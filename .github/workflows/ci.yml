@@ -55,7 +55,7 @@ jobs:
         run: |
           sbt test_$BUILD_KEY \
               pushRemoteCache_$BUILD_KEY \
-              -J-Xmx2G
+              -J-Xmx4G
 
       - name: Run checks
         if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
@@ -79,7 +79,7 @@ jobs:
   release:
     name: Release
     needs: [build]
-    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main')
+    if: startsWith(github.ref, 'refs/tags/v') # || (github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
