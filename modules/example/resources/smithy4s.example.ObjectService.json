@@ -1,0 +1,199 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ObjectService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/{bucketName}/{key}": {
+            "get": {
+                "operationId": "GetObject",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "bucketName",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetObject 200 response",
+                        "headers": {
+                            "X-Size": {
+                                "schema": {
+                                    "type": "number",
+                                    "format": "int32"
+                                },
+                                "required": true
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetObjectOutputPayload"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "ServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "PutObject",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PutObjectInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "bucketName",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "paramName",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Foo",
+                        "in": "header",
+                        "schema": {
+                            "$ref": "#/components/schemas/LowHigh"
+                        }
+                    }
+                ],
+                "responses": {
+                    "500": {
+                        "description": "ServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "507": {
+                        "description": "NoMoreSpace 507 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoMoreSpaceResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Foo": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "title": "int",
+                        "properties": {
+                            "int": {
+                                "type": "number",
+                                "format": "int32",
+                                "nullable": true
+                            }
+                        },
+                        "required": [
+                            "int"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "str",
+                        "properties": {
+                            "str": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "str"
+                        ]
+                    }
+                ]
+            },
+            "GetObjectOutputPayload": {
+                "type": "string"
+            },
+            "LowHigh": {
+                "type": "string",
+                "enum": [
+                    "Low",
+                    "High"
+                ]
+            },
+            "NoMoreSpaceResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "foo": {
+                        "$ref": "#/components/schemas/Foo"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "PutObjectInputPayload": {
+                "type": "string"
+            },
+            "ServerErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,4 @@
+# check if smithy4sCodegen works
+> compile
+$ exists target/scala-2.13/src_managed/main/smithy4s/example/ObjectService.scala
+$ exists target/scala-2.13/resource_managed/main/smithy4s.example.ObjectService.json

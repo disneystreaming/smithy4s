@@ -1,0 +1,133 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+      "title": "HelloWorldService",
+      "version": "0.0.1"
+  },
+  "paths": {
+      "/hello/{name}": {
+          "get": {
+              "operationId": "Greet",
+              "parameters": [
+                  {
+                      "name": "name",
+                      "in": "path",
+                      "schema": {
+                          "type": "string"
+                      },
+                      "required": true
+                  },
+                  {
+                      "name": "X-Bamtech-Partner",
+                      "in": "header",
+                      "schema": {
+                          "type": "string"
+                      }
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Greet 200 response",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/GreetOutputPayload"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "GeneralServerError 500 response",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/untagged": {
+          "get": {
+              "operationId": "GetIntOrString",
+              "responses": {
+                  "200": {
+                      "description": "GetIntOrString 200 response",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/GetIntOrStringResponseContent"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "GeneralServerError 500 response",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  },
+  "components": {
+      "schemas": {
+          "GeneralServerErrorResponseContent": {
+              "type": "object",
+              "properties": {
+                  "message": {
+                      "type": "string"
+                  }
+              }
+          },
+          "GetIntOrStringResponseContent": {
+              "type": "object",
+              "properties": {
+                  "intOrString": {
+                      "$ref": "#/components/schemas/IntOrString"
+                  }
+              }
+          },
+          "GreetOutputPayload": {
+              "type": "string"
+          },
+          "IntOrString": {
+              "oneOf": [
+                  {
+                      "type": "object",
+                      "title": "int",
+                      "properties": {
+                          "int": {
+                              "type": "number",
+                              "format": "int32",
+                              "nullable": true
+                          }
+                      },
+                      "required": [
+                          "int"
+                      ]
+                  },
+                  {
+                      "type": "object",
+                      "title": "string",
+                      "properties": {
+                          "string": {
+                              "type": "string"
+                          }
+                      },
+                      "required": [
+                          "string"
+                      ]
+                  }
+              ]
+          }
+      }
+  }
+}

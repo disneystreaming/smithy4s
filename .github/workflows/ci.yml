@@ -1,0 +1,113 @@
+name: CI
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["*"]
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  JABBA_INDEX: 'https://github.com/typelevel/jdk-index/raw/main/index.json'
+
+jobs:
+  build:
+    name: Test ${{matrix.ceVersion}} ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]
+        java: [adoptium@17]
+        scalaVersion: ["2_12", "2_13", "3_0"]
+        scalaPlatform: ["jvm", "js"]
+        ceVersion: ["CE2", "CE3"]
+        exclude:
+          # Do not build CE2 artifacts for Scala 3
+          - scalaVersion: "3_0"
+            ceVersion: "CE2"
+          # Do not build CE2 artifacts for Scalajs
+          - scalaPlatform: "js"
+            ceVersion: "CE2"
+          # Do not build 2.12 artifacts for Scalajs
+          - scalaVersion: "2_12"
+            scalaPlatform: "js"
+    runs-on: ${{ matrix.os }}
+    env:
+      BUILD_KEY: ${{matrix.ceVersion}}_${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+        with:
+          extraKey: ${{ env.BUILD_KEY }}
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v13
+        with:
+          java-version: ${{ matrix.java }}
+
+      - name: Run tests
+        run: |
+          sbt test_$BUILD_KEY \
+              pushRemoteCache_$BUILD_KEY \
+              -J-Xmx2G
+
+      - name: Run checks
+        if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
+        run: |
+          sbt scalafmt_$BUILD_KEY \
+              headerCheck \
+              "docs/mdoc --in $PWD/README.md"
+
+      - name: Check for untracked changes
+        run: |
+          git status
+          ./scripts/check-dirty.sh
+          echo "Built $(cat version)"
+
+      - name: Upload compilation cache
+        uses: actions/upload-artifact@v2
+        with:
+          name: compilation-${{env.BUILD_KEY}}.zip
+          path: /tmp/remote-cache
+
+  release:
+    name: Release
+    needs: [build]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v13
+        with:
+          java-version: adoptium@17
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+
+      - name: Download compilation cache
+        uses: actions/download-artifact@v2
+        with:
+          path: /tmp/remote-cache
+
+      - name: Unpack compilation cache
+        run: cd /tmp/remote-cache && (ls | xargs -I {} sh -c 'cp -r {}/* .')
+
+      - name: Publish ${{ github.ref }}
+        run: |
+          echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
+          sbt 'pullRemoteCache; release' -J-Xmx2G
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}

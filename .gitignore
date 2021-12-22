@@ -1,0 +1,64 @@
+#mill
+out
+
+# sbt
+lib_managed
+project/project
+target
+
+# Eclipse
+.cache*
+.classpath
+.project
+.scala_dependencies
+.settings
+.target
+.worksheet
+
+# IntelliJ
+.idea
+.idea_modules
+*.iml
+
+# ENSIME
+.ensime
+.ensime_lucene
+.ensime_cache
+
+# Mac
+.DS_Store
+
+# Akka Persistence
+journal
+snapshots
+
+# Log files
+*.log
+
+#Floobits
+.floo
+
+# Local Dynamo DB
+dynamodb_lib
+*.db
+
+# Node
+node_modules
+website/translated_docs
+website/build/
+website/yarn.lock
+website/node_modules
+website/i18n/*
+
+.bloop
+.vscode
+.history
+.metals
+project/metals.sbt
+.ammonite
+
+# Version file
+version
+
+# BSP files
+.bsp
