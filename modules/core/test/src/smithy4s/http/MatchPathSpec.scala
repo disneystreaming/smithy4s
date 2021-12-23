@@ -22,6 +22,9 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import weaver.SimpleMutableIOSuite
 import weaver.scalacheck.Checkers
+import smithy4s.http.PathSegment.GreedySegment
+import smithy4s.http.PathSegment.LabelSegment
+import smithy4s.http.PathSegment.StaticSegment
 
 object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
 
@@ -41,7 +44,20 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
       Gen.resultOf(PathSegment.static(_))
     )
   }
+
+  val genLabelOrStatic: Gen[PathSegment] = Gen.oneOf(
+    Gen.resultOf(PathSegment.label(_)),
+    Gen.resultOf(PathSegment.static(_))
+  )
+
   implicit val showPathSegment: Show[PathSegment] = Show.fromToString
+
+  private val renderExampleSegment: PathSegment => String = {
+    case LabelSegment(_)      => "label-example"
+    case StaticSegment(value) => value
+    case GreedySegment(_) =>
+      "greedy/example"
+  }
 
   test("Doesn't throw on empty path") {
     forall { (segments: NonEmptyList[PathSegment]) =>
@@ -49,18 +65,16 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
     }
   }
 
-  pureTest("Doesn't throw on empty path") {
-    expect.eql(doMatch(List(PathSegment.label("example")))("/"), None)
+  test("Doesn't throw on partially matching paths") {
+    forall(Gen.listOf(genLabelOrStatic)) { prefix =>
+      forall { segments: NonEmptyList[PathSegment] =>
+        val fullPath = prefix ::: segments.toList
+        val actual = prefix.map(renderExampleSegment).mkString("/")
+        expect.eql(doMatch(fullPath)(actual), None)
+      }
+    }
   }
 
-  pureTest("Doesn't throw when path is shorter than the static segments") {
-    expect.eql(
-      doMatch(
-        List(PathSegment.static("test"), PathSegment.static("test2"))
-      )("/test"),
-      None
-    )
-  }
   pureTest("Is lenient with regards to trailing slashes") {
     // /{foo}
     val path: List[PathSegment] =
