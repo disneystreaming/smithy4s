@@ -67,7 +67,7 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
 
   test("Doesn't throw on partially matching paths") {
     forall(Gen.listOf(genLabelOrStatic)) { prefix =>
-      forall { segments: NonEmptyList[PathSegment] =>
+      forall { (segments: NonEmptyList[PathSegment]) =>
         val fullPath = prefix ::: segments.toList
         val actual = prefix.map(renderExampleSegment).mkString("/")
         expect.eql(doMatch(fullPath)(actual), None)
