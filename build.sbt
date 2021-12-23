@@ -594,8 +594,6 @@ lazy val Dependencies = new {
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "cats-core" % "2.7.0")
-    val effect: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-effect" % "2.2.0")
   }
 
   object Fs2 {
