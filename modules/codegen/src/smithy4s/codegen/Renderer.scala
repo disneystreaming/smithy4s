@@ -45,8 +45,7 @@ object Renderer {
       val p = s"package ${unit.namespace}"
 
       val allImports =
-        (renderResult.imports + "smithy4s.syntax._")
-          .filterNot(_.startsWith(unit.namespace))
+        renderResult.imports.filterNot(_.startsWith(unit.namespace))
 
       val allLines = List(p, "") ++
         allImports.toList.sorted.map("import " + _) ++
@@ -165,14 +164,20 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line(s"""val name: String = "$originalName""""),
         line(s"""val version: String = "$version""""),
         newline,
-        block(
-          s"def endpoint[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) = op match"
-        ) {
-          ops.map {
-            case op if op.input != Type.unit =>
-              s"case ${op.name}(input) => (input, ${op.name})"
-            case op =>
-              s"case ${op.name}() => ((), ${op.name})"
+        if (ops.isEmpty) {
+          line(
+            s"""def endpoint[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) = sys.error("impossible")"""
+          )
+        } else {
+          block(
+            s"def endpoint[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) = op match"
+          ) {
+            ops.map {
+              case op if op.input != Type.unit =>
+                s"case ${op.name}(input) => (input, ${op.name})"
+              case op =>
+                s"case ${op.name}() => ((), ${op.name})"
+            }
           }
         },
         newline,
@@ -194,15 +199,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           s"def asTransformationGen[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
         ) {
-          block(
-            s"def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match "
-          ) {
-            ops.map {
-              case op if op.input == Type.unit =>
-                s"case ${op.name}() => impl.${op.methodName}(${op.renderParams})"
-              case op =>
-                s"case ${op.name}(${op.input.render}(${op.renderParams})) => impl.${op.methodName}(${op.renderParams})"
+          if (ops.isEmpty) {
+            line(
+              s"""def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")"""
+            )
+          } else {
+            block(
+              s"def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match "
+            ) {
+              ops.map {
+                case op if op.input == Type.unit =>
+                  s"case ${op.name}() => impl.${op.methodName}(${op.renderParams})"
+                case op =>
+                  s"case ${op.name}(${op.input.render}(${op.renderParams})) => impl.${op.methodName}(${op.renderParams})"
 
+              }
             }
           }
         },
@@ -272,7 +283,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHttpSpecific(op)
       ),
       renderedErrorUnion
-    ).addImports(op.imports)
+    ).addImports(op.imports).addImports(syntaxImport)
   }
 
   private def renderStreamingSchemaVal(
@@ -297,7 +308,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): RenderResult = {
     val decl = s"case class $name(${renderArgs(fields)})"
-    val imports = fields.foldMap(_.tpe.imports)
+    val imports = fields.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
       if (
         hints.contains(Hint.ClientError) || hints.contains(Hint.ServerError)
@@ -424,7 +435,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     def caseName(altName: String) =
       altName.dropWhile(_ == '_').capitalize + "Case"
     val caseNames = alts.map(_.name).map(caseName)
-    val imports = alts.foldMap(_.tpe.imports)
+    val imports = alts.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
       s"sealed trait $name",
       obj(name, ext = hintKey(name, hints))(
@@ -505,14 +516,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     )
-  )
+  ).addImports(syntaxImport)
 
   private def renderTypeAlias(
       name: String,
       tpe: Type,
       hints: List[Hint]
   ): RenderResult = {
-    val imports = tpe.imports ++ Set("smithy4s.Newtype")
+    val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
     val (hintsVal, hintsRef, withHints) =
       if (hints.nonEmpty)
@@ -552,8 +563,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
-    def imports = (op.input :: op.output :: op.params.map(_.tpe) ++ op.errors)
-      .foldMap(_.imports)
+    def imports =
+      (op.input :: op.output :: op.params.map(_.tpe) ++ op.errors)
+        .foldMap(_.imports)
 
     def renderInput = op.input.render
     def renderOutput = op.output.render
@@ -775,5 +787,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
       case _ => _ => "null"
     }
+
+  val syntaxImport = Set("smithy4s.syntax._")
 
 }

@@ -116,7 +116,8 @@ lazy val core = projectMatrix
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "empty.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     testFrameworks += new TestFramework("weaver.framework.CatsEffect")
