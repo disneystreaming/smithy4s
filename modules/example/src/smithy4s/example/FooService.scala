@@ -46,8 +46,8 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing]
   object GetFoo extends smithy4s.Endpoint[FooServiceOperation, Unit, Nothing, GetFooOutput, Nothing, Nothing] with http.HttpEndpoint[Unit] {
     def name: String = "GetFoo"
-    val input: smithy4s.Schema[Unit] = unit
-    val output: smithy4s.Schema[GetFooOutput] = GetFooOutput.schema
+    val input: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Input)
+    val output: smithy4s.Schema[GetFooOutput] = GetFooOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(

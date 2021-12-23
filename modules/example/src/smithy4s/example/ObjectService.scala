@@ -56,8 +56,8 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation, PutObjectInput, PutObjectError, Unit, Nothing, Nothing] with http.HttpEndpoint[PutObjectInput] with smithy4s.Errorable[PutObjectError] {
     def name: String = "PutObject"
-    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema
-    val output: smithy4s.Schema[Unit] = unit
+    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
+    val output: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
@@ -114,8 +114,8 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation, GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing] with http.HttpEndpoint[GetObjectInput] with smithy4s.Errorable[GetObjectError] {
     def name: String = "GetObject"
-    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema
-    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema
+    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
+    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
