@@ -55,12 +55,16 @@ object matchPath {
     ): Option[Map[String, String]] =
       path match {
         case Nil if i >= size => Some(acc)
-        case StaticSegment(value) :: lt if compareStrings(value, received(i)) =>
+        case StaticSegment(value) :: lt
+            if i < size && compareStrings(value, received(i)) =>
           matchPathAux(lt, i + 1, acc, Nil)
-        case (LabelSegment(name) :: lt) =>
+        case (LabelSegment(name) :: lt) if i < size =>
           matchPathAux(lt, i + 1, acc + (name -> received(i)), Nil)
         case (GreedySegment(name) :: StaticSegment(value) :: lt)
-            if compareStrings(value, received(i)) && greedyAcc.nonEmpty =>
+            if i < size && compareStrings(
+              value,
+              received(i)
+            ) && greedyAcc.nonEmpty =>
           val value = greedyAcc.reverse.mkString("/")
           matchPathAux(lt, i + 1, acc + (name -> value), Nil)
         case p @ (GreedySegment(_) :: Nil) if i < size =>
