@@ -28,8 +28,6 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import schematic.OneOf
 import smithy4s.http._
-import smithy4s.internals.InputOutput
-import smithy4s.syntax._
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -86,10 +84,9 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
 
   private val method: org.http4s.Method = toHttp4sMethod(httpEndpoint.method)
 
-  private val inputSchema: Schema[I] =
-    endpoint.input.withHints(InputOutput.Input)
-  private val outputSchema: Schema[O] =
-    endpoint.output.withHints(InputOutput.Output)
+  private val inputSchema: Schema[I] = endpoint.input
+  private val outputSchema: Schema[O] = endpoint.output
+
   private val inputMetadataEncoder =
     Metadata.Encoder.fromSchema(inputSchema)
   private val inputHasBody =
