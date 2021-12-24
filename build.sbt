@@ -24,11 +24,14 @@ Global / licenses := Seq(
 
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
   // .disablePlugins(Smithy4sPlugin)
   .enablePlugins(ScalafixPlugin)
+  .enablePlugins(MergifyPlugin)
   .settings(Smithy4sPlugin.doNotPublishArtifact)
   .settings(
     pushRemoteCache := {},

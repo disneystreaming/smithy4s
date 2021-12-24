@@ -13,5 +13,9 @@ addSbtPlugin("pl.project13.scala"   % "sbt-jmh"                       % "0.4.3")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.6.0")
 
 libraryDependencies ++= Seq("com.lihaoyi" %% "os-lib" % "0.8.0")
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-yaml" % "0.14.1",
+  "io.circe" %% "circe-generic" % "0.14.1",
+)
 
 addDependencyTreePlugin
