@@ -306,7 +306,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.0",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.0.13"
+      "io.get-coursier" %% "coursier" % "2.0.16"
     ),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
