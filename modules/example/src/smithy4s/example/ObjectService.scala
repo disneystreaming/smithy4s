@@ -20,6 +20,8 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 
 object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] {
 
+  def apply[F[_]](implicit F: ObjectService[F]): F.type = F
+
   val hints : smithy4s.Hints = smithy4s.Hints(
     smithy4s.api.SimpleRestJson(),
   )

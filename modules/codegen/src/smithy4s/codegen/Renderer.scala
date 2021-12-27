@@ -156,6 +156,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = s"$Service_[$genName, $opTraitName]"
       )(
         newline,
+        line(s"def apply[F[_]](implicit F: $name[F]): F.type = F"),
+        newline,
         renderHintsVal(hints),
         newline,
         line(s"val endpoints = List").args(ops.map(_.name)),
