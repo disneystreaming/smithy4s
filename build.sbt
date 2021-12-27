@@ -58,7 +58,7 @@ lazy val allModules = Seq(
 
 lazy val docs =
   projectMatrix
-    .in(file("module/docs"))
+    .in(file("modules/docs"))
     .enablePlugins(MdocPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
@@ -390,6 +390,27 @@ lazy val protocol = projectMatrix
       "-Xlint"
     )
   )
+
+/**
+ * This modules contains utilities to dynamically instantiate
+ * the interfaces provide by smithy4s, based on data from dynamic
+ * Model instances.
+ */
+lazy val dynamic = projectMatrix
+  .in(file("modules/dynamic"))
+  .dependsOn(core)
+  .settings(
+    isCE3 := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Smithy.model,
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+      Dependencies.Weaver.cats.value % Test
+    ),
+    Test / fork := true,
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
 
 /**
  * Module that contains the logic for generating "openapi views" of the
