@@ -16,7 +16,7 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 
 object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation] {
 
-  def apply[F[_]](implicit F: FooService[F]): F.type = F
+  def apply[F[_]](implicit F: smithy4s.Monadic[FooServiceGen, F]): F.type = F
 
   val hints : smithy4s.Hints = smithy4s.Hints()
 

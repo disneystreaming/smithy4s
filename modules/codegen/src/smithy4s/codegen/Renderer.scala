@@ -112,7 +112,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val name = s.name
       lines(
         s"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
-        s"val $name : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen"
+        block(
+          s"object $name extends smithy4s.Service.Provider[${name}Gen, ${name}Operation]"
+        )(
+          s"def apply[F[_]](implicit F: $name[F]): F.type = F",
+          s"def service : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen",
+          s"def namespace: String = service.namespace",
+          s"def name: String = service.name"
+        )
       )
     case _ => empty
   }
@@ -156,7 +163,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = s"$Service_[$genName, $opTraitName]"
       )(
         newline,
-        line(s"def apply[F[_]](implicit F: $name[F]): F.type = F"),
+        line(
+          s"def apply[F[_]](implicit F: smithy4s.Monadic[$genName, F]): F.type = F"
+        ),
         newline,
         renderHintsVal(hints),
         newline,

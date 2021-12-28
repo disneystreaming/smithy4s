@@ -17,12 +17,14 @@
 package smithy4s
 
 import weaver._
+import cats.Id
+import smithy4s.example.EmptyService
 
-object EmptyServiceSmokeSpec extends FunSuite {
+object SummonSmokeSpec extends FunSuite {
 
-  test("Empty services do compile") {
-    val version = smithy4s.example.EmptyService.service.version
-    expect.eql(version, "1.0")
+  test("Algebra can be summoned from monadic alias") {
+    implicit val emptyService: EmptyService[Id] = new EmptyService[Id] {}
+    expect.same(EmptyService[Id], emptyService)
   }
 
 }

@@ -32,8 +32,9 @@ package smithy4s
   *   around makes it drastically easier to implement logic generically, without involving
   *   metaprogramming.
   */
-trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Transformable[Alg] with HasId {
-  implicit val selfService: Service[Alg, Op] = this
+trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Transformable[Alg] with Service.Provider[Alg, Op] {
+  implicit val serviceInstance: Service[Alg, Op] = this
+  val service = this
 
   def endpoints: List[Endpoint[Op, _, _, _, _, _]]
   def endpoint[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): (I, Endpoint[Op, I, E, O, SI, SO])
@@ -54,5 +55,11 @@ trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Transformable[Al
   // Apply a transformation that is aware of the endpoint
   def transformWithEndpoint[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: Alg[P], transformation: Transformation.ZippedWithEndpoint[P, Op, P1]) : Alg[P1] = {
     this.transform(asTransformationGen(alg).zip(opToEndpoint).andThen(transformation))
+  }
+}
+
+object Service {
+  trait Provider[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends HasId {
+    def service: Service[Alg, Op]
   }
 }

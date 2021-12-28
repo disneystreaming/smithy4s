@@ -17,7 +17,7 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
 
 object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] {
 
-  def apply[F[_]](implicit F: StreamedObjects[F]): F.type = F
+  def apply[F[_]](implicit F: smithy4s.Monadic[StreamedObjectsGen, F]): F.type = F
 
   val hints : smithy4s.Hints = smithy4s.Hints()
 

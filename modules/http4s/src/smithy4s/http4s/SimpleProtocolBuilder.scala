@@ -35,20 +35,22 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
 ) {
 
   def apply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      service: smithy4s.Service[Alg, Op]
-  ): ServiceBuilder[Alg, Op] = new ServiceBuilder(service)
+      serviceProvider: smithy4s.Service.Provider[Alg, Op]
+  ): ServiceBuilder[Alg, Op] = new ServiceBuilder(serviceProvider.service)
 
   def routes[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
       impl: Monadic[Alg, F]
   )(implicit
-      service: smithy4s.Service[Alg, Op],
+      serviceProvider: smithy4s.Service.Provider[Alg, Op],
       F: EffectCompat[F]
-  ): RouterBuilder[Alg, Op, F] =
+  ): RouterBuilder[Alg, Op, F] = {
+    val service = serviceProvider.service
     new RouterBuilder[Alg, Op, F](
       service,
       service.asTransformation(impl),
       PartialFunction.empty
     )
+  }
 
   class ServiceBuilder[
       Alg[_[_, _, _, _, _]],
