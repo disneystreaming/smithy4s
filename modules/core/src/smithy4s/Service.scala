@@ -47,7 +47,7 @@ trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Transformable[Al
 
   def transform[P[_, _, _, _, _]](transformation: Transformation[Op, P]): Alg[P]
 
-  def asTransformation[F[_]](impl: Alg[GenLift[F]#λ]): Transformation[Op, GenLift[F]#λ] = asTransformationGen[GenLift[F]#λ](impl)
+  def asTransformation[F[_]](impl: Monadic[Alg, F]): Interpreter[Op, F] = asTransformationGen[GenLift[F]#λ](impl)
 
   def asTransformationGen[P[_, _, _, _, _]](impl: Alg[P]): Transformation[Op, P]
 

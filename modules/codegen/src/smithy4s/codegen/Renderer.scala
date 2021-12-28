@@ -111,7 +111,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case s: Service =>
       val name = s.name
       lines(
-        s"type $name[F[_]] = ${name}Gen[smithy4s.GenLift[F]#λ]",
+        s"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
         s"val $name : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen"
       )
     case _ => empty
