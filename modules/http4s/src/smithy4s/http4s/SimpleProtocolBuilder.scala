@@ -47,7 +47,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
     val service = serviceProvider.service
     new RouterBuilder[Alg, Op, F](
       service,
-      service.asTransformation(impl),
+      service.asTransformation[GenLift[F]#λ](impl),
       PartialFunction.empty
     )
   }
@@ -110,7 +110,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
     ): RouterBuilder[Alg, Op, F] =
       new RouterBuilder[Alg, Op, F](
         service,
-        service.asTransformation(impl),
+        service.asTransformation[GenLift[F]#λ](impl),
         PartialFunction.empty
       )
 
