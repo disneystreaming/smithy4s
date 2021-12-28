@@ -208,7 +208,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ),
         newline,
         block(
-          s"def asTransformationGen[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
+          s"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
         ) {
           if (ops.isEmpty) {
             line(

@@ -48,13 +48,11 @@ trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Transformable[Al
 
   def transform[P[_, _, _, _, _]](transformation: Transformation[Op, P]): Alg[P]
 
-  def asTransformation[F[_]](impl: Monadic[Alg, F]): Interpreter[Op, F] = asTransformationGen[GenLift[F]#λ](impl)
-
-  def asTransformationGen[P[_, _, _, _, _]](impl: Alg[P]): Transformation[Op, P]
+  def asTransformation[P[_, _, _, _, _]](impl: Alg[P]): Transformation[Op, P]
 
   // Apply a transformation that is aware of the endpoint
   def transformWithEndpoint[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: Alg[P], transformation: Transformation.ZippedWithEndpoint[P, Op, P1]) : Alg[P1] = {
-    this.transform(asTransformationGen(alg).zip(opToEndpoint).andThen(transformation))
+    this.transform(asTransformation(alg).zip(opToEndpoint).andThen(transformation))
   }
 }
 
