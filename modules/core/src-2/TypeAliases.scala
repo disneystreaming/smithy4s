@@ -16,13 +16,12 @@
 
 package smithy4s
 
-import weaver._
+protected[smithy4s] trait TypeAliases {
 
-object EmptyServiceSmokeSpec extends FunSuite {
+  type Monadic[Alg[_[_, _, _, _, _]], F[_]] =
+    Alg[Lambda[(I, E, O, SI, SO) => F[O]]]
 
-  test("Empty services do compile") {
-    val version = smithy4s.example.EmptyService.version
-    expect.eql(version, "1.0")
-  }
+  type Interpreter[Op[_, _, _, _, _], F[_]] =
+    Transformation[Op, Lambda[(I, E, O, SI, SO) => F[O]]]
 
 }
