@@ -1,8 +1,6 @@
 package smithy4s
 package dynamic
 
-import software.amazon.smithy.model.shapes.ShapeId
-
 class DynamicModel(
     serviceMap: Map[ShapeId, DynamicService],
     schemaMap: Map[ShapeId, Schema[DynData]]

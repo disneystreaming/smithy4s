@@ -1,23 +1,31 @@
 package smithy4s
 package dynamic
 
-import software.amazon.smithy.model.Model
+// import software.amazon.smithy.model.Model
+import smithy4s.dynamic.model.{ShapeId => SID, _}
 import scala.collection.mutable.{Map => MMap}
 import schematic.OneOf
 import schematic.StructureField
-import software.amazon.smithy.model.shapes._
 import smithy4s.syntax._
-import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.traits._
-import software.amazon.smithy.model.traits
-import software.amazon.smithy.model.node.Node
-import java.util.Optional
 
 object Compiler {
 
   type DynSchema = Schema[DynData]
   type DynFieldSchema = StructureField[Schematic, DynStruct, DynData]
   type DynAltSchema = OneOf[Schematic, DynAlt, DynData]
+
+  object ValidSID {
+    def apply(sid: SID): Option[ShapeId] = {
+      val segments = sid.value.split('#')
+      if (segments.length == 2) {
+        Some(ShapeId(segments(0), segments(1)))
+      } else None
+    }
+
+    def unapply(sid: SID): Option[ShapeId] = apply(sid)
+  }
+
+  def toSID(shapeId: ShapeId): SID = SID(shapeId.namespace + "#" + shapeId.name)
 
   def compile(model: Model, knownHints: KeyedSchema[_]*): DynamicModel = {
     val schemaMap = MMap.empty[ShapeId, Schema[DynData]]
@@ -30,8 +38,10 @@ object Compiler {
       shapeId -> ks
     }.toMap
 
-    def toHintAux[A](ks: KeyedSchema[A], node: Node): Option[Hint] = {
-      val documentRepr: Document = NodeToDoc(node)
+    def toHintAux[A](
+        ks: KeyedSchema[A],
+        documentRepr: Document
+    ): Option[Hint] = {
       val decoded: Option[A] =
         Document.Decoder.fromSchema(ks.schema).decode(documentRepr).toOption
       decoded.map { value =>
@@ -39,15 +49,23 @@ object Compiler {
       }
     }
 
-    def toHint(tr: traits.Trait): Option[Hint] = {
-      val id = tr.toShapeId()
-      val node = tr.toNode()
-      hintsMap.get(id).flatMap(toHintAux(_, node))
+    def toHint(id: ShapeId, tr: Document): Option[Hint] = {
+      hintsMap.get(id).flatMap(toHintAux(_, tr))
     }
 
     val visitor =
-      new CompileVisitor(model, schemaMap, endpointMap, serviceMap, toHint(_))
-    model.shapes().iterator().asScala.foreach(_.accept(visitor))
+      new CompileVisitor(
+        model,
+        schemaMap,
+        endpointMap,
+        serviceMap,
+        toHint(_, _)
+      )
+
+    model.shapes.foreach {
+      case (ValidSID(id), shape) => visitor(id, shape)
+      case _                     => ()
+    }
     new DynamicModel(serviceMap.toMap, schemaMap.toMap)
   }
 
@@ -56,77 +74,83 @@ object Compiler {
       schemaMap: MMap[ShapeId, Schema[DynData]],
       endpointMap: MMap[ShapeId, DynamicEndpoint],
       serviceMap: MMap[ShapeId, DynamicService],
-      toHint: traits.Trait => Option[Hint]
+      toHint: (ShapeId, Document) => Option[Hint]
   ) extends ShapeVisitor.Default[Unit] {
 
-    def allHints(shape: Shape): Seq[Hint] = {
-      shape
-        .getAllTraits()
-        .asScala
-        .values
-        .map(toHint)
+    def schema(sid: SID): Schema[DynData] = schemaMap(ValidSID.unapply(sid).get)
+
+    def allHints(traits: Option[Map[SID, Document]]): Seq[Hint] = {
+      traits
+        .getOrElse(Map.empty)
+        .collect { case (ValidSID(k), v) =>
+          toHint(k, v)
+        }
         .collect { case Some(h) =>
           h
         }
         .toSeq
     }
 
-    def allHints(shapeId: ShapeId): Seq[Hint] =
-      allHints(model.expectShape(shapeId))
-
-    def update[A](shape: Shape, schema: Schema[A]): Unit = {
-      schemaMap += (shape.getId -> schema
-        .withHints(allHints(shape): _*)
-        .withHints(Name(shape.getId.getName()))
+    def update[A](
+        shapeId: ShapeId,
+        traits: Option[Map[SID, Document]],
+        schema: Schema[A]
+    ): Unit = {
+      schemaMap += (shapeId -> schema
+        .withHints(allHints(traits): _*)
+        .withHints(Name(shapeId.name))
         .asInstanceOf[Schema[DynData]])
     }
 
-    def getDefault(shape: Shape): Unit = ()
+    def default: Unit = ()
 
-    override def integerShape(shape: IntegerShape): Unit =
-      update(shape, int)
+    override def integerShape(id: ShapeId, shape: IntegerShape): Unit =
+      update(id, shape.traits, int)
 
-    override def booleanShape(shape: BooleanShape): Unit =
-      update(shape, boolean)
+    override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
+      update(id, shape.traits, boolean)
 
-    override def stringShape(shape: StringShape): Unit =
-      update(shape, string)
+    override def stringShape(id: ShapeId, shape: StringShape): Unit =
+      update(id, shape.traits, string)
 
-    override def listShape(shape: ListShape): Unit =
-      update(shape, list(suspend(schemaMap(shape.getMember.getTarget))))
+    override def listShape(id: ShapeId, shape: ListShape): Unit =
+      update(id, shape.traits, list(suspend(schema(shape.member.target))))
 
-    override def setShape(shape: SetShape): Unit =
-      update(shape, set(suspend(schemaMap(shape.getMember.getTarget))))
+    override def setShape(id: ShapeId, shape: SetShape): Unit =
+      update(id, shape.traits, set(suspend(schema(shape.member.target))))
 
-    override def operationShape(shape: OperationShape): Unit = {
-      def maybeSchema(maybeShapeId: Optional[ShapeId]): Schema[DynData] =
+    override def operationShape(id: ShapeId, shape: OperationShape): Unit = {
+      def maybeSchema(maybeShapeId: Option[SID]): Schema[DynData] =
         suspend(
           maybeShapeId
+            .flatMap(ValidSID(_))
             .map[Schema[DynData]](id => schemaMap(id))
-            .orElseGet(() => unit.asInstanceOf[Schema[DynData]])
+            .getOrElse(unit.asInstanceOf[Schema[DynData]])
         )
 
       val ep = DynamicEndpoint(
-        shape.getId.getNamespace(),
-        shape.getId.getName(),
-        maybeSchema(shape.getInput()),
-        maybeSchema(shape.getOutput()),
-        Hints(allHints(shape): _*)
+        id.namespace,
+        id.name,
+        maybeSchema(shape.input.map(_.target)),
+        maybeSchema(shape.output.map(_.target)),
+        Hints(allHints(shape.traits): _*)
       )
-      endpointMap += shape.getId() -> ep
+      endpointMap += id -> ep
     }
 
-    override def serviceShape(shape: ServiceShape): Unit = {
+    override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
       val getEndpoints = () =>
-        shape.getOperations().asScala.map(opId => endpointMap(opId)).toList
+        shape.operations.toList.map(_.target).collect { case ValidSID(opId) =>
+          endpointMap(opId)
+        }
       val service = DynamicService(
-        shape.getId().getNamespace(),
-        shape.getId().getName(),
-        shape.getVersion(),
+        id.namespace,
+        id.name,
+        shape.version.getOrElse(""),
         getEndpoints,
-        Hints(allHints(shape): _*)
+        Hints(allHints(shape.traits): _*)
       )
-      serviceMap += shape.getId() -> service
+      serviceMap += id -> service
     }
 
     // Creates a dynamic structure array, unpacking options
@@ -142,21 +166,22 @@ object Compiler {
       array
     }
 
-    override def structureShape(shape: StructureShape): Unit =
+    override def structureShape(id: ShapeId, shape: StructureShape): Unit =
       update(
-        shape, {
-          val shapeId = shape.getId()
-          val namespace = shapeId.getNamespace()
-          val shapeName = shapeId.getName()
-          val members = shape.getAllMembers().asScala
+        id,
+        shape.traits, {
+          val members = shape.members.getOrElse(Map.empty)
           val fields =
             members.zipWithIndex.map { case ((label, mShape), index) =>
-              val memberId = ShapeId.fromParts(namespace, shapeName, label)
-              val memberHints = allHints(memberId)
+              val memberHints = allHints(mShape.traits)
               val memberSchema =
-                suspend(schemaMap(mShape.getTarget()))
+                suspend(schema(mShape.target))
                   .withHints(memberHints: _*)
-              if (mShape.getTrait(classOf[RequiredTrait]).isPresent()) {
+              if (
+                mShape.traits
+                  .getOrElse(Map.empty)
+                  .contains(SID("smithy.api#required"))
+              ) {
                 memberSchema.required[DynStruct](label, _(index))
               } else {
                 memberSchema

@@ -407,7 +407,15 @@ lazy val dynamic = projectMatrix
       Dependencies.Weaver.cats.value % Test
     ),
     Test / fork := true,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    //
+    Compile / allowedNamespaces := Seq(
+      "smithy4s.dynamic.model"
+    ),
+    Compile / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
+    ),
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
