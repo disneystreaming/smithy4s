@@ -53,7 +53,7 @@ lazy val allModules = Seq(
   `aws-kernel`.projectRefs,
   aws.projectRefs,
   `aws-http4s`.projectRefs,
-  cli.projectRefs
+  `codegen-cli`.projectRefs
 ).flatten
 
 lazy val docs =
@@ -238,7 +238,7 @@ lazy val `aws-kernel` = projectMatrix
 /**
  * cats-effect specific abstractions of AWS protocol interpreters and constructs
  */
-lazy val `aws` = projectMatrix
+lazy val aws = projectMatrix
   .in(file("modules/aws"))
   .dependsOn(`aws-kernel`, json)
   .settings(
@@ -317,10 +317,10 @@ lazy val codegen = projectMatrix
  * can be used independently of build tools (or that build tools can choose
  * to delegate to in order to implement plugins)
  */
-lazy val cli = projectMatrix
-  .in(file("modules/cli"))
+lazy val `codegen-cli` = projectMatrix
+  .in(file("modules/codegen-cli"))
   .dependsOn(codegen)
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
     libraryDependencies ++= Seq(
       "com.monovore" %% "decline" % "2.2.0"
@@ -682,10 +682,10 @@ def genSmithyImpl(config: Configuration) = Def.task {
     (config / genSmithyDependencies).?.value.getOrElse(List.empty)
 
   val codegenCp =
-    (cli.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
+    (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
       .map(_.data)
 
-  val mc = "smithy4s.cli.Main"
+  val mc = "smithy4s.codegen.cli.Main"
   val s = streams.value
 
   def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli
+package smithy4s.codegen.cli
 
 import cats.syntax.all._
 import smithy4s.codegen.Codegen

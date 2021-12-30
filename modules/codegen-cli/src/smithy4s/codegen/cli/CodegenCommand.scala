@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli
+package smithy4s.codegen.cli
 
 import cats.data.Validated
 import cats.data.ValidatedNel
@@ -156,7 +156,7 @@ object CodegenCommand {
       }
 
   val command = Command(
-    "smithy4s-codegen",
+    "smithy4s",
     "Generates scala code and openapi-specs from smithy specs"
   )(options)
 
