@@ -16,7 +16,6 @@
 
 package object smithy4s extends TypeAliases {
 
-  type Id[A] = A
   type Hint = Hints.Binding[_]
   type Static[A] = schematic.Static[A]
   type Schema[A] = schematic.Schema[Schematic, A]

@@ -20,6 +20,8 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 
 object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] {
 
+  def apply[F[_]](implicit F: smithy4s.Monadic[ObjectServiceGen, F]): F.type = F
+
   val hints : smithy4s.Hints = smithy4s.Hints(
     smithy4s.api.SimpleRestJson(),
   )
@@ -47,7 +49,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: smithy4s.Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)
 
-  def asTransformationGen[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): smithy4s.Transformation[ObjectServiceOperation, P] = new smithy4s.Transformation[ObjectServiceOperation, P] {
+  def asTransformation[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): smithy4s.Transformation[ObjectServiceOperation, P] = new smithy4s.Transformation[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutObject(PutObjectInput(key, bucketName, data, foo, someValue)) => impl.putObject(key, bucketName, data, foo, someValue)
       case GetObject(GetObjectInput(key, bucketName)) => impl.getObject(key, bucketName)

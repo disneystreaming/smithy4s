@@ -21,7 +21,7 @@ import weaver._
 object EmptyServiceSmokeSpec extends FunSuite {
 
   test("Empty services do compile") {
-    val version = smithy4s.example.EmptyService.version
+    val version = smithy4s.example.EmptyService.service.version
     expect.eql(version, "1.0")
   }
 

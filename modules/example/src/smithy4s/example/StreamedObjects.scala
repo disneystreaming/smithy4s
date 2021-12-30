@@ -17,6 +17,8 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
 
 object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] {
 
+  def apply[F[_]](implicit F: smithy4s.Monadic[StreamedObjectsGen, F]): F.type = F
+
   val hints : smithy4s.Hints = smithy4s.Hints()
 
   val endpoints = List(
@@ -42,7 +44,7 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: StreamedObjectsGen[P], transformation: smithy4s.Transformation[P, P1]): StreamedObjectsGen[P1] = alg.transform(transformation)
 
-  def asTransformationGen[P[_, _, _, _, _]](impl : StreamedObjectsGen[P]): smithy4s.Transformation[StreamedObjectsOperation, P] = new smithy4s.Transformation[StreamedObjectsOperation, P] {
+  def asTransformation[P[_, _, _, _, _]](impl : StreamedObjectsGen[P]): smithy4s.Transformation[StreamedObjectsOperation, P] = new smithy4s.Transformation[StreamedObjectsOperation, P] {
     def apply[I, E, O, SI, SO](op : StreamedObjectsOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutStreamedObject(PutStreamedObjectInput(key)) => impl.putStreamedObject(key)
       case GetStreamedObject(GetStreamedObjectInput(key)) => impl.getStreamedObject(key)

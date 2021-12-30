@@ -26,14 +26,14 @@ package object http {
     * of extracted segment values.
     */
   final def httpMatch[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      service: Service[Alg, Op],
+      serviceProvider: Service.Provider[Alg, Op],
       method: http.HttpMethod,
       path: String
   ): Option[
     (Endpoint[Op, _, _, _, _, _], http.HttpEndpoint[_], Map[String, String])
   ] = {
     val pathArray = http.matchPath.make(path)
-    service.endpoints.iterator
+    serviceProvider.service.endpoints.iterator
       .map {
         case endpoint @ http.HttpEndpoint(httpEndpoint)
             if httpEndpoint.method == method =>

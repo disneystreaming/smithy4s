@@ -16,6 +16,8 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 
 object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation] {
 
+  def apply[F[_]](implicit F: smithy4s.Monadic[FooServiceGen, F]): F.type = F
+
   val hints : smithy4s.Hints = smithy4s.Hints()
 
   val endpoints = List(
@@ -38,7 +40,7 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], transformation: smithy4s.Transformation[P, P1]): FooServiceGen[P1] = alg.transform(transformation)
 
-  def asTransformationGen[P[_, _, _, _, _]](impl : FooServiceGen[P]): smithy4s.Transformation[FooServiceOperation, P] = new smithy4s.Transformation[FooServiceOperation, P] {
+  def asTransformation[P[_, _, _, _, _]](impl : FooServiceGen[P]): smithy4s.Transformation[FooServiceOperation, P] = new smithy4s.Transformation[FooServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case GetFoo() => impl.getFoo()
     }

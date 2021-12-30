@@ -15,26 +15,16 @@
  */
 
 package smithy4s
-package aws
 
-import cats.effect.Async
-import cats.effect.Resource
-import org.http4s.client.Client
+import weaver._
+import cats.Id
+import smithy4s.example.EmptyService
 
-package object http4s {
+object SummonSmokeSpec extends FunSuite {
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
-  ) {
-
-    def awsClient[F[_]: Async](
-        client: Client[F],
-        awsRegion: AwsRegion
-    ): Resource[F, AwsClient[Alg, F]] = for {
-      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
-      awsClient <- AwsClient(serviceProvider.service, env)
-    } yield awsClient
-
+  test("Algebra can be summoned from monadic alias") {
+    implicit val emptyService: EmptyService[Id] = new EmptyService[Id] {}
+    expect.same(EmptyService[Id], emptyService)
   }
 
 }
