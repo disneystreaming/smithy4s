@@ -1,5 +1,5 @@
 pull_request_rules:
-  - name: Automatically merge Scala Steward PRs on CI success
+  - name: Automatically approve/merge Scala Steward PRs on CI success
     conditions:
       - author=scala-steward
       - status-success="Test CE2 2_12 (jvm)"
@@ -11,5 +11,8 @@ pull_request_rules:
       - status-success="Test CE3 3_0 (js)"
       - body~=labels:.*semver-patch.*
     actions:
+      review:
+        type: APPROVE
+        message: Automatically approving scala-steward
       merge:
         method: merge
