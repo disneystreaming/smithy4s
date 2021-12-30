@@ -53,7 +53,7 @@ lazy val allModules = Seq(
   `aws-kernel`.projectRefs,
   aws.projectRefs,
   `aws-http4s`.projectRefs,
-  cli.projectRefs
+  `codegen-cli`.projectRefs
 ).flatten
 
 lazy val docs =
@@ -238,7 +238,7 @@ lazy val `aws-kernel` = projectMatrix
 /**
  * cats-effect specific abstractions of AWS protocol interpreters and constructs
  */
-lazy val `aws` = projectMatrix
+lazy val aws = projectMatrix
   .in(file("modules/aws"))
   .dependsOn(`aws-kernel`, json)
   .settings(
@@ -306,7 +306,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.0",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.0.13"
+      "io.get-coursier" %% "coursier" % "2.0.16"
     ),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
@@ -317,10 +317,10 @@ lazy val codegen = projectMatrix
  * can be used independently of build tools (or that build tools can choose
  * to delegate to in order to implement plugins)
  */
-lazy val cli = projectMatrix
-  .in(file("modules/cli"))
+lazy val `codegen-cli` = projectMatrix
+  .in(file("modules/codegen-cli"))
   .dependsOn(codegen)
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
     libraryDependencies ++= Seq(
       "com.monovore" %% "decline" % "2.2.0"
@@ -624,13 +624,11 @@ lazy val Dependencies = new {
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "cats-core" % "2.7.0")
-    val effect: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-effect" % "2.2.0")
   }
 
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.3")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.2.4")
   }
 
   val Circe = new {
@@ -657,7 +655,7 @@ lazy val Dependencies = new {
   }
 
   object Weaver {
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.7" else "0.6.7")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.7.9" else "0.6.9")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
@@ -713,10 +711,10 @@ def genSmithyImpl(config: Configuration) = Def.task {
     (config / genSmithyDependencies).?.value.getOrElse(List.empty)
 
   val codegenCp =
-    (cli.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
+    (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
       .map(_.data)
 
-  val mc = "smithy4s.cli.Main"
+  val mc = "smithy4s.codegen.cli.Main"
   val s = streams.value
 
   def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))

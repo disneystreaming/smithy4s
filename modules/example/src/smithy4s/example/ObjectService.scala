@@ -20,6 +20,8 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 
 object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] {
 
+  def apply[F[_]](implicit F: smithy4s.Monadic[ObjectServiceGen, F]): F.type = F
+
   val hints : smithy4s.Hints = smithy4s.Hints(
     smithy4s.api.SimpleRestJson(),
   )
@@ -47,7 +49,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: smithy4s.Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)
 
-  def asTransformationGen[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): smithy4s.Transformation[ObjectServiceOperation, P] = new smithy4s.Transformation[ObjectServiceOperation, P] {
+  def asTransformation[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): smithy4s.Transformation[ObjectServiceOperation, P] = new smithy4s.Transformation[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutObject(PutObjectInput(key, bucketName, data, foo, someValue)) => impl.putObject(key, bucketName, data, foo, someValue)
       case GetObject(GetObjectInput(key, bucketName)) => impl.getObject(key, bucketName)
@@ -56,8 +58,8 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation, PutObjectInput, PutObjectError, Unit, Nothing, Nothing] with http.HttpEndpoint[PutObjectInput] with smithy4s.Errorable[PutObjectError] {
     def name: String = "PutObject"
-    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema
-    val output: smithy4s.Schema[Unit] = unit
+    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
+    val output: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
@@ -114,8 +116,8 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation, GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing] with http.HttpEndpoint[GetObjectInput] with smithy4s.Errorable[GetObjectError] {
     def name: String = "GetObject"
-    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema
-    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema
+    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
+    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(

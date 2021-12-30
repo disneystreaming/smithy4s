@@ -32,8 +32,6 @@ import org.typelevel.ci.CIString
 import schematic.OneOf
 import smithy4s.http.Metadata
 import smithy4s.http._
-import smithy4s.internals.InputOutput
-import smithy4s.syntax._
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -101,10 +99,8 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
     }
   }
 
-  private val inputSchema: Schema[I] =
-    endpoint.input.withHints(InputOutput.Input)
-  private val outputSchema: Schema[O] =
-    endpoint.output.withHints(InputOutput.Output)
+  private val inputSchema: Schema[I] = endpoint.input
+  private val outputSchema: Schema[O] = endpoint.output
 
   private val inputMetadataDecoder =
     Metadata.PartialDecoder.fromSchema(inputSchema)
