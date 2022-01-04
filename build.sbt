@@ -322,9 +322,12 @@ lazy val `codegen-cli` = projectMatrix
   .dependsOn(codegen)
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
+    isCE3 := true,
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % "2.2.0"
-    )
+      "com.monovore" %% "decline" % "2.2.0",
+      Dependencies.Weaver.cats.value % Test
+    ),
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
   )
 
 /**
@@ -712,7 +715,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 .map(_.getAbsolutePath())
                 .mkString(":")
 
-              val res = ("java" :: "-cp" :: cp :: mc :: args).lineStream.toList
+              val res =
+                ("java" :: "-cp" :: cp :: mc :: "generate" :: args).lineStream.toList
               res.map(new File(_))
             } else outputs.getOrElse(Seq.empty)
           }

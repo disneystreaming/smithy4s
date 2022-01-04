@@ -16,20 +16,41 @@
 
 package smithy4s.codegen.cli
 
+import cats.data.NonEmptyList
 import cats.syntax.all._
+import com.monovore.decline.Command
+import com.monovore.decline.Opts
 import smithy4s.codegen.Codegen
 
 object Main {
+
+  val commands: Command[Smithy4sCommand] =
+    Command("smithy4s", "Command line interface for Smithy4s")(
+      NonEmptyList
+        .of(
+          CodegenCommand.command,
+          DumpModelCommand.command
+        )
+        .reduceMapK(Opts.subcommand(_))
+    )
 
   def main(args: Array[String]): Unit = {
     val out = System.out
     try {
       System.setOut(System.err)
-      CodegenCommand.command.parse(args.toList) match {
-        case Right(codegenArgs) =>
-          Codegen.processSpecs(codegenArgs).foreach(out.println)
-        case Left(help) => System.err.println(help.show)
-      }
+      commands
+        .parse(args.toList)
+        .map {
+          case Smithy4sCommand.Generate(args) =>
+            Codegen.processSpecs(args).foreach(out.println)
+
+          case Smithy4sCommand.DumpModel(args) =>
+            out.println(DumpModel.run(args))
+        }
+        .leftMap { help =>
+          System.err.println(help.show)
+        }
+        .merge
     } catch {
       case e: Throwable => e.printStackTrace(System.err)
     } finally {
