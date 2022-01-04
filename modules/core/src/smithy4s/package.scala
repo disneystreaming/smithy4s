@@ -14,9 +14,8 @@
  *  limitations under the License.
  */
 
-package object smithy4s {
+package object smithy4s extends TypeAliases {
 
-  type Id[A] = A
   type Hint = Hints.Binding[_]
   type Static[A] = schematic.Static[A]
   type Schema[A] = schematic.Schema[Schematic, A]
@@ -28,8 +27,6 @@ package object smithy4s {
 
   def segment(s: Any): String = URIEncoderDecoder.encodeOthers(s.toString())
   def greedySegment(s: String) = s.split("/").map(segment).mkString("/")
-
-  type Interpreter[Op[_, _, _, _, _], F[_]] = Transformation[Op, GenLift[F]#λ]
 
   // Allows to "inject" F[_] types in places that require F[_,_,_,_,_]
   type GenLift[F[_]] = {

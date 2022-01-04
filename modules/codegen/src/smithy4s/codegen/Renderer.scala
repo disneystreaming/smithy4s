@@ -111,8 +111,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case s: Service =>
       val name = s.name
       lines(
-        s"type $name[F[_]] = ${name}Gen[smithy4s.GenLift[F]#λ]",
-        s"val $name : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen"
+        s"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
+        block(
+          s"object $name extends smithy4s.Service.Provider[${name}Gen, ${name}Operation]"
+        )(
+          s"def apply[F[_]](implicit F: $name[F]): F.type = F",
+          s"def service : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen",
+          s"def namespace: String = service.namespace",
+          s"def name: String = service.name"
+        )
       )
     case _ => empty
   }
@@ -156,6 +163,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = s"$Service_[$genName, $opTraitName]"
       )(
         newline,
+        line(
+          s"def apply[F[_]](implicit F: smithy4s.Monadic[$genName, F]): F.type = F"
+        ),
+        newline,
         renderHintsVal(hints),
         newline,
         line(s"val endpoints = List").args(ops.map(_.name)),
@@ -197,7 +208,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ),
         newline,
         block(
-          s"def asTransformationGen[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
+          s"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
         ) {
           if (ops.isEmpty) {
             line(
@@ -273,8 +284,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$httpEndpoint$errorable"
       )(
         s"""def name: String = "${opName}"""",
-        s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}",
-        s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}",
+        s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
+        s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsVal(op.hints),

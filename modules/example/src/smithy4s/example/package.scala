@@ -3,12 +3,27 @@ package smithy4s
 package object example {
   val NAMESPACE: String = "smithy4s.example"
 
-  type StreamedObjects[F[_]] = StreamedObjectsGen[smithy4s.GenLift[F]#λ]
-  val StreamedObjects : smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] = StreamedObjectsGen
-  type FooService[F[_]] = FooServiceGen[smithy4s.GenLift[F]#λ]
-  val FooService : smithy4s.Service[FooServiceGen, FooServiceOperation] = FooServiceGen
-  type ObjectService[F[_]] = ObjectServiceGen[smithy4s.GenLift[F]#λ]
-  val ObjectService : smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
+  type StreamedObjects[F[_]] = smithy4s.Monadic[StreamedObjectsGen, F]
+  object StreamedObjects extends smithy4s.Service.Provider[StreamedObjectsGen, StreamedObjectsOperation] {
+    def apply[F[_]](implicit F: StreamedObjects[F]): F.type = F
+    def service : smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] = StreamedObjectsGen
+    def namespace: String = service.namespace
+    def name: String = service.name
+  }
+  type FooService[F[_]] = smithy4s.Monadic[FooServiceGen, F]
+  object FooService extends smithy4s.Service.Provider[FooServiceGen, FooServiceOperation] {
+    def apply[F[_]](implicit F: FooService[F]): F.type = F
+    def service : smithy4s.Service[FooServiceGen, FooServiceOperation] = FooServiceGen
+    def namespace: String = service.namespace
+    def name: String = service.name
+  }
+  type ObjectService[F[_]] = smithy4s.Monadic[ObjectServiceGen, F]
+  object ObjectService extends smithy4s.Service.Provider[ObjectServiceGen, ObjectServiceOperation] {
+    def apply[F[_]](implicit F: ObjectService[F]): F.type = F
+    def service : smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
+    def namespace: String = service.namespace
+    def name: String = service.name
+  }
 
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type

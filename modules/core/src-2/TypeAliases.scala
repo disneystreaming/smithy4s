@@ -15,26 +15,13 @@
  */
 
 package smithy4s
-package aws
 
-import cats.effect.Async
-import cats.effect.Resource
-import org.http4s.client.Client
+protected[smithy4s] trait TypeAliases {
 
-package object http4s {
+  type Monadic[Alg[_[_, _, _, _, _]], F[_]] =
+    Alg[Lambda[(I, E, O, SI, SO) => F[O]]]
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
-  ) {
-
-    def awsClient[F[_]: Async](
-        client: Client[F],
-        awsRegion: AwsRegion
-    ): Resource[F, AwsClient[Alg, F]] = for {
-      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
-      awsClient <- AwsClient(serviceProvider.service, env)
-    } yield awsClient
-
-  }
+  type Interpreter[Op[_, _, _, _, _], F[_]] =
+    Transformation[Op, Lambda[(I, E, O, SI, SO) => F[O]]]
 
 }

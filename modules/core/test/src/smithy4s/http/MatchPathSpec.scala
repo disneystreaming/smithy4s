@@ -16,16 +16,66 @@
 
 package smithy4s.http
 
-import weaver.FunSuite
+import cats.Show
+import cats.data.NonEmptyList
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
+import weaver.SimpleMutableIOSuite
+import weaver.scalacheck.Checkers
+import smithy4s.http.PathSegment.GreedySegment
+import smithy4s.http.PathSegment.LabelSegment
+import smithy4s.http.PathSegment.StaticSegment
 
-object MatchPathSpec extends FunSuite {
+object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
 
   def doMatch(segments: List[PathSegment])(
       string: String
   ): Option[Map[String, String]] =
     matchPath(segments.toList, matchPath.make(string))
 
-  test("Is lenient with regards to trailing slashes") {
+  implicit def arbNel[T: Arbitrary]: Arbitrary[NonEmptyList[T]] = Arbitrary {
+    Gen.resultOf(NonEmptyList.apply[T] _)
+  }
+
+  implicit val arbPathSegment: Arbitrary[PathSegment] = Arbitrary {
+    Gen.oneOf(
+      Gen.resultOf(PathSegment.label(_)),
+      Gen.resultOf(PathSegment.greedy(_)),
+      Gen.resultOf(PathSegment.static(_))
+    )
+  }
+
+  val genLabelOrStatic: Gen[PathSegment] = Gen.oneOf(
+    Gen.resultOf(PathSegment.label(_)),
+    Gen.resultOf(PathSegment.static(_))
+  )
+
+  implicit val showPathSegment: Show[PathSegment] = Show.fromToString
+
+  private val renderExampleSegment: PathSegment => String = {
+    case LabelSegment(_)      => "label-example"
+    case StaticSegment(value) => value
+    case GreedySegment(_) =>
+      "greedy/example"
+  }
+
+  test("Doesn't throw on empty path") {
+    forall { (segments: NonEmptyList[PathSegment]) =>
+      expect.eql(doMatch(segments.toList)("/"), None)
+    }
+  }
+
+  test("Doesn't throw on partially matching paths") {
+    forall(Gen.listOf(genLabelOrStatic)) { prefix =>
+      forall { (segments: NonEmptyList[PathSegment]) =>
+        val fullPath = prefix ::: segments.toList
+        val actual = prefix.map(renderExampleSegment).mkString("/")
+        expect.eql(doMatch(fullPath)(actual), None)
+      }
+    }
+  }
+
+  pureTest("Is lenient with regards to trailing slashes") {
     // /{foo}
     val path: List[PathSegment] =
       List(PathSegment.label("foo"))
@@ -37,7 +87,7 @@ object MatchPathSpec extends FunSuite {
     expect.eql(result2, Some(expected))
   }
 
-  test("Allows for greedy labels ") {
+  pureTest("Allows for greedy labels") {
     // /{foo}
     val path: List[PathSegment] =
       List(PathSegment.static("hello"), PathSegment.greedy("foo"))
@@ -49,7 +99,7 @@ object MatchPathSpec extends FunSuite {
     expect.eql(result2, Some(expected))
   }
 
-  test("Match several segments") {
+  pureTest("Match several segments") {
     // /{foo}
     val path: List[PathSegment] =
       List(

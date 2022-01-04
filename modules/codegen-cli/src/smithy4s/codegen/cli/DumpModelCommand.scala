@@ -14,27 +14,24 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package aws
+package smithy4s.codegen.cli
 
-import cats.effect.Async
-import cats.effect.Resource
-import org.http4s.client.Client
+import cats.implicits._
+import com.monovore.decline.Command
 
-package object http4s {
+import Options._
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
-  ) {
+object DumpModelCommand {
+  import Smithy4sCommand._
 
-    def awsClient[F[_]: Async](
-        client: Client[F],
-        awsRegion: AwsRegion
-    ): Resource[F, AwsClient[Alg, F]] = for {
-      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
-      awsClient <- AwsClient(serviceProvider.service, env)
-    } yield awsClient
+  val options = (
+    specsArgs,
+    repositoriesOpt.map(_.getOrElse(Nil)),
+    dependenciesOpt.map(_.getOrElse(Nil))
+  ).mapN(DumpModelArgs.apply)
 
-  }
-
+  val command: Command[DumpModel] =
+    Command("dump-model", "Output a JSON view of the Smithy models")(
+      options.map(DumpModel.apply)
+    )
 }

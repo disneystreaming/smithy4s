@@ -254,6 +254,14 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("Negative: / doesn't match") { (client, uri, log) =>
+    for {
+      status <- client.status(GET(uri))
+    } yield {
+      expect(status.code == 404)
+    }
+  }
+
   routerTest("Health check") { (client, uri, log) =>
     for {
       res <- client.send(GET(uri / "health"), log)

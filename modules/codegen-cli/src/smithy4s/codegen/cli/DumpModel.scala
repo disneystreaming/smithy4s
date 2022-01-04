@@ -14,27 +14,20 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package aws
+package smithy4s.codegen.cli
 
-import cats.effect.Async
-import cats.effect.Resource
-import org.http4s.client.Client
+import smithy4s.codegen.ModelLoader
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.shapes.ModelSerializer
 
-package object http4s {
+object DumpModel {
+  def run(args: Smithy4sCommand.DumpModelArgs): String = {
+    val (_, model) = ModelLoader.load(
+      args.specs.map(_.toIO).toSet,
+      args.dependencies,
+      args.repositories
+    )
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
-  ) {
-
-    def awsClient[F[_]: Async](
-        client: Client[F],
-        awsRegion: AwsRegion
-    ): Resource[F, AwsClient[Alg, F]] = for {
-      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
-      awsClient <- AwsClient(serviceProvider.service, env)
-    } yield awsClient
-
+    Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))
   }
-
 }

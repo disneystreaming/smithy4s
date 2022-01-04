@@ -14,27 +14,19 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli
+package smithy4s.codegen.cli
 
-import cats.syntax.all._
-import smithy4s.codegen.Codegen
+import smithy4s.codegen.CodegenArgs
 
-object Main {
+sealed trait Smithy4sCommand extends Product with Serializable
+object Smithy4sCommand {
+  final case class Generate(args: CodegenArgs) extends Smithy4sCommand
+  final case class DumpModel(args: DumpModelArgs) extends Smithy4sCommand
 
-  def main(args: Array[String]): Unit = {
-    val out = System.out
-    try {
-      System.setOut(System.err)
-      CodegenCommand.command.parse(args.toList) match {
-        case Right(codegenArgs) =>
-          Codegen.processSpecs(codegenArgs).foreach(out.println)
-        case Left(help) => System.err.println(help.show)
-      }
-    } catch {
-      case e: Throwable => e.printStackTrace(System.err)
-    } finally {
-      System.setErr(out)
-    }
-  }
+  final case class DumpModelArgs(
+      specs: List[os.Path],
+      repositories: List[String],
+      dependencies: List[String]
+  )
 
 }
