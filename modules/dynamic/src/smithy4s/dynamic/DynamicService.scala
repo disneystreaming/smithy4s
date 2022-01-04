@@ -31,8 +31,7 @@ case class DynamicService(
       transformation: Transformation[DynamicOp, P]
   ): DynamicAlg[P] = transformation
 
-  def asTransformationGen[P[_, _, _, _, _]](
+  def asTransformation[P[_, _, _, _, _]](
       impl: DynamicAlg[P]
   ): Transformation[DynamicOp, P] = impl
-
 }

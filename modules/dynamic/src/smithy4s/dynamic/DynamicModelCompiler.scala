@@ -1,7 +1,6 @@
 package smithy4s
 package dynamic
 
-// import software.amazon.smithy.model.Model
 import smithy4s.dynamic.model.{ShapeId => SID, _}
 import scala.collection.mutable.{Map => MMap}
 import schematic.OneOf
