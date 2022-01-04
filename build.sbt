@@ -402,8 +402,7 @@ lazy val dynamic = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      Dependencies.Smithy.model,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0",
       Dependencies.Weaver.cats.value % Test
     ),
     Test / fork := true,

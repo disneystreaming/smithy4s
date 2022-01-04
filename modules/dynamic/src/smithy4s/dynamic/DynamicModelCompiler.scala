@@ -140,8 +140,9 @@ object Compiler {
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
       val getEndpoints = () =>
-        shape.operations.toList.map(_.target).collect { case ValidSID(opId) =>
-          endpointMap(opId)
+        shape.operations.toList.flatMap(_.map(_.target)).collect {
+          case ValidSID(opId) =>
+            endpointMap(opId)
         }
       val service = DynamicService(
         id.namespace,
