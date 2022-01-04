@@ -20,14 +20,12 @@ object NewtypesSpec extends weaver.FunSuite {
 
   type AccountId = AccountId.Type
   object AccountId extends Newtype[String] {
-    def name = "AccountId"
-    def namespace = "foo"
+    def id = ShapeId("foo", "AccountId")
   }
 
   type DeviceId = DeviceId.Type
   object DeviceId extends Newtype[String] {
-    def name = "DeviceId"
-    def namespace = "foo"
+    def id = ShapeId("foo", "DeviceId")
   }
 
   val id1 = "id-1"

@@ -18,14 +18,16 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
 
   def apply[F[_]](implicit F: smithy4s.Monadic[FooServiceGen, F]): F.type = F
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "FooService")
+
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   val endpoints = List(
     GetFoo,
   )
 
-  def namespace: String = "smithy4s.example"
-  val name: String = "FooService"
   val version: String = "1.0.0"
 
   def endpoint[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) = op match {
@@ -52,7 +54,9 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
     val output: smithy4s.Schema[GetFooOutput] = GetFooOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetFoo")
     val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
       smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/foo"), Some(200)),
       smithy.api.Readonly(),
     )

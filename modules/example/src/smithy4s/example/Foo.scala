@@ -4,21 +4,26 @@ import smithy4s.syntax._
 
 sealed trait Foo
 object Foo {
-  def namespace: String = NAMESPACE
-  val name: String = "Foo"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "Foo")
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   case class IntCase(int: Int) extends Foo
   case class StrCase(str: String) extends Foo
 
   object IntCase {
-    val hints : smithy4s.Hints = smithy4s.Hints()
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
     val schema: smithy4s.Schema[IntCase] = bijection(int, IntCase(_), _.int)
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
-    val hints : smithy4s.Hints = smithy4s.Hints()
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
     val schema: smithy4s.Schema[StrCase] = bijection(string, StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }

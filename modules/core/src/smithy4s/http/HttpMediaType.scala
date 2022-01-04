@@ -19,6 +19,5 @@ package smithy4s.http
 import smithy4s.Newtype
 
 object HttpMediaType extends Newtype[String] {
-  def namespace: String = "smithy4s.http"
-  def name: String = "HttpBinding"
+  def id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.http", "HttpMediaType")
 }

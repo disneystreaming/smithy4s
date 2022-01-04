@@ -19,15 +19,17 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
 
   def apply[F[_]](implicit F: smithy4s.Monadic[StreamedObjectsGen, F]): F.type = F
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "StreamedObjects")
+
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   val endpoints = List(
     PutStreamedObject,
     GetStreamedObject,
   )
 
-  def namespace: String = "smithy4s.example"
-  val name: String = "StreamedObjects"
   val version: String = "1.0.0"
 
   def endpoint[I, E, O, SI, SO](op : StreamedObjectsOperation[I, E, O, SI, SO]) = op match {
@@ -57,7 +59,10 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
     val output: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[StreamedBlob] = smithy4s.StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema)
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val hints : smithy4s.Hints = smithy4s.Hints()
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutStreamedObject")
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
     def wrap(input: PutStreamedObjectInput) = PutStreamedObject(input)
   }
   case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
@@ -67,7 +72,10 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
     val output: smithy4s.Schema[GetStreamedObjectOutput] = GetStreamedObjectOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[StreamedBlob] = smithy4s.StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema)
-    val hints : smithy4s.Hints = smithy4s.Hints()
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetStreamedObject")
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
     def wrap(input: GetStreamedObjectInput) = GetStreamedObject(input)
   }
 }

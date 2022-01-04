@@ -8,8 +8,7 @@ object SomeValue extends Newtype[String] {
     val schema : smithy4s.Schema[String] = string
     implicit val staticSchema : schematic.Static[smithy4s.Schema[String]] = schematic.Static(schema)
   }
-  def namespace = NAMESPACE
-  val name = "SomeValue"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "SomeValue")
 
   val schema : smithy4s.Schema[SomeValue] = bijection(T.schema, SomeValue(_), (_ : SomeValue).value)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[SomeValue]] = schematic.Static(schema)

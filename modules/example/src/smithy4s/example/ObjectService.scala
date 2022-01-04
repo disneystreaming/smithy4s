@@ -22,7 +22,10 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
 
   def apply[F[_]](implicit F: smithy4s.Monadic[ObjectServiceGen, F]): F.type = F
 
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ObjectService")
+
   val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
     smithy4s.api.SimpleRestJson(),
   )
 
@@ -31,8 +34,6 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     GetObject,
   )
 
-  def namespace: String = "smithy4s.example"
-  val name: String = "ObjectService"
   val version: String = "1.0.0"
 
   def endpoint[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) = op match {
@@ -62,7 +63,9 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     val output: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObject")
     val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
       smithy.api.Idempotent(),
       smithy.api.Http(smithy.api.NonEmptyString("PUT"), smithy.api.NonEmptyString("/{bucketName}/{key}"), Some(200)),
     )
@@ -85,21 +88,26 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   }
   sealed trait PutObjectError
   object PutObjectError {
-    def namespace: String = NAMESPACE
-    val name: String = "PutObjectError"
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectError")
 
-    val hints : smithy4s.Hints = smithy4s.Hints()
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
 
     case class ServerErrorCase(serverError: ServerError) extends PutObjectError
     case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
 
     object ServerErrorCase {
-      val hints : smithy4s.Hints = smithy4s.Hints()
+      val hints : smithy4s.Hints = smithy4s.Hints(
+        id,
+      )
       val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema, ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[PutObjectError]("ServerError")
     }
     object NoMoreSpaceCase {
-      val hints : smithy4s.Hints = smithy4s.Hints()
+      val hints : smithy4s.Hints = smithy4s.Hints(
+        id,
+      )
       val schema: smithy4s.Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema, NoMoreSpaceCase(_), _.noMoreSpace)
       val alt = schema.oneOf[PutObjectError]("NoMoreSpace")
     }
@@ -120,7 +128,9 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObject")
     val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
       smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/{bucketName}/{key}"), Some(200)),
       smithy.api.Readonly(),
     )
@@ -141,15 +151,18 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   }
   sealed trait GetObjectError
   object GetObjectError {
-    def namespace: String = NAMESPACE
-    val name: String = "GetObjectError"
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectError")
 
-    val hints : smithy4s.Hints = smithy4s.Hints()
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
 
     case class ServerErrorCase(serverError: ServerError) extends GetObjectError
 
     object ServerErrorCase {
-      val hints : smithy4s.Hints = smithy4s.Hints()
+      val hints : smithy4s.Hints = smithy4s.Hints(
+        id,
+      )
       val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema, ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[GetObjectError]("ServerError")
     }

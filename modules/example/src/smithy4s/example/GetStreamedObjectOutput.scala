@@ -4,10 +4,11 @@ import smithy4s.syntax._
 
 case class GetStreamedObjectOutput()
 object GetStreamedObjectOutput {
-  def namespace: String = NAMESPACE
-  val name: String = "GetStreamedObjectOutput"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetStreamedObjectOutput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   val schema: smithy4s.Schema[GetStreamedObjectOutput] = constant(GetStreamedObjectOutput()).withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[GetStreamedObjectOutput]] = schematic.Static(schema)

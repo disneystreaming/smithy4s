@@ -4,10 +4,11 @@ import smithy4s.syntax._
 
 case class GetFooOutput(foo: Option[Foo] = None)
 object GetFooOutput {
-  def namespace: String = NAMESPACE
-  val name: String = "GetFooOutput"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetFooOutput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   val schema: smithy4s.Schema[GetFooOutput] = struct(
     Foo.schema.optional[GetFooOutput]("foo", _.foo),

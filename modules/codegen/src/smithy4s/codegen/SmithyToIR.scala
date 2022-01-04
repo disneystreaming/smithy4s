@@ -142,6 +142,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
             Operation(
               op.name,
+              op.namespace,
               params,
               inputType,
               errorTypes,

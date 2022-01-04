@@ -42,7 +42,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
   }
 
   private val signer: AwsSigner[F] = AwsSigner.rpcSigner[F](
-    service,
+    service.id,
     endpointPrefix,
     awsEnv,
     contentType

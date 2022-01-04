@@ -33,14 +33,14 @@ object AwsClient {
       awsService <- service.hints
         .get(_root_.aws.api.Service)
         .liftTo[Resource[F, *]](
-          initError(s"${service.identifier} is not an AWS service")
+          initError(s"${service.id.show} is not an AWS service")
         )
       endpointPrefix <- awsService.endpointPrefix.liftTo[Resource[F, *]](
         initError(s"No endpoint prefix for $awsService")
       )
       awsProtocol <- AwsProtocol(service.hints).liftTo[Resource[F, *]](
         initError(
-          s"AWS protocol used by ${service.identifier} is not yet supported"
+          s"AWS protocol used by ${service.id.show} is not yet supported"
         )
       )
     } yield service.transform(

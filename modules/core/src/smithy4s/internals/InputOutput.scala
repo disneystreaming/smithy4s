@@ -21,8 +21,7 @@ sealed trait InputOutput
 
 object InputOutput extends Hints.Key.Companion[InputOutput] {
 
-  def namespace: String = "smithy4s"
-  def name: String = "InputOuput"
+  def id: ShapeId = ShapeId("smithy4s", "InputOutput")
 
   case object Input extends InputOutput
   case object Output extends InputOutput

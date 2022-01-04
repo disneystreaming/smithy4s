@@ -6,10 +6,10 @@ case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwab
   override def getMessage() : String = message
 }
 object NoMoreSpace {
-  def namespace: String = NAMESPACE
-  val name: String = "NoMoreSpace"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "NoMoreSpace")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
     smithy.api.Error.SERVER,
     smithy.api.HttpError(507),
   )
