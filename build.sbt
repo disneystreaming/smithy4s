@@ -712,7 +712,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 .map(_.getAbsolutePath())
                 .mkString(":")
 
-              val res = ("java" :: "-cp" :: cp :: mc :: args).lineStream.toList
+              val res =
+                ("java" :: "-cp" :: cp :: mc :: "generate" :: args).lineStream.toList
               res.map(new File(_))
             } else outputs.getOrElse(Seq.empty)
           }

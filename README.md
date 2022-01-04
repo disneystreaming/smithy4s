@@ -64,7 +64,7 @@ cs install --channel https://disneystreaming.github.io/coursier.json smithy4s
 #### Usage
 
 ```bash 
-bash> smithy4s ./foo.smithy ./bar.smithy
+bash> smithy4s generate ./foo.smithy ./bar.smithy
 ```
 
 The CLI comes with a number of options to customise output directories, skip openapi generation (or scala generation), provide a filter of allowed namespaces, etc. Use the `--help` command to get an exhaustive listing.
