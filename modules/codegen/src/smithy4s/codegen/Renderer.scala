@@ -166,7 +166,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderId(originalName),
         newline,
-        renderHintsVal(hints),
+        renderHintsValWithId(hints),
         newline,
         line(s"val endpoints = List").args(ops.map(_.name)),
         newline,
@@ -286,7 +286,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderId(op.name, op.originalNamespace),
-        renderHintsVal(op.hints),
+        renderHintsValWithId(op.hints),
         s"def wrap(input: ${op.input.render}) = ${opName}($input)",
         renderErrorable(op),
         renderHttpSpecific(op)
@@ -346,7 +346,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, ext = hintKey(name, hints))(
         renderId(name),
         newline,
-        renderHintsVal(hints),
+        renderHintsValWithId(hints),
         newline,
         if (fields.nonEmpty) {
           val definition = if (recursive) "recursive(struct" else "struct"
@@ -449,7 +449,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, ext = hintKey(name, hints))(
         renderId(name),
         newline,
-        renderHintsVal(hints),
+        renderHintsValWithId(hints),
         newline,
         alts.map { case Alt(altName, _, tpe, _) =>
           val cn = caseName(altName)
@@ -534,7 +534,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val (hintsVal, hintsRef, withHints) =
       if (hints.nonEmpty)
         (
-          renderHintsVal(hints),
+          renderHintsValWithId(hints),
           s"val hints: $Hints_ = T.hints",
           ".withHints(hints)"
         )
@@ -690,9 +690,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderId(name: String, ns: String = namespace): RenderResult =
     line(s"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")""")
 
-  def renderHintsVal(hints: List[Hint]): RenderResult =
+  def renderHintsValWithId(hints: List[Hint]): RenderResult =
     line(s"val hints : $Hints_ = $Hints_").args {
       "id" :: hints.flatMap(renderHint(_).toList)
+    }
+
+  def renderHintsVal(hints: List[Hint]): RenderResult =
+    line(s"val hints : $Hints_ = $Hints_").args {
+      hints.flatMap(renderHint(_).toList)
     }
 
   def memberHints(hints: List[Hint]): String = {

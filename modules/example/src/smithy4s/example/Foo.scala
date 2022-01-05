@@ -14,16 +14,12 @@ object Foo {
   case class StrCase(str: String) extends Foo
 
   object IntCase {
-    val hints : smithy4s.Hints = smithy4s.Hints(
-      id,
-    )
+    val hints : smithy4s.Hints = smithy4s.Hints()
     val schema: smithy4s.Schema[IntCase] = bijection(int, IntCase(_), _.int)
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
-    val hints : smithy4s.Hints = smithy4s.Hints(
-      id,
-    )
+    val hints : smithy4s.Hints = smithy4s.Hints()
     val schema: smithy4s.Schema[StrCase] = bijection(string, StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }
