@@ -28,7 +28,8 @@ package smithy4s
   */
 trait Hints {
   def isEmpty: Boolean
-  def all: Seq[Hints.Binding[_]]
+  def toMap: Map[Hints.Key[_], Hint]
+  def all: Iterable[Hints.Binding[_]]
   def get[A](implicit key: Hints.Key[A]): Option[A]
   final def get[A](key: Hints.Key.Has[A]): Option[A] = get(key.getKey)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.key)
@@ -38,7 +39,7 @@ trait Hints {
 object Hints {
 
   def apply[S](bindings: Hint*): Hints = {
-    new Impl(bindings, bindings.map(_.tuple: (Key[_], Hint)).toMap)
+    new Impl(bindings.map(_.tuple: (Key[_], Hint)).toMap)
   }
 
   trait Schematic[F[_]] {
@@ -81,19 +82,19 @@ object Hints {
   }
 
   private[smithy4s] class Impl(
-      bindings: Seq[Hint],
-      map: Map[Key[_], Hint]
+      val toMap: Map[Key[_], Hint]
   ) extends Hints {
-    val isEmpty = bindings.isEmpty
-    val all: Seq[Hint] = bindings
-    def get[A](implicit key: Key[A]): Option[A] = map.get(key).map {
-      case Binding(_, value) => value.asInstanceOf[A]
-    }
+    val isEmpty = toMap.isEmpty
+    def all: Iterable[Hint] = toMap.values
+    def get[A](implicit key: Key[A]): Option[A] =
+      toMap.get(key).map { case Binding(_, value) =>
+        value.asInstanceOf[A]
+      }
     def ++(other: Hints): Hints = {
-      val b = bindings ++ other.all
-      new Impl(b, b.map(_.tuple: (Key[_], Hint)).toMap)
+      new Impl(toMap ++ other.toMap)
     }
-    override def toString(): String = "Hints(...)"
+    override def toString(): String =
+      s"Hints(${all.map(_.value).mkString(", ")})"
   }
 
   case class Binding[A](key: Key[A], value: A) {

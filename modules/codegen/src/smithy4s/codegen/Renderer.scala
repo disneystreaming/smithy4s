@@ -90,8 +90,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       block(
         s"package object ${compilationUnit.namespace.split('.').last}"
       )(
-        line(s"""val NAMESPACE: String = "${compilationUnit.namespace}""""),
-        newline,
         compilationUnit.declarations.map(renderDeclPackageContents),
         newline,
         typeAliases,
@@ -117,8 +115,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         )(
           s"def apply[F[_]](implicit F: $name[F]): F.type = F",
           s"def service : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen",
-          s"def namespace: String = service.namespace",
-          s"def name: String = service.name"
+          s"val id: $ShapeId_ = service.id"
         )
       )
     case _ => empty
@@ -167,12 +164,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           s"def apply[F[_]](implicit F: smithy4s.Monadic[$genName, F]): F.type = F"
         ),
         newline,
-        renderHintsVal(hints),
+        renderId(originalName),
+        newline,
+        renderHintsValWithId(hints),
         newline,
         line(s"val endpoints = List").args(ops.map(_.name)),
         newline,
-        line(s"""def namespace: String = "$namespace""""),
-        line(s"""val name: String = "$originalName""""),
         line(s"""val version: String = "$version""""),
         newline,
         if (ops.isEmpty) {
@@ -288,7 +285,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
-        renderHintsVal(op.hints),
+        renderId(op.name, op.originalNamespace),
+        renderHintsValWithId(op.hints),
         s"def wrap(input: ${op.input.render}) = ${opName}($input)",
         renderErrorable(op),
         renderHttpSpecific(op)
@@ -346,10 +344,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
       } else line(decl),
       obj(name, ext = hintKey(name, hints))(
-        line(s"""def namespace: String = NAMESPACE"""),
-        line(s"""val name: String = "$name""""),
+        renderId(name),
         newline,
-        renderHintsVal(hints),
+        renderHintsValWithId(hints),
         newline,
         if (fields.nonEmpty) {
           val definition = if (recursive) "recursive(struct" else "struct"
@@ -450,10 +447,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       s"sealed trait $name",
       obj(name, ext = hintKey(name, hints))(
-        line(s"""def namespace: String = NAMESPACE"""),
-        line(s"""val name: String = "$name""""),
+        renderId(name),
         newline,
-        renderHintsVal(hints),
+        renderHintsValWithId(hints),
         newline,
         alts.map { case Alt(altName, _, tpe, _) =>
           val cn = caseName(altName)
@@ -508,8 +504,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = lines(
     s"sealed abstract class $name(val value: String, val ordinal: Int) extends Product with Serializable",
     obj(name, ext = s"$Enumeration_[$name]", w = hintKey(name, hints))(
-      line(s"""def namespace: String = NAMESPACE"""),
-      line(s"""val name: String = "$name""""),
+      renderId(name),
       newline,
       values.zipWithIndex.map { case (e @ EnumValue(value, _, _), index) =>
         line(
@@ -536,27 +531,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
-    val (hintsVal, hintsRef, withHints) =
+    val (hintsVal, withHints) =
       if (hints.nonEmpty)
         (
-          renderHintsVal(hints),
-          s"val hints: $Hints_ = T.hints",
+          renderHintsValWithId(hints),
           ".withHints(hints)"
         )
-      else (RenderResult.empty, "", "")
+      else (RenderResult.empty, "")
 
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
-        obj("T")(
-          hintsVal,
-          s"val schema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$withHints",
-          s"implicit val staticSchema : $Static_[$Schema_[${tpe.render}]] = $Static_(schema)"
-        ),
+        renderId(name),
+        hintsVal,
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$withHints",
         lines(
-          line("def namespace = NAMESPACE"),
-          line(s"""val name = "${name}""""),
-          hintsRef,
-          s"val schema : $Schema_[$name] = bijection(T.schema, $name(_), (_ : $name).value)",
+          s"val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)",
           s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
         )
       )
@@ -650,7 +639,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(_, name, Type.PrimitiveType(_)) =>
         s"$name.schema"
       case Type.Alias(_, name, _) =>
-        s"$name.T.schema"
+        s"$name.underlyingSchema"
       case Type.Ref(_, name) => s"$name.schema"
     }
 
@@ -692,6 +681,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       smithy4s.recursion.cata(renderTypedNode)(typedNode).run(true)._2.some
     case _ => None
   }
+
+  def renderId(name: String, ns: String = namespace): RenderResult =
+    line(s"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")""")
+
+  def renderHintsValWithId(hints: List[Hint]): RenderResult =
+    line(s"val hints : $Hints_ = $Hints_").args {
+      "id" :: hints.flatMap(renderHint(_).toList)
+    }
 
   def renderHintsVal(hints: List[Hint]): RenderResult =
     line(s"val hints : $Hints_ = $Hints_").args {

@@ -19,5 +19,5 @@ package smithy4s
 final case class UnsupportedProtocolError(service: HasId, protocolKey: HasId)
     extends Throwable {
   override def getMessage(): String =
-    s"Service ${service.identifier} does not support the ${protocolKey.identifier} protocol"
+    s"Service ${service.id.show} does not support the ${protocolKey.id.show} protocol"
 }

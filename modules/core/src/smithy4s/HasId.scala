@@ -17,7 +17,5 @@
 package smithy4s
 
 trait HasId {
-  def namespace: String
-  def name: String
-  def identifier: String = namespace + '.' + name
+  def id: ShapeId
 }

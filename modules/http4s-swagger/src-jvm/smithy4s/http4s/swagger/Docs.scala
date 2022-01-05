@@ -33,7 +33,7 @@ private[smithy4s] abstract class Docs[F[_]](
     extends Http4sDsl[F]
     with Compat.DocsClass[F] {
 
-  val jsonSpec = hasId.identifier + ".json"
+  val jsonSpec = hasId.id.namespace + '.' + hasId.id.name + ".json"
 
   val actualPath: Path = Uri.Path.unsafeFromString("/" + path)
 

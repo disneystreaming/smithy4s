@@ -16,6 +16,7 @@
 
 package smithy4s.http4s.swagger
 
+import smithy4s.ShapeId
 import cats.effect.IO
 import smithy4s.HasId
 import weaver.BaseIOSuite
@@ -23,8 +24,7 @@ import weaver.BaseIOSuite
 trait TestCompat { self: BaseIOSuite =>
 
   def service = new HasId {
-    def namespace: String = "foobar"
-    def name: String = "test-spec"
+    def id: ShapeId = ShapeId("foobar", "test-spec")
   }
 
   def docs(path: String) =

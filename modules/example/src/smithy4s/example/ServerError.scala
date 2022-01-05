@@ -6,10 +6,10 @@ case class ServerError(message: Option[String] = None) extends Throwable {
   override def getMessage() : String = message.orNull
 }
 object ServerError {
-  def namespace: String = NAMESPACE
-  val name: String = "ServerError"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ServerError")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
     smithy.api.Error.SERVER,
   )
 
