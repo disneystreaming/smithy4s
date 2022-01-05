@@ -1,7 +1,8 @@
 package smithy4s.dynamic
 
+import smithy4s.ShapeId
+
 case class DynamicOp[I, E, O, SI, SO](
-    namespace: String,
-    name: String,
+    id: ShapeId,
     data: I
 )

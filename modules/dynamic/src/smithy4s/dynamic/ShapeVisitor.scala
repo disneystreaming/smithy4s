@@ -1,6 +1,7 @@
-package smithy4s.dynamic
+package smithy4s
+package dynamic
 
-import model.{ShapeId => _, _}
+import model._
 
 trait ShapeVisitor[T] extends ((ShapeId, Shape) => T) {
 

@@ -2,8 +2,7 @@ package smithy4s
 package dynamic
 
 case class DynamicEndpoint(
-    namespace: String,
-    name: String,
+    id: ShapeId,
     input: Schema[DynData],
     output: Schema[DynData],
     hints: Hints
@@ -12,7 +11,7 @@ case class DynamicEndpoint(
   def wrap(
       input: DynData
   ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
-    DynamicOp(namespace, name, input)
+    DynamicOp(id, input)
 
   def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
 

@@ -12,7 +12,7 @@ class DynamicModel(
       namespace: String,
       name: String
   ): Option[Schema[DynData]] = {
-    val shapeId = ShapeId.fromParts(namespace, name)
+    val shapeId = ShapeId(namespace, name)
     schemaMap.get(shapeId)
   }
 }

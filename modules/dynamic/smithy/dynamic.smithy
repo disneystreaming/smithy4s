@@ -17,7 +17,7 @@ structure Model {
   shapes: ShapeMap
 }
 
-string ShapeId
+string IdRef
 
 map MetadataMap {
   key: String,
@@ -25,12 +25,12 @@ map MetadataMap {
 }
 
 map ShapeMap {
-  key: ShapeId,
+  key: IdRef,
   value: Shape
 }
 
 map TraitMap {
-  key: ShapeId,
+  key: IdRef,
   value: Document
 }
 
@@ -132,7 +132,7 @@ structure MapShape {
 
 structure MemberShape {
   @required
-  target: ShapeId,
+  target: IdRef,
   traits: TraitMap,
 }
 

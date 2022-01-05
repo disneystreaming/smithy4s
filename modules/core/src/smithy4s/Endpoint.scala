@@ -40,7 +40,8 @@ package smithy4s
   * be encoded a great many ways, using a greatt many libraries)
   */
 trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
-  def name: String
+  def id: ShapeId
+  final def name: String = id.name
   def input: Schema[I]
   def output: Schema[O]
   def streamedInput: StreamingSchema[SI]

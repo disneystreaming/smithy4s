@@ -2,8 +2,7 @@ package smithy4s
 package dynamic
 
 case class DynamicService(
-    namespace: String,
-    name: String,
+    id: ShapeId,
     version: String,
     getEndpoints: () => List[DynamicEndpoint],
     hints: Hints
@@ -14,14 +13,18 @@ case class DynamicService(
       transformation: Transformation[F, G]
   ): DynamicAlg[G] = alg.andThen(transformation)
 
-  def endpoints: List[Endpoint[DynamicOp, _, _, _, _, _]] = getEndpoints()
+  lazy val endpoints: List[Endpoint[DynamicOp, _, _, _, _, _]] =
+    getEndpoints()
+
+  private lazy val endpointMap
+      : Map[ShapeId, Endpoint[DynamicOp, _, _, _, _, _]] =
+    endpoints.map(ep => ep.id -> ep).toMap
 
   def endpoint[I, E, O, SI, SO](
       op: DynamicOp[I, E, O, SI, SO]
   ): (I, Endpoint[DynamicOp, I, E, O, SI, SO]) = {
-    val endpoint = endpoints
-      .find(ep => ep.name == op.name)
-      .get
+    val endpoint = endpointMap
+      .get(op.id)
       .asInstanceOf[Endpoint[DynamicOp, I, E, O, SI, SO]]
     val input = op.data
     (input, endpoint)
