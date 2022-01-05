@@ -112,12 +112,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map(model.getShape(_).asScala)
           .collect { case Some(S.Operation(op)) =>
             val inputType =
-              op.getInput().asScala.flatMap(_.tpe).getOrElse(Type.unit)
+              op.getInputShape().tpe.getOrElse(Type.unit)
 
             val params =
-              op.getInput()
-                .asScala
-                .flatMap(_.shape)
+              op.getInputShape()
+                .shape
                 .toList
                 .flatMap(_.fields)
 
@@ -125,8 +124,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               shapeId.shape
                 .map(_.members().asScala.toList)
                 .flatMap(_.collectFirstSome(streamingField))
-            val streamedInput = op.getInput().asScala.flatMap(streamedMember)
-            val streamedOutput = op.getOutput().asScala.flatMap(streamedMember)
+            val streamedInput = streamedMember(op.getInputShape())
+            val streamedOutput = streamedMember(op.getOutputShape())
 
             val errorTypes = (generalErrors ++ op
               .getErrors()
@@ -138,7 +137,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               .toList).distinct
 
             val outputType =
-              op.getOutput().asScala.flatMap(_.tpe).getOrElse(Type.unit)
+              op.getOutputShape().tpe.getOrElse(Type.unit)
 
             Operation(
               op.name,
@@ -331,7 +330,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       def structureShape(x: StructureShape): Option[Type] =
-        Type.Ref(x.namespace, x.name).some
+        if (x.getId() == ShapeId.fromParts("smithy.api", "Unit"))
+          Some(Type.unit)
+        else Type.Ref(x.namespace, x.name).some
 
       def unionShape(x: UnionShape): Option[Type] =
         Type.Ref(x.namespace, x.name).some
