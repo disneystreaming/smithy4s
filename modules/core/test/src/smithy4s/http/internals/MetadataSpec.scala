@@ -210,7 +210,7 @@ object MetadataSpec extends FunSuite {
     checkRoundTrip(queries, expected)
   }
 
-  test("map of list of strings query param") {
+  test("map of strings query param") {
     val map =
       Map("hello" -> "a", "world" -> "b")
     val queries = Queries(slm = Some(map))
@@ -276,7 +276,7 @@ object MetadataSpec extends FunSuite {
     checkRoundTrip(headers, expected)
   }
 
-  test("map of list of strings header") {
+  test("map of strings header") {
     val map =
       Map(
         "hello" -> "a",
