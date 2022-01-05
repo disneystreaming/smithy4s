@@ -531,26 +531,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
-    val (hintsVal, hintsRef, withHints) =
+    val (hintsVal, withHints) =
       if (hints.nonEmpty)
         (
           renderHintsValWithId(hints),
-          s"val hints: $Hints_ = T.hints",
           ".withHints(hints)"
         )
-      else (RenderResult.empty, "", "")
+      else (RenderResult.empty, "")
 
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
-        obj("T")(
-          hintsVal,
-          s"val schema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$withHints",
-          s"implicit val staticSchema : $Static_[$Schema_[${tpe.render}]] = $Static_(schema)"
-        ),
+        renderId(name),
+        hintsVal,
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$withHints",
         lines(
-          renderId(name),
-          hintsRef,
-          s"val schema : $Schema_[$name] = bijection(T.schema, $name(_), (_ : $name).value)",
+          s"val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)",
           s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
         )
       )
@@ -644,7 +639,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(_, name, Type.PrimitiveType(_)) =>
         s"$name.schema"
       case Type.Alias(_, name, _) =>
-        s"$name.T.schema"
+        s"$name.underlyingSchema"
       case Type.Ref(_, name) => s"$name.schema"
     }
 
