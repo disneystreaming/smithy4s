@@ -30,6 +30,7 @@ import smithy4s.http.MetadataError
 import smithy4s.syntax._
 import weaver._
 import smithy4s.internals.InputOutput
+import cats.syntax.all._
 
 object MetadataSpec extends FunSuite {
 
@@ -211,9 +212,9 @@ object MetadataSpec extends FunSuite {
 
   test("map of list of strings query param") {
     val map =
-      Map("hello" -> List("a", "b", "c"), "world" -> List("f", "g", "h"))
+      Map("hello" -> "a", "world" -> "b")
     val queries = Queries(slm = Some(map))
-    val expected = Metadata(query = map)
+    val expected = Metadata(query = map.fmap(Seq(_)))
     checkRoundTrip(queries, expected)
   }
 
@@ -278,13 +279,13 @@ object MetadataSpec extends FunSuite {
   test("map of list of strings header") {
     val map =
       Map(
-        "hello" -> List("a", "b", "c"),
-        "world" -> List("f", "g", "h")
+        "hello" -> "a",
+        "world" -> "b"
       )
     val expectedHeaders =
       Map(
-        CaseInsensitive("foo-hello") -> List("a", "b", "c"),
-        CaseInsensitive("foo-world") -> List("f", "g", "h")
+        CaseInsensitive("foo-hello") -> List("a"),
+        CaseInsensitive("foo-world") -> List("b")
       )
     val expected = Metadata(headers = expectedHeaders)
     val headers = Headers(slm = Some(map))

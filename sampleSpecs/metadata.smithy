@@ -32,7 +32,7 @@ structure Queries {
   @httpQuery("sl")
   sl : StringList,
   @httpQueryParams
-  slm: StringListMap
+  slm: StringMap
 }
 
 structure Headers {
@@ -56,7 +56,7 @@ structure Headers {
   @httpHeader("sl")
   sl : StringList,
   @httpPrefixHeaders("foo-")
-  slm: StringListMap
+  slm: StringMap
 }
 
 structure PathParams {
@@ -93,11 +93,6 @@ list StringList {
 map StringMap {
   key: String,
   value: String
-}
-
-map StringListMap {
-  key: String,
-  value: StringList
 }
 
 structure ValidationChecks {

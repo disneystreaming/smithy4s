@@ -43,7 +43,7 @@ object TypeInferenceSmokeSpec extends SimpleIOSuite {
           ts4: Option[Timestamp],
           b: Option[Boolean],
           sl: Option[List[String]],
-          slm: Option[Map[String, List[String]]]
+          slm: Option[Map[String, String]]
       ): IO[Unit] = IO.unit
 
     }
