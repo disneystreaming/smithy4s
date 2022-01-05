@@ -4,10 +4,11 @@ import smithy4s.syntax._
 
 case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput {
-  def namespace: String = NAMESPACE
-  val name: String = "GetObjectInput"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectInput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   val schema: smithy4s.Schema[GetObjectInput] = struct(
     ObjectKey.schema.required[GetObjectInput]("key", _.key).withHints(smithy.api.Required(), smithy.api.HttpLabel()),

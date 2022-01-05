@@ -4,10 +4,11 @@ import smithy4s.syntax._
 
 case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
 object PutObjectInput {
-  def namespace: String = NAMESPACE
-  val name: String = "PutObjectInput"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectInput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   val schema: smithy4s.Schema[PutObjectInput] = struct(
     ObjectKey.schema.required[PutObjectInput]("key", _.key).withHints(smithy.api.Required(), smithy.api.HttpLabel()),

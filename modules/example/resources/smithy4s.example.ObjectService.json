@@ -103,6 +103,9 @@
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "PutObject 200 response"
+                    },
                     "500": {
                         "description": "ServerError 500 response",
                         "content": {

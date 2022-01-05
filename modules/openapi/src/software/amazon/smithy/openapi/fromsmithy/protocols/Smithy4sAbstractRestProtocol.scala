@@ -395,7 +395,7 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
     val result = new util.TreeMap[String, ResponseObject]
     val operationIndex = OperationIndex.of(updatedModel)
     operationIndex
-      .getOutput(operation)
+      .getOutputShape(operation)
       .asScala
       .foreach((output: StructureShape) => {
         updateResponsesMapWithResponseStatusAndObject(

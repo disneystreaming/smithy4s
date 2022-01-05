@@ -19,11 +19,11 @@ package internals
 
 import cats.Monad
 import cats.syntax.all._
-import smithy4s.HasId
 import smithy4s.aws.kernel.AwsSignature
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
 import smithy4s.http.Metadata
+import smithy4s.ShapeId
 
 private[aws] trait AwsSigner[F[_]] {
   def sign(
@@ -38,7 +38,7 @@ object AwsSigner {
   private[aws] val EMPTY_PATH = "/"
 
   private[aws] def rpcSigner[F[_]: Monad](
-      serviceId: HasId,
+      serviceId: ShapeId,
       endpointPrefix: String,
       environment: AwsEnvironment[F],
       contentType: String
@@ -46,7 +46,7 @@ object AwsSigner {
     new RPCSigner[F](serviceId, endpointPrefix, environment, contentType)
 
   private class RPCSigner[F[_]: Monad](
-      serviceId: HasId,
+      serviceId: ShapeId,
       endpointPrefix: String,
       awsEnv: AwsEnvironment[F],
       contentType: String

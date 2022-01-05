@@ -42,6 +42,7 @@ case class Service(
 
 case class Operation(
     name: String,
+    originalNamespace: String,
     params: List[Field],
     input: Type,
     errors: List[Type],

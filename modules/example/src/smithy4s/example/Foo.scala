@@ -4,10 +4,11 @@ import smithy4s.syntax._
 
 sealed trait Foo
 object Foo {
-  def namespace: String = NAMESPACE
-  val name: String = "Foo"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "Foo")
 
-  val hints : smithy4s.Hints = smithy4s.Hints()
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
 
   case class IntCase(int: Int) extends Foo
   case class StrCase(str: String) extends Foo

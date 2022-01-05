@@ -4,8 +4,7 @@ import smithy4s.syntax._
 
 sealed abstract class LowHigh(val value: String, val ordinal: Int) extends Product with Serializable
 object LowHigh extends smithy4s.Enumeration[LowHigh] {
-  def namespace: String = NAMESPACE
-  val name: String = "LowHigh"
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "LowHigh")
 
   case object Low extends LowHigh("Low", 0)
   case object High extends LowHigh("High", 1)

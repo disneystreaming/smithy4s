@@ -31,6 +31,7 @@ object CollisionAvoidance {
         val newOps = ops.map {
           case Operation(
                 name,
+                ns,
                 params,
                 input,
                 errors,
@@ -41,6 +42,7 @@ object CollisionAvoidance {
               ) =>
             Operation(
               protect(name.capitalize),
+              ns,
               params.map(modField),
               modType(input),
               errors.map(modType),
@@ -224,6 +226,7 @@ object CollisionAvoidance {
     val Service_ = "smithy4s.Service"
     val Endpoint_ = "smithy4s.Endpoint"
     val NoInput_ = "smithy4s.NoInput"
+    val ShapeId_ = "smithy4s.ShapeId"
     val Schema_ = "smithy4s.Schema"
     val StreamingSchema_ = "smithy4s.StreamingSchema"
     val Enumeration_ = "smithy4s.Enumeration"

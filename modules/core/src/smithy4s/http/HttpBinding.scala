@@ -42,8 +42,7 @@ sealed abstract class HttpBinding(val tpe: HttpBinding.Type)
 
 object HttpBinding extends Hints.Key.Companion[HttpBinding] {
 
-  def namespace: String = "smithy4s.http"
-  def name: String = "HttpBinding"
+  val id: ShapeId = ShapeId("smithy4s.http", "HttpBinding")
 
   sealed trait Type
   object Type {

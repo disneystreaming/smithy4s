@@ -20,8 +20,7 @@ import smithy4s.Newtype
 
 object AwsRegion extends Newtype[String] {
 
-  val namespace = "smithy4s.aws"
-  val name = "AwsRegion"
+  val id = smithy4s.ShapeId("smithy4s.aws", "AwsRegion")
 
   val AF_SOUTH_1: AwsRegion = apply("af-south-1")
   val AP_EAST_1: AwsRegion = apply("ap-east-1")
