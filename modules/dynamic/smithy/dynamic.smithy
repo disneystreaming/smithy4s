@@ -165,7 +165,7 @@ structure OperationShape {
 structure ServiceShape {
   version: String,
   errors: MemberList,
-  operations: MemberShape,
+  operations: MemberList,
   traits: TraitMap
 }
 

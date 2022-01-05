@@ -1,12 +1,12 @@
 package smithy4s
 package dynamic
 
-// import software.amazon.smithy.model.Model
 import smithy4s.dynamic.model.{ShapeId => SID, _}
 import scala.collection.mutable.{Map => MMap}
 import schematic.OneOf
 import schematic.StructureField
 import smithy4s.syntax._
+import smithy4s.internals.InputOutput
 
 object Compiler {
 
@@ -131,8 +131,8 @@ object Compiler {
       val ep = DynamicEndpoint(
         id.namespace,
         id.name,
-        maybeSchema(shape.input.map(_.target)),
-        maybeSchema(shape.output.map(_.target)),
+        maybeSchema(shape.input.map(_.target)).withHints(InputOutput.Input),
+        maybeSchema(shape.output.map(_.target)).withHints(InputOutput.Output),
         Hints(allHints(shape.traits): _*)
       )
       endpointMap += id -> ep
@@ -140,8 +140,9 @@ object Compiler {
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
       val getEndpoints = () =>
-        shape.operations.toList.map(_.target).collect { case ValidSID(opId) =>
-          endpointMap(opId)
+        shape.operations.toList.flatMap(_.map(_.target)).collect {
+          case ValidSID(opId) =>
+            endpointMap(opId)
         }
       val service = DynamicService(
         id.namespace,
