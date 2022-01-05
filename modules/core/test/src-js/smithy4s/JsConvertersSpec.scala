@@ -36,6 +36,14 @@ object JsConvertersSpec extends FunSuite {
     expect(result == expected)
   }
 
+  test("undefined") {
+    val input = js.undefined
+    val result = JsConverters.convertJsToDocument(input)
+    val expected =
+      Right(Document.DNull)
+    expect(result == expected)
+  }
+
   test("double") {
     val input = 1.1
     val result = JsConverters.convertJsToDocument(input)
