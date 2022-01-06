@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.http
 
 case class UnknownErrorResponse(
     code: Int,
