@@ -16,32 +16,81 @@
 
 package smithy4s.api;
 
+import software.amazon.smithy.model.SourceException;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.AnnotationTrait;
 import software.amazon.smithy.model.traits.AbstractTrait;
+import software.amazon.smithy.model.traits.AbstractTraitBuilder;
+import software.amazon.smithy.model.traits.TraitService;
+import software.amazon.smithy.utils.SmithyBuilder;
+import software.amazon.smithy.utils.ToSmithyBuilder;
 
-public class DiscriminatedUnionTrait extends AnnotationTrait {
+public final class DiscriminatedUnionTrait extends AbstractTrait implements ToSmithyBuilder<DiscriminatedUnionTrait> {
 
-  public static ShapeId ID = ShapeId.from("smithy4s.api#discriminated");
+    public static final ShapeId ID = ShapeId.from("smithy4s.api#discriminated");
 
-  public DiscriminatedUnionTrait(ObjectNode node) {
-    super(ID, node);
-  }
+    private final String propertyName;
 
-  public DiscriminatedUnionTrait() {
-    super(ID, Node.objectNode());
-  }
+    private DiscriminatedUnionTrait(DiscriminatedUnionTrait.Builder builder) {
+        super(ID, builder.getSourceLocation());
+        this.propertyName = builder.propertyName;
+        if (propertyName == null) {
+            throw new SourceException("A propertyName must be provided.", getSourceLocation());
+        }
+    }
 
-  public static final class Provider extends AbstractTrait.Provider {
-    public Provider() {
-      super(ID);
+    public String getPropertyName() {
+        return this.propertyName;
     }
 
     @Override
-    public DiscriminatedUnionTrait createTrait(ShapeId target, Node node) {
-      return new DiscriminatedUnionTrait(node.expectObjectNode());
+    protected Node createNode() {
+        ObjectNode.Builder builder = Node.objectNodeBuilder();
+        builder.withMember("propertyName", getPropertyName());
+        return builder.build();
     }
-  }
+
+    @Override
+    public SmithyBuilder<DiscriminatedUnionTrait> toBuilder() {
+        return builder().propertyName(propertyName).sourceLocation(getSourceLocation());
+    }
+
+    /**
+     * @return Returns a new DiscriminatedUnionTrait builder.
+     */
+    public static DiscriminatedUnionTrait.Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractTraitBuilder<DiscriminatedUnionTrait, DiscriminatedUnionTrait.Builder> {
+
+        private String propertyName;
+
+        public DiscriminatedUnionTrait.Builder propertyName(String propertyName) {
+            this.propertyName = propertyName;
+            return this;
+        }
+
+        @Override
+        public DiscriminatedUnionTrait build() {
+            return new DiscriminatedUnionTrait(this);
+        }
+    }
+
+    public static final class Provider implements TraitService {
+
+        @Override
+        public ShapeId getShapeId() {
+            return ID;
+        }
+
+        @Override
+        public DiscriminatedUnionTrait createTrait(ShapeId target, Node value) {
+            ObjectNode objectNode = value.expectObjectNode();
+            String propertyName = objectNode.getMember("propertyName")
+                    .map(node -> node.expectStringNode().getValue()).orElse(null);
+            return builder().sourceLocation(value).propertyName(propertyName).build();
+        }
+    }
 }
