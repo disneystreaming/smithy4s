@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy.api.JsonName
+import smithy4s.api.Discriminated
 import smithy4s.example.IntList
 import weaver._
 
@@ -66,6 +67,28 @@ object DocumentSpec extends FunSuite {
       }
     }
 
+  case class Foo(str: String)
+  case class Bar(str: String)
+
+  implicit val eitherFooBarSchema: Static[Schema[Either[Foo, Bar]]] =
+    Static {
+      val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
+        .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
+
+      val right = struct(
+        string.required[Bar]("str", _.str).withHints(JsonName("barStr"))
+      )(Bar.apply)
+        .oneOf[Either[Foo, Bar]]("bar", (b: Bar) => Right(b))
+        .withHints(JsonName("barBar"))
+
+      union(left, right) {
+        case Left(f)  => left(f)
+        case Right(b) => right(b)
+      }.withHints(
+        Discriminated("type")
+      )
+    }
+
   test("jsonName is handled correctly on structures") {
     val intAndString: (Int, String) = (1, "hello")
 
@@ -97,6 +120,20 @@ object DocumentSpec extends FunSuite {
 
     expect(document == expectedDocument) &&
     expect(roundTripped == Right(intOrString))
+  }
+
+  test("discriminated unions encoding") {
+    val fooOrBar: Either[Foo, Bar] = Right(Bar("hello"))
+
+    val document = Document.encode(fooOrBar)
+    import Document._
+    val expectedDocument =
+      obj(
+        "barStr" -> fromString("hello"),
+        "type" -> fromString("barBar")
+      )
+
+    expect(document == expectedDocument)
   }
 
 }
