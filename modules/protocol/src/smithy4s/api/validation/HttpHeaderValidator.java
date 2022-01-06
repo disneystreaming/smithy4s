@@ -33,8 +33,8 @@ public final class HttpHeaderValidator extends AbstractValidator {
     public List<ValidationEvent> validate(Model model) {
         return model.getShapesWithTrait(HttpHeaderTrait.class).stream().flatMap(headerShape -> {
             String value = headerShape.getTrait(HttpHeaderTrait.class).get().getValue();
-            if (disallowedHeaderNames.contains(value)) {
-                return Stream.of(error(headerShape, String.format("Header named `%s` should not be present since it is automatically filled", value)));
+            if (disallowedHeaderNames.contains(value.toLowerCase())) {
+                return Stream.of(warning(headerShape, String.format("Header named `%s` should not be present since it is automatically filled", value)));
             } else {
                 return Stream.empty();
             }

@@ -31,7 +31,7 @@ object HttpHeaderValidatorSpec extends weaver.FunSuite {
       .builder()
       .id("test#struct$testing")
       .target("smithy.api#String")
-      .addTrait(new HttpHeaderTrait("content-type"))
+      .addTrait(new HttpHeaderTrait("Content-Type"))
       .build()
     val struct =
       StructureShape.builder().id("test#struct").addMember(member).build()
@@ -46,9 +46,9 @@ object HttpHeaderValidatorSpec extends weaver.FunSuite {
         .builder()
         .id("HttpHeader")
         .shape(member)
-        .severity(Severity.ERROR)
+        .severity(Severity.WARNING)
         .message(
-          "Header named `content-type` should not be present since it is automatically filled"
+          "Header named `Content-Type` should not be present since it is automatically filled"
         )
         .build()
     )
