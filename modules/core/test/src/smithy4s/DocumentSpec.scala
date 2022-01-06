@@ -68,7 +68,7 @@ object DocumentSpec extends FunSuite {
     }
 
   case class Foo(str: String)
-  case class Bar(str: String)
+  case class Bar(str: String, int: Int)
 
   implicit val eitherFooBarSchema: Static[Schema[Either[Foo, Bar]]] =
     Static {
@@ -76,7 +76,8 @@ object DocumentSpec extends FunSuite {
         .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
 
       val right = struct(
-        string.required[Bar]("str", _.str).withHints(JsonName("barStr"))
+        string.required[Bar]("str", _.str).withHints(JsonName("barStr")),
+        int.required[Bar]("int", _.int)
       )(Bar.apply)
         .oneOf[Either[Foo, Bar]]("bar", (b: Bar) => Right(b))
         .withHints(JsonName("barBar"))
@@ -123,17 +124,21 @@ object DocumentSpec extends FunSuite {
   }
 
   test("discriminated unions encoding") {
-    val fooOrBar: Either[Foo, Bar] = Right(Bar("hello"))
+    val fooOrBar: Either[Foo, Bar] = Right(Bar("hello", 2022))
 
     val document = Document.encode(fooOrBar)
     import Document._
     val expectedDocument =
       obj(
         "barStr" -> fromString("hello"),
+        "int" -> fromInt(2022),
         "type" -> fromString("barBar")
       )
 
-    expect(document == expectedDocument)
+    val roundTripped = Document.decode[Either[Foo, Bar]](document)
+
+    expect(document == expectedDocument) &&
+    expect(roundTripped == Right(fooOrBar))
   }
 
 }
