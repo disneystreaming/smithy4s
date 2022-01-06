@@ -48,7 +48,7 @@ object HttpHeaderValidatorSpec extends weaver.FunSuite {
         .shape(member)
         .severity(Severity.WARNING)
         .message(
-          "Header named `Content-Type` should not be present since it is automatically filled"
+          "Header named `Content-Type` may be overridden in client/server implementations"
         )
         .build()
     )

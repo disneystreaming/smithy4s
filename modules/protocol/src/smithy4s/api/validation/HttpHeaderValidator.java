@@ -34,7 +34,7 @@ public final class HttpHeaderValidator extends AbstractValidator {
         return model.getShapesWithTrait(HttpHeaderTrait.class).stream().flatMap(headerShape -> {
             String value = headerShape.getTrait(HttpHeaderTrait.class).get().getValue();
             if (disallowedHeaderNames.contains(value.toLowerCase())) {
-                return Stream.of(warning(headerShape, String.format("Header named `%s` should not be present since it is automatically filled", value)));
+                return Stream.of(warning(headerShape, String.format("Header named `%s` may be overridden in client/server implementations", value)));
             } else {
                 return Stream.empty();
             }
