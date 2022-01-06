@@ -280,12 +280,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext =
           s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$httpEndpoint$errorable"
       )(
-        s"""def name: String = "${opName}"""",
+        renderId(op.name, op.originalNamespace),
         s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
         s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
-        renderId(op.name, op.originalNamespace),
         renderHintsValWithId(op.hints),
         s"def wrap(input: ${op.input.render}) = ${opName}($input)",
         renderErrorable(op),
