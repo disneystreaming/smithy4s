@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+import smithy4s.http.internals.URIEncoderDecoder
+
 package object smithy4s extends TypeAliases {
 
   type Hint = Hints.Binding[_]
