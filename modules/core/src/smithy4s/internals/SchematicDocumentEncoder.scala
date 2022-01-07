@@ -214,7 +214,7 @@ object SchematicDocumentEncoder
             alt.instance.addHints(
               Hints(
                 DiscriminatedUnionMember(
-                  discriminated.propertyName,
+                  discriminated.value,
                   jsonLabel(alt)
                 )
               )

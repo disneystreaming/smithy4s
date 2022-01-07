@@ -570,14 +570,14 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
           else {
             in.rollbackToken()
             in.setMark()
-            val key = if (in.skipToKey(discriminated.propertyName)) {
+            val key = if (in.skipToKey(discriminated.value)) {
               val k = in.readString("")
               in.rollbackToMark()
               in.rollbackToken()
               k
             } else {
               in.decodeError(
-                s"Unable to find discriminator ${discriminated.propertyName}"
+                s"Unable to find discriminator ${discriminated.value}"
               )
             }
             val result = cursor.under(key) {
@@ -597,7 +597,7 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
           fa.instance
             .addHints(
               Hints(
-                DiscriminatedUnionMember(discriminated.propertyName, label)
+                DiscriminatedUnionMember(discriminated.value, label)
               )
             )
             .get

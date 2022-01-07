@@ -43,7 +43,4 @@ structure uuidFormat {
 }
 
 @trait(selector: "union")
-structure discriminated {
-    @required
-    propertyName: String
-}
+string discriminated

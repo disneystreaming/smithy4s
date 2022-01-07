@@ -25,72 +25,24 @@ import software.amazon.smithy.model.traits.AbstractTraitBuilder;
 import software.amazon.smithy.model.traits.TraitService;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.ToSmithyBuilder;
+import software.amazon.smithy.model.traits.StringTrait;
+import software.amazon.smithy.model.SourceLocation;
 
-public final class DiscriminatedUnionTrait extends AbstractTrait implements ToSmithyBuilder<DiscriminatedUnionTrait> {
+public final class DiscriminatedUnionTrait extends StringTrait {
 
     public static final ShapeId ID = ShapeId.from("smithy4s.api#discriminated");
 
-    private final String propertyName;
-
-    private DiscriminatedUnionTrait(DiscriminatedUnionTrait.Builder builder) {
-        super(ID, builder.getSourceLocation());
-        this.propertyName = builder.propertyName;
-        if (propertyName == null) {
-            throw new SourceException("A propertyName must be provided.", getSourceLocation());
-        }
+    public DiscriminatedUnionTrait(String value, SourceLocation sourceLocation) {
+        super(ID, value, sourceLocation);
     }
 
-    public String getPropertyName() {
-        return this.propertyName;
+    public DiscriminatedUnionTrait(String value) {
+        this(value, SourceLocation.NONE);
     }
 
-    @Override
-    protected Node createNode() {
-        ObjectNode.Builder builder = Node.objectNodeBuilder();
-        builder.withMember("propertyName", getPropertyName());
-        return builder.build();
-    }
-
-    @Override
-    public SmithyBuilder<DiscriminatedUnionTrait> toBuilder() {
-        return builder().propertyName(propertyName).sourceLocation(getSourceLocation());
-    }
-
-    /**
-     * @return Returns a new DiscriminatedUnionTrait builder.
-     */
-    public static DiscriminatedUnionTrait.Builder builder() {
-        return new Builder();
-    }
-
-    public static final class Builder extends AbstractTraitBuilder<DiscriminatedUnionTrait, DiscriminatedUnionTrait.Builder> {
-
-        private String propertyName;
-
-        public DiscriminatedUnionTrait.Builder propertyName(String propertyName) {
-            this.propertyName = propertyName;
-            return this;
-        }
-
-        @Override
-        public DiscriminatedUnionTrait build() {
-            return new DiscriminatedUnionTrait(this);
-        }
-    }
-
-    public static final class Provider implements TraitService {
-
-        @Override
-        public ShapeId getShapeId() {
-            return ID;
-        }
-
-        @Override
-        public DiscriminatedUnionTrait createTrait(ShapeId target, Node value) {
-            ObjectNode objectNode = value.expectObjectNode();
-            String propertyName = objectNode.getMember("propertyName")
-                    .map(node -> node.expectStringNode().getValue()).orElse(null);
-            return builder().sourceLocation(value).propertyName(propertyName).build();
+    public static final class Provider extends StringTrait.Provider<DiscriminatedUnionTrait> {
+        public Provider() {
+            super(ID, DiscriminatedUnionTrait::new);
         }
     }
 }

@@ -366,7 +366,7 @@ object SchematicDocumentDecoder
       document match {
         case DObject(map) =>
           map
-            .get(discriminated.propertyName) match {
+            .get(discriminated.value) match {
             case Some(value: Document.DString) =>
               decoders.get(value.value) match {
                 case Some(decoder) => decoder(pp, document)
@@ -381,7 +381,7 @@ object SchematicDocumentDecoder
               throw new PayloadError(
                 PayloadPath(pp.reverse),
                 "Union",
-                s"Unable to locate discriminator under property '${discriminated.propertyName}'"
+                s"Unable to locate discriminator under property '${discriminated.value}'"
               )
           }
         case other =>
