@@ -364,7 +364,7 @@ object SchematicDocumentDecoder
   ): DocumentDecoder[S] = handleUnion {
     (pp: List[PayloadPath.Segment], document: Document) =>
       document match {
-        case DObject(map) if (map.size > 1) =>
+        case DObject(map) =>
           map
             .get(discriminated.propertyName) match {
             case Some(value: Document.DString) =>
@@ -384,11 +384,11 @@ object SchematicDocumentDecoder
                 s"Unable to locate discriminator under property '${discriminated.propertyName}'"
               )
           }
-        case _ =>
+        case other =>
           throw new PayloadError(
             PayloadPath(pp.reverse),
             "Union",
-            "Expected more than single-key Json object"
+            s"Expected DObject, but found $other"
           )
 
       }
@@ -431,8 +431,9 @@ object SchematicDocumentDecoder
 
     val decoders: DecoderMap[S] =
       (first +: rest).map { case alt @ Alt(_, instance, inject) =>
+        val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-          inject(instance.get.apply(jsonLabel(alt) :: pp, doc))
+          inject(instance.get.apply(label :: pp, doc))
         }
         jsonLabel(alt) -> encoder
       }.toMap

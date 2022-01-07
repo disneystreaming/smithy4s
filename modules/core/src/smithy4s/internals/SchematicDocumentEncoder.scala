@@ -167,6 +167,11 @@ object SchematicDocumentEncoder
   ): DocumentEncoderMake[S] =
     Hinted[DocumentEncoder].onHintOpt[DiscriminatedUnionMember, S] {
       maybeDiscriminated =>
+        val discriminator = maybeDiscriminated.map { discriminated =>
+          (discriminated.propertyName -> Document.fromString(
+            discriminated.alternativeLabel
+          ))
+        }
         def fieldEncoder[A](
             field: Field[DocumentEncoderMake, S, A]
         ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
@@ -180,11 +185,6 @@ object SchematicDocumentEncoder
 
               builder.+=(jsonLabel -> encoder.get.apply(t))
             }
-            maybeDiscriminated.foreach { discriminated =>
-              builder += (discriminated.propertyName -> Document.fromString(
-                discriminated.alternativeLabel
-              ))
-            }
         }
 
         val encoders = fields.map(field => fieldEncoder(field))
@@ -192,7 +192,7 @@ object SchematicDocumentEncoder
           def apply: S => Document = { s =>
             val builder = Map.newBuilder[String, Document]
             encoders.foreach(_(s, builder))
-            DObject(builder.result())
+            DObject(builder.result() ++ discriminator)
           }
           def canBeKey: Boolean = false
         }

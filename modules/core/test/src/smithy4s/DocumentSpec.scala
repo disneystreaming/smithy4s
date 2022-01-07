@@ -90,6 +90,24 @@ object DocumentSpec extends FunSuite {
       )
     }
 
+  case class Baz()
+
+  implicit val eitherFooBazSchema: Static[Schema[Either[Foo, Baz]]] =
+    Static {
+      val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
+        .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))
+
+      val right = genericStruct(Vector.empty)(_ => Baz())
+        .oneOf[Either[Foo, Baz]]("baz", (b: Baz) => Right(b))
+
+      union(left, right) {
+        case Left(f)  => left(f)
+        case Right(b) => right(b)
+      }.withHints(
+        Discriminated("type")
+      )
+    }
+
   test("jsonName is handled correctly on structures") {
     val intAndString: (Int, String) = (1, "hello")
 
@@ -139,6 +157,22 @@ object DocumentSpec extends FunSuite {
 
     expect(document == expectedDocument) &&
     expect(roundTripped == Right(fooOrBar))
+  }
+
+  test("discriminated unions encoding - empty structure alternative") {
+    val fooOrBaz: Either[Foo, Baz] = Right(Baz())
+
+    val document = Document.encode(fooOrBaz)
+    import Document._
+    val expectedDocument =
+      obj(
+        "type" -> fromString("baz")
+      )
+
+    val roundTripped = Document.decode[Either[Foo, Baz]](document)
+
+    expect(document == expectedDocument) &&
+    expect(roundTripped == Right(fooOrBaz))
   }
 
 }
