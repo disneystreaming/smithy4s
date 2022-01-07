@@ -592,13 +592,16 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
       }
 
       val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
-        def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance
-          .addHints(
-            Hints(
-              DiscriminatedUnionMember(discriminated.propertyName, fa.label)
+        def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = {
+          val label = jsonLabel(fa)
+          fa.instance
+            .addHints(
+              Hints(
+                DiscriminatedUnionMember(discriminated.propertyName, label)
+              )
             )
-          )
-          .get
+            .get
+        }
       }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
 
       def encodeValue(z: Z, out: JsonWriter): Unit = {

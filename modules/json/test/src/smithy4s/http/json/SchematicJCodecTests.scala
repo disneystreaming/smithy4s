@@ -65,10 +65,11 @@ object SchematicJCodecTests extends SimpleIOSuite {
         .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
 
       val right = struct(
-        string.required[Bin]("str", _.str),
+        string.required[Bin]("str", _.str).withHints(JsonName("binStr")),
         int.required[Bin]("int", _.int)
       )(Bin.apply)
         .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
+        .withHints(JsonName("binBin"))
 
       union(left, right) {
         case Left(f)  => left(f)
@@ -150,7 +151,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
   pureTest("Discriminated union gets encoded correctly") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
-    val jsonBin = """{"type":"bin","str":"foo","int":2022}"""
+    val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = writeToString[Either[Baz, Bin]](Left(Baz("test")))
     val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
     expect(baz == jsonBaz) &&
@@ -159,7 +160,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
   pureTest("Discriminated union gets routed to the correct codec") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
-    val jsonBin = """{"type":"bin","str":"foo","int":2022}"""
+    val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = readFromString[Either[Baz, Bin]](jsonBaz)
     val bin = readFromString[Either[Baz, Bin]](jsonBin)
     expect(baz == Left(Baz("test"))) &&
