@@ -24,6 +24,7 @@ import schematic._
 import smithy.api.HttpPayload
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
+import smithy4s.api.Discriminated
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
 import smithy4s.Document.DNull
@@ -32,6 +33,7 @@ import smithy4s.Document.DObject
 import smithy4s.Document.DString
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
+import smithy4s.internals.DiscriminatedUnionMember
 
 import java.util.UUID
 import scala.collection.compat.immutable.ArraySeq
@@ -464,76 +466,163 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
     }
   }
 
+  private def taggedUnion[Z](
+      first: Alt[JCodecMake, Z, _],
+      rest: Vector[Alt[JCodecMake, Z, _]]
+  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] =
+    new JCodec[Z] {
+
+      override lazy val expecting: String = "tagged-union"
+
+      override def canBeKey: Boolean = false
+
+      def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
+        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+
+      val handlerMap: Map[String, (Cursor, JsonReader) => Z] = {
+        val res = MMap.empty[String, (Cursor, JsonReader) => Z]
+        def handler[A](alt: Alt[JCodecMake, Z, A]) = {
+          val codec = alt.instance.get
+          (cursor: Cursor, reader: JsonReader) =>
+            alt.inject(cursor.decode(codec, reader))
+        }
+
+        res += (jsonLabel(first) -> handler(first))
+        rest.foreach(alt => res += (jsonLabel(alt) -> handler(alt)))
+        res.toMap
+      }
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+        if (in.isNextToken('{')) {
+          if (in.isNextToken('}'))
+            in.decodeError("Expected a single key/value pair")
+          else {
+            in.rollbackToken()
+            val key = in.readKeyAsString()
+            val result = cursor.under(key) {
+              handlerMap.get(key).map(_.apply(cursor, in))
+            } match {
+              case Some(value) => value
+              case None        => in.discriminatorValueError(key)
+            }
+            if (in.isNextToken('}')) result
+            else {
+              in.rollbackToken()
+              in.decodeError(s"Expected no other field after $key")
+            }
+          }
+        } else in.decodeError("Expected JSON object")
+      }
+
+      val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
+        def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
+      }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
+
+      def encodeValue(z: Z, out: JsonWriter): Unit = {
+        def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
+          altCache(awv.alt).encodeValue(awv.value, out)
+
+        val awv = total(z)
+        out.writeObjectStart()
+        out.writeKey(jsonLabel(awv.alt))
+        writeValue(awv)
+        out.writeObjectEnd()
+      }
+
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use coproducts as keys")
+
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use coproducts as keys")
+    }
+
+  private def discriminatedUnion[Z](
+      first: Alt[JCodecMake, Z, _],
+      rest: Vector[Alt[JCodecMake, Z, _]],
+      discriminated: Discriminated
+  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] =
+    new JCodec[Z] {
+
+      override lazy val expecting: String = "discriminated-union"
+
+      override def canBeKey: Boolean = false
+
+      def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
+        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+
+      val handlerMap: Map[String, (Cursor, JsonReader) => Z] = {
+        val res = MMap.empty[String, (Cursor, JsonReader) => Z]
+        def handler[A](alt: Alt[JCodecMake, Z, A]) = {
+          val codec = alt.instance.get
+          (cursor: Cursor, reader: JsonReader) =>
+            alt.inject(cursor.decode(codec, reader))
+        }
+
+        res += (jsonLabel(first) -> handler(first))
+        rest.foreach(alt => res += (jsonLabel(alt) -> handler(alt)))
+        res.toMap
+      }
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+        if (in.isNextToken('{')) {
+          if (in.isNextToken('}'))
+            in.decodeError("Expected at least a one key/value pair")
+          else {
+            in.rollbackToken()
+            in.setMark()
+            val key = if (in.skipToKey(discriminated.propertyName)) {
+              val k = in.readString("")
+              in.rollbackToMark()
+              in.rollbackToken()
+              k
+            } else {
+              in.decodeError(
+                s"Unable to find discriminator ${discriminated.propertyName}"
+              )
+            }
+            val result = cursor.under(key) {
+              handlerMap.get(key).map(_.apply(cursor, in))
+            } match {
+              case Some(value) => value
+              case None        => in.discriminatorValueError(key)
+            }
+            result
+          }
+        } else in.decodeError("Expected JSON object")
+      }
+
+      val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
+        def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance
+          .addHints(
+            Hints(
+              DiscriminatedUnionMember(discriminated.propertyName, fa.label)
+            )
+          )
+          .get
+      }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
+
+      def encodeValue(z: Z, out: JsonWriter): Unit = {
+        def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
+          altCache(awv.alt).encodeValue(awv.value, out)
+
+        val awv = total(z)
+        writeValue(awv)
+      }
+
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use coproducts as keys")
+
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use coproducts as keys")
+    }
+
   def union[Z](
       first: Alt[JCodecMake, Z, _],
       rest: Vector[Alt[JCodecMake, Z, _]]
   )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodecMake[Z] =
-    Hinted.static {
-      new JCodec[Z] {
-
-        override lazy val expecting: String = "tagged-union"
-
-        override def canBeKey: Boolean = false
-
-        def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
-          alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
-
-        val handlerMap: Map[String, (Cursor, JsonReader) => Z] = {
-          val res = MMap.empty[String, (Cursor, JsonReader) => Z]
-          def handler[A](alt: Alt[JCodecMake, Z, A]) = {
-            val codec = alt.instance.get
-            (cursor: Cursor, reader: JsonReader) =>
-              alt.inject(cursor.decode(codec, reader))
-          }
-
-          res += (jsonLabel(first) -> handler(first))
-          rest.foreach(alt => res += (jsonLabel(alt) -> handler(alt)))
-          res.toMap
-        }
-
-        def decodeValue(cursor: Cursor, in: JsonReader): Z = {
-          if (in.isNextToken('{')) {
-            if (in.isNextToken('}'))
-              in.decodeError("Expected a single key/value pair")
-            else {
-              in.rollbackToken()
-              val key = in.readKeyAsString()
-              val result = cursor.under(key) {
-                handlerMap.get(key).map(_.apply(cursor, in))
-              } match {
-                case Some(value) => value
-                case None        => in.discriminatorValueError(key)
-              }
-              if (in.isNextToken('}')) result
-              else {
-                in.rollbackToken()
-                in.decodeError(s"Expected no other field after $key")
-              }
-            }
-          } else in.decodeError("Expected JSON object")
-        }
-
-        val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
-          def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
-        }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
-
-        def encodeValue(z: Z, out: JsonWriter): Unit = {
-          def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
-            altCache(awv.alt).encodeValue(awv.value, out)
-
-          val awv = total(z)
-          out.writeObjectStart()
-          out.writeKey(jsonLabel(awv.alt))
-          writeValue(awv)
-          out.writeObjectEnd()
-        }
-
-        def decodeKey(in: JsonReader): Z =
-          in.decodeError("Cannot use coproducts as keys")
-
-        def encodeKey(x: Z, out: JsonWriter): Unit =
-          out.encodeError("Cannot use coproducts as keys")
-      }
+    Hinted[JCodec].onHintOpt[Discriminated, Z] {
+      case Some(d) => discriminatedUnion(first, rest, d)(total)
+      case None    => taggedUnion(first, rest)(total)
     }
 
   def enumeration[A](
@@ -633,7 +722,10 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
   private def nonPayloadStruct[Z](
       fields: Fields[Z],
       maybeInputOutput: Option[InputOutput]
-  )(const: Vector[Any] => Z): JCodec[Z] =
+  )(
+      const: Vector[Any] => Z,
+      encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
+  ): JCodec[Z] =
     new JCodec[Z] {
 
       val documentFields =
@@ -707,11 +799,8 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       def documentEncoders = documentFields.map(field => fieldEncoder(field))
 
-      def encodeValue(z: Z, out: JsonWriter): Unit = {
-        out.writeObjectStart()
-        documentEncoders.foreach(encoder => encoder(z, out))
-        out.writeObjectEnd()
-      }
+      def encodeValue(z: Z, out: JsonWriter): Unit =
+        encode(z, out, documentEncoders)
 
       def decodeKey(in: JsonReader): Z =
         in.decodeError("Cannot use products as keys")
@@ -788,14 +877,42 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
   def genericStruct[Z](
       fields: Vector[Field[JCodecMake, Z, _]]
   )(const: Vector[Any] => Z): JCodecMake[Z] =
-    Hinted[JCodec].onHintOpt[InputOutput, Z] { maybeInputOutput =>
-      fields.find(_.instance.hints.get(HttpPayload).isDefined) match {
-        case Some(payloadField) =>
-          val codec = payloadField.instance.get
-          payloadStruct(payloadField, fields)(codec, const)
-        case None =>
-          nonPayloadStruct(fields, maybeInputOutput)(const)
-      }
+    Hinted[JCodec].onHintsOpt[InputOutput, DiscriminatedUnionMember, Z] {
+      case (maybeInputOutput, maybeDiscriminated) =>
+        fields.find(_.instance.hints.get(HttpPayload).isDefined) match {
+          case Some(payloadField) =>
+            val codec = payloadField.instance.get
+            payloadStruct(payloadField, fields)(codec, const)
+          case None =>
+            maybeDiscriminated match {
+              case Some(d) =>
+                val encode = {
+                  (
+                      z: Z,
+                      out: JsonWriter,
+                      documentEncoders: Vector[(Z, JsonWriter) => Unit]
+                  ) =>
+                    out.writeObjectStart()
+                    out.writeKey(d.propertyName)
+                    out.writeVal(d.alternativeLabel)
+                    documentEncoders.foreach(encoder => encoder(z, out))
+                    out.writeObjectEnd()
+                }
+                nonPayloadStruct(fields, maybeInputOutput)(const, encode)
+              case None =>
+                val encode = {
+                  (
+                      z: Z,
+                      out: JsonWriter,
+                      documentEncoders: Vector[(Z, JsonWriter) => Unit]
+                  ) =>
+                    out.writeObjectStart()
+                    documentEncoders.foreach(encoder => encoder(z, out))
+                    out.writeObjectEnd()
+                }
+                nonPayloadStruct(fields, maybeInputOutput)(const, encode)
+            }
+        }
     }
 
   def withHints[A](fa: JCodecMake[A], hints: Hints): JCodecMake[A] =
