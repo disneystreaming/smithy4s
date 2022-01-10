@@ -16,17 +16,9 @@
 
 package smithy4s.api;
 
-import software.amazon.smithy.model.SourceException;
-import software.amazon.smithy.model.node.Node;
-import software.amazon.smithy.model.node.ObjectNode;
-import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.AbstractTrait;
-import software.amazon.smithy.model.traits.AbstractTraitBuilder;
-import software.amazon.smithy.model.traits.TraitService;
-import software.amazon.smithy.utils.SmithyBuilder;
-import software.amazon.smithy.utils.ToSmithyBuilder;
-import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.model.SourceLocation;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.StringTrait;
 
 public final class DiscriminatedUnionTrait extends StringTrait {
 
