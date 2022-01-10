@@ -15,11 +15,13 @@
  */
 
 package smithy4s
+package http
+package internals
 
 import java.io.ByteArrayOutputStream
 import java.net._
 
-object URIEncoderDecoder {
+private[smithy4s] object URIEncoderDecoder {
 
   val digits: String = "0123456789ABCDEF"
 

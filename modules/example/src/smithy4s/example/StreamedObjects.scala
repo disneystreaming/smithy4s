@@ -54,12 +54,11 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
   }
   case class PutStreamedObject(input: PutStreamedObjectInput) extends StreamedObjectsOperation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
   object PutStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation, PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
-    def name: String = "PutStreamedObject"
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutStreamedObject")
     val input: smithy4s.Schema[PutStreamedObjectInput] = PutStreamedObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
     val output: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[StreamedBlob] = smithy4s.StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema)
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutStreamedObject")
     val hints : smithy4s.Hints = smithy4s.Hints(
       id,
     )
@@ -67,12 +66,11 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
   }
   case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
   object GetStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation, GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
-    def name: String = "GetStreamedObject"
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetStreamedObject")
     val input: smithy4s.Schema[GetStreamedObjectInput] = GetStreamedObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
     val output: smithy4s.Schema[GetStreamedObjectOutput] = GetStreamedObjectOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[StreamedBlob] = smithy4s.StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema)
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetStreamedObject")
     val hints : smithy4s.Hints = smithy4s.Hints(
       id,
     )
