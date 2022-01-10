@@ -33,12 +33,11 @@ public final class DiscriminatedUnionValidator extends AbstractValidator {
     public List<ValidationEvent> validate(Model model) {
         return model.getShapesWithTrait(DiscriminatedUnionTrait.class).stream().flatMap(unionShape -> {
            return unionShape.asUnionShape().get().getAllMembers().entrySet().stream().flatMap(entry -> {
-              System.out.println(model.getShape(entry.getValue().getTarget()));
               Optional<Shape> maybeTarget = model.getShape(entry.getValue().getTarget());
               if (maybeTarget.isPresent() && maybeTarget.get().isStructureShape()) { // if not defined then shape won't be structure
                   return Stream.empty();
               } else {
-                  return Stream.of(error(entry.getValue(), String.format("Member shape corresponding to key '%s' is not a structure shape", entry.getKey())));
+                  return Stream.of(error(entry.getValue(), String.format("Target of member '%s' is not a structure shape", entry.getKey())));
               }
            });
         }).collect(Collectors.toList());

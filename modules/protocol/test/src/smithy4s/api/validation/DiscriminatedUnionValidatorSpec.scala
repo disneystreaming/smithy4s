@@ -39,7 +39,7 @@ object DiscriminatedUnionValidatorSpec extends weaver.FunSuite {
         .shape(member)
         .severity(Severity.ERROR)
         .message(
-          "Member shape corresponding to key 'test' is not a structure shape"
+          "Target of member 'test' is not a structure shape"
         )
         .build()
     )
