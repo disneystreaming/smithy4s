@@ -6,6 +6,10 @@ sealed abstract class LowHigh(val value: String, val ordinal: Int) extends Produ
 object LowHigh extends smithy4s.Enumeration[LowHigh] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "LowHigh")
 
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    id,
+  )
+
   case object Low extends LowHigh("Low", 0)
   case object High extends LowHigh("High", 1)
 
@@ -15,6 +19,6 @@ object LowHigh extends smithy4s.Enumeration[LowHigh] {
   )
 
   def to(e: LowHigh) : (String, Int) = (e.value, e.ordinal)
-  val schema: smithy4s.Schema[LowHigh] = enumeration(to, valueMap, ordinalMap)
+  val schema: smithy4s.Schema[LowHigh] = (enumeration(to, valueMap, ordinalMap): smithy4s.Schema[LowHigh]).withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[LowHigh]] = schematic.Static(schema)
 }
