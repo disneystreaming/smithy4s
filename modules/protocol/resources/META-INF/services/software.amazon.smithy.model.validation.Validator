@@ -1,2 +1,3 @@
 smithy4s.api.validation.SimpleRestJsonValidator
 smithy4s.api.validation.HttpHeaderValidator
+smithy4s.api.validation.DiscriminatedUnionValidator
