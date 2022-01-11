@@ -481,7 +481,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .appendToLast(
-              if (error) ").withHints(hints)" else ".withHints(hints)"
+              if (error) ")" else ".withHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
         },
