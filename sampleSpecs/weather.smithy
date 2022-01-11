@@ -1,9 +1,8 @@
-namespace example.weather
+namespace smithy4s.example
 
 /// Provides weather forecasts.
 @paginated(inputToken: "nextToken", outputToken: "nextToken",
            pageSize: "pageSize")
-
 service Weather {
     version: "2006-03-01",
     resources: [City],
@@ -127,5 +126,13 @@ structure GetForecastInput {
 }
 
 structure GetForecastOutput {
-    chanceOfRain: Float
+    forecast: ForecastResult
 }
+
+union ForecastResult {
+    rain: ChanceOfRain,
+    sun: UVIndex
+}
+
+float ChanceOfRain
+integer UVIndex
