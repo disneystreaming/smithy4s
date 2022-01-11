@@ -521,7 +521,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       line(s"def to(e: $name) : (String, Int) = (e.value, e.ordinal)"),
       lines(
-        s"val schema: $Schema_[$name] = (enumeration(to, valueMap, ordinalMap): $Schema_[$name]).withHints(hints)",
+        s"val schema: $Schema_[$name] = enumeration(to, valueMap, ordinalMap).withHints(hints)",
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     )
