@@ -41,3 +41,6 @@ structure UncheckedExample {
 @trait(selector: "string")
 structure uuidFormat {
 }
+
+@trait(selector: "union")
+string discriminated

@@ -33,6 +33,7 @@ import scala.collection.mutable.Builder
 
 import Document._
 import DocumentEncoder.DocumentEncoderMake
+import smithy4s.api.Discriminated
 
 trait DocumentEncoder[A] { self =>
 
@@ -163,29 +164,39 @@ object SchematicDocumentEncoder
 
   def genericStruct[S](fields: Vector[Field[DocumentEncoderMake, S, _]])(
       const: Vector[Any] => S
-  ): DocumentEncoderMake[S] = {
-    def fieldEncoder[A](
-        field: Field[DocumentEncoderMake, S, A]
-    ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
-      val encoder = field.instance
-      (s, builder) =>
-        field.foreachT(s) { t =>
-          val jsonLabel = field.instance.hints
-            .get(JsonName)
-            .map(_.value)
-            .getOrElse(field.label)
+  ): DocumentEncoderMake[S] =
+    Hinted[DocumentEncoder].onHintOpt[DiscriminatedUnionMember, S] {
+      maybeDiscriminated =>
+        val discriminator = maybeDiscriminated.map { discriminated =>
+          (discriminated.propertyName -> Document.fromString(
+            discriminated.alternativeLabel
+          ))
+        }
+        def fieldEncoder[A](
+            field: Field[DocumentEncoderMake, S, A]
+        ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
+          val encoder = field.instance
+          (s, builder) =>
+            field.foreachT(s) { t =>
+              val jsonLabel = field.instance.hints
+                .get(JsonName)
+                .map(_.value)
+                .getOrElse(field.label)
 
-          builder.+=(jsonLabel -> encoder.get.apply(t))
+              builder.+=(jsonLabel -> encoder.get.apply(t))
+            }
+        }
+
+        val encoders = fields.map(field => fieldEncoder(field))
+        new DocumentEncoder[S] {
+          def apply: S => Document = { s =>
+            val builder = Map.newBuilder[String, Document]
+            encoders.foreach(_(s, builder))
+            DObject(builder.result() ++ discriminator)
+          }
+          def canBeKey: Boolean = false
         }
     }
-
-    val encoders = fields.map(field => fieldEncoder(field))
-    fromNotKey { s =>
-      val builder = Map.newBuilder[String, Document]
-      encoders.foreach(_(s, builder))
-      DObject(builder.result())
-    }
-  }
 
   def union[S](
       first: Alt[DocumentEncoderMake, S, _],
@@ -193,25 +204,59 @@ object SchematicDocumentEncoder
   )(
       total: S => Alt.WithValue[DocumentEncoderMake, S, _]
   ): DocumentEncoderMake[S] = {
-
     def jsonLabel[A](alt: Alt[DocumentEncoderMake, S, A]): String =
       alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+    val handle = handleUnion(first, rest, total) _
+    Hinted[DocumentEncoder].onHintOpt[Discriminated, S] {
+      case Some(discriminated) =>
+        handle(
+          (alt: Alt[DocumentEncoderMake, S, _]) =>
+            alt.instance.addHints(
+              Hints(
+                DiscriminatedUnionMember(
+                  discriminated.value,
+                  jsonLabel(alt)
+                )
+              )
+            ),
+          (alt: Alt[DocumentEncoderMake, S, _], doc: Document) => doc
+        )
+      case None =>
+        handle(
+          (alt: Alt[DocumentEncoderMake, S, _]) => alt.instance,
+          (alt: Alt[DocumentEncoderMake, S, _], doc: Document) =>
+            Document.obj(jsonLabel(alt) -> doc)
+        )
 
+    }
+  }
+
+  private def handleUnion[S](
+      first: Alt[DocumentEncoderMake, S, _],
+      rest: Vector[Alt[DocumentEncoderMake, S, _]],
+      total: S => Alt.WithValue[DocumentEncoderMake, S, _]
+  )(
+      alterEncoder: Alt[DocumentEncoderMake, S, _] => DocumentEncoderMake[_],
+      alterDocument: (Alt[DocumentEncoderMake, S, _], Document) => Document
+  ): DocumentEncoder[S] = {
     val encoders: Map[Alt[DocumentEncoderMake, S, Any], Any => Document] =
       (first +: rest).map { alt =>
-        val instance = alt.instance
+        val instance = alterEncoder(alt)
         val encoder = instance.get.apply
         alt.asInstanceOf[Alt[DocumentEncoderMake, S, Any]] -> encoder
           .asInstanceOf[Any => Document]
       }.toMap
 
-    fromNotKey { s =>
-      val awv = total(s)
-      val altDoc =
-        encoders(awv.alt.asInstanceOf[Alt[DocumentEncoderMake, S, Any]])(
-          awv.value
-        )
-      Document.obj(jsonLabel(awv.alt) -> altDoc)
+    new DocumentEncoder[S] {
+      def apply: S => Document = { s =>
+        val awv = total(s)
+        val altDoc =
+          encoders(awv.alt.asInstanceOf[Alt[DocumentEncoderMake, S, Any]])(
+            awv.value
+          )
+        alterDocument(awv.alt, altDoc)
+      }
+      def canBeKey: Boolean = false
     }
   }
 

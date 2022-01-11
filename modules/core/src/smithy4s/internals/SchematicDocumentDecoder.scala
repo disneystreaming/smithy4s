@@ -33,6 +33,7 @@ import java.util.UUID
 
 import Document._
 import DocumentDecoder.DocumentDecoderMake
+import smithy4s.api.Discriminated
 
 trait DocumentDecoder[A] { self =>
 
@@ -344,49 +345,104 @@ object SchematicDocumentDecoder
     }
   }
 
+  private def handleUnion[S](
+      f: (List[PayloadPath.Segment], Document) => S
+  ): DocumentDecoder[S] =
+    new DocumentDecoder[S] {
+      def expected: String = "Union"
+      def apply(pp: List[PayloadPath.Segment], document: Document): S =
+        f(pp, document)
+      def canBeKey: Boolean = false
+    }
+
+  private type DecoderMap[S] =
+    Map[String, (List[PayloadPath.Segment], Document) => S]
+
+  private def discriminatedUnion[S](
+      discriminated: Discriminated,
+      decoders: DecoderMap[S]
+  ): DocumentDecoder[S] = handleUnion {
+    (pp: List[PayloadPath.Segment], document: Document) =>
+      document match {
+        case DObject(map) =>
+          map
+            .get(discriminated.value) match {
+            case Some(value: Document.DString) =>
+              decoders.get(value.value) match {
+                case Some(decoder) => decoder(pp, document)
+                case None =>
+                  throw new PayloadError(
+                    PayloadPath(pp.reverse),
+                    "Union",
+                    s"Unknown discriminator: ${value.value}"
+                  )
+              }
+            case _ =>
+              throw new PayloadError(
+                PayloadPath(pp.reverse),
+                "Union",
+                s"Unable to locate discriminator under property '${discriminated.value}'"
+              )
+          }
+        case other =>
+          throw new PayloadError(
+            PayloadPath(pp.reverse),
+            "Union",
+            s"Expected DObject, but found $other"
+          )
+
+      }
+  }
+
+  private def taggedUnion[S](
+      decoders: DecoderMap[S]
+  ): DocumentDecoder[S] = handleUnion {
+    (pp: List[PayloadPath.Segment], document: Document) =>
+      document match {
+        case DObject(map) if (map.size == 1) =>
+          val (key: String, value: Document) = map.head
+          decoders.get(key) match {
+            case Some(decoder) => decoder(pp, value)
+            case None =>
+              throw new PayloadError(
+                PayloadPath(pp.reverse),
+                "Union",
+                s"Unknown discriminator: $key"
+              )
+          }
+        case _ =>
+          throw new PayloadError(
+            PayloadPath(pp.reverse),
+            "Union",
+            "Expected a single-key Json object"
+          )
+      }
+
+  }
+
   def union[S](
       first: Alt[DocumentDecoderMake, S, _],
       rest: Vector[Alt[DocumentDecoderMake, S, _]]
   )(
       total: S => Alt.WithValue[DocumentDecoderMake, S, _]
-  ): DocumentDecoderMake[S] = Hinted.static {
-    new DocumentDecoder[S] {
+  ): DocumentDecoderMake[S] = {
+    def jsonLabel[A](alt: Alt[DocumentDecoderMake, S, A]): String =
+      alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-      def jsonLabel[A](alt: Alt[DocumentDecoderMake, S, A]): String =
-        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
-
-      val decoders: Map[String, (List[PayloadPath.Segment], Document) => S] =
-        (first +: rest).map { case alt @ Alt(_, instance, inject) =>
-          val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
-            inject(instance.get.apply(jsonLabel(alt) :: pp, doc))
-          }
-          jsonLabel(alt) -> encoder
-        }.toMap
-
-      def expected: String = "Union"
-      def apply(pp: List[PayloadPath.Segment], document: Document): S = {
-        document match {
-          case DObject(map) if (map.size == 1) =>
-            val (key: String, value: Document) = map.head
-            decoders.get(key) match {
-              case Some(decoder) => decoder(pp, value)
-              case None =>
-                throw new PayloadError(
-                  PayloadPath(pp.reverse),
-                  "Union",
-                  s"Unknown discriminator: $key"
-                )
-            }
-          case _ =>
-            throw new PayloadError(
-              PayloadPath(pp.reverse),
-              "Union",
-              "Expected a single-key Json object"
-            )
+    val decoders: DecoderMap[S] =
+      (first +: rest).map { case alt @ Alt(_, instance, inject) =>
+        val label = jsonLabel(alt)
+        val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
+          inject(instance.get.apply(label :: pp, doc))
         }
-      }
+        jsonLabel(alt) -> encoder
+      }.toMap
 
-      def canBeKey: Boolean = false
+    Hinted[DocumentDecoder].onHintOpt[Discriminated, S] {
+      case Some(discriminated) =>
+        discriminatedUnion(discriminated, decoders)
+      case None =>
+        taggedUnion(decoders)
     }
   }
 

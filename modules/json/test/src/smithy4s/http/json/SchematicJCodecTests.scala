@@ -23,6 +23,7 @@ import smithy.api.JsonName
 import smithy4s.http.PayloadError
 import smithy4s.syntax._
 import weaver._
+import smithy4s.api.Discriminated
 
 import scala.collection.immutable.ListMap
 
@@ -54,6 +55,29 @@ object SchematicJCodecTests extends SimpleIOSuite {
     implicit val staticSchema: schematic.Static[smithy4s.Schema[IntList]] =
       schematic.Static(schema)
   }
+
+  case class Baz(str: String)
+  case class Bin(str: String, int: Int)
+
+  implicit val eitherBazBinSchema: Static[Schema[Either[Baz, Bin]]] =
+    Static {
+      val left = struct(string.required[Baz]("str", _.str))(Baz.apply)
+        .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
+
+      val right = struct(
+        string.required[Bin]("str", _.str).withHints(JsonName("binStr")),
+        int.required[Bin]("int", _.int)
+      )(Bin.apply)
+        .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
+        .withHints(JsonName("binBin"))
+
+      union(left, right) {
+        case Left(f)  => left(f)
+        case Right(b) => right(b)
+      }.withHints(
+        Discriminated("type")
+      )
+    }
 
   pureTest(
     "Compiling a codec for a recursive type should not blow up the stack"
@@ -123,6 +147,24 @@ object SchematicJCodecTests extends SimpleIOSuite {
     val str = writeToString[Either[Int, String]](Right("foo"))
     expect(int == jsonInt) &&
     expect(str == jsonStr)
+  }
+
+  pureTest("Discriminated union gets encoded correctly") {
+    val jsonBaz = """{"type":"baz","str":"test"}"""
+    val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
+    val baz = writeToString[Either[Baz, Bin]](Left(Baz("test")))
+    val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
+    expect(baz == jsonBaz) &&
+    expect(bin == jsonBin)
+  }
+
+  pureTest("Discriminated union gets routed to the correct codec") {
+    val jsonBaz = """{"type":"baz","str":"test"}"""
+    val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
+    val baz = readFromString[Either[Baz, Bin]](jsonBaz)
+    val bin = readFromString[Either[Baz, Bin]](jsonBin)
+    expect(baz == Left(Baz("test"))) &&
+    expect(bin == Right(Bin("foo", 2022)))
   }
 
   pureTest("Union gets routed to the correct codec") {
