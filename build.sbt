@@ -420,7 +420,12 @@ lazy val dynamic = projectMatrix
     ),
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jvmPlatform(
+    allJvmScalaVersions,
+    jvmDimSettings ++ Seq(
+      libraryDependencies += Dependencies.Smithy.model % Test
+    )
+  )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
 
 /**

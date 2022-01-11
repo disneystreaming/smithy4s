@@ -6,7 +6,10 @@ metadata suppressions = [
     }
 ]
 
+
 namespace smithy4s.dynamic.model
+
+use smithy4s.api#discriminated
 
 /// This is a best-effort meta-representation of the smithy-model, that we should be able
 /// to deserialise from Json.
@@ -34,6 +37,7 @@ map TraitMap {
   value: Document
 }
 
+@discriminated("type")
 union Shape {
   blob: BlobShape,
   byte: ByteShape,
