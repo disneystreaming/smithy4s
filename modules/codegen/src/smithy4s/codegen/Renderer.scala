@@ -466,7 +466,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline, {
           val union =
             if (error)
-              s"val schema: $errorUnion_.Schema[$name] = (errors"
+              s"val schema: $errorUnion_.Schema[$name] = errors"
             else if (recursive)
               s"val schema: $Schema_[$name] = recursive(union"
             else
@@ -481,7 +481,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .appendToLast(
-              if (error) ")" else ".withHints(hints)"
+              if (error) "" else ".withHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
         },
