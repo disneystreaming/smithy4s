@@ -587,7 +587,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.16.1"
+    val smithyVersion = "1.16.2"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val awsTraits =
       "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
