@@ -113,7 +113,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     ){
       case c : ServerErrorCase => ServerErrorCase.alt(c)
       case c : NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
-    }).withHints(hints)
+    })
     implicit val staticSchema : schematic.Static[smithy4s.Schema[PutObjectError]] = schematic.Static(schema)
   }
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
@@ -163,7 +163,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       ServerErrorCase.alt,
     ){
       case c : ServerErrorCase => ServerErrorCase.alt(c)
-    }).withHints(hints)
+    })
     implicit val staticSchema : schematic.Static[smithy4s.Schema[GetObjectError]] = schematic.Static(schema)
   }
 }

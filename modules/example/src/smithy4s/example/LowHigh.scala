@@ -19,6 +19,6 @@ object LowHigh extends smithy4s.Enumeration[LowHigh] {
   )
 
   def to(e: LowHigh) : (String, Int) = (e.value, e.ordinal)
-  val schema: smithy4s.Schema[LowHigh] = (enumeration(to, valueMap, ordinalMap): smithy4s.Schema[LowHigh]).withHints(hints)
+  val schema: smithy4s.Schema[LowHigh] = enumeration(to, valueMap, ordinalMap).withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[LowHigh]] = schematic.Static(schema)
 }
