@@ -10,5 +10,6 @@ lazy val root = (project in file("."))
     Compile / smithy4sAllowedNamespaces := List(
       "aws.iam",
       "smithy4s.example"
-    )
+    ),
+    libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
