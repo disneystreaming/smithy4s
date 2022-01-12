@@ -15,6 +15,6 @@ object GetObjectInput {
     BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).withHints(smithy.api.Required(), smithy.api.HttpLabel()),
   ){
     GetObjectInput.apply
-  }
+  }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[GetObjectInput]] = schematic.Static(schema)
 }
