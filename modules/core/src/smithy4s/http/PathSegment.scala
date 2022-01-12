@@ -26,4 +26,5 @@ object PathSegment {
   case class StaticSegment(value: String) extends PathSegment
   case class LabelSegment(value: String) extends PathSegment
   case class GreedySegment(value: String) extends PathSegment
+
 }

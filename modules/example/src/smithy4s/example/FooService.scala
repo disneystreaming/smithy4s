@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.http
 import smithy4s.syntax._
 
 trait FooServiceGen[F[_, _, _, _, _]] {
@@ -48,7 +47,7 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
     }
   }
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing]
-  object GetFoo extends smithy4s.Endpoint[FooServiceOperation, Unit, Nothing, GetFooOutput, Nothing, Nothing] with http.HttpEndpoint[Unit] {
+  object GetFoo extends smithy4s.Endpoint[FooServiceOperation, Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetFoo")
     val input: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Input)
     val output: smithy4s.Schema[GetFooOutput] = GetFooOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
@@ -60,10 +59,6 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
       smithy.api.Readonly(),
     )
     def wrap(input: Unit) = GetFoo()
-    def path(input: Unit) = s"foo"
-    val path = List(http.PathSegment.static("foo"))
-    val code: Int = 200
-    val method: http.HttpMethod = http.HttpMethod.GET
   }
 }
 
