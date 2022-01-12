@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-import smithy4s.http.internals.URIEncoderDecoder
-
 package object smithy4s extends TypeAliases {
 
   type Hint = Hints.Binding[_]
@@ -26,9 +24,6 @@ package object smithy4s extends TypeAliases {
   type UnionSchema[A] = schematic.union.Schema[UnionSchematic, A]
 
   val errorTypeHeader = "X-Error-Type"
-
-  def segment(s: Any): String = URIEncoderDecoder.encodeOthers(s.toString())
-  def greedySegment(s: String) = s.split("/").map(segment).mkString("/")
 
   // Allows to "inject" F[_] types in places that require F[_,_,_,_,_]
   type GenLift[F[_]] = {
