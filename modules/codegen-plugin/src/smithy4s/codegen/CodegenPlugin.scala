@@ -51,6 +51,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       settingKey[List[String]](
         "List of dependencies containing smithy files to include in codegen task"
       )
+
+    val smithy4sModelTransformers =
+      settingKey[List[String]](
+        "List of transformer names that should be applied to the model prior to codegen"
+      )
   }
 
   import autoImport._
@@ -72,7 +77,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       Compile / resourceGenerators += (Compile / smithy4sCodegen).map(
         _.filter(_.ext != "scala")
       ),
-      cleanFiles += (Compile / smithy4sOutputDir).value
+      cleanFiles += (Compile / smithy4sOutputDir).value,
+      Compile / smithy4sModelTransformers := List.empty
     )
 
   private def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) =>
@@ -96,6 +102,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
       }
+    val transforms = (conf / smithy4sModelTransformers).value
     val s = streams.value
 
     val cached =
@@ -117,7 +124,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
                   skipOpenapi = false,
                   allowedNS = allowedNamespaces,
                   repositories = res,
-                  dependencies = dependencies
+                  dependencies = dependencies,
+                  transforms
                 )
                 val resPaths = smithy4s.codegen.Codegen
                   .processSpecs(codegenArgs)

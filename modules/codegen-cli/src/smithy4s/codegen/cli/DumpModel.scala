@@ -25,7 +25,8 @@ object DumpModel {
     val (_, model) = ModelLoader.load(
       args.specs.map(_.toIO).toSet,
       args.dependencies,
-      args.repositories
+      args.repositories,
+      args.transformers
     )
 
     Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))

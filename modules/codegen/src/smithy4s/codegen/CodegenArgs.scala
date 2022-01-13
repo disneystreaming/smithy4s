@@ -24,5 +24,6 @@ case class CodegenArgs(
     skipOpenapi: Boolean,
     allowedNS: Option[Set[String]],
     repositories: List[String],
-    dependencies: List[String]
+    dependencies: List[String],
+    transformers: List[String]
 )
