@@ -72,8 +72,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       Compile / resourceGenerators += (Compile / smithy4sCodegen).map(
         _.filter(_.ext != "scala")
       ),
-      cleanFiles += (Compile / smithy4sOutputDir).value,
-      libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % BuildInfo.version
+      cleanFiles += (Compile / smithy4sOutputDir).value
     )
 
   private def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) =>

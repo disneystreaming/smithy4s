@@ -118,7 +118,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "empty.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     testFrameworks += new TestFramework("weaver.framework.CatsEffect")
@@ -588,7 +589,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.16.1"
+    val smithyVersion = "1.16.2"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val awsTraits =
       "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion

@@ -134,6 +134,10 @@ object Hinted {
     def from[A](f: Hints => F[A]): Hinted[F, A] = Hinted(Hints(), f(_))
     def onHintOpt[H: Hints.Key, A](f: Option[H] => F[A]): Hinted[F, A] =
       Hinted(Hints(), (h: Hints) => f(h.get[H]))
+    def onHintsOpt[H1: Hints.Key, H2: Hints.Key, A](
+        f: (Option[H1], Option[H2]) => F[A]
+    ): Hinted[F, A] =
+      Hinted(Hints(), (h: Hints) => f(h.get[H1], h.get[H2]))
     def onHint[H: Hints.Key, A](default: H)(f: H => F[A]): Hinted[F, A] =
       Hinted(Hints(), (h: Hints) => f(h.get[H].getOrElse(default)))
     def static[A](fa: F[A]): Hinted[F, A] =

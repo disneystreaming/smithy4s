@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy.api.JsonName
+import smithy4s.api.Discriminated
 import smithy4s.example.IntList
 import weaver._
 
@@ -66,6 +67,47 @@ object DocumentSpec extends FunSuite {
       }
     }
 
+  case class Foo(str: String)
+  case class Bar(str: String, int: Int)
+
+  implicit val eitherFooBarSchema: Static[Schema[Either[Foo, Bar]]] =
+    Static {
+      val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
+        .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
+
+      val right = struct(
+        string.required[Bar]("str", _.str).withHints(JsonName("barStr")),
+        int.required[Bar]("int", _.int)
+      )(Bar.apply)
+        .oneOf[Either[Foo, Bar]]("bar", (b: Bar) => Right(b))
+        .withHints(JsonName("barBar"))
+
+      union(left, right) {
+        case Left(f)  => left(f)
+        case Right(b) => right(b)
+      }.withHints(
+        Discriminated("type")
+      )
+    }
+
+  case class Baz()
+
+  implicit val eitherFooBazSchema: Static[Schema[Either[Foo, Baz]]] =
+    Static {
+      val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
+        .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))
+
+      val right = genericStruct(Vector.empty)(_ => Baz())
+        .oneOf[Either[Foo, Baz]]("baz", (b: Baz) => Right(b))
+
+      union(left, right) {
+        case Left(f)  => left(f)
+        case Right(b) => right(b)
+      }.withHints(
+        Discriminated("type")
+      )
+    }
+
   test("jsonName is handled correctly on structures") {
     val intAndString: (Int, String) = (1, "hello")
 
@@ -97,6 +139,40 @@ object DocumentSpec extends FunSuite {
 
     expect(document == expectedDocument) &&
     expect(roundTripped == Right(intOrString))
+  }
+
+  test("discriminated unions encoding") {
+    val fooOrBar: Either[Foo, Bar] = Right(Bar("hello", 2022))
+
+    val document = Document.encode(fooOrBar)
+    import Document._
+    val expectedDocument =
+      obj(
+        "barStr" -> fromString("hello"),
+        "int" -> fromInt(2022),
+        "type" -> fromString("barBar")
+      )
+
+    val roundTripped = Document.decode[Either[Foo, Bar]](document)
+
+    expect(document == expectedDocument) &&
+    expect(roundTripped == Right(fooOrBar))
+  }
+
+  test("discriminated unions encoding - empty structure alternative") {
+    val fooOrBaz: Either[Foo, Baz] = Right(Baz())
+
+    val document = Document.encode(fooOrBaz)
+    import Document._
+    val expectedDocument =
+      obj(
+        "type" -> fromString("baz")
+      )
+
+    val roundTripped = Document.decode[Either[Foo, Baz]](document)
+
+    expect(document == expectedDocument) &&
+    expect(roundTripped == Right(fooOrBaz))
   }
 
 }
