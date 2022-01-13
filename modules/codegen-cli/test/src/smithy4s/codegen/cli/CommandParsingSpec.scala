@@ -33,7 +33,8 @@ object CommandParsingSpec extends FunSuite {
               skipOpenapi = false,
               allowedNS = None,
               repositories = Nil,
-              dependencies = Nil
+              dependencies = Nil,
+              transformers = Nil
             )
           )
         )
@@ -56,7 +57,9 @@ object CommandParsingSpec extends FunSuite {
         "--repositories",
         "repo1,repo2",
         "--dependencies",
-        "dep1,dep2"
+        "dep1,dep2",
+        "--transformers",
+        "t1,t2"
       )
     )
 
@@ -75,7 +78,8 @@ object CommandParsingSpec extends FunSuite {
               skipOpenapi = true,
               allowedNS = Some(Set("name1", "name2")),
               repositories = List("repo1", "repo2"),
-              dependencies = List("dep1", "dep2")
+              dependencies = List("dep1", "dep2"),
+              transformers = List("t1", "t2")
             )
           )
         )
@@ -90,7 +94,8 @@ object CommandParsingSpec extends FunSuite {
             Smithy4sCommand.DumpModelArgs(
               specs = Nil,
               repositories = Nil,
-              dependencies = Nil
+              dependencies = Nil,
+              transformers = Nil
             )
           )
         )
@@ -105,7 +110,9 @@ object CommandParsingSpec extends FunSuite {
         "--repositories",
         "repo1,repo2",
         "--dependencies",
-        "dep1,dep2"
+        "dep1,dep2",
+        "--transformers",
+        "t1,t2"
       )
     )
     assert(
@@ -118,7 +125,8 @@ object CommandParsingSpec extends FunSuite {
                 os.pwd / "sampleSpecs" / "example.smithy"
               ),
               repositories = List("repo1", "repo2"),
-              dependencies = List("dep1", "dep2")
+              dependencies = List("dep1", "dep2"),
+              transformers = List("t1", "t2")
             )
           )
         )
