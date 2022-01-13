@@ -362,7 +362,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             )
             .block(s"$name.apply")
-            .appendToLast(if (hints.nonEmpty) ".withHints(hints)" else "")
+            .appendToLast(".withHints(hints)")
             .appendToLast(if (recursive) ")" else "")
         } else {
           line(

@@ -15,6 +15,6 @@ object GetObjectOutput {
     string.optional[GetObjectOutput]("data", _.data).withHints(smithy.api.HttpPayload()),
   ){
     GetObjectOutput.apply
-  }
+  }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[GetObjectOutput]] = schematic.Static(schema)
 }
