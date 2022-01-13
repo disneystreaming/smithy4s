@@ -30,6 +30,6 @@ object Foo {
   ){
     case c : IntCase => IntCase.alt(c)
     case c : StrCase => StrCase.alt(c)
-  }
+  }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[Foo]] = schematic.Static(schema)
 }

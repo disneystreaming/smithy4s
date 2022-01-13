@@ -104,10 +104,6 @@ object Timestamp extends TimePlatformCompat {
     def timestamp: F[Timestamp]
   }
 
-  trait Syntax {
-    val timestamp: schematic.Schema[Schematic, Timestamp] = Schema
-  }
-
   private[smithy4s] implicit class sbExt(val sb: StringBuilder) extends AnyVal {
     def appendTime(i: Int): StringBuilder =
       (if (i < 10) sb.append(0) else sb).append(i)

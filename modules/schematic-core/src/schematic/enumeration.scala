@@ -39,12 +39,12 @@ object enumeration {
   }
 
   trait Syntax {
-    def enumeration[H, S[x[_]] <: Schematic[x], A](
+    def enumeration[A](
         to: A => (String, Int),
         fromName: Map[String, A],
         fromOrdinal: Map[Int, A]
-    ): schematic.Schema[S, A] =
-      new Schema[S, A](to, fromName, fromOrdinal)
+    ): schematic.Schema[Schematic, A] =
+      new Schema[Schematic, A](to, fromName, fromOrdinal)
   }
 
 }

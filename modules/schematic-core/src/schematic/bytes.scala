@@ -22,12 +22,12 @@ object bytes {
     def bytes: F[ByteArray]
   }
 
-  class Schema() extends schematic.Schema[Schematic, ByteArray] {
+  object Schema extends schematic.Schema[Schematic, ByteArray] {
     def compile[F[_]](s: Schematic[F]): F[ByteArray] = s.bytes
   }
 
   trait Syntax {
-    object bytes extends Schema()
+    val bytes: schematic.Schema[Schematic, ByteArray] = Schema
   }
 
 }

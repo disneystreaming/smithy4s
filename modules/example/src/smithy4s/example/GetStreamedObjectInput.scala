@@ -14,6 +14,6 @@ object GetStreamedObjectInput {
     string.required[GetStreamedObjectInput]("key", _.key).withHints(smithy.api.Required()),
   ){
     GetStreamedObjectInput.apply
-  }
+  }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[GetStreamedObjectInput]] = schematic.Static(schema)
 }
