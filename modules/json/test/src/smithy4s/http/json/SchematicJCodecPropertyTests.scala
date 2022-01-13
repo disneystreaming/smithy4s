@@ -144,7 +144,7 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
           schematic.string.Schema
         ),
         schematic.string.Schema,
-        new schematic.bytes.Schema()
+        schematic.bytes.Schema
       ).map(_.withHints(Hints(l))).asInstanceOf[Vector[Schema[DynData]]]
     )
 

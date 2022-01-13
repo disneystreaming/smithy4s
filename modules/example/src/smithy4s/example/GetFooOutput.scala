@@ -14,6 +14,6 @@ object GetFooOutput {
     Foo.schema.optional[GetFooOutput]("foo", _.foo),
   ){
     GetFooOutput.apply
-  }
+  }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[GetFooOutput]] = schematic.Static(schema)
 }

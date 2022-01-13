@@ -352,7 +352,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             )
             .block(s"$name.apply")
-            .appendToLast(if (hints.nonEmpty) ".withHints(hints)" else "")
+            .appendToLast(".withHints(hints)")
             .appendToLast(if (recursive) ")" else "")
         } else {
           line(
@@ -437,7 +437,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 s"case c : $caseName => $caseName.alt(c)"
               }
             }
-            .appendToLast(if (hints.nonEmpty) ".withHints(hints)" else "")
+            .appendToLast(
+              if (error) "" else ".withHints(hints)"
+            )
             .appendToLast(if (recursive) ")" else "")
         },
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
@@ -462,6 +464,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     obj(name, ext = s"$Enumeration_[$name]", w = hintKey(name, hints))(
       renderId(name),
       newline,
+      renderHintsValWithId(hints),
+      newline,
       values.zipWithIndex.map { case (e @ EnumValue(value, _, _), index) =>
         line(
           s"""case object ${e.className} extends $name("$value", $index)"""
@@ -474,7 +478,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       line(s"def to(e: $name) : (String, Int) = (e.value, e.ordinal)"),
       lines(
-        s"val schema: $Schema_[$name] = enumeration(to, valueMap, ordinalMap)",
+        s"val schema: $Schema_[$name] = enumeration(to, valueMap, ordinalMap).withHints(hints)",
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     )
@@ -487,19 +491,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
-    val (hintsVal, withHints) =
-      if (hints.nonEmpty)
-        (
-          renderHintsValWithId(hints),
-          ".withHints(hints)"
-        )
-      else (RenderResult.empty, "")
-
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
         renderId(name),
-        hintsVal,
-        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$withHints",
+        renderHintsValWithId(hints),
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withHints(hints)",
         lines(
           s"val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)",
           s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"

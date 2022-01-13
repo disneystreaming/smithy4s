@@ -18,6 +18,6 @@ object PutObjectInput {
     SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).withHints(smithy.api.HttpQuery("paramName")),
   ){
     PutObjectInput.apply
-  }
+  }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[PutObjectInput]] = schematic.Static(schema)
 }
