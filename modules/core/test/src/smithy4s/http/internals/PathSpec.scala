@@ -55,10 +55,13 @@ object PathSpec extends weaver.FunSuite {
         )
       )
 
-    assert.eql(
-      result,
+    val expected = if (weaver.Platform.isJS) {
+      "dummy-path/example+with+spaces%2C+%25%2C+%2F+and+%5C/10/1970-01-01T00%3A00%3A00.000Z/1970-01-01T00%3A00%3A00.000Z/0/Thu%2C+01+Jan+1970+00%3A00%3A00+GMT/true"
+    } else {
       "dummy-path/example+with+spaces%2C+%25%2C+%2F+and+%5C/10/1970-01-01T00%3A00%3A00Z/1970-01-01T00%3A00%3A00Z/0/Thu%2C+01+Jan+1970+00%3A00%3A00+GMT/true"
-    )
+    }
+
+    assert.eql(result, expected)
   }
 
 }
