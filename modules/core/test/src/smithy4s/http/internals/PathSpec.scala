@@ -22,7 +22,7 @@ import smithy4s.example.PathParams
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
 
-object PathParsingSpec extends weaver.FunSuite {
+object PathSpec extends weaver.FunSuite {
 
   test("Parse path pattern into path segments") {
     val result = pathSegments("/{head}/foo/{tail+}")
@@ -55,10 +55,9 @@ object PathParsingSpec extends weaver.FunSuite {
         )
       )
 
-    // todo this should probably be URLencoded already
     assert.eql(
       result,
-      "dummy-path/example with spaces, %, / and \\/10/1970-01-01T00:00:00Z/1970-01-01T00:00:00Z/0/Thu, 01 Jan 1970 00:00:00 GMT/true"
+      "dummy-path/example+with+spaces%2C+%25%2C+%2F+and+%5C/10/1970-01-01T00%3A00%3A00Z/1970-01-01T00%3A00%3A00Z/0/Thu%2C+01+Jan+1970+00%3A00%3A00+GMT/true"
     )
   }
 

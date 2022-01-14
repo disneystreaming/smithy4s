@@ -45,12 +45,12 @@ object PathEncode {
     def raw[A](f: A => String): PathEncode[A] = {
       new PathEncode[A] {
         def encode(sb: StringBuilder, a: A): Unit = {
-          val _ = sb.append(URIEncoderDecoder.encodeOthers(f(a)))
+          val _ = sb.append(URIEncoderDecoder.encode(f(a)))
         }
         def encodeGreedy(sb: StringBuilder, a: A): Unit = {
           f(a).split('/').foreach {
             case s if s.isEmpty() => ()
-            case s => sb.append('/').append(URIEncoderDecoder.encodeOthers(s))
+            case s => sb.append('/').append(URIEncoderDecoder.encode(s))
           }
         }
       }
