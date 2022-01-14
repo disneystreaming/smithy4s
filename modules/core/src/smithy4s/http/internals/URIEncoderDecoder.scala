@@ -19,113 +19,66 @@ package http
 package internals
 
 import java.io.ByteArrayOutputStream
-import java.net._
+import scala.annotation.tailrec
 
 private[smithy4s] object URIEncoderDecoder {
 
   val digits: String = "0123456789ABCDEF"
-
   val encoding: String = "UTF8"
 
-  def validate(s: String, legal: String): Unit = {
-    var i: Int = 0
-    while (i < s.length) {
-      var continue = false
-      val ch: Char = s.charAt(i)
-      if (ch == '%') {
-        continue = true
-        while ({
-          if (i + 2 >= s.length) {
-            throw new URISyntaxException(s, "Incomplete % sequence", i)
-          }
-          val d1: Int = java.lang.Character.digit(s.charAt(i + 1), 16)
-          val d2: Int = java.lang.Character.digit(s.charAt(i + 2), 16)
-          if (d1 == -1 || d2 == -1) {
-            throw new URISyntaxException(
-              s,
-              "Invalid % sequence (" + s.substring(i, i + 3) + ")",
-              i
-            )
-          }
-          i += 3
-          // loop condition
-          // Scala 3 dropped do-while loops
-          // this is the recommended rewrite:
-          // https://docs.scala-lang.org/scala3/reference/dropped-features/do-while.html
-          (i < s.length && s.charAt(i) == '%')
-        }) {}
-      } else if (
-        !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-          (ch >= '0' && ch <= '9') ||
-          legal.indexOf(ch.toInt) > -1 ||
-          (ch > 127 && !java.lang.Character.isSpaceChar(
-            ch
-          ) && !java.lang.Character
-            .isISOControl(ch)))
-      ) {
-        throw new URISyntaxException(s, "Illegal character", i)
-      }
-      if (!continue) i += 1
+  def encode(s: String): String = {
+    if (s == null) {
+      throw new NullPointerException
     }
-  }
-
-  def validateSimple(s: String, legal: String): Unit = {
-    var i: Int = 0
-    while (i < s.length) {
-      val ch: Char = s.charAt(i)
-      if (
-        !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-          (ch >= '0' && ch <= '9') ||
-          legal.indexOf(ch.toInt) > -1)
-      ) {
-        throw new URISyntaxException(s, "Illegal character", i)
-      }
-      i += 1
-    }
-  }
-
-  def quoteIllegal(s: String, legal: String): String = {
-    val buf: StringBuilder = new StringBuilder()
-    for (i <- 0 until s.length) {
-      val ch: Char = s.charAt(i)
-      if (
-        (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-        (ch >= '0' && ch <= '9') ||
-        legal.indexOf(ch.toInt) > -1 ||
-        (ch > 127 && !java.lang.Character.isSpaceChar(
-          ch
-        ) && !java.lang.Character
-          .isISOControl(ch))
-      ) {
-        buf.append(ch)
-      } else {
-        val bytes: Array[Byte] = new String(Array(ch)).getBytes(encoding)
-        for (j <- bytes.indices) {
-          buf.append('%')
-          buf.append(digits.charAt((bytes(j) & 0xf0) >> 4))
-          buf.append(digits.charAt(bytes(j) & 0xf))
+    val buf = new java.lang.StringBuilder(s.length + 16)
+    var start = -1
+    @tailrec
+    def loop(i: Int): Unit = {
+      if (i < s.length) {
+        val ch: Char = s.charAt(i)
+        if (
+          (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || " .-*_"
+            .indexOf(ch.toInt) > -1
+        ) {
+          if (start >= 0) {
+            encodeOthers(s.substring(start, i), buf, encoding)
+            start = -1
+          }
+          if (ch != ' ') {
+            buf.append(ch)
+          } else {
+            buf.append('+')
+          }
+        } else if (start < 0) {
+          start = i
         }
+        loop(i + 1)
       }
+    }
+    loop(0)
+
+    if (start >= 0) {
+      encodeOthers(s.substring(start, s.length), buf, encoding)
     }
     buf.toString
   }
 
-  def encodeOthers(s: String): String = {
-    val buf: StringBuilder = new StringBuilder()
-    for (i <- 0 until s.length) {
-      val ch: Char = s.charAt(i)
-      if (ch <= 127) {
-        buf.append(ch)
-      } else {
-        val bytes: Array[Byte] = new String(Array(ch)).getBytes(encoding)
-        for (j <- bytes.indices) {
-          buf.append('%')
-          buf.append(digits.charAt((bytes(j) & 0xf0) >> 4))
-          buf.append(digits.charAt(bytes(j) & 0xf))
-        }
+  private def encodeOthers(
+      s: String,
+      buf: java.lang.StringBuilder,
+      enc: String
+  ): Unit = {
+    val bytes = s.getBytes(enc)
+    @tailrec
+    def loop(j: Int): Unit = {
+      if (j < bytes.length) {
+        buf.append('%')
+        buf.append(digits((bytes(j) & 0xf0) >> 4))
+        buf.append(digits(bytes(j) & 0xf))
+        loop(j + 1)
       }
     }
-    buf.toString
+    loop(0)
   }
 
   def decode(s: String): String = {

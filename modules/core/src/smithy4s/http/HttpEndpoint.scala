@@ -17,6 +17,9 @@
 package smithy4s
 package http
 
+import smithy4s.syntax._
+import smithy.api.Http
+
 trait HttpEndpoint[I] {
   def path(input: I): String
   def path: List[PathSegment]
@@ -36,8 +39,27 @@ object HttpEndpoint {
 
   def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = endpoint match {
-    case he: HttpEndpoint[_] => Some(he.asInstanceOf[HttpEndpoint[I]])
-    case _                   => None
+  ): Option[HttpEndpoint[I]] = {
+    for {
+      http <- endpoint.hints.get(Http)
+      httpMethod <- HttpMethod.fromString(http.method.value)
+      httpPath <- internals.pathSegments(http.uri.value)
+      encoder <- endpoint.input
+        .withHints(http)
+        .compile(internals.SchematicPathEncoder)
+        .get
+    } yield {
+      new HttpEndpoint[I] {
+        def path(input: I): String = {
+          val sb = new StringBuilder()
+          encoder.encode(sb, input)
+          sb.result()
+        }
+        val path: List[PathSegment] = httpPath.toList
+        val method: HttpMethod = httpMethod
+        val code: Int = http.code.getOrElse(200)
+      }
+    }
   }
+
 }

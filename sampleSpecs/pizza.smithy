@@ -60,6 +60,7 @@ structure AddMenuItemResult {
   added: Timestamp
 }
 
+@readonly
 @http(method: "GET", uri: "/version", code: 200)
 operation Version {
   output: VersionOutput

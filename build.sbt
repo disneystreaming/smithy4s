@@ -284,7 +284,6 @@ lazy val `aws-http4s` = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json"
     )
   )
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
 

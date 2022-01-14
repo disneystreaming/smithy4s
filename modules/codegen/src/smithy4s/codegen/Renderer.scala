@@ -245,7 +245,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val opName = op.name
     val traitName = s"${serviceName}Operation"
-    val inputName = op.input.render
     val input =
       if (op.input == Type.unit) "" else "input"
     val errorName = if (op.errors.isEmpty) "Nothing" else s"${op.name}Error"
@@ -253,13 +252,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val errorable = if (op.errors.nonEmpty) {
       s" with $Errorable_[$errorName]"
     } else ""
-
-    val httpEndpoint =
-      op.hints
-        .collectFirst { case Hint.Http(_, _, _) =>
-          s" with http.HttpEndpoint[$inputName]"
-        }
-        .getOrElse("")
 
     val errorUnion: Option[Union] = for {
       errorNel <- NonEmptyList.fromList(op.errors)
@@ -277,8 +269,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       s"case class $opName($params) extends $traitName[${op.renderAlgParams}]",
       obj(
         opName,
-        ext =
-          s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$httpEndpoint$errorable"
+        ext = s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
         s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
@@ -287,8 +278,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsValWithId(op.hints),
         s"def wrap(input: ${op.input.render}) = ${opName}($input)",
-        renderErrorable(op),
-        renderHttpSpecific(op)
+        renderErrorable(op)
       ),
       renderedErrorUnion
     ).addImports(op.imports).addImports(syntaxImport)
@@ -372,39 +362,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     ).addImports(imports)
-  }
-
-  private def renderHttpSpecific(op: Operation): RenderResult = lines {
-    op.hints
-      .collectFirst { case Hint.Http(method, uriPattern, code) =>
-        val segments = uriPattern
-          .map {
-            case Segment.Label(value) =>
-              s"""http.PathSegment.label("$value")"""
-            case Segment.GreedyLabel(value) =>
-              s"""http.PathSegment.greedy("$value")"""
-            case Segment.Static(value) =>
-              s"""http.PathSegment.static("$value")"""
-          }
-          .mkString("List(", ", ", ")")
-
-        val uriValue = uriPattern
-          .map {
-            case Segment.Label(value) =>
-              s"$${smithy4s.segment(input.$value)}"
-            case Segment.GreedyLabel(value) =>
-              s"$${smithy4s.greedySegment(input.$value)}"
-            case Segment.Static(value) => value
-          }
-          .mkString("s\"", "/", "\"")
-        lines(
-          s"def path(input: ${op.input.render}) = $uriValue",
-          s"val path = $segments",
-          s"val code: Int = $code",
-          s"val method: http.HttpMethod = http.HttpMethod.$method"
-        ).addImports(Set("smithy4s.http"))
-      }
-      .getOrElse(empty)
   }
 
   private def renderErrorable(op: Operation): RenderResult = {
