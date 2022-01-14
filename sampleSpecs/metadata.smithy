@@ -4,11 +4,19 @@ namespace smithy4s.example
 /// when testing core
 service DummyService {
   version: "0.0",
-  operations: [Dummy]
+  operations: [Dummy, DummyPath]
 }
 
+@http(method: "GET", uri: "/dummy")
+@readonly
 operation Dummy {
   input: Queries
+}
+
+@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}")
+@readonly
+operation DummyPath {
+  input: PathParams
 }
 
 structure Queries {
@@ -58,6 +66,7 @@ structure Headers {
   @httpPrefixHeaders("foo-")
   slm: StringMap
 }
+
 
 structure PathParams {
   @httpLabel

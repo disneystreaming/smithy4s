@@ -16,6 +16,10 @@
 
 package smithy4s.http.internals
 
+import smithy4s.Timestamp
+import smithy4s.example.DummyServiceGen.DummyPath
+import smithy4s.example.PathParams
+import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
 
 object PathParsingSpec extends weaver.FunSuite {
@@ -30,6 +34,31 @@ object PathParsingSpec extends weaver.FunSuite {
           PathSegment.greedy("tail")
         )
       )
+    )
+  }
+
+  test("Write PathParams") {
+    val result = HttpEndpoint
+      .cast(
+        DummyPath
+      )
+      .get
+      .path(
+        PathParams(
+          "example with spaces, %, / and \\",
+          10,
+          Timestamp.fromEpochSecond(0L),
+          Timestamp.fromEpochSecond(0L),
+          Timestamp.fromEpochSecond(0L),
+          Timestamp.fromEpochSecond(0L),
+          true
+        )
+      )
+
+    // todo this should probably be URLencoded already
+    assert.eql(
+      result,
+      "dummy-path/example with spaces, %, / and \\/10/1970-01-01T00:00:00Z/1970-01-01T00:00:00Z/0/Thu, 01 Jan 1970 00:00:00 GMT/true"
     )
   }
 

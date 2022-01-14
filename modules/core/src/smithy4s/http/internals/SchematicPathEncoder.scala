@@ -59,8 +59,14 @@ object SchematicPathEncoder
   override val uuid: PathEncode.Make[java.util.UUID] =
     PathEncode.Make.fromToString
   override val boolean: PathEncode.Make[Boolean] = PathEncode.Make.fromToString
+
   override val timestamp: PathEncode.Make[Timestamp] =
-    PathEncode.Make.from(_.format(TimestampFormat.DATE_TIME))
+    Hinted[PathEncode.MaybePathEncode].from { hints =>
+      val fmt = hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
+
+      Some(PathEncode.Make.raw(_.format(fmt)))
+    }
+
   override val unit: PathEncode.Make[Unit] =
     genericStruct(Vector.empty)(_ => ())
 

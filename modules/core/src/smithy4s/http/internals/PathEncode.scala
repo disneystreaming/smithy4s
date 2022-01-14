@@ -38,15 +38,19 @@ object PathEncode {
   object Make {
     def from[A](f: A => String): Make[A] = Hinted.static[MaybePathEncode, A] {
       Some {
-        new PathEncode[A] {
-          def encode(sb: StringBuilder, a: A): Unit = {
-            val _ = sb.append(URIEncoderDecoder.encodeOthers(f(a)))
-          }
-          def encodeGreedy(sb: StringBuilder, a: A): Unit = {
-            f(a).split('/').foreach {
-              case s if s.isEmpty() => ()
-              case s => sb.append('/').append(URIEncoderDecoder.encodeOthers(s))
-            }
+        raw(f)
+      }
+    }
+
+    def raw[A](f: A => String): PathEncode[A] = {
+      new PathEncode[A] {
+        def encode(sb: StringBuilder, a: A): Unit = {
+          val _ = sb.append(URIEncoderDecoder.encodeOthers(f(a)))
+        }
+        def encodeGreedy(sb: StringBuilder, a: A): Unit = {
+          f(a).split('/').foreach {
+            case s if s.isEmpty() => ()
+            case s => sb.append('/').append(URIEncoderDecoder.encodeOthers(s))
           }
         }
       }
