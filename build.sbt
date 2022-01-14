@@ -421,7 +421,10 @@ lazy val openapi = projectMatrix
  */
 lazy val json = projectMatrix
   .in(file("modules/json"))
-  .dependsOn(core, `scalacheck` % "test -> compile")
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `scalacheck` % "test -> compile"
+  )
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(

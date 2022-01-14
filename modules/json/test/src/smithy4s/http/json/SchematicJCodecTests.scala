@@ -26,6 +26,9 @@ import weaver._
 import smithy4s.api.Discriminated
 
 import scala.collection.immutable.ListMap
+import smithy4s.example.PayloadData
+import smithy4s.example.TestBiggerUnion
+import smithy4s.example.One
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -156,6 +159,27 @@ object SchematicJCodecTests extends SimpleIOSuite {
     val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
     expect(baz == jsonBaz) &&
     expect(bin == jsonBin)
+  }
+
+  pureTest("Discriminated union decoding tolerates whitespace") {
+    val json = """ { "tpe" : "one" , "value" : "hello" }"""
+    val result = readFromString[TestBiggerUnion](json)
+
+    expect(
+      result == TestBiggerUnion.OneCase(One(Some("hello")))
+    )
+  }
+
+  pureTest("Nested discriminated union decoding tolerates whitespace") {
+    val json = """{ "testBiggerUnion": { "tpe": "one", "value": "hello" } }"""
+    val result = readFromString[PayloadData](json)
+
+    expect(
+      result == PayloadData(
+        None,
+        Some(TestBiggerUnion.OneCase(One(Some("hello"))))
+      )
+    )
   }
 
   pureTest("Discriminated union gets routed to the correct codec") {
