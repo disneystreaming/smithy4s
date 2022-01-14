@@ -16,7 +16,7 @@
 
 package smithy4s.aws.kernel
 
-import smithy4s.http.internals.URIEncoderDecoder.{encodeOthers => uriEncode}
+import smithy4s.http.internals.URIEncoderDecoder.{encode => uriEncode}
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
 
