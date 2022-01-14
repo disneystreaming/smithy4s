@@ -87,11 +87,12 @@ object CodegenCommand {
       allowedNSOpt,
       repositoriesOpt,
       dependenciesOpt,
+      transformersOpt,
       specsArgs
     )
       .mapN {
         // format: off
-        case (output, openApiOutput, skipScala, skipOpenapi, allowedNS, repositories, dependencies, specsArgs) =>
+        case (output, openApiOutput, skipScala, skipOpenapi, allowedNS, repositories, dependencies, transformers, specsArgs) =>
         // format: on
           CodegenArgs(
             specsArgs,
@@ -101,7 +102,8 @@ object CodegenCommand {
             skipOpenapi,
             allowedNS,
             repositories.getOrElse(List.empty),
-            dependencies.getOrElse(List.empty)
+            dependencies.getOrElse(List.empty),
+            transformers.getOrElse(List.empty)
           )
       }
 

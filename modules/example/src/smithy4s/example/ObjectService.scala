@@ -2,7 +2,6 @@ package smithy4s.example
 
 import ObjectServiceGen.GetObjectError
 import ObjectServiceGen.PutObjectError
-import smithy4s.http
 import smithy4s.syntax._
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
@@ -57,7 +56,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     }
   }
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
-  object PutObject extends smithy4s.Endpoint[ObjectServiceOperation, PutObjectInput, PutObjectError, Unit, Nothing, Nothing] with http.HttpEndpoint[PutObjectInput] with smithy4s.Errorable[PutObjectError] {
+  object PutObject extends smithy4s.Endpoint[ObjectServiceOperation, PutObjectInput, PutObjectError, Unit, Nothing, Nothing] with smithy4s.Errorable[PutObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObject")
     val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
     val output: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Output)
@@ -80,10 +79,6 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       case PutObjectError.ServerErrorCase(e) => e
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
-    def path(input: PutObjectInput) = s"${smithy4s.segment(input.bucketName)}/${smithy4s.segment(input.key)}"
-    val path = List(http.PathSegment.label("bucketName"), http.PathSegment.label("key"))
-    val code: Int = 200
-    val method: http.HttpMethod = http.HttpMethod.PUT
   }
   sealed trait PutObjectError
   object PutObjectError {
@@ -117,7 +112,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     implicit val staticSchema : schematic.Static[smithy4s.Schema[PutObjectError]] = schematic.Static(schema)
   }
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
-  object GetObject extends smithy4s.Endpoint[ObjectServiceOperation, GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing] with http.HttpEndpoint[GetObjectInput] with smithy4s.Errorable[GetObjectError] {
+  object GetObject extends smithy4s.Endpoint[ObjectServiceOperation, GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing] with smithy4s.Errorable[GetObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObject")
     val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema.withHints(smithy4s.internals.InputOutput.Input)
     val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
@@ -138,10 +133,6 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     def unliftError(e: GetObjectError) : Throwable = e match {
       case GetObjectError.ServerErrorCase(e) => e
     }
-    def path(input: GetObjectInput) = s"${smithy4s.segment(input.bucketName)}/${smithy4s.segment(input.key)}"
-    val path = List(http.PathSegment.label("bucketName"), http.PathSegment.label("key"))
-    val code: Int = 200
-    val method: http.HttpMethod = http.HttpMethod.GET
   }
   sealed trait GetObjectError
   object GetObjectError {

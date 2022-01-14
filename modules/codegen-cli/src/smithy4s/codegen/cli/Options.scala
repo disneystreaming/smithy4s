@@ -72,4 +72,13 @@ object Options {
       .map(_.split(',').toList)
       .orNone
 
+  val transformersOpt: Opts[Option[List[String]]] =
+    Opts
+      .option[String](
+        "transformers",
+        "Comma-delimited list of transformer names to apply to smithy files"
+      )
+      .map(_.split(',').toList)
+      .orNone
+
 }

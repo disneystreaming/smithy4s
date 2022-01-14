@@ -40,4 +40,10 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
+
+  val values = List(PUT, POST, DELETE, GET, PATCH)
+
+  def fromString(s: String): Option[HttpMethod] = values.find { m =>
+    CaseInsensitive(s) == CaseInsensitive(m.showCapitalised)
+  }
 }

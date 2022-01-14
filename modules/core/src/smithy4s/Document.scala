@@ -71,10 +71,6 @@ object Document {
     def compile[F[_]](s: Schematic[F]): F[Document] = s.document
   }
 
-  trait ClosedSyntax[S[x[_]] <: Schematic[x]] {
-    val document: schematic.Schema[S, Document] = Schema
-  }
-
   trait Encoder[A] {
     def encode(a: A): Document
   }

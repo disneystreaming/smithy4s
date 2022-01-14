@@ -28,7 +28,7 @@ object Smithy4sPlugin extends AutoPlugin {
   val CatsEffect2Axis = CatsEffectAxis("_CE2", "ce2")
 
   val Scala212 = "2.12.15"
-  val Scala213 = "2.13.7"
+  val Scala213 = "2.13.8"
   val Scala3 = "3.1.0"
 
   implicit class ProjectMatrixOps(val pm: ProjectMatrix) extends AnyVal {

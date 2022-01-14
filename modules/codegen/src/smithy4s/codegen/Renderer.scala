@@ -245,7 +245,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val opName = op.name
     val traitName = s"${serviceName}Operation"
-    val inputName = op.input.render
     val input =
       if (op.input == Type.unit) "" else "input"
     val errorName = if (op.errors.isEmpty) "Nothing" else s"${op.name}Error"
@@ -253,13 +252,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val errorable = if (op.errors.nonEmpty) {
       s" with $Errorable_[$errorName]"
     } else ""
-
-    val httpEndpoint =
-      op.hints
-        .collectFirst { case Hint.Http(_, _, _) =>
-          s" with http.HttpEndpoint[$inputName]"
-        }
-        .getOrElse("")
 
     val errorUnion: Option[Union] = for {
       errorNel <- NonEmptyList.fromList(op.errors)
@@ -277,8 +269,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       s"case class $opName($params) extends $traitName[${op.renderAlgParams}]",
       obj(
         opName,
-        ext =
-          s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$httpEndpoint$errorable"
+        ext = s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
         s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
@@ -287,8 +278,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsValWithId(op.hints),
         s"def wrap(input: ${op.input.render}) = ${opName}($input)",
-        renderErrorable(op),
-        renderHttpSpecific(op)
+        renderErrorable(op)
       ),
       renderedErrorUnion
     ).addImports(op.imports).addImports(syntaxImport)
@@ -362,7 +352,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             )
             .block(s"$name.apply")
-            .appendToLast(if (hints.nonEmpty) ".withHints(hints)" else "")
+            .appendToLast(".withHints(hints)")
             .appendToLast(if (recursive) ")" else "")
         } else {
           line(
@@ -372,39 +362,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     ).addImports(imports)
-  }
-
-  private def renderHttpSpecific(op: Operation): RenderResult = lines {
-    op.hints
-      .collectFirst { case Hint.Http(method, uriPattern, code) =>
-        val segments = uriPattern
-          .map {
-            case Segment.Label(value) =>
-              s"""http.PathSegment.label("$value")"""
-            case Segment.GreedyLabel(value) =>
-              s"""http.PathSegment.greedy("$value")"""
-            case Segment.Static(value) =>
-              s"""http.PathSegment.static("$value")"""
-          }
-          .mkString("List(", ", ", ")")
-
-        val uriValue = uriPattern
-          .map {
-            case Segment.Label(value) =>
-              s"$${smithy4s.segment(input.$value)}"
-            case Segment.GreedyLabel(value) =>
-              s"$${smithy4s.greedySegment(input.$value)}"
-            case Segment.Static(value) => value
-          }
-          .mkString("s\"", "/", "\"")
-        lines(
-          s"def path(input: ${op.input.render}) = $uriValue",
-          s"val path = $segments",
-          s"val code: Int = $code",
-          s"val method: http.HttpMethod = http.HttpMethod.$method"
-        ).addImports(Set("smithy4s.http"))
-      }
-      .getOrElse(empty)
   }
 
   private def renderErrorable(op: Operation): RenderResult = {
@@ -480,7 +437,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 s"case c : $caseName => $caseName.alt(c)"
               }
             }
-            .appendToLast(if (hints.nonEmpty) ".withHints(hints)" else "")
+            .appendToLast(
+              if (error) "" else ".withHints(hints)"
+            )
             .appendToLast(if (recursive) ")" else "")
         },
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
@@ -505,6 +464,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     obj(name, ext = s"$Enumeration_[$name]", w = hintKey(name, hints))(
       renderId(name),
       newline,
+      renderHintsValWithId(hints),
+      newline,
       values.zipWithIndex.map { case (e @ EnumValue(value, _, _), index) =>
         line(
           s"""case object ${e.className} extends $name("$value", $index)"""
@@ -517,7 +478,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       line(s"def to(e: $name) : (String, Int) = (e.value, e.ordinal)"),
       lines(
-        s"val schema: $Schema_[$name] = enumeration(to, valueMap, ordinalMap)",
+        s"val schema: $Schema_[$name] = enumeration(to, valueMap, ordinalMap).withHints(hints)",
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     )
@@ -530,19 +491,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
-    val (hintsVal, withHints) =
-      if (hints.nonEmpty)
-        (
-          renderHintsValWithId(hints),
-          ".withHints(hints)"
-        )
-      else (RenderResult.empty, "")
-
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
         renderId(name),
-        hintsVal,
-        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$withHints",
+        renderHintsValWithId(hints),
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withHints(hints)",
         lines(
           s"val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)",
           s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"

@@ -27,7 +27,8 @@ object DumpModelCommand {
   val options = (
     specsArgs,
     repositoriesOpt.map(_.getOrElse(Nil)),
-    dependenciesOpt.map(_.getOrElse(Nil))
+    dependenciesOpt.map(_.getOrElse(Nil)),
+    transformersOpt.map(_.getOrElse(Nil))
   ).mapN(DumpModelArgs.apply)
 
   val command: Command[DumpModel] =

@@ -21,21 +21,7 @@ import schematic.OptionalField
 import schematic.RequiredField
 
 package object syntax
-    extends schematic.short.Syntax
-    with schematic.int.Syntax
-    with schematic.long.Syntax
-    with schematic.double.Syntax
-    with schematic.float.Syntax
-    with schematic.bigint.Syntax
-    with schematic.bigdecimal.Syntax
-    with schematic.string.Syntax
-    with schematic.boolean.Syntax
-    with schematic.uuid.Syntax
-    with schematic.byte.Syntax
-    with schematic.bytes.Syntax
-    with schematic.unit.Syntax
-    with schematic.enumeration.Syntax
-    with Timestamp.Syntax
+    extends schematic.enumeration.Syntax
     with schematic.list.ClosedSyntax[Schematic]
     with schematic.vector.ClosedSyntax[Schematic]
     with schematic.set.ClosedSyntax[Schematic]
@@ -45,8 +31,52 @@ package object syntax
     with schematic.suspended.ClosedSyntax[Schematic]
     with schematic.bijection.ClosedSyntax[Schematic]
     with Hints.ClosedSyntax[Schematic]
-    with Document.ClosedSyntax[Schematic]
     with errorUnion.Syntax {
+
+  val short: Schema[Short] =
+    schematic.short.Schema.withHints(ShapeId("smithy.api", "Short"))
+
+  val int: Schema[Int] =
+    schematic.int.Schema.withHints(ShapeId("smithy.api", "Integer"))
+
+  val long: Schema[Long] =
+    schematic.long.Schema.withHints(ShapeId("smithy.api", "Long"))
+
+  val double: Schema[Double] =
+    schematic.double.Schema.withHints(ShapeId("smithy.api", "BigDecimal"))
+
+  val float: Schema[Float] =
+    schematic.float.Schema.withHints(ShapeId("smithy.api", "Float"))
+
+  val bigint: Schema[BigInt] =
+    schematic.bigint.Schema.withHints(ShapeId("smithy.api", "BigInteger"))
+
+  val bigdecimal: Schema[BigDecimal] =
+    schematic.bigdecimal.Schema.withHints(ShapeId("smithy.api", "BigDecimal"))
+
+  val string: Schema[String] =
+    schematic.string.Schema.withHints(ShapeId("smithy.api", "String"))
+
+  val boolean: Schema[Boolean] =
+    schematic.boolean.Schema.withHints(ShapeId("smithy.api", "Boolean"))
+
+  val byte: Schema[Byte] =
+    schematic.byte.Schema.withHints(ShapeId("smithy.api", "Byte"))
+
+  val bytes: Schema[schematic.ByteArray] =
+    schematic.bytes.Schema.withHints(ShapeId("smithy.api", "Blob"))
+
+  val unit: Schema[Unit] =
+    schematic.unit.Schema.withHints(ShapeId("smithy.api", "Unit"))
+
+  val timestamp: Schema[Timestamp] =
+    Timestamp.Schema.withHints(ShapeId("smithy.api", "Timestamp"))
+
+  val document: Schema[Document] =
+    Document.Schema.withHints(ShapeId("smithy.api", "Document"))
+
+  val uuid: Schema[java.util.UUID] =
+    schematic.uuid.Schema.withHints(ShapeId("smithy4s.api", "UUID"))
 
   def constant[A](make: => A): Schema[A] = new Schema[A] {
     def compile[F[_]](s: Schematic[F]): F[A] = s.struct(make)

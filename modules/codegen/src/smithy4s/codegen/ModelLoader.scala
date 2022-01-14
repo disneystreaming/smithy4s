@@ -24,12 +24,15 @@ import software.amazon.smithy.model.Model
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
+import software.amazon.smithy.build.ProjectionTransformer
+import software.amazon.smithy.build.TransformContext
 
 object ModelLoader {
   def load(
       specs: Set[File],
       dependencies: List[String],
-      repositories: List[String]
+      repositories: List[String],
+      transformers: List[String]
   ): (ClassLoader, Model) = {
     val maybeDeps = resolveDependencies(dependencies, repositories)
     val currentClassLoader = this.getClass().getClassLoader()
@@ -76,7 +79,19 @@ object ModelLoader {
       .assemble()
       .unwrap()
 
-    (validatorClassLoader, model)
+    val serviceFactory =
+      ProjectionTransformer.createServiceFactory(validatorClassLoader)
+
+    val trans = transformers.flatMap { t =>
+      val result = serviceFactory(t)
+      if (result.isPresent()) Some(result.get) else None
+    }
+
+    val transformedModel = trans.foldLeft(model)((m, t) =>
+      t.transform(TransformContext.builder().model(m).build())
+    )
+
+    (validatorClassLoader, transformedModel)
   }
 
   private def resolveDependencies(
