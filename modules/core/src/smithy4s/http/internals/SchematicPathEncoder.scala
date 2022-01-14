@@ -28,11 +28,10 @@ import smithy4s.http.PathSegment.GreedySegment
 
 object SchematicPathEncoder
     extends Schematic[PathEncode.Make]
-    with schematic.StubSchematic[PathEncode.Make] {
+    with StubSchematic[PathEncode.Make] {
 
   def default[A]: PathEncode.Make[A] = PathEncode.Make.noop
-  def document: PathEncode.Make[Document] = PathEncode.Make.noop
-  def withHints[A](
+  override def withHints[A](
       fa: PathEncode.Make[A],
       hints: smithy4s.Hints
   ): PathEncode.Make[A] =
@@ -65,7 +64,7 @@ object SchematicPathEncoder
   override val unit: PathEncode.Make[Unit] =
     genericStruct(Vector.empty)(_ => ())
 
-  def genericStruct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
+  override def genericStruct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S
   ): PathEncode.Make[S] = {
     type Writer = (StringBuilder, S) => Unit
