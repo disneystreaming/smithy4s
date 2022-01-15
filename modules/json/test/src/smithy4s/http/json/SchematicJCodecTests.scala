@@ -17,7 +17,7 @@
 package smithy4s
 package http.json
 
-import com.github.plokhotnyuk.jsoniter_scala.core._
+import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import schematic.ByteArray
 import smithy.api.JsonName
 import smithy4s.http.PayloadError
@@ -39,6 +39,16 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val b = int.optional[Foo]("b", _.b).withHints(JsonName("_b"))
       struct(a, b)(Foo.apply)
     }
+  }
+
+  private val readerConfig: ReaderConfig = ReaderConfig
+    .withThrowReaderExceptionWithStackTrace(true)
+    .withAppendHexDumpToParseException(true)
+    .withCheckForEndOfInput(false)
+
+  def readFromString[A: JsonCodec](str: String): A = {
+    com.github.plokhotnyuk.jsoniter_scala.core
+      .readFromString[A](str, readerConfig)
   }
 
   import JCodec.deriveJCodecFromSchema
