@@ -30,11 +30,26 @@ structure TestDiscriminatedOutput {
 }
 
 structure PayloadData {
-  testUnion: TestUnion
+  testUnion: TestUnion,
+  testBiggerUnion: TestBiggerUnion
 }
 
 @discriminated("type")
 union TestUnion {
   one: String,
   two: Integer
+}
+
+@discriminated("tpe")
+union TestBiggerUnion {
+  one: One,
+  two: Two
+}
+
+structure One {
+  value: String
+}
+
+structure Two {
+  value: Integer
 }

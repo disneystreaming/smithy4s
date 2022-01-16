@@ -565,29 +565,24 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z = {
         if (in.isNextToken('{')) {
-          if (in.isNextToken('}'))
-            in.decodeError("Expected at least a one key/value pair")
-          else {
+          in.setMark()
+          val key = if (in.skipToKey(discriminated.value)) {
+            val k = in.readString("")
+            in.rollbackToMark()
             in.rollbackToken()
-            in.setMark()
-            val key = if (in.skipToKey(discriminated.value)) {
-              val k = in.readString("")
-              in.rollbackToMark()
-              in.rollbackToken()
-              k
-            } else {
-              in.decodeError(
-                s"Unable to find discriminator ${discriminated.value}"
-              )
-            }
-            val result = cursor.under(key) {
-              handlerMap.get(key).map(_.apply(cursor, in))
-            } match {
-              case Some(value) => value
-              case None        => in.discriminatorValueError(key)
-            }
-            result
+            k
+          } else {
+            in.decodeError(
+              s"Unable to find discriminator ${discriminated.value}"
+            )
           }
+          val result = cursor.under(key) {
+            handlerMap.get(key).map(_.apply(cursor, in))
+          } match {
+            case Some(value) => value
+            case None        => in.discriminatorValueError(key)
+          }
+          result
         } else in.decodeError("Expected JSON object")
       }
 
