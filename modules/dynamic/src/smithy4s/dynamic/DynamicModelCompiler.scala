@@ -29,6 +29,16 @@ object Compiler {
     shapeId.namespace + "#" + shapeId.name
   )
 
+  private def getTrait[A: Hints.Key: Document.Decoder](
+      traits: Option[Map[IdRef, Document]]
+  ): Option[A] =
+    traits.flatMap(dynamicTraits =>
+      dynamicTraits.get(toIdRef(implicitly[Hints.Key[A]].id)).flatMap {
+        document =>
+          document.decode[A].toOption
+      }
+    )
+
   def compile(model: Model, knownHints: KeyedSchema[_]*): DynamicModel = {
     val schemaMap = MMap.empty[ShapeId, Schema[DynData]]
     val endpointMap = MMap.empty[ShapeId, DynamicEndpoint]
@@ -132,17 +142,64 @@ object Compiler {
     override def floatShape(id: ShapeId, shape: FloatShape): Unit =
       update(id, shape.traits, float)
 
+    override def longShape(id: ShapeId, shape: LongShape): Unit =
+      update(id, shape.traits, long)
+
+    override def doubleShape(id: ShapeId, shape: DoubleShape): Unit =
+      update(id, shape.traits, double)
+
+    override def shortShape(id: ShapeId, shape: ShortShape): Unit =
+      update(id, shape.traits, short)
+
+    override def bigIntegerShape(id: ShapeId, shape: BigIntegerShape): Unit =
+      update(id, shape.traits, bigint)
+
+    override def bigDecimalShape(id: ShapeId, shape: BigDecimalShape): Unit =
+      update(id, shape.traits, bigdecimal)
+
+    override def byteShape(id: ShapeId, shape: ByteShape): Unit =
+      update(id, shape.traits, byte)
+
+    override def timestampShape(id: ShapeId, shape: TimestampShape): Unit =
+      update(id, shape.traits, timestamp)
+
+    override def blobShape(id: ShapeId, shape: BlobShape): Unit =
+      update(id, shape.traits, bytes)
+
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
       update(id, shape.traits, boolean)
 
-    override def stringShape(id: ShapeId, shape: StringShape): Unit =
-      update(id, shape.traits, string)
+    override def stringShape(id: ShapeId, shape: StringShape): Unit = {
+      val maybeUuid = getTrait[smithy4s.api.UuidFormat](shape.traits)
+      val maybeEnum = getTrait[smithy.api.Enum](shape.traits)
+      (maybeUuid, maybeEnum) match {
+        case (Some(_), _) => update(id, shape.traits, uuid)
+        case (None, Some(e)) => {
+          val valuesAndIndexes = e.value.map(_.value.value).zipWithIndex
+          val fn = valuesAndIndexes.map(tup => tup._1 -> tup).toMap
+          val fromName = valuesAndIndexes.map(tup => tup._1 -> tup._1).toMap
+          val fromOrd = valuesAndIndexes.map(tup => tup._2 -> tup._1).toMap
+          update(id, shape.traits, enumeration(fn, fromName, fromOrd))
+        }
+        case _ => update(id, shape.traits, string)
+      }
+    }
 
     override def listShape(id: ShapeId, shape: ListShape): Unit =
       update(id, shape.traits, list(suspend(schema(shape.member.target))))
 
     override def setShape(id: ShapeId, shape: SetShape): Unit =
       update(id, shape.traits, set(suspend(schema(shape.member.target))))
+
+    override def mapShape(id: ShapeId, shape: MapShape): Unit =
+      update(
+        id,
+        shape.traits,
+        map(
+          suspend(schema(shape.key.target)),
+          suspend(schema(shape.value.target))
+        )
+      )
 
     override def operationShape(id: ShapeId, shape: OperationShape): Unit = {
       def maybeSchema(maybeShapeId: Option[IdRef]): Schema[DynData] =
@@ -215,6 +272,27 @@ object Compiler {
           genericStruct(fields)(dynStruct)
         }
       )
+
+    override def unionShape(id: ShapeId, shape: UnionShape): Unit =
+      shape.members.filter(_.nonEmpty).foreach { members =>
+        update(
+          id,
+          shape.traits, {
+            val alts =
+              members.zipWithIndex.map { case ((label, mShape), index) =>
+                val memberHints = allHints(mShape.traits)
+                val memberSchema =
+                  suspend(schema(mShape.target))
+                    .withHints(memberHints: _*)
+                memberSchema
+                  .oneOf[DynAlt](label, data => (index, data))
+              }.toVector
+            union(alts.head, alts.drop(1): _*) { case (index, data) =>
+              alts(index).apply(data)
+            }
+          }
+        )
+      }
   }
 
 }
