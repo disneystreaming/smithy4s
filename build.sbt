@@ -412,11 +412,10 @@ lazy val dynamic = projectMatrix
       Dependencies.Weaver.cats.value % Test
     ),
     Test / fork := true,
+    // Forwarding cwd to tests
+    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
-    //
-    Compile / allowedNamespaces := Seq(
-      "smithy4s.dynamic.model"
-    ),
+    Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),

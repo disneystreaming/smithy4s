@@ -5,17 +5,16 @@ import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.effect.IO
 import cats.syntax.all._
-import java.nio.file.Files
 import java.nio.file.Paths
 
 object DynamicModelPizzaSpec extends SimpleIOSuite {
 
-  val modelString = new String(
-    Files.readAllBytes(
-      // quick and dirty
-      Paths.get("../../../sampleSpecs/pizza.smithy").toAbsolutePath()
-    )
-  )
+  // This is not ideal, but it does the job.
+  val cwd = System.getProperty("user.dir");
+  val pizzaSpec = Paths.get(cwd + "/sampleSpecs/pizza.smithy").toAbsolutePath()
+  val smithy4sPrelude = Paths
+    .get(cwd + "/modules/protocol/resources/META-INF/smithy/smithy4s.smithy")
+    .toAbsolutePath()
 
   val expected: Model = {
     Model(
@@ -30,7 +29,8 @@ object DynamicModelPizzaSpec extends SimpleIOSuite {
     IO(
       SModel
         .assembler()
-        .addUnparsedModel("pizza.smithy", modelString)
+        .addImport(smithy4sPrelude)
+        .addImport(pizzaSpec)
         .assemble()
         .unwrap()
     ).map(ModelSerializer.builder().build.serialize(_))
