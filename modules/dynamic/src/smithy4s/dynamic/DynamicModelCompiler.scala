@@ -63,6 +63,25 @@ object Compiler {
         toHint(_, _)
       )
 
+    // Loosely inspired by
+    // https://awslabs.github.io/smithy/1.0/spec/core/prelude-model.html#prelude-shapes
+    List(
+      "String" -> Shape.StringCase(StringShape()),
+      "Blob" -> Shape.BlobCase(BlobShape()),
+      "BigInteger" -> Shape.BigIntegerCase(BigIntegerShape()),
+      "BigDecimal" -> Shape.BigDecimalCase(BigDecimalShape()),
+      "Timestamp" -> Shape.TimestampCase(TimestampShape()),
+      "Document" -> Shape.DocumentCase(DocumentShape()),
+      "Boolean" -> Shape.BooleanCase(BooleanShape()),
+      "Byte" -> Shape.ByteCase(ByteShape()),
+      "Short" -> Shape.ShortCase(ShortShape()),
+      "Integer" -> Shape.IntegerCase(IntegerShape()),
+      "Long" -> Shape.LongCase(LongShape()),
+      "Float" -> Shape.FloatCase(FloatShape()),
+      "Double" -> Shape.DoubleCase(DoubleShape()),
+      "Unit" -> Shape.StructureCase(StructureShape())
+    ).foreach { case (id, shape) => visitor(ShapeId("smithy.api", id), shape) }
+
     model.shapes.foreach {
       case (ValidIdRef(id), shape) => visitor(id, shape)
       case _                       => ()
