@@ -180,6 +180,15 @@ object SchematicJCodecTests extends SimpleIOSuite {
     )
   }
 
+  pureTest("Discriminated union discriminator can follow other keys") {
+    val json = """ { "value" : "hello", "tpe" : "one" }"""
+    val result = readFromString[TestBiggerUnion](json)
+
+    expect(
+      result == TestBiggerUnion.OneCase(One(Some("hello")))
+    )
+  }
+
   pureTest("Nested discriminated union decoding tolerates whitespace") {
     val json = """{ "testBiggerUnion": { "tpe": "one", "value": "hello" } }"""
     val result = readFromString[PayloadData](json)
