@@ -34,7 +34,8 @@ object DynamicModelSpec extends SimpleIOSuite {
       |}
       |
       |structure Output {
-      |  greeting: String
+      |  greeting: String,
+      |  someFloat: Float
       |}
       |""".stripMargin.trim
 
@@ -86,6 +87,9 @@ object DynamicModelSpec extends SimpleIOSuite {
               Map(
                 "greeting" -> MemberShape(
                   IdRef("smithy.api#String")
+                ),
+                "someFloat" -> MemberShape(
+                  IdRef("smithy.api#Float")
                 )
               )
             )
@@ -172,6 +176,6 @@ object DynamicModelSpec extends SimpleIOSuite {
 
     //  NoSuchElementException: key not found: smithy.api#String
     val result = Interpreter.toFieldNames(svc)
-    assert(result == List("name", "greeting"))
+    assert(result == List("name", "greeting", "someFloat"))
   }
 }

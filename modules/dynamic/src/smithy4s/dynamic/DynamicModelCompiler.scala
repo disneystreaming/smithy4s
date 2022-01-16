@@ -129,6 +129,9 @@ object Compiler {
     override def integerShape(id: ShapeId, shape: IntegerShape): Unit =
       update(id, shape.traits, int)
 
+    override def floatShape(id: ShapeId, shape: FloatShape): Unit =
+      update(id, shape.traits, float)
+
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
       update(id, shape.traits, boolean)
 
