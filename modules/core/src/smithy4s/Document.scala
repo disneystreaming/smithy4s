@@ -19,6 +19,7 @@ package smithy4s
 import smithy4s.http.PayloadError
 import smithy4s.internals.SchematicDocumentDecoder
 import smithy4s.internals.SchematicDocumentEncoder
+import smithy4s.Document._
 
 /**
   * A json-like free-form structure serving as a model for
@@ -30,6 +31,26 @@ sealed trait Document extends Product with Serializable {
       decoder: Document.Decoder[A]
   ): Either[PayloadError, A] =
     decoder.decode(this)
+
+  override def toString(): String = this.show
+
+  /**
+    * Toy renderer that does not comply the json specification :
+    * strings aren't escaped and keys aren't quoted.
+    * Do not use for any real purpose other than debugging.
+    */
+  def show: String = this match {
+    case DNumber(value) => {
+      if (value.isValidLong) value.toLong.toString()
+      else value.toString()
+    }
+    case DBoolean(value) => value.toString
+    case DString(value)  => s""""$value""""
+    case DNull           => "null"
+    case DArray(value)   => value.map(_.show).mkString("[", ", ", "]")
+    case DObject(value) =>
+      value.map { case (k, v) => k + "=" + v.show }.mkString("{", ", ", "}")
+  }
 
 }
 

@@ -99,7 +99,7 @@ object Compiler {
     new DynamicModel(serviceMap.toMap, schemaMap.toMap)
   }
 
-  class CompileVisitor(
+  private class CompileVisitor(
       model: Model,
       schemaMap: MMap[ShapeId, Schema[DynData]],
       endpointMap: MMap[ShapeId, DynamicEndpoint],

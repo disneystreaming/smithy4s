@@ -6,7 +6,12 @@ case class DynamicService(
     version: String,
     getEndpoints: () => List[DynamicEndpoint],
     hints: Hints
-) extends Service[DynamicAlg, DynamicOp] {
+) extends Service[DynamicAlg, DynamicOp]
+    with DynamicModel.ServiceWrapper {
+
+  type Alg[P[_, _, _, _, _]] = DynamicAlg[P]
+  type Op[I, E, O, SI, SO] = DynamicOp[I, E, O, SI, SO]
+  override val service: Service[Alg, Op] = this
 
   def transform[F[_, _, _, _, _], G[_, _, _, _, _]](
       alg: DynamicAlg[F],

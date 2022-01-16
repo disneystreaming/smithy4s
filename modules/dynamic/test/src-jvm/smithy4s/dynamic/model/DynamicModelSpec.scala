@@ -172,7 +172,7 @@ object DynamicModelSpec extends SimpleIOSuite {
   pureTest(
     "Extract field names from all structures in a service's endpoints"
   ) {
-    val svc = dynamic.Compiler.compile(expected).allServices.head
+    val svc = dynamic.Compiler.compile(expected).allServices.head.service
 
     //  NoSuchElementException: key not found: smithy.api#String
     val result = Interpreter.toFieldNames(svc)
