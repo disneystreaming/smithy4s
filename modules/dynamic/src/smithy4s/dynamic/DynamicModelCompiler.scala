@@ -39,6 +39,9 @@ object Compiler {
       }
     )
 
+  /**
+     * @param knownHints hints supported by the caller.
+     */
   def compile(model: Model, knownHints: KeyedSchema[_]*): DynamicModel = {
     val schemaMap = MMap.empty[ShapeId, Schema[DynData]]
     val endpointMap = MMap.empty[ShapeId, DynamicEndpoint]
@@ -61,7 +64,12 @@ object Compiler {
     }
 
     def toHint(id: ShapeId, tr: Document): Option[Hint] = {
-      hintsMap.get(id).flatMap(toHintAux(_, tr))
+      // todo: this is an ugly hack, get rid of it
+      hintsMap
+        .collectFirst {
+          case (shape, schema) if shape.show.equalsIgnoreCase(id.show) => schema
+        }
+        .flatMap(toHintAux(_, tr))
     }
 
     val visitor =

@@ -59,6 +59,11 @@ object PathEncode {
     def fromToString[A]: Make[A] = from(_.toString)
 
     def noop[A]: Make[A] = Hinted.static[MaybePathEncode, A](None)
+
+    def suspend[A](make: => Make[A]): Make[A] = Hinted[MaybePathEncode].from {
+      hints =>
+        make.addHints(hints).get
+    }
   }
 
 }

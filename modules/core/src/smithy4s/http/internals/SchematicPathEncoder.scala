@@ -37,6 +37,9 @@ object SchematicPathEncoder
   ): PathEncode.Make[A] =
     fa.addHints(hints)
 
+  override def suspend[A](f: => PathEncode.Make[A]): PathEncode.Make[A] =
+    PathEncode.Make.suspend(f)
+
   override def bijection[A, B](
       f: PathEncode.Make[A],
       to: A => B,
