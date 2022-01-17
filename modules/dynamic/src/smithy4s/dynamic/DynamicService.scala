@@ -29,7 +29,7 @@ case class DynamicService(
       op: DynamicOp[I, E, O, SI, SO]
   ): (I, Endpoint[DynamicOp, I, E, O, SI, SO]) = {
     val endpoint = endpointMap
-      .get(op.id)
+      .getOrElse(op.id, sys.error("Unknown endpoint: " + op.id))
       .asInstanceOf[Endpoint[DynamicOp, I, E, O, SI, SO]]
     val input = op.data
     (input, endpoint)
