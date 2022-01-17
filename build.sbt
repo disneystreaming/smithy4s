@@ -454,7 +454,10 @@ lazy val openapi = projectMatrix
  */
 lazy val json = projectMatrix
   .in(file("modules/json"))
-  .dependsOn(core, `scalacheck` % "test -> compile")
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `scalacheck` % "test -> compile"
+  )
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -618,11 +621,11 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.12.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.12.1"
     )
 
   val Smithy = new {
-    val smithyVersion = "1.16.2"
+    val smithyVersion = "1.16.3"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =

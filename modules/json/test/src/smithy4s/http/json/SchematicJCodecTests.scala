@@ -17,7 +17,7 @@
 package smithy4s
 package http.json
 
-import com.github.plokhotnyuk.jsoniter_scala.core._
+import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import schematic.ByteArray
 import smithy.api.JsonName
 import smithy4s.http.PayloadError
@@ -26,6 +26,9 @@ import weaver._
 import smithy4s.api.Discriminated
 
 import scala.collection.immutable.ListMap
+import smithy4s.example.PayloadData
+import smithy4s.example.TestBiggerUnion
+import smithy4s.example.One
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -36,6 +39,16 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val b = int.optional[Foo]("b", _.b).withHints(JsonName("_b"))
       struct(a, b)(Foo.apply)
     }
+  }
+
+  private val readerConfig: ReaderConfig = ReaderConfig
+    .withThrowReaderExceptionWithStackTrace(true)
+    .withAppendHexDumpToParseException(true)
+    .withCheckForEndOfInput(false)
+
+  def readFromString[A: JsonCodec](str: String): A = {
+    com.github.plokhotnyuk.jsoniter_scala.core
+      .readFromString[A](str, readerConfig)
   }
 
   import JCodec.deriveJCodecFromSchema
@@ -156,6 +169,36 @@ object SchematicJCodecTests extends SimpleIOSuite {
     val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
     expect(baz == jsonBaz) &&
     expect(bin == jsonBin)
+  }
+
+  pureTest("Discriminated union decoding tolerates whitespace") {
+    val json = """ { "tpe" : "one" , "value" : "hello" }"""
+    val result = readFromString[TestBiggerUnion](json)
+
+    expect(
+      result == TestBiggerUnion.OneCase(One(Some("hello")))
+    )
+  }
+
+  pureTest("Discriminated union discriminator can follow other keys") {
+    val json = """ { "value" : "hello", "tpe" : "one" }"""
+    val result = readFromString[TestBiggerUnion](json)
+
+    expect(
+      result == TestBiggerUnion.OneCase(One(Some("hello")))
+    )
+  }
+
+  pureTest("Nested discriminated union decoding tolerates whitespace") {
+    val json = """{ "testBiggerUnion": { "tpe": "one", "value": "hello" } }"""
+    val result = readFromString[PayloadData](json)
+
+    expect(
+      result == PayloadData(
+        None,
+        Some(TestBiggerUnion.OneCase(One(Some("hello"))))
+      )
+    )
   }
 
   pureTest("Discriminated union gets routed to the correct codec") {
