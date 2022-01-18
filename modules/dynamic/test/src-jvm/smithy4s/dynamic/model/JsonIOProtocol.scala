@@ -23,13 +23,13 @@ object JsonIOProtocol {
         kleisliCache(ep).apply(input)
       }
     }
-    S.transform(transfo)
+    S.transform[GenLift[IO]#λ](transfo)
   }
 
   def toJsonIO[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       alg: Monadic[Alg, IO]
   )(implicit S: Service[Alg, Op]): Document => IO[Document] = {
-    val transformation = S.asTransformation(alg)
+    val transformation = S.asTransformation[GenLift[IO]#λ](alg)
     val jsonEndpoints =
       S.endpoints.map(ep => ep.name -> toLowLevel(transformation, ep)).toMap
     (d: Document) =>
