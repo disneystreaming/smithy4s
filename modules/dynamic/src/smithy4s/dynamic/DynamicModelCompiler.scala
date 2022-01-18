@@ -310,7 +310,7 @@ object Compiler {
         id,
         shape.traits, {
           val members = shape.members.getOrElse(Map.empty)
-          val lFields =
+          val lFields = {
             members.zipWithIndex
               .map { case ((label, mShape), index) =>
                 val memberHints = allHints(mShape.traits)
@@ -330,10 +330,10 @@ object Compiler {
               }
               .toVector
               .sequence
-          lFields.map { fields =>
-            if (isRecursive(id)) suspend(genericStruct(fields)(dynStruct))
-            else genericStruct(fields)(dynStruct)
           }
+          if (isRecursive(id))
+            Eval.later(suspend(genericStruct(lFields.value)(dynStruct)))
+          else lFields.map(fields => genericStruct(fields)(dynStruct))
         }
       )
 

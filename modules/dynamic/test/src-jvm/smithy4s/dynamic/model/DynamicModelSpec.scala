@@ -26,8 +26,21 @@ import smithy4s.dynamic
 import smithy4s.Service
 import smithy4s.Hints
 import schematic.Field
+import scala.concurrent.duration._
 
 object DynamicModelSpec extends SimpleIOSuite {
+
+  def parse(string: String): IO[Model] =
+    IO(
+      SModel
+        .assembler()
+        .addUnparsedModel("foo.smithy", string)
+        .assemble()
+        .unwrap()
+    ).map(ModelSerializer.builder().build.serialize(_))
+      .map(NodeToDocument(_))
+      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
+      .flatMap(_.liftTo[IO])
 
   val modelString =
     """|namespace foo
@@ -116,17 +129,24 @@ object DynamicModelSpec extends SimpleIOSuite {
   }
 
   test("Decode json representation of models") {
-    IO(
-      SModel
-        .assembler()
-        .addUnparsedModel("foo.smithy", modelString)
-        .assemble()
-        .unwrap()
-    ).map(ModelSerializer.builder().build.serialize(_))
-      .map(NodeToDocument(_))
-      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
-      .flatMap(_.liftTo[IO])
+    parse(modelString)
       .map(obtained => expect.same(obtained, expected))
+  }
+
+  test(
+    "Compilation does not recurse infinitely in the case of recursive structures".only
+  ) {
+    val modelString =
+      """|namespace foo
+         |
+         |structure Foo {
+         |  foo: Foo
+         |}
+         |""".stripMargin
+
+    parse(modelString).flatMap { dynamicModel =>
+      IO(dynamic.Compiler.compile(dynamicModel)).as(success)
+    }
   }
 
   object Interpreter {
