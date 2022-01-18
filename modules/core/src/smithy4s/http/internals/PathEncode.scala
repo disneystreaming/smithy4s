@@ -60,10 +60,6 @@ object PathEncode {
 
     def noop[A]: Make[A] = Hinted.static[MaybePathEncode, A](None)
 
-    def suspend[A](make: => Make[A]): Make[A] = Hinted[MaybePathEncode].from {
-      hints =>
-        make.addHints(hints).get
-    }
   }
 
 }

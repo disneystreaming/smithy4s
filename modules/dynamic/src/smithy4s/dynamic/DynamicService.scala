@@ -4,7 +4,7 @@ package dynamic
 case class DynamicService(
     id: ShapeId,
     version: String,
-    getEndpoints: () => List[DynamicEndpoint],
+    endpoints: List[DynamicEndpoint],
     hints: Hints
 ) extends Service[DynamicAlg, DynamicOp]
     with DynamicModel.ServiceWrapper {
@@ -17,9 +17,6 @@ case class DynamicService(
       alg: DynamicAlg[F],
       transformation: Transformation[F, G]
   ): DynamicAlg[G] = alg.andThen(transformation)
-
-  lazy val endpoints: List[Endpoint[DynamicOp, _, _, _, _, _]] =
-    getEndpoints()
 
   private lazy val endpointMap
       : Map[ShapeId, Endpoint[DynamicOp, _, _, _, _, _]] =

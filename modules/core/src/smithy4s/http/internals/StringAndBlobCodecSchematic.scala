@@ -82,11 +82,6 @@ private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
 
   def default[A]: Result[A] = noop[A]
 
-  override def suspend[A](f: => Result[A]): Result[A] =
-    Hinted[CodecResult].from { hints =>
-      f.addHints(hints).get
-    }
-
   override def string: Result[String] = Hinted[CodecResult]
     .onHintOpt[smithy.api.MediaType, String] { maybeMediaTypeHint =>
       SimpleCodecResult {

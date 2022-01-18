@@ -77,10 +77,7 @@ object DynamicModelPizzaSpec extends SimpleIOSuite {
       .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
       .flatMap(_.liftTo[IO])
       .map { model =>
-        val compiled = dynamic.Compiler.compile(
-          model,
-          dynamic.KeyedSchema(Http.schema, Http)
-        )
+        val compiled = dynamic.Compiler.compile(model, Http)
 
         val endpoints = compiled.allServices.head.service.endpoints
         val httpEndpoints = endpoints.map(HttpEndpoint.cast(_))
