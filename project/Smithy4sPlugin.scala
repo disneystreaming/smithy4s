@@ -98,7 +98,8 @@ object Smithy4sPlugin extends AutoPlugin {
     incOptions := incOptions.value.withLogRecompileOnMacro(false),
     // https://scalacenter.github.io/scalafix/docs/users/installation.html
     semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
+    semanticdbVersion := scalafixSemanticdb.revision,
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(

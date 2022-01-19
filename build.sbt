@@ -299,6 +299,7 @@ lazy val codegen = projectMatrix
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
     buildInfoPackage := "smithy4s.codegen",
+    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,
@@ -308,8 +309,10 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.0",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.0.16"
+      "io.get-coursier" %% "coursier" % "2.0.16",
+      Dependencies.Weaver.cats.value % Test
     ),
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
   )
@@ -328,8 +331,7 @@ lazy val `codegen-cli` = projectMatrix
     libraryDependencies ++= Seq(
       "com.monovore" %% "decline" % "2.2.0",
       Dependencies.Weaver.cats.value % Test
-    ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    )
   )
 
 /**
@@ -386,7 +388,6 @@ lazy val protocol = projectMatrix
       Dependencies.Weaver.scalacheck.value % Test
     ),
     Test / fork := true,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     javacOptions ++= Seq(
       "-source",
       "1.8",
@@ -405,7 +406,6 @@ lazy val openapi = projectMatrix
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .dependsOn(protocol)
   .settings(
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
@@ -432,8 +432,7 @@ lazy val json = projectMatrix
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -460,8 +459,7 @@ lazy val http4s = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
-    },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -484,8 +482,7 @@ lazy val `http4s-swagger` = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
-    },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -509,7 +506,6 @@ lazy val tests = projectMatrix
         Dependencies.Weaver.cats.value
       )
     },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
