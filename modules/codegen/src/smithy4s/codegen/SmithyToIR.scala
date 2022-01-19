@@ -34,6 +34,15 @@ object SmithyToIR {
     CompilationUnit(namespace, new SmithyToIR(model, namespace).allDecls)
   }
 
+  private[codegen] def prettifyName(
+      maybeSdkId: Option[String],
+      shapeName: String
+  ): String = {
+    maybeSdkId
+      .map(_.replaceAll("\\s+", ""))
+      .getOrElse(shapeName)
+  }
+
 }
 
 private[codegen] class SmithyToIR(model: Model, namespace: String) {
@@ -161,7 +170,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             .flatMap(st => Option(st.getSdkId()))
             .filterNot(_.isEmpty)
 
-        val prettyName = maybeSdkId.getOrElse(shape.name)
+        val prettyName = SmithyToIR.prettifyName(maybeSdkId, shape.name)
 
         Service(
           prettyName,
