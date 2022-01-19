@@ -72,7 +72,7 @@ map AgeMap {
 
 ### Structures
 
-Structures are product types. In scala, they naturally translate to case classes in Scala.
+Structures are product types. In scala, they naturally translate to case classes.
 
 ```kotlin
 namespace foo
@@ -113,7 +113,7 @@ union Animal {
 
 #### Operations
 
-Operations are essentially an optional Input, an optional Output, and a optional list of errors. Inputs, outputs and errors all have to be structure shapes.
+Operations are essentially an optional Input, an optional Output, and an optional list of errors. Inputs, outputs and errors all have to be structure shapes.
 
 ```kotlin
 namespace foo
@@ -161,7 +161,7 @@ structure ServerError {
 }
 ```
 
-Smithy4s translates them in the following fashion :
+Smithy4s translates them in the following fashion:
 
 ```scala
 package foo
@@ -173,7 +173,7 @@ trait HelloServiceGen[P[_, _, _, _, _]]{
 }
 ```
 
-P represents an abstractr context against which operations are going
+P represents an abstract context against which operations are going
 to run against. The abstact context has 5 type parameters:
 * input,
 * error,
@@ -196,4 +196,4 @@ package foo {
 
 ### Currently **not** supported (in particular)
 
-Smithy has a `resource` type of shape, that represent CRUD specialised services. It is currently not supported in smithy4s.
+Smithy has a `resource` type of shape, that represents CRUD specialised services. It is currently not supported in smithy4s.

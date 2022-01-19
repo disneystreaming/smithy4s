@@ -1,6 +1,6 @@
 ---
 sidebar_label: Server
-title: SimpleRestJson client
+title: SimpleRestJson server
 ---
 
 The `smithy4s-http4s` module provides functions that transform instances of the generated interfaces into http4s routes, provided the corresponding service definitions (in smithy) are  annotated with the `simpleRestJson` protocol.

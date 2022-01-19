@@ -59,8 +59,3 @@ Smithy4s automatically creates corresponding values in the generated Scala code,
 
 These values can be retrieved via some interfaces that will be documented in a near future.
 
-
-
-
-
-
