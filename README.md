@@ -378,7 +378,7 @@ object Main extends IOApp.Simple {
 
 ## Benchmarks
 
-There's a module with benchmarks to compare against the handcrafted implementations of an http4s / Play with the generic ones run the benchmarks, one should execute:
+There's a module with benchmarks to compare against the handcrafted implementations of the interpreters with the generic ones. To run the benchmarks, one should execute:
 
 ```sh
 sbt benchmark/jmh:run
