@@ -26,7 +26,6 @@ import smithy4s.dynamic
 import smithy4s.Service
 import smithy4s.Hints
 import schematic.Field
-import scala.concurrent.duration._
 
 object DynamicModelSpec extends SimpleIOSuite {
 
