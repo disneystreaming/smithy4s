@@ -1,11 +1,9 @@
 ---
-sidebar_label: Docs
+sidebar_label: Openapi
+title: Openapi
 ---
 
-# Swagger-ui
-
-Smithy4s will automatically generate an openapi "view" of all service specifications that are annotated with a protocol trait that supports openapi
-conversion. We provide one out of the box, called `simpleRestJson`.
+At build-time, when encountering a service annotated with the `simpleRestJson` protocol, Smithy4s will automatically generate an openapi "view" for this service.
 
 ```kotlin
 namespace smithy4s.example
@@ -19,8 +17,7 @@ service HelloWorldService {
 }
 ```
 
-
-In addition, the http4s-swagger module provides a one liner function to serve swagger-ui using that view. By default, the documentation is routed under the `/docs` path.
+The `smithy4s-http4s-swagger` module provides a one liner function to serve swagger-ui using that generated openapi view. By default, the documentation is routed under the `/docs` path.
 
 In `build.sbt`
 

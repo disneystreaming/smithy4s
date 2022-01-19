@@ -1,10 +1,9 @@
 ---
 sidebar_label: Client
+title: SimpleRestJson client
 ---
 
-# REST JSON Client
-
-Smithy4s provides functions to transform low-level http4s clients into a high-level smithy service client.
+The `smithy4s-http4s` module provides functions that transform low-level http4s clients into a high-level stubs, provided the corresponding service definitions (in smithy) are annotated with the `simpleRestJson` protocol.
 
 In `build.sbt`
 
