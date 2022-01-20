@@ -70,9 +70,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         if (shape.isMemberShape()) None
         else
           shape.tpe.flatMap {
-            case Type.Alias(_, name, tpe) => TypeAlias(name, tpe, hints).some
-            case Type.PrimitiveType(_)    => None
-            case other => TypeAlias(shape.name, other, hints).some
+            case Type.Alias(_, name, tpe) =>
+              TypeAlias(name, name, tpe, hints).some
+            case Type.PrimitiveType(_) => None
+            case other => TypeAlias(shape.name, shape.name, other, hints).some
           }
       }
 
@@ -80,7 +81,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId(), Set.empty)
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
-        Product(shape.name, shape.fields, rec, hints).some
+        Product(shape.name, shape.name, shape.fields, rec, hints).some
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
@@ -88,7 +89,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.name, alts, rec, hints)
+          Union(shape.name, shape.name, alts, rec, hints)
         }
       }
 
@@ -101,7 +102,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               EnumValue(value.getValue(), value.getName().asScala)
             }
             .toList
-          Enumeration(shape.name, values).some
+          Enumeration(shape.name, shape.name, values).some
         case _ => super.stringShape(shape)
       }
 

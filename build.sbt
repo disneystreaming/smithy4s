@@ -410,6 +410,7 @@ lazy val dynamic = projectMatrix
     isCE3 := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0",
+      Dependencies.Cats.core.value,
       Dependencies.Weaver.cats.value % Test
     ),
     Test / fork := true,
