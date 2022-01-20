@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
 )
 ```
 
-In your scala code :
+In your Scala code:
 
 ```scala mdoc:compile-only
 import cats.effect._

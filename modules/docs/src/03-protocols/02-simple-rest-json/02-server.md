@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
 )
 ```
 
-In `MyHelloWorld.scala`, implement the service interface that is generated at build-time :
+In `MyHelloWorld.scala`, implement the service interface that is generated at build-time:
 
 ```scala mdoc:silent
 // the package under which the scala code was generated
@@ -55,7 +55,7 @@ When encountering data types annotated with the `@error` trait in smithy, smithy
 
 As a convenience, Smithy4s provides `mapErrors` and `flatMapErrors` methods, that allow to intercept exceptions that were not specified in the spec, and transform them into exceptions that were.
 
-In particular, the smithy4s interpreters raise specific errors when they fail to decode http requests. The `mapErrors` and `flatMapErrors` methods can be used to ensure that a specified error is returned by your service :
+In particular, the smithy4s interpreters raise specific errors when they fail to decode http requests. The `mapErrors` and `flatMapErrors` methods can be used to ensure that a specified error is returned by your service:
 
 ```scala
 myRoutes.mapErrors{
@@ -65,7 +65,7 @@ myRoutes.mapErrors{
 
 ## Wiring the routes
 
-As a reminder, to wire those routes into a server, you need something like :
+As a reminder, to wire those routes into a server, you need something like:
 
 ```scala mdoc:compile-only
 import cats.effect._

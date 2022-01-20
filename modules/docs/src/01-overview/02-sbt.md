@@ -7,13 +7,13 @@ title: Installation (SBT)
 
 The generated code includes traits for any services you might define, as well as case classes for models used in these services. It has no dependencies on external libraries or any specific protocol like HTTP or JSON. It does, however, depend on a "core" library that contains a number of interfaces implemented by the generated code.
 
-In `project/plugins.sbt` :
+In `project/plugins.sbt`:
 
 ```scala
 addSbtPlugin("com.disneystreaming.smithy4s"  % "smithy4s-sbt-codegen" % "@VERSION@")
 ```
 
-and enable the plugin in the desired sbt module :
+and enable the plugin in the desired sbt module:
 
 ```scala
 import smithy4s.codegen.Smithy4sCodegenPlugin

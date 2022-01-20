@@ -171,9 +171,9 @@ package object foo {
 }
 ```
 
-`HelloService` is type alias that expose a normal "functor-shaped" type parameter: we are aware that the most common usecase of smithy4s abides by the "capatibility trait" pattern (or tagless-final), against effect types that probably abide by the cats-effect semantics.
+`HelloService` is type alias that exposes a normal "functor-shaped" type parameter: we are aware that the most common usecase of smithy4s abides by the "capatibility trait" pattern (or tagless-final), against effect types that probably abide by the cats-effect semantics.
 
-However, the actual interface is `HelloServiceGen`, which has a higher degree of polymorphism. It looks like this :
+However, the actual interface is `HelloServiceGen`, which has a higher degree of polymorphism. It looks like this:
 
 ```scala
 package foo

@@ -7,7 +7,7 @@ Smithy4s provides a custom Json-in/Json-out protocol that smithy services can be
 
 Smithy4s comes with opt-in http4s-specific module, that contains functions that are aware of this protocol, and can be used to quickly synthetise http services and clients.
 
-As for the json aspect of the protocol, [jsoniter-scala](https://github.com/plokhotnyuk/jsoniter-scala/) is used for the (de)serialisaiton of the http bodies.
+As for the json aspect of the protocol, [jsoniter-scala](https://github.com/plokhotnyuk/jsoniter-scala/) is used for the (de)serialisation of the http bodies.
 
 ## Semantics
 
@@ -44,7 +44,7 @@ operation Hello {
 
 ## Supported taits
 
-This protocol and its interpreters, are aware of the following traits provided out of the box :
+This protocol and its interpreters, are aware of the following traits provided out of the box:
 
 * [all simple shapes](https://awslabs.github.io/smithy/1.0/spec/core/model.html#simple-shapes)
 * composite data shapes, including collections, unions, structures.

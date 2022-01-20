@@ -40,7 +40,7 @@ structure BadInput {
 
 ### Creating your own traits
 
-Smithy makes it really easy to create your own traits :
+Smithy makes it really easy to create your own traits:
 
 ```kotlin
 namespace foo
