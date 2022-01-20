@@ -3,7 +3,9 @@ sidebar_label: Installation (SBT)
 title: Installation (SBT)
 ---
 
-`smithy4s-sbt-codegen` is a code generating SBT plugin that creates `.scala` models and stubs out of the `.smithy` specs. The generated code does not depend on any third-party dependency for compilation, whether http-related, json-related or otherwise. It does however depend on a "core" library that contains a number of interfaces implemented by the generated code.
+`smithy4s-sbt-codegen` is a code generating sbt plugin that creates `.scala` files corresponding to the provided `.smithy` specs.
+
+The generated code includes traits for any services you might define, as well as case classes for models used in these services. It has no dependencies on external libraries or any specific protocol like HTTP or JSON. It does, however, depend on a "core" library that contains a number of interfaces implemented by the generated code.
 
 In `project/plugins.sbt` :
 

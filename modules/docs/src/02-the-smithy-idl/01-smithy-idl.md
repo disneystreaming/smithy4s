@@ -5,11 +5,11 @@ title: The Smithy IDL
 
 [Smithy](https://awslabs.github.io/smithy/) is a protocol agnostic definition language. It means that it is not tied to any transport or application protocol or serialisation mechanism, be that http, websockets, json, protobuf, etc.
 
-In order to achieve this, whilst still being useful, smithy separates the core-semantics from protocol-level concerns.
+In order to achieve this, whilst still being useful, smithy separates its core semantics from protocol-level concerns.
 
-The core-semantics contain means to concisely and simply express data models, as well as operations and services.
+The core semantics contain means to concisely and simply express data models, as well as operations and services.
 
-The protocol level semantics are provided by means of an annotation mechanism. If some annotations are provided with the smithy language out of the box, in a "standard library" called prelude, the user is free to define their own.
+The protocol level semantics are provided by means of an annotation mechanism. Some annotations are provided with the smithy language out of the box, in a "standard library" called prelude, but users are free to define their own.
 
 Annotations are called `traits` in smithy.
 
@@ -37,7 +37,7 @@ Smithy provides the following "primitive" types out of the box.
 
 ### Named primitives
 
-Smithy lets you define custom names for primitive types :
+Smithy lets you define custom names for primitive types:
 
 ```kotlin
 namespace foo
@@ -50,7 +50,7 @@ These get translated as unboxed type wrappers, or `newtypes`, that look like a c
 
 ### Collection types
 
-Smithy provides 3 different shapes of collections : lists, sets, and maps. They translate to the same, in the generated Scala code.
+Smithy provides 3 different shapes of collections: lists, sets, and maps. They translate to the corresponding `scala.collection` types in the generated Scala code.
 
 ```kotlin
 namespace foo
@@ -88,9 +88,9 @@ structure Person {
 
 ### Unions
 
-Unions are coproduct types. In Scala, they quite naturally translate to sealed-traits.
+Unions are coproduct types. In Scala, they quite naturally translate to sealed traits.
 
-Union members can target any data shape, be that a structure or a primitive type.
+Union members can target any data shape, be it a structure or a primitive type.
 
 ```kotlin
 namespace foo

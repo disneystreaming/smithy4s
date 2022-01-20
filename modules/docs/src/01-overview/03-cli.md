@@ -3,9 +3,9 @@ sidebar_label: Installation (CLI)
 title: Installation (CLI)
 ---
 
-Beside the provided SBT plugin, smithy4s can be used as a CLI. It allows to generate Scala code and OpenAPI specs from smithy specs.
+Beside the provided sbt plugin, smithy4s can be used as a CLI. It allows generating Scala code and OpenAPI specs from smithy specs.
 
-We recommend using [coursier](https://get-coursier.io/docs/cli-launch) to install/run it
+We recommend using [coursier](https://get-coursier.io/docs/cli-launch) to install/run it.
 
 #### Installation
 

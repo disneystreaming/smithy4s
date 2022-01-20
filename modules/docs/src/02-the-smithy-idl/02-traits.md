@@ -38,7 +38,7 @@ structure BadInput {
 }
 ```
 
-### Creating your own traits.
+### Creating your own traits
 
 Smithy makes it really easy to create your own traits :
 

@@ -5,7 +5,7 @@ title: The SimpleRestJson protocol
 
 Smithy4s provides a custom Json-in/Json-out protocol that smithy services can be annotated with.
 
-Smithy4s comes with opt-in http4s-specific module, that contain functions that are aware of this protocol, and can be used to quickly synthetise http services and clients.
+Smithy4s comes with opt-in http4s-specific module, that contains functions that are aware of this protocol, and can be used to quickly synthetise http services and clients.
 
 ## Semantics
 
