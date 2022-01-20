@@ -9,7 +9,7 @@ const FeatureList = [
     description: (
       <>
         Smithy4s generates protocol-agnostic Scala code from Smithy, a concise, readable, language-agnostic
-        format
+        format.
       </>
     ),
   },
