@@ -50,6 +50,7 @@ private[aws] object AwsSignature {
     def timestamp: Timestamp
     def region: String
     def endpointPrefix: String
+    def sigName: String
 
     def credentialsScope =
       s"${timestamp.conciseDate}/$region/${endpointPrefix.toLowerCase}/aws4_request"
@@ -92,7 +93,7 @@ private[aws] object AwsSignature {
       request.secretKey,
       request.timestamp.conciseDate,
       request.region,
-      request.endpointPrefix.toLowerCase
+      request.sigName
     )
     val stringToSign = List[String](
       algorithm,

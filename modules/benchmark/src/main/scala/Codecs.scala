@@ -58,4 +58,3 @@ object Circe {
   implicit val s3ObjectCodec: Codec[S3Object] =
     io.circe.generic.semiauto.deriveCodec[S3Object]
 }
-
