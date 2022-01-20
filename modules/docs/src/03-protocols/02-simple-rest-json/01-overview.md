@@ -7,6 +7,8 @@ Smithy4s provides a custom Json-in/Json-out protocol that smithy services can be
 
 Smithy4s comes with opt-in http4s-specific module, that contains functions that are aware of this protocol, and can be used to quickly synthetise http services and clients.
 
+As for the json aspect of the protocol, [jsoniter-scala](https://github.com/plokhotnyuk/jsoniter-scala/) is used for the (de)serialisaiton of the http bodies.
+
 ## Semantics
 
 In this protocol, the values in shapes are bound to http metadata or body according to the specification of the [Http Binding traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html?highlight=http#http-binding-traits). However, the `@mediaType` trait has no incidence, and all bodies (when present) are serialised in JSON.
@@ -23,7 +25,7 @@ service HelloWorldService {
   version: "1.0.0",
   // Indicates that all operations in `HelloWorldService`,
   // here limited to the Hello operation, can return `GenericServerError`.
-  errors: [GenericServerError]
+  errors: [GenericServerError],
   operations: [Hello]
 }
 

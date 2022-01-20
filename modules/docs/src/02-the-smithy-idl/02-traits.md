@@ -58,4 +58,3 @@ structure MyStructure {
 Smithy4s automatically creates corresponding values in the generated Scala code, for all the annotations it finds, whether defined in the smithy prelude, or defined by users.
 
 These values can be retrieved via some interfaces that will be documented in a near future.
-

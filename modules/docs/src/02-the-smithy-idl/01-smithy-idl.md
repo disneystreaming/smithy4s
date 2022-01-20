@@ -164,6 +164,18 @@ structure ServerError {
 Smithy4s translates them in the following fashion:
 
 ```scala
+package object foo {
+
+  type HelloService[F[_]] = HelloServiceGen[???]
+
+}
+```
+
+`HelloService` is type alias that expose a normal "functor-shaped" type parameter: we are aware that the most common usecase of smithy4s abides by the "capatibility trait" pattern (or tagless-final), against effect types that probably abide by the cats-effect semantics.
+
+However, the actual interface is `HelloServiceGen`, which has a higher degree of polymorphism. It looks like this :
+
+```scala
 package foo
 
 trait HelloServiceGen[P[_, _, _, _, _]]{
@@ -181,17 +193,7 @@ to run against. The abstact context has 5 type parameters:
 * streamed input (Nothing, most of the time)
 * streamed output (Nothing, most of the time)
 
-Keeping track of these parameters is really important for intepreters. However, we are aware that the most common usecase of smithy4s abides by the "capatibility trait" pattern (or tagless-final), against effect types that abide by the cats-effect semantics.
-
-Therefore, type aliases are provided in the package objects, that expose a normal "functor-shaped" type parameter.
-
-```scala
-package foo {
-
-  type HelloService[F[_]] = HelloServiceGen[???]
-
-}
-```
+Keeping track of these parameters is really important for the implementation  intepreters. It also opens the door for providing interpreters that work against bi-functors (`EitherT[IO, *, *]`) without changing the generated code.
 
 
 ### Currently **not** supported (in particular)

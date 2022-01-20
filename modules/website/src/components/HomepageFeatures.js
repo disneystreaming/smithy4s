@@ -8,8 +8,8 @@ const FeatureList = [
     Svg: require('../../static/img/undraw_sync_files.svg').default,
     description: (
       <>
-        Smithy4s will generate Scala code from your Smithy files. This means your servers
-        and clients will be generated from the same source of truth.
+        Smithy4s generates protocol-agnostic Scala code from Smithy, a concise, readable, language-agnostic
+        format
       </>
     ),
   },
@@ -18,24 +18,23 @@ const FeatureList = [
     Svg: require('../../static/img/undraw_programmer.svg').default,
     description: (
       <>
-        All generated code is pure functional Scala. Smithy4s is designed to work
-        seamlessly with all of your favorite frameworks.
+        Smithy4s allows for idiomatic integration with your favourite
+        libraries/frameworks.
       </>
     ),
   },
   {
-    title: 'Documentation Generation',
+    title: 'Seamless API Dev',
     Svg: require('../../static/img/undraw_add_files.svg').default,
     description: (
       <>
-        In addition to generating Scala code, Smithy4s can generate OpenAPI
-        files. It allows you to easily serve these files through SwaggerUI.
+        Smithy4s can translate your specs to OpenAPI files, and makes it trivial to serve them.
       </>
     ),
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({ Svg, title, description }) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
