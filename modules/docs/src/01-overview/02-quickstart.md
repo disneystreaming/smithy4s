@@ -20,7 +20,7 @@ Enable the plugin in your project, add the smithy and http4s dependencies.
 ```scala
 import smithy4s.codegen.Smithy4sCodegenPlugin
 
-ThisBuild / scalaVersion := "2.13.8"
+ThisBuild / scalaVersion := "@SCALA_VERSION@"
 
 val example = project
   .in(file("modules/example"))
