@@ -40,30 +40,35 @@ val example = project
 Define your API in smithy files.
 
 ```kotlin
-namespace example
+namespace smithy4s.hello
 
 use smithy4s.api#simpleRestJson
 
 @simpleRestJson
 service HelloWorldService {
-  version: "1",
+  version: "1.0.0",
   operations: [Hello]
 }
 
-@http(method: "POST", uri: "/hello", code: 200)
+@http(method: "POST", uri: "/{name}", code: 200)
 operation Hello {
-  input: HelloInput,
+  input: Person,
   output: Greeting
 }
 
-structure HelloInput {
+
+structure Person {
+  @httpLabel
   @required
-  name: String
+  name: String,
+
+  @httpQuery("town")
+  town: String
 }
 
 structure Greeting {
   @required
-  greeting: String
+  message: String
 }
 ```
 
@@ -73,8 +78,8 @@ The Scala code corresponding to this smithy file will be generated the next time
 
 Implement your service by extending the generated Service trait. Wire up routes into server.
 
-```scala
-import example._
+```scala mdoc:compile-only
+import smithy4s.hello._
 import cats.effect._
 import cats.implicits._
 import org.http4s.implicits._
@@ -84,8 +89,12 @@ import com.comcast.ip4s._
 import smithy4s.http4s.SimpleRestJsonBuilder
 
 object HelloWorldImpl extends HelloWorldService[IO] {
-  def hello(name: String): cats.effect.IO[Greeting] =
-    IO.pure(Greeting(s"Hello, $name!"))
+  def hello(name: String, town: Option[String]) : IO[Greeting] = IO.pure {
+    town match {
+      case None => Greeting(s"Hello $name!")
+      case Some(t) => Greeting(s"Hello $name from $t!")
+    }
+  }
 }
 
 object Routes {
@@ -124,6 +133,6 @@ sbt "example/run"
 
 Here you will find the automatically generated SwaggerUI which will allow you to easily test your API.
 
-![SwaggerUI documentation site request](https://i.imgur.com/2NRX2VT.png)
+![SwaggerUI documentation site request](https://i.imgur.com/WQgetF6.png)
 
-![SwaggerUI documentation site response](https://i.imgur.com/cjDs9ii.png)
+![SwaggerUI documentation site response](https://i.imgur.com/JRUQyny.png)
