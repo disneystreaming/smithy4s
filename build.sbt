@@ -58,8 +58,8 @@ lazy val allModules = Seq(
 
 lazy val docs =
   projectMatrix
-    .in(file("module/docs"))
-    .enablePlugins(MdocPlugin)
+    .in(file("modules/docs"))
+    .enablePlugins(MdocPlugin, DocusaurusPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
       http4s,
@@ -67,6 +67,11 @@ lazy val docs =
       `aws-http4s` % "compile -> compile,test"
     )
     .settings(
+      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
+      mdocVariables := Map(
+        "VERSION" -> version.value,
+        "SCALA_VERSION" -> scalaVersion.value
+      ),
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
