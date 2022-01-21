@@ -37,7 +37,7 @@ object HintMaskSpec extends weaver.FunSuite {
   test("hint mask is applied in schematic mask") {
     val schema = string.withHints(Readonly(), Paginated())
     val mask = HintMask(Readonly)
-    val newSchematic = HintMask.mask(TestCompiler, mask)
+    val newSchematic = TestCompiler.mask(mask)
     val result = schema.compile(newSchematic)
     val expected = Hints(Readonly())
     expect.eql(

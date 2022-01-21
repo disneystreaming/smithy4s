@@ -113,4 +113,8 @@ package object syntax
       OneOf(oneOf.label, oneOf.schema.withHints(hints: _*), oneOf.inject)
   }
 
+  implicit class withMaskSyntax[F[_]](val s: Schematic[F]) extends AnyVal {
+    def mask(hintMask: HintMask): Schematic[F] = HintMask.mask(s, hintMask)
+  }
+
 }
