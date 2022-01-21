@@ -149,7 +149,7 @@ object ClientImpl extends IOApp.Simple {
     client <- EmberClientBuilder.default[IO].build
     helloClient <- SimpleRestJsonBuilder(HelloWorldService).clientResource(
       client,
-      Uri.unsafeFromString("http://localhost")
+      Uri.unsafeFromString("http://localhost:9000")
     )
   } yield helloClient
 
