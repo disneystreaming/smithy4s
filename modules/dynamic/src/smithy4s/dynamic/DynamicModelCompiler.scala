@@ -109,7 +109,14 @@ object Compiler {
       "Long" -> Shape.LongCase(LongShape()),
       "Float" -> Shape.FloatCase(FloatShape()),
       "Double" -> Shape.DoubleCase(DoubleShape()),
-      "Unit" -> Shape.StructureCase(StructureShape())
+      "Unit" -> Shape.StructureCase(StructureShape()),
+      "PrimitiveBoolean" -> Shape.BooleanCase(BooleanShape()),
+      "PrimitiveByte" -> Shape.ByteCase(ByteShape()),
+      "PrimitiveShort" -> Shape.ShortCase(ShortShape()),
+      "PrimitiveInteger" -> Shape.IntegerCase(IntegerShape()),
+      "PrimitiveLong" -> Shape.LongCase(LongShape()),
+      "PrimitiveFloat" -> Shape.FloatCase(FloatShape()),
+      "PrimitiveDouble" -> Shape.DoubleCase(DoubleShape())
     ).foreach { case (id, shape) => visitor(ShapeId("smithy.api", id), shape) }
 
     model.shapes.foreach {

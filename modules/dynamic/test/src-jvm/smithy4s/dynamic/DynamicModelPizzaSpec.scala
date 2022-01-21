@@ -14,18 +14,19 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic.model
+package smithy4s
+package dynamic
 
+import model._
 import weaver._
 import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.effect.IO
-import cats.syntax.all._
 import java.nio.file.Paths
-import smithy4s.Document
 import smithy4s.dynamic
 import smithy4s.http.HttpEndpoint
 import smithy.api.Http
+import cats.syntax.all._
 
 object DynamicModelPizzaSpec extends SimpleIOSuite {
 

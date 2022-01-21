@@ -14,32 +14,16 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic.model
+package smithy4s.dynamic
 
+import model._
 import weaver._
 import smithy4s.Document
-import software.amazon.smithy.model.{Model => SModel}
-import software.amazon.smithy.model.shapes.ModelSerializer
-import cats.effect.IO
-import cats.syntax.all._
-import smithy4s.dynamic
 import smithy4s.Service
 import smithy4s.Hints
 import schematic.Field
 
 object DynamicModelSpec extends SimpleIOSuite {
-
-  def parse(string: String): IO[Model] =
-    IO(
-      SModel
-        .assembler()
-        .addUnparsedModel("foo.smithy", string)
-        .assemble()
-        .unwrap()
-    ).map(ModelSerializer.builder().build.serialize(_))
-      .map(NodeToDocument(_))
-      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
-      .flatMap(_.liftTo[IO])
 
   val modelString =
     """|namespace foo
@@ -128,7 +112,8 @@ object DynamicModelSpec extends SimpleIOSuite {
   }
 
   test("Decode json representation of models") {
-    parse(modelString)
+    Utils
+      .parse(modelString)
       .map(obtained => expect.same(obtained, expected))
   }
 
@@ -143,9 +128,7 @@ object DynamicModelSpec extends SimpleIOSuite {
          |}
          |""".stripMargin
 
-    parse(modelString).flatMap { dynamicModel =>
-      IO(dynamic.Compiler.compile(dynamicModel)).as(success)
-    }
+    Utils.compile(modelString).as(success)
   }
 
   object Interpreter {
@@ -207,7 +190,7 @@ object DynamicModelSpec extends SimpleIOSuite {
   pureTest(
     "Extract field names from all structures in a service's endpoints"
   ) {
-    val svc = dynamic.Compiler.compile(expected).allServices.head.service
+    val svc = Utils.compile(expected).allServices.head.service
 
     //  NoSuchElementException: key not found: smithy.api#String
     val result = Interpreter.toFieldNames(svc)

@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package dynamic.model
+package dynamic
 
 import cats.effect.IO
 import cats.syntax.all._
@@ -27,6 +27,21 @@ import cats.syntax.all._
   * Created for testing purposes.
   */
 object JsonIOProtocol {
+
+  def dummy[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      service: Service.Provider[Alg, Op]
+  ): Document => IO[Document] = {
+    implicit val S: Service[Alg, Op] = service.service
+    toJsonIO[Alg, Op](DummyService[IO].create[Alg, Op])
+  }
+
+  def proxy[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      jsonIO: Document => IO[Document],
+      service: Service.Provider[Alg, Op]
+  ): Document => IO[Document] = {
+    implicit val S: Service[Alg, Op] = service.service
+    toJsonIO[Alg, Op](fromJsonIO[Alg, Op](jsonIO))
+  }
 
   def fromJsonIO[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       jsonIO: Document => IO[Document]

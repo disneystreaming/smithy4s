@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic.model
+package smithy4s.dynamic
 
 import smithy4s.Document
 import software.amazon.smithy.model.node._
