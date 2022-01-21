@@ -56,11 +56,6 @@ jobs:
         with:
           extraKey: ${{ env.BUILD_KEY }}
 
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v13
-        with:
-          java-version: ${{ matrix.java }}
-
       - name: Run tests
         run: |
           nix develop --command \
