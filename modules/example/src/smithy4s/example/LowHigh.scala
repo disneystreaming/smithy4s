@@ -2,7 +2,7 @@ package smithy4s.example
 
 import smithy4s.syntax._
 
-sealed abstract class LowHigh(val value: String, val ordinal: Int) extends Product with Serializable
+sealed abstract class LowHigh(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable
 object LowHigh extends smithy4s.Enumeration[LowHigh] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "LowHigh")
 

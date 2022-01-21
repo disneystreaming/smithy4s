@@ -69,7 +69,13 @@ lazy val docs =
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
-        "VERSION" -> version.value,
+        "VERSION" -> (if (isSnapshot.value)
+                        previousStableVersion.value.getOrElse(
+                          throw new Exception(
+                            "No previous version found from dynver"
+                          )
+                        )
+                      else version.value),
         "SCALA_VERSION" -> scalaVersion.value
       ),
       isCE3 := true,
@@ -123,6 +129,7 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "empty.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy"
     ),

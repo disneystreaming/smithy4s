@@ -1,12 +1,12 @@
 name: CI
 on:
-  push:
-    workflow_dispatch:
+  workflow_dispatch:
     inputs:
       publishSnapshot:
         description: 'Publish Snapshot'
         required: true
         default: 'false'
+  push:
     branches: ["main"]
     tags: ["v*"]
   pull_request:
@@ -46,6 +46,8 @@ jobs:
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Cache
         uses: coursier/cache-action@v6
@@ -118,14 +120,14 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      
+
       - name: Compile Documentation Markdown Files
         if: startsWith(github.ref, 'refs/tags/v') # do not run for snapshots
         run: sbt "docs/mdoc"
 
       - name: Build Microsite
         if: startsWith(github.ref, 'refs/tags/v') # do not run for snapshots
-        run: cd ./modules/website && yarn build
+        run: cd ./modules/website && yarn && yarn build
 
       - name: Publish Microsite
         if: startsWith(github.ref, 'refs/tags/v') # do not run for snapshots

@@ -9,7 +9,9 @@ We recommend using [coursier](https://get-coursier.io/docs/cli-launch) to instal
 
 #### Installation
 
+```bash
 cs install --channel https://disneystreaming.github.io/coursier.json smithy4s
+```
 
 #### Usage
 
