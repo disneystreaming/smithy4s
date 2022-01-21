@@ -80,7 +80,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }
-  sealed trait PutObjectError
+  sealed trait PutObjectError extends scala.Product with scala.Serializable
   object PutObjectError {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectError")
 
@@ -134,7 +134,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       case GetObjectError.ServerErrorCase(e) => e
     }
   }
-  sealed trait GetObjectError
+  sealed trait GetObjectError extends scala.Product with scala.Serializable
   object GetObjectError {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectError")
 
