@@ -143,7 +143,7 @@ You can also generate a client using smithy4s.
 ```scala mdoc:compile-only
 import org.http4s.ember.client.EmberClientBuilder
 
-object ClientImpl {
+object ClientImpl extends IOApp.Simple {
 
   val helloWorldClient: Resource[IO, HelloWorldService[IO]] = for {
     client <- EmberClientBuilder.default[IO].build
@@ -153,7 +153,7 @@ object ClientImpl {
     )
   } yield helloClient
 
-  val exampleClientUsage = helloWorldClient.use(c =>
+  val run = helloWorldClient.use(c =>
     c.hello("Sam", Some("New York City"))
       .flatMap(greeting => IO.println(greeting.message))
   )
