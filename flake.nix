@@ -6,15 +6,24 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+        shellPackages = with pkgs; [
+          jre
+          sbt
+          nodejs-14_x
+          yarn
+        ];
       in
       {
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            jre
-            sbt
-            nodejs-14_x
-            yarn
-          ];
+          buildInputs = shellPackages;
+          welcomeMessage = ''
+
+            Available packages: ${builtins.concatStringsSep "\n" (map (pkg : pkg.name) shellPackages)}
+          '';
+
+          shellHook = ''
+            echo "$welcomeMessage"
+          '';
         };
       }
     );
