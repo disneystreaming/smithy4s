@@ -34,6 +34,7 @@ trait Hints {
   final def get[A](key: Hints.Key.Has[A]): Option[A] = get(key.getKey)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.key)
   def remove[A](implicit key: Hints.Key[A]): Hints
+  final def remove[A](key: Hints.Key.Has[A]): Hints = remove(key.getKey)
   def ++(other: Hints): Hints
 }
 
