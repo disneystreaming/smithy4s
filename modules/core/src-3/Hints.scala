@@ -17,7 +17,7 @@
 package smithy4s
 
 /**
-  * A hing is an arbitrary piece of data that can be added to a schema,
+  * A hint is an arbitrary piece of data that can be added to a schema,
   * at the struct level, or at the field/member level.
   *
   * You can think of it as an annotation that can communicate
@@ -33,6 +33,7 @@ trait Hints {
   def get[A](implicit key: Hints.Key[A]): Option[A]
   final def get[A](key: Hints.Key.Has[A]): Option[A] = get(key.getKey)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.key)
+  def remove[A](implicit key: Hints.Key[A]): Hints
   def ++(other: Hints): Hints
 }
 
@@ -90,6 +91,8 @@ object Hints {
       toMap.get(key).map { case Binding(_, value) =>
         value.asInstanceOf[A]
       }
+    def remove[A](implicit key: Hints.Key[A]): Hints =
+      new Impl(toMap - key)
     def ++(other: Hints): Hints = {
       new Impl(toMap ++ other.toMap)
     }

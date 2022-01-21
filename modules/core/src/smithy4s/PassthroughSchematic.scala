@@ -1,0 +1,70 @@
+package smithy4s
+
+import schematic._
+import schematic.struct.GenericAritySchematic
+import java.util.UUID
+
+class PassthroughSchematic[F[_]](schematic: Schematic[F])
+    extends Schematic[F]
+    with GenericAritySchematic[F] {
+  def short: F[Short] = schematic.short
+
+  def int: F[Int] = schematic.int
+
+  def long: F[Long] = schematic.long
+
+  def double: F[Double] = schematic.double
+
+  def float: F[Float] = schematic.float
+
+  def bigint: F[BigInt] = schematic.bigint
+
+  def bigdecimal: F[BigDecimal] = schematic.bigdecimal
+
+  def string: F[String] = schematic.string
+
+  def boolean: F[Boolean] = schematic.boolean
+
+  def uuid: F[UUID] = schematic.uuid
+
+  def byte: F[Byte] = schematic.byte
+
+  def bytes: F[ByteArray] = schematic.bytes
+
+  def unit: F[Unit] = schematic.unit
+
+  def list[S](fs: F[S]): F[List[S]] = schematic.list(fs)
+
+  def set[S](fs: F[S]): F[Set[S]] = schematic.set(fs)
+
+  def vector[S](fs: F[S]): F[Vector[S]] = schematic.vector(fs)
+
+  def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]] = schematic.map(fk, fv)
+
+  def genericStruct[S](fields: Vector[Field[F, S, _]])(
+      const: Vector[Any] => S
+  ): F[S] = schematic.genericStruct(fields)(const)
+
+  def union[S](first: Alt[F, S, _], rest: Vector[Alt[F, S, _]])(
+      total: S => Alt.WithValue[F, S, _]
+  ): F[S] = schematic.union(first, rest)(total)
+
+  def enumeration[A](
+      to: A => (String, Int),
+      fromName: Map[String, A],
+      fromOrdinal: Map[Int, A]
+  ): F[A] = schematic.enumeration(to, fromName, fromOrdinal)
+
+  def suspend[A](f: => F[A]): F[A] = schematic.suspend(f)
+
+  def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B] =
+    schematic.bijection(f, to, from)
+
+  def timestamp: F[Timestamp] = schematic.timestamp
+
+  def withHints[A](fa: F[A], hints: Hints): F[A] =
+    schematic.withHints(fa, hints)
+
+  def document: F[Document] = schematic.document
+
+}
