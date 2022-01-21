@@ -69,7 +69,13 @@ lazy val docs =
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
-        "VERSION" -> version.value,
+        "VERSION" -> (if (isSnapshot.value)
+                        previousStableVersion.value.getOrElse(
+                          throw new Exception(
+                            "No previous version found from dynver"
+                          )
+                        )
+                      else version.value),
         "SCALA_VERSION" -> scalaVersion.value
       ),
       isCE3 := true,
