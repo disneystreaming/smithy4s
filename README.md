@@ -23,3 +23,23 @@ benchmark/jmh:run .*Http4sBenchmark.*
 ```
 
 To benchmark with Scala 2.12 version instead of 2.13, use `benchmark2_12/jmh:run` instead.
+
+## Development environment
+
+For the easiest setup of development tools, use [Nix](https://nixos.org).
+
+The recommended way is to use `nix develop` (requires Flakes support, available since Nix 2.4 - read on if you don't use that experimental feature):
+
+```bash
+nix develop
+```
+
+This will load all required packages into your shell. Run `exit` or press `ctrl+d` to clear it.
+
+If you're a [direnv](https://github.com/nix-community/nix-direnv) user, we have that too.
+
+If you don't have Flakes support:
+
+```bash
+nix-shell
+```
