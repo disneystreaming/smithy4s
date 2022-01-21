@@ -125,7 +125,7 @@ jobs:
 
       - name: Build Microsite
         if: startsWith(github.ref, 'refs/tags/v') # do not run for snapshots
-        run: cd ./modules/website && yarn build
+        run: cd ./modules/website && yarn && yarn build
 
       - name: Publish Microsite
         if: startsWith(github.ref, 'refs/tags/v') # do not run for snapshots
