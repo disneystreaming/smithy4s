@@ -77,7 +77,7 @@ The Scala code corresponding to this smithy file will be generated the next time
 
 Implement your service by extending the generated Service trait. Wire up routes into server.
 
-```scala mdoc:compile-only
+```scala mdoc:silent
 import smithy4s.hello._
 import cats.effect._
 import cats.implicits._
@@ -135,3 +135,28 @@ Here you will find the automatically generated SwaggerUI which will allow you to
 ![SwaggerUI documentation site request](https://i.imgur.com/WQgetF6.png)
 
 ![SwaggerUI documentation site response](https://i.imgur.com/JRUQyny.png)
+
+## Client Example
+
+You can also generate a client using smithy4s.
+
+```scala mdoc:compile-only
+import org.http4s.ember.client.EmberClientBuilder
+
+object ClientImpl {
+
+  val helloWorldClient: Resource[IO, HelloWorldService[IO]] = for {
+    client <- EmberClientBuilder.default[IO].build
+    helloClient <- SimpleRestJsonBuilder(HelloWorldService).clientResource(
+      client,
+      Uri.unsafeFromString("http://localhost")
+    )
+  } yield helloClient
+
+  val exampleClientUsage = helloWorldClient.use(c =>
+    c.hello("Sam", Some("New York City"))
+      .flatMap(greeting => IO.println(greeting.message))
+  )
+
+}
+```
