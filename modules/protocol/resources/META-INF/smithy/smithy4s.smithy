@@ -14,7 +14,22 @@ namespace smithy4s.api
 @uuidFormat
 string UUID
 
-@protocolDefinition
+@protocolDefinition(traits: [
+    "smithy.api#cors",
+    "smithy.api#endpoint",
+    "smithy.api#hostLabel",
+    "smithy.api#http",
+    "smithy.api#httpError",
+    "smithy.api#httpHeader",
+    "smithy.api#httpLabel",
+    "smithy.api#httpPayload",
+    "smithy.api#httpPrefixHeaders",
+    "smithy.api#httpQuery",
+    "smithy.api#httpQueryParams",
+    "smithy.api#httpResponseCode",
+    "smithy.api#jsonName",
+    "smithy.api#timestampFormat"
+])
 @trait(selector: "service")
 structure simpleRestJson {
 }

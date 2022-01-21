@@ -19,5 +19,7 @@ package http4s
 
 object SimpleRestJsonBuilder
     extends SimpleProtocolBuilder[smithy4s.api.SimpleRestJson](
-      smithy4s.http.json.codecs
+      smithy4s.http.json.codecs(
+        HintMask()
+      ) // TODO smithy4s.api.SimpleRestJson.hintMask??
     )
