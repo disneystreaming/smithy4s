@@ -2,7 +2,7 @@ package smithy4s.example
 
 import smithy4s.syntax._
 
-sealed trait Foo
+sealed trait Foo extends scala.Product with scala.Serializable
 object Foo {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "Foo")
 

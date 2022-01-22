@@ -406,7 +406,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val caseNames = alts.map(_.name).map(caseName)
     val imports = alts.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
-      s"sealed trait $name",
+      s"sealed trait $name extends scala.Product with scala.Serializable",
       obj(name, ext = hintKey(name, hints))(
         renderId(originalName),
         newline,
@@ -466,7 +466,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): RenderResult = lines(
-    s"sealed abstract class $name(val value: String, val ordinal: Int) extends Product with Serializable",
+    s"sealed abstract class $name(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable",
     obj(name, ext = s"$Enumeration_[$name]", w = hintKey(name, hints))(
       renderId(originalName),
       newline,

@@ -60,7 +60,7 @@ lazy val allModules = Seq(
 lazy val docs =
   projectMatrix
     .in(file("modules/docs"))
-    .enablePlugins(MdocPlugin)
+    .enablePlugins(MdocPlugin, DocusaurusPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
       http4s,
@@ -68,6 +68,17 @@ lazy val docs =
       `aws-http4s` % "compile -> compile,test"
     )
     .settings(
+      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
+      mdocVariables := Map(
+        "VERSION" -> (if (isSnapshot.value)
+                        previousStableVersion.value.getOrElse(
+                          throw new Exception(
+                            "No previous version found from dynver"
+                          )
+                        )
+                      else version.value),
+        "SCALA_VERSION" -> scalaVersion.value
+      ),
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
@@ -119,6 +130,7 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "empty.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy"
     ),

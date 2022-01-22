@@ -1,12 +1,12 @@
 name: CI
 on:
-  push:
-    workflow_dispatch:
+  workflow_dispatch:
     inputs:
       publishSnapshot:
         description: 'Publish Snapshot'
         required: true
         default: 'false'
+  push:
     branches: ["main"]
     tags: ["v*"]
   pull_request:
@@ -46,6 +46,8 @@ jobs:
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Cache
         uses: coursier/cache-action@v6
@@ -68,7 +70,7 @@ jobs:
         run: |
           sbt scalafmt_$BUILD_KEY \
               headerCheck \
-              "docs/mdoc --in $PWD/README.md"
+              "docs/mdoc"
 
       - name: Check for untracked changes
         run: |
@@ -118,3 +120,16 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+      - name: Compile Documentation Markdown Files
+        run: sbt "docs/mdoc"
+
+      - name: Build Microsite
+        run: cd ./modules/website && yarn && yarn build
+
+      - name: Publish Microsite
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./modules/website/build
+          publish_branch: gh-pages

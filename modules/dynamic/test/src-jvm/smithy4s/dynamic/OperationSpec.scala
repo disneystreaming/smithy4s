@@ -28,7 +28,7 @@ import smithy4s.http.HttpEndpoint
 import smithy.api.Http
 import cats.syntax.all._
 
-object DynamicModelPizzaSpec extends SimpleIOSuite {
+object OperationSpec extends SimpleIOSuite {
 
   // This is not ideal, but it does the job.
   val cwd = System.getProperty("user.dir");
