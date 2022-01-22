@@ -22,10 +22,10 @@ import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.syntax.all._
 import cats.effect.IO
 
-private[dynamic] trait PlatformUtils {
+private[dynamic] trait PlatformUtils { self: Utils.type =>
 
   def compile(string: String): IO[DynamicModel] =
-    parse(string).map(compile)
+    parse(string).map(self.compile)
 
   def parse(string: String): IO[Model] =
     IO(

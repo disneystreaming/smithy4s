@@ -14,14 +14,29 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic
+package smithy4s
+package dynamic
 
-object DynamicJsonServerSpec {
+import cats.effect._
+import cats.syntax.all._
+
+/**
+ * This spec dynamically compiles a KV Store service,
+ * creates a dummy instance for it (that returns 0 values for all the fields of outputs),
+ * and serves it over an example JSON-RPC-like protocol (returning a `Document => IO[Document]`)
+ */
+object DynamicJsonServerSpec extends weaver.IOSuite {
+
+  case class JsonIO(fn: Document => IO[Document]) {
+    def apply(json: Document): IO[Document] = fn(json)
+  }
+
+  type Res = JsonIO
 
   val modelString = """|namespace foo
                        |
                        |service KVStore {
-                       |  operations[Get, Set, Delete]
+                       |  operations: [Get, Set, Delete]
                        |}
                        |
                        |operation Set {
@@ -34,7 +49,7 @@ object DynamicJsonServerSpec {
                        |}
                        |
                        |operation Delete {
-                       |  output:
+                       |  input: Key
                        |}
                        |
                        |structure Key {
@@ -54,5 +69,70 @@ object DynamicJsonServerSpec {
                        |  value: String
                        |}
                        |""".stripMargin
+
+  def sharedResource: Resource[IO, Res] = Resource.eval {
+    Utils
+      .compile(modelString)
+      .flatMap { dynamicModel =>
+        dynamicModel.allServices
+          .find(_.service.id == ShapeId("foo", "KVStore"))
+          .liftTo[IO](new Throwable("Not found"))
+      }
+      .map(service => JsonIOProtocol.dummy(service.service))
+      .map(JsonIO(_))
+  }
+
+  test("Dynamic service is correctly wired: Set") { jsonIO =>
+    val expected = Document.obj()
+
+    jsonIO(
+      Document.obj(
+        "Set" -> Document.obj(
+          "key" -> Document.fromString("K"),
+          "value" -> Document.fromString("V")
+        )
+      )
+    ).map { result =>
+      expect.same(result, expected)
+    }
+  }
+
+  test("Dynamic service is correctly wired: Get") { jsonIO =>
+    val expected = Document.obj("value" -> Document.fromString(""))
+
+    jsonIO(
+      Document.obj(
+        "Get" -> Document.obj(
+          "key" -> Document.fromString("K")
+        )
+      )
+    ).map { result =>
+      expect.same(result, expected)
+    }
+  }
+
+  test("Dynamic service is correctly wired: Bad Json Input") { jsonIO =>
+    val expected = smithy4s.http.PayloadError(
+      PayloadPath("key"),
+      "",
+      "Required field not found"
+    )
+
+    jsonIO(
+      Document.obj("Get" -> Document.obj())
+    ).attempt.map { result =>
+      expect(result == Left(expected))
+    }
+  }
+
+  test("Dynamic service is correctly wired: Bad operation") { jsonIO =>
+    val expected = JsonIOProtocol.NotFound
+
+    jsonIO(
+      Document.obj("Unknown" -> Document.DNull)
+    ).attempt.map { result =>
+      expect(result == Left(expected))
+    }
+  }
 
 }
