@@ -28,8 +28,8 @@ object DummyService {
         service: Service[Alg, Op],
         F: Applicative[F]
     ): smithy4s.Monadic[Alg, F] = {
-      service.transform {
-        service.opToEndpoint.andThen(
+      service.transform[GenLift[F]#λ] {
+        service.opToEndpoint.andThen[GenLift[F]#λ](
           new Transformation[Endpoint[Op, *, *, *, *, *], GenLift[F]#λ] {
             def apply[I, E, O, SI, SO](
                 ep: Endpoint[Op, I, E, O, SI, SO]
