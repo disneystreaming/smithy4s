@@ -34,8 +34,8 @@ object HintMask {
     def ++(other: HintMask): HintMask =
       new Impl(toSet ++ other.toSet)
     def apply(hints: Hints): Hints = {
-      val hintKeysToRemove = hints.toMap.keySet.diff(toSet)
-      hintKeysToRemove.foldLeft(hints)((all, key) => all.remove(key))
+      val hintsToKeep = hints.all.filter(h => toSet.contains(h.key)).toSeq
+      Hints(hintsToKeep: _*)
     }
   }
 
