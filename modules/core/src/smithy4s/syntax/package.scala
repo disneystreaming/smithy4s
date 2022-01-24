@@ -113,6 +113,4 @@ package object syntax
       OneOf(oneOf.label, oneOf.schema.withHints(hints: _*), oneOf.inject)
   }
 
-  implicit def newTypeToHintKey[A](a: Newtype[A]): Hints.Key[_] = a.key
-
 }

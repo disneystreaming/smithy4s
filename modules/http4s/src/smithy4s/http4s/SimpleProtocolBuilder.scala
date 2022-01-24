@@ -24,6 +24,7 @@ import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http.CodecAPI
+import smithy4s.internals.InputOutput
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -34,6 +35,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
     protocolKey: Hints.Key[P],
     protocol: Protocol[P]
 ) {
+
+  private lazy val hintMask = protocol.hintMask ++ HintMask(InputOutput)
 
   def apply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       serviceProvider: smithy4s.Service.Provider[Alg, Op]
@@ -69,7 +72,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
             service,
             Left(http4sClient),
             EntityCompiler
-              .fromCodecAPI[F](codecs, protocol.hintMask)
+              .fromCodecAPI[F](codecs, hintMask)
           )
         )
         .map(service.transform[GenLift[F]#λ](_))
@@ -85,7 +88,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
             service,
             Right(http4sApp),
             EntityCompiler
-              .fromCodecAPI[F](codecs, protocol.hintMask)
+              .fromCodecAPI[F](codecs, hintMask)
           )
         )
         .map(service.transform[GenLift[F]#λ](_))
@@ -130,7 +133,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
   )(implicit F: EffectCompat[F]) {
 
     val entityCompiler =
-      EntityCompiler.fromCodecAPI(codecs, protocol.hintMask)
+      EntityCompiler.fromCodecAPI(codecs, hintMask)
 
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]

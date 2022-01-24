@@ -79,6 +79,8 @@ object Hints {
       implicit val keyInstance: Key[A] = this
       final override def getKey: Key[A] = this
     }
+
+    implicit def newTypeToHintKey[A](a: Newtype[A]): Hints.Key[_] = a.key
   }
 
   private[smithy4s] class Impl(
