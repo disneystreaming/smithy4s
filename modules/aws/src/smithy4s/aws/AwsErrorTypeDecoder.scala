@@ -21,15 +21,17 @@ import cats.syntax.all._
 import smithy4s.aws.kernel.`X-Amzn-Errortype`
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.CodecAPI
+import smithy4s.HintMask
 
 object AwsErrorTypeDecoder {
 
   private val errorTypeHeader = CaseInsensitive(`X-Amzn-Errortype`)
 
   private[aws] def fromResponse[F[_]](
-      codecApi: CodecAPI
+      codecApi: CodecAPI,
+      hintMask: HintMask
   )(implicit F: MonadThrow[F]): HttpResponse => F[Option[String]] = {
-    val codec = codecApi.compileCodec(AwsErrorType.schema)
+    val codec = codecApi.compileCodec(AwsErrorType.schema, hintMask)
     (response: HttpResponse) =>
       val maybeTypeHeader =
         response.metadata.headers

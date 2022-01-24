@@ -31,17 +31,19 @@ import smithy4s.aws.kernel.SysEnv
 import smithy4s.http.HttpMethod
 
 import scala.concurrent.duration._
+import smithy4s.HintMask
 
 object AwsCredentialsProvider {
 
   def default[F[_]](
-      httpClient: SimpleHttpClient[F]
+      httpClient: SimpleHttpClient[F],
+      hintMask: HintMask
   )(implicit F: Temporal[F]): Resource[F, F[AwsCredentials]] = {
     Resource
       .eval(fromEnv[F])
       .map(F.pure)
-      .orElse(refreshing[F](fromECS(httpClient)))
-      .orElse(refreshing[F](fromEC2(httpClient)))
+      .orElse(refreshing[F](fromECS(httpClient, hintMask)))
+      .orElse(refreshing[F](fromEC2(httpClient, hintMask)))
   }
 
   def fromEnv[F[_]](implicit F: MonadThrow[F]): F[AwsCredentials] = {
@@ -62,11 +64,12 @@ object AwsCredentialsProvider {
   val AWS_EC2_METADATA_URI =
     "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
-  val instanceMetadataCodec =
-    json.awsJson.compileCodec(AwsInstanceMetadata.schema)
+  def instanceMetadataCodec(hintMask: HintMask) =
+    json.awsJson.compileCodec(AwsInstanceMetadata.schema, hintMask)
 
   def fromEC2[F[_]: MonadThrow](
-      httpClient: SimpleHttpClient[F]
+      httpClient: SimpleHttpClient[F],
+      hintMask: HintMask
   ): F[AwsTemporaryCredentials] =
     for {
       roleRes <- httpClient.run(
@@ -77,21 +80,22 @@ object AwsCredentialsProvider {
         HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI + roleName)
       )
       maybeCreds = json.awsJson.decodeFromByteArray(
-        instanceMetadataCodec,
+        instanceMetadataCodec(hintMask),
         metadataRes.body
       )
       creds <- MonadThrow[F].fromEither(maybeCreds)
     } yield creds
 
   def fromECS[F[_]: MonadThrow](
-      httpClient: SimpleHttpClient[F]
+      httpClient: SimpleHttpClient[F],
+      hintMask: HintMask
   ): F[AwsTemporaryCredentials] =
     for {
       response <- httpClient.run(
         HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI)
       )
       maybeCreds = json.awsJson.decodeFromByteArray(
-        instanceMetadataCodec,
+        instanceMetadataCodec(hintMask),
         response.body
       )
       creds <- MonadThrow[F].fromEither(maybeCreds)

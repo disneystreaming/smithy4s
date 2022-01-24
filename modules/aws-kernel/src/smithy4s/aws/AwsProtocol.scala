@@ -19,6 +19,7 @@ package smithy4s.aws
 import aws.protocols.AwsJson1_0
 import aws.protocols.AwsJson1_1
 import smithy4s.Hints
+import smithy4s.HintMask
 
 private[aws] sealed trait AwsProtocol extends Product with Serializable {}
 
@@ -27,11 +28,17 @@ private[aws] object AwsProtocol {
   def apply(hints: Hints): Option[AwsProtocol] =
     hints
       .get(AwsJson1_0)
-      .map(AWS_JSON_1_0.apply)
-      .orElse(hints.get(AwsJson1_1).map(AWS_JSON_1_1.apply))
+      .map(p => AWS_JSON_1_0(p, AwsJson1_0.protocol.hintMask))
+      .orElse(
+        hints
+          .get(AwsJson1_1)
+          .map(p => AWS_JSON_1_1(p, AwsJson1_1.protocol.hintMask))
+      )
 
   // See https://awslabs.github.io/smithy/1.0/spec/aws/aws-json-1_0-protocol.html#differences-between-awsjson1-0-and-awsjson1-1
-  final case class AWS_JSON_1_0(value: AwsJson1_0) extends AwsProtocol
-  final case class AWS_JSON_1_1(value: AwsJson1_1) extends AwsProtocol
+  final case class AWS_JSON_1_0(value: AwsJson1_0, hintMask: HintMask)
+      extends AwsProtocol
+  final case class AWS_JSON_1_1(value: AwsJson1_1, hintMask: HintMask)
+      extends AwsProtocol
 
 }

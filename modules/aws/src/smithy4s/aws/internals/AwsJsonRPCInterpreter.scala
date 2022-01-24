@@ -20,6 +20,7 @@ package internals
 import cats.MonadThrow
 import smithy4s.Endpoint
 import smithy4s.Transformation
+import smithy4s.HintMask
 
 // format: off
 /**
@@ -29,7 +30,8 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     service: smithy4s.Service[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
-    contentType: String
+    contentType: String,
+    hintMask: HintMask
 )(implicit F: MonadThrow[F])
     extends Transformation[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
@@ -56,7 +58,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
       ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] =
-        new AwsUnaryEndpoint(awsEnv, signer, endpoint, json.awsJson)
+        new AwsUnaryEndpoint(awsEnv, signer, endpoint, json.awsJson, hintMask)
     }.precompute(service.endpoints.map(smithy4s.Kind5.existential(_)))
 
 }

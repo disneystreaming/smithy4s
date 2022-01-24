@@ -30,9 +30,10 @@ object AwsEnvironment {
 
   def default[F[_]](
       client: SimpleHttpClient[F],
-      region: AwsRegion
+      region: AwsRegion,
+      hintMask: smithy4s.HintMask
   )(implicit F: Async[F]): Resource[F, AwsEnvironment[F]] =
-    AwsCredentialsProvider.default[F](client).map { credentialsF =>
+    AwsCredentialsProvider.default[F](client, hintMask).map { credentialsF =>
       make(
         client,
         F.pure(region),
