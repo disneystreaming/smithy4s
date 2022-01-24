@@ -28,7 +28,10 @@ string UUID
     "smithy.api#httpQueryParams",
     "smithy.api#httpResponseCode",
     "smithy.api#jsonName",
-    "smithy.api#timestampFormat"
+    "smithy.api#timestampFormat",
+    "smithy4s.api#uncheckedExamples",
+    "smithy4s.api#uuidFormat",
+    "smithy4s.api#discriminated"
 ])
 @trait(selector: "service")
 structure simpleRestJson {
