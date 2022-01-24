@@ -19,10 +19,11 @@ package http
 
 import smithy4s.syntax._
 import smithy.api.Http
+import scala.collection.mutable.ArrayBuilder
 
 trait HttpEndpoint[I] {
   // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
-  def path(input: I): List[String]
+  def path(input: I): Array[String]
 
   // Returns a path template as a list of segments, which can be constant strings or placeholders.
   def path: List[PathSegment]
@@ -53,7 +54,11 @@ object HttpEndpoint {
         .get
     } yield {
       new HttpEndpoint[I] {
-        def path(input: I): List[String] = encoder.encode(input)
+        def path(input: I): Array[String] = {
+          val ab = ArrayBuilder.make[String]
+          encoder.encode(ab, input)
+          ab.result()
+        }
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod
         val code: Int = http.code.getOrElse(200)

@@ -25,6 +25,7 @@ import smithy4s.http.PathSegment
 import smithy4s.http.PathSegment.StaticSegment
 import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.GreedySegment
+import scala.collection.mutable.ArrayBuilder
 
 object SchematicPathEncoder
     extends Schematic[PathEncode.Make]
@@ -73,7 +74,7 @@ object SchematicPathEncoder
   override def genericStruct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S
   ): PathEncode.Make[S] = {
-    type Writer = S => List[String]
+    type Writer = (ArrayBuilder[String], S) => Unit
 
     def toPathEncoder[A](
         field: Field[PathEncode.Make, S, A],
@@ -99,7 +100,7 @@ object SchematicPathEncoder
     }
 
     def compile1(path: PathSegment): Option[Writer] = path match {
-      case StaticSegment(value) => Some(Function.const(List(value)))
+      case StaticSegment(value) => Some((ab, _) => ab += value)
       case LabelSegment(value) =>
         fields
           .find(_.label == value)
@@ -119,8 +120,9 @@ object SchematicPathEncoder
         path <- pathSegments(httpHint.uri.value)
         writers <- compilePath(path)
       } yield new PathEncode[S] {
-        def encode(s: S): List[String] = writers.flatMap(_.apply(s)).toList
-        def encodeGreedy(s: S): List[String] = Nil
+        def encode(ab: ArrayBuilder[String], s: S): Unit =
+          writers.foreach(_.apply(ab, s))
+        def encodeGreedy(ab: ArrayBuilder[String], s: S): Unit = ()
       }
     }
   }

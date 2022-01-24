@@ -28,6 +28,7 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import schematic.OneOf
 import smithy4s.http._
+import scala.collection.compat.immutable.ArraySeq
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -102,7 +103,10 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
     val metadata = inputMetadataEncoder.encode(input)
     val path = httpEndpoint.path(input)
     val uri = baseUri
-      .copy(path = baseUri.path.addSegments(path.map(Uri.Path.Segment(_))))
+      .copy(path =
+        baseUri.path
+          .addSegments(ArraySeq.unsafeWrapArray(path).map(Uri.Path.Segment(_)))
+      )
       .withMultiValueQueryParams(metadata.query)
     val headers = toHeaders(metadata.headers)
     val baseRequest = Request[F](method, uri, headers = headers)
