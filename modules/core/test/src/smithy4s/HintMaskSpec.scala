@@ -12,7 +12,7 @@ object HintMaskSpec extends weaver.FunSuite {
 
   test("Hints are masked") {
     val hints = Hints(Discriminated("type"), Required(), HttpError(404))
-    val mask = HintMask(Discriminated.key, Required)
+    val mask = HintMask(Discriminated, Required)
     val result = mask(hints)
     val expected = Hints(Discriminated("type"), Required())
     expect.eql(expected, result)

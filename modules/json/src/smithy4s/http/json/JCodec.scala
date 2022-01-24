@@ -113,7 +113,7 @@ object JCodec {
   type JCodecMake[A] = Hinted[JCodec, A]
 
   def fromSchema[A](schema: Schema[A]): JCodec[A] =
-    schema.compile(codecs.schematicJCodec).get
+    schema.compile(schematicJCodec).get
 
   implicit def deriveJCodecFromSchema[A](implicit
       schema: Static[Schema[A]]

@@ -369,6 +369,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case t: ErrorTrait if t.isServerError => Hint.ServerError
     case t: HttpErrorTrait                => Hint.HttpError(t.getCode())
     case t: HttpTrait => Hint.Http(t.getMethod(), segments(t), t.getCode())
+    case t: ProtocolDefinitionTrait =>
+      val shapeIds = t.getTraits()
+      val refs = shapeIds.asScala.map(shapeId =>
+        Type.Ref(shapeId.getNamespace(), shapeId.getName())
+      )
+      Hint.Protocol(refs.toList)
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
   }

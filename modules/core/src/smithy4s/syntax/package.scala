@@ -117,4 +117,6 @@ package object syntax
     def mask(hintMask: HintMask): Schematic[F] = HintMask.mask(s, hintMask)
   }
 
+  implicit def newTypeToHintKey[A](a: Newtype[A]): Hints.Key[_] = a.key
+
 }

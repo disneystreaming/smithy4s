@@ -15,9 +15,12 @@
  */
 
 package smithy4s
-package http4s
+package http
 
-object SimpleRestJsonBuilder
-    extends SimpleProtocolBuilder[smithy4s.api.SimpleRestJson](
-      smithy4s.http.json.codecs
-    )
+package object json {
+
+  private[smithy4s] val schematicJCodec: Schematic[JCodec.JCodecMake] =
+    new SchematicJCodec(Constraints.defaultConstraints, maxArity = 1024)
+  object codecs extends JsonCodecAPI(schematicJCodec)
+
+}

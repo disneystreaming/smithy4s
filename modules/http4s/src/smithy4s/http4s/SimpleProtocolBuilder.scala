@@ -31,7 +31,8 @@ import smithy4s.http.CodecAPI
   * first check that they are indeed annotated with the protocol in question.
   */
 abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
-    protocolKey: Hints.Key[P]
+    protocolKey: Hints.Key[P],
+    protocol: Protocol[P]
 ) {
 
   def apply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
@@ -67,7 +68,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
             baseUri,
             service,
             Left(http4sClient),
-            EntityCompiler.fromCodecAPI[F](codecs)
+            EntityCompiler
+              .fromCodecAPI[F](codecs, protocol.hintMask)
           )
         )
         .map(service.transform[GenLift[F]#λ](_))
@@ -82,7 +84,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
             baseUri,
             service,
             Right(http4sApp),
-            EntityCompiler.fromCodecAPI[F](codecs)
+            EntityCompiler
+              .fromCodecAPI[F](codecs, protocol.hintMask)
           )
         )
         .map(service.transform[GenLift[F]#λ](_))
@@ -126,7 +129,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
   )(implicit F: EffectCompat[F]) {
 
-    val entityCompiler = EntityCompiler.fromCodecAPI(codecs)
+    val entityCompiler =
+      EntityCompiler.fromCodecAPI(codecs, protocol.hintMask)
 
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
