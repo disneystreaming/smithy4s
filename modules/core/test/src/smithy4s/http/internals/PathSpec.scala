@@ -24,7 +24,6 @@ import smithy4s.http.PathSegment
 import smithy4s.Schema
 import smithy.api.Http
 import smithy.api.NonEmptyString
-import scala.collection.mutable.ArrayBuilder
 
 object PathSpec extends weaver.FunSuite {
   import smithy4s.syntax._
@@ -40,19 +39,7 @@ object PathSpec extends weaver.FunSuite {
       .compile(SchematicPathEncoder)
       .get
 
-    val simpleString: Option[PathEncode[String]] = encodePathAs(string)
-
-    def encode[A](pe: PathEncode[A], value: A): List[String] = {
-      val ab = ArrayBuilder.make[String]
-      pe.encode(ab, value)
-      ab.result().toList
-    }
-
-    def encodeGreedy[A](pe: PathEncode[A], value: A): List[String] = {
-      val ab = ArrayBuilder.make[String]
-      pe.encodeGreedy(ab, value)
-      ab.result().toList
-    }
+    val simpleString = encodePathAs(string)
   }
 
   test("Parse path pattern into path segments") {
@@ -85,7 +72,6 @@ object PathSpec extends weaver.FunSuite {
           true
         )
       )
-      .toList
 
     val expected = if (weaver.Platform.isJS) {
       "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00.000Z" :: "1970-01-01T00:00:00.000Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
@@ -111,7 +97,7 @@ object PathSpec extends weaver.FunSuite {
       )
       .compile(SchematicPathEncoder)
       .get
-      .map(util.encode(_, ()))
+      .map(_.encode(()))
 
     assert.eql(
       result,
@@ -134,7 +120,7 @@ object PathSpec extends weaver.FunSuite {
       )
       .compile(SchematicPathEncoder)
       .get
-      .map(util.encode(_, ()))
+      .map(_.encode(()))
 
     assert.eql(
       result,
@@ -144,14 +130,14 @@ object PathSpec extends weaver.FunSuite {
 
   test("Write PathParams for a simple string") {
     assert.eql(
-      util.simpleString.map(util.encode(_, "example")),
+      util.simpleString.map(_.encode("example")),
       Some(List("example"))
     )
   }
 
   test("Write PathParams for an int") {
     assert.eql(
-      util.encodePathAs(int).map(util.encode(_, 42)),
+      util.encodePathAs(int).map(_.encode(42)),
       Some(List("42"))
     )
   }
@@ -162,14 +148,14 @@ object PathSpec extends weaver.FunSuite {
     })
 
     assert.eql(
-      util.encodePathAs(double).map(util.encode(_, 42.0)),
+      util.encodePathAs(double).map(_.encode(42.0)),
       expected
     )
   }
 
   test("Write PathParams for a boolean") {
     assert.eql(
-      util.encodePathAs(boolean).map(util.encode(_, true)),
+      util.encodePathAs(boolean).map(_.encode(true)),
       Some(List("true"))
     )
   }
@@ -178,7 +164,7 @@ object PathSpec extends weaver.FunSuite {
     val input = "example with all kinds of strange characters / \\ & "
 
     assert.eql(
-      util.simpleString.map(util.encode(_, input)),
+      util.simpleString.map(_.encode(input)),
       Some(List(input))
     )
   }
@@ -189,14 +175,14 @@ object PathSpec extends weaver.FunSuite {
     val input = "example/with/slashes and spaces"
 
     assert.eql(
-      util.simpleString.map(util.encodeGreedy(_, input)),
+      util.simpleString.map(_.encodeGreedy(input)),
       Some(List("example", "with", "slashes and spaces"))
     )
   }
 
   test("Write PathParams for unit as None") {
     assert.eql(
-      util.encodePathAs(unit).map(util.encode(_, ())),
+      util.encodePathAs(unit).map(_.encode(())),
       None
     )
   }

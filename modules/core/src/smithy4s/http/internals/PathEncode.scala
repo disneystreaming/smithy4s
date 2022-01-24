@@ -17,17 +17,14 @@
 package smithy4s.http.internals
 
 import smithy4s.internals.Hinted
-import scala.collection.mutable.ArrayBuilder
 
 trait PathEncode[A] { self =>
-  def encode(ab: ArrayBuilder[String], a: A): Unit
-  def encodeGreedy(ab: ArrayBuilder[String], a: A): Unit
+  def encode(a: A): List[String]
+  def encodeGreedy(a: A): List[String]
 
   def contramap[B](from: B => A): PathEncode[B] = new PathEncode[B] {
-    def encode(ab: ArrayBuilder[String], b: B): Unit =
-      self.encode(ab, from(b))
-    def encodeGreedy(ab: ArrayBuilder[String], b: B): Unit =
-      self.encodeGreedy(ab, from(b))
+    def encode(b: B): List[String] = self.encode(from(b))
+    def encodeGreedy(b: B): List[String] = self.encodeGreedy(from(b))
   }
 }
 
@@ -45,12 +42,12 @@ object PathEncode {
 
     def raw[A](f: A => String): PathEncode[A] = {
       new PathEncode[A] {
-        def encode(ab: ArrayBuilder[String], a: A): Unit = {
-          ab += f(a)
+        def encode(a: A): List[String] = {
+          List(f(a))
         }
 
-        def encodeGreedy(ab: ArrayBuilder[String], a: A): Unit = {
-          ab ++= f(a).split('/')
+        def encodeGreedy(a: A): List[String] = {
+          f(a).split('/').toList
         }
       }
     }
