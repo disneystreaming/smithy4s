@@ -157,9 +157,13 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a double") {
+    val expected = Some(List {
+      if (weaver.Platform.isJS) "42" else "42.0"
+    })
+
     assert.eql(
       util.encodePathAs(double).map(util.encode(_, 42.0)),
-      Some(List("42.0"))
+      expected
     )
   }
 
