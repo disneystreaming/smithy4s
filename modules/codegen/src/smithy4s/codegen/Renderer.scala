@@ -326,9 +326,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val decl = s"case class $name(${renderArgs(fields)})"
     val imports = fields.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
-      if (
-        hints.contains(Hint.ClientError) || hints.contains(Hint.ServerError)
-      ) {
+      if (hints.contains(Hint.Error)) {
         block(s"$decl extends Throwable") {
           fields
             .find(_.name == "message")

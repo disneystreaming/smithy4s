@@ -365,8 +365,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   )
 
   private val traitToHint: PartialFunction[Trait, Hint] = {
-    case t: ErrorTrait if t.isClientError => Hint.ClientError
-    case t: ErrorTrait if t.isServerError => Hint.ServerError
+    case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>
       val shapeIds = t.getTraits()
       val refs = shapeIds.asScala.map(shapeId =>
