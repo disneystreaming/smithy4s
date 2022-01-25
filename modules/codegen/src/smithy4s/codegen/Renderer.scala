@@ -300,20 +300,18 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProtocol(name: String, hints: List[Hint]): RenderResult = {
-    hints.collect({ case p: Hint.Protocol => p }) match {
-      case protocol :: _ =>
-        val protocolTraits = protocol.traits
-          .map(t => s"${t.namespace}.${t.name.capitalize}")
-          .mkString(", ")
-        lines(
-          newline,
-          block(
-            s"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
-          ) {
-            s"def hintMask: smithy4s.HintMask = smithy4s.HintMask($protocolTraits)"
-          }
-        )
-      case _ => RenderResult.empty
+    hints.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
+      val protocolTraits = protocol.traits
+        .map(t => s"${t.namespace}.${t.name.capitalize}")
+        .mkString(", ")
+      lines(
+        newline,
+        block(
+          s"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
+        ) {
+          s"def hintMask: smithy4s.HintMask = smithy4s.HintMask($protocolTraits)"
+        }
+      )
     }
   }
 
