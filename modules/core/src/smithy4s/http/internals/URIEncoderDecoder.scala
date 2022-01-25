@@ -18,7 +18,6 @@ package smithy4s
 package http
 package internals
 
-import java.io.ByteArrayOutputStream
 import scala.annotation.tailrec
 
 private[smithy4s] object URIEncoderDecoder {
@@ -79,41 +78,6 @@ private[smithy4s] object URIEncoderDecoder {
       }
     }
     loop(0)
-  }
-
-  def decode(s: String): String = {
-    val result: StringBuilder = new StringBuilder()
-    val out: ByteArrayOutputStream = new ByteArrayOutputStream()
-    var i: Int = 0
-    while (i < s.length) {
-      val c: Char = s.charAt(i)
-      if (c == '%') {
-        out.reset()
-        while ({
-          if (i + 2 >= s.length) {
-            throw new IllegalArgumentException("Incomplete % sequence at: " + i)
-          }
-          val d1: Int = java.lang.Character.digit(s.charAt(i + 1), 16)
-          val d2: Int = java.lang.Character.digit(s.charAt(i + 2), 16)
-          if (d1 == -1 || d2 == -1) {
-            throw new IllegalArgumentException(
-              "Invalid % sequence (" + s.substring(i, i + 3) + ") at: " + i
-            )
-          }
-          out.write(((d1 << 4) + d2))
-          i += 3
-          // loop condition
-          // Scala 3 dropped do-while loops
-          // this is the recommended rewrite:
-          // https://docs.scala-lang.org/scala3/reference/dropped-features/do-while.html
-          (i < s.length && s.charAt(i) == '%')
-        }) {}
-        result.append(out.toString(encoding))
-      }
-      result.append(c)
-      i += 1
-    }
-    result.toString
   }
 
 }
