@@ -28,19 +28,18 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   awsEnv: AwsEnvironment[F],
   signer: AwsSigner[F],
   endpoint: Endpoint[Op, I, E, O, SI, SO],
-  codecAPI: CodecAPI,
-  hintMask: HintMask
+  codecAPI: CodecAPI
 )(implicit F: MonadThrow[F]) { outer =>
 // format: on
 
   private val metadataEncoder = Metadata.Encoder.fromSchema(endpoint.input)
   private val inputHasBody =
     Metadata.TotalDecoder.fromSchema(endpoint.input).isEmpty
-  private val inputCodec = codecAPI.compileCodec(endpoint.input, hintMask)
+  private val inputCodec = codecAPI.compileCodec(endpoint.input)
 
   private val maybeOutputMetadataDecoder =
     Metadata.TotalDecoder.fromSchema(endpoint.output)
-  private val outputCodec = codecAPI.compileCodec(endpoint.output, hintMask)
+  private val outputCodec = codecAPI.compileCodec(endpoint.output)
   private val getErrorType: HttpResponse => F[Option[String]] =
     AwsErrorTypeDecoder.fromResponse[F](codecAPI)
 
@@ -95,7 +94,7 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   ): F[O] = {
     val schema = oneOf.schema
     val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
-    val errorCodec = codecAPI.compileCodec(schema, hintMask)
+    val errorCodec = codecAPI.compileCodec(schema)
     decodeResponse(response, errorCodec, errorMetadataDecoder)
       .map(oneOf.inject)
       .map(errorable.unliftError)

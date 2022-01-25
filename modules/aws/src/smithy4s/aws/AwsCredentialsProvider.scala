@@ -31,7 +31,6 @@ import smithy4s.aws.kernel.SysEnv
 import smithy4s.http.HttpMethod
 
 import scala.concurrent.duration._
-import smithy4s.HintMask
 
 object AwsCredentialsProvider {
 
@@ -64,7 +63,7 @@ object AwsCredentialsProvider {
     "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
   val instanceMetadataCodec =
-    json.awsJson.compileCodec(AwsInstanceMetadata.schema, HintMask.allAllowed)
+    json.awsJson.compileCodec(AwsInstanceMetadata.schema)
 
   def fromEC2[F[_]: MonadThrow](
       httpClient: SimpleHttpClient[F]
