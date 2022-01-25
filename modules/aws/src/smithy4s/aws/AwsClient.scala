@@ -54,22 +54,20 @@ object AwsClient {
       endpointPrefix: String
   )(implicit F: MonadThrow[F]): Transformation[Op, AwsCall[F, *, *, *, *, *]] =
     awsProtocol match {
-      case AwsProtocol.AWS_JSON_1_0(_, hintMask) =>
+      case AwsProtocol.AWS_JSON_1_0(_) =>
         new AwsJsonRPCInterpreter[Alg, Op, F](
           service,
           endpointPrefix,
           awsEnv,
-          "application/x-amz-json-1.0",
-          hintMask
+          "application/x-amz-json-1.0"
         )
 
-      case AwsProtocol.AWS_JSON_1_1(_, hintMask) =>
+      case AwsProtocol.AWS_JSON_1_1(_) =>
         new AwsJsonRPCInterpreter[Alg, Op, F](
           service,
           endpointPrefix,
           awsEnv,
-          "application/x-amz-json-1.1",
-          hintMask
+          "application/x-amz-json-1.1"
         )
     }
 

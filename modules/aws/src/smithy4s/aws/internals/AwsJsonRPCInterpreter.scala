@@ -20,7 +20,6 @@ package internals
 import cats.MonadThrow
 import smithy4s.Endpoint
 import smithy4s.Transformation
-import smithy4s.HintMask
 
 // format: off
 /**
@@ -30,8 +29,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     service: smithy4s.Service[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
-    contentType: String,
-    hintMask: HintMask
+    contentType: String
 )(implicit F: MonadThrow[F])
     extends Transformation[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
