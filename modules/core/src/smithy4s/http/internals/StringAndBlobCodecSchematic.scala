@@ -77,8 +77,7 @@ private[smithy4s] object StringAndBlobCodecSchematic {
 
 private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
     extends Schematic[Result]
-    with StubSchematic[Result]
-    with schematic.struct.GenericAritySchematic[Result] {
+    with StubSchematic[Result] {
 
   def default[A]: Result[A] = noop[A]
 
@@ -119,7 +118,7 @@ private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
         }
     }
 
-  override def genericStruct[S](fields: Vector[Field[Result, S, _]])(
+  override def struct[S](fields: Vector[Field[Result, S, _]])(
       const: Vector[Any] => S
   ): Result[S] = {
     type CodecResultOpt[A] = CodecResult[Option[A]]

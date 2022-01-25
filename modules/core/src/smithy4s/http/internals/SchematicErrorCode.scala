@@ -48,7 +48,7 @@ private[smithy4s] object SchematicErrorCode
   ): HttpCode[B] =
     (b, hints) => f(from(b), hints)
 
-  override def genericStruct[S](
+  override def struct[S](
       fields: Vector[Field[HttpCode, S, _]]
   )(f: Vector[Any] => S): HttpCode[S] = (_, hints) =>
     hints

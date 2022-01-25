@@ -97,7 +97,7 @@ object DocumentSpec extends FunSuite {
       val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
         .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))
 
-      val right = genericStruct(Vector.empty)(_ => Baz())
+      val right = struct(Baz())
         .oneOf[Either[Foo, Baz]]("baz", (b: Baz) => Right(b))
 
       union(left, right) {

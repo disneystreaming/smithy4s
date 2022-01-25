@@ -16,7 +16,7 @@ object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
         from: B => A
     ): ToShapeIds[B] = f
 
-    override def genericStruct[S](fields: Vector[Field[ToShapeIds, S, _]])(
+    override def struct[S](fields: Vector[Field[ToShapeIds, S, _]])(
         const: Vector[Any] => S
     ): ToShapeIds[S] =
       fields.flatMap(_.instance).toList

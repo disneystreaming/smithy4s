@@ -19,7 +19,6 @@ package http
 package internals
 
 import schematic._
-import schematic.struct.GenericAritySchematic
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
 
@@ -41,7 +40,6 @@ private[http] object SchematicMetadataReader
   */
 private[http] class SchematicMetadataReader(constraints: Constraints)
     extends Schematic[MetaDecode.Make]
-    with GenericAritySchematic[MetaDecode.Make]
     with ScalaCompat {
 
   def short: MetaDecode.Make[Short] =
@@ -212,7 +210,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
       binding: HttpBinding,
       update: (Metadata, PutField) => Unit
   )
-  def genericStruct[S](
+  def struct[S](
       fields: Vector[Field[MetaDecode.Make, S, _]]
   )(const: Vector[Any] => S): MetaDecode.Make[S] =
     Hinted[MetaDecode].onHintOpt[InputOutput, S] { maybeInputOutput =>

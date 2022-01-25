@@ -49,7 +49,7 @@ trait StubSchematic[F[_]] extends Schematic[F] with schematic.StubSchematic[F] {
   def document: F[Document] = default
   def timestamp: F[Timestamp] = default
   def withHints[A](fa: F[A], hints: Hints): F[A] = default
-  def genericStruct[S](fields: Vector[Field[F, S, _]])(
+  def struct[S](fields: Vector[Field[F, S, _]])(
       const: Vector[Any] => S
   ): F[S] = default
 }
