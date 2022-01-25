@@ -28,9 +28,9 @@ object AwsErrorTypeDecoder {
   private val errorTypeHeader = CaseInsensitive(`X-Amzn-Errortype`)
 
   private[aws] def fromResponse[F[_]](
-      codecApi: CodecAPI,
-      hintMask: HintMask
+      codecApi: CodecAPI
   )(implicit F: MonadThrow[F]): HttpResponse => F[Option[String]] = {
+    val hintMask = HintMask.allAllowed
     val codec = codecApi.compileCodec(AwsErrorType.schema, hintMask)
     (response: HttpResponse) =>
       val maybeTypeHeader =

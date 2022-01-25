@@ -16,23 +16,33 @@
 
 package smithy4s
 
-abstract class HintMask {
-  protected def toSet: Set[Hints.Key[_]]
+sealed abstract class HintMask {
   def ++(other: HintMask): HintMask
   def apply(hints: Hints): Hints
 }
 
 object HintMask {
+
+  def allAllowed: HintMask = Permissive
+
   def empty: HintMask = apply()
 
   def apply(hintKeys: Hints.Key[_]*): HintMask = {
     new Impl(hintKeys.toSet)
   }
 
+  private[this] case object Permissive extends HintMask {
+    def ++(other: HintMask): HintMask = this
+    def apply(hints: Hints): Hints = hints
+  }
+
   private[this] final class Impl(val toSet: Set[Hints.Key[_]])
       extends HintMask {
-    def ++(other: HintMask): HintMask =
-      new Impl(toSet ++ other.toSet)
+    def ++(other: HintMask): HintMask = other match {
+      case i: Impl    => new Impl(toSet ++ i.toSet)
+      case Permissive => Permissive
+    }
+
     def apply(hints: Hints): Hints = {
       val hintsToKeep = hints.all.filter(h => toSet.contains(h.key)).toSeq
       Hints(hintsToKeep: _*)

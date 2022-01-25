@@ -36,14 +36,13 @@ import smithy4s.HintMask
 object AwsCredentialsProvider {
 
   def default[F[_]](
-      httpClient: SimpleHttpClient[F],
-      hintMask: HintMask
+      httpClient: SimpleHttpClient[F]
   )(implicit F: Temporal[F]): Resource[F, F[AwsCredentials]] = {
     Resource
       .eval(fromEnv[F])
       .map(F.pure)
-      .orElse(refreshing[F](fromECS(httpClient, hintMask)))
-      .orElse(refreshing[F](fromEC2(httpClient, hintMask)))
+      .orElse(refreshing[F](fromECS(httpClient)))
+      .orElse(refreshing[F](fromEC2(httpClient)))
   }
 
   def fromEnv[F[_]](implicit F: MonadThrow[F]): F[AwsCredentials] = {
@@ -64,12 +63,11 @@ object AwsCredentialsProvider {
   val AWS_EC2_METADATA_URI =
     "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
-  def instanceMetadataCodec(hintMask: HintMask) =
-    json.awsJson.compileCodec(AwsInstanceMetadata.schema, hintMask)
+  val instanceMetadataCodec =
+    json.awsJson.compileCodec(AwsInstanceMetadata.schema, HintMask.allAllowed)
 
   def fromEC2[F[_]: MonadThrow](
-      httpClient: SimpleHttpClient[F],
-      hintMask: HintMask
+      httpClient: SimpleHttpClient[F]
   ): F[AwsTemporaryCredentials] =
     for {
       roleRes <- httpClient.run(
@@ -80,22 +78,21 @@ object AwsCredentialsProvider {
         HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI + roleName)
       )
       maybeCreds = json.awsJson.decodeFromByteArray(
-        instanceMetadataCodec(hintMask),
+        instanceMetadataCodec,
         metadataRes.body
       )
       creds <- MonadThrow[F].fromEither(maybeCreds)
     } yield creds
 
   def fromECS[F[_]: MonadThrow](
-      httpClient: SimpleHttpClient[F],
-      hintMask: HintMask
+      httpClient: SimpleHttpClient[F]
   ): F[AwsTemporaryCredentials] =
     for {
       response <- httpClient.run(
         HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI)
       )
       maybeCreds = json.awsJson.decodeFromByteArray(
-        instanceMetadataCodec(hintMask),
+        instanceMetadataCodec,
         response.body
       )
       creds <- MonadThrow[F].fromEither(maybeCreds)

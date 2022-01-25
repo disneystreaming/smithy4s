@@ -42,7 +42,7 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
     Metadata.TotalDecoder.fromSchema(endpoint.output)
   private val outputCodec = codecAPI.compileCodec(endpoint.output, hintMask)
   private val getErrorType: HttpResponse => F[Option[String]] =
-    AwsErrorTypeDecoder.fromResponse[F](codecAPI, hintMask)
+    AwsErrorTypeDecoder.fromResponse[F](codecAPI)
 
   private[aws] def toAwsCall(input: I): AwsCall[F, I, E, O, SI, SO] =
     new AwsCall[F, I, E, O, SI, SO] {
