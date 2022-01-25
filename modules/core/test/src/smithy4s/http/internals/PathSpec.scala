@@ -83,7 +83,7 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema") {
-    val result = genericStruct(
+    val result = struct(
       Vector(
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("secondLabel", _ => "example2")
@@ -106,7 +106,7 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema - URI ending with greedy label") {
-    val result = genericStruct(
+    val result = struct(
       Vector(
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("greedyLabel", _ => "example2/with/slashes")
