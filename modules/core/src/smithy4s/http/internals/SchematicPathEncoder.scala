@@ -68,9 +68,9 @@ object SchematicPathEncoder
     }
 
   override val unit: PathEncode.Make[Unit] =
-    genericStruct(Vector.empty)(_ => ())
+    struct(Vector.empty)(_ => ())
 
-  override def genericStruct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
+  override def struct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S
   ): PathEncode.Make[S] = {
     type Writer = S => List[String]

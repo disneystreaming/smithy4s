@@ -16,14 +16,11 @@
 
 package schematic
 
-import schematic.struct.GenericAritySchematic
-
 import java.{util => ju}
 
 trait StubSchematic[F[_]]
     extends Schematic.all.Mixin[F]
-    with javatime.StubSchematic[F]
-    with GenericAritySchematic[F] {
+    with javatime.StubSchematic[F] {
 
   def default[A]: F[A]
 
@@ -76,7 +73,7 @@ trait StubSchematic[F[_]]
 
   def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B] = default
 
-  def genericStruct[S](fields: Vector[Field[F, S, _]]): F[S] =
+  def struct[S](fields: Vector[Field[F, S, _]]): F[S] =
     default
 
 }
