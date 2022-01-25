@@ -22,6 +22,7 @@ import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
 import java.util.concurrent.TimeUnit
+import smithy4s.HintMask
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -36,7 +37,8 @@ class JsonBenchmark {
   val s3objectGen = S3Object.schema.compile(smithy4s.scalacheck.SchematicGen)
   val schema = S3Object.schema
   val jsonCodecs = smithy4s.http.json.codecs
-  val jsonCodec = smithy4s.http.json.codecs.compileCodec(schema)
+  val jsonCodec =
+    smithy4s.http.json.codecs.compileCodec(schema, HintMask.allAllowed)
 
   val original = s3objectGen(Gen.Parameters.default, Seed(2048)).get
 
