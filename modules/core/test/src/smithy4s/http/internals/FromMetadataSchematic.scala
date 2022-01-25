@@ -103,7 +103,7 @@ object FromMetadataSchematic
 
   def withHints[A](fa: FromMetadata[A], hints: Hints): FromMetadata[A] = fa
 
-  def genericStruct[S](fields: Vector[Field[FromMetadata, S, _]])(
+  def struct[S](fields: Vector[Field[FromMetadata, S, _]])(
       const: Vector[Any] => S
   ): FromMetadata[S] = { (metadata: Map[String, Any]) =>
     fields

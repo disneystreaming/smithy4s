@@ -78,9 +78,8 @@ package object syntax
   val uuid: Schema[java.util.UUID] =
     schematic.uuid.Schema.withHints(ShapeId("smithy4s.api", "UUID"))
 
-  def constant[A](make: => A): Schema[A] = new Schema[A] {
-    def compile[F[_]](s: Schematic[F]): F[A] = s.struct(make)
-  }
+  def constant[A](make: => A): Schema[A] =
+    new schematic.struct.Schema[Schematic, A](Vector.empty, _ => make)
 
   implicit class withHintsSyntax[A](val schema: Schema[A]) extends AnyVal {
     def withHints(hints: Hints): Schema[A] = schema match {

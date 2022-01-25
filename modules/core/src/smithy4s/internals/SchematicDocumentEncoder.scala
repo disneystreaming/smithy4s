@@ -62,8 +62,7 @@ object DocumentEncoder {
 }
 
 object SchematicDocumentEncoder
-    extends smithy4s.Schematic[DocumentEncoderMake]
-    with schematic.struct.GenericAritySchematic[DocumentEncoderMake] {
+    extends smithy4s.Schematic[DocumentEncoderMake] {
 
   def from[A](f: A => Document): DocumentEncoderMake[A] = Hinted.static {
     new DocumentEncoder[A] {
@@ -162,7 +161,7 @@ object SchematicDocumentEncoder
     }
   }
 
-  def genericStruct[S](fields: Vector[Field[DocumentEncoderMake, S, _]])(
+  def struct[S](fields: Vector[Field[DocumentEncoderMake, S, _]])(
       const: Vector[Any] => S
   ): DocumentEncoderMake[S] =
     Hinted[DocumentEncoder].onHintOpt[DiscriminatedUnionMember, S] {

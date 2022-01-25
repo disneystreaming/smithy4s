@@ -872,7 +872,7 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
         out.encodeError("Cannot use products as keys")
     }
 
-  def genericStruct[Z](
+  def struct[Z](
       fields: Vector[Field[JCodecMake, Z, _]]
   )(const: Vector[Any] => Z): JCodecMake[Z] =
     Hinted[JCodec].onHintsOpt[InputOutput, DiscriminatedUnionMember, Z] {

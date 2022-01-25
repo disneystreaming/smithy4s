@@ -18,9 +18,7 @@ package schematic
 
 object SchematicPretty extends SchematicPretty
 
-trait SchematicPretty
-    extends Schematic.stdlib.Mixin[PrettyRepr]
-    with struct.GenericAritySchematic[PrettyRepr] {
+trait SchematicPretty extends Schematic.stdlib.Mixin[PrettyRepr] {
 
   def short: Printer = Printer.raw("short")
 
@@ -79,7 +77,7 @@ trait SchematicPretty
     Printer.raw(s"enumeration[$labels]")
   }
 
-  def genericStruct[S](
+  def struct[S](
       list: Vector[Field[PrettyRepr, S, _]]
   )(f: Vector[Any] => S): Printer =
     Printer { nesting =>
