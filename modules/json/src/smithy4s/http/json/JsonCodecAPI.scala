@@ -33,8 +33,8 @@ abstract class JsonCodecAPI(
 
   type Codec[A] = JCodec[A]
 
-  def compileCodec[A](schema: Schema[A], hintMask: HintMask): JCodec[A] =
-    schema.compile(HintMask.mask(schematicJCodec, hintMask)).get
+  def compileCodec[A](schema: Schema[A]): JCodec[A] =
+    schema.compile(schematicJCodec).get
 
   def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
     HttpMediaType("application/json")

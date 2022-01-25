@@ -24,7 +24,6 @@ import smithy4s.Schematic
 import smithy4s.example._
 
 import java.nio.ByteBuffer
-import smithy4s.HintMask
 
 object StringAndBlobSpec extends weaver.FunSuite {
 
@@ -33,8 +32,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
     type Codec[A] = Dummy.type
     def mediaType[A](codec: Codec[A]): HttpMediaType = HttpMediaType("foo/bar")
     def compileCodec[A](
-        schema: Schema[Schematic, A],
-        hintMask: HintMask
+        schema: Schema[Schematic, A]
     ): Codec[A] = Dummy
     def decodeFromByteArrayPartial[A](
         codec: Codec[A],
@@ -56,7 +54,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
 
   test("Strings") {
     val input = StringBody("hello")
-    val codec = stringsAndBlobs.compileCodec(StringBody.schema, HintMask.empty)
+    val codec = stringsAndBlobs.compileCodec(StringBody.schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
@@ -67,7 +65,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
 
   test("Strings (custom media-type)") {
     val input = CSVBody(CSV("hello"))
-    val codec = stringsAndBlobs.compileCodec(CSVBody.schema, HintMask.empty)
+    val codec = stringsAndBlobs.compileCodec(CSVBody.schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
@@ -78,7 +76,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
 
   test("Blobs") {
     val input = BlobBody(ByteArray("hello".getBytes()))
-    val codec = stringsAndBlobs.compileCodec(BlobBody.schema, HintMask.empty)
+    val codec = stringsAndBlobs.compileCodec(BlobBody.schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
@@ -89,7 +87,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
 
   test("Blobs (custom media-type)") {
     val input = PNGBody(PNG(ByteArray("hello".getBytes())))
-    val codec = stringsAndBlobs.compileCodec(PNGBody.schema, HintMask.empty)
+    val codec = stringsAndBlobs.compileCodec(PNGBody.schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
@@ -101,7 +99,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
   test("Delegates to some other codec when neither strings not bytes") {
     val input = 1
     val codec =
-      stringsAndBlobs.compileCodec(schematic.int.Schema, HintMask.empty)
+      stringsAndBlobs.compileCodec(schematic.int.Schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)

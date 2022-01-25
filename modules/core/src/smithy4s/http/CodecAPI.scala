@@ -40,7 +40,7 @@ trait CodecAPI {
     * @param schema the value's schema
     * @return the codec associated to the A value.
     */
-  def compileCodec[A](schema: Schema[A], hintMask: HintMask): Codec[A]
+  def compileCodec[A](schema: Schema[A]): Codec[A]
 
   /**
     * Decodes partial data from a byte array
@@ -159,8 +159,7 @@ object CodecAPI {
     new DelegatingCodecAPI {
 
       def compileCodec[A](
-          schema: Schema[A],
-          hintMask: HintMask
+          schema: Schema[A]
       ): this.Codec[A] = {
         val stringAndBlobResult = schema.compile(
           new internals.StringAndBlobCodecSchematic(constraints)
@@ -169,7 +168,7 @@ object CodecAPI {
           case StringAndBlobCodecSchematic.BodyCodecResult(bodyCodec) =>
             bodyCodec
           case _ =>
-            val underlyingCodec = underlying.compileCodec(schema, hintMask)
+            val underlyingCodec = underlying.compileCodec(schema)
             new this.Codec[A] {
               def mediaType: HttpMediaType =
                 underlying.mediaType(underlyingCodec)

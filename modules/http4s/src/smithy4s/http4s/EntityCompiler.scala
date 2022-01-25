@@ -61,12 +61,11 @@ trait EntityCompiler[F[_]] {
 object EntityCompiler {
 
   def fromCodecAPI[F[_]](
-      codecAPI: CodecAPI,
-      hintMask: HintMask
+      codecAPI: CodecAPI
   )(implicit F: EffectCompat[F]): EntityCompiler[F] =
     new EntityCompiler[F] {
       def compileEntityEncoder[A](schema: Schema[A]): EntityEncoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, hintMask)
+        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
 
         EntityEncoder
@@ -80,7 +79,7 @@ object EntityCompiler {
       def compileEntityDecoder[A](
           schema: Schema[A]
       ): EntityDecoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, hintMask)
+        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
         EntityDecoder
           .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
@@ -95,7 +94,7 @@ object EntityCompiler {
       def compilePartialEntityDecoder[A](
           schema: Schema[A]
       ): EntityDecoder[F, BodyPartial[A]] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, hintMask)
+        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
         EntityDecoder
           .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
