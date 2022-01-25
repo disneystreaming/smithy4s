@@ -24,7 +24,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: function ({docPath}) {
-            return `https://github.com/disneystreaming/smithy4s/edit/main/modules/docs/${docPath}`
+            return `https://github.com/disneystreaming/smithy4s/edit/main/modules/docs/src/${docPath}`
           },
           path: '../docs/target/jvm-2.13/mdoc'
         },
