@@ -36,9 +36,7 @@ object FromMetadata {
     Left("Only structs are supported")
 }
 
-object FromMetadataSchematic
-    extends Schematic[FromMetadata]
-    with schematic.struct.GenericAritySchematic[FromMetadata] {
+object FromMetadataSchematic extends Schematic[FromMetadata] {
   def short: FromMetadata[Short] = FromMetadata.default
 
   def int: FromMetadata[Int] = FromMetadata.default

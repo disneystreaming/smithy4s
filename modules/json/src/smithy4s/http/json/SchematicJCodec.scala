@@ -43,8 +43,7 @@ import scala.collection.mutable.{Map => MMap}
 import JCodec.JCodecMake
 
 private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
-    extends Schematic[JCodecMake]
-    with struct.GenericAritySchematic[JCodecMake] {
+    extends Schematic[JCodecMake] {
 
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
@@ -438,7 +437,9 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
     type KV = (K, V)
     val kField = Field.required[JCodecMake, KV, K]("key", k, _._1)
     val vField = Field.required[JCodecMake, KV, V]("value", v, _._2)
-    val kvCodec = struct(kField, vField)(Tuple2.apply)
+    val kvCodec = struct(Vector(kField, vField))(vec =>
+      (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V])
+    )
     vector(kvCodec).transform(_.biject(_.toMap, _.toVector))
   }
 
