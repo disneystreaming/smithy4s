@@ -38,7 +38,9 @@ class JsonBenchmark {
   val schema = S3Object.schema
   val jsonCodecs = smithy4s.http.json.codecs
   val jsonCodec =
-    smithy4s.http.json.codecs.compileCodec(schema, HintMask.allAllowed)
+    smithy4s.http.json
+      .codecs(hintMask = HintMask.allAllowed)
+      .compileCodec(schema)
 
   val original = s3objectGen(Gen.Parameters.default, Seed(2048)).get
 
@@ -52,8 +54,12 @@ class JsonBenchmark {
   @Benchmark
   def measureSmithy4sJson(): Unit = {
     val bytes =
-      smithy4s.http.json.codecs.writeToArray[S3Object](jsonCodec, original)
+      smithy4s.http.json
+        .codecs(hintMask = HintMask.allAllowed)
+        .writeToArray[S3Object](jsonCodec, original)
     val _ =
-      smithy4s.http.json.codecs.decodeFromByteArray(jsonCodec, bytes)
+      smithy4s.http.json
+        .codecs(hintMask = HintMask.allAllowed)
+        .decodeFromByteArray(jsonCodec, bytes)
   }
 }
