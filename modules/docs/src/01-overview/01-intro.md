@@ -8,8 +8,8 @@ title: Intro
 smithy4s is a tool that generates third-party-free, protocol-agnostic scala code from smithy specifications.
 
 Smithy4s can be used to:
-* quickly synthetise http/rest servers and clients
-* synthetise pure-scala AWS clients
-* synthetise CLI tools
+* quickly derive http/rest servers and clients
+* derive pure-scala AWS clients
+* derive CLI tools
 * and has the potential for much, much more!
 

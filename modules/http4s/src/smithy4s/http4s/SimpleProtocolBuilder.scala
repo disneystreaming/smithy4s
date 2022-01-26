@@ -67,7 +67,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
             baseUri,
             service,
             Left(http4sClient),
-            EntityCompiler.fromCodecAPI[F](codecs)
+            EntityCompiler
+              .fromCodecAPI[F](codecs)
           )
         )
         .map(service.transform[GenLift[F]#λ](_))
@@ -82,7 +83,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
             baseUri,
             service,
             Right(http4sApp),
-            EntityCompiler.fromCodecAPI[F](codecs)
+            EntityCompiler
+              .fromCodecAPI[F](codecs)
           )
         )
         .map(service.transform[GenLift[F]#λ](_))
@@ -126,7 +128,8 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
   )(implicit F: EffectCompat[F]) {
 
-    val entityCompiler = EntityCompiler.fromCodecAPI(codecs)
+    val entityCompiler =
+      EntityCompiler.fromCodecAPI(codecs)
 
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]

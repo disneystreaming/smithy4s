@@ -18,9 +18,7 @@ package schematic
 
 object SchematicRepr extends SchematicRepr {}
 
-trait SchematicRepr
-    extends Schematic.stdlib.Mixin[Repr]
-    with struct.GenericAritySchematic[Repr] {
+trait SchematicRepr extends Schematic.stdlib.Mixin[Repr] {
 
   def short: String = "short"
 
@@ -69,7 +67,7 @@ trait SchematicRepr
   ): String =
     "enumeration"
 
-  def genericStruct[S](
+  def struct[S](
       list: Vector[Field[Repr, S, _]]
   )(f: Vector[Any] => S): String = {
     val fields = list

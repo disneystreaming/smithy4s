@@ -173,10 +173,8 @@ sealed trait Hint
 
 object Hint {
   case object Trait extends Hint
-  case object ClientError extends Hint
-  case object ServerError extends Hint
-  case class Http(method: String, uri: List[Segment], code: Int) extends Hint
-  case class HttpError(code: Int) extends Hint
+  case object Error extends Hint
+  case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
 }

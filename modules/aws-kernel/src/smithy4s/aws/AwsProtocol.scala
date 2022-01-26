@@ -28,7 +28,11 @@ private[aws] object AwsProtocol {
     hints
       .get(AwsJson1_0)
       .map(AWS_JSON_1_0.apply)
-      .orElse(hints.get(AwsJson1_1).map(AWS_JSON_1_1.apply))
+      .orElse(
+        hints
+          .get(AwsJson1_1)
+          .map(AWS_JSON_1_1.apply)
+      )
 
   // See https://awslabs.github.io/smithy/1.0/spec/aws/aws-json-1_0-protocol.html#differences-between-awsjson1-0-and-awsjson1-1
   final case class AWS_JSON_1_0(value: AwsJson1_0) extends AwsProtocol

@@ -87,7 +87,7 @@ trait SchematicGen
   override def struct[Z, A0](a0: Field[Gen, Z, A0])(f: A0 => Z): Gen[Z] =
     genField(a0).map(f)
 
-  def genericStruct[S](
+  def struct[S](
       fields: Vector[Field[Gen, S, _]]
   )(const: Vector[Any] => S): Gen[S] = {
     Gen.sequence(fields.map(f => genField(f))).flatMap { arrayList =>

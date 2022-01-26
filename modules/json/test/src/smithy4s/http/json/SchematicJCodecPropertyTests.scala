@@ -31,6 +31,7 @@ import smithy4s.scalacheck._
 import smithy4s.syntax._
 import weaver._
 import weaver.scalacheck._
+import codecs.schematicJCodec
 
 object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
 

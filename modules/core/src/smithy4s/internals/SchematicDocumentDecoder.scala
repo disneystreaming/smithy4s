@@ -88,8 +88,7 @@ object DocumentDecoder {
 }
 
 object SchematicDocumentDecoder
-    extends smithy4s.Schematic[DocumentDecoderMake]
-    with schematic.struct.GenericAritySchematic[DocumentDecoderMake] {
+    extends smithy4s.Schematic[DocumentDecoderMake] {
 
   object FlexibleNumber {
     def unapply(doc: Document): Option[BigDecimal] = doc match {
@@ -287,7 +286,7 @@ object SchematicDocumentDecoder
       }
   }
 
-  def genericStruct[S](fields: Vector[Field[DocumentDecoderMake, S, _]])(
+  def struct[S](fields: Vector[Field[DocumentDecoderMake, S, _]])(
       const: Vector[Any] => S
   ): DocumentDecoderMake[S] = Hinted.static {
     def jsonLabel[A](field: Field[DocumentDecoderMake, S, A]): String =

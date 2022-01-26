@@ -630,7 +630,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.12.1"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.12.2"
     )
 
   val Smithy = new {
@@ -659,7 +659,7 @@ lazy val Dependencies = new {
   }
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.7" else "0.22.8")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.7" else "0.22.9")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)

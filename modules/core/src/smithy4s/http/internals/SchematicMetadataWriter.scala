@@ -19,7 +19,6 @@ package http
 package internals
 
 import schematic._
-import schematic.struct.GenericAritySchematic
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
@@ -42,8 +41,7 @@ import HttpBinding._
   *
   */
 private[http] object SchematicMetadataWriter
-    extends Schematic[MetaEncode.Make]
-    with GenericAritySchematic[MetaEncode.Make] {
+    extends Schematic[MetaEncode.Make] {
 
   def short: MetaEncode.Make[Short] = MetaEncode.Make.fromToString
 
@@ -171,7 +169,7 @@ private[http] object SchematicMetadataWriter
   ): MetaEncode.Make[B] =
     f.contramap(from)
 
-  def genericStruct[S](
+  def struct[S](
       fields: Vector[Field[MetaEncode.Make, S, _]]
   )(f: Vector[Any] => S): MetaEncode.Make[S] =
     Hinted[MetaEncode].onHintOpt[InputOutput, S] { maybeInputOutput =>

@@ -302,6 +302,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       )
   }
 
+  private def renderProtocol(name: String, hints: List[Hint]): RenderResult = {
+    hints.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
+      val protocolTraits = protocol.traits
+        .map(t => s"${t.namespace}.${t.name.capitalize}")
+        .mkString(", ")
+      lines(
+        newline,
+        block(
+          s"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
+        ) {
+          s"def hintMask: smithy4s.HintMask = smithy4s.HintMask($protocolTraits)"
+        }
+      )
+    }
+  }
+
   private def renderProduct(
       name: String,
       originalName: String,
@@ -312,9 +328,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val decl = s"case class $name(${renderArgs(fields)})"
     val imports = fields.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
-      if (
-        hints.contains(Hint.ClientError) || hints.contains(Hint.ServerError)
-      ) {
+      if (hints.contains(Hint.Error)) {
         block(s"$decl extends Throwable") {
           fields
             .find(_.name == "message")
@@ -340,6 +354,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderId(originalName),
         newline,
         renderHintsValWithId(hints),
+        renderProtocol(name, hints),
         newline,
         if (fields.nonEmpty) {
           val definition = if (recursive) "recursive(struct" else "struct"

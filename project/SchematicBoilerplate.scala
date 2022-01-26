@@ -176,19 +176,13 @@ object Boilerplate {
         }
         .mkString(", ")
 
-      val genDelegateMethods =
-        s"""final def struct[Z, ${`A..N`}]($params)(f: (${`A..N`}) => Z): F[Z] = genericStruct(Vector($args))(arr => f($casts))"""
-
       val smartCtsrOpen =
-        s"""def struct[S[x[_]] <: Schematic[x], Z, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => Z) : Schema[S, Z] = new struct$arity($args, const)"""
+        s"""def struct[S[x[_]] <: Schematic[x], Z, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => Z) : schematic.Schema[S, Z] = new Schema[S, Z](Vector($args), arr => const($casts))"""
 
       val smartCtsrClosed =
-        s"""def struct[Z, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => Z) : Schema[S, Z] = new struct$arity($args, const)"""
+        s"""def struct[Z, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => Z) : schematic.Schema[S, Z] =  new Schema[S, Z](Vector($args), arr => const($casts))"""
 
       val compiledFields = synVals.map(_ + ".compile(s)").mkString(", ")
-
-      val structClasses =
-        s"class struct$arity[S[x[_]] <: Schematic[x], Z, ${`A..N`}]($schemaParams, const : (${`A..N`}) => Z) extends Schema[S, Z]{ def compile[F[_]](s: S[F]): F[Z] = { s.struct($compiledFields)(const) }}"
 
       block"""
       |package schematic
@@ -196,42 +190,38 @@ object Boilerplate {
       |object struct {
       |
       |  trait Schematic[F[_]] {
-      |    def genericStruct[S](fields: Vector[Field[F, S, _]])(const: Vector[Any] => S): F[S]
-      |
-      |    def struct[S](f : => S) : F[S]
-      -    $structMethods
+      |    def struct[S](fields: Vector[Field[F, S, _]])(const: Vector[Any] => S): F[S]
       |   }
       |
-      |  trait GenericAritySchematic[F[_]] extends Schematic[F] {
-      |    final def struct[S](f: => S): F[S] = genericStruct(Vector.empty)(_ => f)
-      -    $genDelegateMethods
-      |  }
-      |
       |  trait OpenSyntax {
-      |    def genericStruct[S[x[_]] <: Schematic[x], Z](
+      |    def struct[S[x[_]] <: Schematic[x], Z](const: => Z) : schematic.Schema[S, Z] =
+      |     new Schema(Vector.empty, _ => const)
+      |
+      |    def struct[S[x[_]] <: Schematic[x], Z](
       |      fields: Vector[StructureField[S, Z, _]])(
-      |      const: Vector[Any] => Z) : Schema[S, Z] =
-      |    new genericStructSchema(fields, const)
+      |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+      |    new Schema(fields, const)
       |
       -    $smartCtsrOpen
       |  }
       |
       |  trait ClosedSyntax[S[x[_]] <: Schematic[x]]{
-      |    def genericStruct[Z](
+      |    def struct[Z](const: => Z) : schematic.Schema[S, Z] =
+      |     new Schema(Vector.empty, _ => const)
+      |
+      |    def struct[Z](
       |      fields: Vector[StructureField[S, Z, _]])(
-      |      const: Vector[Any] => Z) : Schema[S, Z] =
-      |    new genericStructSchema(fields, const)
+      |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+      |    new Schema(fields, const)
       |
       -    $smartCtsrClosed
       |  }
       |
-      -   $structClasses
-      |
-      |   class genericStructSchema[S[x[_]] <: Schematic[x], Z](
+      |   class Schema[S[x[_]] <: Schematic[x], Z](
       |     fields: Vector[StructureField[S, Z, _]],
       |     const: Vector[Any] => Z
-      |   ) extends Schema[S, Z]{
-      |     def compile[F[_]](s: S[F]) : F[Z] =  s.genericStruct(fields.map(_.compile(s)))(const)
+      |   ) extends schematic.Schema[S, Z]{
+      |     def compile[F[_]](s: S[F]) : F[Z] = s.struct(fields.map(_.compile(s)))(const)
       |   }
       |
       |}
@@ -270,7 +260,7 @@ object Boilerplate {
       |
       |  def dynStruct(fields : Vector[DynFieldSchema]) : DynSchema = (fields match {
       -    $patterns
-      |    case _ => genericStruct(fields.toVector){ values =>  dynStruct(fields.map(_.label).zip(values):_*) }.asInstanceOf[DynSchema]
+      |    case _ => struct(fields.toVector){ values =>  dynStruct(fields.map(_.label).zip(values):_*) }.asInstanceOf[DynSchema]
       |  }).asInstanceOf[DynSchema]
       |}
       """

@@ -68,12 +68,12 @@ object SchematicPathEncoder
     }
 
   override val unit: PathEncode.Make[Unit] =
-    genericStruct(Vector.empty)(_ => ())
+    struct(Vector.empty)(_ => ())
 
-  override def genericStruct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
+  override def struct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S
   ): PathEncode.Make[S] = {
-    type Writer = (StringBuilder, S) => Unit
+    type Writer = S => List[String]
 
     def toPathEncoder[A](
         field: Field[PathEncode.Make, S, A],
@@ -86,11 +86,10 @@ object SchematicPathEncoder
             get: S => AA
         ): Option[Writer] =
           if (greedy)
-            instance.get.map(encoder =>
-              (sb, s) => encoder.encodeGreedy(sb, get(s))
-            )
+            instance.get.map(_.contramap(get).encodeGreedy)
           else
-            instance.get.map(encoder => (sb, s) => encoder.encode(sb, get(s)))
+            instance.get.map(_.contramap(get).encode)
+
         def onOptional[AA](
             label: String,
             instance: PathEncode.Make[AA],
@@ -100,8 +99,7 @@ object SchematicPathEncoder
     }
 
     def compile1(path: PathSegment): Option[Writer] = path match {
-      case StaticSegment(value) =>
-        Some((sb, _) => { val _ = sb.append(value) })
+      case StaticSegment(value) => Some(Function.const(List(value)))
       case LabelSegment(value) =>
         fields
           .find(_.label == value)
@@ -121,15 +119,8 @@ object SchematicPathEncoder
         path <- pathSegments(httpHint.uri.value)
         writers <- compilePath(path)
       } yield new PathEncode[S] {
-        def encode(sb: StringBuilder, s: S): Unit = {
-          var first = true
-          writers.foreach { w =>
-            if (first) { w.apply(sb, s); first = false }
-            else w.apply(sb.append('/'), s)
-          }
-        }
-
-        def encodeGreedy(sb: StringBuilder, s: S) = ()
+        def encode(s: S): List[String] = writers.flatMap(_.apply(s)).toList
+        def encodeGreedy(s: S): List[String] = Nil
       }
     }
   }

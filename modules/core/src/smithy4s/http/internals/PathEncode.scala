@@ -19,14 +19,12 @@ package smithy4s.http.internals
 import smithy4s.internals.Hinted
 
 trait PathEncode[A] { self =>
-  def encode(sb: StringBuilder, a: A): Unit
-  def encodeGreedy(sb: StringBuilder, a: A): Unit
+  def encode(a: A): List[String]
+  def encodeGreedy(a: A): List[String]
 
   def contramap[B](from: B => A): PathEncode[B] = new PathEncode[B] {
-    def encode(sb: StringBuilder, b: B): Unit = self.encode(sb, from(b))
-
-    def encodeGreedy(sb: StringBuilder, b: B): Unit =
-      self.encodeGreedy(sb, from(b))
+    def encode(b: B): List[String] = self.encode(from(b))
+    def encodeGreedy(b: B): List[String] = self.encodeGreedy(from(b))
   }
 }
 
@@ -44,14 +42,12 @@ object PathEncode {
 
     def raw[A](f: A => String): PathEncode[A] = {
       new PathEncode[A] {
-        def encode(sb: StringBuilder, a: A): Unit = {
-          val _ = sb.append(URIEncoderDecoder.encode(f(a)))
+        def encode(a: A): List[String] = {
+          List(f(a))
         }
-        def encodeGreedy(sb: StringBuilder, a: A): Unit = {
-          f(a).split('/').foreach {
-            case s if s.isEmpty() => ()
-            case s => sb.append('/').append(URIEncoderDecoder.encode(s))
-          }
+
+        def encodeGreedy(a: A): List[String] = {
+          f(a).split('/').toList
         }
       }
     }
