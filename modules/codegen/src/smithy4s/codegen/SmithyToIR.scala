@@ -365,28 +365,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   )
 
   private val traitToHint: PartialFunction[Trait, Hint] = {
-    case t: ErrorTrait if t.isClientError => Hint.ClientError
-    case t: ErrorTrait if t.isServerError => Hint.ServerError
-    case t: HttpErrorTrait                => Hint.HttpError(t.getCode())
-    case t: HttpTrait => Hint.Http(t.getMethod(), segments(t), t.getCode())
+    case _: ErrorTrait => Hint.Error
+    case t: ProtocolDefinitionTrait =>
+      val shapeIds = t.getTraits()
+      val refs = shapeIds.asScala.map(shapeId =>
+        Type.Ref(shapeId.getNamespace(), shapeId.getName())
+      )
+      Hint.Protocol(refs.toList)
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
   }
 
   private def traitsToHints(traits: List[Trait]): List[Hint] =
     traits.collect(traitToHint) ++ traits.map(unfoldTrait)
-
-  private def segments(httpTrait: HttpTrait): List[Segment] =
-    httpTrait
-      .getUri()
-      .getSegments()
-      .asScala
-      .map {
-        case s if s.isGreedyLabel() => Segment.GreedyLabel(s.getContent())
-        case s if s.isLabel()       => Segment.Label(s.getContent())
-        case s                      => Segment.Static(s.getContent())
-      }
-      .toList
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()

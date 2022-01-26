@@ -31,7 +31,9 @@ object StringAndBlobSpec extends weaver.FunSuite {
   def dummy: CodecAPI = new CodecAPI {
     type Codec[A] = Dummy.type
     def mediaType[A](codec: Codec[A]): HttpMediaType = HttpMediaType("foo/bar")
-    def compileCodec[A](schema: Schema[Schematic, A]): Codec[A] = Dummy
+    def compileCodec[A](
+        schema: Schema[Schematic, A]
+    ): Codec[A] = Dummy
     def decodeFromByteArrayPartial[A](
         codec: Codec[A],
         bytes: Array[Byte]
@@ -96,7 +98,8 @@ object StringAndBlobSpec extends weaver.FunSuite {
 
   test("Delegates to some other codec when neither strings not bytes") {
     val input = 1
-    val codec = stringsAndBlobs.compileCodec(schematic.int.Schema)
+    val codec =
+      stringsAndBlobs.compileCodec(schematic.int.Schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)

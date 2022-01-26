@@ -157,7 +157,10 @@ object CodecAPI {
       constraints: Constraints
   ): CodecAPI =
     new DelegatingCodecAPI {
-      def compileCodec[A](schema: Schema[A]): this.Codec[A] = {
+
+      def compileCodec[A](
+          schema: Schema[A]
+      ): this.Codec[A] = {
         val stringAndBlobResult = schema.compile(
           new internals.StringAndBlobCodecSchematic(constraints)
         )

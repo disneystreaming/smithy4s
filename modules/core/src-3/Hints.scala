@@ -17,7 +17,7 @@
 package smithy4s
 
 /**
-  * A hing is an arbitrary piece of data that can be added to a schema,
+  * A hint is an arbitrary piece of data that can be added to a schema,
   * at the struct level, or at the field/member level.
   *
   * You can think of it as an annotation that can communicate
@@ -79,6 +79,8 @@ object Hints {
       implicit val keyInstance: Key[A] = this
       final override def getKey: Key[A] = this
     }
+
+    implicit def newTypeToHintKey[A](a: Newtype[A]): Hints.Key[_] = a.key
   }
 
   private[smithy4s] class Impl(
