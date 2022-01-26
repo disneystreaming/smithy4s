@@ -23,9 +23,7 @@ import schematic.ByteArray
 import schematic.Field
 import schematic.Alt
 
-object DefaultSchematic
-    extends smithy4s.Schematic[Id]
-    with schematic.struct.GenericAritySchematic[Id] {
+object DefaultSchematic extends smithy4s.Schematic[Id] {
 
   def short: Id[Short] = 0
   def int: Id[Int] = 0
@@ -56,7 +54,7 @@ object DefaultSchematic
 
   def map[K, V](fk: Id[K], fv: Id[V]): Id[Map[K, V]] = Map.empty
 
-  def genericStruct[S](fields: Vector[Field[Id, S, _]])(
+  def struct[S](fields: Vector[Field[Id, S, _]])(
       const: Vector[Any] => S
   ): Id[S] = const(fields.map(_.fold(new Field.Folder[Id, S, Any] {
     def onRequired[A](label: String, instance: Id[A], get: S => A): Any =

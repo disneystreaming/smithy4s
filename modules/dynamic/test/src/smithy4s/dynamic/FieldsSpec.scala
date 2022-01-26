@@ -45,7 +45,7 @@ object FieldsSpec extends SimpleIOSuite {
           hints: Hints
       ): ToFieldNames[A] = fa
 
-      override def genericStruct[S](
+      override def struct[S](
           fields: Vector[Field[ToFieldNames, S, _]]
       )(const: Vector[Any] => S): ToFieldNames[S] = () =>
         fields.flatMap { f =>

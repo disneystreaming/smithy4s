@@ -339,8 +339,8 @@ object Compiler {
               .sequence
           }
           if (isRecursive(id))
-            Eval.later(suspend(genericStruct(lFields.value)(dynStruct)))
-          else lFields.map(fields => genericStruct(fields)(dynStruct))
+            Eval.later(suspend(struct(lFields.value)(dynStruct)))
+          else lFields.map(fields => struct(fields)(dynStruct))
         }
       )
 
