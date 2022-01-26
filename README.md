@@ -24,6 +24,9 @@ benchmark/jmh:run .*Http4sBenchmark.*
 
 To benchmark with Scala 2.12 version instead of 2.13, use `benchmark2_12/jmh:run` instead.
 
+Smithy4s makes use of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/) for performance optimisation.<br/>
+![YourKit Logo](https://www.yourkit.com/images/yklogo.png)
+
 ## Development environment
 
 For the easiest setup of development tools, use [Nix](https://nixos.org).
