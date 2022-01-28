@@ -79,7 +79,7 @@ object Hints {
   }
 
   case class Binding[A](key: ShapeTag[A], value: A) {
-    def tuple: (ShapeTag[A], Binding[A]) = key -> this
+    def tuple: (ShapeTag[A], this.type) = key -> this
   }
 
   object Binding {
