@@ -62,7 +62,7 @@ object Hints {
       new Schema(a, hints)
   }
 
-  private[smithy4s] class Impl(
+  private[smithy4s] final class Impl(
       val toMap: Map[ShapeTag[_], Hint]
   ) extends Hints {
     val isEmpty = toMap.isEmpty

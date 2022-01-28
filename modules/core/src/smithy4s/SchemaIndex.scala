@@ -41,7 +41,7 @@ object SchemaIndex {
     def withHints[A](fa: F[A], hints: Hints): F[A]
   }
 
-  private[smithy4s] class Impl(
+  private[smithy4s] final class Impl(
       val toMap: Map[ShapeTag[_], Schema[_]]
   ) extends SchemaIndex {
     val isEmpty = toMap.isEmpty
