@@ -83,7 +83,9 @@ object Hints {
   }
 
   object Binding {
-    implicit def fromValue[A](value: A)(implicit key: ShapeTag[A]): Binding[A] =
+    implicit def fromValue[A, AA <: A](value: AA)(implicit
+        key: ShapeTag[A]
+    ): Binding[A] =
       Binding(key, value)
   }
 
