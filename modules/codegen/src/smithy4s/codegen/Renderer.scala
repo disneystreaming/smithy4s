@@ -312,7 +312,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           s"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
         ) {
-          s"def hintMask: smithy4s.HintMask = smithy4s.HintMask($protocolTraits)"
+          s"def schemas: smithy4s.SchemaIndex = smithy4s.SchemaIndex($protocolTraits)"
         }
       )
     }
@@ -675,7 +675,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def hintKey(name: String, hints: List[Hint]): String =
-    if (hints.contains(Hint.Trait)) s"$Hints_.Key.Companion[$name]" else ""
+    if (hints.contains(Hint.Trait)) s"$ShapeTag_.Companion[$name]" else ""
 
   type TopLevel = Boolean
   type InCollection = Boolean

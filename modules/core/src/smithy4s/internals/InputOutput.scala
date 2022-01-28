@@ -19,7 +19,7 @@ package internals
 
 sealed trait InputOutput
 
-object InputOutput extends Hints.Key.Companion[InputOutput] {
+object InputOutput extends ShapeTag.Companion[InputOutput] {
 
   def id: ShapeId = ShapeId("smithy4s", "InputOutput")
 

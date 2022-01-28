@@ -32,7 +32,7 @@ abstract class Newtype[A] extends HasId { self =>
     @inline def value: A = Newtype.this.value(self)
   }
 
-  implicit val key: Hints.Key[Type] = new Hints.Key[Type] {
+  implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
     def id: ShapeId = self.id
   }
 

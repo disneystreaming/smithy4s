@@ -31,7 +31,7 @@ import smithy4s.http.CodecAPI
   * first check that they are indeed annotated with the protocol in question.
   */
 abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
-    protocolKey: Hints.Key[P]
+    protocolTag: ShapeTag[P]
 ) {
 
   def apply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
@@ -61,7 +61,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
         http4sClient: Client[F],
         baseUri: Uri
     ): Either[UnsupportedProtocolError, Monadic[Alg, F]] =
-      checkProtocol(service, protocolKey)
+      checkProtocol(service, protocolTag)
         .as(
           new SmithyHttp4sReverseRouter[Alg, Op, F](
             baseUri,
@@ -77,7 +77,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
         http4sApp: HttpApp[F],
         baseUri: Uri
     ): Either[UnsupportedProtocolError, Monadic[Alg, F]] =
-      checkProtocol(service, protocolKey)
+      checkProtocol(service, protocolTag)
         .as(
           new SmithyHttp4sReverseRouter[Alg, Op, F](
             baseUri,
@@ -142,7 +142,7 @@ abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
       new RouterBuilder(service, impl, fe)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
-      checkProtocol(service, protocolKey).as {
+      checkProtocol(service, protocolTag).as {
         new SmithyHttp4sRouter[Alg, Op, F](
           service,
           impl,

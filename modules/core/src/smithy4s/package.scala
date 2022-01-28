@@ -32,11 +32,11 @@ package object smithy4s extends TypeAliases {
 
   def checkProtocol[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       service: Service[Alg, Op],
-      protocolKey: Hints.Key[_]
+      protocolTag: ShapeTag[_]
   ): Either[UnsupportedProtocolError, Unit] =
     service.hints
-      .get(protocolKey)
-      .toRight(UnsupportedProtocolError(service, protocolKey))
+      .get(protocolTag)
+      .toRight(UnsupportedProtocolError(service, protocolTag))
       .map(_ => ())
 
 }
