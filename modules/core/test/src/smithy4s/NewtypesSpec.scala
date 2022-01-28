@@ -35,7 +35,7 @@ object NewtypesSpec extends weaver.FunSuite {
     expect.all(
       AccountId(id1).value == id1,
       AccountId(id1).value != AccountId(id2).value,
-      implicitly[Hints.Key[AccountId]] != implicitly[Hints.Key[DeviceId]],
+      implicitly[ShapeTag[AccountId]] != implicitly[ShapeTag[DeviceId]],
       AccountId.unapply(AccountId(id1)) == Some(id1)
     )
   }

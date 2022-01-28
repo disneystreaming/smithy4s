@@ -27,7 +27,7 @@ object HintMask {
 
   def empty: HintMask = apply()
 
-  def apply(hintKeys: Hints.Key[_]*): HintMask = {
+  def apply(hintKeys: ShapeTag[_]*): HintMask = {
     new Impl(hintKeys.toSet)
   }
 
@@ -36,8 +36,7 @@ object HintMask {
     def apply(hints: Hints): Hints = hints
   }
 
-  private[this] final class Impl(val toSet: Set[Hints.Key[_]])
-      extends HintMask {
+  private[this] final class Impl(val toSet: Set[ShapeTag[_]]) extends HintMask {
     def ++(other: HintMask): HintMask = other match {
       case i: Impl    => new Impl(toSet ++ i.toSet)
       case Permissive => Permissive

@@ -16,12 +16,20 @@
 
 package smithy4s
 
-trait Enumeration[E] extends ShapeTag.Companion[E] {
-  def values: List[E]
-  def to(e: E): (String, Int)
-  final def asString(e: E): String = to(e)._1
-  lazy val valueMap = values.map(e => to(e)._1 -> e).toMap
-  lazy val ordinalMap = values.map(e => to(e)._2 -> e).toMap
-  final def fromString(s: String): Option[E] = valueMap.get(s)
-  final def fromOrdinal(s: Int): Option[E] = ordinalMap.get(s)
+/**
+  * A tag that can be used as keys for higher-kinded maps
+  */
+trait ShapeTag[-A] extends HasId {}
+
+object ShapeTag {
+  trait Has[A] {
+    def getTag: ShapeTag[A]
+  }
+
+  trait Companion[A] extends ShapeTag[A] with Has[A] {
+    implicit val tagInstance: ShapeTag[A] = this
+    final override def getTag: ShapeTag[A] = this
+  }
+
+  implicit def newTypeToShapeTag[A](a: Newtype[A]): ShapeTag[_] = a.tag
 }

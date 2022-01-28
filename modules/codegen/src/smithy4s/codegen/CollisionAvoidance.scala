@@ -231,6 +231,7 @@ object CollisionAvoidance {
     val StreamingSchema_ = "smithy4s.StreamingSchema"
     val Enumeration_ = "smithy4s.Enumeration"
     val Hints_ = "smithy4s.Hints"
+    val ShapeTag_ = "smithy4s.ShapeTag"
     val Static_ = "schematic.Static"
     val Errorable_ = "smithy4s.Errorable"
     val errorUnion_ = "smithy4s.errorUnion"

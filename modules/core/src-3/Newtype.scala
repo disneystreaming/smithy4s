@@ -25,7 +25,7 @@ abstract class Newtype[A] extends HasId { self =>
 
   def unapply(orig: Type): Some[A] = Some(orig.value)
 
-  implicit val key: Hints.Key[Type] = new Hints.Key[Type] {
+  implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
     def id: ShapeId = self.id
   }
 

@@ -28,10 +28,10 @@ package smithy4s
   */
 trait Hints {
   def isEmpty: Boolean
-  def toMap: Map[Hints.Key[_], Hint]
+  def toMap: Map[ShapeTag[_], Hint]
   def all: Iterable[Hints.Binding[_]]
-  def get[A](implicit key: Hints.Key[A]): Option[A]
-  final def get[A](key: Hints.Key.Has[A]): Option[A] = get(key.getKey)
+  def get[A](implicit key: ShapeTag[A]): Option[A]
+  final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getKey)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.key)
   def ++(other: Hints): Hints
 }
@@ -80,7 +80,7 @@ object Hints {
       final override def getKey: Key[A] = this
     }
 
-    implicit def newTypeToHintKey[A](a: Newtype[A]): Hints.Key[_] = a.key
+    implicit def newTypeToHintKey[A](a: Newtype[A]): ShapeTag[_] = a.key
   }
 
   private[smithy4s] class Impl(
