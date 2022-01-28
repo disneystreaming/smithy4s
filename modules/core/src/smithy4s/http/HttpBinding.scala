@@ -40,7 +40,7 @@ sealed abstract class HttpBinding(val tpe: HttpBinding.Type)
 
 }
 
-object HttpBinding extends Hints.Key.Companion[HttpBinding] {
+object HttpBinding extends ShapeTag.Companion[HttpBinding] {
 
   val id: ShapeId = ShapeId("smithy4s.http", "HttpBinding")
 

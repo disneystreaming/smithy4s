@@ -17,5 +17,6 @@
 package smithy4s
 
 trait Protocol[A] {
-  def hintMask: HintMask
+  def schemas: SchemaIndex
+  final def hintMask: HintMask = HintMask(schemas.tags.toSeq: _*)
 }
