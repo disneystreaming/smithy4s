@@ -7,7 +7,7 @@ use smithy4s.api#discriminated
 service HelloWorldService {
   version: "0.0.1",
   errors: [GeneralServerError],
-  operations: [Greet, GetIntOrString]
+  operations: [Greet, GetUnion]
 }
 
 @readonly
@@ -19,8 +19,8 @@ operation Greet {
 
 @readonly
 @http(method: "GET", uri: "/untagged")
-operation GetIntOrString {
-  output: GetIntOrStringResponse
+operation GetUnion {
+  output: GetUnionResponse
 }
 
 structure Person {
@@ -44,7 +44,7 @@ structure GeneralServerError {
   message: String,
 }
 
-structure GetIntOrStringResponse {
+structure GetUnionResponse {
   intOrString: IntOrString,
   catOrDog: CatOrDog
 }

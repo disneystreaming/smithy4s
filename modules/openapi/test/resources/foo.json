@@ -51,14 +51,14 @@
       },
       "/untagged": {
           "get": {
-              "operationId": "GetIntOrString",
+              "operationId": "GetUnion",
               "responses": {
                   "200": {
-                      "description": "GetIntOrString 200 response",
+                      "description": "GetUnion 200 response",
                       "content": {
                           "application/json": {
                               "schema": {
-                                  "$ref": "#/components/schemas/GetIntOrStringResponseContent"
+                                  "$ref": "#/components/schemas/GetUnionResponseContent"
                               }
                           }
                       }
@@ -119,7 +119,7 @@
                   }
               }
           },
-          "GetIntOrStringResponseContent": {
+          "GetUnionResponseContent": {
               "type": "object",
               "properties": {
                   "intOrString": {
