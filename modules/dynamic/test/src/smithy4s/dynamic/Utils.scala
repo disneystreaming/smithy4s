@@ -17,10 +17,11 @@
 package smithy4s.dynamic
 
 import model.Model
+import smithy4s.SchemaIndex
 
 object Utils extends PlatformUtils {
 
   def compile(model: Model): DynamicModel =
-    Compiler.compile(model)
+    Compiler.compile(model, SchemaIndex.empty)
 
 }

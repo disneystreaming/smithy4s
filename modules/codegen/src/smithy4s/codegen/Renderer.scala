@@ -350,7 +350,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         }
       } else line(decl),
-      obj(name, ext = hintKey(name, hints))(
+      obj(name, ext = shapeTag(name))(
         renderId(originalName),
         newline,
         renderHintsValWithId(hints),
@@ -422,7 +422,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val imports = alts.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
       s"sealed trait $name extends scala.Product with scala.Serializable",
-      obj(name, ext = hintKey(name, hints))(
+      obj(name, ext = shapeTag(name))(
         renderId(originalName),
         newline,
         renderHintsValWithId(hints),
@@ -482,7 +482,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): RenderResult = lines(
     s"sealed abstract class $name(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable",
-    obj(name, ext = s"$Enumeration_[$name]", w = hintKey(name, hints))(
+    obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
       renderId(originalName),
       newline,
       renderHintsValWithId(hints),
@@ -674,8 +674,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (h.isEmpty) "" else h.mkString(", ")
   }
 
-  private def hintKey(name: String, hints: List[Hint]): String =
-    if (hints.contains(Hint.Trait)) s"$ShapeTag_.Companion[$name]" else ""
+  private def shapeTag(name: String): String =
+    s"$ShapeTag_.Companion[$name]"
 
   type TopLevel = Boolean
   type InCollection = Boolean

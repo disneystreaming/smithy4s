@@ -47,11 +47,11 @@ object Compiler {
     shapeId.namespace + "#" + shapeId.name
   )
 
-  private def getTrait[A: Hints.Key: Document.Decoder](
+  private def getTrait[A: ShapeTag: Document.Decoder](
       traits: Option[Map[IdRef, Document]]
   ): Option[A] =
     traits.flatMap(dynamicTraits =>
-      dynamicTraits.get(toIdRef(implicitly[Hints.Key[A]].id)).flatMap {
+      dynamicTraits.get(toIdRef(implicitly[ShapeTag[A]].id)).flatMap {
         document =>
           document.decode[A].toOption
       }
@@ -60,24 +60,27 @@ object Compiler {
   /**
      * @param knownHints hints supported by the caller.
      */
-  def compile(model: Model, knownHints: KeyedSchema[_]*): DynamicModel = {
+  def compile(model: Model, knownHints: SchemaIndex): DynamicModel = {
     val schemaMap = MMap.empty[ShapeId, Eval[Schema[DynData]]]
     val endpointMap = MMap.empty[ShapeId, Eval[DynamicEndpoint]]
     val serviceMap = MMap.empty[ShapeId, Eval[DynamicService]]
 
-    val hintsMap: Map[ShapeId, KeyedSchema[_]] = knownHints.map { ks =>
-      val shapeId: ShapeId = ks.hintKey.id
-      shapeId -> ks
-    }.toMap
+    val hintsMap: Map[ShapeId, SchemaIndex.Binding[_]] = {
+      def binding[A](
+          tag: ShapeTag[A]
+      ): Option[(ShapeId, SchemaIndex.Binding[A])] =
+        knownHints.get(tag).map(s => tag.id -> SchemaIndex.Binding(tag, s))
+      knownHints.tags.flatMap(binding(_)).toMap
+    }
 
     def toHintAux[A](
-        ks: KeyedSchema[A],
+        ks: SchemaIndex.Binding[A],
         documentRepr: Document
     ): Option[Hint] = {
       val decoded: Option[A] =
         Document.Decoder.fromSchema(ks.schema).decode(documentRepr).toOption
       decoded.map { value =>
-        Hints.Binding(ks.hintKey, value)
+        Hints.Binding(ks.tag, value)
       }
     }
 

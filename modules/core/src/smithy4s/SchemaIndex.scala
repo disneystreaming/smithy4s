@@ -33,6 +33,8 @@ sealed trait SchemaIndex {
 
 object SchemaIndex {
 
+  val empty: SchemaIndex = new Impl(Map.empty)
+
   def apply[S](bindings: Binding[_]*): SchemaIndex = {
     new Impl(bindings.map(b => b.tuple: (ShapeTag[_], Schema[_])).toMap)
   }
