@@ -1,6 +1,7 @@
 namespace foo
 
 use smithy4s.api#simpleRestJson
+use smithy4s.api#discriminated
 
 @simpleRestJson
 service HelloWorldService {
@@ -44,12 +45,28 @@ structure GeneralServerError {
 }
 
 structure GetIntOrStringResponse {
-  intOrString: IntOrString
+  intOrString: IntOrString,
+  catOrDog: CatOrDog
 }
 
 union IntOrString {
   int: Integer,
   string: String
+}
+
+structure Cat {
+  name: String
+}
+
+structure Dog {
+  name: String,
+  breed: String
+}
+
+@discriminated("type")
+union CatOrDog {
+  cat: Cat,
+  dog: Dog
 }
 
 

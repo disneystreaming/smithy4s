@@ -24,6 +24,7 @@ import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.validation.ValidationEvent
 import software.amazon.smithy.model.validation.Severity
 import software.amazon.smithy.model.shapes.StructureShape
+import software.amazon.smithy.model.shapes.ShapeId
 
 object DiscriminatedUnionValidatorSpec extends weaver.FunSuite {
 
@@ -56,6 +57,44 @@ object DiscriminatedUnionValidatorSpec extends weaver.FunSuite {
         .severity(Severity.ERROR)
         .message(
           "Target of member 'test' is not a structure shape"
+        )
+        .build()
+    )
+    expect(result == expected)
+  }
+
+  test("return error when target structures contain discriminator") {
+    val struct = StructureShape
+      .builder()
+      .id("test#struct")
+      .addMember("type", ShapeId.fromParts("smithy.api", "String"))
+      .build()
+    val member =
+      MemberShape
+        .builder()
+        .target("test#struct")
+        .id("test#test$test")
+        .build()
+    val union = UnionShape
+      .builder()
+      .addTrait(new DiscriminatedUnionTrait("type"))
+      .id("test#test")
+      .addMember(member)
+      .build()
+
+    val model =
+      Model.builder().addShapes(struct, union).build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("DiscriminatedUnion")
+        .shape(member)
+        .severity(Severity.ERROR)
+        .message(
+          "Target of member 'test' contains discriminator 'type'"
         )
         .build()
     )

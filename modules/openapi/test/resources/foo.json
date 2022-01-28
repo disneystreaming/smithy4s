@@ -79,6 +79,38 @@
   },
   "components": {
       "schemas": {
+        "Cat": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "CatOrDog": {
+            "oneOf": [
+                {
+                    "$ref": "#/components/schemas/Cat"
+                },
+                {
+                    "$ref": "#/components/schemas/Dog"
+                }
+            ],
+            "discriminator": {
+                "propertyName": "type"
+            }
+        },
+        "Dog": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "breed": {
+                    "type": "string"
+                }
+            }
+        },
           "GeneralServerErrorResponseContent": {
               "type": "object",
               "properties": {
@@ -92,6 +124,9 @@
               "properties": {
                   "intOrString": {
                       "$ref": "#/components/schemas/IntOrString"
+                  },
+                  "catOrDog": {
+                      "$ref": "#/components/schemas/CatOrDog"
                   }
               }
           },
