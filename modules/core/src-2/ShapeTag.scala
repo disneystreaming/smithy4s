@@ -15,12 +15,21 @@
  */
 
 package smithy4s
-package http
 
-package object json {
+/**
+  * A tag that can be used as keys for higher-kinded maps
+  */
+trait ShapeTag[-A] extends HasId {}
 
-  private[smithy4s] val schematicJCodec: Schematic[JCodec.JCodecMake] =
-    new SchematicJCodec(Constraints.defaultConstraints, maxArity = 1024)
-  object codecs extends JsonCodecAPI(schematicJCodec)
+object ShapeTag {
+  trait Has[A] {
+    def getTag: ShapeTag[A]
+  }
 
+  trait Companion[A] extends ShapeTag[A] with Has[A] {
+    implicit val tagInstance: ShapeTag[A] = this
+    final override def getTag: ShapeTag[A] = this
+  }
+
+  implicit def newTypeToShapeTag[A](a: Newtype[A]): ShapeTag[_] = a.tag
 }

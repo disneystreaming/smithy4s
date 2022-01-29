@@ -25,6 +25,7 @@ import smithy4s.Document
 import smithy4s.Schema
 import weaver._
 import weaver.scalacheck._
+import codecs.schematicJCodec
 
 object DocumentPropertyTests extends SimpleIOSuite with Checkers {
 

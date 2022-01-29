@@ -23,6 +23,6 @@ final case class DiscriminatedUnionMember(
 )
 
 object DiscriminatedUnionMember
-    extends Hints.Key.Companion[DiscriminatedUnionMember] {
+    extends ShapeTag.Companion[DiscriminatedUnionMember] {
   def id: ShapeId = ShapeId("smithy4s", "DiscriminatedUnionMember")
 }

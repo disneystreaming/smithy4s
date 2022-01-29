@@ -16,12 +16,7 @@
 
 package smithy4s
 
-trait Enumeration[E] extends ShapeTag.Companion[E] {
-  def values: List[E]
-  def to(e: E): (String, Int)
-  final def asString(e: E): String = to(e)._1
-  lazy val valueMap = values.map(e => to(e)._1 -> e).toMap
-  lazy val ordinalMap = values.map(e => to(e)._2 -> e).toMap
-  final def fromString(s: String): Option[E] = valueMap.get(s)
-  final def fromOrdinal(s: Int): Option[E] = ordinalMap.get(s)
+trait Protocol[A] {
+  def schemas: SchemaIndex
+  final def hintMask: HintMask = HintMask(schemas.tags.toSeq: _*)
 }

@@ -17,7 +17,7 @@
 package smithy4s
 
 /**
-  * A hing is an arbitrary piece of data that can be added to a schema,
+  * A hint is an arbitrary piece of data that can be added to a schema,
   * at the struct level, or at the field/member level.
   *
   * You can think of it as an annotation that can communicate
@@ -28,18 +28,18 @@ package smithy4s
   */
 trait Hints {
   def isEmpty: Boolean
-  def toMap: Map[Hints.Key[_], Hint]
+  def toMap: Map[ShapeTag[_], Hint]
   def all: Iterable[Hints.Binding[_]]
-  def get[A](implicit key: Hints.Key[A]): Option[A]
-  final def get[A](key: Hints.Key.Has[A]): Option[A] = get(key.getKey)
-  final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.key)
+  def get[A](implicit key: ShapeTag[A]): Option[A]
+  final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getTag)
+  final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.tag)
   def ++(other: Hints): Hints
 }
 
 object Hints {
 
   def apply[S](bindings: Hint*): Hints = {
-    new Impl(bindings.map(_.tuple: (Key[_], Hint)).toMap)
+    new Impl(bindings.map(_.tuple: (ShapeTag[_], Hint)).toMap)
   }
 
   trait Schematic[F[_]] {
@@ -62,31 +62,12 @@ object Hints {
       new Schema(a, hints)
   }
 
-  // NB: having Key be contravariant seems to break Scala 3
-
-  /**
-    * Key used to store and access hints.
-    */
-
-  trait Key[A] extends HasId
-
-  object Key {
-    trait Has[A] {
-      def getKey: Key[A]
-    }
-
-    trait Companion[A] extends Key[A] with Has[A] {
-      implicit val keyInstance: Key[A] = this
-      final override def getKey: Key[A] = this
-    }
-  }
-
-  private[smithy4s] class Impl(
-      val toMap: Map[Key[_], Hint]
+  private[smithy4s] final class Impl(
+      val toMap: Map[ShapeTag[_], Hint]
   ) extends Hints {
     val isEmpty = toMap.isEmpty
     def all: Iterable[Hint] = toMap.values
-    def get[A](implicit key: Key[A]): Option[A] =
+    def get[A](implicit key: ShapeTag[A]): Option[A] =
       toMap.get(key).map { case Binding(_, value) =>
         value.asInstanceOf[A]
       }
@@ -97,13 +78,13 @@ object Hints {
       s"Hints(${all.map(_.value).mkString(", ")})"
   }
 
-  case class Binding[A](key: Key[A], value: A) {
-    def tuple: (Key[A], Binding[A]) = key -> this
+  case class Binding[A](key: ShapeTag[A], value: A) {
+    def tuple: (ShapeTag[A], this.type) = key -> this
   }
 
   object Binding {
     implicit def fromValue[A, AA <: A](value: AA)(implicit
-        key: Key[A]
+        key: ShapeTag[A]
     ): Binding[A] =
       Binding(key, value)
   }

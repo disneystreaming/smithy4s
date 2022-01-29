@@ -21,6 +21,6 @@ case class ShapeId(namespace: String, name: String) {
   override def toString = show
 }
 
-object ShapeId extends Hints.Key.Companion[ShapeId] {
+object ShapeId extends ShapeTag.Companion[ShapeId] {
   def id: ShapeId = ShapeId("smithy4s", "ShapeId")
 }

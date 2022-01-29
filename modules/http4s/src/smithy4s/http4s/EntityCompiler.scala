@@ -76,7 +76,9 @@ object EntityCompiler {
           .contramap[A]((a: A) => codecAPI.writeToArray(codecA, a))
       }
 
-      def compileEntityDecoder[A](schema: Schema[A]): EntityDecoder[F, A] = {
+      def compileEntityDecoder[A](
+          schema: Schema[A]
+      ): EntityDecoder[F, A] = {
         val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
         EntityDecoder
