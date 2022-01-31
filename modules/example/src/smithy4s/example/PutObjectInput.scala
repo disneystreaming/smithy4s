@@ -3,7 +3,7 @@ package smithy4s.example
 import smithy4s.syntax._
 
 case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
-object PutObjectInput {
+object PutObjectInput extends smithy4s.ShapeTag.Companion[PutObjectInput] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectInput")
 
   val hints : smithy4s.Hints = smithy4s.Hints(

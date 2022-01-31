@@ -3,7 +3,7 @@ package smithy4s.example
 import smithy4s.syntax._
 
 case class GetStreamedObjectInput(key: String)
-object GetStreamedObjectInput {
+object GetStreamedObjectInput extends smithy4s.ShapeTag.Companion[GetStreamedObjectInput] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetStreamedObjectInput")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
