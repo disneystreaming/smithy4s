@@ -1,168 +1,204 @@
 {
   "openapi": "3.0.2",
   "info": {
-      "title": "HelloWorldService",
-      "version": "0.0.1"
+    "title": "HelloWorldService",
+    "version": "0.0.1"
   },
   "paths": {
-      "/hello/{name}": {
-          "get": {
-              "operationId": "Greet",
-              "parameters": [
-                  {
-                      "name": "name",
-                      "in": "path",
-                      "schema": {
-                          "type": "string"
-                      },
-                      "required": true
-                  },
-                  {
-                      "name": "X-Bamtech-Partner",
-                      "in": "header",
-                      "schema": {
-                          "type": "string"
-                      }
-                  }
-              ],
-              "responses": {
-                  "200": {
-                      "description": "Greet 200 response",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/GreetOutputPayload"
-                              }
-                          }
-                      }
-                  },
-                  "500": {
-                      "description": "GeneralServerError 500 response",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
-                              }
-                          }
-                      }
-                  }
-              }
+    "/hello/{name}": {
+      "get": {
+        "operationId": "Greet",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "X-Bamtech-Partner",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
-      },
-      "/untagged": {
-          "get": {
-              "operationId": "GetUnion",
-              "responses": {
-                  "200": {
-                      "description": "GetUnion 200 response",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/GetUnionResponseContent"
-                              }
-                          }
-                      }
-                  },
-                  "500": {
-                      "description": "GeneralServerError 500 response",
-                      "content": {
-                          "application/json": {
-                              "schema": {
-                                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
-                              }
-                          }
-                      }
-                  }
+        ],
+        "responses": {
+          "200": {
+            "description": "Greet200response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GreetOutputPayload"
+                }
               }
+            }
+          },
+          "500": {
+            "description": "GeneralServerError500response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
+                }
+              }
+            }
           }
+        }
       }
+    },
+    "/untagged": {
+      "get": {
+        "operationId": "GetUnion",
+        "responses": {
+          "200": {
+            "description": "GetUnion200response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUnionResponseContent"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "GeneralServerError500response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   },
   "components": {
-      "schemas": {
-        "Cat": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "CatOrDog": {
-            "oneOf": [
-                {
-                    "$ref": "#/components/schemas/Cat"
-                },
-                {
-                    "$ref": "#/components/schemas/Dog"
-                }
-            ],
-            "discriminator": {
-                "propertyName": "type"
-            }
-        },
-        "Dog": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "breed": {
-                    "type": "string"
-                }
-            }
-        },
-          "GeneralServerErrorResponseContent": {
-              "type": "object",
-              "properties": {
-                  "message": {
-                      "type": "string"
-                  }
-              }
-          },
-          "GetUnionResponseContent": {
-              "type": "object",
-              "properties": {
-                  "intOrString": {
-                      "$ref": "#/components/schemas/IntOrString"
-                  },
-                  "catOrDog": {
-                      "$ref": "#/components/schemas/CatOrDog"
-                  }
-              }
-          },
-          "GreetOutputPayload": {
-              "type": "string"
-          },
-          "IntOrString": {
-              "oneOf": [
-                  {
-                      "type": "object",
-                      "title": "int",
-                      "properties": {
-                          "int": {
-                              "type": "number",
-                              "format": "int32",
-                              "nullable": true
-                          }
-                      },
-                      "required": [
-                          "int"
-                      ]
-                  },
-                  {
-                      "type": "object",
-                      "title": "string",
-                      "properties": {
-                          "string": {
-                              "type": "string"
-                          }
-                      },
-                      "required": [
-                          "string"
-                      ]
-                  }
-              ]
+    "schemas": {
+      "Cat": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
           }
+        }
+      },
+      "CatOrDog": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Cat"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "cat"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Dog"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "dog"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            ]
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type"
+        }
+      },
+      "Dog": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "breed": {
+            "type": "string"
+          }
+        }
+      },
+      "GeneralServerErrorResponseContent": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "GetUnionResponseContent": {
+        "type": "object",
+        "properties": {
+          "intOrString": {
+            "$ref": "#/components/schemas/IntOrString"
+          },
+          "catOrDog": {
+            "$ref": "#/components/schemas/CatOrDog"
+          }
+        }
+      },
+      "GreetOutputPayload": {
+        "type": "string"
+      },
+      "IntOrString": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "int",
+            "properties": {
+              "int": {
+                "type": "number",
+                "format": "int32",
+                "nullable": true
+              }
+            },
+            "required": [
+              "int"
+            ]
+          },
+          {
+            "type": "object",
+            "title": "string",
+            "properties": {
+              "string": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "string"
+            ]
+          }
+        ]
       }
+    }
   }
 }

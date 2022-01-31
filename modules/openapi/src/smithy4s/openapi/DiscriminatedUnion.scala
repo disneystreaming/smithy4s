@@ -24,6 +24,7 @@ import _root_.software.amazon.smithy.model.shapes.Shape
 import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.node.ObjectNode
 import smithy4s.api.DiscriminatedUnionTrait
+import software.amazon.smithy.jsonschema.Schema
 
 class DiscriminatedUnions() extends JsonSchemaMapper {
   private final val COMPONENTS = "components"
@@ -36,15 +37,39 @@ class DiscriminatedUnions() extends JsonSchemaMapper {
     val maybeDiscriminated = shape.getTrait(classOf[DiscriminatedUnionTrait])
     if (maybeDiscriminated.isPresent()) {
       val discriminated = maybeDiscriminated.get()
+      val discriminatorField = discriminated.getValue()
       val unionSchema = schemaBuilder.build()
 
       val alternatives = unionSchema.getOneOf().asScala
-      val discriminatedAlts = alternatives.flatMap(
-        _.getProperties().asScala.map(_._2)
-      )
+      val discriminatedAlts =
+        alternatives.flatMap(alt => alt.getProperties().asScala)
+
+      val transformedAlts = discriminatedAlts.map { case (label, altSchema) =>
+        val localDiscriminator = Schema
+          .builder()
+          .`type`("string")
+          .enumValues(List(label).asJava)
+          .build()
+        val discObject = Schema
+          .builder()
+          .`type`("object")
+          .properties(
+            Map(
+              discriminatorField -> localDiscriminator
+            ).asJava
+          )
+          .required(List(discriminatorField).asJava)
+          .build()
+        Schema
+          .builder()
+          .allOf(
+            List(altSchema, discObject).asJava
+          )
+          .build()
+      }.asJava
 
       schemaBuilder
-        .oneOf(discriminatedAlts.asJava)
+        .oneOf(transformedAlts)
         .putExtension(
           "discriminator",
           ObjectNode
