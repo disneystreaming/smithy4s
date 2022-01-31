@@ -3,7 +3,7 @@ package smithy4s.example
 import smithy4s.syntax._
 
 case class ArbitraryDataTest()
-object ArbitraryDataTest {
+object ArbitraryDataTest extends smithy4s.ShapeTag.Companion[ArbitraryDataTest] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ArbitraryDataTest")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
