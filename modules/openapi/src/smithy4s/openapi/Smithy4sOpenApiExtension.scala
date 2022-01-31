@@ -44,7 +44,8 @@ final class Smithy4sOpenApiExtension() extends Smithy2OpenApiExtension {
   ).asJava
 
   override def getJsonSchemaMappers(): ju.List[JsonSchemaMapper] = List(
-    new OpenApiJsonSchemaMapper(): JsonSchemaMapper
+    new OpenApiJsonSchemaMapper(): JsonSchemaMapper,
+    new DiscriminatedUnions()
   ).asJava
 
 }
