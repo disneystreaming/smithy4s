@@ -318,7 +318,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.build,
       Dependencies.Smithy.awsTraits,
       Dependencies.Smithy.waiters,
-      "com.lihaoyi" %% "os-lib" % "0.8.0",
+      "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "io.get-coursier" %% "coursier" % "2.0.16",
