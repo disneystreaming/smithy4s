@@ -1,3 +1,4 @@
 smithy4s.api.SimpleRestJsonTrait$Provider
 smithy4s.api.UncheckedExamplesTrait$Provider
 smithy4s.api.UuidFormatTrait$Provider
+smithy4s.api.DiscriminatedUnionTrait$Provider

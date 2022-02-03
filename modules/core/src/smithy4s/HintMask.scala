@@ -27,8 +27,8 @@ object HintMask {
 
   def empty: HintMask = apply()
 
-  def apply(hintKeys: ShapeTag[_]*): HintMask = {
-    new Impl(hintKeys.toSet)
+  def apply(shapeTags: ShapeTag[_]*): HintMask = {
+    new Impl(shapeTags.toSet)
   }
 
   private[this] case object Permissive extends HintMask {
