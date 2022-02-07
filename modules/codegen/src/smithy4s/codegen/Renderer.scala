@@ -45,7 +45,11 @@ object Renderer {
       val p = s"package ${unit.namespace}"
 
       val allImports =
-        renderResult.imports.filterNot(_.startsWith(unit.namespace))
+        renderResult.imports.filter(
+          _.replaceAll(unit.namespace, "")
+            .split('.')
+            .count(_.nonEmpty) > 1
+        )
 
       val allLines = List(p, "") ++
         allImports.toList.sorted.map("import " + _) ++
@@ -57,7 +61,13 @@ object Renderer {
       Result(unit.namespace, decl.name, content)
     }
 
-    pack :: classes
+    val packageApplicableDecls = unit.declarations.filter {
+      case _: TypeAlias | _: Service => true
+      case _                         => false
+    }
+
+    if (packageApplicableDecls.isEmpty) classes
+    else pack :: classes
   }
 
 }

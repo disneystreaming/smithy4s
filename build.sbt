@@ -542,12 +542,15 @@ lazy val example = projectMatrix
   .disablePlugins(HeaderPlugin)
   .settings(
     Compile / allowedNamespaces := Seq(
-      "smithy4s.example"
+      "smithy4s.example",
+      "smithy4s.example.import_test"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "import.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
