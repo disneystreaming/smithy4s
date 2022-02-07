@@ -1,0 +1,33 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ImportService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "operationId": "ImportOperation",
+                "responses": {
+                    "200": {
+                        "description": "ImportOperation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImportOperationOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ImportOperationOutputPayload": {
+                "type": "string"
+            }
+        }
+    }
+}
