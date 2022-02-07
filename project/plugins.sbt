@@ -10,7 +10,7 @@ addSbtPlugin("org.scalameta"        % "sbt-mdoc"                      % "2.2.24"
 addSbtPlugin("com.eed3si9n"         % "sbt-buildinfo"                 % "0.10.0")
 addSbtPlugin("com.eed3si9n"         % "sbt-projectmatrix"             % "0.9.0")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"                       % "0.4.3")
-addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.6.0")
+addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.6.5")
 
 libraryDependencies ++= Seq("com.lihaoyi" %% "os-lib" % "0.8.1")
 
