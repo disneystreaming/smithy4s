@@ -399,9 +399,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           s"def liftError(throwable: Throwable) : Option[$errorName] = throwable match"
         ) {
-          op.errors.collect { case Type.Ref(ns, name) =>
-            ns -> s"case e: ${name} => Some($errorName.${name}Case(e))"
-          } ++ List("" -> "case _ => None")
+          op.errors.collect { case Type.Ref(_, name) =>
+            s"case e: ${name} => Some($errorName.${name}Case(e))"
+          } ++ List("case _ => None")
         },
         block(
           s"def unliftError(e: $errorName) : Throwable = e match"
