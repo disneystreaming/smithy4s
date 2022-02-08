@@ -43,8 +43,7 @@ object Renderable {
 
   implicit def tupleRenderable[A](implicit
       A: Renderable[A]
-  ): Renderable[(String, A)] = (t: (String, A)) =>
-    A.render(t._2).addImport(t._1)
+  ): Renderable[(String, A)] = (t: (String, A)) => A.render(t._2)
 
   implicit def nelRenderable[A](implicit
       A: Renderable[A]

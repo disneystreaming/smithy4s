@@ -252,7 +252,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val params = if (op.input != Type.unit) {
       s"input: ${op.input.render}"
     } else ""
-
     val opName = op.name
     val traitName = s"${serviceName}Operation"
     val input =
@@ -425,6 +424,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       altName.dropWhile(_ == '_').capitalize + "Case"
     val caseNames = alts.map(_.name).map(caseName)
     val imports = alts.foldMap(_.tpe.imports) ++ syntaxImport
+
     lines(
       s"sealed trait $name extends scala.Product with scala.Serializable",
       obj(name, ext = shapeTag(name))(
