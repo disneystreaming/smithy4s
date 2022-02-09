@@ -543,14 +543,17 @@ lazy val example = projectMatrix
   .settings(
     Compile / allowedNamespaces := Seq(
       "smithy4s.example",
-      "smithy4s.example.import_test"
+      "smithy4s.example.import_test",
+      "smithy4s.example.imp",
+      "smithy4s.example.error"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "import.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "import.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "importerror.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,

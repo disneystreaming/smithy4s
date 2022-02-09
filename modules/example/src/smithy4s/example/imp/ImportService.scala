@@ -1,16 +1,18 @@
-package smithy4s.example
+package smithy4s.example.imp
 
+import ImportServiceGen.ImportOperationError
+import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
 import smithy4s.syntax._
 
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def importOperation() : F[Unit, Nothing, OpOutput, Nothing, Nothing]
+  def importOperation() : F[Unit, ImportOperationError, OpOutput, Nothing, Nothing]
 
   def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : ImportServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends ImportServiceGen[G] {
-    def importOperation() = transformation[Unit, Nothing, OpOutput, Nothing, Nothing](self.importOperation())
+    def importOperation() = transformation[Unit, ImportOperationError, OpOutput, Nothing, Nothing](self.importOperation())
   }
 }
 
@@ -18,7 +20,7 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
 
   def apply[F[_]](implicit F: smithy4s.Monadic[ImportServiceGen, F]): F.type = F
 
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ImportService")
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.imp", "ImportService")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
     id,
@@ -48,8 +50,8 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
       case ImportOperation() => impl.importOperation()
     }
   }
-  case class ImportOperation() extends ImportServiceOperation[Unit, Nothing, OpOutput, Nothing, Nothing]
-  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation, Unit, Nothing, OpOutput, Nothing, Nothing] {
+  case class ImportOperation() extends ImportServiceOperation[Unit, ImportOperationError, OpOutput, Nothing, Nothing]
+  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation, Unit, ImportOperationError, OpOutput, Nothing, Nothing] with smithy4s.Errorable[ImportOperationError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.import_test", "ImportOperation")
     val input: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Input)
     val output: smithy4s.Schema[OpOutput] = OpOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
@@ -60,6 +62,38 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
       smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/test"), Some(200)),
     )
     def wrap(input: Unit) = ImportOperation()
+    override val errorable: Option[smithy4s.Errorable[ImportOperationError]] = Some(this)
+    val error: smithy4s.errorUnion.Schema[ImportOperationError] = ImportOperationError.schema
+    def liftError(throwable: Throwable) : Option[ImportOperationError] = throwable match {
+      case e: NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
+      case _ => None
+    }
+    def unliftError(e: ImportOperationError) : Throwable = e match {
+      case ImportOperationError.NotFoundErrorCase(e) => e
+    }
+  }
+  sealed trait ImportOperationError extends scala.Product with scala.Serializable
+  object ImportOperationError extends smithy4s.ShapeTag.Companion[ImportOperationError] {
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.imp", "ImportOperationError")
+
+    val hints : smithy4s.Hints = smithy4s.Hints(
+      id,
+    )
+
+    case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
+
+    object NotFoundErrorCase {
+      val hints : smithy4s.Hints = smithy4s.Hints()
+      val schema: smithy4s.Schema[NotFoundErrorCase] = bijection(NotFoundError.schema, NotFoundErrorCase(_), _.notFoundError)
+      val alt = schema.oneOf[ImportOperationError]("NotFoundError")
+    }
+
+    val schema: smithy4s.errorUnion.Schema[ImportOperationError] = errors(
+      NotFoundErrorCase.alt,
+    ){
+      case c : NotFoundErrorCase => NotFoundErrorCase.alt(c)
+    }
+    implicit val staticSchema : schematic.Static[smithy4s.Schema[ImportOperationError]] = schematic.Static(schema)
   }
 }
 

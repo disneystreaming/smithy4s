@@ -18,6 +18,16 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "description": "NotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundErrorResponseContent"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -27,6 +37,14 @@
         "schemas": {
             "ImportOperationOutputPayload": {
                 "type": "string"
+            },
+            "NotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                }
             }
         }
     }
