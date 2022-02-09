@@ -73,8 +73,8 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
   def sharedResource: Resource[IO, Res] = Resource.eval {
     Utils
       .compile(modelString)
-      .flatMap { dynamicModel =>
-        dynamicModel.allServices
+      .flatMap { DynamicSchemaIndex =>
+        DynamicSchemaIndex.allServices
           .find(_.service.id == ShapeId("foo", "KVStore"))
           .liftTo[IO](new Throwable("Not found"))
       }

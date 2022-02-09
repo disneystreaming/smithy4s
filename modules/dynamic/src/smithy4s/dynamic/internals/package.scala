@@ -14,23 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package dynamic
+package smithy4s.dynamic
 
-case class DynamicEndpoint(
-    id: ShapeId,
-    input: Schema[DynData],
-    output: Schema[DynData],
-    hints: Hints
-) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
+package object internals {
 
-  def wrap(
-      input: DynData
-  ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
-    DynamicOp(id, input)
+  private[internals] type DynData = Any
+  private[internals] type DynStruct = Array[DynData]
+  private[internals] type DynAlt = (Int, DynData)
 
-  def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
-
-  def streamedOutput: StreamingSchema[Nothing] = StreamingSchema.NoStream
+  private[internals] type DynamicAlg[F[_, _, _, _, _]] = smithy4s.Transformation[DynamicOp, F]
 
 }

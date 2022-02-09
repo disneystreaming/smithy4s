@@ -16,10 +16,11 @@
 
 package smithy4s
 package dynamic
+package internals
 
 import model._
 
-trait ShapeVisitor[T] extends ((ShapeId, Shape) => T) {
+private[internals] trait ShapeVisitor[T] extends ((ShapeId, Shape) => T) {
 
   def apply(id: ShapeId, shape: Shape): T = shape match {
     case Shape.BlobCase(s)       => blobShape(id, s)
@@ -68,7 +69,7 @@ trait ShapeVisitor[T] extends ((ShapeId, Shape) => T) {
   def timestampShape(id: ShapeId, x: TimestampShape): T
 }
 
-object ShapeVisitor {
+private[internals] object ShapeVisitor {
 
   trait Default[T] extends ShapeVisitor[T] {
     def default: T

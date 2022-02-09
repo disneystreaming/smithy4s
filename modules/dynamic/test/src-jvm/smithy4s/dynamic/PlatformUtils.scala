@@ -24,7 +24,7 @@ import cats.effect.IO
 
 private[dynamic] trait PlatformUtils { self: Utils.type =>
 
-  def compile(string: String): IO[DynamicModel] =
+  def compile(string: String): IO[DynamicSchemaIndex] =
     parse(string).map(self.compile)
 
   def parse(string: String): IO[Model] =

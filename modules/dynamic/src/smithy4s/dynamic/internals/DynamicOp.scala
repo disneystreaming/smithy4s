@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic
+package smithy4s.dynamic.internals
 
 import smithy4s.ShapeId
 
-case class DynamicOp[I, E, O, SI, SO](
+private[internals] case class DynamicOp[I, E, O, SI, SO](
     id: ShapeId,
     data: I
 )

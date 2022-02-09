@@ -16,14 +16,15 @@
 
 package smithy4s
 package dynamic
+package internals
 
-case class DynamicService(
+private[internals] case class DynamicService(
     id: ShapeId,
     version: String,
     endpoints: List[DynamicEndpoint],
     hints: Hints
 ) extends Service[DynamicAlg, DynamicOp]
-    with DynamicModel.ServiceWrapper {
+    with DynamicSchemaIndex.ServiceWrapper {
 
   type Alg[P[_, _, _, _, _]] = DynamicAlg[P]
   type Op[I, E, O, SI, SO] = DynamicOp[I, E, O, SI, SO]

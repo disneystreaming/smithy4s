@@ -21,7 +21,7 @@ import smithy4s.SchemaIndex
 
 object Utils extends PlatformUtils {
 
-  def compile(model: Model): DynamicModel =
-    Compiler.compile(model, SchemaIndex.empty)
+  def compile(model: Model): DynamicSchemaIndex =
+    internals.Compiler.compile(model, SchemaIndex.empty)
 
 }

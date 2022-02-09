@@ -15,13 +15,23 @@
  */
 
 package smithy4s
+package dynamic
+package internals
 
-package object dynamic {
+private[internals] case class DynamicEndpoint(
+    id: ShapeId,
+    input: Schema[DynData],
+    output: Schema[DynData],
+    hints: Hints
+) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
 
-  type DynData = Any
-  type DynStruct = Array[DynData]
-  type DynAlt = (Int, DynData)
+  def wrap(
+      input: DynData
+  ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
+    DynamicOp(id, input)
 
-  type DynamicAlg[F[_, _, _, _, _]] = Transformation[DynamicOp, F]
+  def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
+
+  def streamedOutput: StreamingSchema[Nothing] = StreamingSchema.NoStream
 
 }

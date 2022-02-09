@@ -16,23 +16,18 @@
 
 package smithy4s
 package dynamic
+package internals
 
 import smithy4s.dynamic.model._
 import scala.collection.mutable.{Map => MMap}
-import schematic.OneOf
-import schematic.StructureField
 import smithy4s.syntax._
 import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
 
-object Compiler {
+private[dynamic] object Compiler {
 
-  type DynSchema = Schema[DynData]
-  type DynFieldSchema = StructureField[Schematic, DynStruct, DynData]
-  type DynAltSchema = OneOf[Schematic, DynAlt, DynData]
-
-  object ValidIdRef {
+  private object ValidIdRef {
     def apply(idRef: IdRef): Option[ShapeId] = {
       val segments = idRef.value.split('#')
       if (segments.length == 2) {
@@ -43,7 +38,7 @@ object Compiler {
     def unapply(idRef: IdRef): Option[ShapeId] = apply(idRef)
   }
 
-  def toIdRef(shapeId: ShapeId): IdRef = IdRef(
+  private def toIdRef(shapeId: ShapeId): IdRef = IdRef(
     shapeId.namespace + "#" + shapeId.name
   )
 
@@ -60,7 +55,10 @@ object Compiler {
   /**
      * @param knownHints hints supported by the caller.
      */
-  def compile(model: Model, knownHints: SchemaIndex): DynamicModel = {
+  protected[dynamic] def compile(
+      model: Model,
+      knownHints: SchemaIndex
+  ): DynamicSchemaIndex = {
     val schemaMap = MMap.empty[ShapeId, Eval[Schema[DynData]]]
     val endpointMap = MMap.empty[ShapeId, Eval[DynamicEndpoint]]
     val serviceMap = MMap.empty[ShapeId, Eval[DynamicService]]
@@ -126,7 +124,7 @@ object Compiler {
       case (ValidIdRef(id), shape) => visitor(id, shape)
       case _                       => ()
     }
-    new DynamicModel(
+    new DynamicSchemaIndexImpl(
       serviceMap.toMap.fmap(_.value),
       schemaMap.toMap.fmap(_.value)
     )
@@ -140,22 +138,26 @@ object Compiler {
       toHint: (ShapeId, Document) => Option[Hint]
   ) extends ShapeVisitor.Default[Unit] {
 
-    val closureMap: Map[ShapeId, Set[ShapeId]] = model.shapes.collect {
+    private val closureMap: Map[ShapeId, Set[ShapeId]] = model.shapes.collect {
       case (ValidIdRef(shapeId), shape) =>
         shapeId -> ClosureVisitor(shapeId, shape)
     }
-    def isRecursive(id: ShapeId, visited: Set[ShapeId] = Set.empty): Boolean =
+
+    private def isRecursive(
+        id: ShapeId,
+        visited: Set[ShapeId] = Set.empty
+    ): Boolean =
       visited(id) || closureMap
         .getOrElse(id, Set.empty)
         .exists(isRecursive(_, visited + id))
 
-    def schema(idRef: IdRef): Eval[Schema[DynData]] = Eval.defer {
+    private def schema(idRef: IdRef): Eval[Schema[DynData]] = Eval.defer {
       schemaMap(
         ValidIdRef.unapply(idRef).get
       )
     }
 
-    def allHints(traits: Option[Map[IdRef, Document]]): Seq[Hint] = {
+    private def allHints(traits: Option[Map[IdRef, Document]]): Seq[Hint] = {
       traits
         .getOrElse(Map.empty)
         .collect { case (ValidIdRef(k), v) =>
@@ -167,7 +169,7 @@ object Compiler {
         .toSeq
     }
 
-    def update[A](
+    private def update[A](
         shapeId: ShapeId,
         traits: Option[Map[IdRef, Document]],
         lSchema: Eval[Schema[A]]
@@ -373,7 +375,7 @@ object Compiler {
   }
 
   // A visitor allowing to gather the "closure" of all shapes
-  object ClosureVisitor extends ShapeVisitor.Default[Set[ShapeId]] {
+  private object ClosureVisitor extends ShapeVisitor.Default[Set[ShapeId]] {
     def default: Set[ShapeId] = Set.empty
 
     def fromMembers(it: Iterable[MemberShape]): Set[ShapeId] =
