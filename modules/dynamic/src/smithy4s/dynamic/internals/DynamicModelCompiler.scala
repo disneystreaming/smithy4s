@@ -68,7 +68,10 @@ private[dynamic] object Compiler {
           tag: ShapeTag[A]
       ): Option[(ShapeId, SchemaIndex.Binding[A])] =
         knownHints.get(tag).map(s => tag.id -> SchemaIndex.Binding(tag, s))
-      knownHints.tags.flatMap(binding(_)).toMap
+      type B = (ShapeId, SchemaIndex.Binding[_])
+      knownHints.tags
+        .flatMap[B, Iterable[B]](binding(_))
+        .toMap
     }
 
     def toHintAux[A](
