@@ -70,7 +70,7 @@ private[dynamic] object Compiler {
         knownHints.get(tag).map(s => tag.id -> SchemaIndex.Binding(tag, s))
       type B = (ShapeId, SchemaIndex.Binding[_])
       knownHints.tags
-        .flatMap[B, Iterable[B]](binding(_))
+        .flatMap(binding(_): Option[B])
         .toMap
     }
 
