@@ -39,7 +39,10 @@ object DynamicSchemaIndex {
     * @param knownHints an index of schemas of hints that the user would like
     *   to retrieve from the dynamic representation of the model.
     */
-  def load(model: dynamic.model.Model, knownHints: SchemaIndex): DynamicSchemaIndex =
+  def load(
+      model: dynamic.model.Model,
+      knownHints: SchemaIndex
+  ): DynamicSchemaIndex =
     internals.Compiler.compile(model, knownHints)
 
   /**
