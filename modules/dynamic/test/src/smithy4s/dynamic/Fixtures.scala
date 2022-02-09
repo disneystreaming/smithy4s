@@ -64,8 +64,7 @@ object Fixtures {
               Map(
                 IdRef("smithy.api#http") -> Document.obj(
                   "method" -> Document.fromString("GET"),
-                  "uri" -> Document.fromString("/{name}"),
-                  "code" -> Document.fromInt(200)
+                  "uri" -> Document.fromString("/{name}")
                 ),
                 IdRef("smithy.api#readonly") -> Document.obj()
               )

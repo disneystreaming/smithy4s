@@ -45,7 +45,11 @@ object Renderer {
       val p = s"package ${unit.namespace}"
 
       val allImports =
-        renderResult.imports.filterNot(_.startsWith(unit.namespace))
+        renderResult.imports.filter(
+          _.replaceAll(unit.namespace, "")
+            .split('.')
+            .count(_.nonEmpty) > 1
+        )
 
       val allLines = List(p, "") ++
         allImports.toList.sorted.map("import " + _) ++
@@ -57,7 +61,13 @@ object Renderer {
       Result(unit.namespace, decl.name, content)
     }
 
-    pack :: classes
+    val packageApplicableDecls = unit.declarations.filter {
+      case _: TypeAlias | _: Service => true
+      case _                         => false
+    }
+
+    if (packageApplicableDecls.isEmpty) classes
+    else pack :: classes
   }
 
 }
@@ -244,7 +254,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val params = if (op.input != Type.unit) {
       s"input: ${op.input.render}"
     } else ""
-
     val opName = op.name
     val traitName = s"${serviceName}Operation"
     val input =
@@ -394,9 +403,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           s"def liftError(throwable: Throwable) : Option[$errorName] = throwable match"
         ) {
-          op.errors.collect { case Type.Ref(ns, name) =>
-            ns -> s"case e: ${name} => Some($errorName.${name}Case(e))"
-          } ++ List("" -> "case _ => None")
+          op.errors.collect { case Type.Ref(_, name) =>
+            s"case e: ${name} => Some($errorName.${name}Case(e))"
+          } ++ List("case _ => None")
         },
         block(
           s"def unliftError(e: $errorName) : Throwable = e match"
@@ -420,6 +429,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       altName.dropWhile(_ == '_').capitalize + "Case"
     val caseNames = alts.map(_.name).map(caseName)
     val imports = alts.foldMap(_.tpe.imports) ++ syntaxImport
+
     lines(
       s"sealed trait $name extends scala.Product with scala.Serializable",
       obj(name, ext = shapeTag(name))(

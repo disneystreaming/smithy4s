@@ -18,13 +18,23 @@ package smithy4s.dynamic
 
 import weaver._
 import Fixtures._
+import smithy4s.dynamic.model.Model
 
 object DecodingSpec extends SimpleIOSuite {
 
+  private def order(model: Model): Model =
+    model.copy(shapes =
+      scala.collection.immutable.ListMap(
+        model.shapes.toSeq.sortBy(_._1.value): _*
+      )
+    )
+
   test("Decode json representation of models") {
+    val expected = order(pizzaModel)
     Utils
       .parse(pizzaModelString)
-      .map(obtained => expect.same(obtained, pizzaModel))
+      .map(order)
+      .map(obtained => expect.same(obtained, expected))
   }
 
 }

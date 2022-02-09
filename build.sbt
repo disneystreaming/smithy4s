@@ -319,7 +319,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.build,
       Dependencies.Smithy.awsTraits,
       Dependencies.Smithy.waiters,
-      "com.lihaoyi" %% "os-lib" % "0.8.0",
+      "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "io.get-coursier" %% "coursier" % "2.0.16",
@@ -576,12 +576,18 @@ lazy val example = projectMatrix
   .disablePlugins(HeaderPlugin)
   .settings(
     Compile / allowedNamespaces := Seq(
-      "smithy4s.example"
+      "smithy4s.example",
+      "smithy4s.example.import_test",
+      "smithy4s.example.imp",
+      "smithy4s.example.error"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "import.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "importerror.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
@@ -630,11 +636,11 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.12.3"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.0"
     )
 
   val Smithy = new {
-    val smithyVersion = "1.16.3"
+    val smithyVersion = "1.17.0"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
@@ -659,7 +665,7 @@ lazy val Dependencies = new {
   }
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.7" else "0.22.9")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.10" else "0.22.11")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)

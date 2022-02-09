@@ -195,7 +195,6 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
     expect(
       result == PayloadData(
-        None,
         Some(TestBiggerUnion.OneCase(One(Some("hello"))))
       )
     )

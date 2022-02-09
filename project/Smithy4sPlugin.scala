@@ -29,7 +29,7 @@ object Smithy4sPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.15"
   val Scala213 = "2.13.8"
-  val Scala3 = "3.1.0"
+  val Scala3 = "3.1.1"
 
   implicit class ProjectMatrixOps(val pm: ProjectMatrix) extends AnyVal {
     def http4sJvmPlatform(

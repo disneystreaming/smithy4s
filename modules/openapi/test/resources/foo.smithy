@@ -1,12 +1,13 @@
 namespace foo
 
 use smithy4s.api#simpleRestJson
+use smithy4s.api#discriminated
 
 @simpleRestJson
 service HelloWorldService {
   version: "0.0.1",
   errors: [GeneralServerError],
-  operations: [Greet, GetIntOrString]
+  operations: [Greet, GetUnion]
 }
 
 @readonly
@@ -18,8 +19,8 @@ operation Greet {
 
 @readonly
 @http(method: "GET", uri: "/untagged")
-operation GetIntOrString {
-  output: GetIntOrStringResponse
+operation GetUnion {
+  output: GetUnionResponse
 }
 
 structure Person {
@@ -43,13 +44,29 @@ structure GeneralServerError {
   message: String,
 }
 
-structure GetIntOrStringResponse {
-  intOrString: IntOrString
+structure GetUnionResponse {
+  intOrString: IntOrString,
+  catOrDog: CatOrDog
 }
 
 union IntOrString {
   int: Integer,
   string: String
+}
+
+structure Cat {
+  name: String
+}
+
+structure Dog {
+  name: String,
+  breed: String
+}
+
+@discriminated("type")
+union CatOrDog {
+  cat: Cat,
+  dog: Dog
 }
 
 
