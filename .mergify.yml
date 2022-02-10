@@ -9,7 +9,7 @@ pull_request_rules:
       - status-success="Test CE3 2_13 (js)"
       - status-success="Test CE3 3_0 (jvm)"
       - status-success="Test CE3 3_0 (js)"
-      - body~=labels:.*semver-patch.*
+      - body~=labels:.*semver-spec-patch
     actions:
       review:
         type: APPROVE
