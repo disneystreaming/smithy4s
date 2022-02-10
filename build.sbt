@@ -76,7 +76,8 @@ lazy val docs =
                           )
                         )
                       else version.value),
-        "SCALA_VERSION" -> scalaVersion.value
+        "SCALA_VERSION" -> scalaVersion.value,
+        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
       isCE3 := true,
       libraryDependencies ++= Seq(
