@@ -46,7 +46,7 @@ integer Age
 long Identifier
 ```
 
-These get translated as unboxed type wrappers, or `newtypes`, that look like a case class but do not induce any boxing at runtiime.
+These get translated as unboxed type wrappers, or `newtypes`, that look like a case class but do not induce any boxing at runtime.
 
 ### Collection types
 
