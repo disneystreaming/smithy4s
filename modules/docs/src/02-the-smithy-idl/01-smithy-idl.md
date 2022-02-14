@@ -72,7 +72,7 @@ map AgeMap {
 
 ### Structures
 
-Structures are product types. In scala, they naturally translate to case classes.
+Structures are product types. In Scala, they naturally translate to case classes.
 
 ```kotlin
 namespace foo
