@@ -81,18 +81,20 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderDecl(decl: Decl): RenderResult = decl match {
     case Service(name, originalName, ops, hints, version) =>
       renderService(name, originalName, ops, hints, version)
-    case Product(name, fields, recursive, hints) =>
-      renderProduct(name, fields, recursive, hints)
-    case Union(name, alts, recursive, hints) =>
-      renderUnion(name, alts, recursive, hints)
-    case TypeAlias(name, tpe, hints)      => renderTypeAlias(name, tpe, hints)
-    case Enumeration(name, values, hints) => renderEnum(name, values, hints)
-    case _                                => RenderResult.empty
+    case Product(name, originalName, fields, recursive, hints) =>
+      renderProduct(name, originalName, fields, recursive, hints)
+    case Union(name, originalName, alts, recursive, hints) =>
+      renderUnion(name, originalName, alts, recursive, hints)
+    case TypeAlias(name, originalName, tpe, hints) =>
+      renderTypeAlias(name, originalName, tpe, hints)
+    case Enumeration(name, originalName, values, hints) =>
+      renderEnum(name, originalName, values, hints)
+    case _ => RenderResult.empty
   }
 
   def renderPackageContents: RenderResult = {
     val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(name, _, _) =>
+      case TypeAlias(name, _, _, _) =>
         s"type $name = ${compilationUnit.namespace}.${name}.Type"
     }
 
@@ -267,11 +269,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       alts <- errorNel.traverse { t =>
         t.name.map(n => Alt(n, t))
       }
-    } yield Union(opName + "Error", alts)
+      name = opName + "Error"
+    } yield Union(name, name, alts)
 
     val renderedErrorUnion = errorUnion.foldMap {
-      case Union(name, alts, recursive, hints) =>
-        renderUnion(name, alts, recursive, hints, error = true)
+      case Union(name, originalName, alts, recursive, hints) =>
+        renderUnion(name, originalName, alts, recursive, hints, error = true)
     }
 
     lines(
@@ -326,6 +329,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderProduct(
       name: String,
+      originalName: String,
       fields: List[Field],
       recursive: Boolean,
       hints: List[Hint]
@@ -356,7 +360,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
       } else line(decl),
       obj(name, ext = shapeTag(name))(
-        renderId(name),
+        renderId(originalName),
         newline,
         renderHintsValWithId(hints),
         renderProtocol(name, hints),
@@ -415,6 +419,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderUnion(
       name: String,
+      originalName: String,
       alts: NonEmptyList[Alt],
       recursive: Boolean,
       hints: List[Hint],
@@ -428,7 +433,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       s"sealed trait $name extends scala.Product with scala.Serializable",
       obj(name, ext = shapeTag(name))(
-        renderId(name),
+        renderId(originalName),
         newline,
         renderHintsValWithId(hints),
         newline,
@@ -482,12 +487,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderEnum(
       name: String,
+      originalName: String,
       values: List[EnumValue],
       hints: List[Hint]
   ): RenderResult = lines(
     s"sealed abstract class $name(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable",
     obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
-      renderId(name),
+      renderId(originalName),
       newline,
       renderHintsValWithId(hints),
       newline,
@@ -511,6 +517,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypeAlias(
       name: String,
+      originalName: String,
       tpe: Type,
       hints: List[Hint]
   ): RenderResult = {
@@ -518,7 +525,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
-        renderId(name),
+        renderId(originalName),
         renderHintsValWithId(hints),
         s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withHints(hints)",
         lines(

@@ -14,16 +14,24 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.dynamic
 
-case class ShapeId(namespace: String, name: String) {
-  def show = s"$namespace#$name"
-  def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
-  override def toString = show
-}
+import weaver._
 
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
+object RecursionSpec extends SimpleIOSuite {
 
-  case class Member(shapeId: ShapeId, member: String)
+  test(
+    "Compilation does not recurse infinitely in the case of recursive structures".only
+  ) {
+    val modelString =
+      """|namespace foo
+         |
+         |structure Foo {
+         |  foo: Foo
+         |}
+         |""".stripMargin
+
+    Utils.compile(modelString).as(success)
+  }
+
 }

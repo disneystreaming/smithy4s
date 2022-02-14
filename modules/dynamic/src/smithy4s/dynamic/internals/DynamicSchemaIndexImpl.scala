@@ -15,15 +15,20 @@
  */
 
 package smithy4s
+package dynamic
+package internals
 
-case class ShapeId(namespace: String, name: String) {
-  def show = s"$namespace#$name"
-  def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
-  override def toString = show
-}
+private[internals] class DynamicSchemaIndexImpl(
+    serviceMap: Map[ShapeId, DynamicService],
+    schemaMap: Map[ShapeId, Schema[DynData]]
+) extends DynamicSchemaIndex {
 
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
+  def allServices: List[DynamicSchemaIndex.ServiceWrapper] =
+    serviceMap.values.toList
 
-  case class Member(shapeId: ShapeId, member: String)
+  def getSchema(
+      shapeId: ShapeId
+  ): Option[Schema[_]] =
+    schemaMap.get(shapeId)
+
 }

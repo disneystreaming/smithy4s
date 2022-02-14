@@ -14,16 +14,11 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.dynamic.internals
 
-case class ShapeId(namespace: String, name: String) {
-  def show = s"$namespace#$name"
-  def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
-  override def toString = show
-}
+import smithy4s.ShapeId
 
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
-
-  case class Member(shapeId: ShapeId, member: String)
-}
+private[internals] case class DynamicOp[I, E, O, SI, SO](
+    id: ShapeId,
+    data: I
+)

@@ -42,6 +42,8 @@ case class PayloadError(
     expected: String,
     message: String
 ) extends HttpContractError {
+  override def toString(): String =
+    s"PayloadError($path, expected = $expected, message=$message)"
   override def getMessage(): String = message
 }
 

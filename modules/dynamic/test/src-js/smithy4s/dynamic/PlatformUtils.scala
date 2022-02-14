@@ -14,16 +14,6 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.dynamic
 
-case class ShapeId(namespace: String, name: String) {
-  def show = s"$namespace#$name"
-  def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
-  override def toString = show
-}
-
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
-
-  case class Member(shapeId: ShapeId, member: String)
-}
+private[dynamic] trait PlatformUtils {}

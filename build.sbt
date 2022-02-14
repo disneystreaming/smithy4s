@@ -53,7 +53,8 @@ lazy val allModules = Seq(
   `aws-kernel`.projectRefs,
   aws.projectRefs,
   `aws-http4s`.projectRefs,
-  `codegen-cli`.projectRefs
+  `codegen-cli`.projectRefs,
+  dynamic.projectRefs
 ).flatten
 
 lazy val docs =
@@ -409,6 +410,39 @@ lazy val protocol = projectMatrix
       "-Xlint"
     )
   )
+
+/**
+ * This modules contains utilities to dynamically instantiate
+ * the interfaces provide by smithy4s, based on data from dynamic
+ * Model instances.
+ */
+lazy val dynamic = projectMatrix
+  .in(file("modules/dynamic"))
+  .dependsOn(core)
+  .settings(
+    isCE3 := true,
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0",
+      Dependencies.Cats.core.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    Test / fork := true,
+    // Forwarding cwd to tests
+    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
+    Compile / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
+    ),
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
+  )
+  .jvmPlatform(
+    allJvmScalaVersions,
+    jvmDimSettings ++ Seq(
+      libraryDependencies += Dependencies.Smithy.model % Test
+    )
+  )
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
 
 /**
  * Module that contains the logic for generating "openapi views" of the

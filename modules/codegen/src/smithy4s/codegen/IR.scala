@@ -54,6 +54,7 @@ case class Operation(
 
 case class Product(
     name: String,
+    originalName: String,
     fields: List[Field],
     recursive: Boolean = false,
     hints: List[Hint] = Nil
@@ -61,16 +62,22 @@ case class Product(
 
 case class Union(
     name: String,
+    originalName: String,
     alts: NonEmptyList[Alt],
     recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl
 
-case class TypeAlias(name: String, tpe: Type, hints: List[Hint] = Nil)
-    extends Decl
+case class TypeAlias(
+    name: String,
+    originalName: String,
+    tpe: Type,
+    hints: List[Hint] = Nil
+) extends Decl
 
 case class Enumeration(
     name: String,
+    originalName: String,
     values: List[EnumValue],
     hints: List[Hint] = Nil
 ) extends Decl

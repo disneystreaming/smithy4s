@@ -15,15 +15,23 @@
  */
 
 package smithy4s
+package dynamic
+package internals
 
-case class ShapeId(namespace: String, name: String) {
-  def show = s"$namespace#$name"
-  def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
-  override def toString = show
-}
+private[internals] case class DynamicEndpoint(
+    id: ShapeId,
+    input: Schema[DynData],
+    output: Schema[DynData],
+    hints: Hints
+) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
 
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
+  def wrap(
+      input: DynData
+  ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
+    DynamicOp(id, input)
 
-  case class Member(shapeId: ShapeId, member: String)
+  def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
+
+  def streamedOutput: StreamingSchema[Nothing] = StreamingSchema.NoStream
+
 }

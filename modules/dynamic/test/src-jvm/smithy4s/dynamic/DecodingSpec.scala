@@ -14,16 +14,27 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.dynamic
 
-case class ShapeId(namespace: String, name: String) {
-  def show = s"$namespace#$name"
-  def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
-  override def toString = show
-}
+import weaver._
+import Fixtures._
+import smithy4s.dynamic.model.Model
 
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
+object DecodingSpec extends SimpleIOSuite {
 
-  case class Member(shapeId: ShapeId, member: String)
+  private def order(model: Model): Model =
+    model.copy(shapes =
+      scala.collection.immutable.ListMap(
+        model.shapes.toSeq.sortBy(_._1.value): _*
+      )
+    )
+
+  test("Decode json representation of models") {
+    val expected = order(pizzaModel)
+    Utils
+      .parse(pizzaModelString)
+      .map(order)
+      .map(obtained => expect.same(obtained, expected))
+  }
+
 }

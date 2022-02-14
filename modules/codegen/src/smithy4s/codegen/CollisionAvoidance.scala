@@ -59,27 +59,39 @@ object CollisionAvoidance {
           hints.map(modHint),
           version
         )
-      case Product(name, fields, recursive, hints) =>
+      case Product(name, originalName, fields, recursive, hints) =>
         Product(
           protect(name.capitalize),
+          originalName,
           fields.map(modField),
           recursive,
           hints.map(modHint)
         )
-      case Union(name, alts, recursive, hints) =>
+      case Union(name, originalName, alts, recursive, hints) =>
         Union(
           protect(name.capitalize),
+          originalName,
           alts.map(modAlt),
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, tpe, hints) =>
-        TypeAlias(protect(name.capitalize), modType(tpe), hints.map(modHint))
-      case Enumeration(name, values, hints) =>
+      case TypeAlias(name, originalName, tpe, hints) =>
+        TypeAlias(
+          protect(name.capitalize),
+          originalName,
+          modType(tpe),
+          hints.map(modHint)
+        )
+      case Enumeration(name, originalName, values, hints) =>
         val newValues = values.map { case EnumValue(value, name, hints) =>
           EnumValue(value, name.map(protect), hints.map(modHint))
         }
-        Enumeration(protect(name.capitalize), newValues, hints.map(modHint))
+        Enumeration(
+          protect(name.capitalize),
+          originalName,
+          newValues,
+          hints.map(modHint)
+        )
     }
     CompilationUnit(compilationUnit.namespace, declarations)
   }
