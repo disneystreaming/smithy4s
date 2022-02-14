@@ -186,7 +186,7 @@ trait HelloServiceGen[P[_, _, _, _, _]]{
 ```
 
 P represents an abstract context against which operations are going
-to run against. The abstact context has 5 type parameters:
+to run. The abstact context has 5 type parameters:
 * input,
 * error,
 * output,
