@@ -46,7 +46,7 @@ integer Age
 long Identifier
 ```
 
-These get translated as unboxed type wrappers, or `newtypes`, that look like a case class but do not induce any boxing at runtiime.
+These get translated as unboxed type wrappers, or `newtypes`, that look like a case class but do not induce any boxing at runtime.
 
 ### Collection types
 
@@ -72,7 +72,7 @@ map AgeMap {
 
 ### Structures
 
-Structures are product types. In scala, they naturally translate to case classes.
+Structures are product types. In Scala, they naturally translate to case classes.
 
 ```kotlin
 namespace foo
@@ -186,7 +186,7 @@ trait HelloServiceGen[P[_, _, _, _, _]]{
 ```
 
 P represents an abstract context against which operations are going
-to run against. The abstact context has 5 type parameters:
+to run. The abstract context has 5 type parameters:
 * input,
 * error,
 * output,
