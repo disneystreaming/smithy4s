@@ -22,7 +22,7 @@ val myModule = project
   .in(file("modules/my-module"))
   .enablePlugins(Smithy4sCodegenPlugin)
   // version for smithy4s-core is sourced from Smithy4sCodegenPlugin
-  .settings(libraryDependencies += "com.disneystreaming.smithy4s" %%% "smithy4s-core" % smithy4sVersion.value)
+  .settings(libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value)
 ```
 
 This will enable the plugin on `myModule`. We also need to add `smithy4s-core ` here since it is needed for compiling the generated code.
@@ -39,7 +39,7 @@ val myModule = project
     scalaVersion := "@SCALA_VERSION@",
     smithy4sInputDir in Compile  := (baseDirectory in ThisBuild).value / "smithy_input",
     smithy4sOutputDir in Compile := (baseDirectory in ThisBuild).value / "smithy_output",
-    libraryDependencies += "com.disneystreaming.smithy4s" %%% "smithy4s-core" % smithy4sVersion.value
+    libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
 ```
 
