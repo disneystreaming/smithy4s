@@ -26,7 +26,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest]
-        java: [adoptium@17]
+        java: [temurin@17]
         scalaVersion: ["2_12", "2_13", "3_0"]
         scalaPlatform: ["jvm", "js"]
         ceVersion: ["CE2", "CE3"]
@@ -98,7 +98,7 @@ jobs:
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v13
         with:
-          java-version: adoptium@17
+          java-version: temurin@17
 
       - name: Cache
         uses: coursier/cache-action@v6
