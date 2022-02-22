@@ -22,7 +22,7 @@ import smithy4s.example.{PackedInputsService, PackedInput}
 
 object PackedInputsSmokeSpec extends FunSuite {
 
-  test("Algebra can be summoned from monadic alias") {
+  test("Methods with packed inputs have a single case-class parameter") {
     val service: PackedInputsService[Id] = new PackedInputsService[Id] {
       def packedInputOperation(input: PackedInput): Unit = ()
     }
