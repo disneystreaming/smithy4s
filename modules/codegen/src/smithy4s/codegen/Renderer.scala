@@ -205,6 +205,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           ops.map {
             case op if op.input == Type.unit =>
               s"def ${op.methodName}(${op.renderArgs}) = ${op.name}()"
+            case op if op.hints.contains(Hint.PackedInputs) =>
+              s"def ${op.methodName}(${op.renderArgs}) = ${op.name}(input)"
             case op =>
               s"def ${op.methodName}(${op.renderArgs}) = ${op.name}(${op.input.render}(${op.renderParams}))"
           }
@@ -230,6 +232,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               ops.map {
                 case op if op.input == Type.unit =>
                   s"case ${op.name}() => impl.${op.methodName}(${op.renderParams})"
+                case op if op.hints.contains(Hint.PackedInputs) =>
+                  s"case ${op.name}(input) => impl.${op.methodName}(${op.renderParams})"
                 case op =>
                   s"case ${op.name}(${op.input.render}(${op.renderParams})) => impl.${op.methodName}(${op.renderParams})"
 
@@ -539,11 +543,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private implicit class OperationExt(op: Operation) {
     def renderArgs =
       if (op.input == Type.unit) ""
-      else self.renderArgs(op.params)
+      else if (op.hints.contains(Hint.PackedInputs)) {
+        "input: " + renderInput
+      } else self.renderArgs(op.params)
 
     def renderParams =
       if (op.input == Type.unit) ""
-      else op.params.map(_.name).mkString(", ")
+      else if (op.hints.contains(Hint.PackedInputs)) {
+        "input"
+      } else op.params.map(_.name).mkString(", ")
 
     def methodName = uncapitalise(op.name)
 

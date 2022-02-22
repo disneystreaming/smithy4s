@@ -19,6 +19,7 @@ package smithy4s.codegen
 import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.recursion._
+import smithy4s.meta.PackedInputsTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
@@ -31,7 +32,9 @@ import scala.jdk.CollectionConverters._
 object SmithyToIR {
 
   def apply(model: Model, namespace: String): CompilationUnit = {
-    CompilationUnit(namespace, new SmithyToIR(model, namespace).allDecls)
+    PostProcessor(
+      CompilationUnit(namespace, new SmithyToIR(model, namespace).allDecls)
+    )
   }
 
   private[codegen] def prettifyName(
@@ -373,12 +376,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Type.Ref(shapeId.getNamespace(), shapeId.getName())
       )
       Hint.Protocol(refs.toList)
+    case _: PackedInputsTrait =>
+      Hint.PackedInputs
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
   }
 
-  private def traitsToHints(traits: List[Trait]): List[Hint] =
-    traits.collect(traitToHint) ++ traits.map(unfoldTrait)
+  private def traitsToHints(traits: List[Trait]): List[Hint] = {
+    val nonMetaTraits =
+      traits.filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
+    traits.collect(traitToHint) ++ nonMetaTraits.map(unfoldTrait)
+  }
 
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
