@@ -174,6 +174,7 @@ sealed trait Hint
 object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object PackedInputs extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
