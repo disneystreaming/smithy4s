@@ -39,7 +39,7 @@ trait PackedInputServiceGen[F[_]] {
 }
 ```
 
-It is however possible to annotate the service (or operation) definition with the `smithy.meta#packedInputs` trait, in order for the rendered method to contain a single parameter, typed with actual input case class of the operation.
+It is however possible to annotate the service (or operation) definition with the `smithy4s.meta#packedInputs` trait, in order for the rendered method to contain a single parameter, typed with actual input case class of the operation.
 
 For instance :
 
