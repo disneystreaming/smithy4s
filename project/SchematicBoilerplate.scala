@@ -202,6 +202,11 @@ object Boilerplate {
       |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
       |    new Schema(fields, const)
       |
+      |    def bigStruct[S[x[_]] <: Schematic[x], Z](
+      |      fields: StructureField[S, Z, _]*)(
+      |       const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+      |    new Schema(fields.toVector, const)
+      |
       -    $smartCtsrOpen
       |  }
       |
@@ -213,6 +218,11 @@ object Boilerplate {
       |      fields: Vector[StructureField[S, Z, _]])(
       |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
       |    new Schema(fields, const)
+      |
+      |    def bigStruct[Z](
+      |      fields: StructureField[S, Z, _]*)(
+      |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+      |    new Schema(fields.toVector, const)
       |
       -    $smartCtsrClosed
       |  }

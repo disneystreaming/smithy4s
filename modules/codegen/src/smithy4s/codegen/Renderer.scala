@@ -370,10 +370,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderProtocol(name, hints),
         newline,
         if (fields.nonEmpty) {
-          val definition = if (recursive) "recursive(struct" else "struct"
-          line(s"val schema: $Schema_[$name] = $definition")
-            .args(
-              fields.map { case Field(fieldName, realName, tpe, required, hints) =>
+          val renderedFields =
+            fields.map {
+              case Field(fieldName, realName, tpe, required, hints) =>
                 val req = if (required) "required" else "optional"
                 if (hints.isEmpty) {
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
@@ -381,11 +380,33 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   val mh = memberHints(hints)
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).withHints($mh)"""
                 }
-              }
-            )
-            .block(s"$name.apply")
-            .appendToLast(".withHints(hints)")
-            .appendToLast(if (recursive) ")" else "")
+            }
+          if (fields.size <= 22) {
+            val definition = if (recursive) "recursive(struct" else "struct"
+            line(s"val schema: $Schema_[$name] = $definition")
+              .args(renderedFields)
+              .block(s"$name.apply")
+              .appendToLast(".withHints(hints)")
+              .appendToLast(if (recursive) ")" else "")
+          } else {
+            val definition =
+              if (recursive) "recursive(bigStruct" else "bigStruct"
+            line(s"val schema: $Schema_[$name] = $definition")
+              .args(renderedFields)
+              .block(
+                line(s"arr => new $name").args(
+                  fields.zipWithIndex.map {
+                    case (Field(_, _, tpe, required, _), idx) =>
+                      val scalaTpe =
+                        if (required) tpe.render
+                        else s"Option[${tpe.render}]"
+                      line(s"arr($idx).asInstanceOf[$scalaTpe]")
+                  }
+                )
+              )
+              .appendToLast(".withHints(hints)")
+              .appendToLast(if (recursive) ")" else "")
+          }
         } else {
           line(
             s"val schema: $Schema_[$name] = constant($name()).withHints(hints)"

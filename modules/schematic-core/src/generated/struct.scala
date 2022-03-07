@@ -31,6 +31,11 @@ object struct {
       const: Vector[Any] => Z) : schematic.Schema[S, Z] =
     new Schema(fields, const)
 
+    def bigStruct[S[x[_]] <: Schematic[x], Z](
+      fields: StructureField[S, Z, _]*)(
+       const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+    new Schema(fields.toVector, const)
+
     def struct[S[x[_]] <: Schematic[x], Z, A0](a0: StructureField[S, Z, A0])(const : (A0) => Z) : schematic.Schema[S, Z] = new Schema[S, Z](Vector(a0), arr => const(arr(0).asInstanceOf[A0]))
     def struct[S[x[_]] <: Schematic[x], Z, A0, A1](a0: StructureField[S, Z, A0], a1: StructureField[S, Z, A1])(const : (A0, A1) => Z) : schematic.Schema[S, Z] = new Schema[S, Z](Vector(a0, a1), arr => const(arr(0).asInstanceOf[A0], arr(1).asInstanceOf[A1]))
     def struct[S[x[_]] <: Schematic[x], Z, A0, A1, A2](a0: StructureField[S, Z, A0], a1: StructureField[S, Z, A1], a2: StructureField[S, Z, A2])(const : (A0, A1, A2) => Z) : schematic.Schema[S, Z] = new Schema[S, Z](Vector(a0, a1, a2), arr => const(arr(0).asInstanceOf[A0], arr(1).asInstanceOf[A1], arr(2).asInstanceOf[A2]))
@@ -63,6 +68,11 @@ object struct {
       fields: Vector[StructureField[S, Z, _]])(
       const: Vector[Any] => Z) : schematic.Schema[S, Z] =
     new Schema(fields, const)
+
+    def bigStruct[Z](
+      fields: StructureField[S, Z, _]*)(
+      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+    new Schema(fields.toVector, const)
 
     def struct[Z, A0](a0: StructureField[S, Z, A0])(const : (A0) => Z) : schematic.Schema[S, Z] =  new Schema[S, Z](Vector(a0), arr => const(arr(0).asInstanceOf[A0]))
     def struct[Z, A0, A1](a0: StructureField[S, Z, A0], a1: StructureField[S, Z, A1])(const : (A0, A1) => Z) : schematic.Schema[S, Z] =  new Schema[S, Z](Vector(a0, a1), arr => const(arr(0).asInstanceOf[A0], arr(1).asInstanceOf[A1]))
