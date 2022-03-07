@@ -52,3 +52,10 @@ structure BigStruct{
   @required
   a23: Integer
 }
+
+@enum([{
+  value: "foo:foo:foo",
+  },
+  {value: "bar:bar:bar"
+}])
+string EnumWithSymbols

@@ -681,8 +681,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
+  private def toCamelCase(value: String): String = {
+    val (_, output) = value.foldLeft((false, "")) {
+      case ((wasLastSkipped, str), c) =>
+        if (c.isLetterOrDigit) {
+          val newC =
+            if (wasLastSkipped) c.toString.capitalize else c.toString
+          (false, str + newC)
+        } else {
+          (true, str)
+        }
+    }
+    output
+  }
+
   private def enumValueClassName(name: Option[String], value: String) = {
-    name.getOrElse(value.capitalize)
+    name.getOrElse(toCamelCase(value).capitalize)
   }
 
   private implicit class EnumValueOps(enumValue: EnumValue) {
