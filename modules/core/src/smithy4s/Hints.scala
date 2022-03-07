@@ -38,6 +38,8 @@ trait Hints {
 
 object Hints {
 
+  val empty: Hints = new Impl(Map.empty)
+
   def apply[S](bindings: Hint*): Hints = {
     new Impl(bindings.map(_.tuple: (ShapeTag[_], Hint)).toMap)
   }

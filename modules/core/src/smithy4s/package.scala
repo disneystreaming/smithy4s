@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 
-package object smithy4s extends TypeAliases {
+package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
 
+  type ~>[F[_], G[_]] = PolyFunction[F, G]
   type Hint = Hints.Binding[_]
   type Static[A] = schematic.Static[A]
   type Schema[A] = schematic.Schema[Schematic, A]
