@@ -83,8 +83,9 @@ object CollisionAvoidance {
           hints.map(modHint)
         )
       case Enumeration(name, originalName, values, hints) =>
-        val newValues = values.map { case EnumValue(value, name, hints) =>
-          EnumValue(value, name.map(protect), hints.map(modHint))
+        val newValues = values.map {
+          case EnumValue(value, ordinal, name, hints) =>
+            EnumValue(value, ordinal, name.map(protect), hints.map(modHint))
         }
         Enumeration(
           protect(name.capitalize),
@@ -146,8 +147,8 @@ object CollisionAvoidance {
         Type.Ref(ref.namespace, ref.name.capitalize)
 
       def apply[A](fa: TypedNode[A]): TypedNode[A] = fa match {
-        case EnumerationTN(ref, value, name) =>
-          EnumerationTN(modRef(ref), value, name)
+        case EnumerationTN(ref, value, ordinal, name) =>
+          EnumerationTN(modRef(ref), value, ordinal, name)
         case StructureTN(ref, fields) =>
           StructureTN(modRef(ref), fields)
         case NewTypeTN(ref, target) =>

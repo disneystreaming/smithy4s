@@ -101,8 +101,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           val values = e
             .getValues()
             .asScala
-            .map { value =>
-              EnumValue(value.getValue(), value.getName().asScala)
+            .zipWithIndex
+            .map { case (value, index) =>
+              EnumValue(value.getValue(), index, value.getName().asScala)
             }
             .toList
           Enumeration(shape.name, shape.name, values).some
@@ -512,12 +513,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
-        val enumDef = e.getValues().asScala.find(_.getValue() == str).get
+        val (enumDef, index) =
+          e.getValues().asScala.zipWithIndex.find(_._1.getValue() == str).get
         val shapeId = shape.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         TypedNode.EnumerationTN(
           ref,
           enumDef.getValue(),
+          index,
           enumDef.getName().asScala
         )
       // List

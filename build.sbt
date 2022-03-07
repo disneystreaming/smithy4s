@@ -130,7 +130,7 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "empty.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
