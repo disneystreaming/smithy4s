@@ -83,6 +83,7 @@ case class Enumeration(
 ) extends Decl
 case class EnumValue(
     value: String,
+    ordinal: Int,
     name: Option[String],
     hints: List[Hint] = Nil
 )
@@ -217,7 +218,8 @@ object TypedNode {
 
   implicit val typedNodeFunctor: Functor[TypedNode] = new Functor[TypedNode] {
     def map[A, B](fa: TypedNode[A])(f: A => B): TypedNode[B] = fa match {
-      case EnumerationTN(ref, value, name) => EnumerationTN(ref, value, name)
+      case EnumerationTN(ref, value, ordinal, name) =>
+        EnumerationTN(ref, value, ordinal, name)
       case StructureTN(ref, fields) =>
         StructureTN(ref, fields.map(_.map(_.map(f))))
       case NewTypeTN(ref, target) =>
@@ -235,8 +237,12 @@ object TypedNode {
     }
   }
 
-  case class EnumerationTN(ref: Type.Ref, value: String, name: Option[String])
-      extends TypedNode[Nothing]
+  case class EnumerationTN(
+      ref: Type.Ref,
+      value: String,
+      ordinal: Int,
+      name: Option[String]
+  ) extends TypedNode[Nothing]
   case class StructureTN[A](
       ref: Type.Ref,
       fields: List[(String, FieldTN[A])]

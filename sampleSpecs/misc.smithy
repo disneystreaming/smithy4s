@@ -53,9 +53,9 @@ structure BigStruct{
   a23: Integer
 }
 
-@enum([{
-  value: "foo:foo:foo",
-  },
-  {value: "bar:bar:bar"
-}])
+@enum([
+  {value: "foo:foo:foo"},
+  {value: "bar:bar:bar"},
+  {value: "_"},
+])
 string EnumWithSymbols

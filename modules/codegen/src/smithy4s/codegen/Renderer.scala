@@ -522,9 +522,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsValWithId(hints),
       newline,
-      values.zipWithIndex.map { case (e @ EnumValue(value, _, _), index) =>
+      values.map { case e @ EnumValue(value, ordinal, _, _) =>
         line(
-          s"""case object ${e.className} extends $name("$value", $index)"""
+          s"""case object ${e.className} extends $name("$value", $ordinal)"""
         )
       },
       newline,
@@ -695,12 +695,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     output
   }
 
-  private def enumValueClassName(name: Option[String], value: String) = {
-    name.getOrElse(toCamelCase(value).capitalize)
+  private def enumValueClassName(
+      name: Option[String],
+      value: String,
+      ordinal: Int
+  ) = {
+    name.getOrElse {
+      val camel = toCamelCase(value).capitalize
+      if (camel.nonEmpty) camel else "Value" + ordinal
+    }
+
   }
 
   private implicit class EnumValueOps(enumValue: EnumValue) {
-    def className = enumValueClassName(enumValue.name, enumValue.value)
+    def className =
+      enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
   }
 
   private def renderHint(hint: Hint): Option[String] = hint match {
@@ -746,8 +755,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
-    case EnumerationTN(ref, value, name) =>
-      (ref.show + "." + enumValueClassName(name, value)).write
+    case EnumerationTN(ref, value, ordinal, name) =>
+      (ref.show + "." + enumValueClassName(name, value, ordinal)).write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (_, FieldTN.RequiredTN(value))     => value.runDefault

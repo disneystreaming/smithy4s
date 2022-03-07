@@ -26,7 +26,8 @@ object EnumWithSymbolsSmokeSpec extends FunSuite {
     val values = smithy4s.example.EnumWithSymbols.values
     val expected = List(
       smithy4s.example.EnumWithSymbols.FooFooFoo,
-      smithy4s.example.EnumWithSymbols.BarBarBar
+      smithy4s.example.EnumWithSymbols.BarBarBar,
+      smithy4s.example.EnumWithSymbols.Value2
     )
     expect(values == expected)
   }
