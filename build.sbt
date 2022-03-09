@@ -366,6 +366,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       scriptedLaunchOpts.value ++
         Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
     },
+    Compile / unmanagedSources / excludeFilter := { f => Glob("**/sbt-test/**").matches(f.toPath) },
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
