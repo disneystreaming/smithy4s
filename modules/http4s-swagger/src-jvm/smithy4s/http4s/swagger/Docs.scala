@@ -39,9 +39,9 @@ private[smithy4s] abstract class Docs[F[_]](
   object DocPath {
     def unapply(p: Path): Boolean = {
       p match {
-        case Root / `path` => true
-        case Root / `path` / "" => true
-        case Root / `path` / file if file.equalsIgnoreCase("index.html") => true
+        case `actualPath` => true
+        case `actualPath` / "" => true
+        case `actualPath` / file if file.equalsIgnoreCase("index.html") => true
         case _ => false
       }
     }
