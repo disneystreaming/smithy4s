@@ -14,16 +14,52 @@
  *  limitations under the License.
  */
 
-package smithy4s.schema
+package smithy4s
+package schema
 
 /**
   * Represents a member of coproduct type (sealed trait)
   */
-case class Alt[F[_], S, A](label: String, instance: F[A], inject: A => S) {
-  def apply(value: A): Alt.WithValue[F, S, A] =
+final case class Alt[F[_], U, A](
+    label: String,
+    instance: F[A],
+    inject: A => U,
+    hints: Hints
+) {
+  def apply(value: A): Alt.WithValue[F, U, A] =
     Alt.WithValue(this, value)
+
+  def transformHints(f: Hints => Hints): Alt[F, U, A] =
+    Alt(label, instance, inject, f(hints))
+
+  def addHints(newHints: Hint*) = transformHints(_ ++ Hints(newHints: _*))
+
+  def mapK[G[_]](fk: PolyFunction[F, G]): Alt[G, U, A] =
+    Alt(label, fk(instance), inject, hints)
 }
 object Alt {
-  case class WithValue[F[_], S, A](alt: Alt[F, S, A], value: A)
+  final case class WithValue[F[_], U, A](alt: Alt[F, U, A], value: A) {
+    def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
+      WithValue(alt.mapK(fk), value)
+  }
+
+  def liftK[F[_], G[_], U](
+      fk: PolyFunction[F, G]
+  ): PolyFunction[Alt[F, U, *], Alt[G, U, *]] =
+    new PolyFunction[Alt[F, U, *], Alt[G, U, *]] {
+      def apply[A](fa: Alt[F, U, A]): Alt[G, U, A] = fa.mapK(fk)
+    }
+
+  def shiftHintsK[U]: PolyFunction[Alt[Schema, U, *], Alt[Schema, U, *]] =
+    new PolyFunction[Alt[Schema, U, *], Alt[Schema, U, *]] {
+      def apply[A](fa: Alt[Schema, U, A]): Alt[Schema, U, A] =
+        Alt(
+          fa.label,
+          fa.instance.transformHints(_ ++ fa.hints),
+          fa.inject,
+          Hints.empty
+        )
+    }
+
   type SchemaAndValue[S, A] = WithValue[Schema, S, A]
 }

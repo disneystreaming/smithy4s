@@ -25,6 +25,11 @@ import schematic.maps.MMap
 trait PolyFunction[F[_], G[_]] { self =>
   def apply[A](fa: F[A]): G[A]
 
+  final def andThen[H[_]](other: PolyFunction[G, H]): PolyFunction[F, H] =
+    new PolyFunction[F, H] {
+      def apply[A](fa: F[A]): H[A] = other(self(fa))
+    }
+
   /**
     * Creates a memoised version of this function that will
     * only accept values proven to be static values as inputs.

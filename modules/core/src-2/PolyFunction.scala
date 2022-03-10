@@ -25,13 +25,18 @@ import schematic.maps.MMap
 trait PolyFunction[F[_], G[_]] { self =>
   def apply[A](fa: F[A]): G[A]
 
+  final def andThen[H[_]](other: PolyFunction[G, H]): PolyFunction[F, H] =
+    new PolyFunction[F, H] {
+      def apply[A](fa: F[A]): H[A] = other(self(fa))
+    }
+
   /**
     * Creates a memoised version of this function.
     *
     * Unsafe because it creates mutable state, which is a
     * non-referentially-transparent action (aka a side-effect).
     */
-  def unsafeMemoise: PolyFunction[Lambda[A => Static[F[A]]], G] =
+  final def unsafeMemoise: PolyFunction[Lambda[A => Static[F[A]]], G] =
     new PolyFunction[Lambda[A => Static[F[A]]], G] {
       private val map: MMap[F[_], Any] = MMap.empty
 
@@ -50,7 +55,7 @@ trait PolyFunction[F[_], G[_]] { self =>
    * Unsafe because calling the resulting polyfunction with an input that wasn't cached
    * will result in an exception.
    */
-  def unsafeCache(
+  final def unsafeCache(
       allPossibleInputs: Vector[Existential[F]]
   ): PolyFunction[F, G] =
     new PolyFunction[F, G] {

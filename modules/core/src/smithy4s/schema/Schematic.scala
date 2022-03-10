@@ -1,6 +1,8 @@
 package smithy4s
 package schema
 
+import smithy4s.schema.Schema._
+
 trait Schematic[F[_]] {
 
   // numeric
@@ -14,12 +16,13 @@ trait Schematic[F[_]] {
 
   // misc primitives
   def boolean: F[Boolean]
-  def bytes: F[schematic.ByteArray]
+  def bytes: F[ByteArray]
   def uuid: F[java.util.UUID]
   def byte: F[Byte]
   def string: F[String]
   def document: F[Document]
   def unit: F[Unit]
+  def timestamp: F[Timestamp]
 
   // collections
   def set[S](fs: F[S]): F[Set[S]]
@@ -28,22 +31,93 @@ trait Schematic[F[_]] {
   def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]]
 
   // Other
-  def suspend[A](f: => F[A]): F[A]
+  def suspend[A](f: Lazy[F[A]]): F[A]
   def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B]
-  def withHints[A](fa: F[A], hints: smithy4s.Hints): F[A]
+  def withHints[A](fa: F[A], hints: Hints): F[A]
   def enumeration[A](
       to: A => (String, Int),
       fromName: Map[String, A],
       fromOrdinal: Map[Int, A]
   ): F[A]
 
-  def struct[S](fields: Vector[schematic.Field[F, S, _]])(
-      const: Vector[Any] => S
-  ): F[S]
+  def struct[S](fields: Vector[Field[F, S, _]])(const: Vector[Any] => S): F[S]
 
   def union[S](
-      first: schematic.Alt[F, S, _],
-      rest: Vector[schematic.Alt[F, S, _]]
-  )(total: S => schematic.Alt.WithValue[F, S, _]): F[S]
+      first: Alt[F, S, _],
+      rest: Vector[Alt[F, S, _]]
+  )(total: S => Alt.WithValue[F, S, _]): F[S]
+
+  final val toPolyFunction: Schema ~> F = new (Schema ~> F) { self =>
+    def apply[A](fa: Schema[A]): F[A] = {
+      fa match {
+        case PrimitiveSchema(_, _, tag) => primitive(tag)
+        case EnumerationSchema(_, _, values, total) =>
+          val to: A => (String, Int) = a => {
+            val t = total(a)
+            (t.name, t.ordinal)
+          }
+          val fromOrdinal = values.map { v => v.ordinal -> v.value }.toMap
+          val fromName = values.map { v => v.name -> v.value }.toMap
+          enumeration(to, fromName, fromOrdinal)
+        case SetSchema(_, _, member) =>
+          set(apply(member))
+        case ListSchema(_, _, member) =>
+          list(apply(member))
+        case MapSchema(_, _, key, value) =>
+          map(apply(key), apply(value))
+        case BijectionSchema(underlying, to, from) =>
+          bijection(apply(underlying), to, from)
+        case StructSchema(_, _, fields, make) =>
+          struct(fields.map(Field.shiftHintsK(_)).map(_.mapK(self)))(make)
+        case schema @ Schema.UnionSchema(_, _, _, _) => {
+          compileUnion(schema)
+        }
+        case LazySchema(suspendedSchema) =>
+          suspend(suspendedSchema.map(self(_)))
+      }
+    }
+
+    import Primitive._
+    def primitive[A](p: Primitive[A]): F[A] = p match {
+      case PShort      => short
+      case PInt        => int
+      case PFloat      => float
+      case PLong       => long
+      case PDouble     => double
+      case PBigInt     => bigint
+      case PBigDecimal => bigdecimal
+      case PBoolean    => boolean
+      case PString     => string
+      case PUUID       => uuid
+      case PByte       => byte
+      case PBlob       => bytes
+      case PDocument   => document
+      case PTimestamp  => timestamp
+      case PUnit       => unit
+    }
+
+    def compileUnion[U](schema: UnionSchema[U]): F[U] = {
+      val alts: Vector[SchemaAlt[U, _]] = schema.alternatives
+      val head = alts.head
+      val tail = alts.tail
+      // Pre-compiles the schemas associated to each alternative. This is important
+      // because we need to avoid compiling the schemas to codecs upon every dispatch
+      val precompiledAlts =
+        (Alt.shiftHintsK[U] andThen Alt.liftK[Schema, F, U](self))
+          .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
+
+      def processAlt[A](
+          altWithValue: Alt.WithValue[Schema, U, A]
+      ): Alt.WithValue[F, U, A] = {
+        val Alt.WithValue(alt, value) = altWithValue
+        val altF: Alt[F, U, A] = precompiledAlts(alt)
+        Alt.WithValue(altF, value)
+      }
+      val dispatch: U => Alt.WithValue[F, U, _] = u =>
+        processAlt(schema.dispatch(u))
+      union(precompiledAlts(head), tail.map(precompiledAlts(_)))(dispatch)
+    }
+
+  }
 
 }
