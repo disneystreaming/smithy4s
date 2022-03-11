@@ -75,7 +75,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       Compile / smithy4sOutputDir := (Compile / sourceManaged).value,
       Compile / smithy4sOpenapiDir := (Compile / resourceManaged).value,
       Compile / smithy4sCodegen := cachedSmithyCodegen(Compile).value,
-      Compile / smithy4sCodegenDependencies := Nil: @annotation.nowarn,
+      Compile / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
       Compile / sourceGenerators += (Compile / smithy4sCodegen).map(
         _.filter(_.ext == "scala")
       ),
