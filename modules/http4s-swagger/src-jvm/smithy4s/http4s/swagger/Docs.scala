@@ -36,13 +36,14 @@ private[smithy4s] abstract class Docs[F[_]](
   val jsonSpec = hasId.id.namespace + '.' + hasId.id.name + ".json"
 
   val actualPath: Path = Uri.Path.unsafeFromString("/" + path)
+
   object DocPath {
     def unapply(p: Path): Boolean = {
       p match {
-        case `actualPath` => true
-        case `actualPath` / "" => true
+        case `actualPath`                                               => true
+        case `actualPath` / ""                                          => true
         case `actualPath` / file if file.equalsIgnoreCase("index.html") => true
-        case _ => false
+        case _                                                          => false
       }
     }
   }
@@ -51,6 +52,7 @@ private[smithy4s] abstract class Docs[F[_]](
       PermanentRedirect(
         Location(Uri.unsafeFromString(s"/$path/index.html?url=/$jsonSpec"))
       )
+
     case request @ GET -> `actualPath` / filePath =>
       val resource = s"$swaggerUiPath/$filePath"
       staticResource(resource, Some(request)).getOrElseF(NotFound())
@@ -60,7 +62,6 @@ private[smithy4s] abstract class Docs[F[_]](
         .getOrElseF(InternalServerError())
   }
 }
-
 
 object Docs extends Compat.DocsCompanion {}
 

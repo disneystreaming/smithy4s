@@ -29,7 +29,10 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
 
     test(s"GET /$path redirects to expected location") {
       val request =
-        Request[IO](method = Method.GET, uri = Uri.unsafeFromString(s"/$path"))
+        Request[IO](
+          method = Method.GET,
+          uri = Uri.unsafeFromString(s"/$path/index.html")
+        )
       app.run(request).map { response =>
         val redirectUri = response.headers
           .get(CIString("Location"))
