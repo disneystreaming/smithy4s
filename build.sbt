@@ -366,7 +366,9 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       scriptedLaunchOpts.value ++
         Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
     },
-    Compile / unmanagedSources / excludeFilter := { f => Glob("**/sbt-test/**").matches(f.toPath) },
+    Compile / unmanagedSources / excludeFilter := { f =>
+      Glob("**/sbt-test/**").matches(f.toPath)
+    },
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
@@ -643,7 +645,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.18.0"
+    val smithyVersion = "1.18.1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
