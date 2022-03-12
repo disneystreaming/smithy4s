@@ -1,7 +1,7 @@
 package smithy4s
 package schema
 
-object syntax {
+object syntax extends StructSyntax {
 
   private val prelude = "smithy.api"
 
@@ -22,7 +22,8 @@ object syntax {
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("smithy4s.api", "UUID")
 
-  private val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
+  override protected val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
+
   def list[A](a: Schema[A]): Schema[List[A]] = Schema.ListSchema(placeholder, Hints.empty, a)
   def set[A](a: Schema[A]): Schema[Set[A]] = Schema.SetSchema(placeholder, Hints.empty, a)
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)

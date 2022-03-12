@@ -370,10 +370,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderProtocol(name, hints),
         newline,
         if (fields.nonEmpty) {
-          val definition = if (recursive) "recursive(struct" else "struct"
-          line(s"val schema: $Schema_[$name] = $definition")
-            .args(
-              fields.map { case Field(fieldName, realName, tpe, required, hints) =>
+          val renderedFields =
+            fields.map {
+              case Field(fieldName, realName, tpe, required, hints) =>
                 val req = if (required) "required" else "optional"
                 if (hints.isEmpty) {
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
@@ -381,11 +380,33 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   val mh = memberHints(hints)
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).withHints($mh)"""
                 }
-              }
-            )
-            .block(s"$name.apply")
-            .appendToLast(".withHints(hints)")
-            .appendToLast(if (recursive) ")" else "")
+            }
+          if (fields.size <= 22) {
+            val definition = if (recursive) "recursive(struct" else "struct"
+            line(s"val schema: $Schema_[$name] = $definition")
+              .args(renderedFields)
+              .block(s"$name.apply")
+              .appendToLast(".withHints(hints)")
+              .appendToLast(if (recursive) ")" else "")
+          } else {
+            val definition =
+              if (recursive) "recursive(bigStruct" else "bigStruct"
+            line(s"val schema: $Schema_[$name] = $definition")
+              .args(renderedFields)
+              .block(
+                line(s"arr => new $name").args(
+                  fields.zipWithIndex.map {
+                    case (Field(_, _, tpe, required, _), idx) =>
+                      val scalaTpe =
+                        if (required) tpe.render
+                        else s"Option[${tpe.render}]"
+                      line(s"arr($idx).asInstanceOf[$scalaTpe]")
+                  }
+                )
+              )
+              .appendToLast(".withHints(hints)")
+              .appendToLast(if (recursive) ")" else "")
+          }
         } else {
           line(
             s"val schema: $Schema_[$name] = constant($name()).withHints(hints)"
@@ -501,9 +522,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsValWithId(hints),
       newline,
-      values.zipWithIndex.map { case (e @ EnumValue(value, _, _), index) =>
+      values.map { case e @ EnumValue(value, ordinal, _, _) =>
         line(
-          s"""case object ${e.className} extends $name("$value", $index)"""
+          s"""case object ${e.className} extends $name("$value", $ordinal)"""
         )
       },
       newline,
@@ -660,12 +681,35 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def enumValueClassName(name: Option[String], value: String) = {
-    name.getOrElse(value.capitalize)
+  private def toCamelCase(value: String): String = {
+    val (_, output) = value.foldLeft((false, "")) {
+      case ((wasLastSkipped, str), c) =>
+        if (c.isLetterOrDigit) {
+          val newC =
+            if (wasLastSkipped) c.toString.capitalize else c.toString
+          (false, str + newC)
+        } else {
+          (true, str)
+        }
+    }
+    output
+  }
+
+  private def enumValueClassName(
+      name: Option[String],
+      value: String,
+      ordinal: Int
+  ) = {
+    name.getOrElse {
+      val camel = toCamelCase(value).capitalize
+      if (camel.nonEmpty) camel else "Value" + ordinal
+    }
+
   }
 
   private implicit class EnumValueOps(enumValue: EnumValue) {
-    def className = enumValueClassName(enumValue.name, enumValue.value)
+    def className =
+      enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
   }
 
   private def renderHint(hint: Hint): Option[String] = hint match {
@@ -711,8 +755,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
-    case EnumerationTN(ref, value, name) =>
-      (ref.show + "." + enumValueClassName(name, value)).write
+    case EnumerationTN(ref, value, ordinal, name) =>
+      (ref.show + "." + enumValueClassName(name, value, ordinal)).write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (_, FieldTN.RequiredTN(value))     => value.runDefault

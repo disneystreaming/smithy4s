@@ -117,6 +117,9 @@ lazy val core = projectMatrix
       "smithy4s.api"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
+    Compile / sourceGenerators += sourceDirectory
+      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
+      .taskValue,
     libraryDependencies ++= Seq(Dependencies.collectionsCompat.value),
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -130,7 +133,7 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "empty.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
@@ -189,7 +192,7 @@ lazy val schematic = projectMatrix
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .settings(
     Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.SchematicModule.Core))
+      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.SchematicCore))
       .taskValue
   )
 
@@ -211,7 +214,7 @@ lazy val `schematic-scalacheck` = projectMatrix
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .settings(
     Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.SchematicModule.Scalacheck))
+      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.SchematicScalacheck))
       .taskValue
   )
 
@@ -365,6 +368,9 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
         Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
+    },
+    Compile / unmanagedSources / excludeFilter := { f =>
+      Glob("**/sbt-test/**").matches(f.toPath)
     },
     publishLocal := {
       // make sure that core and codegen are published before the
@@ -638,11 +644,11 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.5"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.6"
     )
 
   val Smithy = new {
-    val smithyVersion = "1.17.0"
+    val smithyVersion = "1.18.1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
@@ -686,7 +692,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.10" else "0.6.10")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.7.11" else "0.6.11")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)

@@ -23,22 +23,24 @@ object Boilerplate {
     }
   }
 
-  sealed trait SchematicModule extends Product with Serializable
-  object SchematicModule {
-    case object Core extends SchematicModule
-    case object Scalacheck extends SchematicModule
+  sealed trait BoilerplateModule extends Product with Serializable
+  object BoilerplateModule {
+    case object Core extends BoilerplateModule
+    case object SchematicCore extends BoilerplateModule
+    case object SchematicScalacheck extends BoilerplateModule
 
-    def templates: Map[SchematicModule, List[Template]] = Map(
-      Core -> (Schemas.templates ++ Seq(Struct)),
-      Scalacheck -> List(SchematicGenArity, DynamicSchema)
+    def templates: Map[BoilerplateModule, List[Template]] = Map(
+      Core -> List(StructSyntax),
+      SchematicCore -> (Schemas.templates ++ Seq(Struct)),
+      SchematicScalacheck -> List(SchematicGenArity, DynamicSchema)
     )
   }
 
   /**
    * Returns a seq of the generated files.  As a side-effect, it actually generates them...
    */
-  def gen(dir: File, module: SchematicModule) =
-    for (t <- SchematicModule.templates(module)) yield {
+  def gen(dir: File, module: BoilerplateModule) =
+    for (t <- BoilerplateModule.templates(module)) yield {
       val tgtFile = t.filename(dir)
       IO.write(tgtFile, t.body)
       tgtFile
@@ -202,6 +204,11 @@ object Boilerplate {
       |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
       |    new Schema(fields, const)
       |
+      |    def bigStruct[S[x[_]] <: Schematic[x], Z](
+      |      fields: StructureField[S, Z, _]*)(
+      |       const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+      |    new Schema(fields.toVector, const)
+      |
       -    $smartCtsrOpen
       |  }
       |
@@ -214,6 +221,11 @@ object Boilerplate {
       |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
       |    new Schema(fields, const)
       |
+      |    def bigStruct[Z](
+      |      fields: StructureField[S, Z, _]*)(
+      |      const: Vector[Any] => Z) : schematic.Schema[S, Z] =
+      |    new Schema(fields.toVector, const)
+      |
       -    $smartCtsrClosed
       |  }
       |
@@ -223,6 +235,66 @@ object Boilerplate {
       |   ) extends schematic.Schema[S, Z]{
       |     def compile[F[_]](s: S[F]) : F[Z] = s.struct(fields.map(_.compile(s)))(const)
       |   }
+      |
+      |}
+      """
+    }
+  }
+
+  object StructSyntax extends Template {
+    override def filename(root: File): File =
+      root / "generated" / "StructSyntax.scala"
+
+    override def content(tv: TemplateVals): String = {
+      import tv._
+
+      val fields = synTypes.map { tpe =>
+        s"Field[F, S, $tpe]"
+      }
+
+      val schemaFields = synTypes.map { tpe =>
+        s"SchemaField[S, $tpe]"
+      }
+
+      val params =
+        synVals.zip(fields).map { case (v, t) => s"$v: $t" }.mkString(", ")
+
+      val schemaParams =
+        synVals
+          .zip(schemaFields)
+          .map { case (v, t) => s"$v: $t" }
+          .mkString(", ")
+
+      val args = synVals.mkString(", ")
+
+      val consArgs = synVals.map(v => s"_$v").mkString(", ")
+
+      val structMethods =
+        s"""def struct[S, ${`A..N`}]($params)(f: (${`A..N`}) => S): F[S]"""
+
+      val casts = synTypes.zipWithIndex
+        .map { case (a, i) =>
+          s"arr($i).asInstanceOf[${a}]"
+        }
+        .mkString(", ")
+
+      val smartCtsr =
+        s"""def struct[S, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
+
+      block"""
+      |package smithy4s
+      |package schema
+      |
+      |trait StructSyntax {
+      |
+      |  protected def placeholder: ShapeId
+      |
+      |  def bigStruct[S](
+      |      fields: SchemaField[S, _]*)(
+      |      const: IndexedSeq[Any] => S) : Schema[S] =
+      |    Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
+      |
+      -  $smartCtsr
       |
       |}
       """
