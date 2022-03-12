@@ -288,8 +288,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
-        s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
-        s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
+        s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input)",
+        s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsValWithId(op.hints),
@@ -305,7 +305,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ) = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".withHints${memberHints(hints)}"
+      val mh = if (hints.isEmpty) "" else s".addHints${memberHints(hints)}"
       line(
         s"""val $valName : $StreamingSchema_[${tpe.render}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
       )
@@ -378,7 +378,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
                 } else {
                   val mh = memberHints(hints)
-                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).withHints($mh)"""
+                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
                 }
             }
           if (fields.size <= 22) {
@@ -386,7 +386,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             line(s"val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(s"$name.apply")
-              .appendToLast(".withHints(hints)")
+              .appendToLast(".addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -404,12 +404,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   }
                 )
               )
-              .appendToLast(".withHints(hints)")
+              .appendToLast(".addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
           line(
-            s"val schema: $Schema_[$name] = constant($name()).withHints(hints)"
+            s"val schema: $Schema_[$name] = constant($name()).addHints(hints)"
           )
         },
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
@@ -493,7 +493,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .appendToLast(
-              if (error) "" else ".withHints(hints)"
+              if (error) "" else ".addHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
         },
@@ -516,7 +516,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): RenderResult = lines(
-    s"sealed abstract class $name(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable",
+    s"sealed abstract class $name(val value: String, val ordinal: Int, hints: $Hints_ = $Hints_.empty) extends $Enumeration_.Value[$name]",
     obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
       renderId(originalName),
       newline,
@@ -531,10 +531,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       line(s"val values: List[$name] = List").args(
         values.toList.map(_.className)
       ),
+      s"val schemaValues: List[$EnumValue_[$name]] = values.map(_.toSchemaValue)",
       newline,
-      line(s"def to(e: $name) : (String, Int) = (e.value, e.ordinal)"),
+      line(s"def to(e: $name) : $EnumValue_[$name] = e.toSchemaValue"),
       lines(
-        s"val schema: $Schema_[$name] = enumeration(to, valueMap, ordinalMap).withHints(hints)",
+        s"val schema: $Schema_[$name] = enumeration(to, schemaValues).addHints(hints)",
         s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
       )
     )
@@ -552,7 +553,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
         renderId(originalName),
         renderHintsValWithId(hints),
-        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withHints(hints)",
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.addHints(hints)",
         lines(
           s"val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)",
           s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
@@ -628,7 +629,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     private def importAndRenderP(p: Primitive): (Set[String], String) =
       p match {
         case Primitive.Unit       => Set.empty -> "Unit"
-        case Primitive.ByteArray  => Set("schematic.ByteArray") -> "ByteArray"
+        case Primitive.ByteArray  => Set("smithy4s.ByteArray") -> "ByteArray"
         case Primitive.Bool       => Set.empty -> "Boolean"
         case Primitive.String     => Set.empty -> "String"
         case Primitive.Timestamp  => Set("smithy4s.Timestamp") -> "Timestamp"

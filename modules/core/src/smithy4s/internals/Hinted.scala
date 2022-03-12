@@ -17,8 +17,7 @@
 package smithy4s
 package internals
 
-import schematic.PolyFunction
-import schematic.Wrapped
+import schema.Field.Wrapped
 import smithy4s.capability._
 
 case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
@@ -118,7 +117,7 @@ object Hinted {
     }
 
   def wrapK[F[_], G[_]](
-      polyFunction: PolyFunction[F, schematic.Wrapped[F, G, *]]
+      polyFunction: PolyFunction[F, Wrapped[F, G, *]]
   ): PolyFunction[Hinted[F, *], Wrapped[Hinted[F, *], G, *]] =
     new PolyFunction[Hinted[F, *], Wrapped[Hinted[F, *], G, *]] {
       def apply[A](fa: Hinted[F, A]): Hinted[F, G[A]] =

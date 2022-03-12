@@ -12,8 +12,10 @@ sealed trait Schema[A]{
   def oneOf[Union](label: String, hints: Hint*)(implicit ev: A <:< Union): SchemaAlt[Union, A] = Alt(label, this, ev, Hints(hints: _*))
 
   def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
+  def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
 
   def addHints(hints: Hint*) : Schema[A] = transformHints(_ ++ Hints(hints:_*))
+  def withHints(hints: Hint*) : Schema[A] = addHints(hints: _*)
 
   def withId(newId: ShapeId) : Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)

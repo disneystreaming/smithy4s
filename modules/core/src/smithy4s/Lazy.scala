@@ -1,6 +1,6 @@
 package smithy4s
 
-class Lazy[A](make: () => A) {
+final class Lazy[A](make: () => A) {
   private[this] var thunk: () => A = make
   lazy val value: A = {
     val result = thunk()
@@ -9,4 +9,8 @@ class Lazy[A](make: () => A) {
   }
 
   def map[B](f: A => B): Lazy[B] = new Lazy(() => f(make()))
+}
+
+object Lazy {
+  def apply[A](a: => A): Lazy[A] = new Lazy(() => a)
 }

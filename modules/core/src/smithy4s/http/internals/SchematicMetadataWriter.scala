@@ -18,7 +18,7 @@ package smithy4s
 package http
 package internals
 
-import schematic._
+import smithy4s.schema._
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput

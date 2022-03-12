@@ -44,26 +44,6 @@ object Hints {
     new Impl(bindings.map(_.tuple: (ShapeTag[_], Hint)).toMap)
   }
 
-  trait Schematic[F[_]] {
-    def withHints[A](fa: F[A], hints: Hints): F[A]
-  }
-
-  class Schema[S[x[_]] <: Schematic[x], A](
-      a: schematic.Schema[S, A],
-      hints: Hints
-  ) extends schematic.Schema[S, A] {
-    def compile[F[_]](s: S[F]): F[A] = s.withHints(a.compile(s), hints)
-    def addHints(other: Hints) = new Schema[S, A](a, hints ++ other)
-  }
-
-  trait ClosedSyntax[S[x[_]] <: Schematic[x]] {
-    def withHints[A](
-        a: schematic.Schema[S, A],
-        hints: Hints
-    ): schematic.Schema[S, A] =
-      new Schema(a, hints)
-  }
-
   private[smithy4s] final class Impl(
       val toMap: Map[ShapeTag[_], Hint]
   ) extends Hints {

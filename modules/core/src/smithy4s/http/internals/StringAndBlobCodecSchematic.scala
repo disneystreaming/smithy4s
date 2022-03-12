@@ -18,9 +18,7 @@ package smithy4s
 package http
 package internals
 
-import schematic.ByteArray
-import schematic.Field
-import schematic.PolyFunction
+import schema._
 import smithy.api.HttpPayload
 import smithy4s.http.BodyPartial
 import smithy4s.http.HttpMediaType

@@ -15,8 +15,8 @@
  */
 
 package smithy4s
+package schema
 
-import schematic._
 import java.util.UUID
 
 class PassthroughSchematic[F[_]](schematic: Schematic[F]) extends Schematic[F] {
@@ -68,7 +68,7 @@ class PassthroughSchematic[F[_]](schematic: Schematic[F]) extends Schematic[F] {
       fromOrdinal: Map[Int, A]
   ): F[A] = schematic.enumeration(to, fromName, fromOrdinal)
 
-  def suspend[A](f: => F[A]): F[A] = schematic.suspend(f)
+  def suspend[A](f: Lazy[F[A]]): F[A] = schematic.suspend(f)
 
   def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B] =
     schematic.bijection(f, to, from)

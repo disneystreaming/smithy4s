@@ -27,4 +27,16 @@ object syntax extends StructSyntax {
   def list[A](a: Schema[A]): Schema[List[A]] = Schema.ListSchema(placeholder, Hints.empty, a)
   def set[A](a: Schema[A]): Schema[Set[A]] = Schema.SetSchema(placeholder, Hints.empty, a)
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
+  def recursive[A](s : => Schema[A]) : Schema[A] = Schema.LazySchema(Lazy(s))
+
+  def union[U](alts: SchemaAlt[U, _]*)(dispatch: U => Alt.SchemaAndValue[U, _]) : Schema[U] =
+    Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
+
+  def enumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]) : Schema[E] =
+    Schema.EnumerationSchema(placeholder, Hints.empty, values, total)
+
+  def bijection[A, B](a: Schema[A], to: A => B, from: B => A) : Schema[B] =
+    Schema.BijectionSchema(a, to, from)
+
+  def constant[A](a : A) : Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 }

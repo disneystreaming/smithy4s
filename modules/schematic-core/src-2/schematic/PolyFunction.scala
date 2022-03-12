@@ -71,11 +71,12 @@ trait PolyFunction[F[_], G[_]] { self =>
 
 object PolyFunction {
 
-  def fromSchematic[S[_[_]], F[_]](
-      schematic: S[F]
-  ): PolyFunction[Lambda[A => Schema[S, A]], F] =
-    new PolyFunction[Lambda[A => Schema[S, A]], F] {
-      def apply[A](fa: Schema[S, A]): F[A] = fa.compile(schematic)
+  def fromSchematic[F[_]](
+      schematic: schema.Schematic[F]
+  ): PolyFunction[Schema, F] =
+    new PolyFunction[Schema, F] {
+      def apply[A](fa: Schema[S, A]): F[A] =
+        fa.compile(schema.Schematic.toPolyFunction(schematic))
     }
 
 }

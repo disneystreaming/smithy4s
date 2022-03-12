@@ -26,7 +26,7 @@ sealed trait HttpContractError
 object HttpContractError {
 
   val schema: Static[Schema[HttpContractError]] =
-    schematic.Static[Schema[HttpContractError]] {
+    Static[Schema[HttpContractError]] {
       val payload = PayloadError.schema.oneOf[HttpContractError]("payload")
       val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
       union(payload, metadata) {

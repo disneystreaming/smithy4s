@@ -16,8 +16,10 @@
 
 package smithy4s
 
+import schema.Schema.UnionSchema
+
 trait Errorable[E] {
-  def error: errorUnion.Schema[E]
+  def error: UnionSchema[E]
   def liftError(throwable: Throwable): Option[E]
   def unliftError(e: E): Throwable
 }

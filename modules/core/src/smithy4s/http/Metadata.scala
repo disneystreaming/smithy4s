@@ -201,12 +201,12 @@ object Metadata {
     }
 
     implicit def derivedDecoderFromStaticSchema[A](implicit
-        schema: Static[smithy4s.Schema[A]]
+        schema: Static[Schema[A]]
     ): PartialDecoder[A] = decoderCache(schema)
 
     private val decoderCache =
-      new schematic.PolyFunction[smithy4s.Schema, PartialDecoder] {
-        def apply[A](fa: smithy4s.Schema[A]): PartialDecoder[A] = fromSchema(fa)
+      new PolyFunction[Schema, PartialDecoder] {
+        def apply[A](fa: Schema[A]): PartialDecoder[A] = fromSchema(fa)
       }.unsafeMemoise
   }
 
@@ -254,7 +254,7 @@ object Metadata {
     ): Encoder[A] = encoderCache(schema)
 
     private val encoderCache =
-      new schematic.PolyFunction[smithy4s.Schema, Encoder] {
+      new PolyFunction[smithy4s.Schema, Encoder] {
         def apply[A](fa: smithy4s.Schema[A]): Encoder[A] = fromSchema(fa)
       }.unsafeMemoise
 

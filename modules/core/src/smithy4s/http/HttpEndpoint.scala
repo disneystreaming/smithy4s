@@ -17,7 +17,6 @@
 package smithy4s
 package http
 
-import smithy4s.syntax._
 import smithy.api.Http
 
 trait HttpEndpoint[I] {

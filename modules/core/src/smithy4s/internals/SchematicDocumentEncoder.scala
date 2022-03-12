@@ -17,9 +17,7 @@
 package smithy4s
 package internals
 
-import schematic.Alt
-import schematic.ByteArray
-import schematic.Field
+import smithy4s.schema._
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
@@ -61,8 +59,7 @@ object DocumentEncoder {
     }
 }
 
-object SchematicDocumentEncoder
-    extends smithy4s.Schematic[DocumentEncoderMake] {
+object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
 
   def from[A](f: A => Document): DocumentEncoderMake[A] = Hinted.static {
     new DocumentEncoder[A] {

@@ -109,7 +109,6 @@ lazy val docs =
  */
 lazy val core = projectMatrix
   .in(file("modules/core"))
-  .dependsOn(schematic)
   .settings(
     allowedNamespaces := Seq(
       "smithy.api",

@@ -84,21 +84,13 @@ object Document {
   def obj(kv: (String, Document)*): Document = DObject(Map(kv: _*))
   def nullDoc: Document = DNull
 
-  trait Schematic[F[_]] {
-    def document: F[Document]
-  }
-
-  object Schema extends schematic.Schema[Schematic, Document] {
-    def compile[F[_]](s: Schematic[F]): F[Document] = s.document
-  }
-
   trait Encoder[A] {
     def encode(a: A): Document
   }
 
   object Encoder {
 
-    def fromSchema[A](schema: smithy4s.Schema[A]): Encoder[A] = {
+    def fromSchema[A](schema: Schema[A]): Encoder[A] = {
       val makeEncoder = schema.compile(SchematicDocumentEncoder).get
       new Encoder[A] {
         val encodeFunction = makeEncoder.apply
@@ -107,12 +99,12 @@ object Document {
     }
 
     implicit def deriveEncoderFromStaticSchema[A](implicit
-        schema: Static[smithy4s.Schema[A]]
+        schema: Static[Schema[A]]
     ): Encoder[A] = encoderCache(schema)
 
     private val encoderCache =
-      new schematic.PolyFunction[smithy4s.Schema, Encoder] {
-        def apply[A](fa: smithy4s.Schema[A]): Encoder[A] = fromSchema(fa)
+      new PolyFunction[Schema, Encoder] {
+        def apply[A](fa: Schema[A]): Encoder[A] = fromSchema(fa)
       }.unsafeMemoise
 
   }
@@ -123,7 +115,7 @@ object Document {
 
   object Decoder {
 
-    def fromSchema[A](schema: smithy4s.Schema[A]): Decoder[A] = {
+    def fromSchema[A](schema: Schema[A]): Decoder[A] = {
       val makeDecoder = schema.compile(SchematicDocumentDecoder)
       new Decoder[A] {
         val decodeFunction = makeDecoder.get
@@ -136,12 +128,12 @@ object Document {
     }
 
     implicit def derivedDecoderFromStaticSchema[A](implicit
-        schema: Static[smithy4s.Schema[A]]
+        schema: Static[Schema[A]]
     ): Decoder[A] = decoderCache(schema)
 
     private val decoderCache =
-      new schematic.PolyFunction[smithy4s.Schema, Decoder] {
-        def apply[A](fa: smithy4s.Schema[A]): Decoder[A] = fromSchema(fa)
+      new PolyFunction[Schema, Decoder] {
+        def apply[A](fa: Schema[A]): Decoder[A] = fromSchema(fa)
       }.unsafeMemoise
 
   }

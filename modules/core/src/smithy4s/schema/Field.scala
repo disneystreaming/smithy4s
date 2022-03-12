@@ -32,6 +32,9 @@ sealed abstract class Field[F[_], S, A] {
   def mapK[G[_]](f: F ~> G): Field[G, S, A]
 
   def transformHints(f: Hints => Hints): Field[F, S, A]
+  def addHints(hints: Hint*): Field[F, S, A] = transformHints(
+    _ ++ Hints(hints: _*)
+  )
 
   /**
     * Grabs the instance associated to this field, applying a polymorphic

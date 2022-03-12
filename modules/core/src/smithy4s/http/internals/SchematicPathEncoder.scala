@@ -18,9 +18,9 @@ package smithy4s
 package http.internals
 
 import smithy.api.TimestampFormat
-import schematic.Field
-import smithy4s.internals.Hinted
+import smithy4s.schema._
 import smithy.api.Http
+import smithy4s.internals.Hinted
 import smithy4s.http.PathSegment
 import smithy4s.http.PathSegment.StaticSegment
 import smithy4s.http.PathSegment.LabelSegment
