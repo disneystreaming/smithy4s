@@ -16,7 +16,6 @@
 
 package smithy4s.http.internals
 
-import schematic.Static
 import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.Headers
@@ -27,7 +26,6 @@ import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpBinding
 import smithy4s.http.Metadata
 import smithy4s.http.MetadataError
-import smithy4s.syntax._
 import weaver._
 import smithy4s.internals.InputOutput
 import cats.syntax.all._
@@ -41,7 +39,7 @@ object MetadataSpec extends FunSuite {
   implicit val pathParamsSchema: Schema[PathParams] =
     PathParams.schema.withHints(InputOutput.Input)
   implicit val validationChecksSchema: Schema[ValidationChecks] =
-    Static(ValidationChecks.schema.withHints(InputOutput.Input))
+    ValidationChecks.schema.withHints(InputOutput.Input)
 
   def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
       s: Schema[A],

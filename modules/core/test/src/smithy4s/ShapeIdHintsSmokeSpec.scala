@@ -16,8 +16,7 @@
 
 package smithy4s
 
-import schematic.Field
-import schematic.Alt
+import smithy4s.schema._
 
 object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
 

@@ -59,8 +59,6 @@ trait StubSchematic[F[_]] extends Schematic[F] {
 
   override def set[S](fs: F[S]): F[Set[S]] = default
 
-  override def vector[S](fs: F[S]): F[Vector[S]] = default
-
   override def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]] = default
 
   override def union[S](first: Alt[F, S, _], rest: Vector[Alt[F, S, _]])(

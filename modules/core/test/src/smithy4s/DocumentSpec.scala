@@ -44,69 +44,65 @@ object DocumentSpec extends FunSuite {
   }
 
   import smithy4s.syntax._
-  implicit val tupleIntStringSchema: Schema[(Int, String)] =
-    Static {
-      val i = int.required[(Int, String)]("int", _._1)
-      val s =
-        string
-          .required[(Int, String)]("string", _._2)
-          .withHints(JsonName("_string"))
-      struct(i, s)((_, _))
-    }
+  implicit val tupleIntStringSchema: Schema[(Int, String)] = {
+    val i = int.required[(Int, String)]("int", _._1)
+    val s =
+      string
+        .required[(Int, String)]("string", _._2)
+        .addHints(JsonName("_string"))
+    struct(i, s)((_, _))
+  }
 
-  implicit val eitherIntStringSchema: Schema[Either[Int, String]] =
-    Static {
-      val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
-      val right =
-        string
-          .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
-          .withHints(JsonName("_string"))
-      union(left, right) {
-        case Left(i)    => left(i)
-        case Right(str) => right(str)
-      }
+  implicit val eitherIntStringSchema: Schema[Either[Int, String]] = {
+    val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
+    val right =
+      string
+        .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
+        .addHints(JsonName("_string"))
+    union(left, right) {
+      case Left(i)    => left(i)
+      case Right(str) => right(str)
     }
+  }
 
   case class Foo(str: String)
   case class Bar(str: String, int: Int)
 
-  implicit val eitherFooBarSchema: Schema[Either[Foo, Bar]] =
-    Static {
-      val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
-        .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
+  implicit val eitherFooBarSchema: Schema[Either[Foo, Bar]] = {
+    val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
+      .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
 
-      val right = struct(
-        string.required[Bar]("str", _.str).withHints(JsonName("barStr")),
-        int.required[Bar]("int", _.int)
-      )(Bar.apply)
-        .oneOf[Either[Foo, Bar]]("bar", (b: Bar) => Right(b))
-        .withHints(JsonName("barBar"))
+    val right = struct(
+      string.required[Bar]("str", _.str).addHints(JsonName("barStr")),
+      int.required[Bar]("int", _.int)
+    )(Bar.apply)
+      .oneOf[Either[Foo, Bar]]("bar", (b: Bar) => Right(b))
+      .addHints(JsonName("barBar"))
 
-      union(left, right) {
-        case Left(f)  => left(f)
-        case Right(b) => right(b)
-      }.withHints(
-        Discriminated("type")
-      )
-    }
+    union(left, right) {
+      case Left(f)  => left(f)
+      case Right(b) => right(b)
+    }.addHints(
+      Discriminated("type")
+    )
+  }
 
   case class Baz()
 
-  implicit val eitherFooBazSchema: Schema[Either[Foo, Baz]] =
-    Static {
-      val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
-        .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))
+  implicit val eitherFooBazSchema: Schema[Either[Foo, Baz]] = {
+    val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
+      .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))
 
-      val right = struct(Baz())
-        .oneOf[Either[Foo, Baz]]("baz", (b: Baz) => Right(b))
+    val right = constant(Baz())
+      .oneOf[Either[Foo, Baz]]("baz", (b: Baz) => Right(b))
 
-      union(left, right) {
-        case Left(f)  => left(f)
-        case Right(b) => right(b)
-      }.withHints(
-        Discriminated("type")
-      )
-    }
+    union(left, right) {
+      case Left(f)  => left(f)
+      case Right(b) => right(b)
+    }.addHints(
+      Discriminated("type")
+    )
+  }
 
   test("jsonName is handled correctly on structures") {
     val intAndString: (Int, String) = (1, "hello")

@@ -16,6 +16,7 @@
 
 package smithy4s
 
+import smithy4s.schema._
 import smithy4s.api.Discriminated
 import smithy.api._
 import cats.kernel.Eq

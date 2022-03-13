@@ -50,8 +50,6 @@ class PassthroughSchematic[F[_]](schematic: Schematic[F]) extends Schematic[F] {
 
   def set[S](fs: F[S]): F[Set[S]] = schematic.set(fs)
 
-  def vector[S](fs: F[S]): F[Vector[S]] = schematic.vector(fs)
-
   def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]] = schematic.map(fk, fv)
 
   def struct[S](fields: Vector[Field[F, S, _]])(

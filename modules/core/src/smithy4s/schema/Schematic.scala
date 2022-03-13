@@ -27,7 +27,6 @@ trait Schematic[F[_]] {
   // collections
   def set[S](fs: F[S]): F[Set[S]]
   def list[S](fs: F[S]): F[List[S]]
-  def vector[S](fs: F[S]): F[Vector[S]]
   def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]]
 
   // Other

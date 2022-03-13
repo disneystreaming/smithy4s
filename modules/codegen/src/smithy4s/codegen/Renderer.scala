@@ -281,6 +281,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderUnion(name, originalName, alts, recursive, hints, error = true)
     }
 
+    val additionalImports =
+      if (op.input == Type.unit || op.output == Type.unit) syntaxImport
+      else Set.empty[String]
+
     lines(
       s"case class $opName($params) extends $traitName[${op.renderAlgParams}]",
       obj(
@@ -297,7 +301,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderErrorable(op)
       ),
       renderedErrorUnion
-    ).addImports(op.imports).addImports(syntaxImport)
+    ).addImports(op.imports).addImports(additionalImports)
   }
 
   private def renderStreamingSchemaVal(
