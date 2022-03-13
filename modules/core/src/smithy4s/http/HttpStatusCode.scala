@@ -39,7 +39,7 @@ object HttpStatusCode {
   }
 
   implicit def derivedHttpStatusCodeFromStaticSchema[A](implicit
-      schema: Static[Schema[A]]
+      schema: Schema[A]
   ): HttpStatusCode[A] = statusCodeCache(schema)
 
   private val statusCodeCache =

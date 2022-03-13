@@ -15,6 +15,8 @@ sealed trait Schema[A]{
   def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
 
   def addHints(hints: Hint*) : Schema[A] = transformHints(_ ++ Hints(hints:_*))
+  def addHints(hints: Hints) : Schema[A] = transformHints(_ ++ hints)
+
   def withHints(hints: Hint*) : Schema[A] = addHints(hints: _*)
 
   def withId(newId: ShapeId) : Schema[A] = this match {

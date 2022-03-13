@@ -44,7 +44,7 @@ object DocumentSpec extends FunSuite {
   }
 
   import smithy4s.syntax._
-  implicit val tupleIntStringSchema: Static[Schema[(Int, String)]] =
+  implicit val tupleIntStringSchema: Schema[(Int, String)] =
     Static {
       val i = int.required[(Int, String)]("int", _._1)
       val s =
@@ -54,7 +54,7 @@ object DocumentSpec extends FunSuite {
       struct(i, s)((_, _))
     }
 
-  implicit val eitherIntStringSchema: Static[Schema[Either[Int, String]]] =
+  implicit val eitherIntStringSchema: Schema[Either[Int, String]] =
     Static {
       val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
       val right =
@@ -70,7 +70,7 @@ object DocumentSpec extends FunSuite {
   case class Foo(str: String)
   case class Bar(str: String, int: Int)
 
-  implicit val eitherFooBarSchema: Static[Schema[Either[Foo, Bar]]] =
+  implicit val eitherFooBarSchema: Schema[Either[Foo, Bar]] =
     Static {
       val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
         .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
@@ -92,7 +92,7 @@ object DocumentSpec extends FunSuite {
 
   case class Baz()
 
-  implicit val eitherFooBazSchema: Static[Schema[Either[Foo, Baz]]] =
+  implicit val eitherFooBazSchema: Schema[Either[Foo, Baz]] =
     Static {
       val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
         .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))

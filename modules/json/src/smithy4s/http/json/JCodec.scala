@@ -116,7 +116,7 @@ object JCodec {
     schema.compile(codecs.schematicJCodec).get
 
   implicit def deriveJCodecFromSchema[A](implicit
-      schema: Static[Schema[A]]
+      schema: Schema[A]
   ): JCodec[A] = jcodecCache(schema)
 
   private val jcodecCache =

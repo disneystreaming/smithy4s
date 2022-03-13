@@ -59,10 +59,10 @@ object Schematic {
           case EnumerationSchema(_, _, values, total) =>
             val to: A => (String, Int) = a => {
               val t = total(a)
-              (t.name, t.ordinal)
+              (t.stringValue, t.ordinal)
             }
             val fromOrdinal = values.map { v => v.ordinal -> v.value }.toMap
-            val fromName = values.map { v => v.name -> v.value }.toMap
+            val fromName = values.map { v => v.stringValue -> v.value }.toMap
             enumeration(to, fromName, fromOrdinal)
           case SetSchema(_, _, member) =>
             set(apply(member))

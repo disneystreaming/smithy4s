@@ -17,7 +17,8 @@
 package smithy4s
 package http
 
-import syntax._
+import smithy4s.schema._
+import smithy4s.schema.syntax._
 
 sealed trait HttpContractError
     extends Throwable
@@ -25,15 +26,14 @@ sealed trait HttpContractError
 
 object HttpContractError {
 
-  val schema: Static[Schema[HttpContractError]] =
-    Static[Schema[HttpContractError]] {
-      val payload = PayloadError.schema.oneOf[HttpContractError]("payload")
-      val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
-      union(payload, metadata) {
-        case n: PayloadError  => payload(n)
-        case w: MetadataError => metadata(w)
-      }
+  val schema: Schema[HttpContractError] = {
+    val payload = PayloadError.schema.oneOf[HttpContractError]("payload")
+    val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
+    union(payload, metadata) {
+      case n: PayloadError  => payload(n)
+      case w: MetadataError => metadata(w)
     }
+  }
 
 }
 

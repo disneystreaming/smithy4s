@@ -30,7 +30,7 @@ case class AwsInstanceMetadata(
 
 object AwsInstanceMetadata {
 
-  implicit val schema: Static[Schema[AwsInstanceMetadata]] = Static {
+  implicit val schema: Schema[AwsInstanceMetadata] = {
     val accessKeyIdField =
       string.required[AwsInstanceMetadata]("AccessKeyId", _.accessKeyId)
     val expirationField =

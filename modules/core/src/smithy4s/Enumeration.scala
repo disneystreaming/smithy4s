@@ -22,7 +22,7 @@ trait Enumeration[E] extends ShapeTag.Companion[E] {
   def values: List[E]
   def schemaValues: List[schema.EnumValue[E]]
   def to(e: E): schema.EnumValue[E]
-  lazy val valueMap = values.map(e => to(e).name -> e).toMap
+  lazy val valueMap = values.map(e => to(e).stringValue -> e).toMap
   lazy val ordinalMap = values.map(e => to(e).ordinal -> e).toMap
   final def fromString(s: String): Option[E] = valueMap.get(s)
   final def fromOrdinal(s: Int): Option[E] = ordinalMap.get(s)
@@ -31,11 +31,11 @@ trait Enumeration[E] extends ShapeTag.Companion[E] {
 object Enumeration {
 
   trait Value[E] extends Product with Serializable { self: E =>
-    def name: String
+    def value: String
     def ordinal: Int
     def hints: Hints
     def toSchemaValue: schema.EnumValue[E] =
-      EnumValue(name, ordinal, self, hints)
+      EnumValue(value, ordinal, self, hints)
   }
 
 }

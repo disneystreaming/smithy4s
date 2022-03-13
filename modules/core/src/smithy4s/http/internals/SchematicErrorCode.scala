@@ -37,7 +37,7 @@ private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
   ): Option[Int] =
     withValue.alt.instance(withValue.value, hints)
 
-  override def suspend[A](f: => HttpCode[A]): HttpCode[A] = f
+  override def suspend[A](f: Lazy[HttpCode[A]]): HttpCode[A] = f.value
 
   override def bijection[A, B](
       f: HttpCode[A],
@@ -57,13 +57,7 @@ private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
         case smithy.api.Error.SERVER => 500
       })
 
-  override def unit: HttpCode[Unit] = default
-
-  def withHints[A](fa: HttpCode[A], hints: Hints): HttpCode[A] =
+  override def withHints[A](fa: HttpCode[A], hints: Hints): HttpCode[A] =
     (a: A, _: Hints) => fa(a, hints)
-
-  def document: HttpCode[Document] = default
-
-  def timestamp: HttpCode[Timestamp] = default
 
 }

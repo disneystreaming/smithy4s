@@ -262,14 +262,13 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
       fromOrdinal: Map[Int, A]
   ): DocumentEncoderMake[A] = from(a => DString(to(a)._1))
 
-  def suspend[A](f: => DocumentEncoderMake[A]): DocumentEncoderMake[A] =
+  def suspend[A](f: Lazy[DocumentEncoderMake[A]]): DocumentEncoderMake[A] =
     Hinted.static {
       new DocumentEncoder[A] {
-        lazy val underlying = f.get
+        lazy val underlying = f.value.get
         def canBeKey: Boolean = underlying.canBeKey
 
         def apply: A => Document = underlying.apply
-
       }
     }
 

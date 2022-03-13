@@ -34,20 +34,17 @@ import cats.syntax.all._
 
 object MetadataSpec extends FunSuite {
 
-  implicit val queriesSchema: Static[Schema[Queries]] = Static(
+  implicit val queriesSchema: Schema[Queries] =
     Queries.schema.withHints(InputOutput.Input)
-  )
-  implicit val headersSchema: Static[Schema[Headers]] = Static(
+  implicit val headersSchema: Schema[Headers] =
     Headers.schema.withHints(InputOutput.Input)
-  )
-  implicit val pathParamsSchema: Static[Schema[PathParams]] = Static(
+  implicit val pathParamsSchema: Schema[PathParams] =
     PathParams.schema.withHints(InputOutput.Input)
-  )
-  implicit val validationChecksSchema: Static[Schema[ValidationChecks]] =
+  implicit val validationChecksSchema: Schema[ValidationChecks] =
     Static(ValidationChecks.schema.withHints(InputOutput.Input))
 
   def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)
@@ -65,7 +62,7 @@ object MetadataSpec extends FunSuite {
 
   def checkRoundTripError[A](a: A, expectedEncoding: Metadata, message: String)(
       implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)
@@ -86,7 +83,7 @@ object MetadataSpec extends FunSuite {
       expectedEncoding: Metadata,
       message: String
   )(implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)
@@ -102,7 +99,7 @@ object MetadataSpec extends FunSuite {
   }
 
   def checkRoundTripTotal[A](a: A, expectedEncoding: Metadata)(implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)

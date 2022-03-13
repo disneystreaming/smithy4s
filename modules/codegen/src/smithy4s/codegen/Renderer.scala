@@ -383,7 +383,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             }
           if (fields.size <= 22) {
             val definition = if (recursive) "recursive(struct" else "struct"
-            line(s"val schema: $Schema_[$name] = $definition")
+            line(s"implicit val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(s"$name.apply")
               .appendToLast(".addHints(hints)")
@@ -391,7 +391,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           } else {
             val definition =
               if (recursive) "recursive(bigStruct" else "bigStruct"
-            line(s"val schema: $Schema_[$name] = $definition")
+            line(s"implicit val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(
                 line(s"arr => new $name").args(
@@ -409,10 +409,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         } else {
           line(
-            s"val schema: $Schema_[$name] = constant($name()).addHints(hints)"
+            s"implicit val schema: $Schema_[$name] = constant($name()).addHints(hints)"
           )
-        },
-        s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
+        }
       )
     ).addImports(imports)
   }
@@ -478,11 +477,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline, {
           val union =
             if (error)
-              s"val schema: $errorUnion_.Schema[$name] = errors"
+              s"implicit val schema: $errorUnion_.Schema[$name] = errors"
             else if (recursive)
-              s"val schema: $Schema_[$name] = recursive(union"
+              s"implicit val schema: $Schema_[$name] = recursive(union"
             else
-              s"val schema: $Schema_[$name] = union"
+              s"implicit val schema: $Schema_[$name] = union"
           line(union)
             .args {
               caseNames.map(_ + ".alt")
@@ -496,8 +495,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (error) "" else ".addHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
-        },
-        s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
+        }
       )
     ).addImports(imports)
   }
@@ -516,7 +514,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): RenderResult = lines(
-    s"sealed abstract class $name(val value: String, val ordinal: Int, hints: $Hints_ = $Hints_.empty) extends $Enumeration_.Value[$name]",
+    s"sealed abstract class $name(val value: String, val ordinal: Int, val hints: $Hints_ = $Hints_.empty) extends $Enumeration_.Value[$name]",
     obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
       renderId(originalName),
       newline,
@@ -535,8 +533,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       line(s"def to(e: $name) : $EnumValue_[$name] = e.toSchemaValue"),
       lines(
-        s"val schema: $Schema_[$name] = enumeration(to, schemaValues).addHints(hints)",
-        s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
+        s"implicit val schema: $Schema_[$name] = enumeration(to, schemaValues).addHints(hints)"
       )
     )
   ).addImports(syntaxImport)
@@ -555,8 +552,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsValWithId(hints),
         s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.addHints(hints)",
         lines(
-          s"val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)",
-          s"implicit val staticSchema : $Static_[$Schema_[$name]] = $Static_(schema)"
+          s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)"
         )
       )
     ).addImports(imports)

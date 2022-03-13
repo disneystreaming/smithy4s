@@ -99,7 +99,7 @@ object Document {
     }
 
     implicit def deriveEncoderFromStaticSchema[A](implicit
-        schema: Static[Schema[A]]
+        schema: Schema[A]
     ): Encoder[A] = encoderCache(schema)
 
     private val encoderCache =
@@ -128,7 +128,7 @@ object Document {
     }
 
     implicit def derivedDecoderFromStaticSchema[A](implicit
-        schema: Static[Schema[A]]
+        schema: Schema[A]
     ): Decoder[A] = decoderCache(schema)
 
     private val decoderCache =

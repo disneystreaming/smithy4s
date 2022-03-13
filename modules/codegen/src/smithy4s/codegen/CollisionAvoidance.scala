@@ -246,7 +246,6 @@ object CollisionAvoidance {
     val EnumValue_ = "smithy4s.schema.EnumValue"
     val Hints_ = "smithy4s.Hints"
     val ShapeTag_ = "smithy4s.ShapeTag"
-    val Static_ = "smithy4s.Static"
     val Errorable_ = "smithy4s.Errorable"
     val errorUnion_ = "smithy4s.errorUnion"
 

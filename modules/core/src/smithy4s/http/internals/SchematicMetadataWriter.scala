@@ -159,7 +159,7 @@ private[http] object SchematicMetadataWriter
       fromOrdinal: Map[Int, A]
   ): MetaEncode.Make[A] = MetaEncode.Make.stringValue(to.andThen(_._1))
 
-  def suspend[A](f: => MetaEncode.Make[A]): MetaEncode.Make[A] =
+  def suspend[A](f: Lazy[MetaEncode.Make[A]]): MetaEncode.Make[A] =
     MetaEncode.Make.empty
 
   def bijection[A, B](

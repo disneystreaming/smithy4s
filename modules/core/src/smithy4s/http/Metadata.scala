@@ -201,7 +201,7 @@ object Metadata {
     }
 
     implicit def derivedDecoderFromStaticSchema[A](implicit
-        schema: Static[Schema[A]]
+        schema: Schema[A]
     ): PartialDecoder[A] = decoderCache(schema)
 
     private val decoderCache =
@@ -250,7 +250,7 @@ object Metadata {
     }
 
     implicit def deriveEncoderFromStaticSchema[A](implicit
-        schema: Static[smithy4s.Schema[A]]
+        schema: Schema[A]
     ): Encoder[A] = encoderCache(schema)
 
     private val encoderCache =

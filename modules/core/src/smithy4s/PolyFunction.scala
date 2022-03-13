@@ -16,7 +16,7 @@
 
 package smithy4s
 
-import schematic.maps.MMap
+import smithy4s.internals.maps.MMap
 
 /**
   * Natural transformation, turning a polymorphic type into another,
@@ -36,13 +36,13 @@ trait PolyFunction[F[_], G[_]] { self =>
     * Unsafe because it creates mutable state, which is a
     * non-referentially-transparent action (aka a side-effect).
     */
-  final def unsafeMemoise: PolyFunction[Lambda[A => Static[F[A]]], G] =
-    new PolyFunction[Lambda[A => Static[F[A]]], G] {
-      private val map: MMap[F[_], Any] = MMap.empty
+  final def unsafeMemoise: PolyFunction[F, G] =
+    new PolyFunction[F, G] {
+      private val map: MMap[Any, Any] = MMap.empty
 
-      def apply[A](static: Static[F[A]]): G[A] = {
+      def apply[A](fa: F[A]): G[A] = {
         map
-          .getOrElseUpdate(static, self(static))
+          .getOrElseUpdate(fa, self(fa))
           .asInstanceOf[G[A]]
       }
 

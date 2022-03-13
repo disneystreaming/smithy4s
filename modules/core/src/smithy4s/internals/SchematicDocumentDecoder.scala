@@ -452,10 +452,10 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
     case DString(value) if fromName.contains(value) => fromName(value)
   }
 
-  def suspend[A](f: => DocumentDecoderMake[A]): DocumentDecoderMake[A] =
+  def suspend[A](f: Lazy[DocumentDecoderMake[A]]): DocumentDecoderMake[A] =
     Hinted.static {
       new DocumentDecoder[A] {
-        lazy val underlying = f.get
+        lazy val underlying = f.value.get
         def canBeKey: Boolean = underlying.canBeKey
 
         def apply(history: List[PayloadPath.Segment], document: Document): A =

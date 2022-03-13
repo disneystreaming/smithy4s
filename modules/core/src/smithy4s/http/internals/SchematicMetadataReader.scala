@@ -202,7 +202,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
         s"Enum[${fromString.keySet.mkString(",")}]"
       )(fromString.get)
 
-  def suspend[A](f: => MetaDecode.Make[A]): MetaDecode.Make[A] =
+  def suspend[A](f: Lazy[MetaDecode.Make[A]]): MetaDecode.Make[A] =
     MetaDecode.Make.empty
 
   private case class FieldDecode(
