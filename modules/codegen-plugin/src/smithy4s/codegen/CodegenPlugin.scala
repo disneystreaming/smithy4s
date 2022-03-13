@@ -47,13 +47,17 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Allow-list of namespaces that should be processed by the generator. If unset, considers all namespaces but stdlib ones"
       )
 
-    @deprecated("2022-03-01", """use `libraryDependencies += "org.acme" % "artifact" % "version" % Smithy4s`""")
+    @deprecated(
+      "2022-03-01",
+      """use `libraryDependencies += "org.acme" % "artifact" % "version" % Smithy4s`"""
+    )
     val smithy4sCodegenDependencies =
       settingKey[List[String]](
         "List of dependencies containing smithy files to include in codegen task"
       )
 
-    val Smithy4s = config("smithy4s").describedAs("Dependencies for Smithy code.")
+    val Smithy4s =
+      config("smithy4s").describedAs("Dependencies for Smithy code.")
 
     val smithy4sModelTransformers =
       settingKey[List[String]](
@@ -98,7 +102,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     deps
       .filter { _.configurations.contains(Smithy4s.name) }
       .map { m =>
-        if (CrossVersion.disabled == m.crossVersion) s"${m.organization}:${m.name}:${m.revision}"
+        if (CrossVersion.disabled == m.crossVersion)
+          s"${m.organization}:${m.name}:${m.revision}"
         else s"${m.organization}::${m.name}:${m.revision}"
       }
       .toList

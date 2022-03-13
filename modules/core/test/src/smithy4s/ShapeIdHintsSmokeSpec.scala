@@ -61,7 +61,7 @@ object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
     )
   }
 
-  test("structure members contain ShapeId in hints") {
+  test("structure members contain ShapeId in hints".only) {
     val shapeIds =
       example.CityCoordinates.schema.compile(TestCompiler).toSet
     expect(

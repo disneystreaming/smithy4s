@@ -35,6 +35,9 @@ object syntax extends StructSyntax {
   def enumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]) : Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, values, total)
 
+  def enumeration[E <: Enumeration.Value](values: List[E]) : Schema[E] =
+    Schema.EnumerationSchema(placeholder, Hints.empty, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
+
   def bijection[A, B](a: Schema[A], to: A => B, from: B => A) : Schema[B] =
     Schema.BijectionSchema(a, to, from)
 

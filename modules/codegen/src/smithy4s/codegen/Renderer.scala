@@ -178,7 +178,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderId(originalName),
         newline,
-        renderHintsValWithId(hints),
+        renderHintsVal(hints),
         newline,
         line(s"val endpoints = List").args(ops.map(_.name)),
         newline,
@@ -296,7 +296,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
-        renderHintsValWithId(op.hints),
+        renderHintsVal(op.hints),
         s"def wrap(input: ${op.input.render}) = ${opName}($input)",
         renderErrorable(op)
       ),
@@ -370,7 +370,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, ext = shapeTag(name))(
         renderId(originalName),
         newline,
-        renderHintsValWithId(hints),
+        renderHintsVal(hints),
         renderProtocol(name, hints),
         newline,
         if (fields.nonEmpty) {
@@ -390,7 +390,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             line(s"implicit val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(s"$name.apply")
-              .appendToLast(".addHints(hints)")
+              .appendToLast(".withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -408,12 +408,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   }
                 )
               )
-              .appendToLast(".addHints(hints)")
+              .appendToLast(".withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
           line(
-            s"implicit val schema: $Schema_[$name] = constant($name()).addHints(hints)"
+            s"implicit val schema: $Schema_[$name] = constant($name()).withId(id).addHints(hints)"
           )
         }
       )
@@ -463,7 +463,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, ext = shapeTag(name))(
         renderId(originalName),
         newline,
-        renderHintsValWithId(hints),
+        renderHintsVal(hints),
         newline,
         alts.map { case Alt(altName, _, tpe, _) =>
           val cn = caseName(altName)
@@ -496,7 +496,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .appendToLast(
-              if (error) "" else ".addHints(hints)"
+              if (error) "" else ".withId(id).addHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
         }
@@ -518,26 +518,29 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): RenderResult = lines(
-    s"sealed abstract class $name(val value: String, val ordinal: Int, val hints: $Hints_ = $Hints_.empty) extends $Enumeration_.Value[$name]",
+    block(
+      s"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
+    )(
+      "override val value : String = _value",
+      "override val ordinal: Int = _ordinal",
+      s"override val hints: $Hints_ = $Hints_.empty"
+    ),
     obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
       renderId(originalName),
       newline,
-      renderHintsValWithId(hints),
+      renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
         line(
-          s"""case object ${e.className} extends $name("$value", $ordinal)"""
+          s"""final case object ${e.className} extends $name("$value", $ordinal)"""
         )
       },
       newline,
       line(s"val values: List[$name] = List").args(
         values.toList.map(_.className)
       ),
-      s"val schemaValues: List[$EnumValue_[$name]] = values.map(_.toSchemaValue)",
-      newline,
-      line(s"def to(e: $name) : $EnumValue_[$name] = e.toSchemaValue"),
       lines(
-        s"implicit val schema: $Schema_[$name] = enumeration(to, schemaValues).addHints(hints)"
+        s"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
       )
     )
   ).addImports(syntaxImport)
@@ -553,8 +556,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
         renderId(originalName),
-        renderHintsValWithId(hints),
-        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.addHints(hints)",
+        renderHintsVal(hints),
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withId(id).addHints(hints)",
         lines(
           s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)"
         )
@@ -722,15 +725,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderId(name: String, ns: String = namespace): RenderResult =
     line(s"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")""")
 
-  def renderHintsValWithId(hints: List[Hint]): RenderResult =
-    line(s"val hints : $Hints_ = $Hints_").args {
-      "id" :: hints.flatMap(renderHint(_).toList)
-    }
-
-  def renderHintsVal(hints: List[Hint]): RenderResult =
+  def renderHintsVal(hints: List[Hint]): RenderResult = if (hints.isEmpty) {
+    line(s"val hints : $Hints_ = $Hints_.empty")
+  } else {
     line(s"val hints : $Hints_ = $Hints_").args {
       hints.flatMap(renderHint(_).toList)
     }
+  }
 
   def memberHints(hints: List[Hint]): String = {
     val h = hints.map(renderHint).collect { case Some(v) => v }

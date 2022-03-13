@@ -53,7 +53,7 @@ object Schematic {
     new (Schema ~> F) { self =>
       import schematic._
       def apply[A](fa: Schema[A]): F[A] = {
-        fa match {
+        val rawCodec: F[A] = fa match {
           case PrimitiveSchema(_, _, tag) => primitive(tag)
           case EnumerationSchema(_, _, values, total) =>
             val to: A => (String, Int) = a => {
@@ -79,6 +79,7 @@ object Schematic {
           case LazySchema(suspendedSchema) =>
             suspend(suspendedSchema.map(self(_)))
         }
+        withHints(rawCodec, fa.hints ++ Hints(fa.shapeId))
       }
 
       import Primitive._

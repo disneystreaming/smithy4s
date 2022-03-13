@@ -98,7 +98,7 @@ object Field {
       hints: Hints
   ) extends Field[F, S, A] {
     type T = A
-    override def toString(): String = s"Required($label, ...)"
+    override def toString(): String = s"Required($label, ..., $hints)"
     override def transformHints(f: Hints => Hints): Field[F, S, A] =
       Required(label, instance, get, f(hints))
     override def mapK[G[_]](fk: F ~> G): Field[G, S, A] =
@@ -123,7 +123,7 @@ object Field {
       hints: Hints
   ) extends Field[F, S, Option[A]] {
     type T = A
-    override def toString = s"Optional($label, ...)"
+    override def toString = s"Optional($label, ..., $hints)"
     override def mapK[G[_]](fk: F ~> G): Field[G, S, Option[A]] =
       Optional(label, fk(instance), get, hints)
     override def transformHints(f: Hints => Hints): Field[F, S, Option[A]] =
