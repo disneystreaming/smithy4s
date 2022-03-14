@@ -18,7 +18,7 @@ package software.amazon.smithy.openapi.fromsmithy.protocols
 
 import cats.syntax.all._
 import smithy4s.api.UncheckedExamplesTrait
-import _root_.software.amazon.smithy.jsonschema.Schema
+import software.amazon.smithy.jsonschema.Schema
 import software.amazon.smithy.model.knowledge.HttpBinding.Location
 import software.amazon.smithy.model.knowledge._
 import software.amazon.smithy.model.node.Node
