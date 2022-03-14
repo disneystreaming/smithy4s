@@ -29,7 +29,10 @@ structure Person {
   name: String,
 
   @httpHeader("X-Bamtech-Partner")
-  partner: String
+  partner: String,
+
+  @httpHeader("when")
+  when: Timestamp
 }
 
 structure Greeting {

@@ -18,7 +18,7 @@ package software.amazon.smithy.openapi.fromsmithy.protocols
 
 import cats.syntax.all._
 import smithy4s.api.UncheckedExamplesTrait
-import software.amazon.smithy.jsonschema.Schema
+import _root_.software.amazon.smithy.jsonschema.Schema
 import software.amazon.smithy.model.knowledge.HttpBinding.Location
 import software.amazon.smithy.model.knowledge._
 import software.amazon.smithy.model.node.Node
@@ -181,13 +181,8 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
       binding: HttpBinding
   ) = {
     val member = binding.getMember
-    // Timestamps sent in the URI are serialized as a date-time string by default.
-    if (needsInlineTimestampSchema(context, member)) { // Create a copy of the targeted schema and remove any possible numeric keywords.
-      val copiedBuilder = ModelUtils.convertSchemaToStringBuilder(
-        context.getSchema(context.getPointer(member))
-      )
-      copiedBuilder.format("date-time").build
-    } else if (context.getJsonSchemaConverter.isInlined(member))
+
+    if (context.getJsonSchemaConverter.isInlined(member))
       context.getJsonSchemaConverter.convertShape(member).getRootSchema
     else context.createRef(binding.getMember)
   }
@@ -196,11 +191,12 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
       context: Context[_ <: Trait],
       member: MemberShape
   ): Boolean = {
+
     if (
       member
         .getMemberTrait(context.getModel, classOf[TimestampFormatTrait])
         .isPresent
-    ) return false
+    ) return false;
     context.getModel
       .getShape(member.getTarget)
       .filter(_.isTimestampShape)
@@ -270,6 +266,7 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
     val result = for (binding <- bindings.asScala) yield {
       val member = binding.getMember
       val param = ModelUtils.createParameterMember(context, member)
+
       if (messageType eq AbstractRestProtocol.MessageType.REQUEST) {
         param.in("header").name(binding.getLocationName)
         createInputExamples(operation, binding.getMemberName)
@@ -280,9 +277,22 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
           .foreach(param.examples)
       }
       val target = context.getModel.expectShape(member.getTarget)
-      val refSchema = context.inlineOrReferenceSchema(member)
-      val visitor = new HeaderSchemaVisitor[T](context, refSchema, member)
-      param.schema(target.accept(visitor))
+
+      val visitor = new HeaderSchemaVisitor[T](
+        context,
+        context.getSchema(context.getPointer(member)),
+        member
+      )
+      val sc: Schema = target.accept(visitor)
+      val schemaVerified = if (needsInlineTimestampSchema(context, member)) {
+        val copiedBuilder = ModelUtils.convertSchemaToStringBuilder(
+          context.getSchema(context.getPointer(member))
+        )
+        copiedBuilder.format("http-date").build
+      } else {
+        sc
+      }
+      param.schema(schemaVerified)
       binding.getLocationName -> param.build
     }
     result.toMap
