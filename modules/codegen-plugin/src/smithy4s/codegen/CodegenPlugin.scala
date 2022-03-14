@@ -47,10 +47,13 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Allow-list of namespaces that should be processed by the generator. If unset, considers all namespaces but stdlib ones"
       )
 
+    @deprecated("2022-03-01", """use `libraryDependencies += "org.acme" % "artifact" % "version" % Smithy4s`""")
     val smithy4sCodegenDependencies =
       settingKey[List[String]](
         "List of dependencies containing smithy files to include in codegen task"
       )
+
+    val Smithy4s = config("smithy4s").describedAs("Dependencies for Smithy code.")
 
     val smithy4sModelTransformers =
       settingKey[List[String]](
@@ -64,13 +67,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     smithy4sVersion := BuildInfo.version
   )
 
+  override def projectConfigurations: Seq[Configuration] = Seq(Smithy4s)
+
   override lazy val projectSettings =
     Seq(
       Compile / smithy4sInputDir := (Compile / sourceDirectory).value / "smithy",
       Compile / smithy4sOutputDir := (Compile / sourceManaged).value,
       Compile / smithy4sOpenapiDir := (Compile / resourceManaged).value,
       Compile / smithy4sCodegen := cachedSmithyCodegen(Compile).value,
-      Compile / smithy4sCodegenDependencies := List.empty,
+      Compile / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
       Compile / sourceGenerators += (Compile / smithy4sCodegen).map(
         _.filter(_.ext == "scala")
       ),
@@ -89,6 +94,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       List[String]
   )
 
+  private def prepareSmithy4sDeps(deps: Seq[ModuleID]): List[String] =
+    deps
+      .filter { _.configurations.contains(Smithy4s.name) }
+      .map { m =>
+        if (CrossVersion.disabled == m.crossVersion) s"${m.organization}:${m.name}:${m.revision}"
+        else s"${m.organization}::${m.name}:${m.revision}"
+      }
+      .toList
+
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
       Option((conf / smithy4sInputDir).value.listFiles()).getOrElse(Array.empty)
@@ -96,8 +110,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
-    val dependencies =
-      (conf / smithy4sCodegenDependencies).value
+    val dependencies = prepareSmithy4sDeps(libraryDependencies.value)
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
