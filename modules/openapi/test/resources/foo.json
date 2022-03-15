@@ -5,7 +5,7 @@
     "version": "0.0.1"
   },
   "paths": {
-    "/hello/{name}": {
+    "/hello/{name}/{ts}": {
       "get": {
         "operationId": "Greet",
         "parameters": [
@@ -16,6 +16,23 @@
               "type": "string"
             },
             "required": true
+          },
+          {
+            "name": "ts",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": true
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
           },
           {
             "name": "X-Bamtech-Partner",
