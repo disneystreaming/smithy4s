@@ -20,7 +20,7 @@ package internals
 
 import cats.MonadThrow
 import cats.syntax.all._
-import schematic.OneOf
+import smithy4s.schema.SchemaAlt
 import smithy4s.http._
 
 // format: off
@@ -73,7 +73,7 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
             val errAndAlt = for {
               discriminator <- maybeDiscriminator
               err <- endpoint.errorable
-              oneOf <- err.error.find(discriminator)
+              oneOf <- err.error.alternatives.find(_.label == discriminator)
             } yield (err, oneOf)
 
             errAndAlt match {
@@ -89,10 +89,10 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
 
   private def processError[ErrorType](
       errorable: Errorable[E],
-      oneOf: OneOf[Schematic, E, ErrorType],
+      oneOf: SchemaAlt[E, ErrorType],
       response: HttpResponse
   ): F[O] = {
-    val schema = oneOf.schema
+    val schema = oneOf.instance
     val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
     val errorCodec = codecAPI.compileCodec(schema)
     decodeResponse(response, errorCodec, errorMetadataDecoder)

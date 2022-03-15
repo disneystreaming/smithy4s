@@ -78,7 +78,7 @@ object AwsErrorTypeDecoder {
       val typeHeader =
         string
           .optional[AwsErrorType]("typeHeader", _.typeHeader)
-          .withHints(
+          .addHints(
             smithy.api.HttpHeader(`X-Amzn-Errortype`)
           )
       struct(__typeField, codeField, typeHeader)(AwsErrorType.apply)
