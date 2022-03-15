@@ -14,9 +14,25 @@
  *  limitations under the License.
  */
 
-package schematic
-package scalacheck
+package smithy4s
 
-import org.scalacheck.Gen
+package object scalacheck {
 
-trait JavaTimeSchematicGen extends javatime.Schematic.Mixin[Gen]
+  type DynData = Any
+  type DynStruct = Map[String, DynData]
+  type DynAlt = (String, DynData)
+
+  object gen extends SchematicGen
+
+  private[scalacheck] def distinctBy[A, B](
+      list: Vector[A]
+  )(f: A => B): Vector[A] = {
+    val start = (Vector.empty[A], Set.empty[B])
+    val (res, _) = list.foldLeft(start) {
+      case ((res, track), a) if track(f(a)) => (res, track)
+      case ((res, track), a)                => (res :+ a, track + f(a))
+    }
+    res
+  }
+
+}

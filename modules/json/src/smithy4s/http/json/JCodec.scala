@@ -19,7 +19,7 @@ package http
 package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import schematic.PolyFunction
+import smithy4s.PolyFunction
 import smithy4s.capability.Invariant
 import smithy4s.internals.Hinted
 

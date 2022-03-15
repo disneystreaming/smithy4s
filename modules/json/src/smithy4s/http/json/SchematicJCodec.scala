@@ -20,7 +20,7 @@ package json
 
 import _root_.smithy.api.JsonName
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import schematic._
+import smithy4s.schema._
 import smithy.api.HttpPayload
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
@@ -449,9 +449,9 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
       from: B => A
   ): JCodecMake[B] = a.transform(_.biject(to, from))
 
-  def suspend[A](a: => JCodecMake[A]): JCodecMake[A] = Hinted.static {
+  def suspend[A](a: Lazy[JCodecMake[A]]): JCodecMake[A] = Hinted.static {
     new JCodec[A] {
-      lazy val underlying = a.get
+      lazy val underlying = a.value.get
 
       def expecting: String = underlying.expecting
 

@@ -14,15 +14,11 @@
  *  limitations under the License.
  */
 
-package schematic.scalacheck
+package smithy4s.scalacheck
 
 import org.scalacheck.Gen
 
 object LongGen {
-  def gen(min: Option[Long] = None, max: Option[Long] = None) = {
-    Gen.chooseNum(
-      min.getOrElse(Long.MinValue / 10000L),
-      max.getOrElse(Long.MaxValue / 10000L)
-    )
-  }
+  def gen(min: Option[Long] = None, max: Option[Long] = None) =
+    Gen.chooseNum(min.getOrElse(Long.MinValue), max.getOrElse(Long.MaxValue))
 }

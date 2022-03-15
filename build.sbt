@@ -149,10 +149,12 @@ lazy val core = projectMatrix
  */
 lazy val scalacheck = projectMatrix
   .in(file("modules/scalacheck"))
-  .dependsOn(core, `schematic-scalacheck`)
+  .dependsOn(core)
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
+      Dependencies.collectionsCompat.value,
+      Dependencies.Scalacheck.scalacheck.value,
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
@@ -213,7 +215,9 @@ lazy val `schematic-scalacheck` = projectMatrix
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .settings(
     Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.SchematicScalacheck))
+      .map(
+        Boilerplate.gen(_, Boilerplate.BoilerplateModule.SchematicScalacheck)
+      )
       .taskValue
   )
 

@@ -532,7 +532,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
         line(
-          s"""final case object ${e.className} extends $name("$value", $ordinal)"""
+          s"""case object ${e.className} extends $name("$value", $ordinal)"""
         )
       },
       newline,

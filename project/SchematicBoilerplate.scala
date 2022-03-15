@@ -361,12 +361,12 @@ object Boilerplate {
         s"""def struct[Z, ${`A..N`}]($params)(f: (${`A..N`}) => Z): Gen[Z] = Gen.zip($gens).map($f)"""
 
       block"""
-        |package schematic
+        |package smithy4s
         |package scalacheck
         |
         |import org.scalacheck.Gen
         |
-        |trait SchematicGenArity extends struct.Schematic[Gen] {
+        |trait SchematicGenArity extends smithy4s.schema.Schematic[Gen] {
         |
         |  protected def genField[S, A](field: Field[Gen, S, A]): Gen[A] = Gen.lzy(field.instanceA {
         |    new Field.ToOptional[Gen] { def apply[AA](genA: Gen[AA]) : Gen[Option[AA]] = Gen.option(genA) }

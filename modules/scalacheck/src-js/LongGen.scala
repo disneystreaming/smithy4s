@@ -14,22 +14,15 @@
  *  limitations under the License.
  */
 
-package schematic
-package scalacheck
+package smithy4s.scalacheck
 
 import org.scalacheck.Gen
 
-import java.time.Instant
-import java.time.LocalDate
-import java.time.OffsetDateTime
-
-trait JavaTimeSchematicGen extends javatime.Schematic.Mixin[Gen] {
-
-  def instant: Gen[Instant] =
-    Gen.chooseNum(0L, 4102444800L).map(Instant.ofEpochSecond)
-
-  def localDate: Gen[LocalDate] = instant.map(LocalDate.from)
-
-  def offsetDateTime: Gen[OffsetDateTime] = instant.map(OffsetDateTime.from)
-
+object LongGen {
+  def gen(min: Option[Long] = None, max: Option[Long] = None) = {
+    Gen.chooseNum(
+      min.getOrElse(Long.MinValue / 10000L),
+      max.getOrElse(Long.MaxValue / 10000L)
+    )
+  }
 }

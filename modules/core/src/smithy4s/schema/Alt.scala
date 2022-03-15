@@ -38,6 +38,7 @@ final case class Alt[F[_], U, A](
     Alt(label, fk(instance), inject, hints)
 }
 object Alt {
+
   final case class WithValue[F[_], U, A](alt: Alt[F, U, A], value: A) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
       WithValue(alt.mapK(fk), value)
