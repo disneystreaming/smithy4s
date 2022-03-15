@@ -247,7 +247,7 @@ object CollisionAvoidance {
     val Hints_ = "smithy4s.Hints"
     val ShapeTag_ = "smithy4s.ShapeTag"
     val Errorable_ = "smithy4s.Errorable"
-    val errorUnion_ = "smithy4s.errorUnion"
+    val unionSchema_ = "smithy4s.UnionSchema"
 
     def reconcile(str: String): String = {
       val last = str.split('.').last

@@ -29,7 +29,7 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.typelevel.ci.CIString
-import schematic.OneOf
+import smithy4s.schema.Alt
 import smithy4s.http.Metadata
 import smithy4s.http._
 
@@ -178,9 +178,9 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
         )
 
     def processAlternative[ErrorUnion, ErrorType](
-        altAndValue: OneOf.WithValue[Schematic, ErrorUnion, ErrorType]
+        altAndValue: Alt.SchemaAndValue[ErrorUnion, ErrorType]
     ): Response[F] = {
-      val errorSchema = altAndValue.alt.schema
+      val errorSchema = altAndValue.alt.instance
       val errorValue = altAndValue.value
       val errorCode =
         http.HttpStatusCode.fromSchema(errorSchema).code(errorValue, 500)
@@ -199,7 +199,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
         case e: HttpContractError =>
           Response[F](Status.BadRequest).withEntity(e).pure[F]
         case endpoint.Error((errorable, e)) =>
-          processAlternative(errorable.error.total(e)).pure[F]
+          processAlternative(errorable.error.dispatch(e)).pure[F]
         case e: Throwable =>
           F.raiseError(e)
       }

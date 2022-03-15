@@ -29,7 +29,7 @@ object syntax extends StructSyntax {
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
   def recursive[A](s : => Schema[A]) : Schema[A] = Schema.LazySchema(Lazy(s))
 
-  def union[U](alts: SchemaAlt[U, _]*)(dispatch: U => Alt.SchemaAndValue[U, _]) : Schema[U] =
+  def union[U](alts: SchemaAlt[U, _]*)(dispatch: U => Alt.SchemaAndValue[U, _]): Schema.UnionSchema[U] =
     Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
 
   def enumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]) : Schema[E] =

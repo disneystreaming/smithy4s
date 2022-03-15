@@ -6,15 +6,12 @@ case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput extends smithy4s.ShapeTag.Companion[GetObjectInput] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectInput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints(
-    id,
-  )
+  val hints : smithy4s.Hints = smithy4s.Hints.empty
 
-  val schema: smithy4s.Schema[GetObjectInput] = struct(
-    ObjectKey.schema.required[GetObjectInput]("key", _.key).withHints(smithy.api.Required(), smithy.api.HttpLabel()),
-    BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).withHints(smithy.api.Required(), smithy.api.HttpLabel()),
+  implicit val schema: smithy4s.Schema[GetObjectInput] = struct(
+    ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
+    BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
   ){
     GetObjectInput.apply
-  }.withHints(hints)
-  implicit val staticSchema : schematic.Static[smithy4s.Schema[GetObjectInput]] = schematic.Static(schema)
+  }.withId(id).addHints(hints)
 }

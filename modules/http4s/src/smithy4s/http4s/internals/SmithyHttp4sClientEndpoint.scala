@@ -26,7 +26,7 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
-import schematic.OneOf
+import smithy4s.schema.SchemaAlt
 import smithy4s.http._
 
 /**
@@ -123,7 +123,7 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
     val errAndAlt = for {
       discriminator <- getFirstHeader(response, errorTypeHeader)
       err <- endpoint.errorable
-      oneOf <- err.error.find(discriminator)
+      oneOf <- err.error.alternatives.find(_.label == discriminator)
     } yield (err, oneOf)
 
     errAndAlt match {
@@ -140,10 +140,10 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
 
   private def processError[ErrorType](
       errorable: Errorable[E],
-      oneOf: OneOf[Schematic, E, ErrorType],
+      oneOf: SchemaAlt[E, ErrorType],
       response: Response[F]
   ): F[O] = {
-    val schema = oneOf.schema
+    val schema = oneOf.instance
     val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
     implicit val errorCodec = entityCompiler.compilePartialEntityDecoder(schema)
     decodeResponse[ErrorType](response, errorMetadataDecoder)

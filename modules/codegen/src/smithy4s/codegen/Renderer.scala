@@ -394,7 +394,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
-              if (recursive) "recursive(genericArityStruct" else "genericArityStruct"
+              if (recursive) "recursive(genericArityStruct"
+              else "genericArityStruct"
             line(s"implicit val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(
@@ -427,7 +428,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     else
       lines(
         s"override val errorable: Option[$Errorable_[$errorName]] = Some(this)",
-        s"val error: $errorUnion_.Schema[$errorName] = $errorName.schema",
+        s"val error: $unionSchema_[$errorName] = $errorName.schema",
         block(
           s"def liftError(throwable: Throwable) : Option[$errorName] = throwable match"
         ) {
@@ -481,7 +482,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline, {
           val union =
             if (error)
-              s"implicit val schema: $errorUnion_.Schema[$name] = errors"
+              s"implicit val schema: $unionSchema_[$name] = union"
             else if (recursive)
               s"implicit val schema: $Schema_[$name] = recursive(union"
             else

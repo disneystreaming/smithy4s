@@ -23,7 +23,6 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.imp", "ImportService")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
-    id,
     smithy4s.api.SimpleRestJson(),
   )
 
@@ -53,17 +52,16 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
   case class ImportOperation() extends ImportServiceOperation[Unit, ImportOperationError, OpOutput, Nothing, Nothing]
   object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation, Unit, ImportOperationError, OpOutput, Nothing, Nothing] with smithy4s.Errorable[ImportOperationError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.import_test", "ImportOperation")
-    val input: smithy4s.Schema[Unit] = unit.withHints(smithy4s.internals.InputOutput.Input)
-    val output: smithy4s.Schema[OpOutput] = OpOutput.schema.withHints(smithy4s.internals.InputOutput.Output)
+    val input: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input)
+    val output: smithy4s.Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
-      id,
       smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/test"), Some(200)),
     )
     def wrap(input: Unit) = ImportOperation()
     override val errorable: Option[smithy4s.Errorable[ImportOperationError]] = Some(this)
-    val error: smithy4s.errorUnion.Schema[ImportOperationError] = ImportOperationError.schema
+    val error: smithy4s.UnionSchema[ImportOperationError] = ImportOperationError.schema
     def liftError(throwable: Throwable) : Option[ImportOperationError] = throwable match {
       case e: NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
       case _ => None
@@ -76,24 +74,21 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
   object ImportOperationError extends smithy4s.ShapeTag.Companion[ImportOperationError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.imp", "ImportOperationError")
 
-    val hints : smithy4s.Hints = smithy4s.Hints(
-      id,
-    )
+    val hints : smithy4s.Hints = smithy4s.Hints.empty
 
     case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
 
     object NotFoundErrorCase {
-      val hints : smithy4s.Hints = smithy4s.Hints()
+      val hints : smithy4s.Hints = smithy4s.Hints.empty
       val schema: smithy4s.Schema[NotFoundErrorCase] = bijection(NotFoundError.schema, NotFoundErrorCase(_), _.notFoundError)
       val alt = schema.oneOf[ImportOperationError]("NotFoundError")
     }
 
-    val schema: smithy4s.errorUnion.Schema[ImportOperationError] = errors(
+    implicit val schema: smithy4s.UnionSchema[ImportOperationError] = union(
       NotFoundErrorCase.alt,
     ){
       case c : NotFoundErrorCase => NotFoundErrorCase.alt(c)
     }
-    implicit val staticSchema : schematic.Static[smithy4s.Schema[ImportOperationError]] = schematic.Static(schema)
   }
 }
 

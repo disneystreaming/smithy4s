@@ -6,15 +6,12 @@ case class GetObjectOutput(size: ObjectSize, data: Option[String] = None)
 object GetObjectOutput extends smithy4s.ShapeTag.Companion[GetObjectOutput] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectOutput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints(
-    id,
-  )
+  val hints : smithy4s.Hints = smithy4s.Hints.empty
 
-  val schema: smithy4s.Schema[GetObjectOutput] = struct(
-    ObjectSize.schema.required[GetObjectOutput]("size", _.size).withHints(smithy.api.HttpHeader("X-Size"), smithy.api.Required()),
-    string.optional[GetObjectOutput]("data", _.data).withHints(smithy.api.HttpPayload()),
+  implicit val schema: smithy4s.Schema[GetObjectOutput] = struct(
+    ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.HttpHeader("X-Size"), smithy.api.Required()),
+    string.optional[GetObjectOutput]("data", _.data).addHints(smithy.api.HttpPayload()),
   ){
     GetObjectOutput.apply
-  }.withHints(hints)
-  implicit val staticSchema : schematic.Static[smithy4s.Schema[GetObjectOutput]] = schematic.Static(schema)
+  }.withId(id).addHints(hints)
 }

@@ -2,13 +2,15 @@ package smithy4s.example
 
 import smithy4s.syntax._
 
-sealed abstract class LowHigh(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable
+sealed abstract class LowHigh(_value: String, _ordinal: Int) extends smithy4s.Enumeration.Value {
+  override val value : String = _value
+  override val ordinal: Int = _ordinal
+  override val hints: smithy4s.Hints = smithy4s.Hints.empty
+}
 object LowHigh extends smithy4s.Enumeration[LowHigh] with smithy4s.ShapeTag.Companion[LowHigh] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "LowHigh")
 
-  val hints : smithy4s.Hints = smithy4s.Hints(
-    id,
-  )
+  val hints : smithy4s.Hints = smithy4s.Hints.empty
 
   case object Low extends LowHigh("Low", 0)
   case object High extends LowHigh("High", 1)
@@ -17,8 +19,5 @@ object LowHigh extends smithy4s.Enumeration[LowHigh] with smithy4s.ShapeTag.Comp
     Low,
     High,
   )
-
-  def to(e: LowHigh) : (String, Int) = (e.value, e.ordinal)
-  val schema: smithy4s.Schema[LowHigh] = enumeration(to, valueMap, ordinalMap).withHints(hints)
-  implicit val staticSchema : schematic.Static[smithy4s.Schema[LowHigh]] = schematic.Static(schema)
+  implicit val schema: smithy4s.Schema[LowHigh] = enumeration(values).withId(id).addHints(hints)
 }
