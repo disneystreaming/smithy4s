@@ -19,7 +19,6 @@ package http
 package internals
 
 import schema._
-import smithy.api.HttpPayload
 import smithy4s.http.BodyPartial
 import smithy4s.http.HttpMediaType
 import smithy4s.http.PayloadError
@@ -28,6 +27,7 @@ import smithy4s.internals.Hinted
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
+import smithy.api.HttpPayload
 import StringAndBlobCodecSchematic._
 
 private[smithy4s] object StringAndBlobCodecSchematic {

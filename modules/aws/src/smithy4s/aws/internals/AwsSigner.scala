@@ -19,11 +19,11 @@ package internals
 
 import cats.Monad
 import cats.syntax.all._
+import smithy4s.ShapeId
 import smithy4s.aws.kernel.AwsSignature
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
 import smithy4s.http.Metadata
-import smithy4s.ShapeId
 
 private[aws] trait AwsSigner[F[_]] {
   def sign(

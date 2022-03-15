@@ -17,21 +17,21 @@
 package smithy4s
 package internals
 
-import smithy4s.schema._
+import DocumentDecoder.DocumentDecoderMake
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import smithy4s.capability.Covariant
-import smithy4s.http.PayloadError
+import smithy4s.api.Discriminated
+import smithy4s.schema._
 
-import java.util.Base64
 import java.util.UUID
 
+import smithy4s.capability.Covariant
+import smithy4s.http.PayloadError
+import java.util.Base64
 import Document._
-import DocumentDecoder.DocumentDecoderMake
-import smithy4s.api.Discriminated
 
 trait DocumentDecoder[A] { self =>
 

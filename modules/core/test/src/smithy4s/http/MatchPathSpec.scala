@@ -20,11 +20,11 @@ import cats.Show
 import cats.data.NonEmptyList
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import weaver.SimpleMutableIOSuite
-import weaver.scalacheck.Checkers
 import smithy4s.http.PathSegment.GreedySegment
 import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.StaticSegment
+import weaver.SimpleMutableIOSuite
+import weaver.scalacheck.Checkers
 
 object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
 

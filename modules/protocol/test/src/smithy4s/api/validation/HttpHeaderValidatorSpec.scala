@@ -17,9 +17,11 @@
 package smithy4s.api.validation
 
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.shapes.{MemberShape, StructureShape}
+import software.amazon.smithy.model.shapes.MemberShape
+import software.amazon.smithy.model.shapes.StructureShape
 import software.amazon.smithy.model.traits.HttpHeaderTrait
-import software.amazon.smithy.model.validation.{Severity, ValidationEvent}
+import software.amazon.smithy.model.validation.Severity
+import software.amazon.smithy.model.validation.ValidationEvent
 
 import scala.jdk.CollectionConverters._
 

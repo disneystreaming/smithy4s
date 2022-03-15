@@ -16,14 +16,14 @@
 
 package smithy4s.http.internals
 
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.DummyServiceGen.DummyPath
 import smithy4s.example.PathParams
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
-import smithy4s.Schema
-import smithy.api.Http
-import smithy.api.NonEmptyString
 
 object PathSpec extends weaver.FunSuite {
   import smithy4s.schema.syntax._

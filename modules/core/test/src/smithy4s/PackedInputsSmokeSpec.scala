@@ -16,9 +16,10 @@
 
 package smithy4s
 
-import weaver._
 import cats.Id
-import smithy4s.example.{PackedInputsService, PackedInput}
+import smithy4s.example.PackedInput
+import smithy4s.example.PackedInputsService
+import weaver._
 
 object PackedInputsSmokeSpec extends FunSuite {
 

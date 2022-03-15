@@ -18,8 +18,8 @@ package smithy4s.codegen
 
 import cats.data.NonEmptyList
 import cats.implicits._
-import smithy4s.recursion._
 import smithy4s.meta.PackedInputsTrait
+import smithy4s.recursion._
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node

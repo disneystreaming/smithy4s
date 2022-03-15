@@ -16,10 +16,10 @@
 
 package smithy4s
 
+import smithy4s.Document._
 import smithy4s.http.PayloadError
 import smithy4s.internals.SchematicDocumentDecoder
 import smithy4s.internals.SchematicDocumentEncoder
-import smithy4s.Document._
 
 /**
   * A json-like free-form structure serving as a model for

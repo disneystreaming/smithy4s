@@ -16,14 +16,14 @@
 
 package smithy4s.http.internals
 
-import smithy4s.Lazy
 import smithy4s.ByteArray
-import smithy4s.schema.Alt
-import smithy4s.schema.Field
 import smithy4s.Document
 import smithy4s.Hints
+import smithy4s.Lazy
 import smithy4s.Schematic
 import smithy4s.Timestamp
+import smithy4s.schema.Alt
+import smithy4s.schema.Field
 
 import java.util.UUID
 

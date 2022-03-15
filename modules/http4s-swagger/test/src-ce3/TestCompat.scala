@@ -16,9 +16,9 @@
 
 package smithy4s.http4s.swagger
 
-import smithy4s.ShapeId
 import cats.effect.IO
 import smithy4s.HasId
+import smithy4s.ShapeId
 import weaver.BaseIOSuite
 
 trait TestCompat { self: BaseIOSuite =>

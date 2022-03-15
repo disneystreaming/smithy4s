@@ -26,8 +26,8 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
-import smithy4s.schema.SchemaAlt
 import smithy4s.http._
+import smithy4s.schema.SchemaAlt
 
 /**
   * A construct that encapsulates interprets and a low-level

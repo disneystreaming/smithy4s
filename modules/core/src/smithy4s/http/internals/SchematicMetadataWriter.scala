@@ -18,10 +18,10 @@ package smithy4s
 package http
 package internals
 
-import smithy4s.schema._
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
+import smithy4s.schema._
 
 import java.util.Base64
 import java.util.UUID

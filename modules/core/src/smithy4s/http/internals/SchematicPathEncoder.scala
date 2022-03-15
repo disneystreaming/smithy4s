@@ -17,14 +17,14 @@
 package smithy4s
 package http.internals
 
-import smithy.api.TimestampFormat
-import smithy4s.schema._
 import smithy.api.Http
-import smithy4s.internals.Hinted
+import smithy.api.TimestampFormat
 import smithy4s.http.PathSegment
-import smithy4s.http.PathSegment.StaticSegment
-import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.GreedySegment
+import smithy4s.http.PathSegment.LabelSegment
+import smithy4s.http.PathSegment.StaticSegment
+import smithy4s.internals.Hinted
+import smithy4s.schema._
 
 object SchematicPathEncoder
     extends Schematic[PathEncode.Make]

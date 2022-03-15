@@ -20,11 +20,12 @@ import cats.Show
 import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
-import smithy4s.scalacheck.DynData
 import smithy4s.Document
 import smithy4s.Schema
+import smithy4s.scalacheck.DynData
 import weaver._
 import weaver.scalacheck._
+
 import codecs.schematicJCodec
 
 object DocumentPropertyTests extends SimpleIOSuite with Checkers {

@@ -16,9 +16,9 @@
 
 package smithy4s
 
-import smithy4s.example._
 import cats.Functor
 import cats.syntax.all._
+import smithy4s.example._
 
 // compile-time tests
 object TypeInferenceSmokeSpec {

@@ -16,7 +16,7 @@
 
 package smithy4s
 
-import schema.Schema.UnionSchema
+
 
 trait Errorable[E] {
   def error: UnionSchema[E]

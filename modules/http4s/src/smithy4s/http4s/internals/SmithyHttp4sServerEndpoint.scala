@@ -29,9 +29,9 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.typelevel.ci.CIString
-import smithy4s.schema.Alt
 import smithy4s.http.Metadata
 import smithy4s.http._
+import smithy4s.schema.Alt
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes

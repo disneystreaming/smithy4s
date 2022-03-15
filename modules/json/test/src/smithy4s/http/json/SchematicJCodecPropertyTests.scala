@@ -20,17 +20,18 @@ import cats.Show
 import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
-import smithy4s.ByteArray
-import smithy4s.scalacheck.DynData
 import smithy.api.Length
 import smithy.api.Range
+import smithy4s.ByteArray
 import smithy4s.Hints
+import smithy4s.http.PayloadError
+import smithy4s.scalacheck.DynData
+import smithy4s.scalacheck._
 import smithy4s.schema._
 import smithy4s.schema.syntax._
-import smithy4s.http.PayloadError
-import smithy4s.scalacheck._
 import weaver._
 import weaver.scalacheck._
+
 import codecs.schematicJCodec
 
 object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {

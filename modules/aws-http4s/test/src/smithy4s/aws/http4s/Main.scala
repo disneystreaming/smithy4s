@@ -18,9 +18,9 @@ package smithy4s.test
 
 import cats.effect._
 import com.amazonaws.dynamodb._
+import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws._
 import smithy4s.aws.http4s._
-import org.http4s.ember.client.EmberClientBuilder
 
 object Main extends IOApp.Simple {
 

@@ -19,13 +19,13 @@ package smithy4s.codegen
 import coursier._
 import coursier.parse.DependencyParser
 import coursier.parse.RepositoryParser
+import software.amazon.smithy.build.ProjectionTransformer
+import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import software.amazon.smithy.build.ProjectionTransformer
-import software.amazon.smithy.build.TransformContext
 
 object ModelLoader {
   def load(

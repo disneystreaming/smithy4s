@@ -20,8 +20,8 @@ package internals
 
 import cats.MonadThrow
 import cats.syntax.all._
-import smithy4s.schema.SchemaAlt
 import smithy4s.http._
+import smithy4s.schema.SchemaAlt
 
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](

@@ -16,6 +16,7 @@
 
 package smithy4s.http.internals
 
+import cats.syntax.all._
 import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.Headers
@@ -26,9 +27,8 @@ import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpBinding
 import smithy4s.http.Metadata
 import smithy4s.http.MetadataError
-import weaver._
 import smithy4s.internals.InputOutput
-import cats.syntax.all._
+import weaver._
 
 object MetadataSpec extends FunSuite {
 

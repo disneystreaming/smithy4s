@@ -18,16 +18,16 @@ package smithy4s
 package http.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
-import weaver._
 import smithy.api.JsonName
-import smithy4s.http.PayloadError
-import smithy4s.schema.syntax._
 import smithy4s.api.Discriminated
-
-import scala.collection.immutable.ListMap
+import smithy4s.example.One
 import smithy4s.example.PayloadData
 import smithy4s.example.TestBiggerUnion
-import smithy4s.example.One
+import smithy4s.http.PayloadError
+import smithy4s.schema.syntax._
+import weaver._
+
+import scala.collection.immutable.ListMap
 
 object SchematicJCodecTests extends SimpleIOSuite {
 

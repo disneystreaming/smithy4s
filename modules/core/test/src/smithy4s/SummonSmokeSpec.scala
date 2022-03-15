@@ -16,9 +16,9 @@
 
 package smithy4s
 
-import weaver._
 import cats.Id
 import smithy4s.example.EmptyService
+import weaver._
 
 object SummonSmokeSpec extends FunSuite {
 

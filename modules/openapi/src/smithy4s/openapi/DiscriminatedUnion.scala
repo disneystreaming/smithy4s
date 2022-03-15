@@ -20,11 +20,11 @@ import _root_.software.amazon.smithy.jsonschema.JsonSchemaConfig
 import _root_.software.amazon.smithy.jsonschema.JsonSchemaMapper
 import _root_.software.amazon.smithy.jsonschema.Schema.Builder
 import _root_.software.amazon.smithy.model.shapes.Shape
-
-import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.node.ObjectNode
 import smithy4s.api.DiscriminatedUnionTrait
 import software.amazon.smithy.jsonschema.Schema
+import software.amazon.smithy.model.node.ObjectNode
+
+import scala.jdk.CollectionConverters._
 
 class DiscriminatedUnions() extends JsonSchemaMapper {
   private final val COMPONENTS = "components"

@@ -17,9 +17,9 @@
 package smithy4s.http
 
 import smithy4s.ByteArray
-import smithy4s.Schema
 import smithy4s.Constraints
 import smithy4s.PayloadPath
+import smithy4s.Schema
 import smithy4s.example._
 
 import java.nio.ByteBuffer
