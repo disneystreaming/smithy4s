@@ -394,7 +394,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
-              if (recursive) "recursive(bigStruct" else "bigStruct"
+              if (recursive) "recursive(genericArityStruct" else "genericArityStruct"
             line(s"implicit val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(

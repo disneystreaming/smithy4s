@@ -38,8 +38,6 @@ lazy val root = project
 
 lazy val allModules = Seq(
   core.projectRefs,
-  schematic.projectRefs,
-  `schematic-scalacheck`.projectRefs,
   codegen.projectRefs,
   json.projectRefs,
   example.projectRefs,
@@ -163,63 +161,6 @@ lazy val scalacheck = projectMatrix
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
 
-/**
-  * Set of atomic and composable (not compositional) abstractions allowing
-  * to describe schemas associated to data model.
-  *
-  * These schemas serve as an abstraction layer for various codecs and
-  * typeclasses, which allows to avoid specialising the generated code
-  * against a specific serialisation protocol.
-  */
-lazy val schematic = projectMatrix
-  .in(file("modules/schematic-core"))
-  .settings(
-    moduleName := s"schematic-core",
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
-    ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
-    libraryDependencies ++= (CrossVersion.partialVersion(
-      scalaVersion.value
-    ) match {
-      case Some((2, _)) =>
-        Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
-      case _ => Nil
-    })
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .settings(
-    Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.SchematicCore))
-      .taskValue
-  )
-
-lazy val `schematic-scalacheck` = projectMatrix
-  .in(file("modules/schematic-scalacheck"))
-  .dependsOn(schematic)
-  .settings(
-    moduleName := s"schematic-scalacheck",
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.collectionsCompat.value,
-      Dependencies.Scalacheck.scalacheck.value,
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
-    ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .settings(
-    Compile / sourceGenerators += sourceDirectory
-      .map(
-        Boilerplate.gen(_, Boilerplate.BoilerplateModule.SchematicScalacheck)
-      )
-      .taskValue
-  )
 
 /**
  * The aws-specific core a library. Contains the generated code for AWS specific
@@ -380,7 +321,6 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       // plugin is published
       // this allows running `scripted` alone
       val _ = List(
-        (schematic.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala212) / publishLocal).value,
         (openapi.jvm(Scala212) / publishLocal).value,

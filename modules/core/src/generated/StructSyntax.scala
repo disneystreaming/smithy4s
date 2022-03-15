@@ -21,7 +21,7 @@ trait StructSyntax {
 
   protected def placeholder: ShapeId
 
-  def bigStruct[S](fields: SchemaField[S, _]*)(
+  def genericArityStruct[S](fields: SchemaField[S, _]*)(
       const: IndexedSeq[Any] => S
   ): Schema[S] =
     Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
