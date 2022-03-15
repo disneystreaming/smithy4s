@@ -16,14 +16,25 @@
 
 package smithy4s
 
+import java.util.Base64
+
 class ByteArray(val array: Array[Byte]) {
   override def equals(other: Any) = other match {
     case bytes: ByteArray => java.util.Arrays.equals(array, bytes.array)
     case _                => false
   }
 
-  override def toString =
-    new String(array, java.nio.charset.StandardCharsets.UTF_8)
+  override def hashCode(): Int = {
+    var hashCode = 0
+    var i = 0
+    while (i < array.length) {
+      hashCode += array(i).hashCode()
+      i += 1
+    }
+    hashCode
+  }
+
+  override def toString = Base64.getEncoder().encodeToString(array)
 }
 
 object ByteArray {

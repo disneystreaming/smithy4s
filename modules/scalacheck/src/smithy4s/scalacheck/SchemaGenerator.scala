@@ -86,16 +86,6 @@ class SchemaGenerator(maxWidth: Int) {
       fs <- fields.map(_.toVector)
     } yield makeStruct(fs)
 
-    val numerousFields: Gen[Vector[DynFieldSchema]] = for {
-      fields <- Gen.listOfN(30, genField(recurse)).map(_.toVector)
-    } yield {
-      distinctBy(fields)(_.label)
-    }
-
-    val genBigStruct = for {
-      fs <- numerousFields
-    } yield makeStruct(fs)
-
     val genUnion = for {
       numAlts <- Gen.chooseNum(1, maxWidth)
       alts <- Gen
@@ -113,7 +103,6 @@ class SchemaGenerator(maxWidth: Int) {
       recurse.map(syntax.set(_)),
       Gen.zip(recurse, recurse).map { case (k, v) => map(k, v) },
       genStruct,
-      genBigStruct,
       genUnion
     ).asInstanceOf[Vector[Gen[DynSchema]]]
   }

@@ -300,15 +300,6 @@ object SchematicJCodecTests extends SimpleIOSuite {
     )
   }
 
-  pureTest("throw PayloadError on Vector violating length constraint") {
-    val vct = Vector.fill(Bar.maxLength + 1)(0)
-    val json = s"""{"vct": ${vct.mkString("[", ",", "]")}}"""
-    val result = util.Try(readFromString[Bar](json))
-    expect(
-      result.failed.get.getMessage == "length required to be <= 10, but was 11"
-    )
-  }
-
   pureTest("throw PayloadError on List violating length constraint") {
     val lst = List.fill(Bar.maxLength + 1)(0)
     val json = s"""{"lst": ${lst.mkString("[", ",", "]")}}"""
