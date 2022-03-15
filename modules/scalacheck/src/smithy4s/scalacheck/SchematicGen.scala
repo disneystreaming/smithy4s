@@ -24,6 +24,8 @@ import org.scalacheck.Gen
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
 
+object SchematicGen extends SchematicGen
+
 trait SchematicGen extends Schematic[Gen] {
 
   def unit: Gen[Unit] = Gen.const(())

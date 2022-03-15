@@ -20,7 +20,7 @@ import cats.Show
 import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
-import schematic.scalacheck.DynData
+import smithy4s.scalacheck.DynData
 import smithy4s.Document
 import smithy4s.Schema
 import weaver._
@@ -59,7 +59,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
         schema.compile(schematicJCodec).get
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
-      val schemaStr = schema.compile(smithy4s.SchematicRepr)
+      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
       val document = encoder.encode(data)
       val jsonFromDocument = writeToString(document)
       val jsonDirect = writeToString(data)

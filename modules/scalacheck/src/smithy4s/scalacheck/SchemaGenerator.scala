@@ -24,13 +24,23 @@ import org.scalacheck.Gen
 import org.scalacheck.Gen.const
 import smithy.api.TimestampFormat
 
-object SchemaGenerator {}
+object SchemaGenerator {
+
+  def genSchema(
+      maxDepth: Int,
+      maxWidth: Int
+  ): Gen[Schema[DynData]] = {
+    val generator = new SchemaGenerator(maxWidth)
+    generator.gen(maxDepth)
+  }
+
+}
 
 /**
   * Contains logic to generate random schemas which work on an unsafe data
   * representation
   */
-abstract class SchemaGenerator(maxWidth: Int) {
+class SchemaGenerator(maxWidth: Int) {
 
   type DynSchema = Schema[DynData]
   type DynFieldSchema = SchemaField[DynStruct, DynData]

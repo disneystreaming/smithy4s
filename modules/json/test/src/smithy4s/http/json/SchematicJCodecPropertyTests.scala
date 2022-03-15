@@ -20,15 +20,15 @@ import cats.Show
 import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
-import schematic.ByteArray
-import schematic.scalacheck.DynData
+import smithy4s.ByteArray
+import smithy4s.scalacheck.DynData
 import smithy.api.Length
 import smithy.api.Range
 import smithy4s.Hints
-import smithy4s.Schema
+import smithy4s.schema._
+import smithy4s.syntax._
 import smithy4s.http.PayloadError
 import smithy4s.scalacheck._
-import smithy4s.syntax._
 import weaver._
 import weaver.scalacheck._
 import codecs.schematicJCodec
@@ -59,7 +59,7 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
         schema.compile(schematicJCodec).get
-      val schemaStr = schema.compile(smithy4s.SchematicRepr)
+      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
       val json = writeToString(data)
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
       val result = scala.util.Try(readFromString[Any](json, config)).toEither
@@ -139,27 +139,24 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
   ): Gen[Schema[DynData]] = {
     def lengthGen(l: Length) = Gen.oneOf(
       Vector(
-        list[String](schematic.string.Schema),
-        map[String, String](
-          schematic.string.Schema,
-          schematic.string.Schema
-        ),
-        schematic.string.Schema,
-        schematic.bytes.Schema
-      ).map(_.withHints(Hints(l))).asInstanceOf[Vector[Schema[DynData]]]
+        (string),
+        map(string, string),
+        string,
+        bytes
+      ).map(_.addHints(l)).asInstanceOf[Vector[Schema[DynData]]]
     )
 
     def rangeGen(r: Range) = Gen.oneOf(
       Vector(
-        schematic.byte.Schema,
-        schematic.short.Schema,
-        schematic.int.Schema,
-        schematic.long.Schema,
-        schematic.float.Schema,
-        schematic.double.Schema,
-        schematic.bigdecimal.Schema,
-        schematic.bigint.Schema
-      ).map(_.withHints(Hints(r))).asInstanceOf[Vector[Schema[DynData]]]
+        byte,
+        short,
+        int,
+        long,
+        float,
+        double,
+        bigdecimal,
+        bigint
+      ).map(_.addHints(r)).asInstanceOf[Vector[Schema[DynData]]]
     )
     hint.value match {
       case l: Length => lengthGen(l)

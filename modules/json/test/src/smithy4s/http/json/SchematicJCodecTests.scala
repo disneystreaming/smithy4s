@@ -18,11 +18,10 @@ package smithy4s
 package http.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
-import schematic.ByteArray
+import weaver._
 import smithy.api.JsonName
 import smithy4s.http.PayloadError
 import smithy4s.syntax._
-import weaver._
 import smithy4s.api.Discriminated
 
 import scala.collection.immutable.ListMap
@@ -36,7 +35,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
   object Foo {
     implicit val schema: Schema[Foo] = {
       val a = int.required[Foo]("a", _.a)
-      val b = int.optional[Foo]("b", _.b).withHints(JsonName("_b"))
+      val b = int.optional[Foo]("b", _.b).addHints(JsonName("_b"))
       struct(a, b)(Foo.apply)
     }
   }
@@ -57,16 +56,14 @@ object SchematicJCodecTests extends SimpleIOSuite {
   object IntList {
     val hints: smithy4s.Hints = smithy4s.Hints()
 
-    val schema: smithy4s.Schema[IntList] = recursive(
+    implicit val schema: smithy4s.Schema[IntList] = recursive(
       struct(
-        int.required[IntList]("head", _.head).withHints(smithy.api.Required()),
+        int.required[IntList]("head", _.head).addHints(smithy.api.Required()),
         IntList.schema.optional[IntList]("tail", _.tail)
       ) {
         IntList.apply
       }
     )
-    implicit val staticSchema: schematic.Static[smithy4s.Schema[IntList]] =
-      schematic.Static(schema)
   }
 
   case class Baz(str: String)
@@ -77,16 +74,16 @@ object SchematicJCodecTests extends SimpleIOSuite {
       .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
 
     val right = struct(
-      string.required[Bin]("str", _.str).withHints(JsonName("binStr")),
+      string.required[Bin]("str", _.str).addHints(JsonName("binStr")),
       int.required[Bin]("int", _.int)
     )(Bin.apply)
       .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
-      .withHints(JsonName("binBin"))
+      .addHints(JsonName("binBin"))
 
     union(left, right) {
       case Left(f)  => left(f)
       case Right(b) => right(b)
-    }.withHints(
+    }.addHints(
       Discriminated("type")
     )
   }
@@ -144,7 +141,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
     val right =
       string
         .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
-        .withHints(JsonName("_string"))
+        .addHints(JsonName("_string"))
     union(left, right) {
       case Left(i)    => left(i)
       case Right(str) => right(str)
@@ -277,7 +274,6 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
   case class Bar(
       str: Option[String],
-      vct: Option[Vector[Int]],
       lst: Option[List[Int]],
       int: Option[Int]
   )
@@ -288,12 +284,10 @@ object SchematicJCodecTests extends SimpleIOSuite {
     implicit val schema: Schema[Bar] = {
       val str = string
         .optional[Bar]("str", _.str)
-        .withHints(lengthHint)
-      val vct =
-        vector[Int](int).optional[Bar]("vct", _.vct).withHints(lengthHint)
-      val lst = list[Int](int).optional[Bar]("lst", _.lst).withHints(lengthHint)
-      val intS = int.optional[Bar]("int", _.int).withHints(rangeHint)
-      struct(str, vct, lst, intS)(Bar.apply)
+        .addHints(lengthHint)
+      val lst = list[Int](int).optional[Bar]("lst", _.lst).addHints(lengthHint)
+      val intS = int.optional[Bar]("int", _.int).addHints(rangeHint)
+      struct(str, lst, intS)(Bar.apply)
     }
   }
 
@@ -344,7 +338,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
     implicit val schema: Schema[Foo2] = {
       val str = string
         .required[Bar2]("str", _.str)
-        .withHints(lengthHint)
+        .addHints(lengthHint)
       val bar = struct(str)(Bar2.apply).required[Foo2]("bar", _.bar)
       struct(bar)(Foo2.apply)
     }
@@ -368,7 +362,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
     implicit val schema: Schema[Foo3] = {
       val str = string
         .required[Bar2]("str", _.str)
-        .withHints(lengthHint)
+        .addHints(lengthHint)
       val bar = list(struct(str)(Bar2.apply)).required[Foo3]("bar", _.bar)
       struct(bar)(Foo3.apply)
     }
@@ -408,14 +402,14 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
-  private implicit val schemaVectorInt: Schema[Vector[Int]] = {
-    vector(int)
+  private implicit val schemaVectorInt: Schema[List[Int]] = {
+    list(int)
   }
 
   pureTest("throw PayloadError on Vector inserts over maxArity") {
     try {
       val items = List.fill(1025)("1").mkString("[", ",", "]")
-      val _ = readFromString[Vector[Int]](items)
+      val _ = readFromString[List[Int]](items)
       failure("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>

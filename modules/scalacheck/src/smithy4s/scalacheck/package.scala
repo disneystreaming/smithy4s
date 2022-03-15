@@ -22,8 +22,6 @@ package object scalacheck {
   type DynStruct = Map[String, DynData]
   type DynAlt = (String, DynData)
 
-  object gen extends SchematicGen
-
   private[scalacheck] def distinctBy[A, B](
       list: Vector[A]
   )(f: A => B): Vector[A] = {
