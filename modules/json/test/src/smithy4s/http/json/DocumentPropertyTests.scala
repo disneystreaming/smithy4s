@@ -36,7 +36,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- Gen.const(
-      smithy4s.syntax.float.asInstanceOf[Schema[DynData]]
+      smithy4s.schema.syntax.float.asInstanceOf[Schema[DynData]]
     ) // SchemaGenerator.genSchema(1, 1)
     data <- schema.compile(smithy4s.scalacheck.SchematicGen)
   } yield (schema -> data)
@@ -45,7 +45,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
     Show.fromToString
 
   implicit val documentCodec: JCodec[Document] =
-    smithy4s.syntax.document.compile(schematicJCodec).get
+    smithy4s.schema.syntax.document.compile(schematicJCodec).get
 
   loggedTest(
     "Going through json directly or via the adt give the same results"

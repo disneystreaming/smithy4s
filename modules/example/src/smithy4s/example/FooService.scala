@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>

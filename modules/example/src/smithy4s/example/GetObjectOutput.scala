@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 case class GetObjectOutput(size: ObjectSize, data: Option[String] = None)
 object GetObjectOutput extends smithy4s.ShapeTag.Companion[GetObjectOutput] {

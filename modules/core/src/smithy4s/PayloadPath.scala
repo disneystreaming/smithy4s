@@ -16,7 +16,7 @@
 
 package smithy4s
 
-import syntax._
+import schema.syntax._
 
 case class PayloadPath(segments: List[PayloadPath.Segment]) {
   override def toString = PayloadPath.asString(this)

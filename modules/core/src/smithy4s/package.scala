@@ -23,8 +23,6 @@ package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
   type UnionSchema[A] = schema.Schema.UnionSchema[A]
   type Wrapped[F[_], G[_], A] = F[G[A]]
 
-  val syntax = schema.syntax
-
   val errorTypeHeader = "X-Error-Type"
 
   // Allows to "inject" F[_] types in places that require F[_,_,_,_,_]

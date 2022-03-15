@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 case class GetStreamedObjectInput(key: String)
 object GetStreamedObjectInput extends smithy4s.ShapeTag.Companion[GetStreamedObjectInput] {

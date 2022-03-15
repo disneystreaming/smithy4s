@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 sealed trait Foo extends scala.Product with scala.Serializable
 object Foo extends smithy4s.ShapeTag.Companion[Foo] {

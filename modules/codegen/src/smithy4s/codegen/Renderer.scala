@@ -835,6 +835,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case _ => _ => "null"
     }
 
-  val syntaxImport = Set("smithy4s.syntax._")
+  val syntaxImport = Set("smithy4s.schema.syntax._")
 
 }

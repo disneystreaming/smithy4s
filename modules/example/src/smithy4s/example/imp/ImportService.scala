@@ -3,7 +3,7 @@ package smithy4s.example.imp
 import ImportServiceGen.ImportOperationError
 import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>

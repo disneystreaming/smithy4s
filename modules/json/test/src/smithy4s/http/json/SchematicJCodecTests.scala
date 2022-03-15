@@ -21,7 +21,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import weaver._
 import smithy.api.JsonName
 import smithy4s.http.PayloadError
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 import smithy4s.api.Discriminated
 
 import scala.collection.immutable.ListMap

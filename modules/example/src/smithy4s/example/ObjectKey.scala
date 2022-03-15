@@ -2,7 +2,7 @@ package smithy4s.example
 
 import java.util.UUID
 import smithy4s.Newtype
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 object ObjectKey extends Newtype[UUID] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ObjectKey")

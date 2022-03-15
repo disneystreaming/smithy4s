@@ -24,7 +24,7 @@ import smithy4s.http.HttpBinding.PathBinding
 import smithy4s.http.HttpBinding.QueryBinding
 import smithy4s.http.HttpBinding.QueryParamsBinding
 import smithy4s.internals.InputOutput
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 sealed abstract class HttpBinding(val tpe: HttpBinding.Type)
     extends Product

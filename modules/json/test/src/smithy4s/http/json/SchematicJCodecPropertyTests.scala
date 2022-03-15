@@ -26,7 +26,7 @@ import smithy.api.Length
 import smithy.api.Range
 import smithy4s.Hints
 import smithy4s.schema._
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 import smithy4s.http.PayloadError
 import smithy4s.scalacheck._
 import weaver._

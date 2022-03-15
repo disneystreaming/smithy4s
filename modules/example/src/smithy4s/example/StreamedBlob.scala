@@ -1,7 +1,7 @@
 package smithy4s.example
 
 import smithy4s.Newtype
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 object StreamedBlob extends Newtype[Byte] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "StreamedBlob")

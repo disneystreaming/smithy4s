@@ -17,7 +17,7 @@
 package smithy4s
 package aws.kernel
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 case class AwsInstanceMetadata(
     accessKeyId: String,

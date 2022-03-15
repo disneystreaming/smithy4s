@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 case class ServerError(message: Option[String] = None) extends Throwable {
   override def getMessage() : String = message.orNull

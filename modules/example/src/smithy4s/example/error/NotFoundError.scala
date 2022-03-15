@@ -1,6 +1,6 @@
 package smithy4s.example.error
 
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 case class NotFoundError(error: Option[String] = None) extends Throwable {
 }

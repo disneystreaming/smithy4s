@@ -20,7 +20,7 @@ import smithy4s.schema._
 import smithy4s.api.Discriminated
 import smithy.api._
 import cats.kernel.Eq
-import smithy4s.syntax._
+import smithy4s.schema.syntax._
 
 object HintMaskSpec extends weaver.FunSuite {
 

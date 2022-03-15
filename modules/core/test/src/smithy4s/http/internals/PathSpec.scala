@@ -26,7 +26,7 @@ import smithy.api.Http
 import smithy.api.NonEmptyString
 
 object PathSpec extends weaver.FunSuite {
-  import smithy4s.syntax._
+  import smithy4s.schema.syntax._
   object util {
 
     def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = schema
