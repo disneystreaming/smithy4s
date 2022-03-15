@@ -17,20 +17,20 @@
 package smithy4s
 package internals
 
-import DocumentEncoder.DocumentEncoderMake
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
 import smithy4s.api.Discriminated
+import smithy4s.capability.Contravariant
 import smithy4s.schema._
 
+import java.util.Base64
 import java.util.UUID
 import scala.collection.mutable.Builder
 
-import smithy4s.capability.Contravariant
-import java.util.Base64
+import DocumentEncoder.DocumentEncoderMake
 import Document._
 
 trait DocumentEncoder[A] { self =>

@@ -17,9 +17,9 @@
 package smithy4s
 package internals
 
-import schema.Field.Wrapped
-
 import smithy4s.capability._
+
+import schema.Field.Wrapped
 
 case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
   def get: F[A] = make(hints)
