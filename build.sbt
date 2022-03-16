@@ -708,9 +708,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
             s.cacheStoreFactory.make("output")
           ) { case ((changed, files), outputs) =>
             if (changed || outputs.isEmpty) {
-              if (changed) {
-                outputs.foreach(IO.delete)
-              }
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
               val args =
                 List("--output", outputDir) ++
