@@ -161,7 +161,6 @@ lazy val scalacheck = projectMatrix
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
 
-
 /**
  * The aws-specific core a library. Contains the generated code for AWS specific
  * traits, the instances of which contain metadata required to run the AWS signing
@@ -709,8 +708,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
             s.cacheStoreFactory.make("output")
           ) { case ((changed, files), outputs) =>
             if (changed || outputs.isEmpty) {
-              if (changed){
-                IO.delete(new File(outputDir))
+              if (changed) {
+                outputs.foreach(IO.delete)
               }
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
               val args =
