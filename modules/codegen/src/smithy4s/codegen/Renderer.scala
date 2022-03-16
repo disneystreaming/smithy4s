@@ -394,8 +394,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
-              if (recursive) "recursive(genericArityStruct"
-              else "genericArityStruct"
+              if (recursive) "recursive(struct.genericArity"
+              else "struct.genericArity"
             line(s"implicit val schema: $Schema_[$name] = $definition")
               .args(renderedFields)
               .block(
@@ -835,6 +835,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case _ => _ => "null"
     }
 
-  val syntaxImport = Set("smithy4s.schema.syntax._")
+  val syntaxImport = Set("smithy4s.schema.Schema._")
 
 }

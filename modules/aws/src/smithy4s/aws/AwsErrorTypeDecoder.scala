@@ -71,7 +71,7 @@ object AwsErrorTypeDecoder {
   private[aws] object AwsErrorType {
 
     protected[aws] val schema: smithy4s.Schema[AwsErrorType] = {
-      import smithy4s.schema.syntax._
+      import smithy4s.schema.Schema._
 
       val __typeField = string.optional[AwsErrorType]("__type", _.__type)
       val codeField = string.optional[AwsErrorType]("code", _.code)

@@ -43,7 +43,7 @@ object DocumentSpec extends FunSuite {
     expect(roundTripped == Right(recursive))
   }
 
-  import smithy4s.schema.syntax._
+  import smithy4s.schema.Schema._
   implicit val tupleIntStringSchema: Schema[(Int, String)] = {
     val i = int.required[(Int, String)]("int", _._1)
     val s =

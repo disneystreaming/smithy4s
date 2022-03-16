@@ -19,6 +19,7 @@ package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
   type ~>[F[_], G[_]] = PolyFunction[F, G]
   type Hint = Hints.Binding[_]
   type Schema[A] = schema.Schema[A]
+  val Schema: schema.Schema.type = schema.Schema
   type Schematic[F[_]] = schema.Schematic[F]
   type UnionSchema[A] = schema.Schema.UnionSchema[A]
   type Wrapped[F[_], G[_], A] = F[G[A]]

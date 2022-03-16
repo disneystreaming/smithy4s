@@ -161,22 +161,20 @@ object Boilerplate {
         .mkString(", ")
 
       val smartCtsr =
-        s"""def struct[S, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
+        s"""def apply[S, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
 
       block"""
       |package smithy4s
       |package schema
       |
-      |trait StructSyntax {
+      |class StructSyntax protected[schema](placeholder: ShapeId) {
       |
-      |  protected def placeholder: ShapeId
-      |
-      |  def genericArityStruct[S](
+      |  def genericArity[S](
       |      fields: SchemaField[S, _]*)(
       |      const: IndexedSeq[Any] => S) : Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
       |
-      |  def struct[S](
+      |  def apply[S](
       |     fields: Vector[SchemaField[S, _]])(
       |     const: IndexedSeq[Any] => S) : Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields, const)

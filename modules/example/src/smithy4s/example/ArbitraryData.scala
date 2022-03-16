@@ -2,7 +2,7 @@ package smithy4s.example
 
 import smithy4s.Document
 import smithy4s.Newtype
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 object ArbitraryData extends Newtype[Document] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "arbitraryData")

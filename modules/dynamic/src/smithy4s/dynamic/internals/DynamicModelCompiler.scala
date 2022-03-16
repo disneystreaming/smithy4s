@@ -20,7 +20,7 @@ package internals
 
 import smithy4s.dynamic.model._
 import scala.collection.mutable.{Map => MMap}
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._

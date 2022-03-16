@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 case class ArbitraryDataTest()
 object ArbitraryDataTest extends smithy4s.ShapeTag.Companion[ArbitraryDataTest] {

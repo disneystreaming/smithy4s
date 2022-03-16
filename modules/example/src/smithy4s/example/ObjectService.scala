@@ -2,7 +2,7 @@ package smithy4s.example
 
 import ObjectServiceGen.GetObjectError
 import ObjectServiceGen.PutObjectError
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>

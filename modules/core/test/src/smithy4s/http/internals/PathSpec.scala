@@ -26,7 +26,7 @@ import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
 
 object PathSpec extends weaver.FunSuite {
-  import smithy4s.schema.syntax._
+  import smithy4s.schema.Schema._
   object util {
 
     def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = schema
@@ -83,10 +83,11 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema") {
-    val result = genericArityStruct(
-      string.required[Unit]("label", _ => "example"),
-      string.required[Unit]("secondLabel", _ => "example2")
-    )(_ => ())
+    val result = struct
+      .genericArity(
+        string.required[Unit]("label", _ => "example"),
+        string.required[Unit]("secondLabel", _ => "example2")
+      )(_ => ())
       .withHints(
         Http(
           method = NonEmptyString("GET"),
@@ -104,10 +105,11 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema - URI ending with greedy label") {
-    val result = genericArityStruct(
-      string.required[Unit]("label", _ => "example"),
-      string.required[Unit]("greedyLabel", _ => "example2/with/slashes")
-    )(_ => ())
+    val result = struct
+      .genericArity(
+        string.required[Unit]("label", _ => "example"),
+        string.required[Unit]("greedyLabel", _ => "example2/with/slashes")
+      )(_ => ())
       .withHints(
         Http(
           method = NonEmptyString("GET"),

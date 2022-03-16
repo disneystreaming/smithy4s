@@ -24,7 +24,7 @@ import smithy4s.example.One
 import smithy4s.example.PayloadData
 import smithy4s.example.TestBiggerUnion
 import smithy4s.http.PayloadError
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 import weaver._
 
 import scala.collection.immutable.ListMap

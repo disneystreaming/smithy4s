@@ -98,7 +98,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
   test("Delegates to some other codec when neither strings not bytes") {
     val input = 1
     val codec =
-      stringsAndBlobs.compileCodec(smithy4s.schema.syntax.int)
+      stringsAndBlobs.compileCodec(Schema.int)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)

@@ -1,7 +1,7 @@
 package smithy4s.example
 
 import smithy4s.Newtype
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 object ObjectSize extends Newtype[Int] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ObjectSize")

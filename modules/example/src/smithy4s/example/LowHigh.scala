@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 sealed abstract class LowHigh(_value: String, _ordinal: Int) extends smithy4s.Enumeration.Value {
   override val value : String = _value

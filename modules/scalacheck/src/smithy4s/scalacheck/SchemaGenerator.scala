@@ -18,7 +18,7 @@ package smithy4s
 package scalacheck
 
 import smithy4s.schema._
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 import org.scalacheck.Gen
 import org.scalacheck.Gen.const

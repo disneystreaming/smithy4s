@@ -18,7 +18,7 @@ package smithy4s
 package http
 
 import smithy4s.schema._
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 sealed trait HttpContractError
     extends Throwable

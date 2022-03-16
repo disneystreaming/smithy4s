@@ -1,6 +1,6 @@
 package smithy4s.example.import_test
 
-import smithy4s.schema.syntax._
+import smithy4s.schema.Schema._
 
 case class OpOutput(output: String)
 object OpOutput extends smithy4s.ShapeTag.Companion[OpOutput] {
