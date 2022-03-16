@@ -23,6 +23,7 @@ case class CodegenArgs(
     skipScala: Boolean,
     skipOpenapi: Boolean,
     allowedNS: Option[Set[String]],
+    excludedNS: Option[Set[String]],
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String]
