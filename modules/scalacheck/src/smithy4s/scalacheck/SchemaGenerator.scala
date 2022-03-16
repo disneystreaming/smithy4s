@@ -48,22 +48,22 @@ class SchemaGenerator(maxWidth: Int) {
 
   def primitives: Vector[DynSchema] =
     Vector(
-      syntax.boolean,
-      syntax.bytes,
-      syntax.byte,
-      syntax.string,
-      syntax.int,
-      syntax.long,
-      syntax.float,
-      syntax.double,
-      syntax.short,
-      syntax.uuid,
-      syntax.unit,
-      syntax.document,
-      syntax.timestamp,
-      syntax.timestamp.addHints(TimestampFormat.DATE_TIME),
-      syntax.timestamp.addHints(TimestampFormat.EPOCH_SECONDS),
-      syntax.timestamp.addHints(TimestampFormat.HTTP_DATE)
+      boolean,
+      bytes,
+      byte,
+      string,
+      int,
+      long,
+      float,
+      double,
+      short,
+      uuid,
+      unit,
+      document,
+      timestamp,
+      timestamp.addHints(TimestampFormat.DATE_TIME),
+      timestamp.addHints(TimestampFormat.EPOCH_SECONDS),
+      timestamp.addHints(TimestampFormat.HTTP_DATE)
     ).asInstanceOf[Vector[DynSchema]]
 
   def inductive(recurse: Gen[DynSchema]): Vector[Gen[DynSchema]] = {
@@ -75,8 +75,8 @@ class SchemaGenerator(maxWidth: Int) {
     }
 
     def makeStruct(fields: Vector[DynFieldSchema]): DynSchema = {
-      syntax
-        .genericArityStruct[DynStruct](fields: _*) { values =>
+      Schema.struct
+        .genericArity[DynStruct](fields: _*) { values =>
           dynStruct(fields.map(_.label).zip(values): _*)
         }
         .asInstanceOf[DynSchema]
@@ -99,8 +99,8 @@ class SchemaGenerator(maxWidth: Int) {
     }
 
     Vector(
-      recurse.map(syntax.list(_)),
-      recurse.map(syntax.set(_)),
+      recurse.map(Schema.list(_)),
+      recurse.map(Schema.set(_)),
       Gen.zip(recurse, recurse).map { case (k, v) => map(k, v) },
       genStruct,
       genUnion
