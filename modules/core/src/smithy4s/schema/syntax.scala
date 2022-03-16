@@ -32,6 +32,9 @@ object syntax extends StructSyntax {
   def union[U](alts: SchemaAlt[U, _]*)(dispatch: U => Alt.SchemaAndValue[U, _]): Schema.UnionSchema[U] =
     Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
 
+  def union[U](alts: Vector[SchemaAlt[U, _]])(dispatch: U => Alt.SchemaAndValue[U, _]): Schema.UnionSchema[U] =
+    Schema.UnionSchema(placeholder, Hints.empty, alts, dispatch)
+
   def enumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]) : Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, values, total)
 

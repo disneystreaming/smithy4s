@@ -24,6 +24,7 @@ import smithy4s.schema.syntax._
 import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
+import smithy4s.schema.EnumValue
 
 private[dynamic] object Compiler {
 
@@ -235,11 +236,18 @@ private[dynamic] object Compiler {
       (maybeUuid, maybeEnum) match {
         case (Some(_), _) => update(id, shape.traits, uuid)
         case (None, Some(e)) => {
-          val valuesAndIndexes = e.value.map(_.value.value).zipWithIndex
-          val fn = valuesAndIndexes.map(tup => tup._1 -> tup).toMap
-          val fromName = valuesAndIndexes.map(tup => tup._1 -> tup._1).toMap
-          val fromOrd = valuesAndIndexes.map(tup => tup._2 -> tup._1).toMap
-          update(id, shape.traits, enumeration(fn, fromName, fromOrd))
+          // Using the ordinal as a runtime value
+          val values = e.value.map(_.value.value).zipWithIndex.map {
+            case (stringValue, ordinal) =>
+              EnumValue(
+                stringValue,
+                ordinal,
+                ordinal,
+                Hints.empty
+              )
+          }
+          val fromOrdinal = values(_: Int)
+          update(id, shape.traits, enumeration(fromOrdinal, values))
         }
         case _ => update(id, shape.traits, string)
       }
@@ -309,7 +317,7 @@ private[dynamic] object Compiler {
 
     // Creates a dynamic structure array, unpacking options
     // when needed
-    private final def dynStruct(fields: Vector[Any]): DynStruct = {
+    private final def dynStruct(fields: IndexedSeq[Any]): DynStruct = {
       val array = Array.ofDim[Any](fields.size)
       var i = 0
       fields.foreach {
@@ -347,7 +355,7 @@ private[dynamic] object Compiler {
               .sequence
           }
           if (isRecursive(id))
-            Eval.later(suspend(struct(lFields.value)(dynStruct)))
+            Eval.later(recursive(struct(lFields.value)(dynStruct)))
           else lFields.map(fields => struct(fields)(dynStruct))
         }
       )
@@ -363,12 +371,12 @@ private[dynamic] object Compiler {
                   val memberHints = allHints(mShape.traits)
                   schema(mShape.target)
                     .map(_.withHints(memberHints: _*))
-                    .map(_.oneOf[DynAlt](label, data => (index, data)))
+                    .map(_.oneOf[DynAlt](label, (data: Any) => (index, data)))
                 }
                 .toVector
                 .sequence
             lAlts.map { alts =>
-              union(alts.head, alts.drop(1): _*) { case (index, data) =>
+              union(alts) { case (index, data) =>
                 alts(index).apply(data)
               }
             }

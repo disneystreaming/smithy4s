@@ -123,7 +123,6 @@ object Boilerplate {
     }
   }
 
-
   object StructSyntax extends Template {
     override def filename(root: File): File =
       root / "generated" / "StructSyntax.scala"
@@ -176,6 +175,11 @@ object Boilerplate {
       |      fields: SchemaField[S, _]*)(
       |      const: IndexedSeq[Any] => S) : Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
+      |
+      |  def struct[S](
+      |     fields: Vector[SchemaField[S, _]])(
+      |     const: IndexedSeq[Any] => S) : Schema[S] =
+      |    Schema.StructSchema(placeholder, Hints.empty, fields, const)
       |
       -  $smartCtsr
       |

@@ -26,6 +26,11 @@ trait StructSyntax {
       const: IndexedSeq[Any] => S) : Schema[S] =
     Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
 
+  def struct[S](
+     fields: Vector[SchemaField[S, _]])(
+     const: IndexedSeq[Any] => S) : Schema[S] =
+    Schema.StructSchema(placeholder, Hints.empty, fields, const)
+
   def struct[S, A0](a0: SchemaField[S, A0])(const : (A0) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector(a0), arr => const(arr(0).asInstanceOf[A0]))
   def struct[S, A0, A1](a0: SchemaField[S, A0], a1: SchemaField[S, A1])(const : (A0, A1) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector(a0, a1), arr => const(arr(0).asInstanceOf[A0], arr(1).asInstanceOf[A1]))
   def struct[S, A0, A1, A2](a0: SchemaField[S, A0], a1: SchemaField[S, A1], a2: SchemaField[S, A2])(const : (A0, A1, A2) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector(a0, a1, a2), arr => const(arr(0).asInstanceOf[A0], arr(1).asInstanceOf[A1], arr(2).asInstanceOf[A2]))

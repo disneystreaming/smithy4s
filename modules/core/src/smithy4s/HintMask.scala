@@ -17,7 +17,6 @@
 package smithy4s
 
 import smithy4s.schema.PassthroughSchematic
-import smithy4s.schema.Schematic
 
 sealed abstract class HintMask {
   def ++(other: HintMask): HintMask
