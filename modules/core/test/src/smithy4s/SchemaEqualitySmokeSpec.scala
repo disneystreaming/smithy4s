@@ -1,6 +1,5 @@
 package smithy4s
 
-import smithy4s.schema._
 import smithy4s.schema.Schema._
 
 // Verifies equality of implicit values
