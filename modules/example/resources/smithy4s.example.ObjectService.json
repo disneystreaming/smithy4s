@@ -98,11 +98,7 @@
                         "name": "X-Foo",
                         "in": "header",
                         "schema": {
-                            "type": "string",
-                            "enum": [
-                                "Low",
-                                "High"
-                            ]
+                            "$ref": "#/components/schemas/LowHigh"
                         }
                     }
                 ],
@@ -168,6 +164,13 @@
             },
             "GetObjectOutputPayload": {
                 "type": "string"
+            },
+            "LowHigh": {
+                "type": "string",
+                "enum": [
+                    "Low",
+                    "High"
+                ]
             },
             "NoMoreSpaceResponseContent": {
                 "type": "object",

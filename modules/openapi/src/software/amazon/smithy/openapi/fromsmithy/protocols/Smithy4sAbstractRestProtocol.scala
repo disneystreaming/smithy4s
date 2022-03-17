@@ -191,16 +191,14 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
       context: Context[_ <: Trait],
       member: MemberShape
   ): Boolean = {
-
-    if (
-      member
-        .getMemberTrait(context.getModel, classOf[TimestampFormatTrait])
-        .isPresent
-    ) return false;
-    context.getModel
+    member
+      .getMemberTrait(context.getModel, classOf[TimestampFormatTrait])
+      .asScala
+      .isEmpty && context.getModel
       .getShape(member.getTarget)
-      .filter(_.isTimestampShape)
-      .isPresent
+      .filter(s => s.isTimestampShape)
+      .isPresent()
+
   }
 
   // Creates parameters that appear in the query string. Each input member
@@ -277,20 +275,16 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
           .foreach(param.examples)
       }
       val target = context.getModel.expectShape(member.getTarget)
-
-      val visitor = new HeaderSchemaVisitor[T](
-        context,
-        context.getSchema(context.getPointer(member)),
-        member
-      )
-      val sc: Schema = target.accept(visitor)
+      val startingSchema = context.inlineOrReferenceSchema(member)
+      val visitor = new HeaderSchemaVisitor[T](context, startingSchema, member)
+      val visitedSchema = target.accept(visitor)
       val schemaVerified = if (needsInlineTimestampSchema(context, member)) {
         val copiedBuilder = ModelUtils.convertSchemaToStringBuilder(
-          context.getSchema(context.getPointer(member))
+          visitedSchema
         )
         copiedBuilder.format("http-date").build
       } else {
-        sc
+        visitedSchema
       }
       param.schema(schemaVerified)
       binding.getLocationName -> param.build
