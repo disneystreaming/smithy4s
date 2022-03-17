@@ -43,4 +43,40 @@ object Primitive {
   case object PTimestamp extends Primitive[Timestamp]
   case object PUnit extends Primitive[Unit]
 
+  def deriving[F[_]](implicit
+      short: F[Short],
+      int: F[Int],
+      float: F[Float],
+      long: F[Long],
+      double: F[Double],
+      bigint: F[BigInt],
+      bigdecimal: F[BigDecimal],
+      boolean: F[Boolean],
+      string: F[String],
+      uuid: F[java.util.UUID],
+      byte: F[Byte],
+      blob: F[ByteArray],
+      document: F[Document],
+      timestamp: F[Timestamp],
+      unit: F[Unit]
+  ): PolyFunction[Primitive, F] = new PolyFunction[Primitive, F] {
+    def apply[T](prim: Primitive[T]): F[T] = prim match {
+      case PShort      => short
+      case PInt        => int
+      case PFloat      => float
+      case PLong       => long
+      case PDouble     => double
+      case PBigInt     => bigint
+      case PBigDecimal => bigdecimal
+      case PBoolean    => boolean
+      case PString     => string
+      case PUUID       => uuid
+      case PByte       => byte
+      case PBlob       => blob
+      case PDocument   => document
+      case PTimestamp  => timestamp
+      case PUnit       => unit
+    }
+  }
+
 }
