@@ -34,8 +34,6 @@ sealed trait Schema[A]{
   def addHints(hints: Hint*) : Schema[A] = transformHints(_ ++ Hints(hints:_*))
   def addHints(hints: Hints) : Schema[A] = transformHints(_ ++ hints)
 
-  def withHints(hints: Hint*) : Schema[A] = addHints(hints: _*)
-
   def withId(newId: ShapeId) : Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: ListSchema[a] => ListSchema(newId, s.hints, s.member).asInstanceOf[Schema[A]]

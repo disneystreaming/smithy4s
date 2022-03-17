@@ -180,8 +180,8 @@ private[dynamic] object Compiler {
     ): Unit = {
       schemaMap += (shapeId -> lSchema.map { sch =>
         sch
-          .withHints(allHints(traits): _*)
-          .withHints(shapeId)
+          .withId(shapeId)
+          .addHints(allHints(traits): _*)
           .asInstanceOf[Schema[DynData]]
       })
     }
@@ -280,8 +280,8 @@ private[dynamic] object Compiler {
       val output = shape.output.map(_.target)
 
       val ep = for {
-        inputSchema <- getSchema(input).map(_.withHints(InputOutput.Input))
-        outputSchema <- getSchema(output).map(_.withHints(InputOutput.Output)),
+        inputSchema <- getSchema(input).map(_.addHints(InputOutput.Input))
+        outputSchema <- getSchema(output).map(_.addHints(InputOutput.Output)),
       } yield {
         DynamicEndpoint(
           id,
@@ -338,7 +338,7 @@ private[dynamic] object Compiler {
               .map { case ((label, mShape), index) =>
                 val memberHints = allHints(mShape.traits)
                 val lMemberSchema =
-                  schema(mShape.target).map(_.withHints(memberHints: _*))
+                  schema(mShape.target).map(_.addHints(memberHints: _*))
                 if (
                   mShape.traits
                     .getOrElse(Map.empty)
@@ -370,7 +370,7 @@ private[dynamic] object Compiler {
                 .map { case ((label, mShape), index) =>
                   val memberHints = allHints(mShape.traits)
                   schema(mShape.target)
-                    .map(_.withHints(memberHints: _*))
+                    .map(_.addHints(memberHints: _*))
                     .map(_.oneOf[DynAlt](label, (data: Any) => (index, data)))
                 }
                 .toVector

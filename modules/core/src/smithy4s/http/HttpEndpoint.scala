@@ -47,7 +47,7 @@ object HttpEndpoint {
       httpMethod <- HttpMethod.fromString(http.method.value)
       httpPath <- internals.pathSegments(http.uri.value)
       encoder <- endpoint.input
-        .withHints(http)
+        .addHints(http)
         .compile(internals.SchematicPathEncoder)
         .get
     } yield {

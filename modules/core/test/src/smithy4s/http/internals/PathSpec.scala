@@ -30,7 +30,7 @@ object PathSpec extends weaver.FunSuite {
   object util {
 
     def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = schema
-      .withHints(
+      .addHints(
         Http(
           method = NonEmptyString("GET"),
           uri = NonEmptyString("/{label}")
@@ -88,7 +88,7 @@ object PathSpec extends weaver.FunSuite {
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("secondLabel", _ => "example2")
       )(_ => ())
-      .withHints(
+      .addHints(
         Http(
           method = NonEmptyString("GET"),
           uri = NonEmptyString("/{label}/const/{secondLabel}")
@@ -110,7 +110,7 @@ object PathSpec extends weaver.FunSuite {
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("greedyLabel", _ => "example2/with/slashes")
       )(_ => ())
-      .withHints(
+      .addHints(
         Http(
           method = NonEmptyString("GET"),
           uri = NonEmptyString("/{label}/const/{greedyLabel+}")

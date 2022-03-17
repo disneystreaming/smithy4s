@@ -18,8 +18,10 @@ package smithy4s
 package schema
 
 sealed trait Primitive[T] {
+  final def schema(shapeId: ShapeId): Schema[T] =
+    Schema.PrimitiveSchema(shapeId, Hints.empty, this)
   final def schema(namespace: String, name: String): Schema[T] =
-    Schema.PrimitiveSchema(ShapeId(namespace, name), Hints.empty, this)
+    this.schema(ShapeId(namespace, name))
 }
 
 object Primitive {
