@@ -44,7 +44,7 @@ class Smithy4sOpenApiProtocol
       config: OpenApiConfig
   ): Unit = {
     config.setUseJsonName(true);
-    config.setDefaultTimestampFormat(TimestampFormatTrait.Format.EPOCH_SECONDS);
+    config.setDefaultTimestampFormat(TimestampFormatTrait.Format.DATE_TIME);
   }
 
   def createDocumentSchema(

@@ -181,13 +181,8 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
       binding: HttpBinding
   ) = {
     val member = binding.getMember
-    // Timestamps sent in the URI are serialized as a date-time string by default.
-    if (needsInlineTimestampSchema(context, member)) { // Create a copy of the targeted schema and remove any possible numeric keywords.
-      val copiedBuilder = ModelUtils.convertSchemaToStringBuilder(
-        context.getSchema(context.getPointer(member))
-      )
-      copiedBuilder.format("date-time").build
-    } else if (context.getJsonSchemaConverter.isInlined(member))
+
+    if (context.getJsonSchemaConverter.isInlined(member))
       context.getJsonSchemaConverter.convertShape(member).getRootSchema
     else context.createRef(binding.getMember)
   }
@@ -196,15 +191,14 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
       context: Context[_ <: Trait],
       member: MemberShape
   ): Boolean = {
-    if (
-      member
-        .getMemberTrait(context.getModel, classOf[TimestampFormatTrait])
-        .isPresent
-    ) return false
-    context.getModel
+    member
+      .getMemberTrait(context.getModel, classOf[TimestampFormatTrait])
+      .asScala
+      .isEmpty && context.getModel
       .getShape(member.getTarget)
-      .filter(_.isTimestampShape)
-      .isPresent
+      .filter(s => s.isTimestampShape)
+      .isPresent()
+
   }
 
   // Creates parameters that appear in the query string. Each input member
@@ -270,6 +264,7 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
     val result = for (binding <- bindings.asScala) yield {
       val member = binding.getMember
       val param = ModelUtils.createParameterMember(context, member)
+
       if (messageType eq AbstractRestProtocol.MessageType.REQUEST) {
         param.in("header").name(binding.getLocationName)
         createInputExamples(operation, binding.getMemberName)
@@ -280,9 +275,18 @@ abstract class Smithy4sAbstractRestProtocol[T <: Trait]
           .foreach(param.examples)
       }
       val target = context.getModel.expectShape(member.getTarget)
-      val refSchema = context.inlineOrReferenceSchema(member)
-      val visitor = new HeaderSchemaVisitor[T](context, refSchema, member)
-      param.schema(target.accept(visitor))
+      val startingSchema = context.inlineOrReferenceSchema(member)
+      val visitor = new HeaderSchemaVisitor[T](context, startingSchema, member)
+      val visitedSchema = target.accept(visitor)
+      val schemaVerified = if (needsInlineTimestampSchema(context, member)) {
+        val copiedBuilder = ModelUtils.convertSchemaToStringBuilder(
+          visitedSchema
+        )
+        copiedBuilder.format("http-date").build
+      } else {
+        visitedSchema
+      }
+      param.schema(schemaVerified)
       binding.getLocationName -> param.build
     }
     result.toMap

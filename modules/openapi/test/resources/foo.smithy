@@ -11,7 +11,7 @@ service HelloWorldService {
 }
 
 @readonly
-@http(method: "GET", uri: "/hello/{name}")
+@http(method: "GET", uri: "/hello/{name}/{ts}")
 operation Greet {
   input: Person,
   output: Greeting
@@ -29,13 +29,23 @@ structure Person {
   name: String,
 
   @httpHeader("X-Bamtech-Partner")
-  partner: String
+  partner: String,
+
+  @httpHeader("when")
+  when: Timestamp,
+
+@httpQuery("from")
+  from: Timestamp,
+
+  @httpLabel
+  @required
+  ts: Timestamp
 }
 
 structure Greeting {
   @required
   @httpPayload
-  message: String,
+  message: String
 }
 
 @error("server")
