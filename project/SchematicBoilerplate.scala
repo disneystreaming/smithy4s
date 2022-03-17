@@ -28,7 +28,7 @@ object Boilerplate {
     case object Core extends BoilerplateModule
 
     def templates: Map[BoilerplateModule, List[Template]] = Map(
-      Core -> List(StructSyntax)
+      Core -> List(PartiallyAppliedStruct)
     )
   }
 
@@ -123,9 +123,9 @@ object Boilerplate {
     }
   }
 
-  object StructSyntax extends Template {
+  object PartiallyAppliedStruct extends Template {
     override def filename(root: File): File =
-      root / "generated" / "StructSyntax.scala"
+      root / "generated" / "PartiallyAppliedStruct.scala"
 
     override def content(tv: TemplateVals): String = {
       import tv._
@@ -161,20 +161,20 @@ object Boilerplate {
         .mkString(", ")
 
       val smartCtsr =
-        s"""def apply[S, ${`A..N`}]($schemaParams)(const : (${`A..N`}) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
+        s"""def apply[${`A..N`}]($schemaParams)(const : (${`A..N`}) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
 
       block"""
       |package smithy4s
       |package schema
       |
-      |class StructSyntax protected[schema](placeholder: ShapeId) {
+      |class PartiallyAppliedStruct[S] protected[schema](placeholder: ShapeId) {
       |
-      |  def genericArity[S](
+      |  def genericArity(
       |      fields: SchemaField[S, _]*)(
       |      const: IndexedSeq[Any] => S) : Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
       |
-      |  def apply[S](
+      |  def apply(
       |     fields: Vector[SchemaField[S, _]])(
       |     const: IndexedSeq[Any] => S) : Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields, const)

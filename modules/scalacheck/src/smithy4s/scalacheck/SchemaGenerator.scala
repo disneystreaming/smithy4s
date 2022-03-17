@@ -75,8 +75,9 @@ class SchemaGenerator(maxWidth: Int) {
     }
 
     def makeStruct(fields: Vector[DynFieldSchema]): DynSchema = {
-      Schema.struct
-        .genericArity[DynStruct](fields: _*) { values =>
+      Schema
+        .struct[DynStruct]
+        .genericArity(fields: _*) { values =>
           dynStruct(fields.map(_.label).zip(values): _*)
         }
         .asInstanceOf[DynSchema]

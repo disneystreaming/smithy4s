@@ -23,11 +23,10 @@ import Schema._
 sealed trait Schema[A]{
   def shapeId: ShapeId
   def hints: Hints
-  def required[Struct](label: String, get: Struct => A, hints: Hint*): SchemaField[Struct, A] = Field.required(label, this, get, hints: _*)
-  def optional[Struct](label: String, get: Struct => Option[A], hints: Hint*): SchemaField[Struct, Option[A]] = Field.optional(label, this, get, hints: _*)
+  def required[Struct] : PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
+  def optional[Struct] : PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
 
-  def oneOf[Union](label: String, hints: Hint*)(implicit ev: A <:< Union): SchemaAlt[Union, A] = Alt(label, this, ev, Hints(hints: _*))
-  def oneOf[Union](label: String, inject: A => Union, hints: Hint*): SchemaAlt[Union, A] = Alt(label, this, inject, Hints(hints: _*))
+  def oneOf[Union] : PartiallyAppliedOneOf[Union, A]= new PartiallyAppliedOneOf[Union,A](this)
 
   def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
   def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
@@ -128,5 +127,18 @@ object Schema {
 
   def constant[A](a : A) : Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 
-  val struct : StructSyntax = new StructSyntax(placeholder)
+  def struct[S] : PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
+
+  private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
+    def apply(label: String, get: S => A, hints: Hint*): SchemaField[S, A] = Field.required(label, schema, get, hints: _*)
+  }
+
+  private [smithy4s] class PartiallyAppliedOptional[S, A](private val schema: Schema[A]) extends AnyVal {
+    def apply(label: String, get: S => Option[A], hints: Hint*): SchemaField[S, Option[A]] = Field.optional(label, schema, get, hints: _*)
+  }
+
+  private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {
+    def apply(label: String, hints: Hint*)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema, ev, Hints(hints: _*))
+    def apply(label: String, inject: A => U, hints: Hint*): SchemaAlt[U, A] = Alt(label, schema, inject, Hints(hints: _*))
+  }
 }
