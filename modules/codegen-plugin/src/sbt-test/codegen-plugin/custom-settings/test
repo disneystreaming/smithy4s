@@ -1,4 +1,9 @@
 # check if smithy4sCodegen works
-> compile
-$ exists smithy_output/aws/iam/ActionPermissionDescription.scala
-$ exists smithy_output/smithy4s/example/ObjectService.scala
+> p1/compile
+$ exists p1/smithy_output/aws/iam/ActionPermissionDescription.scala
+$ exists p1/smithy_output/smithy4s/example/ObjectService.scala
+
+> p2/compile
+$ exists p2/smithy_output/aws/iam/ActionPermissionDescription.scala
+$ exists p2/smithy_output/smithy4s/example/ObjectService.scala
+-$ exists p2/smithy_output/smithy4s/toexclude/StructureToExclude.scala

@@ -41,6 +41,7 @@ object OpenApiConversionSpec extends SimpleIOSuite {
       .resource(Source.fromResource("foo.json"))(
         _.getLines().mkString.filterNot(_.isWhitespace)
       )
+
     expect(result == expected)
   }
 

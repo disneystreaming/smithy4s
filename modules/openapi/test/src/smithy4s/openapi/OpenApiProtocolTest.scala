@@ -42,7 +42,7 @@ class OpenApiProtocolTest extends Smithy4sAbstractRestProtocol[TestJsonTrait] {
       config: OpenApiConfig
   ): Unit = {
     config.setUseJsonName(true);
-    config.setDefaultTimestampFormat(TimestampFormatTrait.Format.EPOCH_SECONDS);
+    config.setDefaultTimestampFormat(TimestampFormatTrait.Format.DATE_TIME);
   }
 
   def createDocumentSchema(

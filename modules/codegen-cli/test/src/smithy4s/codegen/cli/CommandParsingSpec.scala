@@ -32,6 +32,7 @@ object CommandParsingSpec extends FunSuite {
               skipScala = false,
               skipOpenapi = false,
               allowedNS = None,
+              excludedNS = None,
               repositories = Nil,
               dependencies = Nil,
               transformers = Nil
@@ -77,6 +78,7 @@ object CommandParsingSpec extends FunSuite {
               skipScala = true,
               skipOpenapi = true,
               allowedNS = Some(Set("name1", "name2")),
+              excludedNS = None,
               repositories = List("repo1", "repo2"),
               dependencies = List("dep1", "dep2"),
               transformers = List("t1", "t2")

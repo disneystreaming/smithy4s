@@ -78,6 +78,15 @@ object CodegenCommand {
       .map(_.split(',').toSet)
       .orNone
 
+  val excludedNSOpt: Opts[Option[Set[String]]] =
+    Opts
+      .option[String](
+        "excluded-ns",
+        "Comma-delimited list of namespaces that should not be processed. If unset, all namespaces are processed (except stdlib ones)"
+      )
+      .map(_.split(',').toSet)
+      .orNone
+
   val options =
     (
       outputOpt,
@@ -85,6 +94,7 @@ object CodegenCommand {
       skipScalaOpt,
       skipOpenapiOpt,
       allowedNSOpt,
+      excludedNSOpt,
       repositoriesOpt,
       dependenciesOpt,
       transformersOpt,
@@ -92,7 +102,7 @@ object CodegenCommand {
     )
       .mapN {
         // format: off
-        case (output, openApiOutput, skipScala, skipOpenapi, allowedNS, repositories, dependencies, transformers, specsArgs) =>
+        case (output, openApiOutput, skipScala, skipOpenapi, allowedNS, excludedNS, repositories, dependencies, transformers, specsArgs) =>
         // format: on
           CodegenArgs(
             specsArgs,
@@ -101,6 +111,7 @@ object CodegenCommand {
             skipScala,
             skipOpenapi,
             allowedNS,
+            excludedNS,
             repositories.getOrElse(List.empty),
             dependencies.getOrElse(List.empty),
             transformers.getOrElse(List.empty)

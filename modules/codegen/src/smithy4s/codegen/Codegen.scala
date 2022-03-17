@@ -35,7 +35,7 @@ object Codegen { self =>
     )
 
     val scalaFiles = if (!args.skipScala) {
-      Codegen.generate(model, args.allowedNS).map {
+      Codegen.generate(model, args.allowedNS, args.excludedNS).map {
         case (relPath, name, outputString) =>
           val fileName = name + ".scala"
           val scalaFile = (args.output / relPath / fileName)
@@ -59,7 +59,8 @@ object Codegen { self =>
 
   private def generate(
       model: Model,
-      allowedNS: Option[Set[String]]
+      allowedNS: Option[Set[String]],
+      excludedNS: Option[Set[String]]
   ): List[(os.RelPath, String, String)] = {
     val namespaces = model
       .shapes()
@@ -72,15 +73,19 @@ object Codegen { self =>
       Set(
         "smithy4s.api"
       )
+    val excluded = excludedNS.getOrElse(Set.empty)
 
     val filteredNamespaces = allowedNS match {
       case Some(allowedNamespaces) =>
-        namespaces.filter(allowedNamespaces)
+        namespaces
+          .filter(allowedNamespaces)
+          .filterNot(excluded)
       case None =>
         namespaces
           .filterNot(_.startsWith("aws."))
           .filterNot(_.startsWith("smithy."))
           .filterNot(reserved)
+          .filterNot(excluded)
     }
 
     filteredNamespaces.toList
