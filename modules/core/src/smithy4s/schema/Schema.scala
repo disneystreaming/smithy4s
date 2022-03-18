@@ -31,8 +31,8 @@ sealed trait Schema[A]{
   def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
   def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
 
-  def addHints(hints: Hint*) : Schema[A] = transformHints(_ ++ Hints(hints:_*))
-  def addHints(hints: Hints) : Schema[A] = transformHints(_ ++ hints)
+  def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
+  def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)
 
   def withId(newId: ShapeId) : Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
@@ -46,7 +46,7 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
-  def transformHints(f: Hints => Hints) : Schema[A] = this match {
+  def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: ListSchema[a] => ListSchema(s.shapeId, f(s.hints), s.member).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member).asInstanceOf[Schema[A]]
@@ -54,8 +54,20 @@ sealed trait Schema[A]{
     case EnumerationSchema(shapeId, hints, values, total) => EnumerationSchema(shapeId, f(hints), values, total)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
-    case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHints(f), to, from)
-    case LazySchema(suspend) => LazySchema(suspend.map(_.transformHints(f)))
+    case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsLocally(f), to, from)
+    case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
+  }
+
+  def transformHintsTransitively(f: Hints => Hints) : Schema[A] = this match {
+    case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
+    case s: ListSchema[a] => ListSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
+    case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
+    case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key.transformHintsTransitively(f), s.value.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
+    case EnumerationSchema(shapeId, hints, values, total) => EnumerationSchema(shapeId, f(hints), values.map(_.transformHints(f)), total)
+    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), make)
+    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
+    case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsTransitively(f), to, from)
+    case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
   }
 }
 
@@ -76,8 +88,12 @@ object Schema {
     def hints: Hints = suspend.value.hints
   }
 
-  def transformHintsK(f: Hints => Hints) : Schema ~> Schema = new (Schema ~> Schema){
-    def apply[A](fa: Schema[A]) : Schema[A] = fa.transformHints(f)
+  def transformHintsLocallyK(f: Hints => Hints) : Schema ~> Schema = new (Schema ~> Schema){
+    def apply[A](fa: Schema[A]) : Schema[A] = fa.transformHintsLocally(f)
+  }
+
+  def transformHintsTransitivelyK(f: Hints => Hints) : Schema ~> Schema = new (Schema ~> Schema){
+    def apply[A](fa: Schema[A]) : Schema[A] = fa.transformHintsTransitively(f)
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////

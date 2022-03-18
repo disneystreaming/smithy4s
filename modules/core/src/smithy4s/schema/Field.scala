@@ -31,8 +31,9 @@ sealed abstract class Field[F[_], S, A] {
 
   def mapK[G[_]](f: F ~> G): Field[G, S, A]
 
-  def transformHints(f: Hints => Hints): Field[F, S, A]
-  def addHints(hints: Hint*): Field[F, S, A] = transformHints(
+  def transformHintsLocally(f: Hints => Hints): Field[F, S, A]
+
+  def addHints(hints: Hint*): Field[F, S, A] = transformHintsLocally(
     _ ++ Hints(hints: _*)
   )
 
@@ -99,7 +100,7 @@ object Field {
   ) extends Field[F, S, A] {
     type T = A
     override def toString(): String = s"Required($label, ..., $hints)"
-    override def transformHints(f: Hints => Hints): Field[F, S, A] =
+    override def transformHintsLocally(f: Hints => Hints): Field[F, S, A] =
       Required(label, instance, get, f(hints))
     override def mapK[G[_]](fk: F ~> G): Field[G, S, A] =
       Required(label, fk(instance), get, hints)
@@ -126,7 +127,9 @@ object Field {
     override def toString = s"Optional($label, ..., $hints)"
     override def mapK[G[_]](fk: F ~> G): Field[G, S, Option[A]] =
       Optional(label, fk(instance), get, hints)
-    override def transformHints(f: Hints => Hints): Field[F, S, Option[A]] =
+    override def transformHintsLocally(
+        f: Hints => Hints
+    ): Field[F, S, Option[A]] =
       Optional(label, instance, get, f(hints))
     override def instanceA(onOptional: ToOptional[F]): F[Option[A]] =
       onOptional.apply(instance)
@@ -168,7 +171,7 @@ object Field {
 
   def shiftHintsK[S] : PolyFunction[Field[Schema, S, *], Field[Schema, S, *]] = new PolyFunction[Field[Schema, S, *], Field[Schema, S, *]]{
     def apply[A](fa: Field[Schema,S,A]): Field[Schema,S,A] = {
-      fa.mapK(Schema.transformHintsK(_ ++ fa.hints)).transformHints(_ => Hints.empty)
+      fa.mapK(Schema.transformHintsLocallyK(_ ++ fa.hints)).transformHintsLocally(_ => Hints.empty)
     }
   }
   // format: on

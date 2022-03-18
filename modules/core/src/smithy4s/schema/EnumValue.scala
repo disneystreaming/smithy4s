@@ -22,4 +22,7 @@ case class EnumValue[E](
     ordinal: Int,
     value: E,
     hints: Hints
-)
+) {
+  def transformHints(f: Hints => Hints): EnumValue[E] =
+    EnumValue(stringValue, ordinal, value, f(hints))
+}

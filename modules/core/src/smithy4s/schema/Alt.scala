@@ -29,10 +29,12 @@ final case class Alt[F[_], U, A](
   def apply(value: A): Alt.WithValue[F, U, A] =
     Alt.WithValue(this, value)
 
-  def transformHints(f: Hints => Hints): Alt[F, U, A] =
+  def transformHintsLocally(f: Hints => Hints): Alt[F, U, A] =
     Alt(label, instance, inject, f(hints))
 
-  def addHints(newHints: Hint*) = transformHints(_ ++ Hints(newHints: _*))
+  def addHints(newHints: Hint*) = transformHintsLocally(
+    _ ++ Hints(newHints: _*)
+  )
 
   def mapK[G[_]](fk: PolyFunction[F, G]): Alt[G, U, A] =
     Alt(label, fk(instance), inject, hints)
@@ -56,7 +58,7 @@ object Alt {
       def apply[A](fa: Alt[Schema, U, A]): Alt[Schema, U, A] =
         Alt(
           fa.label,
-          fa.instance.transformHints(_ ++ fa.hints),
+          fa.instance.transformHintsLocally(_ ++ fa.hints),
           fa.inject,
           Hints.empty
         )
