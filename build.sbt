@@ -401,7 +401,7 @@ lazy val protocol = projectMatrix
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Smithy.model,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
@@ -426,7 +426,7 @@ lazy val dynamic = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
       Dependencies.Cats.core.value,
       Dependencies.Weaver.cats.value % Test
     ),
@@ -461,7 +461,7 @@ lazy val openapi = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.openapi,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -636,7 +636,7 @@ lazy val Dependencies = new {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0"
     )
 
   val Jsoniter =
