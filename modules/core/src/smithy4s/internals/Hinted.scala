@@ -55,6 +55,20 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
       (h: Hints) => f(make(hints ++ h), other.make(other.hints ++ h))
     )
 
+  def emap[B](
+      f: A => Either[schema.ConstraintError, B]
+  )(implicit C: Covariant[F]): Hinted[F, B] =
+    Hinted(
+      hints,
+      h =>
+        C.map(make(h))(a =>
+          f(a) match {
+            case Left(constraintError) => throw constraintError
+            case Right(b)              => b
+          }
+        )
+    )
+
   def validated(
       f: Hints => Option[A => Either[Constraints.ConstraintError, Unit]]
   )(implicit

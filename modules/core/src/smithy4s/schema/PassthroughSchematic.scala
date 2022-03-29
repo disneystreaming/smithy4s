@@ -71,6 +71,9 @@ class PassthroughSchematic[F[_]](schematic: Schematic[F]) extends Schematic[F] {
   def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B] =
     schematic.bijection(f, to, from)
 
+  def surjection[A, B](f: F[A], tags: List[ShapeTag[_]], to: A => Either[ConstraintError, B], from: B => A): F[B] =
+    schematic.surjection(f, tags,  to, from)
+
   def timestamp: F[Timestamp] = schematic.timestamp
 
   def withHints[A](fa: F[A], hints: Hints): F[A] =

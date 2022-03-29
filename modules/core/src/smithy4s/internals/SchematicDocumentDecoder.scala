@@ -472,6 +472,13 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
       from: B => A
   ): DocumentDecoderMake[B] = f.map(to)
 
+  def surjection[A, B](
+      f: DocumentDecoderMake[A],
+      tags: List[ShapeTag[_]],
+      to: A => Either[ConstraintError, B],
+      from: B => A
+  ): DocumentDecoderMake[B] = f.emap(to)
+
   def timestamp: DocumentDecoderMake[Timestamp] =
     Hinted[DocumentDecoder].onHint(DATE_TIME: TimestampFormat) {
       case format @ (DATE_TIME | HTTP_DATE) =>

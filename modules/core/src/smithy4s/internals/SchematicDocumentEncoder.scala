@@ -278,6 +278,13 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
       from: B => A
   ): DocumentEncoderMake[B] = f.contramap(from)
 
+  def surjection[A, B](
+      f: DocumentEncoderMake[A],
+      tags: List[ShapeTag[_]],
+      to: A => Either[ConstraintError, B],
+      from: B => A
+  ): DocumentEncoderMake[B] = f.contramap(from)
+
   def timestamp: DocumentEncoderMake[Timestamp] = Hinted[DocumentEncoder].from {
     hints =>
       new DocumentEncoder[Timestamp] {
