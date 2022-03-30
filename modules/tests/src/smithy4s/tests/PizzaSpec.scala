@@ -384,6 +384,18 @@ abstract class PizzaSpec
     expect(matchResult == None)
   }
 
+  routerTest("Positive: can find enum endpoint by value") {
+    (client, uri, log) =>
+      for {
+        resValue <- client.send(
+          GET(uri / "get-enum" / "v1"),
+          log
+        )
+      } yield {
+        expect(resValue._1 == 200)
+      }
+  }
+
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(
