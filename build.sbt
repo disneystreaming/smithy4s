@@ -661,7 +661,7 @@ lazy val Dependencies = new {
 
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.6")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.2.7")
   }
 
   val Circe = new {
