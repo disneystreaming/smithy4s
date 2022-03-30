@@ -6,7 +6,7 @@ use smithy4s.api#simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
   errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
@@ -214,3 +214,27 @@ string UnknownServerErrorCode
 
 @trait
 document freeForm
+
+@readonly
+@http(method: "GET", uri: "/get-enum/{aa}", code: 200)
+operation GetEnum {
+  input: GetEnumInput,
+  output: GetEnumOutput,
+  errors: [ UnknownServerError ]
+}
+
+structure GetEnumInput {
+  @required
+  @httpLabel
+  aa: TheEnum
+}
+
+structure GetEnumOutput {
+  result: String
+}
+
+@enum([
+  {value: "v1", name: "V1"},
+  {value: "v2", name: "V2"}
+])
+string TheEnum
