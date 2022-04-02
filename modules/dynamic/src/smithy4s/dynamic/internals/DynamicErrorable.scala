@@ -14,25 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package dynamic
-package internals
+package smithy4s.dynamic.internals
 
-private[internals] case class DynamicEndpoint(
-    id: ShapeId,
-    input: Schema[DynData],
-    output: Schema[DynData],
-    override val errorable: Option[Errorable[DynData]],
-    hints: Hints
-) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
+import smithy4s.Errorable
+import smithy4s.UnionSchema
 
-  def wrap(
-      input: DynData
-  ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
-    DynamicOp(id, input)
-
-  def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
-
-  def streamedOutput: StreamingSchema[Nothing] = StreamingSchema.NoStream
-
+private[internals] case class DynamicErrorable[E](error: UnionSchema[E])
+    extends Errorable[E] {
+  def liftError(throwable: Throwable): Option[E] = throwable match {
+    case DynamicError(shapeId, e) if shapeId == error.shapeId =>
+      Some(e.asInstanceOf[E])
+    case _ => None
+  }
+  def unliftError(e: E): Throwable = DynamicError(error.shapeId, e)
 }

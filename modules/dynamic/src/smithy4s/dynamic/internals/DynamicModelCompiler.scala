@@ -25,6 +25,7 @@ import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
 import smithy4s.schema.EnumValue
+import smithy4s.schema.Alt
 
 private[dynamic] object Compiler {
 
@@ -270,23 +271,62 @@ private[dynamic] object Compiler {
       )
 
     override def operationShape(id: ShapeId, shape: OperationShape): Unit = {
+      def getSchemaFromId(shapeId: ShapeId): Eval[Schema[DynData]] =
+        Eval.defer(schemaMap(shapeId))
+
       def getSchema(maybeShapeId: Option[IdRef]): Eval[Schema[DynData]] =
         maybeShapeId
           .flatMap(ValidIdRef(_))
-          .map[Eval[Schema[DynData]]](id => Eval.defer(schemaMap(id)))
+          .map[Eval[Schema[DynData]]](getSchemaFromId)
           .getOrElse(Eval.now(unit.asInstanceOf[Schema[DynData]]))
+
+      def errorAlt(
+          index: Int,
+          shapeId: ShapeId
+      ): Eval[smithy4s.schema.SchemaAlt[DynAlt, DynData]] =
+        getSchemaFromId(shapeId).map { schema =>
+          Alt[Schema, DynAlt, DynData](
+            shapeId.name,
+            schema,
+            (index, _: DynData),
+            Hints.empty
+          )
+        }
 
       val input = shape.input.map(_.target)
       val output = shape.output.map(_.target)
 
+      val errorId = id.copy(id.name + "Error")
+      val errorUnionLazy = shape.errors.traverse { err =>
+        err
+          .collect { case MemberShape(ValidIdRef(id), _) => id }
+          .zipWithIndex
+          .traverse { case (id, idx) => errorAlt(idx, id) }
+          .map(alts =>
+            Schema.UnionSchema[DynAlt](
+              errorId,
+              Hints.empty,
+              alts.toVector,
+              { case (index, data) =>
+                alts(index).apply(data)
+              }
+            )
+          )
+      }
+      val errorableLazy = errorUnionLazy.map(
+        _.map(DynamicErrorable(_).asInstanceOf[Errorable[Any]])
+      )
+
       val ep = for {
         inputSchema <- getSchema(input).map(_.addHints(InputOutput.Input))
+        errorable <- errorableLazy
         outputSchema <- getSchema(output).map(_.addHints(InputOutput.Output)),
       } yield {
         DynamicEndpoint(
           id,
           inputSchema,
           outputSchema,
+          errorable,
           Hints(allHints(shape.traits): _*)
         )
       }
