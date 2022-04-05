@@ -40,7 +40,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
       Constraints.LengthConstraints.checkString(Hints(hint))("#" * 21)
     expect(
       result == Left(
-        Constraints.ConstraintError(
+        ConstraintError(
           hint,
           "length required to be >= 10 and <= 20, but was 21"
         )
@@ -89,7 +89,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     val result = Constraints.PatternConstraints.checkString(Hints(hint))("!!")
     expect(
       result == Left(
-        Constraints.ConstraintError(
+        ConstraintError(
           hint,
           "String '!!' does not match pattern '\\w+'"
         )
@@ -185,7 +185,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     )(List(1, 2, 3, 1))
     expect(
       result == Left(
-        Constraints.ConstraintError(
+        ConstraintError(
           hint,
           "List contains duplicate items while marked with UniqueItems trait"
         )
@@ -220,7 +220,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
 
     expect(
       check("!hello!") == Left(
-        Constraints.ConstraintError(
+        ConstraintError(
           length,
           "length required to be >= 1 and <= 5, but was 7"
         )
@@ -228,7 +228,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     ) &&
     expect(
       check("!!") == Left(
-        Constraints.ConstraintError(
+        ConstraintError(
           pattern,
           "String '!!' does not match pattern '\\w+'"
         )
@@ -236,7 +236,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     ) &&
     expect(
       check("!!!!!!") == Left(
-        Constraints.ConstraintError(
+        ConstraintError(
           pattern,
           "String '!!!!!!' does not match pattern '\\w+'"
         )
@@ -247,7 +247,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
   private def runLengthTest[A: Show](
       getLength: A => Int,
       genA: Gen[A],
-      check: Hints => Option[A => Either[Constraints.ConstraintError, Unit]]
+      check: Hints => Option[A => Either[ConstraintError, Unit]]
   ): IO[Expectations] = {
     val gen = for {
       min <- Gen.option(Gen.posNum[Long])
@@ -268,9 +268,9 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
   }
 
   private implicit class MaybeCheckOps[A](
-      maybeCheck: Option[A => Either[Constraints.ConstraintError, Unit]]
+      maybeCheck: Option[A => Either[ConstraintError, Unit]]
   ) {
-    def apply(a: A): Either[Constraints.ConstraintError, Unit] =
+    def apply(a: A): Either[ConstraintError, Unit] =
       maybeCheck match {
         case Some(check) => check(a)
         case None        => Right(())

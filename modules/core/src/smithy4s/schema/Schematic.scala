@@ -48,7 +48,12 @@ trait Schematic[F[_]] {
   // Other
   def suspend[A](f: Lazy[F[A]]): F[A]
   def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B]
-  def surjection[A, B](f: F[A], tags: List[ShapeTag[_]], to: A => Either[ConstraintError, B], from: B => A): F[B]
+  def surjection[A, B](
+      f: F[A],
+      tags: List[ShapeTag[_]],
+      to: A => Either[ConstraintError, B],
+      from: B => A
+  ): F[B]
   def withHints[A](fa: F[A], hints: Hints): F[A]
   def enumeration[A](
       to: A => (String, Int),

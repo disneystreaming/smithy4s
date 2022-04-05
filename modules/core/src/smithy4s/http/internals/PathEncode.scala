@@ -17,6 +17,7 @@
 package smithy4s.http.internals
 
 import smithy4s.internals.Hinted
+import smithy4s.capability.Contravariant
 
 trait PathEncode[A] { self =>
   def encode(a: A): List[String]
@@ -32,6 +33,12 @@ object PathEncode {
 
   type MaybePathEncode[A] = Option[PathEncode[A]]
   type Make[A] = Hinted[MaybePathEncode, A]
+
+  implicit val contravariantInstance: Contravariant[PathEncode] =
+    new Contravariant[PathEncode] {
+      def contramap[A, B](fa: PathEncode[A])(f: B => A): PathEncode[B] =
+        fa.contramap(f)
+    }
 
   object Make {
     def from[A](f: A => String): Make[A] = Hinted.static[MaybePathEncode, A] {

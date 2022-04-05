@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.internals
+package smithy4s
+package http.internals
 
 import smithy4s.ByteArray
 import smithy4s.Document
@@ -98,6 +99,13 @@ object FromMetadataSchematic extends Schematic[FromMetadata] {
   def bijection[A, B](
       f: FromMetadata[A],
       to: A => B,
+      from: B => A
+  ): FromMetadata[B] = FromMetadata.default
+
+  def surjection[A, B](
+      f: FromMetadata[A],
+      tags: List[ShapeTag[_]],
+      to: A => Either[ConstraintError, B],
       from: B => A
   ): FromMetadata[B] = FromMetadata.default
 

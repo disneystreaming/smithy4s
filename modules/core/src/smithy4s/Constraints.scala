@@ -21,8 +21,6 @@ import smithy.api.Pattern
 
 trait Constraints { self =>
 
-  import Constraints._
-
   def checkString(hints: Hints): Option[String => Either[ConstraintError, Unit]]
 
   def checkCollection[A](
@@ -229,9 +227,5 @@ object Constraints {
     RangeConstraints ++
     PatternConstraints ++
     UniqueItemsConstraints
-
-  final case class ConstraintError(hint: Hint, message: String)
-      extends Throwable
-      with scala.util.control.NoStackTrace
 
 }

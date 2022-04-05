@@ -51,6 +51,22 @@ trait DocumentDecoder[A] { self =>
 
   }
 
+  def emap[B](f: A => Either[ConstraintError, B]): DocumentDecoder[B] =
+    new DocumentDecoder[B] {
+
+      def apply(path: List[PayloadPath.Segment], document: Document): B = {
+        f(self(path, document)) match {
+          case Right(value) => value
+          case Left(value) =>
+            throw PayloadError(PayloadPath(path), expected, value.message)
+        }
+      }
+
+      def expected: String = self.expected
+      def canBeKey: Boolean = self.canBeKey
+
+    }
+
 }
 
 object DocumentDecoder {
@@ -60,6 +76,11 @@ object DocumentDecoder {
     new Covariant[DocumentDecoder] {
       def map[A, B](fa: DocumentDecoder[A])(f: A => B): DocumentDecoder[B] =
         fa.map(f)
+
+      def emap[A, B](fa: DocumentDecoder[A])(
+          f: A => Either[ConstraintError, B]
+      ): DocumentDecoder[B] =
+        fa.emap(f)
     }
 
   def instance[A](

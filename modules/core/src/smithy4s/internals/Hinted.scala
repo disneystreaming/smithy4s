@@ -34,6 +34,11 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
   ): Hinted[F, B] =
     Hinted(hints, h => I.imap(make(h))(to, from))
 
+  def xmap[B](to: A => Either[ConstraintError, B], from: B => A)(implicit
+      I: Invariant[F]
+  ): Hinted[F, B] =
+    Hinted(hints, h => I.xmap(make(h))(to, from))
+
   def mapK[G[_]](polyFunction: PolyFunction[F, G]): Hinted[G, A] =
     Hinted(hints, h => polyFunction(make(h)))
 
@@ -56,21 +61,12 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
     )
 
   def emap[B](
-      f: A => Either[schema.ConstraintError, B]
+      f: A => Either[ConstraintError, B]
   )(implicit C: Covariant[F]): Hinted[F, B] =
-    Hinted(
-      hints,
-      h =>
-        C.map(make(h))(a =>
-          f(a) match {
-            case Left(constraintError) => throw constraintError
-            case Right(b)              => b
-          }
-        )
-    )
+    Hinted(hints, h => C.emap(make(h))(f))
 
   def validated(
-      f: Hints => Option[A => Either[Constraints.ConstraintError, Unit]]
+      f: Hints => Option[A => Either[ConstraintError, Unit]]
   )(implicit
       C: Covariant[F]
   ): Hinted[F, A] = {
@@ -94,7 +90,7 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
   }
 
   def validatedI(
-      f: Hints => Option[A => Either[Constraints.ConstraintError, Unit]]
+      f: Hints => Option[A => Either[ConstraintError, Unit]]
   )(implicit
       I: Invariant[F]
   ): Hinted[F, A] = {

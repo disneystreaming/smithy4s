@@ -268,7 +268,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
           case e: MetadataError => Left(e)
           case MetaDecode.MetaDecodeError(const) =>
             Left(const(currentFieldName, currentBinding))
-          case Constraints.ConstraintError(_, message) =>
+          case ConstraintError(_, message) =>
             Left(
               MetadataError.FailedConstraint(
                 currentFieldName,
@@ -308,7 +308,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
               case e: MetadataError => Left(e)
               case MetaDecode.MetaDecodeError(const) =>
                 Left(const(currentFieldName, currentBinding))
-              case Constraints.ConstraintError(_, message) =>
+              case ConstraintError(_, message) =>
                 Left(
                   MetadataError.FailedConstraint(
                     currentFieldName,
@@ -324,6 +324,14 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
 
   def bijection[A, B](fa: MetaDecode.Make[A], to: A => B, from: B => A) =
     fa.map(to)
+
+  def surjection[A, B](
+      fa: MetaDecode.Make[A],
+      tags: List[ShapeTag[_]],
+      to: A => Either[ConstraintError, B],
+      from: B => A
+  ): MetaDecode.Make[B] =
+    fa.emap(to)
 
   def withHints[A](
       fa: MetaDecode.Make[A],

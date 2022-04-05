@@ -91,6 +91,13 @@ object SchematicRepr extends Schematic[Repr] {
 
   def bijection[A, B](f: String, to: A => B, from: B => A) = f
 
+  def surjection[A, B](
+      f: String,
+      tags: List[ShapeTag[_]],
+      to: A => Either[ConstraintError, B],
+      from: B => A
+  ) = f
+
   def unit: Repr[Unit] = "unit"
 
 }

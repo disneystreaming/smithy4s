@@ -123,6 +123,15 @@ object CodecAPI {
 
       def writeToArray(value: B): Array[Byte] = self.writeToArray(from(value))
     }
+
+    def xmap[B](to: A => Either[ConstraintError, B], from: B => A): Codec[B] = {
+      // TODO, this is a hack that will be removed when we get around to adapting
+      def adapted(a: A): B = to(a) match {
+        case Left(e)  => throw e
+        case Right(b) => b
+      }
+      imap(adapted, from)
+    }
   }
 
   abstract class DelegatingCodecAPI extends CodecAPI {
