@@ -305,7 +305,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ) = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".withHints${memberHints(hints)}"
+      val mh = if (hints.isEmpty) "" else s".withHints(${memberHints(hints)})"
       line(
         s"""val $valName : $StreamingSchema_[${tpe.render}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
       )
@@ -631,7 +631,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.ByteArray  => Set("schematic.ByteArray") -> "ByteArray"
         case Primitive.Bool       => Set.empty -> "Boolean"
         case Primitive.String     => Set.empty -> "String"
-        case Primitive.Timestamp  => Set("smithy4s.Timestamp") -> "Timestamp"
+        case Primitive.Timestamp  => Set.empty -> "smithy4s.Timestamp"
         case Primitive.Byte       => Set.empty -> "Byte"
         case Primitive.Int        => Set.empty -> "Int"
         case Primitive.Short      => Set.empty -> "Short"
@@ -641,7 +641,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.BigDecimal => Set.empty -> "BigDecimal"
         case Primitive.BigInteger => Set.empty -> "BigInteger"
         case Primitive.Uuid       => Set("java.util.UUID") -> "UUID"
-        case Primitive.Document   => Set("smithy4s.Document") -> "Document"
+        case Primitive.Document   => Set.empty -> "smithy4s.Document"
       }
 
     def schemaRef: String = tpe match {
