@@ -59,13 +59,14 @@ object AwsHttp4sBackend {
         case HttpMethod.PUT    => PUT
         case HttpMethod.DELETE => DELETE
       }
-      req = request.body.foldLeft(
-        Request[F](
-          method = method,
-          uri = endpoint,
-          headers = Headers(headers.map { case (k, v) => Header.Raw(k, v) })
-        )
-      )(_.withEntity(_))
+      req = request.body
+        .foldLeft(
+          Request[F](
+            method = method,
+            uri = endpoint
+          )
+        )(_.withEntity(_))
+        .putHeaders(Headers(headers.map { case (k, v) => Header.Raw(k, v) }))
     } yield req
   }
 
