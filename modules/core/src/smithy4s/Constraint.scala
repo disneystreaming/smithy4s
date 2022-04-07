@@ -16,6 +16,7 @@
 
 package smithy4s
 
+import capability.Isomorphism
 import smithy.api.Length
 import smithy.api.Pattern
 
@@ -32,7 +33,18 @@ object Constraint {
   def apply[C, A](implicit constraint: Constraint[C, A]): Constraint[C, A] =
     constraint
 
-  // format: on
+  implicit def isomorphismConstraint[C, A, B](implicit
+      constraintOnA: Constraint[C, A],
+      iso: Isomorphism[A, B]
+  ): Constraint[C, B] = new Constraint[C, B] {
+
+    def tag = constraintOnA.tag
+
+    def check(constraint: C): B => Either[ConstraintError, Unit] = {
+      val fun = constraintOnA.check(constraint)
+      fun.compose(iso.from)
+    }
+  }
 
   implicit val stringLengthConstraint: Constraint[Length, String] =
     new LengthConstraint[String](_.length)
@@ -41,6 +53,9 @@ object Constraint {
       ev: C[A] <:< Iterable[A]
   ): Constraint[Length, C[A]] =
     new LengthConstraint[C[A]](ca => ev(ca).size)
+
+  implicit def mapLengthConstraint[K, V]: Constraint[Length, Map[K, V]] =
+    new LengthConstraint[Map[K, V]](_.size)
 
   class LengthConstraint[A](getLength: A => Int) extends Constraint[Length, A] {
 
