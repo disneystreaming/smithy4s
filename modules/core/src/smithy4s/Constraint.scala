@@ -29,6 +29,9 @@ trait Constraint[C, A] { self =>
 
 object Constraint {
 
+  def apply[C, A](implicit constraint: Constraint[C, A]): Constraint[C, A] =
+    constraint
+
   // format: on
 
   implicit val stringLengthConstraint: Constraint[Length, String] =
@@ -40,6 +43,8 @@ object Constraint {
     new LengthConstraint[C[A]](ca => ev(ca).size)
 
   class LengthConstraint[A](getLength: A => Int) extends Constraint[Length, A] {
+
+    val tag = Length
 
     def check(
         lengthHint: Length
@@ -82,6 +87,8 @@ object Constraint {
   implicit val stringPatternConstraints: Constraint[Pattern, String] =
     new Constraint[Pattern, String] {
 
+      val tag: ShapeTag[Pattern] = ShapeTag[Pattern]
+
       def check(
           pattern: Pattern
       ): String => Either[ConstraintError, Unit] = {
@@ -101,6 +108,8 @@ object Constraint {
 
   implicit def numericRangeConstraints[N: Numeric]
       : Constraint[smithy.api.Range, N] = new Constraint[smithy.api.Range, N] {
+
+    val tag: ShapeTag[smithy.api.Range] = ShapeTag[smithy.api.Range]
 
     def check(
         range: smithy.api.Range
@@ -142,14 +151,17 @@ object Constraint {
     }
   }
 
-  implicit def collectionsUniqueItemsConstraint[C[_], A](
+  implicit def collectionsUniqueItemsConstraint[C[_], A](implicit
       ev: C[A] <:< Iterable[A]
   ): Constraint[smithy.api.UniqueItems, C[A]] =
     new Constraint[smithy.api.UniqueItems, C[A]] {
 
+      val tag: ShapeTag[smithy.api.UniqueItems] =
+        ShapeTag[smithy.api.UniqueItems]
+
       def check(
           unique: smithy.api.UniqueItems
-      ): C[A] => Either[ConstraintError, Unit] = { ca: C[A] =>
+      ): C[A] => Either[ConstraintError, Unit] = { (ca: C[A]) =>
         val itr = ev(ca)
         if (itr.toSet.size != itr.size) {
           Left(

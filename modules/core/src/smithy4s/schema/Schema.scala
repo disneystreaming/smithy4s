@@ -72,6 +72,26 @@ sealed trait Schema[A]{
     case SurjectionSchema(schema, tags, to, from) => SurjectionSchema(schema.transformHintsTransitively(f), tags, to, from)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
   }
+
+  def checked[C](tag: ShapeTag[C])(implicit constraint: Constraint[C, A]): Schema[A] = {
+    this.hints.get(tag) match {
+      case Some(hint) => this match {
+        case surjection: SurjectionSchema[a0, A] =>
+          val newTo : a0 => Either[ConstraintError, A] = {
+            val check = constraint.check(hint)
+            (a: a0) => surjection.to(a).flatMap(aa => check(aa).map(_ => aa))
+          }
+          SurjectionSchema(surjection.underlying, tag :: surjection.constraintTags, newTo, surjection.from)
+        case other =>
+          val to: A => Either[ConstraintError, A] = {
+            val check = constraint.check(hint)
+            (a: A) => check(a).map(_ => a)
+          }
+          SurjectionSchema[A, A](other, tag:: Nil, to, identity[A](_))
+      }
+      case None => this
+    }
+  }
 }
 
 object Schema {

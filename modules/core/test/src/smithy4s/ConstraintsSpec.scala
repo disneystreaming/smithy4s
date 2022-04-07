@@ -29,15 +29,14 @@ import weaver.scalacheck.Checkers
 object ConstraintsSpec extends SimpleIOSuite with Checkers {
 
   pureTest("LengthConstraints checks strings for length - valid input") {
-    val hints = Hints(Length(Some(10), Some(20)))
-    val result = Constraints.LengthConstraints.checkString(hints)("#" * 10)
+    val hint = Length(Some(10), Some(20))
+    val result = Constraint[Length, String].check(hint)("#" * 10)
     expect(result == Right(()))
   }
 
   pureTest("LengthConstraints checks strings for length - invalid input") {
     val hint = Length(Some(10), Some(20))
-    val result =
-      Constraints.LengthConstraints.checkString(Hints(hint))("#" * 21)
+    val result = Constraint[Length, String].check(hint)("#" * 21)
     expect(
       result == Left(
         ConstraintError(
@@ -51,42 +50,27 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
   test("LengthConstraints String properties") {
     runLengthTest[String](
       _.size,
-      Gen.alphaNumStr,
-      Constraints.LengthConstraints.checkString
+      Gen.alphaNumStr
     )
   }
 
   test("LengthConstraints collection properties - List") {
     runLengthTest[List[Byte]](
       _.size,
-      Gen.alphaNumStr.map(_.getBytes.toList),
-      Constraints.LengthConstraints.checkCollection
+      Gen.alphaNumStr.map(_.getBytes.toList)
     )
-  }
-
-  test("LengthConstraints Number properties - long") {
-    val gen = for {
-      min <- Gen.option(Gen.posNum[Long])
-      max <- Gen.option(Gen.posNum[Long])
-      input <- Gen.long
-    } yield (min, max, input)
-    forall(gen) { case (min, max, input) =>
-      val hint = Length(min, max)
-      val f = Constraints.LengthConstraints.checkNumeric[Long](Hints(hint))
-      expect(f(input) == Right(()))
-    }
   }
 
   pureTest("PatternConstraints checks strings for pattern - valid input") {
     val hint = Pattern("\\w+")
     val result =
-      Constraints.PatternConstraints.checkString(Hints(hint))("!hello!")
+      Constraint[Pattern, String].check(hint)("!hello!")
     expect(result == Right(()))
   }
 
   pureTest("PatternConstraints checks strings for pattern - invalid input") {
     val hint = Pattern("\\w+")
-    val result = Constraints.PatternConstraints.checkString(Hints(hint))("!!")
+    val result = Constraint[Pattern, String].check(hint)("!!")
     expect(
       result == Left(
         ConstraintError(
@@ -95,31 +79,6 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
         )
       )
     )
-  }
-
-  test("PatternConstraints collection properties - List") {
-    val gen = for {
-      pattern <- Gen.alphaNumStr
-      input <- Gen.listOf(Gen.long)
-    } yield (pattern, input)
-    forall(gen) { case (pattern, input) =>
-      val hint = Pattern(pattern)
-      val result =
-        Constraints.PatternConstraints.checkCollection(Hints(hint))(input)
-      expect(result == Right(()))
-    }
-  }
-
-  test("PatternConstraints Numeric properties - long") {
-    val gen = for {
-      pattern <- Gen.alphaNumStr
-      input <- Gen.long
-    } yield (pattern, input)
-    forall(gen) { case (pattern, input) =>
-      val hint = Pattern(pattern)
-      val f = Constraints.PatternConstraints.checkNumeric[Long](Hints(hint))
-      expect(f(input) == Right(()))
-    }
   }
 
   test("RangeConstraints Numeric check input is in range - long") {
@@ -130,7 +89,7 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     } yield (min, max, input)
     forall(gen) { case (min, max, input) =>
       val hint = smithy.api.Range(min, max)
-      val f = Constraints.RangeConstraints.checkNumeric[Long](Hints(hint))
+      val f = Constraint[smithy.api.Range, Long].check(hint)
       val result = f(input)
       result match {
         case Left(_) => expect(min.exists(_ > input) || max.exists(_ < input))
@@ -140,38 +99,11 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     }
   }
 
-  test("RangeConstraints String properties") {
-    val gen = for {
-      min <- Gen.option(Gen.posNum[BigDecimal])
-      max <- Gen.option(Gen.posNum[BigDecimal])
-      input <- Gen.alphaNumStr
-    } yield (min, max, input)
-    forall(gen) { case (min, max, input) =>
-      val hint = smithy.api.Range(min, max)
-      val result = Constraints.RangeConstraints.checkString(Hints(hint))(input)
-      expect(result == Right(()))
-    }
-  }
-
-  test("RangeConstraints collection properties") {
-    val gen = for {
-      min <- Gen.option(Gen.posNum[BigDecimal])
-      max <- Gen.option(Gen.posNum[BigDecimal])
-      input <- Gen.listOf(Gen.long)
-    } yield (min, max, input)
-    forall(gen) { case (min, max, input) =>
-      val hint = smithy.api.Range(min, max)
-      val result =
-        Constraints.RangeConstraints.checkCollection(Hints(hint))(input)
-      expect(result == Right(()))
-    }
-  }
-
   test("UniqueItemsConstraints checks for duplicates in Lists - valid inputs") {
     forall(Gen.listOf(Gen.long).map(_.distinct)) { input =>
       val hint = UniqueItems()
       val result =
-        Constraints.UniqueItemsConstraints.checkCollection(Hints(hint))(input)
+        Constraint[UniqueItems, List[Long]].check(hint)(input)
       expect(result == Right(()))
     }
   }
@@ -180,9 +112,8 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     "UniqueItemsConstraints checks for duplicates in Lists - invalid input"
   ) {
     val hint = UniqueItems()
-    val result = Constraints.UniqueItemsConstraints.checkCollection(
-      Hints(hint)
-    )(List(1, 2, 3, 1))
+    val result =
+      Constraint[UniqueItems, List[Int]].check(hint)(List(1, 2, 3, 1))
     expect(
       result == Left(
         ConstraintError(
@@ -193,62 +124,10 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     )
   }
 
-  test("UniqueItemsConstraints String properties") {
-    forall(Gen.alphaNumStr) { input =>
-      val hint = UniqueItems()
-      val result =
-        Constraints.UniqueItemsConstraints.checkString(Hints(hint))(input)
-      expect(result == Right(()))
-    }
-  }
-
-  test("UniqueItemsConstraints Numeric properties") {
-    forall(Gen.long) { input =>
-      val hint = UniqueItems()
-      val f = Constraints.UniqueItemsConstraints.checkNumeric[Long](Hints(hint))
-      expect(f(input) == Right(()))
-    }
-  }
-
-  pureTest("Constraints composition") {
-    val constraints =
-      Constraints.PatternConstraints ++ Constraints.LengthConstraints
-    val length = Length(Some(1), Some(5))
-    val pattern = Pattern("\\w+")
-    val hints = Hints(pattern, length)
-    val check = constraints.checkString(hints)
-
-    expect(
-      check("!hello!") == Left(
-        ConstraintError(
-          length,
-          "length required to be >= 1 and <= 5, but was 7"
-        )
-      )
-    ) &&
-    expect(
-      check("!!") == Left(
-        ConstraintError(
-          pattern,
-          "String '!!' does not match pattern '\\w+'"
-        )
-      )
-    ) &&
-    expect(
-      check("!!!!!!") == Left(
-        ConstraintError(
-          pattern,
-          "String '!!!!!!' does not match pattern '\\w+'"
-        )
-      )
-    ) // shows left side precedence of ++
-  }
-
   private def runLengthTest[A: Show](
       getLength: A => Int,
-      genA: Gen[A],
-      check: Hints => Option[A => Either[ConstraintError, Unit]]
-  ): IO[Expectations] = {
+      genA: Gen[A]
+  )(implicit constraint: Constraint[Length, A]): IO[Expectations] = {
     val gen = for {
       min <- Gen.option(Gen.posNum[Long])
       max <- Gen.option(Gen.posNum[Long])
@@ -256,8 +135,8 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     } yield (min, max, input)
     forall(gen) { case (min, max, input) =>
       val testLength = getLength(input)
-      val hints = Hints(Length(min, max))
-      val result = check(hints)(input)
+      val hint = Length(min, max)
+      val result = constraint.check(hint)(input)
       result match {
         case Left(_) =>
           expect(min.exists(_ > testLength) || max.exists(_ < testLength))
@@ -267,13 +146,4 @@ object ConstraintsSpec extends SimpleIOSuite with Checkers {
     }
   }
 
-  private implicit class MaybeCheckOps[A](
-      maybeCheck: Option[A => Either[ConstraintError, Unit]]
-  ) {
-    def apply(a: A): Either[ConstraintError, Unit] =
-      maybeCheck match {
-        case Some(check) => check(a)
-        case None        => Right(())
-      }
-  }
 }

@@ -93,7 +93,7 @@ private[smithy4s] object StringAndBlobCodecSchematic {
 
 }
 
-private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
+private[smithy4s] class StringAndBlobCodecSchematic
     extends Schematic[Result]
     with StubSchematic[Result] {
 
@@ -116,7 +116,6 @@ private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
         }
       }
     }
-    .validatedI(constraints.checkString)
 
   override def bytes: Result[ByteArray] =
     Hinted[CodecResult].onHintOpt[smithy.api.MediaType, ByteArray] {

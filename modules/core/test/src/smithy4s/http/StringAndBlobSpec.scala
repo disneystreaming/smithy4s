@@ -17,7 +17,6 @@
 package smithy4s.http
 
 import smithy4s.ByteArray
-import smithy4s.Constraints
 import smithy4s.PayloadPath
 import smithy4s.Schema
 import smithy4s.example._
@@ -49,7 +48,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
   }
 
   val stringsAndBlobs =
-    CodecAPI.nativeStringsAndBlob(dummy, Constraints.defaultConstraints)
+    CodecAPI.nativeStringsAndBlob(dummy)
 
   test("Strings") {
     val input = StringBody("hello")

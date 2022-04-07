@@ -162,17 +162,15 @@ object CodecAPI {
     * for instance)
     */
   def nativeStringsAndBlob(
-      underlying: CodecAPI,
-      constraints: Constraints
+      underlying: CodecAPI
   ): CodecAPI =
     new DelegatingCodecAPI {
 
       def compileCodec[A](
           schema: Schema[A]
       ): this.Codec[A] = {
-        val stringAndBlobResult = schema.compile(
-          new internals.StringAndBlobCodecSchematic(constraints)
-        )
+        val stringAndBlobResult =
+          schema.compile(new internals.StringAndBlobCodecSchematic())
         stringAndBlobResult.get match {
           case StringAndBlobCodecSchematic.BodyCodecResult(bodyCodec) =>
             bodyCodec
