@@ -46,8 +46,7 @@ object SchematicPathEncoder
 
   override def surjection[A, B](
       f: PathEncode.Make[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): PathEncode.Make[B] = f.contramap(from)
 

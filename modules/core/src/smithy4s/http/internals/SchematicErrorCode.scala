@@ -48,8 +48,7 @@ private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
 
   override def surjection[A, B](
       f: HttpCode[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): HttpCode[B] =
     (b, hints) => f(from(b), hints)

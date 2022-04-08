@@ -382,7 +382,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
                 } else {
                   val mh = memberHints(hints)
-                  s"""${tpe.schemaRef}${renderConstraintCheck(hints)}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
+                  s"""${tpe.schemaRef}${renderConstraintCheck(
+                    hints
+                  )}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
                 }
             }
           if (fields.size <= 22) {

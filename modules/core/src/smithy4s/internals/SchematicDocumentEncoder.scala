@@ -280,8 +280,7 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
 
   def surjection[A, B](
       f: DocumentEncoderMake[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): DocumentEncoderMake[B] = f.contramap(from)
 

@@ -495,10 +495,9 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
 
   def surjection[A, B](
       f: DocumentDecoderMake[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
-  ): DocumentDecoderMake[B] = f.emap(to)
+  ): DocumentDecoderMake[B] = f.emap(to.asFunction)
 
   def timestamp: DocumentDecoderMake[Timestamp] =
     Hinted[DocumentDecoder].onHint(DATE_TIME: TimestampFormat) {

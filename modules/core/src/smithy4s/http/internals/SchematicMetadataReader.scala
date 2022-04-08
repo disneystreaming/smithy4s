@@ -321,11 +321,10 @@ private[http] class SchematicMetadataReader()
 
   def surjection[A, B](
       fa: MetaDecode.Make[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): MetaDecode.Make[B] =
-    fa.emap(to)
+    fa.emap(to.asFunction)
 
   def withHints[A](
       fa: MetaDecode.Make[A],

@@ -73,11 +73,10 @@ class PassthroughSchematic[F[_]](schematic: Schematic[F]) extends Schematic[F] {
 
   def surjection[A, B](
       f: F[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): F[B] =
-    schematic.surjection(f, tags, to, from)
+    schematic.surjection(f, to, from)
 
   def timestamp: F[Timestamp] = schematic.timestamp
 

@@ -218,9 +218,8 @@ private[smithy4s] class StringAndBlobCodecSchematic
 
   override def surjection[A, B](
       f: Result[A],
-      tags: List[smithy4s.ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
-  ): Result[B] = f.xmap(to, from) // inherited from trait
+  ): Result[B] = f.xmap(to.asFunction, from) // inherited from trait
 
 }

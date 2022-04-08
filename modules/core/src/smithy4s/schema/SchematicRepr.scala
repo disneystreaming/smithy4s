@@ -93,8 +93,7 @@ object SchematicRepr extends Schematic[Repr] {
 
   def surjection[A, B](
       f: String,
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ) = f
 

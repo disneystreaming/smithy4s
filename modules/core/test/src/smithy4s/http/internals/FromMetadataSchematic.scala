@@ -104,8 +104,7 @@ object FromMetadataSchematic extends Schematic[FromMetadata] {
 
   def surjection[A, B](
       f: FromMetadata[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): FromMetadata[B] = FromMetadata.default
 

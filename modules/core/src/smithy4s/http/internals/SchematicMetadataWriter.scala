@@ -171,8 +171,7 @@ private[http] object SchematicMetadataWriter
 
   def surjection[A, B](
       f: MetaEncode.Make[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      to: Refinement[A, B],
       from: B => A
   ): MetaEncode.Make[B] =
     f.contramap(from)

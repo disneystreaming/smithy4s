@@ -79,8 +79,7 @@ trait StubSchematic[F[_]] extends Schematic[F] {
 
   override def surjection[A, B](
       f: F[A],
-      tags: List[ShapeTag[_]],
-      to: A => Either[ConstraintError, B],
+      refinement: Refinement[A, B],
       from: B => A
   ): F[B] =
     default
