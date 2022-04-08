@@ -346,7 +346,7 @@ lazy val protocol = projectMatrix
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Smithy.model,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
@@ -371,7 +371,7 @@ lazy val dynamic = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
       Dependencies.Cats.core.value,
       Dependencies.Weaver.cats.value % Test
     ),
@@ -406,7 +406,7 @@ lazy val openapi = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.openapi,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -581,16 +581,16 @@ lazy val Dependencies = new {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.6.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0"
     )
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.7"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.12"
     )
 
   val Smithy = new {
-    val smithyVersion = "1.18.1"
+    val smithyVersion = "1.19.0"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
@@ -606,7 +606,7 @@ lazy val Dependencies = new {
 
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.4")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.2.7")
   }
 
   val Circe = new {
@@ -615,7 +615,7 @@ lazy val Dependencies = new {
   }
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.10" else "0.22.12")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.11" else "0.22.12")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
