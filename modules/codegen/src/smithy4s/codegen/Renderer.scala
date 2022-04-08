@@ -309,7 +309,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ) = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".withHints(${memberHints(hints)})"
+      val mh = if (hints.isEmpty) "" else s".addHints(${memberHints(hints)})"
       line(
         s"""val $valName : $StreamingSchema_[${tpe.render}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
       )
