@@ -639,7 +639,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.Float      => Set.empty -> "Float"
         case Primitive.Double     => Set.empty -> "Double"
         case Primitive.BigDecimal => Set.empty -> "BigDecimal"
-        case Primitive.BigInteger => Set.empty -> "BigInteger"
+        case Primitive.BigInteger => Set.empty -> "BigInt"
         case Primitive.Uuid       => Set("java.util.UUID") -> "UUID"
         case Primitive.Document   => Set.empty -> "smithy4s.Document"
       }
@@ -792,7 +792,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     prim match {
       case Primitive.BigDecimal =>
         (bd: BigDecimal) => s"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInteger($bi)"
+      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInt($bi)"
       case Primitive.Unit       => _ => "()"
       case Primitive.Double     => _.toString
       case Primitive.Float      => _.toString

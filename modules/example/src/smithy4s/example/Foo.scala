@@ -12,6 +12,8 @@ object Foo extends smithy4s.ShapeTag.Companion[Foo] {
 
   case class IntCase(int: Int) extends Foo
   case class StrCase(str: String) extends Foo
+  case class BIntCase(bInt: BigInt) extends Foo
+  case class BDecCase(bDec: BigDecimal) extends Foo
 
   object IntCase {
     val hints : smithy4s.Hints = smithy4s.Hints()
@@ -23,13 +25,27 @@ object Foo extends smithy4s.ShapeTag.Companion[Foo] {
     val schema: smithy4s.Schema[StrCase] = bijection(string, StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }
+  object BIntCase {
+    val hints : smithy4s.Hints = smithy4s.Hints()
+    val schema: smithy4s.Schema[BIntCase] = bijection(bigint, BIntCase(_), _.bInt)
+    val alt = schema.oneOf[Foo]("bInt")
+  }
+  object BDecCase {
+    val hints : smithy4s.Hints = smithy4s.Hints()
+    val schema: smithy4s.Schema[BDecCase] = bijection(bigdecimal, BDecCase(_), _.bDec)
+    val alt = schema.oneOf[Foo]("bDec")
+  }
 
   val schema: smithy4s.Schema[Foo] = union(
     IntCase.alt,
     StrCase.alt,
+    BIntCase.alt,
+    BDecCase.alt,
   ){
     case c : IntCase => IntCase.alt(c)
     case c : StrCase => StrCase.alt(c)
+    case c : BIntCase => BIntCase.alt(c)
+    case c : BDecCase => BDecCase.alt(c)
   }.withHints(hints)
   implicit val staticSchema : schematic.Static[smithy4s.Schema[Foo]] = schematic.Static(schema)
 }
