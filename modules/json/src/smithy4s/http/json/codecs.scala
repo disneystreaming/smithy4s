@@ -34,7 +34,6 @@ object codecs {
       TimestampFormat,
       Discriminated,
       InputOutput,
-      Discriminated,
       DiscriminatedUnionMember
     )
 
