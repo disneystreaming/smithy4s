@@ -641,9 +641,7 @@ lazy val Dependencies = new {
 
   object ScalaJS {
     val scalaJsJavaSecureRandom: Def.Initialize[ModuleID] = Def.setting(
-      ("org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0").cross(
-        CrossVersion.for3Use2_13
-      )
+      "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0"
     )
   }
 
