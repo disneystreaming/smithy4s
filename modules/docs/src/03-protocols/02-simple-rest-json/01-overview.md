@@ -40,6 +40,20 @@ operation Hello {
   input: Person,
   output: Greeting
 }
+
+structure Person {
+  @httpLabel
+  @required
+  name: String,
+
+  @httpQuery("town")
+  town: String
+}
+
+structure Greeting {
+  @required
+  message: String
+}
 ```
 
 ## Supported taits
