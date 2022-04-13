@@ -486,12 +486,7 @@ lazy val json = projectMatrix
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(
-    allJsScalaVersions,
-    jsDimSettings ++ Seq(
-      libraryDependencies += Dependencies.ScalaJS.scalaJsJavaSecureRandom.value
-    )
-  )
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
 
 /**
  * Module that contains http4s-specific client/server bindings for the
@@ -638,12 +633,6 @@ lazy val benchmark = projectMatrix
 val isCE3 = settingKey[Boolean]("Is the current build using CE3?")
 
 lazy val Dependencies = new {
-
-  object ScalaJS {
-    val scalaJsJavaSecureRandom: Def.Initialize[ModuleID] = Def.setting(
-      "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0"
-    )
-  }
 
   val collectionsCompat =
     Def.setting(
