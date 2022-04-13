@@ -498,7 +498,11 @@ lazy val http4s = projectMatrix
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
-      Seq(
+      val ce3 =
+        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
+        else Seq.empty
+
+      ce3 ++ Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
@@ -547,8 +551,11 @@ lazy val tests = projectMatrix
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
+      val ce3 =
+        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
+        else Seq.empty
 
-      Seq(
+      ce3 ++ Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.emberClient.value,
@@ -669,6 +676,18 @@ lazy val Dependencies = new {
       Def.setting("io.circe" %%% "circe-generic" % "0.14.1")
   }
 
+  /*
+   * we override the version to use the fix included in
+   * https://github.com/typelevel/cats-effect/pull/2945
+   * it allows us to use UUIDGen instead of calling
+   * UUID.randomUUID manually
+   *
+   * we also provide a 2.12 shim under:
+   * modules/tests/src-ce2/UUIDGen.scala
+   */
+  val CatsEffect3: Def.Initialize[ModuleID] =
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.11")
+
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.11" else "0.22.12")
 
@@ -676,7 +695,6 @@ lazy val Dependencies = new {
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
     val emberClient: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-client" % http4sVersion.value)
-
     val circe: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion.value)
     val core: Def.Initialize[ModuleID] =
