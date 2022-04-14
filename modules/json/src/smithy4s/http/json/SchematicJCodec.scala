@@ -678,11 +678,14 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
       first: Alt[JCodecMake, Z, _],
       rest: Vector[Alt[JCodecMake, Z, _]]
   )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodecMake[Z] = {
-    Hinted[JCodec].onHintOneOf[Untagged, Discriminated, Z](
-      _ => untaggedUnion(first, rest)(total),
-      d => discriminatedUnion(first, rest, d)(total),
-      taggedUnion(first, rest)(total)
-    )
+    Hinted[JCodec].from {
+      case Untagged.hint(_) =>
+        untaggedUnion(first, rest)(total)
+      case Discriminated.hint(d) =>
+        discriminatedUnion(first, rest, d)(total)
+      case _ =>
+        taggedUnion(first, rest)(total)
+    }
   }
 
   def enumeration[A](
