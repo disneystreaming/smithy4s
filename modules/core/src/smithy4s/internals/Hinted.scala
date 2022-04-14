@@ -138,21 +138,6 @@ object Hinted {
         f: (Option[H1], Option[H2]) => F[A]
     ): Hinted[F, A] =
       Hinted(Hints(), (h: Hints) => f(h.get[H1], h.get[H2]))
-    def onHintOneOf[H1: ShapeTag, H2: ShapeTag, A](
-        onH1: H1 => F[A],
-        onH2: H2 => F[A],
-        fallback: => F[A]
-    ): Hinted[F, A] =
-      Hinted(
-        Hints(),
-        (h: Hints) => {
-          h.get[H1]
-            .map(onH1)
-            .orElse(h.get[H2].map(onH2))
-            .getOrElse(fallback)
-        }
-      )
-
     def onHint[H: ShapeTag, A](default: H)(f: H => F[A]): Hinted[F, A] =
       Hinted(Hints(), (h: Hints) => f(h.get[H].getOrElse(default)))
     def static[A](fa: F[A]): Hinted[F, A] =
