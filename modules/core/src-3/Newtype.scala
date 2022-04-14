@@ -29,4 +29,7 @@ abstract class Newtype[A] extends HasId { self =>
     def id: ShapeId = self.id
   }
 
+  object hint {
+    def unapply(h: Hints): Option[Type] = h.get(tag)
+  }
 }
