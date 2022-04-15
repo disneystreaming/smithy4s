@@ -20,16 +20,12 @@ package http.json
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import smithy.api.JsonName
 import smithy4s.api.Discriminated
-import smithy4s.example.One
-import smithy4s.example.PayloadData
-import smithy4s.example.TestBiggerUnion
+import smithy4s.example._
 import smithy4s.http.PayloadError
 import smithy4s.schema.Schema._
 import weaver._
 
 import scala.collection.immutable.ListMap
-import smithy4s.example.{TestBiggerUnion, One}
-import smithy4s.example.{UntaggedUnion, Three, Four}
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -243,9 +239,6 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
-  <<<<<<< HEAD
-  implicit val byteArraySchema: Schema[ByteArray] = bytes
-  =======
   pureTest("Untagged union are encoded / decoded") {
     val oneJ = """ {"three":"three_value"}"""
     val twoJ = """ {"four":4}"""
@@ -258,8 +251,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
     )
   }
 
-  implicit val byteArraySchema: Static[Schema[ByteArray]] = Static(bytes)
-  >>>>>>> main
+  implicit val byteArraySchema: Schema[ByteArray] = bytes
 
   pureTest("byte arrays are encoded as base64") {
     val bytes = ByteArray("foobar".getBytes())
