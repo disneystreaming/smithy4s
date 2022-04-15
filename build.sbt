@@ -138,17 +138,18 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
-    Compile / packageSrc / mappings ++= {
-      val base = (Compile / sourceManaged).value
-      val files = (Compile / managedSources).value
-      files.map(f =>
-        (
-          f,
-          f.relativeTo(base).get.getPath
-        )
-      )
-    }
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    // TODO: bring back
+    // Compile / packageSrc / mappings ++= {
+    //   val base = (Compile / sourceManaged).value
+    //   val files = (Compile / managedSources).value
+    //   files.map(f =>
+    //     (
+    //       f,
+    //       f.relativeTo(base).get.getPath
+    //     )
+    //   )
+    // }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
