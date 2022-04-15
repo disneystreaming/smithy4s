@@ -24,6 +24,7 @@ import smithy4s.http.PayloadError
 import smithy4s.syntax._
 import smithy4s.example.{
   CheckedOrUnchecked,
+  CheckedOrUnchecked2,
   Four,
   One,
   PayloadData,
@@ -185,6 +186,18 @@ object SchematicJCodecTests extends SimpleIOSuite {
         "String '!@#' does not match pattern '^\\w+$'"
       )
     )
+  }
+
+  pureTest(
+    "Constraints contribute to the discrimination process of untagged union"
+  ) {
+    val jsonStr = "\"foo\""
+    val result = readFromString[CheckedOrUnchecked2](jsonStr)
+    val e1 = expect(result == CheckedOrUnchecked2.CheckedCase("foo"))
+    val jsonStr2 = "\"!@#\""
+    val result2 = readFromString[CheckedOrUnchecked2](jsonStr2)
+    val e2 = expect(result2 == CheckedOrUnchecked2.RawCase("!@#"))
+    e1 && e2
   }
 
   pureTest("Discriminated union gets encoded correctly") {
