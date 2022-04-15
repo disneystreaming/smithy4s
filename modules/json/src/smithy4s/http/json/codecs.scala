@@ -39,6 +39,6 @@ object codecs {
     )
 
   private[smithy4s] val schematicJCodec: Schematic[JCodec.JCodecMake] =
-    new SchematicJCodec(Constraints.defaultConstraints, maxArity = 1024)
+    new SchematicJCodec(maxArity = 1024)
 
 }

@@ -116,6 +116,8 @@ trait SchematicGen extends Schematic[Gen] {
   def suspend[A](f: Lazy[Gen[A]]): Gen[A] = Gen.lzy(f.value)
 
   def bijection[A, B](f: Gen[A], to: A => B, from: B => A): Gen[B] = f.map(to)
+  def surjection[A, B](f: Gen[A], to: Refinement[A, B], from: B => A): Gen[B] =
+    f.map(to.asThrowingFunction)
 
   def withHints[A](fa: Gen[A], hints: Hints): Gen[A] = fa
   def timestamp: Gen[Timestamp] = Smithy4sGen.genTimestamp

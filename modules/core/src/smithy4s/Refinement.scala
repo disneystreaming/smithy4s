@@ -39,6 +39,13 @@ trait Refinement[A, B] { self =>
         ConstraintError(Hints.Binding(tag, constraint), msg)
       )
 
+  final val asThrowingFunction: A => B =
+    apply(_) match {
+      case Left(msg) =>
+        throw ConstraintError(Hints.Binding(tag, constraint), msg)
+      case Right(b) => b
+    }
+
   final def contramap[A0](f: A0 => A): Refinement.Aux[Constraint, A0, B] =
     new Refinement[A0, B] {
       type Constraint = self.Constraint

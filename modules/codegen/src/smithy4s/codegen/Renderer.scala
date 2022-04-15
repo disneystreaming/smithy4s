@@ -382,9 +382,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
                 } else {
                   val mh = memberHints(hints)
-                  s"""${tpe.schemaRef}${renderConstraintCheck(
-                    hints
-                  )}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
+                  // format: off
+                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintCheck(hints, tpe)}"""
+                  // format: on
                 }
             }
           if (fields.size <= 22) {
@@ -751,7 +751,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderConstraintCheck(hints: List[Hint]): String = {
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
     if (tags.isEmpty) ""
-    else s".checked[${tags.map(_.renderFull).mkString(", ")}]"
+    else {
+      tags.map(t => s".checked[${t.renderFull}]").mkString(".")
+    }
+  }
+
+  def renderFieldConstraintCheck(hints: List[Hint], tpe: Type): String = {
+    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    if (tags.isEmpty) ""
+    else {
+      tags.map(t => s".checked[${t.renderFull}, ${tpe.render}]").mkString(".")
+    }
   }
 
   private def shapeTag(name: String): String =

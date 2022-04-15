@@ -73,12 +73,16 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
   }
 
-  def checked[C](implicit constraint: Refinement.Checked[C, A]): Schema[A] = {
-    this.hints.get(constraint.tag) match {
+  private[smithy4s] def checkedAgainstHints[C](hints: Hints)(implicit constraint: Refinement.Checked[C, A]): Schema[A] = {
+    hints.get(constraint.tag) match {
       case Some(hint) =>
         SurjectionSchema(this, constraint.make(hint), identity[A](_))
       case None => this
     }
+  }
+
+  def checked[C](implicit constraint: Refinement.Checked[C, A]): Schema[A] = {
+    checkedAgainstHints(this.hints)
   }
 }
 
