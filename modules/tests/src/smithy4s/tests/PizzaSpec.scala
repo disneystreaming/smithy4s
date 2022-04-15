@@ -324,9 +324,10 @@ abstract class PizzaSpec
           log
         )
       } yield {
-        val (code, headers, _) = res
+        val (code, headers, body) = res
 
         expect(code == 200) &&
+        expect(body.isEmpty()) &&
         expect(headers.get("x-uppercase-header") == Some(List("header-1"))) &&
         expect(headers.get("x-capitalized-header") == Some(List("header-2"))) &&
         expect(headers.get("x-lowercase-header") == Some(List("header-3"))) &&
