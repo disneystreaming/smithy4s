@@ -61,10 +61,8 @@ structure BigStruct{
 string EnumWithSymbols
 
 
-@pattern("^\\w+$")
-string CheckedString
-
 union CheckedOrUnchecked {
-  checked: CheckedString,
+  @pattern("^\\w+$")
+  checked: String,
   raw: String
 }

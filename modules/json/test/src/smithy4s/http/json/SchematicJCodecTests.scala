@@ -24,7 +24,6 @@ import smithy4s.http.PayloadError
 import smithy4s.syntax._
 import smithy4s.example.{
   CheckedOrUnchecked,
-  CheckedString,
   Four,
   One,
   PayloadData,
@@ -173,7 +172,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
   pureTest("Valid union values are parsed successfuly") {
     val jsonStr = """{"checked":"foo"}"""
     val result = readFromString[CheckedOrUnchecked](jsonStr)
-    expect(result == CheckedOrUnchecked.CheckedCase(CheckedString("foo")))
+    expect(result == CheckedOrUnchecked.CheckedCase("foo"))
   }
 
   pureTest("Invalid union values fails to parse") {
