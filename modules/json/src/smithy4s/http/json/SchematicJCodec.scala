@@ -23,7 +23,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core._
 import smithy.api.HttpPayload
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
-import smithy4s.api.Discriminated
 import smithy4s.api.Untagged
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
