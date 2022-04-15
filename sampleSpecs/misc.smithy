@@ -59,3 +59,10 @@ structure BigStruct{
   {value: "_"},
 ])
 string EnumWithSymbols
+
+
+union CheckedOrUnchecked {
+  @pattern("^\\w+$")
+  checked: String,
+  raw: String
+}
