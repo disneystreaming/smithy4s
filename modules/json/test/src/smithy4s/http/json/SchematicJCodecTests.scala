@@ -28,6 +28,8 @@ import smithy4s.schema.Schema._
 import weaver._
 
 import scala.collection.immutable.ListMap
+import smithy4s.example.{TestBiggerUnion, One}
+import smithy4s.example.{UntaggedUnion, Three, Four}
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -241,7 +243,23 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
+  <<<<<<< HEAD
   implicit val byteArraySchema: Schema[ByteArray] = bytes
+  =======
+  pureTest("Untagged union are encoded / decoded") {
+    val oneJ = """ {"three":"three_value"}"""
+    val twoJ = """ {"four":4}"""
+    val oneRes = readFromString[UntaggedUnion](oneJ)
+    val twoRes = readFromString[UntaggedUnion](twoJ)
+
+    expect(
+      oneRes == UntaggedUnion.ThreeCase(Three("three_value")) &&
+        twoRes == UntaggedUnion.FourCase(Four(4))
+    )
+  }
+
+  implicit val byteArraySchema: Static[Schema[ByteArray]] = Static(bytes)
+  >>>>>>> main
 
   pureTest("byte arrays are encoded as base64") {
     val bytes = ByteArray("foobar".getBytes())

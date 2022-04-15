@@ -24,6 +24,7 @@ import smithy4s.example._
 import java.util.UUID
 
 import PizzaAdminServiceImpl._
+import cats.effect.std.UUIDGen
 
 object PizzaAdminServiceImpl {
   case class Item(food: Food, price: Float, addedAt: Timestamp)
@@ -50,7 +51,7 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
           PriceError(s"Prices must be whole numbers: ${menuItem.price}")
         )
         .unlessA(menuItem.price.isWhole)
-      uuid <- IO(java.util.UUID.randomUUID())
+      uuid <- UUIDGen.randomUUID[IO]
       timestamp <- IO(Timestamp.nowUTC())
       _ <- ref.update { state =>
         val item = Item(menuItem.food, menuItem.price, timestamp)
