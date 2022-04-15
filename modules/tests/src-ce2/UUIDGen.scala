@@ -14,22 +14,11 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package cats.effect.std
 
-abstract class Newtype[A] extends HasId { self =>
-  opaque type Type = A
+import java.util.UUID
+import cats.effect._
 
-  def apply(a: A): Type = a
-
-  extension (orig: Type) def value: A = orig
-
-  def unapply(orig: Type): Some[A] = Some(orig.value)
-
-  implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
-    def id: ShapeId = self.id
-  }
-
-  object hint {
-    def unapply(h: Hints): Option[Type] = h.get(tag)
-  }
+object UUIDGen {
+  def randomUUID[F[_]: Sync]: F[UUID] = Sync[F].delay(UUID.randomUUID())
 }

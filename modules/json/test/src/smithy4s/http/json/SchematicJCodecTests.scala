@@ -22,13 +22,20 @@ import schematic.ByteArray
 import smithy.api.JsonName
 import smithy4s.http.PayloadError
 import smithy4s.syntax._
-import weaver._
+import smithy4s.example.{
+  CheckedOrUnchecked,
+  Four,
+  One,
+  PayloadData,
+  TestBiggerUnion,
+  Three,
+  UntaggedUnion
+}
 import smithy4s.api.Discriminated
+import weaver._
 
 import scala.collection.immutable.ListMap
-import smithy4s.example.PayloadData
-import smithy4s.example.TestBiggerUnion
-import smithy4s.example.One
+import scala.util.Try
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -162,6 +169,24 @@ object SchematicJCodecTests extends SimpleIOSuite {
     expect(str == jsonStr)
   }
 
+  pureTest("Valid union values are parsed successfuly") {
+    val jsonStr = """{"checked":"foo"}"""
+    val result = readFromString[CheckedOrUnchecked](jsonStr)
+    expect(result == CheckedOrUnchecked.CheckedCase("foo"))
+  }
+
+  pureTest("Invalid union values fails to parse") {
+    val jsonStr = """{"checked":"!@#"}"""
+    val result = Try(readFromString[CheckedOrUnchecked](jsonStr)).failed
+    expect(
+      result.get == PayloadError(
+        PayloadPath.fromString(".checked"),
+        "string",
+        "String '!@#' does not match pattern '^\\w+$'"
+      )
+    )
+  }
+
   pureTest("Discriminated union gets encoded correctly") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
@@ -244,6 +269,18 @@ object SchematicJCodecTests extends SimpleIOSuite {
           expect(msg.contains("Expected JSON object"))
 
     }
+  }
+
+  pureTest("Untagged union are encoded / decoded") {
+    val oneJ = """ {"three":"three_value"}"""
+    val twoJ = """ {"four":4}"""
+    val oneRes = readFromString[UntaggedUnion](oneJ)
+    val twoRes = readFromString[UntaggedUnion](twoJ)
+
+    expect(
+      oneRes == UntaggedUnion.ThreeCase(Three("three_value")) &&
+        twoRes == UntaggedUnion.FourCase(Four(4))
+    )
   }
 
   implicit val byteArraySchema: Static[Schema[ByteArray]] = Static(bytes)
