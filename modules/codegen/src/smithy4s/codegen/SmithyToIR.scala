@@ -108,9 +108,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Enumeration(shape.name, shape.name, values).some
       }
 
-      override def stringShape(shape: StringShape): Option[Decl] =
-        super.stringShape(shape)
-
       override def serviceShape(shape: ServiceShape): Option[Decl] = {
         val generalErrors: List[Type] =
           shape
