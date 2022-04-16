@@ -202,8 +202,7 @@
             "properties": {
               "int": {
                 "type": "number",
-                "format": "int32",
-                "nullable": true
+                "format": "int32"
               }
             },
             "required": [

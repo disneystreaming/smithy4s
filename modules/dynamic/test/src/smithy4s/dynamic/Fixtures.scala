@@ -49,7 +49,7 @@ object Fixtures {
 
   val pizzaModel: Model = {
     Model(
-      smithy = Some("1.0"),
+      smithy = Some("2.0"),
       shapes = Map(
         IdRef("foo#Service") -> Shape.ServiceCase(
           ServiceShape(operations =
@@ -92,11 +92,11 @@ object Fixtures {
           StructureShape(
             members = Some(
               Map(
-                "greeting" -> MemberShape(
-                  IdRef("smithy.api#String")
-                ),
                 "someFloat" -> MemberShape(
                   IdRef("smithy.api#Float")
+                ),
+                "greeting" -> MemberShape(
+                  IdRef("smithy.api#String")
                 )
               )
             )
