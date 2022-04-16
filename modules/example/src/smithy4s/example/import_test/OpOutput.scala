@@ -9,7 +9,7 @@ object OpOutput extends smithy4s.ShapeTag.Companion[OpOutput] {
   val hints : smithy4s.Hints = smithy4s.Hints.empty
 
   implicit val schema: smithy4s.Schema[OpOutput] = struct(
-    string.required[OpOutput]("output", _.output).addHints(smithy.api.Required(), smithy.api.HttpPayload()),
+    string.required[OpOutput]("output", _.output).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
   ){
     OpOutput.apply
   }.withId(id).addHints(hints)

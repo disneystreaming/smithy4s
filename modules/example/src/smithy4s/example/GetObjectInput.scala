@@ -9,8 +9,8 @@ object GetObjectInput extends smithy4s.ShapeTag.Companion[GetObjectInput] {
   val hints : smithy4s.Hints = smithy4s.Hints.empty
 
   implicit val schema: smithy4s.Schema[GetObjectInput] = struct(
-    ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
-    BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
+    ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    BucketName.schema.required[GetObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
   ){
     GetObjectInput.apply
   }.withId(id).addHints(hints)

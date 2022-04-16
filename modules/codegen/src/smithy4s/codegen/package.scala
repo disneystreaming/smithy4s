@@ -20,7 +20,6 @@ import cats.syntax.all._
 import smithy4s.api.UuidFormatTrait
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
-import software.amazon.smithy.model.traits.EnumTrait
 import software.amazon.smithy.model.traits.ErrorTrait
 import software.amazon.smithy.model.traits.HttpErrorTrait
 import software.amazon.smithy.model.traits.HttpTrait
@@ -97,6 +96,7 @@ package object codegen {
     object Map extends ShapeExtractor(_.asMapShape())
     object Structure extends ShapeExtractor(_.asStructureShape())
     object Union extends ShapeExtractor(_.asUnionShape())
+    object Enumeration extends ShapeExtractor(_.asEnumShape())
     object Service extends ShapeExtractor(_.asServiceShape())
     object Resource extends ShapeExtractor(_.asResourceShape())
     object Operation extends ShapeExtractor(_.asOperationShape())
@@ -108,7 +108,6 @@ package object codegen {
     object error extends TraitExtractor[ErrorTrait]
     object httpError extends TraitExtractor[HttpErrorTrait]
     object required extends TraitExtractor[RequiredTrait]
-    object enumeration extends TraitExtractor[EnumTrait]
     object timestampFormat extends TraitExtractor[TimestampFormatTrait]
     object uuidFormat extends TraitExtractor[UuidFormatTrait]
   }

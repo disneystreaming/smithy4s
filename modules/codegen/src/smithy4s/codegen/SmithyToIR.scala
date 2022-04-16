@@ -96,19 +96,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
 
-      override def stringShape(shape: StringShape): Option[Decl] = shape match {
-        case T.enumeration(e) =>
-          val values = e
-            .getValues()
-            .asScala
-            .zipWithIndex
-            .map { case (value, index) =>
-              EnumValue(value.getValue(), index, value.getName().asScala)
-            }
-            .toList
-          Enumeration(shape.name, shape.name, values).some
-        case _ => super.stringShape(shape)
+      override def enumShape(shape: EnumShape): Option[Decl] = {
+        val values = shape
+          .getEnumValues()
+          .asScala
+          .zipWithIndex
+          .map { case ((key, value), index) =>
+            EnumValue(value, index, key)
+          }
+          .toList
+        Enumeration(shape.name, shape.name, values).some
       }
+
+      override def stringShape(shape: StringShape): Option[Decl] =
+        super.stringShape(shape)
 
       override def serviceShape(shape: ServiceShape): Option[Decl] = {
         val generalErrors: List[Type] =
@@ -331,8 +332,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       def serviceShape(x: ServiceShape): Option[Type] = None
 
+      override def enumShape(x: EnumShape): Option[Type] =
+        Type.Ref(x.namespace, x.name).some
+
       def stringShape(x: StringShape): Option[Type] = x match {
-        case T.enumeration(_) => Type.Ref(x.namespace, x.name).some
         case shape if shape.getId() == uuidShapeId =>
           Type.PrimitiveType(Primitive.Uuid).some
         case T.uuidFormat(_) =>
@@ -528,16 +531,21 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case (node, Type.Alias(ns, name, tpe)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration
-      case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
+      case (N.StringNode(str), UnRef(S.Enumeration(enumeration))) =>
         val (enumDef, index) =
-          e.getValues().asScala.zipWithIndex.find(_._1.getValue() == str).get
-        val shapeId = shape.getId()
+          enumeration
+            .getEnumValues()
+            .asScala
+            .zipWithIndex
+            .find(_._1._2 == str)
+            .get
+        val shapeId = enumeration.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         TypedNode.EnumerationTN(
           ref,
-          enumDef.getValue(),
+          enumDef._2,
           index,
-          enumDef.getName().asScala
+          enumDef._1
         )
       // List
       case (N.ArrayNode(list), Type.List(mem)) =>

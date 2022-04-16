@@ -84,7 +84,7 @@ case class Enumeration(
 case class EnumValue(
     value: String,
     ordinal: Int,
-    name: Option[String],
+    name: String,
     hints: List[Hint] = Nil
 )
 
@@ -242,7 +242,7 @@ object TypedNode {
       ref: Type.Ref,
       value: String,
       ordinal: Int,
-      name: Option[String]
+      name: String
   ) extends TypedNode[Nothing]
   case class StructureTN[A](
       ref: Type.Ref,
