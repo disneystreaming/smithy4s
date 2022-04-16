@@ -529,20 +529,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration
       case (N.StringNode(str), UnRef(S.Enumeration(enumeration))) =>
-        val ((name, value), index) =
+        val ((enumName, enumValue), index) =
           enumeration
             .getEnumValues()
             .asScala
             .zipWithIndex
-            .find { case ((_, name), _) => name == str }
+            .find { case ((_, value), _) => value == str }
             .get
         val shapeId = enumeration.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         TypedNode.EnumerationTN(
           ref,
-          value,
+          enumValue,
           index,
-          name
+          enumName
         )
       // List
       case (N.ArrayNode(list), Type.List(mem)) =>
