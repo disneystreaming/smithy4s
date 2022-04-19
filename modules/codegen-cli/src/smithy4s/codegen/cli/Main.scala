@@ -29,7 +29,8 @@ object Main {
       NonEmptyList
         .of(
           CodegenCommand.command,
-          DumpModelCommand.command
+          DumpModelCommand.command,
+          ProtoTypeCommand.command
         )
         .reduceMapK(Opts.subcommand(_))
     )
@@ -46,6 +47,9 @@ object Main {
 
           case Smithy4sCommand.DumpModel(args) =>
             out.println(DumpModel.run(args))
+
+          case Smithy4sCommand.ProtoType(args) =>
+            Codegen.proto(args).foreach(out.println)
         }
         .leftMap { help =>
           System.err.println(help.show)

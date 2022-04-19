@@ -28,3 +28,8 @@ case class CodegenArgs(
     dependencies: List[String],
     transformers: List[String]
 )
+
+case class ProtoTypeArgs(
+                          smithyString:String,
+                          output: os.Path
+                        )

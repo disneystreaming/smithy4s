@@ -23,6 +23,26 @@ import scala.jdk.CollectionConverters._
 
 object Codegen { self =>
 
+  def proto(args:ProtoTypeArgs):Set[os.Path] = {
+    val modelBuilder =
+      Model
+        .assembler()
+        .addUnparsedModel("codegen-cli.smithy",args.smithyString)
+        .assemble()
+        .unwrap()
+        .toBuilder()
+
+        val model = modelBuilder.build()
+
+    Codegen.generate(model,None,None).map{
+      case (relPath, name, outputString) =>
+        val fileName = name + ".scala"
+        val scalaFile = (args.output / relPath / fileName)
+        os.write.over(scalaFile, outputString, createFolders = true)
+        scalaFile
+    }.toSet
+
+  }
   def processSpecs(
       args: CodegenArgs
   ): Set[os.Path] = {
