@@ -31,7 +31,7 @@ object Codegen { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      args.transformers ++ List("V1EnumTransformation")
+      args.transformers
     )
 
     val scalaFiles = if (!args.skipScala) {

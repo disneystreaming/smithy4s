@@ -28,6 +28,7 @@ import software.amazon.smithy.model.traits.TimestampFormatTrait
 
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
+import software.amazon.smithy.model.traits.EnumTrait
 
 package object codegen {
 
@@ -108,6 +109,8 @@ package object codegen {
     object error extends TraitExtractor[ErrorTrait]
     object httpError extends TraitExtractor[HttpErrorTrait]
     object required extends TraitExtractor[RequiredTrait]
+    @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")
+    object enumeration extends TraitExtractor[EnumTrait]
     object timestampFormat extends TraitExtractor[TimestampFormatTrait]
     object uuidFormat extends TraitExtractor[UuidFormatTrait]
   }

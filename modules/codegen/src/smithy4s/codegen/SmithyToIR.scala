@@ -66,19 +66,54 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     .toList
 
   val toIRVisitor: ShapeVisitor[Option[Decl]] =
-    new ShapeVisitor.Default[Option[Decl]] {
-      def getDefault(shape: Shape): Option[Decl] = {
+    new ShapeVisitor[Option[Decl]] {
+
+      private def getDefault(shape: Shape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
 
-        if (shape.isMemberShape()) None
-        else
-          shape.tpe.flatMap {
-            case Type.Alias(_, name, tpe) =>
-              TypeAlias(name, name, tpe, hints).some
-            case Type.PrimitiveType(_) => None
-            case other => TypeAlias(shape.name, shape.name, other, hints).some
-          }
+        shape.tpe.flatMap {
+          case Type.Alias(_, name, tpe) =>
+            TypeAlias(name, name, tpe, hints).some
+          case Type.PrimitiveType(_) => None
+          case other => TypeAlias(shape.name, shape.name, other, hints).some
+        }
       }
+
+      def blobShape(x: BlobShape): Option[Decl] = getDefault(x)
+
+      def booleanShape(x: BooleanShape): Option[Decl] = getDefault(x)
+
+      def listShape(x: ListShape): Option[Decl] = getDefault(x)
+
+      def setShape(x: SetShape): Option[Decl] = getDefault(x)
+
+      def mapShape(x: MapShape): Option[Decl] = getDefault(x)
+
+      def byteShape(x: ByteShape): Option[Decl] = getDefault(x)
+
+      def shortShape(x: ShortShape): Option[Decl] = getDefault(x)
+
+      def integerShape(x: IntegerShape): Option[Decl] = getDefault(x)
+
+      def longShape(x: LongShape): Option[Decl] = getDefault(x)
+
+      def floatShape(x: FloatShape): Option[Decl] = getDefault(x)
+
+      def documentShape(x: DocumentShape): Option[Decl] = getDefault(x)
+
+      def doubleShape(x: DoubleShape): Option[Decl] = getDefault(x)
+
+      def bigIntegerShape(x: BigIntegerShape): Option[Decl] = getDefault(x)
+
+      def bigDecimalShape(x: BigDecimalShape): Option[Decl] = getDefault(x)
+
+      def operationShape(x: OperationShape): Option[Decl] = getDefault(x)
+
+      def resourceShape(x: ResourceShape): Option[Decl] = getDefault(x)
+
+      def memberShape(x: MemberShape): Option[Decl] = None
+
+      def timestampShape(x: TimestampShape): Option[Decl] = getDefault(x)
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
         val rec = isRecursive(shape.getId(), Set.empty)
@@ -94,6 +129,28 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         NonEmptyList.fromList(shape.alts).map { case alts =>
           Union(shape.name, shape.name, alts, rec, hints)
         }
+      }
+
+      override def stringShape(shape: StringShape): Option[Decl] = shape match {
+        case T.enumeration(e) =>
+          val values = e
+            .getValues()
+            .asScala
+            .zipWithIndex
+            .map { case (value, index) =>
+              EnumValue(
+                value.getValue(),
+                index,
+                EnumUtil.enumValueClassName(
+                  value.getName().asScala,
+                  value.getValue,
+                  index
+                )
+              )
+            }
+            .toList
+          Enumeration(shape.name, shape.name, values).some
+        case _ => getDefault(shape)
       }
 
       override def enumShape(shape: EnumShape): Option[Decl] = {
@@ -333,6 +390,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Type.Ref(x.namespace, x.name).some
 
       def stringShape(x: StringShape): Option[Type] = x match {
+        case T.enumeration(_) => Type.Ref(x.namespace, x.name).some
         case shape if shape.getId() == uuidShapeId =>
           Type.PrimitiveType(Primitive.Uuid).some
         case T.uuidFormat(_) =>
@@ -497,6 +555,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     Hint.Native(ana(unfoldNodeAndType)(nodeAndType))
   }
 
+  private def optionalToOption[A](opta: java.util.Optional[A]): Option[A] =
+    if (opta.isPresent()) Some(opta.get) else None
+
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =
     (layer.node, layer.tpe) match {
       // Struct
@@ -528,6 +589,21 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       case (node, Type.Alias(ns, name, tpe)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration
+      case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
+        val (enumDef, index) =
+          e.getValues().asScala.zipWithIndex.find(_._1.getValue() == str).get
+        val shapeId = shape.getId()
+        val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
+        TypedNode.EnumerationTN(
+          ref,
+          enumDef.getValue(),
+          index,
+          EnumUtil.enumValueClassName(
+            optionalToOption(enumDef.getName()),
+            enumDef.getValue,
+            index
+          )
+        )
       case (N.StringNode(str), UnRef(S.Enumeration(enumeration))) =>
         val ((enumName, enumValue), index) =
           enumeration
