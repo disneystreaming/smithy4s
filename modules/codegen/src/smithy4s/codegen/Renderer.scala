@@ -520,33 +520,34 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       originalName: String,
       values: List[EnumValue],
       hints: List[Hint]
-  ): RenderResult = lines(
-    block(
-      s"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
-    )(
-      "override val value : String = _value",
-      "override val ordinal: Int = _ordinal",
-      s"override val hints: $Hints_ = $Hints_.empty"
-    ),
-    obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
-      renderId(originalName),
-      newline,
-      renderHintsVal(hints),
-      newline,
-      values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line(
-          s"""case object ${e.name} extends $name("$value", $ordinal)"""
-        )
-      },
-      newline,
-      line(s"val values: List[$name] = List").args(
-        values.toList.map(_.name)
+  ): RenderResult =
+    lines(
+      block(
+        s"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
+      )(
+        "override val value : String = _value",
+        "override val ordinal: Int = _ordinal",
+        s"override val hints: $Hints_ = $Hints_.empty"
       ),
-      lines(
-        s"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
+      obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
+        renderId(originalName),
+        newline,
+        renderHintsVal(hints),
+        newline,
+        values.map { case e @ EnumValue(value, ordinal, _, _) =>
+          line(
+            s"""case object ${e.name} extends $name("$value", $ordinal)"""
+          )
+        },
+        newline,
+        line(s"val values: List[$name] = List").args(
+          values.toList.map(_.name)
+        ),
+        lines(
+          s"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
+        )
       )
-    )
-  ).addImports(syntaxImport)
+    ).addImports(syntaxImport)
 
   private def renderTypeAlias(
       name: String,
@@ -698,7 +699,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderHint(hint: Hint): Option[String] = hint match {
     case Hint.Native(typedNode) =>
       smithy4s.recursion.cata(renderTypedNode)(typedNode).run(true)._2.some
-    case _ => None
+    case Hint.IntEnum => "smithy4s.IntEnum()".some
+    case _            => None
   }
 
   def renderId(name: String, ns: String = namespace): RenderResult =

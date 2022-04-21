@@ -165,6 +165,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Enumeration(shape.name, shape.name, values).some
       }
 
+      override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
+        val values = shape
+          .getEnumValues()
+          .asScala
+          .zipWithIndex
+          .map { case ((name, value), index) =>
+            EnumValue(value.toString, index, name)
+          }
+          .toList
+        Enumeration(shape.name, shape.name, values, List(Hint.IntEnum)).some
+      }
+
       override def serviceShape(shape: ServiceShape): Option[Decl] = {
         val generalErrors: List[Type] =
           shape

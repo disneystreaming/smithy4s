@@ -1,3 +1,5 @@
+$version: "2.0"
+
 namespace smithy4s.example
 
 service EmptyService {
@@ -59,3 +61,19 @@ structure BigStruct{
   {value: "_"},
 ])
 string EnumWithSymbols
+
+intEnum FaceCard {
+    @enumValue(1)
+    JACK
+    @enumValue(2)
+    QUEEN
+    
+    @enumValue(3)
+    KING
+    
+    @enumValue(4)
+    ACE
+    
+    @enumValue(5)
+    JOKER
+}

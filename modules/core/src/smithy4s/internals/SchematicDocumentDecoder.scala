@@ -129,6 +129,12 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
   def from[A](expectedType: String)(
       f: PartialFunction[Document, A]
   ): DocumentDecoderMake[A] = Hinted.static {
+    fromNonHinted(expectedType)(f)
+  }
+
+  private def fromNonHinted[A](expectedType: String)(
+      f: PartialFunction[Document, A]
+  ): DocumentDecoder[A] =
     new DocumentDecoder[A] {
       def apply(path: List[PayloadPath.Segment], a: Document): A = {
         if (f.isDefinedAt(a)) f(a)
@@ -142,7 +148,6 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
       def canBeKey: Boolean = true
       def expected: String = expectedType
     }
-  }
 
   def fromUnsafe[A](expectedType: String)(
       f: PartialFunction[Document, A]
@@ -467,11 +472,19 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
       to: A => (String, Int),
       fromName: Map[String, A],
       fromOrdinal: Map[Int, A]
-  ): DocumentDecoderMake[A] = from(
+  ): DocumentDecoderMake[A] = {
+  val f = fromNonHinted[A](
     s"value in [${fromName.keySet.mkString(", ")}]"
-  ) {
-    case DString(value) if fromName.contains(value) => fromName(value)
+  ) _
+  Hinted[DocumentDecoder].onHintOpt[smithy4s.IntEnum, A] {
+    case Some(_) => f {
+      case DNumber(value) if fromName.contains(value.toString) => fromName(value.toString)
+    }
+    case None => f {
+      case DString(value) if fromName.contains(value) => fromName(value)
+    }
   }
+}
 
   def suspend[A](f: Lazy[DocumentDecoderMake[A]]): DocumentDecoderMake[A] =
     Hinted.static {

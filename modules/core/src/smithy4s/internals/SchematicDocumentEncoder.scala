@@ -62,11 +62,14 @@ object DocumentEncoder {
 object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
 
   def from[A](f: A => Document): DocumentEncoderMake[A] = Hinted.static {
+    fromNonHinted(f)
+  }
+
+  private def fromNonHinted[A](f: A => Document): DocumentEncoder[A] =
     new DocumentEncoder[A] {
       def apply: A => Document = f
       def canBeKey: Boolean = true
     }
-  }
 
   def fromNotKey[A](f: A => Document): DocumentEncoderMake[A] = Hinted.static {
     new DocumentEncoder[A] {
@@ -260,7 +263,11 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
       to: A => (String, Int),
       fromName: Map[String, A],
       fromOrdinal: Map[Int, A]
-  ): DocumentEncoderMake[A] = from(a => DString(to(a)._1))
+  ): DocumentEncoderMake[A] =
+    Hinted[DocumentEncoder].onHintOpt[smithy4s.IntEnum, A] {
+      case Some(_) => fromNonHinted(a => DNumber(to(a)._1.toInt))
+      case None    => fromNonHinted(a => DString(to(a)._1))
+    }
 
   def suspend[A](f: Lazy[DocumentEncoderMake[A]]): DocumentEncoderMake[A] =
     Hinted.static {

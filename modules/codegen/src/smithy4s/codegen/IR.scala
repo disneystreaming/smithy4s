@@ -180,6 +180,7 @@ object Hint {
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
+  case object IntEnum extends Hint
 }
 
 sealed trait Segment extends scala.Product with Serializable
