@@ -71,7 +71,7 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
         .map(_.menu.map { case (key, item) =>
           key.toString -> MenuItem(item.food, item.price)
         })
-        .liftTo[IO](NotFoundError(Some(restaurant)))
+        .liftTo[IO](NotFoundError(restaurant))
     } yield GetMenuResult(map)
 
   def version(): IO[VersionOutput] = IO.pure(VersionOutput("version"))
