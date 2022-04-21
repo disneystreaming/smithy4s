@@ -475,7 +475,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           val cn = caseName(altName)
           block(s"object $cn")(
             renderHintsVal(altHints),
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}, $cn(_), _.${uncapitalise(altName)})",
+            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints), $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
           )
         },
@@ -581,8 +581,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
+    val params =
+      if (op.hints.contains(Hint.PackedInputs)) op.params.map(_.tpe) else Nil
+
     def imports =
-      (op.input :: op.output :: op.params.map(_.tpe) ++ op.errors)
+      (op.input :: op.output :: params ++ op.errors)
         .foldMap(_.imports)
 
     def renderInput = op.input.render

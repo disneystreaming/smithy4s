@@ -19,13 +19,24 @@ package http.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import smithy.api.JsonName
-import smithy4s.api.Discriminated
-import smithy4s.example._
-import smithy4s.http.PayloadError
 import smithy4s.schema.Schema._
+
+import smithy4s.http.PayloadError
+import smithy4s.example.{
+  CheckedOrUnchecked,
+  CheckedOrUnchecked2,
+  Four,
+  One,
+  PayloadData,
+  TestBiggerUnion,
+  Three,
+  UntaggedUnion
+}
+import smithy4s.api.Discriminated
 import weaver._
 
 import scala.collection.immutable.ListMap
+import scala.util.Try
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -153,6 +164,36 @@ object SchematicJCodecTests extends SimpleIOSuite {
     val str = writeToString[Either[Int, String]](Right("foo"))
     expect(int == jsonInt) &&
     expect(str == jsonStr)
+  }
+
+  pureTest("Valid union values are parsed successfuly") {
+    val jsonStr = """{"checked":"foo"}"""
+    val result = readFromString[CheckedOrUnchecked](jsonStr)
+    expect(result == CheckedOrUnchecked.CheckedCase("foo"))
+  }
+
+  pureTest("Invalid union values fails to parse") {
+    val jsonStr = """{"checked":"!@#"}"""
+    val result = Try(readFromString[CheckedOrUnchecked](jsonStr)).failed
+    expect(
+      result.get == PayloadError(
+        PayloadPath.fromString(".checked"),
+        "string",
+        "String '!@#' does not match pattern '^\\w+$'"
+      )
+    )
+  }
+
+  pureTest(
+    "Constraints contribute to the discrimination process of untagged union"
+  ) {
+    val jsonStr = "\"foo\""
+    val result = readFromString[CheckedOrUnchecked2](jsonStr)
+    val e1 = expect(result == CheckedOrUnchecked2.CheckedCase("foo"))
+    val jsonStr2 = "\"!@#\""
+    val result2 = readFromString[CheckedOrUnchecked2](jsonStr2)
+    val e2 = expect(result2 == CheckedOrUnchecked2.RawCase("!@#"))
+    e1 && e2
   }
 
   pureTest("Discriminated union gets encoded correctly") {
