@@ -15,22 +15,22 @@ object Foo extends smithy4s.ShapeTag.Companion[Foo] {
 
   object IntCase {
     val hints : smithy4s.Hints = smithy4s.Hints.empty
-    val schema: smithy4s.Schema[IntCase] = bijection(int, IntCase(_), _.int)
+    val schema: smithy4s.Schema[IntCase] = bijection(int.addHints(hints), IntCase(_), _.int)
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
     val hints : smithy4s.Hints = smithy4s.Hints.empty
-    val schema: smithy4s.Schema[StrCase] = bijection(string, StrCase(_), _.str)
+    val schema: smithy4s.Schema[StrCase] = bijection(string.addHints(hints), StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }
   object BIntCase {
     val hints : smithy4s.Hints = smithy4s.Hints.empty
-    val schema: smithy4s.Schema[BIntCase] = bijection(bigint, BIntCase(_), _.bInt)
+    val schema: smithy4s.Schema[BIntCase] = bijection(bigint.addHints(hints), BIntCase(_), _.bInt)
     val alt = schema.oneOf[Foo]("bInt")
   }
   object BDecCase {
     val hints : smithy4s.Hints = smithy4s.Hints.empty
-    val schema: smithy4s.Schema[BDecCase] = bijection(bigdecimal, BDecCase(_), _.bDec)
+    val schema: smithy4s.Schema[BDecCase] = bijection(bigdecimal.addHints(hints), BDecCase(_), _.bDec)
     val alt = schema.oneOf[Foo]("bDec")
   }
 
