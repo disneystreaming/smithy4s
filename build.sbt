@@ -48,6 +48,7 @@ lazy val allModules = Seq(
   codegenPlugin.projectRefs,
   benchmark.projectRefs,
   protocol.projectRefs,
+  protocolTests.projectRefs,
   openapi.projectRefs,
   `aws-kernel`.projectRefs,
   aws.projectRefs,
@@ -423,6 +424,19 @@ lazy val protocol = projectMatrix
       "1.8",
       "-Xlint"
     )
+  )
+
+lazy val protocolTests = projectMatrix
+  .in(file("modules/protocol-tests"))
+  .jvmPlatform(Seq(Scala213), jvmDimSettings)
+  .dependsOn(protocol)
+  .settings(
+    isCE3 := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Weaver.cats.value % Test,
+      Dependencies.Weaver.scalacheck.value % Test
+    ),
+    Test / fork := true
   )
 
 /**
