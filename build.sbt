@@ -323,7 +323,16 @@ lazy val codegen = projectMatrix
   .dependsOn(openapi)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
+    buildInfoKeys := Seq[BuildInfoKey](
+      organization,
+      version,
+      scalaBinaryVersion,
+      "protocolArtifact" -> (protocol
+        .jvm(autoScalaLibrary = false) / moduleName).value,
+      "smithyOrg" -> Dependencies.Smithy.model.organization,
+      "smithyVersion" -> Dependencies.Smithy.model.revision,
+      "smithyArtifact" -> Dependencies.Smithy.model.name
+    ),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
     libraryDependencies ++= Seq(
