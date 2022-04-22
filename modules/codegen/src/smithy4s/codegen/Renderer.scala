@@ -752,7 +752,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
     if (tags.isEmpty) ""
     else {
-      tags.map(t => s".checked[${t.renderFull}]").mkString(".")
+      tags.map(t => s".validated[${t.renderFull}]").mkString(".")
     }
   }
 
@@ -760,7 +760,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
     if (tags.isEmpty) ""
     else {
-      tags.map(t => s".checked[${t.renderFull}, ${tpe.render}]").mkString(".")
+      tags.map(t => s".validated[${t.renderFull}, ${tpe.render}]").mkString(".")
     }
   }
 

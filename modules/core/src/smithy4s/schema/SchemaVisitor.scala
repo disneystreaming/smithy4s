@@ -29,7 +29,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F){
   def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : F[S]
   def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]) : F[U]
   def biject[A, B](schema: Schema[A], to: A => B, from: B => A) : F[B]
-  def surject[A, B](schema: Schema[A], ro: Refinement[A, B], from: B => A) : F[B]
+  def surject[A, B](schema: Schema[A], to: Refinement[A, B], from: B => A) : F[B]
   def lazily[A](suspend: Lazy[Schema[A]]) : F[A]
 
   def apply[A](schema: Schema[A]) : F[A] = schema match {

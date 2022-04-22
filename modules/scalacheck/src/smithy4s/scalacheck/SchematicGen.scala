@@ -21,106 +21,142 @@ import smithy4s.schema._
 
 import org.scalacheck.Gen
 
-import java.{util => ju}
 import scala.jdk.CollectionConverters._
+import smithy4s.schema.Primitive._
+import smithy.api.Length
 
-object SchematicGen extends SchematicGen
+object SchematicGen extends SchematicGen2
 
-trait SchematicGen extends Schematic[Gen] {
+abstract class SchematicGen2 extends SchemaVisitor[Gen] { self =>
 
-  def unit: Gen[Unit] = Gen.const(())
-
-  def short: Gen[Short] =
-    Gen.chooseNum(Short.MinValue, Short.MaxValue)
-
-  def int: Gen[Int] =
-    Gen.chooseNum(Int.MinValue, Int.MaxValue)
-
-  def long: Gen[Long] =
-    LongGen.gen()
-
-  def double: Gen[Double] =
-    Gen.chooseNum(Double.MinValue, Double.MaxValue)
-
-  def float: Gen[Float] =
-    Gen.choose(Float.MinValue, Float.MaxValue)
-
-  def string: Gen[String] =
-    Gen.asciiPrintableStr
-
-  def boolean: Gen[Boolean] =
-    Gen.oneOf(true, false)
-
-  def bigint: Gen[BigInt] =
-    Gen.chooseNum(Long.MinValue, Long.MaxValue).map(BigInt.apply)
-
-  def bigdecimal: Gen[BigDecimal] =
-    Gen.chooseNum(Double.MinValue, Double.MaxValue).map(BigDecimal.apply)
-
-  def byte: Gen[Byte] =
-    Gen.oneOf(Range(1, 0xff)).map(_.toByte)
-
-  def bytes: Gen[ByteArray] =
-    Gen.asciiStr.map(_.getBytes).map(ByteArray.apply)
-
-  def uuid: Gen[ju.UUID] = Gen.uuid
-
-  def list[S](fs: Gen[S]): Gen[List[S]] =
-    Gen.listOf(fs)
-
-  def set[S](fs: Gen[S]): Gen[Set[S]] =
-    Gen.listOfN(5, fs).map(_.toSet)
-
-  def vector[S](fs: Gen[S]): Gen[Vector[S]] =
-    Gen.listOfN(5, fs).map(_.toVector)
-
-  def map[K, V](fk: Gen[K], fv: Gen[V]): Gen[Map[K, V]] =
-    Gen.mapOfN(5, fk.flatMap(k => fv.map(k -> _)))
-
-  def enumeration[A](
-      to: A => (String, Int),
-      fromString: Map[String, A],
-      fromOrdinal: Map[Int, A]
-  ): Gen[A] = Gen.oneOf(fromString.values)
-
-  def struct[S](
-      fields: Vector[Field[Gen, S, _]]
-  )(const: Vector[Any] => S): Gen[S] = {
-    Gen.sequence(fields.map(f => genField(f))).flatMap { arrayList =>
-      const(arrayList.asScala.toVector)
+  def primitive[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): Gen[P] = {
+    tag match {
+      case PShort  => chooseNumAux(hints, Short.MinValue, Short.MaxValue)
+      case PDouble => chooseNumAux(hints, Double.MinValue, Double.MaxValue)
+      case PInt    => chooseNumAux(hints, Int.MinValue, Int.MaxValue)
+      case PLong   => chooseNumAux(hints, Long.MinValue, Long.MaxValue)
+      case PFloat  => chooseNumAux(hints, Float.MinValue, Float.MaxValue)
+      case PBigDecimal =>
+        chooseNumAux(hints, Long.MinValue, Long.MaxValue).map(BigDecimal.apply)
+      case PBigInt =>
+        chooseNumAux(hints, Long.MinValue, Long.MaxValue).map(BigInt.apply)
+      case PUnit     => ()
+      case PUUID     => Gen.uuid
+      case PByte     => Gen.oneOf(Range(1, 0xff)).map(_.toByte)
+      case PDocument => Smithy4sGen.genDocument(1)
+      case PBoolean  => Gen.oneOf(true, false)
+      case PString =>
+        length(hints).flatMap(l => Gen.stringOfN(l, Gen.asciiPrintableChar))
+      case PTimestamp => Smithy4sGen.genTimestamp
+      case PBlob =>
+        length(hints)
+          .flatMap(l => Gen.stringOfN(l, Gen.asciiPrintableChar))
+          .map(_.getBytes)
+          .map(ByteArray.apply)
     }
   }
 
-  private def genField[S, A](field: Field[Gen, S, A]): Gen[A] =
-    Gen.lzy(field.instanceA {
+  def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): Gen[List[A]] =
+    length(hints).flatMap(l => Gen.listOfN(l, member.compile(this)))
+  def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): Gen[Set[A]] =
+    length(hints).flatMap(l =>
+      Gen.listOfN(l, member.compile(this)).map(_.toSet)
+    )
+  def map[K, V](
+      shapeId: ShapeId,
+      hints: Hints,
+      key: Schema[K],
+      value: Schema[V]
+  ): Gen[Map[K, V]] =
+    length(hints).flatMap(l =>
+      Gen.mapOfN(
+        l,
+        key.compile(this).flatMap(k => value.compile(this).map(k -> _))
+      )
+    )
+  def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): Gen[E] =
+    Gen.oneOf(values.map(_.value))
+  def struct[S](
+      shapeId: ShapeId,
+      hints: Hints,
+      fields: Vector[SchemaField[S, _]],
+      make: IndexedSeq[Any] => S
+  ): Gen[S] =
+    Gen.sequence(fields.map(f => genField(f))).flatMap { arrayList =>
+      make(arrayList.asScala.toVector)
+    }
+  def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: U => Alt.SchemaAndValue[U, _]
+  ): Gen[U] = {
+    if (alternatives.size == 1) genAlt(alternatives(0))
+    else
+      Gen.oneOf(
+        genAlt(alternatives(0)),
+        genAlt(alternatives(1)),
+        alternatives.drop(2).map(a => genAlt(a)): _*
+      )
+  }
+
+  def biject[A, B](schema: Schema[A], to: A => B, from: B => A): Gen[B] =
+    schema.compile(this).map(to)
+
+  def surject[A, B](
+      schema: Schema[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): Gen[B] = schema.compile(this).map(to.asThrowingFunction)
+  def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
+    Gen.lzy(suspend.map(_.compile(this)).value)
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  //// HELPER FUNCTIONS
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  private def genAlt[S, A](alt: Alt[Schema, S, A]): Gen[S] =
+    alt.instance.compile(this).map(alt.inject)
+
+  private def genField[S, A](field: Field[Schema, S, A]): Gen[A] =
+    Gen.lzy(field.mapK(this).instanceA {
       new Field.ToOptional[Gen] {
         def apply[AA](genA: Gen[AA]): Gen[Option[AA]] = Gen.option(genA)
       }
     })
 
-  private def genAlt[S, A](alt: Alt[Gen, S, A]): Gen[S] =
-    alt.instance.map(alt.inject)
+  private def bigDecimalToInt(b: BigDecimal): Int = if (
+    b < BigDecimal(Int.MinValue)
+  ) Int.MinValue
+  else if (b > BigDecimal(Int.MaxValue)) Int.MaxValue
+  else b.toInt
 
-  def union[S](first: Alt[Gen, S, _], rest: Vector[Alt[Gen, S, _]])(
-      total: S => Alt.WithValue[Gen, S, _]
-  ): Gen[S] = {
-    if (rest.isEmpty) genAlt(first)
-    else
-      Gen.oneOf(
-        genAlt(first),
-        genAlt(rest.head),
-        rest.tail.map(a => genAlt(a)): _*
-      )
+  private def chooseNumAux[T](hints: Hints, minT: T, maxT: T)(implicit
+      num: Numeric[T],
+      c: Gen.Choose[T]
+  ) = hints.get[smithy.api.Range] match {
+    case None => Gen.chooseNum[T](minT, maxT)
+    case Some(range) =>
+      val min = range.min.map(bigDecimalToInt).map(num.fromInt).getOrElse(minT)
+      val max = range.max.map(bigDecimalToInt).map(num.fromInt).getOrElse(maxT)
+      Gen.chooseNum[T](min, max)
   }
 
-  def suspend[A](f: Lazy[Gen[A]]): Gen[A] = Gen.lzy(f.value)
-
-  def bijection[A, B](f: Gen[A], to: A => B, from: B => A): Gen[B] = f.map(to)
-  def surjection[A, B](f: Gen[A], to: Refinement[A, B], from: B => A): Gen[B] =
-    f.map(to.asThrowingFunction)
-
-  def withHints[A](fa: Gen[A], hints: Hints): Gen[A] = fa
-  def timestamp: Gen[Timestamp] = Smithy4sGen.genTimestamp
-  def document: Gen[Document] = Smithy4sGen.genDocument(1)
+  private def length(hints: Hints): Gen[Int] = hints.get[Length] match {
+    case None => Gen.const(5)
+    case Some(length) =>
+      val min = length.min.map(_.toInt).getOrElse(0)
+      val max = length.max.map(_.toInt).getOrElse(min + 5)
+      Gen.chooseNum[Int](min, max)
+  }
 
 }

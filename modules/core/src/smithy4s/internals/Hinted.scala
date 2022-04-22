@@ -65,57 +65,6 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
   )(implicit C: Covariant[F]): Hinted[F, B] =
     Hinted(hints, h => C.emap(make(h))(f))
 
-  def validated(
-      f: Hints => Option[A => Either[ConstraintError, Unit]]
-  )(implicit
-      C: Covariant[F]
-  ): Hinted[F, A] = {
-    Hinted(
-      hints,
-      (h: Hints) => {
-        val maybePartiallyApplied = f(h)
-        maybePartiallyApplied match {
-          case Some(partiallyApplied) =>
-            C.map(make(h))(a =>
-              partiallyApplied(a) match {
-                case Left(e)   => throw e
-                case Right(()) => a
-              }
-            )
-          case None =>
-            make(h)
-        }
-      }
-    )
-  }
-
-  def validatedI(
-      f: Hints => Option[A => Either[ConstraintError, Unit]]
-  )(implicit
-      I: Invariant[F]
-  ): Hinted[F, A] = {
-    Hinted(
-      hints,
-      (h: Hints) => {
-        val maybePartiallyApplied = f(h)
-        maybePartiallyApplied match {
-          case Some(partiallyApplied) =>
-            I.imap(make(h))(
-              { a =>
-                partiallyApplied(a) match {
-                  case Left(e)   => throw e
-                  case Right(()) => a
-                }
-              },
-              identity[A]
-            )
-          case None =>
-            make(h)
-        }
-      }
-    )
-  }
-
 }
 
 object Hinted {
