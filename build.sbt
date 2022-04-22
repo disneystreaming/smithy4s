@@ -1,6 +1,5 @@
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import java.io.File
-import Smithy4sPlugin.jvmDimSettings
 import sys.process._
 
 ThisBuild / commands ++= createBuildCommands(allModules)
