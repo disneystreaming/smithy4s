@@ -171,4 +171,17 @@ object DocumentSpec extends FunSuite {
     expect(roundTripped == Right(fooOrBaz))
   }
 
+  test("integer based enum") {
+    import smithy4s.example._
+    val faceCard: FaceCard = FaceCard.ACE
+    val document = Document.encode(faceCard)
+    import Document._
+    val expectedDocument = DNumber(faceCard.value.toInt)
+
+    val roundTripped = Document.decode[FaceCard](document)
+
+    expect(document == expectedDocument) &&
+    expect(roundTripped == Right(faceCard))
+  }
+
 }
