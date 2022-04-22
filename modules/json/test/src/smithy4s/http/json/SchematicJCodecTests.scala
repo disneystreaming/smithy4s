@@ -157,6 +157,13 @@ object SchematicJCodecTests extends SimpleIOSuite {
     expect(str == jsonStr)
   }
 
+  pureTest("Int Enum gets encoded/decoded correctly") {
+    val jsonInt = "1"
+    val int = writeToString[FaceCard](FaceCard.JACK)
+    val roundTripped = readFromString[FaceCard](int)
+    expect(int == jsonInt) && expect(roundTripped == FaceCard.JACK)
+  }
+
   pureTest("Discriminated union gets encoded correctly") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
