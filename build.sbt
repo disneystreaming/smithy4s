@@ -398,7 +398,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         (core.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala212) / publishLocal).value,
         (openapi.jvm(Scala212) / publishLocal).value,
-        (protocol.jvm(Scala212) / publishLocal).value
+        (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
       )
       publishLocal.value
     },
