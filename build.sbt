@@ -407,23 +407,14 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
  */
 lazy val protocol = projectMatrix
   .in(file("modules/protocol"))
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(
+    autoScalaLibrary = false,
+    scalaVersions = Seq.empty,
+    settings = jvmDimSettings
+  )
   .settings(
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.Smithy.model,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
-    ),
-    Test / fork := true,
-    javacOptions ++= Seq(
-      "-source",
-      "1.8",
-      "-target",
-      "1.8",
-      "-Xlint"
-    )
+    libraryDependencies += Dependencies.Smithy.model,
+    javacOptions ++= Seq("--release", "8")
   )
 
 lazy val protocolTests = projectMatrix
