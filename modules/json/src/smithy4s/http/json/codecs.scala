@@ -20,6 +20,7 @@ package http.json
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy4s.api.Discriminated
+import smithy4s.api.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.InputOutput
 
@@ -33,8 +34,8 @@ object codecs {
       JsonName,
       TimestampFormat,
       Discriminated,
+      Untagged,
       InputOutput,
-      Discriminated,
       DiscriminatedUnionMember
     )
 

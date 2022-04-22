@@ -73,6 +73,12 @@ object SchematicPathEncoder
   override val unit: PathEncode.Make[Unit] =
     struct(Vector.empty)(_ => ())
 
+  override def enumeration[A](
+      to: A => (String, Int),
+      fromName: Map[String, A],
+      fromOrdinal: Map[Int, A]
+  ): PathEncode.Make[A] = PathEncode.Make.from { a => to(a)._1 }
+
   override def struct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S
   ): PathEncode.Make[S] = {

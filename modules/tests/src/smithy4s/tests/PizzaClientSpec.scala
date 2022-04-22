@@ -17,8 +17,8 @@
 package smithy4s.tests
 
 import cats.data.Chain
-import cats.effect.Resource
 import cats.effect._
+import cats.effect.std.UUIDGen
 import cats.syntax.all._
 import io.circe.Json
 import org.http4s.HttpApp
@@ -30,8 +30,6 @@ import org.typelevel.ci.CIString
 import smithy4s.Timestamp
 import smithy4s.example._
 import weaver._
-
-import java.util.UUID
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -49,7 +47,7 @@ abstract class PizzaClientSpec extends IOSuite {
   clientTest("Errors make it through") { (client, backend, log) =>
     for {
       ts <- IO(Timestamp.nowUTC())
-      uuid <- IO(UUID.randomUUID())
+      uuid <- UUIDGen.randomUUID[IO]
       response <- Created(
         Json.fromString(uuid.toString),
         Header.Raw(

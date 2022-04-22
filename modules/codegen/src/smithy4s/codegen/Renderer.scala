@@ -309,7 +309,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ) = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".addHints${memberHints(hints)}"
+      val mh = if (hints.isEmpty) "" else s".addHints(${memberHints(hints)})"
       line(
         s"""val $valName : $StreamingSchema_[${tpe.render}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
       )
@@ -477,7 +477,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           val cn = caseName(altName)
           block(s"object $cn")(
             renderHintsVal(altHints),
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}, $cn(_), _.${uncapitalise(altName)})",
+            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints), $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
           )
         },
@@ -586,8 +586,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
+    val params =
+      if (op.hints.contains(Hint.PackedInputs)) op.params.map(_.tpe) else Nil
+
     def imports =
-      (op.input :: op.output :: op.params.map(_.tpe) ++ op.errors)
+      (op.input :: op.output :: params ++ op.errors)
         .foldMap(_.imports)
 
     def renderInput = op.input.render
@@ -645,7 +648,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.ByteArray  => Set("smithy4s.ByteArray") -> "ByteArray"
         case Primitive.Bool       => Set.empty -> "Boolean"
         case Primitive.String     => Set.empty -> "String"
-        case Primitive.Timestamp  => Set("smithy4s.Timestamp") -> "Timestamp"
+        case Primitive.Timestamp  => Set.empty -> "smithy4s.Timestamp"
         case Primitive.Byte       => Set.empty -> "Byte"
         case Primitive.Int        => Set.empty -> "Int"
         case Primitive.Short      => Set.empty -> "Short"
@@ -653,9 +656,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.Float      => Set.empty -> "Float"
         case Primitive.Double     => Set.empty -> "Double"
         case Primitive.BigDecimal => Set.empty -> "BigDecimal"
-        case Primitive.BigInteger => Set.empty -> "BigInteger"
+        case Primitive.BigInteger => Set.empty -> "BigInt"
         case Primitive.Uuid       => Set("java.util.UUID") -> "UUID"
-        case Primitive.Document   => Set("smithy4s.Document") -> "Document"
+        case Primitive.Document   => Set.empty -> "smithy4s.Document"
       }
 
     def schemaRef: String = tpe match {
@@ -820,7 +823,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     prim match {
       case Primitive.BigDecimal =>
         (bd: BigDecimal) => s"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInteger($bi)"
+      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInt($bi)"
       case Primitive.Unit       => _ => "()"
       case Primitive.Double     => _.toString
       case Primitive.Float      => _.toString

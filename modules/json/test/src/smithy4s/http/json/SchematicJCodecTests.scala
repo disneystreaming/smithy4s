@@ -19,15 +19,24 @@ package http.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import smithy.api.JsonName
-import smithy4s.api.Discriminated
-import smithy4s.example.One
-import smithy4s.example.PayloadData
-import smithy4s.example.TestBiggerUnion
-import smithy4s.http.PayloadError
 import smithy4s.schema.Schema._
+
+import smithy4s.http.PayloadError
+import smithy4s.example.{
+  CheckedOrUnchecked,
+  CheckedOrUnchecked2,
+  Four,
+  One,
+  PayloadData,
+  TestBiggerUnion,
+  Three,
+  UntaggedUnion
+}
+import smithy4s.api.Discriminated
 import weaver._
 
 import scala.collection.immutable.ListMap
+import scala.util.Try
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -157,6 +166,36 @@ object SchematicJCodecTests extends SimpleIOSuite {
     expect(str == jsonStr)
   }
 
+  pureTest("Valid union values are parsed successfuly") {
+    val jsonStr = """{"checked":"foo"}"""
+    val result = readFromString[CheckedOrUnchecked](jsonStr)
+    expect(result == CheckedOrUnchecked.CheckedCase("foo"))
+  }
+
+  pureTest("Invalid union values fails to parse") {
+    val jsonStr = """{"checked":"!@#"}"""
+    val result = Try(readFromString[CheckedOrUnchecked](jsonStr)).failed
+    expect(
+      result.get == PayloadError(
+        PayloadPath.fromString(".checked"),
+        "string",
+        "String '!@#' does not match pattern '^\\w+$'"
+      )
+    )
+  }
+
+  pureTest(
+    "Constraints contribute to the discrimination process of untagged union"
+  ) {
+    val jsonStr = "\"foo\""
+    val result = readFromString[CheckedOrUnchecked2](jsonStr)
+    val e1 = expect(result == CheckedOrUnchecked2.CheckedCase("foo"))
+    val jsonStr2 = "\"!@#\""
+    val result2 = readFromString[CheckedOrUnchecked2](jsonStr2)
+    val e2 = expect(result2 == CheckedOrUnchecked2.RawCase("!@#"))
+    e1 && e2
+  }
+
   pureTest("Discriminated union gets encoded correctly") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
@@ -239,6 +278,18 @@ object SchematicJCodecTests extends SimpleIOSuite {
           expect(msg.contains("Expected JSON object"))
 
     }
+  }
+
+  pureTest("Untagged union are encoded / decoded") {
+    val oneJ = """ {"three":"three_value"}"""
+    val twoJ = """ {"four":4}"""
+    val oneRes = readFromString[UntaggedUnion](oneJ)
+    val twoRes = readFromString[UntaggedUnion](twoJ)
+
+    expect(
+      oneRes == UntaggedUnion.ThreeCase(Three("three_value")) &&
+        twoRes == UntaggedUnion.FourCase(Four(4))
+    )
   }
 
   implicit val byteArraySchema: Schema[ByteArray] = bytes
