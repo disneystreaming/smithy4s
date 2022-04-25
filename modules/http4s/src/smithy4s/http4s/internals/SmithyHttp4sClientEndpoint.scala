@@ -26,8 +26,6 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
-import smithy.api.Error.CLIENT
-import smithy.api.Error.SERVER
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
 
@@ -166,7 +164,8 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
         errorResponseFallBack(response)
       case Some(errorable) =>
         val statusInt = response.status.code
-        val errorAltPicker = new ErrorAltPicker(errorable.error.alternatives)
+        val errorAltPicker =
+          new ErrorAltPicker(errorable.error.alternatives)
         // try to find precisely either by status code unique match
         // or by matching the errorTypeHeader
         val maybePreciseAlt =
@@ -225,46 +224,5 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
           bodyPartial <- response.as[BodyPartial[T]]
         } yield metadataPartial.map(_.combine(bodyPartial))
     }
-  }
-}
-
-private final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
-  private lazy val withHints = alts.map(a => a -> a.instance.hints)
-  private lazy val (generic, rest) = withHints.partition {
-    case (_, smithy.api.Error.hint(_)) => true
-    case (_, _)                        => false
-  }
-  private lazy val clientErrors = generic.collect {
-    case (a, smithy.api.Error.hint(CLIENT)) => a
-  }
-  private lazy val serverErrors = generic.collect {
-    case (a, smithy.api.Error.hint(SERVER)) => a
-  }
-  private lazy val others = rest.collect {
-    case (a, smithy.api.HttpError.hint(extracted)) =>
-      a -> extracted.value
-  }
-
-  def orderedForStatus(status: Int): Vector[SchemaAlt[E, _]] = {
-    val generics =
-      if (status >= 400 && status < 500) {
-        clientErrors ++ serverErrors
-      } else {
-        serverErrors ++ clientErrors
-      }
-    generics ++ others.map(_._1)
-  }
-
-  def getPreciseAlternative(status: Int): Option[SchemaAlt[E, _]] = {
-    others
-      .find(_._2 === status)
-      .map(_._1)
-      .orElse(
-        if (status === 400 && clientErrors.size == 1)
-          clientErrors.headOption
-        else if (status === 500 && serverErrors.size == 1)
-          serverErrors.headOption
-        else None
-      )
   }
 }
