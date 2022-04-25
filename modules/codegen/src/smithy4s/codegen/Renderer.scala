@@ -383,7 +383,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 } else {
                   val mh = memberHints(hints)
                   // format: off
-                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintCheck(hints, tpe)}"""
+                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
                   // format: on
                 }
             }
@@ -478,7 +478,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           block(s"object $cn")(
             renderHintsVal(altHints),
             // format: off
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintCheck(altHints)}, $cn(_), _.${uncapitalise(altName)})",
+            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
             // format: on
           )
@@ -559,7 +559,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
     val trailingCalls =
-      s".withId(id).addHints(hints)${renderConstraintCheck(hints)}"
+      s".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
 
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
@@ -753,15 +753,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (h.isEmpty) "" else h.mkString(", ")
   }
 
-  def renderConstraintCheck(hints: List[Hint]): String = {
+  def renderConstraintValidation(hints: List[Hint]): String = {
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
     if (tags.isEmpty) ""
     else {
-      tags.map(t => s".validated[${t.renderFull}]").mkString(".")
+      tags.map(t => s".validated[${t.renderFull}]").mkString("")
     }
   }
 
-  def renderFieldConstraintCheck(hints: List[Hint], tpe: Type): String = {
+  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): String = {
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
     if (tags.isEmpty) ""
     else {
