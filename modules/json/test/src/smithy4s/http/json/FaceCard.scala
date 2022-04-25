@@ -14,14 +14,15 @@ object FaceCard
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "FaceCard")
 
   val hints: smithy4s.Hints = smithy4s.Hints(
+    smithy.api.Documentation("FaceCard types"),
     smithy4s.IntEnum()
   )
 
-  case object JACK extends FaceCard("1", 0)
-  case object QUEEN extends FaceCard("2", 1)
-  case object KING extends FaceCard("3", 2)
-  case object ACE extends FaceCard("4", 3)
-  case object JOKER extends FaceCard("5", 4)
+  case object JACK extends FaceCard("JACK", 1)
+  case object QUEEN extends FaceCard("QUEEN", 2)
+  case object KING extends FaceCard("KING", 3)
+  case object ACE extends FaceCard("ACE", 4)
+  case object JOKER extends FaceCard("JOKER", 5)
 
   val values: List[FaceCard] = List(
     JACK,

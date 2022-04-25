@@ -191,10 +191,18 @@ private[http] class SchematicMetadataReader()
       fromString: Map[String, A],
       fromOrdinal: Map[Int, A]
   ): MetaDecode.Make[A] =
-    MetaDecode.Make
-      .from(
-        s"Enum[${fromString.keySet.mkString(",")}]"
-      )(fromString.get)
+    Hinted[MetaDecode].onHintOpt[IntEnum, A] {
+      case Some(_) =>
+        MetaDecode
+          .from(
+            s"Enum[${fromString.keySet.mkString(",")}]"
+          )(s => fromOrdinal.get(s.toInt))
+      case None =>
+        MetaDecode
+          .from(
+            s"Enum[${fromString.keySet.mkString(",")}]"
+          )(fromString.get)
+    }
 
   def suspend[A](f: Lazy[MetaDecode.Make[A]]): MetaDecode.Make[A] =
     MetaDecode.Make.empty

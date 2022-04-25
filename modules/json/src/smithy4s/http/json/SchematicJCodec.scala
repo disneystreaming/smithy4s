@@ -633,28 +633,28 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
   ): JCodec[A] =
     new JCodec[A] {
       val expecting: String =
-        s"enumeration: [${fromName.keys.mkString(", ")}]"
+        s"enumeration: [${fromOrdinal.keys.mkString(", ")}]"
 
       def decodeValue(cursor: Cursor, in: JsonReader): A = {
-        val str = in.readInt().toString
-        fromName.get(str) match {
+        val int = in.readInt()
+        fromOrdinal.get(int) match {
           case Some(value) => value
-          case None        => in.enumValueError(str)
+          case None        => in.enumValueError(int)
         }
       }
 
       def encodeValue(x: A, out: JsonWriter): Unit =
-        out.writeVal(to(x)._1.toInt)
+        out.writeVal(to(x)._2)
 
       def decodeKey(in: JsonReader): A = {
-        val str = in.readKeyAsInt().toString
-        fromName.get(str) match {
+        val int = in.readKeyAsInt()
+        fromOrdinal.get(int) match {
           case Some(value) => value
-          case None        => in.enumValueError(str)
+          case None        => in.enumValueError(int)
         }
       }
 
-      def encodeKey(x: A, out: JsonWriter): Unit = out.writeKey(to(x)._1.toInt)
+      def encodeKey(x: A, out: JsonWriter): Unit = out.writeKey(to(x)._2)
     }
 
   def stringEnumeration[A](

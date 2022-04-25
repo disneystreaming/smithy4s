@@ -473,18 +473,21 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
       fromName: Map[String, A],
       fromOrdinal: Map[Int, A]
   ): DocumentDecoderMake[A] = {
-  val f = fromNonHinted[A](
-    s"value in [${fromName.keySet.mkString(", ")}]"
-  ) _
-  Hinted[DocumentDecoder].onHintOpt[smithy4s.IntEnum, A] {
-    case Some(_) => f {
-      case DNumber(value) if fromName.contains(value.toString) => fromName(value.toString)
-    }
-    case None => f {
-      case DString(value) if fromName.contains(value) => fromName(value)
+    val f = fromNonHinted[A](
+      s"value in [${fromName.keySet.mkString(", ")}]"
+    ) _
+    Hinted[DocumentDecoder].onHintOpt[smithy4s.IntEnum, A] {
+      case Some(_) =>
+        f {
+          case DNumber(value) if fromOrdinal.contains(value.toInt) =>
+            fromOrdinal(value.toInt)
+        }
+      case None =>
+        f {
+          case DString(value) if fromName.contains(value) => fromName(value)
+        }
     }
   }
-}
 
   def suspend[A](f: Lazy[DocumentDecoderMake[A]]): DocumentDecoderMake[A] =
     Hinted.static {

@@ -62,6 +62,7 @@ structure BigStruct{
 ])
 string EnumWithSymbols
 
+@documentation("FaceCard types")
 intEnum FaceCard {
     @enumValue(1)
     JACK

@@ -74,7 +74,11 @@ object SchematicPathEncoder
       to: A => (String, Int),
       fromString: Map[String, A],
       fromOrdinal: Map[Int, A]
-  ): PathEncode.Make[A] = PathEncode.Make.from(to.andThen(_._1))
+  ): PathEncode.Make[A] =
+    Hinted[PathEncode.MaybePathEncode].onHintOpt[IntEnum, A] {
+      case Some(_) => Some(PathEncode.Make.raw(to.andThen(_._2.toString)))
+      case None    => Some(PathEncode.Make.raw(to.andThen(_._1)))
+    }
 
   override val unit: PathEncode.Make[Unit] =
     struct(Vector.empty)(_ => ())

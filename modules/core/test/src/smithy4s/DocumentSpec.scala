@@ -176,7 +176,7 @@ object DocumentSpec extends FunSuite {
     val faceCard: FaceCard = FaceCard.ACE
     val document = Document.encode(faceCard)
     import Document._
-    val expectedDocument = DNumber(faceCard.value.toInt)
+    val expectedDocument = DNumber(faceCard.ordinal)
 
     val roundTripped = Document.decode[FaceCard](document)
 

@@ -265,7 +265,7 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
       fromOrdinal: Map[Int, A]
   ): DocumentEncoderMake[A] =
     Hinted[DocumentEncoder].onHintOpt[smithy4s.IntEnum, A] {
-      case Some(_) => fromNonHinted(a => DNumber(to(a)._1.toInt))
+      case Some(_) => fromNonHinted(a => DNumber(to(a)._2))
       case None    => fromNonHinted(a => DString(to(a)._1))
     }
 
