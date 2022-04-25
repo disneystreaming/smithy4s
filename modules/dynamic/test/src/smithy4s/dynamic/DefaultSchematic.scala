@@ -88,7 +88,7 @@ object DefaultSchematic extends smithy4s.Schematic[Id] {
       f: Id[A],
       to: smithy4s.Refinement[A, B],
       from: B => A
-  ): Id[B] = to.asThrowingFunction(f)
+  ): Id[B] = to.unchecked(f)
 
   def timestamp: Id[Timestamp] = Timestamp.fromEpochSecond(0L)
 

@@ -116,13 +116,13 @@ abstract class SchematicGen2 extends SchemaVisitor[Gen] { self =>
       schema: Schema[A],
       to: Refinement[A, B],
       from: B => A
-  ): Gen[B] = schema.compile(this).map(to.asThrowingFunction)
+  ): Gen[B] = schema.compile(this).map(to.unchecked)
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //// HELPER FUNCTIONS
-  ////////////////////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////////////////////
+  // // HELPER FUNCTIONS
+  // //////////////////////////////////////////////////////////////////////////////////////
 
   private def genAlt[S, A](alt: Alt[Schema, S, A]): Gen[S] =
     alt.instance.compile(this).map(alt.inject)

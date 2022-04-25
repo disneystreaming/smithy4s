@@ -32,6 +32,13 @@ trait Refinement[A, B] { self =>
   def constraint: Constraint
   def apply(a: A): Either[String, B]
 
+  /**
+    * Short circuits validation. This should only be used as last-resort
+    * when it is impossible to implement schema compilers otherwise, such as ones
+    * that create data out of thin air (random generators/default values/etc).
+    */
+  def unchecked(a: A): B
+
   final val asFunction: A => Either[ConstraintError, B] =
     (a: A) =>
       apply(a).left.map(msg =>
@@ -51,6 +58,7 @@ trait Refinement[A, B] { self =>
       def tag: ShapeTag[Constraint] = self.tag
       def constraint: Constraint = self.constraint
       def apply(a0: A0): Either[String, B] = self(f(a0))
+      def unchecked(a0: A0): B = self.unchecked(f(a0))
     }
 
   final def map[B0](f: B => B0): Refinement.Aux[Constraint, A, B0] =
@@ -59,6 +67,7 @@ trait Refinement[A, B] { self =>
       def tag: ShapeTag[Constraint] = self.tag
       def constraint: Constraint = self.constraint
       def apply(a: A): Either[String, B0] = self(a).map(f)
+      def unchecked(a: A): B0 = f(self.unchecked(a))
     }
 
 }

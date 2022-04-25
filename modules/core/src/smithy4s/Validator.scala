@@ -58,6 +58,7 @@ object Validator {
       final val constraint: C = c
       final val run = get(c)
       final def apply(a: A): Either[String, A] = run(a).map(_ => a)
+      final def unchecked(a: A): A = a
     }
 
   }
