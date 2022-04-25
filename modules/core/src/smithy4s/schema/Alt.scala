@@ -38,6 +38,7 @@ final case class Alt[F[_], U, A](
 
   def mapK[G[_]](fk: PolyFunction[F, G]): Alt[G, U, A] =
     Alt(label, fk(instance), inject, hints)
+
 }
 object Alt {
 
@@ -63,6 +64,19 @@ object Alt {
           Hints.empty
         )
     }
+
+  implicit class SchemaAltOps[U, A](private val alt: SchemaAlt[U, A])
+      extends AnyVal {
+    def validated[C](implicit
+        constraint: Validator.Simple[C, A]
+    ): SchemaAlt[U, A] =
+      Alt(
+        alt.label,
+        alt.instance.validatedAgainstHints(alt.hints),
+        alt.inject,
+        alt.hints
+      )
+  }
 
   type SchemaAndValue[S, A] = WithValue[Schema, S, A]
 }

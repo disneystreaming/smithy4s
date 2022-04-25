@@ -477,8 +477,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           val cn = caseName(altName)
           block(s"object $cn")(
             renderHintsVal(altHints),
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints), $cn(_), _.${uncapitalise(altName)})",
+            // format: off
+            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintCheck(altHints)}, $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
+            // format: on
           )
         },
         newline, {
