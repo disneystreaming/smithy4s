@@ -84,6 +84,12 @@ object DefaultSchematic extends smithy4s.Schematic[Id] {
 
   def bijection[A, B](f: Id[A], to: A => B, from: B => A): Id[B] = to(f)
 
+  def surjection[A, B](
+      f: Id[A],
+      to: smithy4s.Refinement[A, B],
+      from: B => A
+  ): Id[B] = to.asThrowingFunction(f)
+
   def timestamp: Id[Timestamp] = Timestamp.fromEpochSecond(0L)
 
   def withHints[A](fa: Id[A], hints: Hints): Id[A] = fa
