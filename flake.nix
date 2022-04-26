@@ -14,7 +14,7 @@
         ];
       in
       {
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           buildInputs = map (pkgName: pkgs.${pkgName}) shellPackages;
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
