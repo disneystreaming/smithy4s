@@ -125,7 +125,8 @@ object CodecAPI {
     }
 
     def xmap[B](to: A => Either[ConstraintError, B], from: B => A): Codec[B] = {
-      // TODO, this is a hack that will be removed when we get around to adapting
+      // TODO, this is a hack that will be removed when we get around to rewriting the current
+      // CodecAPI implementations using `SchemaVisitor` instead of `Schematic`
       def adapted(a: A): B = to(a) match {
         case Left(e)  => throw e
         case Right(b) => b
