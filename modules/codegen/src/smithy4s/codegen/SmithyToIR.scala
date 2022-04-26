@@ -369,6 +369,21 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     shape.getAllTraits().asScala.values.toList
   )
 
+  def toTypeRef(id: ToShapeId): Type.Ref = {
+    val shapeId = id.toShapeId()
+    Type.Ref(shapeId.getNamespace(), shapeId.getName())
+  }
+
+  object ConstraintTrait {
+    def unapply(tr: Trait): Option[Trait] =
+      tr match {
+        case t: RangeTrait   => Some(t)
+        case t: LengthTrait  => Some(t)
+        case t: PatternTrait => Some(t)
+        case _               => None
+      }
+  }
+
   private val traitToHint: PartialFunction[Trait, Hint] = {
     case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>
@@ -381,6 +396,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.PackedInputs
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
+    case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr))
   }
 
   private def traitsToHints(traits: List[Trait]): List[Hint] = {

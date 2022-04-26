@@ -336,8 +336,15 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val str = string
         .optional[Bar]("str", _.str)
         .addHints(lengthHint)
-      val lst = list[Int](int).optional[Bar]("lst", _.lst).addHints(lengthHint)
-      val intS = int.optional[Bar]("int", _.int).addHints(rangeHint)
+        .validated[smithy.api.Length, String]
+      val lst = list[Int](int)
+        .optional[Bar]("lst", _.lst)
+        .addHints(lengthHint)
+        .validated[smithy.api.Length, List[Int]]
+      val intS = int
+        .optional[Bar]("int", _.int)
+        .addHints(rangeHint)
+        .validated[smithy.api.Range, Int]
       struct(str, lst, intS)(Bar.apply)
     }
   }
@@ -381,6 +388,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val str = string
         .required[Bar2]("str", _.str)
         .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
       val bar = struct(str)(Bar2.apply).required[Foo2]("bar", _.bar)
       struct(bar)(Foo2.apply)
     }
@@ -405,6 +413,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val str = string
         .required[Bar2]("str", _.str)
         .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
       val bar = list(struct(str)(Bar2.apply)).required[Foo3]("bar", _.bar)
       struct(bar)(Foo3.apply)
     }

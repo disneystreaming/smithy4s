@@ -42,10 +42,13 @@ object SchematicPathEncoder
       to: A => B,
       from: B => A
   ): PathEncode.Make[B] =
-    Hinted[PathEncode.MaybePathEncode, B](
-      f.hints,
-      make = hints => f.make(hints).map(_.contramap(from))
-    )
+    f.contramap(from)
+
+  override def surjection[A, B](
+      f: PathEncode.Make[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): PathEncode.Make[B] = f.contramap(from)
 
   override val bigdecimal: PathEncode.Make[BigDecimal] =
     PathEncode.Make.fromToString

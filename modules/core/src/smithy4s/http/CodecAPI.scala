@@ -123,6 +123,16 @@ object CodecAPI {
 
       def writeToArray(value: B): Array[Byte] = self.writeToArray(from(value))
     }
+
+    def xmap[B](to: A => Either[ConstraintError, B], from: B => A): Codec[B] = {
+      // TODO, this is a hack that will be removed when we get around to rewriting the current
+      // CodecAPI implementations using `SchemaVisitor` instead of `Schematic`
+      def adapted(a: A): B = to(a) match {
+        case Left(e)  => throw e
+        case Right(b) => b
+      }
+      imap(adapted, from)
+    }
   }
 
   abstract class DelegatingCodecAPI extends CodecAPI {
@@ -153,17 +163,15 @@ object CodecAPI {
     * for instance)
     */
   def nativeStringsAndBlob(
-      underlying: CodecAPI,
-      constraints: Constraints
+      underlying: CodecAPI
   ): CodecAPI =
     new DelegatingCodecAPI {
 
       def compileCodec[A](
           schema: Schema[A]
       ): this.Codec[A] = {
-        val stringAndBlobResult = schema.compile(
-          new internals.StringAndBlobCodecSchematic(constraints)
-        )
+        val stringAndBlobResult =
+          schema.compile(new internals.StringAndBlobCodecSchematic())
         stringAndBlobResult.get match {
           case StringAndBlobCodecSchematic.BodyCodecResult(bodyCodec) =>
             bodyCodec

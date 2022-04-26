@@ -48,6 +48,11 @@ trait Schematic[F[_]] {
   // Other
   def suspend[A](f: Lazy[F[A]]): F[A]
   def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B]
+  def surjection[A, B](
+      f: F[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): F[B]
   def withHints[A](fa: F[A], hints: Hints): F[A]
   def enumeration[A](
       to: A => (String, Int),
@@ -87,6 +92,8 @@ object Schematic {
             map(apply(key), apply(value))
           case BijectionSchema(underlying, to, from) =>
             bijection(apply(underlying), to, from)
+          case SurjectionSchema(underlying, to, from) =>
+            surjection(apply(underlying), to, from)
           case StructSchema(_, _, fields, make) =>
             struct(fields.map(Field.shiftHintsK(_)).map(_.mapK(self)))(make)
           case schema @ Schema.UnionSchema(_, _, _, _) => {

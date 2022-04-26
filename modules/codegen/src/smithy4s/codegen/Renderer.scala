@@ -382,7 +382,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
                 } else {
                   val mh = memberHints(hints)
-                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
+                  // format: off
+                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
+                  // format: on
                 }
             }
           if (fields.size <= 22) {
@@ -475,8 +477,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           val cn = caseName(altName)
           block(s"object $cn")(
             renderHintsVal(altHints),
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints), $cn(_), _.${uncapitalise(altName)})",
+            // format: off
+            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
+            // format: on
           )
         },
         newline, {
@@ -554,11 +558,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
+    val trailingCalls =
+      s".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
         renderId(originalName),
         renderHintsVal(hints),
-        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withId(id).addHints(hints)",
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$trailingCalls",
         lines(
           s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)"
         )
@@ -599,6 +606,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def renderAlgParams =
       s"$renderInput, $renderError, $renderOutput, $renderStreamedInput, $renderStreamedOutput"
+  }
+
+  implicit class TypeRefExt(tpe: Type.Ref) {
+    def renderFull: String = s"${tpe.namespace}.${tpe.name}"
   }
 
   implicit class TypeExt(tpe: Type) {
@@ -740,6 +751,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def memberHints(hints: List[Hint]): String = {
     val h = hints.map(renderHint).collect { case Some(v) => v }
     if (h.isEmpty) "" else h.mkString(", ")
+  }
+
+  def renderConstraintValidation(hints: List[Hint]): String = {
+    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    if (tags.isEmpty) ""
+    else {
+      tags.map(t => s".validated[${t.renderFull}]").mkString("")
+    }
+  }
+
+  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): String = {
+    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    if (tags.isEmpty) ""
+    else {
+      tags.map(t => s".validated[${t.renderFull}, ${tpe.render}]").mkString(".")
+    }
   }
 
   private def shapeTag(name: String): String =

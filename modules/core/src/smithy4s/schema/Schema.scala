@@ -43,6 +43,7 @@ sealed trait Schema[A]{
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
     case BijectionSchema(schema, to, from) => BijectionSchema(schema.withId(newId), to, from)
+    case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.withId(newId), to, from)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
@@ -55,6 +56,7 @@ sealed trait Schema[A]{
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
     case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsLocally(f), to, from)
+    case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.transformHintsLocally(f), to, from)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
   }
 
@@ -67,7 +69,20 @@ sealed trait Schema[A]{
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
     case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsTransitively(f), to, from)
+    case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.transformHintsTransitively(f), to, from)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
+  }
+
+  private[smithy4s] def validatedAgainstHints[C](hints: Hints)(implicit constraint: Validator.Simple[C, A]): Schema[A] = {
+    hints.get(constraint.tag) match {
+      case Some(hint) =>
+        SurjectionSchema(this, constraint.make(hint), identity[A](_))
+      case None => this
+    }
+  }
+
+  def validated[C](implicit constraint: Validator.Simple[C, A]): Schema[A] = {
+    validatedAgainstHints(this.hints)
   }
 }
 
@@ -80,6 +95,10 @@ object Schema {
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]) extends Schema[U]
   final case class BijectionSchema[A, B](underlying: Schema[A], to: A => B, from: B => A) extends Schema[B]{
+    def shapeId = underlying.shapeId
+    def hints = underlying.hints
+  }
+  final case class SurjectionSchema[A, B](underlying: Schema[A], refinement: Refinement[A, B], from: B => A) extends Schema[B]{
     def shapeId = underlying.shapeId
     def hints = underlying.hints
   }

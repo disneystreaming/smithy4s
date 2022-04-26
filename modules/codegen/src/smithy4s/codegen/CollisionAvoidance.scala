@@ -22,6 +22,7 @@ import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.Hint.Constraint
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -136,15 +137,17 @@ object CollisionAvoidance {
     )
   }
 
+  private def modRef(ref: Type.Ref): Type.Ref =
+    Type.Ref(ref.namespace, ref.name.capitalize)
+
   private def modHint(hint: Hint): Hint = hint match {
     case Native(nt) => Native(smithy4s.recursion.preprocess(modTypedNode)(nt))
-    case other      => other
+    case Constraint(tr) => Constraint(modRef(tr))
+    case other          => other
   }
 
   private def modTypedNode: TypedNode ~> TypedNode =
     new (TypedNode ~> TypedNode) {
-      def modRef(ref: Type.Ref): Type.Ref =
-        Type.Ref(ref.namespace, ref.name.capitalize)
 
       def apply[A](fa: TypedNode[A]): TypedNode[A] = fa match {
         case EnumerationTN(ref, value, ordinal, name) =>

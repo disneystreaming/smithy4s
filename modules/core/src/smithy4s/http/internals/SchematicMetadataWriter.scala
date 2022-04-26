@@ -169,6 +169,13 @@ private[http] object SchematicMetadataWriter
   ): MetaEncode.Make[B] =
     f.contramap(from)
 
+  def surjection[A, B](
+      f: MetaEncode.Make[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): MetaEncode.Make[B] =
+    f.contramap(from)
+
   def struct[S](
       fields: Vector[Field[MetaEncode.Make, S, _]]
   )(f: Vector[Any] => S): MetaEncode.Make[S] =

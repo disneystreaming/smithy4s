@@ -91,6 +91,12 @@ object SchematicRepr extends Schematic[Repr] {
 
   def bijection[A, B](f: String, to: A => B, from: B => A) = f
 
+  def surjection[A, B](
+      f: String,
+      to: Refinement[A, B],
+      from: B => A
+  ) = f
+
   def unit: Repr[Unit] = "unit"
 
 }

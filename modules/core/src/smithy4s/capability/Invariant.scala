@@ -14,10 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s.capability
+package smithy4s
+package capability
 
 trait Invariant[F[_]] {
   def imap[A, B](fa: F[A])(to: A => B, from: B => A): F[B]
+  def xmap[A, B](
+      fa: F[A]
+  )(to: A => Either[ConstraintError, B], from: B => A): F[B]
 }
 
 object Invariant {
