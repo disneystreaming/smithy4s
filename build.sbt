@@ -1,6 +1,5 @@
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import java.io.File
-import Smithy4sPlugin.jvmDimSettings
 import sys.process._
 
 ThisBuild / commands ++= createBuildCommands(allModules)
@@ -47,6 +46,7 @@ lazy val allModules = Seq(
   codegenPlugin.projectRefs,
   benchmark.projectRefs,
   protocol.projectRefs,
+  protocolTests.projectRefs,
   openapi.projectRefs,
   `aws-kernel`.projectRefs,
   aws.projectRefs,
@@ -270,7 +270,16 @@ lazy val codegen = projectMatrix
   .dependsOn(openapi)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
+    buildInfoKeys := Seq[BuildInfoKey](
+      organization,
+      version,
+      scalaBinaryVersion,
+      "protocolArtifact" -> (protocol
+        .jvm(autoScalaLibrary = false) / moduleName).value,
+      "smithyOrg" -> Dependencies.Smithy.model.organization,
+      "smithyVersion" -> Dependencies.Smithy.model.revision,
+      "smithyArtifact" -> Dependencies.Smithy.model.name
+    ),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -335,7 +344,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         (core.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala212) / publishLocal).value,
         (openapi.jvm(Scala212) / publishLocal).value,
-        (protocol.jvm(Scala212) / publishLocal).value
+        (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
       )
       publishLocal.value
     },
@@ -353,23 +362,27 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
  */
 lazy val protocol = projectMatrix
   .in(file("modules/protocol"))
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
+  .jvmPlatform(
+    autoScalaLibrary = false,
+    scalaVersions = Seq.empty,
+    settings = jvmDimSettings
+  )
+  .settings(
+    libraryDependencies += Dependencies.Smithy.model,
+    javacOptions ++= Seq("--release", "8")
+  )
+
+lazy val protocolTests = projectMatrix
+  .in(file("modules/protocol-tests"))
+  .jvmPlatform(Seq(Scala213), jvmDimSettings)
+  .dependsOn(protocol)
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      Dependencies.Smithy.model,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    Test / fork := true,
-    javacOptions ++= Seq(
-      "-source",
-      "1.8",
-      "-target",
-      "1.8",
-      "-Xlint"
-    )
+    Test / fork := true
   )
 
 /**
@@ -605,7 +618,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.17"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.18"
     )
 
   val Smithy = new {
@@ -706,6 +719,8 @@ def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
  * library code, aws-specific code.
  */
 def genSmithyImpl(config: Configuration) = Def.task {
+  // codegen needs the `protocol` jar to be published
+  (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
 
   val inputFiles = (config / smithySpecs).value
   val outputDir = (config / genSmithyOutput).?.value

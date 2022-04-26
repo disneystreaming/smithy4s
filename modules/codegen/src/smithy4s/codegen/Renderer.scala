@@ -588,11 +588,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
-    val params =
-      if (op.hints.contains(Hint.PackedInputs)) op.params.map(_.tpe) else Nil
+    val paramImports =
+      if (op.hints.contains(Hint.PackedInputs)) Nil else op.params.map(_.tpe)
 
     def imports =
-      (op.input :: op.output :: params ++ op.errors)
+      (op.input :: op.output :: paramImports ++ op.errors)
         .foldMap(_.imports)
 
     def renderInput = op.input.render
