@@ -20,6 +20,7 @@ import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
 import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.test.renderResultInterpolator
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
 
@@ -134,12 +135,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderService(
-      name: String,
-      originalName: String,
-      ops: List[Operation],
-      hints: List[Hint],
-      version: String
-  ): RenderResult = {
+                             name: String,
+                             originalName: String,
+                             ops: List[Operation],
+                             hints: List[Hint],
+                             version: String
+                           ): RenderResult = {
 
     val genName = name + "Gen"
     val opTraitName = name + "Operation"
@@ -150,7 +151,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         ops.map { op =>
           line(
-            s"def ${op.methodName}(${op.renderArgs}) : F[${op.renderAlgParams}]"
+            render"def ${op.methodName}(${op.renderArgsWithImports}) : F[${op.renderAlgParams}]"
           ).addImports(
             if (op.errors.isEmpty) Set() else Set(s"$genName.${op.name}Error")
           )
@@ -252,9 +253,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderOperation(
-      serviceName: String,
-      op: Operation
-  ): RenderResult = {
+                               serviceName: String,
+                               op: Operation
+                             ): RenderResult = {
     val params = if (op.input != Type.unit) {
       s"input: ${op.input.render}"
     } else ""
@@ -301,9 +302,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderStreamingSchemaVal(
-      valName: String,
-      sField: Option[StreamingField]
-  ) = sField match {
+                                        valName: String,
+                                        sField: Option[StreamingField]
+                                      ) = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
       val mh = if (hints.isEmpty) "" else s".withHints(${memberHints(hints)})"
       line(
@@ -332,12 +333,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProduct(
-      name: String,
-      originalName: String,
-      fields: List[Field],
-      recursive: Boolean,
-      hints: List[Hint]
-  ): RenderResult = {
+                             name: String,
+                             originalName: String,
+                             fields: List[Field],
+                             recursive: Boolean,
+                             hints: List[Hint]
+                           ): RenderResult = {
     val decl = s"case class $name(${renderArgs(fields)})"
     val imports = fields.foldMap(_.tpe.imports) ++ syntaxImport
     lines(
@@ -443,13 +444,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderUnion(
-      name: String,
-      originalName: String,
-      alts: NonEmptyList[Alt],
-      recursive: Boolean,
-      hints: List[Hint],
-      error: Boolean = false
-  ): RenderResult = {
+                           name: String,
+                           originalName: String,
+                           alts: NonEmptyList[Alt],
+                           recursive: Boolean,
+                           hints: List[Hint],
+                           error: Boolean = false
+                         ): RenderResult = {
     def caseName(altName: String) =
       altName.dropWhile(_ == '_').capitalize + "Case"
     val caseNames = alts.map(_.name).map(caseName)
@@ -502,6 +503,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     ).addImports(imports)
   }
 
+  private def renderArgsWithImports(fields: List[Field]): RenderLine = fields
+    .map {
+      case Field(name, _, tpe, optional, _) => {
+        val (imports,line) =tpe.importsAndRender
+        RenderLine(imports,name + ": " + {if(optional)  s"Option[$line] = None" else line})
+      }
+    }.foldLeft(RenderLine.empty) {
+      case (acc, RenderLine(imports, line)) => RenderLine(acc.imports ++ imports, acc.line + ", " + line)
+    }
+
+
   private def renderArgs(fields: List[Field]): String = fields
     .map {
       case Field(name, _, tpe, true, _) => name + ": " + tpe.render
@@ -511,11 +523,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     .mkString(", ")
 
   private def renderEnum(
-      name: String,
-      originalName: String,
-      values: List[EnumValue],
-      hints: List[Hint]
-  ): RenderResult = lines(
+                          name: String,
+                          originalName: String,
+                          values: List[EnumValue],
+                          hints: List[Hint]
+                        ): RenderResult = lines(
     s"sealed abstract class $name(val value: String, val ordinal: Int) extends scala.Product with scala.Serializable",
     obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
       renderId(originalName),
@@ -541,11 +553,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ).addImports(syntaxImport)
 
   private def renderTypeAlias(
-      name: String,
-      originalName: String,
-      tpe: Type,
-      hints: List[Hint]
-  ): RenderResult = {
+                               name: String,
+                               originalName: String,
+                               tpe: Type,
+                               hints: List[Hint]
+                             ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
     lines(
@@ -564,9 +576,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private implicit class OperationExt(op: Operation) {
     def renderArgs =
       if (op.input == Type.unit) ""
+      else if (op.hints.contains(Hint.PackedInputs)) "input: " + op.input.render
+      else self.renderArgs(op.params)
+
+    def renderArgsWithImports =
+      if (op.input == Type.unit) RenderLine.empty
       else if (op.hints.contains(Hint.PackedInputs)) {
-        "input: " + renderInput
-      } else self.renderArgs(op.params)
+        val (imports , line) = op.input.importsAndRender
+        RenderLine(imports,  "input: " + line)
+      } else self.renderArgsWithImports(op.params)
 
     def renderParams =
       if (op.input == Type.unit) ""
@@ -576,10 +594,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
-    val params = if(op.hints.contains(Hint.PackedInputs)) op.params.map(_.tpe) else Nil
+    val paramImports =
+      if (op.hints.contains(Hint.PackedInputs)) Nil else op.params.map(_.tpe)
 
     def imports =
-      (op.input :: op.output :: params ++ op.errors)
+      (op.input :: op.output :: paramImports ++ op.errors)
         .foldMap(_.imports)
 
     def renderInput = op.input.render
@@ -601,9 +620,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     def imports: Set[String] = importsAndRender._1
 
     /**
-      * Returns both the rendered string of the type,
-      * and the necessary imports.
-      */
+     * Returns both the rendered string of the type,
+     * and the necessary imports.
+     */
     def importsAndRender: (Set[String], String) = tpe match {
       case Type.PrimitiveType(p) => importAndRenderP(p)
       case Type.List(member) =>
@@ -698,10 +717,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def enumValueClassName(
-      name: Option[String],
-      value: String,
-      ordinal: Int
-  ) = {
+                                  name: Option[String],
+                                  value: String,
+                                  ordinal: Int
+                                ) = {
     name.getOrElse {
       val camel = toCamelCase(value).capitalize
       if (camel.nonEmpty) camel else "Value" + ordinal

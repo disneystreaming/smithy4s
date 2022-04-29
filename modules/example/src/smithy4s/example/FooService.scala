@@ -5,7 +5,7 @@ import smithy4s.syntax._
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def getFoo() : F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
+  def getFoo() : F[PrimitiveType(Unit),Ref(smithy4s.example,GetFooOutput),List()]
 
   def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : FooServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends FooServiceGen[G] {

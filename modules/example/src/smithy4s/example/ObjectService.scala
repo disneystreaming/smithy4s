@@ -7,8 +7,8 @@ import smithy4s.syntax._
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
-  def getObject(key: ObjectKey, bucketName: BucketName) : F[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
+  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[Ref(smithy4s.example,PutObjectInput),PrimitiveType(Unit),List(Ref(smithy4s.example,ServerError), Ref(smithy4s.example,NoMoreSpace))]
+  def getObject(key: ObjectKey, bucketName: BucketName) : F[Ref(smithy4s.example,GetObjectInput),Ref(smithy4s.example,GetObjectOutput),List(Ref(smithy4s.example,ServerError))]
 
   def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : ObjectServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends ObjectServiceGen[G] {
