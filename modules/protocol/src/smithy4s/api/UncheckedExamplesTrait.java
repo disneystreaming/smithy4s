@@ -161,7 +161,7 @@ public final class UncheckedExamplesTrait extends AbstractTrait implements ToSmi
         }
 
         /**
-         * Builder used to create {@link Example}s.
+         * Builder used to create {@link UncheckedExample}s.
          */
         public static final class Builder implements SmithyBuilder<UncheckedExample> {
             private String title;

@@ -28,24 +28,24 @@ import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 
 object ModelLoader {
+  private val requiredDeps =
+    s"${smithy4s.codegen.BuildInfo.organization}:${smithy4s.codegen.BuildInfo.protocolArtifact}:${smithy4s.codegen.BuildInfo.version}" ::
+      s"${smithy4s.codegen.BuildInfo.smithyOrg}:${smithy4s.codegen.BuildInfo.smithyArtifact}:${smithy4s.codegen.BuildInfo.smithyVersion}" ::
+      Nil
+
   def load(
       specs: Set[File],
       dependencies: List[String],
       repositories: List[String],
       transformers: List[String]
   ): (ClassLoader, Model) = {
-    val maybeDeps = resolveDependencies(dependencies, repositories)
+    val allDeps = dependencies ++ requiredDeps
+    val maybeDeps = resolveDependencies(allDeps, repositories)
     val currentClassLoader = this.getClass().getClassLoader()
 
     // Loads a model using whatever's on the current classpath (in particular, anything that
     // might be provided by smithy4s itself out of the box)
-    val modelBuilder =
-      Model
-        .assembler()
-        .discoverModels(currentClassLoader)
-        .assemble()
-        .unwrap()
-        .toBuilder()
+    val modelBuilder = Model.builder()
 
     maybeDeps.foreach { deps =>
       // Loading the model just from upstream dependencies, in isolation
