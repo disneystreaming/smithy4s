@@ -110,6 +110,7 @@ object Renderable {
 // Models
 case class RenderLine(imports: Set[String], line: String) {
   def tupled = (imports, line)
+  def modify(f: String => String) = RenderLine(imports, f(line))
   def toRenderResult = RenderResult(imports, List(line))
 }
 object RenderLine {

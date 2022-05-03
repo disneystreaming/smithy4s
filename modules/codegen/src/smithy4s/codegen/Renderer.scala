@@ -497,11 +497,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def fieldToRenderLine(field: Field): RenderLine = {
     field match {
       case Field(name, _, tpe, required, _) =>
-        val (imports, line) = tpe.importsAndRender
-        RenderLine(
-          imports,
-          name + ": " + { if (required) line else s"Option[$line] = None" }
-        )
+        RenderLine(tpe.importsAndRender)
+          .modify(line =>  name + ": " + { if (required) line else s"Option[$line] = None" } )
     }
   }
   private def renderArgs(fields: List[Field]): RenderLine = fields
