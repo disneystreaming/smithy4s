@@ -573,7 +573,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
-    val paramImports: List[Type] =
+    val paramImports =
+
       if (op.hints.contains(Hint.PackedInputs)) Nil else op.params.map(_.tpe)
 
     def imports =
