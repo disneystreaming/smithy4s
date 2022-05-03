@@ -22,10 +22,6 @@ import cats.~>
 
 package recursion {
   case class Fix[F[_]](unfix: F[Fix[F]])
-
-  object t {
-    val x = Fix[Option](Option(Fix[Option](None)))
-  }
 }
 
 package object recursion {

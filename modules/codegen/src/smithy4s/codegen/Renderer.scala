@@ -19,15 +19,13 @@ package smithy4s.codegen
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
-import smithy4s.codegen.RenderLine.renderLineRenderable
 import smithy4s.codegen.TypedNode._
-import smithy4s.codegen.test.renderResultInterpolator
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
 
 import scala.jdk.CollectionConverters._
 
-object Renderer {
+object Renderer  {
 
   case class Result(namespace: String, name: String, content: String)
 
@@ -152,7 +150,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         ops.map { op =>
           line(
-            render"def ${op.methodName}(${op.renderArgsWithImports}) : F[${op.renderAlgParamsWithImports(genName)}]"
+            render"def ${op.methodName}(${op.renderArgs}) : F[${op.renderAlgParamsWithImports(genName)}]"
           )
         },
         newline,
@@ -162,7 +160,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ) {
           ops.map { op =>
             val opName = op.methodName
-            render"def $opName(${op.renderArgsWithImports}) = transformation[${op
+            render"def $opName(${op.renderArgs}) = transformation[${op
               .renderAlgParamsWithImports(genName)}](self.$opName(${op.renderParams}))"
           }
         }
@@ -205,39 +203,34 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(s"object reified extends $genName[$opTraitName]") {
           ops.map {
             case op if op.input == Type.unit =>
-              s"def ${op.methodName}(${op.renderArgs}) = ${op.name}()"
+              render"def ${op.methodName}(${op.renderArgs}) = ${op.name}()"
             case op if op.hints.contains(Hint.PackedInputs) =>
-              s"def ${op.methodName}(${op.renderArgs}) = ${op.name}(input)"
+              render"def ${op.methodName}(${op.renderArgs}) = ${op.name}(input)"
             case op =>
-              s"def ${op.methodName}(${op.renderArgs}) = ${op.name}(${op.input.render}(${op.renderParams}))"
+              render"def ${op.methodName}(${op.renderArgs}) = ${op.name}(${op.input.render}(${op.renderParams}))"
           }
         },
         newline,
-        s"def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
+        render"def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
         newline,
-        line(
-          s"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: smithy4s.Transformation[P, P1]): $genName[P1] = alg.transform(transformation)"
-        ),
+          render"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: smithy4s.Transformation[P, P1]): $genName[P1] = alg.transform(transformation)",
         newline,
         block(
           s"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
         ) {
           if (ops.isEmpty) {
-            line(
-              s"""def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")"""
-            )
+              render"""def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")""".toRenderResult
           } else {
             block(
               s"def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match "
             ) {
               ops.map {
                 case op if op.input == Type.unit =>
-                  s"case ${op.name}() => impl.${op.methodName}(${op.renderParams})"
+                  render"case ${op.name}() => impl.${op.methodName}(${op.renderParams})"
                 case op if op.hints.contains(Hint.PackedInputs) =>
-                  s"case ${op.name}(input) => impl.${op.methodName}(${op.renderParams})"
+                  render"case ${op.name}(input) => impl.${op.methodName}(${op.renderParams})"
                 case op =>
-                  s"case ${op.name}(${op.input.render}(${op.renderParams})) => impl.${op.methodName}(${op.renderParams})"
-
+                  render"case ${op.name}(${op.input.render}(${op.renderParams})) => impl.${op.methodName}(${op.renderParams})"
               }
             }
           }
@@ -245,9 +238,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ops.map(renderOperation(name, _))
       ),
       newline,
-      line(
-        s"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
-      ),
+        render"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]",
       newline
     )
   }
@@ -283,14 +274,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     lines(
-      s"case class $opName($params) extends $traitName[${op.renderAlgParams}]",
+      render"case class $opName($params) extends $traitName[${op.renderAlgParamsWithImports(serviceName+"Gen")}]",
       obj(
         opName,
         ext = s"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
-        s"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
-        s"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
+        render"val input: $Schema_[${op.input.render}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
+        render"val output: $Schema_[${op.output.render}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsValWithId(op.hints),
@@ -298,7 +289,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderErrorable(op)
       ),
       renderedErrorUnion
-    ).addImports(op.imports).addImports(syntaxImport)
+    ).addImports(syntaxImport)
   }
 
   private def renderStreamingSchemaVal(
@@ -339,11 +330,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       recursive: Boolean,
       hints: List[Hint]
   ): RenderResult = {
-    val decl = s"case class $name(${renderArgs(fields)})"
-    val imports = fields.foldMap(_.tpe.imports) ++ syntaxImport
+    val decl = render"case class $name(${renderArgs(fields)})"
+    val imports = decl.imports ++ syntaxImport
     lines(
       if (hints.contains(Hint.Error)) {
-        block(s"$decl extends Throwable") {
+        block(s"${decl.line} extends Throwable") {
           fields
             .find(_.name == "message")
             .map(field => (field.tpe, field.required))
@@ -513,17 +504,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         )
     }
   }
-  private def renderArgsWithImports(fields: List[Field]): RenderLine = fields
+  private def renderArgs(fields: List[Field]): RenderLine = fields
     .map(fieldToRenderLine)
     .intercalate(RenderLine(", "))
 
-  private def renderArgs(fields: List[Field]): String = fields
-    .map {
-      case Field(name, _, tpe, true, _) => name + ": " + tpe.render
-      case Field(name, _, tpe, false, _) =>
-        name + ": Option[" + tpe.render + "] = None"
-    }
-    .mkString(", ")
 
   private def renderEnum(
       name: String,
@@ -578,16 +562,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private implicit class OperationExt(op: Operation) {
     def renderArgs =
-      if (op.input == Type.unit) ""
-      else if (op.hints.contains(Hint.PackedInputs)) "input: " + op.input.render
-      else self.renderArgs(op.params)
-
-    def renderArgsWithImports =
       if (op.input == Type.unit) RenderLine.empty
       else if (op.hints.contains(Hint.PackedInputs)) {
         val (imports, line) = op.input.importsAndRender
         RenderLine(imports, "input: " + line)
-      } else self.renderArgsWithImports(op.params)
+      } else self.renderArgs(op.params)
 
     def renderParams =
       if (op.input == Type.unit) ""
@@ -597,7 +576,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
-    val paramImports =
+    val paramImports: List[Type] =
       if (op.hints.contains(Hint.PackedInputs)) Nil else op.params.map(_.tpe)
 
     def imports =

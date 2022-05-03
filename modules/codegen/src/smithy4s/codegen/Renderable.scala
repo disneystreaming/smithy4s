@@ -76,17 +76,14 @@ object Renderable {
       case Primitive.Uuid => RenderResult(Set("java.util.UUID"), List("UUID"))
       case Primitive.Document => line("smithy4s.Document")
     }
-  implicit def listRenderable[A](implicit
-      A: Renderable[A]
-  ): Renderable[List[A]] = { (l: List[A]) =>
+  implicit def listRenderable[A](implicit A: Renderable[A]): Renderable[List[A]] = { (l: List[A]) =>
     val (imports, lines) = l.map(A.render).map(r => (r.imports, r.lines)).unzip
     RenderResult(imports.fold(Set.empty)(_ ++ _), lines.flatten)
   }
 
   implicit val identity: Renderable[RenderResult] = r => r
-  implicit val renderLine: Renderable[RenderLine] = {
-    case RenderLine(imports, line) => RenderResult(imports, List(line))
-  }
+  implicit val renderLine: Renderable[RenderLine] = _.toRenderResult
+
   implicit def tupleRenderable[A](implicit
       A: Renderable[A]
   ): Renderable[(String, A)] = (t: (String, A)) =>
@@ -110,23 +107,23 @@ object Renderable {
   }
 }
 
+// Models
 case class RenderLine(imports: Set[String], line: String) {
   def tupled = (imports, line)
+  def toRenderResult = RenderResult(imports, List(line))
 }
 object RenderLine {
-  implicit val renderLineRenderable: Renderable[RenderLine] = (r: RenderLine) =>
-    RenderResult(r.imports, List(r.line))
   def apply(line: String): RenderLine = RenderLine(Set.empty, line)
-  def apply(importsAndLine: (Set[String], String)): RenderLine =
-    RenderLine(importsAndLine._1, importsAndLine._2)
+  def apply(importsAndLine: (Set[String], String)): RenderLine = RenderLine(importsAndLine._1, importsAndLine._2)
   val empty: RenderLine = RenderLine(Set.empty, "")
   implicit val monoid: Monoid[RenderLine] = new Monoid[RenderLine] {
     def empty = RenderLine.empty
     def combine(a: RenderLine, b: RenderLine) =
       RenderLine(a.imports ++ b.imports, a.line + b.line)
   }
-
 }
+
+
 case class RenderResult(imports: Set[String], lines: List[String]) {
   def tupled = (imports, lines)
   def block(l: Lines*): RenderResult = {
