@@ -5,8 +5,8 @@ import smithy4s.syntax._
 trait StreamedObjectsGen[F[_, _, _, _, _]] {
   self =>
 
-  def putStreamedObject(key: String) : F[Ref(smithy4s.example,PutStreamedObjectInput),PrimitiveType(Unit),List()]
-  def getStreamedObject(key: String) : F[Ref(smithy4s.example,GetStreamedObjectInput),Ref(smithy4s.example,GetStreamedObjectOutput),List()]
+  def putStreamedObject(key: String) : F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
+  def getStreamedObject(key: String) : F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
   def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : StreamedObjectsGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends StreamedObjectsGen[G] {

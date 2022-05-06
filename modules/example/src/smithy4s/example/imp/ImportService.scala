@@ -8,7 +8,7 @@ import smithy4s.syntax._
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def importOperation() : F[PrimitiveType(Unit),Ref(smithy4s.example.import_test,OpOutput),List(Ref(smithy4s.example.error,NotFoundError))]
+  def importOperation() : F[Unit, ImportOperationError, OpOutput, Nothing, Nothing]
 
   def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : ImportServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends ImportServiceGen[G] {

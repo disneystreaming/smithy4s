@@ -30,7 +30,7 @@ import software.amazon.smithy.model.traits.TimestampFormatTrait
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
 
-package object codegen extends RenderableInterpolator {
+package object codegen  {
 
   val uuidShapeId = ShapeId.from("smithy4s.api#UUID")
 

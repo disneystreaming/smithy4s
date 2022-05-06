@@ -82,7 +82,7 @@ object Renderable {
   }
 
   implicit val identity: Renderable[RenderResult] = r => r
-  implicit val renderLine: Renderable[RenderLine] = _.toRenderResult
+  implicit val renderLine: Renderable[Line] = _.toRenderResult
 
   implicit def tupleRenderable[A](implicit
       A: Renderable[A]
@@ -108,19 +108,19 @@ object Renderable {
 }
 
 // Models
-case class RenderLine(imports: Set[String], line: String) {
+case class Line(imports: Set[String], line: String) {
   def tupled = (imports, line)
-  def modify(f: String => String) = RenderLine(imports, f(line))
+  def modify(f: String => String) = Line(imports, f(line))
   def toRenderResult = RenderResult(imports, List(line))
 }
-object RenderLine {
-  def apply(line: String): RenderLine = RenderLine(Set.empty, line)
-  def apply(importsAndLine: (Set[String], String)): RenderLine = RenderLine(importsAndLine._1, importsAndLine._2)
-  val empty: RenderLine = RenderLine(Set.empty, "")
-  implicit val monoid: Monoid[RenderLine] = new Monoid[RenderLine] {
-    def empty = RenderLine.empty
-    def combine(a: RenderLine, b: RenderLine) =
-      RenderLine(a.imports ++ b.imports, a.line + b.line)
+object Line {
+  def apply(line: String): Line = Line(Set.empty, line)
+  def apply(importsAndLine: (Set[String], String)): Line = Line(importsAndLine._1, importsAndLine._2)
+  val empty: Line = Line(Set.empty, "")
+  implicit val monoid: Monoid[Line] = new Monoid[Line] {
+    def empty = Line.empty
+    def combine(a: Line, b: Line) =
+      Line(a.imports ++ b.imports, a.line + b.line)
   }
 }
 
