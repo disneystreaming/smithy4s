@@ -23,45 +23,46 @@ import cats.syntax.all._
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
   */
-trait Renderable[A] {
-  def render(a: A): RenderResult
+trait ToLines[A] {
+  def render(a: A): Lines
 }
 
-object Renderable {
+object ToLines {
 
-  def render[A](a: A)(implicit A: Renderable[A]): RenderResult = A.render(a)
+  def render[A](a: A)(implicit A: ToLines[A]): Lines = A.render(a)
 
-  implicit val stringRenderable: Renderable[String] = (s: String) =>
-    RenderResult(Set.empty, List(s))
-  def typeRenderable(ns: String): Renderable[Type] = new Renderable[Type] {
-    override def render(a: Type): RenderResult = a match {
+  implicit val stringRenderable: ToLines[String] = (s: String) =>
+    Lines(Set.empty, List(s))
+
+  //todo remove unnecessary imports at the "end of the world"
+  implicit val  typeRenderable: ToLines[Type] = new ToLines[Type] {
+    override def render(a: Type): Lines = a match {
       case Type.List(member) =>
         val (imports, m) = render(member).tupled
-        RenderResult(imports, List(s"List[${m.mkString("")}]"))
+        Lines(imports, List(s"List[${m.mkString("")}]"))
       case Type.Set(member) =>
         val (imports, m) = render(member).tupled
-        RenderResult(imports, List(s"Set[${m.mkString("")}]"))
+        Lines(imports, List(s"Set[${m.mkString("")}]"))
       case Type.Map(key, value) =>
         val (kimports, k) = render(key).tupled
         val (vimports, v) = render(value).tupled
-        RenderResult(kimports ++ vimports, List(s"Map[$k, $v]"))
+        Lines(kimports ++ vimports, List(s"Map[${k.mkString("")}, ${v.mkString("")}]"))
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
-        RenderResult(Set(s"$ns.$name"), List(name))
+        Lines(Set(s"$ns.$name"), List(name))
       case Type.Alias(ns, name, aliased) =>
         val (imports, t) = render(aliased).tupled
-        RenderResult(imports + s"$ns.$name", t)
+        Lines(imports + s"$ns.$name", t)
       case Type.Ref(namespace, name) =>
-        val imports =
-          if (ns != namespace) Set(s"$ns.$name") else Set.empty[String]
-        RenderResult(imports, List(name))
+        val imports = Set(s"$namespace.$name")
+        Lines(imports, List(name))
       case Type.PrimitiveType(prim) => renderPrimitive(prim)
     }
   }
-  private def renderPrimitive(p: Primitive): RenderResult =
+  private def renderPrimitive(p: Primitive): Lines =
     p match {
       case Primitive.Unit => line("Unit")
       case Primitive.ByteArray =>
-        RenderResult(Set("schematic.ByteArray"), List("ByteArray"))
+        Lines(Set("schematic.ByteArray"), List("ByteArray"))
       case Primitive.Bool       => line("Boolean")
       case Primitive.String     => line("String")
       case Primitive.Timestamp  => line("smithy4s.Timestamp")
@@ -73,45 +74,58 @@ object Renderable {
       case Primitive.Double     => line("Double")
       case Primitive.BigDecimal => line("BigDecimal")
       case Primitive.BigInteger => line("BigInt")
-      case Primitive.Uuid => RenderResult(Set("java.util.UUID"), List("UUID"))
+      case Primitive.Uuid => Lines(Set("java.util.UUID"), List("UUID"))
       case Primitive.Document => line("smithy4s.Document")
+      case Primitive.Nothing => line("Nothing")
     }
-  implicit def listRenderable[A](implicit A: Renderable[A]): Renderable[List[A]] = { (l: List[A]) =>
+  implicit def listRenderable[A](implicit A: ToLines[A]): ToLines[List[A]] = { (l: List[A]) =>
     val (imports, lines) = l.map(A.render).map(r => (r.imports, r.lines)).unzip
-    RenderResult(imports.fold(Set.empty)(_ ++ _), lines.flatten)
+    Lines(imports.fold(Set.empty)(_ ++ _), lines.flatten)
   }
 
-  implicit val identity: Renderable[RenderResult] = r => r
-  implicit val renderLine: Renderable[Line] = _.toRenderResult
+  implicit val identity: ToLines[Lines] = r => r
+  implicit val renderLine: ToLines[Line] = _.toRenderResult
 
   implicit def tupleRenderable[A](implicit
-      A: Renderable[A]
-  ): Renderable[(String, A)] = (t: (String, A)) =>
+      A: ToLines[A]
+  ): ToLines[(String, A)] = (t: (String, A)) =>
     A.render(t._2).addImport(t._1)
 
   implicit def nelRenderable[A](implicit
-      A: Renderable[A]
-  ): Renderable[NonEmptyList[A]] =
+      A: ToLines[A]
+  ): ToLines[NonEmptyList[A]] =
     (l: NonEmptyList[A]) => listRenderable(A).render(l.toList)
 
   // Binding value and instance to recover from existentials
-  case class WithValue[A](value: A, instance: Renderable[A]) {
+  case class WithValue[A](value: A, instance: ToLines[A]) {
     def render = instance.render(value)
   }
   object WithValue {
     // implicit conversion for use in varargs methods
     implicit def to[A](
         value: A
-    )(implicit instance: Renderable[A]): Renderable.WithValue[_] =
-      Renderable.WithValue(value, instance)
+    )(implicit instance: ToLines[A]): ToLines.WithValue[_] =
+      ToLines.WithValue(value, instance)
   }
 }
+
+trait ToLine[A] {
+  def render(a: A): Line
+}
+object ToLine{
+  implicit def apply[A](implicit A: ToLine[A]): ToLine[A] = A
+
+}
+
 
 // Models
 case class Line(imports: Set[String], line: String) {
   def tupled = (imports, line)
+  def suffix(suffix: Line) = modify(s => s"$s $suffix")
   def modify(f: String => String) = Line(imports, f(line))
-  def toRenderResult = RenderResult(imports, List(line))
+  def nonEmpty = line.nonEmpty
+  def toRenderResult = Lines(imports, List(line))
+
 }
 object Line {
   def apply(line: String): Line = Line(Set.empty, line)
@@ -125,9 +139,9 @@ object Line {
 }
 
 
-case class RenderResult(imports: Set[String], lines: List[String]) {
+case class Lines(imports: Set[String], lines: List[String]) {
   def tupled = (imports, lines)
-  def block(l: Lines*): RenderResult = {
+  def block(l: LinesWithValue*): Lines = {
     val openBlock = lines.lastOption.map {
       case ")"   => "){"
       case "}"   => "}{"
@@ -137,12 +151,12 @@ case class RenderResult(imports: Set[String], lines: List[String]) {
       case None        => lines
     }
 
-    RenderResult(imports, openBlock) ++ indent(
+    Lines(imports, openBlock) ++ indent(
       l.toList.foldMap(_.render)
-    ) ++ RenderResult("}")
+    ) ++ Lines("}")
   }
 
-  def args(l: Lines*): RenderResult = if (l.exists(_.render.lines.nonEmpty)) {
+  def args(l: LinesWithValue*): Lines = if (l.exists(_.render.lines.nonEmpty)) {
     val openBlock = lines.lastOption.map { case line =>
       line + "("
     } match {
@@ -150,37 +164,37 @@ case class RenderResult(imports: Set[String], lines: List[String]) {
       case None        => lines
     }
 
-    RenderResult(imports, openBlock) ++ indent(
+    Lines(imports, openBlock) ++ indent(
       l.toList.foldMap(_.render).mapLines(_ + ",")
-    ) ++ RenderResult(")")
+    ) ++ Lines(")")
   } else appendToLast("()")
 
-  def appendToLast(s: String): RenderResult = {
+  def appendToLast(s: String): Lines = {
     val newLines = lines.lastOption.map(_ + s) match {
       case Some(value) => lines.dropRight(1).:+(value)
       case None        => lines
     }
-    RenderResult(imports, newLines)
+    Lines(imports, newLines)
   }
 
-  def transformLines(f: List[String] => List[String]): RenderResult =
-    RenderResult(imports, f(lines))
-  def mapLines(f: String => String): RenderResult = transformLines(_.map(f))
+  def transformLines(f: List[String] => List[String]): Lines =
+    Lines(imports, f(lines))
+  def mapLines(f: String => String): Lines = transformLines(_.map(f))
 
-  def ++(other: RenderResult): RenderResult =
-    RenderResult(imports ++ other.imports, lines ++ other.lines)
+  def ++(other: Lines): Lines =
+    Lines(imports ++ other.imports, lines ++ other.lines)
 
-  def addImport(im: String): RenderResult =
-    if (im.nonEmpty) RenderResult(imports + im, lines) else this
-  def addImports(im: Set[String]): RenderResult =
-    RenderResult(imports ++ im, lines)
+  def addImport(im: String): Lines =
+    if (im.nonEmpty) Lines(imports + im, lines) else this
+  def addImports(im: Set[String]): Lines =
+    Lines(imports ++ im, lines)
 
 }
-object RenderResult {
-  def apply(line: String): RenderResult = RenderResult(Set.empty, List(line))
-  def apply(lines: List[String]): RenderResult = RenderResult(Set.empty, lines)
-  val empty = RenderResult(Set.empty, List.empty)
+object Lines {
+  def apply(line: String): Lines = Lines(Set.empty, List(line))
+  def apply(lines: List[String]): Lines = Lines(Set.empty, lines)
+  val empty = Lines(Set.empty, List.empty)
 
-  implicit val renderResultMonoid: Monoid[RenderResult] =
+  implicit val renderResultMonoid: Monoid[Lines] =
     Monoid.instance(empty, _ ++ _)
 }

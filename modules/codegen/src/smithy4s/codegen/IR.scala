@@ -154,6 +154,7 @@ object Primitive {
   case object BigDecimal extends Primitive { type T = scala.math.BigDecimal }
   case object BigInteger extends Primitive { type T = scala.math.BigInt }
   case object Document extends Primitive { type T = Node }
+  case object Nothing extends Primitive { type T = Nothing }
 }
 
 object Type {
