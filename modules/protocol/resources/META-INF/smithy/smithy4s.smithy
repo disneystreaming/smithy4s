@@ -56,5 +56,8 @@ structure UncheckedExample {
 structure uuidFormat {
 }
 
-@trait(selector: "union")
+@trait(selector: "union :not([trait|smithy4s.api#untagged])")
 string discriminated
+
+@trait(selector: "union :not([trait|smithy4s.api#discriminated])")
+structure untagged {}

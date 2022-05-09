@@ -23,6 +23,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core._
 import smithy.api.HttpPayload
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
+import smithy4s.api.Untagged
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
 import smithy4s.Document.DNull
@@ -530,6 +531,64 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         out.encodeError("Cannot use coproducts as keys")
     }
 
+  private def untaggedUnion[Z](
+      first: Alt[JCodecMake, Z, _],
+      rest: Vector[Alt[JCodecMake, Z, _]]
+  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] = new JCodec[Z] {
+
+    override lazy val expecting: String = "untaggedUnion"
+
+    override def canBeKey: Boolean = false
+
+    val handlerList: Vector[(Cursor, JsonReader) => Z] = {
+      val res = Vector.newBuilder[(Cursor, JsonReader) => Z]
+      def handler[A](alt: Alt[JCodecMake, Z, A]) = {
+        val codec = alt.instance.get
+        (cursor: Cursor, reader: JsonReader) =>
+          alt.inject(cursor.decode(codec, reader))
+      }
+      res += handler(first)
+      rest.foreach(alt => res += handler(alt))
+      res.result()
+    }
+
+    def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+      var z: Z = null.asInstanceOf[Z]
+      var i = 0
+      while (z == null && i < handlerList.size) {
+        in.setMark()
+        val handler = handlerList(i)
+        try {
+          z = handler(cursor, in)
+        } catch {
+          case _: Throwable =>
+            in.rollbackToMark()
+            i += 1
+        }
+      }
+      if (z != null) z
+      else cursor.payloadError(this, "Could not decode untagged union")
+    }
+
+    val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
+      def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
+    }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
+
+    def encodeValue(z: Z, out: JsonWriter): Unit = {
+      def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
+        altCache(awv.alt).encodeValue(awv.value, out)
+
+      val awv = total(z)
+      writeValue(awv)
+    }
+
+    def decodeKey(in: JsonReader): Z =
+      in.decodeError("Cannot use coproducts as keys")
+
+    def encodeKey(x: Z, out: JsonWriter): Unit =
+      out.encodeError("Cannot use coproducts as keys")
+  }
+
   private def discriminatedUnion[Z](
       first: Alt[JCodecMake, Z, _],
       rest: Vector[Alt[JCodecMake, Z, _]],
@@ -611,11 +670,16 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
   def union[Z](
       first: Alt[JCodecMake, Z, _],
       rest: Vector[Alt[JCodecMake, Z, _]]
-  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodecMake[Z] =
-    Hinted[JCodec].onHintOpt[Discriminated, Z] {
-      case Some(d) => discriminatedUnion(first, rest, d)(total)
-      case None    => taggedUnion(first, rest)(total)
+  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodecMake[Z] = {
+    Hinted[JCodec].from {
+      case Untagged.hint(_) =>
+        untaggedUnion(first, rest)(total)
+      case Discriminated.hint(d) =>
+        discriminatedUnion(first, rest, d)(total)
+      case _ =>
+        taggedUnion(first, rest)(total)
     }
+  }
 
   def enumeration[A](
       to: A => (String, Int),

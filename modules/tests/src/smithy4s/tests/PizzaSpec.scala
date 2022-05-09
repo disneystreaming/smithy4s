@@ -37,6 +37,8 @@ import smithy4s.http.PayloadError
 import weaver._
 
 import java.util.UUID
+import cats.Show
+import org.http4s.EntityDecoder
 
 abstract class PizzaSpec
     extends IOSuite
@@ -70,7 +72,7 @@ abstract class PizzaSpec
 
   routerTest(positiveEmptyLabel) { (client, uri, log) =>
     for {
-      res <- client.send(GET(uri / "version"), log)
+      res <- client.send[Json](GET(uri / "version"), log)
       (code, headers, body) = res
       _ <- expect(code == 200).failFast
       version <- body.expect[String]
@@ -95,7 +97,7 @@ abstract class PizzaSpec
     )
 
     for {
-      res <- client.send(createPizza, log)
+      res <- client.send[Json](createPizza, log)
       (code, headers, body) = res
       _ <- expect(code == 201).failFast
       addedAt = headers
@@ -103,7 +105,7 @@ abstract class PizzaSpec
         .foldMap(identity)
       pizzaId <- body.expect[UUID]
       getMenu = GET(uri / "restaurant" / "foo" / "menu")
-      res <- client.send(getMenu, log)
+      res <- client.send[Json](getMenu, log)
       (code2, _, body2) = res
       _ <- expect(code2 == 200).failFast
       expected = expectedMenu(pizzaId)
@@ -127,7 +129,7 @@ abstract class PizzaSpec
       )
 
     for {
-      res <- client.send(
+      res <- client.send[Json](
         POST(badMenuItem, uri / "restaurant" / "bad1" / "menu" / "item"),
         log
       )
@@ -163,7 +165,7 @@ abstract class PizzaSpec
       )
 
     for {
-      res <- client.send(
+      res <- client.send[Json](
         POST(
           badMenuItem,
           uri / "restaurant" / "foo" / "menu" / "item"
@@ -190,7 +192,7 @@ abstract class PizzaSpec
     val badMenuItem = Json.obj()
 
     for {
-      res <- client.send(
+      res <- client.send[Json](
         POST(
           badMenuItem,
           uri / "restaurant" / "foo" / "menu" / "item"
@@ -215,7 +217,7 @@ abstract class PizzaSpec
 
   routerTest("Negative: error transformation") { (client, uri, log) =>
     for {
-      res <- client.send(
+      res <- client.send[Json](
         POST(
           menuItem,
           uri / "restaurant" / "boom" / "menu" / "item"
@@ -241,7 +243,7 @@ abstract class PizzaSpec
     )
 
     for {
-      res <- client.send(addBadSalad, log)
+      res <- client.send[Json](addBadSalad, log)
     } yield {
       val (code, headers, body) = res
       val discriminator = headers.get("X-Error-Type").flatMap(_.headOption)
@@ -264,7 +266,7 @@ abstract class PizzaSpec
 
   routerTest("Health check") { (client, uri, log) =>
     for {
-      res <- client.send(GET(uri / "health"), log)
+      res <- client.send[Json](GET(uri / "health"), log)
     } yield {
       val (code, _, _) = res
       expect(code == 200)
@@ -274,7 +276,7 @@ abstract class PizzaSpec
   routerTest("Health check - fail length constraint on query") {
     (client, uri, log) =>
       for {
-        res <- client.send(
+        res <- client.send[Json](
           GET((uri / "health").withQueryParam("query", "1" * 6)),
           log
         )
@@ -286,7 +288,7 @@ abstract class PizzaSpec
 
   routerTest("Round trip") { (client, uri, log) =>
     for {
-      res <- client.send(
+      res <- client.send[Json](
         POST(
           uri = (uri / "roundTrip" / "l").withQueryParam("query", "q"),
           headers = Headers(Header.Raw(CIString("HEADER"), "h")),
@@ -311,7 +313,7 @@ abstract class PizzaSpec
   private def headerTest(name: String)(requestHeaderNames: String*) =
     routerTest(name) { (client, uri, log) =>
       for {
-        res <- client.send(
+        res <- client.send[String](
           POST.apply(
             (uri / "headers"),
             requestHeaderNames.zipWithIndex
@@ -322,9 +324,10 @@ abstract class PizzaSpec
           log
         )
       } yield {
-        val (code, headers, _) = res
+        val (code, headers, body) = res
 
         expect(code == 200) &&
+        expect(body.isEmpty()) &&
         expect(headers.get("x-uppercase-header") == Some(List("header-1"))) &&
         expect(headers.get("x-capitalized-header") == Some(List("header-2"))) &&
         expect(headers.get("x-lowercase-header") == Some(List("header-3"))) &&
@@ -384,6 +387,18 @@ abstract class PizzaSpec
     expect(matchResult == None)
   }
 
+  routerTest("Positive: can find enum endpoint by value") {
+    (client, uri, log) =>
+      for {
+        resValue <- client.send[Json](
+          GET(uri / "get-enum" / "v1"),
+          log
+        )
+      } yield {
+        expect(resValue._1 == 200)
+      }
+  }
+
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(
@@ -413,10 +428,10 @@ abstract class PizzaSpec
 
   implicit class ClientOps(client: Client[IO]) {
     // Returns: (status, headers, body)
-    def send(
+    def send[A: Show](
         request: Request[IO],
         log: Log[IO]
-    ): IO[(Int, HeaderMap, Json)] =
+    )(implicit A: EntityDecoder[IO, A]): IO[(Int, HeaderMap, A)] =
       client.run(request).use { response =>
         val code = response.status.code
         val headers =
@@ -427,10 +442,10 @@ abstract class PizzaSpec
                 k -> v.map(_.value)
               }
           }
-        val payloadIO = response.as[Json]
+        val payloadIO = response.as[A]
         log.info("code = " + code) *>
           log.info("headers = " + headers) *>
-          payloadIO.flatTap(p => log.info("payload = " + p.noSpaces)).map {
+          payloadIO.flatTap(p => log.info("payload = " + p.show)).map {
             payload => (code, headers, payload)
           }
       }

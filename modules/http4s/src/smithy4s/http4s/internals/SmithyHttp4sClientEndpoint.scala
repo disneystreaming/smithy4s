@@ -116,24 +116,71 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
     else outputFromErrorResponse(response)
 
   private def outputFromSuccessResponse(response: Response[F]): F[O] = {
-    decodeResponse(response, outputMetadataDecoder)
+    decodeResponse(response, outputMetadataDecoder).rethrow
+  }
+
+  private def errorResponseFallBack(response: Response[F]): F[O] = {
+    val headers = toMap(response.headers)
+    val code = response.status.code
+    response.as[String].flatMap { case body =>
+      effect.raiseError(UnknownErrorResponse(code, headers, body))
+    }
   }
 
   private def outputFromErrorResponse(response: Response[F]): F[O] = {
-    val errAndAlt = for {
-      discriminator <- getFirstHeader(response, errorTypeHeader)
-      err <- endpoint.errorable
-      oneOf <- err.error.alternatives.find(_.label == discriminator)
-    } yield (err, oneOf)
 
-    errAndAlt match {
-      case Some((err, alt)) =>
-        processError(err, alt, response)
-      case None =>
-        val headers = toMap(response.headers)
-        val code = response.status.code
-        response.as[String].flatMap { case body =>
-          effect.raiseError(UnknownErrorResponse(code, headers, body))
+    /**
+      * Find the error schema alternative that matches the errorTypeHeader.
+      */
+    def findErrorAltForHeader(err: Errorable[E]) = for {
+      discriminator <- getFirstHeader(response, errorTypeHeader)
+      oneOf <- err.error.alternatives.find(_.label == discriminator)
+    } yield oneOf
+
+    /**
+      * Attempt to decode for all union member, return as soon as one
+      * decodes successfully.
+      */
+    def bestEffort(
+        errorable: Errorable[E],
+        alts: Vector[SchemaAlt[E, _]]
+    ): F[O] = {
+      alts
+        .collectFirstSomeM { oneOf =>
+          tryProcessError(errorable, oneOf, response)
+            .map(_.toOption)
+            .handleError { case _: PayloadError => None }
+        }
+        .flatMap {
+          case Some(e) =>
+            effect.raiseError(errorable.unliftError(e))
+          case None =>
+            errorResponseFallBack(response)
+        }
+    }
+
+    endpoint.errorable match {
+      case None => // can't do anything w/o the errorable
+        errorResponseFallBack(response)
+      case Some(errorable) =>
+        val statusInt = response.status.code
+        val errorAltPicker =
+          new ErrorAltPicker(errorable.error.alternatives)
+        // try to find precisely either by status code unique match
+        // or by matching the errorTypeHeader
+        val maybePreciseAlt =
+          errorAltPicker
+            .getPreciseAlternative(statusInt)
+            .orElse(findErrorAltForHeader(errorable))
+
+        val maybeError = maybePreciseAlt.map { alt =>
+          processError(errorable, alt, response)
+        }
+
+        // if no response is rendered by then, do a best effort
+        maybeError.getOrElse {
+          val sortedAlts = errorAltPicker.orderedForStatus(statusInt)
+          bestEffort(errorable, sortedAlts)
         }
     }
   }
@@ -143,29 +190,39 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
       oneOf: SchemaAlt[E, ErrorType],
       response: Response[F]
   ): F[O] = {
+    tryProcessError(errorable, oneOf, response).rethrow
+      .map(errorable.unliftError)
+      .flatMap(effect.raiseError)
+  }
+
+  private def tryProcessError[ErrorType](
+      errorable: Errorable[E],
+      oneOf: SchemaAlt[E, ErrorType],
+      response: Response[F]
+  ): F[Either[MetadataError, E]] = {
     val schema = oneOf.instance
     val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
     implicit val errorCodec = entityCompiler.compilePartialEntityDecoder(schema)
     decodeResponse[ErrorType](response, errorMetadataDecoder)
-      .map(oneOf.inject)
-      .map(errorable.unliftError)
-      .flatMap(effect.raiseError)
+      .map(_.map(oneOf.inject))
   }
 
   private def decodeResponse[T](
       response: Response[F],
       metadataDecoder: Metadata.PartialDecoder[T]
-  )(implicit entityDecoder: EntityDecoder[F, BodyPartial[T]]): F[T] = {
+  )(implicit
+      entityDecoder: EntityDecoder[F, BodyPartial[T]]
+  ): F[Either[MetadataError, T]] = {
     val headers = getHeaders(response)
     val metadata = Metadata(headers = headers)
     metadataDecoder.total match {
       case Some(totalDecoder) =>
-        totalDecoder.decode(metadata).liftTo[F]
+        totalDecoder.decode(metadata).pure[F]
       case None =>
         for {
-          metadataPartial <- metadataDecoder.decode(metadata).liftTo[F]
+          metadataPartial <- metadataDecoder.decode(metadata).pure[F]
           bodyPartial <- response.as[BodyPartial[T]]
-        } yield metadataPartial.combine(bodyPartial)
+        } yield metadataPartial.map(_.combine(bodyPartial))
     }
   }
 }

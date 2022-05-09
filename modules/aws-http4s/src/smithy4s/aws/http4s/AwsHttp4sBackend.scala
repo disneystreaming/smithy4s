@@ -17,8 +17,8 @@
 package smithy4s.aws
 package http4s
 
-import cats.effect.Async
 import cats.effect.Concurrent
+import cats.MonadThrow
 import cats.implicits._
 import fs2.Chunk
 import org.http4s.Header
@@ -33,24 +33,25 @@ import smithy4s.aws.SimpleHttpClient
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
 
-final class AwsHttp4sBackend[F[_]: Async](client: Client[F])
+final class AwsHttp4sBackend[F[_]: Concurrent](client: Client[F])
     extends SimpleHttpClient[F] {
 
   import AwsHttp4sBackend._
   def run(request: HttpRequest): F[HttpResponse] =
-    fromHttpRequest(request).flatMap(client.run(_).use(toHttpResponse[F]))
+    fromHttpRequest[F](request).flatMap(client.run(_).use(toHttpResponse[F]))
 }
 
 object AwsHttp4sBackend {
 
-  def apply[F[_]: Async](client: Client[F]): SimpleHttpClient[F] =
+  def apply[F[_]: Concurrent](client: Client[F]): SimpleHttpClient[F] =
     new AwsHttp4sBackend(client)
 
-  def fromHttpRequest[F[_]: Async](request: HttpRequest): F[Request[F]] = {
+  def fromHttpRequest[F[_]: MonadThrow](request: HttpRequest): F[Request[F]] = {
+    val headers = request.headers.map { case (k, v) =>
+      (CIString(k.toString), v)
+    }
+
     for {
-      headers <- Async[F].delay(request.headers.map { case (k, v) =>
-        (CIString(k.toString), v)
-      })
       endpoint <- Uri.fromString(request.uri).liftTo[F]
       method = request.httpMethod match {
         case HttpMethod.POST   => POST
@@ -59,13 +60,14 @@ object AwsHttp4sBackend {
         case HttpMethod.PUT    => PUT
         case HttpMethod.DELETE => DELETE
       }
-      req = request.body.foldLeft(
-        Request[F](
-          method = method,
-          uri = endpoint,
-          headers = Headers(headers.map { case (k, v) => Header.Raw(k, v) })
-        )
-      )(_.withEntity(_))
+      req = request.body
+        .foldLeft(
+          Request[F](
+            method = method,
+            uri = endpoint
+          )
+        )(_.withEntity(_))
+        .putHeaders(Headers(headers.map { case (k, v) => Header.Raw(k, v) }))
     } yield req
   }
 
