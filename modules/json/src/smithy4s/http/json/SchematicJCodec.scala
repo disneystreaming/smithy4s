@@ -20,11 +20,9 @@ package json
 
 import _root_.smithy.api.JsonName
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import schematic._
 import smithy.api.HttpPayload
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
-import smithy4s.api.Discriminated
 import smithy4s.api.Untagged
 import smithy4s.Document.DArray
 import smithy4s.Document.DBoolean
@@ -32,9 +30,11 @@ import smithy4s.Document.DNull
 import smithy4s.Document.DNumber
 import smithy4s.Document.DObject
 import smithy4s.Document.DString
+import smithy4s.api.Discriminated
+import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
-import smithy4s.internals.DiscriminatedUnionMember
+import smithy4s.schema._
 
 import java.util.UUID
 import scala.collection.compat.immutable.ArraySeq
@@ -43,7 +43,7 @@ import scala.collection.mutable.{Map => MMap}
 
 import JCodec.JCodecMake
 
-private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
+private[smithy4s] class SchematicJCodec(maxArity: Int)
     extends Schematic[JCodecMake] {
 
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -95,7 +95,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkString)
 
   def int: JCodecMake[Int] = Hinted[JCodec]
     .static {
@@ -112,7 +111,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def long: JCodecMake[Long] = Hinted[JCodec]
     .static {
@@ -130,7 +128,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def float: JCodecMake[Float] = Hinted[JCodec]
     .static {
@@ -147,7 +144,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
         def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def double: JCodecMake[Double] = Hinted[JCodec]
     .static {
@@ -165,7 +161,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def short: JCodecMake[Short] = Hinted[JCodec]
     .static {
@@ -183,7 +178,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def byte: JCodecMake[Byte] = Hinted[JCodec]
     .static {
@@ -201,7 +195,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def bytes: JCodecMake[ByteArray] = Hinted[JCodec]
     .static {
@@ -223,9 +216,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
           out.encodeError("Cannot use byte array as key")
       }
     }
-    .validatedI(
-      constraints.checkCollection[Byte](_).map(_.compose((_: ByteArray).array))
-    )
 
   def bigdecimal: JCodecMake[BigDecimal] = Hinted[JCodec]
     .static {
@@ -245,7 +235,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric)
 
   def bigint: JCodecMake[BigInt] = Hinted[JCodec]
     .static {
@@ -265,7 +254,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
       }
     }
-    .validatedI(constraints.checkNumeric[BigInt])
 
   def uuid: JCodecMake[UUID] = Hinted[JCodec].static {
     new PrimitiveJCodec[UUID] {
@@ -364,7 +352,6 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
 
         }
       }
-      .validatedI(constraints.checkCollection)
 
   def list[A](a: JCodecMake[A]): JCodecMake[List[A]] =
     vector(a).transform(_.biject(_.toList, _.toVector))
@@ -378,7 +365,7 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
     } else {
       arrayMap(jk, jv)
     }
-  }.validatedI(constraints.checkCollection)
+  }
 
   private def objectMap[K, V](
       jk: JCodecMake[K],
@@ -450,9 +437,15 @@ private[smithy4s] class SchematicJCodec(constraints: Constraints, maxArity: Int)
       from: B => A
   ): JCodecMake[B] = a.transform(_.biject(to, from))
 
-  def suspend[A](a: => JCodecMake[A]): JCodecMake[A] = Hinted.static {
+  def surjection[A, B](
+      a: JCodecMake[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): JCodecMake[B] = a.xmap(to.asFunction, from)
+
+  def suspend[A](a: Lazy[JCodecMake[A]]): JCodecMake[A] = Hinted.static {
     new JCodec[A] {
-      lazy val underlying = a.get
+      lazy val underlying = a.value.get
 
       def expecting: String = underlying.expecting
 

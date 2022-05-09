@@ -16,9 +16,10 @@
 
 package smithy4s
 
+import smithy4s._
+
 import scala.scalajs.js
 import scala.util.control.NonFatal
-import smithy4s._
 
 object JsConverters {
 

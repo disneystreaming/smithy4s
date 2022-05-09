@@ -15,8 +15,8 @@
  */
 
 package smithy4s.codegen.cli
-import weaver._
 import smithy4s.codegen.CodegenArgs
+import weaver._
 
 object CommandParsingSpec extends FunSuite {
 

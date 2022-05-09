@@ -3,7 +3,7 @@ package scalacheck
 
 import org.scalacheck.Gen
 
-object Smithy4sGen {
+private[scalacheck] object Smithy4sGen {
 
   private val year = Gen.chooseNum(1900, 2100)
   private val month = Gen.chooseNum(1, 12)

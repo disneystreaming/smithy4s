@@ -18,10 +18,10 @@ package smithy4s
 package http.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
-import schematic.ByteArray
 import smithy.api.JsonName
+import smithy4s.schema.Schema._
+
 import smithy4s.http.PayloadError
-import smithy4s.syntax._
 import smithy4s.example.{
   CheckedOrUnchecked,
   CheckedOrUnchecked2,
@@ -42,9 +42,9 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
   case class Foo(a: Int, b: Option[Int])
   object Foo {
-    implicit val schema: Static[Schema[Foo]] = Static {
+    implicit val schema: Schema[Foo] = {
       val a = int.required[Foo]("a", _.a)
-      val b = int.optional[Foo]("b", _.b).withHints(JsonName("_b"))
+      val b = int.optional[Foo]("b", _.b).addHints(JsonName("_b"))
       struct(a, b)(Foo.apply)
     }
   }
@@ -65,40 +65,37 @@ object SchematicJCodecTests extends SimpleIOSuite {
   object IntList {
     val hints: smithy4s.Hints = smithy4s.Hints()
 
-    val schema: smithy4s.Schema[IntList] = recursive(
+    implicit val schema: smithy4s.Schema[IntList] = recursive(
       struct(
-        int.required[IntList]("head", _.head).withHints(smithy.api.Required()),
+        int.required[IntList]("head", _.head).addHints(smithy.api.Required()),
         IntList.schema.optional[IntList]("tail", _.tail)
       ) {
         IntList.apply
       }
     )
-    implicit val staticSchema: schematic.Static[smithy4s.Schema[IntList]] =
-      schematic.Static(schema)
   }
 
   case class Baz(str: String)
   case class Bin(str: String, int: Int)
 
-  implicit val eitherBazBinSchema: Static[Schema[Either[Baz, Bin]]] =
-    Static {
-      val left = struct(string.required[Baz]("str", _.str))(Baz.apply)
-        .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
+  implicit val eitherBazBinSchema: Schema[Either[Baz, Bin]] = {
+    val left = struct(string.required[Baz]("str", _.str))(Baz.apply)
+      .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
 
-      val right = struct(
-        string.required[Bin]("str", _.str).withHints(JsonName("binStr")),
-        int.required[Bin]("int", _.int)
-      )(Bin.apply)
-        .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
-        .withHints(JsonName("binBin"))
+    val right = struct(
+      string.required[Bin]("str", _.str).addHints(JsonName("binStr")),
+      int.required[Bin]("int", _.int)
+    )(Bin.apply)
+      .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
+      .addHints(JsonName("binBin"))
 
-      union(left, right) {
-        case Left(f)  => left(f)
-        case Right(b) => right(b)
-      }.withHints(
-        Discriminated("type")
-      )
-    }
+    union(left, right) {
+      case Left(f)  => left(f)
+      case Right(b) => right(b)
+    }.addHints(
+      Discriminated("type")
+    )
+  }
 
   pureTest(
     "Compiling a codec for a recursive type should not blow up the stack"
@@ -148,18 +145,17 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
-  implicit val eitherIntStringSchema: Static[Schema[Either[Int, String]]] =
-    Static {
-      val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
-      val right =
-        string
-          .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
-          .withHints(JsonName("_string"))
-      union(left, right) {
-        case Left(i)    => left(i)
-        case Right(str) => right(str)
-      }
+  implicit val eitherIntStringSchema: Schema[Either[Int, String]] = {
+    val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
+    val right =
+      string
+        .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
+        .addHints(JsonName("_string"))
+    union(left, right) {
+      case Left(i)    => left(i)
+      case Right(str) => right(str)
     }
+  }
 
   pureTest("Union gets encoded correctly") {
     val jsonInt = """{"int":1}"""
@@ -296,7 +292,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
     )
   }
 
-  implicit val byteArraySchema: Static[Schema[ByteArray]] = Static(bytes)
+  implicit val byteArraySchema: Schema[ByteArray] = bytes
 
   pureTest("byte arrays are encoded as base64") {
     val bytes = ByteArray("foobar".getBytes())
@@ -305,7 +301,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
     expect(bytesJson == "\"Zm9vYmFy\"") && expect(decoded == bytes)
   }
 
-  implicit val documentSchema: Static[Schema[Document]] = Static(document)
+  implicit val documentSchema: Schema[Document] = document
   pureTest("documents get encoded as json") {
     import Document._
     val doc: Document = DObject(
@@ -329,7 +325,6 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
   case class Bar(
       str: Option[String],
-      vct: Option[Vector[Int]],
       lst: Option[List[Int]],
       int: Option[Int]
   )
@@ -337,30 +332,26 @@ object SchematicJCodecTests extends SimpleIOSuite {
     val maxLength = 10
     val lengthHint = smithy.api.Length(max = Some(maxLength.toLong))
     val rangeHint = smithy.api.Range(max = Some(maxLength.toLong))
-    implicit val schema: Static[Schema[Bar]] = Static {
+    implicit val schema: Schema[Bar] = {
       val str = string
         .optional[Bar]("str", _.str)
-        .withHints(lengthHint)
-      val vct =
-        vector[Int](int).optional[Bar]("vct", _.vct).withHints(lengthHint)
-      val lst = list[Int](int).optional[Bar]("lst", _.lst).withHints(lengthHint)
-      val intS = int.optional[Bar]("int", _.int).withHints(rangeHint)
-      struct(str, vct, lst, intS)(Bar.apply)
+        .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
+      val lst = list[Int](int)
+        .optional[Bar]("lst", _.lst)
+        .addHints(lengthHint)
+        .validated[smithy.api.Length, List[Int]]
+      val intS = int
+        .optional[Bar]("int", _.int)
+        .addHints(rangeHint)
+        .validated[smithy.api.Range, Int]
+      struct(str, lst, intS)(Bar.apply)
     }
   }
 
   pureTest("throw PayloadError on String violating length constraint") {
     val str = "a" * (Bar.maxLength + 1)
     val json = s"""{"str":"$str"}"""
-    val result = util.Try(readFromString[Bar](json))
-    expect(
-      result.failed.get.getMessage == "length required to be <= 10, but was 11"
-    )
-  }
-
-  pureTest("throw PayloadError on Vector violating length constraint") {
-    val vct = Vector.fill(Bar.maxLength + 1)(0)
-    val json = s"""{"vct": ${vct.mkString("[", ",", "]")}}"""
     val result = util.Try(readFromString[Bar](json))
     expect(
       result.failed.get.getMessage == "length required to be <= 10, but was 11"
@@ -393,10 +384,11 @@ object SchematicJCodecTests extends SimpleIOSuite {
   object Foo2 {
     val maxLength = 10
     val lengthHint = smithy.api.Length(max = Some(maxLength.toLong))
-    implicit val schema: Static[Schema[Foo2]] = Static {
+    implicit val schema: Schema[Foo2] = {
       val str = string
         .required[Bar2]("str", _.str)
-        .withHints(lengthHint)
+        .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
       val bar = struct(str)(Bar2.apply).required[Foo2]("bar", _.bar)
       struct(bar)(Foo2.apply)
     }
@@ -417,10 +409,11 @@ object SchematicJCodecTests extends SimpleIOSuite {
   object Foo3 {
     val maxLength = 10
     val lengthHint = smithy.api.Length(max = Some(maxLength.toLong))
-    implicit val schema: Static[Schema[Foo3]] = Static {
+    implicit val schema: Schema[Foo3] = {
       val str = string
         .required[Bar2]("str", _.str)
-        .withHints(lengthHint)
+        .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
       val bar = list(struct(str)(Bar2.apply)).required[Foo3]("bar", _.bar)
       struct(bar)(Foo3.apply)
     }
@@ -444,10 +437,9 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
-  private implicit val schemaMapStringInt: Static[Schema[Map[String, Int]]] =
-    Static {
-      map(string, int)
-    }
+  private implicit val schemaMapStringInt: Schema[Map[String, Int]] = {
+    map(string, int)
+  }
 
   pureTest("throw PayloadError on Map inserts over maxArity") {
     try {
@@ -461,14 +453,14 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
-  private implicit val schemaVectorInt: Static[Schema[Vector[Int]]] = Static {
-    vector(int)
+  private implicit val schemaVectorInt: Schema[List[Int]] = {
+    list(int)
   }
 
   pureTest("throw PayloadError on Vector inserts over maxArity") {
     try {
       val items = List.fill(1025)("1").mkString("[", ",", "]")
-      val _ = readFromString[Vector[Int]](items)
+      val _ = readFromString[List[Int]](items)
       failure("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>

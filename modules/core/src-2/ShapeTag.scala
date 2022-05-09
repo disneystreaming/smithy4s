@@ -22,6 +22,8 @@ package smithy4s
 trait ShapeTag[-A] extends HasId {}
 
 object ShapeTag {
+  def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag
+
   trait Has[A] {
     def getTag: ShapeTag[A]
   }

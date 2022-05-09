@@ -16,9 +16,9 @@
 
 package smithy4s.aws.kernel
 
-import smithy4s.http.internals.URIEncoderDecoder.{encode => uriEncode}
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
+import smithy4s.http.internals.URIEncoderDecoder.{encode => uriEncode}
 
 /**
   * Implementation of the AWS Signature Version 4 algorithm.

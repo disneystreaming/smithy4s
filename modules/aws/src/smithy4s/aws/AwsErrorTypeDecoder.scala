@@ -71,14 +71,14 @@ object AwsErrorTypeDecoder {
   private[aws] object AwsErrorType {
 
     protected[aws] val schema: smithy4s.Schema[AwsErrorType] = {
-      import smithy4s.syntax._
+      import smithy4s.schema.Schema._
 
       val __typeField = string.optional[AwsErrorType]("__type", _.__type)
       val codeField = string.optional[AwsErrorType]("code", _.code)
       val typeHeader =
         string
           .optional[AwsErrorType]("typeHeader", _.typeHeader)
-          .withHints(
+          .addHints(
             smithy.api.HttpHeader(`X-Amzn-Errortype`)
           )
       struct(__typeField, codeField, typeHeader)(AwsErrorType.apply)

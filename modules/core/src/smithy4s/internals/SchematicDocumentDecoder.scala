@@ -17,23 +17,21 @@
 package smithy4s
 package internals
 
-import schematic.Alt
-import schematic.ByteArray
-import schematic.Field
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
+import smithy4s.api.Discriminated
 import smithy4s.capability.Covariant
 import smithy4s.http.PayloadError
+import smithy4s.schema._
 
 import java.util.Base64
 import java.util.UUID
 
-import Document._
 import DocumentDecoder.DocumentDecoderMake
-import smithy4s.api.Discriminated
+import Document._
 
 trait DocumentDecoder[A] { self =>
 
@@ -53,6 +51,22 @@ trait DocumentDecoder[A] { self =>
 
   }
 
+  def emap[B](f: A => Either[ConstraintError, B]): DocumentDecoder[B] =
+    new DocumentDecoder[B] {
+
+      def apply(path: List[PayloadPath.Segment], document: Document): B = {
+        f(self(path, document)) match {
+          case Right(value) => value
+          case Left(value) =>
+            throw PayloadError(PayloadPath(path), expected, value.message)
+        }
+      }
+
+      def expected: String = self.expected
+      def canBeKey: Boolean = self.canBeKey
+
+    }
+
 }
 
 object DocumentDecoder {
@@ -62,6 +76,11 @@ object DocumentDecoder {
     new Covariant[DocumentDecoder] {
       def map[A, B](fa: DocumentDecoder[A])(f: A => B): DocumentDecoder[B] =
         fa.map(f)
+
+      def emap[A, B](fa: DocumentDecoder[A])(
+          f: A => Either[ConstraintError, B]
+      ): DocumentDecoder[B] =
+        fa.emap(f)
     }
 
   def instance[A](
@@ -87,8 +106,7 @@ object DocumentDecoder {
 
 }
 
-object SchematicDocumentDecoder
-    extends smithy4s.Schematic[DocumentDecoderMake] {
+object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
 
   object FlexibleNumber {
     def unapply(doc: Document): Option[BigDecimal] = doc match {
@@ -429,7 +447,7 @@ object SchematicDocumentDecoder
       alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[S] =
-      (first +: rest).map { case alt @ Alt(_, instance, inject) =>
+      (first +: rest).map { case alt @ Alt(_, instance, inject, _) =>
         val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(instance.get.apply(label :: pp, doc))
@@ -455,10 +473,10 @@ object SchematicDocumentDecoder
     case DString(value) if fromName.contains(value) => fromName(value)
   }
 
-  def suspend[A](f: => DocumentDecoderMake[A]): DocumentDecoderMake[A] =
+  def suspend[A](f: Lazy[DocumentDecoderMake[A]]): DocumentDecoderMake[A] =
     Hinted.static {
       new DocumentDecoder[A] {
-        lazy val underlying = f.get
+        lazy val underlying = f.value.get
         def canBeKey: Boolean = underlying.canBeKey
 
         def apply(history: List[PayloadPath.Segment], document: Document): A =
@@ -474,6 +492,12 @@ object SchematicDocumentDecoder
       to: A => B,
       from: B => A
   ): DocumentDecoderMake[B] = f.map(to)
+
+  def surjection[A, B](
+      f: DocumentDecoderMake[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): DocumentDecoderMake[B] = f.emap(to.asFunction)
 
   def timestamp: DocumentDecoderMake[Timestamp] =
     Hinted[DocumentDecoder].onHint(DATE_TIME: TimestampFormat) {

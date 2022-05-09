@@ -17,7 +17,7 @@
 package smithy4s
 package aws.kernel
 
-import smithy4s.syntax._
+import smithy4s.schema.Schema._
 
 case class AwsInstanceMetadata(
     accessKeyId: String,
@@ -30,7 +30,7 @@ case class AwsInstanceMetadata(
 
 object AwsInstanceMetadata {
 
-  implicit val schema: Static[Schema[AwsInstanceMetadata]] = Static {
+  implicit val schema: Schema[AwsInstanceMetadata] = {
     val accessKeyIdField =
       string.required[AwsInstanceMetadata]("AccessKeyId", _.accessKeyId)
     val expirationField =

@@ -20,11 +20,12 @@ import cats.Show
 import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
-import schematic.scalacheck.DynData
 import smithy4s.Document
 import smithy4s.Schema
+import smithy4s.scalacheck.DynData
 import weaver._
 import weaver.scalacheck._
+
 import codecs.schematicJCodec
 
 object DocumentPropertyTests extends SimpleIOSuite with Checkers {
@@ -36,7 +37,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- Gen.const(
-      smithy4s.syntax.float.asInstanceOf[Schema[DynData]]
+      Schema.float.asInstanceOf[Schema[DynData]]
     ) // SchemaGenerator.genSchema(1, 1)
     data <- schema.compile(smithy4s.scalacheck.SchematicGen)
   } yield (schema -> data)
@@ -45,7 +46,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
     Show.fromToString
 
   implicit val documentCodec: JCodec[Document] =
-    smithy4s.syntax.document.compile(schematicJCodec).get
+    Schema.document.compile(schematicJCodec).get
 
   loggedTest(
     "Going through json directly or via the adt give the same results"
@@ -59,7 +60,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
         schema.compile(schematicJCodec).get
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
-      val schemaStr = schema.compile(smithy4s.SchematicRepr)
+      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
       val document = encoder.encode(data)
       val jsonFromDocument = writeToString(document)
       val jsonDirect = writeToString(data)

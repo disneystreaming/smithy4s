@@ -17,6 +17,7 @@
 package smithy4s
 
 import weaver._
+
 import scala.scalajs.js
 
 object JsConvertersSpec extends FunSuite {

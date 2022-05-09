@@ -16,8 +16,7 @@
 
 package smithy4s
 
-import schematic.Field
-import schematic.Alt
+import smithy4s.schema._
 
 object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
 
@@ -62,7 +61,7 @@ object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
     )
   }
 
-  test("structure members contain ShapeId in hints") {
+  test("structure members contain ShapeId in hints".only) {
     val shapeIds =
       example.CityCoordinates.schema.compile(TestCompiler).toSet
     expect(

@@ -18,10 +18,10 @@ package smithy4s
 package http
 package internals
 
-import schematic._
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
+import smithy4s.schema._
 
 import java.util.Base64
 import java.util.UUID
@@ -159,12 +159,19 @@ private[http] object SchematicMetadataWriter
       fromOrdinal: Map[Int, A]
   ): MetaEncode.Make[A] = MetaEncode.Make.stringValue(to.andThen(_._1))
 
-  def suspend[A](f: => MetaEncode.Make[A]): MetaEncode.Make[A] =
+  def suspend[A](f: Lazy[MetaEncode.Make[A]]): MetaEncode.Make[A] =
     MetaEncode.Make.empty
 
   def bijection[A, B](
       f: MetaEncode.Make[A],
       to: A => B,
+      from: B => A
+  ): MetaEncode.Make[B] =
+    f.contramap(from)
+
+  def surjection[A, B](
+      f: MetaEncode.Make[A],
+      to: Refinement[A, B],
       from: B => A
   ): MetaEncode.Make[B] =
     f.contramap(from)

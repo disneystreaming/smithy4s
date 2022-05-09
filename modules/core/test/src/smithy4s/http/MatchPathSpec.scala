@@ -20,11 +20,11 @@ import cats.Show
 import cats.data.NonEmptyList
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import weaver.SimpleMutableIOSuite
-import weaver.scalacheck.Checkers
 import smithy4s.http.PathSegment.GreedySegment
 import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.StaticSegment
+import weaver.SimpleMutableIOSuite
+import weaver.scalacheck.Checkers
 
 object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
 
@@ -66,12 +66,14 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
   }
 
   test("Doesn't throw on partially matching paths") {
-    forall(Gen.listOf(genLabelOrStatic)) { prefix =>
-      forall { (segments: NonEmptyList[PathSegment]) =>
-        val fullPath = prefix ::: segments.toList
-        val actual = prefix.map(renderExampleSegment).mkString("/")
-        expect.eql(doMatch(fullPath)(actual), None)
-      }
+    val gen = Gen.zip(
+      Gen.listOf(genLabelOrStatic),
+      Arbitrary.arbitrary[NonEmptyList[PathSegment]]
+    )
+    forall(gen) { case (prefix, segments) =>
+      val fullPath = prefix ::: segments.toList
+      val actual = prefix.map(renderExampleSegment).mkString("/")
+      expect.eql(doMatch(fullPath)(actual), None)
     }
   }
 

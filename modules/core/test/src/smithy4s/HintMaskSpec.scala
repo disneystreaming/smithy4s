@@ -16,10 +16,11 @@
 
 package smithy4s
 
-import smithy4s.api.Discriminated
-import smithy.api._
 import cats.kernel.Eq
-import smithy4s.syntax._
+import smithy.api._
+import smithy4s.api.Discriminated
+import smithy4s.schema._
+import smithy4s.schema.Schema._
 
 object HintMaskSpec extends weaver.FunSuite {
 
@@ -51,7 +52,7 @@ object HintMaskSpec extends weaver.FunSuite {
   }
 
   test("hint mask is applied in schematic mask") {
-    val schema = string.withHints(Readonly(), Paginated())
+    val schema = string.addHints(Readonly(), Paginated())
     val mask = HintMask(Readonly)
     val newSchematic = HintMask.mask(TestCompiler, mask)
     val result = schema.compile(newSchematic)

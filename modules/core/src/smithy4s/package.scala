@@ -14,14 +14,15 @@
  *  limitations under the License.
  */
 
-package object smithy4s extends TypeAliases {
+package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
 
+  type ~>[F[_], G[_]] = PolyFunction[F, G]
   type Hint = Hints.Binding[_]
-  type Static[A] = schematic.Static[A]
-  type Schema[A] = schematic.Schema[Schematic, A]
-  type StaticSchema[A] = Static[Schema[A]]
-  type UnionSchematic[F[_]] = schematic.union.Schematic[F]
-  type UnionSchema[A] = schematic.union.Schema[UnionSchematic, A]
+  type Schema[A] = schema.Schema[A]
+  val Schema: schema.Schema.type = schema.Schema
+  type Schematic[F[_]] = schema.Schematic[F]
+  type UnionSchema[A] = schema.Schema.UnionSchema[A]
+  type Wrapped[F[_], G[_], A] = F[G[A]]
 
   val errorTypeHeader = "X-Error-Type"
 
