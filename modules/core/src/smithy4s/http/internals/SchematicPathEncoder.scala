@@ -70,14 +70,18 @@ object SchematicPathEncoder
       Some(PathEncode.Make.raw(_.format(fmt)))
     }
 
-  override val unit: PathEncode.Make[Unit] =
-    struct(Vector.empty)(_ => ())
-
   override def enumeration[A](
       to: A => (String, Int),
-      fromName: Map[String, A],
+      fromString: Map[String, A],
       fromOrdinal: Map[Int, A]
-  ): PathEncode.Make[A] = PathEncode.Make.from { a => to(a)._1 }
+  ): PathEncode.Make[A] =
+    Hinted[PathEncode.MaybePathEncode].onHintOpt[IntEnum, A] {
+      case Some(_) => Some(PathEncode.Make.raw(to.andThen(_._2.toString)))
+      case None    => Some(PathEncode.Make.raw(to.andThen(_._1)))
+    }
+
+  override val unit: PathEncode.Make[Unit] =
+    struct(Vector.empty)(_ => ())
 
   override def struct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S

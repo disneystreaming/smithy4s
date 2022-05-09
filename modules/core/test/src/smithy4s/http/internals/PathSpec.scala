@@ -69,14 +69,15 @@ object PathSpec extends weaver.FunSuite {
           Timestamp.fromEpochSecond(0L),
           Timestamp.fromEpochSecond(0L),
           Timestamp.fromEpochSecond(0L),
-          true
+          true,
+          smithy4s.example.Numbers.TWO
         )
       )
 
     val expected = if (weaver.Platform.isJS) {
-      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00.000Z" :: "1970-01-01T00:00:00.000Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
+      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00.000Z" :: "1970-01-01T00:00:00.000Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: "2" :: Nil
     } else {
-      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
+      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: "2" :: Nil
     }
 
     assert.eql(result, expected)

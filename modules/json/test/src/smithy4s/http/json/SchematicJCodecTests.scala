@@ -184,6 +184,13 @@ object SchematicJCodecTests extends SimpleIOSuite {
     )
   }
 
+  pureTest("Int Enum gets encoded/decoded correctly") {
+    val jsonInt = "1"
+    val int = writeToString[FaceCard](FaceCard.JACK)
+    val roundTripped = readFromString[FaceCard](int)
+    expect(int == jsonInt) && expect(roundTripped == FaceCard.JACK)
+  }
+
   pureTest(
     "Constraints contribute to the discrimination process of untagged union"
   ) {

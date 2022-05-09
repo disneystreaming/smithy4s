@@ -157,7 +157,12 @@ private[http] object SchematicMetadataWriter
       to: A => (String, Int),
       fromName: Map[String, A],
       fromOrdinal: Map[Int, A]
-  ): MetaEncode.Make[A] = MetaEncode.Make.stringValue(to.andThen(_._1))
+  ): MetaEncode.Make[A] =
+    Hinted[MetaEncode].onHintOpt[IntEnum, A] {
+      case Some(_) =>
+        MetaEncode.StringValueMetaEncode(to.andThen(_._2.toString))
+      case None => MetaEncode.StringValueMetaEncode(to.andThen(_._1))
+    }
 
   def suspend[A](f: Lazy[MetaEncode.Make[A]]): MetaEncode.Make[A] =
     MetaEncode.Make.empty

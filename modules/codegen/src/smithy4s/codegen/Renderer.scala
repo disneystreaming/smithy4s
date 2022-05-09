@@ -524,33 +524,34 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       originalName: String,
       values: List[EnumValue],
       hints: List[Hint]
-  ): RenderResult = lines(
-    block(
-      s"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
-    )(
-      "override val value : String = _value",
-      "override val ordinal: Int = _ordinal",
-      s"override val hints: $Hints_ = $Hints_.empty"
-    ),
-    obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
-      renderId(originalName),
-      newline,
-      renderHintsVal(hints),
-      newline,
-      values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line(
-          s"""case object ${e.className} extends $name("$value", $ordinal)"""
-        )
-      },
-      newline,
-      line(s"val values: List[$name] = List").args(
-        values.toList.map(_.className)
+  ): RenderResult =
+    lines(
+      block(
+        s"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
+      )(
+        "override val value : String = _value",
+        "override val ordinal: Int = _ordinal",
+        s"override val hints: $Hints_ = $Hints_.empty"
       ),
-      lines(
-        s"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
+      obj(name, ext = s"$Enumeration_[$name]", w = shapeTag(name))(
+        renderId(originalName),
+        newline,
+        renderHintsVal(hints),
+        newline,
+        values.map { case e @ EnumValue(value, ordinal, _, _) =>
+          line(
+            s"""case object ${e.name} extends $name("$value", $ordinal)"""
+          )
+        },
+        newline,
+        line(s"val values: List[$name] = List").args(
+          values.toList.map(_.name)
+        ),
+        lines(
+          s"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
+        )
       )
-    )
-  ).addImports(syntaxImport)
+    ).addImports(syntaxImport)
 
   private def renderTypeAlias(
       name: String,
@@ -702,41 +703,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def toCamelCase(value: String): String = {
-    val (_, output) = value.foldLeft((false, "")) {
-      case ((wasLastSkipped, str), c) =>
-        if (c.isLetterOrDigit) {
-          val newC =
-            if (wasLastSkipped) c.toString.capitalize else c.toString
-          (false, str + newC)
-        } else {
-          (true, str)
-        }
-    }
-    output
-  }
-
-  private def enumValueClassName(
-      name: Option[String],
-      value: String,
-      ordinal: Int
-  ) = {
-    name.getOrElse {
-      val camel = toCamelCase(value).capitalize
-      if (camel.nonEmpty) camel else "Value" + ordinal
-    }
-
-  }
-
-  private implicit class EnumValueOps(enumValue: EnumValue) {
-    def className =
-      enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
-  }
-
   private def renderHint(hint: Hint): Option[String] = hint match {
     case Hint.Native(typedNode) =>
       smithy4s.recursion.cata(renderTypedNode)(typedNode).run(true)._2.some
-    case _ => None
+    case Hint.IntEnum => "smithy4s.IntEnum()".some
+    case _            => None
   }
 
   def renderId(name: String, ns: String = namespace): RenderResult =
@@ -790,8 +761,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
-    case EnumerationTN(ref, value, ordinal, name) =>
-      (ref.show + "." + enumValueClassName(name, value, ordinal)).write
+    case EnumerationTN(ref, _, _, name) =>
+      (ref.show + "." + name).write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (_, FieldTN.RequiredTN(value))     => value.runDefault

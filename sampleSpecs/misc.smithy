@@ -1,3 +1,5 @@
+$version: "2.0"
+
 namespace smithy4s.example
 
 use smithy4s.api#untagged
@@ -74,4 +76,21 @@ union CheckedOrUnchecked2 {
   @pattern("^\\w+$")
   checked: String,
   raw: String
+}
+
+@documentation("FaceCard types")
+intEnum FaceCard {
+    @enumValue(1)
+    JACK
+    @enumValue(2)
+    QUEEN
+    
+    @enumValue(3)
+    KING
+    
+    @enumValue(4)
+    ACE
+    
+    @enumValue(5)
+    JOKER
 }

@@ -685,13 +685,52 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       to: A => (String, Int),
       fromName: Map[String, A],
       fromOrdinal: Map[Int, A]
-  ): JCodecMake[A] = Hinted.static {
+  ): JCodecMake[A] = Hinted[JCodec].onHintOpt[IntEnum, A] {
+    case Some(_) => intEnumeration(to, fromName, fromOrdinal)
+    case None    => stringEnumeration(to, fromName, fromOrdinal)
+  }
+
+  def intEnumeration[A](
+      to: A => (String, Int),
+      fromName: Map[String, A],
+      fromOrdinal: Map[Int, A]
+  ): JCodec[A] =
+    new JCodec[A] {
+      val expecting: String =
+        s"enumeration: [${fromOrdinal.keys.mkString(", ")}]"
+
+      def decodeValue(cursor: Cursor, in: JsonReader): A = {
+        val int = in.readInt()
+        fromOrdinal.get(int) match {
+          case Some(value) => value
+          case None        => in.enumValueError(int)
+        }
+      }
+
+      def encodeValue(x: A, out: JsonWriter): Unit =
+        out.writeVal(to(x)._2)
+
+      def decodeKey(in: JsonReader): A = {
+        val int = in.readKeyAsInt()
+        fromOrdinal.get(int) match {
+          case Some(value) => value
+          case None        => in.enumValueError(int)
+        }
+      }
+
+      def encodeKey(x: A, out: JsonWriter): Unit = out.writeKey(to(x)._2)
+    }
+
+  def stringEnumeration[A](
+      to: A => (String, Int),
+      fromName: Map[String, A],
+      fromOrdinal: Map[Int, A]
+  ): JCodec[A] =
     new JCodec[A] {
       val expecting: String =
         s"enumeration: [${fromName.keys.mkString(", ")}]"
 
       def decodeValue(cursor: Cursor, in: JsonReader): A = {
-
         val str = in.readString(null)
         fromName.get(str) match {
           case Some(value) => value
@@ -711,7 +750,6 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
 
       def encodeKey(x: A, out: JsonWriter): Unit = out.writeKey(to(x)._1)
     }
-  }
 
   private def jsonLabel[A, Z](field: Field[JCodecMake, Z, A]): String =
     field.instance.hints

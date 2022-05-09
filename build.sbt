@@ -569,7 +569,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "import.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "importerror.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "importerror.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
@@ -622,7 +623,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.21.0"
+    val smithyVersion = "1.21.0-rc1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
