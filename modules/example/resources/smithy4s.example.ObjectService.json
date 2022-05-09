@@ -159,6 +159,30 @@
                         "required": [
                             "str"
                         ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "bInt",
+                        "properties": {
+                            "bInt": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "bInt"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "bDec",
+                        "properties": {
+                            "bDec": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "bDec"
+                        ]
                     }
                 ]
             },

@@ -14,28 +14,22 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.api;
 
-/**
-  * A tag that can be used as keys for higher-kinded maps
-  */
-trait ShapeTag[-A] extends HasId {}
+import software.amazon.smithy.model.node.Node;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.AnnotationTrait;
 
-object ShapeTag {
-  def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag
+public final class UuidFormatTrait extends AnnotationTrait {
+	public static ShapeId ID = ShapeId.from("smithy4s.api#uuidFormat");
 
-  trait Has[A] {
-    def getTag: ShapeTag[A]
-  }
+	public UuidFormatTrait() {
+		super(ID, Node.objectNode());
+	}
 
-  trait Companion[A] extends ShapeTag[A] with Has[A] {
-    implicit val tagInstance: ShapeTag[A] = this
-    final override def getTag: ShapeTag[A] = this
-
-    object hint {
-      def unapply(h: Hints): Option[A] = h.get[A]
-    }
-  }
-
-  implicit def newTypeToShapeTag[A](a: Newtype[A]): ShapeTag[_] = a.tag
+	public static final class Provider extends AnnotationTrait.Provider<UuidFormatTrait> {
+		public Provider() {
+			super(ID, (node) -> new UuidFormatTrait());
+		}
+	}
 }

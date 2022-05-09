@@ -42,10 +42,13 @@ object SchematicPathEncoder
       to: A => B,
       from: B => A
   ): PathEncode.Make[B] =
-    Hinted[PathEncode.MaybePathEncode, B](
-      f.hints,
-      make = hints => f.make(hints).map(_.contramap(from))
-    )
+    f.contramap(from)
+
+  override def surjection[A, B](
+      f: PathEncode.Make[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): PathEncode.Make[B] = f.contramap(from)
 
   override val bigdecimal: PathEncode.Make[BigDecimal] =
     PathEncode.Make.fromToString
@@ -69,6 +72,12 @@ object SchematicPathEncoder
 
   override val unit: PathEncode.Make[Unit] =
     struct(Vector.empty)(_ => ())
+
+  override def enumeration[A](
+      to: A => (String, Int),
+      fromName: Map[String, A],
+      fromOrdinal: Map[Int, A]
+  ): PathEncode.Make[A] = PathEncode.Make.from { a => to(a)._1 }
 
   override def struct[S](fields: Vector[Field[PathEncode.Make, S, _]])(
       const: Vector[Any] => S

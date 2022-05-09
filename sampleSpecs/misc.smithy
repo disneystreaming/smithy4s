@@ -1,5 +1,7 @@
 namespace smithy4s.example
 
+use smithy4s.api#untagged
+
 service EmptyService {
   version: "1.0"
 }
@@ -59,3 +61,17 @@ structure BigStruct{
   {value: "_"},
 ])
 string EnumWithSymbols
+
+
+union CheckedOrUnchecked {
+  @pattern("^\\w+$")
+  checked: String,
+  raw: String
+}
+
+@untagged
+union CheckedOrUnchecked2 {
+  @pattern("^\\w+$")
+  checked: String,
+  raw: String
+}

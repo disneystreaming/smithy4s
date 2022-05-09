@@ -26,7 +26,7 @@ import smithy4s.http.json.SchematicJCodec
 import smithy4s.internals.Hinted
 
 private[aws] object AwsSchematicJCodec
-    extends SchematicJCodec(Constraints.NoopConstraints, maxArity = 1024) {
+    extends SchematicJCodec(maxArity = 1024) {
 
   override def timestamp: JCodec.JCodecMake[Timestamp] = Hinted.static {
     new JCodec[Timestamp] {

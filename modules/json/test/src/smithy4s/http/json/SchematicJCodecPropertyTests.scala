@@ -123,12 +123,12 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
 
   val genSchemaWithHints: Gen[(smithy4s.Hint, Schema[DynData])] = {
     for {
-      min <- Gen.option(Gen.long)
+      min <- Gen.option(Gen.chooseNum(0, 10))
       max <- Gen.option(
-        Gen.chooseNum(min.getOrElse(Long.MinValue), Long.MaxValue)
+        Gen.chooseNum(min.getOrElse(0) + 10, min.getOrElse(0) + 20)
       )
       hint <- Gen.oneOf[smithy4s.Hint](
-        Length(min, max),
+        Length(min.map(_.toLong), max.map(_.toLong)),
         Range(min.map(BigDecimal(_)), max.map(BigDecimal(_)))
       )
       schema <- genSchemaWithConstraints(hint)
@@ -140,24 +140,23 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
   ): Gen[Schema[DynData]] = {
     def lengthGen(l: Length) = Gen.oneOf(
       Vector(
-        (string),
-        map(string, string),
-        string,
-        bytes
-      ).map(_.addHints(l)).asInstanceOf[Vector[Schema[DynData]]]
+        string.addHints(l).validated[Length],
+        map(string, string).addHints(l).validated[Length],
+        string.addHints(l).validated[Length],
+        bytes.addHints(l).validated[Length]
+      ).asInstanceOf[Vector[Schema[DynData]]]
     )
 
     def rangeGen(r: Range) = Gen.oneOf(
       Vector(
-        byte,
-        short,
-        int,
-        long,
-        float,
-        double,
-        bigdecimal,
-        bigint
-      ).map(_.addHints(r)).asInstanceOf[Vector[Schema[DynData]]]
+        short.addHints(r).validated[Range],
+        int.addHints(r).validated[Range],
+        long.addHints(r).validated[Range],
+        float.addHints(r).validated[Range],
+        double.addHints(r).validated[Range],
+        bigdecimal.addHints(r).validated[Range],
+        bigint.addHints(r).validated[Range]
+      ).asInstanceOf[Vector[Schema[DynData]]]
     )
     hint.value match {
       case l: Length => lengthGen(l)

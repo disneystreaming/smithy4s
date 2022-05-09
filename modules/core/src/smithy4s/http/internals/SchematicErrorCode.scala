@@ -46,6 +46,13 @@ private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
   ): HttpCode[B] =
     (b, hints) => f(from(b), hints)
 
+  override def surjection[A, B](
+      f: HttpCode[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): HttpCode[B] =
+    (b, hints) => f(from(b), hints)
+
   override def struct[S](
       fields: Vector[Field[HttpCode, S, _]]
   )(f: Vector[Any] => S): HttpCode[S] = (_, hints) =>

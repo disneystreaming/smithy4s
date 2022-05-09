@@ -34,6 +34,11 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
   ): Hinted[F, B] =
     Hinted(hints, h => I.imap(make(h))(to, from))
 
+  def xmap[B](to: A => Either[ConstraintError, B], from: B => A)(implicit
+      I: Invariant[F]
+  ): Hinted[F, B] =
+    Hinted(hints, h => I.xmap(make(h))(to, from))
+
   def mapK[G[_]](polyFunction: PolyFunction[F, G]): Hinted[G, A] =
     Hinted(hints, h => polyFunction(make(h)))
 
@@ -55,56 +60,10 @@ case class Hinted[F[_], A](hints: Hints, make: Hints => F[A]) {
       (h: Hints) => f(make(hints ++ h), other.make(other.hints ++ h))
     )
 
-  def validated(
-      f: Hints => Option[A => Either[Constraints.ConstraintError, Unit]]
-  )(implicit
-      C: Covariant[F]
-  ): Hinted[F, A] = {
-    Hinted(
-      hints,
-      (h: Hints) => {
-        val maybePartiallyApplied = f(h)
-        maybePartiallyApplied match {
-          case Some(partiallyApplied) =>
-            C.map(make(h))(a =>
-              partiallyApplied(a) match {
-                case Left(e)   => throw e
-                case Right(()) => a
-              }
-            )
-          case None =>
-            make(h)
-        }
-      }
-    )
-  }
-
-  def validatedI(
-      f: Hints => Option[A => Either[Constraints.ConstraintError, Unit]]
-  )(implicit
-      I: Invariant[F]
-  ): Hinted[F, A] = {
-    Hinted(
-      hints,
-      (h: Hints) => {
-        val maybePartiallyApplied = f(h)
-        maybePartiallyApplied match {
-          case Some(partiallyApplied) =>
-            I.imap(make(h))(
-              { a =>
-                partiallyApplied(a) match {
-                  case Left(e)   => throw e
-                  case Right(()) => a
-                }
-              },
-              identity[A]
-            )
-          case None =>
-            make(h)
-        }
-      }
-    )
-  }
+  def emap[B](
+      f: A => Either[ConstraintError, B]
+  )(implicit C: Covariant[F]): Hinted[F, B] =
+    Hinted(hints, h => C.emap(make(h))(f))
 
 }
 

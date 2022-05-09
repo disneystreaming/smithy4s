@@ -24,6 +24,8 @@ package smithy4s
 trait ShapeTag[A] extends HasId
 
 object ShapeTag {
+  def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag
+
   trait Has[A] {
     def getTag: ShapeTag[A]
   }
@@ -31,6 +33,10 @@ object ShapeTag {
   trait Companion[A] extends ShapeTag[A] with Has[A] {
     implicit val tagInstance: ShapeTag[A] = this
     final override def getTag: ShapeTag[A] = this
+
+    object hint {
+      def unapply(h: Hints): Option[A] = h.get[A]
+    }
   }
 
   implicit def newTypeToShapeTag[A](a: Newtype[A]): ShapeTag[_] = a.tag

@@ -28,8 +28,7 @@ import scala.collection.mutable.{Map => MMap}
 
 import MetaDecode._
 
-private[http] object SchematicMetadataReader
-    extends SchematicMetadataReader(Constraints.defaultConstraints)
+private[http] object SchematicMetadataReader extends SchematicMetadataReader
 
 /**
   * This construct creates a Map[String Any] by pulling expected
@@ -38,7 +37,7 @@ private[http] object SchematicMetadataReader
   * This Map is then passed to the Schematic that is aware
   * of the request's body, for quick access.
   */
-private[http] class SchematicMetadataReader(constraints: Constraints)
+private[http] class SchematicMetadataReader()
     extends Schematic[MetaDecode.Make]
     with ScalaCompat {
 
@@ -47,31 +46,26 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
       .from("Short")(
         _.toShortOption
       )
-      .validated(constraints.checkNumeric[Short])
 
   def int: MetaDecode.Make[Int] =
     MetaDecode.Make
       .from("Int")(_.toIntOption)
-      .validated(constraints.checkNumeric[Int])
 
   def long: MetaDecode.Make[Long] =
     MetaDecode.Make
       .from("Long")(_.toLongOption)
-      .validated(constraints.checkNumeric[Long])
 
   def double: MetaDecode.Make[Double] =
     MetaDecode.Make
       .from("Double")(
         _.toDoubleOption
       )
-      .validated(constraints.checkNumeric[Double])
 
   def float: MetaDecode.Make[Float] =
     MetaDecode.Make
       .from("Float")(
         _.toFloatOption
       )
-      .validated(constraints.checkNumeric[Float])
 
   def bigdecimal: MetaDecode.Make[BigDecimal] =
     MetaDecode.Make.fromUnsafe("BigDecimal")(BigDecimal(_))
@@ -79,7 +73,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
     MetaDecode.Make.fromUnsafe("BigInt")(BigInt(_))
 
   def string: MetaDecode.Make[String] =
-    MetaDecode.Make.from("String")(Some(_)).validated(constraints.checkString)
+    MetaDecode.Make.from("String")(Some(_))
 
   def boolean: MetaDecode.Make[Boolean] =
     MetaDecode.Make.from("Boolean") {
@@ -146,7 +140,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
           buffer.toList
         }
       case _ => MetaDecode.EmptyMetaDecode
-    }.validated(constraints.checkCollection)
+    }
 
   def set[S](fs: MetaDecode.Make[S]): MetaDecode.Make[Set[S]] =
     fs.transform[Set[S]] {
@@ -157,7 +151,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
           buffer.toSet
         }
       case _ => MetaDecode.EmptyMetaDecode
-    }.validated(constraints.checkCollection)
+    }
 
   def vector[S](fs: MetaDecode.Make[S]): MetaDecode.Make[Vector[S]] =
     fs.transform[Vector[S]] {
@@ -168,7 +162,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
           buffer.toVector
         }
       case _ => MetaDecode.EmptyMetaDecode
-    }.validated(constraints.checkCollection)
+    }
 
   def map[K, V](
       fk: MetaDecode.Make[K],
@@ -184,7 +178,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap
         )
       case _ => EmptyMetaDecode
-    }.validated(constraints.checkCollection)
+    }
 
   def union[S](
       first: Alt[MetaDecode.Make, S, _],
@@ -268,7 +262,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
           case e: MetadataError => Left(e)
           case MetaDecode.MetaDecodeError(const) =>
             Left(const(currentFieldName, currentBinding))
-          case Constraints.ConstraintError(_, message) =>
+          case ConstraintError(_, message) =>
             Left(
               MetadataError.FailedConstraint(
                 currentFieldName,
@@ -308,7 +302,7 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
               case e: MetadataError => Left(e)
               case MetaDecode.MetaDecodeError(const) =>
                 Left(const(currentFieldName, currentBinding))
-              case Constraints.ConstraintError(_, message) =>
+              case ConstraintError(_, message) =>
                 Left(
                   MetadataError.FailedConstraint(
                     currentFieldName,
@@ -324,6 +318,13 @@ private[http] class SchematicMetadataReader(constraints: Constraints)
 
   def bijection[A, B](fa: MetaDecode.Make[A], to: A => B, from: B => A) =
     fa.map(to)
+
+  def surjection[A, B](
+      fa: MetaDecode.Make[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): MetaDecode.Make[B] =
+    fa.emap(to.asFunction)
 
   def withHints[A](
       fa: MetaDecode.Make[A],

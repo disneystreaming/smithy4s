@@ -80,7 +80,7 @@ object Cursor {
           cursor.getExpected(),
           e.getMessage()
         )
-      case Constraints.ConstraintError(_, message) =>
+      case ConstraintError(_, message) =>
         throw PayloadError(
           cursor.getPath(),
           cursor.getExpected(),

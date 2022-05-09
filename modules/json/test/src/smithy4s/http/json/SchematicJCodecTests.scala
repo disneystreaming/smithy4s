@@ -19,15 +19,24 @@ package http.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import smithy.api.JsonName
-import smithy4s.api.Discriminated
-import smithy4s.example.One
-import smithy4s.example.PayloadData
-import smithy4s.example.TestBiggerUnion
-import smithy4s.http.PayloadError
 import smithy4s.schema.Schema._
+
+import smithy4s.http.PayloadError
+import smithy4s.example.{
+  CheckedOrUnchecked,
+  CheckedOrUnchecked2,
+  Four,
+  One,
+  PayloadData,
+  TestBiggerUnion,
+  Three,
+  UntaggedUnion
+}
+import smithy4s.api.Discriminated
 import weaver._
 
 import scala.collection.immutable.ListMap
+import scala.util.Try
 
 object SchematicJCodecTests extends SimpleIOSuite {
 
@@ -157,6 +166,36 @@ object SchematicJCodecTests extends SimpleIOSuite {
     expect(str == jsonStr)
   }
 
+  pureTest("Valid union values are parsed successfuly") {
+    val jsonStr = """{"checked":"foo"}"""
+    val result = readFromString[CheckedOrUnchecked](jsonStr)
+    expect(result == CheckedOrUnchecked.CheckedCase("foo"))
+  }
+
+  pureTest("Invalid union values fails to parse") {
+    val jsonStr = """{"checked":"!@#"}"""
+    val result = Try(readFromString[CheckedOrUnchecked](jsonStr)).failed
+    expect(
+      result.get == PayloadError(
+        PayloadPath.fromString(".checked"),
+        "string",
+        "String '!@#' does not match pattern '^\\w+$'"
+      )
+    )
+  }
+
+  pureTest(
+    "Constraints contribute to the discrimination process of untagged union"
+  ) {
+    val jsonStr = "\"foo\""
+    val result = readFromString[CheckedOrUnchecked2](jsonStr)
+    val e1 = expect(result == CheckedOrUnchecked2.CheckedCase("foo"))
+    val jsonStr2 = "\"!@#\""
+    val result2 = readFromString[CheckedOrUnchecked2](jsonStr2)
+    val e2 = expect(result2 == CheckedOrUnchecked2.RawCase("!@#"))
+    e1 && e2
+  }
+
   pureTest("Discriminated union gets encoded correctly") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
@@ -241,6 +280,18 @@ object SchematicJCodecTests extends SimpleIOSuite {
     }
   }
 
+  pureTest("Untagged union are encoded / decoded") {
+    val oneJ = """ {"three":"three_value"}"""
+    val twoJ = """ {"four":4}"""
+    val oneRes = readFromString[UntaggedUnion](oneJ)
+    val twoRes = readFromString[UntaggedUnion](twoJ)
+
+    expect(
+      oneRes == UntaggedUnion.ThreeCase(Three("three_value")) &&
+        twoRes == UntaggedUnion.FourCase(Four(4))
+    )
+  }
+
   implicit val byteArraySchema: Schema[ByteArray] = bytes
 
   pureTest("byte arrays are encoded as base64") {
@@ -285,8 +336,15 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val str = string
         .optional[Bar]("str", _.str)
         .addHints(lengthHint)
-      val lst = list[Int](int).optional[Bar]("lst", _.lst).addHints(lengthHint)
-      val intS = int.optional[Bar]("int", _.int).addHints(rangeHint)
+        .validated[smithy.api.Length, String]
+      val lst = list[Int](int)
+        .optional[Bar]("lst", _.lst)
+        .addHints(lengthHint)
+        .validated[smithy.api.Length, List[Int]]
+      val intS = int
+        .optional[Bar]("int", _.int)
+        .addHints(rangeHint)
+        .validated[smithy.api.Range, Int]
       struct(str, lst, intS)(Bar.apply)
     }
   }
@@ -330,6 +388,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val str = string
         .required[Bar2]("str", _.str)
         .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
       val bar = struct(str)(Bar2.apply).required[Foo2]("bar", _.bar)
       struct(bar)(Foo2.apply)
     }
@@ -354,6 +413,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
       val str = string
         .required[Bar2]("str", _.str)
         .addHints(lengthHint)
+        .validated[smithy.api.Length, String]
       val bar = list(struct(str)(Bar2.apply)).required[Foo3]("bar", _.bar)
       struct(bar)(Foo3.apply)
     }

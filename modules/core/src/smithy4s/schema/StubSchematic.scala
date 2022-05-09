@@ -77,6 +77,13 @@ trait StubSchematic[F[_]] extends Schematic[F] {
   override def bijection[A, B](f: F[A], to: A => B, from: B => A): F[B] =
     default
 
+  override def surjection[A, B](
+      f: F[A],
+      refinement: Refinement[A, B],
+      from: B => A
+  ): F[B] =
+    default
+
   override def struct[S](fields: Vector[Field[F, S, _]])(
       const: Vector[Any] => S
   ): F[S] = default

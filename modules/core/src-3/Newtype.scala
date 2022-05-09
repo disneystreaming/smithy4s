@@ -29,4 +29,13 @@ abstract class Newtype[A] extends HasId { self =>
     def id: ShapeId = self.id
   }
 
+  implicit val isomorphismInstance: capability.Isomorphism[A, Type] =
+    new capability.Isomorphism[A, Type] {
+      inline def from(b: Type): A = b.value
+      inline def to(a: A): Type = apply(a)
+    }
+
+  object hint {
+    def unapply(h: Hints): Option[Type] = h.get(tag)
+  }
 }

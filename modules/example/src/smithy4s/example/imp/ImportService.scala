@@ -80,7 +80,7 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
 
     object NotFoundErrorCase {
       val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[NotFoundErrorCase] = bijection(NotFoundError.schema, NotFoundErrorCase(_), _.notFoundError)
+      val schema: smithy4s.Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
       val alt = schema.oneOf[ImportOperationError]("NotFoundError")
     }
 

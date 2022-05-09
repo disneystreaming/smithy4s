@@ -309,7 +309,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ) = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".addHints${memberHints(hints)}"
+      val mh = if (hints.isEmpty) "" else s".addHints(${memberHints(hints)})"
       line(
         s"""val $valName : $StreamingSchema_[${tpe.render}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
       )
@@ -382,7 +382,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                   s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
                 } else {
                   val mh = memberHints(hints)
-                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
+                  // format: off
+                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
+                  // format: on
                 }
             }
           if (fields.size <= 22) {
@@ -475,8 +477,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           val cn = caseName(altName)
           block(s"object $cn")(
             renderHintsVal(altHints),
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}, $cn(_), _.${uncapitalise(altName)})",
+            // format: off
+            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
+            // format: on
           )
         },
         newline, {
@@ -554,11 +558,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): RenderResult = {
     val imports = tpe.imports ++ Set("smithy4s.Newtype") ++ syntaxImport
 
+    val trailingCalls =
+      s".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+
     lines(
       obj(name, extensions = List(s"Newtype[${tpe.render}]"))(
         renderId(originalName),
         renderHintsVal(hints),
-        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}.withId(id).addHints(hints)",
+        s"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$trailingCalls",
         lines(
           s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)"
         )
@@ -581,8 +588,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
+    val paramImports =
+      if (op.hints.contains(Hint.PackedInputs)) Nil else op.params.map(_.tpe)
+
     def imports =
-      (op.input :: op.output :: op.params.map(_.tpe) ++ op.errors)
+      (op.input :: op.output :: paramImports ++ op.errors)
         .foldMap(_.imports)
 
     def renderInput = op.input.render
@@ -596,6 +606,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def renderAlgParams =
       s"$renderInput, $renderError, $renderOutput, $renderStreamedInput, $renderStreamedOutput"
+  }
+
+  implicit class TypeRefExt(tpe: Type.Ref) {
+    def renderFull: String = s"${tpe.namespace}.${tpe.name}"
   }
 
   implicit class TypeExt(tpe: Type) {
@@ -636,7 +650,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.ByteArray  => Set("smithy4s.ByteArray") -> "ByteArray"
         case Primitive.Bool       => Set.empty -> "Boolean"
         case Primitive.String     => Set.empty -> "String"
-        case Primitive.Timestamp  => Set("smithy4s.Timestamp") -> "Timestamp"
+        case Primitive.Timestamp  => Set.empty -> "smithy4s.Timestamp"
         case Primitive.Byte       => Set.empty -> "Byte"
         case Primitive.Int        => Set.empty -> "Int"
         case Primitive.Short      => Set.empty -> "Short"
@@ -644,9 +658,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         case Primitive.Float      => Set.empty -> "Float"
         case Primitive.Double     => Set.empty -> "Double"
         case Primitive.BigDecimal => Set.empty -> "BigDecimal"
-        case Primitive.BigInteger => Set.empty -> "BigInteger"
+        case Primitive.BigInteger => Set.empty -> "BigInt"
         case Primitive.Uuid       => Set("java.util.UUID") -> "UUID"
-        case Primitive.Document   => Set("smithy4s.Document") -> "Document"
+        case Primitive.Document   => Set.empty -> "smithy4s.Document"
       }
 
     def schemaRef: String = tpe match {
@@ -739,6 +753,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (h.isEmpty) "" else h.mkString(", ")
   }
 
+  def renderConstraintValidation(hints: List[Hint]): String = {
+    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    if (tags.isEmpty) ""
+    else {
+      tags.map(t => s".validated[${t.renderFull}]").mkString("")
+    }
+  }
+
+  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): String = {
+    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    if (tags.isEmpty) ""
+    else {
+      tags.map(t => s".validated[${t.renderFull}, ${tpe.render}]").mkString(".")
+    }
+  }
+
   private def shapeTag(name: String): String =
     s"$ShapeTag_.Companion[$name]"
 
@@ -795,7 +825,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     prim match {
       case Primitive.BigDecimal =>
         (bd: BigDecimal) => s"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInteger($bi)"
+      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInt($bi)"
       case Primitive.Unit       => _ => "()"
       case Primitive.Double     => _.toString
       case Primitive.Float      => _.toString

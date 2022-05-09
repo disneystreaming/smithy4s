@@ -25,4 +25,12 @@ object Contravariant {
   def apply[F[_]](implicit instance: Contravariant[F]): Contravariant[F] =
     instance
 
+  type OptionT[F[_], A] = Option[F[A]]
+  implicit def optionInstance[F[_]](implicit
+      F: Contravariant[F]
+  ): Contravariant[OptionT[F, *]] = new Contravariant[OptionT[F, *]] {
+    def contramap[A, B](fa: OptionT[F, A])(f: B => A): OptionT[F, B] =
+      fa.map(F.contramap(_)(f))
+  }
+
 }

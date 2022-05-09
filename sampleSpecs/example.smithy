@@ -91,7 +91,9 @@ structure GetFooOutput {
 
 union Foo {
   int: Integer,
-  str: String
+  str: String,
+  bInt: BigInteger,
+  bDec: BigDecimal
 }
 
 @enum([{value : "Low"}, {value : "High"}])

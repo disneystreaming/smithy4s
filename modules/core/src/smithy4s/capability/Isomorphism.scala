@@ -14,28 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s
-
-/**
-  * A tag that can be used as keys for higher-kinded maps
-  */
-trait ShapeTag[-A] extends HasId {}
-
-object ShapeTag {
-  def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag
-
-  trait Has[A] {
-    def getTag: ShapeTag[A]
-  }
-
-  trait Companion[A] extends ShapeTag[A] with Has[A] {
-    implicit val tagInstance: ShapeTag[A] = this
-    final override def getTag: ShapeTag[A] = this
-
-    object hint {
-      def unapply(h: Hints): Option[A] = h.get[A]
-    }
-  }
-
-  implicit def newTypeToShapeTag[A](a: Newtype[A]): ShapeTag[_] = a.tag
+package smithy4s.capability
+trait Isomorphism[A, B] {
+  def to(a: A): B
+  def from(b: B): A
 }
