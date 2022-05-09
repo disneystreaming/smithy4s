@@ -1,16 +1,18 @@
 package smithy4s.codegen
 
 import cats.implicits._
+import smithy4s.codegen.WithValue.ToLineWithValue
+
 object LineSyntax {
   implicit class LineInterpolator(val sc: StringContext) extends AnyVal {
-    def line(renderables: ToLines.WithValue[_]*): Line = {
+    def line(renderables: ToLineWithValue[_]*): Line = {
       renderAndCombine(renderables.toList)
     }
 
     private def renderAndCombine(
-        renderables: List[ToLines.WithValue[_]]
+        renderables: List[ToLineWithValue[_]]
     ): Line = {
-      def aux[A](binding: ToLines.WithValue[A]): Line = {
+      def aux[A](binding: ToLineWithValue[A]): Line = {
         val (imports, lines) = binding.render.tupled
         Line(imports, lines.mkString(""))
       }
