@@ -29,7 +29,8 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     service: smithy4s.Service[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
-    contentType: String
+    contentType: String,
+    sigName: String
 )(implicit F: MonadThrow[F])
     extends Transformation[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
@@ -45,7 +46,8 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     service.id,
     endpointPrefix,
     awsEnv,
-    contentType
+    contentType,
+    sigName
   )
 
   private val awsEndpoints =

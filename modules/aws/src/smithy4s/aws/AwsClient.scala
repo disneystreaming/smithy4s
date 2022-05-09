@@ -38,20 +38,27 @@ object AwsClient {
       endpointPrefix <- awsService.endpointPrefix.liftTo[Resource[F, *]](
         initError(s"No endpoint prefix for $awsService")
       )
+      sigName <- service.hints
+        .get(_root_.aws.auth.Sigv4)
+        .map(_.name)
+        .liftTo[Resource[F, *]](
+          initError(s"${service.id.show} does not have an api.auth.Sigv4 name")
+        )
       awsProtocol <- AwsProtocol(service.hints).liftTo[Resource[F, *]](
         initError(
           s"AWS protocol used by ${service.id.show} is not yet supported"
         )
       )
     } yield service.transform(
-      interpreter(awsProtocol, service, awsEnv, endpointPrefix)
+      interpreter(awsProtocol, service, awsEnv, endpointPrefix, sigName)
     )
 
   private def interpreter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
       awsProtocol: AwsProtocol,
       service: smithy4s.Service[Alg, Op],
       awsEnv: AwsEnvironment[F],
-      endpointPrefix: String
+      endpointPrefix: String,
+      sigName: String
   )(implicit F: MonadThrow[F]): Transformation[Op, AwsCall[F, *, *, *, *, *]] =
     awsProtocol match {
       case AwsProtocol.AWS_JSON_1_0(_) =>
@@ -59,7 +66,8 @@ object AwsClient {
           service,
           endpointPrefix,
           awsEnv,
-          "application/x-amz-json-1.0"
+          "application/x-amz-json-1.0",
+          sigName
         )
 
       case AwsProtocol.AWS_JSON_1_1(_) =>
@@ -67,7 +75,8 @@ object AwsClient {
           service,
           endpointPrefix,
           awsEnv,
-          "application/x-amz-json-1.1"
+          "application/x-amz-json-1.1",
+          sigName
         )
     }
 

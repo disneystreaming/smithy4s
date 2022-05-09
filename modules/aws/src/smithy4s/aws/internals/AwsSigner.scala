@@ -41,15 +41,23 @@ object AwsSigner {
       serviceId: ShapeId,
       endpointPrefix: String,
       environment: AwsEnvironment[F],
-      contentType: String
+      contentType: String,
+      sigName: String
   ): AwsSigner[F] =
-    new RPCSigner[F](serviceId, endpointPrefix, environment, contentType)
+    new RPCSigner[F](
+      serviceId,
+      endpointPrefix,
+      environment,
+      contentType,
+      sigName
+    )
 
   private class RPCSigner[F[_]: Monad](
       serviceId: ShapeId,
       endpointPrefix: String,
       awsEnv: AwsEnvironment[F],
-      contentType: String
+      contentType: String,
+      sigName: String
   ) extends AwsSigner[F] {
     def sign(
         endpointName: String,
@@ -74,7 +82,8 @@ object AwsSigner {
           metadata = metadata,
           timestamp = t,
           body = body,
-          contentType = contentType
+          contentType = contentType,
+          sigName = sigName
         )
       }
     }
@@ -98,7 +107,8 @@ object AwsSigner {
       accessToken: Option[String],
       timestamp: Timestamp,
       body: Option[Array[Byte]],
-      contentType: String
+      contentType: String,
+      sigName: String
   ) extends HttpRequest
       with AwsSignature.Signable {
 
