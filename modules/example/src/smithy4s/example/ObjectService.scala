@@ -89,12 +89,12 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
 
     object ServerErrorCase {
       val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema, ServerErrorCase(_), _.serverError)
+      val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[PutObjectError]("ServerError")
     }
     object NoMoreSpaceCase {
       val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema, NoMoreSpaceCase(_), _.noMoreSpace)
+      val schema: smithy4s.Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema.addHints(hints), NoMoreSpaceCase(_), _.noMoreSpace)
       val alt = schema.oneOf[PutObjectError]("NoMoreSpace")
     }
 
@@ -138,7 +138,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
 
     object ServerErrorCase {
       val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema, ServerErrorCase(_), _.serverError)
+      val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[GetObjectError]("ServerError")
     }
 

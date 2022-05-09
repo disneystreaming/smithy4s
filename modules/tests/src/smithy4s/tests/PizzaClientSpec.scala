@@ -17,8 +17,8 @@
 package smithy4s.tests
 
 import cats.data.Chain
-import cats.effect.Resource
 import cats.effect._
+import cats.effect.std.UUIDGen
 import cats.syntax.all._
 import io.circe.Json
 import org.http4s.HttpApp
@@ -30,8 +30,6 @@ import org.typelevel.ci.CIString
 import smithy4s.Timestamp
 import smithy4s.example._
 import weaver._
-
-import java.util.UUID
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -49,7 +47,7 @@ abstract class PizzaClientSpec extends IOSuite {
   clientTest("Errors make it through") { (client, backend, log) =>
     for {
       ts <- IO(Timestamp.nowUTC())
-      uuid <- IO(UUID.randomUUID())
+      uuid <- UUIDGen.randomUUID[IO]
       response <- Created(
         Json.fromString(uuid.toString),
         Header.Raw(
@@ -92,21 +90,51 @@ abstract class PizzaClientSpec extends IOSuite {
     }
   }
 
-  clientTest("Receives errors as exceptions") { (client, backend, log) =>
-    for {
-      response <- NotFound(
-        Json.obj("name" -> Json.fromString("bar")),
-        Header.Raw(CIString("X-Error-Type"), "NotFoundError")
-      )
-      _ <- backend.prepResponse("bar", response)
-      maybeResult <- client.getMenu("bar").attempt
-    } yield maybeResult match {
-      case Right(_) => failure("expected success")
-      case Left(error) =>
-        val expected = NotFoundError(Some("bar"))
-        expect(error == expected)
-    }
-  }
+  clientTestForError(
+    "Receives errors as exceptions",
+    Response(status = Status.NotFound)
+      .withHeaders(Header.Raw(CIString("X-Error-Type"), "NotFoundError"))
+      .withEntity(
+        Json.obj("name" -> Json.fromString("bar"))
+      ),
+    NotFoundError("bar")
+  )
+
+  clientTestForError(
+    "Handle error with a unique status code mapping (418)",
+    Response(status = Status.ImATeapot)
+      .withEntity(
+        Json.obj("message" -> Json.fromString("generic error message for 418"))
+      ),
+    GenericClientError("generic error message for 418")
+  )
+
+  clientTestForError(
+    "Handle error w/o a discriminator header and a unique status code (4xx)",
+    Response(status = Status.ProxyAuthenticationRequired)
+      .withEntity(
+        Json.obj("message" -> Json.fromString("generic client error message"))
+      ),
+    GenericClientError("generic client error message")
+  )
+
+  clientTestForError(
+    "Handle error w/o a discriminator header and a unique status code (4xx) but matches one error type",
+    Response(status = Status.ProxyAuthenticationRequired)
+      .withEntity(
+        Json.obj("error" -> Json.fromString("error key in json"))
+      ),
+    FallbackError("error key in json")
+  )
+
+  clientTestForError(
+    "Handle error w/o a discriminator header and a unique status code (5xx)",
+    Response(status = Status.VariantAlsoNegotiates)
+      .withEntity(
+        Json.obj("message" -> Json.fromString("generic error server message"))
+      ),
+    GenericServerError("generic error server message")
+  )
 
   clientTest("Headers are case insensitive") { (client, backend, log) =>
     for {
@@ -140,6 +168,26 @@ abstract class PizzaClientSpec extends IOSuite {
         body = Some("b")
       )
       expect.same(res, expected)
+    }
+  }
+
+  def clientTestForError[T](
+      name: String,
+      response: Response[IO],
+      expected: Throwable
+  ) = {
+    clientTest(name) { (client, backend, log) =>
+      for {
+        _ <- backend.prepResponse(
+          name,
+          response
+        )
+        maybeResult <- client.getMenu(name).attempt
+      } yield maybeResult match {
+        case Right(_) => failure("expected failure")
+        case Left(error) =>
+          expect(error == expected)
+      }
     }
   }
 

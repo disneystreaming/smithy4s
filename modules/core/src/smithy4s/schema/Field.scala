@@ -178,34 +178,34 @@ object Field {
 
   implicit class SchemaFieldOps[S, A](private val field: SchemaField[S, A])
       extends AnyVal {
-    def checked[C, A2](implicit
-        fieldCheck: Field.FieldCheck[C, A, A2],
-        constraint: Refinement.Checked[C, A2]
-    ): SchemaField[S, A] = fieldCheck(field, constraint)
+    def validated[C, A2](implicit
+        FieldValidator: Field.FieldValidator[C, A, A2],
+        constraint: Validator.Simple[C, A2]
+    ): SchemaField[S, A] = FieldValidator(field, constraint)
   }
 
   /**
    * Construct aiming at facilitate the application of Refinements
    * on fields, as it's made tricky due to the GADT nature of fields.
    */
-  trait FieldCheck[C, A, T] {
+  trait FieldValidator[C, A, T] {
     def apply[S](
         field: SchemaField[S, A],
-        constraint: Refinement.Checked[C, T]
+        constraint: Validator.Simple[C, T]
     ): SchemaField[S, A]
   }
 
-  object FieldCheck {
-    implicit def requiredCase[C, A]: FieldCheck[C, A, A] =
-      new FieldCheck[C, A, A] {
+  object FieldValidator {
+    implicit def requiredCase[C, A]: FieldValidator[C, A, A] =
+      new FieldValidator[C, A, A] {
         def apply[S](
             field: SchemaField[S, A],
-            constraint: Refinement.Checked[C, A]
+            constraint: Validator.Simple[C, A]
         ): SchemaField[S, A] = field match {
           case Required(label, instance, get, hints) =>
             Required(
               label,
-              instance.checkedAgainstHints(hints)(constraint),
+              instance.validatedAgainstHints(hints)(constraint),
               get,
               hints
             )
@@ -213,16 +213,16 @@ object Field {
         }
       }
 
-    implicit def optionalCase[C, A]: FieldCheck[C, Option[A], A] =
-      new FieldCheck[C, Option[A], A] {
+    implicit def optionalCase[C, A]: FieldValidator[C, Option[A], A] =
+      new FieldValidator[C, Option[A], A] {
         def apply[S](
             field: SchemaField[S, Option[A]],
-            constraint: Refinement.Checked[C, A]
+            constraint: Validator.Simple[C, A]
         ): SchemaField[S, Option[A]] = field match {
           case opt: Optional[Schema, S, A] =>
             Optional(
               opt.label,
-              opt.instance.checkedAgainstHints(opt.hints)(constraint),
+              opt.instance.validatedAgainstHints(opt.hints)(constraint),
               opt.get,
               opt.hints
             )

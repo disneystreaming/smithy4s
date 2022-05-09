@@ -78,6 +78,20 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           )
       }
     }
+    test(
+      s"GET /$path/index.html?url=/test-file.json does not redirect"
+    ) {
+      val request =
+        Request[IO](
+          method = Method.GET,
+          uri = Uri.unsafeFromString(
+            s"/$path/index.html?url=/test-file.json"
+          )
+        )
+      app.run(request).map { response =>
+        expect(response.status == Status.Ok)
+      }
+    }
     test(s"GET $path/test-file.json fetches requested file") {
       val filePath = s"/$path/test-file.json"
       val request =

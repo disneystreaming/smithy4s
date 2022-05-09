@@ -16,8 +16,9 @@
 
 package smithy4s.aws
 
-import cats.effect.Async
+import cats.effect.Temporal
 import cats.effect.Resource
+import cats.implicits._
 
 trait AwsEnvironment[F[_]] {
   def credentials: F[AwsCredentials]
@@ -31,13 +32,14 @@ object AwsEnvironment {
   def default[F[_]](
       client: SimpleHttpClient[F],
       region: AwsRegion
-  )(implicit F: Async[F]): Resource[F, AwsEnvironment[F]] =
+  )(implicit F: Temporal[F]): Resource[F, AwsEnvironment[F]] =
     AwsCredentialsProvider.default[F](client).map { credentialsF =>
       make(
         client,
         F.pure(region),
         credentialsF,
-        F.delay(Timestamp.nowUTC())
+        // note: fromEpochMilli would be nice
+        F.realTime.map(_.toSeconds).map(Timestamp.fromEpochSecond(_))
       )
     }
 

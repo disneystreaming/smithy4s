@@ -48,7 +48,7 @@ private[smithy4s] abstract class Docs[F[_]](
     }
   }
   def routes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> DocPath() =>
+    case r @ GET -> DocPath() if r.uri.query.isEmpty =>
       PermanentRedirect(
         Location(Uri.unsafeFromString(s"/$path/index.html?url=/$jsonSpec"))
       )

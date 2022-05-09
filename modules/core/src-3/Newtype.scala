@@ -35,4 +35,7 @@ abstract class Newtype[A] extends HasId { self =>
       inline def to(a: A): Type = apply(a)
     }
 
+  object hint {
+    def unapply(h: Hints): Option[Type] = h.get(tag)
+  }
 }

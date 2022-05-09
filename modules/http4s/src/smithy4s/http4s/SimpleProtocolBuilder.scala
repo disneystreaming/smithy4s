@@ -30,7 +30,7 @@ import smithy4s.http.CodecAPI
   * for a given protocol. Upon constructing the routers/clients, it will
   * first check that they are indeed annotated with the protocol in question.
   */
-abstract class SimpleProtocolBuilder[P](codecs: CodecAPI)(implicit
+abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     protocolTag: ShapeTag[P]
 ) {
 
