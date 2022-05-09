@@ -32,17 +32,19 @@ import software.amazon.smithy.model.traits.TimestampFormatTrait
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
 
-package object codegen  {
+package object codegen {
 
   val uuidShapeId = ShapeId.from("smithy4s.api#UUID")
 
   private[codegen] type LinesWithValue = ToLinesWithValue[_]
   private[codegen] type LineWithValue = ToLineWithValue[_]
-  implicit class LinesSyntaxWithValue[A](val value: ToLinesWithValue[A]) extends AnyVal {
-  def render:Lines = value.typeclass.render(value.value)
+  implicit class LinesSyntaxWithValue[A](val value: ToLinesWithValue[A])
+      extends AnyVal {
+    def render: Lines = value.typeclass.render(value.value)
   }
-  implicit class LineSyntaxWithValue[A](val value:ToLineWithValue[A]) extends AnyVal {
-  def render:Line = value.typeclass.render(value.value)
+  implicit class LineSyntaxWithValue[A](val value: ToLineWithValue[A])
+      extends AnyVal {
+    def render: Line = value.typeclass.render(value.value)
   }
 
   private[codegen] val empty: Lines = Lines.empty
@@ -60,16 +62,18 @@ package object codegen  {
     lines(l: _*).transformLines(indent)
 
   private[codegen] def block(l: Line): PartialBlock = new PartialBlock(l)
-  private[codegen] def block(s: String): PartialBlock = new PartialBlock(Line(s))
+  private[codegen] def block(s: String): PartialBlock = new PartialBlock(
+    Line(s)
+  )
 
   private[codegen] def obj(
-                            name: String,
-                            ext: Line ,
-                            w: Line = Line.empty
-                          ): PartialBlock = {
+      name: String,
+      ext: Line,
+      w: Line = Line.empty
+  ): PartialBlock = {
     val start = line"object $name"
-   val withExt = if (ext.nonEmpty) start combine line" extends $ext" else start
-   val withW = if (w.nonEmpty) withExt combine  line" with $w" else withExt
+    val withExt = if (ext.nonEmpty) start combine line" extends $ext" else start
+    val withW = if (w.nonEmpty) withExt combine line" with $w" else withExt
     new PartialBlock(withW)
   }
   private[codegen] def obj(

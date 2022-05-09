@@ -18,11 +18,12 @@ package smithy4s.codegen
 
 import cats.syntax.all._
 
-class PartialBlock(l:Line) {
+class PartialBlock(l: Line) {
   def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    val (imports,line) =  l.tupled
+    val (imports, line) = l.tupled
     A.render(inner)
-      .transformLines(lines => (line + " {") :: indent(lines) ::: "}" :: Nil).addImports(imports)
+      .transformLines(lines => (line + " {") :: indent(lines) ::: "}" :: Nil)
+      .addImports(imports)
   }
 
   def apply(inner: LinesWithValue*): Lines =

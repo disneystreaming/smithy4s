@@ -16,14 +16,15 @@
 
 package smithy4s.codegen
 
-
 // Binding value and instance to recover from existentials
 
-case class WithValue[TC[_], A]( value: A,typeclass: TC[A])
+case class WithValue[TC[_], A](value: A, typeclass: TC[A])
 
 object WithValue {
-  implicit def to[TC[_], A](value: A)(implicit instance: TC[A]): WithValue[TC, A] =
-    WithValue(value,instance)
+  implicit def to[TC[_], A](value: A)(implicit
+      instance: TC[A]
+  ): WithValue[TC, A] =
+    WithValue(value, instance)
 
   type ToLinesWithValue[A] = WithValue[ToLines, A]
   type ToLineWithValue[A] = WithValue[ToLine, A]

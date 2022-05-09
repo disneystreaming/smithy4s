@@ -50,9 +50,11 @@ object ToLines {
                                ): ToLines[NonEmptyList[A]] =
     (l: NonEmptyList[A]) => listToLines(A).render(l.toList)
 
-  implicit def lineToLines[A: ToLine]: ToLines[A] = (a: A) => Lines(ToLine[A].render(a).imports, List(ToLine[A].render(a).line))
-
-
+  implicit def lineToLines[A: ToLine]: ToLines[A] = (a: A) => {
+    val (imports, line) = ToLine[A].render(a).tupled
+    // empty string must be treated like an empty list which is a Monoid Empty as oposed to wrapping in a singleton list which will render a new line character`
+    if(line.isEmpty) Lines.empty else Lines(imports, List(line))
+  }
 }
 
 // Models
@@ -82,7 +84,6 @@ case class Lines(imports: Set[String], lines: List[String]) {
       case Some(value) => lines.dropRight(1).+:(value)
       case None        => lines
     }
-    println(openBlock)
 
     Lines(imports, openBlock) ++ indent(
       l.toList.foldMap(_.render).mapLines(_ + ",")

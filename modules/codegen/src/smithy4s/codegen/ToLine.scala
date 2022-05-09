@@ -19,18 +19,17 @@ package smithy4s.codegen
 import cats.kernel.Monoid
 import smithy4s.codegen.LineSyntax.LineInterpolator
 
-
 trait ToLine[A] {
   def render(a: A): Line
 }
-object ToLine{
+object ToLine {
   implicit def apply[A](implicit A: ToLine[A]): ToLine[A] = A
 
   implicit val identity: ToLine[Line] = r => r
 
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
   implicit val stringToLine: ToLine[String] = s => Line(s)
-  implicit val  typeToLine: ToLine[Type] = new ToLine[Type] {
+  implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
     override def render(a: Type): Line = a match {
       case Type.List(member) =>
         val (imports, m) = render(member).tupled
@@ -82,11 +81,11 @@ case class Line(imports: Set[String], line: String) {
   def nonEmpty = line.nonEmpty
   def toLines = Lines(imports, List(line))
 
-
 }
 object Line {
   def apply(line: String): Line = Line(Set.empty, line)
-  def apply(importsAndLine: (Set[String], String)): Line = Line(importsAndLine._1, importsAndLine._2)
+  def apply(importsAndLine: (Set[String], String)): Line =
+    Line(importsAndLine._1, importsAndLine._2)
   val empty: Line = Line(Set.empty, "")
   implicit val monoid: Monoid[Line] = new Monoid[Line] {
     def empty = Line.empty
