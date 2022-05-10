@@ -59,7 +59,7 @@ object ToLine {
       case Primitive.ByteArray  => Line(Set("smithy4s.ByteArray"), "ByteArray")
       case Primitive.Bool       => line"Boolean"
       case Primitive.String     => line"String"
-      case Primitive.Timestamp  => line"smithy4s.Timestamp"
+      case Primitive.Timestamp  => Line(Set("smithy4s.Timestamp"), "Timestamp")
       case Primitive.Byte       => line"Byte"
       case Primitive.Int        => line"Int"
       case Primitive.Short      => line"Short"
@@ -69,7 +69,7 @@ object ToLine {
       case Primitive.BigDecimal => line"BigDecimal"
       case Primitive.BigInteger => line"BigInt"
       case Primitive.Uuid       => Line(Set("java.util.UUID"), "UUID")
-      case Primitive.Document   => line"smithy4s.Document"
+      case Primitive.Document   => Line(Set("smithy4s.Document"), "Document")
       case Primitive.Nothing    => line"Nothing"
     }
 }
