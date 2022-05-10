@@ -240,7 +240,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]",
       newline
-    ).addImports(syntaxImport)
+    )
   }
 
   private def renderOperation(
