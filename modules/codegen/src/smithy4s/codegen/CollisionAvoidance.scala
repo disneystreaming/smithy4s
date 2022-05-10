@@ -22,6 +22,7 @@ import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.Hint.Constraint
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -136,15 +137,17 @@ object CollisionAvoidance {
     )
   }
 
+  private def modRef(ref: Type.Ref): Type.Ref =
+    Type.Ref(ref.namespace, ref.name.capitalize)
+
   private def modHint(hint: Hint): Hint = hint match {
     case Native(nt) => Native(smithy4s.recursion.preprocess(modTypedNode)(nt))
-    case other      => other
+    case Constraint(tr) => Constraint(modRef(tr))
+    case other          => other
   }
 
   private def modTypedNode: TypedNode ~> TypedNode =
     new (TypedNode ~> TypedNode) {
-      def modRef(ref: Type.Ref): Type.Ref =
-        Type.Ref(ref.namespace, ref.name.capitalize)
 
       def apply[A](fa: TypedNode[A]): TypedNode[A] = fa match {
         case EnumerationTN(ref, value, ordinal, name) =>
@@ -243,11 +246,11 @@ object CollisionAvoidance {
     val Schema_ = "smithy4s.Schema"
     val StreamingSchema_ = "smithy4s.StreamingSchema"
     val Enumeration_ = "smithy4s.Enumeration"
+    val EnumValue_ = "smithy4s.schema.EnumValue"
     val Hints_ = "smithy4s.Hints"
     val ShapeTag_ = "smithy4s.ShapeTag"
-    val Static_ = "schematic.Static"
     val Errorable_ = "smithy4s.Errorable"
-    val errorUnion_ = "smithy4s.errorUnion"
+    val unionSchema_ = "smithy4s.UnionSchema"
 
     def reconcile(str: String): String = {
       val last = str.split('.').last

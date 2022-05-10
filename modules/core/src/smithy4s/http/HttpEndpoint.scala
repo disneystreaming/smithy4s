@@ -17,7 +17,6 @@
 package smithy4s
 package http
 
-import smithy4s.syntax._
 import smithy.api.Http
 
 trait HttpEndpoint[I] {
@@ -48,7 +47,7 @@ object HttpEndpoint {
       httpMethod <- HttpMethod.fromString(http.method.value)
       httpPath <- internals.pathSegments(http.uri.value)
       encoder <- endpoint.input
-        .withHints(http)
+        .addHints(http)
         .compile(internals.SchematicPathEncoder)
         .get
     } yield {

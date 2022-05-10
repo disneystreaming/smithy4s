@@ -96,14 +96,6 @@ abstract class Timestamp private[smithy4s] () extends TimestampPlatformMethods {
   */
 object Timestamp extends TimePlatformCompat {
 
-  object Schema extends schematic.Schema[Schematic, Timestamp] {
-    def compile[F[_]](s: Schematic[F]): F[Timestamp] = s.timestamp
-  }
-
-  trait Schematic[F[_]] {
-    def timestamp: F[Timestamp]
-  }
-
   private[smithy4s] implicit class sbExt(val sb: StringBuilder) extends AnyVal {
     def appendTime(i: Int): StringBuilder =
       (if (i < 10) sb.append(0) else sb).append(i)

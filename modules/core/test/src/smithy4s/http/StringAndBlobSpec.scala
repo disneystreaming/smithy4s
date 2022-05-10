@@ -16,11 +16,9 @@
 
 package smithy4s.http
 
-import schematic.ByteArray
-import schematic.Schema
-import smithy4s.Constraints
+import smithy4s.ByteArray
 import smithy4s.PayloadPath
-import smithy4s.Schematic
+import smithy4s.Schema
 import smithy4s.example._
 
 import java.nio.ByteBuffer
@@ -32,7 +30,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
     type Codec[A] = Dummy.type
     def mediaType[A](codec: Codec[A]): HttpMediaType = HttpMediaType("foo/bar")
     def compileCodec[A](
-        schema: Schema[Schematic, A]
+        schema: Schema[A]
     ): Codec[A] = Dummy
     def decodeFromByteArrayPartial[A](
         codec: Codec[A],
@@ -50,7 +48,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
   }
 
   val stringsAndBlobs =
-    CodecAPI.nativeStringsAndBlob(dummy, Constraints.defaultConstraints)
+    CodecAPI.nativeStringsAndBlob(dummy)
 
   test("Strings") {
     val input = StringBody("hello")
@@ -99,7 +97,7 @@ object StringAndBlobSpec extends weaver.FunSuite {
   test("Delegates to some other codec when neither strings not bytes") {
     val input = 1
     val codec =
-      stringsAndBlobs.compileCodec(schematic.int.Schema)
+      stringsAndBlobs.compileCodec(Schema.int)
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)

@@ -17,23 +17,21 @@
 package smithy4s
 package internals
 
-import schematic.Alt
-import schematic.ByteArray
-import schematic.Field
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
+import smithy4s.api.Discriminated
 import smithy4s.capability.Contravariant
+import smithy4s.schema._
 
 import java.util.Base64
 import java.util.UUID
 import scala.collection.mutable.Builder
 
-import Document._
 import DocumentEncoder.DocumentEncoderMake
-import smithy4s.api.Discriminated
+import Document._
 
 trait DocumentEncoder[A] { self =>
 
@@ -61,8 +59,7 @@ object DocumentEncoder {
     }
 }
 
-object SchematicDocumentEncoder
-    extends smithy4s.Schematic[DocumentEncoderMake] {
+object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
 
   def from[A](f: A => Document): DocumentEncoderMake[A] = Hinted.static {
     new DocumentEncoder[A] {
@@ -265,20 +262,25 @@ object SchematicDocumentEncoder
       fromOrdinal: Map[Int, A]
   ): DocumentEncoderMake[A] = from(a => DString(to(a)._1))
 
-  def suspend[A](f: => DocumentEncoderMake[A]): DocumentEncoderMake[A] =
+  def suspend[A](f: Lazy[DocumentEncoderMake[A]]): DocumentEncoderMake[A] =
     Hinted.static {
       new DocumentEncoder[A] {
-        lazy val underlying = f.get
+        lazy val underlying = f.value.get
         def canBeKey: Boolean = underlying.canBeKey
 
         def apply: A => Document = underlying.apply
-
       }
     }
 
   def bijection[A, B](
       f: DocumentEncoderMake[A],
       to: A => B,
+      from: B => A
+  ): DocumentEncoderMake[B] = f.contramap(from)
+
+  def surjection[A, B](
+      f: DocumentEncoderMake[A],
+      to: Refinement[A, B],
       from: B => A
   ): DocumentEncoderMake[B] = f.contramap(from)
 

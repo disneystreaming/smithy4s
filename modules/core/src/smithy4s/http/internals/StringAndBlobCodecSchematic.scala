@@ -18,9 +18,6 @@ package smithy4s
 package http
 package internals
 
-import schematic.ByteArray
-import schematic.Field
-import schematic.PolyFunction
 import smithy.api.HttpPayload
 import smithy4s.http.BodyPartial
 import smithy4s.http.HttpMediaType
@@ -30,6 +27,7 @@ import smithy4s.internals.Hinted
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
+import schema._
 import StringAndBlobCodecSchematic._
 
 private[smithy4s] object StringAndBlobCodecSchematic {
@@ -41,6 +39,17 @@ private[smithy4s] object StringAndBlobCodecSchematic {
     def imap[B](to: A => B, from: B => A): SimpleCodec[B] = new SimpleCodec[B] {
       def mediaType: HttpMediaType = self.mediaType
       def fromBytes(bytes: Array[Byte]): B = to(self.fromBytes(bytes))
+      def toBytes(b: B): Array[Byte] = self.toBytes(from(b))
+    }
+    def xmap[B](
+        to: A => Either[ConstraintError, B],
+        from: B => A
+    ): SimpleCodec[B] = new SimpleCodec[B] {
+      def mediaType: HttpMediaType = self.mediaType
+      def fromBytes(bytes: Array[Byte]): B = to(self.fromBytes(bytes)) match {
+        case Right(value) => value
+        case Left(e)      => throw e
+      }
       def toBytes(b: B): Array[Byte] = self.toBytes(from(b))
     }
   }
@@ -67,6 +76,15 @@ private[smithy4s] object StringAndBlobCodecSchematic {
           case BodyCodecResult(codec) => BodyCodecResult(codec.imap(to, from))
           case NoCodecResult()        => NoCodecResult()
         }
+        def xmap[A, B](
+            fa: CodecResult[A]
+        )(to: A => Either[ConstraintError, B], from: B => A): CodecResult[B] =
+          fa match {
+            case SimpleCodecResult(simpleCodec) =>
+              SimpleCodecResult(simpleCodec.xmap(to, from))
+            case BodyCodecResult(codec) => BodyCodecResult(codec.xmap(to, from))
+            case NoCodecResult()        => NoCodecResult()
+          }
       }
 
   }
@@ -75,7 +93,7 @@ private[smithy4s] object StringAndBlobCodecSchematic {
 
 }
 
-private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
+private[smithy4s] class StringAndBlobCodecSchematic
     extends Schematic[Result]
     with StubSchematic[Result] {
 
@@ -98,7 +116,6 @@ private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
         }
       }
     }
-    .validatedI(constraints.checkString)
 
   override def bytes: Result[ByteArray] =
     Hinted[CodecResult].onHintOpt[smithy.api.MediaType, ByteArray] {
@@ -198,5 +215,11 @@ private[smithy4s] class StringAndBlobCodecSchematic(constraints: Constraints)
       to: A => B,
       from: B => A
   ): Result[B] = f.imap(to, from)
+
+  override def surjection[A, B](
+      f: Result[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): Result[B] = f.xmap(to.asFunction, from) // inherited from trait
 
 }

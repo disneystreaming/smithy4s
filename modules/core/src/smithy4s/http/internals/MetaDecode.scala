@@ -173,6 +173,18 @@ private[http] object MetaDecode {
     new Covariant[MetaDecode] {
       def map[A, B](fa: MetaDecode[A])(f: A => B): MetaDecode[B] =
         fa.map(f)
+      def emap[A, B](
+          fa: MetaDecode[A]
+      )(f: A => Either[ConstraintError, B]): MetaDecode[B] =
+        fa.map(a =>
+          f(a) match {
+            case Right(b) => b
+            case Left(error) =>
+              throw MetaDecodeError(
+                MetadataError.FailedConstraint(_, _, error.message)
+              )
+          }
+        )
     }
 
   type Make[A] = Hinted[MetaDecode, A]

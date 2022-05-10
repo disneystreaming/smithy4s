@@ -19,7 +19,7 @@ package http
 package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import schematic.PolyFunction
+import smithy4s.PolyFunction
 import smithy4s.capability.Invariant
 import smithy4s.internals.Hinted
 
@@ -96,7 +96,6 @@ trait JCodec[A] extends JsonCodec[A] {
 
       def encodeKey(value: B, out: JsonWriter): Unit =
         self.encodeKey(from(value), out)
-
     }
 
   def widen[B >: A]: JCodec[B] = this.asInstanceOf[JCodec[B]]
@@ -108,6 +107,17 @@ object JCodec {
   implicit val jcodecInvariant: Invariant[JCodec] = new Invariant[JCodec] {
     def imap[A, B](fa: JCodec[A])(to: A => B, from: B => A): JCodec[B] =
       fa.biject(to, from)
+
+    def xmap[A, B](fa: JCodec[A])(
+        to: A => Either[smithy4s.ConstraintError, B],
+        from: B => A
+    ): JCodec[B] = {
+      val throwingTo: A => B = to(_) match {
+        case Left(error)  => throw error
+        case Right(value) => value
+      }
+      imap(fa)(throwingTo, from)
+    }
   }
 
   type JCodecMake[A] = Hinted[JCodec, A]
@@ -116,7 +126,7 @@ object JCodec {
     schema.compile(codecs.schematicJCodec).get
 
   implicit def deriveJCodecFromSchema[A](implicit
-      schema: Static[Schema[A]]
+      schema: Schema[A]
   ): JCodec[A] = jcodecCache(schema)
 
   private val jcodecCache =

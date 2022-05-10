@@ -16,21 +16,21 @@
 
 package smithy4s.http.internals
 
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.DummyServiceGen.DummyPath
 import smithy4s.example.PathParams
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
-import smithy4s.Schema
-import smithy.api.Http
-import smithy.api.NonEmptyString
 
 object PathSpec extends weaver.FunSuite {
-  import smithy4s.syntax._
+  import smithy4s.schema.Schema._
   object util {
 
     def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = schema
-      .withHints(
+      .addHints(
         Http(
           method = NonEmptyString("GET"),
           uri = NonEmptyString("/{label}")
@@ -83,13 +83,12 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema") {
-    val result = struct(
-      Vector(
+    val result = struct
+      .genericArity(
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("secondLabel", _ => "example2")
-      )
-    )(_ => ())
-      .withHints(
+      )(_ => ())
+      .addHints(
         Http(
           method = NonEmptyString("GET"),
           uri = NonEmptyString("/{label}/const/{secondLabel}")
@@ -106,13 +105,12 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema - URI ending with greedy label") {
-    val result = struct(
-      Vector(
+    val result = struct
+      .genericArity(
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("greedyLabel", _ => "example2/with/slashes")
-      )
-    )(_ => ())
-      .withHints(
+      )(_ => ())
+      .addHints(
         Http(
           method = NonEmptyString("GET"),
           uri = NonEmptyString("/{label}/const/{greedyLabel+}")

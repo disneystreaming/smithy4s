@@ -16,15 +16,16 @@
 
 package smithy4s.api.validation
 
-import software.amazon.smithy.model.shapes.UnionShape
-import software.amazon.smithy.model.shapes.MemberShape
 import smithy4s.api.DiscriminatedUnionTrait
 import software.amazon.smithy.model.Model
-import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.validation.ValidationEvent
-import software.amazon.smithy.model.validation.Severity
-import software.amazon.smithy.model.shapes.StructureShape
+import software.amazon.smithy.model.shapes.MemberShape
 import software.amazon.smithy.model.shapes.ShapeId
+import software.amazon.smithy.model.shapes.StructureShape
+import software.amazon.smithy.model.shapes.UnionShape
+import software.amazon.smithy.model.validation.Severity
+import software.amazon.smithy.model.validation.ValidationEvent
+
+import scala.jdk.CollectionConverters._
 
 object DiscriminatedUnionValidatorSpec extends weaver.FunSuite {
 

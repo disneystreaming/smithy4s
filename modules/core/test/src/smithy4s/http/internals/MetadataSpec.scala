@@ -16,7 +16,7 @@
 
 package smithy4s.http.internals
 
-import schematic.Static
+import cats.syntax.all._
 import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.Headers
@@ -27,27 +27,22 @@ import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpBinding
 import smithy4s.http.Metadata
 import smithy4s.http.MetadataError
-import smithy4s.syntax._
-import weaver._
 import smithy4s.internals.InputOutput
-import cats.syntax.all._
+import weaver._
 
 object MetadataSpec extends FunSuite {
 
-  implicit val queriesSchema: Static[Schema[Queries]] = Static(
-    Queries.schema.withHints(InputOutput.Input)
-  )
-  implicit val headersSchema: Static[Schema[Headers]] = Static(
-    Headers.schema.withHints(InputOutput.Input)
-  )
-  implicit val pathParamsSchema: Static[Schema[PathParams]] = Static(
-    PathParams.schema.withHints(InputOutput.Input)
-  )
-  implicit val validationChecksSchema: Static[Schema[ValidationChecks]] =
-    Static(ValidationChecks.schema.withHints(InputOutput.Input))
+  implicit val queriesSchema: Schema[Queries] =
+    Queries.schema.addHints(InputOutput.Input)
+  implicit val headersSchema: Schema[Headers] =
+    Headers.schema.addHints(InputOutput.Input)
+  implicit val pathParamsSchema: Schema[PathParams] =
+    PathParams.schema.addHints(InputOutput.Input)
+  implicit val validationChecksSchema: Schema[ValidationChecks] =
+    ValidationChecks.schema.addHints(InputOutput.Input)
 
   def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)
@@ -65,7 +60,7 @@ object MetadataSpec extends FunSuite {
 
   def checkRoundTripError[A](a: A, expectedEncoding: Metadata, message: String)(
       implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)
@@ -86,7 +81,7 @@ object MetadataSpec extends FunSuite {
       expectedEncoding: Metadata,
       message: String
   )(implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)
@@ -102,7 +97,7 @@ object MetadataSpec extends FunSuite {
   }
 
   def checkRoundTripTotal[A](a: A, expectedEncoding: Metadata)(implicit
-      s: Static[Schema[A]],
+      s: Schema[A],
       loc: SourceLocation
   ): Expectations = {
     val encoded = Metadata.encode(a)

@@ -17,9 +17,11 @@
 package smithy4s.dynamic
 
 import weaver._
+import smithy4s.Lazy
 import smithy4s.Service
 import smithy4s.Hints
-import schematic.Field
+import smithy4s.schema.Field
+import smithy4s.schema.StubSchematic
 import Fixtures._
 
 object FieldsSpec extends SimpleIOSuite {
@@ -37,7 +39,7 @@ object FieldsSpec extends SimpleIOSuite {
   object Interpreter {
     type ToFieldNames[A] = () => List[String]
 
-    object GetFieldNames extends smithy4s.StubSchematic[ToFieldNames] {
+    object GetFieldNames extends StubSchematic[ToFieldNames] {
       def default[A]: ToFieldNames[A] = () => Nil
 
       override def withHints[A](
@@ -52,8 +54,8 @@ object FieldsSpec extends SimpleIOSuite {
           f.label :: f.instance()
         }.toList
 
-      override def suspend[A](f: => ToFieldNames[A]): ToFieldNames[A] =
-        () => f()
+      override def suspend[A](f: Lazy[ToFieldNames[A]]): ToFieldNames[A] =
+        () => f.value()
 
       // these will be needed later but are irrelevant for now
       // override def union[S](

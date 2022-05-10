@@ -14,15 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.internals
+package smithy4s
+package http.internals
 
-import schematic.Alt
-import schematic.ByteArray
-import schematic.Field
+import smithy4s.ByteArray
 import smithy4s.Document
 import smithy4s.Hints
+import smithy4s.Lazy
 import smithy4s.Schematic
 import smithy4s.Timestamp
+import smithy4s.schema.Alt
+import smithy4s.schema.Field
 
 import java.util.UUID
 
@@ -91,11 +93,18 @@ object FromMetadataSchematic extends Schematic[FromMetadata] {
       fromOrdinal: Map[Int, A]
   ): FromMetadata[A] = FromMetadata.default
 
-  def suspend[A](f: => FromMetadata[A]): FromMetadata[A] = FromMetadata.default
+  def suspend[A](f: Lazy[FromMetadata[A]]): FromMetadata[A] =
+    FromMetadata.default
 
   def bijection[A, B](
       f: FromMetadata[A],
       to: A => B,
+      from: B => A
+  ): FromMetadata[B] = FromMetadata.default
+
+  def surjection[A, B](
+      f: FromMetadata[A],
+      to: Refinement[A, B],
       from: B => A
   ): FromMetadata[B] = FromMetadata.default
 

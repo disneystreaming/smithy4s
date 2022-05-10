@@ -16,8 +16,6 @@
 
 package smithy4s
 
-import syntax._
-
 case class PayloadPath(segments: List[PayloadPath.Segment]) {
   override def toString = PayloadPath.asString(this)
 }
@@ -40,7 +38,8 @@ object PayloadPath {
     }
     .mkString(".", ".", "")
 
-  val schema: Schema[PayloadPath] = bijection(string, fromString, asString)
+  val schema: Schema[PayloadPath] =
+    Schema.bijection(Schema.string, fromString, asString)
 
   /**
     * A path-segment in a json-like object

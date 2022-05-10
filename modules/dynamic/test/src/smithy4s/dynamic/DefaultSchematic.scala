@@ -19,9 +19,8 @@ package dynamic
 
 import cats.Id
 import java.util.UUID
-import schematic.ByteArray
-import schematic.Field
-import schematic.Alt
+import smithy4s.schema.Field
+import smithy4s.schema.Alt
 
 object DefaultSchematic extends smithy4s.Schematic[Id] {
 
@@ -81,9 +80,15 @@ object DefaultSchematic extends smithy4s.Schematic[Id] {
       fromOrdinal: Map[Int, A]
   ): Id[A] = fromName.head._2
 
-  def suspend[A](f: => Id[A]): Id[A] = f
+  def suspend[A](f: Lazy[Id[A]]): Id[A] = f.value
 
   def bijection[A, B](f: Id[A], to: A => B, from: B => A): Id[B] = to(f)
+
+  def surjection[A, B](
+      f: Id[A],
+      to: smithy4s.Refinement[A, B],
+      from: B => A
+  ): Id[B] = to.unchecked(f)
 
   def timestamp: Id[Timestamp] = Timestamp.fromEpochSecond(0L)
 

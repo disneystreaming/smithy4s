@@ -37,8 +37,6 @@ lazy val root = project
 
 lazy val allModules = Seq(
   core.projectRefs,
-  schematic.projectRefs,
-  `schematic-scalacheck`.projectRefs,
   codegen.projectRefs,
   json.projectRefs,
   example.projectRefs,
@@ -109,7 +107,6 @@ lazy val docs =
  */
 lazy val core = projectMatrix
   .in(file("modules/core"))
-  .dependsOn(schematic)
   .settings(
     allowedNamespaces := Seq(
       "smithy.api",
@@ -117,6 +114,9 @@ lazy val core = projectMatrix
       "smithy4s.api"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
+    Compile / sourceGenerators += sourceDirectory
+      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
+      .taskValue,
     libraryDependencies ++= Seq(Dependencies.collectionsCompat.value),
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -138,17 +138,18 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
-    Compile / packageSrc / mappings ++= {
-      val base = (Compile / sourceManaged).value
-      val files = (Compile / managedSources).value
-      files.map(f =>
-        (
-          f,
-          f.relativeTo(base).get.getPath
-        )
-      )
-    }
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    // TODO: bring back
+    // Compile / packageSrc / mappings ++= {
+    //   val base = (Compile / sourceManaged).value
+    //   val files = (Compile / managedSources).value
+    //   files.map(f =>
+    //     (
+    //       f,
+    //       f.relativeTo(base).get.getPath
+    //     )
+    //   )
+    // }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -158,57 +159,8 @@ lazy val core = projectMatrix
  */
 lazy val scalacheck = projectMatrix
   .in(file("modules/scalacheck"))
-  .dependsOn(core, `schematic-scalacheck`)
+  .dependsOn(core)
   .settings(
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
-    ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-
-/**
-  * Set of atomic and composable (not compositional) abstractions allowing
-  * to describe schemas associated to data model.
-  *
-  * These schemas serve as an abstraction layer for various codecs and
-  * typeclasses, which allows to avoid specialising the generated code
-  * against a specific serialisation protocol.
-  */
-lazy val schematic = projectMatrix
-  .in(file("modules/schematic-core"))
-  .settings(
-    moduleName := s"schematic-core",
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
-    ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
-    libraryDependencies ++= (CrossVersion.partialVersion(
-      scalaVersion.value
-    ) match {
-      case Some((2, _)) =>
-        Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
-      case _ => Nil
-    })
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .settings(
-    Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.SchematicModule.Core))
-      .taskValue
-  )
-
-lazy val `schematic-scalacheck` = projectMatrix
-  .in(file("modules/schematic-scalacheck"))
-  .dependsOn(schematic)
-  .settings(
-    moduleName := s"schematic-scalacheck",
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.collectionsCompat.value,
@@ -220,11 +172,6 @@ lazy val `schematic-scalacheck` = projectMatrix
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .settings(
-    Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.SchematicModule.Scalacheck))
-      .taskValue
-  )
 
 /**
  * The aws-specific core a library. Contains the generated code for AWS specific
@@ -395,7 +342,6 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       // plugin is published
       // this allows running `scripted` alone
       val _ = List(
-        (schematic.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala212) / publishLocal).value,
         (openapi.jvm(Scala212) / publishLocal).value,
@@ -673,7 +619,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.18"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.20"
     )
 
   val Smithy = new {

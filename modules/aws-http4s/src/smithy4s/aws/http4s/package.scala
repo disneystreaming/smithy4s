@@ -17,7 +17,7 @@
 package smithy4s
 package aws
 
-import cats.effect.Async
+import cats.effect.Temporal
 import cats.effect.Resource
 import org.http4s.client.Client
 
@@ -27,7 +27,7 @@ package object http4s {
       private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
   ) {
 
-    def awsClient[F[_]: Async](
+    def awsClient[F[_]: Temporal](
         client: Client[F],
         awsRegion: AwsRegion
     ): Resource[F, AwsClient[Alg, F]] = for {

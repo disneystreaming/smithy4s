@@ -39,12 +39,12 @@ object HttpStatusCode {
   }
 
   implicit def derivedHttpStatusCodeFromStaticSchema[A](implicit
-      schema: Static[Schema[A]]
+      schema: Schema[A]
   ): HttpStatusCode[A] = statusCodeCache(schema)
 
   private val statusCodeCache =
-    new schematic.PolyFunction[smithy4s.Schema, HttpStatusCode] {
-      def apply[A](fa: smithy4s.Schema[A]): HttpStatusCode[A] = fromSchema(fa)
+    new PolyFunction[Schema, HttpStatusCode] {
+      def apply[A](fa: Schema[A]): HttpStatusCode[A] = fromSchema(fa)
     }.unsafeMemoise
 
 }

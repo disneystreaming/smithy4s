@@ -17,14 +17,14 @@
 package smithy4s
 package http.internals
 
-import smithy.api.TimestampFormat
-import schematic.Field
-import smithy4s.internals.Hinted
 import smithy.api.Http
+import smithy.api.TimestampFormat
 import smithy4s.http.PathSegment
-import smithy4s.http.PathSegment.StaticSegment
-import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.GreedySegment
+import smithy4s.http.PathSegment.LabelSegment
+import smithy4s.http.PathSegment.StaticSegment
+import smithy4s.internals.Hinted
+import smithy4s.schema._
 
 object SchematicPathEncoder
     extends Schematic[PathEncode.Make]
@@ -42,10 +42,13 @@ object SchematicPathEncoder
       to: A => B,
       from: B => A
   ): PathEncode.Make[B] =
-    Hinted[PathEncode.MaybePathEncode, B](
-      f.hints,
-      make = hints => f.make(hints).map(_.contramap(from))
-    )
+    f.contramap(from)
+
+  override def surjection[A, B](
+      f: PathEncode.Make[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): PathEncode.Make[B] = f.contramap(from)
 
   override val bigdecimal: PathEncode.Make[BigDecimal] =
     PathEncode.Make.fromToString

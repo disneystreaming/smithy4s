@@ -18,11 +18,9 @@ package smithy4s
 package http
 package internals
 
-import schematic._
+import smithy4s.schema._
 
-private[smithy4s] object SchematicErrorCode
-    extends Schematic[HttpCode]
-    with StubSchematic[HttpCode] {
+private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
 
   def default[A]: (A, Hints) => Option[Int] = (_, _) => None
 
@@ -39,11 +37,18 @@ private[smithy4s] object SchematicErrorCode
   ): Option[Int] =
     withValue.alt.instance(withValue.value, hints)
 
-  override def suspend[A](f: => HttpCode[A]): HttpCode[A] = f
+  override def suspend[A](f: Lazy[HttpCode[A]]): HttpCode[A] = f.value
 
   override def bijection[A, B](
       f: HttpCode[A],
       to: A => B,
+      from: B => A
+  ): HttpCode[B] =
+    (b, hints) => f(from(b), hints)
+
+  override def surjection[A, B](
+      f: HttpCode[A],
+      to: Refinement[A, B],
       from: B => A
   ): HttpCode[B] =
     (b, hints) => f(from(b), hints)
@@ -59,13 +64,7 @@ private[smithy4s] object SchematicErrorCode
         case smithy.api.Error.SERVER => 500
       })
 
-  override def unit: HttpCode[Unit] = default
-
-  def withHints[A](fa: HttpCode[A], hints: Hints): HttpCode[A] =
+  override def withHints[A](fa: HttpCode[A], hints: Hints): HttpCode[A] =
     (a: A, _: Hints) => fa(a, hints)
-
-  def document: HttpCode[Document] = default
-
-  def timestamp: HttpCode[Timestamp] = default
 
 }
