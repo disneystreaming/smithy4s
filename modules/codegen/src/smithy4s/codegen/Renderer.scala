@@ -283,12 +283,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
-
-        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.withHints(smithy4s.internals.InputOutput.Input)",
-        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.withHints(smithy4s.internals.InputOutput.Output)",
+        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input)",
+        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
-      renderHintsVal(op.hints),
+        renderHintsVal(op.hints),
         line"def wrap(input: ${op.input}) = ${opName}($input)",
         renderErrorable(op)
       ),
@@ -313,14 +312,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderProtocol(name: String, hints: List[Hint]): Lines = {
     hints.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
       val protocolTraits = protocol.traits
-        .map(t => s"${t.namespace}.${t.name.capitalize}")
-        .mkString(", ")
+        .map(t => line"${t.namespace}.${t.name.capitalize}")
+        .intercalate(Line.comma)
       lines(
         newline,
         block(
-          s"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
+          line"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
         ) {
-          s"def schemas: smithy4s.SchemaIndex = smithy4s.SchemaIndex($protocolTraits)"
+          line"def schemas: smithy4s.SchemaIndex = smithy4s.SchemaIndex($protocolTraits)"
         }
       )
     }
@@ -369,11 +368,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               case Field(fieldName, realName, tpe, required, hints) =>
                 val req = if (required) "required" else "optional"
                 if (hints.isEmpty) {
-                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
+                  line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
                 } else {
                   val mh = memberHints(hints)
                   // format: off
-                  s"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
+                  line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
                   // format: on
                 }
             }
@@ -407,8 +406,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
-            line"implicit val schema: $Schema_[$name] = constant($name()).withId(id).addHints(hints)"
-         
+          line"implicit val schema: $Schema_[$name] = constant($name()).withId(id).addHints(hints)"
+
         }
       )
     ).addImports(imports)
@@ -469,7 +468,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           block(s"object $cn")(
             renderHintsVal(altHints),
             // format: off
-            s"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
+            line"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
             // format: on
           )
@@ -511,7 +510,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
   private def renderArgs(fields: List[Field]): Line = fields
     .map(fieldToRenderLine)
-    .intercalate(Line(", "))
+    .intercalate(Line.comma)
 
   private def renderEnum(
       name: String,
@@ -522,9 +521,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     block(
       line"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
     )(
-      "override val value : String = _value",
-      "override val ordinal: Int = _ordinal",
-      s"override val hints: $Hints_ = $Hints_.empty"
+      line"override val value : String = _value",
+      line"override val ordinal: Int = _ordinal",
+      line"override val hints: $Hints_ = $Hints_.empty"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
       renderId(originalName),
@@ -535,11 +534,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"""case object ${e.className} extends $name("$value", $ordinal)"""
       },
       newline,
-    line"val values: List[$name] = List".args(
+      line"val values: List[$name] = List".args(
         values.map(_.className)
       ),
-        line"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
-      
+      line"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
     )
   ).addImports(syntaxImport)
 
@@ -549,7 +547,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       tpe: Type,
       hints: List[Hint]
   ): Lines = {
-    val imports =  Set("smithy4s.Newtype") ++ syntaxImport
+    val imports = Set("smithy4s.Newtype") ++ syntaxImport
 
     val trailingCalls =
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
@@ -557,7 +555,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, line"Newtype[$tpe]")(
         renderId(originalName),
         renderHintsVal(hints),
-        line"val underlyingSchema : $Schema_[${tpe.render}] = ${tpe.schemaRef}$trailingCalls",
+        line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
           s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)"
         )
@@ -572,11 +570,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"input: ${op.input}"
       } else self.renderArgs(op.params)
 
-    def renderParams =
-      if (op.input == Type.unit) ""
+    def renderParams: Line =
+      if (op.input == Type.unit) Line.empty
       else if (op.hints.contains(Hint.PackedInputs)) {
-        "input"
-      } else op.params.map(_.name).mkString(", ")
+        line"input"
+      } else op.params.map(f => Line(f.name)).intercalate(Line.comma)
 
     def methodName = uncapitalise(op.name)
 
@@ -621,7 +619,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.BigInteger => "bigint"
       case Primitive.Uuid       => "uuid"
       case Primitive.Document   => "document"
-      case Primitive.Nothing    => "Nothing"
+      case Primitive.Nothing    => "???"
     }
 
     def name: Option[String] = tpe match {
@@ -662,41 +660,48 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
   }
 
-  private def renderHint(hint: Hint): Option[String] = hint match {
+  private def renderHint(hint: Hint): Option[Line] = hint match {
     case Hint.Native(typedNode) =>
-      smithy4s.recursion.cata(renderTypedNode)(typedNode).run(true)._2.some
+      smithy4s.recursion
+        .cata(renderTypedNode)(typedNode)
+        .run(true)
+        ._2
+        .some
+        .map(Line(_))
     case _ => None
   }
 
   def renderId(name: String, ns: String = namespace): Line =
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
 
-  def renderHintsVal(hints: List[Hint]): RenderResult = if (hints.isEmpty) {
-    line"val hints : $Hints_ = $Hints_.empty"
+  def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
+    lines(line"val hints : $Hints_ = $Hints_.empty")
   } else {
     line"val hints : $Hints_ = $Hints_".args {
       hints.flatMap(renderHint(_).toList)
     }
   }
 
-  def memberHints(hints: List[Hint]): String = {
+  def memberHints(hints: List[Hint]): Line = {
     val h = hints.map(renderHint).collect { case Some(v) => v }
-    if (h.isEmpty) "" else h.mkString(", ")
+    if (h.isEmpty) Line.empty else h.intercalate(Line.comma)
   }
 
-  def renderConstraintValidation(hints: List[Hint]): String = {
+  def renderConstraintValidation(hints: List[Hint]): Line = {
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
-    if (tags.isEmpty) ""
+    if (tags.isEmpty) Line.empty
     else {
-      tags.map(t => s".validated[${t.renderFull}]").mkString("")
+      tags.map(t => line".validated[${t.renderFull}]").intercalate(Line.empty)
     }
   }
 
-  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): String = {
+  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): Line = {
     val tags = hints.collect { case Hint.Constraint(tr) => tr }
-    if (tags.isEmpty) ""
+    if (tags.isEmpty) Line.empty
     else {
-      tags.map(t => s".validated[${t.renderFull}, ${tpe.render}]").mkString(".")
+      tags
+        .map(t => line".validated[${t.renderFull}, $tpe]")
+        .intercalate(Line.dot)
     }
   }
 

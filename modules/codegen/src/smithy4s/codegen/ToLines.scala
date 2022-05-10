@@ -20,7 +20,6 @@ import cats.data.NonEmptyList
 import cats.kernel.Monoid
 import cats.syntax.all._
 
-
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
   */
@@ -33,28 +32,28 @@ object ToLines {
   def render[A](a: A)(implicit A: ToLines[A]): Lines = A.render(a)
   implicit val identity: ToLines[Lines] = r => r
 
-  implicit def listToLines[A](implicit A: ToLines[A]): ToLines[List[A]] = { (l: List[A]) =>
-    val (imports, lines) = l.map(A.render).map(r => (r.imports, r.lines)).unzip
-    Lines(imports.fold(Set.empty)(_ ++ _), lines.flatten)
+  implicit def listToLines[A](implicit A: ToLines[A]): ToLines[List[A]] = {
+    (l: List[A]) =>
+      val (imports, lines) =
+        l.map(A.render).map(r => (r.imports, r.lines)).unzip
+      Lines(imports.fold(Set.empty)(_ ++ _), lines.flatten)
   }
 
-
-
   implicit def tupleRenderable[A](implicit
-                                  A: ToLines[A]
-                                 ): ToLines[(String, A)] = (t: (String, A)) =>
-    A.render(t._2).addImport(t._1)
+      A: ToLines[A]
+  ): ToLines[(String, A)] = (t: (String, A)) => A.render(t._2).addImport(t._1)
 
   implicit def nelRenderable[A](implicit
-                                A: ToLines[A]
-                               ): ToLines[NonEmptyList[A]] =
+      A: ToLines[A]
+  ): ToLines[NonEmptyList[A]] =
     (l: NonEmptyList[A]) => listToLines(A).render(l.toList)
 
   implicit def lineToLines[A: ToLine]: ToLines[A] = (a: A) => {
     val (imports, line) = ToLine[A].render(a).tupled
     // empty string must be treated like an empty list which is a Monoid Empty as oposed to wrapping in a singleton list which will render a new line character`
-    if(line.isEmpty) Lines.empty else Lines(imports, List(line))
+    if (line.isEmpty) Lines.empty else Lines(imports, List(line))
   }
+
 }
 
 // Models

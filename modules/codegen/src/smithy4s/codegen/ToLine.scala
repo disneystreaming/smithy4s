@@ -24,7 +24,7 @@ trait ToLine[A] {
   def render(a: A): Line
 }
 object ToLine {
-  implicit def apply[A](implicit A: ToLine[A]): ToLine[A] = A
+  def apply[A](implicit A: ToLine[A]): ToLine[A] = A
 
   implicit val identity: ToLine[Line] = r => r
 
@@ -83,7 +83,7 @@ case class Line(imports: Set[String], line: String) {
   def toLines = Lines(imports, List(line))
 
   def args(l: LinesWithValue*): Lines = if (l.exists(_.render.lines.nonEmpty)) {
-    val openBlock = if(line.nonEmpty) line + "(" else ""
+    val openBlock = if (line.nonEmpty) line + "(" else ""
     Lines(imports, List(openBlock)) ++ indent(
       l.toList.foldMap(_.render).mapLines(_ + ",")
     ) ++ Lines(")")
@@ -94,7 +94,9 @@ object Line {
   def apply(line: String): Line = Line(Set.empty, line)
   def apply(importsAndLine: (Set[String], String)): Line =
     Line(importsAndLine._1, importsAndLine._2)
-  val empty: Line = Line(Set.empty, "")
+  val empty: Line = Line("")
+  val comma: Line = Line(", ")
+  val dot: Line = Line(".")
   implicit val monoid: Monoid[Line] = new Monoid[Line] {
     def empty = Line.empty
     def combine(a: Line, b: Line) =

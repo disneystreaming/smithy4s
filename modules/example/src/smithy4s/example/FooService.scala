@@ -52,7 +52,7 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/foo"), Some(200)),
+      smithy.api.Http(smithy.api.NonEmptyString("GET"),smithy.api.NonEmptyString("/foo"),Some(200)),
       smithy.api.Readonly(),
     )
     def wrap(input: Unit) = GetFoo()
