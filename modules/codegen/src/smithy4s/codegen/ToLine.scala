@@ -56,7 +56,7 @@ object ToLine {
   private def primitiveLine(p: Primitive): Line =
     p match {
       case Primitive.Unit       => line"Unit"
-      case Primitive.ByteArray  => Line(Set("schematic.ByteArray"), "ByteArray")
+      case Primitive.ByteArray  => Line(Set("smithy4s.ByteArray"), "ByteArray")
       case Primitive.Bool       => line"Boolean"
       case Primitive.String     => line"String"
       case Primitive.Timestamp  => line"smithy4s.Timestamp"
