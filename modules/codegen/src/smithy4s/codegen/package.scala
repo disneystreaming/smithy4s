@@ -19,7 +19,8 @@ package smithy4s
 import cats.syntax.all._
 import smithy4s.api.UuidFormatTrait
 import smithy4s.codegen.LineSyntax.LineInterpolator
-import smithy4s.codegen.WithValue.{ToLineWithValue, ToLinesWithValue}
+import smithy4s.codegen.WithValue.ToLineWithValue
+import smithy4s.codegen.WithValue.ToLinesWithValue
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait

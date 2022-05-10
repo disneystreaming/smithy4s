@@ -19,14 +19,15 @@ package smithy4s.codegen
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
+import smithy4s.codegen.Primitive.Nothing
 import smithy4s.codegen.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
-import LineSyntax.LineInterpolator
-import ToLines.lineToLines
-import smithy4s.codegen.Primitive.Nothing
 
 import scala.jdk.CollectionConverters._
+
+import LineSyntax.LineInterpolator
+import ToLines.lineToLines
 
 object Renderer {
 
