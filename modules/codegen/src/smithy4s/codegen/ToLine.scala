@@ -16,6 +16,7 @@
 
 package smithy4s.codegen
 
+import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
 import smithy4s.codegen.LineSyntax.LineInterpolator
 
@@ -80,6 +81,13 @@ case class Line(imports: Set[String], line: String) {
   def modify(f: String => String) = Line(imports, f(line))
   def nonEmpty = line.nonEmpty
   def toLines = Lines(imports, List(line))
+
+  def args(l: LinesWithValue*): Lines = if (l.exists(_.render.lines.nonEmpty)) {
+    val openBlock = if(line.nonEmpty) line + "(" else ""
+    Lines(imports, List(openBlock)) ++ indent(
+      l.toList.foldMap(_.render).mapLines(_ + ",")
+    ) ++ Lines(")")
+  } else Lines(line + "()").addImports(imports)
 
 }
 object Line {

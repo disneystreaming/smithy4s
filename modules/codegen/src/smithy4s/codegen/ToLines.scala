@@ -76,20 +76,6 @@ case class Lines(imports: Set[String], lines: List[String]) {
     ) ++ Lines("}")
   }
 
-
-  def args(l: LinesWithValue*): Lines = if (l.exists(_.render.lines.nonEmpty)) {
-    val openBlock = lines.lastOption.map { case line =>
-      line + "("
-    } match {
-      case Some(value) => lines.dropRight(1).+:(value)
-      case None        => lines
-    }
-
-    Lines(imports, openBlock) ++ indent(
-      l.toList.foldMap(_.render).mapLines(_ + ",")
-    ) ++ Lines(")")
-  } else appendToLast("()")
-
   def appendToLast(s: String): Lines = {
     val newLines = lines.lastOption.map(_ + s) match {
       case Some(value) => lines.dropRight(1).:+(value)
@@ -115,7 +101,5 @@ object Lines {
   def apply(line: String): Lines = Lines(Set.empty, List(line))
   def apply(lines: List[String]): Lines = Lines(Set.empty, lines)
   val empty = Lines(Set.empty, List.empty)
-
-  implicit val renderResultMonoid: Monoid[Lines] =
-    Monoid.instance(empty, _ ++ _)
+  implicit val linesMonoid: Monoid[Lines] = Monoid.instance(empty, _ ++ _)
 }

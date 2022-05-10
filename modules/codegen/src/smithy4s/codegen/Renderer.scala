@@ -179,7 +179,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsValWithId(hints),
         newline,
-        Lines("val endpoints = List").args(ops.map(_.name)),
+        line"val endpoints = List".args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
         newline,
@@ -372,7 +372,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             }
           if (fields.size <= 22) {
             val definition = if (recursive) "recursive(struct" else "struct"
-            Lines(s"val schema: $Schema_[$name] = $definition")
+            line"val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(s"$name.apply")
               .appendToLast(".withHints(hints)")
@@ -380,11 +380,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           } else {
             val definition =
               if (recursive) "recursive(bigStruct" else "bigStruct"
-            Lines(s"val schema: $Schema_[$name] = $definition")
-              .args(renderedFields)
+            line"val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(
-                Lines(s"arr => new $name").args(
+                line"arr => new $name".args(
                   fields.zipWithIndex.map {
                     case (Field(_, _, tpe, required, _), idx) =>
                       val scalaTpe = line"${tpe}"
@@ -467,12 +466,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline, {
           val union =
             if (error)
-              s"val schema: $errorUnion_.Schema[$name] = errors"
+              line"val schema: $errorUnion_.Schema[$name] = errors"
             else if (recursive)
-              s"val schema: $Schema_[$name] = recursive(union"
+              line"val schema: $Schema_[$name] = recursive(union"
             else
-              s"val schema: $Schema_[$name] = union"
-          Lines(union)
+              line"val schema: $Schema_[$name] = union"
+          union
             .args {
               caseNames.map(_ + ".alt")
             }
@@ -520,7 +519,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"""case object ${e.className} extends $name("$value", $ordinal)"""
       },
       newline,
-      Lines(s"val values: List[$name] = List").args(
+    line"val values: List[$name] = List".args(
         values.map(_.className)
       ),
       newline,
@@ -656,12 +655,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
 
   def renderHintsValWithId(hints: List[Hint]): Lines =
-    Lines(s"val hints : $Hints_ = $Hints_").args {
+    line"val hints : $Hints_ = $Hints_".args {
       "id" :: hints.flatMap(renderHint(_).toList)
     }
 
   def renderHintsVal(hints: List[Hint]): Lines =
-    Lines(s"val hints : $Hints_ = $Hints_").args {
+    line"val hints : $Hints_ = $Hints_".args {
       hints.flatMap(renderHint(_).toList)
     }
 
