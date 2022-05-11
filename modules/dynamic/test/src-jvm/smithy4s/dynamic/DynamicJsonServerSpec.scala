@@ -33,7 +33,7 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
 
   type Res = JsonIO
 
-  val modelString = """|namespace foo
+  val modelString = """|namespace smithy4s.example
                        |
                        |service KVStore {
                        |  operations: [Get, Set, Delete]
@@ -45,11 +45,13 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
                        |
                        |operation Get {
                        |  input: Key,
-                       |  output: Value
+                       |  output: Value,
+                       |  errors: [NotFoundError]
                        |}
                        |
                        |operation Delete {
-                       |  input: Key
+                       |  input: Key,
+                       |  errors: [NotFoundError]
                        |}
                        |
                        |structure Key {
@@ -68,6 +70,11 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
                        |  @required
                        |  value: String
                        |}
+                       |
+                       |@error("client")
+                       |structure NotFoundError {
+                       |  key: String
+                       |}
                        |""".stripMargin
 
   def sharedResource: Resource[IO, Res] = Resource.eval {
@@ -75,7 +82,7 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
       .compile(modelString)
       .flatMap { DynamicSchemaIndex =>
         DynamicSchemaIndex.allServices
-          .find(_.service.id == ShapeId("foo", "KVStore"))
+          .find(_.service.id == ShapeId("smithy4s.example", "KVStore"))
           .liftTo[IO](new Throwable("Not found"))
       }
       .map(service => JsonIOProtocol.dummy(service.service))

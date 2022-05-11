@@ -25,6 +25,7 @@ import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
 import smithy4s.schema.EnumValue
+import smithy4s.schema.Alt
 
 private[dynamic] object Compiler {
 
@@ -61,7 +62,7 @@ private[dynamic] object Compiler {
       knownHints: SchemaIndex
   ): DynamicSchemaIndex = {
     val schemaMap = MMap.empty[ShapeId, Eval[Schema[DynData]]]
-    val endpointMap = MMap.empty[ShapeId, Eval[DynamicEndpoint]]
+    // val endpointMap = MMap.empty[ShapeId, Eval[DynamicEndpoint]]
     val serviceMap = MMap.empty[ShapeId, Eval[DynamicService]]
 
     val hintsMap: Map[ShapeId, SchemaIndex.Binding[_]] = {
@@ -93,7 +94,7 @@ private[dynamic] object Compiler {
       new CompileVisitor(
         model,
         schemaMap,
-        endpointMap,
+        // endpointMap,
         serviceMap,
         toHint(_, _)
       )
@@ -137,7 +138,6 @@ private[dynamic] object Compiler {
   private class CompileVisitor(
       model: Model,
       schemaMap: MMap[ShapeId, Eval[Schema[DynData]]],
-      endpointMap: MMap[ShapeId, Eval[DynamicEndpoint]],
       serviceMap: MMap[ShapeId, Eval[DynamicService]],
       toHint: (ShapeId, Document) => Option[Hint]
   ) extends ShapeVisitor.Default[Unit] {
@@ -269,37 +269,84 @@ private[dynamic] object Compiler {
         } yield map(k, v)
       )
 
-    override def operationShape(id: ShapeId, shape: OperationShape): Unit = {
+    override def operationShape(id: ShapeId, x: OperationShape): Unit = {}
+
+    def compileOperation(
+        id: ShapeId,
+        serviceErrors: List[MemberShape],
+        shape: OperationShape
+    ): Eval[DynamicEndpoint] = {
+      def getSchemaFromId(shapeId: ShapeId): Eval[Schema[DynData]] =
+        Eval.defer(schemaMap(shapeId))
+
       def getSchema(maybeShapeId: Option[IdRef]): Eval[Schema[DynData]] =
         maybeShapeId
           .flatMap(ValidIdRef(_))
-          .map[Eval[Schema[DynData]]](id => Eval.defer(schemaMap(id)))
+          .map[Eval[Schema[DynData]]](getSchemaFromId)
           .getOrElse(Eval.now(unit.asInstanceOf[Schema[DynData]]))
+
+      def errorAlt(
+          index: Int,
+          shapeId: ShapeId
+      ): Eval[smithy4s.schema.SchemaAlt[DynAlt, DynData]] =
+        getSchemaFromId(shapeId).map { schema =>
+          Alt[Schema, DynAlt, DynData](
+            shapeId.name,
+            schema,
+            (index, _: DynData),
+            Hints.empty
+          )
+        }
 
       val input = shape.input.map(_.target)
       val output = shape.output.map(_.target)
 
-      val ep = for {
+      val errorId = id.copy(id.name + "Error")
+      val errorUnionLazy = shape.errors.traverse { err =>
+        err
+          .collect { case MemberShape(ValidIdRef(id), _) => id }
+          .zipWithIndex
+          .traverse { case (id, idx) => errorAlt(idx, id) }
+          .map(alts =>
+            Schema.UnionSchema[DynAlt](
+              errorId,
+              Hints.empty,
+              alts.toVector,
+              { case (index, data) =>
+                alts(index).apply(data)
+              }
+            )
+          )
+      }
+      val errorableLazy = errorUnionLazy.map(
+        _.map(DynamicErrorable(_).asInstanceOf[Errorable[Any]])
+      )
+
+      for {
         inputSchema <- getSchema(input).map(_.addHints(InputOutput.Input))
+        errorable <- errorableLazy
         outputSchema <- getSchema(output).map(_.addHints(InputOutput.Output)),
       } yield {
         DynamicEndpoint(
           id,
           inputSchema,
           outputSchema,
+          errorable,
           Hints(allHints(shape.traits): _*)
         )
       }
-
-      endpointMap += id -> ep
     }
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
+      val serviceErrors : List[MemberShape] =
+        shape.errors.toList.flatten
       val lEndpoints =
         shape.operations.toList
           .flatMap(_.map(_.target))
-          .collect { case ValidIdRef(opId) =>
-            Eval.defer(endpointMap(opId))
+          .flatMap(id => model.shapes.get(id).map(id -> _))
+          .collect {
+            case (ValidIdRef(id), Shape.OperationCase(op)) =>
+              compileOperation(id, serviceErrors, op)
           }
           .sequence
 

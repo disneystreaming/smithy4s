@@ -16,23 +16,9 @@
 
 package smithy4s
 package dynamic
-package internals
 
-private[internals] case class DynamicEndpoint(
-    id: ShapeId,
-    input: Schema[DynData],
-    output: Schema[DynData],
-    override val errorable: Option[Errorable[DynData]],
-    hints: Hints
-) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
 
-  def wrap(
-      input: DynData
-  ): DynamicOp[DynData, DynData, DynData, Nothing, Nothing] =
-    DynamicOp(id, input)
+object KVStoreImpl extends smithy4s.example.KVStore[IO] {
 
-  def streamedInput: StreamingSchema[Nothing] = StreamingSchema.NoStream
-
-  def streamedOutput: StreamingSchema[Nothing] = StreamingSchema.NoStream
 
 }
