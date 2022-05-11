@@ -26,5 +26,6 @@ package object example {
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type BucketName = smithy4s.example.BucketName.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
+  type OrderNumber = smithy4s.example.OrderNumber.Type
 
 }

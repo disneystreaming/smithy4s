@@ -3,3 +3,4 @@ smithy4s.api.UncheckedExamplesTrait$Provider
 smithy4s.api.UuidFormatTrait$Provider
 smithy4s.api.DiscriminatedUnionTrait$Provider
 smithy4s.meta.PackedInputsTrait$Provider
+smithy4s.meta.AdtMemberTrait$Provider
