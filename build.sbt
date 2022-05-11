@@ -297,6 +297,7 @@ lazy val codegen = projectMatrix
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
+
   )
 
 /**
@@ -623,7 +624,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.20"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.21"
     )
 
   val Smithy = new {
