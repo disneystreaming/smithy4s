@@ -18,11 +18,11 @@ package smithy4s.codegen
 
 import cats.syntax.all._
 import cats.~>
+import smithy4s.codegen.Hint.Constraint
 import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
-import smithy4s.codegen.Hint.Constraint
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {

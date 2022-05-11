@@ -297,6 +297,7 @@ lazy val codegen = projectMatrix
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
+
   )
 
 /**

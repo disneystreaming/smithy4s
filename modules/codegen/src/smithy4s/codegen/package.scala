@@ -18,6 +18,9 @@ package smithy4s
 
 import cats.syntax.all._
 import smithy4s.api.UuidFormatTrait
+import smithy4s.codegen.LineSyntax.LineInterpolator
+import smithy4s.codegen.WithValue.ToLineWithValue
+import smithy4s.codegen.WithValue.ToLinesWithValue
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait
@@ -34,12 +37,20 @@ package object codegen {
 
   val uuidShapeId = ShapeId.from("smithy4s.api#UUID")
 
-  private[codegen] type Lines = Renderable.WithValue[_]
+  private[codegen] type LinesWithValue = ToLinesWithValue[_]
+  private[codegen] type LineWithValue = ToLineWithValue[_]
+  implicit class LinesSyntaxWithValue[A](val value: ToLinesWithValue[A])
+      extends AnyVal {
+    def render: Lines = value.typeclass.render(value.value)
+  }
+  implicit class LineSyntaxWithValue[A](val value: ToLineWithValue[A])
+      extends AnyVal {
+    def render: Line = value.typeclass.render(value.value)
+  }
 
-  private[codegen] val empty: RenderResult = RenderResult.empty
-  private[codegen] val newline: RenderResult = RenderResult(List(""))
-  private[codegen] def line(l: Lines): RenderResult = lines(l)
-  private[codegen] def lines(l: Lines*): RenderResult =
+  private[codegen] val empty: Lines = Lines.empty
+  private[codegen] val newline: Lines = Lines(List(""))
+  private[codegen] def lines(l: LinesWithValue*): Lines =
     l.toList.foldMap(_.render)
 
   private[codegen] def indent(l: List[String]): List[String] = l.map { line =>
@@ -48,27 +59,35 @@ package object codegen {
     else
       line
   }
-  private[codegen] def indent(l: Lines*): RenderResult =
+  private[codegen] def indent(l: LinesWithValue*): Lines =
     lines(l: _*).transformLines(indent)
 
-  private[codegen] def block(s: String): PartialBlock = new PartialBlock(s)
+  private[codegen] def block(l: Line): PartialBlock = new PartialBlock(l)
+  private[codegen] def block(s: String): PartialBlock = new PartialBlock(
+    Line(s)
+  )
 
   private[codegen] def obj(
       name: String,
-      ext: String = "",
-      w: String = ""
+      ext: Line,
+      w: Line = Line.empty
   ): PartialBlock = {
-    var str = s"object $name"
-    if (ext.nonEmpty) str += s" extends $ext"
-    if (w.nonEmpty) str += s" with $w"
-    new PartialBlock(str)
+    val start = line"object $name"
+    val withExt = if (ext.nonEmpty) start combine line" extends $ext" else start
+    val withW = if (w.nonEmpty) withExt combine line" with $w" else withExt
+    new PartialBlock(withW)
+  }
+  private[codegen] def obj(
+      name: String
+  ): PartialBlock = {
+    new PartialBlock(Line(name))
   }
 
   private[codegen] def obj(
       name: String,
-      extensions: Seq[String]
+      extensions: List[Line]
   ): PartialBlock = {
-    obj(name, extensions.mkString(" with "))
+    obj(name, extensions.intercalate(Line(" with ")))
   }
 
   private[codegen] def commas(lines: List[String]): List[String] =

@@ -16,17 +16,16 @@
 
 package smithy4s.codegen
 
-import cats.syntax.all._
+// Binding value and instance to recover from existentials
 
-class PartialBlock(l: Line) {
-  def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    val (imports, line) = l.tupled
-    A.render(inner)
-      .transformLines(lines => (line + " {") :: indent(lines) ::: "}" :: Nil)
-      .addImports(imports)
-  }
+case class WithValue[TC[_], A](value: A, typeclass: TC[A])
 
-  def apply(inner: LinesWithValue*): Lines =
-    apply(inner.toList.foldMap(_.render))
+object WithValue {
+  implicit def to[TC[_], A](value: A)(implicit
+      instance: TC[A]
+  ): WithValue[TC, A] =
+    WithValue(value, instance)
 
+  type ToLinesWithValue[A] = WithValue[ToLines, A]
+  type ToLineWithValue[A] = WithValue[ToLine, A]
 }
