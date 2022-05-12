@@ -263,7 +263,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val errorUnion: Option[Union] = for {
       errorNel <- NonEmptyList.fromList(op.errors)
       alts <- errorNel.traverse { t =>
-        t.name.map(n => Alt(n, t))
+        t.name.map(n => Alt(n, t.asRight))
       }
       name = opName + "Error"
     } yield Union(name, name, alts)
@@ -331,13 +331,20 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       originalName: String,
       fields: List[Field],
       recursive: Boolean,
-      hints: List[Hint]
+      hints: List[Hint],
+      extendsType: Option[String] = None,
+      makeSchemaImplicit: Boolean = true,
+      altString: Option[String] = None
   ): Lines = {
     val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
+    val implct = if (makeSchemaImplicit) "implicit " else ""
+    val altLines = altString.map(lines(newline, _)).getOrElse(Lines.empty)
+
     lines(
       if (hints.contains(Hint.Error)) {
-        block(line"${decl} extends Throwable") {
+        val alsoExtend = extendsType.map(t => s" $t").getOrElse("")
+        block(line"${decl} extends Throwable$alsoExtend") {
           fields
             .find(_.name == "message")
             .map(field => (field.tpe, field.required))
@@ -356,7 +363,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             case None => Line.empty
           }
         }
-      } else decl,
+      } else {
+        val extend = extendsType.map(t => s" extends $t").getOrElse("")
+        line"$decl$extend"
+      },
       obj(name, line"${shapeTag(name)}")(
         renderId(originalName),
         newline,
@@ -379,8 +389,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             }
           if (fields.size <= 22) {
             val definition = if (recursive) "recursive(struct" else "struct"
-
-            line"implicit val schema: $Schema_[$name] = $definition"
+            line"${implct}val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(s"$name.apply")
               .appendToLast(".withId(id).addHints(hints)")
@@ -389,7 +398,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             val definition =
               if (recursive) "recursive(struct.genericArity"
               else "struct.genericArity"
-            line"implicit val schema: $Schema_[$name] = $definition"
+            line"${implct}val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(
                 line"arr => new $name".args(
@@ -408,8 +417,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         } else {
           line"implicit val schema: $Schema_[$name] = constant($name()).withId(id).addHints(hints)"
-
-        }
+        },
+        altLines
       )
     ).addImports(imports)
   }
@@ -447,9 +456,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def caseName(altName: String) =
-      altName.dropWhile(_ == '_').capitalize + "Case"
-    val caseNames = alts.map(_.name).map(caseName)
+    def caseName(alt: Alt) = alt.tpe match {
+      case Left(product) => product.name
+      case Right(_)      => alt.name.dropWhile(_ == '_').capitalize + "Case"
+    }
+    val caseNames = alts.map(caseName)
     val imports = /*alts.foldMap(_.tpe.imports) ++*/ syntaxImport
 
     lines(
@@ -459,13 +470,28 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        alts.map { case Alt(altName, _, tpe, _) =>
-          val cn = caseName(altName)
-          line"case class $cn(${uncapitalise(altName)}: ${tpe}) extends $name"
+        alts.map {
+          case a @ Alt(altName, _, Right(tpe), _) =>
+            val cn = caseName(a)
+            lines(
+              line"case class $cn(${uncapitalise(altName)}: ${tpe}) extends $name"
+            )
+          case Alt(_, realName, Left(struct), _) =>
+            renderProduct(
+              struct.name,
+              struct.originalName,
+              struct.fields,
+              struct.recursive,
+              struct.hints,
+              extendsType = Some(name),
+              makeSchemaImplicit = false,
+              altString =
+                Some(s"""val alt = schema.oneOf[$name]("$realName")""")
+            )
         },
         newline,
-        alts.map { case Alt(altName, realName, tpe, altHints) =>
-          val cn = caseName(altName)
+        alts.collect { case a @ Alt(altName, realName, Right(tpe), altHints) =>
+          val cn = caseName(a)
           block(s"object $cn")(
             renderHintsVal(altHints),
             // format: off

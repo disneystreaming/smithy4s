@@ -60,14 +60,8 @@ object CollisionAvoidance {
           hints.map(modHint),
           version
         )
-      case Product(name, originalName, fields, recursive, hints) =>
-        Product(
-          protect(name.capitalize),
-          originalName,
-          fields.map(modField),
-          recursive,
-          hints.map(modHint)
-        )
+      case p: Product =>
+        modProduct(p)
       case Union(name, originalName, alts, recursive, hints) =>
         Union(
           protect(name.capitalize),
@@ -132,7 +126,7 @@ object CollisionAvoidance {
     Alt(
       protect(uncapitalise(alt.name)),
       alt.name,
-      modType(alt.tpe),
+      alt.tpe.map(modType).leftMap(modProduct),
       alt.hints.map(modHint)
     )
   }
@@ -144,6 +138,17 @@ object CollisionAvoidance {
     case Native(nt) => Native(smithy4s.recursion.preprocess(modTypedNode)(nt))
     case Constraint(tr) => Constraint(modRef(tr))
     case other          => other
+  }
+
+  private def modProduct(p: Product): Product = {
+    import p._
+    Product(
+      protect(name.capitalize),
+      originalName,
+      fields.map(modField),
+      recursive,
+      hints.map(modHint)
+    )
   }
 
   private def modTypedNode: TypedNode ~> TypedNode =

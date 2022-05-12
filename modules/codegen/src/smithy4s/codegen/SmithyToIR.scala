@@ -28,6 +28,7 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
+import smithy4s.meta.AdtMemberTrait
 
 object SmithyToIR {
 
@@ -84,7 +85,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId(), Set.empty)
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
-        Product(shape.name, shape.name, shape.fields, rec, hints).some
+        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) None
+        else Product(shape.name, shape.name, shape.fields, rec, hints).some
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
@@ -435,10 +437,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .members()
         .asScala
         .map { member =>
-          (member.getMemberName(), member.tpe, hints(member))
+          val memberTarget =
+            model
+              .getShape(member.getTarget)
+              .get() // member target exists or model is invalid
+          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+            val s = memberTarget.accept(toIRVisitor).map(Left(_))
+            (member.getMemberName(), s, hints(member))
+          } else {
+            (member.getMemberName(), member.tpe.map(Right(_)), hints(member))
+          }
         }
-        .collect { case (name, Some(tpe), h) =>
-          Alt(name, tpe, h)
+        .collect {
+          case (name, Some(Right(tpe)), h)       => Alt(name, tpe.asRight, h)
+          case (name, Some(Left(p: Product)), h) => Alt(name, p.asLeft, h)
         }
         .toList
 
@@ -523,7 +535,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         val (name, node) = map.head // unions are encoded as objects
         val alt = union.alts.find(_.name == name).get
-        TypedNode.AltTN(ref, name, NodeAndType(node, alt.tpe))
+        TypedNode.AltTN(ref, name, NodeAndType(node, alt.tpe.toOption.get))
       // Alias
       case (node, Type.Alias(ns, name, tpe)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))

@@ -114,13 +114,18 @@ object Field {
 
 }
 
-case class Alt(name: String, realName: String, tpe: Type, hints: List[Hint])
+case class Alt(
+    name: String,
+    realName: String,
+    tpe: Either[Product, Type],
+    hints: List[Hint]
+)
 
 object Alt {
 
   def apply(
       name: String,
-      tpe: Type,
+      tpe: Either[Product, Type],
       hints: List[Hint] = Nil
   ): Alt = Alt(name, name, tpe, hints)
 
