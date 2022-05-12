@@ -85,8 +85,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId(), Set.empty)
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
-        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) None
-        else Product(shape.name, shape.name, shape.fields, rec, hints).some
+        Product(shape.name, shape.name, shape.fields, rec, hints).some
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
