@@ -1,22 +1,22 @@
 namespace smithy4s.example
 
 service KVStore {
-  operations: [Get, Set, Delete]
+  operations: [Get, Put, Delete]
 }
 
-operation Set {
+operation Put {
   input: KeyValue
 }
 
 operation Get {
   input: Key,
   output: Value,
-  errors: [NotFoundError]
+  errors: [KeyNotFoundError]
 }
 
 operation Delete {
   input: Key,
-  errors: [NotFoundError]
+  errors: [KeyNotFoundError]
 }
 
 structure Key {
@@ -37,6 +37,7 @@ structure Value {
 }
 
 @error("client")
-structure NotFoundError {
-  key: String
+structure KeyNotFoundError {
+  @required
+  message: String
 }

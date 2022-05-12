@@ -27,11 +27,26 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
   def compile(string: String): IO[DynamicSchemaIndex] =
     parse(string).map(self.compile)
 
+  def compileSampleSpec(string: String): IO[DynamicSchemaIndex] =
+    parseSampleSpec(string).map(self.compile)
+
   def parse(string: String): IO[Model] =
     IO(
       SModel
         .assembler()
         .addUnparsedModel("dynamic.smithy", string)
+        .assemble()
+        .unwrap()
+    ).map(ModelSerializer.builder().build.serialize(_))
+      .map(NodeToDocument(_))
+      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
+      .flatMap(_.liftTo[IO])
+
+  def parseSampleSpec(fileName: String): IO[Model] =
+    IO(
+      SModel
+        .assembler()
+        .addImport(s"./sampleSpecs/$fileName")
         .assemble()
         .unwrap()
     ).map(ModelSerializer.builder().build.serialize(_))

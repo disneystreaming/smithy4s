@@ -109,8 +109,12 @@ object Document {
 
   }
 
-  trait Decoder[A] {
-    def decode(a: Document): Either[PayloadError, A]
+  trait Decoder[A] { self =>
+    def decode(document: Document): Either[PayloadError, A]
+    def map[B](f: A => B): Decoder[B] = new Decoder[B] {
+      def decode(document: Document): Either[PayloadError, B] =
+        self.decode(document).map(f)
+    }
   }
 
   object Decoder {

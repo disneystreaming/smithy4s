@@ -33,53 +33,9 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
 
   type Res = JsonIO
 
-  val modelString = """|namespace smithy4s.example
-                       |
-                       |service KVStore {
-                       |  operations: [Get, Set, Delete]
-                       |}
-                       |
-                       |operation Set {
-                       |  input: KeyValue
-                       |}
-                       |
-                       |operation Get {
-                       |  input: Key,
-                       |  output: Value,
-                       |  errors: [NotFoundError]
-                       |}
-                       |
-                       |operation Delete {
-                       |  input: Key,
-                       |  errors: [NotFoundError]
-                       |}
-                       |
-                       |structure Key {
-                       |  @required
-                       |  key: String
-                       |}
-                       |
-                       |structure KeyValue {
-                       |  @required
-                       |  key: String,
-                       |  @required
-                       |  value: String
-                       |}
-                       |
-                       |structure Value {
-                       |  @required
-                       |  value: String
-                       |}
-                       |
-                       |@error("client")
-                       |structure NotFoundError {
-                       |  key: String
-                       |}
-                       |""".stripMargin
-
   def sharedResource: Resource[IO, Res] = Resource.eval {
     Utils
-      .compile(modelString)
+      .compileSampleSpec("kvstore.smithy")
       .flatMap { DynamicSchemaIndex =>
         DynamicSchemaIndex.allServices
           .find(_.service.id == ShapeId("smithy4s.example", "KVStore"))
@@ -89,12 +45,12 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
       .map(JsonIO(_))
   }
 
-  test("Dynamic service is correctly wired: Set") { jsonIO =>
+  test("Dynamic service is correctly wired: Put") { jsonIO =>
     val expected = Document.obj()
 
     jsonIO(
       Document.obj(
-        "Set" -> Document.obj(
+        "Put" -> Document.obj(
           "key" -> Document.fromString("K"),
           "value" -> Document.fromString("V")
         )

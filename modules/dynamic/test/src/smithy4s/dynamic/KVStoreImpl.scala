@@ -17,8 +17,26 @@
 package smithy4s
 package dynamic
 
+import smithy4s.example._
+import cats.effect.IO
+import cats.effect.Ref
+import cats.syntax.all._
 
-object KVStoreImpl extends smithy4s.example.KVStore[IO] {
-
-
+class KVStoreImpl(ref: Ref[IO, Map[String, String]]) extends KVStore[IO] {
+  def delete(key: String): IO[Unit] = ref
+    .modify[Either[Throwable, Unit]] { map =>
+      map.get(key) match {
+        case None        => (map, Left(KeyNotFoundError(key)))
+        case Some(value) => (map - value, Right(()))
+      }
+    }
+    .rethrow
+  def get(key: String): IO[Value] =
+    ref.get
+      .map[Either[Throwable, Value]](_.get(key) match {
+        case None        => Left(KeyNotFoundError(key))
+        case Some(value) => Right(smithy4s.example.Value(value))
+      })
+      .rethrow
+  def put(key: String, value: String): IO[Unit] = ref.update(_ + (key -> value))
 }

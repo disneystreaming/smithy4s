@@ -338,15 +338,14 @@ private[dynamic] object Compiler {
     }
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
-      val serviceErrors : List[MemberShape] =
+      val serviceErrors: List[MemberShape] =
         shape.errors.toList.flatten
       val lEndpoints =
         shape.operations.toList
           .flatMap(_.map(_.target))
           .flatMap(id => model.shapes.get(id).map(id -> _))
-          .collect {
-            case (ValidIdRef(id), Shape.OperationCase(op)) =>
-              compileOperation(id, serviceErrors, op)
+          .collect { case (ValidIdRef(id), Shape.OperationCase(op)) =>
+            compileOperation(id, serviceErrors, op)
           }
           .sequence
 
