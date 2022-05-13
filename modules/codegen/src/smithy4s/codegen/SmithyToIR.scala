@@ -411,6 +411,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     traits.collect(traitToHint) ++ nonMetaTraits.map(unfoldTrait)
   }
 
+  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
+
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
 
@@ -455,12 +457,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
         }
         .collect {
-          case (name, Some(Right(tpe)), h)       => Alt(name, tpe.asRight, h)
-          case (name, Some(Left(p: Product)), h) => Alt(name, p.asLeft, h)
+          case (name, Some(Right(tpe)), h) =>
+            Alt(name, UnionMember.TypeCase(tpe), h)
+          case (name, Some(Left(p: Product)), h) =>
+            Alt(name, UnionMember.ProductCase(p), h)
         }
         .toList
 
-    def getAltTypes: List[(String, Either[Type, Type])] =
+    def getAltTypes: List[AltInfo] =
       shape
         .members()
         .asScala
@@ -470,16 +474,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               .getShape(member.getTarget)
               .get() // member target exists or model is invalid
           if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
-            (member.getMemberName(), member.tpe.map(Left(_)), hints(member))
+            (member.getMemberName(), member.tpe.map(Left(_)))
           } else {
-            (member.getMemberName(), member.tpe.map(Right(_)), hints(member))
+            (member.getMemberName(), member.tpe.map(Right(_)))
           }
         }
         .collect {
-          case (name, Some(Right(tpe)), _) =>
-            (name, tpe.asRight)
-          case (name, Some(Left(tpe)), _) =>
-            (name, tpe.asLeft)
+          case (name, Some(Left(tpe))) =>
+            AltInfo(name, tpe, isAdtMember = true)
+          case (name, Some(Right(tpe))) =>
+            AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
 
@@ -575,14 +579,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val shapeId = union.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         val (name, node) = map.head // unions are encoded as objects
-        val alt = union.getAltTypes.find(_._1 == name).get
-        val a = alt._2 match {
-          case Left(tpe) =>
-            val t = NodeAndType(node, tpe)
-            TypedNode.AltValueTN.ProductAltTN(t)
-          case Right(tpe) =>
-            val t = NodeAndType(node, tpe)
-            TypedNode.AltValueTN.TypeAltTN(t)
+        val alt = union.getAltTypes.find(_.name == name).get
+        val a = if (alt.isAdtMember) {
+          val t = NodeAndType(node, alt.tpe)
+          TypedNode.AltValueTN.ProductAltTN(t)
+        } else {
+          val t = NodeAndType(node, alt.tpe)
+          TypedNode.AltValueTN.TypeAltTN(t)
         }
         TypedNode.AltTN(ref, name, a)
       // Alias

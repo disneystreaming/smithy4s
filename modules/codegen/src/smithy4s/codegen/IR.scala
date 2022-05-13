@@ -26,6 +26,8 @@ import smithy4s.recursion._
 import software.amazon.smithy.model.node.Node
 import smithy4s.codegen.TypedNode.AltValueTN.ProductAltTN
 import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
+import smithy4s.codegen.UnionMember.TypeCase
+import smithy4s.codegen.UnionMember.ProductCase
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
@@ -116,10 +118,21 @@ object Field {
 
 }
 
+sealed trait UnionMember {
+  def update(f: Product => Product)(g: Type => Type): UnionMember = this match {
+    case TypeCase(tpe)        => TypeCase(g(tpe))
+    case ProductCase(product) => ProductCase(f(product))
+  }
+}
+object UnionMember {
+  case class ProductCase(product: Product) extends UnionMember
+  case class TypeCase(tpe: Type) extends UnionMember
+}
+
 case class Alt(
     name: String,
     realName: String,
-    tpe: Either[Product, Type],
+    member: UnionMember,
     hints: List[Hint]
 )
 
@@ -127,9 +140,9 @@ object Alt {
 
   def apply(
       name: String,
-      tpe: Either[Product, Type],
+      member: UnionMember,
       hints: List[Hint] = Nil
-  ): Alt = Alt(name, name, tpe, hints)
+  ): Alt = Alt(name, name, member, hints)
 
 }
 

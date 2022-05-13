@@ -263,7 +263,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val errorUnion: Option[Union] = for {
       errorNel <- NonEmptyList.fromList(op.errors)
       alts <- errorNel.traverse { t =>
-        t.name.map(n => Alt(n, t.asRight))
+        t.name.map(n => Alt(n, UnionMember.TypeCase(t)))
       }
       name = opName + "Error"
     } yield Union(name, name, alts)
@@ -453,9 +453,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def caseName(alt: Alt) = alt.tpe match {
-      case Left(product) => product.name
-      case Right(_)      => alt.name.dropWhile(_ == '_').capitalize + "Case"
+    def caseName(alt: Alt) = alt.member match {
+      case UnionMember.ProductCase(product) => product.name
+      case UnionMember.TypeCase(_) =>
+        alt.name.dropWhile(_ == '_').capitalize + "Case"
     }
     val caseNames = alts.map(caseName)
     val imports = /*alts.foldMap(_.tpe.imports) ++*/ syntaxImport
@@ -468,12 +469,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         alts.map {
-          case a @ Alt(altName, _, Right(tpe), _) =>
+          case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
               line"case class $cn(${uncapitalise(altName)}: ${tpe}) extends $name"
             )
-          case Alt(_, realName, Left(struct), _) =>
+          case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
             val additionalLines = lines(
               newline,
               line"""val alt = schema.oneOf[$name]("$realName")"""
@@ -489,15 +490,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
         },
         newline,
-        alts.collect { case a @ Alt(altName, realName, Right(tpe), altHints) =>
-          val cn = caseName(a)
-          block(s"object $cn")(
-            renderHintsVal(altHints),
+        alts.collect {
+          case a @ Alt(
+                altName,
+                realName,
+                UnionMember.TypeCase(tpe),
+                altHints
+              ) =>
+            val cn = caseName(a)
+            block(s"object $cn")(
+              renderHintsVal(altHints),
             // format: off
             line"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
             s"""val alt = schema.oneOf[$name]("$realName")"""
             // format: on
-          )
+            )
         },
         newline, {
           val union =

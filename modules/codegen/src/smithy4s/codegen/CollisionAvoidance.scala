@@ -126,7 +126,7 @@ object CollisionAvoidance {
     Alt(
       protect(uncapitalise(alt.name)),
       alt.name,
-      alt.tpe.map(modType).leftMap(modProduct),
+      alt.member.update(modProduct)(modType),
       alt.hints.map(modHint)
     )
   }
