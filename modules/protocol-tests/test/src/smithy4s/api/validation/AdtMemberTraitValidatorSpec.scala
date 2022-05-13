@@ -9,7 +9,7 @@ import software.amazon.smithy.model.validation.{Severity, ValidationEvent}
 import scala.jdk.CollectionConverters._
 import smithy4s.meta.validation.AdtMemberTraitValidator
 
-final class AdtMemberTraitValidatorSpec extends FunSuite {
+object AdtMemberTraitValidatorSpec extends FunSuite {
   private val validator = new AdtMemberTraitValidator()
 
   test("return no error when union targets the structure") {
