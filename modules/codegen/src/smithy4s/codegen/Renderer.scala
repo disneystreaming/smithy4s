@@ -332,19 +332,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       fields: List[Field],
       recursive: Boolean,
       hints: List[Hint],
-      extendsType: Option[String] = None,
-      makeSchemaImplicit: Boolean = true,
-      altString: Option[String] = None
+      adtParent: Option[String] = None,
+      additionalLines: Lines = Lines.empty
   ): Lines = {
     val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
-    val implct = if (makeSchemaImplicit) "implicit " else ""
-    val altLines = altString.map(lines(newline, _)).getOrElse(Lines.empty)
+    val implct = if (adtParent.isDefined) "implicit " else ""
 
     lines(
       if (hints.contains(Hint.Error)) {
-        val alsoExtend = extendsType.map(t => s" $t").getOrElse("")
-        block(line"${decl} extends Throwable$alsoExtend") {
+        block(line"${decl} extends Throwable") {
           fields
             .find(_.name == "message")
             .map(field => (field.tpe, field.required))
@@ -364,7 +361,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         }
       } else {
-        val extend = extendsType.map(t => s" extends $t").getOrElse("")
+        val extend = adtParent.map(t => s" extends $t").getOrElse("")
         line"$decl$extend"
       },
       obj(name, line"${shapeTag(name)}")(
@@ -418,7 +415,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         } else {
           line"implicit val schema: $Schema_[$name] = constant($name()).withId(id).addHints(hints)"
         },
-        altLines
+        additionalLines
       )
     ).addImports(imports)
   }
@@ -477,16 +474,18 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"case class $cn(${uncapitalise(altName)}: ${tpe}) extends $name"
             )
           case Alt(_, realName, Left(struct), _) =>
+            val additionalLines = lines(
+              newline,
+              line"""val alt = schema.oneOf[$name]("$realName")"""
+            )
             renderProduct(
               struct.name,
               struct.originalName,
               struct.fields,
               struct.recursive,
               struct.hints,
-              extendsType = Some(name),
-              makeSchemaImplicit = false,
-              altString =
-                Some(s"""val alt = schema.oneOf[$name]("$realName")""")
+              adtParent = Some(name),
+              additionalLines
             )
         },
         newline,

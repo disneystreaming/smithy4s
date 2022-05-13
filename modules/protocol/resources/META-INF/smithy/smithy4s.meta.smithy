@@ -14,6 +14,6 @@ namespace smithy4s.meta
 @trait(selector: ":is(service, operation)")
 structure packedInputs {}
 
-@trait(selector: "structure")
+@trait(selector: "structure :not([trait|error])")
 @idRef(failWhenMissing: true, selector: "union")
 string adtMember

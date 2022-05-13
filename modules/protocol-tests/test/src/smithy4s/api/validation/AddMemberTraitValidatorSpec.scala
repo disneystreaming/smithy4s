@@ -189,36 +189,4 @@ final class AdtMemberTraitValidatorSpec extends FunSuite {
     )
     expect(result == expected)
   }
-
-  test("return error when structure has no members") {
-    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
-    val adtTrait = new AdtMemberTrait(unionShapeId)
-    val struct =
-      StructureShape.builder().id("test#struct").addTrait(adtTrait).build()
-
-    val unionMember = MemberShape
-      .builder()
-      .id(unionShapeId.withMember("unionMember"))
-      .target(struct.getId)
-      .build()
-    val union =
-      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
-    val model =
-      Model.builder().addShapes(struct, union).build()
-
-    val result = validator.validate(model).asScala.toList
-
-    val expected = List(
-      ValidationEvent
-        .builder()
-        .id("AdtMemberTrait")
-        .shape(struct)
-        .severity(Severity.ERROR)
-        .message(
-          "test#struct must contain at least 1 member to use the adtMember trait"
-        )
-        .build()
-    )
-    expect(result == expected)
-  }
 }

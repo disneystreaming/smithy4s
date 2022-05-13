@@ -91,13 +91,6 @@ public final class AdtMemberTraitValidator extends AbstractValidator {
 				validationEvents.add(error(adtMemberShape, String.format("%s does not target %s in any of its members",
 						adtMemberTrait.getValue(), adtMemberShape.getId())));
 			}
-			Optional<StructureShape> maybeStruct = adtMemberShape.asStructureShape();
-			Stream<StructureShape> structStream = maybeStruct.isPresent() ? Stream.of(maybeStruct.get())
-					: Stream.empty();
-			if (structStream.mapToLong(s -> s.members().size()).sum() == 0) {
-				validationEvents.add(error(adtMemberShape, String.format(
-						"%s must contain at least 1 member to use the adtMember trait", adtMemberShape.getId())));
-			}
 			return validationEvents.stream();
 		}).collect(Collectors.toList());
 	}

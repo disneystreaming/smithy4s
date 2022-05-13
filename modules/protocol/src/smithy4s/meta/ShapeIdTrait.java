@@ -26,7 +26,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.AbstractTrait;
 
 /**
- * Abstract trait class for traits that contain only a string value.
+ * Abstract trait class for traits that contain only a ShapeId value.
  */
 public abstract class ShapeIdTrait extends AbstractTrait {
 	private final ShapeId value;
