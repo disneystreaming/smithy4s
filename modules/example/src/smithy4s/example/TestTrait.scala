@@ -4,7 +4,7 @@ import smithy4s.schema.Schema._
 
 case class TestTrait(orderType: Option[OrderType] = None)
 object TestTrait extends smithy4s.ShapeTag.Companion[TestTrait] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "TestTrait")
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "testTrait")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
     smithy.api.Trait(None, None, None),

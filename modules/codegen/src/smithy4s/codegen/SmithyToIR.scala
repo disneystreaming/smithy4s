@@ -460,6 +460,29 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
         .toList
 
+    def getAltTypes: List[(String, Either[Type, Type])] =
+      shape
+        .members()
+        .asScala
+        .map { member =>
+          val memberTarget =
+            model
+              .getShape(member.getTarget)
+              .get() // member target exists or model is invalid
+          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+            (member.getMemberName(), member.tpe.map(Left(_)), hints(member))
+          } else {
+            (member.getMemberName(), member.tpe.map(Right(_)), hints(member))
+          }
+        }
+        .collect {
+          case (name, Some(Right(tpe)), _) =>
+            (name, tpe.asRight)
+          case (name, Some(Left(tpe)), _) =>
+            (name, tpe.asLeft)
+        }
+        .toList
+
   }
 
   private def isStreaming(member: MemberShape): Boolean =
@@ -498,9 +521,21 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   private object UnRef {
     def unapply(tpe: Type): Option[Shape] = tpe match {
       case Type.Ref(ns, name) =>
-        model
+        val maybeShape = model
           .getShape(ShapeId.fromParts(ns, name))
           .asScala
+        maybeShape.map { shape =>
+          shape.getTrait(classOf[AdtMemberTrait]).asScala match {
+            case Some(adtMemberTrait) =>
+              val cId = shape.getId
+              val newNs =
+                cId.getNamespace + "." + adtMemberTrait.getValue.getName
+              shape.asStructureShape.get.toBuilder
+                .id(ShapeId.fromParts(newNs, cId.getName))
+                .build()
+            case _ => shape
+          }
+        }
       case _ => None
     }
   }
@@ -540,8 +575,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val shapeId = union.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         val (name, node) = map.head // unions are encoded as objects
-        val alt = union.alts.find(_.name == name).get
-        TypedNode.AltTN(ref, name, NodeAndType(node, alt.tpe.toOption.get))
+        val alt = union.getAltTypes.find(_._1 == name).get
+        val a = alt._2 match {
+          case Left(tpe) =>
+            val t = NodeAndType(node, tpe)
+            TypedNode.AltValueTN.ProductAltTN(t)
+          case Right(tpe) =>
+            val t = NodeAndType(node, tpe)
+            TypedNode.AltValueTN.TypeAltTN(t)
+        }
+        TypedNode.AltTN(ref, name, a)
       // Alias
       case (node, Type.Alias(ns, name, tpe)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))

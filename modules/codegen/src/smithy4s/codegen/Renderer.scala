@@ -768,8 +768,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           false -> s"${ref.show}($text)"
       })
 
-    case AltTN(ref, altName, alt) =>
+    case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
       (s"${ref.show}" + "." + s"${altName.capitalize}Case(${alt.runDefault})").write
+
+    case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
+      alt.runDefault.write
 
     case ListTN(values) =>
       s"List(${values.map(_.runDefault).mkString(", ")})".writeCollection

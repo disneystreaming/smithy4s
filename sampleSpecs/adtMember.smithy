@@ -17,6 +17,14 @@ structure InStoreOrder {
 }
 
 @trait
-structure TestTrait {
+structure testTrait {
   orderType: OrderType
 }
+
+@testTrait(orderType: {
+  inStore: {
+    id: 100,
+    locationId: "someLocation"
+  }
+})
+string TestString
