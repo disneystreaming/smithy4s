@@ -90,7 +90,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       Compile / smithy4sInputDir := (Compile / sourceDirectory).value / "smithy",
       Compile / smithy4sOutputDir := (Compile / sourceManaged).value,
       Compile / smithy4sOpenapiDir := (Compile / resourceManaged).value,
-      Compile / smithy4sCodegen := cachedSmithyCodegen1(Compile).value,
+      Compile / smithy4sCodegen := cachedSmithyCodegen(Compile).value,
       Compile / smithy4sCodegen / fileInputs ++= {
         Option((Compile / smithy4sInputDir).value.listFiles())
           .getOrElse(Array.empty)
@@ -116,14 +116,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       Compile / smithy4sModelTransformers := List.empty
     )
 
-  private def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) =>
-    f((a, b))
-
-  private type CacheKey = (
-      FilesInfo[HashFileInfo],
-      List[String]
-  )
-
   private def prepareSmithy4sDeps(deps: Seq[ModuleID]): List[String] =
     deps
       .filter { _.configurations.contains(Smithy4s.name) }
@@ -134,51 +126,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
       .toList
 
-  def cachedSmithyCodegen1(conf: Configuration) = Def.task {
-    val outputPath = (conf / smithy4sOutputDir).value.getAbsolutePath()
-    val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
-    val allowedNamespaces =
-      (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
-    val excludedNamespaces =
-      (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
-    val dependencies = prepareSmithy4sDeps(libraryDependencies.value)
-    val res =
-      (conf / resolvers).value.toList.collect { case m: MavenRepository =>
-        m.root
-      }
-    val transforms = (conf / smithy4sModelTransformers).value
-
-    val report = (conf / smithy4sCodegen).inputFileChanges
-
-    import report.{modified, created, unmodified, deleted}
-    
-    val filePaths =
-      if (deleted.nonEmpty) created ++ modified ++ unmodified
-      else created ++ modified
-
-    val codegenArgs = CodegenArgs(
-      filePaths.map(os.Path(_)).toList,
-      output = os.Path(outputPath),
-      openapiOutput = os.Path(openApiOutputPath),
-      skipScala = false,
-      skipOpenapi = false,
-      allowedNS = allowedNamespaces,
-      excludedNS = excludedNamespaces,
-      repositories = res,
-      dependencies = dependencies,
-      transforms
-    )
-
-    val resPaths = smithy4s.codegen.Codegen
-      .processSpecs(codegenArgs)
-      .toList
-
-    resPaths.map(path => new File(path.toString))
-  }
-
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
-    val inputFiles =
-      Option((conf / smithy4sInputDir).value.listFiles()).getOrElse(Array.empty)
     val outputPath = (conf / smithy4sOutputDir).value.getAbsolutePath()
     val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
     val allowedNamespaces =
@@ -191,44 +139,33 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         m.root
       }
     val transforms = (conf / smithy4sModelTransformers).value
-    val s = streams.value
 
-    val cached =
-      Tracked.inputChanged[CacheKey, Seq[File]](
-        s.cacheStoreFactory.make("input")
-      ) {
-        untupled {
-          Tracked
-            .lastOutput[(Boolean, CacheKey), Seq[File]](
-              s.cacheStoreFactory.make("output")
-            ) { case ((changed, _), outputs) =>
-              if (changed || outputs.isEmpty) {
-                val filePaths = inputFiles.map(_.getAbsolutePath())
-                val codegenArgs = CodegenArgs(
-                  filePaths.map(os.Path(_)).toList,
-                  output = os.Path(outputPath),
-                  openapiOutput = os.Path(openApiOutputPath),
-                  skipScala = false,
-                  skipOpenapi = false,
-                  allowedNS = allowedNamespaces,
-                  excludedNS = excludedNamespaces,
-                  repositories = res,
-                  dependencies = dependencies,
-                  transforms
-                )
-                val resPaths = smithy4s.codegen.Codegen
-                  .processSpecs(codegenArgs)
-                  .toList
-                resPaths.map(path => new File(path.toString))
-              } else {
-                outputs.getOrElse(Seq.empty)
-              }
-            }
-        }
-      }
+    val fileChangesReport = (conf / smithy4sCodegen).inputFileChanges
 
-    cached(
-      (FilesInfo(inputFiles.map(FileInfo.hash(_)).toSet), dependencies)
-    )
+    if (fileChangesReport.hasChanges) {
+
+      import fileChangesReport.*
+
+      val filePaths = modified ++ created ++ unmodified
+
+      val codegenArgs = CodegenArgs(
+        filePaths.map(os.Path(_)).toList,
+        output = os.Path(outputPath),
+        openapiOutput = os.Path(openApiOutputPath),
+        skipScala = false,
+        skipOpenapi = false,
+        allowedNS = allowedNamespaces,
+        excludedNS = excludedNamespaces,
+        repositories = res,
+        dependencies = dependencies,
+        transforms
+      )
+
+      val resPaths = smithy4s.codegen.Codegen
+        .processSpecs(codegenArgs)
+        .toList
+
+      resPaths.map(path => new File(path.toString))
+    } else (conf / smithy4sOutputDir).value.listFiles().toSeq
   }
 }
