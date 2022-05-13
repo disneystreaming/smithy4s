@@ -301,7 +301,7 @@ private[dynamic] object Compiler {
       val input = shape.input.map(_.target)
       val output = shape.output.map(_.target)
 
-      val errorId = id.copy(id.name + "Error")
+      val errorId = id.copy(name = id.name + "Error")
       val errorUnionLazy = shape.errors.traverse { err =>
         err
           .collect { case MemberShape(ValidIdRef(id), _) => id }
