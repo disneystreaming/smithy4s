@@ -65,6 +65,11 @@ jobs:
               pushRemoteCache_$BUILD_KEY \
               -J-Xmx4G
 
+      - name: Run plugin tests
+        if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
+        run: |
+          sbt scripted
+
       - name: Run checks
         if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
         run: |
