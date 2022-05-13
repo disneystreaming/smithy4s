@@ -83,12 +83,28 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   override def projectConfigurations: Seq[Configuration] = Seq(Smithy4s)
 
+  import sbt.nio.Keys.{fileInputs, fileOutputs}
+
   override lazy val projectSettings =
     Seq(
       Compile / smithy4sInputDir := (Compile / sourceDirectory).value / "smithy",
       Compile / smithy4sOutputDir := (Compile / sourceManaged).value,
       Compile / smithy4sOpenapiDir := (Compile / resourceManaged).value,
-      Compile / smithy4sCodegen := cachedSmithyCodegen(Compile).value,
+      Compile / smithy4sCodegen := cachedSmithyCodegen1(Compile).value,
+      Compile / smithy4sCodegen / fileInputs ++= {
+        Option((Compile / smithy4sInputDir).value.listFiles())
+          .getOrElse(Array.empty)
+          .toSeq
+          .map(_.toGlob)
+      },
+      Compile / smithy4sCodegen / fileOutputs ++=
+        Option(
+          (Compile / smithy4sOutputDir).value
+            .listFiles()
+        )
+          .getOrElse(Array.empty)
+          .map(_.toGlob)
+          .toSeq,
       Compile / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
       Compile / sourceGenerators += (Compile / smithy4sCodegen).map(
         _.filter(_.ext == "scala")
@@ -117,6 +133,48 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         else s"${m.organization}::${m.name}:${m.revision}"
       }
       .toList
+
+  def cachedSmithyCodegen1(conf: Configuration) = Def.task {
+    val outputPath = (conf / smithy4sOutputDir).value.getAbsolutePath()
+    val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
+    val allowedNamespaces =
+      (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
+    val excludedNamespaces =
+      (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
+    val dependencies = prepareSmithy4sDeps(libraryDependencies.value)
+    val res =
+      (conf / resolvers).value.toList.collect { case m: MavenRepository =>
+        m.root
+      }
+    val transforms = (conf / smithy4sModelTransformers).value
+
+    val report = (conf / smithy4sCodegen).inputFileChanges
+
+    import report.{modified, created, unmodified, deleted}
+    
+    val filePaths =
+      if (deleted.nonEmpty) created ++ modified ++ unmodified
+      else created ++ modified
+
+    val codegenArgs = CodegenArgs(
+      filePaths.map(os.Path(_)).toList,
+      output = os.Path(outputPath),
+      openapiOutput = os.Path(openApiOutputPath),
+      skipScala = false,
+      skipOpenapi = false,
+      allowedNS = allowedNamespaces,
+      excludedNS = excludedNamespaces,
+      repositories = res,
+      dependencies = dependencies,
+      transforms
+    )
+
+    val resPaths = smithy4s.codegen.Codegen
+      .processSpecs(codegenArgs)
+      .toList
+
+    resPaths.map(path => new File(path.toString))
+  }
 
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
