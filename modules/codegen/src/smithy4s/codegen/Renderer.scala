@@ -337,7 +337,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
-    val implct = if (adtParent.isDefined) "implicit " else ""
+    val implct = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
       if (hints.contains(Hint.Error)) {

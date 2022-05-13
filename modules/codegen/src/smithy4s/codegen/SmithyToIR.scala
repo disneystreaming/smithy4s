@@ -60,13 +60,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
-    .map(_.accept(toIRVisitor))
+    .map(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .collect { case Some(decl) =>
       decl
     }
     .toList
 
-  val toIRVisitor: ShapeVisitor[Option[Decl]] =
+  def toIRVisitor(
+      renderAdtMemberStructures: Boolean
+  ): ShapeVisitor[Option[Decl]] =
     new ShapeVisitor.Default[Option[Decl]] {
       def getDefault(shape: Shape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
@@ -85,7 +87,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId(), Set.empty)
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
-        Product(shape.name, shape.name, shape.fields, rec, hints).some
+        val p = Product(shape.name, shape.name, shape.fields, rec, hints).some
+        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (renderAdtMemberStructures) p else None
+        } else p
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
@@ -441,7 +446,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               .getShape(member.getTarget)
               .get() // member target exists or model is invalid
           if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
-            val s = memberTarget.accept(toIRVisitor).map(Left(_))
+            val s = memberTarget
+              .accept(toIRVisitor(renderAdtMemberStructures = true))
+              .map(Left(_))
             (member.getMemberName(), s, hints(member))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)), hints(member))

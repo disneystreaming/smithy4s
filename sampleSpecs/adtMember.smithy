@@ -15,3 +15,8 @@ structure InStoreOrder {
     id: OrderNumber,
     locationId: String
 }
+
+@trait
+structure TestTrait {
+  orderType: OrderType
+}
