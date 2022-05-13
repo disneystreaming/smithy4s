@@ -1,13 +1,15 @@
 package smithy4s.api.validation
 
+import weaver._
 import smithy4s.meta.AdtMemberTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.validation.{Severity, ValidationEvent}
 
 import scala.jdk.CollectionConverters._
+import smithy4s.meta.validation.AdtMemberTraitValidator
 
-final class AdtMemberTraitValidatorSpec extends munit.FunSuite {
+final class AdtMemberTraitValidatorSpec extends FunSuite {
   private val validator = new AdtMemberTraitValidator()
 
   test("return no error when union targets the structure") {
@@ -39,7 +41,7 @@ final class AdtMemberTraitValidatorSpec extends munit.FunSuite {
     val result = validator.validate(model).asScala.toList
 
     val expected = List.empty
-    assertEquals(result, expected)
+    expect(result == expected)
   }
 
   test("return error when union does not target the structure") {
@@ -82,7 +84,7 @@ final class AdtMemberTraitValidatorSpec extends munit.FunSuite {
         )
         .build()
     )
-    assertEquals(result, expected)
+    expect(result == expected)
   }
 
   test("return error when structure is targeted by multiple unions") {
@@ -132,7 +134,7 @@ final class AdtMemberTraitValidatorSpec extends munit.FunSuite {
         )
         .build()
     )
-    assertEquals(result, expected)
+    expect(result == expected)
   }
 
   test("return error when structure is targeted by a union and a structure") {
@@ -185,7 +187,7 @@ final class AdtMemberTraitValidatorSpec extends munit.FunSuite {
         )
         .build()
     )
-    assertEquals(result, expected)
+    expect(result == expected)
   }
 
   test("return error when structure has no members") {
@@ -217,6 +219,6 @@ final class AdtMemberTraitValidatorSpec extends munit.FunSuite {
         )
         .build()
     )
-    assertEquals(result, expected)
+    expect(result == expected)
   }
 }
