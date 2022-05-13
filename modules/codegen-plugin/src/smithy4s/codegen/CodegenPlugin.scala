@@ -126,6 +126,12 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
       .toList
 
+  /**
+    * This implementation leverages SBT's input & output file tracking
+    * capabilities. We record inputs via `fileInputs` and outputs
+    * via `fileOutputs` and then use the `inputFileChanges` value
+    * to decide whether or not Codegen should run.
+    */
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val outputPath = (conf / smithy4sOutputDir).value.getAbsolutePath()
     val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
