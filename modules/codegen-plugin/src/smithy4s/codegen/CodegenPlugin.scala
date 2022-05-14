@@ -146,32 +146,42 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
     val transforms = (conf / smithy4sModelTransformers).value
 
-    val fileChangesReport = (conf / smithy4sCodegen).inputFileChanges
+    val out = streams.value
+    val cacheFile =
+      out.cacheDirectory / s"smithy4s_${scalaBinaryVersion.value}"
 
-    if (fileChangesReport.hasChanges) {
+    val schemas = ((conf / smithy4sInputDir).value ** "*.smithy").get().toSet
 
-      import fileChangesReport.*
+    out.log.debug(s"[Smithy4s] discovered specs: $schemas")
 
-      val filePaths = modified ++ created ++ unmodified
+    val compile = FileFunction
+      .cached(
+        cacheFile,
+        inStyle = FilesInfo.lastModified,
+        outStyle = FilesInfo.exists
+      ) { (filePaths: Set[File]) =>
+        val codegenArgs = CodegenArgs(
+          filePaths.map(os.Path(_)).toList,
+          output = os.Path(outputPath),
+          openapiOutput = os.Path(openApiOutputPath),
+          skipScala = false,
+          skipOpenapi = false,
+          allowedNS = allowedNamespaces,
+          excludedNS = excludedNamespaces,
+          repositories = res,
+          dependencies = dependencies,
+          transforms
+        )
 
-      val codegenArgs = CodegenArgs(
-        filePaths.map(os.Path(_)).toList,
-        output = os.Path(outputPath),
-        openapiOutput = os.Path(openApiOutputPath),
-        skipScala = false,
-        skipOpenapi = false,
-        allowedNS = allowedNamespaces,
-        excludedNS = excludedNamespaces,
-        repositories = res,
-        dependencies = dependencies,
-        transforms
-      )
+        val resPaths = smithy4s.codegen.Codegen
+          .processSpecs(codegenArgs)
+          .map(_.toIO)
 
-      val resPaths = smithy4s.codegen.Codegen
-        .processSpecs(codegenArgs)
-        .toList
+        out.log.debug(s"[Smithy4s] generated files: $resPaths")
 
-      resPaths.map(path => new File(path.toString))
-    } else (conf / smithy4sOutputDir).value.listFiles().toSeq
+        resPaths
+      }
+
+    compile(schemas).toSeq
   }
 }
