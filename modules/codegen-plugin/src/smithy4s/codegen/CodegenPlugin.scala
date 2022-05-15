@@ -106,12 +106,12 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           .map(_.toGlob)
           .toSeq,
       Compile / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
-      Compile / sourceGenerators += (Compile / smithy4sCodegen).map(
-        _.filter(_.ext == "scala")
-      ),
-      Compile / resourceGenerators += (Compile / smithy4sCodegen).map(
-        _.filter(_.ext != "scala")
-      ),
+      Compile / sourceGenerators +=
+        (Compile / smithy4sCodegen).taskValue
+          .map(_.filter(_.ext == "scala")),
+      Compile / resourceGenerators +=
+        (Compile / smithy4sCodegen).taskValue
+          .map(_.filterNot(_.ext == "scala")),
       cleanFiles += (Compile / smithy4sOutputDir).value,
       Compile / smithy4sModelTransformers := List.empty
     )
@@ -149,6 +149,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val out = streams.value
     val cacheFile =
       out.cacheDirectory / s"smithy4s_${scalaBinaryVersion.value}"
+    
+    // This is important - it's what re-triggers this task on file changes
+    val _ = (conf / smithy4sCodegen).inputFileChanges
 
     val schemas = ((conf / smithy4sInputDir).value ** "*.smithy").get().toSet
 
@@ -158,7 +161,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       .cached(
         cacheFile,
         inStyle = FilesInfo.lastModified,
-        outStyle = FilesInfo.exists
+        outStyle = FilesInfo.hash
       ) { (filePaths: Set[File]) =>
         val codegenArgs = CodegenArgs(
           filePaths.map(os.Path(_)).toList,
