@@ -534,7 +534,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               val cId = shape.getId
               val newNs =
                 cId.getNamespace + "." + adtMemberTrait.getValue.getName
-              shape.asStructureShape.get.toBuilder
+              val error = new Exception(
+                s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
+              )
+              shape.asStructureShape.asScala
+                // This error should never be thrown due to selector on AdtMemberTrait, but is here in case
+                .getOrElse(throw error)
+                .toBuilder
                 .id(ShapeId.fromParts(newNs, cId.getName))
                 .build()
             case _ => shape
