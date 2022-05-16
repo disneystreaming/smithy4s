@@ -65,8 +65,9 @@ trait PackedInputServiceGen[F[_]] {
 
 #### ADT Member Trait
 
-The default behavior of smithy4s when rendering unions that target structures is to render the structure as normal
-and create a `MyStructureCase` class that extends the union's sealed trait and takes `MyStructure` as a parameter.
+The default behavior of smithy4s when rendering unions that target structures is to render the structure as a normal
+ADT sealed trait hierarchy and create a `MyStructureCase` class that extends the union's sealed trait and takes
+`MyStructure` as a parameter.
 
 For example:
 
