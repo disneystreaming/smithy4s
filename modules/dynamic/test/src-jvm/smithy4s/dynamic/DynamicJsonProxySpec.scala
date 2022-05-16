@@ -80,4 +80,15 @@ object DynamicJsonProxySpec extends weaver.SimpleIOSuite {
 
   }
 
+  test("Dynamic service based proxy supports service errors") {
+    kvStoreResource.use { kvStore =>
+      val expectedError = smithy4s.example.UnauthorizedError("special-key")
+
+      for {
+        attempt <- kvStore.get("authorized-only-key").attempt
+      } yield expect.same(attempt, Left(expectedError))
+    }
+
+  }
+
 }

@@ -302,7 +302,9 @@ private[dynamic] object Compiler {
       val output = shape.output.map(_.target)
 
       val errorId = id.copy(name = id.name + "Error")
-      val errorUnionLazy = shape.errors.traverse { err =>
+      val allOperationErrors = (serviceErrors ++ shape.errors.combineAll).toNel
+
+      val errorUnionLazy = allOperationErrors.traverse { err =>
         err
           .collect { case MemberShape(ValidIdRef(id), _) => id }
           .zipWithIndex

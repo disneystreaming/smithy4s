@@ -1,7 +1,8 @@
 namespace smithy4s.example
 
 service KVStore {
-  operations: [Get, Put, Delete]
+  operations: [Get, Put, Delete],
+  errors: [UnauthorizedError]
 }
 
 operation Put {
@@ -34,6 +35,12 @@ structure KeyValue {
 structure Value {
   @required
   value: String
+}
+
+@error("client")
+structure UnauthorizedError {
+  @required
+  reason: String
 }
 
 @error("client")
