@@ -337,7 +337,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
-    val implct = if (adtParent.isEmpty) "implicit " else ""
+    val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
       if (hints.contains(Hint.Error)) {
@@ -386,7 +386,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             }
           if (fields.size <= 22) {
             val definition = if (recursive) "recursive(struct" else "struct"
-            line"${implct}val schema: $Schema_[$name] = $definition"
+            line"${schemaImplicit}val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(s"$name.apply")
               .appendToLast(".withId(id).addHints(hints)")
@@ -395,7 +395,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             val definition =
               if (recursive) "recursive(struct.genericArity"
               else "struct.genericArity"
-            line"${implct}val schema: $Schema_[$name] = $definition"
+            line"${schemaImplicit}val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(
                 line"arr => new $name".args(
