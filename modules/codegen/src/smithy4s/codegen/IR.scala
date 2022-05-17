@@ -24,6 +24,10 @@ import smithy4s.codegen.TypedNode.FieldTN.OptionalSomeTN
 import smithy4s.codegen.TypedNode.FieldTN.RequiredTN
 import smithy4s.recursion._
 import software.amazon.smithy.model.node.Node
+import smithy4s.codegen.TypedNode.AltValueTN.ProductAltTN
+import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
+import smithy4s.codegen.UnionMember.TypeCase
+import smithy4s.codegen.UnionMember.ProductCase
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
@@ -114,15 +118,31 @@ object Field {
 
 }
 
-case class Alt(name: String, realName: String, tpe: Type, hints: List[Hint])
+sealed trait UnionMember {
+  def update(f: Product => Product)(g: Type => Type): UnionMember = this match {
+    case TypeCase(tpe)        => TypeCase(g(tpe))
+    case ProductCase(product) => ProductCase(f(product))
+  }
+}
+object UnionMember {
+  case class ProductCase(product: Product) extends UnionMember
+  case class TypeCase(tpe: Type) extends UnionMember
+}
+
+case class Alt(
+    name: String,
+    realName: String,
+    member: UnionMember,
+    hints: List[Hint]
+)
 
 object Alt {
 
   def apply(
       name: String,
-      tpe: Type,
+      member: UnionMember,
       hints: List[Hint] = Nil
-  ): Alt = Alt(name, name, tpe, hints)
+  ): Alt = Alt(name, name, member, hints)
 
 }
 
@@ -217,6 +237,16 @@ object TypedNode {
     case class OptionalSomeTN[A](value: A) extends FieldTN[A]
     case object OptionalNoneTN extends FieldTN[Nothing]
   }
+  sealed trait AltValueTN[+A] {
+    def map[B](f: A => B): AltValueTN[B] = this match {
+      case ProductAltTN(value) => ProductAltTN(f(value))
+      case TypeAltTN(value)    => TypeAltTN(f(value))
+    }
+  }
+  object AltValueTN {
+    case class ProductAltTN[A](value: A) extends AltValueTN[A]
+    case class TypeAltTN[A](value: A) extends AltValueTN[A]
+  }
 
   implicit val typedNodeFunctor: Functor[TypedNode] = new Functor[TypedNode] {
     def map[A, B](fa: TypedNode[A])(f: A => B): TypedNode[B] = fa match {
@@ -227,7 +257,7 @@ object TypedNode {
       case NewTypeTN(ref, target) =>
         NewTypeTN(ref, f(target))
       case AltTN(ref, altName, alt) =>
-        AltTN(ref, altName, f(alt))
+        AltTN(ref, altName, alt.map(f))
       case MapTN(values) =>
         MapTN(values.map(_.leftMap(f).map(f)))
       case ListTN(values) =>
@@ -250,7 +280,7 @@ object TypedNode {
       fields: List[(String, FieldTN[A])]
   ) extends TypedNode[A]
   case class NewTypeTN[A](ref: Type.Ref, target: A) extends TypedNode[A]
-  case class AltTN[A](ref: Type.Ref, altName: String, alt: A)
+  case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]
   case class ListTN[A](values: List[A]) extends TypedNode[A]

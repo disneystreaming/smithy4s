@@ -28,6 +28,7 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
+import smithy4s.meta.AdtMemberTrait
 
 object SmithyToIR {
 
@@ -59,13 +60,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
-    .map(_.accept(toIRVisitor))
+    .map(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .collect { case Some(decl) =>
       decl
     }
     .toList
 
-  val toIRVisitor: ShapeVisitor[Option[Decl]] =
+  def toIRVisitor(
+      renderAdtMemberStructures: Boolean
+  ): ShapeVisitor[Option[Decl]] =
     new ShapeVisitor.Default[Option[Decl]] {
       def getDefault(shape: Shape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
@@ -84,7 +87,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId(), Set.empty)
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
-        Product(shape.name, shape.name, shape.fields, rec, hints).some
+        val p = Product(shape.name, shape.name, shape.fields, rec, hints).some
+        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (renderAdtMemberStructures) p else None
+        } else p
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
@@ -405,6 +411,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     traits.collect(traitToHint) ++ nonMetaTraits.map(unfoldTrait)
   }
 
+  case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
+
   implicit class ShapeExt(shape: Shape) {
     def name = shape.getId().getName()
 
@@ -435,10 +443,43 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .members()
         .asScala
         .map { member =>
-          (member.getMemberName(), member.tpe, hints(member))
+          val memberTarget =
+            model.expectShape(member.getTarget)
+          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+            val s = memberTarget
+              .accept(toIRVisitor(renderAdtMemberStructures = true))
+              .map(Left(_))
+            (member.getMemberName(), s, hints(member))
+          } else {
+            (member.getMemberName(), member.tpe.map(Right(_)), hints(member))
+          }
         }
-        .collect { case (name, Some(tpe), h) =>
-          Alt(name, tpe, h)
+        .collect {
+          case (name, Some(Right(tpe)), h) =>
+            Alt(name, UnionMember.TypeCase(tpe), h)
+          case (name, Some(Left(p: Product)), h) =>
+            Alt(name, UnionMember.ProductCase(p), h)
+        }
+        .toList
+
+    def getAltTypes: List[AltInfo] =
+      shape
+        .members()
+        .asScala
+        .map { member =>
+          val memberTarget =
+            model.expectShape(member.getTarget)
+          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+            (member.getMemberName(), member.tpe.map(Left(_)))
+          } else {
+            (member.getMemberName(), member.tpe.map(Right(_)))
+          }
+        }
+        .collect {
+          case (name, Some(Left(tpe))) =>
+            AltInfo(name, tpe, isAdtMember = true)
+          case (name, Some(Right(tpe))) =>
+            AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
 
@@ -480,9 +521,27 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   private object UnRef {
     def unapply(tpe: Type): Option[Shape] = tpe match {
       case Type.Ref(ns, name) =>
-        model
+        val maybeShape = model
           .getShape(ShapeId.fromParts(ns, name))
           .asScala
+        maybeShape.map { shape =>
+          shape.getTrait(classOf[AdtMemberTrait]).asScala match {
+            case Some(adtMemberTrait) =>
+              val cId = shape.getId
+              val newNs =
+                cId.getNamespace + "." + adtMemberTrait.getValue.getName
+              val error = new Exception(
+                s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
+              )
+              shape.asStructureShape.asScala
+                // This error should never be thrown due to selector on AdtMemberTrait, but is here in case
+                .getOrElse(throw error)
+                .toBuilder
+                .id(ShapeId.fromParts(newNs, cId.getName))
+                .build()
+            case _ => shape
+          }
+        }
       case _ => None
     }
   }
@@ -522,8 +581,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val shapeId = union.getId()
         val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
         val (name, node) = map.head // unions are encoded as objects
-        val alt = union.alts.find(_.name == name).get
-        TypedNode.AltTN(ref, name, NodeAndType(node, alt.tpe))
+        val alt = union.getAltTypes.find(_.name == name).get
+        val a = if (alt.isAdtMember) {
+          val t = NodeAndType(node, alt.tpe)
+          TypedNode.AltValueTN.ProductAltTN(t)
+        } else {
+          val t = NodeAndType(node, alt.tpe)
+          TypedNode.AltValueTN.TypeAltTN(t)
+        }
+        TypedNode.AltTN(ref, name, a)
       // Alias
       case (node, Type.Alias(ns, name, tpe)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
