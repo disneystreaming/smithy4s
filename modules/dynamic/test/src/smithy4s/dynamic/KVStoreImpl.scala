@@ -33,7 +33,8 @@ class KVStoreImpl(ref: Ref[IO, Map[String, String]]) extends KVStore[IO] {
     .rethrow
   def get(key: String): IO[Value] =
     if (key.contains("authorized-only"))
-      IO.raiseError(UnauthorizedError("special-key"))
+      // This will be redacted by the redacting proxy
+      IO.raiseError(UnauthorizedError("sensitive"))
     else
       ref.get
         .map[Either[Throwable, Value]](_.get(key) match {
