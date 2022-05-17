@@ -80,7 +80,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
         .shape(struct)
         .severity(Severity.ERROR)
         .message(
-          "test#MyUnion does not target test#struct in any of its members"
+          "test#MyUnion must have exactly one member targeting test#struct"
         )
         .build()
     )
@@ -127,10 +127,10 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       ValidationEvent
         .builder()
         .id("AdtMemberTrait")
-        .shape(struct)
+        .shape(union2)
         .severity(Severity.ERROR)
         .message(
-          "test#struct is improperly referenced from [test#MyUnionTwo]"
+          "ADT member test#struct must not be referenced in any other shape but test#MyUnion"
         )
         .build()
     )
@@ -180,10 +180,10 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       ValidationEvent
         .builder()
         .id("AdtMemberTrait")
-        .shape(struct)
+        .shape(struct2)
         .severity(Severity.ERROR)
         .message(
-          "test#struct is improperly referenced from [test#MyStruct2]"
+          "ADT member test#struct must not be referenced in any other shape but test#MyUnion"
         )
         .build()
     )

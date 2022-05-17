@@ -76,7 +76,7 @@ public final class AdtMemberTraitValidator extends AbstractValidator {
 
 	private List<ValidationEvent> getReferenceEvents(Model model, Set<Shape> adtMemberShapes) {
 		return adtMemberShapes.stream().flatMap(adtMemberShape -> {
-			AdtMemberTrait adtMemberTrait = adtMemberShape.getTrait(AdtMemberTrait.class).get();
+			AdtMemberTrait adtMemberTrait = adtMemberShape.expectTrait(AdtMemberTrait.class);
 			List<Reference> references = getReferences(model, adtMemberShape, adtMemberTrait);
 			List<ShapeId> illegalReferencers = references.stream().filter(Reference::getIsInvalid)
 					.map(Reference::getReferencer).collect(Collectors.toList());
@@ -84,11 +84,15 @@ public final class AdtMemberTraitValidator extends AbstractValidator {
 					.collect(Collectors.toList());
 			List<ValidationEvent> validationEvents = new ArrayList<>();
 			if (illegalReferencers.size() > 0) {
-				validationEvents.add(error(adtMemberShape, String.format("%s is improperly referenced from %s",
-						adtMemberShape.getId(), illegalReferencers)));
+				illegalReferencers.forEach(illegalReferencerId -> {
+					Shape illegalReferencer = model.expectShape(illegalReferencerId);
+					validationEvents
+							.add(error(illegalReferencer, String.format("ADT member %s must not be referenced in any other shape but %s",
+									adtMemberShape.getId(), adtMemberTrait.getValue())));
+				});
 			}
 			if (legalReferences.size() < 1) {
-				validationEvents.add(error(adtMemberShape, String.format("%s does not target %s in any of its members",
+				validationEvents.add(error(adtMemberShape, String.format("%s must have exactly one member targeting %s",
 						adtMemberTrait.getValue(), adtMemberShape.getId())));
 			}
 			return validationEvents.stream();
