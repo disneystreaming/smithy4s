@@ -32,11 +32,15 @@ class KVStoreImpl(ref: Ref[IO, Map[String, String]]) extends KVStore[IO] {
     }
     .rethrow
   def get(key: String): IO[Value] =
-    ref.get
-      .map[Either[Throwable, Value]](_.get(key) match {
-        case None        => Left(KeyNotFoundError(key))
-        case Some(value) => Right(smithy4s.example.Value(value))
-      })
-      .rethrow
+    if (key.contains("authorized-only"))
+      // This will be redacted by the redacting proxy
+      IO.raiseError(UnauthorizedError("sensitive"))
+    else
+      ref.get
+        .map[Either[Throwable, Value]](_.get(key) match {
+          case None        => Left(KeyNotFoundError(key))
+          case Some(value) => Right(smithy4s.example.Value(value))
+        })
+        .rethrow
   def put(key: String, value: String): IO[Unit] = ref.update(_ + (key -> value))
 }
