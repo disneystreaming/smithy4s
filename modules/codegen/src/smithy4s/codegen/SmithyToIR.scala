@@ -444,9 +444,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .asScala
         .map { member =>
           val memberTarget =
-            model
-              .getShape(member.getTarget)
-              .get() // member target exists or model is invalid
+            model.expectShape(member.getTarget)
           if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
@@ -470,9 +468,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .asScala
         .map { member =>
           val memberTarget =
-            model
-              .getShape(member.getTarget)
-              .get() // member target exists or model is invalid
+            model.expectShape(member.getTarget)
           if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
             (member.getMemberName(), member.tpe.map(Left(_)))
           } else {
