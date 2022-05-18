@@ -149,7 +149,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val out = streams.value
     val cacheFile =
       out.cacheDirectory / s"smithy4s_${scalaBinaryVersion.value}"
-    
+
     // This is important - it's what re-triggers this task on file changes
     val _ = (conf / smithy4sCodegen).inputFileChanges
 

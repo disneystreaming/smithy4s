@@ -726,9 +726,6 @@ def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
  * library code, aws-specific code.
  */
 def genSmithyImpl(config: Configuration) = Def.task {
-  // codegen needs the `protocol` jar to be published
-  (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
-
   val inputFiles = (config / smithySpecs).value
   val outputDir = (config / genSmithyOutput).?.value
     .getOrElse((config / sourceManaged).value)

@@ -28,10 +28,6 @@ import java.net.URL
 import java.net.URLClassLoader
 
 object ModelLoader {
-  private val requiredDeps =
-    s"${smithy4s.codegen.BuildInfo.organization}:${smithy4s.codegen.BuildInfo.protocolArtifact}:${smithy4s.codegen.BuildInfo.version}" ::
-      s"${smithy4s.codegen.BuildInfo.smithyOrg}:${smithy4s.codegen.BuildInfo.smithyArtifact}:${smithy4s.codegen.BuildInfo.smithyVersion}" ::
-      Nil
 
   def load(
       specs: Set[File],
@@ -39,7 +35,7 @@ object ModelLoader {
       repositories: List[String],
       transformers: List[String]
   ): (ClassLoader, Model) = {
-    val allDeps = dependencies ++ requiredDeps
+    val allDeps = dependencies
     val maybeDeps = resolveDependencies(allDeps, repositories)
     val currentClassLoader = this.getClass().getClassLoader()
 
@@ -47,12 +43,19 @@ object ModelLoader {
     // might be provided by smithy4s itself out of the box)
     val modelBuilder = Model.builder()
 
+    val smithy4sResource =
+      currentClassLoader.getResource("META-INF/smithy/smithy4s.smithy")
+    val smithy4sMetaResource =
+      currentClassLoader.getResource("META-INF/smithy/smithy4s.meta.smithy")
+
     maybeDeps.foreach { deps =>
       // Loading the model just from upstream dependencies, in isolation
       val upstreamClassLoader = new URLClassLoader(deps)
       val upstreamModel = Model
         .assembler()
         .discoverModels(upstreamClassLoader)
+        .addImport(smithy4sResource)
+        .addImport(smithy4sMetaResource)
         .assemble()
         .unwrap()
 
@@ -69,7 +72,11 @@ object ModelLoader {
     }
 
     val modelAssembler =
-      Model.assembler(validatorClassLoader).addModel(modelBuilder.build())
+      Model
+        .assembler(validatorClassLoader)
+        .addImport(smithy4sResource)
+        .addImport(smithy4sMetaResource)
+        .addModel(modelBuilder.build())
 
     specs.map(_.toPath()).foreach {
       modelAssembler.addImport
