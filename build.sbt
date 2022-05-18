@@ -114,7 +114,7 @@ lazy val core = projectMatrix
       "smithy4s.api"
     ),
     genDiscoverModels := true,
-    Test / genDiscoverModels := false,
+    Test / genDiscoverModels := true,
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / sourceGenerators += sourceDirectory
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
@@ -248,6 +248,7 @@ lazy val `aws-http4s` = projectMatrix
   .dependsOn(aws)
   .settings(
     isCE3 := true,
+    genDiscoverModels := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.client.value,
@@ -389,6 +390,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(core)
   .settings(
     isCE3 := true,
+    genDiscoverModels := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
       Dependencies.Cats.core.value,
@@ -518,6 +520,7 @@ lazy val tests = projectMatrix
   .in(file("modules/tests"))
   .dependsOn(core)
   .settings(
+    genDiscoverModels := true,
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       val ce3 =
@@ -556,6 +559,7 @@ lazy val example = projectMatrix
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
+    genDiscoverModels := true,
     Compile / allowedNamespaces := Seq(
       "smithy4s.example",
       "smithy4s.example.import_test",
