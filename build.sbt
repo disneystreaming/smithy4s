@@ -79,6 +79,7 @@ lazy val docs =
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
       isCE3 := true,
+      genDiscoverModels := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value
