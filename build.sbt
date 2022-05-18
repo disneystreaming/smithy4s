@@ -146,12 +146,10 @@ lazy val core = projectMatrix
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
       val files = (Compile / managedSources).value
-      files.map(f =>
-        (
-          f,
-          f.relativeTo(base).get.getPath
-        )
-      )
+      files
+        .map(f => (f, f.relativeTo(base)))
+        // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
+        .collect { case (f, Some(relF)) => f -> relF.getPath() }
     }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
