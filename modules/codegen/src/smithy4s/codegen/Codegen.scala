@@ -31,7 +31,8 @@ object Codegen { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      args.transformers
+      args.transformers,
+      args.discoverModels
     )
 
     val scalaFiles = if (!args.skipScala) {

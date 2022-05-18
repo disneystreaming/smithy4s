@@ -113,6 +113,8 @@ lazy val core = projectMatrix
       "smithy.waiters",
       "smithy4s.api"
     ),
+    genDiscoverModels := true,
+    Test / genDiscoverModels := false,
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / sourceGenerators += sourceDirectory
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
@@ -139,18 +141,17 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
-    // TODO: bring back
-    // Compile / packageSrc / mappings ++= {
-    //   val base = (Compile / sourceManaged).value
-    //   val files = (Compile / managedSources).value
-    //   files.map(f =>
-    //     (
-    //       f,
-    //       f.relativeTo(base).get.getPath
-    //     )
-    //   )
-    // }
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Compile / packageSrc / mappings ++= {
+      val base = (Compile / sourceManaged).value
+      val files = (Compile / managedSources).value
+      files.map(f =>
+        (
+          f,
+          f.relativeTo(base).get.getPath
+        )
+      )
+    }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -191,6 +192,7 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.scalacheck.value % Test
     ),
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    genDiscoverModels := true,
     Compile / allowedNamespaces := Seq(
       "aws.api",
       "aws.auth",
@@ -715,6 +717,7 @@ lazy val genSmithyOpenapiOutput = SettingKey[File]("genSmithyOpenapiOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
   SettingKey[Seq[String]]("genSmithyDependencies")
+lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
 
 (ThisBuild / smithySpecs) := Seq.empty
 
@@ -737,6 +740,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
   val smithyDeps =
     (config / genSmithyDependencies).?.value.getOrElse(List.empty)
+  val discoverModels =
+    (config / genDiscoverModels).?.value.getOrElse(false)
 
   val codegenCp =
     (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
@@ -761,6 +766,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
               val args =
                 List("--output", outputDir) ++
                   List("--openapi-output", openapiOutputDir) ++
+                  (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
                      List("--allowed-ns", allowedNS.get.mkString(","))
                    else Nil) ++ inputs

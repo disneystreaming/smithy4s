@@ -69,6 +69,15 @@ object CodegenCommand {
       )
       .orFalse
 
+  val discoverModelsOpt =
+    Opts
+      .flag(
+        long = "discover-models",
+        help =
+          "Indicates whether the model assembler should try to discover models in the classpath"
+      )
+      .orFalse
+
   val allowedNSOpt: Opts[Option[Set[String]]] =
     Opts
       .option[String](
@@ -93,6 +102,7 @@ object CodegenCommand {
       openApiOutputOpt,
       skipScalaOpt,
       skipOpenapiOpt,
+      discoverModelsOpt,
       allowedNSOpt,
       excludedNSOpt,
       repositoriesOpt,
@@ -102,7 +112,7 @@ object CodegenCommand {
     )
       .mapN {
         // format: off
-        case (output, openApiOutput, skipScala, skipOpenapi, allowedNS, excludedNS, repositories, dependencies, transformers, specsArgs) =>
+        case (output, openApiOutput, skipScala, skipOpenapi, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, specsArgs) =>
         // format: on
           CodegenArgs(
             specsArgs,
@@ -110,6 +120,7 @@ object CodegenCommand {
             openApiOutput.getOrElse(os.pwd),
             skipScala,
             skipOpenapi,
+            discoverModels,
             allowedNS,
             excludedNS,
             repositories.getOrElse(List.empty),
