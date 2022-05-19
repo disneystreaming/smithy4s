@@ -31,7 +31,8 @@ object Codegen { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      args.transformers
+      args.transformers,
+      args.discoverModels
     )
 
     val scalaFiles = if (!args.skipScala) {
@@ -95,7 +96,8 @@ object Codegen { self =>
         Renderer(amended)
       }
       .map { result =>
-        val relPath = os.RelPath(result.namespace.replace('.', '/'))
+        val relPath =
+          os.RelPath(result.namespace.split('.').toIndexedSeq, ups = 0)
         (relPath, result.name, result.content)
       }
   }

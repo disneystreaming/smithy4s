@@ -22,30 +22,33 @@ import coursier.parse.RepositoryParser
 import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.loader.ModelAssembler
 
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 
 object ModelLoader {
-  private val requiredDeps =
-    s"${smithy4s.codegen.BuildInfo.organization}:${smithy4s.codegen.BuildInfo.protocolArtifact}:${smithy4s.codegen.BuildInfo.version}" ::
-      s"${smithy4s.codegen.BuildInfo.smithyOrg}:${smithy4s.codegen.BuildInfo.smithyArtifact}:${smithy4s.codegen.BuildInfo.smithyVersion}" ::
-      Nil
 
   def load(
       specs: Set[File],
       dependencies: List[String],
       repositories: List[String],
-      transformers: List[String]
+      transformers: List[String],
+      discoverModels: Boolean
   ): (ClassLoader, Model) = {
-    val allDeps = dependencies ++ requiredDeps
+    val allDeps = dependencies
     val maybeDeps = resolveDependencies(allDeps, repositories)
     val currentClassLoader = this.getClass().getClassLoader()
 
     // Loads a model using whatever's on the current classpath (in particular, anything that
     // might be provided by smithy4s itself out of the box)
-    val modelBuilder = Model.builder()
+    val modelBuilder = Model
+      .assembler()
+      .addClasspathModels(currentClassLoader, discoverModels)
+      .assemble()
+      .unwrap()
+      .toBuilder()
 
     maybeDeps.foreach { deps =>
       // Loading the model just from upstream dependencies, in isolation
@@ -69,7 +72,9 @@ object ModelLoader {
     }
 
     val modelAssembler =
-      Model.assembler(validatorClassLoader).addModel(modelBuilder.build())
+      Model
+        .assembler(validatorClassLoader)
+        .addModel(modelBuilder.build())
 
     specs.map(_.toPath()).foreach {
       modelAssembler.addImport
@@ -125,6 +130,26 @@ object ModelLoader {
       files.map(_.toURI().toURL()).toArray
     }
     else None
+  }
+
+  implicit class ModelAssemblerOps(assembler: ModelAssembler) {
+    def addImports(urls: List[java.net.URL]): ModelAssembler = {
+      urls.foreach(assembler.addImport)
+      assembler
+    }
+
+    def addClasspathModels(
+        classLoader: ClassLoader,
+        flag: Boolean
+    ): ModelAssembler = {
+      val smithy4sResources = List(
+        "META-INF/smithy/smithy4s.smithy",
+        "META-INF/smithy/smithy4s.meta.smithy"
+      ).map(classLoader.getResource)
+
+      if (flag) assembler.discoverModels(classLoader)
+      else addImports(smithy4sResources)
+    }
   }
 
 }

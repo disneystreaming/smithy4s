@@ -133,8 +133,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     * to decide whether or not Codegen should run.
     */
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
-    val outputPath = (conf / smithy4sOutputDir).value.getAbsolutePath()
-    val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
+    val outputPath = (conf / smithy4sOutputDir).value
+    val openApiOutputPath = (conf / smithy4sOpenapiDir).value
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
@@ -149,7 +149,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val out = streams.value
     val cacheFile =
       out.cacheDirectory / s"smithy4s_${scalaBinaryVersion.value}"
-    
+
     // This is important - it's what re-triggers this task on file changes
     val _ = (conf / smithy4sCodegen).inputFileChanges
 
@@ -169,6 +169,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           openapiOutput = os.Path(openApiOutputPath),
           skipScala = false,
           skipOpenapi = false,
+          discoverModels = true, // we need protocol here
           allowedNS = allowedNamespaces,
           excludedNS = excludedNamespaces,
           repositories = res,

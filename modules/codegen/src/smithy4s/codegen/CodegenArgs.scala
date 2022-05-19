@@ -22,6 +22,7 @@ case class CodegenArgs(
     openapiOutput: os.Path,
     skipScala: Boolean,
     skipOpenapi: Boolean,
+    discoverModels: Boolean,
     allowedNS: Option[Set[String]],
     excludedNS: Option[Set[String]],
     repositories: List[String],

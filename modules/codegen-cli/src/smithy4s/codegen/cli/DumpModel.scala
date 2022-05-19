@@ -26,7 +26,8 @@ object DumpModel {
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      args.transformers
+      args.transformers,
+      discoverModels = false
     )
 
     Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))

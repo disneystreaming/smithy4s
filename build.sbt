@@ -114,6 +114,7 @@ lazy val core = projectMatrix
       "smithy.waiters",
       "smithy4s.api"
     ),
+    genDiscoverModels := true,
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / sourceGenerators += sourceDirectory
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
@@ -140,18 +141,15 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
-    // TODO: bring back
-    // Compile / packageSrc / mappings ++= {
-    //   val base = (Compile / sourceManaged).value
-    //   val files = (Compile / managedSources).value
-    //   files.map(f =>
-    //     (
-    //       f,
-    //       f.relativeTo(base).get.getPath
-    //     )
-    //   )
-    // }
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Compile / packageSrc / mappings ++= {
+      val base = (Compile / sourceManaged).value
+      val files = (Compile / managedSources).value
+      files
+        .map(f => (f, f.relativeTo(base)))
+        // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
+        .collect { case (f, Some(relF)) => f -> relF.getPath() }
+    }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -192,6 +190,7 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.scalacheck.value % Test
     ),
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    genDiscoverModels := true,
     Compile / allowedNamespaces := Seq(
       "aws.api",
       "aws.auth",
@@ -247,6 +246,7 @@ lazy val `aws-http4s` = projectMatrix
   .dependsOn(aws)
   .settings(
     isCE3 := true,
+    Test / genDiscoverModels := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.client.value,
@@ -272,16 +272,7 @@ lazy val codegen = projectMatrix
   .dependsOn(openapi)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](
-      organization,
-      version,
-      scalaBinaryVersion,
-      "protocolArtifact" -> (protocol
-        .jvm(autoScalaLibrary = false) / moduleName).value,
-      "smithyOrg" -> Dependencies.Smithy.model.organization,
-      "smithyVersion" -> Dependencies.Smithy.model.revision,
-      "smithyArtifact" -> Dependencies.Smithy.model.name
-    ),
+    buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -716,6 +707,7 @@ lazy val genSmithyOpenapiOutput = SettingKey[File]("genSmithyOpenapiOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
   SettingKey[Seq[String]]("genSmithyDependencies")
+lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
 
 (ThisBuild / smithySpecs) := Seq.empty
 
@@ -727,9 +719,6 @@ def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
  * library code, aws-specific code.
  */
 def genSmithyImpl(config: Configuration) = Def.task {
-  // codegen needs the `protocol` jar to be published
-  (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
-
   val inputFiles = (config / smithySpecs).value
   val outputDir = (config / genSmithyOutput).?.value
     .getOrElse((config / sourceManaged).value)
@@ -741,6 +730,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
   val smithyDeps =
     (config / genSmithyDependencies).?.value.getOrElse(List.empty)
+  val discoverModels =
+    (config / genDiscoverModels).?.value.getOrElse(false)
 
   val codegenCp =
     (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
@@ -765,6 +756,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
               val args =
                 List("--output", outputDir) ++
                   List("--openapi-output", openapiOutputDir) ++
+                  (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
                      List("--allowed-ns", allowedNS.get.mkString(","))
                    else Nil) ++ inputs
