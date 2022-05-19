@@ -25,7 +25,7 @@ The CLI comes with a number of options to customize output directories, skip ope
 ```scala mdoc:passthrough
 println("```bash")
 println("bash> smithy4s --help")
-println(smithy4s.codegen.cli.Main.commands.showHelp)
+println(Main.commands.showHelp)
 println("```")
 ```
 
