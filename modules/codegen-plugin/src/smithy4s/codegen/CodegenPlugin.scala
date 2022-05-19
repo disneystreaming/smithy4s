@@ -169,7 +169,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           openapiOutput = os.Path(openApiOutputPath),
           skipScala = false,
           skipOpenapi = false,
-          discoverModels = false,
+          discoverModels = true, // we need protocol here
           allowedNS = allowedNamespaces,
           excludedNS = excludedNamespaces,
           repositories = res,

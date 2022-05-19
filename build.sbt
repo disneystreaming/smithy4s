@@ -143,12 +143,10 @@ lazy val core = projectMatrix
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
       val files = (Compile / managedSources).value
-      files.map(f =>
-        (
-          f,
-          f.relativeTo(base).get.getPath
-        )
-      )
+      files
+        .map(f => (f, f.relativeTo(base)))
+        // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
+        .collect { case (f, Some(relF)) => f -> relF.getPath() }
     }
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -271,16 +269,7 @@ lazy val codegen = projectMatrix
   .dependsOn(openapi)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](
-      organization,
-      version,
-      scalaBinaryVersion,
-      "protocolArtifact" -> (protocol
-        .jvm(autoScalaLibrary = false) / moduleName).value,
-      "smithyOrg" -> Dependencies.Smithy.model.organization,
-      "smithyVersion" -> Dependencies.Smithy.model.revision,
-      "smithyArtifact" -> Dependencies.Smithy.model.name
-    ),
+    buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
     libraryDependencies ++= Seq(
