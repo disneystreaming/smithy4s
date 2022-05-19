@@ -45,7 +45,7 @@ object ModelLoader {
     // might be provided by smithy4s itself out of the box)
     val modelBuilder = Model
       .assembler()
-      .maybeDiscoverModels(currentClassLoader, discoverModels)
+      .addClasspathModels(currentClassLoader, discoverModels)
       .assemble()
       .unwrap()
       .toBuilder()
@@ -138,12 +138,17 @@ object ModelLoader {
       assembler
     }
 
-    def maybeDiscoverModels(
+    def addClasspathModels(
         classLoader: ClassLoader,
         flag: Boolean
     ): ModelAssembler = {
+      val smithy4sResources = List(
+        "META-INF/smithy/smithy4s.smithy",
+        "META-INF/smithy/smithy4s.meta.smithy"
+      ).map(classLoader.getResource)
+
       if (flag) assembler.discoverModels(classLoader)
-      else assembler
+      else addImports(smithy4sResources)
     }
   }
 
