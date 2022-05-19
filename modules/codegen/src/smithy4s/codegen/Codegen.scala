@@ -96,7 +96,8 @@ object Codegen { self =>
         Renderer(amended)
       }
       .map { result =>
-        val relPath = os.RelPath(result.namespace.replace('.', '/'))
+        val relPath =
+          os.RelPath(result.namespace.split('.').toIndexedSeq, ups = 0)
         (relPath, result.name, result.content)
       }
   }

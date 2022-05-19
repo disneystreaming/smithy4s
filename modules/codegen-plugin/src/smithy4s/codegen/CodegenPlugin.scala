@@ -133,8 +133,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     * to decide whether or not Codegen should run.
     */
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
-    val outputPath = (conf / smithy4sOutputDir).value.getAbsolutePath()
-    val openApiOutputPath = (conf / smithy4sOpenapiDir).value.getAbsolutePath()
+    val outputPath = (conf / smithy4sOutputDir).value
+    val openApiOutputPath = (conf / smithy4sOpenapiDir).value
     val allowedNamespaces =
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
