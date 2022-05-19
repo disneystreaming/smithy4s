@@ -7,16 +7,42 @@ Beside the provided sbt plugin, smithy4s can be used as a CLI. It allows generat
 
 We recommend using [coursier](https://get-coursier.io/docs/cli-launch) to install/run it.
 
-#### Installation
+### Installation
 
 ```bash
 cs install --channel https://disneystreaming.github.io/coursier.json smithy4s
 ```
 
-#### Usage
+### Usage
 
-```bash 
-bash> smithy4s generate ./foo.smithy ./bar.smithy
+```scala mdoc:invisible
+import com.monovore.decline._
+import smithy4s.codegen.cli._
 ```
 
 The CLI comes with a number of options to customize output directories, skip openapi generation (or scala generation), provide a filter of allowed namespaces, etc. Use the `--help` command to get an exhaustive listing.
+
+```scala mdoc:passthrough
+println("```bash")
+println("bash> smithy4s --help")
+println(Main.commands.showHelp)
+println("```")
+```
+
+#### Codegen
+
+```scala mdoc:passthrough
+println("```bash")
+println("bash> smithy4s generate --help")
+println(Help.fromCommand(CodegenCommand.command))
+println("```")
+```
+
+#### Dump model
+
+```scala mdoc:passthrough
+println("```bash")
+println("bash> smithy4s dump-model --help")
+println(Help.fromCommand(DumpModelCommand.command))
+println("```")
+```
