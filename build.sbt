@@ -61,6 +61,7 @@ lazy val docs =
     .enablePlugins(MdocPlugin, DocusaurusPlugin)
     .jvmPlatform(List(Scala213))
     .dependsOn(
+      `codegen-cli`,
       http4s,
       `http4s-swagger`,
       `aws-http4s` % "compile -> compile,test"
