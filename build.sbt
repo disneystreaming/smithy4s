@@ -113,6 +113,7 @@ lazy val core = projectMatrix
       "smithy.waiters",
       "smithy4s.api"
     ),
+    genDiscoverModels := true,
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / sourceGenerators += sourceDirectory
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
