@@ -3,11 +3,10 @@ package http
 package internals
 
 import smithy4s.http.HttpBinding
-import smithy4s._
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.internals.InputOutput
 import smithy4s.schema.Alt.SchemaAndValue
-import smithy4s.schema._
+import smithy4s.schema.{EnumValue, Field, Primitive, SchemaAlt, SchemaField, SchemaVisitor}
 
 import java.util.Base64
 
