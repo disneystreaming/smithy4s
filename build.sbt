@@ -642,7 +642,7 @@ lazy val Dependencies = new {
 
   val Circe = new {
     val generic: Def.Initialize[ModuleID] =
-      Def.setting("io.circe" %%% "circe-generic" % "0.14.1")
+      Def.setting("io.circe" %%% "circe-generic" % "0.14.2")
   }
 
   /*
