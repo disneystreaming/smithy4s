@@ -18,6 +18,7 @@ package smithy4s
 package http
 
 import smithy4s.http.internals.MetaEncode._
+import smithy4s.http.internals.SchemaVisitorMetadataWriter
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -241,9 +242,7 @@ object Metadata {
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
     def fromSchema[A](schema: Schema[A]): Encoder[A] = {
-      schema
-        .compile(internals.SchematicMetadataWriter)
-        .get match {
+      SchemaVisitorMetadataWriter(schema) match {
         case StructureMetaEncode(f) => (a: A) => f(a)
         case _                      => (_: A) => Metadata.empty
       }

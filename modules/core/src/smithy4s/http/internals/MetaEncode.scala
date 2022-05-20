@@ -20,7 +20,6 @@ package internals
 
 import smithy4s.capability.Contravariant
 import smithy4s.internals.Hinted
-
 import HttpBinding._
 import MetaEncode._
 
@@ -96,6 +95,7 @@ object MetaEncode {
   case class StructureMetaEncode[S](f: S => Metadata) extends MetaEncode[S]
   // format: on
 
+  def fromToString[A]: MetaEncode[A] = StringValueMetaEncode(_.toString())
   def empty[A]: MetaEncode[A] = EmptyMetaEncode
 
   type Make[A] = Hinted[MetaEncode, A]
