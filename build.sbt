@@ -655,7 +655,7 @@ lazy val Dependencies = new {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.11")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.12")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.11" else "0.22.13")
