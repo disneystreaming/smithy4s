@@ -6,7 +6,14 @@ import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.internals.InputOutput
 import smithy4s.schema.Alt.SchemaAndValue
-import smithy4s.schema.{EnumValue, Field, Primitive, SchemaAlt, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  EnumValue,
+  Field,
+  Primitive,
+  SchemaAlt,
+  SchemaField,
+  SchemaVisitor
+}
 
 import java.util.Base64
 
@@ -116,16 +123,15 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
     def encodeField[A](
         field: SchemaField[S, A]
     ): Option[(Metadata, S) => Metadata] = {
-      val hints = field.instance.hints
       HttpBinding
-        .fromHints(field.label, hints, maybeInputOutput)
+        .fromHints(field.label,field.hints , maybeInputOutput)
         .map { binding =>
           val folderT = new Field.LeftFolder[Schema, Metadata] {
             override def compile[T](
                 label: String,
                 instance: Schema[T]
             ): (Metadata, T) => Metadata = {
-              val encoder: MetaEncode[T] = self(instance)
+              val encoder: MetaEncode[T] = self(instance.addHints(field.hints))
               val updateFunction = encoder.updateMetadata(binding)
               (metadata, t: T) => updateFunction(metadata, t)
             }
@@ -133,12 +139,10 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
           field.leftFolder(folderT)
         }
     }
-
-    val updateFunctions =
-      fields.map(field => encodeField(field)).collect {
-        case Some(updateFunction) =>
-          updateFunction
-      }
+    val updateFunctions = fields.map(field => encodeField(field)).collect {
+      case Some(updateFunction) =>
+        updateFunction
+    }
 
     StructureMetaEncode(s =>
       updateFunctions.foldLeft(Metadata.empty)((metadata, updateFunction) =>
