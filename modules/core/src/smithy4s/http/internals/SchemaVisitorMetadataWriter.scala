@@ -139,15 +139,19 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
     def encodeField[A](
         field: SchemaField[S, A]
     ): Option[(Metadata, S) => Metadata] = {
+      val hints = field.hints
       HttpBinding
-        .fromHints(field.label,field.hints , maybeInputOutput)
+        .fromHints(field.label, hints, maybeInputOutput)
         .map { binding =>
           val folderT = new Field.LeftFolder[Schema, Metadata] {
             override def compile[T](
                 label: String,
                 instance: Schema[T]
             ): (Metadata, T) => Metadata = {
-              val encoder: MetaEncode[T] = self(instance.addHints(field.hints))
+              val encoder: MetaEncode[T] =
+                self(
+                  instance.addHints(Hints(binding) ++ hints).addHints(binding)
+                )
               val updateFunction = encoder.updateMetadata(binding)
               (metadata, t: T) => updateFunction(metadata, t)
             }
