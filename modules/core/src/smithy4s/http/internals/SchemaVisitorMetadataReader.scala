@@ -56,7 +56,8 @@ private[http] class SchemaVisitorMetadataReader()
         MetaDecode.fromUnsafe("BigDecimal")(BigDecimal(_))
       case Primitive.PBoolean => MetaDecode.from("Boolean")(_.toBooleanOption)
       case Primitive.PString  => MetaDecode.fromUnsafe("String")(identity)
-      case Primitive.PUUID => MetaDecode.fromUnsafe[ju.UUID]("UUID")(ju.UUID.fromString)
+      case Primitive.PUUID =>
+        MetaDecode.fromUnsafe[ju.UUID]("UUID")(ju.UUID.fromString)
       case Primitive.PByte => EmptyMetaDecode
       case Primitive.PBlob =>
         MetaDecode.fromUnsafe("Bytes")(string =>
