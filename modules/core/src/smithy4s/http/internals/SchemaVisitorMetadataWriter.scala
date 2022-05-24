@@ -33,6 +33,18 @@ import smithy4s.schema.{
 
 import java.util.Base64
 
+/**
+ * This schema visitor works on data that is annotated with :
+ * - smithy.api.httpLabel
+ * - smithy.api.httpHeader
+ * - smithy.api.httpPrefixHeaders
+ * - smithy.api.httpQuery
+ * - smithy.api.httpQueryParams
+ *
+ * As such, assumptions are made using the information of what types can be
+ * annotated in the smithy specs.
+ *
+ */
 object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
 
   override def primitive[P](
