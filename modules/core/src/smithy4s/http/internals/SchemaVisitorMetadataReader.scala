@@ -56,14 +56,13 @@ private[http] class SchemaVisitorMetadataReader()
         MetaDecode.fromUnsafe("BigDecimal")(BigDecimal(_))
       case Primitive.PBoolean => MetaDecode.from("Boolean")(_.toBooleanOption)
       case Primitive.PString  => MetaDecode.fromUnsafe("String")(identity)
-      case Primitive.PUUID =>
-        MetaDecode.fromUnsafe[ju.UUID]("UUID")(ju.UUID.fromString)
-      case Primitive.PByte => MetaDecode.EmptyMetaDecode
+      case Primitive.PUUID => MetaDecode.fromUnsafe[ju.UUID]("UUID")(ju.UUID.fromString)
+      case Primitive.PByte => EmptyMetaDecode
       case Primitive.PBlob =>
         MetaDecode.fromUnsafe("Bytes")(string =>
           ByteArray(ju.Base64.getDecoder().decode(string))
         )
-      case Primitive.PDocument => MetaDecode.EmptyMetaDecode
+      case Primitive.PDocument => EmptyMetaDecode
       case Primitive.PTimestamp =>
         (
           hints.get(HttpBinding).map(_.tpe),
@@ -89,7 +88,7 @@ private[http] class SchemaVisitorMetadataReader()
               Timestamp.parse(str, smithy.api.TimestampFormat.HTTP_DATE)
             )
           case (None, None) =>
-            MetaDecode.EmptyMetaDecode
+            EmptyMetaDecode
         }
       case Primitive.PUnit =>
         MetaDecode.StructureMetaDecode(
@@ -112,7 +111,7 @@ private[http] class SchemaVisitorMetadataReader()
           buffer.toList
         }
       }
-      case _ => MetaDecode.EmptyMetaDecode
+      case _ => EmptyMetaDecode
     }
   }
 
@@ -128,7 +127,7 @@ private[http] class SchemaVisitorMetadataReader()
           iterator.foreach(string => buffer += f(string))
           buffer.toSet
         }
-      case _ => MetaDecode.EmptyMetaDecode
+      case _ => EmptyMetaDecode
     }
 
   override def map[K, V](
@@ -285,7 +284,7 @@ private[http] class SchemaVisitorMetadataReader()
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: U => Alt.SchemaAndValue[U, _]
-  ): MetaDecode[U] = MetaDecode.EmptyMetaDecode
+  ): MetaDecode[U] = EmptyMetaDecode
 
   override def biject[A, B](
       schema: Schema[A],
@@ -300,5 +299,5 @@ private[http] class SchemaVisitorMetadataReader()
   ): MetaDecode[B] = self(schema).map(to.asThrowingFunction)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
-    MetaDecode.EmptyMetaDecode
+    EmptyMetaDecode
 }
