@@ -1,0 +1,151 @@
+package smithy4s.http.internals
+import smithy4s.schema._
+import PathEncode.MaybePathEncode
+import smithy.api.TimestampFormat
+import smithy4s.http.PathSegment
+import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
+import smithy4s.{Hints, Lazy, Refinement, ShapeId}
+import smithy4s.schema.Alt._
+import smithy.api.Http
+
+object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
+
+  def default[A]: MaybePathEncode[A] = None
+
+  override def primitive[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): MaybePathEncode[P] = {
+    tag match {
+      case Primitive.PShort      => PathEncode.fromToString
+      case Primitive.PInt        => PathEncode.fromToString
+      case Primitive.PFloat      => PathEncode.fromToString
+      case Primitive.PLong       => PathEncode.fromToString
+      case Primitive.PDouble     => PathEncode.fromToString
+      case Primitive.PBigInt     => PathEncode.fromToString
+      case Primitive.PBigDecimal => PathEncode.fromToString
+      case Primitive.PBoolean    => PathEncode.fromToString
+      case Primitive.PString     => PathEncode.fromToString
+      case Primitive.PUUID       => PathEncode.fromToString
+      case Primitive.PByte       => default
+      case Primitive.PBlob       => default
+      case Primitive.PDocument   => default
+      case Primitive.PTimestamp =>
+        val fmt =
+          hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
+        Some(PathEncode.raw(_.format(fmt)))
+      case Primitive.PUnit =>
+        struct(shapeId, hints, fields = Vector.empty, make = _ => ())
+    }
+  }
+
+  override def list[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      member: Schema[A]
+  ): MaybePathEncode[List[A]] = default
+
+  override def set[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      member: Schema[A]
+  ): MaybePathEncode[Set[A]] = default
+
+  override def map[K, V](
+      shapeId: ShapeId,
+      hints: Hints,
+      key: Schema[K],
+      value: Schema[V]
+  ): MaybePathEncode[Map[K, V]] = default
+
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): MaybePathEncode[E] = {
+    PathEncode.from(e => total(e).stringValue)
+  }
+
+  override def struct[S](
+      shapeId: ShapeId,
+      hints: Hints,
+      fields: Vector[SchemaField[S, _]],
+      make: IndexedSeq[Any] => S
+  ): MaybePathEncode[S] = {
+    type Writer = S => List[String]
+
+    def toPathEncoder[A](
+        field: Field[Schema, S, A],
+        greedy: Boolean
+    ): Option[Writer] = {
+      field.fold(new Field.Folder[Schema, S, Option[Writer]] {
+        def onRequired[AA](
+            label: String,
+            instance: Schema[AA],
+            get: S => AA
+        ): Option[Writer] = {
+          if (greedy)
+            self(instance.addHints(field.hints))
+              .map(_.contramap(get).encodeGreedy)
+          else
+            self(instance.addHints(field.hints)).map(_.contramap(get).encode)
+        }
+
+        def onOptional[AA](
+            label: String,
+            instance: Schema[AA],
+            get: S => Option[AA]
+        ): Option[Writer] = None
+      })
+    }
+    def compile1(path: PathSegment): Option[Writer] = path match {
+      case StaticSegment(value) => Some(Function.const(List(value)))
+      case LabelSegment(value) =>
+        fields
+          .find(_.label == value)
+          .flatMap(field => toPathEncoder(field, greedy = false))
+      case GreedySegment(value) =>
+        fields
+          .find(_.label == value)
+          .flatMap(field => toPathEncoder(field, greedy = true))
+    }
+
+    def compilePath(path: Vector[PathSegment]): Option[Vector[Writer]] =
+      path.traverse(compile1(_))
+    for {
+      httpHint <- hints.get[Http]
+      path <- pathSegments(httpHint.uri.value)
+      writers <- compilePath(path)
+    } yield new PathEncode[S] {
+      def encode(s: S): List[String] = writers.flatMap(_.apply(s)).toList
+      def encodeGreedy(s: S): List[String] = Nil
+    }
+  }
+
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: U => SchemaAndValue[U, _]
+  ): MaybePathEncode[U] = default
+
+  override def biject[A, B](
+      schema: Schema[A],
+      to: A => B,
+      from: B => A
+  ): MaybePathEncode[B] = {
+    self(schema).map(_.contramap(from))
+  }
+
+  override def surject[A, B](
+      schema: Schema[A],
+      to: Refinement[A, B],
+      from: B => A
+  ): MaybePathEncode[B] = {
+    self(schema).map(_.contramap(from))
+  }
+
+  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = default
+}

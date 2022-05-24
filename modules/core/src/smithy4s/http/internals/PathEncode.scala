@@ -39,23 +39,22 @@ object PathEncode {
       def contramap[A, B](fa: PathEncode[A])(f: B => A): PathEncode[B] =
         fa.contramap(f)
     }
+  def raw[A](f: A => String): PathEncode[A] = {
+    new PathEncode[A] {
+      def encode(a: A): List[String] = {
+        List(f(a))
+      }
+
+      def encodeGreedy(a: A): List[String] = {
+        f(a).split('/').toList
+      }
+    }
+  }
 
   object Make {
     def from[A](f: A => String): Make[A] = Hinted.static[MaybePathEncode, A] {
       Some {
         raw(f)
-      }
-    }
-
-    def raw[A](f: A => String): PathEncode[A] = {
-      new PathEncode[A] {
-        def encode(a: A): List[String] = {
-          List(f(a))
-        }
-
-        def encodeGreedy(a: A): List[String] = {
-          f(a).split('/').toList
-        }
       }
     }
 
@@ -65,4 +64,10 @@ object PathEncode {
 
   }
 
+  def from[A](f: A => String): MaybePathEncode[A] = {
+    Some {
+      raw(f)
+    }
+  }
+  def fromToString[A]: MaybePathEncode[A] = from(_.toString)
 }

@@ -67,7 +67,7 @@ object SchematicPathEncoder
     Hinted[PathEncode.MaybePathEncode].from { hints =>
       val fmt = hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
 
-      Some(PathEncode.Make.raw(_.format(fmt)))
+      Some(PathEncode.raw(_.format(fmt)))
     }
 
   override val unit: PathEncode.Make[Unit] =
