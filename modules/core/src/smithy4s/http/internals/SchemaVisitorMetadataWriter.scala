@@ -162,7 +162,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
             ): (Metadata, T) => Metadata = {
               val encoder: MetaEncode[T] =
                 self(
-                  instance.addHints(Hints(binding) ++ hints).addHints(binding)
+                  instance.addHints(Hints(binding) ++ hints)
                 )
               val updateFunction = encoder.updateMetadata(binding)
               (metadata, t: T) => updateFunction(metadata, t)
