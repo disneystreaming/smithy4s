@@ -25,6 +25,7 @@ private[smithy4s] trait ScalaCompat {
     def toLongOption: Option[Long] = Try(s.toLong).toOption
     def toFloatOption: Option[Float] = Try(s.toFloat).toOption
     def toShortOption: Option[Short] = Try(s.toShort).toOption
+    def toBooleanOption: Option[Boolean] = Try(s.toBoolean).toOption
   }
 
   implicit final class MapOps[K, V](val map: Map[K, V]) {

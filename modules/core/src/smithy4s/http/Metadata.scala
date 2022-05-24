@@ -19,7 +19,7 @@ package http
 
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
-
+import smithy4s.http.internals.SchemaVisitorMetadataReader
 import scala.collection.mutable.{Map => MMap}
 
 /**
@@ -177,9 +177,9 @@ object Metadata {
       instance
 
     def fromSchema[A](schema: Schema[A]): PartialDecoder[A] = {
-      val makeReader = schema.compile(internals.SchematicMetadataReader)
+      val metaDecode = SchemaVisitorMetadataReader(schema)
       val (partial, maybeTotal) =
-        makeReader.get match {
+        metaDecode match {
           case internals.MetaDecode.StructureMetaDecode(partial, maybeTotal) =>
             (partial, maybeTotal)
           case _ => ((_: Metadata) => Right(MMap.empty[String, Any]), None)
@@ -224,8 +224,8 @@ object Metadata {
       instance
 
     def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] = {
-      val makeReader = schema.compile(internals.SchematicMetadataReader)
-      makeReader.get match {
+      val metaDecode = SchemaVisitorMetadataReader(schema)
+      metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(_, maybeTotal) =>
           maybeTotal.map { total => (metadata: Metadata) => total(metadata) }
         case _ => None
