@@ -1,0 +1,8 @@
+{
+  "maven": {
+    "dependencies": [
+      "com.disneystreaming.smithy4s:smithy4s-protocol:$smithy4s_version$",
+      "com.disneystreaming.smithy4s:smithy4s-core_2.13:$smithy4s_version$"
+    ]
+  }
+}

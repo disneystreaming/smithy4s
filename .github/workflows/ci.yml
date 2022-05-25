@@ -69,6 +69,7 @@ jobs:
         if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
         run: |
           sbt scripted
+          (cd modules/smithy4s.g8 && sbt test)
 
       - name: Run checks
         if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
