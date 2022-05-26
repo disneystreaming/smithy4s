@@ -27,7 +27,8 @@ string UUID
     smithy.api#timestampFormat,
     uncheckedExamples,
     uuidFormat,
-    discriminated
+    discriminated,
+    untagged,
 ])
 @trait(selector: "service")
 structure simpleRestJson {
