@@ -29,16 +29,13 @@ object Routes {
 }
 
 object Main extends IOApp.Simple {
-
-  val run = Routes.all
-    .flatMap { routes =>
-      EmberServerBuilder
-        .default[IO]
-        .withPort(port"9000")
-        .withHost(host"localhost")
-        .withHttpApp(routes.orNotFound)
-        .build
-    }
-    .use(_ => IO.never)
+  val run = Routes.all.flatMap { routes =>
+    EmberServerBuilder
+      .default[IO]
+      .withPort(port"9000")
+      .withHost(host"localhost")
+      .withHttpApp(routes.orNotFound)
+      .build
+  }.useForever
 
 }
