@@ -784,16 +784,18 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      val documentFields =
+      private[this] val documentFields =
         fields.filter { field =>
           val hints = field.instance.hints
           HttpBinding.fromHints(field.label, hints, maybeInputOutput).isEmpty
         }
 
-      val handlers =
+      private[this] val handlers =
         documentFields
           .map(field => jsonLabel(field) -> fieldHandler(field))
           .toMap
+
+      private[this] val documentEncoders = documentFields.map(field => fieldEncoder(field))
 
       val expecting: String = "object"
 
@@ -852,8 +854,6 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           const(stage2.toVector)
         }
       }
-
-      def documentEncoders = documentFields.map(field => fieldEncoder(field))
 
       def encodeValue(z: Z, out: JsonWriter): Unit =
         encode(z, out, documentEncoders)
