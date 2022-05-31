@@ -47,6 +47,7 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
       SModel
         .assembler()
         .addImport(s"./sampleSpecs/$fileName")
+        .discoverModels()
         .assemble()
         .unwrap()
     ).map(ModelSerializer.builder().build.serialize(_))

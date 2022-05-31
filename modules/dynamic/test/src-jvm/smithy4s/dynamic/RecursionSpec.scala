@@ -20,18 +20,22 @@ import weaver._
 
 object RecursionSpec extends SimpleIOSuite {
 
-  test(
-    "Compilation does not recurse infinitely in the case of recursive structures".only
-  ) {
-    val modelString =
-      """|namespace foo
-         |
-         |structure Foo {
-         |  foo: Foo
-         |}
-         |""".stripMargin
+  // test(
+  //   "Compilation does not recurse infinitely in the case of recursive structures".only
+  // ) {
+  //   val modelString =
+  //     """|namespace foo
+  //        |
+  //        |structure Foo {
+  //        |  foo: Foo
+  //        |}
+  //        |""".stripMargin
 
-    Utils.compile(modelString).as(success)
+  //   Utils.compile(modelString).as(success)
+  // }
+
+  test("dynamodb"){
+    Utils.compileSampleSpec("dynamodb.json").as(success)
   }
 
 }

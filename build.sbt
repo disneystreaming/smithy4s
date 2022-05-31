@@ -391,7 +391,9 @@ lazy val dynamic = projectMatrix
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
       Dependencies.Cats.core.value,
-      Dependencies.Weaver.cats.value % Test
+      Dependencies.Weaver.cats.value % Test,
+      Dependencies.Smithy.awsTraits % Test,
+      Dependencies.Smithy.waiters % Test
     ),
     Test / fork := true,
     // Forwarding cwd to tests

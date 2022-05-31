@@ -150,10 +150,22 @@ private[dynamic] object Compiler {
     private def isRecursive(
         id: ShapeId,
         visited: Set[ShapeId] = Set.empty
-    ): Boolean =
-      visited(id) || closureMap
-        .getOrElse(id, Set.empty)
-        .exists(isRecursive(_, visited + id))
+    ): Boolean = {
+      def transitiveClosure(
+          _id: ShapeId,
+          visited: Set[ShapeId]
+      ): Set[ShapeId] = {
+        val newVisited = visited + _id
+        val neighbours = closureMap.getOrElse(_id, Set.empty)
+        val nonVisitedNeighbours = neighbours.filterNot(newVisited)
+        val neighbourClosures =
+          nonVisitedNeighbours.flatMap(transitiveClosure(_, newVisited))
+        neighbours ++ neighbourClosures
+      }
+      val closure = transitiveClosure(id, Set.empty)
+      // A type is recursive if it's referenced in its own closure
+      closure.contains(id)
+    }
 
     private def schema(idRef: IdRef): Eval[Schema[DynData]] = Eval.defer {
       schemaMap(
@@ -402,13 +414,13 @@ private[dynamic] object Compiler {
               .toVector
               .sequence
           }
-          if (isRecursive(id))
+          if (isRecursive(id)) {
             Eval.later(recursive(struct(lFields.value)(dynStruct)))
-          else lFields.map(fields => struct(fields)(dynStruct))
+          } else lFields.map(fields => struct(fields)(dynStruct))
         }
       )
 
-    override def unionShape(id: ShapeId, shape: UnionShape): Unit =
+    override def unionShape(id: ShapeId, shape: UnionShape): Unit = {
       shape.members.filter(_.nonEmpty).foreach { members =>
         update(
           id,
@@ -423,14 +435,23 @@ private[dynamic] object Compiler {
                 }
                 .toVector
                 .sequence
-            lAlts.map { alts =>
-              union(alts) { case (index, data) =>
-                alts(index).apply(data)
+            if (isRecursive(id)) {
+              Eval.later(recursive {
+                val alts = lAlts.value
+                union(alts) { case (index, data) =>
+                  alts(index).apply(data)
+                }
+              })
+            } else
+              lAlts.map { alts =>
+                union(alts) { case (index, data) =>
+                  alts(index).apply(data)
+                }
               }
-            }
           }
         )
       }
+    }
   }
 
   // A visitor allowing to gather the "closure" of all shapes
