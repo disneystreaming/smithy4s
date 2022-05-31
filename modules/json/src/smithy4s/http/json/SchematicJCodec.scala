@@ -35,12 +35,12 @@ import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
 import smithy4s.schema._
-
+import java.util
 import java.util.UUID
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
-
+import scala.collection.immutable.VectorBuilder
 import JCodec.JCodecMake
 
 private[smithy4s] class SchematicJCodec(maxArity: Int)
@@ -719,7 +719,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       .map(_.value)
       .getOrElse(field.label)
 
-  private type Handler = (Cursor, JsonReader, MMap[String, Any]) => Unit
+  private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
       field: Field[JCodecMake, Z, A]
@@ -727,14 +727,13 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
     val codec = field.instance.get
     val label = field.label
     if (field.isRequired) { (cursor, in, mmap) =>
-      mmap += label -> cursor.under(label)(cursor.decode(codec, in))
+      val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
     } else { (cursor, in, mmap) =>
       cursor.under[Unit](label) {
-        if (in.isNextToken('n')) {
-          val _ = in.readNullOrError[None.type](None, "Expected null")
-        } else {
+        if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
+        else {
           in.rollbackToken()
-          mmap += label -> cursor.decode(codec, in)
+          val _ = mmap.put(label, cursor.decode(codec, in))
         }
       }
     }
@@ -812,10 +811,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           HttpBinding.fromHints(field.label, hints, maybeInputOutput).isEmpty
         }
 
-      private[this] val handlers =
-        documentFields
-          .map(field => jsonLabel(field) -> fieldHandler(field))
-          .toMap
+      private[this] val handlers = new util.HashMap[String, Handler](documentFields.length) {
+        documentFields.foreach(field => put(jsonLabel(field), fieldHandler(field)))
+      }
 
       private[this] val documentEncoders = documentFields.map(field => fieldEncoder(field))
 
@@ -834,23 +832,19 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val buffer = MMap.empty[String, Any]
+        val buffer = new util.HashMap[String, Any](handlers.size)
         if (in.isNextToken('{')) {
           // In this case, metadata and payload are mixed together
           // and values field values must be sought from either.
-          if (in.isNextToken('}')) () // do nothing
-          else {
+          if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
-              handlers.get(in.readKeyAsString()) match {
-                case Some(handler) => handler(cursor, in, buffer)
-                case None          => in.skip()
-              }
+              val handler = handlers.get(in.readKeyAsString())
+              if (handler eq null) in.skip()
+              else handler(cursor, in, buffer)
               in.isNextToken(',')
             }) ()
-            if (!in.isCurrentToken('}')) {
-              in.objectEndOrCommaError()
-            }
+            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
           }
         } else in.decodeError("Expected JSON object")
 
@@ -861,19 +855,16 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         // with the ones pull the metadata, and call the constructor
         // on it.
         { (meta: scala.collection.Map[String, Any]) =>
-          meta.foreach(buffer += _) // 2.12
-          val stage2 = scala.collection.mutable.ListBuffer.empty[Any]
-          fields.foreach {
-            case f if f.isRequired =>
-              buffer.get(f.label) match {
-                case Some(value) => stage2 += value
-                case None =>
-                  cursor.requiredFieldError(f.label, f.label)
-              }
-            case f =>
-              stage2 += buffer.get(f.label)
-          }
-          const(stage2.toVector)
+          meta.foreach(kv => buffer.put(kv._1, kv._2))
+          val stage2 = new VectorBuilder[Any]
+          fields.foreach(f => stage2 += {
+            val value = buffer.get(f.label)
+            if (f.isRequired) {
+              if (value == null) cursor.requiredFieldError(f.label, f.label)
+              value
+            } else Option(value)
+          })
+          const(stage2.result())
         }
       }
 
@@ -908,13 +899,10 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val buffer = MMap.empty[String, Any]
+        val buffer = new util.HashMap[String, Any](1)
         // In this case, one field assumes the whole payload. We use
         // its associated codec.
-        buffer += payloadField.label -> cursor.decode(
-          codec,
-          in
-        )
+        buffer.put(payloadField.label, cursor.decode(codec, in))
 
         // At this point, we have parsed the json and retrieved
         // all the values that interest us for the construction
@@ -923,19 +911,16 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         // with the ones pull the metadata, and call the constructor
         // on it.
         { (meta: scala.collection.Map[String, Any]) =>
-          meta.foreach(buffer += _) // 2.12
-          val stage2 = scala.collection.mutable.ListBuffer.empty[Any]
-          fields.foreach {
-            case f if f.isRequired =>
-              buffer.get(f.label) match {
-                case Some(value) => stage2 += value
-                case None =>
-                  cursor.requiredFieldError(f.label, f.label)
-              }
-            case f =>
-              stage2 += buffer.get(f.label)
-          }
-          const(stage2.toVector)
+          meta.foreach(kv => buffer.put(kv._1, kv._2))
+          val stage2 = new VectorBuilder[Any]
+          fields.foreach(f => stage2 += {
+            val value = buffer.get(f.label)
+            if (f.isRequired) {
+              if (value == null) cursor.requiredFieldError(f.label, f.label)
+              value
+            } else Option(value)
+          })
+          const(stage2.result())
         }
       }
 
