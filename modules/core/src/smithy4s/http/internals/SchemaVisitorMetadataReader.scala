@@ -31,7 +31,7 @@ import smithy4s.internals.InputOutput
 import smithy4s.schema._
 
 import java.{util => ju}
-import scala.collection.mutable.{ListBuffer, Map => MMap}
+import scala.collection.mutable.{Map => MMap}
 
 private[http] object SchemaVisitorMetadataReader
     extends SchemaVisitorMetadataReader
@@ -105,13 +105,8 @@ private[http] class SchemaVisitorMetadataReader()
       member: Schema[A]
   ): MetaDecode[List[A]] = {
     self(member) match {
-      case MetaDecode.StringValueMetaDecode(f) => {
-        MetaDecode.StringListMetaDecode[List[A]] { iterator =>
-          val buffer = ListBuffer.empty[A]
-          iterator.foreach(string => buffer += f(string))
-          buffer.toList
-        }
-      }
+      case MetaDecode.StringValueMetaDecode(f) =>
+        MetaDecode.StringListMetaDecode[List[A]](_.map(f).toList)
       case _ => EmptyMetaDecode
     }
   }
@@ -123,11 +118,7 @@ private[http] class SchemaVisitorMetadataReader()
   ): MetaDecode[Set[A]] =
     self(member) match {
       case MetaDecode.StringValueMetaDecode(f) =>
-        MetaDecode.StringListMetaDecode[Set[A]] { iterator =>
-          val buffer = ListBuffer.empty[A]
-          iterator.foreach(string => buffer += f(string))
-          buffer.toSet
-        }
+        MetaDecode.StringListMetaDecode[Set[A]](_.map(f).toSet)
       case _ => EmptyMetaDecode
     }
 
