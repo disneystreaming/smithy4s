@@ -303,69 +303,141 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
     }
   }
 
-  def vector[A](jc: JCodecMake[A]): JCodecMake[Vector[A]] =
-    Hinted[JCodec]
-      .static {
-        val a = jc.get
+  def vector[A](jc: JCodecMake[A]): JCodecMake[Vector[A]] = Hinted[JCodec].static {
+    new JCodec[Vector[A]] {
+      val a = jc.get
+      val expecting: String = "list"
 
-        new JCodec[Vector[A]] {
-          val expecting: String = "list"
+      override def canBeKey: Boolean = false
 
-          override def canBeKey: Boolean = false
-
-          def decodeValue(cursor: Cursor, in: JsonReader): Vector[A] = {
-            if (in.isNextToken('[')) {
-              if (in.isNextToken(']')) Vector.empty
-              else {
-                in.rollbackToken()
-                val buffer = new ListBuffer[A]
-                var i = 0
-                while ({
-                  if (i >= maxArity)
-                    throw cursor.payloadError(
-                      this,
-                      s"input $expecting exceeded max arity of `$maxArity`"
-                    )
-                  buffer += cursor.under(i)(cursor.decode(a, in))
-                  i += 1
-                  in.isNextToken(',')
-                }) ()
-                if (in.isCurrentToken(']')) buffer.toVector
-                else in.arrayEndOrCommaError()
-              }
-            } else in.decodeError("Expected JSON array")
+      def decodeValue(cursor: Cursor, in: JsonReader): Vector[A] =
+        if (in.isNextToken('[')) {
+          if (in.isNextToken(']')) Vector.empty
+          else {
+            in.rollbackToken()
+            val builder = new VectorBuilder[A]
+            var i = 0
+            while ({
+              if (i >= maxArity)
+                throw cursor.payloadError(
+                  this,
+                  s"input $expecting exceeded max arity of `$maxArity`"
+                )
+              builder += cursor.under(i)(cursor.decode(a, in))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (in.isCurrentToken(']')) builder.result()
+            else in.arrayEndOrCommaError()
           }
+        } else in.decodeError("Expected JSON array")
 
-          def encodeValue(list: Vector[A], out: JsonWriter): Unit = {
-            out.writeArrayStart()
-            list.foreach { x =>
-              a.encodeValue(x, out)
-            }
-            out.writeArrayEnd()
-          }
-
-          def decodeKey(in: JsonReader): Vector[A] =
-            in.decodeError("Cannot use vectors as keys")
-
-          def encodeKey(x: Vector[A], out: JsonWriter): Unit =
-            out.encodeError("Cannot use vectors as keys")
-
+      def encodeValue(xs: Vector[A], out: JsonWriter): Unit = {
+        out.writeArrayStart()
+        val len = xs.length
+        var i = 0
+        while (i < len) {
+          a.encodeValue(xs(i), out)
+          i += 1
         }
+        out.writeArrayEnd()
       }
 
-  def list[A](a: JCodecMake[A]): JCodecMake[List[A]] =
-    vector(a).transform(_.biject(_.toList, _.toVector))
+      def decodeKey(in: JsonReader): Vector[A] = in.decodeError("Cannot use vectors as keys")
 
-  def set[A](a: JCodecMake[A]): JCodecMake[Set[A]] =
-    vector(a).transform(_.biject(_.toSet, _.toVector))
-
-  def map[K, V](jk: JCodecMake[K], jv: JCodecMake[V]): JCodecMake[Map[K, V]] = {
-    if (jk.get.canBeKey) {
-      objectMap(jk, jv)
-    } else {
-      arrayMap(jk, jv)
+      def encodeKey(xs: Vector[A], out: JsonWriter): Unit = out.encodeError("Cannot use vectors as keys")
     }
   }
+
+  def list[A](jc: JCodecMake[A]): JCodecMake[List[A]] = Hinted[JCodec].static {
+    new JCodec[List[A]] {
+      val a = jc.get
+      val expecting: String = "list"
+
+      override def canBeKey: Boolean = false
+
+      def decodeValue(cursor: Cursor, in: JsonReader): List[A] =
+        if (in.isNextToken('[')) {
+          if (in.isNextToken(']')) Nil
+          else {
+            in.rollbackToken()
+            val builder = new ListBuffer[A]
+            var i = 0
+            while ( {
+              if (i >= maxArity)
+                throw cursor.payloadError(
+                  this,
+                  s"input $expecting exceeded max arity of `$maxArity`"
+                )
+              builder += cursor.under(i)(cursor.decode(a, in))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (in.isCurrentToken(']')) builder.result()
+            else in.arrayEndOrCommaError()
+          }
+        } else in.decodeError("Expected JSON array")
+
+      def encodeValue(xs: List[A], out: JsonWriter): Unit = {
+        out.writeArrayStart()
+        var list = xs
+        while (list ne Nil) {
+          a.encodeValue(list.head, out)
+          list = list.tail
+        }
+        out.writeArrayEnd()
+      }
+
+      def decodeKey(in: JsonReader): List[A] = in.decodeError("Cannot use vectors as keys")
+
+      def encodeKey(xs: List[A], out: JsonWriter): Unit = out.encodeError("Cannot use vectors as keys")
+    }
+  }
+
+  def set[A](jc: JCodecMake[A]): JCodecMake[Set[A]] = Hinted[JCodec].static {
+    new JCodec[Set[A]] {
+      val a = jc.get
+      val expecting: String = "list"
+
+      override def canBeKey: Boolean = false
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Set[A] =
+        if (in.isNextToken('[')) {
+          if (in.isNextToken(']')) Set.empty
+          else {
+            in.rollbackToken()
+            val builder = Set.newBuilder[A]
+            var i = 0
+            while ({
+              if (i >= maxArity)
+                throw cursor.payloadError(
+                  this,
+                  s"input $expecting exceeded max arity of `$maxArity`"
+                )
+              builder += cursor.under(i)(cursor.decode(a, in))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (in.isCurrentToken(']')) builder.result()
+            else in.arrayEndOrCommaError()
+          }
+        } else in.decodeError("Expected JSON array")
+
+      def encodeValue(xs: Set[A], out: JsonWriter): Unit = {
+        out.writeArrayStart()
+        xs.foreach(x => a.encodeValue(x, out))
+        out.writeArrayEnd()
+      }
+
+      def decodeKey(in: JsonReader): Set[A] = in.decodeError("Cannot use vectors as keys")
+
+      def encodeKey(xs: Set[A], out: JsonWriter): Unit = out.encodeError("Cannot use vectors as keys")
+    }
+  }
+
+  def map[K, V](jk: JCodecMake[K], jv: JCodecMake[V]): JCodecMake[Map[K, V]] =
+    if (jk.get.canBeKey) objectMap(jk, jv)
+    else arrayMap(jk, jv)
 
   private def objectMap[K, V](
       jk: JCodecMake[K],
@@ -381,7 +453,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           if (in.isNextToken('}')) Map.empty
           else {
             in.rollbackToken()
-            val buffer = MMap.empty[K, V]
+            val builder = Map.newBuilder[K, V]
             var i = 0
             while ({
               if (i >= maxArity)
@@ -389,32 +461,28 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
                   this,
                   s"input $expecting exceeded max arity of `$maxArity`"
                 )
-              buffer += (k.decodeKey(in) -> cursor.under(i)(
-                cursor.decode(v, in)
-              ))
+              builder += ((k.decodeKey(in), cursor.under(i)(cursor.decode(v, in))))
               i += 1
               in.isNextToken(',')
             }) ()
-            if (in.isCurrentToken('}')) buffer.toMap
+            if (in.isCurrentToken('}')) builder.result()
             else in.objectEndOrCommaError()
           }
         } else in.decodeError("Expected JSON object")
       }
 
-      def encodeValue(map: Map[K, V], out: JsonWriter): Unit = {
+      def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
         out.writeObjectStart()
-        map.foreach { case (key, value) =>
+        xs.foreach { case (key, value) =>
           k.encodeKey(key, out)
           v.encodeValue(value, out)
         }
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Map[K, V] =
-        in.decodeError("Cannot use maps as keys")
+      def decodeKey(in: JsonReader): Map[K, V] = in.decodeError("Cannot use maps as keys")
 
-      def encodeKey(x: Map[K, V], out: JsonWriter): Unit =
-        out.encodeError("Cannot use maps as keys")
+      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit = out.encodeError("Cannot use maps as keys")
     }
   }
 
@@ -474,18 +542,17 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
         alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-      val handlerMap: Map[String, (Cursor, JsonReader) => Z] = {
-        val res = MMap.empty[String, (Cursor, JsonReader) => Z]
-        def handler[A](alt: Alt[JCodecMake, Z, A]) = {
-          val codec = alt.instance.get
-          (cursor: Cursor, reader: JsonReader) =>
-            alt.inject(cursor.decode(codec, reader))
-        }
+      private[this] val handlerMap: util.HashMap[String, (Cursor, JsonReader) => Z] =
+        new util.HashMap[String, (Cursor, JsonReader) => Z] {
+          def handler[A](alt: Alt[JCodecMake, Z, A]) = {
+            val codec = alt.instance.get
+            (cursor: Cursor, reader: JsonReader) =>
+              alt.inject(cursor.decode(codec, reader))
+          }
 
-        res += (jsonLabel(first) -> handler(first))
-        rest.foreach(alt => res += (jsonLabel(alt) -> handler(alt)))
-        res.toMap
-      }
+          put(jsonLabel(first), handler(first))
+          rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
+        }
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z = {
         if (in.isNextToken('{')) {
@@ -495,10 +562,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
             in.rollbackToken()
             val key = in.readKeyAsString()
             val result = cursor.under(key) {
-              handlerMap.get(key).map(_.apply(cursor, in))
-            } match {
-              case Some(value) => value
-              case None        => in.discriminatorValueError(key)
+              val handler = handlerMap.get(key)
+              if (handler eq null) in.discriminatorValueError(key)
+              handler(cursor, in)
             }
             if (in.isNextToken('}')) result
             else {
