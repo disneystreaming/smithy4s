@@ -198,9 +198,7 @@ private[http] class SchemaVisitorMetadataReader()
       }
     }
     val fieldUpdates: Vector[FieldDecode] =
-      fields.map(f => decodeField(f)).collect { case Some(fieldUpdate) =>
-        fieldUpdate
-      }
+      fields.flatMap(f => decodeField(f))
 
     val partial = { (metadata: Metadata) =>
       val buffer = MMap.empty[String, Any]

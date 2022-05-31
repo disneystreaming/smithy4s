@@ -171,10 +171,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
           field.leftFolder(folderT)
         }
     }
-    val updateFunctions = fields.map(field => encodeField(field)).collect {
-      case Some(updateFunction) =>
-        updateFunction
-    }
+    val updateFunctions = fields.flatMap(field => encodeField(field))
 
     StructureMetaEncode(s =>
       updateFunctions.foldLeft(Metadata.empty)((metadata, updateFunction) =>
