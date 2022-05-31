@@ -744,28 +744,50 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       field: Field[JCodecMake, Z, A]
   ): (Z, JsonWriter) => Unit = {
     field.fold(new Field.Folder[JCodecMake, Z, (Z, JsonWriter) => Unit] {
-      val jLabel = jsonLabel(field)
       def onRequired[AA](
           label: String,
           instance: JCodecMake[AA],
           get: Z => AA
       ): (Z, JsonWriter) => Unit = {
         val codec = instance.get
-        (z: Z, out: JsonWriter) => {
-          out.writeKey(jLabel)
-          codec.encodeValue(get(z), out)
+        val jLabel = jsonLabel(field)
+        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
+          (z: Z, out: JsonWriter) => {
+            out.writeNonEscapedAsciiKey(jLabel)
+            codec.encodeValue(get(z), out)
+          }
+        } else {
+          (z: Z, out: JsonWriter) => {
+            out.writeKey(jLabel)
+            codec.encodeValue(get(z), out)
+          }
         }
       }
+
       def onOptional[AA](
           label: String,
           instance: JCodecMake[AA],
           get: Z => Option[AA]
       ): (Z, JsonWriter) => Unit = {
         val codec = instance.get
-        (z: Z, out: JsonWriter) => {
-          get(z).foreach { maybeAA =>
-            out.writeKey(jLabel)
-            codec.encodeValue(maybeAA, out)
+        val jLabel = jsonLabel(field)
+        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
+          (z: Z, out: JsonWriter) => {
+            get(z) match {
+              case Some(aa) =>
+                out.writeNonEscapedAsciiKey(jLabel)
+                codec.encodeValue(aa, out)
+              case _ =>
+            }
+          }
+        } else {
+          (z: Z, out: JsonWriter) => {
+            get(z) match {
+              case Some(aa) =>
+                out.writeKey(jLabel)
+                codec.encodeValue(aa, out)
+              case _ =>
+            }
           }
         }
       }
