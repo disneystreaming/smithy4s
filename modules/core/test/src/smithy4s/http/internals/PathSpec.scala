@@ -29,15 +29,16 @@ object PathSpec extends weaver.FunSuite {
   import smithy4s.schema.Schema._
   object util {
 
-    def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = schema
-      .addHints(
-        Http(
-          method = NonEmptyString("GET"),
-          uri = NonEmptyString("/{label}")
+    def encodePathAs[A](schema: Schema[A]): Option[PathEncode[A]] = {
+      val schemaA = schema
+        .addHints(
+          Http(
+            method = NonEmptyString("GET"),
+            uri = NonEmptyString("/{label}")
+          )
         )
-      )
-      .compile(SchematicPathEncoder)
-      .get
+      SchemaVisitorPathEncoder(schemaA)
+    }
 
     val simpleString = encodePathAs(string)
   }
@@ -83,7 +84,7 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema") {
-    val result = struct
+    val schema = struct
       .genericArity(
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("secondLabel", _ => "example2")
@@ -94,8 +95,7 @@ object PathSpec extends weaver.FunSuite {
           uri = NonEmptyString("/{label}/const/{secondLabel}")
         )
       )
-      .compile(SchematicPathEncoder)
-      .get
+      val result = SchemaVisitorPathEncoder(schema)
       .map(_.encode(()))
 
     assert.eql(
@@ -105,7 +105,7 @@ object PathSpec extends weaver.FunSuite {
   }
 
   test("Write PathParams for a struct schema - URI ending with greedy label") {
-    val result = struct
+    val schema = struct
       .genericArity(
         string.required[Unit]("label", _ => "example"),
         string.required[Unit]("greedyLabel", _ => "example2/with/slashes")
@@ -116,8 +116,7 @@ object PathSpec extends weaver.FunSuite {
           uri = NonEmptyString("/{label}/const/{greedyLabel+}")
         )
       )
-      .compile(SchematicPathEncoder)
-      .get
+      val result = SchemaVisitorPathEncoder(schema)
       .map(_.encode(()))
 
     assert.eql(
