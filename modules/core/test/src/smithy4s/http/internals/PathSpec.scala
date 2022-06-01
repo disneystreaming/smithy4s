@@ -95,7 +95,7 @@ object PathSpec extends weaver.FunSuite {
           uri = NonEmptyString("/{label}/const/{secondLabel}")
         )
       )
-      val result = SchemaVisitorPathEncoder(schema)
+    val result = SchemaVisitorPathEncoder(schema)
       .map(_.encode(()))
 
     assert.eql(
@@ -116,7 +116,7 @@ object PathSpec extends weaver.FunSuite {
           uri = NonEmptyString("/{label}/const/{greedyLabel+}")
         )
       )
-      val result = SchemaVisitorPathEncoder(schema)
+    val result = SchemaVisitorPathEncoder(schema)
       .map(_.encode(()))
 
     assert.eql(
