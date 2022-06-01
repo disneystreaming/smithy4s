@@ -18,6 +18,7 @@ package smithy4s
 package http
 
 import smithy.api.Http
+import smithy4s.http.internals.SchemaVisitorPathEncoder
 
 trait HttpEndpoint[I] {
   // Returns a list of path segments that should be appended to the base URL. These are not URL-encoded.
@@ -46,10 +47,11 @@ object HttpEndpoint {
       http <- endpoint.hints.get(Http)
       httpMethod <- HttpMethod.fromString(http.method.value)
       httpPath <- internals.pathSegments(http.uri.value)
-      encoder <- endpoint.input
-        .addHints(http)
-        .compile(internals.SchematicPathEncoder)
-        .get
+      encoder <- SchemaVisitorPathEncoder(
+        endpoint.input
+          .addHints(http)
+      )
+
     } yield {
       new HttpEndpoint[I] {
         def path(input: I): List[String] = encoder.encode(input)
