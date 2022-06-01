@@ -2,7 +2,6 @@ package smithy4s.http4s
 
 import weaver._
 
-import smithy4s.http4s.SimpleRestJsonBuilder
 import org.http4s.HttpApp
 import cats.effect.IO
 import org.http4s.Uri
