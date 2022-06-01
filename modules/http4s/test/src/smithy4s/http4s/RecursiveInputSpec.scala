@@ -10,10 +10,11 @@ import org.http4s.Uri
 object RecursiveInputSpec extends FunSuite {
 
   test("simpleRestJson works with recursive input operations") {
-    val result = SimpleRestJsonBuilder(smithy4s.example.RecursiveInputService).client(
-      HttpApp.notFound[IO],
-      Uri.unsafeFromString("http://localhost")
-    )
+    val result =
+      SimpleRestJsonBuilder(smithy4s.example.RecursiveInputService).client(
+        HttpApp.notFound[IO],
+        Uri.unsafeFromString("http://localhost")
+      )
 
     expect(result.isRight)
   }
