@@ -164,5 +164,10 @@ object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
     self(schema).map(_.contramap(from))
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = default
+  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = {
+    // "safe" because the `structure` implementation will not exercise any recursion
+    // due to the fact that httpLabel can only be applied on members targeting
+    // simple shapes.
+    suspend.map(this.apply(_)).value
+  }
 }

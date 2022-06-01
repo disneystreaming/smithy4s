@@ -29,6 +29,7 @@ import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
 import smithy4s.meta.AdtMemberTrait
+import software.amazon.smithy.model.selector.PathFinder
 
 object SmithyToIR {
 
@@ -50,6 +51,8 @@ object SmithyToIR {
 }
 
 private[codegen] class SmithyToIR(model: Model, namespace: String) {
+
+  val finder = PathFinder.create(model)
 
   val allShapes =
     model
@@ -84,7 +87,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
-        val rec = isRecursive(shape.getId(), Set.empty)
+        val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         val p = Product(shape.name, shape.name, shape.fields, rec, hints).some
@@ -94,7 +97,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
-        val rec = isRecursive(shape.getId(), Set.empty)
+        val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         NonEmptyList.fromList(shape.alts).map { case alts =>
@@ -192,16 +195,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
     }
 
-  private def isRecursive(id: ShapeId, visited: Set[ShapeId]): Boolean =
-    if (visited.contains(id)) true
-    else
-      model
-        .getShape(id)
-        .asScala
-        .toList
-        .flatMap(_.members().asScala.toList)
-        .map(_.getTarget())
-        .exists(isRecursive(_, visited + id))
+  private def isRecursive(id: ShapeId): Boolean = {
+    // A shape is recursive if there is a relationship from itself to itself.
+    val shape = model.expectShape(id)
+    val paths = finder.search(shape, List(shape).asJava)
+    !paths.isEmpty()
+  }
 
   private def addedTraits(
       traits: java.util.Collection[Trait]
