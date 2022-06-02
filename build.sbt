@@ -390,7 +390,7 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core)
+  .dependsOn(core, tests % "test->compile", http4s % "test->compile")
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
