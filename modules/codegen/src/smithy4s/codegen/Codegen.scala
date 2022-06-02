@@ -72,7 +72,8 @@ object Codegen { self =>
 
     val reserved =
       Set(
-        "smithy4s.api"
+        "smithy4s.api",
+        "smithy4s.meta"
       )
     val excluded = excludedNS.getOrElse(Set.empty)
 
