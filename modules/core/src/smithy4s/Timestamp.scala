@@ -25,7 +25,7 @@ import smithy4s.Timestamp.sbExt
 /**
   * Platform-agnostic UTC timestamp representation.
   *
-  * The [[schematic.TimePlatformCompat]] trait provides a "nowUTC" method to get the current time.
+  * The [[TimestampPlatformMethods]] trait provides a "nowUTC" method to get the current time.
   */
 abstract class Timestamp private[smithy4s] () extends TimestampPlatformMethods {
   def year: Int
@@ -90,7 +90,7 @@ abstract class Timestamp private[smithy4s] () extends TimestampPlatformMethods {
 }
 
 /**
-  * The [[smithy4s.TimePlatformCompat]] contains all the platform-specific
+  * The [[TimePlatformCompat]] contains all the platform-specific
   * code that has to do with retrieving time from the system, and is provided
   * for the hree platforms (jvm/js/native.)
   */

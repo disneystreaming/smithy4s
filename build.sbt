@@ -23,6 +23,11 @@ Global / licenses := Seq(
 
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
+ThisBuild / version := {
+  if (!sys.env.contains("CI")) "dev"
+  else (ThisBuild / version).value
+}
+
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
