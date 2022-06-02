@@ -377,6 +377,7 @@ lazy val protocolTests = projectMatrix
     ),
     Test / fork := true
   )
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
 
 /**
  * This modules contains utilities to dynamically instantiate
