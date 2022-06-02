@@ -180,7 +180,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
       def decodeValue(cursor: Cursor, in: JsonReader): ByteArray = ByteArray(in.readBase64AsBytes(null))
 
-      def encodeValue(x: ByteArray, out: JsonWriter): Unit = out.writeBase64Val(x.array, doPadding = false)
+      def encodeValue(x: ByteArray, out: JsonWriter): Unit = out.writeBase64Val(x.array, doPadding = true)
 
       def decodeKey(in: JsonReader): ByteArray = in.decodeError("Cannot use byte array as key")
 
