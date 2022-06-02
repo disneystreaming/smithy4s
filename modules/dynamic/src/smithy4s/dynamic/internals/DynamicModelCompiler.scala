@@ -396,20 +396,22 @@ private[dynamic] object Compiler {
           val lFields = {
             members.zipWithIndex
               .map { case ((label, mShape), index) =>
-                val memberHints = allHints(mShape.traits)
                 val lMemberSchema =
-                  schema(mShape.target).map(_.addHints(memberHints: _*))
-                if (
-                  mShape.traits
-                    .getOrElse(Map.empty)
-                    .contains(IdRef("smithy.api#required"))
-                ) {
-                  lMemberSchema.map(_.required[DynStruct](label, _(index)))
-                } else {
-                  lMemberSchema.map(
-                    _.optional[DynStruct](label, arr => Option(arr(index)))
-                  )
-                }
+                  schema(mShape.target)
+                val lField =
+                  if (
+                    mShape.traits
+                      .getOrElse(Map.empty)
+                      .contains(IdRef("smithy.api#required"))
+                  ) {
+                    lMemberSchema.map(_.required[DynStruct](label, _(index)))
+                  } else {
+                    lMemberSchema.map(
+                      _.optional[DynStruct](label, arr => Option(arr(index)))
+                    )
+                  }
+                val memberHints = allHints(mShape.traits)
+                lField.map(_.addHints(memberHints: _*))
               }
               .toVector
               .sequence
@@ -430,8 +432,8 @@ private[dynamic] object Compiler {
                 .map { case ((label, mShape), index) =>
                   val memberHints = allHints(mShape.traits)
                   schema(mShape.target)
-                    .map(_.addHints(memberHints: _*))
                     .map(_.oneOf[DynAlt](label, (data: Any) => (index, data)))
+                    .map(_.addHints(memberHints: _*))
                 }
                 .toVector
                 .sequence

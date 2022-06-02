@@ -23,6 +23,11 @@ Global / licenses := Seq(
 
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
+ThisBuild / version := {
+  if (!sys.env.contains("CI")) "dev"
+  else (ThisBuild / version).value
+}
+
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
@@ -386,7 +391,7 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core)
+  .dependsOn(core, tests % "test->compile", http4s % "test->compile")
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(

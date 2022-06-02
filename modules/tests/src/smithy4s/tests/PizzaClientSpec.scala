@@ -192,18 +192,23 @@ abstract class PizzaClientSpec extends IOSuite {
   }
 
   def clientTest(name: TestName)(
-      f: (PizzaAdminService[IO], Backend, Log[IO]) => IO[Expectations]
+      f: (
+          smithy4s.Monadic[PizzaAdminServiceGen, IO],
+          Backend,
+          Log[IO]
+      ) => IO[Expectations]
   ): Unit =
     test(name) { (res, log) => f(res._1, res._2, log) }
 
   // If right, TCP will be exercised.
   def makeClient: Either[
-    HttpApp[IO] => Resource[IO, PizzaAdminService[IO]],
-    Int => Resource[IO, PizzaAdminService[IO]]
+    HttpApp[IO] => Resource[IO, smithy4s.Monadic[PizzaAdminServiceGen, IO]],
+    Int => Resource[IO, smithy4s.Monadic[PizzaAdminServiceGen, IO]]
   ]
 
-  type Res = (PizzaAdminService[IO], Backend)
-  def sharedResource: Resource[IO, (PizzaAdminService[IO], Backend)] =
+  type Res = (smithy4s.Monadic[PizzaAdminServiceGen, IO], Backend)
+  def sharedResource
+      : Resource[IO, (smithy4s.Monadic[PizzaAdminServiceGen, IO], Backend)] =
     for {
       ref <- Resource.eval(Compat.ref(State.empty))
       app = router(ref)
@@ -253,11 +258,15 @@ abstract class PizzaClientSpec extends IOSuite {
   }
 
   def router(ref: Compat.Ref[IO, State]) = {
-    def storeAndReturn(key: String, request: Request[IO]): IO[Response[IO]] = {
-      ref
-        .updateAndGet(_.saveRequest(key, request))
-        .flatMap(_.getResponse(key))
-    }
+    def storeAndReturn(key: String, request: Request[IO]): IO[Response[IO]] =
+      // Collecting the whole body eagerly to make sure we don't consume it after closing the connection
+      request.body.compile.toVector.flatMap { body =>
+        ref
+          .updateAndGet(
+            _.saveRequest(key, request.withBodyStream(fs2.Stream.emits(body)))
+          )
+          .flatMap(_.getResponse(key))
+      }
 
     object Q extends OptionalQueryParamDecoderMatcher[String]("query")
 

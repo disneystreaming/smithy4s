@@ -22,6 +22,10 @@ import smithy4s.dynamic.model.Model
 
 object DecodingSpec extends SimpleIOSuite {
 
+  /*
+   * Although not needed for equality, we sort the shapes in the model
+   * to make diffs more readable in case of failed assertions.
+   */
   private def order(model: Model): Model =
     model.copy(shapes =
       scala.collection.immutable.ListMap(

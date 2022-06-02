@@ -24,6 +24,8 @@ package dynamic
   */
 trait DynamicSchemaIndex {
   def allServices: List[DynamicSchemaIndex.ServiceWrapper]
+  def getService(shapeId: ShapeId): Option[DynamicSchemaIndex.ServiceWrapper] =
+    allServices.find(_.service.id == shapeId)
 
   def getSchema(shapeId: ShapeId): Option[Schema[_]]
 }
