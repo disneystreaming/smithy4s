@@ -218,7 +218,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
   def uuid: JCodecMake[UUID] = Hinted[JCodec].static {
     new JCodec[UUID] {
-      val expecting: String = "uuid"
+      def expecting: String = "uuid"
 
       def decodeValue(cursor: Cursor, in: JsonReader): UUID = in.readUUID(null)
 
@@ -260,6 +260,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
   def list[A](jc: JCodecMake[A]): JCodecMake[List[A]] = Hinted[JCodec].static {
     new JCodec[List[A]] {
       private[this] val a = jc.get
+
       def expecting: String = "list"
 
       override def canBeKey: Boolean = false
@@ -305,6 +306,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
   def set[A](jc: JCodecMake[A]): JCodecMake[Set[A]] = Hinted[JCodec].static {
     new JCodec[Set[A]] {
       private[this] val a = jc.get
+
       def expecting: String = "list"
 
       override def canBeKey: Boolean = false
@@ -397,12 +399,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       k: JCodecMake[K],
       v: JCodecMake[V]
   ): JCodecMake[Map[K, V]] = {
-    type KV = (K, V)
-    val kField = Field.required[JCodecMake, KV, K]("key", k, _._1)
-    val vField = Field.required[JCodecMake, KV, V]("value", v, _._2)
-    val kvCodec = struct(Vector(kField, vField))(vec =>
-      (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V])
-    )
+    val kField = Field.required[JCodecMake, (K, V), K]("key", k, _._1)
+    val vField = Field.required[JCodecMake, (K, V), V]("value", v, _._2)
+    val kvCodec = struct(Vector(kField, vField))(vec => (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V]))
     list(kvCodec).transform(_.biject(_.toMap, _.toList))
   }
 
@@ -458,10 +457,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
           rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
         if (in.isNextToken('{')) {
-          if (in.isNextToken('}'))
-            in.decodeError("Expected a single key/value pair")
+          if (in.isNextToken('}')) in.decodeError("Expected a single key/value pair")
           else {
             in.rollbackToken()
             val key = in.readKeyAsString()
@@ -477,7 +475,6 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
             }
           }
         } else in.decodeError("Expected JSON object")
-      }
 
       private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
         def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
@@ -507,8 +504,8 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
     override def canBeKey: Boolean = false
 
-    private[this] val handlerList: Vector[(Cursor, JsonReader) => Z] = {
-      val res = Vector.newBuilder[(Cursor, JsonReader) => Z]
+    private[this] val handlerList: Array[(Cursor, JsonReader) => Z] = {
+      val res = Array.newBuilder[(Cursor, JsonReader) => Z]
       def handler[A](alt: Alt[JCodecMake, Z, A]) = {
         val codec = alt.instance.get
         (cursor: Cursor, reader: JsonReader) =>
@@ -521,8 +518,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
     def decodeValue(cursor: Cursor, in: JsonReader): Z = {
       var z: Z = null.asInstanceOf[Z]
+      val len = handlerList.length
       var i = 0
-      while (z == null && i < handlerList.size) {
+      while (z == null && i < len) {
         in.setMark()
         val handler = handlerList(i)
         try {
@@ -579,24 +577,20 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
           rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
         if (in.isNextToken('{')) {
           in.setMark()
-          val key = if (in.skipToKey(discriminated.value)) {
-            val k = in.readString("")
+          if (in.skipToKey(discriminated.value)) {
+            val key = in.readString("")
             in.rollbackToMark()
             in.rollbackToken()
-            k
-          } else {
-            in.decodeError(s"Unable to find discriminator ${discriminated.value}")
-          }
-          cursor.under(key) {
-            val handler = handlerMap.get(key)
-            if (handler eq null) in.discriminatorValueError(key)
-            handler(cursor, in)
-          }
+            cursor.under(key) {
+              val handler = handlerMap.get(key)
+              if (handler eq null) in.discriminatorValueError(key)
+              handler(cursor, in)
+            }
+          } else in.decodeError(s"Unable to find discriminator ${discriminated.value}")
         } else in.decodeError("Expected JSON object")
-      }
 
       private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
         def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = {
@@ -749,7 +743,6 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
   ): JCodec[Z] =
     new JCodec[Z] {
-
       private[this] val documentFields =
         fields.filter { field =>
           val hints = field.instance.hints
@@ -956,47 +949,51 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         val b = in.nextToken()
         if (b == '"') {
           in.rollbackToken()
-          DString(in.readString(null))
+          new DString(in.readString(null))
         } else if (b == 'f' || b == 't') {
           in.rollbackToken()
-          DBoolean(in.readBoolean())
+          new DBoolean(in.readBoolean())
         } else if ((b >= '0' && b <= '9') || b == '-') {
           in.rollbackToken()
-          DNumber(in.readBigDecimal(null))
-        } else if (b == '[') DArray {
-          if (in.isNextToken(']')) IndexedSeq.empty[Document]
-          else {
-            in.rollbackToken()
-            var arr = new Array[Document](4)
-            var i = 0
-            while ({
-              if (i >= maxArity) maxArityError(cursor)
-              if (i == arr.length) arr = java.util.Arrays.copyOf(arr, i << 1)
-              arr(i) = decodeValue(in, null)
-              i += 1
-              in.isNextToken(',')
-            }) {}
-            if (in.isCurrentToken(']')) ArraySeq.unsafeWrapArray {
-              if (i == arr.length) arr
-              else java.util.Arrays.copyOf(arr, i)
-            } else in.arrayEndOrCommaError()
-          }
-        } else if (b == '{') DObject {
-          if (in.isNextToken('}')) Map.empty
-          else {
-            in.rollbackToken()
-            // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
-            val obj = Map.newBuilder[String, Document]
-            var i = 0
-            while ({
-              if (i >= maxArity) maxArityError(cursor)
-              obj += ((in.readKeyAsString(), decodeValue(in, null)))
-              i += 1
-              in.isNextToken(',')
-            }) {}
-            if (in.isCurrentToken('}')) obj.result()
-            else in.objectEndOrCommaError()
-          }
+          new DNumber(in.readBigDecimal(null))
+        } else if (b == '[') {
+          new DArray({
+            if (in.isNextToken(']')) IndexedSeq.empty[Document]
+            else {
+              in.rollbackToken()
+              var arr = new Array[Document](4)
+              var i = 0
+              while ({
+                if (i >= maxArity) maxArityError(cursor)
+                if (i == arr.length) arr = java.util.Arrays.copyOf(arr, i << 1)
+                arr(i) = decodeValue(in, null)
+                i += 1
+                in.isNextToken(',')
+              }) {}
+              if (in.isCurrentToken(']')) ArraySeq.unsafeWrapArray {
+                if (i == arr.length) arr
+                else java.util.Arrays.copyOf(arr, i)
+              } else in.arrayEndOrCommaError()
+            }
+          })
+        } else if (b == '{') {
+          new DObject({
+            if (in.isNextToken('}')) Map.empty
+            else {
+              in.rollbackToken()
+              // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
+              val obj = Map.newBuilder[String, Document]
+              var i = 0
+              while ({
+                if (i >= maxArity) maxArityError(cursor)
+                obj += ((in.readKeyAsString(), decodeValue(in, null)))
+                i += 1
+                in.isNextToken(',')
+              }) {}
+              if (in.isCurrentToken('}')) obj.result()
+              else in.objectEndOrCommaError()
+            }
+          })
         } else in.readNullOrError(DNull, "expected JSON document")
       }
 
