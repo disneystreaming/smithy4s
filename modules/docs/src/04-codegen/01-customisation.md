@@ -1,6 +1,6 @@
 ---
-sidebar_label: Protocols and smithy4s
-title: Protocols and smithy4s
+sidebar_label: Customisation
+title: Customisation
 ---
 
 Smithy4s is opinionated in what the generated code look like, there are a few things that can be tweaked.
