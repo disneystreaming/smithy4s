@@ -32,7 +32,7 @@ import smithy4s.schema.Schema._
 import weaver._
 import weaver.scalacheck._
 
-import codecs.schematicJCodec
+import codecs.schemaVisitorJCodec
 
 object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
 
@@ -59,7 +59,7 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
     forall(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
-        schema.compile(schematicJCodec).get
+        schema.compile(schemaVisitorJCodec)
       val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
       val json = writeToString(data)
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
@@ -86,7 +86,7 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
     forall(gen) { case (hints, schema, data) =>
       val hint = hints.all.head
       implicit val codec: JCodec[Any] =
-        schema.compile(schematicJCodec).get
+        schema.compile(schemaVisitorJCodec)
       val json = writeToString(data)
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
       val result = scala.util.Try(readFromString[Any](json, config)).toEither
