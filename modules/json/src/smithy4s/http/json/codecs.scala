@@ -23,9 +23,10 @@ import smithy4s.api.Discriminated
 import smithy4s.api.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.InputOutput
+import smithy4s.schema.SchemaVisitor
 
 final case class codecs(hintMask: HintMask = codecs.defaultHintMask)
-    extends JsonCodecAPI(HintMask.mask(codecs.schematicJCodec, hintMask))
+    extends JsonCodecAPI(codecs.schemaVisitorJCodec) // TODO hint mask
 
 object codecs {
 
@@ -39,7 +40,7 @@ object codecs {
       DiscriminatedUnionMember
     )
 
-  private[smithy4s] val schematicJCodec: Schematic[JCodec.JCodecMake] =
-    new SchematicJCodec(maxArity = 1024)
+  private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
+    new SchemaVisitorJCodec(maxArity = 1024)
 
 }

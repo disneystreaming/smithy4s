@@ -23,10 +23,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
 
 import java.nio.ByteBuffer
 
-import JCodec.JCodecMake
+import smithy4s.schema.SchemaVisitor
 
 abstract class JsonCodecAPI(
-    schematicJCodec: Schematic[JCodecMake],
+    schemaVisitorJCodec: SchemaVisitor[JCodec],
     readerConfig: ReaderConfig = JsonCodecAPI.defaultReaderConfig,
     writerConfig: WriterConfig = WriterConfig
 ) extends CodecAPI {
@@ -34,7 +34,7 @@ abstract class JsonCodecAPI(
   type Codec[A] = JCodec[A]
 
   def compileCodec[A](schema: Schema[A]): JCodec[A] =
-    schema.compile(schematicJCodec).get
+    schema.compile(schemaVisitorJCodec)
 
   def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
     HttpMediaType("application/json")
