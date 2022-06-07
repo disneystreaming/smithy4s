@@ -281,7 +281,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       out.writeKey(total(x).stringValue)
   }
   private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =
-    field.instance.hints
+    field.hints
       .get(JsonName)
       .map(_.value)
       .getOrElse(field.label)
@@ -375,8 +375,9 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
       private[this] val documentFields =
         fields.filter { field =>
-          val hints = field.instance.hints
-          HttpBinding.fromHints(field.label, hints, maybeInputOutput).isEmpty
+          HttpBinding
+            .fromHints(field.label, field.hints, maybeInputOutput)
+            .isEmpty
         }
 
       private[this] val handlers =
@@ -539,7 +540,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       DiscriminatedUnionMember.hint.unapply(hints)
     ) match {
       case (maybeInputOutput, maybeDiscriminated) =>
-        fields.find(_.instance.hints.get(HttpPayload).isDefined) match {
+        fields.find(_.hints.get(HttpPayload).isDefined) match {
           case Some(payloadField) =>
             val codec = apply(payloadField.instance)
             payloadStruct(payloadField, fields)(codec, make)
@@ -575,7 +576,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       override def canBeKey: Boolean = false
 
       def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
-        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+        alt.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
       private[this] val handlerMap
           : util.HashMap[String, (Cursor, JsonReader) => Z] =
@@ -700,7 +701,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       override def canBeKey: Boolean = false
 
       def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
-        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+        alt.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
       private[this] val handlerMap
           : util.HashMap[String, (Cursor, JsonReader) => Z] =
