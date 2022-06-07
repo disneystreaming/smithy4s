@@ -26,7 +26,7 @@ import smithy4s.internals.InputOutput
 import smithy4s.schema.SchemaVisitor
 
 final case class codecs(hintMask: HintMask = codecs.defaultHintMask)
-    extends JsonCodecAPI(codecs.schemaVisitorJCodec) // TODO hint mask
+    extends JsonCodecAPI(codecs.schemaVisitorJCodec, Some(hintMask))
 
 object codecs {
 
