@@ -17,4 +17,4 @@
 package smithy4s.aws.json
 
 private[aws] object awsJson
-    extends smithy4s.http.json.JsonCodecAPI(AwsSchematicJCodec) {}
+    extends smithy4s.http.json.JsonCodecAPI(AwsSchematicJCodec, None) {}
