@@ -63,7 +63,7 @@ When processing this Smithy model, Smithy4s renders a `case class Metadata(descr
 
 ```scala
 val hints = Hints(
-  Metadata("this is my own integer shape)
+  Metadata("this is my own integer shape")
 )
 ```
 
