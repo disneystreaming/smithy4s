@@ -3,8 +3,8 @@ sidebar_label: Datatypes and schemas
 title: Datatypes and schemas
 ---
 
-As stated before, smithy4s does not generate code that depends on any third party library.
-However, we want to use the generated code with specific serialisation technologies, such as JSON, or Protocol Buffers, or CBOR, MessagePack, XML (yes ... we know).
+As stated before, smithy4s generates code that does not depends on any third-party library.
+However, we still want to use the generated code with specific serialisation technologies, such as JSON, or Protocol Buffers, or CBOR, MessagePack, XML (yes ... we know).
 
 We also want to avoid having to implement complex macros to allow for auto-derivation of these things.
 For starters, the reality is that maintaining macros across two different Scala versions (2 and 3) is hard work.
@@ -34,7 +34,7 @@ It is encoded as a sealed trait, the members of which capture the following aspe
 * Structures
 * Unions
 
-For a Scala type called `Foo`, formulating a `Schema[Foo]` is equivalent to exhaustively capturing the information needed for the serialisation and deserialisation of `Foo` in any format (JSON, XML, ...). Indeed, for any `Codec[_]` construct provided by third party libraries, it is possible to write a generic `def compile(schema: Schema[A]): Codec[A]` function that produces the `Codec` for `A` based on the information held by the `Schema`.
+For a Scala type called `Foo`, formulating a `Schema[Foo]` is equivalent to exhaustively capturing the information needed for the serialisation and deserialisation of `Foo` in any format (JSON, XML, ...). Indeed, for any `Codec[_]` construct provided by third-party libraries, it is possible to write a generic `def compile(schema: Schema[A]): Codec[A]` function that produces the `Codec` for `A` based on the information held by the `Schema`.
 
 Why do things this way? Why not just render `Codec` during code generation?
 The reason is that we want for the generated code to be completely decoupled from any serialisation format of library, and for the user to have the ability to wire that generated code in different ways, without having to change anything in the build.
@@ -68,7 +68,7 @@ val hints = Hints(
 ```
 
 The `smithy4s.Hints` type is a polymorphic map that can hold shapes, keyed by `ShapeTag`.
-A `ShapeTag` is basically a uniquely identified tag that uses referential equality.
+A `ShapeTag` is a uniquely identified tag that uses referential equality.
 Every schema can hold a `Hints` instance, which means that in addition to the datatype structures, Schemas also offer an accurate reflection of the trait values that annotate shapes in the smithy models.
 
 Smithy4s uses these hints to implement interpreters.
@@ -119,7 +119,7 @@ Indeed, for each field, there is an associated reference to a schema (int, strin
 Additionally, the constructor of the case class is also referenced in the Schema.
 
 Typically, the accessors are needed for encoding the data, which involves destructuring it to access its individual components.
-The labels are there to cater to serialisation mechanisms like JSON or XML, which apply some labelled nesting on component data.
+The labels are there to cater to serialisation mechanisms like JSON or XML, where sub-components of a piece of data are labelled and nested under a larger block. 
 
 Conversely, the constructor is used for deserialisation, which involves reconstructing the data after all of its component values have been successfully deserialised.
 
@@ -138,7 +138,7 @@ For instance: `Some(None)` and `None` can easily have the same encoding in Json,
 
 ### Unions
 
-A union, also referred to as coproduct, or sum type, is a construct that expresses sealed polymorphism. It is the dual of a structure:
+Union, also referred to as coproduct, or sum type, is a construct that expresses sealed polymorphism. It is the dual of a structure:
 when structures express that you have **A AND B**, unions express that you can have **A OR B**.
 
 The way this is expressed in Smithy looks like this:
