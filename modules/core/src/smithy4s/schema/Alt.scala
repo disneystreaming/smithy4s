@@ -45,6 +45,14 @@ object Alt {
   final case class WithValue[F[_], U, A](alt: Alt[F, U, A], value: A) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
       WithValue(alt.mapK(fk), value)
+
+    /**
+     * Helper function to identify this `WithValue` as an instance of another `Alt`.
+     */
+    def matchAs[B](another: Alt[F, U, B]): Option[WithValue[F, U, B]] =
+      if (another eq alt)
+        Some(this.asInstanceOf[WithValue[F, U, B]])
+      else None
   }
 
   def liftK[F[_], G[_], U](
