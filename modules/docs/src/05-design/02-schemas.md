@@ -119,7 +119,7 @@ Indeed, for each field, there is an associated reference to a schema (int, strin
 Additionally, the constructor of the case class is also referenced in the Schema.
 
 Typically, the accessors are needed for encoding the data, which involves destructuring it to access its individual components.
-The labels are there to cater to serialisation mechanisms like JSON or XML, where sub-components of a piece of data are labelled and nested under a larger block. 
+The labels are there to cater to serialisation mechanisms like JSON or XML, where sub-components of a piece of data are labelled and nested under a larger block.
 
 Conversely, the constructor is used for deserialisation, which involves reconstructing the data after all of its component values have been successfully deserialised.
 
