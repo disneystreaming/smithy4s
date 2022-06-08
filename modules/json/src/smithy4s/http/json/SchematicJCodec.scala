@@ -873,14 +873,23 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
           case None =>
             maybeDiscriminated match {
               case Some(d) =>
-                val encode = {
-                  (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
-                    out.writeObjectStart()
-                    out.writeKey(d.propertyName)
-                    out.writeVal(d.alternativeLabel)
-                    documentEncoders.foreach(encoder => encoder(z, out))
-                    out.writeObjectEnd()
-                }
+                val encode =
+                  if (d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&
+                    d.alternativeLabel.forall(JsonWriter.isNonEscapedAscii)) {
+                    (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
+                      out.writeObjectStart()
+                      out.writeNonEscapedAsciiKey(d.propertyName)
+                      out.writeNonEscapedAsciiVal(d.alternativeLabel)
+                      documentEncoders.foreach(encoder => encoder(z, out))
+                      out.writeObjectEnd()
+                  } else {
+                    (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
+                      out.writeObjectStart()
+                      out.writeKey(d.propertyName)
+                      out.writeVal(d.alternativeLabel)
+                      documentEncoders.foreach(encoder => encoder(z, out))
+                      out.writeObjectEnd()
+                  }
                 nonPayloadStruct(fields, maybeInputOutput)(const, encode)
               case None =>
                 val encode = {
