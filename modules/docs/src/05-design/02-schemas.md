@@ -242,3 +242,67 @@ val int: Int = myInt.value
 You may have noticed that the `schema` value is using `bijection`.
 Indeed, additionally to the GADT members stated previously, `Schema` also has a `BijectionSchema` member, which allows to apply bidirectional transformation on another Schemas.
 This is useful for the case of newtypes: if we are able to derive a codec that can encode and decode `Int`, it should be possible to derive a codec that encodes and decodes `MyInt`.
+
+### Collections
+
+Smithy supports three types of collections :
+
+* Set
+* List
+* Map
+
+Smithy does not support generics, therefore all collection are named. Though seemingly tedious, it makes it easier to build tooling
+(and probably helps languages that do not support generics). Provided the following shape :
+
+```kotlin
+namespace example
+
+list IntList {
+  member: Integer
+}
+```
+
+You get the following Scala code :
+
+```scala
+package example
+
+object IntList extends Newtype[List[Int]] {
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("example", "IntList")
+  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val underlyingSchema : smithy4s.Schema[List[Int]] = list(int).withId(id).addHints(hints)
+  implicit val schema : smithy4s.Schema[IntList] = bijection(underlyingSchema, IntList(_), (_ : IntList).value)
+}
+```
+
+It is really similar to named primitives. **However**, for pragmatic reasons, when a structure reference a collection in one of its members, the Scala field gets rendered using the dealiased type (as opposed to the newtype). The `IntList` newtype is generated mostly as a way to hold the hints and schemas
+corresponding to the smithy `IntList` shape. Additionally, the `IntList` newtype is used by smithy4s to render `Hints` values :
+
+``` 
+namespace example
+
+@trait
+
+list info {
+  member: String
+}
+
+@info("foo", "bar", "baz")
+structure A {} 
+```
+
+would lead to the following code being rendered in the companion object of `A` :
+
+```scala
+val hints : Hints = Hints(
+  example.Info(List("foo", "bar", "baz")),
+)
+```
+
+This allows to query Hints for `Info` using the following syntax: `hints.get(example.Info)`
+
+Regarding the `underlyingSchema` value in the companion object of `IntList`, you can see that it is constructed using a `list` function. Conceptually, it encodes this : "if I'm able to encode or decode an `A` in a specific format, then I should be able to encode or decode a `List[A]`".
+
+### Enumerations
+
+**TODO** (waiting for smithy 2.0 which changes the syntax)
