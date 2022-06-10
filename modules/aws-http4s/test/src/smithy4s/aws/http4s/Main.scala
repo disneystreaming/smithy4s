@@ -18,22 +18,34 @@ package smithy4s.test
 
 import cats.effect._
 import com.amazonaws.dynamodb._
+import com.amazonaws.lambda._
 import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws._
 import smithy4s.aws.http4s._
+import cats.implicits._
 
 object Main extends IOApp.Simple {
 
-  def run = resource.use { dynamodb =>
+  def run = resource.use { case (dynamodb, lambda) =>
     dynamodb
       .describeTable(TableName("omelois-test"))
       .run
-      .flatMap(IO.println(_))
+      .flatMap(IO.println(_)) *>
+      lambda
+        .listFunctions()
+        .run
+        .flatMap(IO.println(_))
+        .whenA(
+          false
+        ) // FIXME: Lambda uses @restJson1 which is currently unsupported: https://github.com/disneystreaming/smithy4s/issues/53
   }
 
-  val resource: Resource[IO, AwsClient[DynamoDBGen, IO]] = for {
-    httpClient <- EmberClientBuilder.default[IO].build
-    dynamodb <- DynamoDB.awsClient(httpClient, AwsRegion.US_EAST_1)
-  } yield dynamodb
+  val resource
+      : Resource[IO, (AwsClient[DynamoDBGen, IO], AwsClient[LambdaGen, IO])] =
+    for {
+      httpClient <- EmberClientBuilder.default[IO].build
+      dynamodb <- DynamoDB.awsClient(httpClient, AwsRegion.US_EAST_1)
+      lambda <- Lambda.awsClient(httpClient, AwsRegion.US_EAST_1)
+    } yield (dynamodb, lambda)
 
 }

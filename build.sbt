@@ -261,7 +261,8 @@ lazy val `aws-http4s` = projectMatrix
     Test / allowedNamespaces := Seq(),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
     )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
