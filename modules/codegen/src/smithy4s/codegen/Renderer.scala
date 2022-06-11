@@ -304,7 +304,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ): Line = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".addHints(${memberHints(hints)})"
+      val mh =
+        if (hints.isEmpty) Line.empty
+        else line".addHints(${memberHints(hints)})"
       line"""val $valName : $StreamingSchema_[${tpe}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
     case None =>
       line"""val $valName : $StreamingSchema_[Nothing] = $StreamingSchema_.nothing"""
