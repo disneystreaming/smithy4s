@@ -5,6 +5,7 @@ import cats.implicits._
 import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.HttpApp
+import org.http4s.HttpRoutes
 import org.http4s.MediaType
 import org.http4s.Method
 import org.http4s.Request
@@ -22,6 +23,7 @@ import weaver._
 import java.nio.charset.StandardCharsets
 
 import concurrent.duration._
+import cats.kernel.Eq
 
 abstract class WeaverTests[
     Alg[_[_, _, _, _, _]],
@@ -30,17 +32,20 @@ abstract class WeaverTests[
     client: (
         HttpApp[IO],
         Uri
-    ) => Either[UnsupportedProtocolError, smithy4s.Monadic[Alg, IO]]
+    ) => Either[UnsupportedProtocolError, smithy4s.Monadic[Alg, IO]],
+    server: smithy4s.Monadic[Alg, IO] => Either[
+      UnsupportedProtocolError,
+      HttpRoutes[IO]
+    ]
 )(implicit service: Service[Alg, Op])
     extends SimpleIOSuite {
   import org.http4s.implicits._
 
   private val baseUri = uri"http://localhost"
-
-  private def matchRequest(
-      request: Request[IO],
+  private def makeRequest(
+      baseUri: Uri,
       testCase: HttpRequestTestCase
-  ) = request.bodyText.compile.string.map { requestBody =>
+  ): Request[IO] = {
     val expectedHeaders =
       List(
         testCase.headers.map(h =>
@@ -78,10 +83,24 @@ abstract class WeaverTests[
     val expectedBody =
       testCase.body.getOrElse(sys.error("no body expectation: todo"))
 
-    assert.eql(request.uri, expectedUri) &&
-    assert.eql(request.method, expectedMethod) &&
-    assert.eql(request.headers.removePayloadHeaders, expectedHeaders) &&
-    assert.eql(requestBody, expectedBody)
+    Request[IO](
+      method = expectedMethod,
+      uri = expectedUri,
+      headers = expectedHeaders,
+      body = fs2.Stream.emit(expectedBody).through(fs2.text.utf8.encode[IO])
+    )
+  }
+
+  private def matchRequest(
+      request: Request[IO],
+      expected: Request[IO]
+  ) = request.bodyText.compile.string.flatMap { requestBody =>
+    expected.bodyText.compile.string.map { expectedBody =>
+      assert.eql(request.uri, expected.uri) &&
+      assert.eql(request.method, expected.method) &&
+      assert.eql(request.headers.removePayloadHeaders, expected.headers) &&
+      assert.eql(requestBody, expectedBody)
+    }
   }
 
   private def handle[I, E, O, SE, SO](
@@ -93,47 +112,100 @@ abstract class WeaverTests[
 
     val inputFromDocument = Document.Decoder.fromSchema(endpoint.input)
 
-    requestTests.map { testCase =>
-      // todo: protocol check
-      test(endpoint.name + ": " + testCase.id) {
+    requestTests.flatMap { testCase =>
+      List(
+        makeClientTest(endpoint, testCase, inputFromDocument),
+        makeServerTest(endpoint, testCase, inputFromDocument)
+      )
+    }
+  }
 
-        Deferred[IO, Request[IO]]
-          .flatMap { requestDeferred =>
-            val theClient: IO[smithy4s.Monadic[Alg, IO]] = client(
-              {
+  private def makeServerTest[I, E, O, SE, SO](
+      endpoint: Endpoint[Op, I, E, O, SE, SO],
+      testCase: HttpRequestTestCase,
+      inputFromDocument: Document.Decoder[I]
+  ) =
+    // todo: protocol check
+    test(endpoint.id.toString + "(server): " + testCase.id) {
+      Deferred[IO, I]
+        .flatMap { requestDeferred =>
+          val fakeImpl: smithy4s.Monadic[Alg, IO] =
+            service.transform(new smithy4s.Interpreter[Op, IO] {
+              def apply[I_, E_, O_, SE_, SO_](
+                  op: Op[I_, E_, O_, SE_, SO_]
+              ): IO[O_] = {
+                val (in, endpointInternal) = service.endpoint(op)
 
-                HttpApp[IO] { req =>
-                  // Save consumed stream for later reuse
-                  req.body.compile.toVector
-                    .map(fs2.Stream.emits(_))
-                    .map(req.withBodyStream(_))
-                    .flatMap(requestDeferred.complete(_))
-                    .as(Response[IO]())
+                if (endpointInternal.id == endpoint.id)
+                  requestDeferred.complete(in.asInstanceOf[I]) *>
+                    IO.raiseError(new NotImplementedError)
+                else IO.raiseError(new Throwable("Wrong endpoint called"))
+              }
+            })
+
+          server(fakeImpl)
+            .liftTo[IO]
+            .flatMap(_.orNotFound.run(makeRequest(baseUri, testCase)))
+            .attemptNarrow[NotImplementedError] *>
+            requestDeferred.get.flatMap { foundInput =>
+              inputFromDocument
+                .decode(testCase.params.getOrElse(sys.error("no params: todo")))
+                .liftTo[IO]
+                .map { decodedInput =>
+                  // todo: derive Eq from schemas?
+                  implicit val eqq: Eq[I] = Eq.fromUniversalEquals
+                  assert.eql(foundInput, decodedInput)
                 }
-              },
-              baseUri
-            ).liftTo[IO]
+            }
+        }
+    }
 
-            theClient
-              .flatMap { client =>
-                inputFromDocument
-                  .decode(
-                    testCase.params.getOrElse(sys.error("no params, todo"))
-                  )
-                  .liftTo[IO]
-                  .flatMap { in =>
-                    service
-                      .asTransformation(client)
-                      .apply(endpoint.wrap(in))
-                      // We don't expect the response to parse, as it's empty.
-                      .attemptNarrow[PayloadError]
-                  }
-              } *> requestDeferred.get
-              // should be complete by now, but just to avoid blocking the test forever...
-              .timeout(1.second)
-          }
-          .flatMap(matchRequest(_, testCase))
-      }
+  private def makeClientTest[I, E, O, SE, SO](
+      endpoint: Endpoint[Op, I, E, O, SE, SO],
+      testCase: HttpRequestTestCase,
+      inputFromDocument: Document.Decoder[I]
+  ) = {
+    // todo: protocol check
+    test(endpoint.id.toString + "(client): " + testCase.id) {
+
+      Deferred[IO, Request[IO]]
+        .flatMap { requestDeferred =>
+          val theClient: IO[smithy4s.Monadic[Alg, IO]] = client(
+            {
+
+              HttpApp[IO] { req =>
+                // Save consumed stream for later reuse
+                req.body.compile.toVector
+                  .map(fs2.Stream.emits(_))
+                  .map(req.withBodyStream(_))
+                  .flatMap(requestDeferred.complete(_))
+                  .as(Response[IO]())
+              }
+            },
+            baseUri
+          ).liftTo[IO]
+
+          theClient
+            .flatMap { client =>
+              inputFromDocument
+                .decode(
+                  testCase.params.getOrElse(sys.error("no params, todo"))
+                )
+                .liftTo[IO]
+                .flatMap { in =>
+                  service
+                    .asTransformation(
+                      client
+                    )
+                    .apply(endpoint.wrap(in))
+                    // We don't expect the response to parse, as it's empty.
+                    .attemptNarrow[PayloadError]
+                }
+            } *> requestDeferred.get
+            // should be complete by now, but just to avoid blocking the test forever...
+            .timeout(1.second)
+        }
+        .flatMap(matchRequest(_, makeRequest(baseUri, testCase)))
     }
   }
 

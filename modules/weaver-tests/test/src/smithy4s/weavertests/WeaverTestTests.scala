@@ -6,5 +6,6 @@ import cats.effect.IO
 
 object WeaverTestTestsExample
     extends WeaverTests(
-      SimpleRestJsonBuilder(HelloServiceGen).client[IO]
+      SimpleRestJsonBuilder(HelloServiceGen).client[IO],
+      SimpleRestJsonBuilder.routes(_: HelloService[IO]).make
     )
