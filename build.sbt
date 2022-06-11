@@ -62,7 +62,8 @@ lazy val allModules = Seq(
   `aws-http4s`.projectRefs,
   `codegen-cli`.projectRefs,
   dynamic.projectRefs,
-  testUtils.projectRefs
+  testUtils.projectRefs,
+  weaverTests.projectRefs
 ).flatten
 
 lazy val docs =
@@ -137,6 +138,7 @@ lazy val core = projectMatrix
     isMimaEnabled := true,
     allowedNamespaces := Seq(
       "smithy.api",
+      "smithy.test",
       "smithy.waiters",
       "smithy4s.api"
     ),
@@ -311,6 +313,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
       Dependencies.Smithy.awsTraits,
+      Dependencies.Smithy.testTraits,
       Dependencies.Smithy.waiters,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
@@ -620,6 +623,28 @@ lazy val tests = projectMatrix
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
+lazy val weaverTests = projectMatrix
+  .in(file("modules/weaver-tests"))
+  .dependsOn(core, http4s % "test->compile", testUtils)
+  .settings(
+    isCE3 := true,
+    // todo
+    scalacOptions -= "-Xfatal-warnings",
+    libraryDependencies ++= {
+      Seq(
+        Dependencies.Http4s.circe.value,
+        Dependencies.Weaver.cats.value
+      )
+    },
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Test / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
+    ),
+    Test / genDiscoverModels := true,
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
+  )
+  .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
 /**
  * Example application using the custom REST-JSON protocol provided by
  * smithy4s.
@@ -706,6 +731,8 @@ lazy val Dependencies = new {
   val Smithy = new {
     val smithyVersion = "1.23.1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
+    val testTraits =
+      "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
       "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
@@ -824,8 +851,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
-  val smithyDeps =
-    (config / genSmithyDependencies).?.value.getOrElse(List.empty)
   val discoverModels =
     (config / genDiscoverModels).?.value.getOrElse(false)
 
