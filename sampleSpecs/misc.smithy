@@ -75,3 +75,29 @@ union CheckedOrUnchecked2 {
   checked: String,
   raw: String
 }
+
+@trait
+structure SomeCollections {
+  @required
+  someList: SomeList,
+  @required
+  someSet: SomeSet,
+  @required
+  someMap : SomeMap
+}
+
+list SomeList {
+  member: String
+}
+
+set SomeSet {
+  member: String
+}
+
+map SomeMap {
+  key: String,
+  value: String
+}
+
+@SomeCollections(someList: ["a"], someSet: ["b"], someMap: {"a" : "b"})
+integer SomeInt
