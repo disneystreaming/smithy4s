@@ -790,7 +790,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case MapTN(values) =>
       s"Map(${values
         .map { case (k, v) => k.runDefault + " -> " + v.runDefault }
-        .mkString(", ")})".write
+        .mkString(", ")})".writeCollection
     case PrimitiveTN(prim, value) =>
       renderPrimitive(prim)(value).write
   }
