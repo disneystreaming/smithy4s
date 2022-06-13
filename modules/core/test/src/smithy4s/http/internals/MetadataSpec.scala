@@ -33,13 +33,13 @@ import weaver._
 object MetadataSpec extends FunSuite {
 
   implicit val queriesSchema: Schema[Queries] =
-    Queries.schema.addHints(InputOutput.Input)
+    Queries.schema.addHints(InputOutput.Input.widen)
   implicit val headersSchema: Schema[Headers] =
-    Headers.schema.addHints(InputOutput.Input)
+    Headers.schema.addHints(InputOutput.Input.widen)
   implicit val pathParamsSchema: Schema[PathParams] =
-    PathParams.schema.addHints(InputOutput.Input)
+    PathParams.schema.addHints(InputOutput.Input.widen)
   implicit val validationChecksSchema: Schema[ValidationChecks] =
-    ValidationChecks.schema.addHints(InputOutput.Input)
+    ValidationChecks.schema.addHints(InputOutput.Input.widen)
 
   def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
       s: Schema[A],

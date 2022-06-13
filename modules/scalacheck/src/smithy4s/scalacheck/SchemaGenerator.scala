@@ -61,9 +61,9 @@ class SchemaGenerator(maxWidth: Int) {
       unit,
       document,
       timestamp,
-      timestamp.addHints(TimestampFormat.DATE_TIME),
-      timestamp.addHints(TimestampFormat.EPOCH_SECONDS),
-      timestamp.addHints(TimestampFormat.HTTP_DATE)
+      timestamp.addHints(TimestampFormat.DATE_TIME.widen),
+      timestamp.addHints(TimestampFormat.EPOCH_SECONDS.widen),
+      timestamp.addHints(TimestampFormat.HTTP_DATE.widen)
     ).asInstanceOf[Vector[DynSchema]]
 
   def inductive(recurse: Gen[DynSchema]): Vector[Gen[DynSchema]] = {
