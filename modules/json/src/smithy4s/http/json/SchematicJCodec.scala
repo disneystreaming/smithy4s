@@ -46,19 +46,21 @@ import JCodec.JCodecMake
 private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecMake] {
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
-  def boolean: JCodecMake[Boolean] = Hinted.static {
-    new JCodec[Boolean] {
-      def expecting: String = "boolean"
+  object PrimitiveJCodecs {
+    val boolean: JCodec[Boolean] =
+      new JCodec[Boolean] {
+        def expecting: String = "boolean"
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Boolean = in.readBoolean()
+        def decodeValue(cursor: Cursor, in: JsonReader): Boolean =
+          in.readBoolean()
 
-      def encodeValue(x: Boolean, out: JsonWriter): Unit = out.writeVal(x)
+        def encodeValue(x: Boolean, out: JsonWriter): Unit = out.writeVal(x)
 
-      def decodeKey(in: JsonReader): Boolean = in.readKeyAsBoolean()
+        def decodeKey(in: JsonReader): Boolean = in.readKeyAsBoolean()
 
-      def encodeKey(x: Boolean, out: JsonWriter): Unit = out.writeKey(x)
+        def encodeKey(x: Boolean, out: JsonWriter): Unit = out.writeKey(x)
+      }
     }
-  }
 
   def char: JCodecMake[Char] = Hinted.static {
     new JCodec[Char] {
