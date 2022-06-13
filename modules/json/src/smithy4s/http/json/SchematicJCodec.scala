@@ -402,6 +402,38 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     }
   }
 
+  private val documentJCodec = PrimitiveJCodecs.document(maxArity)
+  override def primitive[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): JCodec[P] = {
+    tag match {
+      case PBigDecimal => PrimitiveJCodecs.bigdecimal
+      case PBigInt     => PrimitiveJCodecs.bigint
+      case PBlob       => PrimitiveJCodecs.bytes
+      case PBoolean    => PrimitiveJCodecs.boolean
+      case PByte       => PrimitiveJCodecs.byte
+      case PDocument   => documentJCodec
+      case PDouble     => PrimitiveJCodecs.double
+      case PFloat      => PrimitiveJCodecs.float
+      case PInt        => PrimitiveJCodecs.int
+      case PLong       => PrimitiveJCodecs.long
+      case PShort      => PrimitiveJCodecs.short
+      case PString     => PrimitiveJCodecs.string
+      case PTimestamp =>
+        val format =
+          hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
+        format match {
+          case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
+          case TimestampFormat.EPOCH_SECONDS => PrimitiveJCodecs.timestampEpoch
+          case TimestampFormat.HTTP_DATE => PrimitiveJCodecs.timestampHttpDate
+        }
+      case PUnit => PrimitiveJCodecs.unit
+      case PUUID => PrimitiveJCodecs.uuid
+    }
+  }
+
   def list[A](jc: JCodecMake[A]): JCodecMake[List[A]] = Hinted[JCodec].static {
     new JCodec[List[A]] {
       private[this] val a = jc.get
