@@ -286,6 +286,28 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS),
       longJsonInOut
     )
+
+    val unit: JCodec[Unit] =
+      new JCodec[Unit] {
+        def expecting: String = "empty object"
+
+        override def canBeKey: Boolean = false
+
+        def decodeValue(cursor: Cursor, in: JsonReader): Unit =
+          if (!in.isNextToken('{') || !in.isNextToken('}'))
+            in.decodeError("Expected empty object")
+
+        def encodeValue(x: Unit, out: JsonWriter): Unit = {
+          out.writeObjectStart()
+          out.writeObjectEnd()
+        }
+
+        def decodeKey(in: JsonReader): Unit =
+          in.decodeError("Cannot use Unit as keys")
+
+        def encodeKey(x: Unit, out: JsonWriter): Unit =
+          out.encodeError("Cannot use Unit as keys")
+      }
   }
 
   def list[A](jc: JCodecMake[A]): JCodecMake[List[A]] = Hinted[JCodec].static {
@@ -935,26 +957,6 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     }
 
   def withHints[A](fa: JCodecMake[A], hints: Hints): JCodecMake[A] = fa.addHints(hints)
-
-  def unit: JCodecMake[Unit] = Hinted.static {
-    new JCodec[Unit] {
-      def expecting: String = "empty object"
-
-      override def canBeKey: Boolean = false
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Unit =
-        if (!in.isNextToken('{') || !in.isNextToken('}')) in.decodeError("Expected empty object")
-
-      def encodeValue(x: Unit, out: JsonWriter): Unit = {
-        out.writeObjectStart()
-        out.writeObjectEnd()
-      }
-
-      def decodeKey(in: JsonReader): Unit = in.decodeError("Cannot use Unit as keys")
-
-      def encodeKey(x: Unit, out: JsonWriter): Unit = out.encodeError("Cannot use Unit as keys")
-    }
-  }
 
   def document: JCodecMake[Document] = Hinted.static {
     new JCodec[Document] {
