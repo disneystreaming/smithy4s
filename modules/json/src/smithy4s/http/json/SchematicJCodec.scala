@@ -218,33 +218,74 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
         def encodeKey(x: UUID, out: JsonWriter): Unit = out.writeKey(x)
       }
-  }
 
-  def timestamp: JCodecMake[Timestamp] = Hinted[JCodec].from { hints =>
-    new JCodec[Timestamp] {
-      private[this] val format = hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
-      val expecting: String = Timestamp.showFormat(format)
+    private def forFormat[T](
+        name: String,
+        json: JsonInOut[T, _]
+    ) =
+      new JCodec[Timestamp] {
+        val expecting: String = name
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
-        format match {
-          case EPOCH_SECONDS => Timestamp.fromEpochSecond(in.readLong())
-          case other =>
-            Timestamp.parse(in.readString(null), other) match {
-              case Some(value) => value
-              case None        => in.decodeError("Wrong timestamp format")
-            }
-        }
+        def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
+          json.decodeValue(in)
 
+        def encodeValue(x: Timestamp, out: JsonWriter): Unit =
+          json.encodeValue(x, out)
+
+        // key decoding/encoding ignores the format and support only epoch
+        def decodeKey(in: JsonReader): Timestamp =
+          Timestamp.fromEpochSecond(in.readKeyAsLong())
+        def encodeKey(x: Timestamp, out: JsonWriter): Unit =
+          out.writeKey(x.epochSecond)
+      }
+
+    private trait JsonInOut[T, Out] {
+      def decodeValue(in: JsonReader): Timestamp
       def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-        format match {
-          case EPOCH_SECONDS => out.writeVal(x.epochSecond)
-          case other         => out.writeVal(x.format(other))
-        }
+        toOut(toRaw(x), out)
 
-      def decodeKey(in: JsonReader): Timestamp = Timestamp.fromEpochSecond(in.readKeyAsLong())
-
-      def encodeKey(x: Timestamp, out: JsonWriter): Unit = out.writeKey(x.epochSecond)
+      protected def toRaw(ts: Timestamp): T
+      protected def fromRaw(t: T): Out
+      protected def fromIn(in: JsonReader): T
+      protected def toOut(value: T, out: JsonWriter): Unit
     }
+    private val longJsonInOut = new JsonInOut[Long, Timestamp] {
+      def decodeValue(in: JsonReader): Timestamp =
+        fromRaw(fromIn(in))
+      def toRaw(ts: Timestamp): Long = ts.epochSecond
+      def fromRaw(t: Long): Timestamp = Timestamp.fromEpochSecond(t)
+      def fromIn(in: JsonReader): Long = in.readLong()
+      def toOut(value: Long, out: JsonWriter): Unit = out.writeVal(value)
+    }
+    private def stringJsonInOut(format: TimestampFormat) =
+      new JsonInOut[String, Option[Timestamp]] {
+        def decodeValue(in: JsonReader): Timestamp =
+          fromRaw(fromIn(in)) match {
+            case Some(value) => value
+            case None        => in.decodeError("Wrong timestamp format")
+          }
+
+        def toRaw(ts: Timestamp): String = ts.format(format)
+        def fromRaw(t: String): Option[Timestamp] = Timestamp.parse(t, format)
+        def fromIn(in: JsonReader): String = in.readString(null)
+        def toOut(value: String, out: JsonWriter): Unit = out.writeVal(value)
+      }
+
+    private val dateTimeFormat = stringJsonInOut(TimestampFormat.DATE_TIME)
+    val timestampDateTime = forFormat[String](
+      Timestamp.showFormat(TimestampFormat.DATE_TIME),
+      dateTimeFormat
+    )
+    private val httpDateFormat = stringJsonInOut(TimestampFormat.HTTP_DATE)
+    val timestampHttpDate = forFormat[String](
+      Timestamp.showFormat(TimestampFormat.HTTP_DATE),
+      httpDateFormat
+    )
+
+    val timestampEpoch = forFormat[Long](
+      Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS),
+      longJsonInOut
+    )
   }
 
   def list[A](jc: JCodecMake[A]): JCodecMake[List[A]] = Hinted[JCodec].static {
