@@ -6,6 +6,7 @@ sealed abstract class LowHigh(_value: String, _ordinal: Int) extends smithy4s.En
   override val value : String = _value
   override val ordinal: Int = _ordinal
   override val hints: smithy4s.Hints = smithy4s.Hints.empty
+  @inline def widen: LowHigh = this
 }
 object LowHigh extends smithy4s.Enumeration[LowHigh] with smithy4s.ShapeTag.Companion[LowHigh] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "LowHigh")

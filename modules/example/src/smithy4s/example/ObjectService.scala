@@ -57,8 +57,8 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation, PutObjectInput, PutObjectError, Unit, Nothing, Nothing] with smithy4s.Errorable[PutObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObject")
-    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input)
-    val output: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output)
+    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
@@ -78,7 +78,9 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }
-  sealed trait PutObjectError extends scala.Product with scala.Serializable
+  sealed trait PutObjectError extends scala.Product with scala.Serializable {
+    @inline def widen: PutObjectError = this
+  }
   object PutObjectError extends smithy4s.ShapeTag.Companion[PutObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectError")
 
@@ -109,8 +111,8 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation, GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing] with smithy4s.Errorable[GetObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObject")
-    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input)
-    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output)
+    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
@@ -128,7 +130,9 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       case GetObjectError.ServerErrorCase(e) => e
     }
   }
-  sealed trait GetObjectError extends scala.Product with scala.Serializable
+  sealed trait GetObjectError extends scala.Product with scala.Serializable {
+    @inline def widen: GetObjectError = this
+  }
   object GetObjectError extends smithy4s.ShapeTag.Companion[GetObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectError")
 

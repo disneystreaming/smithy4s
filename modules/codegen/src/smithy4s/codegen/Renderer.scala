@@ -284,8 +284,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
-        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.input)",
-        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.output)",
+        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",
+        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsVal(op.hints),

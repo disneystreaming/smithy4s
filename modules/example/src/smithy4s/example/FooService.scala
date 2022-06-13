@@ -47,8 +47,8 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing]
   object GetFoo extends smithy4s.Endpoint[FooServiceOperation, Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetFoo")
-    val input: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input)
-    val output: smithy4s.Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output)
+    val input: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: smithy4s.Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(

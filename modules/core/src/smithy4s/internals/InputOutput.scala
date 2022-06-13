@@ -17,15 +17,15 @@
 package smithy4s
 package internals
 
-sealed trait InputOutput
+sealed trait InputOutput extends Product with Serializable {
+  @inline def widen: InputOutput = this
+}
 
 object InputOutput extends ShapeTag.Companion[InputOutput] {
 
   def id: ShapeId = ShapeId("smithy4s", "InputOutput")
 
   case object Input extends InputOutput
-  val input: InputOutput = Input
   case object Output extends InputOutput
-  val output: InputOutput = Output
 
 }
