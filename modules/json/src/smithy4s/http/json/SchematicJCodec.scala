@@ -486,46 +486,49 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       member: Schema[A]
   ): JCodec[List[A]] = listImpl(member)
 
-  def set[A](jc: JCodecMake[A]): JCodecMake[Set[A]] = Hinted[JCodec].static {
-    new JCodec[Set[A]] {
-      private[this] val a = jc.get
+  override def set[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      member: Schema[A]
+  ): JCodec[Set[A]] = new JCodec[Set[A]] {
+    private[this] val a = apply(member)
+    def expecting: String = "list"
 
-      def expecting: String = "list"
+    override def canBeKey: Boolean = false
 
-      override def canBeKey: Boolean = false
+    def decodeValue(cursor: Cursor, in: JsonReader): Set[A] =
+      if (in.isNextToken('[')) {
+        if (in.isNextToken(']')) Set.empty
+        else {
+          in.rollbackToken()
+          val builder = Set.newBuilder[A]
+          var i = 0
+          while ({
+            if (i >= maxArity)
+              throw cursor.payloadError(
+                this,
+                s"input $expecting exceeded max arity of `$maxArity`"
+              )
+            builder += cursor.under(i)(cursor.decode(a, in))
+            i += 1
+            in.isNextToken(',')
+          }) ()
+          if (in.isCurrentToken(']')) builder.result()
+          else in.arrayEndOrCommaError()
+        }
+      } else in.decodeError("Expected JSON array")
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Set[A] =
-        if (in.isNextToken('[')) {
-          if (in.isNextToken(']')) Set.empty
-          else {
-            in.rollbackToken()
-            val builder = Set.newBuilder[A]
-            var i = 0
-            while ({
-              if (i >= maxArity)
-                throw cursor.payloadError(
-                  this,
-                  s"input $expecting exceeded max arity of `$maxArity`"
-                )
-              builder += cursor.under(i)(cursor.decode(a, in))
-              i += 1
-              in.isNextToken(',')
-            }) ()
-            if (in.isCurrentToken(']')) builder.result()
-            else in.arrayEndOrCommaError()
-          }
-        } else in.decodeError("Expected JSON array")
-
-      def encodeValue(xs: Set[A], out: JsonWriter): Unit = {
-        out.writeArrayStart()
-        xs.foreach(x => a.encodeValue(x, out))
-        out.writeArrayEnd()
-      }
-
-      def decodeKey(in: JsonReader): Set[A] = in.decodeError("Cannot use vectors as keys")
-
-      def encodeKey(xs: Set[A], out: JsonWriter): Unit = out.encodeError("Cannot use vectors as keys")
+    def encodeValue(xs: Set[A], out: JsonWriter): Unit = {
+      out.writeArrayStart()
+      xs.foreach(x => a.encodeValue(x, out))
+      out.writeArrayEnd()
     }
+
+    def decodeKey(in: JsonReader): Set[A] =
+      in.decodeError("Cannot use vectors as keys")
+
+    def encodeKey(xs: Set[A], out: JsonWriter): Unit =
+      out.encodeError("Cannot use vectors as keys")
   }
 
   def map[K, V](jk: JCodecMake[K], jv: JCodecMake[V]): JCodecMake[Map[K, V]] =
