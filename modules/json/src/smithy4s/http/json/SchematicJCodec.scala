@@ -173,20 +173,21 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         def encodeKey(x: ByteArray, out: JsonWriter): Unit =
           out.encodeError("Cannot use byte array as key")
       }
-  }
+    val bigdecimal: JCodec[BigDecimal] =
+      new JCodec[BigDecimal] {
+        def expecting: String = "big-decimal"
 
-  def bigdecimal: JCodecMake[BigDecimal] = Hinted[JCodec].static {
-    new JCodec[BigDecimal] {
-      def expecting: String = "big-decimal"
+        def decodeValue(cursor: Cursor, in: JsonReader): BigDecimal =
+          in.readBigDecimal(null)
 
-      def decodeValue(cursor: Cursor, in: JsonReader): BigDecimal = in.readBigDecimal(null)
+        def decodeKey(in: JsonReader): BigDecimal = in.readKeyAsBigDecimal()
 
-      def decodeKey(in: JsonReader): BigDecimal = in.readKeyAsBigDecimal()
+        def encodeValue(value: BigDecimal, out: JsonWriter): Unit =
+          out.writeVal(value)
 
-      def encodeValue(value: BigDecimal, out: JsonWriter): Unit = out.writeVal(value)
-
-      def encodeKey(value: BigDecimal, out: JsonWriter): Unit = out.writeVal(value)
-    }
+        def encodeKey(value: BigDecimal, out: JsonWriter): Unit =
+          out.writeVal(value)
+      }
   }
 
   def bigint: JCodecMake[BigInt] = Hinted[JCodec].static {
