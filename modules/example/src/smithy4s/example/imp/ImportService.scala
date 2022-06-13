@@ -71,7 +71,7 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
     }
   }
   sealed trait ImportOperationError extends scala.Product with scala.Serializable {
-    @inline def widen: ImportOperationError = this
+    @inline final def widen: ImportOperationError = this
   }
   object ImportOperationError extends smithy4s.ShapeTag.Companion[ImportOperationError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.imp", "ImportOperationError")

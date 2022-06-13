@@ -3,7 +3,7 @@ package smithy4s.example
 import smithy4s.schema.Schema._
 
 sealed trait Foo extends scala.Product with scala.Serializable {
-  @inline def widen: Foo = this
+  @inline final def widen: Foo = this
 }
 object Foo extends smithy4s.ShapeTag.Companion[Foo] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "Foo")

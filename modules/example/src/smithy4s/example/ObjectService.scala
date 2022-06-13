@@ -79,7 +79,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     }
   }
   sealed trait PutObjectError extends scala.Product with scala.Serializable {
-    @inline def widen: PutObjectError = this
+    @inline final def widen: PutObjectError = this
   }
   object PutObjectError extends smithy4s.ShapeTag.Companion[PutObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectError")
@@ -131,7 +131,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     }
   }
   sealed trait GetObjectError extends scala.Product with scala.Serializable {
-    @inline def widen: GetObjectError = this
+    @inline final def widen: GetObjectError = this
   }
   object GetObjectError extends smithy4s.ShapeTag.Companion[GetObjectError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectError")

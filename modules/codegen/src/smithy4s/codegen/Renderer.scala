@@ -467,7 +467,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       block(
         s"sealed trait $name extends scala.Product with scala.Serializable"
       )(
-        line"@inline def widen: $name = this"
+        line"@inline final def widen: $name = this"
       ),
       obj(name, line"${shapeTag(name)}")(
         renderId(originalName),
@@ -563,7 +563,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"override val value : String = _value",
       line"override val ordinal: Int = _ordinal",
       line"override val hints: $Hints_ = $Hints_.empty",
-      line"@inline def widen: $name = this"
+      line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
       renderId(originalName),

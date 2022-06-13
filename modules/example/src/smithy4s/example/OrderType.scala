@@ -3,7 +3,7 @@ package smithy4s.example
 import smithy4s.schema.Schema._
 
 sealed trait OrderType extends scala.Product with scala.Serializable {
-  @inline def widen: OrderType = this
+  @inline final def widen: OrderType = this
 }
 object OrderType extends smithy4s.ShapeTag.Companion[OrderType] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "OrderType")
