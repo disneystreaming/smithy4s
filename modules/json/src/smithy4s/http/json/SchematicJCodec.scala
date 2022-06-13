@@ -188,20 +188,22 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         def encodeKey(value: BigDecimal, out: JsonWriter): Unit =
           out.writeVal(value)
       }
-  }
+    
+    val bigint: JCodec[BigInt] =
+      new JCodec[BigInt] {
+        def expecting: String = "big-int"
 
-  def bigint: JCodecMake[BigInt] = Hinted[JCodec].static {
-    new JCodec[BigInt] {
-      def expecting: String = "big-int"
+        def decodeValue(cursor: Cursor, in: JsonReader): BigInt =
+          in.readBigInt(null)
 
-      def decodeValue(cursor: Cursor, in: JsonReader): BigInt = in.readBigInt(null)
+        def decodeKey(in: JsonReader): BigInt = in.readKeyAsBigInt()
 
-      def decodeKey(in: JsonReader): BigInt = in.readKeyAsBigInt()
+        def encodeValue(value: BigInt, out: JsonWriter): Unit =
+          out.writeVal(value)
 
-      def encodeValue(value: BigInt, out: JsonWriter): Unit = out.writeVal(value)
-
-      def encodeKey(value: BigInt, out: JsonWriter): Unit = out.writeVal(value)
-    }
+        def encodeKey(value: BigInt, out: JsonWriter): Unit =
+          out.writeVal(value)
+      }
   }
 
   def uuid: JCodecMake[UUID] = Hinted[JCodec].static {
