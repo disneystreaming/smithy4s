@@ -140,20 +140,19 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
         def encodeKey(x: Short, out: JsonWriter): Unit = out.writeKey(x)
       }
-  }
 
-  def byte: JCodecMake[Byte] = Hinted[JCodec].static {
-    new JCodec[Byte] {
-      def expecting: String = "byte"
+    val byte: JCodec[Byte] =
+      new JCodec[Byte] {
+        def expecting: String = "byte"
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Byte = in.readByte()
+        def decodeValue(cursor: Cursor, in: JsonReader): Byte = in.readByte()
 
-      def encodeValue(x: Byte, out: JsonWriter): Unit = out.writeVal(x)
+        def encodeValue(x: Byte, out: JsonWriter): Unit = out.writeVal(x)
 
-      def decodeKey(in: JsonReader): Byte = in.readKeyAsByte()
+        def decodeKey(in: JsonReader): Byte = in.readKeyAsByte()
 
-      def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
-    }
+        def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
+      }
   }
 
   def bytes: JCodecMake[ByteArray] = Hinted[JCodec].static {
