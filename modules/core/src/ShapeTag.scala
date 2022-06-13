@@ -19,7 +19,7 @@ package smithy4s
 /**
   * A tag that can be used as keys for higher-kinded maps
   */
-trait ShapeTag[-A] extends HasId {}
+trait ShapeTag[A] extends HasId {}
 
 object ShapeTag {
   def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag

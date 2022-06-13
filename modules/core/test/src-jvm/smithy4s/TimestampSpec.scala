@@ -26,18 +26,25 @@ import java.time._
 
 object TimestampSpec extends SimpleIOSuite with Checkers {
 
-  override def checkConfig: CheckConfig = super.checkConfig.copy(minimumSuccessful = 10000)
+  override def checkConfig: CheckConfig =
+    super.checkConfig.copy(minimumSuccessful = 10000)
 
   private implicit val arbInstant: Arbitrary[Instant] = {
     implicit val c: Choose[Instant] =
-      Choose.xmap[Long, Instant] (x => Instant.ofEpochSecond(x % 2000000000, {
-        x & 3 match {
-          case 0 => 0
-          case 1 => x % 1000  * 1000000
-          case 2 => x % 1000000  * 1000
-          case _ => x % 1000000000
-        }
-      }), x => x.getEpochSecond)
+      Choose.xmap[Long, Instant](
+        x =>
+          Instant.ofEpochSecond(
+            x % 2000000000, {
+              x & 3 match {
+                case 0 => 0
+                case 1 => x % 1000 * 1000000
+                case 2 => x % 1000000 * 1000
+                case _ => x % 1000000000
+              }
+            }
+          ),
+        x => x.getEpochSecond
+      )
     Arbitrary(
       Gen.choose[Instant](Instant.MIN, Instant.MAX)
     )
@@ -106,5 +113,6 @@ object TimestampSpec extends SimpleIOSuite with Checkers {
     }
   }
 
-  private def toLocalDate(i: Instant): LocalDate = LocalDate.ofEpochDay(i.getEpochSecond / (24 * 60 * 60))
+  private def toLocalDate(i: Instant): LocalDate =
+    LocalDate.ofEpochDay(i.getEpochSecond / (24 * 60 * 60))
 }
