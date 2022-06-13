@@ -113,21 +113,21 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
         def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
       }
+
+    val double: JCodec[Double] =
+      new JCodec[Double] {
+        def expecting: String = "double"
+
+        def decodeValue(cursor: Cursor, in: JsonReader): Double =
+          in.readDouble()
+
+        def encodeValue(x: Double, out: JsonWriter): Unit = out.writeVal(x)
+
+        def decodeKey(in: JsonReader): Double = in.readKeyAsDouble()
+
+        def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
+      }
     }
-
-  def double: JCodecMake[Double] = Hinted[JCodec].static {
-    new JCodec[Double] {
-      def expecting: String = "double"
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Double = in.readDouble()
-
-      def encodeValue(x: Double, out: JsonWriter): Unit = out.writeVal(x)
-
-      def decodeKey(in: JsonReader): Double = in.readKeyAsDouble()
-
-      def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
-    }
-  }
 
   def short: JCodecMake[Short] = Hinted[JCodec].static {
     new JCodec[Short] {
