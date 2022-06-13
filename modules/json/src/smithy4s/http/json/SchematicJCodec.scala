@@ -638,32 +638,32 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
   }
 
   private def taggedUnion[Z](
-      first: Alt[JCodecMake, Z, _],
-      rest: Vector[Alt[JCodecMake, Z, _]]
-  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] =
+      alternatives: Vector[Alt[Schema, Z, _]]
+  )(total: Z => Alt.WithValue[Schema, Z, _]): JCodec[Z] =
     new JCodec[Z] {
       val expecting: String = "tagged-union"
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
-        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+      def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
+        alt.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-      private[this] val handlerMap: util.HashMap[String, (Cursor, JsonReader) => Z] =
+      private[this] val handlerMap
+          : util.HashMap[String, (Cursor, JsonReader) => Z] =
         new util.HashMap[String, (Cursor, JsonReader) => Z] {
-          def handler[A](alt: Alt[JCodecMake, Z, A]) = {
-            val codec = alt.instance.get
+          def handler[A](alt: Alt[Schema, Z, A]) = {
+            val codec = apply(alt.instance)
             (cursor: Cursor, reader: JsonReader) =>
               alt.inject(cursor.decode(codec, reader))
           }
 
-          put(jsonLabel(first), handler(first))
-          rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
+          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
         if (in.isNextToken('{')) {
-          if (in.isNextToken('}')) in.decodeError("Expected a single key/value pair")
+          if (in.isNextToken('}'))
+            in.decodeError("Expected a single key/value pair")
           else {
             in.rollbackToken()
             val key = in.readKeyAsString()
@@ -680,12 +680,14 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
           }
         } else in.decodeError("Expected JSON object")
 
-      private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
-        def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
-      }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
+      private[this] val altCache =
+        new PolyFunction[Alt[Schema, Z, *], JCodec] {
+          def apply[A](fa: Alt[Schema, Z, A]): JCodec[A] =
+            self.apply(fa.instance)
+        }.unsafeCache((alternatives).map(alt => Existential.wrap(alt)))
 
       def encodeValue(z: Z, out: JsonWriter): Unit = {
-        def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
+        def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
           altCache(awv.alt).encodeValue(awv.value, out)
 
         val awv = total(z)
@@ -695,28 +697,28 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use coproducts as keys")
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use coproducts as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use coproducts as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use coproducts as keys")
     }
 
   private def untaggedUnion[Z](
-      first: Alt[JCodecMake, Z, _],
-      rest: Vector[Alt[JCodecMake, Z, _]]
-  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] = new JCodec[Z] {
+      alternatives: Vector[Alt[Schema, Z, _]]
+  )(total: Z => Alt.WithValue[Schema, Z, _]): JCodec[Z] = new JCodec[Z] {
     def expecting: String = "untaggedUnion"
 
     override def canBeKey: Boolean = false
 
     private[this] val handlerList: Array[(Cursor, JsonReader) => Z] = {
       val res = Array.newBuilder[(Cursor, JsonReader) => Z]
-      def handler[A](alt: Alt[JCodecMake, Z, A]) = {
-        val codec = alt.instance.get
+      def handler[A](alt: Alt[Schema, Z, A]) = {
+        val codec = apply(alt.instance)
         (cursor: Cursor, reader: JsonReader) =>
           alt.inject(cursor.decode(codec, reader))
       }
-      res += handler(first)
-      rest.foreach(alt => res += handler(alt))
+      alternatives.foreach(alt => res += handler(alt))
       res.result()
     }
 
@@ -739,46 +741,50 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       else cursor.payloadError(this, "Could not decode untagged union")
     }
 
-    private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
-      def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
-    }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
+    private[this] val altCache =
+      new PolyFunction[Alt[Schema, Z, *], JCodec] {
+        def apply[A](fa: Alt[Schema, Z, A]): JCodec[A] = self.apply(fa.instance)
+      }.unsafeCache((alternatives).map(alt => Existential.wrap(alt)))
 
     def encodeValue(z: Z, out: JsonWriter): Unit = {
-      def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
+      def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
         altCache(awv.alt).encodeValue(awv.value, out)
 
       val awv = total(z)
       writeValue(awv)
     }
 
-    def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use coproducts as keys")
+    def decodeKey(in: JsonReader): Z =
+      in.decodeError("Cannot use coproducts as keys")
 
-    def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use coproducts as keys")
+    def encodeKey(x: Z, out: JsonWriter): Unit =
+      out.encodeError("Cannot use coproducts as keys")
   }
 
   private def discriminatedUnion[Z](
-      first: Alt[JCodecMake, Z, _],
-      rest: Vector[Alt[JCodecMake, Z, _]],
+      alternatives: Vector[Alt[Schema, Z, _]],
       discriminated: Discriminated
-  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] =
+  )(total: Z => Alt.WithValue[Schema, Z, _]): JCodec[Z] =
     new JCodec[Z] {
       def expecting: String = "discriminated-union"
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
-        alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+      def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
+        alt.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-      private[this] val handlerMap: util.HashMap[String, (Cursor, JsonReader) => Z] =
+      private[this] val handlerMap
+          : util.HashMap[String, (Cursor, JsonReader) => Z] =
         new util.HashMap[String, (Cursor, JsonReader) => Z] {
-          def handler[A](alt: Alt[JCodecMake, Z, A]): (Cursor, JsonReader) => Z = {
-            val codec = alt.instance.get
+          def handler[A](
+              alt: Alt[Schema, Z, A]
+          ): (Cursor, JsonReader) => Z = {
+            val codec = apply(alt.instance)
             (cursor: Cursor, reader: JsonReader) =>
               alt.inject(cursor.decode(codec, reader))
           }
 
-          put(jsonLabel(first), handler(first))
-          rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
+          alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
@@ -793,38 +799,49 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
               if (handler eq null) in.discriminatorValueError(key)
               handler(cursor, in)
             }
-          } else in.decodeError(s"Unable to find discriminator ${discriminated.value}")
+          } else
+            in.decodeError(
+              s"Unable to find discriminator ${discriminated.value}"
+            )
         } else in.decodeError("Expected JSON object")
 
-      private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
-        def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = {
-          val label = jsonLabel(fa)
-          fa.instance.addHints(Hints(DiscriminatedUnionMember(discriminated.value, label))).get
-        }
-      }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
+      private[this] val altCache =
+        new PolyFunction[Alt[Schema, Z, *], JCodec] {
+          def apply[A](fa: Alt[Schema, Z, A]): JCodec[A] = {
+            val label = jsonLabel(fa)
+            self.apply(
+              fa.instance
+                .addHints(
+                  Hints(DiscriminatedUnionMember(discriminated.value, label))
+                )
+            )
+          }
+        }.unsafeCache((alternatives).map(alt => Existential.wrap(alt)))
 
       def encodeValue(z: Z, out: JsonWriter): Unit = {
-        def writeValue[A](awv: Alt.WithValue[JCodecMake, Z, A]): Unit =
+        def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
           altCache(awv.alt).encodeValue(awv.value, out)
 
         val awv = total(z)
         writeValue(awv)
       }
 
-      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use coproducts as keys")
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use coproducts as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use coproducts as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use coproducts as keys")
     }
 
-  def union[Z](
-      first: Alt[JCodecMake, Z, _],
-      rest: Vector[Alt[JCodecMake, Z, _]]
-  )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodecMake[Z] = {
-    Hinted[JCodec].from {
-      case Untagged.hint(_) => untaggedUnion(first, rest)(total)
-      case Discriminated.hint(d) => discriminatedUnion(first, rest, d)(total)
-      case _ => taggedUnion(first, rest)(total)
-    }
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: U => Alt.SchemaAndValue[U, _]
+  ): JCodec[U] = hints match {
+    case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
+    case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
+    case _                     => taggedUnion(alternatives)(dispatch)
   }
 
   def enumeration[A](
