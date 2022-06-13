@@ -153,22 +153,26 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
         def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
       }
-  }
 
-  def bytes: JCodecMake[ByteArray] = Hinted[JCodec].static {
-    new JCodec[ByteArray] {
-      def expecting: String = "byte-array"
+    val bytes: JCodec[ByteArray] =
+      new JCodec[ByteArray] {
+        def expecting: String = "byte-array" // or blob?
 
-      override def canBeKey: Boolean = false
+        override def canBeKey: Boolean = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): ByteArray = ByteArray(in.readBase64AsBytes(null))
+        def decodeValue(cursor: Cursor, in: JsonReader): ByteArray = ByteArray(
+          in.readBase64AsBytes(null)
+        )
 
-      def encodeValue(x: ByteArray, out: JsonWriter): Unit = out.writeBase64Val(x.array, doPadding = true)
+        def encodeValue(x: ByteArray, out: JsonWriter): Unit =
+          out.writeBase64Val(x.array, doPadding = true)
 
-      def decodeKey(in: JsonReader): ByteArray = in.decodeError("Cannot use byte array as key")
+        def decodeKey(in: JsonReader): ByteArray =
+          in.decodeError("Cannot use byte array as key")
 
-      def encodeKey(x: ByteArray, out: JsonWriter): Unit = out.encodeError("Cannot use byte array as key")
-    }
+        def encodeKey(x: ByteArray, out: JsonWriter): Unit =
+          out.encodeError("Cannot use byte array as key")
+      }
   }
 
   def bigdecimal: JCodecMake[BigDecimal] = Hinted[JCodec].static {
