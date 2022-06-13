@@ -531,14 +531,10 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       out.encodeError("Cannot use vectors as keys")
   }
 
-  def map[K, V](jk: JCodecMake[K], jv: JCodecMake[V]): JCodecMake[Map[K, V]] =
-    if (jk.get.canBeKey) objectMap(jk, jv)
-    else arrayMap(jk, jv)
-
   private def objectMap[K, V](
-      jk: JCodecMake[K],
-      jv: JCodecMake[V]
-  ): JCodecMake[Map[K, V]] = jk.productTransform(jv) { (k, v) =>
+      jk: JCodec[K],
+      jv: JCodec[V]
+  ): JCodec[Map[K, V]] = {
     new JCodec[Map[K, V]] {
       val expecting: String = "map"
 
@@ -557,7 +553,12 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
                   this,
                   s"input $expecting exceeded max arity of `$maxArity`"
                 )
-              builder += ((k.decodeKey(in), cursor.under(i)(cursor.decode(v, in))))
+              builder += (
+                (
+                  jk.decodeKey(in),
+                  cursor.under(i)(cursor.decode(jv, in))
+                )
+              )
               i += 1
               in.isNextToken(',')
             }) ()
@@ -569,26 +570,42 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
         out.writeObjectStart()
         xs.foreach { case (key, value) =>
-          k.encodeKey(key, out)
-          v.encodeValue(value, out)
+          jk.encodeKey(key, out)
+          jv.encodeValue(value, out)
         }
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Map[K, V] = in.decodeError("Cannot use maps as keys")
+      def decodeKey(in: JsonReader): Map[K, V] =
+        in.decodeError("Cannot use maps as keys")
 
-      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit = out.encodeError("Cannot use maps as keys")
+      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit =
+        out.encodeError("Cannot use maps as keys")
     }
   }
 
   private def arrayMap[K, V](
-      k: JCodecMake[K],
-      v: JCodecMake[V]
-  ): JCodecMake[Map[K, V]] = {
-    val kField = Field.required[JCodecMake, (K, V), K]("key", k, _._1)
-    val vField = Field.required[JCodecMake, (K, V), V]("value", v, _._2)
-    val kvCodec = struct(Vector(kField, vField))(vec => (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V]))
-    list(kvCodec).transform(_.biject(_.toMap, _.toList))
+      k: Schema[K],
+      v: Schema[V]
+  ): JCodec[Map[K, V]] = {
+    val kField = Field.required[Schema, (K, V), K]("key", k, _._1)
+    val vField = Field.required[Schema, (K, V), V]("value", v, _._2)
+    val kvCodec = Schema.struct(Vector(kField, vField))(vec =>
+      (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V])
+    )
+    listImpl(kvCodec).biject(_.toMap, _.toList)
+  }
+
+  override def map[K, V](
+      shapeId: ShapeId,
+      hints: Hints,
+      key: Schema[K],
+      value: Schema[V]
+  ): JCodec[Map[K, V]] = {
+    val jk = apply(key)
+    val jv = apply(value)
+    if (jk.canBeKey) objectMap(jk, jv)
+    else arrayMap(key, value)
   }
 
   def bijection[A, B](
