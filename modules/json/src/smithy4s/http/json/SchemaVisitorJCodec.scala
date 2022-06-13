@@ -18,32 +18,29 @@ package smithy4s
 package http
 package json
 
-import _root_.smithy.api.JsonName
-import com.github.plokhotnyuk.jsoniter_scala.core._
+import java.util.UUID
+import java.util
+
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
+import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy.api.TimestampFormat._
-import smithy4s.api.Untagged
-import smithy4s.Document.DArray
-import smithy4s.Document.DBoolean
-import smithy4s.Document.DNull
-import smithy4s.Document.DNumber
-import smithy4s.Document.DObject
-import smithy4s.Document.DString
 import smithy4s.api.Discriminated
+import smithy4s.api.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
-import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
 import smithy4s.schema._
-import java.util
-import java.util.UUID
+import smithy4s.schema.Primitive._
+import smithy4s.Timestamp
+
 import scala.collection.compat.immutable.ArraySeq
+import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
-import scala.collection.immutable.VectorBuilder
-import JCodec.JCodecMake
 
-private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecMake] {
+private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
+    extends SchemaVisitor[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
   object PrimitiveJCodecs {
@@ -100,7 +97,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
         def encodeKey(x: Long, out: JsonWriter): Unit = out.writeKey(x)
       }
-      
+
     val float: JCodec[Float] =
       new JCodec[Float] {
         def expecting: String = "float"
@@ -173,6 +170,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         def encodeKey(x: ByteArray, out: JsonWriter): Unit =
           out.encodeError("Cannot use byte array as key")
       }
+
     val bigdecimal: JCodec[BigDecimal] =
       new JCodec[BigDecimal] {
         def expecting: String = "big-decimal"
@@ -188,7 +186,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         def encodeKey(value: BigDecimal, out: JsonWriter): Unit =
           out.writeVal(value)
       }
-    
+
     val bigint: JCodec[BigInt] =
       new JCodec[BigInt] {
         def expecting: String = "big-int"
@@ -434,7 +432,6 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     }
   }
 
-  
   private def listImpl[A](member: Schema[A]) = new JCodec[List[A]] {
     private[this] val a: JCodec[A] = apply(member)
     def expecting: String = "list"
@@ -1180,5 +1177,4 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     }
   }
 
-  def withHints[A](fa: JCodecMake[A], hints: Hints): JCodecMake[A] = fa.addHints(hints)
 }
