@@ -608,32 +608,33 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     else arrayMap(key, value)
   }
 
-  def bijection[A, B](
-      a: JCodecMake[A],
+  override def biject[A, B](
+      schema: Schema[A],
       to: A => B,
       from: B => A
-  ): JCodecMake[B] = a.transform(_.biject(to, from))
-
-  def surjection[A, B](
-      a: JCodecMake[A],
+  ): JCodec[B] =
+    apply(schema).biject(to, from)
+  override def surject[A, B](
+      schema: Schema[A],
       to: Refinement[A, B],
       from: B => A
-  ): JCodecMake[B] = a.xmap(to.asFunction, from)
+  ): JCodec[B] =
+    JCodec.jcodecInvariant
+      .xmap(apply(schema))(to.asFunction, from)
+  override def lazily[A](suspend: Lazy[Schema[A]]): JCodec[A] = new JCodec[A] {
+    lazy val underlying = apply(suspend.value)
 
-  def suspend[A](a: Lazy[JCodecMake[A]]): JCodecMake[A] = Hinted.static {
-    new JCodec[A] {
-      lazy val underlying = a.value.get
+    def expecting: String = underlying.expecting
 
-      def expecting: String = underlying.expecting
+    def decodeValue(cursor: Cursor, in: JsonReader): A =
+      underlying.decodeValue(cursor, in)
 
-      def decodeValue(cursor: Cursor, in: JsonReader): A = underlying.decodeValue(cursor, in)
+    def encodeValue(x: A, out: JsonWriter): Unit =
+      underlying.encodeValue(x, out)
 
-      def encodeValue(x: A, out: JsonWriter): Unit = underlying.encodeValue(x, out)
+    def decodeKey(in: JsonReader): A = underlying.decodeKey(in)
 
-      def decodeKey(in: JsonReader): A = underlying.decodeKey(in)
-
-      def encodeKey(x: A, out: JsonWriter): Unit = underlying.encodeKey(x, out)
-    }
+    def encodeKey(x: A, out: JsonWriter): Unit = underlying.encodeKey(x, out)
   }
 
   private def taggedUnion[Z](
