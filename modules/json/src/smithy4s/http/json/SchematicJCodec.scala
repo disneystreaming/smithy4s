@@ -878,8 +878,8 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       out.writeKey(total(x).stringValue)
   }
 
-  private def jsonLabel[A, Z](field: Field[JCodecMake, Z, A]): String =
-    field.instance.hints
+  private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =
+    field.hints
       .get(JsonName)
       .map(_.value)
       .getOrElse(field.label)
@@ -887,9 +887,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
-      field: Field[JCodecMake, Z, A]
+      field: Field[Schema, Z, A]
   ): Handler = {
-    val codec = field.instance.get
+    val codec = apply(field.instance)
     val label = field.label
     if (field.isRequired) { (cursor, in, mmap) =>
       val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
@@ -905,23 +905,24 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
   }
 
   private def fieldEncoder[Z, A](
-      field: Field[JCodecMake, Z, A]
+      field: Field[Schema, Z, A]
   ): (Z, JsonWriter) => Unit = {
-    field.fold(new Field.Folder[JCodecMake, Z, (Z, JsonWriter) => Unit] {
+    field.fold(new Field.Folder[Schema, Z, (Z, JsonWriter) => Unit] {
       def onRequired[AA](
           label: String,
-          instance: JCodecMake[AA],
+          instance: Schema[AA],
           get: Z => AA
       ): (Z, JsonWriter) => Unit = {
-        val codec = instance.get
+        val codec = apply(instance)
         val jLabel = jsonLabel(field)
         if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
-          (z: Z, out: JsonWriter) => {
-            out.writeNonEscapedAsciiKey(jLabel)
-            codec.encodeValue(get(z), out)
-          }
-        } else {
-          (z: Z, out: JsonWriter) => {
+          (z: Z, out: JsonWriter) =>
+            {
+              out.writeNonEscapedAsciiKey(jLabel)
+              codec.encodeValue(get(z), out)
+            }
+        } else { (z: Z, out: JsonWriter) =>
+          {
             out.writeKey(jLabel)
             codec.encodeValue(get(z), out)
           }
@@ -930,22 +931,23 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
       def onOptional[AA](
           label: String,
-          instance: JCodecMake[AA],
+          instance: Schema[AA],
           get: Z => Option[AA]
       ): (Z, JsonWriter) => Unit = {
-        val codec = instance.get
+        val codec = apply(instance)
         val jLabel = jsonLabel(field)
         if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
-          (z: Z, out: JsonWriter) => {
-            get(z) match {
-              case Some(aa) =>
-                out.writeNonEscapedAsciiKey(jLabel)
-                codec.encodeValue(aa, out)
-              case _ =>
+          (z: Z, out: JsonWriter) =>
+            {
+              get(z) match {
+                case Some(aa) =>
+                  out.writeNonEscapedAsciiKey(jLabel)
+                  codec.encodeValue(aa, out)
+                case _ =>
+              }
             }
-          }
-        } else {
-          (z: Z, out: JsonWriter) => {
+        } else { (z: Z, out: JsonWriter) =>
+          {
             get(z) match {
               case Some(aa) =>
                 out.writeKey(jLabel)
@@ -958,7 +960,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     })
   }
 
-  private type Fields[Z] = Vector[Field[JCodecMake, Z, _]]
+  private type Fields[Z] = Vector[Field[Schema, Z, _]]
 
   private def nonPayloadStruct[Z](
       fields: Fields[Z],
@@ -968,25 +970,34 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
       encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
   ): JCodec[Z] =
     new JCodec[Z] {
+
       private[this] val documentFields =
         fields.filter { field =>
-          val hints = field.instance.hints
-          HttpBinding.fromHints(field.label, hints, maybeInputOutput).isEmpty
+          HttpBinding
+            .fromHints(field.label, field.hints, maybeInputOutput)
+            .isEmpty
         }
 
-      private[this] val handlers = new util.HashMap[String, Handler](documentFields.length) {
-        documentFields.foreach(field => put(jsonLabel(field), fieldHandler(field)))
-      }
+      private[this] val handlers =
+        new util.HashMap[String, Handler](documentFields.length) {
+          documentFields.foreach(field =>
+            put(jsonLabel(field), fieldHandler(field))
+          )
+        }
 
-      private[this] val documentEncoders = documentFields.map(field => fieldEncoder(field))
+      private[this] val documentEncoders =
+        documentFields.map(field => fieldEncoder(field))
 
       def expecting: String = "object"
 
       override def canBeKey = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z = decodeValue_(cursor, in)(emptyMetadata)
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
+        decodeValue_(cursor, in)(emptyMetadata)
 
-      override def decodeMessage(in: JsonReader): scala.collection.Map[String, Any] => Z =
+      override def decodeMessage(
+          in: JsonReader
+      ): scala.collection.Map[String, Any] => Z =
         Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
@@ -1018,26 +1029,31 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
-          fields.foreach(f => stage2 += {
-            val value = buffer.get(f.label)
-            if (f.isRequired) {
-              if (value == null) cursor.requiredFieldError(f.label, f.label)
-              value
-            } else Option(value)
-          })
+          fields.foreach(f =>
+            stage2 += {
+              val value = buffer.get(f.label)
+              if (f.isRequired) {
+                if (value == null) cursor.requiredFieldError(f.label, f.label)
+                value
+              } else Option(value)
+            }
+          )
           const(stage2.result())
         }
       }
 
-      def encodeValue(z: Z, out: JsonWriter): Unit = encode(z, out, documentEncoders)
+      def encodeValue(z: Z, out: JsonWriter): Unit =
+        encode(z, out, documentEncoders)
 
-      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use products as keys")
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use products as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use products as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use products as keys")
     }
 
-  def payloadStruct[A, Z](
-      payloadField: Field[JCodecMake, Z, _],
+  private def payloadStruct[A, Z](
+      payloadField: Field[Schema, Z, _],
       fields: Fields[Z]
   )(codec: JCodec[payloadField.T], const: Vector[Any] => Z): JCodec[Z] =
     new JCodec[Z] {
@@ -1045,9 +1061,12 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
 
       override def canBeKey = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z = decodeValue_(cursor, in)(emptyMetadata)
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
+        decodeValue_(cursor, in)(emptyMetadata)
 
-      override def decodeMessage(in: JsonReader): scala.collection.Map[String, Any] => Z =
+      override def decodeMessage(
+          in: JsonReader
+      ): scala.collection.Map[String, Any] => Z =
         Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
@@ -1068,65 +1087,98 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
-          fields.foreach(f => stage2 += {
-            val value = buffer.get(f.label)
-            if (f.isRequired) {
-              if (value == null) cursor.requiredFieldError(f.label, f.label)
-              value
-            } else Option(value)
-          })
+          fields.foreach(f =>
+            stage2 += {
+              val value = buffer.get(f.label)
+              if (f.isRequired) {
+                if (value == null) cursor.requiredFieldError(f.label, f.label)
+                value
+              } else Option(value)
+            }
+          )
           const(stage2.result())
         }
       }
 
-      def encodeValue(z: Z, out: JsonWriter): Unit = payloadField.foreachT(z)(codec.encodeValue(_, out))
+      def encodeValue(z: Z, out: JsonWriter): Unit =
+        payloadField.foreachT(z)(codec.encodeValue(_, out))
 
-      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use products as keys")
+      def decodeKey(in: JsonReader): Z =
+        in.decodeError("Cannot use products as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use products as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit =
+        out.encodeError("Cannot use products as keys")
     }
 
-  def struct[Z](
-      fields: Vector[Field[JCodecMake, Z, _]]
-  )(const: Vector[Any] => Z): JCodecMake[Z] =
-    Hinted[JCodec].onHintsOpt[InputOutput, DiscriminatedUnionMember, Z] {
+  private def basicStruct[A, S](
+      fields: Fields[S],
+      maybeInputOutput: Option[InputOutput]
+  )(make: Vector[Any] => S): JCodec[S] = {
+    val encode = {
+      (
+          z: S,
+          out: JsonWriter,
+          documentEncoders: Vector[(S, JsonWriter) => Unit]
+      ) =>
+        out.writeObjectStart()
+        documentEncoders.foreach(encoder => encoder(z, out))
+        out.writeObjectEnd()
+    }
+
+    nonPayloadStruct(fields, maybeInputOutput)(make, encode)
+  }
+  override def struct[S](
+      shapeId: ShapeId,
+      hints: Hints,
+      fields: Vector[SchemaField[S, _]],
+      make: IndexedSeq[Any] => S
+  ): JCodec[S] = {
+    (
+      InputOutput.hint.unapply(hints),
+      DiscriminatedUnionMember.hint.unapply(hints)
+    ) match {
       case (maybeInputOutput, maybeDiscriminated) =>
-        fields.find(_.instance.hints.get(HttpPayload).isDefined) match {
+        fields.find(_.hints.get(HttpPayload).isDefined) match {
           case Some(payloadField) =>
-            val codec = payloadField.instance.get
-            payloadStruct(payloadField, fields)(codec, const)
+            val codec = apply(payloadField.instance)
+            payloadStruct(payloadField, fields)(codec, make)
           case None =>
             maybeDiscriminated match {
               case Some(d) =>
                 val encode =
-                  if (d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&
-                    d.alternativeLabel.forall(JsonWriter.isNonEscapedAscii)) {
-                    (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
+                  if (
+                    d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&
+                    d.alternativeLabel.forall(JsonWriter.isNonEscapedAscii)
+                  ) {
+                    (
+                        z: S,
+                        out: JsonWriter,
+                        documentEncoders: Vector[(S, JsonWriter) => Unit]
+                    ) =>
                       out.writeObjectStart()
                       out.writeNonEscapedAsciiKey(d.propertyName)
                       out.writeNonEscapedAsciiVal(d.alternativeLabel)
                       documentEncoders.foreach(encoder => encoder(z, out))
                       out.writeObjectEnd()
                   } else {
-                    (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
+                    (
+                        z: S,
+                        out: JsonWriter,
+                        documentEncoders: Vector[(S, JsonWriter) => Unit]
+                    ) =>
                       out.writeObjectStart()
                       out.writeKey(d.propertyName)
                       out.writeVal(d.alternativeLabel)
                       documentEncoders.foreach(encoder => encoder(z, out))
                       out.writeObjectEnd()
                   }
-                nonPayloadStruct(fields, maybeInputOutput)(const, encode)
+                nonPayloadStruct(fields, maybeInputOutput)(make, encode)
               case None =>
-                val encode = {
-                  (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
-                    out.writeObjectStart()
-                    documentEncoders.foreach(encoder => encoder(z, out))
-                    out.writeObjectEnd()
-                }
-                nonPayloadStruct(fields, maybeInputOutput)(const, encode)
+                basicStruct(fields, maybeInputOutput)(make)
             }
         }
     }
+  }
 
   def withHints[A](fa: JCodecMake[A], hints: Hints): JCodecMake[A] = fa.addHints(hints)
 }
