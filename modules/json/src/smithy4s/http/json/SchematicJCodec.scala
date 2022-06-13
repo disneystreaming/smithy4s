@@ -844,34 +844,38 @@ private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecM
     case _                     => taggedUnion(alternatives)(dispatch)
   }
 
-  def enumeration[A](
-      to: A => (String, Int),
-      fromName: Map[String, A],
-      fromOrdinal: Map[Int, A]
-  ): JCodecMake[A] = Hinted.static {
-    new JCodec[A] {
-      val expecting: String = s"enumeration: [${fromName.keys.mkString(", ")}]"
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): JCodec[E] = new JCodec[E] {
+    def fromName(v: String): Option[E] =
+      values.find(_.stringValue == v).map(_.value)
+    val expecting: String =
+      s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
-      def decodeValue(cursor: Cursor, in: JsonReader): A = {
-        val str = in.readString(null)
-        fromName.get(str) match {
-          case Some(value) => value
-          case None        => in.enumValueError(str)
-        }
+    def decodeValue(cursor: Cursor, in: JsonReader): E = {
+      val str = in.readString(null)
+      fromName(str) match {
+        case Some(value) => value
+        case None        => in.enumValueError(str)
       }
-
-      def encodeValue(x: A, out: JsonWriter): Unit = out.writeVal(to(x)._1)
-
-      def decodeKey(in: JsonReader): A = {
-        val str = in.readKeyAsString()
-        fromName.get(str) match {
-          case Some(value) => value
-          case None        => in.enumValueError(str)
-        }
-      }
-
-      def encodeKey(x: A, out: JsonWriter): Unit = out.writeKey(to(x)._1)
     }
+
+    def encodeValue(x: E, out: JsonWriter): Unit =
+      out.writeVal(total(x).stringValue)
+
+    def decodeKey(in: JsonReader): E = {
+      val str = in.readKeyAsString()
+      fromName(str) match {
+        case Some(value) => value
+        case None        => in.enumValueError(str)
+      }
+    }
+
+    def encodeKey(x: E, out: JsonWriter): Unit =
+      out.writeKey(total(x).stringValue)
   }
 
   private def jsonLabel[A, Z](field: Field[JCodecMake, Z, A]): String =
