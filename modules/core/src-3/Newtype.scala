@@ -25,8 +25,11 @@ abstract class Newtype[A] extends HasId { self =>
 
   def unapply(orig: Type): Some[A] = Some(orig.value)
 
+  def schema: Schema[Type]
+
   implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
     def id: ShapeId = self.id
+    def schema: Schema[Type] = self.schema
   }
 
   implicit val isomorphismInstance: capability.Isomorphism[A, Type] =
