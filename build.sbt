@@ -114,6 +114,7 @@ lazy val docs =
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .settings(
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",

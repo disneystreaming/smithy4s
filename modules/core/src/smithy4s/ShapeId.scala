@@ -23,15 +23,8 @@ case class ShapeId(namespace: String, name: String) extends HasId {
   override def id: ShapeId = this
 }
 
-object ShapeId extends ShapeTag.Companion[ShapeId] {
-
-  val id = ShapeId("smithy4s", "ShapeId")
-  val schema: Schema[ShapeId] = Schema
-    .struct(
-      Schema.string.required[ShapeId]("namespace", _.namespace),
-      Schema.string.required[ShapeId]("name", _.name)
-    )(ShapeId(_, _))
-    .withId(id)
+object ShapeId {
+  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
 
   case class Member(shapeId: ShapeId, member: String)
 }

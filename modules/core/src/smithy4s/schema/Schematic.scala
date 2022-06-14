@@ -102,7 +102,7 @@ object Schematic {
           case LazySchema(suspendedSchema) =>
             suspend(suspendedSchema.map(self(_)))
         }
-        withHints(rawCodec, fa.hints ++ Hints(fa.shapeId))
+        withHints(rawCodec, fa.hints)
       }
 
       import Primitive._
