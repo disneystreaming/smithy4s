@@ -20,12 +20,19 @@ object NewtypesSpec extends weaver.FunSuite {
 
   type AccountId = AccountId.Type
   object AccountId extends Newtype[String] {
-    def id = ShapeId("foo", "AccountId")
+
+    val id: ShapeId = ShapeId("foo", "AccountId")
+    val schema: Schema[AccountId] =
+      Schema.bijection(Schema.string, apply, value).withId(id)
   }
 
   type DeviceId = DeviceId.Type
   object DeviceId extends Newtype[String] {
-    def id = ShapeId("foo", "DeviceId")
+
+    val id: ShapeId = ShapeId("foo", "DeviceId")
+
+    val schema: Schema[DeviceId] =
+      Schema.bijection(Schema.string, apply, value).withId(id)
   }
 
   val id1 = "id-1"

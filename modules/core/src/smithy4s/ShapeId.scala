@@ -16,14 +16,22 @@
 
 package smithy4s
 
-case class ShapeId(namespace: String, name: String) {
+case class ShapeId(namespace: String, name: String) extends HasId {
   def show = s"$namespace#$name"
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
   override def toString = show
+  override def id: ShapeId = this
 }
 
 object ShapeId extends ShapeTag.Companion[ShapeId] {
-  def id: ShapeId = ShapeId("smithy4s", "ShapeId")
+
+  val id = ShapeId("smithy4s", "ShapeId")
+  val schema: Schema[ShapeId] = Schema
+    .struct(
+      Schema.string.required[ShapeId]("namespace", _.namespace),
+      Schema.string.required[ShapeId]("name", _.name)
+    )(ShapeId(_, _))
+    .withId(id)
 
   case class Member(shapeId: ShapeId, member: String)
 }

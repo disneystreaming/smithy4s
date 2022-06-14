@@ -29,8 +29,12 @@ object HintMask {
 
   def empty: HintMask = apply()
 
+  def apply(traits: Set[ShapeId]): HintMask = {
+    new Impl(traits)
+  }
+
   def apply(shapeTags: ShapeTag[_]*): HintMask = {
-    new Impl(shapeTags.toSet)
+    new Impl(shapeTags.map(_.id).toSet)
   }
 
   private[this] case object Permissive extends HintMask {
@@ -38,14 +42,15 @@ object HintMask {
     def apply(hints: Hints): Hints = hints
   }
 
-  private[this] final class Impl(val toSet: Set[ShapeTag[_]]) extends HintMask {
+  private[this] final class Impl(val shapeIds: Set[ShapeId]) extends HintMask {
     def ++(other: HintMask): HintMask = other match {
-      case i: Impl    => new Impl(toSet ++ i.toSet)
+      case i: Impl    => new Impl(shapeIds ++ i.shapeIds)
       case Permissive => Permissive
     }
 
     def apply(hints: Hints): Hints = {
-      val hintsToKeep = hints.all.filter(h => toSet.contains(h.key)).toSeq
+      val hintsToKeep =
+        hints.all.filter(h => shapeIds.contains(h.keyId)).toSeq
       Hints(hintsToKeep: _*)
     }
   }

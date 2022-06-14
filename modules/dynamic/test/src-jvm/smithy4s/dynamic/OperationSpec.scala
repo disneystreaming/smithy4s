@@ -23,7 +23,6 @@ import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.effect.IO
 import java.nio.file.Paths
-import smithy.api.Http
 import cats.syntax.all._
 import http.HttpEndpoint
 
@@ -93,7 +92,7 @@ object OperationSpec extends SimpleIOSuite {
       .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
       .flatMap(_.liftTo[IO])
       .map { model =>
-        val compiled = DynamicSchemaIndex.load(model, SchemaIndex(Http))
+        val compiled = DynamicSchemaIndex.load(model)
 
         val endpoints = compiled.allServices.head.service.endpoints
         val httpEndpoints = endpoints.map(HttpEndpoint.cast(_))

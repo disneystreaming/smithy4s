@@ -17,13 +17,32 @@
 package smithy4s
 package internals
 
+import smithy4s.schema.Schema
+
 sealed trait InputOutput extends Product with Serializable {
   @inline final def widen: InputOutput = this
 }
 
 object InputOutput extends ShapeTag.Companion[InputOutput] {
 
-  def id: ShapeId = ShapeId("smithy4s", "InputOutput")
+  val id = ShapeId("smithy4s", "InputOutput")
+
+  val schema: Schema[InputOutput] = {
+    val inputAlt = Schema
+      .constant(Input)
+      .withId(ShapeId("smithy4s", "Input"))
+      .oneOf[InputOutput]("input")
+    val outputAlt = Schema
+      .constant(Output)
+      .withId(ShapeId("smithy4s", "Output"))
+      .oneOf[InputOutput]("output")
+    Schema
+      .union(inputAlt, outputAlt) {
+        case Input  => inputAlt(Input)
+        case Output => outputAlt(Output)
+      }
+      .withId(id)
+  }
 
   case object Input extends InputOutput
   case object Output extends InputOutput

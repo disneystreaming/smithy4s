@@ -84,7 +84,9 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
       data <- sch.compile(smithy4s.scalacheck.SchematicGen)
     } yield (Hints(hint), sch, data)
     forall(gen) { case (hints, schema, data) =>
-      val hint = hints.all.head
+      val hint = hints.all.collect { case b: Hints.Binding.StaticBinding[_] =>
+        b
+      }.head
       implicit val codec: JCodec[Any] =
         schema.compile(schematicJCodec).get
       val json = writeToString(data)
@@ -158,9 +160,10 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
         bigint.addHints(r).validated[Range]
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
-    hint.value match {
-      case l: Length => lengthGen(l)
-      case r: Range  => rangeGen(r)
+    hint match {
+      case Hints.Binding.StaticBinding(_, l: Length) => lengthGen(l)
+      case Hints.Binding.StaticBinding(_, r: Range)  => rangeGen(r)
+      case _ => Gen.const(int.asInstanceOf[Schema[Any]])
     }
   }
 
