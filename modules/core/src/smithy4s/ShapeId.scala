@@ -16,8 +16,6 @@
 
 package smithy4s
 
-import smithy4s.Schema
-
 final case class ShapeId(namespace: String, name: String) extends HasId {
   def show = s"$namespace#$name"
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
