@@ -52,8 +52,8 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
   case class ImportOperation() extends ImportServiceOperation[Unit, ImportOperationError, OpOutput, Nothing, Nothing]
   object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation, Unit, ImportOperationError, OpOutput, Nothing, Nothing] with smithy4s.Errorable[ImportOperationError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.import_test", "ImportOperation")
-    val input: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input)
-    val output: smithy4s.Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output)
+    val input: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: smithy4s.Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
@@ -70,7 +70,9 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
       case ImportOperationError.NotFoundErrorCase(e) => e
     }
   }
-  sealed trait ImportOperationError extends scala.Product with scala.Serializable
+  sealed trait ImportOperationError extends scala.Product with scala.Serializable {
+    @inline final def widen: ImportOperationError = this
+  }
   object ImportOperationError extends smithy4s.ShapeTag.Companion[ImportOperationError] {
     val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.imp", "ImportOperationError")
 

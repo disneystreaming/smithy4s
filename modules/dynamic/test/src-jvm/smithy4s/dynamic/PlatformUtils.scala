@@ -47,6 +47,10 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
       SModel
         .assembler()
         .addImport(s"./sampleSpecs/$fileName")
+        .addImport(
+          "./modules/protocol/resources/META-INF/smithy/smithy4s.smithy"
+        )
+        .discoverModels()
         .assemble()
         .unwrap()
     ).map(ModelSerializer.builder().build.serialize(_))

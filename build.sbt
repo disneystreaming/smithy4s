@@ -23,6 +23,11 @@ Global / licenses := Seq(
 
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
+ThisBuild / version := {
+  if (!sys.env.contains("CI")) "dev"
+  else (ThisBuild / version).value
+}
+
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
@@ -256,7 +261,8 @@ lazy val `aws-http4s` = projectMatrix
     Test / allowedNamespaces := Seq(),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
     )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -377,6 +383,7 @@ lazy val protocolTests = projectMatrix
     ),
     Test / fork := true
   )
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
 
 /**
  * This modules contains utilities to dynamically instantiate
@@ -385,7 +392,7 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core)
+  .dependsOn(core, tests % "test->compile", http4s % "test->compile")
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -534,7 +541,8 @@ lazy val tests = projectMatrix
     },
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
     ),
     moduleName := {
       if (virtualAxes.value.contains(CatsEffect2Axis))
@@ -617,7 +625,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.24"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.26"
     )
 
   val Smithy = new {
@@ -642,7 +650,7 @@ lazy val Dependencies = new {
 
   val Circe = new {
     val generic: Def.Initialize[ModuleID] =
-      Def.setting("io.circe" %%% "circe-generic" % "0.14.1")
+      Def.setting("io.circe" %%% "circe-generic" % "0.14.2")
   }
 
   /*
@@ -655,10 +663,10 @@ lazy val Dependencies = new {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.11")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.12")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.11" else "0.22.12")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.12" else "0.22.13")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
@@ -676,7 +684,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.11" else "0.6.11")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.7.12" else "0.6.12")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)

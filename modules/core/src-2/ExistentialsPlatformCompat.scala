@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,6 @@ trait ExistentialsPlatformCompat {
 
 object Existential {
 
-  @inline def wrap[F[_], A](fa: F[A]): F[_] = fa
+  @inline final def wrap[F[_], A](fa: F[A]): F[_] = fa
 
 }

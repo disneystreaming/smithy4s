@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,38 +83,30 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   override def projectConfigurations: Seq[Configuration] = Seq(Smithy4s)
 
-  import sbt.nio.Keys.{fileInputs, fileOutputs}
-
   override lazy val projectSettings =
     Seq(
       Compile / smithy4sInputDir := (Compile / sourceDirectory).value / "smithy",
       Compile / smithy4sOutputDir := (Compile / sourceManaged).value,
       Compile / smithy4sOpenapiDir := (Compile / resourceManaged).value,
       Compile / smithy4sCodegen := cachedSmithyCodegen(Compile).value,
-      Compile / smithy4sCodegen / fileInputs ++= {
-        Option((Compile / smithy4sInputDir).value.listFiles())
-          .getOrElse(Array.empty)
-          .toSeq
-          .map(_.toGlob)
-      },
-      Compile / smithy4sCodegen / fileOutputs ++=
-        Option(
-          (Compile / smithy4sOutputDir).value
-            .listFiles()
-        )
-          .getOrElse(Array.empty)
-          .map(_.toGlob)
-          .toSeq,
       Compile / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
-      Compile / sourceGenerators +=
-        (Compile / smithy4sCodegen).taskValue
-          .map(_.filter(_.ext == "scala")),
-      Compile / resourceGenerators +=
-        (Compile / smithy4sCodegen).taskValue
-          .map(_.filterNot(_.ext == "scala")),
+      Compile / sourceGenerators += (Compile / smithy4sCodegen).map(
+        _.filter(_.ext == "scala")
+      ),
+      Compile / resourceGenerators += (Compile / smithy4sCodegen).map(
+        _.filter(_.ext != "scala")
+      ),
       cleanFiles += (Compile / smithy4sOutputDir).value,
       Compile / smithy4sModelTransformers := List.empty
     )
+
+  private def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) =>
+    f((a, b))
+
+  private type CacheKey = (
+      FilesInfo[HashFileInfo],
+      List[String]
+  )
 
   private def prepareSmithy4sDeps(deps: Seq[ModuleID]): List[String] =
     deps
@@ -126,13 +118,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
       .toList
 
-  /**
-    * This implementation leverages SBT's input & output file tracking
-    * capabilities. We record inputs via `fileInputs` and outputs
-    * via `fileOutputs` and then use the `inputFileChanges` value
-    * to decide whether or not Codegen should run.
-    */
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
+    val inputFiles =
+      Option((conf / smithy4sInputDir).value.listFiles()).getOrElse(Array.empty)
     val outputPath = (conf / smithy4sOutputDir).value
     val openApiOutputPath = (conf / smithy4sOpenapiDir).value
     val allowedNamespaces =
@@ -145,47 +133,45 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         m.root
       }
     val transforms = (conf / smithy4sModelTransformers).value
+    val s = streams.value
 
-    val out = streams.value
-    val cacheFile =
-      out.cacheDirectory / s"smithy4s_${scalaBinaryVersion.value}"
-
-    // This is important - it's what re-triggers this task on file changes
-    val _ = (conf / smithy4sCodegen).inputFileChanges
-
-    val schemas = ((conf / smithy4sInputDir).value ** "*.smithy").get().toSet
-
-    out.log.debug(s"[Smithy4s] discovered specs: $schemas")
-
-    val compile = FileFunction
-      .cached(
-        cacheFile,
-        inStyle = FilesInfo.lastModified,
-        outStyle = FilesInfo.hash
-      ) { (filePaths: Set[File]) =>
-        val codegenArgs = CodegenArgs(
-          filePaths.map(os.Path(_)).toList,
-          output = os.Path(outputPath),
-          openapiOutput = os.Path(openApiOutputPath),
-          skipScala = false,
-          skipOpenapi = false,
-          discoverModels = true, // we need protocol here
-          allowedNS = allowedNamespaces,
-          excludedNS = excludedNamespaces,
-          repositories = res,
-          dependencies = dependencies,
-          transforms
-        )
-
-        val resPaths = smithy4s.codegen.Codegen
-          .processSpecs(codegenArgs)
-          .map(_.toIO)
-
-        out.log.debug(s"[Smithy4s] generated files: $resPaths")
-
-        resPaths
+    val cached =
+      Tracked.inputChanged[CacheKey, Seq[File]](
+        s.cacheStoreFactory.make("input")
+      ) {
+        untupled {
+          Tracked
+            .lastOutput[(Boolean, CacheKey), Seq[File]](
+              s.cacheStoreFactory.make("output")
+            ) { case ((changed, _), outputs) =>
+              if (changed || outputs.isEmpty) {
+                val filePaths = inputFiles.map(_.getAbsolutePath())
+                val codegenArgs = CodegenArgs(
+                  filePaths.map(os.Path(_)).toList,
+                  output = os.Path(outputPath),
+                  openapiOutput = os.Path(openApiOutputPath),
+                  skipScala = false,
+                  skipOpenapi = false,
+                  discoverModels = true, // we need protocol here
+                  allowedNS = allowedNamespaces,
+                  excludedNS = excludedNamespaces,
+                  repositories = res,
+                  dependencies = dependencies,
+                  transforms
+                )
+                val resPaths = smithy4s.codegen.Codegen
+                  .processSpecs(codegenArgs)
+                  .toList
+                resPaths.map(path => new File(path.toString))
+              } else {
+                outputs.getOrElse(Seq.empty)
+              }
+            }
+        }
       }
 
-    compile(schemas).toSeq
+    cached(
+      (FilesInfo(inputFiles.map(FileInfo.hash(_)).toSet), dependencies)
+    )
   }
 }

@@ -2,12 +2,13 @@ namespace foo
 
 use smithy4s.api#simpleRestJson
 use smithy4s.api#discriminated
+use smithy4s.api#untagged
 
 @simpleRestJson
 service HelloWorldService {
   version: "0.0.1",
   errors: [GeneralServerError],
-  operations: [Greet, GetUnion]
+  operations: [Greet, GetUnion, GetValues]
 }
 
 @readonly
@@ -18,9 +19,15 @@ operation Greet {
 }
 
 @readonly
-@http(method: "GET", uri: "/untagged")
+@http(method: "GET", uri: "/default")
 operation GetUnion {
   output: GetUnionResponse
+}
+
+@readonly
+@http(method: "GET", uri: "/values")
+operation GetValues {
+  output: ValuesResponse
 }
 
 structure Person {
@@ -77,6 +84,20 @@ structure Cat {
 structure Dog {
   name: String,
   breed: String
+}
+
+structure ValuesResponse {
+  values: Values
+}
+
+list Values {
+  member: SomeValue
+}
+
+@untagged
+union SomeValue {
+  message: String,
+  value: Integer
 }
 
 @discriminated("type")

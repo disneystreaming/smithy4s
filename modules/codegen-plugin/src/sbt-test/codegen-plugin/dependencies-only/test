@@ -1,0 +1,3 @@
+# check if smithy4sCodegen works
+> p1/compile
+$ exists p1/smithy_output/aws/iam/ActionPermissionDescription.scala

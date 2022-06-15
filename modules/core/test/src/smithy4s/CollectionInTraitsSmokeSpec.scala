@@ -15,16 +15,20 @@
  */
 
 package smithy4s
-package http
-package json
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
+import weaver._
+import cats.syntax.all._
 
-trait PrimitiveJCodec[A] extends JCodec[A] { self =>
+object CollectionInTraitsSmokeSpec extends FunSuite {
 
-  def decodeValue(in: JsonReader): A
+  test("Traits with collection members do not refer to them using newtypes") {
+    val (someList, someSet, someMap) = smithy4s.example.SomeInt.hints
+      .get(smithy4s.example.SomeCollections)
+      .foldMap(x => (x.someList, x.someSet, x.someMap))
 
-  override final def decodeValue(cursor: Cursor, in: JsonReader): A =
-    decodeValue(in)
+    expect.eql(someList, List("a")) &&
+    expect.eql(someSet, Set("b")) &&
+    expect.eql(someMap, Map("a" -> "b"))
+  }
 
 }

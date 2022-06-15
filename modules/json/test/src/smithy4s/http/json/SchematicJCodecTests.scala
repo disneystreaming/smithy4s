@@ -475,7 +475,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
       failure("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input Json document exceeded max arity of `1024`")
+        expect(message == "input JSON document exceeded max arity of `1024`")
     }
   }
 
@@ -487,7 +487,7 @@ object SchematicJCodecTests extends SimpleIOSuite {
       failure("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input Json document exceeded max arity of `1024`")
+        expect(message == "input JSON document exceeded max arity of `1024`")
     }
   }
 

@@ -40,8 +40,8 @@ object DynamicJsonProxySpec extends weaver.SimpleIOSuite {
         Utils
           .compileSampleSpec("kvstore.smithy")
           .flatMap { dynamicSchemaIndex =>
-            dynamicSchemaIndex.allServices
-              .find(_.service.id == ShapeId("smithy4s.example", "KVStore"))
+            dynamicSchemaIndex
+              .getService(ShapeId("smithy4s.example", "KVStore"))
               .liftTo[IO](new Throwable("Not found"))
           }
           .map { serviceDef =>

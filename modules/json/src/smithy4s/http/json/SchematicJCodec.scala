@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,26 +35,22 @@ import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.Hinted
 import smithy4s.internals.InputOutput
 import smithy4s.schema._
-
+import java.util
 import java.util.UUID
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
-
+import scala.collection.immutable.VectorBuilder
 import JCodec.JCodecMake
 
-private[smithy4s] class SchematicJCodec(maxArity: Int)
-    extends Schematic[JCodecMake] {
-
+private[smithy4s] class SchematicJCodec(maxArity: Int) extends Schematic[JCodecMake] {
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
   def boolean: JCodecMake[Boolean] = Hinted.static {
     new JCodec[Boolean] {
+      def expecting: String = "boolean"
 
-      val expecting: String = "boolean"
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Boolean =
-        in.readBoolean()
+      def decodeValue(cursor: Cursor, in: JsonReader): Boolean = in.readBoolean()
 
       def encodeValue(x: Boolean, out: JsonWriter): Unit = out.writeVal(x)
 
@@ -66,10 +62,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
 
   def char: JCodecMake[Char] = Hinted.static {
     new JCodec[Char] {
-      val expecting: String = "char"
+      def expecting: String = "char"
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Char =
-        in.readChar()
+      def decodeValue(cursor: Cursor, in: JsonReader): Char = in.readChar()
 
       def encodeValue(x: Char, out: JsonWriter): Unit = out.writeVal(x)
 
@@ -79,205 +74,166 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
     }
   }
 
-  def string: JCodecMake[String] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[String] {
-        val expecting: String = "string"
+  def string: JCodecMake[String] = Hinted[JCodec].static {
+    new JCodec[String] {
+      def expecting: String = "string"
 
-        def decodeValue(in: JsonReader): String =
-          in.readString(null)
+      def decodeValue(cursor: Cursor, in: JsonReader): String = in.readString(null)
 
-        def encodeValue(x: String, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: String, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): String = in.readKeyAsString()
+      def decodeKey(in: JsonReader): String = in.readKeyAsString()
 
-        def encodeKey(x: String, out: JsonWriter): Unit = out.writeKey(x)
-
-      }
+      def encodeKey(x: String, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def int: JCodecMake[Int] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[Int] {
-        val expecting: String = "int"
+  def int: JCodecMake[Int] = Hinted[JCodec].static {
+    new JCodec[Int] {
+      def expecting: String = "int"
 
-        def decodeValue(in: JsonReader): Int = in.readInt()
+      def decodeValue(cursor: Cursor, in: JsonReader): Int = in.readInt()
 
-        def encodeValue(x: Int, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: Int, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): Int = in.readKeyAsInt()
+      def decodeKey(in: JsonReader): Int = in.readKeyAsInt()
 
-        def encodeKey(x: Int, out: JsonWriter): Unit = out.writeKey(x)
-
-      }
+      def encodeKey(x: Int, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def long: JCodecMake[Long] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[Long] {
-        val expecting: String = "long"
+  def long: JCodecMake[Long] = Hinted[JCodec].static {
+    new JCodec[Long] {
+      def expecting: String = "long"
 
-        def decodeValue(in: JsonReader): Long =
-          in.readLong()
+      def decodeValue(cursor: Cursor, in: JsonReader): Long = in.readLong()
 
-        def encodeValue(x: Long, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: Long, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): Long = in.readKeyAsLong()
+      def decodeKey(in: JsonReader): Long = in.readKeyAsLong()
 
-        def encodeKey(x: Long, out: JsonWriter): Unit = out.writeKey(x)
-
-      }
+      def encodeKey(x: Long, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def float: JCodecMake[Float] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[Float] {
-        val expecting: String = "float"
+  def float: JCodecMake[Float] = Hinted[JCodec].static {
+    new JCodec[Float] {
+      def expecting: String = "float"
 
-        def decodeValue(in: JsonReader): Float =
-          in.readFloat()
+      def decodeValue(cursor: Cursor, in: JsonReader): Float = in.readFloat()
 
-        def encodeValue(x: Float, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: Float, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): Float = in.readKeyAsFloat()
+      def decodeKey(in: JsonReader): Float = in.readKeyAsFloat()
 
-        def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
-      }
+      def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def double: JCodecMake[Double] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[Double] {
-        val expecting: String = "double"
+  def double: JCodecMake[Double] = Hinted[JCodec].static {
+    new JCodec[Double] {
+      def expecting: String = "double"
 
-        def decodeValue(in: JsonReader): Double =
-          in.readDouble()
+      def decodeValue(cursor: Cursor, in: JsonReader): Double = in.readDouble()
 
-        def encodeValue(x: Double, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: Double, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): Double = in.readKeyAsDouble()
+      def decodeKey(in: JsonReader): Double = in.readKeyAsDouble()
 
-        def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
-
-      }
+      def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def short: JCodecMake[Short] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[Short] {
-        val expecting: String = "short"
+  def short: JCodecMake[Short] = Hinted[JCodec].static {
+    new JCodec[Short] {
+      def expecting: String = "short"
 
-        def decodeValue(in: JsonReader): Short =
-          in.readShort()
+      def decodeValue(cursor: Cursor, in: JsonReader): Short = in.readShort()
 
-        def encodeValue(x: Short, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: Short, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): Short = in.readKeyAsShort()
+      def decodeKey(in: JsonReader): Short = in.readKeyAsShort()
 
-        def encodeKey(x: Short, out: JsonWriter): Unit = out.writeKey(x)
-
-      }
+      def encodeKey(x: Short, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def byte: JCodecMake[Byte] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[Byte] {
-        val expecting: String = "byte"
+  def byte: JCodecMake[Byte] = Hinted[JCodec].static {
+    new JCodec[Byte] {
+      def expecting: String = "byte"
 
-        def decodeValue(in: JsonReader): Byte =
-          in.readByte()
+      def decodeValue(cursor: Cursor, in: JsonReader): Byte = in.readByte()
 
-        def encodeValue(x: Byte, out: JsonWriter): Unit = out.writeVal(x)
+      def encodeValue(x: Byte, out: JsonWriter): Unit = out.writeVal(x)
 
-        def decodeKey(in: JsonReader): Byte = in.readKeyAsByte()
+      def decodeKey(in: JsonReader): Byte = in.readKeyAsByte()
 
-        def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
-
-      }
+      def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
     }
+  }
 
-  def bytes: JCodecMake[ByteArray] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[ByteArray] {
-        val expecting: String = "byte-array"
+  def bytes: JCodecMake[ByteArray] = Hinted[JCodec].static {
+    new JCodec[ByteArray] {
+      def expecting: String = "byte-array"
 
-        override def canBeKey: Boolean = false
+      override def canBeKey: Boolean = false
 
-        def decodeValue(in: JsonReader): ByteArray =
-          ByteArray(in.readBase64AsBytes(null))
+      def decodeValue(cursor: Cursor, in: JsonReader): ByteArray = ByteArray(in.readBase64AsBytes(null))
 
-        def encodeValue(x: ByteArray, out: JsonWriter): Unit =
-          out.writeBase64Val(x.array, doPadding = false)
+      def encodeValue(x: ByteArray, out: JsonWriter): Unit = out.writeBase64Val(x.array, doPadding = true)
 
-        def decodeKey(in: JsonReader): ByteArray =
-          in.decodeError("Cannot use byte array as key")
+      def decodeKey(in: JsonReader): ByteArray = in.decodeError("Cannot use byte array as key")
 
-        def encodeKey(x: ByteArray, out: JsonWriter): Unit =
-          out.encodeError("Cannot use byte array as key")
-      }
+      def encodeKey(x: ByteArray, out: JsonWriter): Unit = out.encodeError("Cannot use byte array as key")
     }
+  }
 
-  def bigdecimal: JCodecMake[BigDecimal] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[BigDecimal] {
-        val expecting: String = "big-decimal"
+  def bigdecimal: JCodecMake[BigDecimal] = Hinted[JCodec].static {
+    new JCodec[BigDecimal] {
+      def expecting: String = "big-decimal"
 
-        def decodeValue(in: JsonReader): BigDecimal =
-          in.readBigDecimal(null)
+      def decodeValue(cursor: Cursor, in: JsonReader): BigDecimal = in.readBigDecimal(null)
 
-        def decodeKey(in: JsonReader): BigDecimal = in.readKeyAsBigDecimal()
+      def decodeKey(in: JsonReader): BigDecimal = in.readKeyAsBigDecimal()
 
-        def encodeValue(value: BigDecimal, out: JsonWriter): Unit =
-          out.writeVal(value)
+      def encodeValue(value: BigDecimal, out: JsonWriter): Unit = out.writeVal(value)
 
-        def encodeKey(value: BigDecimal, out: JsonWriter): Unit =
-          out.writeVal(value)
-
-      }
+      def encodeKey(value: BigDecimal, out: JsonWriter): Unit = out.writeVal(value)
     }
+  }
 
-  def bigint: JCodecMake[BigInt] = Hinted[JCodec]
-    .static {
-      new PrimitiveJCodec[BigInt] {
-        val expecting: String = "big-int"
+  def bigint: JCodecMake[BigInt] = Hinted[JCodec].static {
+    new JCodec[BigInt] {
+      def expecting: String = "big-int"
 
-        def decodeValue(in: JsonReader): BigInt =
-          in.readBigInt(null)
+      def decodeValue(cursor: Cursor, in: JsonReader): BigInt = in.readBigInt(null)
 
-        def decodeKey(in: JsonReader): BigInt = in.readKeyAsBigInt()
+      def decodeKey(in: JsonReader): BigInt = in.readKeyAsBigInt()
 
-        def encodeValue(value: BigInt, out: JsonWriter): Unit =
-          out.writeVal(value)
+      def encodeValue(value: BigInt, out: JsonWriter): Unit = out.writeVal(value)
 
-        def encodeKey(value: BigInt, out: JsonWriter): Unit =
-          out.writeVal(value)
-
-      }
+      def encodeKey(value: BigInt, out: JsonWriter): Unit = out.writeVal(value)
     }
+  }
 
   def uuid: JCodecMake[UUID] = Hinted[JCodec].static {
-    new PrimitiveJCodec[UUID] {
-      val expecting: String = "uuid"
+    new JCodec[UUID] {
+      def expecting: String = "uuid"
 
-      def decodeValue(in: JsonReader): UUID =
-        in.readUUID(null)
+      def decodeValue(cursor: Cursor, in: JsonReader): UUID = in.readUUID(null)
 
       def encodeValue(x: UUID, out: JsonWriter): Unit = out.writeVal(x)
 
       def decodeKey(in: JsonReader): UUID = in.readKeyAsUUID()
 
       def encodeKey(x: UUID, out: JsonWriter): Unit = out.writeKey(x)
-
     }
   }
 
   def timestamp: JCodecMake[Timestamp] = Hinted[JCodec].from { hints =>
     new JCodec[Timestamp] {
-      lazy val format = hints
-        .get(TimestampFormat)
-        .getOrElse(TimestampFormat.DATE_TIME)
-
-      lazy val expecting: String = Timestamp.showFormat(format)
+      private[this] val format = hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
+      val expecting: String = Timestamp.showFormat(format)
 
       def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
         format match {
@@ -295,77 +251,103 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           case other         => out.writeVal(x.format(other))
         }
 
-      def decodeKey(in: JsonReader): Timestamp =
-        Timestamp.fromEpochSecond(in.readKeyAsLong())
+      def decodeKey(in: JsonReader): Timestamp = Timestamp.fromEpochSecond(in.readKeyAsLong())
 
-      def encodeKey(x: Timestamp, out: JsonWriter): Unit =
-        out.writeKey(x.epochSecond)
+      def encodeKey(x: Timestamp, out: JsonWriter): Unit = out.writeKey(x.epochSecond)
     }
   }
 
-  def vector[A](jc: JCodecMake[A]): JCodecMake[Vector[A]] =
-    Hinted[JCodec]
-      .static {
-        val a = jc.get
+  def list[A](jc: JCodecMake[A]): JCodecMake[List[A]] = Hinted[JCodec].static {
+    new JCodec[List[A]] {
+      private[this] val a = jc.get
 
-        new JCodec[Vector[A]] {
-          val expecting: String = "list"
+      def expecting: String = "list"
 
-          override def canBeKey: Boolean = false
+      override def canBeKey: Boolean = false
 
-          def decodeValue(cursor: Cursor, in: JsonReader): Vector[A] = {
-            if (in.isNextToken('[')) {
-              if (in.isNextToken(']')) Vector.empty
-              else {
-                in.rollbackToken()
-                val buffer = new ListBuffer[A]
-                var i = 0
-                while ({
-                  if (i >= maxArity)
-                    throw cursor.payloadError(
-                      this,
-                      s"input $expecting exceeded max arity of `$maxArity`"
-                    )
-                  buffer += cursor.under(i)(cursor.decode(a, in))
-                  i += 1
-                  in.isNextToken(',')
-                }) ()
-                if (in.isCurrentToken(']')) buffer.toVector
-                else in.arrayEndOrCommaError()
-              }
-            } else in.decodeError("Expected JSON array")
+      def decodeValue(cursor: Cursor, in: JsonReader): List[A] =
+        if (in.isNextToken('[')) {
+          if (in.isNextToken(']')) Nil
+          else {
+            in.rollbackToken()
+            val builder = new ListBuffer[A]
+            var i = 0
+            while ( {
+              if (i >= maxArity)
+                throw cursor.payloadError(
+                  this,
+                  s"input $expecting exceeded max arity of `$maxArity`"
+                )
+              builder += cursor.under(i)(cursor.decode(a, in))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (in.isCurrentToken(']')) builder.result()
+            else in.arrayEndOrCommaError()
           }
+        } else in.decodeError("Expected JSON array")
 
-          def encodeValue(list: Vector[A], out: JsonWriter): Unit = {
-            out.writeArrayStart()
-            list.foreach { x =>
-              a.encodeValue(x, out)
-            }
-            out.writeArrayEnd()
-          }
-
-          def decodeKey(in: JsonReader): Vector[A] =
-            in.decodeError("Cannot use vectors as keys")
-
-          def encodeKey(x: Vector[A], out: JsonWriter): Unit =
-            out.encodeError("Cannot use vectors as keys")
-
+      def encodeValue(xs: List[A], out: JsonWriter): Unit = {
+        out.writeArrayStart()
+        var list = xs
+        while (list ne Nil) {
+          a.encodeValue(list.head, out)
+          list = list.tail
         }
+        out.writeArrayEnd()
       }
 
-  def list[A](a: JCodecMake[A]): JCodecMake[List[A]] =
-    vector(a).transform(_.biject(_.toList, _.toVector))
+      def decodeKey(in: JsonReader): List[A] = in.decodeError("Cannot use vectors as keys")
 
-  def set[A](a: JCodecMake[A]): JCodecMake[Set[A]] =
-    vector(a).transform(_.biject(_.toSet, _.toVector))
-
-  def map[K, V](jk: JCodecMake[K], jv: JCodecMake[V]): JCodecMake[Map[K, V]] = {
-    if (jk.get.canBeKey) {
-      objectMap(jk, jv)
-    } else {
-      arrayMap(jk, jv)
+      def encodeKey(xs: List[A], out: JsonWriter): Unit = out.encodeError("Cannot use vectors as keys")
     }
   }
+
+  def set[A](jc: JCodecMake[A]): JCodecMake[Set[A]] = Hinted[JCodec].static {
+    new JCodec[Set[A]] {
+      private[this] val a = jc.get
+
+      def expecting: String = "list"
+
+      override def canBeKey: Boolean = false
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Set[A] =
+        if (in.isNextToken('[')) {
+          if (in.isNextToken(']')) Set.empty
+          else {
+            in.rollbackToken()
+            val builder = Set.newBuilder[A]
+            var i = 0
+            while ({
+              if (i >= maxArity)
+                throw cursor.payloadError(
+                  this,
+                  s"input $expecting exceeded max arity of `$maxArity`"
+                )
+              builder += cursor.under(i)(cursor.decode(a, in))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (in.isCurrentToken(']')) builder.result()
+            else in.arrayEndOrCommaError()
+          }
+        } else in.decodeError("Expected JSON array")
+
+      def encodeValue(xs: Set[A], out: JsonWriter): Unit = {
+        out.writeArrayStart()
+        xs.foreach(x => a.encodeValue(x, out))
+        out.writeArrayEnd()
+      }
+
+      def decodeKey(in: JsonReader): Set[A] = in.decodeError("Cannot use vectors as keys")
+
+      def encodeKey(xs: Set[A], out: JsonWriter): Unit = out.encodeError("Cannot use vectors as keys")
+    }
+  }
+
+  def map[K, V](jk: JCodecMake[K], jv: JCodecMake[V]): JCodecMake[Map[K, V]] =
+    if (jk.get.canBeKey) objectMap(jk, jv)
+    else arrayMap(jk, jv)
 
   private def objectMap[K, V](
       jk: JCodecMake[K],
@@ -376,12 +358,12 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
 
       override def canBeKey: Boolean = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] = {
+      def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] =
         if (in.isNextToken('{')) {
           if (in.isNextToken('}')) Map.empty
           else {
             in.rollbackToken()
-            val buffer = MMap.empty[K, V]
+            val builder = Map.newBuilder[K, V]
             var i = 0
             while ({
               if (i >= maxArity)
@@ -389,32 +371,27 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
                   this,
                   s"input $expecting exceeded max arity of `$maxArity`"
                 )
-              buffer += (k.decodeKey(in) -> cursor.under(i)(
-                cursor.decode(v, in)
-              ))
+              builder += ((k.decodeKey(in), cursor.under(i)(cursor.decode(v, in))))
               i += 1
               in.isNextToken(',')
             }) ()
-            if (in.isCurrentToken('}')) buffer.toMap
+            if (in.isCurrentToken('}')) builder.result()
             else in.objectEndOrCommaError()
           }
         } else in.decodeError("Expected JSON object")
-      }
 
-      def encodeValue(map: Map[K, V], out: JsonWriter): Unit = {
+      def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
         out.writeObjectStart()
-        map.foreach { case (key, value) =>
+        xs.foreach { case (key, value) =>
           k.encodeKey(key, out)
           v.encodeValue(value, out)
         }
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Map[K, V] =
-        in.decodeError("Cannot use maps as keys")
+      def decodeKey(in: JsonReader): Map[K, V] = in.decodeError("Cannot use maps as keys")
 
-      def encodeKey(x: Map[K, V], out: JsonWriter): Unit =
-        out.encodeError("Cannot use maps as keys")
+      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit = out.encodeError("Cannot use maps as keys")
     }
   }
 
@@ -422,13 +399,10 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       k: JCodecMake[K],
       v: JCodecMake[V]
   ): JCodecMake[Map[K, V]] = {
-    type KV = (K, V)
-    val kField = Field.required[JCodecMake, KV, K]("key", k, _._1)
-    val vField = Field.required[JCodecMake, KV, V]("value", v, _._2)
-    val kvCodec = struct(Vector(kField, vField))(vec =>
-      (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V])
-    )
-    vector(kvCodec).transform(_.biject(_.toMap, _.toVector))
+    val kField = Field.required[JCodecMake, (K, V), K]("key", k, _._1)
+    val vField = Field.required[JCodecMake, (K, V), V]("value", v, _._2)
+    val kvCodec = struct(Vector(kField, vField))(vec => (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V]))
+    list(kvCodec).transform(_.biject(_.toMap, _.toList))
   }
 
   def bijection[A, B](
@@ -449,11 +423,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
 
       def expecting: String = underlying.expecting
 
-      def decodeValue(cursor: Cursor, in: JsonReader): A =
-        underlying.decodeValue(cursor, in)
+      def decodeValue(cursor: Cursor, in: JsonReader): A = underlying.decodeValue(cursor, in)
 
-      def encodeValue(x: A, out: JsonWriter): Unit =
-        underlying.encodeValue(x, out)
+      def encodeValue(x: A, out: JsonWriter): Unit = underlying.encodeValue(x, out)
 
       def decodeKey(in: JsonReader): A = underlying.decodeKey(in)
 
@@ -466,39 +438,35 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       rest: Vector[Alt[JCodecMake, Z, _]]
   )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] =
     new JCodec[Z] {
-
-      override lazy val expecting: String = "tagged-union"
+      val expecting: String = "tagged-union"
 
       override def canBeKey: Boolean = false
 
       def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
         alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-      val handlerMap: Map[String, (Cursor, JsonReader) => Z] = {
-        val res = MMap.empty[String, (Cursor, JsonReader) => Z]
-        def handler[A](alt: Alt[JCodecMake, Z, A]) = {
-          val codec = alt.instance.get
-          (cursor: Cursor, reader: JsonReader) =>
-            alt.inject(cursor.decode(codec, reader))
+      private[this] val handlerMap: util.HashMap[String, (Cursor, JsonReader) => Z] =
+        new util.HashMap[String, (Cursor, JsonReader) => Z] {
+          def handler[A](alt: Alt[JCodecMake, Z, A]) = {
+            val codec = alt.instance.get
+            (cursor: Cursor, reader: JsonReader) =>
+              alt.inject(cursor.decode(codec, reader))
+          }
+
+          put(jsonLabel(first), handler(first))
+          rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
-        res += (jsonLabel(first) -> handler(first))
-        rest.foreach(alt => res += (jsonLabel(alt) -> handler(alt)))
-        res.toMap
-      }
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
         if (in.isNextToken('{')) {
-          if (in.isNextToken('}'))
-            in.decodeError("Expected a single key/value pair")
+          if (in.isNextToken('}')) in.decodeError("Expected a single key/value pair")
           else {
             in.rollbackToken()
             val key = in.readKeyAsString()
             val result = cursor.under(key) {
-              handlerMap.get(key).map(_.apply(cursor, in))
-            } match {
-              case Some(value) => value
-              case None        => in.discriminatorValueError(key)
+              val handler = handlerMap.get(key)
+              if (handler eq null) in.discriminatorValueError(key)
+              handler(cursor, in)
             }
             if (in.isNextToken('}')) result
             else {
@@ -507,9 +475,8 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
             }
           }
         } else in.decodeError("Expected JSON object")
-      }
 
-      val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
+      private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
         def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
       }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
 
@@ -524,24 +491,21 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Z =
-        in.decodeError("Cannot use coproducts as keys")
+      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use coproducts as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit =
-        out.encodeError("Cannot use coproducts as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use coproducts as keys")
     }
 
   private def untaggedUnion[Z](
       first: Alt[JCodecMake, Z, _],
       rest: Vector[Alt[JCodecMake, Z, _]]
   )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] = new JCodec[Z] {
-
-    override lazy val expecting: String = "untaggedUnion"
+    def expecting: String = "untaggedUnion"
 
     override def canBeKey: Boolean = false
 
-    val handlerList: Vector[(Cursor, JsonReader) => Z] = {
-      val res = Vector.newBuilder[(Cursor, JsonReader) => Z]
+    private[this] val handlerList: Array[(Cursor, JsonReader) => Z] = {
+      val res = Array.newBuilder[(Cursor, JsonReader) => Z]
       def handler[A](alt: Alt[JCodecMake, Z, A]) = {
         val codec = alt.instance.get
         (cursor: Cursor, reader: JsonReader) =>
@@ -554,8 +518,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
 
     def decodeValue(cursor: Cursor, in: JsonReader): Z = {
       var z: Z = null.asInstanceOf[Z]
+      val len = handlerList.length
       var i = 0
-      while (z == null && i < handlerList.size) {
+      while (z == null && i < len) {
         in.setMark()
         val handler = handlerList(i)
         try {
@@ -570,7 +535,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       else cursor.payloadError(this, "Could not decode untagged union")
     }
 
-    val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
+    private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
       def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = fa.instance.get
     }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
 
@@ -582,11 +547,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       writeValue(awv)
     }
 
-    def decodeKey(in: JsonReader): Z =
-      in.decodeError("Cannot use coproducts as keys")
+    def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use coproducts as keys")
 
-    def encodeKey(x: Z, out: JsonWriter): Unit =
-      out.encodeError("Cannot use coproducts as keys")
+    def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use coproducts as keys")
   }
 
   private def discriminatedUnion[Z](
@@ -595,60 +558,44 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       discriminated: Discriminated
   )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodec[Z] =
     new JCodec[Z] {
-
-      override lazy val expecting: String = "discriminated-union"
+      def expecting: String = "discriminated-union"
 
       override def canBeKey: Boolean = false
 
       def jsonLabel[A](alt: Alt[JCodecMake, Z, A]): String =
         alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
-      val handlerMap: Map[String, (Cursor, JsonReader) => Z] = {
-        val res = MMap.empty[String, (Cursor, JsonReader) => Z]
-        def handler[A](alt: Alt[JCodecMake, Z, A]) = {
-          val codec = alt.instance.get
-          (cursor: Cursor, reader: JsonReader) =>
-            alt.inject(cursor.decode(codec, reader))
+      private[this] val handlerMap: util.HashMap[String, (Cursor, JsonReader) => Z] =
+        new util.HashMap[String, (Cursor, JsonReader) => Z] {
+          def handler[A](alt: Alt[JCodecMake, Z, A]): (Cursor, JsonReader) => Z = {
+            val codec = alt.instance.get
+            (cursor: Cursor, reader: JsonReader) =>
+              alt.inject(cursor.decode(codec, reader))
+          }
+
+          put(jsonLabel(first), handler(first))
+          rest.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
-        res += (jsonLabel(first) -> handler(first))
-        rest.foreach(alt => res += (jsonLabel(alt) -> handler(alt)))
-        res.toMap
-      }
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Z = {
+      def decodeValue(cursor: Cursor, in: JsonReader): Z =
         if (in.isNextToken('{')) {
           in.setMark()
-          val key = if (in.skipToKey(discriminated.value)) {
-            val k = in.readString("")
+          if (in.skipToKey(discriminated.value)) {
+            val key = in.readString("")
             in.rollbackToMark()
             in.rollbackToken()
-            k
-          } else {
-            in.decodeError(
-              s"Unable to find discriminator ${discriminated.value}"
-            )
-          }
-          val result = cursor.under(key) {
-            handlerMap.get(key).map(_.apply(cursor, in))
-          } match {
-            case Some(value) => value
-            case None        => in.discriminatorValueError(key)
-          }
-          result
+            cursor.under(key) {
+              val handler = handlerMap.get(key)
+              if (handler eq null) in.discriminatorValueError(key)
+              handler(cursor, in)
+            }
+          } else in.decodeError(s"Unable to find discriminator ${discriminated.value}")
         } else in.decodeError("Expected JSON object")
-      }
 
-      val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
+      private[this] val altCache = new PolyFunction[Alt[JCodecMake, Z, *], JCodec] {
         def apply[A](fa: Alt[JCodecMake, Z, A]): JCodec[A] = {
           val label = jsonLabel(fa)
-          fa.instance
-            .addHints(
-              Hints(
-                DiscriminatedUnionMember(discriminated.value, label)
-              )
-            )
-            .get
+          fa.instance.addHints(Hints(DiscriminatedUnionMember(discriminated.value, label))).get
         }
       }.unsafeCache((first +: rest).map(alt => Existential.wrap(alt)))
 
@@ -660,11 +607,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         writeValue(awv)
       }
 
-      def decodeKey(in: JsonReader): Z =
-        in.decodeError("Cannot use coproducts as keys")
+      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use coproducts as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit =
-        out.encodeError("Cannot use coproducts as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use coproducts as keys")
     }
 
   def union[Z](
@@ -672,12 +617,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       rest: Vector[Alt[JCodecMake, Z, _]]
   )(total: Z => Alt.WithValue[JCodecMake, Z, _]): JCodecMake[Z] = {
     Hinted[JCodec].from {
-      case Untagged.hint(_) =>
-        untaggedUnion(first, rest)(total)
-      case Discriminated.hint(d) =>
-        discriminatedUnion(first, rest, d)(total)
-      case _ =>
-        taggedUnion(first, rest)(total)
+      case Untagged.hint(_) => untaggedUnion(first, rest)(total)
+      case Discriminated.hint(d) => discriminatedUnion(first, rest, d)(total)
+      case _ => taggedUnion(first, rest)(total)
     }
   }
 
@@ -687,11 +629,9 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       fromOrdinal: Map[Int, A]
   ): JCodecMake[A] = Hinted.static {
     new JCodec[A] {
-      val expecting: String =
-        s"enumeration: [${fromName.keys.mkString(", ")}]"
+      val expecting: String = s"enumeration: [${fromName.keys.mkString(", ")}]"
 
       def decodeValue(cursor: Cursor, in: JsonReader): A = {
-
         val str = in.readString(null)
         fromName.get(str) match {
           case Some(value) => value
@@ -719,7 +659,7 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       .map(_.value)
       .getOrElse(field.label)
 
-  private type Handler = (Cursor, JsonReader, MMap[String, Any]) => Unit
+  private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
       field: Field[JCodecMake, Z, A]
@@ -727,14 +667,13 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
     val codec = field.instance.get
     val label = field.label
     if (field.isRequired) { (cursor, in, mmap) =>
-      mmap += label -> cursor.under(label)(cursor.decode(codec, in))
+      val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
     } else { (cursor, in, mmap) =>
       cursor.under[Unit](label) {
-        if (in.isNextToken('n')) {
-          val _ = in.readNullOrError[None.type](None, "Expected null")
-        } else {
+        if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
+        else {
           in.rollbackToken()
-          mmap += label -> cursor.decode(codec, in)
+          val _ = mmap.put(label, cursor.decode(codec, in))
         }
       }
     }
@@ -744,36 +683,57 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       field: Field[JCodecMake, Z, A]
   ): (Z, JsonWriter) => Unit = {
     field.fold(new Field.Folder[JCodecMake, Z, (Z, JsonWriter) => Unit] {
-      val jLabel = jsonLabel(field)
       def onRequired[AA](
           label: String,
           instance: JCodecMake[AA],
           get: Z => AA
       ): (Z, JsonWriter) => Unit = {
         val codec = instance.get
-        (z: Z, out: JsonWriter) => {
-          out.writeKey(jLabel)
-          codec.encodeValue(get(z), out)
+        val jLabel = jsonLabel(field)
+        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
+          (z: Z, out: JsonWriter) => {
+            out.writeNonEscapedAsciiKey(jLabel)
+            codec.encodeValue(get(z), out)
+          }
+        } else {
+          (z: Z, out: JsonWriter) => {
+            out.writeKey(jLabel)
+            codec.encodeValue(get(z), out)
+          }
         }
       }
+
       def onOptional[AA](
           label: String,
           instance: JCodecMake[AA],
           get: Z => Option[AA]
       ): (Z, JsonWriter) => Unit = {
         val codec = instance.get
-        (z: Z, out: JsonWriter) => {
-          get(z).foreach { maybeAA =>
-            out.writeKey(jLabel)
-            codec.encodeValue(maybeAA, out)
+        val jLabel = jsonLabel(field)
+        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
+          (z: Z, out: JsonWriter) => {
+            get(z) match {
+              case Some(aa) =>
+                out.writeNonEscapedAsciiKey(jLabel)
+                codec.encodeValue(aa, out)
+              case _ =>
+            }
+          }
+        } else {
+          (z: Z, out: JsonWriter) => {
+            get(z) match {
+              case Some(aa) =>
+                out.writeKey(jLabel)
+                codec.encodeValue(aa, out)
+              case _ =>
+            }
           }
         }
       }
     })
   }
 
-  private type Fields[Z] =
-    Vector[Field[JCodecMake, Z, _]]
+  private type Fields[Z] = Vector[Field[JCodecMake, Z, _]]
 
   private def nonPayloadStruct[Z](
       fields: Fields[Z],
@@ -783,50 +743,44 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
   ): JCodec[Z] =
     new JCodec[Z] {
-
-      val documentFields =
+      private[this] val documentFields =
         fields.filter { field =>
           val hints = field.instance.hints
           HttpBinding.fromHints(field.label, hints, maybeInputOutput).isEmpty
         }
 
-      val handlers =
-        documentFields
-          .map(field => jsonLabel(field) -> fieldHandler(field))
-          .toMap
+      private[this] val handlers = new util.HashMap[String, Handler](documentFields.length) {
+        documentFields.foreach(field => put(jsonLabel(field), fieldHandler(field)))
+      }
 
-      val expecting: String = "object"
+      private[this] val documentEncoders = documentFields.map(field => fieldEncoder(field))
+
+      def expecting: String = "object"
 
       override def canBeKey = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z =
-        decodeValue_(cursor, in)(emptyMetadata)
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
+      def decodeValue(cursor: Cursor, in: JsonReader): Z = decodeValue_(cursor, in)(emptyMetadata)
+
+      override def decodeMessage(in: JsonReader): scala.collection.Map[String, Any] => Z =
         Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val buffer = MMap.empty[String, Any]
+        val buffer = new util.HashMap[String, Any](handlers.size)
         if (in.isNextToken('{')) {
           // In this case, metadata and payload are mixed together
           // and values field values must be sought from either.
-          if (in.isNextToken('}')) () // do nothing
-          else {
+          if (!in.isNextToken('}')) {
             in.rollbackToken()
             while ({
-              handlers.get(in.readKeyAsString()) match {
-                case Some(handler) => handler(cursor, in, buffer)
-                case None          => in.skip()
-              }
+              val handler = handlers.get(in.readKeyAsString())
+              if (handler eq null) in.skip()
+              else handler(cursor, in, buffer)
               in.isNextToken(',')
             }) ()
-            if (!in.isCurrentToken('}')) {
-              in.objectEndOrCommaError()
-            }
+            if (!in.isCurrentToken('}')) in.objectEndOrCommaError()
           }
         } else in.decodeError("Expected JSON object")
 
@@ -837,32 +791,24 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         // with the ones pull the metadata, and call the constructor
         // on it.
         { (meta: scala.collection.Map[String, Any]) =>
-          meta.foreach(buffer += _) // 2.12
-          val stage2 = scala.collection.mutable.ListBuffer.empty[Any]
-          fields.foreach {
-            case f if f.isRequired =>
-              buffer.get(f.label) match {
-                case Some(value) => stage2 += value
-                case None =>
-                  cursor.requiredFieldError(f.label, f.label)
-              }
-            case f =>
-              stage2 += buffer.get(f.label)
-          }
-          const(stage2.toVector)
+          meta.foreach(kv => buffer.put(kv._1, kv._2))
+          val stage2 = new VectorBuilder[Any]
+          fields.foreach(f => stage2 += {
+            val value = buffer.get(f.label)
+            if (f.isRequired) {
+              if (value == null) cursor.requiredFieldError(f.label, f.label)
+              value
+            } else Option(value)
+          })
+          const(stage2.result())
         }
       }
 
-      def documentEncoders = documentFields.map(field => fieldEncoder(field))
+      def encodeValue(z: Z, out: JsonWriter): Unit = encode(z, out, documentEncoders)
 
-      def encodeValue(z: Z, out: JsonWriter): Unit =
-        encode(z, out, documentEncoders)
+      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use products as keys")
 
-      def decodeKey(in: JsonReader): Z =
-        in.decodeError("Cannot use products as keys")
-
-      def encodeKey(x: Z, out: JsonWriter): Unit =
-        out.encodeError("Cannot use products as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use products as keys")
     }
 
   def payloadStruct[A, Z](
@@ -870,29 +816,23 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
       fields: Fields[Z]
   )(codec: JCodec[payloadField.T], const: Vector[Any] => Z): JCodec[Z] =
     new JCodec[Z] {
-
-      val expecting: String = "object"
+      def expecting: String = "object"
 
       override def canBeKey = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z =
-        decodeValue_(cursor, in)(emptyMetadata)
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
+      def decodeValue(cursor: Cursor, in: JsonReader): Z = decodeValue_(cursor, in)(emptyMetadata)
+
+      override def decodeMessage(in: JsonReader): scala.collection.Map[String, Any] => Z =
         Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val buffer = MMap.empty[String, Any]
+        val buffer = new util.HashMap[String, Any](1)
         // In this case, one field assumes the whole payload. We use
         // its associated codec.
-        buffer += payloadField.label -> cursor.decode(
-          codec,
-          in
-        )
+        buffer.put(payloadField.label, cursor.decode(codec, in))
 
         // At this point, we have parsed the json and retrieved
         // all the values that interest us for the construction
@@ -901,33 +841,24 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         // with the ones pull the metadata, and call the constructor
         // on it.
         { (meta: scala.collection.Map[String, Any]) =>
-          meta.foreach(buffer += _) // 2.12
-          val stage2 = scala.collection.mutable.ListBuffer.empty[Any]
-          fields.foreach {
-            case f if f.isRequired =>
-              buffer.get(f.label) match {
-                case Some(value) => stage2 += value
-                case None =>
-                  cursor.requiredFieldError(f.label, f.label)
-              }
-            case f =>
-              stage2 += buffer.get(f.label)
-          }
-          const(stage2.toVector)
+          meta.foreach(kv => buffer.put(kv._1, kv._2))
+          val stage2 = new VectorBuilder[Any]
+          fields.foreach(f => stage2 += {
+            val value = buffer.get(f.label)
+            if (f.isRequired) {
+              if (value == null) cursor.requiredFieldError(f.label, f.label)
+              value
+            } else Option(value)
+          })
+          const(stage2.result())
         }
       }
 
-      def encodeValue(z: Z, out: JsonWriter): Unit = {
-        payloadField.foreachT(z)(
-          codec.encodeValue(_, out)
-        )
-      }
+      def encodeValue(z: Z, out: JsonWriter): Unit = payloadField.foreachT(z)(codec.encodeValue(_, out))
 
-      def decodeKey(in: JsonReader): Z =
-        in.decodeError("Cannot use products as keys")
+      def decodeKey(in: JsonReader): Z = in.decodeError("Cannot use products as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit =
-        out.encodeError("Cannot use products as keys")
+      def encodeKey(x: Z, out: JsonWriter): Unit = out.encodeError("Cannot use products as keys")
     }
 
   def struct[Z](
@@ -942,26 +873,27 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
           case None =>
             maybeDiscriminated match {
               case Some(d) =>
-                val encode = {
-                  (
-                      z: Z,
-                      out: JsonWriter,
-                      documentEncoders: Vector[(Z, JsonWriter) => Unit]
-                  ) =>
-                    out.writeObjectStart()
-                    out.writeKey(d.propertyName)
-                    out.writeVal(d.alternativeLabel)
-                    documentEncoders.foreach(encoder => encoder(z, out))
-                    out.writeObjectEnd()
-                }
+                val encode =
+                  if (d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&
+                    d.alternativeLabel.forall(JsonWriter.isNonEscapedAscii)) {
+                    (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
+                      out.writeObjectStart()
+                      out.writeNonEscapedAsciiKey(d.propertyName)
+                      out.writeNonEscapedAsciiVal(d.alternativeLabel)
+                      documentEncoders.foreach(encoder => encoder(z, out))
+                      out.writeObjectEnd()
+                  } else {
+                    (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
+                      out.writeObjectStart()
+                      out.writeKey(d.propertyName)
+                      out.writeVal(d.alternativeLabel)
+                      documentEncoders.foreach(encoder => encoder(z, out))
+                      out.writeObjectEnd()
+                  }
                 nonPayloadStruct(fields, maybeInputOutput)(const, encode)
               case None =>
                 val encode = {
-                  (
-                      z: Z,
-                      out: JsonWriter,
-                      documentEncoders: Vector[(Z, JsonWriter) => Unit]
-                  ) =>
+                  (z: Z, out: JsonWriter, documentEncoders: Vector[(Z, JsonWriter) => Unit]) =>
                     out.writeObjectStart()
                     documentEncoders.foreach(encoder => encoder(z, out))
                     out.writeObjectEnd()
@@ -971,142 +903,111 @@ private[smithy4s] class SchematicJCodec(maxArity: Int)
         }
     }
 
-  def withHints[A](fa: JCodecMake[A], hints: Hints): JCodecMake[A] =
-    fa.addHints(hints)
+  def withHints[A](fa: JCodecMake[A], hints: Hints): JCodecMake[A] = fa.addHints(hints)
 
-  def unit = Hinted.static {
+  def unit: JCodecMake[Unit] = Hinted.static {
     new JCodec[Unit] {
-      val expecting = "empty object"
+      def expecting: String = "empty object"
 
       override def canBeKey: Boolean = false
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Unit =
+        if (!in.isNextToken('{') || !in.isNextToken('}')) in.decodeError("Expected empty object")
 
       def encodeValue(x: Unit, out: JsonWriter): Unit = {
         out.writeObjectStart()
         out.writeObjectEnd()
       }
 
-      def decodeKey(in: JsonReader): Unit =
-        in.decodeError("Cannot use Unit as keys")
+      def decodeKey(in: JsonReader): Unit = in.decodeError("Cannot use Unit as keys")
 
-      def encodeKey(x: Unit, out: JsonWriter): Unit =
-        out.encodeError("Cannot use Unit as keys")
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Unit =
-        if (!in.isNextToken('{') || !in.isNextToken('}'))
-          in.decodeError("Expected empty object")
+      def encodeKey(x: Unit, out: JsonWriter): Unit = out.encodeError("Cannot use Unit as keys")
     }
   }
 
   def document: JCodecMake[Document] = Hinted.static {
     new JCodec[Document] {
-
       override def canBeKey: Boolean = false
 
       def encodeValue(doc: Document, out: JsonWriter): Unit = doc match {
-        case DNumber(value)  => out.writeVal(value)
-        case DString(value)  => out.writeVal(value)
-        case DBoolean(value) => out.writeVal(value)
-        case DNull           => out.writeNull()
-        case DArray(values) =>
+        case s: DString  => out.writeVal(s.value)
+        case b: DBoolean => out.writeVal(b.value)
+        case n: DNumber  => out.writeVal(n.value)
+        case a: DArray =>
           out.writeArrayStart()
-          values.foreach(encodeValue(_, out))
+          a.value.foreach(encodeValue(_, out))
           out.writeArrayEnd()
-        case DObject(map) =>
+        case o: DObject =>
           out.writeObjectStart()
-          map.foreach { case (k, v) =>
-            out.writeKey(k)
-            encodeValue(v, out)
+          o.value.foreach { kv =>
+            out.writeKey(kv._1)
+            encodeValue(kv._2, out)
           }
           out.writeObjectEnd()
+        case _ => out.writeNull()
       }
 
-      def decodeKey(in: JsonReader): Document =
-        in.decodeError("Cannot use json document as keys")
+      def decodeKey(in: JsonReader): Document = in.decodeError("Cannot use JSON document as keys")
 
-      def encodeKey(x: Document, out: JsonWriter): Unit =
-        out.encodeError("Cannot use json documents as keys")
+      def encodeKey(x: Document, out: JsonWriter): Unit = out.encodeError("Cannot use JSON documents as keys")
 
-      def expecting: String = "Json document"
+      def expecting: String = "JSON document"
 
-      /*
-       * Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
-       */
+      // Borrowed from: https://github.com/plokhotnyuk/jsoniter-scala/blob/e80d51019b39efacff9e695de97dce0c23ae9135/jsoniter-scala-benchmark/src/main/scala/io/circe/CirceJsoniter.scala
       def decodeValue(cursor: Cursor, in: JsonReader): Document = {
         val b = in.nextToken()
-        if (b == 'n')
-          in.readNullOrError(Document.DNull, "expected `null` value")
-        else if (b == '"') {
+        if (b == '"') {
           in.rollbackToken()
-          Document.DString(in.readString(null))
+          new DString(in.readString(null))
         } else if (b == 'f' || b == 't') {
           in.rollbackToken()
-          if (in.readBoolean()) Document.DBoolean(true)
-          else Document.DBoolean(false)
+          new DBoolean(in.readBoolean())
         } else if ((b >= '0' && b <= '9') || b == '-') {
           in.rollbackToken()
-          val bigDecimal = in.readBigDecimal(null)
-          Document.DNumber(bigDecimal)
+          new DNumber(in.readBigDecimal(null))
         } else if (b == '[') {
-          val array: IndexedSeq[Document] =
+          new DArray({
             if (in.isNextToken(']')) IndexedSeq.empty[Document]
             else {
               in.rollbackToken()
-              var i = 0
               var arr = new Array[Document](4)
+              var i = 0
               while ({
-                if (i >= maxArity)
-                  throw cursor.payloadError(
-                    this,
-                    s"input $expecting exceeded max arity of `$maxArity`"
-                  )
+                if (i >= maxArity) maxArityError(cursor)
                 if (i == arr.length) arr = java.util.Arrays.copyOf(arr, i << 1)
                 arr(i) = decodeValue(in, null)
                 i += 1
                 in.isNextToken(',')
               }) {}
-
-              if (in.isCurrentToken(']'))
-                if (i == arr.length) ArraySeq.unsafeWrapArray(arr)
-                else ArraySeq.unsafeWrapArray(java.util.Arrays.copyOf(arr, i))
-              else in.arrayEndOrCommaError()
+              if (in.isCurrentToken(']')) ArraySeq.unsafeWrapArray {
+                if (i == arr.length) arr
+                else java.util.Arrays.copyOf(arr, i)
+              } else in.arrayEndOrCommaError()
             }
-          Document.DArray(array)
+          })
         } else if (b == '{') {
-          /*
-           * Because of DoS vulnerability in Scala 2.12 HashMap https://github.com/scala/bug/issues/11203
-           * we use a Java LinkedHashMap because it better handles hash code collisions for Comparable keys.
-           */
-          val kvs =
-            if (in.isNextToken('}'))
-              new java.util.LinkedHashMap[String, Document]()
+          new DObject({
+            if (in.isNextToken('}')) Map.empty
             else {
-              val underlying = new java.util.LinkedHashMap[String, Document]()
               in.rollbackToken()
+              // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
+              val obj = Map.newBuilder[String, Document]
               var i = 0
               while ({
-                if (i >= maxArity)
-                  throw cursor.payloadError(
-                    this,
-                    s"input $expecting exceeded max arity of `$maxArity`"
-                  )
-                underlying.put(in.readKeyAsString(), decodeValue(in, null))
+                if (i >= maxArity) maxArityError(cursor)
+                obj += ((in.readKeyAsString(), decodeValue(in, null)))
                 i += 1
                 in.isNextToken(',')
               }) {}
-
-              if (!in.isCurrentToken('}'))
-                in.objectEndOrCommaError()
-
-              underlying
+              if (in.isCurrentToken('}')) obj.result()
+              else in.objectEndOrCommaError()
             }
-          import scala.jdk.CollectionConverters._
-          Document.DObject(kvs.asScala.toMap)
-        } else {
-          in.decodeError("expected JSON value")
-        }
+          })
+        } else in.readNullOrError(DNull, "expected JSON document")
       }
 
+      private def maxArityError(cursor: Cursor): Nothing =
+        throw cursor.payloadError(this, s"input $expecting exceeded max arity of `$maxArity`")
     }
   }
-
 }

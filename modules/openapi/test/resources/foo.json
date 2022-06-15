@@ -5,6 +5,33 @@
     "version": "0.0.1"
   },
   "paths": {
+    "/default": {
+      "get": {
+        "operationId": "GetUnion",
+        "responses": {
+          "200": {
+            "description": "GetUnion200response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUnionResponseContent"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "GeneralServerError500response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralServerErrorResponseContent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/hello/{name}/{ts}": {
       "get": {
         "operationId": "Greet",
@@ -74,16 +101,16 @@
         }
       }
     },
-    "/untagged": {
+    "/values": {
       "get": {
-        "operationId": "GetUnion",
+        "operationId": "GetValues",
         "responses": {
           "200": {
-            "description": "GetUnion200response",
+            "description": "GetValues200response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetUnionResponseContent"
+                  "$ref": "#/components/schemas/GetValuesResponseContent"
                 }
               }
             }
@@ -173,15 +200,15 @@
         }
       },
       "DoubleOrFloat": {
-        "oneOf":[
+        "oneOf": [
           {
-            "type":"object",
-            "title":"float",
+            "type": "object",
+            "title": "float",
             "properties": {
               "float": {
-                "type":"number",
-                "format":"float",
-                "nullable":true
+                "type": "number",
+                "format": "float",
+                "nullable": true
               }
             },
             "required": [
@@ -189,13 +216,13 @@
             ]
           },
           {
-            "type":"object",
-            "title":"double",
+            "type": "object",
+            "title": "double",
             "properties": {
               "double": {
-                "type":"number",
-                "format":"double",
-                "nullable":true
+                "type": "number",
+                "format": "double",
+                "nullable": true
               }
             },
             "required": [
@@ -219,10 +246,21 @@
             "$ref": "#/components/schemas/IntOrString"
           },
           "doubleOrFloat": {
-            "$ref":"#/components/schemas/DoubleOrFloat"
+            "$ref": "#/components/schemas/DoubleOrFloat"
           },
           "catOrDog": {
             "$ref": "#/components/schemas/CatOrDog"
+          }
+        }
+      },
+      "GetValuesResponseContent": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SomeValue"
+            }
           }
         }
       },
@@ -255,6 +293,36 @@
             },
             "required": [
               "string"
+            ]
+          }
+        ]
+      },
+      "SomeValue": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "message",
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
+          },
+          {
+            "type": "object",
+            "title": "value",
+            "properties": {
+              "value": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              }
+            },
+            "required": [
+              "value"
             ]
           }
         ]

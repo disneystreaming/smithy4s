@@ -9,7 +9,7 @@ object NoMoreSpace extends smithy4s.ShapeTag.Companion[NoMoreSpace] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "NoMoreSpace")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
-    smithy.api.Error.SERVER,
+    smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(507),
   )
 

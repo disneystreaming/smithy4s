@@ -21,14 +21,33 @@ import weaver._
 object RecursionSpec extends SimpleIOSuite {
 
   test(
+    "Compilation does not recurse infinitely in the case of recursive unions".only
+  ) {
+    val modelString =
+      """|namespace foo
+         |
+         |union RecursiveUnion {
+         |  empty: Unit,
+         |  nonEmpty: RecursiveUnion
+         |}
+         |""".stripMargin
+
+    Utils.compile(modelString).as(success)
+  }
+
+  test(
     "Compilation does not recurse infinitely in the case of recursive structures".only
   ) {
     val modelString =
       """|namespace foo
          |
-         |structure Foo {
-         |  foo: Foo
+         |structure RecursiveStructure1 {
+         |  rec2: RecursiveStructure2
          |}
+         |
+         |structure RecursiveStructure2 {
+         |  rec1: RecursiveStructure1
+         |} 
          |""".stripMargin
 
     Utils.compile(modelString).as(success)

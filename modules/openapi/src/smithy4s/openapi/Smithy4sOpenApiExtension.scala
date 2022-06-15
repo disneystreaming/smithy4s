@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ final class Smithy4sOpenApiExtension() extends Smithy2OpenApiExtension {
 
   override def getJsonSchemaMappers(): ju.List[JsonSchemaMapper] = List(
     new OpenApiJsonSchemaMapper(): JsonSchemaMapper,
-    new DiscriminatedUnions()
+    new DiscriminatedUnions(),
+    new UntaggedUnions()
   ).asJava
 
 }

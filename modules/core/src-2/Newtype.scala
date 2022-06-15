@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ abstract class Newtype[A] extends HasId { self =>
     x.asInstanceOf[A]
 
   implicit final class Ops(val self: Type) {
-    @inline def value: A = Newtype.this.value(self)
+    @inline final def value: A = Newtype.this.value(self)
   }
 
   implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
@@ -40,8 +40,8 @@ abstract class Newtype[A] extends HasId { self =>
 
   implicit val isomorphismInstance: capability.Isomorphism[A, Type] =
     new capability.Isomorphism[A, Type] {
-      @inline def from(b: Type): A = b.value
-      @inline def to(a: A): Type = apply(a)
+      @inline final def from(b: Type): A = b.value
+      @inline final def to(a: A): Type = apply(a)
     }
 
   object hint {
