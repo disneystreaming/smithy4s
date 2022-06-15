@@ -45,6 +45,7 @@ class Smithy4sOpenApiProtocol
   ): Unit = {
     config.setUseJsonName(true);
     config.setDefaultTimestampFormat(TimestampFormatTrait.Format.DATE_TIME);
+    config.setUseIntegerType(true);
   }
 
   def createDocumentSchema(

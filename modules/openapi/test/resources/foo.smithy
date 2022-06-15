@@ -56,12 +56,18 @@ structure GeneralServerError {
 
 structure GetUnionResponse {
   intOrString: IntOrString,
+  doubleOrFloat: DoubleOrFloat,
   catOrDog: CatOrDog
 }
 
 union IntOrString {
   int: Integer,
   string: String
+}
+
+union DoubleOrFloat {
+  float: Float,
+  double: Double
 }
 
 structure Cat {

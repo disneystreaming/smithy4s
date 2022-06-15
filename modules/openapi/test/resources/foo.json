@@ -172,6 +172,38 @@
           }
         }
       },
+      "DoubleOrFloat": {
+        "oneOf":[
+          {
+            "type":"object",
+            "title":"float",
+            "properties": {
+              "float": {
+                "type":"number",
+                "format":"float",
+                "nullable":true
+              }
+            },
+            "required": [
+              "float"
+            ]
+          },
+          {
+            "type":"object",
+            "title":"double",
+            "properties": {
+              "double": {
+                "type":"number",
+                "format":"double",
+                "nullable":true
+              }
+            },
+            "required": [
+              "double"
+            ]
+          }
+        ]
+      },
       "GeneralServerErrorResponseContent": {
         "type": "object",
         "properties": {
@@ -185,6 +217,9 @@
         "properties": {
           "intOrString": {
             "$ref": "#/components/schemas/IntOrString"
+          },
+          "doubleOrFloat": {
+            "$ref":"#/components/schemas/DoubleOrFloat"
           },
           "catOrDog": {
             "$ref": "#/components/schemas/CatOrDog"
@@ -201,7 +236,7 @@
             "title": "int",
             "properties": {
               "int": {
-                "type": "number",
+                "type": "integer",
                 "format": "int32",
                 "nullable": true
               }
