@@ -32,6 +32,7 @@ import org.typelevel.ci.CIString
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.schema.Alt
+import smithy4s.internals.InputOutput
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -184,7 +185,10 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
       val errorValue = altAndValue.value
       val errorCode =
         http.HttpStatusCode.fromSchema(errorSchema).code(errorValue, 500)
-      implicit val errorCodec = codecs.compileEntityEncoder(errorSchema)
+      implicit val errorCodec: EntityEncoder[F, ErrorType] =
+        codecs.compileEntityEncoder(
+          errorSchema.addHints(InputOutput.Output.widen)
+        )
       val metadataEncoder = Metadata.Encoder.fromSchema(errorSchema)
       val metadata = metadataEncoder.encode(errorValue)
       val headers = errorHeaders(altAndValue.alt.label, metadata)

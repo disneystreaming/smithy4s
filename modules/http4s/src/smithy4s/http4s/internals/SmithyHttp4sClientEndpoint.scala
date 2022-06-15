@@ -28,6 +28,7 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
+import smithy4s.internals.InputOutput
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -202,7 +203,10 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
   ): F[Either[MetadataError, E]] = {
     val schema = oneOf.instance
     val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
-    implicit val errorCodec = entityCompiler.compilePartialEntityDecoder(schema)
+    implicit val errorCodec: EntityDecoder[F, BodyPartial[ErrorType]] =
+      entityCompiler.compilePartialEntityDecoder(
+        schema.addHints(InputOutput.Output.widen)
+      )
     decodeResponse[ErrorType](response, errorMetadataDecoder)
       .map(_.map(oneOf.inject))
   }
