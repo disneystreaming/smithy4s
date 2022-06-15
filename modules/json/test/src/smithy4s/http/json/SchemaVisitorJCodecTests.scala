@@ -39,7 +39,7 @@ import weaver._
 import scala.collection.immutable.ListMap
 import scala.util.Try
 
-object SchematicJCodecTests extends SimpleIOSuite {
+object SchemaVisitorJCodecTests extends SimpleIOSuite {
 
   case class Foo(a: Int, b: Option[Int])
   object Foo {
