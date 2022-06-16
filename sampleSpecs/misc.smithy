@@ -101,3 +101,10 @@ map SomeMap {
 
 @SomeCollections(someList: ["a"], someSet: ["b"], someMap: {"a" : "b"})
 integer SomeInt
+
+@suppress(["UnreferencedShape"])
+structure RangeCheck {
+  @required
+  @range(min: 1)
+  qty: Integer
+}

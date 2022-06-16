@@ -28,6 +28,7 @@ import smithy4s.example.{
   Four,
   One,
   PayloadData,
+  RangeCheck,
   TestBiggerUnion,
   Three,
   UntaggedUnion
@@ -38,7 +39,7 @@ import weaver._
 import scala.collection.immutable.ListMap
 import scala.util.Try
 
-object SchematicJCodecTests extends SimpleIOSuite {
+object SchemaVisitorJCodecTests extends SimpleIOSuite {
 
   case class Foo(a: Int, b: Option[Int])
   object Foo {
@@ -321,6 +322,15 @@ object SchematicJCodecTests extends SimpleIOSuite {
 
     expect(documentJson == expected) &&
     expect(decoded == doc)
+  }
+
+  pureTest("Range checks are performed correctly") {
+    val json = """{"qty":0}"""
+    val result = util.Try(readFromString[RangeCheck](json))
+    expect(
+      result.failed.get.getMessage == "Input must be >= 1.0, but was 0.0" ||
+        result.failed.get.getMessage == "Input must be >= 1, but was 0" // js
+    )
   }
 
   case class Bar(

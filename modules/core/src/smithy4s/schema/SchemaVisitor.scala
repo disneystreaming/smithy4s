@@ -20,7 +20,7 @@ package schema
 import Schema._
 
 // format: off
-trait SchemaVisitor[F[_]] extends (Schema ~> F){
+trait SchemaVisitor[F[_]] extends (Schema ~> F) {
   def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) : F[P]
   def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]) : F[List[A]]
   def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): F[Set[A]]

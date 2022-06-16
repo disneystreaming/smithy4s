@@ -21,7 +21,6 @@ package json
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import smithy4s.PolyFunction
 import smithy4s.capability.Invariant
-import smithy4s.internals.Hinted
 
 import scala.collection.{Map => MMap}
 
@@ -120,10 +119,8 @@ object JCodec {
     }
   }
 
-  type JCodecMake[A] = Hinted[JCodec, A]
-
   def fromSchema[A](schema: Schema[A]): JCodec[A] =
-    schema.compile(codecs.schematicJCodec).get
+    schema.compile(codecs.schemaVisitorJCodec)
 
   implicit def deriveJCodecFromSchema[A](implicit
       schema: Schema[A]
