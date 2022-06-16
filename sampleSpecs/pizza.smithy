@@ -76,7 +76,10 @@ structure VersionOutput {
 @error("client")
 structure PriceError {
   @required
-  message: String
+  message: String,
+  @required
+  @httpHeader("X-CODE")
+  code: Integer
 }
 
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
