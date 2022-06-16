@@ -29,7 +29,6 @@ import smithy.api.TimestampFormat
 import smithy4s.api.Discriminated
 import smithy4s.api.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
-import smithy4s.internals.InputOutput
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
 import smithy4s.Timestamp
@@ -961,7 +960,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
   private def nonPayloadStruct[Z](
       fields: Fields[Z],
-      maybeInputOutput: Option[InputOutput]
+      structHints: Hints
   )(
       const: Vector[Any] => Z,
       encode: (Z, JsonWriter, Vector[(Z, JsonWriter) => Unit]) => Unit
@@ -971,7 +970,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       private[this] val documentFields =
         fields.filter { field =>
           HttpBinding
-            .fromHints(field.label, field.hints, maybeInputOutput)
+            .fromHints(field.label, field.hints, structHints)
             .isEmpty
         }
 
@@ -1109,7 +1108,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
   private def basicStruct[A, S](
       fields: Fields[S],
-      maybeInputOutput: Option[InputOutput]
+      structHints: Hints
   )(make: Vector[Any] => S): JCodec[S] = {
     val encode = {
       (
@@ -1122,7 +1121,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         out.writeObjectEnd()
     }
 
-    nonPayloadStruct(fields, maybeInputOutput)(make, encode)
+    nonPayloadStruct(fields, structHints)(make, encode)
   }
   override def struct[S](
       shapeId: ShapeId,
@@ -1130,50 +1129,41 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): JCodec[S] = {
-    (
-      InputOutput.hint.unapply(hints),
-      DiscriminatedUnionMember.hint.unapply(hints)
-    ) match {
-      case (maybeInputOutput, maybeDiscriminated) =>
-        fields.find(_.hints.get(HttpPayload).isDefined) match {
-          case Some(payloadField) =>
-            val codec = apply(payloadField.instance)
-            payloadStruct(payloadField, fields)(codec, make)
-          case None =>
-            maybeDiscriminated match {
-              case Some(d) =>
-                val encode =
-                  if (
-                    d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&
-                    d.alternativeLabel.forall(JsonWriter.isNonEscapedAscii)
-                  ) {
-                    (
-                        z: S,
-                        out: JsonWriter,
-                        documentEncoders: Vector[(S, JsonWriter) => Unit]
-                    ) =>
-                      out.writeObjectStart()
-                      out.writeNonEscapedAsciiKey(d.propertyName)
-                      out.writeNonEscapedAsciiVal(d.alternativeLabel)
-                      documentEncoders.foreach(encoder => encoder(z, out))
-                      out.writeObjectEnd()
-                  } else {
-                    (
-                        z: S,
-                        out: JsonWriter,
-                        documentEncoders: Vector[(S, JsonWriter) => Unit]
-                    ) =>
-                      out.writeObjectStart()
-                      out.writeKey(d.propertyName)
-                      out.writeVal(d.alternativeLabel)
-                      documentEncoders.foreach(encoder => encoder(z, out))
-                      out.writeObjectEnd()
-                  }
-                nonPayloadStruct(fields, maybeInputOutput)(make, encode)
-              case None =>
-                basicStruct(fields, maybeInputOutput)(make)
-            }
-        }
+    (fields.find(_.hints.get(HttpPayload).isDefined), hints) match {
+      case (Some(payloadField), _) =>
+        val codec = apply(payloadField.instance)
+        payloadStruct(payloadField, fields)(codec, make)
+      case (None, DiscriminatedUnionMember.hint(d)) =>
+        val encode =
+          if (
+            d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&
+            d.alternativeLabel.forall(JsonWriter.isNonEscapedAscii)
+          ) {
+            (
+                z: S,
+                out: JsonWriter,
+                documentEncoders: Vector[(S, JsonWriter) => Unit]
+            ) =>
+              out.writeObjectStart()
+              out.writeNonEscapedAsciiKey(d.propertyName)
+              out.writeNonEscapedAsciiVal(d.alternativeLabel)
+              documentEncoders.foreach(encoder => encoder(z, out))
+              out.writeObjectEnd()
+          } else {
+            (
+                z: S,
+                out: JsonWriter,
+                documentEncoders: Vector[(S, JsonWriter) => Unit]
+            ) =>
+              out.writeObjectStart()
+              out.writeKey(d.propertyName)
+              out.writeVal(d.alternativeLabel)
+              documentEncoders.foreach(encoder => encoder(z, out))
+              out.writeObjectEnd()
+          }
+        nonPayloadStruct(fields, hints)(make, encode)
+      case _ =>
+        basicStruct(fields, hints)(make)
     }
   }
 

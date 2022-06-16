@@ -141,6 +141,7 @@ abstract class PizzaSpec
         )
       val discriminator = headers.get("X-Error-Type").flatMap(_.headOption)
 
+      expect(headers.get("X-CODE") == Some(List("1"))) &&
       expect(code == 400) &&
       expect(body == expectedBody) &&
       expect(discriminator == Some("PriceError"))

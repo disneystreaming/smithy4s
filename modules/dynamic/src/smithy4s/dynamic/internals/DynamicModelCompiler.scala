@@ -339,7 +339,9 @@ private[dynamic] object Compiler {
       for {
         inputSchema <- getSchema(input).map(_.addHints(InputOutput.Input.widen))
         errorable <- errorableLazy
-        outputSchema <- getSchema(output).map(_.addHints(InputOutput.Output.widen)),
+        outputSchema <- getSchema(output).map(
+          _.addHints(InputOutput.Output.widen)
+        ),
       } yield {
         DynamicEndpoint(
           id,
