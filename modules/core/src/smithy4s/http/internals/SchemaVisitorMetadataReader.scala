@@ -27,7 +27,6 @@ import smithy4s.http.internals.MetaDecode.{
   StringValueMetaDecode,
   StructureMetaDecode
 }
-import smithy4s.internals.InputOutput
 import smithy4s.schema._
 
 import java.{util => ju}
@@ -165,10 +164,9 @@ private[http] class SchemaVisitorMetadataReader()
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): MetaDecode[S] = {
-    val maybeInputOutput = hints.get[InputOutput]
     val reservedQueries =
       fields
-        .map(f => HttpBinding.fromHints(f.label, f.hints, maybeInputOutput))
+        .map(f => HttpBinding.fromHints(f.label, f.hints, hints))
         .collect { case Some(HttpBinding.QueryBinding(query)) =>
           query
         }
@@ -179,10 +177,10 @@ private[http] class SchemaVisitorMetadataReader()
     ): Option[FieldDecode] = {
       val schema = field.instance
       val label = field.label
-      val hints = field.hints
-      HttpBinding.fromHints(label, hints, maybeInputOutput).map { binding =>
+      val fieldHints = field.hints
+      HttpBinding.fromHints(label, fieldHints, hints).map { binding =>
         val decoder: MetaDecode[_] =
-          self(schema.addHints(Hints(binding) ++ hints))
+          self(schema.addHints(Hints(binding) ++ fieldHints))
         val update = decoder
           .updateMetadata(binding, label, field.isOptional, reservedQueries)
         FieldDecode(label, binding, update)
