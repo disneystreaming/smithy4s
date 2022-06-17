@@ -48,7 +48,10 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
       _ <- IO.raiseError(Boom).whenA(restaurant == "boom")
       _ <- IO
         .raiseError(
-          PriceError(s"Prices must be whole numbers: ${menuItem.price}")
+          PriceError(
+            s"Prices must be whole numbers: ${menuItem.price}",
+            code = 1
+          )
         )
         .unlessA(menuItem.price.isWhole)
       uuid <- UUIDGen.randomUUID[IO]

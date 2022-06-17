@@ -26,7 +26,7 @@ import smithy4s.scalacheck.DynData
 import weaver._
 import weaver.scalacheck._
 
-import codecs.schematicJCodec
+import codecs.schemaVisitorJCodec
 
 object DocumentPropertyTests extends SimpleIOSuite with Checkers {
 
@@ -46,7 +46,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
     Show.fromToString
 
   implicit val documentCodec: JCodec[Document] =
-    Schema.document.compile(schematicJCodec).get
+    Schema.document.compile(schemaVisitorJCodec)
 
   loggedTest(
     "Going through json directly or via the adt give the same results"
@@ -57,7 +57,7 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
     forall(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
-        schema.compile(schematicJCodec).get
+        schema.compile(schemaVisitorJCodec)
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
       val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
