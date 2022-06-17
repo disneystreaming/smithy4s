@@ -61,7 +61,7 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
     )
   }
 
-  test("structure members contain ShapeId in hints".only) {
+  test("structure members contain ShapeId in hints") {
     val shapeIds =
       example.CityCoordinates.schema.compile(TestCompiler).toSet
     expect(
