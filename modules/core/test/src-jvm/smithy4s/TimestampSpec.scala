@@ -76,7 +76,8 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val ts = Timestamp.fromInstant(i)
       val formatted = ts.format(TimestampFormat.DATE_TIME)
       val parsed = Timestamp.parse(formatted, TimestampFormat.DATE_TIME)
-      expect.same(formatted, i.toString) && expect.same(parsed, Some(ts))
+      expect.same(formatted, i.toString)
+      expect.same(parsed, Some(ts))
     }
   }
 
