@@ -16,11 +16,11 @@
 
 package smithy4s
 
-import weaver._
+import munit._
 
 import scala.scalajs.js
 
-object JsConvertersSpec extends FunSuite {
+class JsConvertersSpec() extends FunSuite {
 
   test("object - strings") {
     val input = js.Dictionary("one" -> "1")

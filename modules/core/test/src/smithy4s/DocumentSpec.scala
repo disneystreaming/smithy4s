@@ -19,9 +19,9 @@ package smithy4s
 import smithy.api.JsonName
 import smithy4s.api.Discriminated
 import smithy4s.example.IntList
-import weaver._
+import munit._
 
-object DocumentSpec extends FunSuite {
+class DocumentSpec() extends FunSuite {
 
   test("Recursive document codecs should not blow up the stack") {
     val recursive: IntList = IntList(1, Some(IntList(2, Some(IntList(3)))))
@@ -39,7 +39,7 @@ object DocumentSpec extends FunSuite {
 
     val roundTripped = Document.decode[IntList](document)
 
-    expect(document == expectedDocument) &&
+    expect(document == expectedDocument)
     expect(roundTripped == Right(recursive))
   }
 
@@ -117,7 +117,7 @@ object DocumentSpec extends FunSuite {
 
     val roundTripped = Document.decode[(Int, String)](document)
 
-    expect(document == expectedDocument) &&
+    expect(document == expectedDocument)
     expect(roundTripped == Right(intAndString))
   }
 
@@ -133,8 +133,8 @@ object DocumentSpec extends FunSuite {
 
     val roundTripped = Document.decode[Either[Int, String]](document)
 
-    expect(document == expectedDocument) &&
-    expect(roundTripped == Right(intOrString))
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(intOrString))
   }
 
   test("discriminated unions encoding") {
@@ -151,8 +151,8 @@ object DocumentSpec extends FunSuite {
 
     val roundTripped = Document.decode[Either[Foo, Bar]](document)
 
-    expect(document == expectedDocument) &&
-    expect(roundTripped == Right(fooOrBar))
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(fooOrBar))
   }
 
   test("discriminated unions encoding - empty structure alternative") {
@@ -167,8 +167,8 @@ object DocumentSpec extends FunSuite {
 
     val roundTripped = Document.decode[Either[Foo, Baz]](document)
 
-    expect(document == expectedDocument) &&
-    expect(roundTripped == Right(fooOrBaz))
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(fooOrBaz))
   }
 
 }

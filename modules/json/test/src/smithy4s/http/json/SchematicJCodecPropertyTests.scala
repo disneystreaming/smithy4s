@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.json
+package smithy4s
+package http.json
 
 import cats.Show
-import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
 import smithy.api.Length
@@ -29,17 +29,13 @@ import smithy4s.scalacheck.DynData
 import smithy4s.scalacheck._
 import smithy4s.schema._
 import smithy4s.schema.Schema._
-import weaver._
-import weaver.scalacheck._
+import munit._
 
 import codecs.schemaVisitorJCodec
+import org.scalacheck.Prop
+import Prop._
 
-object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
-
-  override val maxParallelism = 1
-
-  override val checkConfig: CheckConfig =
-    super.checkConfig.copy(perPropertyParallelism = 1)
+class SchematicJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- SchemaGenerator.genSchema(2, 2)
@@ -52,11 +48,11 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
   implicit val schemaDataAndHintsShow: Show[(Hints, Schema[DynData], Any)] =
     Show.fromToString
 
-  loggedTest("Json roundtrip works for the whole metamodel") { log =>
+  property("Json roundtrip works for the whole metamodel") {
     // We're randomly generating a schema, and using it
     // to randomly generate compliant data, and
     // asserting roundtrip there.
-    forall(genSchemaData) { schemaAndData =>
+    forAll(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
         schema.compile(schemaVisitorJCodec)
@@ -65,25 +61,22 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
       val result = scala.util.Try(readFromString[Any](json, config)).toEither
       result.left.foreach(_.printStackTrace())
-      val e = exists(result)(d => expect(d == data))
-      if (e.run.isInvalid) {
-        for {
-          _ <- log.debug("data: " + data)
-          _ <- log.debug("schema: " + schemaStr)
-          _ <- log.debug("json: " + json)
-          _ <- log.debug("roundTrip: " + result.toString())
-        } yield e
-      } else IO.pure(e)
+      val prop = Prop(result == Right(data))
+      prop.label(s"""|data: $data
+                    |schema: $schemaStr
+                    |json: $json
+                    |roundTip: $result
+                    |""".stripMargin)
     }
 
   }
 
-  test("constraint validation") {
+  property("constraint validation") {
     val gen = for {
       (hint, sch) <- genSchemaWithHints
       data <- sch.compile(smithy4s.scalacheck.SchematicGen)
     } yield (Hints(hint), sch, data)
-    forall(gen) { case (hints, schema, data) =>
+    forAll(gen) { case (hints, schema, data) =>
       val hint = hints.all.head
       implicit val codec: JCodec[Any] =
         schema.compile(schemaVisitorJCodec)
@@ -100,23 +93,23 @@ object SchematicJCodecPropertyTests extends SimpleIOSuite with Checkers {
                 case s: String    => s.size
                 case b: ByteArray => b.array.size
               }
-              expect(min.forall(_ <= size)) && expect(max.forall(_ >= size))
+              expect(min.forall(_ <= size))
+              expect(max.forall(_ >= size))
             case Range(min, max) =>
               val value = BigDecimal(data.toString)
-              expect(min.forall(_ <= value)) && expect(
-                max.forall(_ >= value)
-              )
+              expect(min.forall(_ <= value))
+              expect(max.forall(_ >= value))
           }
         case Left(PayloadError(_, _, message)) =>
           hint.value match {
             case Length(min, max) =>
-              expect(min.isEmpty || message.contains(min.get.toString)) &&
-                expect(max.isEmpty || message.contains(max.get.toString))
+              expect(min.isEmpty || message.contains(min.get.toString))
+              expect(max.isEmpty || message.contains(max.get.toString))
             case Range(min, max) =>
-              expect(min.isEmpty || message.contains(min.get.toString)) &&
-                expect(max.isEmpty || message.contains(max.get.toString))
+              expect(min.isEmpty || message.contains(min.get.toString))
+              expect(max.isEmpty || message.contains(max.get.toString))
           }
-        case _ => failure("result should have matched one of the above cases")
+        case _ => fail("result should have matched one of the above cases")
       }
     }
   }

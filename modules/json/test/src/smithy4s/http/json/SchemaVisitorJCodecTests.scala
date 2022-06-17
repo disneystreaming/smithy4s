@@ -34,12 +34,12 @@ import smithy4s.example.{
   UntaggedUnion
 }
 import smithy4s.api.Discriminated
-import weaver._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
+import munit.FunSuite
 
-object SchemaVisitorJCodecTests extends SimpleIOSuite {
+class SchemaVisitorJCodecTests() extends FunSuite {
 
   case class Foo(a: Int, b: Option[Int])
   object Foo {
@@ -98,51 +98,51 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     )
   }
 
-  pureTest(
+  test(
     "Compiling a codec for a recursive type should not blow up the stack"
   ) {
     val foo = IntList(1, Some(IntList(2)))
     val json = """{"head":1,"tail":{"head":2}}"""
     val result = writeToString[IntList](foo)
     val roundTripped = readFromString[IntList](json)
-    expect(result == json) &&
-    expect(roundTripped == foo)
+    expect.same(result, json)
+    expect.same(roundTripped, foo)
   }
 
-  pureTest("Optional encode from present value") {
+  test("Optional encode from present value") {
     val foo = Foo(1, Some(2))
     val json = """{"a":1,"_b":2}"""
     val result = writeToString[Foo](foo)
-    expect(result == json)
+    expect.same(result, json)
   }
 
-  pureTest("Optional decode from present value") {
+  test("Optional decode from present value") {
     val json = """{"a" : 1, "_b": 2}"""
     val result = readFromString[Foo](json)
-    expect(result == Foo(1, Some(2)))
+    expect.same(result, Foo(1, Some(2)))
   }
 
-  pureTest("Optional decode from absent value") {
+  test("Optional decode from absent value") {
     val json = """{"a" : 1}"""
     val result = readFromString[Foo](json)
-    expect(result == Foo(1, None))
+    expect.same(result, Foo(1, None))
   }
 
-  pureTest("Optional decode from null value") {
+  test("Optional decode from null value") {
     val json = """{"a" : 1, "_b": null}"""
     val result = readFromString[Foo](json)
-    expect(result == Foo(1, None))
+    expect.same(result, Foo(1, None))
   }
 
-  pureTest("Optional: path gets surfaced in errors") {
+  test("Optional: path gets surfaced in errors") {
     val json = """{"a" : 1, "_b": "foo"}"""
     try {
       val _ = readFromString[Foo](json)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(path, expected, _) =>
-        expect(path == PayloadPath("b")) &&
-          expect(expected == "int")
+        expect(path == PayloadPath("b"))
+        expect(expected == "int")
     }
   }
 
@@ -158,26 +158,27 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     }
   }
 
-  pureTest("Union gets encoded correctly") {
+  test("Union gets encoded correctly") {
     val jsonInt = """{"int":1}"""
     val jsonStr = """{"_string":"foo"}"""
     val int = writeToString[Either[Int, String]](Left(1))
     val str = writeToString[Either[Int, String]](Right("foo"))
-    expect(int == jsonInt) &&
-    expect(str == jsonStr)
+    expect.same(int, jsonInt)
+    expect.same(str, jsonStr)
   }
 
-  pureTest("Valid union values are parsed successfuly") {
+  test("Valid union values are parsed successfuly") {
     val jsonStr = """{"checked":"foo"}"""
     val result = readFromString[CheckedOrUnchecked](jsonStr)
-    expect(result == CheckedOrUnchecked.CheckedCase("foo"))
+    expect.same(result, CheckedOrUnchecked.CheckedCase("foo"))
   }
 
-  pureTest("Invalid union values fails to parse") {
+  test("Invalid union values fails to parse") {
     val jsonStr = """{"checked":"!@#"}"""
     val result = Try(readFromString[CheckedOrUnchecked](jsonStr)).failed
-    expect(
-      result.get == PayloadError(
+    expect.same(
+      result.get,
+      PayloadError(
         PayloadPath.fromString(".checked"),
         "string",
         "String '!@#' does not match pattern '^\\w+$'"
@@ -185,125 +186,118 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     )
   }
 
-  pureTest(
+  test(
     "Constraints contribute to the discrimination process of untagged union"
   ) {
     val jsonStr = "\"foo\""
     val result = readFromString[CheckedOrUnchecked2](jsonStr)
-    val e1 = expect(result == CheckedOrUnchecked2.CheckedCase("foo"))
+    expect(result == CheckedOrUnchecked2.CheckedCase("foo"))
     val jsonStr2 = "\"!@#\""
     val result2 = readFromString[CheckedOrUnchecked2](jsonStr2)
-    val e2 = expect(result2 == CheckedOrUnchecked2.RawCase("!@#"))
-    e1 && e2
+    expect.same(result2, CheckedOrUnchecked2.RawCase("!@#"))
   }
 
-  pureTest("Discriminated union gets encoded correctly") {
+  test("Discriminated union gets encoded correctly") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = writeToString[Either[Baz, Bin]](Left(Baz("test")))
     val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
-    expect(baz == jsonBaz) &&
-    expect(bin == jsonBin)
+    expect.same(baz, jsonBaz)
+    expect.same(bin, jsonBin)
   }
 
-  pureTest("Discriminated union decoding tolerates whitespace") {
+  test("Discriminated union decoding tolerates whitespace") {
     val json = """ { "tpe" : "one" , "value" : "hello" }"""
     val result = readFromString[TestBiggerUnion](json)
 
-    expect(
-      result == TestBiggerUnion.OneCase(One(Some("hello")))
-    )
+    expect.same(result, TestBiggerUnion.OneCase(One(Some("hello"))))
   }
 
-  pureTest("Discriminated union discriminator can follow other keys") {
+  test("Discriminated union discriminator can follow other keys") {
     val json = """ { "value" : "hello", "tpe" : "one" }"""
     val result = readFromString[TestBiggerUnion](json)
 
-    expect(
-      result == TestBiggerUnion.OneCase(One(Some("hello")))
-    )
+    expect.same(result, TestBiggerUnion.OneCase(One(Some("hello"))))
   }
 
-  pureTest("Nested discriminated union decoding tolerates whitespace") {
+  test("Nested discriminated union decoding tolerates whitespace") {
     val json = """{ "testBiggerUnion": { "tpe": "one", "value": "hello" } }"""
     val result = readFromString[PayloadData](json)
 
-    expect(
-      result == PayloadData(
-        Some(TestBiggerUnion.OneCase(One(Some("hello"))))
-      )
+    expect.same(
+      result,
+      PayloadData(Some(TestBiggerUnion.OneCase(One(Some("hello")))))
     )
   }
 
-  pureTest("Discriminated union gets routed to the correct codec") {
+  test("Discriminated union gets routed to the correct codec") {
     val jsonBaz = """{"type":"baz","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = readFromString[Either[Baz, Bin]](jsonBaz)
     val bin = readFromString[Either[Baz, Bin]](jsonBin)
-    expect(baz == Left(Baz("test"))) &&
-    expect(bin == Right(Bin("foo", 2022)))
+    expect.same(baz, Left(Baz("test")))
+    expect.same(bin, Right(Bin("foo", 2022)))
   }
 
-  pureTest("Union gets routed to the correct codec") {
+  test("Union gets routed to the correct codec") {
     val jsonInt = """{"int" :  1}"""
     val jsonStr = """{"_string" : "foo"}"""
     val int = readFromString[Either[Int, String]](jsonInt)
     val str = readFromString[Either[Int, String]](jsonStr)
-    expect(int == Left(1)) &&
-    expect(str == Right("foo"))
+    expect.same(int, Left(1))
+    expect.same(str, Right("foo"))
   }
 
-  pureTest("Union: path gets surfaced in errors") {
+  test("Union: path gets surfaced in errors") {
     val json = """{"int" : null}"""
     try {
       val _ = readFromString[Either[Int, String]](json)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(path, expected, msg) =>
-        expect(path == PayloadPath("int")) &&
-          expect(expected == "int") &&
-          expect(msg.contains("illegal number"))
+        expect.same(path, PayloadPath("int"))
+        expect.same(expected, "int")
+        expect(msg.contains("illegal number"))
 
     }
   }
 
-  pureTest("Union: wrong shape") {
+  test("Union: wrong shape") {
     val json = """null"""
     try {
       val _ = readFromString[Either[Int, String]](json)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(path, expected, msg) =>
-        expect(path == PayloadPath.root) &&
-          expect(expected == "tagged-union") &&
-          expect(msg.contains("Expected JSON object"))
+        expect.same(path, PayloadPath.root)
+        expect.same(expected, "tagged-union")
+        expect(msg.contains("Expected JSON object"))
 
     }
   }
 
-  pureTest("Untagged union are encoded / decoded") {
+  test("Untagged union are encoded / decoded") {
     val oneJ = """ {"three":"three_value"}"""
     val twoJ = """ {"four":4}"""
     val oneRes = readFromString[UntaggedUnion](oneJ)
     val twoRes = readFromString[UntaggedUnion](twoJ)
 
-    expect(
-      oneRes == UntaggedUnion.ThreeCase(Three("three_value")) &&
-        twoRes == UntaggedUnion.FourCase(Four(4))
-    )
+    expect.same(oneRes, UntaggedUnion.ThreeCase(Three("three_value")))
+    expect.same(twoRes, UntaggedUnion.FourCase(Four(4)))
   }
 
   implicit val byteArraySchema: Schema[ByteArray] = bytes
 
-  pureTest("byte arrays are encoded as base64") {
+  test("byte arrays are encoded as base64") {
     val bytes = ByteArray("foobar".getBytes())
     val bytesJson = writeToString(bytes)
     val decoded = readFromString[ByteArray](bytesJson)
-    expect(bytesJson == "\"Zm9vYmFy\"") && expect(decoded == bytes)
+    expect.same(bytesJson, "\"Zm9vYmFy\"")
+    expect.same(decoded, bytes)
   }
 
   implicit val documentSchema: Schema[Document] = document
-  pureTest("documents get encoded as json") {
+  test("documents get encoded as json") {
     import Document._
     val doc: Document = DObject(
       ListMap(
@@ -320,11 +314,11 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
 
     val decoded = readFromString[Document](documentJson)
 
-    expect(documentJson == expected) &&
-    expect(decoded == doc)
+    expect.same(documentJson, expected)
+    expect.same(decoded, doc)
   }
 
-  pureTest("Range checks are performed correctly") {
+  test("Range checks are performed correctly") {
     val json = """{"qty":0}"""
     val result = util.Try(readFromString[RangeCheck](json))
     expect(
@@ -359,32 +353,35 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     }
   }
 
-  pureTest("throw PayloadError on String violating length constraint") {
+  test("throw PayloadError on String violating length constraint") {
     val str = "a" * (Bar.maxLength + 1)
     val json = s"""{"str":"$str"}"""
     val result = util.Try(readFromString[Bar](json))
-    expect(
-      result.failed.get.getMessage == "length required to be <= 10, but was 11"
+    expect.same(
+      result.failed.get.getMessage,
+      "length required to be <= 10, but was 11"
     )
   }
 
-  pureTest("throw PayloadError on List violating length constraint") {
+  test("throw PayloadError on List violating length constraint") {
     val lst = List.fill(Bar.maxLength + 1)(0)
     val json = s"""{"lst": ${lst.mkString("[", ",", "]")}}"""
     val result = util.Try(readFromString[Bar](json))
-    expect(
-      result.failed.get.getMessage == "length required to be <= 10, but was 11"
+    expect.same(
+      result.failed.get.getMessage,
+      "length required to be <= 10, but was 11"
     )
   }
 
-  pureTest("throw PayloadError on Int violating range constraint") {
+  test("throw PayloadError on Int violating range constraint") {
     val int = Bar.maxLength + 1
     val json = s"""{"int":$int}"""
     val result = util.Try(readFromString[Bar](json))
-    expect(
-      result.failed.get.getMessage == (if (Platform.isJVM)
-                                         "Input must be <= 10, but was 11.0"
-                                       else "Input must be <= 10, but was 11")
+    expect.same(
+      result.failed.get.getMessage,
+      (if (Platform.isJVM)
+         "Input must be <= 10, but was 11.0"
+       else "Input must be <= 10, but was 11")
     )
   }
 
@@ -404,14 +401,15 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     }
   }
 
-  pureTest(
+  test(
     "throw PayloadError on Struct[Struct[String]] violating length constraint"
   ) {
     val str = "a" * (Foo2.maxLength + 1)
     val json = s"""{"bar":{"str":"$str"}}"""
     val result = util.Try(readFromString[Foo2](json))
-    expect(
-      result.failed.get.getMessage == "length required to be <= 10, but was 11"
+    expect.same(
+      result.failed.get.getMessage,
+      "length required to be <= 10, but was 11"
     )
   }
 
@@ -429,21 +427,18 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     }
   }
 
-  pureTest(
+  test(
     "throw PayloadError on Struct[List[Struct[String]]] violating length constraint"
   ) {
     try {
       val str = "a" * (Foo3.maxLength + 1)
       val json = s"""{"bar":[{"str":"$str"}]}"""
       val _ = readFromString[Foo3](json)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(path, _, message) =>
-        expect(
-          message == "length required to be <= 10, but was 11"
-        ) && expect(
-          path == PayloadPath.fromString("bar.0.str")
-        )
+        expect.same(message, "length required to be <= 10, but was 11")
+        expect.same(path, PayloadPath.fromString("bar.0.str"))
     }
   }
 
@@ -451,12 +446,12 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     map(string, int)
   }
 
-  pureTest("throw PayloadError on Map inserts over maxArity") {
+  test("throw PayloadError on Map inserts over maxArity") {
     try {
       val items =
         List.fill(1025)("1").map(i => s""""$i":$i""").mkString("{", ",", "}")
       val _ = readFromString[Map[String, Int]](items)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
         expect(message == "input map exceeded max arity of `1024`")
@@ -467,37 +462,37 @@ object SchemaVisitorJCodecTests extends SimpleIOSuite {
     list(int)
   }
 
-  pureTest("throw PayloadError on Vector inserts over maxArity") {
+  test("throw PayloadError on Vector inserts over maxArity") {
     try {
       val items = List.fill(1025)("1").mkString("[", ",", "]")
       val _ = readFromString[List[Int]](items)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input list exceeded max arity of `1024`")
+        expect.same(message, "input list exceeded max arity of `1024`")
     }
   }
 
-  pureTest("throw PayloadError on Document list inserts over maxArity") {
+  test("throw PayloadError on Document list inserts over maxArity") {
     try {
       val items = List.fill(1025)("1").mkString("[", ",", "]")
       val _ = readFromString[Document](items)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input JSON document exceeded max arity of `1024`")
+        expect.same(message, "input JSON document exceeded max arity of `1024`")
     }
   }
 
-  pureTest("throw PayloadError on Document map inserts over maxArity") {
+  test("throw PayloadError on Document map inserts over maxArity") {
     try {
       val items =
         List.fill(1025)("1").map(i => s""""$i":$i""").mkString("{", ",", "}")
       val _ = readFromString[Document](items)
-      failure("Unexpected success")
+      fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input JSON document exceeded max arity of `1024`")
+        expect.same(message, "input JSON document exceeded max arity of `1024`")
     }
   }
 
