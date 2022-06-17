@@ -114,6 +114,7 @@ lazy val docs =
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .settings(
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
@@ -452,11 +453,10 @@ lazy val json = projectMatrix
     `scalacheck` % "test -> compile"
   )
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Jsoniter.value,
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
     ),
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
