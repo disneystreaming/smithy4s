@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s
+package http
 
 import smithy4s.ByteArray
 import smithy4s.PayloadPath
@@ -23,7 +24,7 @@ import smithy4s.example._
 
 import java.nio.ByteBuffer
 
-object StringAndBlobSpec extends weaver.FunSuite {
+class StringAndBlobSpec() extends munit.FunSuite {
 
   object Dummy
   def dummy: CodecAPI = new CodecAPI {
@@ -56,8 +57,8 @@ object StringAndBlobSpec extends weaver.FunSuite {
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes())) &&
-    expect.same(Right(input), roundTripped) &&
+    expect(result.sameElements("hello".getBytes()))
+    expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/plain"), mediaType)
   }
 
@@ -67,8 +68,8 @@ object StringAndBlobSpec extends weaver.FunSuite {
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes())) &&
-    expect.same(Right(input), roundTripped) &&
+    expect(result.sameElements("hello".getBytes()))
+    expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/csv"), mediaType)
   }
 
@@ -78,8 +79,8 @@ object StringAndBlobSpec extends weaver.FunSuite {
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes())) &&
-    expect.same(Right(input), roundTripped) &&
+    expect(result.sameElements("hello".getBytes()))
+    expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("application/octet-stream"), mediaType)
   }
 
@@ -89,8 +90,8 @@ object StringAndBlobSpec extends weaver.FunSuite {
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes())) &&
-    expect.same(Right(input), roundTripped) &&
+    expect(result.sameElements("hello".getBytes()))
+    expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("image/png"), mediaType)
   }
 
@@ -101,11 +102,11 @@ object StringAndBlobSpec extends weaver.FunSuite {
     val result = stringsAndBlobs.writeToArray(codec, input)
     val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.isEmpty) &&
+    expect(result.isEmpty)
     expect.same(
       Left(PayloadError(PayloadPath.root, "error", "error")),
       roundTripped
-    ) &&
+    )
     expect.same(HttpMediaType("foo/bar"), mediaType)
   }
 

@@ -125,10 +125,10 @@ lazy val core = projectMatrix
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
       .taskValue,
     libraryDependencies ++= Seq(Dependencies.collectionsCompat.value),
-    isCE3 := true,
     libraryDependencies ++= Seq(
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
+      Dependencies.Cats.core.value % Test,
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
     ),
     Test / allowedNamespaces := Seq(
       "smithy4s.example"
@@ -693,6 +693,15 @@ lazy val Dependencies = new {
       Def.setting(
         "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion.value
       )
+  }
+
+  object Munit {
+    val munitVersion = "0.7.29"
+
+    val core: Def.Initialize[ModuleID] =
+      Def.setting("org.scalameta" %%% "munit" % munitVersion)
+    val scalacheck: Def.Initialize[ModuleID] =
+      Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
 
   val Scalacheck = new {

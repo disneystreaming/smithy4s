@@ -16,9 +16,9 @@
 
 package smithy4s
 
-import weaver._
+import munit._
 
-object EmptyServiceSmokeSpec extends FunSuite {
+class EmptyServiceSmokeSpec() extends FunSuite {
 
   test("Empty services do compile") {
     val version = smithy4s.example.EmptyService.service.version
