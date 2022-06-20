@@ -32,7 +32,7 @@
                         "headers": {
                             "X-Size": {
                                 "schema": {
-                                    "type": "number",
+                                    "type": "integer",
                                     "format": "int32"
                                 },
                                 "required": true
@@ -139,7 +139,7 @@
                         "title": "int",
                         "properties": {
                             "int": {
-                                "type": "number",
+                                "type": "integer",
                                 "format": "int32",
                                 "nullable": true
                             }

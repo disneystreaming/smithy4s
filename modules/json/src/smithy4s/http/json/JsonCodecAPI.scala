@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,18 +23,24 @@ import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
 
 import java.nio.ByteBuffer
 
-import JCodec.JCodecMake
+import smithy4s.schema.SchemaVisitor
 
 abstract class JsonCodecAPI(
-    schematicJCodec: Schematic[JCodecMake],
+    schemaVisitorJCodec: SchemaVisitor[JCodec],
+    hintMask: Option[HintMask] = None,
     readerConfig: ReaderConfig = JsonCodecAPI.defaultReaderConfig,
     writerConfig: WriterConfig = WriterConfig
 ) extends CodecAPI {
 
   type Codec[A] = JCodec[A]
 
-  def compileCodec[A](schema: Schema[A]): JCodec[A] =
-    schema.compile(schematicJCodec).get
+  def compileCodec[A](schema0: Schema[A]): JCodec[A] = {
+    val schema =
+      hintMask
+        .map(mask => schema0.transformHintsLocally(mask.apply))
+        .getOrElse(schema0)
+    schema.compile(schemaVisitorJCodec)
+  }
 
   def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
     HttpMediaType("application/json")

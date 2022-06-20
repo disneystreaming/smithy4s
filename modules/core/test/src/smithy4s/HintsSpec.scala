@@ -17,9 +17,9 @@
 package smithy4s
 
 import smithy.api.HttpHeader
-import weaver._
+import munit._
 
-object HintsSpec extends FunSuite {
+class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {
     val hints = Hints(HttpHeader("X-Foobar"))
     expect(hints.get(HttpHeader) == Some(HttpHeader("X-Foobar")))

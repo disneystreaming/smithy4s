@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -141,6 +141,7 @@ abstract class PizzaSpec
         )
       val discriminator = headers.get("X-Error-Type").flatMap(_.headOption)
 
+      expect(headers.get("X-CODE") == Some(List("1"))) &&
       expect(code == 400) &&
       expect(body == expectedBody) &&
       expect(discriminator == Some("PriceError"))

@@ -23,6 +23,11 @@ Global / licenses := Seq(
 
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
+ThisBuild / version := {
+  if (!sys.env.contains("CI")) "dev"
+  else (ThisBuild / version).value
+}
+
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
@@ -109,6 +114,7 @@ lazy val docs =
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .settings(
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
@@ -120,10 +126,10 @@ lazy val core = projectMatrix
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
       .taskValue,
     libraryDependencies ++= Seq(Dependencies.collectionsCompat.value),
-    isCE3 := true,
     libraryDependencies ++= Seq(
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
+      Dependencies.Cats.core.value % Test,
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
     ),
     Test / allowedNamespaces := Seq(
       "smithy4s.example"
@@ -256,7 +262,8 @@ lazy val `aws-http4s` = projectMatrix
     Test / allowedNamespaces := Seq(),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
     )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -377,6 +384,7 @@ lazy val protocolTests = projectMatrix
     ),
     Test / fork := true
   )
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
 
 /**
  * This modules contains utilities to dynamically instantiate
@@ -385,7 +393,7 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core)
+  .dependsOn(core, tests % "test->compile", http4s % "test->compile")
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -445,11 +453,10 @@ lazy val json = projectMatrix
     `scalacheck` % "test -> compile"
   )
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Jsoniter.value,
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
     ),
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
@@ -686,6 +693,15 @@ lazy val Dependencies = new {
       Def.setting(
         "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion.value
       )
+  }
+
+  object Munit {
+    val munitVersion = "0.7.29"
+
+    val core: Def.Initialize[ModuleID] =
+      Def.setting("org.scalameta" %%% "munit" % munitVersion)
+    val scalacheck: Def.Initialize[ModuleID] =
+      Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
 
   val Scalacheck = new {

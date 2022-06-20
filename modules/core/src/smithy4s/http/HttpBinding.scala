@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -106,10 +106,14 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
   private[smithy4s] def fromHints(
       field: String,
       fieldHints: Hints,
-      inputOutput: Option[InputOutput]
-  ): Option[HttpBinding] = inputOutput.flatMap {
-    case InputOutput.Input  => fromHintsInput(field, fieldHints)
-    case InputOutput.Output => fromHintsOutput(field, fieldHints)
+      shapeHints: Hints
+  ): Option[HttpBinding] = shapeHints match {
+    case InputOutput.hint(InputOutput.Input) =>
+      fromHintsInput(field, fieldHints)
+    case InputOutput.hint(InputOutput.Output) =>
+      fromHintsOutput(field, fieldHints)
+    case smithy.api.Error.hint(_) => fromHintsOutput(field, fieldHints)
+    case _                        => None
   }
 
   private def fromHintsInput(

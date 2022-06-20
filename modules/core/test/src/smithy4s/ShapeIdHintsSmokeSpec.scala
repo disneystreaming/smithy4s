@@ -18,7 +18,7 @@ package smithy4s
 
 import smithy4s.schema._
 
-object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
+class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
 
   type ToShapeIds[A] = List[ShapeId]
 
@@ -61,7 +61,7 @@ object ShapeIdHintsSmokeSpec extends weaver.FunSuite {
     )
   }
 
-  test("structure members contain ShapeId in hints".only) {
+  test("structure members contain ShapeId in hints") {
     val shapeIds =
       example.CityCoordinates.schema.compile(TestCompiler).toSet
     expect(

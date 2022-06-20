@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package schema
 import Schema._
 
 // format: off
-trait SchemaVisitor[F[_]] extends (Schema ~> F){
+trait SchemaVisitor[F[_]] extends (Schema ~> F) {
   def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) : F[P]
   def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]) : F[List[A]]
   def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): F[Set[A]]

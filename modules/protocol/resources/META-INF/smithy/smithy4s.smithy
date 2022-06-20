@@ -15,6 +15,11 @@ namespace smithy4s.api
 string UUID
 
 @protocolDefinition(traits: [
+    smithy.api#error,
+    smithy.api#required,
+    smithy.api#pattern,
+    smithy.api#range,
+    smithy.api#length,
     smithy.api#http,
     smithy.api#httpError,
     smithy.api#httpHeader,

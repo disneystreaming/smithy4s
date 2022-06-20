@@ -19,7 +19,7 @@ package smithy4s
 import smithy4s.schema.Schema._
 
 // Verifies equality of implicit values
-object SchemaEqualitySmokeSpec extends weaver.FunSuite {
+class SchemaEqualitySmokeSpec() extends munit.FunSuite {
 
   case class Recursive(foo: Option[Recursive])
 

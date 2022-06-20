@@ -16,26 +16,19 @@
 
 package smithy4s
 
-/**
-  * A tag that can be used as keys for higher-kinded maps
-  */
-trait ShapeTag[-A] extends HasId {}
+import munit._
+import cats.syntax.all._
 
-object ShapeTag {
-  def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag
+class CollectionInTraitsSmokeSpec() extends FunSuite {
 
-  trait Has[A] {
-    def getTag: ShapeTag[A]
+  test("Traits with collection members do not refer to them using newtypes") {
+    val (someList, someSet, someMap) = smithy4s.example.SomeInt.hints
+      .get(smithy4s.example.SomeCollections)
+      .foldMap(x => (x.someList, x.someSet, x.someMap))
+
+    expect.eql(someList, List("a"))
+    expect.eql(someSet, Set("b"))
+    expect.eql(someMap, Map("a" -> "b"))
   }
 
-  trait Companion[A] extends ShapeTag[A] with Has[A] {
-    implicit val tagInstance: ShapeTag[A] = this
-    final override def getTag: ShapeTag[A] = this
-
-    object hint {
-      def unapply(h: Hints): Option[A] = h.get[A]
-    }
-  }
-
-  implicit def newTypeToShapeTag[A](a: Newtype[A]): ShapeTag[_] = a.tag
 }

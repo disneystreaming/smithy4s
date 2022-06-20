@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 
 package smithy4s
 
-// NB: having Key be contravariant seems to break Scala 3
-
 /**
   * A tag that can be used as keys for higher-kinded maps
   */
-trait ShapeTag[A] extends HasId
+trait ShapeTag[A] extends HasId {}
 
 object ShapeTag {
   def apply[A](implicit tag: ShapeTag[A]): ShapeTag[A] = tag

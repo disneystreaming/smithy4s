@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ class Smithy4sOpenApiProtocol
   ): Unit = {
     config.setUseJsonName(true);
     config.setDefaultTimestampFormat(TimestampFormatTrait.Format.DATE_TIME);
+    config.setUseIntegerType(true);
   }
 
   def createDocumentSchema(

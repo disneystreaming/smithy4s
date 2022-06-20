@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -284,8 +284,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Endpoint_[${traitName}, ${op.renderAlgParams}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
-        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input)",
-        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output)",
+        line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",
+        line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
         renderStreamingSchemaVal("streamedOutput", op.streamedOutput),
         renderHintsVal(op.hints),
@@ -304,7 +304,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       sField: Option[StreamingField]
   ): Line = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
-      val mh = if (hints.isEmpty) "" else s".addHints(${memberHints(hints)})"
+      val mh =
+        if (hints.isEmpty) Line.empty
+        else line".addHints(${memberHints(hints)})"
       line"""val $valName : $StreamingSchema_[${tpe}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
     case None =>
       line"""val $valName : $StreamingSchema_[Nothing] = $StreamingSchema_.nothing"""
@@ -462,7 +464,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val imports = /*alts.foldMap(_.tpe.imports) ++*/ syntaxImport
 
     lines(
-      s"sealed trait $name extends scala.Product with scala.Serializable",
+      block(
+        s"sealed trait $name extends scala.Product with scala.Serializable"
+      )(
+        line"@inline final def widen: $name = this"
+      ),
       obj(name, line"${shapeTag(name)}")(
         renderId(originalName),
         newline,
@@ -556,7 +562,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     )(
       line"override val value : String = _value",
       line"override val ordinal: Int = _ordinal",
-      line"override val hints: $Hints_ = $Hints_.empty"
+      line"override val hints: $Hints_ = $Hints_.empty",
+      line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
       renderId(originalName),
@@ -758,7 +765,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, value, ordinal, name) =>
-      (ref.show + "." + enumValueClassName(name, value, ordinal)).write
+      val className = enumValueClassName(name, value, ordinal)
+      (ref.show + "." + className + ".widen").write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (_, FieldTN.RequiredTN(value))     => value.runDefault
@@ -776,7 +784,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
-      (s"${ref.show}" + "." + s"${altName.capitalize}Case(${alt.runDefault})").write
+      (s"${ref.show}" + "." + s"${altName.capitalize}Case(${alt.runDefault}).widen").write
 
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
@@ -788,7 +796,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case MapTN(values) =>
       s"Map(${values
         .map { case (k, v) => k.runDefault + " -> " + v.runDefault }
-        .mkString(", ")})".write
+        .mkString(", ")})".writeCollection
     case PrimitiveTN(prim, value) =>
       renderPrimitive(prim)(value).write
   }
