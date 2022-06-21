@@ -129,19 +129,23 @@ abstract class WeaverTests[
     test(endpoint.id.toString + "(server): " + testCase.id) {
       Deferred[IO, I]
         .flatMap { requestDeferred =>
-          val fakeImpl: smithy4s.Monadic[Alg, IO] =
-            service.transform(new smithy4s.Interpreter[Op, IO] {
-              def apply[I_, E_, O_, SE_, SO_](
-                  op: Op[I_, E_, O_, SE_, SO_]
-              ): IO[O_] = {
-                val (in, endpointInternal) = service.endpoint(op)
+          type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
-                if (endpointInternal.id == endpoint.id)
-                  requestDeferred.complete(in.asInstanceOf[I]) *>
-                    IO.raiseError(new NotImplementedError)
-                else IO.raiseError(new Throwable("Wrong endpoint called"))
+          val fakeImpl: smithy4s.Monadic[Alg, IO] =
+            service.transform[R](
+              new smithy4s.Interpreter[Op, IO] {
+                def apply[I_, E_, O_, SE_, SO_](
+                    op: Op[I_, E_, O_, SE_, SO_]
+                ): IO[O_] = {
+                  val (in, endpointInternal) = service.endpoint(op)
+
+                  if (endpointInternal.id == endpoint.id)
+                    requestDeferred.complete(in.asInstanceOf[I]) *>
+                      IO.raiseError(new NotImplementedError)
+                  else IO.raiseError(new Throwable("Wrong endpoint called"))
+                }
               }
-            })
+            )
 
           server(fakeImpl)
             .liftTo[IO]
@@ -168,6 +172,8 @@ abstract class WeaverTests[
     // todo: protocol check
     test(endpoint.id.toString + "(client): " + testCase.id) {
 
+      type R[I_, E_, O_, SE_, SO_] = IO[O_]
+
       Deferred[IO, Request[IO]]
         .flatMap { requestDeferred =>
           val theClient: IO[smithy4s.Monadic[Alg, IO]] = client(
@@ -193,11 +199,13 @@ abstract class WeaverTests[
                 )
                 .liftTo[IO]
                 .flatMap { in =>
-                  service
-                    .asTransformation(
-                      client
-                    )
-                    .apply(endpoint.wrap(in))
+                  {
+                    service
+                      .asTransformation[R](
+                        client
+                      )
+                      .apply(endpoint.wrap(in)): IO[O]
+                  }
                     // We don't expect the response to parse, as it's empty.
                     .attemptNarrow[PayloadError]
                 }
