@@ -19,9 +19,9 @@ package smithy4s
 import cats.Id
 import smithy4s.example.PackedInput
 import smithy4s.example.PackedInputsService
-import weaver._
+import munit._
 
-object PackedInputsSmokeSpec extends FunSuite {
+class PackedInputsSmokeSpec() extends FunSuite {
 
   test("Methods with packed inputs have a single case-class parameter") {
     val service: PackedInputsService[Id] = new PackedInputsService[Id] {

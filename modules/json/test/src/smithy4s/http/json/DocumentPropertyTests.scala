@@ -17,23 +17,18 @@
 package smithy4s.http.json
 
 import cats.Show
-import cats.effect.IO
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
 import smithy4s.Document
 import smithy4s.Schema
 import smithy4s.scalacheck.DynData
-import weaver._
-import weaver.scalacheck._
+import munit._
+import org.scalacheck.Prop
+import Prop._
 
-import codecs.schematicJCodec
+import codecs.schemaVisitorJCodec
 
-object DocumentPropertyTests extends SimpleIOSuite with Checkers {
-
-  override val maxParallelism = 1
-
-  override val checkConfig: CheckConfig =
-    super.checkConfig.copy(perPropertyParallelism = 1)
+class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- Gen.const(
@@ -46,18 +41,18 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
     Show.fromToString
 
   implicit val documentCodec: JCodec[Document] =
-    Schema.document.compile(schematicJCodec).get
+    Schema.document.compile(schemaVisitorJCodec)
 
-  loggedTest(
+  property(
     "Going through json directly or via the adt give the same results"
-  ) { log =>
+  ) {
     // We're randomly generating a schema, and using it
     // to randomly generate compliant data, and
     // asserting roundtrip there.
-    forall(genSchemaData) { schemaAndData =>
+    forAll(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
-        schema.compile(schematicJCodec).get
+        schema.compile(schemaVisitorJCodec)
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
       val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
@@ -75,22 +70,18 @@ object DocumentPropertyTests extends SimpleIOSuite with Checkers {
         .toEither
       val dataFromDocument = documentFromJson.flatMap(decoder.decode)
 
-      val e = expect.all(
-        dataDirect.exists(_ == data),
-        dataFromDocument.exists(_ == data)
-      )
+      val e1 = Prop(dataDirect.exists(_ == data))
+      val e2 = Prop(dataFromDocument.exists(_ == data))
       dataFromDocument.left.foreach(_.printStackTrace())
-      if (e.run.isInvalid) {
-        for {
-          _ <- log.debug("wassup ?")
-          _ <- log.debug("schema: " + schemaStr)
-          _ <- log.debug("data: " + data)
-          _ <- log.debug("jsonFromDocument: " + jsonFromDocument)
-          _ <- log.debug("jsonDirect: + " + jsonDirect)
-          _ <- log.debug("documentFromJson: " + documentFromJson)
-          _ <- log.debug("dataFromDocument: " + dataFromDocument)
-        } yield e
-      } else IO.pure(e)
+      (e1 && e2).label(
+        s"""|schema: $schemaStr
+           |data: $data
+           |jsonFromDocument: $jsonFromDocument
+           |jsonDirect: $jsonDirect
+           |documentFromJson: $documentFromJson
+           |dataFromDocument: $dataFromDocument
+           |""".stripMargin
+      )
     }
 
   }

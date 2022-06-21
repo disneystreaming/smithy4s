@@ -16,9 +16,9 @@
 
 package smithy4s
 
-import weaver._
+import munit._
 
-object EnumWithSymbolsSmokeSpec extends FunSuite {
+class EnumWithSymbolsSmokeSpec() extends FunSuite {
 
   test(
     "Camel case names are issued from enum values when they don't have names"

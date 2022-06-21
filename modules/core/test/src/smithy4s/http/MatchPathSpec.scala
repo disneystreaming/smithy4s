@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s
+package http
 
 import cats.Show
 import cats.data.NonEmptyList
@@ -23,10 +24,9 @@ import org.scalacheck.Gen
 import smithy4s.http.PathSegment.GreedySegment
 import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.StaticSegment
-import weaver.SimpleMutableIOSuite
-import weaver.scalacheck.Checkers
+import org.scalacheck.Prop._
 
-object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
+class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
   def doMatch(segments: List[PathSegment])(
       string: String
@@ -59,25 +59,25 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
       "greedy/example"
   }
 
-  test("Doesn't throw on empty path") {
-    forall { (segments: NonEmptyList[PathSegment]) =>
+  property("Doesn't throw on empty path") {
+    forAll { (segments: NonEmptyList[PathSegment]) =>
       expect.eql(doMatch(segments.toList)("/"), None)
     }
   }
 
-  test("Doesn't throw on partially matching paths") {
+  property("Doesn't throw on partially matching paths") {
     val gen = Gen.zip(
       Gen.listOf(genLabelOrStatic),
       Arbitrary.arbitrary[NonEmptyList[PathSegment]]
     )
-    forall(gen) { case (prefix, segments) =>
+    forAll(gen) { case (prefix, segments) =>
       val fullPath = prefix ::: segments.toList
       val actual = prefix.map(renderExampleSegment).mkString("/")
       expect.eql(doMatch(fullPath)(actual), None)
     }
   }
 
-  pureTest("Is lenient with regards to trailing slashes") {
+  test("Is lenient with regards to trailing slashes") {
     // /{foo}
     val path: List[PathSegment] =
       List(PathSegment.label("foo"))
@@ -85,11 +85,11 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
     val result = doMatch(path)("/bar")
     val result2 = doMatch(path)("/bar/")
 
-    expect.eql(result, Some(expected)) &&
+    expect.eql(result, Some(expected))
     expect.eql(result2, Some(expected))
   }
 
-  pureTest("Allows for greedy labels") {
+  test("Allows for greedy labels") {
     // /{foo}
     val path: List[PathSegment] =
       List(PathSegment.static("hello"), PathSegment.greedy("foo"))
@@ -97,11 +97,11 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
     val result = doMatch(path)("/hello/foo/bar/baz")
     val result2 = doMatch(path)("/hello/foo/bar/baz/")
 
-    expect.eql(result, Some(expected)) &&
+    expect.eql(result, Some(expected))
     expect.eql(result2, Some(expected))
   }
 
-  pureTest("Match several segments") {
+  test("Match several segments") {
     // /{foo}
     val path: List[PathSegment] =
       List(
@@ -113,7 +113,7 @@ object MatchPathSpec extends SimpleMutableIOSuite with Checkers {
     val result = doMatch(path)("/a/bar/b/")
     val result2 = doMatch(path)("/a/baz/b")
 
-    expect.eql(result, Some(expected)) &&
+    expect.eql(result, Some(expected))
     expect.eql(result2, None)
   }
 

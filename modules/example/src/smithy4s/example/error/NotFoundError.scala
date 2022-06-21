@@ -8,7 +8,7 @@ object NotFoundError extends smithy4s.ShapeTag.Companion[NotFoundError] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example.error", "NotFoundError")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
-    smithy.api.Error.CLIENT,
+    smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
   )
 

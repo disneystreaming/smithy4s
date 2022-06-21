@@ -13,16 +13,16 @@
 There's a module with benchmarks to compare against the handcrafted implementations of an http4s with the generic ones run the benchmarks, one should execute:
 
 ```sh
-sbt benchmark/jmh:run
+sbt benchmark / Jmh / run
 ```
 
 To run http4s benchmarks:
 
 ```sh
-benchmark/jmh:run .*Http4sBenchmark.*
+benchmark / Jmh / run .*Http4sBenchmark.*
 ```
 
-To benchmark with Scala 2.12 version instead of 2.13, use `benchmark2_12/jmh:run` instead.
+To benchmark with Scala 2.12 version instead of 2.13, use `benchmark2_12 / Jmh / run` instead.
 
 Smithy4s makes use of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/) for performance optimisation.<br/>
 ![YourKit Logo](https://www.yourkit.com/images/yklogo.png)

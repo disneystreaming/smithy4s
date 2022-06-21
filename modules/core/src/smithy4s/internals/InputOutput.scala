@@ -17,7 +17,9 @@
 package smithy4s
 package internals
 
-sealed trait InputOutput
+sealed trait InputOutput extends Product with Serializable {
+  @inline final def widen: InputOutput = this
+}
 
 object InputOutput extends ShapeTag.Companion[InputOutput] {
 

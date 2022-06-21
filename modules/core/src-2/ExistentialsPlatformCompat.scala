@@ -24,6 +24,6 @@ trait ExistentialsPlatformCompat {
 
 object Existential {
 
-  @inline def wrap[F[_], A](fa: F[A]): F[_] = fa
+  @inline final def wrap[F[_], A](fa: F[A]): F[_] = fa
 
 }

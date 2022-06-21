@@ -20,7 +20,7 @@ object Kind5 {
 
   type Existential[F[_, _, _, _, _]] = F[_, _, _, _, _]
 
-  @inline def existential[F[_, _, _, _, _], I, E, O, SI, SO](
+  @inline final def existential[F[_, _, _, _, _], I, E, O, SI, SO](
       fa: F[I, E, O, SI, SO]
   ): Existential[F] =
     fa.asInstanceOf[F[_, _, _, _, _]]

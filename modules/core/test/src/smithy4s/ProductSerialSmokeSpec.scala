@@ -16,9 +16,9 @@
 
 package smithy4s
 
-import weaver._
+import munit._
 
-object ProductSerialSmokeSpec extends FunSuite {
+class ProductSerialSmokeSpec() extends FunSuite {
 
   test(
     "Enumeration compiles when shapes called Product or Serializable exist"
