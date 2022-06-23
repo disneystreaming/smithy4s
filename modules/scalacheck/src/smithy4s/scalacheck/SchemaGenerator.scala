@@ -154,6 +154,6 @@ class SchemaGenerator(maxWidth: Int) {
     for {
       key <- Gen.identifier.map(_.take(8))
       next <- recurse
-    } yield Alt(key, next, (d: DynData) => (key, d), Hints.empty)
+    } yield Alt(key, next, (d: DynData) => (key, d))
 
 }

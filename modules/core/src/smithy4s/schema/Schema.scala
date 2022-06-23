@@ -66,8 +66,8 @@ sealed trait Schema[A]{
     case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key.transformHintsTransitively(f), s.value.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case EnumerationSchema(shapeId, hints, values, total) => EnumerationSchema(shapeId, f(hints), values.map(_.transformHints(f)), total)
-    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), make)
-    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
+    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.mapK(Schema.transformHintsTransitivelyK(f))), make)
+    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
     case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsTransitively(f), to, from)
     case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.transformHintsTransitively(f), to, from)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
@@ -163,15 +163,15 @@ object Schema {
   def struct[S] : PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
 
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, get: S => A, hints: Hint*): SchemaField[S, A] = Field.required(label, schema, get, hints: _*)
+    def apply(label: String, get: S => A): SchemaField[S, A] = Field.required(label, schema, get)
   }
 
   private [smithy4s] class PartiallyAppliedOptional[S, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, get: S => Option[A], hints: Hint*): SchemaField[S, Option[A]] = Field.optional(label, schema, get, hints: _*)
+    def apply(label: String, get: S => Option[A]): SchemaField[S, Option[A]] = Field.optional(label, schema, get)
   }
 
   private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, hints: Hint*)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema, ev, Hints(hints: _*))
-    def apply(label: String, inject: A => U, hints: Hint*): SchemaAlt[U, A] = Alt(label, schema, inject, Hints(hints: _*))
+    def apply(label: String, hints: Hint*)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema.addHints(hints: _*), ev)
+    def apply(label: String, inject: A => U, hints: Hint*): SchemaAlt[U, A] = Alt(label, schema.addHints(hints: _*), inject)
   }
 }

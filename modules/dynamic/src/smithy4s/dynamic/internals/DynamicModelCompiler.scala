@@ -305,8 +305,7 @@ private[dynamic] object Compiler {
           Alt[Schema, DynAlt, DynData](
             shapeId.name,
             schema,
-            (index, _: DynData),
-            Hints.empty
+            (index, _: DynData)
           )
         }
 

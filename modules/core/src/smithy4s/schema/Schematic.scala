@@ -95,7 +95,7 @@ object Schematic {
           case SurjectionSchema(underlying, to, from) =>
             surjection(apply(underlying), to, from)
           case StructSchema(_, _, fields, make) =>
-            struct(fields.map(Field.shiftHintsK(_)).map(_.mapK(self)))(make)
+            struct(fields.map(_.mapK(self)))(make)
           case schema @ Schema.UnionSchema(_, _, _, _) => {
             compileUnion(schema)
           }
@@ -131,7 +131,8 @@ object Schematic {
         // Pre-compiles the schemas associated to each alternative. This is important
         // because we need to avoid compiling the schemas to codecs upon every dispatch
         val precompiledAlts =
-          (Alt.shiftHintsK[U] andThen Alt.liftK[Schema, F, U](self))
+          Alt
+            .liftK[Schema, F, U](self)
             .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
 
         def processAlt[A](
