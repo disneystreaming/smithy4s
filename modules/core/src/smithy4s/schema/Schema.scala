@@ -171,7 +171,7 @@ object Schema {
   }
 
   private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, hints: Hint*)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema.addHints(hints: _*), ev)
-    def apply(label: String, inject: A => U, hints: Hint*): SchemaAlt[U, A] = Alt(label, schema.addHints(hints: _*), inject)
+    def apply(label: String)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema, ev)
+    def apply(label: String, inject: A => U): SchemaAlt[U, A] = Alt(label, schema, inject)
   }
 }

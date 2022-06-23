@@ -25,6 +25,7 @@ import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
 import smithy4s.schema.EnumValue
+import smithy4s.schema.SchemaField
 import smithy4s.schema.Alt
 
 private[dynamic] object Compiler {
@@ -397,8 +398,7 @@ private[dynamic] object Compiler {
           val lFields = {
             members.zipWithIndex
               .map { case ((label, mShape), index) =>
-                val lMemberSchema =
-                  schema(mShape.target)
+                val lMemberSchema = schema(mShape.target)
                 val lField =
                   if (
                     mShape.traits
@@ -409,6 +409,7 @@ private[dynamic] object Compiler {
                   } else {
                     lMemberSchema.map(
                       _.optional[DynStruct](label, arr => Option(arr(index)))
+                        .asInstanceOf[SchemaField[DynStruct, DynData]]
                     )
                   }
                 val memberHints = allHints(mShape.traits)
