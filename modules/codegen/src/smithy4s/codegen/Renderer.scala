@@ -154,7 +154,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"self =>",
         newline,
         ops.map { op =>
-          line"def ${op.methodName}(${op.renderArgs}) : F[${op.renderAlgParams}]"
+          line"def ${op.methodName}(${op
+            .renderArgs(hideNewtypeImports = true)}) : F[${op.renderAlgParams}]"
 
         },
         newline,
@@ -164,7 +165,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ) {
           ops.map { op =>
             val opName = op.methodName
-            line"def $opName(${op.renderArgs}) = transformation[${op.renderAlgParams}](self.$opName(${op.renderParams}))"
+            line"def $opName(${op.renderArgs(hideNewtypeImports = true)}) = transformation[${op.renderAlgParams}](self.$opName(${op.renderParams}))"
           }
         }
       ),
@@ -203,11 +204,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(s"object reified extends $genName[$opTraitName]") {
           ops.map {
             case op if op.input == Type.unit =>
-              line"def ${op.methodName}(${op.renderArgs}) = ${op.name}()"
+              line"def ${op.methodName}(${op
+                .renderArgs(hideNewtypeImports = true)}) = ${op.name}()"
             case op if op.hints.contains(Hint.PackedInputs) =>
-              line"def ${op.methodName}(${op.renderArgs}) = ${op.name}(input)"
+              line"def ${op.methodName}(${op
+                .renderArgs(hideNewtypeImports = true)}) = ${op.name}(input)"
             case op =>
-              line"def ${op.methodName}(${op.renderArgs}) = ${op.name}(${op.input}(${op.renderParams}))"
+              line"def ${op.methodName}(${op.renderArgs(hideNewtypeImports =
+                true
+              )}) = ${op.name}(${op.input}(${op.renderParams}))"
           }
         },
         newline,
@@ -538,17 +543,28 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     ).addImports(imports)
   }
 
-  private def fieldToRenderLine(field: Field): Line = {
+  private def fieldToRenderLine(
+      field: Field,
+      hideNewtypeImports: Boolean
+  ): Line = {
     field match {
       case Field(name, _, tpe, required, _) =>
-        line"$tpe"
+        val result = line"$tpe"
           .modify(line =>
             name + ": " + { if (required) line else s"Option[$line] = None" }
           )
+        tpe match {
+          case _: Type.Alias if hideNewtypeImports =>
+            result.copy(imports = Set.empty)
+          case _ => result
+        }
     }
   }
-  private def renderArgs(fields: List[Field]): Line = fields
-    .map(fieldToRenderLine)
+  private def renderArgs(
+      fields: List[Field],
+      hideNewtypeImports: Boolean = false
+  ): Line = fields
+    .map(fieldToRenderLine(_, hideNewtypeImports))
     .intercalate(Line.comma)
 
   private def renderEnum(
@@ -604,11 +620,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private implicit class OperationExt(op: Operation) {
-    def renderArgs =
+    def renderArgs: Line = renderArgs(hideNewtypeImports = false)
+    def renderArgs(hideNewtypeImports: Boolean) =
       if (op.input == Type.unit) Line.empty
       else if (op.hints.contains(Hint.PackedInputs)) {
         line"input: ${op.input}"
-      } else self.renderArgs(op.params)
+      } else self.renderArgs(op.params, hideNewtypeImports)
 
     def renderParams: Line =
       if (op.input == Type.unit) Line.empty
