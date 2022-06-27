@@ -22,20 +22,6 @@ import PathSegment._
 
 object matchPath {
 
-  def make(str: String): Array[String] =
-    if (str == "" || str == "/")
-      Array()
-    else {
-      val segments = str.split("/", -1)
-      val length = segments.length
-      // .head/.last is safe because split always returns non-empty array
-      val start = if (segments.head.isEmpty()) 1 else 0
-      val end =
-        if (length > 1 && segments.last.isEmpty()) length - 1 else length
-      if (start > 0 || end < length) segments.slice(start, end)
-      else segments
-    }
-
   private def compareStrings(left: String, right: String): Boolean = {
     (left.hashCode() == right.hashCode()) &&
     left == right

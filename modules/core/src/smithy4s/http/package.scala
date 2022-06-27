@@ -28,17 +28,16 @@ package object http {
   final def httpMatch[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       serviceProvider: Service.Provider[Alg, Op],
       method: http.HttpMethod,
-      path: String
+      pathSegments: Vector[String]
   ): Option[
     (Endpoint[Op, _, _, _, _, _], http.HttpEndpoint[_], Map[String, String])
   ] = {
-    val pathArray = http.matchPath.make(path)
     serviceProvider.service.endpoints.iterator
       .map {
         case endpoint @ http.HttpEndpoint(httpEndpoint)
             if httpEndpoint.method == method =>
           httpEndpoint
-            .matches(pathArray)
+            .matches(pathSegments.toArray)
             .map(metadata => (endpoint, httpEndpoint, metadata))
         case _ => None
       }

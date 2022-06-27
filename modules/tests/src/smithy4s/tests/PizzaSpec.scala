@@ -362,7 +362,7 @@ abstract class PizzaSpec
       .httpMatch(
         PizzaAdminService,
         smithy4s.http.HttpMethod.POST,
-        "/restaurant/foo/menu/item"
+        Vector("restaurant", "foo", "menu", "item")
       )
       .map { case (endpoint, _, map) =>
         endpoint.name -> map
@@ -374,7 +374,7 @@ abstract class PizzaSpec
     val matchResult = smithy4s.http.httpMatch(
       PizzaAdminService,
       smithy4s.http.HttpMethod.POST,
-      "/restaurants/foo/menu/item"
+      Vector("restaurants", "foo", "menu", "item")
     )
     expect(matchResult == None)
   }
@@ -383,7 +383,7 @@ abstract class PizzaSpec
     val matchResult = smithy4s.http.httpMatch(
       PizzaAdminService,
       smithy4s.http.HttpMethod.PATCH,
-      "/restaurant/foo/menu/item"
+      Vector("restaurant", "foo", "menu", "item")
     )
     expect(matchResult == None)
   }
