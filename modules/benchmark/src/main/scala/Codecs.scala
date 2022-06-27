@@ -32,7 +32,7 @@ object Circe {
     )
 
   implicit val timestampDecoder: Decoder[Timestamp] =
-    Decoder.decodeLong.map(Timestamp.fromEpochSecond(_))
+    Decoder.decodeLong.map(Timestamp(_, 0))
 
   implicit val timestampEncoder: Encoder[Timestamp] =
     Encoder.encodeLong.contramap(_.epochSecond)

@@ -223,36 +223,36 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       new JCodec[Timestamp] {
         val expecting: String = name
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
-          json.decodeValue(in)
+        def decodeValue(cursor: Cursor, in: JsonReader): Timestamp = json.decodeValue(in)
 
-        def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-          json.encodeValue(x, out)
+        def encodeValue(x: Timestamp, out: JsonWriter): Unit = json.encodeValue(x, out)
 
-        // key decoding/encoding ignores the format and support only epoch
-        def decodeKey(in: JsonReader): Timestamp =
-          Timestamp.fromEpochSecond(in.readKeyAsLong())
-        def encodeKey(x: Timestamp, out: JsonWriter): Unit =
-          out.writeKey(x.epochSecond)
+        def decodeKey(in: JsonReader): Timestamp = {
+          val timestamp = in.readKeyAsDouble()
+          val epochSecond = timestamp.toLong
+          Timestamp(epochSecond, ((timestamp - epochSecond) * 1000000000).toInt)
+        }
+
+        def encodeKey(x: Timestamp, out: JsonWriter): Unit = out.writeKey(x.epochSecond + x.nano / 1000000000.0)
       }
 
     private trait JsonInOut[T, Out] {
       def decodeValue(in: JsonReader): Timestamp
-      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-        toOut(toRaw(x), out)
-
+      def encodeValue(x: Timestamp, out: JsonWriter): Unit = toOut(toRaw(x), out)
       protected def toRaw(ts: Timestamp): T
       protected def fromRaw(t: T): Out
       protected def fromIn(in: JsonReader): T
       protected def toOut(value: T, out: JsonWriter): Unit
     }
-    private val longJsonInOut = new JsonInOut[Long, Timestamp] {
-      def decodeValue(in: JsonReader): Timestamp =
-        fromRaw(fromIn(in))
-      def toRaw(ts: Timestamp): Long = ts.epochSecond
-      def fromRaw(t: Long): Timestamp = Timestamp.fromEpochSecond(t)
-      def fromIn(in: JsonReader): Long = in.readLong()
-      def toOut(value: Long, out: JsonWriter): Unit = out.writeVal(value)
+    private val longJsonInOut = new JsonInOut[Double, Timestamp] {
+      def decodeValue(in: JsonReader): Timestamp = fromRaw(fromIn(in))
+      def toRaw(ts: Timestamp): Double = ts.epochSecond + ts.nano / 1000000000.0
+      def fromRaw(t: Double): Timestamp = {
+        val epochSecond = t.toLong
+        Timestamp(epochSecond, ((t - epochSecond) * 1000000000).toInt)
+      }
+      def fromIn(in: JsonReader): Double = in.readDouble()
+      def toOut(value: Double, out: JsonWriter): Unit = out.writeVal(value)
     }
     private def stringJsonInOut(format: TimestampFormat) =
       new JsonInOut[String, Option[Timestamp]] {
@@ -261,7 +261,6 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
             case Some(value) => value
             case None        => in.decodeError("Wrong timestamp format")
           }
-
         def toRaw(ts: Timestamp): String = ts.format(format)
         def fromRaw(t: String): Option[Timestamp] = Timestamp.parse(t, format)
         def fromIn(in: JsonReader): String = in.readString(null)
@@ -279,7 +278,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       httpDateFormat
     )
 
-    val timestampEpoch = forFormat[Long](
+    val timestampEpoch = forFormat[Double](
       Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS),
       longJsonInOut
     )

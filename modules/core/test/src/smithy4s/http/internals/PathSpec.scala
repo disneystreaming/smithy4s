@@ -67,19 +67,16 @@ class PathSpec() extends munit.FunSuite {
         PathParams(
           "example with spaces, %, / and \\",
           10,
-          Timestamp.fromEpochSecond(0L),
-          Timestamp.fromEpochSecond(0L),
-          Timestamp.fromEpochSecond(0L),
-          Timestamp.fromEpochSecond(0L),
+          Timestamp(0L, 0),
+          Timestamp(0L, 0),
+          Timestamp(0L, 0),
+          Timestamp(0L, 0),
           true
         )
       )
 
-    val expected = if (Platform.isJS) {
-      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00.000Z" :: "1970-01-01T00:00:00.000Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
-    } else {
+    val expected =
       "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
-    }
 
     expect.eql(result, expected)
   }
