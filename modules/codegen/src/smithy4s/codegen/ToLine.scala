@@ -45,8 +45,7 @@ object ToLine {
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
         Line(Set(s"$ns.$name"), name)
       case Type.Alias(_, _, aliased) =>
-        val (imports, t) = render(aliased).tupled
-        Line(imports, t)
+        render(aliased)
       case Type.Ref(namespace, name) =>
         val imports = Set(s"$namespace.$name")
         Line(imports, name)
