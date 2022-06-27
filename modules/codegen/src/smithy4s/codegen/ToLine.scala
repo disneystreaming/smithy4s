@@ -44,9 +44,9 @@ object ToLine {
         Line(kimports ++ vimports, s"Map[${k.mkString("")}, ${v.mkString("")}]")
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
         Line(Set(s"$ns.$name"), name)
-      case Type.Alias(ns, name, aliased) =>
+      case Type.Alias(_, _, aliased) =>
         val (imports, t) = render(aliased).tupled
-        Line(imports + s"$ns.$name", t)
+        Line(imports, t)
       case Type.Ref(namespace, name) =>
         val imports = Set(s"$namespace.$name")
         Line(imports, name)
@@ -78,6 +78,7 @@ object ToLine {
 case class Line(imports: Set[String], line: String) {
   def tupled = (imports, line)
   def suffix(suffix: Line) = modify(s => s"$s $suffix")
+  def addImport(imp: String) = copy(imports = imports + imp)
   def modify(f: String => String) = Line(imports, f(line))
   def nonEmpty = line.nonEmpty
   def toLines = Lines(imports, List(line))
