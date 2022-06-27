@@ -631,16 +631,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   implicit class TypeExt(tpe: Type) {
-    def schemaRef: String = tpe match {
-      case Type.PrimitiveType(p) => schemaRefP(p)
-      case Type.List(member)     => s"list(${member.schemaRef})"
-      case Type.Set(member)      => s"set(${member.schemaRef})"
-      case Type.Map(key, value)  => s"map(${key.schemaRef}, ${value.schemaRef})"
-      case Type.Alias(_, name, Type.PrimitiveType(_)) =>
-        s"$name.schema"
-      case Type.Alias(_, name, _) =>
-        s"$name.underlyingSchema"
-      case Type.Ref(_, name) => s"$name.schema"
+    def schemaRef: Line = tpe match {
+      case Type.PrimitiveType(p) => Line(schemaRefP(p))
+      case Type.List(member)     => line"list(${member.schemaRef})"
+      case Type.Set(member)      => line"set(${member.schemaRef})"
+      case Type.Map(key, value) =>
+        line"map(${key.schemaRef}, ${value.schemaRef})"
+      case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
+        line"$name.schema".addImport(ns + "." + name)
+      case Type.Alias(ns, name, _) =>
+        line"$name.underlyingSchema".addImport(ns + "." + name)
+      case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {

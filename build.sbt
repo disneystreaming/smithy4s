@@ -567,7 +567,8 @@ lazy val example = projectMatrix
       "smithy4s.example",
       "smithy4s.example.import_test",
       "smithy4s.example.imp",
-      "smithy4s.example.error"
+      "smithy4s.example.error",
+      "smithy4s.example.common"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
@@ -576,7 +577,9 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "import.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "importerror.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "brands.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "brandscommon.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
