@@ -27,7 +27,10 @@ ThisBuild / version := {
   if (!sys.env.contains("CI")) "dev"
   else (ThisBuild / version).value
 }
-
+def excludeSmithyFiles(mappings:Seq[(File,String)]) = mappings.collect {
+  case (file, path) if !path.contains("smithy/") =>
+    (file, path)
+}
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
@@ -75,12 +78,12 @@ lazy val docs =
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
         "VERSION" -> (if (isSnapshot.value)
-                        previousStableVersion.value.getOrElse(
-                          throw new Exception(
-                            "No previous version found from dynver"
-                          )
-                        )
-                      else version.value),
+          previousStableVersion.value.getOrElse(
+            throw new Exception(
+              "No previous version found from dynver"
+            )
+          )
+        else version.value),
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
@@ -367,6 +370,7 @@ lazy val protocol = projectMatrix
     settings = jvmDimSettings
   )
   .settings(
+    Compile / packageSrc / mappings := excludeSmithyFiles((Compile / packageSrc / mappings).value),
     libraryDependencies += Dependencies.Smithy.model,
     javacOptions ++= Seq("--release", "8")
   )
@@ -394,6 +398,7 @@ lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
   .dependsOn(core, tests % "test->compile", http4s % "test->compile")
   .settings(
+    Compile / packageSrc / mappings := excludeSmithyFiles((Compile / packageSrc / mappings).value),
     isCE3 := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
@@ -766,8 +771,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
                   List("--openapi-output", openapiOutputDir) ++
                   (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
-                     List("--allowed-ns", allowedNS.get.mkString(","))
-                   else Nil) ++ inputs
+                    List("--allowed-ns", allowedNS.get.mkString(","))
+                  else Nil) ++ inputs
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())
