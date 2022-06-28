@@ -28,7 +28,7 @@ ThisBuild / version := {
   else (ThisBuild / version).value
 }
 def excludeSmithyFiles(mappings:Seq[(File,String)]) = mappings.collect {
-  case (file, path) if !path.contains("smithy/") =>
+  case (file, path) if !path.contains("smithy/") || file.ext.contains("smithy") =>
     (file, path)
 }
 lazy val root = project
