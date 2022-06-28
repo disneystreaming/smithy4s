@@ -22,7 +22,7 @@ Before we dive into the core of the solution, one notion that is drastically hel
 
 * Finally-encoded algebras are object-oriented encodings of a set of operations, just like above : operations are represented as **methods** in an interface. Interpretation of expressions written in terms of these methods does not involve any runtime transformation from one context to another : the method call is merely executed. In other words, when they are executed, expressions coming from finally-encoded algebras are already in their "final form".
 
-* Conversely, initially-encoded algebras represent expressions as **data**, implying that interpretation involves a transformation of this data into lower level method calls. However, **data** has the quality of being a first class construct in programming languages, meaning you can pass it around and use it as parameter to functions. This allows for the unification of codepaths, as the differences between some aspects of a bit of logic can be absorbed by the data and handled later on.
+* Conversely, initially-encoded algebras represent expressions as **data**, implying that interpretation involves a transformation of this data into lower level method calls. However, **data** has the quality of being a first class construct in programming languages, meaning you can pass it around and use it as parameter to functions. This allows for the unification of code-paths, as the differences between some aspects of a bit of logic can be absorbed by the data and handled later on.
 
 Finally-encoded KVStore algebra :
 
@@ -56,7 +56,7 @@ def asNaturalTransformation[Context[_]](impl: KVStore[Context]) = new (KVStoreOp
   def apply[A](fa: KVStoreOp[A]) : Context[A] = fa match {
     case KVStoreOp.Put(key, value) => impl.put(key, value)
     case KVStoreOp.Get(key)        => impl.get(key)
-    case KVStoreOp.Delete(key)     => impl.delete(keyu)
+    case KVStoreOp.Delete(key)     => impl.delete(key)
   }
 }
 
