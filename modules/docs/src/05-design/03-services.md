@@ -67,7 +67,7 @@ def fromNaturalTransformation[Context[_]](run: KVStoreOp ~> Context) = new KVSto
 }
 ```
 
-This duality is heavily used by Smithy4s : finally-encoded interfaces are generally more natural to Scala developers, and are better supported in editors (autocompletion, etc). But from an implementation's perspective, the initial, data-base encoding is really interesting, because operations are reified as **datatypes** that can be associated with instances of generic typeclasses : it is possible to abstract over data, it is not possible to abstract over method calls.
+This duality is heavily used by Smithy4s : finally-encoded interfaces are generally more natural to Scala developers, and are better supported in editors (autocompletion, etc). But from an implementation's perspective, the initial, data-base encoding is really interesting, because operations are reified as **data-types** that can be associated with instances of generic typeclasses : it is possible to abstract over data, it is not possible to abstract over method calls.
 
 ### A detour around kinds
 
@@ -90,7 +90,7 @@ That's the input type of an operation. Typically, a case class that holds fields
 
 #### Error
 
-The execution of an operation can result in errors. The Smithy language allows for tying a list of errors to operations. When generating the associated code, Smithy4s synthetises a union so that the coproduct of errors associated to an operation becomes a bonafide Scala type, which we can abstract over via some typeclass instance. This is also very useful for the writing of bifunctor interpreters, for users that are interested in this kind of UX.
+The execution of an operation can result in errors. The Smithy language allows for tying a list of errors to operations. When generating the associated code, Smithy4s synthesize a union so that the coproduct of errors associated to an operation becomes a bona fide Scala type, which we can abstract over via some typeclass instance. This is also very useful for the writing of bi-functor interpreters, for users that are interested in this kind of UX.
 
 #### Output
 
@@ -120,7 +120,7 @@ This is a mouthful, but conceptually, it's exactly the same as our good old poly
 
 ### Codifying the duality between initial and final algebras
 
-What we want users to manipulate is the final-encoded version of a service: a good-old object-oriented interface that has decent editor support. But we need the inital-encoded version to implement interpreters in a generic fashion.
+What we want users to manipulate is the final-encoded version of a service: a good-old object-oriented interface that has decent editor support. But we need the initial-encoded version to implement interpreters in a generic fashion.
 
 So we codify the duality to allow for switching from one to the other via an abstraction called `Smithy4s.Service`, which is the entry point to all interpreters.
 
@@ -133,7 +133,7 @@ trait Service[Final[_[_, _, _, _, _]], Initial[_, _, _, _, _]] {
 }
 ```
 
-Implementations of such interfaces are code-generated. This implies that any smithy `Service` shape gets translated as a finally-encoded interface, but also as an intially-encoded `GADT`
+Implementations of such interfaces are code-generated. This implies that any smithy `Service` shape gets translated as a finally-encoded interface, but also as an initially-encoded `GADT`
 
 ## The high-level philosophy of Smithy4s
 
@@ -216,7 +216,7 @@ object Put extends Endpoint[KVStoreOp, PutRequest, PutError, PutResult, Nothing,
 
 As stated previously, smithy4s generates a coproduct type for each operation, where the members of the coproduct point to the various errors listed in the smithy operation shape. Additionally, each structure annotated with `@error` in smithy is rendered as a case-class that extends `Throwable`, because `Throwables` are the de-facto standard of doing error handling on the JVM. Even libraries that use `Either` to perform error handling often represent the left-hand-side of the Either as some throwable type, to facilitate the absorption of errors into the error-channels of monadic constructs (`IO.raiseError`, etc)
 
-As a result, it is important for smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the user. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turnd into `Throwable` at the client call site, in order to populate the relevant error channel when exposing monofunctor semantics.
+As a result, it is important for smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the user. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turned into `Throwable` at the client call site, in order to populate the relevant error channel when exposing mono-functor semantics.
 
 Therefore, when a smithy operation has `errors` defined, the corresponding `smithy4s.Endpoint` also extends the `Errorable` interface, which looks like this :
 
@@ -267,7 +267,7 @@ structure PutInput {
 }
 ```
 
-Each `@http` occurrence get translated to a scala value in the `Hints` assocated to the corresponding endpoint.
+Each `@http` occurrence get translated to a scala value in the `Hints` associated to the corresponding endpoint.
 
 * On server-side, having a list of all the endpoints associated to a service allows for creating a routing logic that dispatches an http Request to the correct endpoint.
 * On client-side, a method call to a service stub gets translated to an instance of the corresponding `GADT` member. From there, we have to retrieve the schemas associated to the member in question. Additionally, we need to extract the input value out of the member, to run it through an encoder derived from the the associated `Schema`.
