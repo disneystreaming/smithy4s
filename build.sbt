@@ -367,9 +367,8 @@ lazy val protocol = projectMatrix
     settings = jvmDimSettings
   )
   .settings(
-    Compile / packageSrc / mappings := (Compile / packageSrc / mappings).value.collect {
-      case (file, path) if !path.equalsIgnoreCase("META-INF/smithy/manifest") =>
-        (file, path)
+    Compile / packageSrc / mappings := (Compile / packageSrc / mappings).value.filterNot {
+      case (file, path) => path.equalsIgnoreCase("META-INF/smithy/manifest")
     },
     libraryDependencies += Dependencies.Smithy.model,
     javacOptions ++= Seq("--release", "8")
