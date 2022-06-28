@@ -27,10 +27,7 @@ ThisBuild / version := {
   if (!sys.env.contains("CI")) "dev"
   else (ThisBuild / version).value
 }
-def excludeSmithyFiles(mappings:Seq[(File,String)]) = mappings.collect {
-  case (file, path) if !path.contains("smithy/") || file.ext.contains("smithy") =>
-    (file, path)
-}
+
 lazy val root = project
   .in(file("."))
   .aggregate(allModules: _*)
@@ -370,7 +367,10 @@ lazy val protocol = projectMatrix
     settings = jvmDimSettings
   )
   .settings(
-    Compile / packageSrc / mappings := excludeSmithyFiles((Compile / packageSrc / mappings).value),
+    Compile / packageSrc / mappings := (Compile / packageSrc / mappings).value.collect {
+      case (file, path) if !path.equalsIgnoreCase("META-INF/smithy/manifest") =>
+        (file, path)
+    },
     libraryDependencies += Dependencies.Smithy.model,
     javacOptions ++= Seq("--release", "8")
   )
@@ -398,7 +398,6 @@ lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
   .dependsOn(core, tests % "test->compile", http4s % "test->compile")
   .settings(
-    Compile / packageSrc / mappings := excludeSmithyFiles((Compile / packageSrc / mappings).value),
     isCE3 := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
