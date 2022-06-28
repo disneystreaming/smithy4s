@@ -67,7 +67,7 @@ def fromNaturalTransformation[Context[_]](run: KVStoreOp ~> Context) = new KVSto
 }
 ```
 
-This duality is heavily used by Smithy4s : finally-encoded interfaces are generally more natural to Scala developers, and are better supported in editors (autocompletion, etc). But from an implementation's perspective, the initial, data-base encoding is really interesting, because operations are reified as **data-types** that can be associated with instances of generic typeclasses : it is possible to abstract over data, it is not possible to abstract over method calls.
+This duality is heavily used by Smithy4s : finally-encoded interfaces are generally more natural to Scala developers, and are better supported in editors (autocompletion, etc). But from an implementation's perspective, the initial, data-based encoding is really interesting, because operations are reified as **data-types** that can be associated with instances of generic typeclasses : it is possible to abstract over data, it is not possible to abstract over method calls.
 
 ### A detour around kinds
 
@@ -86,7 +86,7 @@ Let's address this awkwardness right away, by explaining the rationale behind th
 That's the input type of an operation. Typically, a case class that holds fields matching the method parameters. We keep track of it in the return type for several reasons:
 
 * In the internal logic of Smithy4s, It prevents having to prematurely shoe-horn kinds into other kinds by means of injection/projection, which helps both implementor and compiler alike
-* It will in handy for the implementation of some pagination-aware interpreters
+* It will in handy for the implementation of some pagination-aware interpreters, as pagination typically works by performing a modification of the previous input in order to get the next batch (page) of results. This implies that the input (and therefore its type) must be tracked across several requests resulting from a single method call.
 
 #### Error
 
