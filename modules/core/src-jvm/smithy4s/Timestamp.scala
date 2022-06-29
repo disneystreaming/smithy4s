@@ -188,7 +188,7 @@ object Timestamp {
 
   def nowUTC(): Timestamp = {
     val now = Instant.now()
-    new Timestamp(now.getEpochSecond, now.getNano)
+    Timestamp(now.getEpochSecond, now.getNano)
   }
 
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {

@@ -203,7 +203,7 @@ object Timestamp {
 
   def nowUTC(): Timestamp = {
     val currentMillis = (new Date()).valueOf()
-    new Timestamp((currentMillis / 1000).toLong, (currentMillis % 1000).toInt * 1000000)
+    Timestamp((currentMillis / 1000).toLong, (currentMillis % 1000).toInt * 1000000)
   }
 
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
