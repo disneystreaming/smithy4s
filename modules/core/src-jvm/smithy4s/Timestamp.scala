@@ -169,14 +169,14 @@ object Timestamp {
     Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
   def apply(epochSecond: Long, nano: Int): Timestamp = {
-    require(epochSecond >= -377705116800L && epochSecond <= 253402300799L, "illegal epochSecond")
+    require(epochSecond >= -62167219200L && epochSecond <= 253402300799L, "illegal epochSecond")
     require(nano >= 0 && nano <= 999999999, "illegal nano")
     new Timestamp(epochSecond, nano)
   }
 
   def apply(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0, second: Int = 0,
             nano: Int = 0): Timestamp = {
-    require(year >= -9999 && year <= 9999, "illegal year")
+    require(year >= 0 && year <= 9999, "illegal year")
     require(month >= 1 && month <= 12, "illegal month")
     require(day >= 1 && (day <= 28 || day <= maxDayForYearMonth(year, month)), "illegal year, month, day combination")
     require(hour >= 0 && hour <= 23, "illegal hour")

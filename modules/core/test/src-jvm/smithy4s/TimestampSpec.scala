@@ -44,7 +44,7 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
         x => x.getEpochSecond
       )
     Arbitrary(
-      Gen.choose[Instant](Instant.ofEpochSecond(-377705116800L), Instant.ofEpochSecond(253402300799L))
+      Gen.choose[Instant](Instant.ofEpochSecond(-62167219200L), Instant.ofEpochSecond(253402300799L))
     )
   }
 
