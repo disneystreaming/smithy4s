@@ -454,7 +454,7 @@ object Timestamp {
       val ch1 = s.charAt(pos + 1)
       val ch2 = s.charAt(pos + 2)
       pos += 3
-      ch0 != 'G' || ch1 != 'M' || ch2 != 'T'
+      ch0 != 'G' || ch1 != 'M' || ch2 != 'T' || pos != len
     }) error()
     new Timestamp(epochDay * 86400 + (hour * 3600 + minute * 60 + second), nano)
   }
