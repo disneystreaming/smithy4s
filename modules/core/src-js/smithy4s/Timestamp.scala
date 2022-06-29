@@ -19,7 +19,7 @@ package smithy4s
 import smithy.api.TimestampFormat
 import smithy4s.Timestamp._
 import scalajs.js.Date
-import scala.util.control.NoStackTrace
+import scala.util.control.{NoStackTrace, NonFatal}
 
 case class Timestamp private(epochSecond: Long, nano: Int) {
   def isAfter(other: Timestamp): Boolean = {
@@ -218,7 +218,7 @@ object Timestamp {
       case TimestampFormat.HTTP_DATE     => parseHTTPDate(string)
     })
   } catch {
-    case _: Throwable => None
+    case NonFatal(_) => None
   }
 
   def showFormat(format: TimestampFormat): String = format match {

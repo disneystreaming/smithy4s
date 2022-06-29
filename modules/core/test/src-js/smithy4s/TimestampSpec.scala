@@ -55,7 +55,10 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val epochSecond = (i.valueOf() / 1000).toLong
       val nano = (i.valueOf() % 1000).toInt * 1000000
       val ts = Timestamp(epochSecond, nano)
-      expect.same(ts.toDate.toString, i.toString)
+      val d = ts.toDate
+      val ts2 = Timestamp.fromDate(d)
+      expect.same(d.toString, i.toString)
+      expect.same(ts, ts2)
     }
   }
 

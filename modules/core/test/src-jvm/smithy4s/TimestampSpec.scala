@@ -56,7 +56,21 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
   property("Converts from/to Instant") {
     forAll { (i: Instant) =>
       val ts = Timestamp(i.getEpochSecond, i.getNano)
-      expect.same(ts.toInstant, i)
+      val i2 = ts.toInstant
+      val ts2 = Timestamp.fromInstant(i2)
+      expect.same(i2, i)
+      expect.same(ts2, ts)
+    }
+  }
+
+  property("Converts from/to OffsetDateTime") {
+    forAll { (i: Instant) =>
+      val odt = OffsetDateTime.ofInstant(i, ZoneOffset.UTC)
+      val ts = Timestamp.fromOffsetDateTime(odt)
+      val odt2 = ts.toOffsetDateTime
+      val ts2 = Timestamp.fromOffsetDateTime(odt)
+      expect.same(odt2, odt)
+      expect.same(ts2, ts)
     }
   }
 
