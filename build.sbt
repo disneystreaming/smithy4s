@@ -75,12 +75,12 @@ lazy val docs =
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
         "VERSION" -> (if (isSnapshot.value)
-          previousStableVersion.value.getOrElse(
-            throw new Exception(
-              "No previous version found from dynver"
-            )
-          )
-        else version.value),
+                        previousStableVersion.value.getOrElse(
+                          throw new Exception(
+                            "No previous version found from dynver"
+                          )
+                        )
+                      else version.value),
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
@@ -367,9 +367,10 @@ lazy val protocol = projectMatrix
     settings = jvmDimSettings
   )
   .settings(
-    Compile / packageSrc / mappings := (Compile / packageSrc / mappings).value.filterNot {
-      case (file, path) => path.equalsIgnoreCase("META-INF/smithy/manifest")
-    },
+    Compile / packageSrc / mappings := (Compile / packageSrc / mappings).value
+      .filterNot { case (file, path) =>
+        path.equalsIgnoreCase("META-INF/smithy/manifest")
+      },
     libraryDependencies += Dependencies.Smithy.model,
     javacOptions ++= Seq("--release", "8")
   )
@@ -769,8 +770,8 @@ def genSmithyImpl(config: Configuration) = Def.task {
                   List("--openapi-output", openapiOutputDir) ++
                   (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
-                    List("--allowed-ns", allowedNS.get.mkString(","))
-                  else Nil) ++ inputs
+                     List("--allowed-ns", allowedNS.get.mkString(","))
+                   else Nil) ++ inputs
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())
