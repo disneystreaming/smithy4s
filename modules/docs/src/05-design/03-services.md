@@ -12,9 +12,9 @@ trait Interface[Context[_]]{
 }
 ```
 
-This generalisation enables the easy interpretation of implementations of such interfaces into services (http, rpc, etc), or, conversely, the derivation of instances of these high-level interfaces to talk to remote services.
+This generalisation enables the easy interpretation of implementations of such interfaces into services (HTTP, RPC, etc), or conversely, the derivation of stub instances of these interfaces to talk to remote services.
 
-The creation of an abstraction that allows for this generalisation is a problem similar to the one that lead to the `Schema` construct : one needs to deconstruct "interfaces" into fundamental building blocks.
+The creation of an abstraction that allows for this generalisation is a problem similar to the one that lead to the `Schema` construct : one needs to deconstruct the notion of "interface" into fundamental building blocks.
 
 ## The duality of final and initial algebras
 
@@ -45,7 +45,7 @@ object KVStoreOp {
 }
 ```
 
-These two encodings contain a similar amount of information. It is even nearly-trivial to go from a `KVstore[Context]` instance to a `KVStoreOp ~> Context` natural transformation, and vice versa:
+These two encodings contain a similar amount of information. It is nearly-trivial to go from a `KVstore[Context]` instance to a `KVStoreOp ~> Context` natural transformation, and vice versa:
 
 ```scala
 trait ~>[F[_], G[_]]{
@@ -83,14 +83,14 @@ Let's address this awkwardness right away, by explaining the rationale behind th
 
 #### Input
 
-That's the input type of an operation. Typically, a case class that holds fields matching the method parameters. We keep track of it in the return type for several reasons:
+It's the input type of an operation. Typically, a case class that holds fields matching the method parameters. We keep track of it in the return type for several reasons:
 
 * In the internal logic of Smithy4s, It prevents having to prematurely shoe-horn kinds into other kinds by means of injection/projection, which helps both implementor and compiler alike
 * It will come in handy for the implementation of some pagination-aware interpreters, as pagination typically works by performing a modification of the previous input in order to get the next batch (page) of results. This implies that the input (and therefore its type) must be tracked across several requests resulting from a single method call.
 
 #### Error
 
-The execution of an operation can result in errors. The Smithy language allows for tying a list of errors to operations. When generating the associated code, Smithy4s synthesize a union so that the coproduct of errors associated to an operation becomes a bona fide Scala type, which we can abstract over via some typeclass instance. This is also very useful for the writing of bi-functor interpreters, for users that are interested in this kind of UX.
+The execution of an operation can result in errors. The Smithy language allows for tying a list of errors to operations. When generating the associated code, Smithy4s synthesize a union. This allows the coproduct of errors associated to an operation to be represented as a bona fide Scala type, which we can abstract over via some typeclass instance. This is also very useful for the writing of bi-functor interpreters, for users that are interested in this kind of UX.
 
 #### Output
 
@@ -98,17 +98,17 @@ No surprise there : this is the data resulting from the run of the operation.
 
 #### StreamedInput, StreamedOutput
 
-Smithy supports the concept of [Streaming](https://awslabs.github.io/smithy/1.0/spec/core/stream-traits.html?highlight=streaming#streaming-trait). It is communicated as a trait that annotates a single field of the input shape or/and output shape of an operation. Scala does not have a "standard" way of expressing streaming semantics. Moreover, streaming constructs in Scala are heavily context dependant , so we could not possibly incorporate Streaming in our `Schema` construct which aims at being context-free and third-party-free.
+Smithy supports the concept of [Streaming](https://awslabs.github.io/smithy/1.0/spec/core/stream-traits.html?highlight=streaming#streaming-trait). It is communicated as a trait that annotates a single field of the input shape or/and output shape of an operation. Scala does not have a "standard" way of expressing streaming semantics. Moreover, streaming constructs in Scala are heavily context dependant. It is therefore impossible for us to incorporate the concept of "streaming" to our `Schema` construct as it is meant to be context-free and third-party-free.
 
-To get some intuition why that is : say we want to express streaming using [fs2](https://github.com/typelevel/fs2/). If we naively generate a case class that has one of its fields annotated with `@streaming`, it means that the the field is of type `fs2.Stream[F, A]`, which means that we either need to make a decision on what the `F` is, which is not okay for obvious reasons, or we need to propagate the `F[_]` type parameter upward to the case class. Now our `Schema` value, which accompanies the case-class, also have to carry the `F` ... this propagates throughout the whole codebase. We deemed that not acceptable.
+To get some intuition for why that is : say we want to express streaming using [fs2](https://github.com/typelevel/fs2/). If we naively generate a case class that has one of its fields annotated with `@streaming`, it means that the the field is of type `fs2.Stream[F, A]`, which means that we either need to make a decision on what the `F` is, which is not okay for obvious reasons, or we need to propagate the `F[_]` type parameter upward to the case class. Now our `Schema` value, which accompanies the case-class, also have to carry the `F` ... this propagates throughout the whole codebase. We deemed that not acceptable.
 
-Rather than polluting all layers of abstraction, we decided to just have the concept of operation be impacted and hold the streamed type in a separate type parameter. This allows for interpreters from various ecosystem to emerge. It also has the quality of allowing users to access the unary component of outputs (ie, data that is communicated in the headers of http responses) without necessarily allocating resources to consume the streamed component of outputs.
+Rather than polluting all layers of abstraction, we decided to just have the concept of operation be impacted and hold the streamed type in a separate type parameter. This allows for interpreters from various ecosystem to emerge. It also has the quality of allowing users to access the unary component of outputs (ie, data that is communicated in the headers of HTTP responses) without necessarily allocating resources to consume the streamed component of the output.
 
 NB: at the time of writing this, Smithy4s does not have any streaming-aware interpreter implemented. But streaming is such a fundamental notion in remote interactions, and we had to devise a plan to ensure that third parties could decide to implement interpreters without waiting.
 
 ### Transformation
 
-Because of the complex kinds we're dealing with, we codify a natural-transformation, called `Smithy4s.Transformation` that allows to work at this level :
+Because of the complex kinds we're dealing with, we codify a natural-transformation, called `Smithy4s.Transformation` that allows us to work at this level :
 
 ```scala
 trait Transformation[F[_, _, _, _, _], G[_, _, _, _, _]] {
@@ -149,7 +149,7 @@ Conceptually, to derive a high-level client that uses some sort of `Request => R
 2. turning the method call into a piece of data : `KVStoreOp.Get("key")` using the initially-encoded dual of the `KVStore` interface
 3. Retrieving the Smithy4s `Schemas` (input and output) associated to the `Get` operation
 4. Compiling the schema associated to the input of the `Get` operation into some encoding function : `GetInput => Request`
-5. Running the request through a low-level `Request => Response` function (like an http client)
+5. Running the request through a low-level `Request => Response` function (like an HTTP client)
 6. Running `Get` into some function that gives us its `GetInput` representation
 7. Compiling the schema associated to the output (`GetOutput` ~= `Option[String]`) of the `Get` operation into some decoding function `Response => Output`
 
@@ -159,7 +159,7 @@ So we get `kvstore.get => KVStoreOp.Get => GetInput => Request => Response => Ge
 
 The server side is different in that we want to derive the `Request => Response` function from an instance of our interface (`KVStore`). The goal is to mechanically translate a request into a method call, and a method's output into a response. The sequence:
 
-1. From a given `Request`, find the corresponding operation `Op` (for instance, by means of http path). Let's assume it's the `get` operation,
+1. From a given `Request`, find the corresponding operation `Op` (for instance, by means of HTTP path). Let's assume it's the `get` operation,
 2. Retrieve the Smithy4s `Schemas` (input and output) associated to the operation (`KVStoreOp.Get`)
 3. Compile a `Request => GetInput` decoding function, and run the `Request` through it
 4. From `GetInput`, recreate the `KVStoreOp.Get` instance
@@ -172,7 +172,7 @@ Both the service-side and client-side logical flows guide the design of the abst
 
 ### A note about efficiency
 
-The flows described above are merely conceptual, and do not account for the optimisations involved to ensure that schemas are not recompiled into codecs on a per-request basis (which would greatly impact performance). Interpreters provided by Smithy4s (http and co) are written to ensure that all compilation is performed ahead of receiving requests, by means of preliminary computations and caching.
+The flows described above are merely conceptual, and do not account for the optimisations involved to ensure that schemas are not recompiled into codecs on a per-request basis (which would greatly impact performance). Interpreters provided by Smithy4s (HTTP and co) are written to ensure that all compilation is performed ahead of receiving requests, by means of preliminary computations and caching.
 
 ## The Endpoint abstraction
 
@@ -216,7 +216,7 @@ object Put extends Endpoint[KVStoreOp, PutRequest, PutError, PutResult, Nothing,
 
 As stated previously, smithy4s generates a coproduct type for each operation, where the members of the coproduct point to the various errors listed in the smithy operation shape. Additionally, each structure annotated with `@error` in smithy is rendered as a case-class that extends `Throwable`, because `Throwables` are the de-facto standard of doing error handling on the JVM. Even libraries that use `Either` to perform error handling often represent the left-hand-side of the Either as some throwable type, to facilitate the absorption of errors into the error-channels of monadic constructs (`IO.raiseError`, etc)
 
-As a result, it is important for smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the user. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turned into `Throwable` at the client call site, in order to populate the relevant error channel when exposing mono-functor semantics.
+As a result, it is important for smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the wire. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turned into `Throwable` at the client call site, in order to populate the relevant error channel when exposing mono-functor semantics.
 
 Therefore, when a smithy operation has `errors` defined, the corresponding `smithy4s.Endpoint` also extends the `Errorable` interface, which looks like this :
 
@@ -269,7 +269,7 @@ structure PutInput {
 
 Each `@http` occurrence get translated to a scala value in the `Hints` associated to the corresponding endpoint.
 
-* On server-side, having a list of all the endpoints associated to a service allows for creating a routing logic that dispatches an http Request to the correct endpoint.
+* On server-side, having a list of all the endpoints associated to a service allows for creating a routing logic that dispatches an HTTP Request to the correct endpoint.
 * On client-side, a method call to a service stub gets translated to an instance of the corresponding `GADT` member. From there, we have to retrieve the schemas associated to the member in question. Additionally, we need to extract the input value out of the member, to run it through an encoder derived from the the associated `Schema`.
 
 Therefore, the `Service` abstraction needs to be enriched with the following methods :
