@@ -188,10 +188,10 @@ object Timestamp {
 
   def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
 
-  def nowUTC(): Timestamp = {
-    val now = Instant.now()
-    Timestamp(now.getEpochSecond, now.getNano)
-  }
+  /** JVM platform only method */
+  def fromInstant(x: Instant): Timestamp = Timestamp(x.getEpochSecond, x.getNano)
+
+  def nowUTC(): Timestamp = fromInstant(Instant.now())
 
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
     new Some(format match {

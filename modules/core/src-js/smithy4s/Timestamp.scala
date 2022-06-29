@@ -203,10 +203,13 @@ object Timestamp {
 
   def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
 
-  def nowUTC(): Timestamp = {
-    val currentMillis = (new Date()).valueOf()
+  /** JS platform only method */
+  def fromDate(x: Date): Timestamp = {
+    val currentMillis = x.valueOf()
     Timestamp((currentMillis / 1000).toLong, (currentMillis % 1000).toInt * 1000000)
   }
+
+  def nowUTC(): Timestamp = fromDate(new Date())
 
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
     new Some(format match {
