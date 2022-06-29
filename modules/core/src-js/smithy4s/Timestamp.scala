@@ -201,6 +201,8 @@ object Timestamp {
     new Timestamp(toEpochDay(year, month, day) * 86400 + (hour * 3600 + minute * 60 + second), nano)
   }
 
+  def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
+
   def nowUTC(): Timestamp = {
     val currentMillis = (new Date()).valueOf()
     Timestamp((currentMillis / 1000).toLong, (currentMillis % 1000).toInt * 1000000)

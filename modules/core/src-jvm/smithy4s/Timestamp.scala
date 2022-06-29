@@ -186,6 +186,8 @@ object Timestamp {
     new Timestamp(toEpochDay(year, month, day) * 86400 + (hour * 3600 + minute * 60 + second), nano)
   }
 
+  def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
+
   def nowUTC(): Timestamp = {
     val now = Instant.now()
     Timestamp(now.getEpochSecond, now.getNano)
