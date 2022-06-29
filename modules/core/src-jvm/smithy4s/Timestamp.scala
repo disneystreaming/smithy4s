@@ -18,7 +18,7 @@ package smithy4s
 
 import smithy.api.TimestampFormat
 import smithy4s.Timestamp._
-import java.time.Instant
+import java.time._
 import scala.util.control.NoStackTrace
 
 case class Timestamp private(epochSecond: Long, nano: Int) {
@@ -39,6 +39,10 @@ case class Timestamp private(epochSecond: Long, nano: Int) {
 
   /** JVM platform only method */
   def toInstant: Instant = Instant.ofEpochSecond(epochSecond, nano.toLong)
+
+  /** JVM platform only method */
+  def toOffsetDateTime: OffsetDateTime =
+    OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSecond, nano.toLong), ZoneOffset.UTC)
 
   override def toString: String = format(TimestampFormat.DATE_TIME)
 
@@ -190,6 +194,9 @@ object Timestamp {
 
   /** JVM platform only method */
   def fromInstant(x: Instant): Timestamp = Timestamp(x.getEpochSecond, x.getNano)
+
+  /** JVM platform only method */
+  def fromOffsetDateTime(x: OffsetDateTime): Timestamp = Timestamp(x.toInstant.getEpochSecond, x.getNano)
 
   def nowUTC(): Timestamp = fromInstant(Instant.now())
 
