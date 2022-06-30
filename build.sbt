@@ -97,6 +97,20 @@ lazy val docs =
     )
     .settings(Smithy4sPlugin.doNotPublishArtifact)
 
+val munitDeps = Def.setting {
+  if (virtualAxes.value.contains(VirtualAxis.native)) {
+    Seq(
+      Dependencies.MunitMilestone.core.value % Test,
+      Dependencies.MunitMilestone.scalacheck.value % Test
+    )
+  } else {
+    Seq(
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
+    )
+  }
+}
+
 /**
  * Protocol-agnostic, dependency-free core module, containing
  * only interfaces and other polymorphic constructs, allowing for the
@@ -130,19 +144,7 @@ lazy val core = projectMatrix
       Dependencies.collectionsCompat.value,
       Dependencies.Cats.core.value % Test
     ),
-    libraryDependencies ++= {
-      if (virtualAxes.value.contains(VirtualAxis.native)) {
-        Seq(
-          Dependencies.MunitMilestone.core.value % Test,
-          Dependencies.MunitMilestone.scalacheck.value % Test
-        )
-      } else {
-        Seq(
-          Dependencies.Munit.core.value % Test,
-          Dependencies.Munit.scalacheck.value % Test
-        )
-      }
-    },
+    libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
       "smithy4s.example"
     ),
@@ -180,17 +182,16 @@ lazy val scalacheck = projectMatrix
   .in(file("modules/scalacheck"))
   .dependsOn(core)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.collectionsCompat.value,
-      Dependencies.Scalacheck.scalacheck.value,
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
+      Dependencies.Scalacheck.scalacheck.value
     ),
+    libraryDependencies ++= munitDeps.value,
     testFrameworks += new TestFramework("weaver.framework.CatsEffect")
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * The aws-specific core a library. Contains the generated code for AWS specific
@@ -725,7 +726,7 @@ lazy val Dependencies = new {
   object MunitMilestone extends MunitCross("1.0.0-M6")
 
   val Scalacheck = new {
-    val version = "1.15.4"
+    val version = "1.16.0"
     val scalacheck =
       Def.setting("org.scalacheck" %%% "scalacheck" % version)
   }
