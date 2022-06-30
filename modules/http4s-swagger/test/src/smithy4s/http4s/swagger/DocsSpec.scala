@@ -31,7 +31,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
       val request =
         Request[IO](
           method = Method.GET,
-          uri = Uri.unsafeFromString(s"/$path/index.html")
+          uri = Uri.unsafeFromString(s"/$path")
         )
       app.run(request).map { response =>
         val redirectUri = response.headers
@@ -39,10 +39,10 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           .map(_.head)
           .map(_.value)
 
-        expect(response.status == Status.PermanentRedirect) and
+        expect(response.status == Status.Found) and
           expect.eql(
             redirectUri,
-            Some(s"/$path/index.html?url=/foobar.test-spec.json")
+            Some(s"/$path/index.html")
           )
       }
     }
@@ -55,10 +55,10 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           .map(_.head)
           .map(_.value)
 
-        expect(response.status == Status.PermanentRedirect) and
+        expect(response.status == Status.Found) and
           expect.eql(
             redirectUri,
-            Some(s"/$path/index.html?url=/foobar.test-spec.json")
+            Some(s"/$path/index.html")
           )
       }
     }
@@ -71,25 +71,11 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           .map(_.head)
           .map(_.value)
 
-        expect(response.status == Status.PermanentRedirect) and
+        expect(response.status == Status.Found) and
           expect.eql(
             redirectUri,
-            Some(s"/$path/index.html?url=/foobar.test-spec.json")
+            Some(s"/$path/index.html")
           )
-      }
-    }
-    test(
-      s"GET /$path/index.html?url=/test-file.json does not redirect"
-    ) {
-      val request =
-        Request[IO](
-          method = Method.GET,
-          uri = Uri.unsafeFromString(
-            s"/$path/index.html?url=/test-file.json"
-          )
-        )
-      app.run(request).map { response =>
-        expect(response.status == Status.Ok)
       }
     }
     test(s"GET $path/test-file.json fetches requested file") {
