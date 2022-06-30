@@ -18,6 +18,7 @@ package smithy4s
 package http4s.swagger
 
 import cats.data.OptionT
+import cats.data.NonEmptyList
 import cats.effect.Sync
 import org.http4s.HttpRoutes
 import org.http4s.Request
@@ -35,7 +36,16 @@ private[smithy4s] object Compat {
     )(implicit
         F: Sync[F]
     ): HttpRoutes[F] = {
-      val docs = Docs[F](hasId, path)
+      multipleDocs(hasId)(path)
+    }
+
+    def multipleDocs[F[_]](
+        id: HasId,
+        rest: HasId*
+    )(path: String)(implicit
+        F: Sync[F]
+    ): HttpRoutes[F] = {
+      val docs = Docs.multiple[F](path)(id, rest: _*)
       docs.routes
     }
   }
@@ -55,7 +65,16 @@ private[smithy4s] object Compat {
     )(implicit
         F: Sync[F]
     ): Docs[F] = {
-      new Docs[F](hasId, path, swaggerUiPath) {
+      multiple[F](path, swaggerUiPath)(hasId)
+    }
+
+    def multiple[F[_]](
+        path: String,
+        swaggerUiPath: String = swaggerUiPath
+    )(id: HasId, rest: HasId*)(implicit
+        F: Sync[F]
+    ): Docs[F] = {
+      new Docs[F](NonEmptyList(id, rest.toList), path, swaggerUiPath) {
         override def staticResource(name: String, req: Option[Request[F]]) = {
           StaticFile.fromResource(name, req)
         }

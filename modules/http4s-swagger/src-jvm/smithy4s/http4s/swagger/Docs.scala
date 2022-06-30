@@ -27,14 +27,19 @@ import org.http4s.HttpRoutes
 import org.webjars.WebJarAssetLocator
 
 private[smithy4s] abstract class Docs[F[_]](
-    hasId: HasId,
+    ids: NonEmptyList[HasId],
     path: String,
     swaggerUiPath: String
 )(implicit F: Sync[F])
     extends Http4sDsl[F]
     with Compat.DocsClass[F] {
 
-  val jsonSpec = hasId.id.namespace + '.' + hasId.id.name + ".json"
+  private def toSwaggerUrl(id: HasId): (String, SwaggerInit.SwaggerUrl) = {
+    val jsonSpec = id.id.namespace + '.' + id.id.name + ".json"
+    jsonSpec -> SwaggerInit.SwaggerUrl(s"/$jsonSpec", id.id.name)
+  }
+  private val validSpecs = ids.map(toSwaggerUrl).map(_._1).toList
+  private val specsUrls = ids.map(toSwaggerUrl).map(_._2)
 
   val actualPath: Path = Uri.Path.unsafeFromString("/" + path)
 
@@ -52,18 +57,13 @@ private[smithy4s] abstract class Docs[F[_]](
       Found(Location(Uri.unsafeFromString(s"/$path/index.html")))
 
     case GET -> `actualPath` / "swagger-initializer.js" =>
-      SwaggerInit.asResponse[F](
-        NonEmptyList(
-          SwaggerInit.SwaggerUrl(s"/$jsonSpec", hasId.id.name),
-          Nil
-        )
-      )
+      SwaggerInit.asResponse[F](specsUrls)
 
     case request @ GET -> `actualPath` / filePath =>
       val resource = s"$swaggerUiPath/$filePath"
       staticResource(resource, Some(request)).getOrElseF(NotFound())
 
-    case request @ GET -> Root / `jsonSpec` =>
+    case request @ GET -> Root / jsonSpec if validSpecs.contains(jsonSpec) =>
       staticResource(jsonSpec, Some(request))
         .getOrElseF(InternalServerError())
   }
