@@ -20,7 +20,7 @@ import model.Model
 import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.syntax.all._
-import cats.effect.IO
+import DummyIO._
 
 private[dynamic] trait PlatformUtils { self: Utils.type =>
 

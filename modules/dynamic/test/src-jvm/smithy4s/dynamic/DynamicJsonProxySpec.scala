@@ -18,7 +18,7 @@ package smithy4s
 package dynamic
 import smithy4s.example.KVStore
 
-import cats.effect._
+import DummyIO._
 import cats.syntax.all._
 
 /**
@@ -26,12 +26,10 @@ import cats.syntax.all._
  * creates a dummy instance for it (that returns 0 values for all the fields of outputs),
  * and serves it over an example JSON-RPC-like protocol (returning a `Document => IO[Document]`)
  */
-object DynamicJsonProxySpec extends weaver.SimpleIOSuite {
+object DynamicJsonProxySpec extends munit.FunSuite {
 
-  def kvStoreResource: Resource[IO, KVStore[IO]] = Resource.eval {
-
-    Ref[IO]
-      .of(Map.empty[String, String])
+  def kvStoreResource: IO[KVStore[IO]] = {
+    IO(scala.collection.mutable.Map.empty[String, String])
       .map { ref =>
         new KVStoreImpl(ref)
       }
@@ -54,12 +52,12 @@ object DynamicJsonProxySpec extends weaver.SimpleIOSuite {
   }
 
   test("Static service is correctly proxied by dynamic service") {
-    kvStoreResource.use { kvStore =>
+    kvStoreResource.flatMap { kvStore =>
       for {
         _ <- kvStore.put("key", "value")
         v <- kvStore.get("key")
       } yield expect(v.value === "value")
-    }
+    }.check
   }
 
   test("Dynamic service based proxy propagates errors correctly") {
@@ -70,18 +68,18 @@ object DynamicJsonProxySpec extends weaver.SimpleIOSuite {
     //
     // Because we get the redacted string, it means that the dynamic proxy was able to decode
     // the error, and re-encode it, hiding the sensitive string.
-    kvStoreResource.use { kvStore =>
+    kvStoreResource.flatMap { kvStore =>
       val expectedError = smithy4s.example.KeyNotFoundError("*****")
 
       for {
         attempt <- kvStore.get("sensitive").attempt
       } yield expect.same(attempt, Left(expectedError))
-    }
+    }.check
 
   }
 
   test("Dynamic service based proxy supports service errors") {
-    kvStoreResource.use { kvStore =>
+    kvStoreResource.flatMap { kvStore =>
       val expectedError =
         smithy4s.example.UnauthorizedError("*****")
 
@@ -90,8 +88,7 @@ object DynamicJsonProxySpec extends weaver.SimpleIOSuite {
       } yield {
         expect.same(attempt, Left(expectedError))
       }
-    }
-
+    }.check
   }
 
 }

@@ -19,7 +19,7 @@ package dynamic
 
 import Document._
 
-import cats.effect.IO
+import DummyIO._
 import cats.syntax.all._
 
 /**

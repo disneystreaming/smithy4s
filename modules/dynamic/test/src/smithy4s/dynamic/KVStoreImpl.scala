@@ -18,11 +18,11 @@ package smithy4s
 package dynamic
 
 import smithy4s.example._
-import cats.effect.IO
+import DummyIO._
 import cats.effect.Ref
 import cats.syntax.all._
 
-class KVStoreImpl(ref: Ref[IO, Map[String, String]]) extends KVStore[IO] {
+class KVStoreImpl(map: scala.collection.mutable.Map[String, String]) extends KVStore[IO] {
   def delete(key: String): IO[Unit] = ref
     .modify[Either[Throwable, Unit]] { map =>
       map.get(key) match {

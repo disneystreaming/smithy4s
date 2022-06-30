@@ -14,13 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic
+package smithy4s
+package dynamic
 
-import weaver._
 import Fixtures._
+import DummyIO._
 import smithy4s.dynamic.model.Model
 
-object DecodingSpec extends SimpleIOSuite {
+object DecodingSpec extends munit.FunSuite {
 
   /*
    * Although not needed for equality, we sort the shapes in the model
@@ -38,7 +39,7 @@ object DecodingSpec extends SimpleIOSuite {
     Utils
       .parse(pizzaModelString)
       .map(order)
-      .map(obtained => expect.same(obtained, expected))
+      .mapRun(obtained => expect.same(obtained, expected))
   }
 
 }

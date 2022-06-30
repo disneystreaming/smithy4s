@@ -411,18 +411,16 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core, tests % "test->compile", http4s % "test->compile")
+  .dependsOn(core % "test->test;compile->compile")
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
-      Dependencies.Cats.core.value,
-      Dependencies.Weaver.cats.value % Test
+      Dependencies.Cats.core.value
     ),
+    libraryDependencies ++= munitDeps.value,
     Test / fork := true,
     // Forwarding cwd to tests
     Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
@@ -441,6 +439,7 @@ lazy val dynamic = projectMatrix
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+// .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains the logic for generating "openapi views" of the
@@ -468,7 +467,7 @@ lazy val json = projectMatrix
   .in(file("modules/json"))
   .dependsOn(
     core % "test->test;compile->compile",
-    `scalacheck` % "test -> compile"
+    scalacheck % "test -> compile"
   )
   .settings(
     libraryDependencies ++= Seq(

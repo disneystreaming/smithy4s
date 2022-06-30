@@ -18,15 +18,14 @@ package smithy4s
 package dynamic
 
 import model._
-import weaver._
 import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.shapes.ModelSerializer
-import cats.effect.IO
 import java.nio.file.Paths
 import cats.syntax.all._
 import http.HttpEndpoint
+import DummyIO._
 
-object OperationSpec extends SimpleIOSuite {
+object OperationSpec extends munit.FunSuite {
 
   // This is not ideal, but it does the job.
   val cwd = System.getProperty("user.dir");
