@@ -115,6 +115,28 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("path with special characters in parameter") {
+    (client, uri, log) =>
+      val createPizza = GET(
+        menuItem,
+        uri / "restaurant" / "foo with spaces and % percentages" / "menu"
+      )
+
+      for {
+        res <- client.send[Json](createPizza, log)
+        (code, headers, body) = res
+      } yield {
+        expect(code == 404) &&
+        expect(
+          body == Json.obj(
+            "name" -> Json.fromString(
+              "foo with spaces and % percentages"
+            )
+          )
+        )
+      }
+  }
+
   val customErrorLabel = """|Negative:
                             |- custom error
                             |- default client error code
@@ -357,19 +379,21 @@ abstract class PizzaSpec
     "X-mIxEd-HeAdEr"
   )
 
+  // note: these aren't really part of the pizza suite
+
   pureTest("Happy path: httpMatch") {
     val matchResult = smithy4s.http
       .httpMatch(
         PizzaAdminService,
         smithy4s.http.HttpMethod.POST,
-        Vector("restaurant", "foo with special %", "menu", "item")
+        Vector("restaurant", "foo", "menu", "item")
       )
       .map { case (endpoint, _, map) =>
         endpoint.name -> map
       }
     expect(
       matchResult == Some(
-        ("AddMenuItem", Map("restaurant" -> "foo with special %"))
+        ("AddMenuItem", Map("restaurant" -> "foo"))
       )
     )
   }
