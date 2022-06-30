@@ -362,12 +362,16 @@ abstract class PizzaSpec
       .httpMatch(
         PizzaAdminService,
         smithy4s.http.HttpMethod.POST,
-        Vector("restaurant", "foo", "menu", "item")
+        Vector("restaurant", "foo with special %", "menu", "item")
       )
       .map { case (endpoint, _, map) =>
         endpoint.name -> map
       }
-    expect(matchResult == Some(("AddMenuItem", Map("restaurant" -> "foo"))))
+    expect(
+      matchResult == Some(
+        ("AddMenuItem", Map("restaurant" -> "foo with special %"))
+      )
+    )
   }
 
   pureTest("Negative: http no match (bad path)") {
