@@ -115,6 +115,28 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("path that returns NotFound") { (client, uri, log) =>
+    val getPizza = GET(
+      menuItem,
+      uri / "restaurant" / "unknown" / "menu"
+    )
+
+    for {
+      res <- client.send[Json](getPizza, log)
+      (code, headers, body) = res
+    } yield {
+      expect(code == 404) &&
+      expect(headers.get("X-Error-Type") == Some(List("NotFoundError"))) &&
+      expect(
+        body == Json.obj(
+          "name" -> Json.fromString(
+            "unknown"
+          )
+        )
+      )
+    }
+  }
+
   val customErrorLabel = """|Negative:
                             |- custom error
                             |- default client error code
