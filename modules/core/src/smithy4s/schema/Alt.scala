@@ -23,21 +23,13 @@ package schema
 final case class Alt[F[_], U, A](
     label: String,
     instance: F[A],
-    inject: A => U,
-    hints: Hints
+    inject: A => U
 ) {
   def apply(value: A): Alt.WithValue[F, U, A] =
     Alt.WithValue(this, value)
 
-  def transformHintsLocally(f: Hints => Hints): Alt[F, U, A] =
-    Alt(label, instance, inject, f(hints))
-
-  def addHints(newHints: Hint*) = transformHintsLocally(
-    _ ++ Hints(newHints: _*)
-  )
-
   def mapK[G[_]](fk: PolyFunction[F, G]): Alt[G, U, A] =
-    Alt(label, fk(instance), inject, hints)
+    Alt(label, fk(instance), inject)
 
 }
 object Alt {
@@ -54,27 +46,21 @@ object Alt {
       def apply[A](fa: Alt[F, U, A]): Alt[G, U, A] = fa.mapK(fk)
     }
 
-  def shiftHintsK[U]: PolyFunction[Alt[Schema, U, *], Alt[Schema, U, *]] =
-    new PolyFunction[Alt[Schema, U, *], Alt[Schema, U, *]] {
-      def apply[A](fa: Alt[Schema, U, A]): Alt[Schema, U, A] =
-        Alt(
-          fa.label,
-          fa.instance.transformHintsLocally(_ ++ fa.hints),
-          fa.inject,
-          Hints.empty
-        )
-    }
-
   implicit class SchemaAltOps[U, A](private val alt: SchemaAlt[U, A])
       extends AnyVal {
+
+    def hints: Hints = alt.instance.hints
+
+    def addHints(newHints: Hint*) =
+      Alt(alt.label, alt.instance.addHints(newHints: _*), alt.inject)
+
     def validated[C](implicit
         constraint: Validator.Simple[C, A]
     ): SchemaAlt[U, A] =
       Alt(
         alt.label,
-        alt.instance.validatedAgainstHints(alt.hints),
-        alt.inject,
-        alt.hints
+        alt.instance.validatedAgainstHints(alt.instance.hints),
+        alt.inject
       )
   }
 

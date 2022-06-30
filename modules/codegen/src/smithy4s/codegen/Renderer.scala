@@ -315,14 +315,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderProtocol(name: String, hints: List[Hint]): Lines = {
     hints.collectFirst({ case p: Hint.Protocol => p }).foldMap { protocol =>
       val protocolTraits = protocol.traits
-        .map(t => line"${t.namespace}.${t.name.capitalize}")
+        .map(t => line"""$ShapeId_("${t.namespace}", "${t.name}")""")
         .intercalate(Line.comma)
       lines(
         newline,
         block(
           line"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
         ) {
-          line"def schemas: smithy4s.SchemaIndex = smithy4s.SchemaIndex($protocolTraits)"
+          line"def traits: Set[$ShapeId_] = Set($protocolTraits)"
         }
       )
     }

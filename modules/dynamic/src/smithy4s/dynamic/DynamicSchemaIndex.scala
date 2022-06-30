@@ -42,10 +42,9 @@ object DynamicSchemaIndex {
     *   to retrieve from the dynamic representation of the model.
     */
   def load(
-      model: dynamic.model.Model,
-      knownHints: SchemaIndex
+      model: dynamic.model.Model
   ): DynamicSchemaIndex =
-    internals.Compiler.compile(model, knownHints)
+    internals.Compiler.compile(model)
 
   /**
     * A construct that hides the types a service instance works,

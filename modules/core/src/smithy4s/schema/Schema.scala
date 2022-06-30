@@ -23,18 +23,18 @@ import Schema._
 sealed trait Schema[A]{
   def shapeId: ShapeId
   def hints: Hints
-  def required[Struct] : PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
-  def optional[Struct] : PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
+  final def required[Struct] : PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
+  final def optional[Struct] : PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
 
-  def oneOf[Union] : PartiallyAppliedOneOf[Union, A]= new PartiallyAppliedOneOf[Union,A](this)
+  final def oneOf[Union] : PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
 
-  def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
-  def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
+  final def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
+  final def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
 
-  def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
-  def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)
+  final def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
+  final def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)
 
-  def withId(newId: ShapeId) : Schema[A] = this match {
+  final def withId(newId: ShapeId) : Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: ListSchema[a] => ListSchema(newId, s.hints, s.member).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(newId, s.hints, s.member).asInstanceOf[Schema[A]]
@@ -47,7 +47,10 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
-  def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
+  final def withId(namespace: String, name: String) : Schema[A] = withId(ShapeId(namespace, name))
+
+
+  final def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: ListSchema[a] => ListSchema(s.shapeId, f(s.hints), s.member).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member).asInstanceOf[Schema[A]]
@@ -60,14 +63,14 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
   }
 
-  def transformHintsTransitively(f: Hints => Hints) : Schema[A] = this match {
+  final def transformHintsTransitively(f: Hints => Hints) : Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: ListSchema[a] => ListSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key.transformHintsTransitively(f), s.value.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case EnumerationSchema(shapeId, hints, values, total) => EnumerationSchema(shapeId, f(hints), values.map(_.transformHints(f)), total)
-    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), make)
-    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.transformHintsLocally(f).mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
+    case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.mapK(Schema.transformHintsTransitivelyK(f))), make)
+    case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
     case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsTransitively(f), to, from)
     case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.transformHintsTransitively(f), to, from)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
@@ -81,7 +84,7 @@ sealed trait Schema[A]{
     }
   }
 
-  def validated[C](implicit constraint: Validator.Simple[C, A]): Schema[A] = {
+  final def validated[C](implicit constraint: Validator.Simple[C, A]): Schema[A] = {
     validatedAgainstHints(this.hints)
   }
 }
@@ -163,15 +166,15 @@ object Schema {
   def struct[S] : PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
 
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, get: S => A, hints: Hint*): SchemaField[S, A] = Field.required(label, schema, get, hints: _*)
+    def apply(label: String, get: S => A): SchemaField[S, A] = Field.required(label, schema, get)
   }
 
   private [smithy4s] class PartiallyAppliedOptional[S, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, get: S => Option[A], hints: Hint*): SchemaField[S, Option[A]] = Field.optional(label, schema, get, hints: _*)
+    def apply(label: String, get: S => Option[A]): SchemaField[S, Option[A]] = Field.optional(label, schema, get)
   }
 
   private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, hints: Hint*)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema, ev, Hints(hints: _*))
-    def apply(label: String, inject: A => U, hints: Hint*): SchemaAlt[U, A] = Alt(label, schema, inject, Hints(hints: _*))
+    def apply(label: String)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema, ev)
+    def apply(label: String, inject: A => U): SchemaAlt[U, A] = Alt(label, schema, inject)
   }
 }

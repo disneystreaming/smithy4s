@@ -90,7 +90,7 @@ object DefaultSchematic extends smithy4s.Schematic[Id] {
       from: B => A
   ): Id[B] = to.unchecked(f)
 
-  def timestamp: Id[Timestamp] = Timestamp.fromEpochSecond(0L)
+  def timestamp: Id[Timestamp] = Timestamp(0L, 0)
 
   def withHints[A](fa: Id[A], hints: Hints): Id[A] = fa
 

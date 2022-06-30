@@ -16,105 +16,94 @@
 
 package smithy4s
 
-import cats.Show
 import org.scalacheck.Gen.Choose
 import org.scalacheck._
 import smithy.api.TimestampFormat
-import java.time._
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import scalajs.js.Date
 import org.scalacheck.Prop._
 
 class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
-  private implicit val arbInstant: Arbitrary[Instant] = {
-    implicit val c: Choose[Instant] =
-      Choose.xmap[Long, Instant](
-        x =>
-          Instant.ofEpochSecond(
-            x % 2000000000, {
-              x & 3 match {
-                case 0 => 0
-                case 1 => x % 1000 * 1000000
-                case 2 => x % 1000000 * 1000
-                case _ => x % 1000000000
-              }
-            }
-          ),
-        x => x.getEpochSecond
+  private implicit val arbDate: Arbitrary[Date] = {
+    implicit val c: Choose[Date] =
+      Choose.xmap[Long, Date](
+        x => {
+          // The 0 there is the key, which sets the date to the epoch
+          val date = new Date(0)
+          date.setUTCSeconds(
+            (x % 2000000000).toDouble + ((x % 1000).toDouble / 1000)
+          )
+          date
+        },
+        x => (x.valueOf() / 1000).toLong
       )
     Arbitrary(
-      Gen.choose[Instant](
-        Instant.ofEpochSecond(-62167219200L),
-        Instant.ofEpochSecond(253402300799L)
+      Gen.choose[Date](
+        {
+          // The 0 there is the key, which sets the date to the epoch
+          val date = new Date(0)
+          date.setUTCSeconds(-6.21672192e10)
+          date
+        }, {
+          // The 0 there is the key, which sets the date to the epoch
+          val date = new Date(0)
+          date.setUTCSeconds(2.53402300799e11)
+          date
+        }
       )
     )
   }
 
-  private implicit val showInstant: Show[Instant] = Show.fromToString
-  private val imfDateFormatter = DateTimeFormatter
-    .ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSSSSSSSS 'GMT'", Locale.ENGLISH)
-    .withZone(ZoneId.of("GMT"))
-
-  property("Converts from/to Instant") {
-    forAll { (i: Instant) =>
-      val ts = Timestamp(i.getEpochSecond, i.getNano)
-      val i2 = ts.toInstant
-      val ts2 = Timestamp.fromInstant(i2)
-      expect.same(i2, i)
-      expect.same(ts2, ts)
-    }
-  }
-
-  property("Converts from/to OffsetDateTime") {
-    forAll { (i: Instant) =>
-      val odt = OffsetDateTime.ofInstant(i, ZoneOffset.UTC)
-      val ts = Timestamp.fromOffsetDateTime(odt)
-      val odt2 = ts.toOffsetDateTime
-      val ts2 = Timestamp.fromOffsetDateTime(odt)
-      expect.same(odt2, odt)
-      expect.same(ts2, ts)
+  property("Converts from/to Date") {
+    forAll { (i: Date) =>
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val ts = Timestamp(epochSecond, nano)
+      val d = ts.toDate
+      val ts2 = Timestamp.fromDate(d)
+      expect.same(d.toString, i.toString)
+      expect.same(ts, ts2)
     }
   }
 
   property("Converts to/from DATE_TIME format") {
-    forAll { (i: Instant) =>
-      val ts = Timestamp(i.getEpochSecond, i.getNano)
+    forAll { (i: Date) =>
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val ts = Timestamp(epochSecond, nano)
       val formatted = ts.format(TimestampFormat.DATE_TIME)
       val parsed = Timestamp.parse(formatted, TimestampFormat.DATE_TIME)
-      expect.same(formatted, i.toString)
+      expect.same(formatted, i.toISOString().replace(".000", ""))
       expect.same(parsed, Some(ts))
     }
   }
 
   property("Converts to/from HTTP_DATE format") {
-    forAll { (i: Instant) =>
-      val ts = Timestamp(i.getEpochSecond, i.getNano)
+    forAll { (i: Date) =>
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val ts = Timestamp(epochSecond, nano)
       val formatted = ts.format(TimestampFormat.HTTP_DATE)
       val parsed = Timestamp.parse(formatted, TimestampFormat.HTTP_DATE)
-      val expected = imfDateFormatter
-        .format(i)
-        .replace("000 GMT", " GMT")
-        .replace("000 GMT", " GMT")
-        .replace(".000 GMT", " GMT")
-      expect.same(formatted, expected)
+      expect.same(formatted, i.toUTCString())
       expect.same(parsed, Some(ts))
     }
   }
 
   property("Converts to/from EPOCH_SECONDS format") {
-    forAll { (i: Instant) =>
-      val ts = Timestamp(i.getEpochSecond, i.getNano)
+    forAll { (i: Date) =>
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val ts = Timestamp(epochSecond, nano)
       val formatted = ts.format(TimestampFormat.EPOCH_SECONDS)
       val parsed = Timestamp.parse(formatted, TimestampFormat.EPOCH_SECONDS)
       val expected =
-        if (i.getNano != 0) {
-          var s =
-            s"${i.getEpochSecond}.${i.getNano + 1000000000}".replace(".1", ".")
+        if (nano != 0) {
+          var s = s"$epochSecond.${nano + 1000000000}".replace(".1", ".")
           if (s.endsWith("000")) s = s.substring(0, s.length - 3)
           if (s.endsWith("000")) s = s.substring(0, s.length - 3)
           s
-        } else i.getEpochSecond.toString
+        } else epochSecond.toString
       expect.same(formatted, expected)
       expect.same(parsed, Some(ts))
     }

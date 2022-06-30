@@ -24,5 +24,18 @@ final case class DiscriminatedUnionMember(
 
 object DiscriminatedUnionMember
     extends ShapeTag.Companion[DiscriminatedUnionMember] {
-  def id: ShapeId = ShapeId("smithy4s", "DiscriminatedUnionMember")
+
+  val id: ShapeId = ShapeId("smithy4s", "DiscriminatedUnionMember")
+
+  val schema: Schema[DiscriminatedUnionMember] = Schema
+    .struct(
+      Schema.string
+        .required[DiscriminatedUnionMember]("propertyName", _.propertyName),
+      Schema.string.required[DiscriminatedUnionMember](
+        "alternativeLabel",
+        _.alternativeLabel
+      )
+    )(DiscriminatedUnionMember.apply)
+    .withId(id)
+
 }
