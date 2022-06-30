@@ -104,10 +104,9 @@ object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
             get: S => AA
         ): Option[Writer] = {
           if (greedy)
-            self(instance.addHints(field.hints))
-              .map(_.contramap(get).encodeGreedy)
+            self(instance).map(_.contramap(get).encodeGreedy)
           else
-            self(instance.addHints(field.hints)).map(_.contramap(get).encode)
+            self(instance).map(_.contramap(get).encode)
         }
 
         def onOptional[AA](

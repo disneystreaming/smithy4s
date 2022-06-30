@@ -30,7 +30,7 @@ import smithy4s.schema.SchemaAlt
   * @param alts alternatives of the error union to choose from
   */
 final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
-  private lazy val withHints = alts.map(a => a -> a.instance.hints)
+  private lazy val withHints = alts.map(a => a -> a.hints)
   private lazy val (generic, rest) = withHints.partition {
     case (_, Error.hint(_)) => true
     case (_, _)             => false

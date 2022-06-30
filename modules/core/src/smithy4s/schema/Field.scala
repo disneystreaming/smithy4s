@@ -27,15 +27,8 @@ sealed abstract class Field[F[_], S, A] {
   def instance: F[T]
   def isRequired: Boolean
   def isOptional: Boolean = !isRequired
-  def hints: Hints
 
   def mapK[G[_]](f: F ~> G): Field[G, S, A]
-
-  def transformHintsLocally(f: Hints => Hints): Field[F, S, A]
-
-  def addHints(hints: Hint*): Field[F, S, A] = transformHintsLocally(
-    _ ++ Hints(hints: _*)
-  )
 
   /**
     * Grabs the instance associated to this field, applying a polymorphic
@@ -79,31 +72,26 @@ object Field {
   def required[F[_], S, A](
       label: String,
       instance: F[A],
-      get: S => A,
-      hints: Hint*
+      get: S => A
   ): Field[F, S, A] =
-    Required(label, instance, get, Hints(hints: _*))
+    Required(label, instance, get)
 
   def optional[F[_], S, A](
       label: String,
       instance: F[A],
-      get: S => Option[A],
-      hints: Hint*
+      get: S => Option[A]
   ): Field[F, S, Option[A]] =
-    Optional(label, instance, get, Hints(hints: _*))
+    Optional(label, instance, get)
 
   private final case class Required[F[_], S, A](
       label: String,
       instance: F[A],
-      get: S => A,
-      hints: Hints
+      get: S => A
   ) extends Field[F, S, A] {
     type T = A
-    override def toString(): String = s"Required($label, ..., $hints)"
-    override def transformHintsLocally(f: Hints => Hints): Field[F, S, A] =
-      Required(label, instance, get, f(hints))
+    override def toString(): String = s"Required($label, ...)"
     override def mapK[G[_]](fk: F ~> G): Field[G, S, A] =
-      Required(label, fk(instance), get, hints)
+      Required(label, fk(instance), get)
     override def instanceA(onOptional: ToOptional[F]): F[A] = instance
     override def fold[B](folder: Field.Folder[F, S, B]): B =
       folder.onRequired(label, instance, get)
@@ -120,17 +108,12 @@ object Field {
   private final case class Optional[F[_], S, A](
       label: String,
       instance: F[A],
-      get: S => Option[A],
-      hints: Hints
+      get: S => Option[A]
   ) extends Field[F, S, Option[A]] {
     type T = A
-    override def toString = s"Optional($label, ..., $hints)"
+    override def toString = s"Optional($label, ...)"
     override def mapK[G[_]](fk: F ~> G): Field[G, S, Option[A]] =
-      Optional(label, fk(instance), get, hints)
-    override def transformHintsLocally(
-        f: Hints => Hints
-    ): Field[F, S, Option[A]] =
-      Optional(label, instance, get, f(hints))
+      Optional(label, fk(instance), get)
     override def instanceA(onOptional: ToOptional[F]): F[Option[A]] =
       onOptional.apply(instance)
     override def fold[B](folder: Field.Folder[F, S, B]): B =
@@ -168,16 +151,20 @@ object Field {
   type Wrapped[F[_], G[_], A] = F[G[A]]
   type ToOptional[F[_]] = PolyFunction[F, Wrapped[F, Option, *]]
 
-
-  def shiftHintsK[S] : PolyFunction[Field[Schema, S, *], Field[Schema, S, *]] = new PolyFunction[Field[Schema, S, *], Field[Schema, S, *]]{
-    def apply[A](fa: Field[Schema,S,A]): Field[Schema,S,A] = {
-      fa.mapK(Schema.transformHintsLocallyK(_ ++ fa.hints)).transformHintsLocally(_ => Hints.empty)
-    }
-  }
   // format: on
 
   implicit class SchemaFieldOps[S, A](private val field: SchemaField[S, A])
       extends AnyVal {
+
+    def hints: Hints = field.instance.hints
+
+    def addHints(hints: Hint*): SchemaField[S, A] = field.mapK[Schema] {
+      new (Schema ~> Schema) {
+        def apply[AA](fa: Schema[AA]): Schema[AA] =
+          fa.addHints(hints: _*)
+      }
+    }
+
     def validated[C, A2](implicit
         FieldValidator: Field.FieldValidator[C, A, A2],
         constraint: Validator.Simple[C, A2]
@@ -202,12 +189,11 @@ object Field {
             field: SchemaField[S, A],
             constraint: Validator.Simple[C, A]
         ): SchemaField[S, A] = field match {
-          case Required(label, instance, get, hints) =>
+          case Required(label, instance, get) =>
             Required(
               label,
-              instance.validatedAgainstHints(hints)(constraint),
-              get,
-              hints
+              instance.validatedAgainstHints(instance.hints)(constraint),
+              get
             )
           case other => other
         }
@@ -222,9 +208,10 @@ object Field {
           case opt: Optional[Schema, S, A] =>
             Optional(
               opt.label,
-              opt.instance.validatedAgainstHints(opt.hints)(constraint),
-              opt.get,
-              opt.hints
+              opt.instance.validatedAgainstHints(opt.instance.hints)(
+                constraint
+              ),
+              opt.get
             )
           case other => other
         }

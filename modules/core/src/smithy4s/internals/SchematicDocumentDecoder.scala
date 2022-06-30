@@ -447,7 +447,7 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
       alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[S] =
-      (first +: rest).map { case alt @ Alt(_, instance, inject, _) =>
+      (first +: rest).map { case alt @ Alt(_, instance, inject) =>
         val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(instance.get.apply(label :: pp, doc))
