@@ -30,23 +30,27 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
         x => {
           // The 0 there is the key, which sets the date to the epoch
           val date = new Date(0)
-          date.setUTCSeconds((x % 2000000000).toDouble + ((x % 1000).toDouble / 1000))
+          date.setUTCSeconds(
+            (x % 2000000000).toDouble + ((x % 1000).toDouble / 1000)
+          )
           date
         },
         x => (x.valueOf() / 1000).toLong
       )
     Arbitrary(
-      Gen.choose[Date]({
-        // The 0 there is the key, which sets the date to the epoch
-        val date = new Date(0)
-        date.setUTCSeconds(-6.21672192E10)
-        date
-      }, {
-        // The 0 there is the key, which sets the date to the epoch
-        val date = new Date(0)
-        date.setUTCSeconds(2.53402300799E11)
-        date
-      })
+      Gen.choose[Date](
+        {
+          // The 0 there is the key, which sets the date to the epoch
+          val date = new Date(0)
+          date.setUTCSeconds(-6.21672192e10)
+          date
+        }, {
+          // The 0 there is the key, which sets the date to the epoch
+          val date = new Date(0)
+          date.setUTCSeconds(2.53402300799e11)
+          date
+        }
+      )
     )
   }
 

@@ -28,8 +28,8 @@ package smithy4s
   */
 trait Hints {
   def isEmpty: Boolean
-  def toMap: Map[ShapeTag[_], Hint]
-  def all: Iterable[Hints.Binding[_]]
+  def all: Iterable[Hints.Binding]
+  def toMap: Map[ShapeId, Hints.Binding]
   def get[A](implicit key: ShapeTag[A]): Option[A]
   final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getTag)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.tag)
@@ -41,34 +41,52 @@ object Hints {
   val empty: Hints = new Impl(Map.empty)
 
   def apply[S](bindings: Hint*): Hints = {
-    new Impl(bindings.map(_.tuple: (ShapeTag[_], Hint)).toMap)
+    new Impl(bindings.map {
+      case b @ Binding.StaticBinding(k, _)  => k.id -> b
+      case b @ Binding.DynamicBinding(k, _) => k -> b
+    }.toMap)
   }
 
   private[smithy4s] final class Impl(
-      val toMap: Map[ShapeTag[_], Hint]
+      val toMap: Map[ShapeId, Hint]
   ) extends Hints {
     val isEmpty = toMap.isEmpty
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
-      toMap.get(key).map { case Binding(_, value) =>
-        value.asInstanceOf[A]
+      toMap.get(key.id).flatMap {
+        case Binding.StaticBinding(k, value) =>
+          if (key.eq(k)) Some(value.asInstanceOf[A]) else None
+        case Binding.DynamicBinding(_, value) =>
+          Document.Decoder.fromSchema(key.schema).decode(value).toOption
       }
     def ++(other: Hints): Hints = {
       new Impl(toMap ++ other.toMap)
     }
     override def toString(): String =
-      s"Hints(${all.map(_.value).mkString(", ")})"
+      s"Hints(${all.mkString(", ")})"
   }
 
-  case class Binding[A](key: ShapeTag[A], value: A) {
-    def tuple: (ShapeTag[A], this.type) = key -> this
+  sealed trait Binding extends Product with Serializable {
+    def keyId: ShapeId
   }
 
   object Binding {
+    final case class StaticBinding[A](key: ShapeTag[A], value: A)
+        extends Binding {
+      override def keyId: ShapeId = key.id
+      override def toString: String = value.toString()
+    }
+    final case class DynamicBinding(keyId: ShapeId, value: Document)
+        extends Binding {
+      override def toString = Document.obj(keyId.show -> value).toString()
+    }
+
     implicit def fromValue[A, AA <: A](value: AA)(implicit
         key: ShapeTag[A]
-    ): Binding[A] =
-      Binding(key, value)
+    ): Binding = StaticBinding(key, value)
+
+    implicit def fromTuple(tup: (ShapeId, Document)): Binding =
+      DynamicBinding(tup._1, tup._2)
   }
 
 }

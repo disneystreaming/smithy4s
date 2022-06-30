@@ -42,13 +42,17 @@ private[aws] object AwsSchematicJCodec
   private val timestamp: JCodec[Timestamp] = new JCodec[Timestamp] {
     val expecting: String = "instant (epoch second)"
 
-    def decodeValue(cursor: Cursor, in: JsonReader): Timestamp = Timestamp(in.readDouble().toLong, 0)
+    def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
+      Timestamp(in.readDouble().toLong, 0)
 
-    def encodeValue(x: Timestamp, out: JsonWriter): Unit = out.writeVal(x.epochSecond)
+    def encodeValue(x: Timestamp, out: JsonWriter): Unit =
+      out.writeVal(x.epochSecond)
 
-    def decodeKey(in: JsonReader): Timestamp = Timestamp(in.readKeyAsDouble().toLong, 0)
+    def decodeKey(in: JsonReader): Timestamp =
+      Timestamp(in.readKeyAsDouble().toLong, 0)
 
-    def encodeKey(x: Timestamp, out: JsonWriter): Unit = out.writeKey(x.epochSecond)
+    def encodeKey(x: Timestamp, out: JsonWriter): Unit =
+      out.writeKey(x.epochSecond)
   }
 
 }

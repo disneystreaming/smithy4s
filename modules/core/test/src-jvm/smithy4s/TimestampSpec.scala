@@ -44,7 +44,10 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
         x => x.getEpochSecond
       )
     Arbitrary(
-      Gen.choose[Instant](Instant.ofEpochSecond(-62167219200L), Instant.ofEpochSecond(253402300799L))
+      Gen.choose[Instant](
+        Instant.ofEpochSecond(-62167219200L),
+        Instant.ofEpochSecond(253402300799L)
+      )
     )
   }
 
@@ -89,7 +92,8 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val ts = Timestamp(i.getEpochSecond, i.getNano)
       val formatted = ts.format(TimestampFormat.HTTP_DATE)
       val parsed = Timestamp.parse(formatted, TimestampFormat.HTTP_DATE)
-      val expected = imfDateFormatter.format(i)
+      val expected = imfDateFormatter
+        .format(i)
         .replace("000 GMT", " GMT")
         .replace("000 GMT", " GMT")
         .replace(".000 GMT", " GMT")
@@ -105,7 +109,8 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val parsed = Timestamp.parse(formatted, TimestampFormat.EPOCH_SECONDS)
       val expected =
         if (i.getNano != 0) {
-          var s = s"${i.getEpochSecond}.${i.getNano + 1000000000}".replace(".1", ".")
+          var s =
+            s"${i.getEpochSecond}.${i.getNano + 1000000000}".replace(".1", ".")
           if (s.endsWith("000")) s = s.substring(0, s.length - 3)
           if (s.endsWith("000")) s = s.substring(0, s.length - 3)
           s

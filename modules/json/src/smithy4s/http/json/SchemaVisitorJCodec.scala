@@ -216,13 +216,13 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         def encodeKey(x: UUID, out: JsonWriter): Unit = out.writeKey(x)
       }
 
-    val timestampDateTime: JCodec[Timestamp] =  new JCodec[Timestamp] {
+    val timestampDateTime: JCodec[Timestamp] = new JCodec[Timestamp] {
       val expecting: String = Timestamp.showFormat(TimestampFormat.DATE_TIME)
 
       def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
         Timestamp.parse(in.readString(null), TimestampFormat.DATE_TIME) match {
           case x: Some[Timestamp] => x.get
-          case _ => in.decodeError("expected " + expecting)
+          case _                  => in.decodeError("expected " + expecting)
         }
 
       def encodeValue(x: Timestamp, out: JsonWriter): Unit =
@@ -231,7 +231,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       def decodeKey(in: JsonReader): Timestamp =
         Timestamp.parse(in.readKeyAsString(), TimestampFormat.DATE_TIME) match {
           case x: Some[Timestamp] => x.get
-          case _ => in.decodeError("expected " + expecting)
+          case _                  => in.decodeError("expected " + expecting)
         }
 
       def encodeKey(x: Timestamp, out: JsonWriter): Unit =
@@ -244,7 +244,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
         Timestamp.parse(in.readString(null), TimestampFormat.HTTP_DATE) match {
           case x: Some[Timestamp] => x.get
-          case _ => in.decodeError("expected " + expecting)
+          case _                  => in.decodeError("expected " + expecting)
         }
 
       def encodeValue(x: Timestamp, out: JsonWriter): Unit =
@@ -253,7 +253,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       def decodeKey(in: JsonReader): Timestamp =
         Timestamp.parse(in.readKeyAsString(), TimestampFormat.HTTP_DATE) match {
           case x: Some[Timestamp] => x.get
-          case _ => in.decodeError("expected " + expecting)
+          case _                  => in.decodeError("expected " + expecting)
         }
 
       def encodeKey(x: Timestamp, out: JsonWriter): Unit =
@@ -261,7 +261,8 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
 
     val timestampEpochSeconds: JCodec[Timestamp] = new JCodec[Timestamp] {
-      val expecting: String = Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS)
+      val expecting: String =
+        Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS)
 
       def decodeValue(cursor: Cursor, in: JsonReader): Timestamp = {
         val timestamp = in.readBigDecimal(null)
@@ -419,7 +420,8 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       case PTimestamp =>
         hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME) match {
           case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
-          case TimestampFormat.EPOCH_SECONDS => PrimitiveJCodecs.timestampEpochSeconds
+          case TimestampFormat.EPOCH_SECONDS =>
+            PrimitiveJCodecs.timestampEpochSeconds
           case TimestampFormat.HTTP_DATE => PrimitiveJCodecs.timestampHttpDate
         }
       case PUnit => PrimitiveJCodecs.unit

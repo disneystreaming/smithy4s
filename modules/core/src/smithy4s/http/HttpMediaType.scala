@@ -14,10 +14,15 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s
+package http
 
 import smithy4s.Newtype
 
 object HttpMediaType extends Newtype[String] {
-  def id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.http", "HttpMediaType")
+
+  val schema: Schema[HttpMediaType] =
+    Schema.bijection(Schema.string, apply, _.value)
+
+  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.http", "HttpMediaType")
 }
