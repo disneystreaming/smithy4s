@@ -18,11 +18,12 @@ package smithy4s
 package http4s
 package swagger
 
+import cats.data.NonEmptyList
 import cats.effect.Sync
-import org.http4s.HttpRoutes
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.Location
+import org.http4s.HttpRoutes
 import org.webjars.WebJarAssetLocator
 
 private[smithy4s] abstract class Docs[F[_]](
@@ -40,17 +41,22 @@ private[smithy4s] abstract class Docs[F[_]](
   object DocPath {
     def unapply(p: Path): Boolean = {
       p match {
-        case `actualPath`                                               => true
-        case `actualPath` / ""                                          => true
-        case `actualPath` / file if file.equalsIgnoreCase("index.html") => true
-        case _                                                          => false
+        case `actualPath`      => true
+        case `actualPath` / "" => true
+        case _                 => false
       }
     }
   }
   def routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case r @ GET -> DocPath() if r.uri.query.isEmpty =>
-      PermanentRedirect(
-        Location(Uri.unsafeFromString(s"/$path/index.html?url=/$jsonSpec"))
+      Found(Location(Uri.unsafeFromString(s"/$path/index.html")))
+
+    case GET -> `actualPath` / "swagger-initializer.js" =>
+      SwaggerInit.asResponse[F](
+        NonEmptyList(
+          SwaggerInit.SwaggerUrl(s"/$jsonSpec", hasId.id.name),
+          Nil
+        )
       )
 
     case request @ GET -> `actualPath` / filePath =>
@@ -67,8 +73,8 @@ object Docs extends Compat.DocsCompanion {}
 
 trait SwaggerUiInit {
   private[this] lazy val swaggerUiVersion: String =
-    new WebJarAssetLocator().getWebJars.get("swagger-ui")
+    new WebJarAssetLocator().getWebJars.get("swagger-ui-dist")
 
   protected lazy val swaggerUiPath =
-    s"META-INF/resources/webjars/swagger-ui/$swaggerUiVersion"
+    s"META-INF/resources/webjars/swagger-ui-dist/$swaggerUiVersion"
 }
