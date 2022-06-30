@@ -12,6 +12,7 @@ import Smithy4sPlugin._
 val latest2ScalaVersions = List(Scala213, Scala3)
 val allJvmScalaVersions = List(Scala212, Scala213, Scala3)
 val allJsScalaVersions = latest2ScalaVersions
+val allNativeScalaVersions = List(Scala3)
 val jvmScala2Versions = List(Scala212, Scala213)
 val buildtimejvmScala2Versions = List(Scala212, Scala213)
 
@@ -125,12 +126,23 @@ lazy val core = projectMatrix
     Compile / sourceGenerators += sourceDirectory
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
       .taskValue,
-    libraryDependencies ++= Seq(Dependencies.collectionsCompat.value),
     libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value % Test,
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
+      Dependencies.collectionsCompat.value,
+      Dependencies.Cats.core.value % Test
     ),
+    libraryDependencies ++= {
+      if (virtualAxes.value.contains(VirtualAxis.native)) {
+        Seq(
+          Dependencies.MunitMilestone.core.value % Test,
+          Dependencies.MunitMilestone.scalacheck.value % Test
+        )
+      } else {
+        Seq(
+          Dependencies.Munit.core.value % Test,
+          Dependencies.Munit.scalacheck.value % Test
+        )
+      }
+    },
     Test / allowedNamespaces := Seq(
       "smithy4s.example"
     ),
@@ -159,6 +171,7 @@ lazy val core = projectMatrix
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Smithy4s specific scalacheck integration.
@@ -647,7 +660,7 @@ lazy val Dependencies = new {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.7.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
   }
 
   object Fs2 {
@@ -702,14 +715,14 @@ lazy val Dependencies = new {
       )
   }
 
-  object Munit {
-    val munitVersion = "0.7.29"
-
+  class MunitCross(munitVersion: String) {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
+  object Munit extends MunitCross("0.7.29")
+  object MunitMilestone extends MunitCross("1.0.0-M6")
 
   val Scalacheck = new {
     val version = "1.15.4"
