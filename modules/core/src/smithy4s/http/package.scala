@@ -21,6 +21,18 @@ package object http {
   type PathParams = Map[String, String]
   type HttpMediaType = HttpMediaType.Type
 
+  final def httpMatch[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      serviceProvider: Service.Provider[Alg, Op],
+      method: http.HttpMethod,
+      path: String
+  ): Option[
+    (Endpoint[Op, _, _, _, _, _], http.HttpEndpoint[_], Map[String, String])
+  ] = httpMatch(
+    serviceProvider,
+    method,
+    pathSegments = matchPath.make(path).toVector
+  )
+
   /**
     * Returns the first http endpoint that matches both a method and path, as well as the map
     * of extracted segment values.
