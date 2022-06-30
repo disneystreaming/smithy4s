@@ -49,55 +49,32 @@ private[dynamic] object Compiler {
       traits: Option[Map[IdRef, Document]]
   ): Option[A] =
     traits.flatMap(dynamicTraits =>
-      dynamicTraits.get(toIdRef(implicitly[ShapeTag[A]].id)).flatMap {
-        document =>
+      dynamicTraits
+        .get(toIdRef(implicitly[ShapeTag[A]].id))
+        .flatMap { document =>
           document.decode[A].toOption
-      }
+        }
     )
+
+  private def toHint(id: ShapeId, tr: Document): Hint =
+    Hints.Binding.DynamicBinding(id, tr)
 
   /**
      * @param knownHints hints supported by the caller.
      */
   protected[dynamic] def compile(
-      model: Model,
-      knownHints: SchemaIndex
+      model: Model
   ): DynamicSchemaIndex = {
     val schemaMap = MMap.empty[ShapeId, Eval[Schema[DynData]]]
     // val endpointMap = MMap.empty[ShapeId, Eval[DynamicEndpoint]]
     val serviceMap = MMap.empty[ShapeId, Eval[DynamicService]]
-
-    val hintsMap: Map[ShapeId, SchemaIndex.Binding[_]] = {
-      def binding[A](
-          tag: ShapeTag[A]
-      ): Option[(ShapeId, SchemaIndex.Binding[A])] =
-        knownHints.get(tag).map(s => tag.id -> SchemaIndex.Binding(tag, s))
-      type B = (ShapeId, SchemaIndex.Binding[_])
-      knownHints.tags
-        .flatMap(binding(_): Option[B])
-        .toMap
-    }
-
-    def toHintAux[A](
-        ks: SchemaIndex.Binding[A],
-        documentRepr: Document
-    ): Option[Hint] = {
-      val decoded: Option[A] =
-        Document.Decoder.fromSchema(ks.schema).decode(documentRepr).toOption
-      decoded.map { value =>
-        Hints.Binding(ks.tag, value)
-      }
-    }
-
-    def toHint(id: ShapeId, tr: Document): Option[Hint] =
-      hintsMap.get(id).flatMap(toHintAux(_, tr))
 
     val visitor =
       new CompileVisitor(
         model,
         schemaMap,
         // endpointMap,
-        serviceMap,
-        toHint(_, _)
+        serviceMap
       )
 
     // Loosely inspired by
@@ -139,8 +116,7 @@ private[dynamic] object Compiler {
   private class CompileVisitor(
       model: Model,
       schemaMap: MMap[ShapeId, Eval[Schema[DynData]]],
-      serviceMap: MMap[ShapeId, Eval[DynamicService]],
-      toHint: (ShapeId, Document) => Option[Hint]
+      serviceMap: MMap[ShapeId, Eval[DynamicService]]
   ) extends ShapeVisitor.Default[Unit] {
 
     private val closureMap: Map[ShapeId, Set[ShapeId]] = model.shapes.collect {
@@ -179,9 +155,6 @@ private[dynamic] object Compiler {
         .getOrElse(Map.empty)
         .collect { case (ValidIdRef(k), v) =>
           toHint(k, v)
-        }
-        .collect { case Some(h) =>
-          h
         }
         .toSeq
     }

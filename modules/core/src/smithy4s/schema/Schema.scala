@@ -23,18 +23,18 @@ import Schema._
 sealed trait Schema[A]{
   def shapeId: ShapeId
   def hints: Hints
-  def required[Struct] : PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
-  def optional[Struct] : PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
+  final def required[Struct] : PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
+  final def optional[Struct] : PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
 
-  def oneOf[Union] : PartiallyAppliedOneOf[Union, A]= new PartiallyAppliedOneOf[Union,A](this)
+  final def oneOf[Union] : PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
 
-  def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
-  def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
+  final def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
+  final def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
 
-  def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
-  def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)
+  final def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
+  final def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)
 
-  def withId(newId: ShapeId) : Schema[A] = this match {
+  final def withId(newId: ShapeId) : Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: ListSchema[a] => ListSchema(newId, s.hints, s.member).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(newId, s.hints, s.member).asInstanceOf[Schema[A]]
@@ -47,7 +47,10 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
-  def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
+  final def withId(namespace: String, name: String) : Schema[A] = withId(ShapeId(namespace, name))
+
+
+  final def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: ListSchema[a] => ListSchema(s.shapeId, f(s.hints), s.member).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member).asInstanceOf[Schema[A]]
@@ -60,7 +63,7 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
   }
 
-  def transformHintsTransitively(f: Hints => Hints) : Schema[A] = this match {
+  final def transformHintsTransitively(f: Hints => Hints) : Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: ListSchema[a] => ListSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case s: SetSchema[a] => SetSchema(s.shapeId, f(s.hints), s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
@@ -81,7 +84,7 @@ sealed trait Schema[A]{
     }
   }
 
-  def validated[C](implicit constraint: Validator.Simple[C, A]): Schema[A] = {
+  final def validated[C](implicit constraint: Validator.Simple[C, A]): Schema[A] = {
     validatedAgainstHints(this.hints)
   }
 }

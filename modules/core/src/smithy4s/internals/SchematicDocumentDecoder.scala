@@ -517,8 +517,9 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
         }
       case EPOCH_SECONDS =>
         DocumentDecoder.instance("Timestamp", "Number", false) {
-          case (_, DNumber(value)) if value.isValidLong && value > 0 =>
-            Timestamp.fromEpochSecond(value.toLongExact)
+          case (_, DNumber(value)) =>
+            val epochSeconds = value.toLong
+            Timestamp(epochSeconds, ((value - epochSeconds) * 1000000000).toInt)
         }
     }
 
