@@ -472,14 +472,14 @@ lazy val json = projectMatrix
   )
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Jsoniter.value,
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
+      Dependencies.Jsoniter.value
     ),
+    libraryDependencies ++= munitDeps.value,
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains http4s-specific client/server bindings for the
