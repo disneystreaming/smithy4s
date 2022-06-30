@@ -39,7 +39,7 @@ object AwsEnvironment {
         F.pure(region),
         credentialsF,
         // note: fromEpochMilli would be nice
-        F.realTime.map(_.toSeconds).map(Timestamp.fromEpochSecond(_))
+        F.realTime.map(_.toSeconds).map(Timestamp(_, 0))
       )
     }
 

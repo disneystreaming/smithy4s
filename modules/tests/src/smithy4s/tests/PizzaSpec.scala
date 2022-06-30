@@ -111,7 +111,7 @@ abstract class PizzaSpec
       expected = expectedMenu(pizzaId)
     } yield {
       expect(body2 == expected) &&
-      expect(addedAt.head.toLong != 0)
+      expect(addedAt.head.toDouble != 0)
     }
   }
 

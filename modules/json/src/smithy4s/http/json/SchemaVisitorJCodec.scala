@@ -216,73 +216,71 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         def encodeKey(x: UUID, out: JsonWriter): Unit = out.writeKey(x)
       }
 
-    private def forFormat[T](
-        name: String,
-        json: JsonInOut[T, _]
-    ) =
-      new JCodec[Timestamp] {
-        val expecting: String = name
+    val timestampDateTime: JCodec[Timestamp] =  new JCodec[Timestamp] {
+      val expecting: String = Timestamp.showFormat(TimestampFormat.DATE_TIME)
 
-        def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
-          json.decodeValue(in)
+      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
+        Timestamp.parse(in.readString(null), TimestampFormat.DATE_TIME) match {
+          case x: Some[Timestamp] => x.get
+          case _ => in.decodeError("expected " + expecting)
+        }
 
-        def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-          json.encodeValue(x, out)
-
-        // key decoding/encoding ignores the format and support only epoch
-        def decodeKey(in: JsonReader): Timestamp =
-          Timestamp.fromEpochSecond(in.readKeyAsLong())
-        def encodeKey(x: Timestamp, out: JsonWriter): Unit =
-          out.writeKey(x.epochSecond)
-      }
-
-    private trait JsonInOut[T, Out] {
-      def decodeValue(in: JsonReader): Timestamp
       def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-        toOut(toRaw(x), out)
+        out.writeNonEscapedAsciiVal(x.format(TimestampFormat.DATE_TIME))
 
-      protected def toRaw(ts: Timestamp): T
-      protected def fromRaw(t: T): Out
-      protected def fromIn(in: JsonReader): T
-      protected def toOut(value: T, out: JsonWriter): Unit
-    }
-    private val longJsonInOut = new JsonInOut[Long, Timestamp] {
-      def decodeValue(in: JsonReader): Timestamp =
-        fromRaw(fromIn(in))
-      def toRaw(ts: Timestamp): Long = ts.epochSecond
-      def fromRaw(t: Long): Timestamp = Timestamp.fromEpochSecond(t)
-      def fromIn(in: JsonReader): Long = in.readLong()
-      def toOut(value: Long, out: JsonWriter): Unit = out.writeVal(value)
-    }
-    private def stringJsonInOut(format: TimestampFormat) =
-      new JsonInOut[String, Option[Timestamp]] {
-        def decodeValue(in: JsonReader): Timestamp =
-          fromRaw(fromIn(in)) match {
-            case Some(value) => value
-            case None        => in.decodeError("Wrong timestamp format")
-          }
+      def decodeKey(in: JsonReader): Timestamp =
+        Timestamp.parse(in.readKeyAsString(), TimestampFormat.DATE_TIME) match {
+          case x: Some[Timestamp] => x.get
+          case _ => in.decodeError("expected " + expecting)
+        }
 
-        def toRaw(ts: Timestamp): String = ts.format(format)
-        def fromRaw(t: String): Option[Timestamp] = Timestamp.parse(t, format)
-        def fromIn(in: JsonReader): String = in.readString(null)
-        def toOut(value: String, out: JsonWriter): Unit = out.writeVal(value)
+      def encodeKey(x: Timestamp, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiKey(x.format(TimestampFormat.DATE_TIME))
+    }
+
+    val timestampHttpDate: JCodec[Timestamp] = new JCodec[Timestamp] {
+      val expecting: String = Timestamp.showFormat(TimestampFormat.HTTP_DATE)
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
+        Timestamp.parse(in.readString(null), TimestampFormat.HTTP_DATE) match {
+          case x: Some[Timestamp] => x.get
+          case _ => in.decodeError("expected " + expecting)
+        }
+
+      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiVal(x.format(TimestampFormat.HTTP_DATE))
+
+      def decodeKey(in: JsonReader): Timestamp =
+        Timestamp.parse(in.readKeyAsString(), TimestampFormat.HTTP_DATE) match {
+          case x: Some[Timestamp] => x.get
+          case _ => in.decodeError("expected " + expecting)
+        }
+
+      def encodeKey(x: Timestamp, out: JsonWriter): Unit =
+        out.writeNonEscapedAsciiKey(x.format(TimestampFormat.HTTP_DATE))
+    }
+
+    val timestampEpochSeconds: JCodec[Timestamp] = new JCodec[Timestamp] {
+      val expecting: String = Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS)
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp = {
+        val timestamp = in.readBigDecimal(null)
+        val epochSecond = timestamp.toLong
+        Timestamp(epochSecond, ((timestamp - epochSecond) * 1000000000).toInt)
       }
 
-    private val dateTimeFormat = stringJsonInOut(TimestampFormat.DATE_TIME)
-    val timestampDateTime = forFormat[String](
-      Timestamp.showFormat(TimestampFormat.DATE_TIME),
-      dateTimeFormat
-    )
-    private val httpDateFormat = stringJsonInOut(TimestampFormat.HTTP_DATE)
-    val timestampHttpDate = forFormat[String](
-      Timestamp.showFormat(TimestampFormat.HTTP_DATE),
-      httpDateFormat
-    )
+      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
+        out.writeVal(BigDecimal(x.epochSecond) + x.nano / 1000000000.0)
 
-    val timestampEpoch = forFormat[Long](
-      Timestamp.showFormat(TimestampFormat.EPOCH_SECONDS),
-      longJsonInOut
-    )
+      def decodeKey(in: JsonReader): Timestamp = {
+        val timestamp = in.readKeyAsBigDecimal()
+        val epochSecond = timestamp.toLong
+        Timestamp(epochSecond, ((timestamp - epochSecond) * 1000000000).toInt)
+      }
+
+      def encodeKey(x: Timestamp, out: JsonWriter): Unit =
+        out.writeKey(BigDecimal(x.epochSecond) + x.nano / 1000000000.0)
+    }
 
     val unit: JCodec[Unit] =
       new JCodec[Unit] {
@@ -419,11 +417,9 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       case PShort      => PrimitiveJCodecs.short
       case PString     => PrimitiveJCodecs.string
       case PTimestamp =>
-        val format =
-          hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
-        format match {
+        hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME) match {
           case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
-          case TimestampFormat.EPOCH_SECONDS => PrimitiveJCodecs.timestampEpoch
+          case TimestampFormat.EPOCH_SECONDS => PrimitiveJCodecs.timestampEpochSeconds
           case TimestampFormat.HTTP_DATE => PrimitiveJCodecs.timestampHttpDate
         }
       case PUnit => PrimitiveJCodecs.unit
