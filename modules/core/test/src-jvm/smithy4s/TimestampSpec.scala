@@ -20,14 +20,12 @@ import cats.Show
 import org.scalacheck.Gen.Choose
 import org.scalacheck._
 import smithy.api.TimestampFormat
-import weaver._
-import weaver.scalacheck._
 import java.time._
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import org.scalacheck.Prop._
 
-object TimestampSpec extends SimpleIOSuite with Checkers {
-
-  override def checkConfig: CheckConfig =
-    super.checkConfig.copy(minimumSuccessful = 10000)
+class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
   private implicit val arbInstant: Arbitrary[Instant] = {
     implicit val c: Choose[Instant] =
@@ -46,73 +44,98 @@ object TimestampSpec extends SimpleIOSuite with Checkers {
         x => x.getEpochSecond
       )
     Arbitrary(
-      Gen.choose[Instant](Instant.MIN, Instant.MAX)
+      Gen.choose[Instant](
+        Instant.ofEpochSecond(-62167219200L),
+        Instant.ofEpochSecond(253402300799L)
+      )
     )
   }
 
   private implicit val showInstant: Show[Instant] = Show.fromToString
+  private val imfDateFormatter = DateTimeFormatter
+    .ofPattern("EEE, dd MMM yyyy HH:mm:ss.SSSSSSSSS 'GMT'", Locale.ENGLISH)
+    .withZone(ZoneId.of("GMT"))
 
-  test("Converts from/to Instant") {
-    forall { (i: Instant) =>
-      val ts = Timestamp.fromInstant(i)
-      expect.same(ts.toInstant, i)
+  property("Converts from/to Instant") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp(i.getEpochSecond, i.getNano)
+      val i2 = ts.toInstant
+      val ts2 = Timestamp.fromInstant(i2)
+      expect.same(i2, i)
+      expect.same(ts2, ts)
     }
   }
 
-  test("Converts from/to OffsetDateTime") {
-    forall { (i: Instant) =>
+  property("Converts from/to OffsetDateTime") {
+    forAll { (i: Instant) =>
       val odt = OffsetDateTime.ofInstant(i, ZoneOffset.UTC)
       val ts = Timestamp.fromOffsetDateTime(odt)
-      expect.same(ts.toOffsetDateTime, odt)
+      val odt2 = ts.toOffsetDateTime
+      val ts2 = Timestamp.fromOffsetDateTime(odt)
+      expect.same(odt2, odt)
+      expect.same(ts2, ts)
     }
   }
 
-  test("Converts from/to LocalDate") {
-    forall { (i: Instant) =>
-      val ld = toLocalDate(i)
-      val ts = Timestamp.fromLocalDate(ld)
-      expect.same(ts.toLocalDate, ld)
-    }
-  }
-
-  test("Converts to/from DATE_TIME format") {
-    forall { (i: Instant) =>
-      val ts = Timestamp.fromInstant(i)
+  property("Converts to/from DATE_TIME format") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp(i.getEpochSecond, i.getNano)
       val formatted = ts.format(TimestampFormat.DATE_TIME)
       val parsed = Timestamp.parse(formatted, TimestampFormat.DATE_TIME)
-      expect.same(formatted, i.toString) && expect.same(parsed, Some(ts))
-    }
-  }
-
-  test("Converts to/from EPOCH_SECONDS format") {
-    forall { (i: Instant) =>
-      val ts = Timestamp.fromInstant(i)
-      val formatted = ts.format(TimestampFormat.EPOCH_SECONDS)
-      val parsed = Timestamp.parse(formatted, TimestampFormat.EPOCH_SECONDS)
+      expect.same(formatted, i.toString)
       expect.same(parsed, Some(ts))
     }
   }
 
-  test("Parse EPOCH_SECONDS format with invalid input") {
+  property("Converts to/from HTTP_DATE format") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp(i.getEpochSecond, i.getNano)
+      val formatted = ts.format(TimestampFormat.HTTP_DATE)
+      val parsed = Timestamp.parse(formatted, TimestampFormat.HTTP_DATE)
+      val expected = imfDateFormatter
+        .format(i)
+        .replace("000 GMT", " GMT")
+        .replace("000 GMT", " GMT")
+        .replace(".000 GMT", " GMT")
+      expect.same(formatted, expected)
+      expect.same(parsed, Some(ts))
+    }
+  }
+
+  property("Converts to/from EPOCH_SECONDS format") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp(i.getEpochSecond, i.getNano)
+      val formatted = ts.format(TimestampFormat.EPOCH_SECONDS)
+      val parsed = Timestamp.parse(formatted, TimestampFormat.EPOCH_SECONDS)
+      val expected =
+        if (i.getNano != 0) {
+          var s =
+            s"${i.getEpochSecond}.${i.getNano + 1000000000}".replace(".1", ".")
+          if (s.endsWith("000")) s = s.substring(0, s.length - 3)
+          if (s.endsWith("000")) s = s.substring(0, s.length - 3)
+          s
+        } else i.getEpochSecond.toString
+      expect.same(formatted, expected)
+      expect.same(parsed, Some(ts))
+    }
+  }
+
+  property("Parse EPOCH_SECONDS format with invalid input") {
     val EpochFormat = """^(\d+)(\.(\d+))?""".r
-    forall { (str: String) =>
+    forAll { (str: String) =>
       val parsed = Timestamp.parse(str, TimestampFormat.EPOCH_SECONDS)
-      val asst = expect(EpochFormat.pattern.matcher(str).matches)
       parsed match {
-        case Some(_) => asst
-        case None    => not(asst)
+        case Some(_) => expect(EpochFormat.pattern.matcher(str).matches)
+        case None    => expect(!EpochFormat.pattern.matcher(str).matches)
       }
     }
   }
 
-  test("Parse EPOCH_SECONDS format with too many decimals") {
-    forall { (i: Int) =>
+  property("Parse EPOCH_SECONDS format with too many decimals") {
+    forAll { (i: Int) =>
       val str = s"$i.${i % 1000}.${i % 1000}"
       val parsed = Timestamp.parse(str, TimestampFormat.EPOCH_SECONDS)
       expect.same(parsed, None)
     }
   }
-
-  private def toLocalDate(i: Instant): LocalDate =
-    LocalDate.ofEpochDay(i.getEpochSecond / (24 * 60 * 60))
 }

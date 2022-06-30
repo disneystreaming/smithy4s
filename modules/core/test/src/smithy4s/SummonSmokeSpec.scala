@@ -18,9 +18,8 @@ package smithy4s
 
 import cats.Id
 import smithy4s.example.EmptyService
-import weaver._
 
-object SummonSmokeSpec extends FunSuite {
+class SummonSmokeSpec() extends munit.FunSuite {
 
   test("Algebra can be summoned from monadic alias") {
     implicit val emptyService: EmptyService[Id] = new EmptyService[Id] {}

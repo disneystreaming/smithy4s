@@ -22,7 +22,7 @@ import smithy4s.api.Discriminated
 import smithy4s.schema._
 import smithy4s.schema.Schema._
 
-object HintMaskSpec extends weaver.FunSuite {
+class HintMaskSpec() extends munit.FunSuite {
 
   private implicit val hintsEq: Eq[Hints] = (x: Hints, y: Hints) =>
     x.toMap == y.toMap

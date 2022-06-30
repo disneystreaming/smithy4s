@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.internals
+package smithy4s
+package http.internals
 
 import cats.syntax.all._
 import smithy4s.Schema
@@ -28,9 +29,9 @@ import smithy4s.http.HttpBinding
 import smithy4s.http.Metadata
 import smithy4s.http.MetadataError
 import smithy4s.internals.InputOutput
-import weaver._
+import munit._
 
-object MetadataSpec extends FunSuite {
+class MetadataSpec() extends FunSuite {
 
   implicit val queriesSchema: Schema[Queries] =
     Queries.schema.addHints(InputOutput.Input.widen)
@@ -43,8 +44,8 @@ object MetadataSpec extends FunSuite {
 
   def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
       s: Schema[A],
-      loc: SourceLocation
-  ): Expectations = {
+      loc: Location
+  ): Unit = {
     val encoded = Metadata.encode(a)
     val result = Metadata
       .decodePartial[A](encoded)
@@ -53,16 +54,16 @@ object MetadataSpec extends FunSuite {
       .flatMap { partial =>
         s.compile(FromMetadataSchematic).read(partial.decoded.toMap)
       }
-    expect.same(encoded, expectedEncoding).traced(loc) &&
-    expect(result == Right(a)).traced(loc) &&
-    checkRoundTripTotal(a, expectedEncoding).traced(loc)
+    expect.same(encoded, expectedEncoding)
+    expect(result == Right(a))
+    checkRoundTripTotal(a, expectedEncoding)
   }
 
   def checkRoundTripError[A](a: A, expectedEncoding: Metadata, message: String)(
       implicit
       s: Schema[A],
-      loc: SourceLocation
-  ): Expectations = {
+      loc: Location
+  ): Unit = {
     val encoded = Metadata.encode(a)
     val result = Metadata
       .decodePartial[A](encoded)
@@ -71,9 +72,9 @@ object MetadataSpec extends FunSuite {
       .flatMap { partial =>
         s.compile(FromMetadataSchematic).read(partial.decoded.toMap)
       }
-    expect.same(encoded, expectedEncoding).traced(loc) &&
-    expect(result == Left(message)).traced(loc) &&
-    checkRoundTripTotalError(a, expectedEncoding, message).traced(loc)
+    expect.same(encoded, expectedEncoding)
+    expect.same(result, Left(message))
+    checkRoundTripTotalError(a, expectedEncoding, message)
   }
 
   def checkRoundTripTotalError[A](
@@ -82,8 +83,8 @@ object MetadataSpec extends FunSuite {
       message: String
   )(implicit
       s: Schema[A],
-      loc: SourceLocation
-  ): Expectations = {
+      loc: Location
+  ): Unit = {
     val encoded = Metadata.encode(a)
     val result = Metadata
       .decodeTotal[A](encoded)
@@ -92,14 +93,14 @@ object MetadataSpec extends FunSuite {
           .map(_.getMessage())
       )
 
-    expect.same(encoded, expectedEncoding).traced(loc) &&
-    expect(result == Some(Left(message))).traced(loc)
+    expect.same(encoded, expectedEncoding)
+    expect.same(result, Some(Left(message)))
   }
 
   def checkRoundTripTotal[A](a: A, expectedEncoding: Metadata)(implicit
       s: Schema[A],
-      loc: SourceLocation
-  ): Expectations = {
+      loc: Location
+  ): Unit = {
     val encoded = Metadata.encode(a)
     val result = Metadata
       .decodeTotal[A](encoded)
@@ -108,12 +109,11 @@ object MetadataSpec extends FunSuite {
           .map(_.getMessage())
       )
 
-    expect.same(encoded, expectedEncoding).traced(here) &&
-    expect(result == Some(Right(a))).traced(loc)
+    expect.same(encoded, expectedEncoding)
+    expect.same(result, Some(Right(a)))
   }
 
-  val epochString =
-    if (Platform.isJS) "1970-01-01T00:00:00.000Z" else "1970-01-01T00:00:00Z"
+  val epochString = "1970-01-01T00:00:00Z"
 
   val constraintMessage1 =
     "length required to be >= 1 and <= 10, but was 11"
@@ -191,9 +191,9 @@ object MetadataSpec extends FunSuite {
   }
 
   test("timestamp query parameters (epoch-seconds format)") {
-    val ts = Timestamp.fromEpochSecond(1984)
+    val ts = Timestamp(1234567890L, 0)
     val queries = Queries(ts3 = Some(ts))
-    val expected = Metadata(query = Map("ts3" -> List("1984")))
+    val expected = Metadata(query = Map("ts3" -> List("1234567890")))
     checkRoundTrip(queries, expected)
   }
 
@@ -257,9 +257,9 @@ object MetadataSpec extends FunSuite {
   }
 
   test("timestamp header (epoch-seconds format)") {
-    val ts = Timestamp.fromEpochSecond(1984)
+    val ts = Timestamp(1234567890L, 0)
     val headers = Headers(ts3 = Some(ts))
-    val expected = Metadata.empty.addHeader("ts3", "1984")
+    val expected = Metadata.empty.addHeader("ts3", "1234567890")
     checkRoundTrip(headers, expected)
   }
 
@@ -300,14 +300,13 @@ object MetadataSpec extends FunSuite {
 
   test("pathParams") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val ts1984 = Timestamp.fromEpochSecond(1984)
 
     val pathParams = PathParams(
       str = "hello",
       int = 123,
       ts1 = ts,
       ts2 = ts,
-      ts3 = ts1984,
+      ts3 = Timestamp(1234567890L, 0),
       ts4 = ts,
       b = false
     )
@@ -320,7 +319,7 @@ object MetadataSpec extends FunSuite {
           "b" -> "false",
           "ts1" -> epochString,
           "ts2" -> epochString,
-          "ts3" -> "1984",
+          "ts3" -> "1234567890",
           "ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"
         )
       )

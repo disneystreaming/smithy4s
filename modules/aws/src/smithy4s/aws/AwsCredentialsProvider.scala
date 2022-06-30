@@ -100,7 +100,7 @@ object AwsCredentialsProvider {
   def refreshing[F[_]](
       get: F[AwsTemporaryCredentials]
   )(implicit F: Temporal[F]): Resource[F, F[AwsCredentials]] = {
-    def refreshLoop(ref: Ref[F, AwsTemporaryCredentials]): F[Unit] =
+    def refreshLoop(ref: Ref[F, AwsTemporaryCredentials]): F[Unit] = {
       for {
         lastCredentials <- ref.get
         now <- Clock[F].realTime.map(_.toSeconds)
@@ -109,8 +109,8 @@ object AwsCredentialsProvider {
         _ <- Temporal[F].sleep(delay.seconds)
         newCredentials <- get
         _ <- ref.set(newCredentials)
-        _ <- refreshLoop(ref)
       } yield ()
+    }.foreverM
 
     for {
       startingMetadata <- Resource.eval(get)

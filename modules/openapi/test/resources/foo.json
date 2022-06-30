@@ -1,6 +1,9 @@
 {
   "openapi": "3.0.2",
-  "info": { "title": "HelloWorldService", "version": "0.0.1" },
+  "info": {
+    "title": "HelloWorldService",
+    "version": "0.0.1"
+  },
   "paths": {
     "/default": {
       "get": {
@@ -130,49 +133,124 @@
     "schemas": {
       "Cat": {
         "type": "object",
-        "properties": { "name": { "type": "string" } }
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
       },
       "CatOrDog": {
         "oneOf": [
           {
             "allOf": [
-              { "$ref": "#/components/schemas/Cat" },
+              {
+                "$ref": "#/components/schemas/Cat"
+              },
               {
                 "type": "object",
-                "properties": { "type": { "type": "string", "enum": ["cat"] } },
-                "required": ["type"]
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "cat"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
               }
             ]
           },
           {
             "allOf": [
-              { "$ref": "#/components/schemas/Dog" },
+              {
+                "$ref": "#/components/schemas/Dog"
+              },
               {
                 "type": "object",
-                "properties": { "type": { "type": "string", "enum": ["dog"] } },
-                "required": ["type"]
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "dog"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
               }
             ]
           }
         ],
-        "discriminator": { "propertyName": "type" }
+        "discriminator": {
+          "propertyName": "type"
+        }
       },
       "Dog": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "breed": { "type": "string" }
+          "name": {
+            "type": "string"
+          },
+          "breed": {
+            "type": "string"
+          }
         }
+      },
+      "DoubleOrFloat": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "float",
+            "properties": {
+              "float": {
+                "type": "number",
+                "format": "float",
+                "nullable": true
+              }
+            },
+            "required": [
+              "float"
+            ]
+          },
+          {
+            "type": "object",
+            "title": "double",
+            "properties": {
+              "double": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              }
+            },
+            "required": [
+              "double"
+            ]
+          }
+        ]
       },
       "GeneralServerErrorResponseContent": {
         "type": "object",
-        "properties": { "message": { "type": "string" } }
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
       },
       "GetUnionResponseContent": {
         "type": "object",
         "properties": {
-          "intOrString": { "$ref": "#/components/schemas/IntOrString" },
-          "catOrDog": { "$ref": "#/components/schemas/CatOrDog" }
+          "intOrString": {
+            "$ref": "#/components/schemas/IntOrString"
+          },
+          "doubleOrFloat": {
+            "$ref": "#/components/schemas/DoubleOrFloat"
+          },
+          "catOrDog": {
+            "$ref": "#/components/schemas/CatOrDog"
+          }
         }
       },
       "GetValuesResponseContent": {
@@ -180,26 +258,42 @@
         "properties": {
           "values": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/SomeValue" }
+            "items": {
+              "$ref": "#/components/schemas/SomeValue"
+            }
           }
         }
       },
-      "GreetOutputPayload": { "type": "string" },
+      "GreetOutputPayload": {
+        "type": "string"
+      },
       "IntOrString": {
         "oneOf": [
           {
             "type": "object",
             "title": "int",
             "properties": {
-              "int": { "type": "number", "format": "int32", "nullable": true }
+              "int": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              }
             },
-            "required": ["int"]
+            "required": [
+              "int"
+            ]
           },
           {
             "type": "object",
             "title": "string",
-            "properties": { "string": { "type": "string" } },
-            "required": ["string"]
+            "properties": {
+              "string": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "string"
+            ]
           }
         ]
       },
@@ -208,16 +302,28 @@
           {
             "type": "object",
             "title": "message",
-            "properties": { "message": { "type": "string" } },
-            "required": ["message"]
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ]
           },
           {
             "type": "object",
             "title": "value",
             "properties": {
-              "value": { "type": "number", "format": "int32", "nullable": true }
+              "value": {
+                "type": "integer",
+                "format": "int32",
+                "nullable": true
+              }
             },
-            "required": ["value"]
+            "required": [
+              "value"
+            ]
           }
         ]
       }

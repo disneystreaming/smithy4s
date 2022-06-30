@@ -16,7 +16,7 @@
 
 package smithy4s
 
-object NewtypesSpec extends weaver.FunSuite {
+class NewtypesSpec() extends munit.FunSuite {
 
   type AccountId = AccountId.Type
   object AccountId extends Newtype[String] {
@@ -39,12 +39,13 @@ object NewtypesSpec extends weaver.FunSuite {
   val id2 = "id-2"
 
   test("Newtypes are consistent") {
-    expect.all(
-      AccountId(id1).value == id1,
-      AccountId(id1).value != AccountId(id2).value,
-      implicitly[ShapeTag[AccountId]] != implicitly[ShapeTag[DeviceId]],
-      AccountId.unapply(AccountId(id1)) == Some(id1)
+    expect.same(AccountId(id1).value, id1)
+    expect.different(AccountId(id1).value, AccountId(id2).value)
+    expect.different(
+      implicitly[ShapeTag[AccountId]],
+      implicitly[ShapeTag[DeviceId]]
     )
+    expect.same(AccountId.unapply(AccountId(id1)), Some(id1))
   }
 
   test("Newtypes have well defined unapply") {

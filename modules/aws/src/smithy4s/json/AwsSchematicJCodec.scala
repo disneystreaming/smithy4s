@@ -22,28 +22,37 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy4s.Timestamp
 import smithy4s.http.json.Cursor
 import smithy4s.http.json.JCodec
-import smithy4s.http.json.SchematicJCodec
-import smithy4s.internals.Hinted
+import smithy4s.http.json.SchemaVisitorJCodec
+import smithy4s.schema.Primitive
 
 private[aws] object AwsSchematicJCodec
-    extends SchematicJCodec(maxArity = 1024) {
+    extends SchemaVisitorJCodec(maxArity = 1024) {
 
-  override def timestamp: JCodec.JCodecMake[Timestamp] = Hinted.static {
-    new JCodec[Timestamp] {
-      val expecting: String = "instant (epoch second)"
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
-        Timestamp.fromEpochSecond(in.readDouble().toLong)
-
-      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-        out.writeVal(x.epochSecond)
-
-      def decodeKey(in: JsonReader): Timestamp =
-        Timestamp.fromEpochSecond(in.readKeyAsDouble().toLong)
-
-      def encodeKey(x: Timestamp, out: JsonWriter): Unit =
-        out.writeKey(x.epochSecond)
+  override def primitive[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): JCodec[P] = {
+    tag match {
+      case Primitive.PTimestamp => timestamp
+      case _                    => super.primitive(shapeId, hints, tag)
     }
+  }
+
+  private val timestamp: JCodec[Timestamp] = new JCodec[Timestamp] {
+    val expecting: String = "instant (epoch second)"
+
+    def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
+      Timestamp(in.readDouble().toLong, 0)
+
+    def encodeValue(x: Timestamp, out: JsonWriter): Unit =
+      out.writeVal(x.epochSecond)
+
+    def decodeKey(in: JsonReader): Timestamp =
+      Timestamp(in.readKeyAsDouble().toLong, 0)
+
+    def encodeKey(x: Timestamp, out: JsonWriter): Unit =
+      out.writeKey(x.epochSecond)
   }
 
 }

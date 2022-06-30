@@ -20,7 +20,6 @@ package internals
 
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.internals.InputOutput
 import smithy4s.schema.Alt.SchemaAndValue
 import smithy4s.schema.{
   EnumValue,
@@ -147,13 +146,12 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): MetaEncode[S] = {
-    val maybeInputOutput = hints.get[InputOutput]
     def encodeField[A](
         field: SchemaField[S, A]
     ): Option[(Metadata, S) => Metadata] = {
-      val hints = field.hints
+      val fieldHints = field.hints
       HttpBinding
-        .fromHints(field.label, hints, maybeInputOutput)
+        .fromHints(field.label, fieldHints, hints)
         .map { binding =>
           val folderT = new Field.LeftFolder[Schema, Metadata] {
             override def compile[T](
@@ -162,7 +160,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
             ): (Metadata, T) => Metadata = {
               val encoder: MetaEncode[T] =
                 self(
-                  instance.addHints(Hints(binding) ++ hints)
+                  instance.addHints(Hints(binding) ++ fieldHints)
                 )
               val updateFunction = encoder.updateMetadata(binding)
               (metadata, t: T) => updateFunction(metadata, t)

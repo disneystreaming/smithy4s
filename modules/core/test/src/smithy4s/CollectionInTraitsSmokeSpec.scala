@@ -16,18 +16,18 @@
 
 package smithy4s
 
-import weaver._
+import munit._
 import cats.syntax.all._
 
-object CollectionInTraitsSmokeSpec extends FunSuite {
+class CollectionInTraitsSmokeSpec() extends FunSuite {
 
   test("Traits with collection members do not refer to them using newtypes") {
     val (someList, someSet, someMap) = smithy4s.example.SomeInt.hints
       .get(smithy4s.example.SomeCollections)
       .foldMap(x => (x.someList, x.someSet, x.someMap))
 
-    expect.eql(someList, List("a")) &&
-    expect.eql(someSet, Set("b")) &&
+    expect.eql(someList, List("a"))
+    expect.eql(someSet, Set("b"))
     expect.eql(someMap, Map("a" -> "b"))
   }
 

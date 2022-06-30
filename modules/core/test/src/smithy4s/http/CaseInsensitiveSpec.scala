@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s
+package http
 
-object CaseInsensitiveSpec extends weaver.FunSuite {
+class CaseInsensitiveSpec() extends munit.FunSuite {
 
   val foo = CaseInsensitive("Foo")
 

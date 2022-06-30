@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.internals
+package smithy4s
+package http.internals
 
 import smithy.api.Http
 import smithy.api.NonEmptyString
@@ -25,7 +26,7 @@ import smithy4s.example.PathParams
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
 
-object PathSpec extends weaver.FunSuite {
+class PathSpec() extends munit.FunSuite {
   import smithy4s.schema.Schema._
   object util {
 
@@ -66,21 +67,18 @@ object PathSpec extends weaver.FunSuite {
         PathParams(
           "example with spaces, %, / and \\",
           10,
-          Timestamp.fromEpochSecond(0L),
-          Timestamp.fromEpochSecond(0L),
-          Timestamp.fromEpochSecond(0L),
-          Timestamp.fromEpochSecond(0L),
+          Timestamp(0L, 0),
+          Timestamp(0L, 0),
+          Timestamp(0L, 0),
+          Timestamp(0L, 0),
           true
         )
       )
 
-    val expected = if (weaver.Platform.isJS) {
-      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00.000Z" :: "1970-01-01T00:00:00.000Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
-    } else {
+    val expected =
       "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
-    }
 
-    assert.eql(result, expected)
+    expect.eql(result, expected)
   }
 
   test("Write PathParams for a struct schema") {
@@ -98,7 +96,7 @@ object PathSpec extends weaver.FunSuite {
     val result = SchemaVisitorPathEncoder(schema)
       .map(_.encode(()))
 
-    assert.eql(
+    expect.eql(
       result,
       Some(List("example", "const", "example2"))
     )
@@ -119,21 +117,21 @@ object PathSpec extends weaver.FunSuite {
     val result = SchemaVisitorPathEncoder(schema)
       .map(_.encode(()))
 
-    assert.eql(
+    expect.eql(
       result,
       Some(List("example", "const", "example2", "with", "slashes"))
     )
   }
 
   test("Write PathParams for a simple string") {
-    assert.eql(
+    expect.eql(
       util.simpleString.map(_.encode("example")),
       Some(List("example"))
     )
   }
 
   test("Write PathParams for an int") {
-    assert.eql(
+    expect.eql(
       util.encodePathAs(int).map(_.encode(42)),
       Some(List("42"))
     )
@@ -141,17 +139,17 @@ object PathSpec extends weaver.FunSuite {
 
   test("Write PathParams for a double") {
     val expected = Some(List {
-      if (weaver.Platform.isJS) "42" else "42.0"
+      if (Platform.isJS) "42" else "42.0"
     })
 
-    assert.eql(
+    expect.eql(
       util.encodePathAs(double).map(_.encode(42.0)),
       expected
     )
   }
 
   test("Write PathParams for a boolean") {
-    assert.eql(
+    expect.eql(
       util.encodePathAs(boolean).map(_.encode(true)),
       Some(List("true"))
     )
@@ -160,7 +158,7 @@ object PathSpec extends weaver.FunSuite {
   test("Write PathParams for a string with special characters unencoded") {
     val input = "example with all kinds of strange characters / \\ & "
 
-    assert.eql(
+    expect.eql(
       util.simpleString.map(_.encode(input)),
       Some(List(input))
     )
@@ -171,14 +169,14 @@ object PathSpec extends weaver.FunSuite {
   ) {
     val input = "example/with/slashes and spaces"
 
-    assert.eql(
+    expect.eql(
       util.simpleString.map(_.encodeGreedy(input)),
       Some(List("example", "with", "slashes and spaces"))
     )
   }
 
   test("Write PathParams for unit as None") {
-    assert.eql(
+    expect.eql(
       util.encodePathAs(unit).map(_.encode(())),
       None
     )
