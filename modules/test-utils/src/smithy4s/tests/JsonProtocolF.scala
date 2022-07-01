@@ -155,7 +155,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
       for {
         input <- document.decode[I].liftTo[F]
         op = endpoint.wrap(input)
-        output <- transformation(op).map(encoderO.encode).recover {
+        output <- (transformation(op): F[O]).map(encoderO.encode).recover {
           case endpoint.Error((_, e)) =>
             Document.obj("error" -> encoderE.encode(e))
         }

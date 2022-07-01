@@ -411,16 +411,13 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core % "test->test;compile->compile", tests % "test->compile")
+  .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
       Dependencies.Cats.core.value
     ),
     libraryDependencies ++= munitDeps.value,
-    Test / fork := true,
-    // Forwarding cwd to tests
-    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
@@ -435,11 +432,14 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
+      Test / fork := true,
+      // Forwarding cwd to tests
+      Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
       libraryDependencies += Dependencies.Smithy.model
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
-// .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains the logic for generating "openapi views" of the
@@ -532,6 +532,17 @@ lazy val `http4s-swagger` = projectMatrix
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val testUtils = projectMatrix
+  .in(file("modules/test-utils"))
+  .dependsOn(core)
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(
+    libraryDependencies += Dependencies.Cats.core.value
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Generic tests aimed at testing the implementations of the custom protocols
