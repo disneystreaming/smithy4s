@@ -25,7 +25,7 @@ import cats.syntax.all._
 import http.HttpEndpoint
 import DummyIO._
 
-object OperationSpec extends munit.FunSuite {
+class OperationSpec() extends munit.FunSuite {
 
   // This is not ideal, but it does the job.
   val cwd = System.getProperty("user.dir");

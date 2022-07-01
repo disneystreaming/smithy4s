@@ -19,28 +19,24 @@ package dynamic
 
 import smithy4s.example._
 import DummyIO._
-import cats.effect.Ref
-import cats.syntax.all._
 
-class KVStoreImpl(map: scala.collection.mutable.Map[String, String]) extends KVStore[IO] {
-  def delete(key: String): IO[Unit] = ref
-    .modify[Either[Throwable, Unit]] { map =>
-      map.get(key) match {
-        case None        => (map, Left(KeyNotFoundError(key)))
-        case Some(value) => (map - value, Right(()))
-      }
+class KVStoreImpl(map: scala.collection.mutable.Map[String, String])
+    extends KVStore[IO] {
+  def delete(key: String): IO[Unit] =
+    map.remove(key) match {
+      case None    => Left(KeyNotFoundError(key))
+      case Some(_) => Right(())
     }
-    .rethrow
   def get(key: String): IO[Value] =
     if (key.contains("authorized-only"))
       // This will be redacted by the redacting proxy
       IO.raiseError(UnauthorizedError("sensitive"))
     else
-      ref.get
-        .map[Either[Throwable, Value]](_.get(key) match {
-          case None        => Left(KeyNotFoundError(key))
-          case Some(value) => Right(smithy4s.example.Value(value))
-        })
-        .rethrow
-  def put(key: String, value: String): IO[Unit] = ref.update(_ + (key -> value))
+      map.get(key) match {
+        case None        => Left(KeyNotFoundError(key))
+        case Some(value) => Right(smithy4s.example.Value(value))
+      }
+  def put(key: String, value: String): IO[Unit] = IO {
+    val _ = map.put(key, value)
+  }
 }

@@ -23,7 +23,7 @@ import smithy4s.schema.Field
 import smithy4s.schema.StubSchematic
 import Fixtures._
 
-object FieldsSpec extends munit.FunSuite {
+class FieldsSpec() extends munit.FunSuite {
 
   test(
     "Extract field names from all structures in a service's endpoints"

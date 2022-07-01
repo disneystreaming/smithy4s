@@ -18,7 +18,7 @@ package smithy4s.dynamic
 
 import DummyIO._
 
-object RecursionSpec extends munit.FunSuite {
+class RecursionSpec() extends munit.FunSuite {
 
   test(
     "Compilation does not recurse infinitely in the case of recursive unions"
@@ -32,7 +32,7 @@ object RecursionSpec extends munit.FunSuite {
          |}
          |""".stripMargin
 
-    Utils.compile(modelString).check
+    Utils.compile(modelString).check()
   }
 
   test(
@@ -50,7 +50,7 @@ object RecursionSpec extends munit.FunSuite {
          |}
          |""".stripMargin
 
-    Utils.compile(modelString).check
+    Utils.compile(modelString).check()
   }
 
 }

@@ -13,7 +13,7 @@ object DummyIO {
       case Left(e)  => throw e
       case Right(a) => f(a)
     }
-    def check: Unit = io match {
+    def check(): Unit = io match {
       case Left(e) => throw e
       case Right(_) => ()
     }

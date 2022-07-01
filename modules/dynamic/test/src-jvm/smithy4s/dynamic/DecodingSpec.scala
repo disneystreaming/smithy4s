@@ -21,7 +21,7 @@ import Fixtures._
 import DummyIO._
 import smithy4s.dynamic.model.Model
 
-object DecodingSpec extends munit.FunSuite {
+class DecodingSpec() extends munit.FunSuite {
 
   /*
    * Although not needed for equality, we sort the shapes in the model
