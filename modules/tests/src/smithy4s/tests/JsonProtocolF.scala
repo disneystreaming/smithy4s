@@ -15,12 +15,12 @@
  */
 
 package smithy4s
-package dynamic
+package tests
 
 import Document._
 
-import DummyIO._
 import cats.syntax.all._
+import cats.MonadThrow
 
 /**
   * These are toy interpreters that turn services into json-in/json-out
@@ -28,21 +28,21 @@ import cats.syntax.all._
   *
   * Created for testing purposes.
   */
-object JsonIOProtocol {
+class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
 
   def dummy[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       service: Service.Provider[Alg, Op]
-  ): Document => IO[Document] = {
+  ): Document => F[Document] = {
     implicit val S: Service[Alg, Op] = service.service
-    toJsonIO[Alg, Op](DummyService[IO].create[Alg, Op])
+    toJsonF[Alg, Op](DummyService[F].create[Alg, Op])
   }
 
   def redactingProxy[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      jsonIO: Document => IO[Document],
+      jsonF: Document => F[Document],
       service: Service.Provider[Alg, Op]
-  ): Document => IO[Document] = {
+  ): Document => F[Document] = {
     implicit val S: Service[Alg, Op] = service.service
-    toJsonIO[Alg, Op](fromJsonIO[Alg, Op](jsonIO)) andThen (_.map(redact))
+    toJsonF[Alg, Op](fromJsonF[Alg, Op](jsonF)) andThen (_.map(redact))
   }
 
   def redact(document: Document): Document = document match {
@@ -52,24 +52,24 @@ object JsonIOProtocol {
     case other                => other
   }
 
-  def fromJsonIO[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      jsonIO: Document => IO[Document]
-  )(implicit S: Service[Alg, Op]): Monadic[Alg, IO] = {
+  def fromJsonF[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      jsonF: Document => F[Document]
+  )(implicit S: Service[Alg, Op]): Monadic[Alg, F] = {
     val kleisliCache =
-      fromLowLevel(jsonIO).precompute(S.endpoints.map(Kind5.existential(_)))
-    val transfo = new Transformation[Op, GenLift[IO]#λ] {
-      def apply[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): IO[O] = {
+      fromLowLevel(jsonF).precompute(S.endpoints.map(Kind5.existential(_)))
+    val transfo = new Transformation[Op, GenLift[F]#λ] {
+      def apply[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): F[O] = {
         val (input, ep) = S.endpoint(op)
         kleisliCache(ep).apply(input)
       }
     }
-    S.transform[GenLift[IO]#λ](transfo)
+    S.transform[GenLift[F]#λ](transfo)
   }
 
-  def toJsonIO[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      alg: Monadic[Alg, IO]
-  )(implicit S: Service[Alg, Op]): Document => IO[Document] = {
-    val transformation = S.asTransformation[GenLift[IO]#λ](alg)
+  def toJsonF[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      alg: Monadic[Alg, F]
+  )(implicit S: Service[Alg, Op]): Document => F[Document] = {
+    val transformation = S.asTransformation[GenLift[F]#λ](alg)
     val jsonEndpoints =
       S.endpoints.map(ep => ep.name -> toLowLevel(transformation, ep)).toMap
     (d: Document) => {
@@ -78,17 +78,17 @@ object JsonIOProtocol {
           val (method, payload) = m.head
           jsonEndpoints.get(method) match {
             case Some(jsonEndpoint) => jsonEndpoint(payload)
-            case None               => IO.raiseError(NotFound)
+            case None               => F.raiseError(NotFound)
           }
-        case _ => IO.raiseError(NotFound)
+        case _ => F.raiseError(NotFound)
       }
     }
   }
 
-  private type KL[I, E, O, SI, SO] = I => IO[O]
+  private type KL[I, E, O, SI, SO] = I => F[O]
 
   private def fromLowLevel[Op[_, _, _, _, _]](
-      jsonIO: Document => IO[Document]
+      jsonF: Document => F[Document]
   ): Transformation[Endpoint[Op, *, *, *, *, *], KL] =
     new Transformation[Endpoint[Op, *, *, *, *, *], KL] {
       def apply[I, E, O, SI, SO](
@@ -99,47 +99,47 @@ object JsonIOProtocol {
         val decoderO: Document.Decoder[O] =
           Document.Decoder.fromSchema(ep.output)
 
-        val decoderE: Document.Decoder[IO[Nothing]] =
+        val decoderE: Document.Decoder[F[Nothing]] =
           ep.errorable match {
             case Some(errorableE) =>
               Document.Decoder
                 .fromSchema(errorableE.error)
-                .map(e => IO.raiseError(errorableE.unliftError(e)))
+                .map(e => F.raiseError(errorableE.unliftError(e)))
             case None =>
-              new Document.Decoder[IO[Nothing]] {
+              new Document.Decoder[F[Nothing]] {
                 def decode(
                     document: Document
-                ): Either[smithy4s.http.PayloadError, IO[Nothing]] =
+                ): Either[smithy4s.http.PayloadError, F[Nothing]] =
                   Right(
-                    IO.raiseError(
+                    F.raiseError(
                       smithy4s.http
                         .PayloadError(PayloadPath.root, "Nothing", "Nothing")
                     )
                   )
               }
           }
-        implicit val decoderIOOnput = new Document.Decoder[IO[O]] {
+        implicit val decoderFoutput = new Document.Decoder[F[O]] {
           def decode(
               document: Document
-          ): Either[smithy4s.http.PayloadError, IO[O]] = {
+          ): Either[smithy4s.http.PayloadError, F[O]] = {
             document match {
               case Document.DObject(map) if (map.contains("error")) =>
-                decoderE.decode(map("error"))
-              case other => decoderO.decode(other).map(IO.pure(_))
+                decoderE.decode(map("error")).map(_.asInstanceOf[F[O]])
+              case other => decoderO.decode(other).map(F.pure(_))
             }
           }
         }
 
         (i: I) =>
-          jsonIO(Document.obj(ep.name -> Document.encode(i)))
-            .flatMap(_.decode[IO[O]].liftTo[IO].flatten)
+          jsonF(Document.obj(ep.name -> Document.encode(i)))
+            .flatMap(_.decode[F[O]].liftTo[F].flatten)
       }
     }
 
   private def toLowLevel[Op[_, _, _, _, _], I, E, O, SI, SO](
-      transformation: Transformation[Op, GenLift[IO]#λ],
+      transformation: Transformation[Op, GenLift[F]#λ],
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Document => IO[Document] = {
+  ): Document => F[Document] = {
     implicit val decoderI = Document.Decoder.fromSchema(endpoint.input)
     implicit val encoderO = Document.Encoder.fromSchema(endpoint.output)
     implicit val encoderE: Document.Encoder[E] =
@@ -153,7 +153,7 @@ object JsonIOProtocol {
       }
     (document: Document) =>
       for {
-        input <- document.decode[I].liftTo[IO]
+        input <- document.decode[I].liftTo[F]
         op = endpoint.wrap(input)
         output <- transformation(op).map(encoderO.encode).recover {
           case endpoint.Error((_, e)) =>

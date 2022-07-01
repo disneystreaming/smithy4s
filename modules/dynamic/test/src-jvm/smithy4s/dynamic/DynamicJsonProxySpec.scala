@@ -34,7 +34,7 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
         new KVStoreImpl(ref)
       }
       .flatMap { kvstore =>
-        val jsonIOService = JsonIOProtocol.toJsonIO(kvstore)
+        val jsonIOService = JsonIOProtocol.toJsonF(kvstore)
         Utils
           .compileSampleSpec("kvstore.smithy")
           .flatMap { dynamicSchemaIndex =>
@@ -46,18 +46,20 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
             JsonIOProtocol.redactingProxy(jsonIOService, serviceDef.service)
           }
           .map { proxied =>
-            JsonIOProtocol.fromJsonIO(proxied)(KVStore.service)
+            JsonIOProtocol.fromJsonF(proxied)(KVStore.service)
           }
       }
   }
 
   test("Static service is correctly proxied by dynamic service") {
-    kvStoreResource.flatMap { kvStore =>
-      for {
-        _ <- kvStore.put("key", "value")
-        v <- kvStore.get("key")
-      } yield expect(v.value === "value")
-    }.check()
+    kvStoreResource
+      .flatMap { kvStore =>
+        for {
+          _ <- kvStore.put("key", "value")
+          v <- kvStore.get("key")
+        } yield expect(v.value === "value")
+      }
+      .check()
   }
 
   test("Dynamic service based proxy propagates errors correctly") {
@@ -68,27 +70,31 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
     //
     // Because we get the redacted string, it means that the dynamic proxy was able to decode
     // the error, and re-encode it, hiding the sensitive string.
-    kvStoreResource.flatMap { kvStore =>
-      val expectedError = smithy4s.example.KeyNotFoundError("*****")
+    kvStoreResource
+      .flatMap { kvStore =>
+        val expectedError = smithy4s.example.KeyNotFoundError("*****")
 
-      for {
-        attempt <- kvStore.get("sensitive").attempt
-      } yield expect.same(attempt, Left(expectedError))
-    }.check()
+        for {
+          attempt <- kvStore.get("sensitive").attempt
+        } yield expect.same(attempt, Left(expectedError))
+      }
+      .check()
 
   }
 
   test("Dynamic service based proxy supports service errors") {
-    kvStoreResource.flatMap { kvStore =>
-      val expectedError =
-        smithy4s.example.UnauthorizedError("*****")
+    kvStoreResource
+      .flatMap { kvStore =>
+        val expectedError =
+          smithy4s.example.UnauthorizedError("*****")
 
-      for {
-        attempt <- kvStore.get("authorized-only-key").attempt
-      } yield {
-        expect.same(attempt, Left(expectedError))
+        for {
+          attempt <- kvStore.get("authorized-only-key").attempt
+        } yield {
+          expect.same(attempt, Left(expectedError))
+        }
       }
-    }.check()
+      .check()
   }
 
 }

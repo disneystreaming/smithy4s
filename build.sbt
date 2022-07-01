@@ -411,7 +411,7 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core % "test->test;compile->compile")
+  .dependsOn(core % "test->test;compile->compile", tests % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
@@ -435,7 +435,7 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
-      libraryDependencies += Dependencies.Smithy.model % Test
+      libraryDependencies += Dependencies.Smithy.model
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -486,7 +486,7 @@ lazy val json = projectMatrix
  */
 lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
-  .dependsOn(core, json, tests % "test -> compile")
+  .dependsOn(core, json, dynamic % "test->compile", tests % "test->compile")
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {

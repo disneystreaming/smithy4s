@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package dynamic
+package tests
 
 import cats.Applicative
 

@@ -1,4 +1,5 @@
 package smithy4s.dynamic
+import smithy4s.tests._
 
 object DummyIO {
   type IO[A] = Either[Throwable, A]
@@ -14,8 +15,9 @@ object DummyIO {
       case Right(a) => f(a)
     }
     def check(): Unit = io match {
-      case Left(e) => throw e
+      case Left(e)  => throw e
       case Right(_) => ()
     }
   }
+  object JsonIOProtocol extends JsonProtocolF[IO]
 }
