@@ -36,7 +36,7 @@ class RecursionSpec() extends munit.FunSuite {
   }
 
   test(
-    "Compilation does not recurse infinitely in the case of recursive structures".only
+    "Compilation does not recurse infinitely in the case of recursive structures"
   ) {
     val modelString =
       """|namespace foo
