@@ -423,6 +423,7 @@ object Smithy4sPlugin extends AutoPlugin {
     val scala213Suffix = VirtualAxis.scalaABIVersion(Scala213).idSuffix
     val scala212Suffix = VirtualAxis.scalaABIVersion(Scala212).idSuffix
     val jsSuffix = VirtualAxis.js.idSuffix
+    val nativeSuffix = VirtualAxis.native.idSuffix
     val ce3Suffix = CatsEffect3Axis.idSuffix
     val ce2Suffix = CatsEffect2Axis.idSuffix
 
@@ -446,15 +447,24 @@ object Smithy4sPlugin extends AutoPlugin {
           val platformAxis =
             if (projectId.endsWith(jsSuffix)) {
               projectId = projectId.dropRight(jsSuffix.length)
-
               "js"
-            } else "jvm"
+            } else if (projectId.endsWith(nativeSuffix)) {
+              projectId = projectId.dropRight(nativeSuffix.length)
+              "native"
+            } else {
+              "jvm"
+            }
 
           val ceAxis =
             if (projectId.endsWith(ce2Suffix)) {
               projectId = projectId.dropRight(ce2Suffix.length)
               "CE2"
-            } else "CE3"
+            } else if (projectId.endsWith(ce3Suffix)) {
+              projectId = projectId.dropRight(ce3Suffix.length)
+              "CE3"
+            } else {
+              "no_CE"
+            }
 
           Triplet(ceAxis, scalaAxis, platformAxis) -> lp.project
         }

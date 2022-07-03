@@ -486,7 +486,13 @@ lazy val json = projectMatrix
  */
 lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
-  .dependsOn(core, json, dynamic % "test->compile", tests % "test->compile")
+  .dependsOn(
+    core,
+    json,
+    dynamic % "test->compile",
+    tests % "test->compile",
+    testUtils % "test->compile"
+  )
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
