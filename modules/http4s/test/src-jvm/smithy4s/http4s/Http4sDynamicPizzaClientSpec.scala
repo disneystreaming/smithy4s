@@ -26,7 +26,6 @@ import cats.effect.IO
 import cats.effect.Resource
 import org.http4s.HttpApp
 import smithy4s.example._
-import smithy4s.http4s.SimpleRestJsonBuilder
 import software.amazon.smithy.model.{Model => SModel}
 
 class DynamicHttpProxy(client: Client[IO]) {
