@@ -27,7 +27,7 @@ jobs:
       matrix:
         scalaVersion: ["2_12", "2_13", "3_0"]
         scalaPlatform: ["jvm", "js"]
-        ceVersion: ["CE2", "CE3"]
+        ceVersion: ["CE2", "default"]
         exclude:
           # Do not build CE2 artifacts for Scala 3
           - scalaVersion: "3_0"
@@ -41,7 +41,7 @@ jobs:
         include:
           - scalaVersion: "3_0"
             scalaPlatform: "native"
-            ceVersion: "no_CE"
+            ceVersion: "default"
     runs-on: ubuntu-latest
     env:
       BUILD_KEY: ${{matrix.ceVersion}}_${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}

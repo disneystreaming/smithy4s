@@ -459,11 +459,8 @@ object Smithy4sPlugin extends AutoPlugin {
             if (projectId.endsWith(ce2Suffix)) {
               projectId = projectId.dropRight(ce2Suffix.length)
               "CE2"
-            } else if (projectId.endsWith(ce3Suffix)) {
-              projectId = projectId.dropRight(ce3Suffix.length)
-              "CE3"
             } else {
-              "no_CE"
+              "default"
             }
 
           Triplet(ceAxis, scalaAxis, platformAxis) -> lp.project
