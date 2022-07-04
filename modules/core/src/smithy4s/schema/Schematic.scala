@@ -41,8 +41,7 @@ trait Schematic[F[_]] {
   def timestamp: F[Timestamp]
 
   // collections
-  def set[S](fs: F[S]): F[Set[S]]
-  def list[S](fs: F[S]): F[List[S]]
+  def collection[C[_], S](tag: CollectionTag[C, S], fs: F[S]): F[C[S]]
   def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]]
 
   // Other
@@ -84,10 +83,8 @@ object Schematic {
             val fromOrdinal = values.map { v => v.ordinal -> v.value }.toMap
             val fromName = values.map { v => v.stringValue -> v.value }.toMap
             enumeration(to, fromName, fromOrdinal)
-          case SetSchema(_, _, member) =>
-            set(apply(member))
-          case ListSchema(_, _, member) =>
-            list(apply(member))
+          case s: CollectionSchema[c, a] =>
+            collection[c, a](s.tag, apply(s.member))
           case MapSchema(_, _, key, value) =>
             map(apply(key), apply(value))
           case BijectionSchema(underlying, to, from) =>

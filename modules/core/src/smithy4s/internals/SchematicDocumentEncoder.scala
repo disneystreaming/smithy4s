@@ -113,19 +113,14 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
 
   def unit: DocumentEncoderMake[Unit] = fromNotKey(_ => DObject(Map.empty))
 
-  def list[S](fs: DocumentEncoderMake[S]): DocumentEncoderMake[List[S]] =
+  def collection[C[_], S](
+      tag: CollectionTag[C, S],
+      fs: DocumentEncoderMake[S]
+  ): DocumentEncoderMake[C[S]] =
     fs.transform(encoderS =>
-      fromNotKey[List[S]](l => DArray(l.map(encoderS.apply).toIndexedSeq)).get
-    )
-
-  def set[S](fs: DocumentEncoderMake[S]): DocumentEncoderMake[Set[S]] =
-    fs.transform(encoderS =>
-      fromNotKey[Set[S]](s => DArray(s.map(encoderS.apply).toIndexedSeq)).get
-    )
-
-  def vector[S](fs: DocumentEncoderMake[S]): DocumentEncoderMake[Vector[S]] =
-    fs.transform(encoderS =>
-      fromNotKey[Vector[S]](v => DArray(v.map(encoderS.apply).toIndexedSeq)).get
+      fromNotKey[C[S]](c =>
+        DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq)
+      ).get
     )
 
   def map[K, V](

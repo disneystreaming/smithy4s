@@ -22,7 +22,7 @@ import smithy4s.http.internals.MetaDecode.{
   EmptyMetaDecode,
   PutField,
   StringListMapMetaDecode,
-  StringListMetaDecode,
+  StringCollectionMetaDecode,
   StringMapMetaDecode,
   StringValueMetaDecode,
   StructureMetaDecode
@@ -98,28 +98,20 @@ private[http] class SchemaVisitorMetadataReader()
     }
   }
 
-  override def list[A](
+  override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
+      tag: CollectionTag[C, A],
       member: Schema[A]
-  ): MetaDecode[List[A]] = {
+  ): MetaDecode[C[A]] = {
     self(member) match {
       case MetaDecode.StringValueMetaDecode(f) =>
-        MetaDecode.StringListMetaDecode[List[A]](_.map(f).toList)
+        MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
+          tag.fromIterator(it.map(f))
+        }
       case _ => EmptyMetaDecode
     }
   }
-
-  override def set[A](
-      shapeId: ShapeId,
-      hints: Hints,
-      member: Schema[A]
-  ): MetaDecode[Set[A]] =
-    self(member) match {
-      case MetaDecode.StringValueMetaDecode(f) =>
-        MetaDecode.StringListMetaDecode[Set[A]](_.map(f).toSet)
-      case _ => EmptyMetaDecode
-    }
 
   override def map[K, V](
       shapeId: ShapeId,
@@ -132,7 +124,7 @@ private[http] class SchemaVisitorMetadataReader()
         StringMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap
         )
-      case (StringValueMetaDecode(readK), StringListMetaDecode(readV)) =>
+      case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>
         StringListMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap
         )

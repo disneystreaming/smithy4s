@@ -28,8 +28,9 @@ import HttpBinding._
 
 private[http] sealed abstract class MetaDecode[+A] {
   def map[B](to: A => B): MetaDecode[B] = this match {
-    case StringValueMetaDecode(f)   => StringValueMetaDecode(f andThen to)
-    case StringListMetaDecode(f)    => StringListMetaDecode(f andThen to)
+    case StringValueMetaDecode(f) => StringValueMetaDecode(f andThen to)
+    case StringCollectionMetaDecode(f) =>
+      StringCollectionMetaDecode(f andThen to)
     case StringMapMetaDecode(f)     => StringMapMetaDecode(f andThen to)
     case StringListMapMetaDecode(f) => StringListMapMetaDecode(f andThen to)
     case EmptyMetaDecode            => EmptyMetaDecode
@@ -76,7 +77,7 @@ private[http] sealed abstract class MetaDecode[+A] {
             putField(fieldName, f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
-      case (HeaderBinding(h), StringListMetaDecode(f)) =>
+      case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
           putField(fieldName, f(values.iterator))
         }
@@ -86,7 +87,7 @@ private[http] sealed abstract class MetaDecode[+A] {
             putField(fieldName, f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
-      case (QueryBinding(q), StringListMetaDecode(f)) =>
+      case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
           putField(fieldName, f(values.iterator))
         }
@@ -154,7 +155,7 @@ private[http] object MetaDecode {
 
   // format: off
   final case class StringValueMetaDecode[A](f: String => A) extends MetaDecode[A]
-  final case class StringListMetaDecode[A](f: Iterator[String] => A) extends MetaDecode[A]
+  final case class StringCollectionMetaDecode[A](f: Iterator[String] => A) extends MetaDecode[A]
   final case class StringMapMetaDecode[A](f: Iterator[(String, String)] => A) extends MetaDecode[A]
   final case class StringListMapMetaDecode[A](f: Iterator[(String, Iterator[String])] => A) extends MetaDecode[A]
   case object EmptyMetaDecode extends MetaDecode[Nothing]

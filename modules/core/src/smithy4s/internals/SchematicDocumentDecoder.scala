@@ -229,25 +229,18 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
         ()
     })
 
-  def list[S](fs: DocumentDecoderMake[S]): DocumentDecoderMake[List[S]] =
+  def collection[C[_], S](
+      tag: CollectionTag[C, S],
+      fs: DocumentDecoderMake[S]
+  ): DocumentDecoderMake[C[S]] =
     fs.transform { fa =>
-      DocumentDecoder.instance("List", "Array", false) {
+      DocumentDecoder.instance("Collection", "Array", false) {
         case (pp, DArray(value)) =>
-          value.zipWithIndex.map { case (document, index) =>
-            val localPath = PayloadPath.Segment(index) :: pp
-            fa(localPath, document)
-          }.toList
-      }
-    }
-
-  def set[S](fs: DocumentDecoderMake[S]): DocumentDecoderMake[Set[S]] =
-    fs.transform { fa =>
-      DocumentDecoder.instance("Set", "Array", false) {
-        case (pp, DArray(value)) =>
-          value.zipWithIndex.map { case (document, index) =>
-            val localPath = PayloadPath.Segment(index) :: pp
-            fa(localPath, document)
-          }.toSet
+          tag.fromIterator(value.iterator.zipWithIndex.map {
+            case (document, index) =>
+              val localPath = PayloadPath.Segment(index) :: pp
+              fa(localPath, document)
+          })
       }
     }
 

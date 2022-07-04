@@ -46,9 +46,8 @@ class PassthroughSchematic[F[_]](schematic: Schematic[F]) extends Schematic[F] {
 
   def unit: F[Unit] = schematic.unit
 
-  def list[S](fs: F[S]): F[List[S]] = schematic.list(fs)
-
-  def set[S](fs: F[S]): F[Set[S]] = schematic.set(fs)
+  def collection[C[_], S](tag: CollectionTag[C, S], fs: F[S]): F[C[S]] =
+    schematic.collection(tag, fs)
 
   def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]] = schematic.map(fk, fv)
 
