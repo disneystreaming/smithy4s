@@ -17,6 +17,7 @@
 package smithy4s.http4s.swagger
 
 import cats.effect.IO
+import org.http4s._
 import smithy4s.HasId
 import smithy4s.ShapeId
 import weaver.BaseIOSuite
@@ -29,4 +30,7 @@ trait TestCompat { self: BaseIOSuite =>
 
   def docs(path: String) =
     Docs.build[IO](path, swaggerUiPath = "swaggerui")(service)
+
+  def toApply(pad: PartiallyAppliedDocs): HttpRoutes[IO] =
+    pad.apply(service)
 }

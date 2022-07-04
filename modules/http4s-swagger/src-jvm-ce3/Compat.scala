@@ -26,24 +26,29 @@ import org.http4s.Response
 import org.http4s.StaticFile
 
 private[smithy4s] object Compat {
-  trait Package {
+  trait Package extends SwaggerUiInit {
     private[smithy4s] type EffectCompat[F[_]] = cats.effect.Concurrent[F]
     private[smithy4s] val EffectCompat = cats.effect.Concurrent
 
-    def docs: PartiallyAppliedDocs = new PartiallyAppliedDocs("docs")
-    def atPath(path: String): PartiallyAppliedDocs =
-      new PartiallyAppliedDocs(path)
+    def docs: PartiallyAppliedDocs =
+      new PartiallyAppliedDocs("docs", swaggerUiPath)
 
-    class PartiallyAppliedDocs(path: String) {
+    case class PartiallyAppliedDocs(path: String, swaggerUiPath: String) {
       def apply[F[_]](
           first: HasId,
           rest: HasId*
       )(implicit
           F: Sync[F]
       ): HttpRoutes[F] = {
-        val docs = Docs.build[F](path)(first, rest: _*)
+        val docs = Docs.build[F](path, swaggerUiPath)(first, rest: _*)
         docs.routes
       }
+
+      def withPath(path: String): PartiallyAppliedDocs =
+        this.copy(path = path)
+
+      def withSwaggerUiPath(swaggerUiPath: String): PartiallyAppliedDocs =
+        this.copy(swaggerUiPath = swaggerUiPath)
     }
   }
 
@@ -54,10 +59,10 @@ private[smithy4s] object Compat {
     ): OptionT[F, Response[F]]
   }
 
-  trait DocsCompanion extends SwaggerUiInit {
+  trait DocsCompanion {
     def build[F[_]](
         path: String,
-        swaggerUiPath: String = swaggerUiPath
+        swaggerUiPath: String
     )(id: HasId, rest: HasId*)(implicit
         F: Sync[F]
     ): Docs[F] = {

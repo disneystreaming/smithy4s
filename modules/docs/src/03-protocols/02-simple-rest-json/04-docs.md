@@ -43,7 +43,7 @@ object Docs {
 
   // documentation served at /custom-docs
   val customPath : HttpRoutes[IO] =
-    smithy4s.http4s.swagger.atPath("custom-docs")(HelloWorldService)
+    smithy4s.http4s.swagger.docs.withPath("custom-docs")(HelloWorldService)
 
   // documentation served at /docs with multiple service specification defined.
   val multipleServices : HttpRoutes[IO] =
@@ -52,7 +52,9 @@ object Docs {
   // documentation served at /custom-docs with swagger assets from `/swagger-ui-path`
   // (from the classpath) being used.
   val customSetup =
-    smithy4s.http4s.swagger.Docs.build[IO]("custom-docs", "/swagger-ui-path")(HelloWorldService)
+     smithy4s.http4s.swagger.docs
+      .withPath("custom-docs")
+      .withSwaggerUiPath("/swagger-ui-path")[IO](HelloWorldService)
 }
 ```
 
