@@ -93,3 +93,13 @@ val app = SimpleRestJsonBuilder
   .map(_.orNotFound)
 // ...
 ```
+
+## Swagger UI
+
+When you visit your documentation page, you'll be served with a Swagger UI application that looks like this:
+
+![Swagger UI preview](swagger-ui.png)
+
+If your documentation route supports multiple service, the dropdown in the top bar (top right) should allow you to select other specifications:
+
+![Swagger UI specification dropdown selection](swagger-ui-dropdown.png)
