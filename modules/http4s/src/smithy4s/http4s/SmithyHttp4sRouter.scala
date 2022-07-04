@@ -21,7 +21,6 @@ import cats.data.Kleisli
 import cats.data.OptionT
 import cats.implicits._
 import org.http4s._
-import smithy4s.http._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 
 // format: off
@@ -35,7 +34,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
   val routes: HttpRoutes[F] = Kleisli { request =>
     for {
       endpoints <- perMethodEndpoint.get(request.method).toOptionT[F]
-      path = matchPath.make(request.uri.path.renderString)
+      path = request.uri.path.segments.map(_.decoded()).toArray
       (endpoint, pathParams) <- endpoints.collectFirstSome(_.matchTap(path)).toOptionT[F]
       response <- OptionT.liftF(endpoint.run(pathParams, request))
     } yield response
