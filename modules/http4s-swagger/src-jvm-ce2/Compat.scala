@@ -30,26 +30,20 @@ private[smithy4s] object Compat {
     private[smithy4s] type EffectCompat[F[_]] = cats.effect.Sync[F]
     private[smithy4s] val EffectCompat = cats.effect.Sync
 
-    def docs[F[_]](
-        hasId: HasId,
-        blocker: Blocker,
-        path: String = "docs"
-    )(implicit
-        F: Sync[F],
-        CS: ContextShift[F]
-    ): HttpRoutes[F] = {
-      multipleDocs(hasId)(blocker, path)
-    }
+    def docs: PartiallyAppliedDocs = new PartiallyAppliedDocs("docs")
 
-    def multipleDocs[F[_]](
-        id: HasId,
-        rest: HasId*
-    )(blocker: Blocker, path: String)(implicit
-        F: Sync[F],
-        CS: ContextShift[F]
-    ): HttpRoutes[F] = {
-      val docs = Docs.multiple[F](path, blocker)(id, rest: _*)
-      docs.routes
+    class PartiallyAppliedDocs(path: String) {
+      def apply[F[_]](
+          blocker: Blocker,
+          first: HasId,
+          rest: HasId*
+      )(implicit
+          F: Sync[F],
+          CS: ContextShift[F]
+      ): HttpRoutes[F] = {
+        val docs = Docs.multiple[F](path, blocker)(first, rest: _*)
+        docs.routes
+      }
     }
   }
 

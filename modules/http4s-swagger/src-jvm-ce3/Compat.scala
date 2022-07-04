@@ -30,23 +30,20 @@ private[smithy4s] object Compat {
     private[smithy4s] type EffectCompat[F[_]] = cats.effect.Concurrent[F]
     private[smithy4s] val EffectCompat = cats.effect.Concurrent
 
-    def docs[F[_]](
-        hasId: HasId,
-        path: String = "docs"
-    )(implicit
-        F: Sync[F]
-    ): HttpRoutes[F] = {
-      multipleDocs(hasId)(path)
-    }
+    def docs: PartiallyAppliedDocs = new PartiallyAppliedDocs("docs")
+    def atPath(path: String): PartiallyAppliedDocs =
+      new PartiallyAppliedDocs(path)
 
-    def multipleDocs[F[_]](
-        id: HasId,
-        rest: HasId*
-    )(path: String)(implicit
-        F: Sync[F]
-    ): HttpRoutes[F] = {
-      val docs = Docs.multiple[F](path)(id, rest: _*)
-      docs.routes
+    class PartiallyAppliedDocs(path: String) {
+      def apply[F[_]](
+          first: HasId,
+          rest: HasId*
+      )(implicit
+          F: Sync[F]
+      ): HttpRoutes[F] = {
+        val docs = Docs.multiple[F](path)(first, rest: _*)
+        docs.routes
+      }
     }
   }
 
@@ -58,16 +55,6 @@ private[smithy4s] object Compat {
   }
 
   trait DocsCompanion extends SwaggerUiInit {
-    def apply[F[_]](
-        hasId: HasId,
-        path: String,
-        swaggerUiPath: String = swaggerUiPath
-    )(implicit
-        F: Sync[F]
-    ): Docs[F] = {
-      multiple[F](path, swaggerUiPath)(hasId)
-    }
-
     def multiple[F[_]](
         path: String,
         swaggerUiPath: String = swaggerUiPath
