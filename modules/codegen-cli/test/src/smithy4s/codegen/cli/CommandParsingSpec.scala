@@ -36,7 +36,8 @@ object CommandParsingSpec extends FunSuite {
               excludedNS = None,
               repositories = Nil,
               dependencies = Nil,
-              transformers = Nil
+              transformers = Nil,
+              localJars = Nil
             )
           )
         )
@@ -83,7 +84,8 @@ object CommandParsingSpec extends FunSuite {
               excludedNS = None,
               repositories = List("repo1", "repo2"),
               dependencies = List("dep1", "dep2"),
-              transformers = List("t1", "t2")
+              transformers = List("t1", "t2"),
+              localJars = Nil
             )
           )
         )

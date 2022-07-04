@@ -27,5 +27,6 @@ case class CodegenArgs(
     excludedNS: Option[Set[String]],
     repositories: List[String],
     dependencies: List[String],
-    transformers: List[String]
+    transformers: List[String],
+    localJars: List[os.Path]
 )

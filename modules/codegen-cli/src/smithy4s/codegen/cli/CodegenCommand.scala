@@ -125,7 +125,8 @@ object CodegenCommand {
             excludedNS,
             repositories.getOrElse(List.empty),
             dependencies.getOrElse(List.empty),
-            transformers.getOrElse(List.empty)
+            transformers.getOrElse(List.empty),
+            localJars = List.empty
           )
       }
 
