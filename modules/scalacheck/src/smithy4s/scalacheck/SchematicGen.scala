@@ -60,12 +60,16 @@ abstract class SchematicGen2 extends SchemaVisitor[Gen] { self =>
     }
   }
 
-  def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): Gen[List[A]] =
-    length(hints).flatMap(l => Gen.listOfN(l, member.compile(this)))
-  def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): Gen[Set[A]] =
-    length(hints).flatMap(l =>
-      Gen.listOfN(l, member.compile(this)).map(_.toSet)
-    )
+  def collection[C[_], A](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: CollectionTag[C, A],
+      member: Schema[A]
+  ): Gen[C[A]] =
+    length(hints)
+      .flatMap(l => Gen.listOfN(l, member.compile(this)))
+      .map(l => tag.fromIterator(l.iterator))
+
   def map[K, V](
       shapeId: ShapeId,
       hints: Hints,
