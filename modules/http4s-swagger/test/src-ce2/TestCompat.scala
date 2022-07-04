@@ -34,5 +34,5 @@ trait TestCompat { self: BaseIOSuite with RunnableSuite[IO] =>
   }
 
   def docs(path: String) =
-    Docs[IO](service, blocker, path, swaggerUiPath = "swaggerui")
+    Docs.build[IO](blocker, path, swaggerUiPath = "swaggerui")(service)
 }

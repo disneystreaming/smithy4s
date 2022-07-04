@@ -41,7 +41,7 @@ private[smithy4s] object Compat {
       )(implicit
           F: Sync[F]
       ): HttpRoutes[F] = {
-        val docs = Docs.multiple[F](path)(first, rest: _*)
+        val docs = Docs.build[F](path)(first, rest: _*)
         docs.routes
       }
     }
@@ -55,7 +55,7 @@ private[smithy4s] object Compat {
   }
 
   trait DocsCompanion extends SwaggerUiInit {
-    def multiple[F[_]](
+    def build[F[_]](
         path: String,
         swaggerUiPath: String = swaggerUiPath
     )(id: HasId, rest: HasId*)(implicit

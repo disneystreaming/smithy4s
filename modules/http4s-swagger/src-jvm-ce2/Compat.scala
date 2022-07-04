@@ -41,7 +41,7 @@ private[smithy4s] object Compat {
           F: Sync[F],
           CS: ContextShift[F]
       ): HttpRoutes[F] = {
-        val docs = Docs.multiple[F](path, blocker)(first, rest: _*)
+        val docs = Docs.build[F](blocker, path)(first, rest: _*)
         docs.routes
       }
     }
@@ -55,20 +55,9 @@ private[smithy4s] object Compat {
   }
 
   trait DocsCompanion extends SwaggerUiInit {
-    def apply[F[_]](
-        hasId: HasId,
+    def build[F[_]](
         blocker: Blocker,
         path: String,
-        swaggerUiPath: String = swaggerUiPath
-    )(implicit
-        F: Sync[F],
-        CS: ContextShift[F]
-    ): Docs[F] =
-      multiple(path, blocker, swaggerUiPath)(id = hasId)
-
-    def multiple[F[_]](
-        path: String,
-        blocker: Blocker,
         swaggerUiPath: String = swaggerUiPath
     )(id: HasId, rest: HasId*)(implicit
         F: Sync[F],

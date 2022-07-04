@@ -28,5 +28,5 @@ trait TestCompat { self: BaseIOSuite =>
   }
 
   def docs(path: String) =
-    Docs.multiple[IO](path, swaggerUiPath = "swaggerui")(service)
+    Docs.build[IO](path, swaggerUiPath = "swaggerui")(service)
 }
