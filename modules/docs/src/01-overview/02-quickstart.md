@@ -7,7 +7,7 @@ Below is a quick example of smithy4s in action. This page does not give very muc
 
 ## project/plugins.sbt
 
-Add the smithy4s codegen plugin to your build.
+Add the `smithy4s-sbt-codegen` plugin to your build.
 
 ```scala
 addSbtPlugin("com.disneystreaming.smithy4s" % "smithy4s-sbt-codegen" % "@VERSION@")
