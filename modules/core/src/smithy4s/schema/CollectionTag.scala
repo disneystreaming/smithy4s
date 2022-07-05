@@ -64,16 +64,4 @@ object CollectionTag {
       builder.result()
     }
   }
-
-  case object ArraySeq extends CollectionTag[cols.ArraySeq] {
-    override def name: String = "ArraySeq"
-    override def iterator[A](c: cols.ArraySeq[A]): Iterator[A] = c.iterator
-
-    override def build[A](put: (A => Unit) => Unit): cols.ArraySeq[A] = {
-      // we're using any here, to avoid the `ClassTag` constraints of `newBuilder`
-      val builder = cols.ArraySeq.newBuilder[Any]
-      put(builder.+=(_))
-      builder.result().asInstanceOf[cols.ArraySeq[A]]
-    }
-  }
 }
