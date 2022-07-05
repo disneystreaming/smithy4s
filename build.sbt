@@ -520,32 +520,6 @@ lazy val `http4s-swagger` = projectMatrix
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
 
-lazy val `doc-check` = projectMatrix
-  .in(file("modules/doc-check"))
-  .dependsOn(core, http4s, `http4s-swagger`)
-  .settings(
-    Compile / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy"
-    ),
-    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
-    (Compile / resourceGenerators) := Seq(
-      genSmithyResources(Compile).taskValue
-    ),
-    isCE3 := true,
-    libraryDependencies ++= {
-      Seq(
-        Dependencies.Http4s.core.value,
-        Dependencies.Http4s.dsl.value,
-        Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value,
-        Dependencies.Http4s.circe.value,
-        Dependencies.Weaver.cats.value
-      )
-    }
-  )
-  .jvmPlatform(List(Scala213), jvmDimSettings)
-
 /**
  * Generic tests aimed at testing the implementations of the custom protocols
  * provided by smithy4s.
