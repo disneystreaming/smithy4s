@@ -46,7 +46,7 @@ object DefaultSchematic extends smithy4s.Schematic[Id] {
 
   def unit: Id[Unit] = ()
 
-  def collection[C[_], S](tag: CollectionTag[C, S], fs: Id[S]): Id[C[S]] =
+  def collection[C[_], S](tag: CollectionTag[C], fs: Id[S]): Id[C[S]] =
     tag.empty
 
   def vector[S](fs: Id[S]): Id[Vector[S]] = Vector.empty

@@ -17,35 +17,39 @@
 package smithy4s
 package schema
 
-sealed trait CollectionTag[C[_], A] {
-  def iterator(c: C[A]): Iterator[A]
-  def build(put: (A => Unit) => Unit): C[A]
+sealed trait CollectionTag[C[_]] {
+  def name: String
 
-  def fromIterator(it: Iterator[A]): C[A] = build(put => it.foreach(put(_)))
-  def empty: C[A] = build(_ => ())
+  def iterator[A](c: C[A]): Iterator[A]
+  def build[A](put: (A => Unit) => Unit): C[A]
+
+  def fromIterator[A](it: Iterator[A]): C[A] = build(put => it.foreach(put(_)))
+  def empty[A]: C[A] = build(_ => ())
 }
 
 object CollectionTag {
-  def list[A]: CollectionTag[List, A] = new CollectionTag[List, A] {
+  import scala.collection.{immutable => cols}
 
-    override def iterator(c: List[A]): Iterator[A] = c.iterator
+  case object List extends CollectionTag[List] {
+    override def name: String = "List"
 
-    override def build(put: (A => Unit) => Unit): List[A] = {
-      val builder = List.newBuilder[A]
+    override def iterator[A](c: List[A]): Iterator[A] = c.iterator
+
+    override def build[A](put: (A => Unit) => Unit): List[A] = {
+      val builder = cols.List.newBuilder[A]
       put(builder.+=(_))
       builder.result()
     }
 
   }
-  def set[A]: CollectionTag[Set, A] = new CollectionTag[Set, A] {
+  case object Set extends CollectionTag[Set] {
+    override def name: String = "Set"
+    override def iterator[A](c: Set[A]): Iterator[A] = c.iterator
 
-    override def iterator(c: Set[A]): Iterator[A] = c.iterator
-
-    override def build(put: (A => Unit) => Unit): Set[A] = {
-      val builder = Set.newBuilder[A]
+    override def build[A](put: (A => Unit) => Unit): Set[A] = {
+      val builder = cols.Set.newBuilder[A]
       put(builder.+=(_))
       builder.result()
     }
-
   }
 }

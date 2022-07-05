@@ -101,7 +101,7 @@ private[http] class SchemaVisitorMetadataReader()
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
-      tag: CollectionTag[C, A],
+      tag: CollectionTag[C],
       member: Schema[A]
   ): MetaDecode[C[A]] = {
     self(member) match {

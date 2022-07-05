@@ -22,7 +22,7 @@ import Schema._
 // format: off
 trait SchemaVisitor[F[_]] extends (Schema ~> F) {
   def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) : F[P]
-  def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C, A], member: Schema[A]): F[C[A]]
+  def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]]
   def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K, V]]
   def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]) : F[E]
   def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : F[S]

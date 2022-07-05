@@ -56,7 +56,7 @@ trait StubSchematic[F[_]] extends Schematic[F] {
   override def withHints[A](fa: F[A], hints: Hints): F[A] = default
 
   override def collection[C[_], S](
-      tag: CollectionTag[C, S],
+      tag: CollectionTag[C],
       fs: F[S]
   ): F[C[S]] = default
 

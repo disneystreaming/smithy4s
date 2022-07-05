@@ -428,7 +428,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
   }
 
-  private def listImpl[C[_], A](tag: CollectionTag[C, A], member: Schema[A]) =
+  private def listImpl[C[_], A](tag: CollectionTag[C], member: Schema[A]) =
     new JCodec[C[A]] {
       private[this] val a: JCodec[A] = apply(member)
       def expecting: String = "list"
@@ -479,7 +479,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
-      tag: CollectionTag[C, A],
+      tag: CollectionTag[C],
       member: Schema[A]
   ): JCodec[C[A]] = listImpl(tag, member)
 
@@ -545,7 +545,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     val kvCodec = Schema.struct(Vector(kField, vField))(vec =>
       (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V])
     )
-    listImpl(CollectionTag.list[(K, V)], kvCodec).biject(_.toMap, _.toList)
+    listImpl(CollectionTag.List, kvCodec).biject(_.toMap, _.toList)
   }
 
   override def map[K, V](

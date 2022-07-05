@@ -230,7 +230,7 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
     })
 
   def collection[C[_], S](
-      tag: CollectionTag[C, S],
+      tag: CollectionTag[C],
       fs: DocumentDecoderMake[S]
   ): DocumentDecoderMake[C[S]] =
     fs.transform { fa =>

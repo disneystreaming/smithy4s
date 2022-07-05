@@ -41,7 +41,7 @@ trait Schematic[F[_]] {
   def timestamp: F[Timestamp]
 
   // collections
-  def collection[C[_], S](tag: CollectionTag[C, S], fs: F[S]): F[C[S]]
+  def collection[C[_], S](tag: CollectionTag[C], fs: F[S]): F[C[S]]
   def map[K, V](fk: F[K], fv: F[V]): F[Map[K, V]]
 
   // Other

@@ -114,7 +114,7 @@ object SchematicDocumentEncoder extends Schematic[DocumentEncoderMake] {
   def unit: DocumentEncoderMake[Unit] = fromNotKey(_ => DObject(Map.empty))
 
   def collection[C[_], S](
-      tag: CollectionTag[C, S],
+      tag: CollectionTag[C],
       fs: DocumentEncoderMake[S]
   ): DocumentEncoderMake[C[S]] =
     fs.transform(encoderS =>

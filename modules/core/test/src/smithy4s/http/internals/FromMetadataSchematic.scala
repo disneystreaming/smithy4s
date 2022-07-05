@@ -71,7 +71,7 @@ object FromMetadataSchematic extends Schematic[FromMetadata] {
   def document: FromMetadata[Document] = FromMetadata.default
 
   def collection[C[_], S](
-      tag: CollectionTag[C, S],
+      tag: CollectionTag[C],
       fs: FromMetadata[S]
   ): FromMetadata[C[S]] = FromMetadata.default
 

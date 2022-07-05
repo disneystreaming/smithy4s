@@ -60,7 +60,7 @@ object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
-      tag: CollectionTag[C, A],
+      tag: CollectionTag[C],
       member: Schema[A]
   ): MaybePathEncode[C[A]] = default
 

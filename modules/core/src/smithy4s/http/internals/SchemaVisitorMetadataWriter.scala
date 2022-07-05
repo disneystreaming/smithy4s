@@ -88,7 +88,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
-      tag: CollectionTag[C, A],
+      tag: CollectionTag[C],
       member: Schema[A]
   ): MetaEncode[C[A]] = {
     self(member) match {

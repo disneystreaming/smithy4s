@@ -88,7 +88,7 @@ sealed trait Schema[A]{
 
 object Schema {
   final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
-  final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C, A], member: Schema[A]) extends Schema[C[A]]
+  final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
   final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
@@ -137,8 +137,8 @@ object Schema {
 
   private val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
 
-  def list[A](a: Schema[A]): Schema[List[A]] = Schema.CollectionSchema[List, A](placeholder, Hints.empty, CollectionTag.list, a)
-  def set[A](a: Schema[A]): Schema[Set[A]] = Schema.CollectionSchema[Set, A](placeholder, Hints.empty, CollectionTag.set, a)
+  def list[A](a: Schema[A]): Schema[List[A]] = Schema.CollectionSchema[List, A](placeholder, Hints.empty, CollectionTag.List, a)
+  def set[A](a: Schema[A]): Schema[Set[A]] = Schema.CollectionSchema[Set, A](placeholder, Hints.empty, CollectionTag.Set, a)
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
   def recursive[A](s : => Schema[A]) : Schema[A] = Schema.LazySchema(Lazy(s))
 

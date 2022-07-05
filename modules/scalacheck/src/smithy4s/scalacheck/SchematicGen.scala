@@ -63,7 +63,7 @@ abstract class SchematicGen2 extends SchemaVisitor[Gen] { self =>
   def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
-      tag: CollectionTag[C, A],
+      tag: CollectionTag[C],
       member: Schema[A]
   ): Gen[C[A]] =
     length(hints)
