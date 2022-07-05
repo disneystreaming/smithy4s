@@ -42,6 +42,7 @@ object CollectionTag {
     }
 
   }
+
   case object Set extends CollectionTag[Set] {
     override def name: String = "Set"
     override def iterator[A](c: Set[A]): Iterator[A] = c.iterator
@@ -50,6 +51,29 @@ object CollectionTag {
       val builder = cols.Set.newBuilder[A]
       put(builder.+=(_))
       builder.result()
+    }
+  }
+
+  case object Vector extends CollectionTag[Vector] {
+    override def name: String = "Vector"
+    override def iterator[A](c: Vector[A]): Iterator[A] = c.iterator
+
+    override def build[A](put: (A => Unit) => Unit): Vector[A] = {
+      val builder = cols.Vector.newBuilder[A]
+      put(builder.+=(_))
+      builder.result()
+    }
+  }
+
+  case object ArraySeq extends CollectionTag[cols.ArraySeq] {
+    override def name: String = "ArraySeq"
+    override def iterator[A](c: cols.ArraySeq[A]): Iterator[A] = c.iterator
+
+    override def build[A](put: (A => Unit) => Unit): cols.ArraySeq[A] = {
+      // we're using any here, to avoid the `ClassTag` constraints of `newBuilder`
+      val builder = cols.ArraySeq.newBuilder[Any]
+      put(builder.+=(_))
+      builder.result().asInstanceOf[cols.ArraySeq[A]]
     }
   }
 }
