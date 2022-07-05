@@ -35,10 +35,11 @@ object ModelLoader {
       dependencies: List[String],
       repositories: List[String],
       transformers: List[String],
-      discoverModels: Boolean
+      discoverModels: Boolean,
+      localJars: List[os.Path]
   ): (ClassLoader, Model) = {
     val allDeps = dependencies
-    val maybeDeps = resolveDependencies(allDeps, repositories)
+    val maybeDeps = resolveDependencies(allDeps, localJars, repositories)
     val currentClassLoader = this.getClass().getClassLoader()
 
     // Loads a model using whatever's on the current classpath (in particular, anything that
@@ -101,6 +102,7 @@ object ModelLoader {
 
   private def resolveDependencies(
       dependencies: List[String],
+      localJars: List[os.Path],
       repositories: List[String]
   ): Option[Array[URL]] = {
     val maybeRepos = RepositoryParser.repositories(repositories).either
@@ -124,12 +126,19 @@ object ModelLoader {
         )
       case Right(d) => d
     }
-    if (dependencies.nonEmpty) Some {
-      val fetch = Fetch().addRepositories(repos: _*).addDependencies(deps: _*)
-      val files = fetch.run()
-      files.map(_.toURI().toURL()).toArray
+    val resolvedDeps: Seq[java.io.File] =
+      if (deps.nonEmpty) {
+        val fetch = Fetch().addRepositories(repos: _*).addDependencies(deps: _*)
+        fetch.run()
+      } else {
+        Seq.empty
+      }
+    val allDeps = resolvedDeps ++ localJars.map(_.toIO)
+    if (allDeps.nonEmpty) {
+      Some(allDeps.map(_.toURI().toURL()).toArray)
+    } else {
+      None
     }
-    else None
   }
 
   implicit class ModelAssemblerOps(assembler: ModelAssembler) {
