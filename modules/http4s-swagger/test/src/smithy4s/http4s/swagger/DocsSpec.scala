@@ -32,8 +32,8 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
 
   def docs(path: String) =
     mkDocs
-      .withPath(path)(service)
-      // .withSwaggerUiPath("swaggerui")(service)
+      .withPath(path)
+      .withSwaggerUiResources("swaggerui")(service)
 
   List("docs", "example/docs", "very/long/example/docs").foreach { path =>
     val app = docs(path).orNotFound

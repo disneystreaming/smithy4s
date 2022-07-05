@@ -54,7 +54,9 @@ private[smithy4s] object Compat {
       def withPath(path: String): PartiallyAppliedDocs[F] =
         this.copy(path = path)
 
-      def withSwaggerUiPath(swaggerUiPath: String): PartiallyAppliedDocs[F] =
+      def withSwaggerUiResources(
+          swaggerUiPath: String
+      ): PartiallyAppliedDocs[F] =
         this.copy(swaggerUiPath = swaggerUiPath)
     }
   }

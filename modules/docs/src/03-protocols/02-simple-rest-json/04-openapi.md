@@ -54,7 +54,7 @@ object Docs {
   val customSetup =
      smithy4s.http4s.swagger.docs[IO]
       .withPath("custom-docs")
-      .withSwaggerUiPath("/swagger-ui-path")(HelloWorldService)
+      .withSwaggerUiResources("/META-INF/custom-swagger-ui")(HelloWorldService)
 }
 ```
 
