@@ -234,7 +234,7 @@ object SchematicDocumentDecoder extends Schematic[DocumentDecoderMake] {
       fs: DocumentDecoderMake[S]
   ): DocumentDecoderMake[C[S]] =
     fs.transform { fa =>
-      DocumentDecoder.instance("Collection", "Array", false) {
+      DocumentDecoder.instance(tag.name, "Array", false) {
         case (pp, DArray(value)) =>
           tag.fromIterator(value.iterator.zipWithIndex.map {
             case (document, index) =>
