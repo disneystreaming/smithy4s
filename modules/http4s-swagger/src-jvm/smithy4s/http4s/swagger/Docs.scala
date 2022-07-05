@@ -25,14 +25,19 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.Location
 import org.http4s.HttpRoutes
 import org.webjars.WebJarAssetLocator
+import cats.data.OptionT
 
 private[smithy4s] abstract class Docs[F[_]](
     ids: NonEmptyList[HasId],
     path: String,
     swaggerUiPath: String
 )(implicit F: Sync[F])
-    extends Http4sDsl[F]
-    with Compat.DocsClass[F] {
+    extends Http4sDsl[F] {
+
+  def staticResource(
+      name: String,
+      req: Option[Request[F]]
+  ): OptionT[F, Response[F]]
 
   private def toSwaggerUrl(id: HasId): (String, SwaggerInit.SwaggerUrl) = {
     val jsonSpec = id.id.namespace + '.' + id.id.name + ".json"
@@ -67,14 +72,13 @@ private[smithy4s] abstract class Docs[F[_]](
       staticResource(jsonSpec, Some(request))
         .getOrElseF(InternalServerError())
   }
+
 }
 
-object Docs extends Compat.DocsCompanion {}
-
-trait SwaggerUiInit {
+private[smithy4s] trait SwaggerUiInit {
   private[this] lazy val swaggerUiVersion: String =
     new WebJarAssetLocator().getWebJars.get("swagger-ui-dist")
 
-  protected lazy val swaggerUiPath =
+  protected lazy val swaggerUiResourcePath =
     s"META-INF/resources/webjars/swagger-ui-dist/$swaggerUiVersion"
 }

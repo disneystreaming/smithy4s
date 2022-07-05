@@ -17,12 +17,10 @@
 package smithy4s
 package http4s.swagger
 
-import cats.data.OptionT
 import cats.data.NonEmptyList
 import cats.effect._
 import org.http4s.HttpRoutes
 import org.http4s.Request
-import org.http4s.Response
 import org.http4s.StaticFile
 
 private[smithy4s] object Compat {
@@ -30,50 +28,34 @@ private[smithy4s] object Compat {
     private[smithy4s] type EffectCompat[F[_]] = cats.effect.Sync[F]
     private[smithy4s] val EffectCompat = cats.effect.Sync
 
-    def docs: PartiallyAppliedDocs =
-      new PartiallyAppliedDocs("docs", swaggerUiPath)
+    def docs[F[_]](blocker: Blocker): PartiallyAppliedDocs[F] =
+      new PartiallyAppliedDocs[F](blocker, "docs", "swagger-ui")
 
-    case class PartiallyAppliedDocs(path: String, swaggerUiPath: String) {
-      def apply[F[_]](
-          blocker: Blocker,
+    case class PartiallyAppliedDocs[F[_]](
+        blocker: Blocker,
+        path: String,
+        swaggerUiPath: String
+    ) {
+      def apply(
           first: HasId,
           rest: HasId*
       )(implicit
           F: Sync[F],
           CS: ContextShift[F]
       ): HttpRoutes[F] = {
-        val docs = Docs.build[F](blocker, path, swaggerUiPath)(first, rest: _*)
+        val docs =
+          new Docs[F](NonEmptyList(first, rest.toList), path, swaggerUiPath) {
+            override def staticResource(name: String, req: Option[Request[F]]) =
+              StaticFile.fromResource(name, blocker, req)
+          }
         docs.routes
       }
 
-      def withPath(path: String): PartiallyAppliedDocs =
+      def withPath(path: String): PartiallyAppliedDocs[F] =
         this.copy(path = path)
 
-      def withSwaggerUiPath(swaggerUiPath: String): PartiallyAppliedDocs =
+      def withSwaggerUiPath(swaggerUiPath: String): PartiallyAppliedDocs[F] =
         this.copy(swaggerUiPath = swaggerUiPath)
-    }
-  }
-
-  trait DocsClass[F[_]] {
-    def staticResource(
-        name: String,
-        req: Option[Request[F]]
-    ): OptionT[F, Response[F]]
-  }
-
-  trait DocsCompanion {
-    def build[F[_]](
-        blocker: Blocker,
-        path: String,
-        swaggerUiPath: String
-    )(id: HasId, rest: HasId*)(implicit
-        F: Sync[F],
-        CS: ContextShift[F]
-    ): Docs[F] = {
-      new Docs[F](NonEmptyList(id, rest.toList), path, swaggerUiPath) {
-        override def staticResource(name: String, req: Option[Request[F]]) =
-          StaticFile.fromResource(name, blocker, req)
-      }
     }
   }
 

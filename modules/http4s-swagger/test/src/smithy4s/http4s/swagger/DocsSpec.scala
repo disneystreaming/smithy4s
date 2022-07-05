@@ -21,11 +21,22 @@ import org.http4s._
 import org.http4s.implicits._
 import org.typelevel.ci.CIString
 import weaver._
+import smithy4s.HasId
+import smithy4s.ShapeId
 
 object DocsSpec extends SimpleIOSuite with TestCompat {
 
+  def service = new HasId {
+    def id: ShapeId = ShapeId("foobar", "test-spec")
+  }
+
+  def docs(path: String) =
+    mkDocs
+      .withPath(path)(service)
+      // .withSwaggerUiPath("swaggerui")(service)
+
   List("docs", "example/docs", "very/long/example/docs").foreach { path =>
-    val app = docs(path).routes.orNotFound
+    val app = docs(path).orNotFound
 
     test(s"GET /$path redirects to expected location") {
       val request =
@@ -92,7 +103,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
     val filePath = "/foobar.test-spec.json"
     val request =
       Request[IO](method = Method.GET, uri = Uri.unsafeFromString(filePath))
-    val app = docs("docs").routes.orNotFound
+    val app = docs("docs").orNotFound
     app.run(request).map { response =>
       expect(response.status == Status.Ok)
     }
@@ -102,7 +113,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
     val filePath = s"/irrelevant"
     val request =
       Request[IO](method = Method.GET, uri = Uri.unsafeFromString(filePath))
-    val app = docs("docs").routes.orNotFound
+    val app = docs("docs").orNotFound
     app.run(request).map { response =>
       expect(response.status == Status.NotFound)
     }

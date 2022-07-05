@@ -52,9 +52,9 @@ object Docs {
   // documentation served at /custom-docs with swagger assets from `/swagger-ui-path`
   // (from the classpath) being used.
   val customSetup =
-     smithy4s.http4s.swagger.docs
+     smithy4s.http4s.swagger.docs[IO]
       .withPath("custom-docs")
-      .withSwaggerUiPath("/swagger-ui-path")[IO](HelloWorldService)
+      .withSwaggerUiPath("/swagger-ui-path")(HelloWorldService)
 }
 ```
 
