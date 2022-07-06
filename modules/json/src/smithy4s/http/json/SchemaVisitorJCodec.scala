@@ -517,6 +517,51 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       out.encodeError("Cannot use vectors as keys")
   }
 
+  private def indexedSeq[A](
+      member: Schema[A]
+  ): JCodec[IndexedSeq[A]] = new JCodec[IndexedSeq[A]] {
+    private[this] val a = apply(member)
+    def expecting: String = "list"
+
+    override def canBeKey: Boolean = false
+
+    def decodeValue(cursor: Cursor, in: JsonReader): IndexedSeq[A] =
+      if (in.isNextToken('[')) {
+        if (in.isNextToken(']')) Vector.empty
+        else {
+          in.rollbackToken()
+          CollectionTag.IndexedSeqTag.compactBuilder(member) { put =>
+            var i = 0
+            while ({
+              if (i >= maxArity)
+                throw cursor.payloadError(
+                  this,
+                  s"input $expecting exceeded max arity of `$maxArity`"
+                )
+              put(cursor.under(i)(cursor.decode(a, in)))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (!in.isCurrentToken(']')) {
+              in.arrayEndOrCommaError()
+            }
+          }
+        }
+      } else in.decodeError("Expected JSON array")
+
+    def encodeValue(xs: IndexedSeq[A], out: JsonWriter): Unit = {
+      out.writeArrayStart()
+      xs.foreach(x => a.encodeValue(x, out))
+      out.writeArrayEnd()
+    }
+
+    def decodeKey(in: JsonReader): IndexedSeq[A] =
+      in.decodeError("Cannot use vectors as keys")
+
+    def encodeKey(xs: IndexedSeq[A], out: JsonWriter): Unit =
+      out.encodeError("Cannot use vectors as keys")
+  }
+
   private def set[A](
       member: Schema[A]
   ): JCodec[Set[A]] = new JCodec[Set[A]] {
@@ -632,9 +677,10 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       member: Schema[A]
   ): JCodec[C[A]] = {
     tag match {
-      case CollectionTag.List   => listImpl(member)
-      case CollectionTag.Set    => set(member)
-      case CollectionTag.Vector => vector(member)
+      case CollectionTag.ListTag       => listImpl(member)
+      case CollectionTag.SetTag        => set(member)
+      case CollectionTag.VectorTag     => vector(member)
+      case CollectionTag.IndexedSeqTag => indexedSeq(member)
     }
   }
 
