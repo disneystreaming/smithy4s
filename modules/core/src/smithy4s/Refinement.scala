@@ -42,13 +42,13 @@ trait Refinement[A, B] { self =>
   final val asFunction: A => Either[ConstraintError, B] =
     (a: A) =>
       apply(a).left.map(msg =>
-        ConstraintError(Hints.Binding(tag, constraint), msg)
+        ConstraintError(Hints.Binding.StaticBinding(tag, constraint), msg)
       )
 
   final val asThrowingFunction: A => B =
     apply(_) match {
       case Left(msg) =>
-        throw ConstraintError(Hints.Binding(tag, constraint), msg)
+        throw ConstraintError(Hints.Binding.StaticBinding(tag, constraint), msg)
       case Right(b) => b
     }
 

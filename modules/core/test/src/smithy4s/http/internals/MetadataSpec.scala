@@ -113,8 +113,7 @@ class MetadataSpec() extends FunSuite {
     expect.same(result, Some(Right(a)))
   }
 
-  val epochString =
-    if (Platform.isJS) "1970-01-01T00:00:00.000Z" else "1970-01-01T00:00:00Z"
+  val epochString = "1970-01-01T00:00:00Z"
 
   val constraintMessage1 =
     "length required to be >= 1 and <= 10, but was 11"
@@ -192,9 +191,9 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("timestamp query parameters (epoch-seconds format)") {
-    val ts = Timestamp.fromEpochSecond(1984)
+    val ts = Timestamp(1234567890L, 0)
     val queries = Queries(ts3 = Some(ts))
-    val expected = Metadata(query = Map("ts3" -> List("1984")))
+    val expected = Metadata(query = Map("ts3" -> List("1234567890")))
     checkRoundTrip(queries, expected)
   }
 
@@ -258,9 +257,9 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("timestamp header (epoch-seconds format)") {
-    val ts = Timestamp.fromEpochSecond(1984)
+    val ts = Timestamp(1234567890L, 0)
     val headers = Headers(ts3 = Some(ts))
-    val expected = Metadata.empty.addHeader("ts3", "1984")
+    val expected = Metadata.empty.addHeader("ts3", "1234567890")
     checkRoundTrip(headers, expected)
   }
 
@@ -301,14 +300,13 @@ class MetadataSpec() extends FunSuite {
 
   test("pathParams") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val ts1984 = Timestamp.fromEpochSecond(1984)
 
     val pathParams = PathParams(
       str = "hello",
       int = 123,
       ts1 = ts,
       ts2 = ts,
-      ts3 = ts1984,
+      ts3 = Timestamp(1234567890L, 0),
       ts4 = ts,
       b = false
     )
@@ -321,7 +319,7 @@ class MetadataSpec() extends FunSuite {
           "b" -> "false",
           "ts1" -> epochString,
           "ts2" -> epochString,
-          "ts3" -> "1984",
+          "ts3" -> "1234567890",
           "ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"
         )
       )

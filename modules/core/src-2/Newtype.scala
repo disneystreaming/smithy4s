@@ -32,8 +32,11 @@ abstract class Newtype[A] extends HasId { self =>
     @inline final def value: A = Newtype.this.value(self)
   }
 
+  def schema: Schema[Type]
+
   implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
     def id: ShapeId = self.id
+    def schema: Schema[Type] = self.schema
   }
 
   def unapply(t: Type): Some[A] = Some(t.value)

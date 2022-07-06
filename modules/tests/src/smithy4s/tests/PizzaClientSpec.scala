@@ -46,7 +46,7 @@ abstract class PizzaClientSpec extends IOSuite {
 
   clientTest("Errors make it through") { (client, backend, log) =>
     for {
-      ts <- IO(Timestamp.nowUTC())
+      ts <- IO(Timestamp(Timestamp.nowUTC().epochSecond, 0))
       uuid <- UUIDGen.randomUUID[IO]
       response <- Created(
         Json.fromString(uuid.toString),

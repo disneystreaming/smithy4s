@@ -108,15 +108,19 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       List[String]
   )
 
-  private def prepareSmithy4sDeps(deps: Seq[ModuleID]): List[String] =
-    deps
-      .filter { _.configurations.contains(Smithy4s.name) }
-      .map { m =>
-        if (CrossVersion.disabled == m.crossVersion)
-          s"${m.organization}:${m.name}:${m.revision}"
-        else s"${m.organization}::${m.name}:${m.revision}"
-      }
-      .toList
+  private def findCodeGenDependencies(
+      updateReport: UpdateReport
+  ): List[os.Path] =
+    for {
+      smithy4sConfigReport <- updateReport.configurations
+        .find(_.configuration.name == Smithy4s.name)
+        .toList
+      module <- smithy4sConfigReport.modules
+      artifactFile <- module.artifacts
+    } yield {
+      val (_, file) = artifactFile
+      os.Path(file)
+    }
 
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
@@ -127,7 +131,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
-    val dependencies = prepareSmithy4sDeps(libraryDependencies.value)
+    val updateReport = (conf / update).value
+    val localJars = findCodeGenDependencies(updateReport)
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
@@ -156,8 +161,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
                   allowedNS = allowedNamespaces,
                   excludedNS = excludedNamespaces,
                   repositories = res,
-                  dependencies = dependencies,
-                  transforms
+                  dependencies = List.empty,
+                  transformers = transforms,
+                  localJars = localJars
                 )
                 val resPaths = smithy4s.codegen.Codegen
                   .processSpecs(codegenArgs)
@@ -171,7 +177,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
 
     cached(
-      (FilesInfo(inputFiles.map(FileInfo.hash(_)).toSet), dependencies)
+      (
+        FilesInfo(inputFiles.map(FileInfo.hash(_)).toSet),
+        localJars.map(_.toString)
+      )
     )
   }
 }

@@ -29,9 +29,9 @@ import org.scalacheck.Prop._
 class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
   def doMatch(segments: List[PathSegment])(
-      string: String
+      path: String*
   ): Option[Map[String, String]] =
-    matchPath(segments.toList, matchPath.make(string))
+    matchPath(segments.toList, path.toArray)
 
   implicit def arbNel[T: Arbitrary]: Arbitrary[NonEmptyList[T]] = Arbitrary {
     Gen.resultOf(NonEmptyList.apply[T] _)
@@ -61,7 +61,7 @@ class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 
   property("Doesn't throw on empty path") {
     forAll { (segments: NonEmptyList[PathSegment]) =>
-      expect.eql(doMatch(segments.toList)("/"), None)
+      expect.eql(doMatch(segments.toList)(), None)
     }
   }
 
@@ -72,37 +72,23 @@ class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     )
     forAll(gen) { case (prefix, segments) =>
       val fullPath = prefix ::: segments.toList
-      val actual = prefix.map(renderExampleSegment).mkString("/")
-      expect.eql(doMatch(fullPath)(actual), None)
+      val actual = prefix.map(renderExampleSegment)
+      expect.eql(doMatch(fullPath)(actual: _*), None)
     }
   }
 
-  test("Is lenient with regards to trailing slashes") {
-    // /{foo}
-    val path: List[PathSegment] =
-      List(PathSegment.label("foo"))
-    val expected = Map("foo" -> "bar")
-    val result = doMatch(path)("/bar")
-    val result2 = doMatch(path)("/bar/")
-
-    expect.eql(result, Some(expected))
-    expect.eql(result2, Some(expected))
-  }
-
   test("Allows for greedy labels") {
-    // /{foo}
+    // /hello/{foo*}
     val path: List[PathSegment] =
       List(PathSegment.static("hello"), PathSegment.greedy("foo"))
     val expected = Map("foo" -> "foo/bar/baz")
-    val result = doMatch(path)("/hello/foo/bar/baz")
-    val result2 = doMatch(path)("/hello/foo/bar/baz/")
+    val result = doMatch(path)("hello", "foo", "bar", "baz")
 
     expect.eql(result, Some(expected))
-    expect.eql(result2, Some(expected))
   }
 
   test("Match several segments") {
-    // /{foo}
+    // /{foo}/bar/{baz}
     val path: List[PathSegment] =
       List(
         PathSegment.label("foo"),
@@ -110,11 +96,36 @@ class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
         PathSegment.label("baz")
       )
     val expected = Map("foo" -> "a", "baz" -> "b")
-    val result = doMatch(path)("/a/bar/b/")
-    val result2 = doMatch(path)("/a/baz/b")
+    val result = doMatch(path)("a", "bar", "b")
 
     expect.eql(result, Some(expected))
-    expect.eql(result2, None)
+  }
+
+  test("Decodes URLencoded characters in path segments") {
+    // /{foo}/hello
+    val path: List[PathSegment] =
+      List(
+        PathSegment.label("foo"),
+        PathSegment.static("hello")
+      )
+
+    val result = doMatch(path)("hello world", "hello")
+
+    val expected = Map("foo" -> "hello world")
+    expect.eql(result, Some(expected))
+  }
+  test("Decodes URLencoded characters in greedy segments") {
+    // /hello/{foo*}
+    val path: List[PathSegment] =
+      List(
+        PathSegment.static("hello"),
+        PathSegment.greedy("foo")
+      )
+
+    val result = doMatch(path)("hello", "hello world", "goodbye world")
+
+    val expected = Map("foo" -> "hello world/goodbye world")
+    expect.eql(result, Some(expected))
   }
 
 }

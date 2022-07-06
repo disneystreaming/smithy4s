@@ -17,7 +17,7 @@
 package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
 
   type ~>[F[_], G[_]] = PolyFunction[F, G]
-  type Hint = Hints.Binding[_]
+  type Hint = Hints.Binding
   type Schema[A] = schema.Schema[A]
   val Schema: schema.Schema.type = schema.Schema
   type Schematic[F[_]] = schema.Schematic[F]
@@ -37,7 +37,7 @@ package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
   ): Either[UnsupportedProtocolError, Unit] =
     service.hints
       .get(protocolTag)
-      .toRight(UnsupportedProtocolError(service, protocolTag))
+      .toRight(UnsupportedProtocolError(service, protocolTag.id))
       .map(_ => ())
 
 }

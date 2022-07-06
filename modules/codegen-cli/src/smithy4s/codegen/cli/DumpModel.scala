@@ -27,7 +27,8 @@ object DumpModel {
       args.dependencies,
       args.repositories,
       args.transformers,
-      discoverModels = false
+      discoverModels = false,
+      args.localJars
     )
 
     Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))

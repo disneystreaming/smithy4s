@@ -111,8 +111,52 @@ abstract class PizzaSpec
       expected = expectedMenu(pizzaId)
     } yield {
       expect(body2 == expected) &&
-      expect(addedAt.head.toLong != 0)
+      expect(addedAt.head.toDouble != 0)
     }
+  }
+
+  routerTest("path that returns NotFound") { case (client, uri, log) =>
+    val getPizza = GET(
+      menuItem,
+      uri / "restaurant" / "unknown" / "menu"
+    )
+
+    for {
+      res <- client.send[Json](getPizza, log)
+      (code, headers, body) = res
+    } yield {
+      expect(code == 404) &&
+      expect(headers.get("X-Error-Type") == Some(List("NotFoundError"))) &&
+      expect(
+        body == Json.obj(
+          "name" -> Json.fromString(
+            "unknown"
+          )
+        )
+      )
+    }
+  }
+
+  routerTest("path with special characters in parameter") {
+    (client, uri, log) =>
+      val createPizza = GET(
+        menuItem,
+        uri / "restaurant" / "foo with spaces and % percentages" / "menu"
+      )
+
+      for {
+        res <- client.send[Json](createPizza, log)
+        (code, headers, body) = res
+      } yield {
+        expect(code == 404) &&
+        expect(
+          body == Json.obj(
+            "name" -> Json.fromString(
+              "foo with spaces and % percentages"
+            )
+          )
+        )
+      }
   }
 
   val customErrorLabel = """|Negative:
@@ -357,24 +401,30 @@ abstract class PizzaSpec
     "X-mIxEd-HeAdEr"
   )
 
+  // note: these aren't really part of the pizza suite
+
   pureTest("Happy path: httpMatch") {
     val matchResult = smithy4s.http
       .httpMatch(
         PizzaAdminService,
         smithy4s.http.HttpMethod.POST,
-        "/restaurant/foo/menu/item"
+        Vector("restaurant", "foo", "menu", "item")
       )
       .map { case (endpoint, _, map) =>
         endpoint.name -> map
       }
-    expect(matchResult == Some(("AddMenuItem", Map("restaurant" -> "foo"))))
+    expect(
+      matchResult == Some(
+        ("AddMenuItem", Map("restaurant" -> "foo"))
+      )
+    )
   }
 
   pureTest("Negative: http no match (bad path)") {
     val matchResult = smithy4s.http.httpMatch(
       PizzaAdminService,
       smithy4s.http.HttpMethod.POST,
-      "/restaurants/foo/menu/item"
+      Vector("restaurants", "foo", "menu", "item")
     )
     expect(matchResult == None)
   }
@@ -383,7 +433,7 @@ abstract class PizzaSpec
     val matchResult = smithy4s.http.httpMatch(
       PizzaAdminService,
       smithy4s.http.HttpMethod.PATCH,
-      "/restaurant/foo/menu/item"
+      Vector("restaurant", "foo", "menu", "item")
     )
     expect(matchResult == None)
   }

@@ -180,7 +180,7 @@ private[http] class SchemaVisitorMetadataReader()
       val fieldHints = field.hints
       HttpBinding.fromHints(label, fieldHints, hints).map { binding =>
         val decoder: MetaDecode[_] =
-          self(schema.addHints(Hints(binding) ++ fieldHints))
+          self(schema.addHints(Hints(binding)))
         val update = decoder
           .updateMetadata(binding, label, field.isOptional, reservedQueries)
         FieldDecode(label, binding, update)

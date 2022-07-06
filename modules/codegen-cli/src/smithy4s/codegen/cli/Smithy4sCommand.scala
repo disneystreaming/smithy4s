@@ -27,7 +27,8 @@ object Smithy4sCommand {
       specs: List[os.Path],
       repositories: List[String],
       dependencies: List[String],
-      transformers: List[String]
+      transformers: List[String],
+      localJars: List[os.Path]
   )
 
 }

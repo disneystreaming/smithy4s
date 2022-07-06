@@ -17,54 +17,48 @@
 package smithy4s
 package http4s.swagger
 
-import cats.data.OptionT
+import cats.data.NonEmptyList
 import cats.effect._
 import org.http4s.HttpRoutes
 import org.http4s.Request
-import org.http4s.Response
 import org.http4s.StaticFile
 
 private[smithy4s] object Compat {
-  trait Package {
+  trait Package extends SwaggerUiInit {
     private[smithy4s] type EffectCompat[F[_]] = cats.effect.Sync[F]
     private[smithy4s] val EffectCompat = cats.effect.Sync
 
-    def docs[F[_]](
-        hasId: HasId,
-        blocker: Blocker,
-        path: String = "docs"
-    )(implicit
-        F: Sync[F],
-        CS: ContextShift[F]
-    ): HttpRoutes[F] = {
-      val docs = Docs[F](hasId, blocker, path)
-      docs.routes
-    }
-  }
+    def docs[F[_]](blocker: Blocker): PartiallyAppliedDocs[F] =
+      new PartiallyAppliedDocs[F](blocker, "docs", "swagger-ui")
 
-  trait DocsClass[F[_]] {
-    def staticResource(
-        name: String,
-        req: Option[Request[F]]
-    ): OptionT[F, Response[F]]
-  }
-
-  trait DocsCompanion extends SwaggerUiInit {
-    def apply[F[_]](
-        hasId: HasId,
+    case class PartiallyAppliedDocs[F[_]](
         blocker: Blocker,
         path: String,
-        swaggerUiPath: String = swaggerUiPath
-    )(implicit
-        F: Sync[F],
-        CS: ContextShift[F]
-    ): Docs[F] = {
-      new Docs[F](hasId, path, swaggerUiPath) {
-
-        override def staticResource(name: String, req: Option[Request[F]]) =
-          StaticFile.fromResource(name, blocker, req)
+        swaggerUiPath: String
+    ) {
+      def apply(
+          first: HasId,
+          rest: HasId*
+      )(implicit
+          F: Sync[F],
+          CS: ContextShift[F]
+      ): HttpRoutes[F] = {
+        val docs =
+          new Docs[F](NonEmptyList(first, rest.toList), path, swaggerUiPath) {
+            override def staticResource(name: String, req: Option[Request[F]]) =
+              StaticFile.fromResource(name, blocker, req)
+          }
+        docs.routes
       }
-    }
 
+      def withPath(path: String): PartiallyAppliedDocs[F] =
+        this.copy(path = path)
+
+      def withSwaggerUiResources(
+          swaggerUiPath: String
+      ): PartiallyAppliedDocs[F] =
+        this.copy(swaggerUiPath = swaggerUiPath)
+    }
   }
+
 }

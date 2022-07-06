@@ -43,13 +43,13 @@ private[aws] object AwsSchematicJCodec
     val expecting: String = "instant (epoch second)"
 
     def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
-      Timestamp.fromEpochSecond(in.readDouble().toLong)
+      Timestamp(in.readDouble().toLong, 0)
 
     def encodeValue(x: Timestamp, out: JsonWriter): Unit =
       out.writeVal(x.epochSecond)
 
     def decodeKey(in: JsonReader): Timestamp =
-      Timestamp.fromEpochSecond(in.readKeyAsDouble().toLong)
+      Timestamp(in.readKeyAsDouble().toLong, 0)
 
     def encodeKey(x: Timestamp, out: JsonWriter): Unit =
       out.writeKey(x.epochSecond)

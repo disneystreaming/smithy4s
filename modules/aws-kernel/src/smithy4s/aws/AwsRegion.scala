@@ -16,11 +16,14 @@
 
 package smithy4s.aws.kernel
 
+import smithy4s.schema.Schema
+
 import smithy4s.Newtype
 
 object AwsRegion extends Newtype[String] {
 
   val id = smithy4s.ShapeId("smithy4s.aws", "AwsRegion")
+  val schema = Schema.bijection(Schema.string, apply, value).withId(id)
 
   val AF_SOUTH_1: AwsRegion = apply("af-south-1")
   val AP_EAST_1: AwsRegion = apply("ap-east-1")
