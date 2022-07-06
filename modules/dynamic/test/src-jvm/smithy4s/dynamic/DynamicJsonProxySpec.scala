@@ -30,9 +30,7 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
 
   def kvStoreResource: IO[KVStore[IO]] = {
     IO(scala.collection.mutable.Map.empty[String, String])
-      .map { ref =>
-        new KVStoreImpl(ref)
-      }
+      .map(new KVStoreImpl(_))
       .flatMap { kvstore =>
         val jsonIOService = JsonIOProtocol.toJsonF(kvstore)
         Utils
