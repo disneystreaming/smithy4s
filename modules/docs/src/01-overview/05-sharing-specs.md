@@ -41,10 +41,10 @@ In the CLI, the [mechanisms native to coursier](https://get-coursier.io/docs/2.0
 
 ## Packaging specifications in order to share them
 
-Smithy4s does not have any feature that helps packaging specifications. This is a design decision that can be explained by the fact that Smithy4s
-optimises for "correctness" as opposed to "compatibility" : the generated Scala code aims at being an accurate reflection of the Smithy models and provide idiomatic developer experience. This happens at the cost of a total lack of guarantee around the binary compatibility of the generated code, when the Schema evolves.
+Smithy4s does not have any features that help in the packaging of specifications. This is a design decision that can be explained by the fact that Smithy4s
+optimises for "correctness" as opposed to "compatibility." This means the generated Scala code aims at 1) being an accurate reflection of the Smithy models and 2) providing an idiomatic developer experience. This happens at the cost of a total lack of guarantees around the binary compatibility of the generated code when the Schema evolves.
 
-Therefore, we recommend that you _DO NOT_ treat the generated-code as publishable library-material. Additionally, the inlined smithy files that you may have under `src/main/smithy` are **not packaged** as resources by Smithy4s.
+Therefore, we recommend that you _DO NOT_ treat the generated code as publishable library-material. Additionally, the inlined smithy files that you may have under `src/main/smithy` are **not packaged** as resources by Smithy4s.
 
 However, if you want to package specifications in jars and publish them to an artifact repository so that several codebases may benefit from it (via Smithy4s or other tools), it is really simple:
 
