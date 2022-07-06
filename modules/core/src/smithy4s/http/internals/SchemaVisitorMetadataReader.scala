@@ -28,6 +28,7 @@ import smithy4s.http.internals.MetaDecode.{
   StructureMetaDecode
 }
 import smithy4s.schema._
+import smithy4s.internals.SchemaDescription
 
 import java.{util => ju}
 import scala.collection.mutable.{Map => MMap}
@@ -44,25 +45,28 @@ private[http] class SchemaVisitorMetadataReader()
       hints: Hints,
       tag: Primitive[P]
   ): MetaDecode[P] = {
+    val desc = tag.schema(shapeId).compile(SchemaDescription)
+    def withDesc[A](f: String => Option[A]) =
+      MetaDecode.from[A](desc.description)(f)
+    def withDescUnsafe[A](f: String => A) =
+      MetaDecode.fromUnsafe[A](desc.description)(f)
     tag match {
-      case Primitive.PShort  => MetaDecode.from("Short")(_.toShortOption)
-      case Primitive.PInt    => MetaDecode.from("Int")(_.toIntOption)
-      case Primitive.PFloat  => MetaDecode.from("Float")(_.toFloatOption)
-      case Primitive.PLong   => MetaDecode.from("Long")(_.toLongOption)
-      case Primitive.PDouble => MetaDecode.from("Double")(_.toDoubleOption)
-      case Primitive.PBigInt => MetaDecode.fromUnsafe("BigInt")(BigInt(_))
-      case Primitive.PBigDecimal =>
-        MetaDecode.fromUnsafe("BigDecimal")(BigDecimal(_))
-      case Primitive.PBoolean => MetaDecode.from("Boolean")(_.toBooleanOption)
-      case Primitive.PString  => MetaDecode.fromUnsafe("String")(identity)
-      case Primitive.PUUID =>
-        MetaDecode.fromUnsafe[ju.UUID]("UUID")(ju.UUID.fromString)
-      case Primitive.PByte => EmptyMetaDecode
+      case Primitive.PShort      => withDesc(_.toShortOption)
+      case Primitive.PInt        => withDesc(_.toIntOption)
+      case Primitive.PFloat      => withDesc(_.toFloatOption)
+      case Primitive.PLong       => withDesc(_.toLongOption)
+      case Primitive.PDouble     => withDesc(_.toDoubleOption)
+      case Primitive.PBoolean    => withDesc(_.toBooleanOption)
+      case Primitive.PBigInt     => withDescUnsafe(BigInt(_))
+      case Primitive.PBigDecimal => withDescUnsafe(BigDecimal(_))
+      case Primitive.PString     => withDescUnsafe(identity)
+      case Primitive.PUUID       => withDescUnsafe(ju.UUID.fromString)
       case Primitive.PBlob =>
-        MetaDecode.fromUnsafe("Bytes")(string =>
+        withDescUnsafe(string =>
           ByteArray(ju.Base64.getDecoder().decode(string))
         )
       case Primitive.PDocument => EmptyMetaDecode
+      case Primitive.PByte     => EmptyMetaDecode
       case Primitive.PTimestamp =>
         (
           hints.get(HttpBinding).map(_.tpe),
