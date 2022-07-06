@@ -120,7 +120,7 @@ object CollectionTag {
     def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
     def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]): MaybeCT[U] = None
     def biject[A, B](schema: Schema[A], to: A => B, from: B => A): MaybeCT[B] = {
-      if (to.isInstanceOf[Newtype.Make[A, B]]) apply(schema).asInstanceOf[MaybeCT[B]]
+      if (to.isInstanceOf[Newtype.Make[_, _]]) apply(schema).asInstanceOf[MaybeCT[B]]
       else None
     }
     def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): MaybeCT[B] = None
