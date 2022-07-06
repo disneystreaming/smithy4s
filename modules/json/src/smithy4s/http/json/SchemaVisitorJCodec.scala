@@ -525,12 +525,14 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     override def canBeKey: Boolean = false
 
+    val withBuilder = CollectionTag.IndexedSeqTag.compactBuilder(member)
+
     def decodeValue(cursor: Cursor, in: JsonReader): IndexedSeq[A] =
       if (in.isNextToken('[')) {
         if (in.isNextToken(']')) Vector.empty
         else {
           in.rollbackToken()
-          CollectionTag.IndexedSeqTag.compactBuilder(member) { put =>
+          withBuilder { put =>
             var i = 0
             while ({
               if (i >= maxArity)
