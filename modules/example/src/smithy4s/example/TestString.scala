@@ -9,5 +9,5 @@ object TestString extends Newtype[String] {
     smithy4s.example.TestTrait(Some(smithy4s.example.OrderType.InStoreOrder(smithy4s.example.OrderNumber(100), Some("someLocation")))),
   )
   val underlyingSchema : smithy4s.Schema[String] = string.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[TestString] = bijection(underlyingSchema, TestString(_), (_ : TestString).value)
+  implicit val schema : smithy4s.Schema[TestString] = bijection(underlyingSchema, TestString.make, (_ : TestString).value)
 }

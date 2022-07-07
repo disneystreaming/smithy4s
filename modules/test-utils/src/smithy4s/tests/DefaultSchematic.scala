@@ -15,10 +15,11 @@
  */
 
 package smithy4s
-package dynamic
+package tests
 
 import cats.Id
 import java.util.UUID
+import smithy4s.schema.CollectionTag
 import smithy4s.schema.Field
 import smithy4s.schema.Alt
 
@@ -45,9 +46,8 @@ object DefaultSchematic extends smithy4s.Schematic[Id] {
 
   def unit: Id[Unit] = ()
 
-  def list[S](fs: Id[S]): Id[List[S]] = List.empty
-
-  def set[S](fs: Id[S]): Id[Set[S]] = Set.empty
+  def collection[C[_], S](tag: CollectionTag[C], fs: Id[S]): Id[C[S]] =
+    tag.empty
 
   def vector[S](fs: Id[S]): Id[Vector[S]] = Vector.empty
 

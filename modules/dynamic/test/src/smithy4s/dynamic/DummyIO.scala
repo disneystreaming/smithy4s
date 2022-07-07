@@ -15,30 +15,25 @@
  */
 
 package smithy4s.dynamic
+import smithy4s.tests._
 
-import weaver._
-import Fixtures._
-import smithy4s.dynamic.model.Model
-
-object DecodingSpec extends SimpleIOSuite {
-
-  /*
-   * Although not needed for equality, we sort the shapes in the model
-   * to make diffs more readable in case of failed assertions.
-   */
-  private def order(model: Model): Model =
-    model.copy(shapes =
-      scala.collection.immutable.ListMap(
-        model.shapes.toSeq.sortBy(_._1.value): _*
-      )
-    )
-
-  test("Decode json representation of models") {
-    val expected = order(pizzaModel)
-    Utils
-      .parse(pizzaModelString)
-      .map(order)
-      .map(obtained => expect.same(obtained, expected))
+object DummyIO {
+  type IO[A] = Either[Throwable, A]
+  object IO {
+    def apply[A](a: => A) = try { Right(a) }
+    catch { case e: Throwable => Left(e) }
+    def pure[A](a: A): IO[A] = Right(a)
+    def raiseError[A](e: Throwable): IO[A] = Left(e)
   }
-
+  implicit class IOOps[A](private val io: IO[A]) extends AnyVal {
+    def mapRun[B](f: A => B): B = io match {
+      case Left(e)  => throw e
+      case Right(a) => f(a)
+    }
+    def check(): Unit = io match {
+      case Left(e)  => throw e
+      case Right(_) => ()
+    }
+  }
+  object JsonIOProtocol extends JsonProtocolF[IO]
 }

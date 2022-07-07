@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s.dynamic
+package smithy4s.http4s
 
+import smithy4s.dynamic._
 import smithy4s.ShapeId
 import org.http4s.client.Client
 import org.http4s.implicits._
@@ -25,17 +26,24 @@ import cats.effect.IO
 import cats.effect.Resource
 import org.http4s.HttpApp
 import smithy4s.example._
-import smithy4s.http4s.SimpleRestJsonBuilder
+import software.amazon.smithy.model.{Model => SModel}
 
 class DynamicHttpProxy(client: Client[IO]) {
 
+  object JsonIOProtocol extends smithy4s.tests.JsonProtocolF[IO]
+
   val dynamicServiceIO =
-    Utils.parseSampleSpec("pizza.smithy").map { model =>
-      DynamicSchemaIndex
-        .load(model)
-        .getService(ShapeId("smithy4s.example", "PizzaAdminService"))
-        .getOrElse(sys.error("service not found in DSI"))
-    }
+    parseSampleSpec("pizza.smithy")
+      .flatMap { model =>
+        DynamicSchemaIndex
+          .loadModel(model)
+          .liftTo[IO]
+      }
+      .map { index =>
+        index
+          .getService(ShapeId("smithy4s.example", "PizzaAdminService"))
+          .getOrElse(sys.error("service not found in DSI"))
+      }
 
   val dynamicPizza: IO[smithy4s.Monadic[PizzaAdminServiceGen, IO]] =
     dynamicServiceIO
@@ -45,12 +53,25 @@ class DynamicHttpProxy(client: Client[IO]) {
           .liftTo[IO]
           .map { dynamicClient =>
             JsonIOProtocol
-              .fromJsonIO[PizzaAdminServiceGen, PizzaAdminServiceOperation](
-                JsonIOProtocol.toJsonIO(dynamicClient)(dsi.service)
+              .fromJsonF[PizzaAdminServiceGen, PizzaAdminServiceOperation](
+                JsonIOProtocol.toJsonF(dynamicClient)(dsi.service)
               )
 
           }
       }
+
+  private def parseSampleSpec(fileName: String): IO[SModel] =
+    IO(
+      SModel
+        .assembler()
+        .addImport(s"./sampleSpecs/$fileName")
+        .addImport(
+          "./modules/protocol/resources/META-INF/smithy/smithy4s.smithy"
+        )
+        .discoverModels()
+        .assemble()
+        .unwrap()
+    )
 }
 
 object Http4sDynamicPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {

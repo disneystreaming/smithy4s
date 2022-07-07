@@ -16,7 +16,6 @@
 
 package smithy4s.dynamic
 
-import weaver._
 import smithy4s.Lazy
 import smithy4s.Service
 import smithy4s.Hints
@@ -24,9 +23,9 @@ import smithy4s.schema.Field
 import smithy4s.schema.StubSchematic
 import Fixtures._
 
-object FieldsSpec extends SimpleIOSuite {
+class FieldsSpec() extends munit.FunSuite {
 
-  pureTest(
+  test(
     "Extract field names from all structures in a service's endpoints"
   ) {
     val svc = Utils.compile(pizzaModel).allServices.head.service

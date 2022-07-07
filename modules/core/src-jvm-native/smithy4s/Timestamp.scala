@@ -17,11 +17,10 @@
 package smithy4s
 
 import smithy.api.TimestampFormat
-import smithy4s.Timestamp._
-import java.time._
 import scala.util.control.{NoStackTrace, NonFatal}
 
-case class Timestamp private (epochSecond: Long, nano: Int) {
+case class Timestamp private (epochSecond: Long, nano: Int)
+    extends TimestampPlatform {
   def isAfter(other: Timestamp): Boolean = {
     val diff = epochSecond - other.epochSecond
     diff > 0 || diff == 0 && nano > other.nano
@@ -36,16 +35,6 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
   def conciseDateTime: String = formatToString(3)
 
   def conciseDate: String = formatToString(2)
-
-  /** JVM platform only method */
-  def toInstant: Instant = Instant.ofEpochSecond(epochSecond, nano.toLong)
-
-  /** JVM platform only method */
-  def toOffsetDateTime: OffsetDateTime =
-    OffsetDateTime.ofInstant(
-      Instant.ofEpochSecond(epochSecond, nano.toLong),
-      ZoneOffset.UTC
-    )
 
   override def toString: String = format(TimestampFormat.DATE_TIME)
 
@@ -79,9 +68,10 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
       marchDayOfYear - ((marchMonth * 1002762 - 16383) >> 15) // marchDayOfYear - (marchMonth * 306 + 5) / 10 + 1
     internalFormat match {
       case 1 =>
-        s.append(daysOfWeek(((epochDay + 700000003) % 7).toInt)).append(',')
+        s.append(Timestamp.daysOfWeek(((epochDay + 700000003) % 7).toInt))
+          .append(',')
         append2Digits(day, s.append(' '))
-        s.append(' ').append(months(month - 1))
+        s.append(' ').append(Timestamp.months(month - 1))
         append4Digits(year, s.append(' '))
         appendTime(secsOfDay, s.append(' '))
         appendNano(nano, s)
@@ -138,7 +128,7 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
         val y3 = (y2 & 0x1ffffffffffffffL) * 100
         val y4 = (y3 & 0x1ffffffffffffffL) * 100
         append2Digits((y3 >>> 57).toInt, s)
-        val d = digits((y4 >>> 57).toInt)
+        val d = Timestamp.digits((y4 >>> 57).toInt)
         s.append((d & 0xff).toChar)
         if ((y4 & 0x1ff000000000000L) != 0 || d > 0x3039) { // check if nano is divisible by 1000
           append2Digits(
@@ -156,7 +146,7 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
   }
 
   private[this] def append2Digits(x: Int, s: java.lang.StringBuilder): Unit = {
-    val d = digits(x)
+    val d = Timestamp.digits(x)
     val _ = s.append((d & 0xff).toChar).append((d >> 8).toChar)
   }
 
@@ -170,7 +160,7 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
   }
 }
 
-object Timestamp {
+object Timestamp extends TimestampCompanionPlatform {
   private val digits: Array[Short] = Array(
     0x3030, 0x3130, 0x3230, 0x3330, 0x3430, 0x3530, 0x3630, 0x3730, 0x3830,
     0x3930, 0x3031, 0x3131, 0x3231, 0x3331, 0x3431, 0x3531, 0x3631, 0x3731,
@@ -242,16 +232,6 @@ object Timestamp {
   }
 
   def fromEpochSecond(epochSecond: Long): Timestamp = Timestamp(epochSecond, 0)
-
-  /** JVM platform only method */
-  def fromInstant(x: Instant): Timestamp =
-    Timestamp(x.getEpochSecond, x.getNano)
-
-  /** JVM platform only method */
-  def fromOffsetDateTime(x: OffsetDateTime): Timestamp =
-    Timestamp(x.toInstant.getEpochSecond, x.getNano)
-
-  def nowUTC(): Timestamp = fromInstant(Instant.now())
 
   def parse(string: String, format: TimestampFormat): Option[Timestamp] = try {
     new Some(format match {

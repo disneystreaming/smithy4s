@@ -12,6 +12,7 @@ import Smithy4sPlugin._
 val latest2ScalaVersions = List(Scala213, Scala3)
 val allJvmScalaVersions = List(Scala212, Scala213, Scala3)
 val allJsScalaVersions = latest2ScalaVersions
+val allNativeScalaVersions = List(Scala3)
 val jvmScala2Versions = List(Scala212, Scala213)
 val buildtimejvmScala2Versions = List(Scala212, Scala213)
 
@@ -96,6 +97,20 @@ lazy val docs =
     )
     .settings(Smithy4sPlugin.doNotPublishArtifact)
 
+val munitDeps = Def.setting {
+  if (virtualAxes.value.contains(VirtualAxis.native)) {
+    Seq(
+      Dependencies.MunitMilestone.core.value % Test,
+      Dependencies.MunitMilestone.scalacheck.value % Test
+    )
+  } else {
+    Seq(
+      Dependencies.Munit.core.value % Test,
+      Dependencies.Munit.scalacheck.value % Test
+    )
+  }
+}
+
 /**
  * Protocol-agnostic, dependency-free core module, containing
  * only interfaces and other polymorphic constructs, allowing for the
@@ -125,12 +140,11 @@ lazy val core = projectMatrix
     Compile / sourceGenerators += sourceDirectory
       .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
       .taskValue,
-    libraryDependencies ++= Seq(Dependencies.collectionsCompat.value),
     libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value % Test,
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
+      Dependencies.collectionsCompat.value,
+      Dependencies.Cats.core.value % Test
     ),
+    libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
       "smithy4s.example"
     ),
@@ -159,6 +173,7 @@ lazy val core = projectMatrix
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Smithy4s specific scalacheck integration.
@@ -167,17 +182,16 @@ lazy val scalacheck = projectMatrix
   .in(file("modules/scalacheck"))
   .dependsOn(core)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.collectionsCompat.value,
-      Dependencies.Scalacheck.scalacheck.value,
-      Dependencies.Weaver.cats.value % Test,
-      Dependencies.Weaver.scalacheck.value % Test
+      Dependencies.Scalacheck.scalacheck.value
     ),
+    libraryDependencies ++= munitDeps.value,
     testFrameworks += new TestFramework("weaver.framework.CatsEffect")
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * The aws-specific core a library. Contains the generated code for AWS specific
@@ -397,18 +411,13 @@ lazy val protocolTests = projectMatrix
  */
 lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
-  .dependsOn(core, tests % "test->compile", http4s % "test->compile")
+  .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
-      Dependencies.Cats.core.value,
-      Dependencies.Weaver.cats.value % Test
+      Dependencies.Cats.core.value
     ),
-    Test / fork := true,
-    // Forwarding cwd to tests
-    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    libraryDependencies ++= munitDeps.value,
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
@@ -423,10 +432,14 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
-      libraryDependencies += Dependencies.Smithy.model % Test
+      Test / fork := true,
+      // Forwarding cwd to tests
+      Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
+      libraryDependencies += Dependencies.Smithy.model
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains the logic for generating "openapi views" of the
@@ -454,18 +467,18 @@ lazy val json = projectMatrix
   .in(file("modules/json"))
   .dependsOn(
     core % "test->test;compile->compile",
-    `scalacheck` % "test -> compile"
+    scalacheck % "test -> compile"
   )
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Jsoniter.value,
-      Dependencies.Munit.core.value % Test,
-      Dependencies.Munit.scalacheck.value % Test
+      Dependencies.Jsoniter.value
     ),
+    libraryDependencies ++= munitDeps.value,
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Module that contains http4s-specific client/server bindings for the
@@ -473,7 +486,13 @@ lazy val json = projectMatrix
  */
 lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
-  .dependsOn(core, json, tests % "test -> compile")
+  .dependsOn(
+    core,
+    json,
+    dynamic % "test->compile",
+    tests % "test->compile",
+    testUtils % "test->compile"
+  )
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
@@ -519,6 +538,17 @@ lazy val `http4s-swagger` = projectMatrix
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val testUtils = projectMatrix
+  .in(file("modules/test-utils"))
+  .dependsOn(core)
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(
+    libraryDependencies += Dependencies.Cats.core.value
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * Generic tests aimed at testing the implementations of the custom protocols
@@ -647,7 +677,7 @@ lazy val Dependencies = new {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.7.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
   }
 
   object Fs2 {
@@ -702,17 +732,17 @@ lazy val Dependencies = new {
       )
   }
 
-  object Munit {
-    val munitVersion = "0.7.29"
-
+  class MunitCross(munitVersion: String) {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit" % munitVersion)
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting("org.scalameta" %%% "munit-scalacheck" % munitVersion)
   }
+  object Munit extends MunitCross("0.7.29")
+  object MunitMilestone extends MunitCross("1.0.0-M6")
 
   val Scalacheck = new {
-    val version = "1.15.4"
+    val version = "1.16.0"
     val scalacheck =
       Def.setting("org.scalacheck" %%% "scalacheck" % version)
   }
