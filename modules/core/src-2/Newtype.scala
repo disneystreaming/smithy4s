@@ -24,7 +24,9 @@ abstract class Newtype[A] extends HasId { self =>
   type Type <: Base with _Tag
 
   @inline final def apply(a: A): Type = a.asInstanceOf[Type]
-  final val make: Newtype.Make[A, Type] = apply(_: A)
+  final val make: A => Type = new Newtype.Make[A, Type] {
+    def apply(a: A) = self.apply(a)
+  }
 
   @inline final def value(x: Type): A =
     x.asInstanceOf[A]
@@ -54,5 +56,5 @@ abstract class Newtype[A] extends HasId { self =>
 }
 
 object Newtype {
-  trait Make[A, B] extends Function[A, B]
+  private[smithy4s] trait Make[A, B] extends Function[A, B]
 }

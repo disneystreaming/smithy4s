@@ -20,7 +20,9 @@ abstract class Newtype[A] extends HasId { self =>
   opaque type Type = A
 
   def apply(a: A): Type = a
-  final val make: Newtype.Make[A, Type] = apply(_: A)
+  final val make: A => Type = new Newtype.Make[A, Type] {
+    def apply(a: A) = self.apply(a)
+  }
 
   extension (orig: Type) def value: A = orig
 
@@ -45,5 +47,5 @@ abstract class Newtype[A] extends HasId { self =>
 }
 
 object Newtype {
-  trait Make[A, B] extends Function[A, B]
+  private[smithy4s] trait Make[A, B] extends Function[A, B]
 }
