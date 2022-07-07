@@ -36,7 +36,10 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
     ): ToShapeIds[S] =
       fields.flatMap(_.instance).toList
 
-    override def list[S](fs: ToShapeIds[S]): ToShapeIds[List[S]] = fs
+    override def collection[C[_], S](
+        tag: CollectionTag[C],
+        fs: ToShapeIds[S]
+    ): ToShapeIds[C[S]] = fs
 
     override def union[S](
         first: Alt[ToShapeIds, S, _],
