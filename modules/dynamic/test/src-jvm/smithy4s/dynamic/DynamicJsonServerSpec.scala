@@ -17,7 +17,7 @@
 package smithy4s
 package dynamic
 
-import cats.effect._
+import DummyIO._
 import cats.syntax.all._
 
 /**
@@ -25,15 +25,13 @@ import cats.syntax.all._
  * creates a dummy instance for it (that returns 0 values for all the fields of outputs),
  * and serves it over an example JSON-RPC-like protocol (returning a `Document => IO[Document]`)
  */
-object DynamicJsonServerSpec extends weaver.IOSuite {
+class DynamicJsonServerSpec() extends munit.FunSuite {
 
   case class JsonIO(fn: Document => IO[Document]) {
     def apply(json: Document): IO[Document] = fn(json)
   }
 
-  type Res = JsonIO
-
-  def sharedResource: Resource[IO, Res] = Resource.eval {
+  val sharedResource: IO[JsonIO] = {
     Utils
       .compileSampleSpec("kvstore.smithy")
       .flatMap { DynamicSchemaIndex =>
@@ -45,7 +43,12 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
       .map(JsonIO(_))
   }
 
-  test("Dynamic service is correctly wired: Put") { jsonIO =>
+  def testJsonIO(name: String)(run: JsonIO => IO[Unit]): Unit =
+    test(name) {
+      sharedResource.flatMap(run).check()
+    }
+
+  testJsonIO("Dynamic service is correctly wired: Put") { jsonIO =>
     val expected = Document.obj()
 
     jsonIO(
@@ -60,7 +63,7 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
     }
   }
 
-  test("Dynamic service is correctly wired: Get") { jsonIO =>
+  testJsonIO("Dynamic service is correctly wired: Get") { jsonIO =>
     val expected = Document.obj("value" -> Document.fromString(""))
 
     jsonIO(
@@ -74,7 +77,7 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
     }
   }
 
-  test("Dynamic service is correctly wired: Bad Json Input") { jsonIO =>
+  testJsonIO("Dynamic service is correctly wired: Bad Json Input") { jsonIO =>
     val expected = smithy4s.http.PayloadError(
       PayloadPath("key"),
       "",
@@ -88,7 +91,7 @@ object DynamicJsonServerSpec extends weaver.IOSuite {
     }
   }
 
-  test("Dynamic service is correctly wired: Bad operation") { jsonIO =>
+  testJsonIO("Dynamic service is correctly wired: Bad operation") { jsonIO =>
     val expected = JsonIOProtocol.NotFound
 
     jsonIO(

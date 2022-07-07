@@ -379,7 +379,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      (if (Platform.isJVM)
+      (if (!Platform.isJS)
          "Input must be <= 10, but was 11.0"
        else "Input must be <= 10, but was 11")
     )

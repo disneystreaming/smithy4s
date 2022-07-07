@@ -16,8 +16,17 @@
 
 package smithy4s
 
-object Platform {
-  def isJS = false
-  def isJVM = true
-  def isNative = false
+import java.time.Instant
+import java.time.OffsetDateTime
+
+private[smithy4s] trait TimestampCompanionPlatform {
+
+  def nowUTC(): Timestamp = {
+    val currentMillis = System.currentTimeMillis
+    Timestamp(
+      (currentMillis / 1000).toLong,
+      (currentMillis % 1000).toInt * 100000
+    )
+  }
+
 }

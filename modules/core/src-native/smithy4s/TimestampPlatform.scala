@@ -16,8 +16,8 @@
 
 package smithy4s
 
-object Platform {
-  def isJS = false
-  def isJVM = true
-  def isNative = false
-}
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.OffsetDateTime
+
+private[smithy4s] trait TimestampPlatform

@@ -16,12 +16,12 @@
 
 package smithy4s.dynamic
 
-import weaver._
+import DummyIO._
 
-object RecursionSpec extends SimpleIOSuite {
+class RecursionSpec() extends munit.FunSuite {
 
   test(
-    "Compilation does not recurse infinitely in the case of recursive unions".only
+    "Compilation does not recurse infinitely in the case of recursive unions"
   ) {
     val modelString =
       """|namespace foo
@@ -32,11 +32,11 @@ object RecursionSpec extends SimpleIOSuite {
          |}
          |""".stripMargin
 
-    Utils.compile(modelString).as(success)
+    Utils.compile(modelString).check()
   }
 
   test(
-    "Compilation does not recurse infinitely in the case of recursive structures".only
+    "Compilation does not recurse infinitely in the case of recursive structures"
   ) {
     val modelString =
       """|namespace foo
@@ -47,10 +47,10 @@ object RecursionSpec extends SimpleIOSuite {
          |
          |structure RecursiveStructure2 {
          |  rec1: RecursiveStructure1
-         |} 
+         |}
          |""".stripMargin
 
-    Utils.compile(modelString).as(success)
+    Utils.compile(modelString).check()
   }
 
 }

@@ -14,10 +14,6 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.dynamic
 
-object Platform {
-  def isJS = false
-  def isJVM = true
-  def isNative = false
-}
+private[dynamic] trait DynamicSchemaIndexPlatform {}
