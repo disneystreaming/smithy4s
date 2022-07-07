@@ -17,8 +17,15 @@
 package smithy4s
 package internals
 
-import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.{Primitive, EnumValue, SchemaField, SchemaAlt, Alt}
+import smithy4s.schema.{
+  Primitive,
+  EnumValue,
+  SchemaField,
+  SchemaAlt,
+  Alt,
+  SchemaVisitor,
+  CollectionTag
+}
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
 
@@ -44,12 +51,8 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     }
     SchemaDescription.of(value)
   }
-  override def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[List[A]] =
-    SchemaDescription.of("List")
-  
-  override def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[Set[A]] =
-    SchemaDescription.of("Set")
-  
+  override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescription[C[A]] = 
+    SchemaDescription.of(tag.name)
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
   
@@ -91,11 +94,8 @@ object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed
       SchemaDescription.apply(tag.schema(shapeId))
     )
   }
-  override def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescriptionDetailed[List[A]] = {
-    apply(member).mapResult(s => s"List[$s]")
-  }
-  override def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescriptionDetailed[Set[A]] = {
-    apply(member).mapResult(s => s"Set[$s]")
+  override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescriptionDetailed[C[A]] = {
+    apply(member).mapResult(s => s"${tag.name}[$s]")
   }
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescriptionDetailed[Map[K,V]] = {
     apply(key).flatMapResult { kDesc =>
