@@ -457,10 +457,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     def caseName(alt: Alt) = alt.member match {
       case UnionMember.ProductCase(product) => product.name
-      case UnionMember.TypeCase(_) =>
+      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
         alt.name.dropWhile(_ == '_').capitalize + "Case"
     }
     val caseNames = alts.map(caseName)
+    val caseNamesAndIsUnit =
+      caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
     val imports = /*alts.foldMap(_.tpe.imports) ++*/ syntaxImport
 
     lines(
@@ -475,6 +477,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         alts.map {
+          case a @ Alt(_, realName, UnionMember.UnitCase, altHints) =>
+            val cn = caseName(a)
+            // format: off
+            lines(
+              line"case object $cn extends $name",
+              line"""private val ${cn}Alt = $Schema_.constant($cn).oneOf[$name]("$realName").addHints(hints)${renderConstraintValidation(altHints)}""",
+              line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
+            )
+            // format: on
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
@@ -508,7 +519,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               renderHintsVal(altHints),
             // format: off
             line"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
-            s"""val alt = schema.oneOf[$name]("$realName")"""
+            line"""val alt = schema.oneOf[$name]("$realName")""",
             // format: on
             )
         },
@@ -522,11 +533,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"implicit val schema: $Schema_[$name] = union"
           union
             .args {
-              caseNames.map(_ + ".alt")
+              caseNamesAndIsUnit.map {
+                case (caseName, false) => caseName + ".alt"
+                case (caseName, true)  => caseName + "Alt"
+              }
             }
             .block {
-              caseNames.map { caseName =>
-                s"case c : $caseName => $caseName.alt(c)"
+              caseNamesAndIsUnit.map {
+                case (caseName, true) =>
+                  s"case $caseName => ${caseName}AltWithValue"
+                case (caseName, false) =>
+                  s"case c : $caseName => $caseName.alt(c)"
               }
             }
             .appendToLast(

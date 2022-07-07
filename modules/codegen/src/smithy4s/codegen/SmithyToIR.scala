@@ -454,6 +454,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
         }
         .collect {
+          case (name, Some(Right(Type.unit)), h) =>
+            Alt(name, UnionMember.UnitCase, h)
           case (name, Some(Right(tpe)), h) =>
             Alt(name, UnionMember.TypeCase(tpe), h)
           case (name, Some(Left(p: Product)), h) =>

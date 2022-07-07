@@ -54,6 +54,9 @@ object Alt {
     def addHints(newHints: Hint*) =
       Alt(alt.label, alt.instance.addHints(newHints: _*), alt.inject)
 
+    def addHints(newHints: Hints) =
+      Alt(alt.label, alt.instance.addHints(newHints), alt.inject)
+
     def validated[C](implicit
         constraint: Validator.Simple[C, A]
     ): SchemaAlt[U, A] =
