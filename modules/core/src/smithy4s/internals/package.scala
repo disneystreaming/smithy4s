@@ -18,4 +18,5 @@ package smithy4s
 
 package object internals {
   type SchemaDescription[A] = String
+  // type SchemaDescriptionDetailed[A] = Set[ShapeId] => (Set[ShapeId], String)
 }
