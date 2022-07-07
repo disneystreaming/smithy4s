@@ -26,6 +26,9 @@ object OrderType extends smithy4s.ShapeTag.Companion[OrderType] {
 
     val alt = schema.oneOf[OrderType]("inStore")
   }
+  case object PreviewCase extends OrderType
+  private val PreviewCaseAlt = smithy4s.Schema.constant(PreviewCase).oneOf[OrderType]("preview").addHints(hints)
+  private val PreviewCaseAltWithValue = PreviewCaseAlt(PreviewCase)
 
   object OnlineCase {
     val hints : smithy4s.Hints = smithy4s.Hints.empty
@@ -36,8 +39,10 @@ object OrderType extends smithy4s.ShapeTag.Companion[OrderType] {
   implicit val schema: smithy4s.Schema[OrderType] = union(
     OnlineCase.alt,
     InStoreOrder.alt,
+    PreviewCaseAlt,
   ){
     case c : OnlineCase => OnlineCase.alt(c)
     case c : InStoreOrder => InStoreOrder.alt(c)
+    case PreviewCase => PreviewCaseAltWithValue
   }.withId(id).addHints(hints)
 }
