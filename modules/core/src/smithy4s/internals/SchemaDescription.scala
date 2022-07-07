@@ -20,14 +20,10 @@ package internals
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.{Primitive, EnumValue, SchemaField, SchemaAlt, Alt}
 
-trait SchemaDescription[F] {
-  def description: String
-}
-
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
-  def of[A](value: String): SchemaDescription[A] = new SchemaDescription[A] {
-    override def description: String = value
-  }
+  type T[A] = String
+
+  def of[A](value: String): SchemaDescription[A] = value
   // format: off
   override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): SchemaDescription[P] = {
     val value = tag match {
@@ -50,32 +46,28 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     SchemaDescription.of(value)
   }
   override def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[List[A]] = {
-    val descSc = apply(member)
-    SchemaDescription.of(s"List[${descSc.description}]")
+    SchemaDescription.of("List")
   }
   override def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[Set[A]] = {
-    val descSc = apply(member)
-    SchemaDescription.of(s"Set[${descSc.description}]")
+    SchemaDescription.of("Set")
   }
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] = {
-    val keySc = apply(key)
-    val valueSc = apply(value)
-    SchemaDescription.of(s"Map[${keySc.description}, ${valueSc.description}]")
+    SchemaDescription.of("Map")
   }
   override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
-    SchemaDescription.of(s"Enumeration")
+    SchemaDescription.of("Enumeration")
   
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =
-    SchemaDescription.of(s"Structure")
+    SchemaDescription.of("Structure")
   
   override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]): SchemaDescription[U] =
-    SchemaDescription.of(s"Union")
+    SchemaDescription.of("Union")
   
   override def biject[A, B](schema: Schema[A], to: A => B, from: B => A): SchemaDescription[B] =
-    SchemaDescription.of(s"Bijection")
+    SchemaDescription.of("Bijection")
   override def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): SchemaDescription[B] =
-    SchemaDescription.of(s"Surjection")
+    SchemaDescription.of("Surjection")
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
-    SchemaDescription.of(s"Lazy")
+    SchemaDescription.of("Lazy")
   // format: on
 }

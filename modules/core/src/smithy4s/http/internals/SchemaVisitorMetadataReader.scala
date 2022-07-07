@@ -47,9 +47,9 @@ private[http] class SchemaVisitorMetadataReader()
   ): MetaDecode[P] = {
     val desc = tag.schema(shapeId).compile(SchemaDescription)
     def withDesc[A](f: String => Option[A]) =
-      MetaDecode.from[A](desc.description)(f)
+      MetaDecode.from[A](desc)(f)
     def withDescUnsafe[A](f: String => A) =
-      MetaDecode.fromUnsafe[A](desc.description)(f)
+      MetaDecode.fromUnsafe[A](desc)(f)
     tag match {
       case Primitive.PShort      => withDesc(_.toShortOption)
       case Primitive.PInt        => withDesc(_.toIntOption)
