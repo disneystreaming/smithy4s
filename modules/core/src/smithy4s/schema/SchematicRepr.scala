@@ -45,9 +45,8 @@ object SchematicRepr extends Schematic[Repr] {
 
   def document: String = "document"
 
-  def list[S](fs: String): String = s"list[$fs]"
-
-  def set[S](fs: String): String = s"set[$fs]"
+  def collection[C[_], S](tag: CollectionTag[C], fs: String): String =
+    s"${tag.name}[$fs]"
 
   def uuid: String = "uuid"
 

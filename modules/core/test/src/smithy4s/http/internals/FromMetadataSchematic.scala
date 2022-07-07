@@ -23,6 +23,7 @@ import smithy4s.Hints
 import smithy4s.Lazy
 import smithy4s.Schematic
 import smithy4s.Timestamp
+import smithy4s.schema.CollectionTag
 import smithy4s.schema.Alt
 import smithy4s.schema.Field
 
@@ -69,12 +70,10 @@ object FromMetadataSchematic extends Schematic[FromMetadata] {
 
   def document: FromMetadata[Document] = FromMetadata.default
 
-  def list[S](fs: FromMetadata[S]): FromMetadata[List[S]] = FromMetadata.default
-
-  def set[S](fs: FromMetadata[S]): FromMetadata[Set[S]] = FromMetadata.default
-
-  def vector[S](fs: FromMetadata[S]): FromMetadata[Vector[S]] =
-    FromMetadata.default
+  def collection[C[_], S](
+      tag: CollectionTag[C],
+      fs: FromMetadata[S]
+  ): FromMetadata[C[S]] = FromMetadata.default
 
   def map[K, V](
       fk: FromMetadata[K],

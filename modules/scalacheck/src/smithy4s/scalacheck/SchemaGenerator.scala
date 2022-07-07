@@ -102,6 +102,8 @@ class SchemaGenerator(maxWidth: Int) {
     Vector(
       recurse.map(Schema.list(_)),
       recurse.map(Schema.set(_)),
+      recurse.map(Schema.vector(_)),
+      recurse.map(Schema.indexedSeq(_)),
       Gen.zip(recurse, recurse).map { case (k, v) => map(k, v) },
       genStruct,
       genUnion
