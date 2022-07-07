@@ -44,7 +44,7 @@ Head over to the page explaining code-gen [customisation](01-customisation.md) f
 
 Smithy4s does not rely on the classic automated derivation mechanisms to determine how unions should be encoded in JSON. Rather, the Smithy models dictates the encoding. Indeed, there are multiple ways to encode unions in JSON.
 
-By default, the specification of the Smithy language hints that the `tagged-union` encoding should be used. This is arguable the best encoding for unions, as it works with members of any type (not just structures), and does not require backtracking during parsing, which makes it more efficient.
+By default, the specification of the Smithy language hints that the `tagged-union` encoding should be used. This is arguably the best encoding for unions, as it works with members of any type (not just structures), and does not require backtracking during parsing, which makes it more efficient.
 
 However, Smithy4s provides support for two additional encodings: `discriminated` and `untagged`, which users can opt-in via the `smithy4s.api#discriminated` and `smithy4s.api#untagged` trait, respectively. These are mostly offered as a way to retrofit existing APIs in Smithy.
 
