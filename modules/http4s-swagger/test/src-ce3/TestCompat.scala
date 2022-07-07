@@ -17,16 +17,10 @@
 package smithy4s.http4s.swagger
 
 import cats.effect.IO
-import smithy4s.HasId
-import smithy4s.ShapeId
 import weaver.BaseIOSuite
 
 trait TestCompat { self: BaseIOSuite =>
 
-  def service = new HasId {
-    def id: ShapeId = ShapeId("foobar", "test-spec")
-  }
+  def mkDocs = smithy4s.http4s.swagger.docs[IO]
 
-  def docs(path: String) =
-    Docs[IO](service, path, swaggerUiPath = "swaggerui")
 }

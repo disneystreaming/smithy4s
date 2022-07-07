@@ -40,6 +40,17 @@ object Options {
 
   }
 
+  implicit def commaDelimitedListArg[A: Argument]: Argument[List[A]] = {
+    val memberArgument = implicitly[Argument[A]]
+    new Argument[List[A]] {
+      def defaultMetavar: String =
+        s"${memberArgument.defaultMetavar},${memberArgument.defaultMetavar},..."
+
+      def read(string: String): ValidatedNel[String, List[A]] =
+        string.split(',').toList.traverse(memberArgument.read)
+    }
+  }
+
   val specsArgs = Opts
     .arguments[os.Path]()
     .mapValidated(
@@ -56,29 +67,33 @@ object Options {
 
   val repositoriesOpt: Opts[Option[List[String]]] =
     Opts
-      .option[String](
+      .option[List[String]](
         "repositories",
         "Comma-delimited list of repositories to look in for resolving any provided dependencies"
       )
-      .map(_.split(',').toList)
       .orNone
 
   val dependenciesOpt: Opts[Option[List[String]]] =
     Opts
-      .option[String](
+      .option[List[String]](
         "dependencies",
         "Comma-delimited list of dependencies containing smithy files"
       )
-      .map(_.split(',').toList)
       .orNone
 
   val transformersOpt: Opts[Option[List[String]]] =
     Opts
-      .option[String](
+      .option[List[String]](
         "transformers",
         "Comma-delimited list of transformer names to apply to smithy files"
       )
-      .map(_.split(',').toList)
       .orNone
 
+  val localJarsOpt: Opts[Option[List[os.Path]]] =
+    Opts
+      .option[List[os.Path]](
+        "localJars",
+        "Comma-delimited list of local JAR files containing smithy files"
+      )
+      .orNone
 }

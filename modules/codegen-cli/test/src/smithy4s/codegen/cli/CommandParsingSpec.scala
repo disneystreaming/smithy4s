@@ -36,7 +36,8 @@ object CommandParsingSpec extends FunSuite {
               excludedNS = None,
               repositories = Nil,
               dependencies = Nil,
-              transformers = Nil
+              transformers = Nil,
+              localJars = Nil
             )
           )
         )
@@ -61,7 +62,9 @@ object CommandParsingSpec extends FunSuite {
         "--dependencies",
         "dep1,dep2",
         "--transformers",
-        "t1,t2"
+        "t1,t2",
+        "--localJars",
+        "lib1.jar,lib2.jar"
       )
     )
 
@@ -83,7 +86,11 @@ object CommandParsingSpec extends FunSuite {
               excludedNS = None,
               repositories = List("repo1", "repo2"),
               dependencies = List("dep1", "dep2"),
-              transformers = List("t1", "t2")
+              transformers = List("t1", "t2"),
+              localJars = List(
+                os.pwd / "lib1.jar",
+                os.pwd / "lib2.jar"
+              )
             )
           )
         )
@@ -99,7 +106,8 @@ object CommandParsingSpec extends FunSuite {
               specs = Nil,
               repositories = Nil,
               dependencies = Nil,
-              transformers = Nil
+              transformers = Nil,
+              localJars = Nil
             )
           )
         )
@@ -116,7 +124,9 @@ object CommandParsingSpec extends FunSuite {
         "--dependencies",
         "dep1,dep2",
         "--transformers",
-        "t1,t2"
+        "t1,t2",
+        "--localJars",
+        "lib1.jar,lib2.jar"
       )
     )
     assert(
@@ -130,7 +140,11 @@ object CommandParsingSpec extends FunSuite {
               ),
               repositories = List("repo1", "repo2"),
               dependencies = List("dep1", "dep2"),
-              transformers = List("t1", "t2")
+              transformers = List("t1", "t2"),
+              localJars = List(
+                os.pwd / "lib1.jar",
+                os.pwd / "lib2.jar"
+              )
             )
           )
         )

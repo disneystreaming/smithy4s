@@ -18,8 +18,6 @@ package smithy4s.http4s.swagger
 
 import cats.effect.Blocker
 import cats.effect.IO
-import smithy4s.HasId
-import smithy4s.ShapeId
 import weaver._
 
 import scala.concurrent.ExecutionContext
@@ -29,10 +27,5 @@ trait TestCompat { self: BaseIOSuite with RunnableSuite[IO] =>
   def blocker: Blocker =
     Blocker.liftExecutionContext(ExecutionContext.Implicits.global)
 
-  def service = new HasId {
-    def id: ShapeId = ShapeId("foobar", "test-spec")
-  }
-
-  def docs(path: String) =
-    Docs[IO](service, blocker, path, swaggerUiPath = "swaggerui")
+  def mkDocs = smithy4s.http4s.swagger.docs[IO](blocker)
 }

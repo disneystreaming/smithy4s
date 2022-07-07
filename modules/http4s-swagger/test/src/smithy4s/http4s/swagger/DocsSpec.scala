@@ -21,17 +21,28 @@ import org.http4s._
 import org.http4s.implicits._
 import org.typelevel.ci.CIString
 import weaver._
+import smithy4s.HasId
+import smithy4s.ShapeId
 
 object DocsSpec extends SimpleIOSuite with TestCompat {
 
+  def service = new HasId {
+    def id: ShapeId = ShapeId("foobar", "test-spec")
+  }
+
+  def docs(path: String) =
+    mkDocs
+      .withPath(path)
+      .withSwaggerUiResources("swaggerui")(service)
+
   List("docs", "example/docs", "very/long/example/docs").foreach { path =>
-    val app = docs(path).routes.orNotFound
+    val app = docs(path).orNotFound
 
     test(s"GET /$path redirects to expected location") {
       val request =
         Request[IO](
           method = Method.GET,
-          uri = Uri.unsafeFromString(s"/$path/index.html")
+          uri = Uri.unsafeFromString(s"/$path")
         )
       app.run(request).map { response =>
         val redirectUri = response.headers
@@ -39,10 +50,10 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           .map(_.head)
           .map(_.value)
 
-        expect(response.status == Status.PermanentRedirect) and
+        expect(response.status == Status.Found) and
           expect.eql(
             redirectUri,
-            Some(s"/$path/index.html?url=/foobar.test-spec.json")
+            Some(s"/$path/index.html")
           )
       }
     }
@@ -55,10 +66,10 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           .map(_.head)
           .map(_.value)
 
-        expect(response.status == Status.PermanentRedirect) and
+        expect(response.status == Status.Found) and
           expect.eql(
             redirectUri,
-            Some(s"/$path/index.html?url=/foobar.test-spec.json")
+            Some(s"/$path/index.html")
           )
       }
     }
@@ -71,25 +82,11 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           .map(_.head)
           .map(_.value)
 
-        expect(response.status == Status.PermanentRedirect) and
+        expect(response.status == Status.Found) and
           expect.eql(
             redirectUri,
-            Some(s"/$path/index.html?url=/foobar.test-spec.json")
+            Some(s"/$path/index.html")
           )
-      }
-    }
-    test(
-      s"GET /$path/index.html?url=/test-file.json does not redirect"
-    ) {
-      val request =
-        Request[IO](
-          method = Method.GET,
-          uri = Uri.unsafeFromString(
-            s"/$path/index.html?url=/test-file.json"
-          )
-        )
-      app.run(request).map { response =>
-        expect(response.status == Status.Ok)
       }
     }
     test(s"GET $path/test-file.json fetches requested file") {
@@ -106,7 +103,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
     val filePath = "/foobar.test-spec.json"
     val request =
       Request[IO](method = Method.GET, uri = Uri.unsafeFromString(filePath))
-    val app = docs("docs").routes.orNotFound
+    val app = docs("docs").orNotFound
     app.run(request).map { response =>
       expect(response.status == Status.Ok)
     }
@@ -116,7 +113,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
     val filePath = s"/irrelevant"
     val request =
       Request[IO](method = Method.GET, uri = Uri.unsafeFromString(filePath))
-    val app = docs("docs").routes.orNotFound
+    val app = docs("docs").orNotFound
     app.run(request).map { response =>
       expect(response.status == Status.NotFound)
     }
