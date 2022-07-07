@@ -21,7 +21,6 @@ import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.{Primitive, EnumValue, SchemaField, SchemaAlt, Alt}
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
-  type T[A] = String
 
   def of[A](value: String): SchemaDescription[A] = value
   // format: off
@@ -45,15 +44,15 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     }
     SchemaDescription.of(value)
   }
-  override def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[List[A]] = {
+  override def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[List[A]] =
     SchemaDescription.of("List")
-  }
-  override def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[Set[A]] = {
+  
+  override def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescription[Set[A]] =
     SchemaDescription.of("Set")
-  }
-  override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] = {
+  
+  override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
-  }
+  
   override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
   
@@ -64,10 +63,102 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     SchemaDescription.of("Union")
   
   override def biject[A, B](schema: Schema[A], to: A => B, from: B => A): SchemaDescription[B] =
-    SchemaDescription.of("Bijection")
+    SchemaDescription.of(apply(schema))
   override def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): SchemaDescription[B] =
-    SchemaDescription.of("Surjection")
+    SchemaDescription.of(apply(schema))
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
-    SchemaDescription.of("Lazy")
-  // format: on
+    suspend.map(s => SchemaDescription.of(apply(s))).value
+}
+
+trait SchemaDescriptionDetailed[A] extends (Set[ShapeId] => (Set[ShapeId], String)) {
+  def mapResult[B](f: String => String): SchemaDescriptionDetailed[B] = { seen =>
+    val (s1, desc) = apply(seen)
+    (s1 ++ seen, f(desc))
+  }
+  def flatMapResult[B](f: String => SchemaDescriptionDetailed[B]): SchemaDescriptionDetailed[B] = { seen =>
+    val (s1, desc) = apply(seen)
+    f(desc)(s1 ++ seen)
+  }
+}
+
+object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed] {
+
+  def of[A](shapeId: ShapeId, value: String): SchemaDescriptionDetailed[A] = s => (s + shapeId, value)
+
+  override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): SchemaDescriptionDetailed[P] = {
+    SchemaDescriptionDetailed.of(
+      shapeId, 
+      SchemaDescription.apply(tag.schema(shapeId))
+    )
+  }
+  override def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescriptionDetailed[List[A]] = {
+    apply(member).mapResult(s => s"List[$s]")
+  }
+  override def set[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): SchemaDescriptionDetailed[Set[A]] = {
+    apply(member).mapResult(s => s"Set[$s]")
+  }
+  override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescriptionDetailed[Map[K,V]] = {
+    apply(key).flatMapResult { kDesc =>
+      apply(value).mapResult { vDesc =>
+        s"Map[$kDesc, $vDesc]"
+      }
+    }
+  }
+  override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescriptionDetailed[E] = {
+    val vDesc = values.map(e => e.stringValue).mkString(", ")
+    SchemaDescriptionDetailed.of(shapeId, s"Enumeration{ $vDesc }")
+  }
+    
+  
+  override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): SchemaDescriptionDetailed[S] = { seen =>
+    def forField[T](sf: SchemaField[S, T]): (String, (Set[ShapeId], String)) = {
+      apply(sf.instance)(seen)
+      sf.label -> apply(sf.instance)(seen)
+    }
+    val (sFinal, res) = fields
+      .map(f => forField(f))
+      .foldLeft((Set.empty[ShapeId], Seq.empty[(String, String)])) { 
+        case ((shapes, fieldDesc), (label, (s2, desc))) =>
+          (shapes ++ s2, fieldDesc :+ (label -> desc))
+      }
+    val fieldDesc = res.map { case (label, desc) => s"$label: $desc" }.mkString(", ")
+    sFinal -> s"Structure { $fieldDesc }"
+  }
+  
+  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]): SchemaDescriptionDetailed[U] = { seen =>
+    def forAlt[T](alt: SchemaAlt[U, T]): (String, (Set[ShapeId], String)) = {
+      val desc = apply(alt.instance)(seen)
+      alt.label -> desc
+    }
+    val (sFinal, res) = alternatives
+      .map(f => forAlt(f))
+      .foldLeft((Set.empty[ShapeId], Seq.empty[(String, String)])) { 
+        case ((shapes, fieldDesc), (label, (s2, desc))) =>
+          (shapes ++ s2, fieldDesc :+ (label -> desc))
+      }
+    val fieldDesc = res.map { case (label, desc) => s"$label: $desc" }.mkString(", ")
+    sFinal -> s"Union { $fieldDesc }"
+  }
+  
+  override def biject[A, B](schema: Schema[A], to: A => B, from: B => A): SchemaDescriptionDetailed[B] = {
+    apply(schema).mapResult { desc => s"Bijection { $desc }" }
+  }
+    
+  override def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): SchemaDescriptionDetailed[B] = {
+    apply(schema).mapResult { desc => s"Surjection { $desc }" }
+  }
+  override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescriptionDetailed[A] = {
+    // can't nail this one
+    (seen: Set[ShapeId]) =>
+      suspend.map { schema => 
+        val (s2, desc) = apply(schema)(seen)
+        if (seen(schema.shapeId)) {
+          s2 -> s"Lazy { $desc }"
+        } else {
+          apply(schema)(seen ++ s2)
+        }
+      }
+      .value
+  }
+// format: on
 }
