@@ -6,7 +6,8 @@ integer OrderNumber
 
 union OrderType {
   online: OrderNumber,
-  inStore: InStoreOrder
+  inStore: InStoreOrder,
+  preview: Unit
 }
 
 @adtMember(OrderType)

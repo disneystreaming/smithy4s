@@ -55,7 +55,7 @@ service PackedInputsService {
 
 will produce the following Scala code
 
-```scala  
+```scala
 trait PackedInputServiceGen[F[_]] {
 
   def packedInputOperation(input: PackedInput) : F[Unit]
