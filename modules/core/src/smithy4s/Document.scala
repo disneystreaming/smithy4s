@@ -18,7 +18,7 @@ package smithy4s
 
 import smithy4s.Document._
 import smithy4s.http.PayloadError
-import smithy4s.internals.SchematicDocumentDecoder
+import smithy4s.internals.DocumentDecoderSchemaVisitor
 import smithy4s.internals.SchematicDocumentEncoder
 
 /**
@@ -120,9 +120,8 @@ object Document {
   object Decoder {
 
     def fromSchema[A](schema: Schema[A]): Decoder[A] = {
-      val makeDecoder = schema.compile(SchematicDocumentDecoder)
+      val decodeFunction = schema.compile(DocumentDecoderSchemaVisitor)
       new Decoder[A] {
-        val decodeFunction = makeDecoder.get
         def decode(a: Document): Either[PayloadError, A] =
           try { Right(decodeFunction(Nil, a)) }
           catch {
