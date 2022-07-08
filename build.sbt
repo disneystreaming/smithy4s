@@ -58,7 +58,8 @@ lazy val allModules = Seq(
   aws.projectRefs,
   `aws-http4s`.projectRefs,
   `codegen-cli`.projectRefs,
-  dynamic.projectRefs
+  dynamic.projectRefs,
+  testUtils.projectRefs
 ).flatten
 
 lazy val docs =
