@@ -315,7 +315,17 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         case n: DNumber  => out.writeVal(n.value)
         case a: DArray =>
           out.writeArrayStart()
-          a.value.foreach(encodeValue(_, out))
+          a.value match {
+            case x: ArraySeq[Document] =>
+              val xs = x.unsafeArray.asInstanceOf[Array[Document]]
+              var i = 0
+              while (i < xs.length) {
+                encodeValue(xs(i), out)
+                i += 1
+              }
+            case xs =>
+              xs.foreach(encodeValue(_, out))
+          }
           out.writeArrayEnd()
         case o: DObject =>
           out.writeObjectStart()
@@ -349,8 +359,8 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           new DNumber(in.readBigDecimal(null))
         } else if (b == '[') {
           new DArray({
-            if (in.isNextToken(']')) IndexedSeq.empty[Document]
-            else {
+            if (in.isNextToken(']')) ArraySeq.empty[Document]
+            else ArraySeq.unsafeWrapArray {
               in.rollbackToken()
               var arr = new Array[Document](4)
               var i = 0
@@ -361,12 +371,10 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
                 i += 1
                 in.isNextToken(',')
               }) {}
-
-              if (in.isCurrentToken(']')) ArraySeq.unsafeWrapArray {
+              if (in.isCurrentToken(']')) {
                 if (i == arr.length) arr
                 else java.util.Arrays.copyOf(arr, i)
-              }
-              else in.arrayEndOrCommaError()
+              } else in.arrayEndOrCommaError()
             }
           })
         } else if (b == '{') {
@@ -553,7 +561,17 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     def encodeValue(xs: IndexedSeq[A], out: JsonWriter): Unit = {
       out.writeArrayStart()
-      xs.foreach(x => a.encodeValue(x, out))
+      xs match {
+        case x: ArraySeq[A] =>
+          val xs = x.unsafeArray.asInstanceOf[Array[A]]
+          var i = 0
+          while (i < xs.length) {
+            a.encodeValue(xs(i), out)
+            i += 1
+          }
+        case _ =>
+          xs.foreach(x => a.encodeValue(x, out))
+      }
       out.writeArrayEnd()
     }
 
