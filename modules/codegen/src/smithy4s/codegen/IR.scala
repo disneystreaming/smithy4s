@@ -26,8 +26,7 @@ import smithy4s.recursion._
 import software.amazon.smithy.model.node.Node
 import smithy4s.codegen.TypedNode.AltValueTN.ProductAltTN
 import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
-import smithy4s.codegen.UnionMember.TypeCase
-import smithy4s.codegen.UnionMember.ProductCase
+import smithy4s.codegen.UnionMember._
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
@@ -122,10 +121,12 @@ sealed trait UnionMember {
   def update(f: Product => Product)(g: Type => Type): UnionMember = this match {
     case TypeCase(tpe)        => TypeCase(g(tpe))
     case ProductCase(product) => ProductCase(f(product))
+    case UnitCase             => UnitCase
   }
 }
 object UnionMember {
   case class ProductCase(product: Product) extends UnionMember
+  case object UnitCase extends UnionMember
   case class TypeCase(tpe: Type) extends UnionMember
 }
 
