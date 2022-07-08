@@ -19,9 +19,11 @@ package smithy4s.dynamic
 import smithy4s.Lazy
 import smithy4s.Service
 import smithy4s.Hints
-import smithy4s.schema.Field
-import smithy4s.schema.StubSchematic
+import smithy4s.schema.SchemaVisitor
 import Fixtures._
+import smithy4s.ShapeId
+import smithy4s.schema.SchemaField
+import smithy4s.schema.Schema
 
 class FieldsSpec() extends munit.FunSuite {
 
@@ -38,23 +40,22 @@ class FieldsSpec() extends munit.FunSuite {
   object Interpreter {
     type ToFieldNames[A] = () => List[String]
 
-    object GetFieldNames extends StubSchematic[ToFieldNames] {
+    object GetFieldNames extends SchemaVisitor.Default[ToFieldNames] {
       def default[A]: ToFieldNames[A] = () => Nil
 
-      override def withHints[A](
-          fa: ToFieldNames[A],
-          hints: Hints
-      ): ToFieldNames[A] = fa
-
       override def struct[S](
-          fields: Vector[Field[ToFieldNames, S, _]]
-      )(const: Vector[Any] => S): ToFieldNames[S] = () =>
+          shapeId: ShapeId,
+          hints: Hints,
+          fields: Vector[SchemaField[S, _]],
+          make: IndexedSeq[Any] => S
+      ): ToFieldNames[S] = { () =>
         fields.flatMap { f =>
-          f.label :: f.instance()
+          f.label :: apply(f.instance)()
         }.toList
+      }
 
-      override def suspend[A](f: Lazy[ToFieldNames[A]]): ToFieldNames[A] =
-        () => f.value()
+      override def lazily[A](suspend: Lazy[Schema[A]]): ToFieldNames[A] =
+        () => apply(suspend.value)()
 
       // these will be needed later but are irrelevant for now
       // override def union[S](

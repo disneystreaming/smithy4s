@@ -29,7 +29,6 @@ sealed trait Schema[A]{
   final def oneOf[Union] : PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
 
   final def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
-  final def compile[F[_]](schematic: Schematic[F]) : F[A] = Schematic.toPolyFunction(schematic)(this)
 
   final def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
   final def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)

@@ -34,7 +34,7 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
     schema <- Gen.const(
       Schema.float.asInstanceOf[Schema[DynData]]
     ) // SchemaGenerator.genSchema(1, 1)
-    data <- schema.compile(smithy4s.scalacheck.SchematicGen)
+    data <- schema.compile(smithy4s.scalacheck.SchemaVisitorGen)
   } yield (schema -> data)
 
   implicit val schemaAndDataShow: Show[(Schema[DynData], Any)] =

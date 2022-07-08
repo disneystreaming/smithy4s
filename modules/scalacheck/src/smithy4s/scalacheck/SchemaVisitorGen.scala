@@ -25,9 +25,9 @@ import scala.jdk.CollectionConverters._
 import smithy4s.schema.Primitive._
 import smithy.api.Length
 
-object SchematicGen extends SchematicGen2
+object SchemaVisitorGen extends SchemaVisitorGen2
 
-abstract class SchematicGen2 extends SchemaVisitor[Gen] { self =>
+abstract class SchemaVisitorGen2 extends SchemaVisitor[Gen] { self =>
 
   def primitive[P](
       shapeId: ShapeId,

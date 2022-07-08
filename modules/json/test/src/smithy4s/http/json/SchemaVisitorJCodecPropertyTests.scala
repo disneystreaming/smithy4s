@@ -39,7 +39,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- SchemaGenerator.genSchema(2, 2)
-    data <- schema.compile(smithy4s.scalacheck.SchematicGen)
+    data <- schema.compile(smithy4s.scalacheck.SchemaVisitorGen)
   } yield (schema -> data)
 
   implicit val schemaAndDataShow: Show[(Schema[DynData], Any)] =
@@ -75,7 +75,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
   property("constraint validation") {
     val gen = for {
       (hint, sch) <- genSchemaWithHints
-      data <- sch.compile(smithy4s.scalacheck.SchematicGen)
+      data <- sch.compile(smithy4s.scalacheck.SchemaVisitorGen)
     } yield (Hints(hint), sch, data)
     forAll(gen) { case (hints, schema, data) =>
       val hint = hints.all.collect { case b: Hints.Binding.StaticBinding[_] =>
