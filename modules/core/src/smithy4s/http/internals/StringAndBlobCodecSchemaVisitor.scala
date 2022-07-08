@@ -20,8 +20,6 @@ package internals
 
 import smithy4s.http.HttpMediaType
 
-import smithy4s.internals.Hinted
-
 import schema._
 import smithy4s.schema.Primitive._
 import java.nio.charset.StandardCharsets
@@ -53,8 +51,6 @@ private[smithy4s] object StringAndBlobCodecSchemaVisitor {
       def toBytes(b: B): Array[Byte] = self.toBytes(from(b))
     }
   }
-
-  type Result[A] = Hinted[CodecResult, A]
 
   sealed trait CodecResult[A]
   case class SimpleCodecResult[A](simpleCodec: SimpleCodec[A])
@@ -89,13 +85,14 @@ private[smithy4s] object StringAndBlobCodecSchemaVisitor {
 
   }
 
-  def noop[A]: Result[A] = Hinted.static(NoCodecResult[A]())
-  def noop2[A]: CodecResult[A] = NoCodecResult[A]()
+  def noop[A]: CodecResult[A] = NoCodecResult[A]()
 
 }
 
 private[smithy4s] class StringAndBlobCodecSchemaVisitor
-    extends SchemaVisitor[CodecResult] {
+    extends SchemaVisitor.Default[CodecResult] {
+
+  override def default[A]: CodecResult[A] = noop
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -136,29 +133,8 @@ private[smithy4s] class StringAndBlobCodecSchemaVisitor
       }
     case PTimestamp | PUUID | PBigInt | PUnit | PBoolean | PLong | PShort |
         PDocument | PByte | PDouble | PFloat | PBigDecimal | PInt =>
-      noop2
+      noop
   }
-
-  override def collection[C[_], A](
-      shapeId: ShapeId,
-      hints: Hints,
-      tag: CollectionTag[C],
-      member: Schema[A]
-  ): CodecResult[C[A]] = noop2
-
-  override def map[K, V](
-      shapeId: ShapeId,
-      hints: Hints,
-      key: Schema[K],
-      value: Schema[V]
-  ): CodecResult[Map[K, V]] = noop2
-
-  override def enumeration[E](
-      shapeId: ShapeId,
-      hints: Hints,
-      values: List[EnumValue[E]],
-      total: E => EnumValue[E]
-  ): CodecResult[E] = noop2
 
   override def struct[S](
       shapeId: ShapeId,
@@ -227,24 +203,17 @@ private[smithy4s] class StringAndBlobCodecSchemaVisitor
             def writeToArray(value: S): Array[Byte] =
               simpleCodec.toBytes(field.get(value))
           })
-        case BodyCodecResult(_) => noop2[S]
-        case NoCodecResult()    => noop2[S]
+        case BodyCodecResult(_) => noop[S]
+        case NoCodecResult()    => noop[S]
       }
     }
 
     fields
       .find(p => p.instance.hints.get(HttpPayload).isDefined)
       .map { field => processField(field) }
-      .getOrElse(noop2[S])
+      .getOrElse(noop[S])
 
   }
-
-  override def union[U](
-      shapeId: ShapeId,
-      hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
-  ): CodecResult[U] = noop2
 
   override def biject[A, B](
       schema: Schema[A],
@@ -259,7 +228,5 @@ private[smithy4s] class StringAndBlobCodecSchemaVisitor
       from: B => A
   ): CodecResult[B] =
     CodecResult.invariantInstance.xmap(apply(schema))(to.asFunction, from)
-
-  override def lazily[A](suspend: Lazy[Schema[A]]): CodecResult[A] = noop2
 
 }
