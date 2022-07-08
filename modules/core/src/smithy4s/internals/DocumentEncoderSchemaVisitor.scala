@@ -62,8 +62,6 @@ trait DocumentEncoder[A] { self =>
 }
 
 object DocumentEncoder {
-  // to remove
-  type DocumentEncoderMake[A] = Hinted[DocumentEncoder, A]
 
   implicit val contraInstance: Contravariant[DocumentEncoder] =
     new Contravariant[DocumentEncoder] {

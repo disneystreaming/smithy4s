@@ -20,7 +20,6 @@ package internals
 
 import smithy4s.capability.Covariant
 import smithy4s.http.internals.MetaDecode._
-import smithy4s.internals.Hinted
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -187,22 +186,6 @@ private[http] object MetaDecode {
           }
         )
     }
-
-  type Make[A] = Hinted[MetaDecode, A]
-
-  object Make {
-    def fromUnsafe[A](
-        expectedType: String
-    )(f: String => A): MetaDecode.Make[A] =
-      Hinted.static(MetaDecode.fromUnsafe(expectedType)(f))
-
-    def from[A](
-        expectedType: String
-    )(f: String => Option[A]): MetaDecode.Make[A] =
-      Hinted.static(MetaDecode.from(expectedType)(f))
-
-    def empty[A]: Make[A] = Hinted.static(MetaDecode.EmptyMetaDecode)
-  }
 
   def fromUnsafe[A](
       expectedType: String
