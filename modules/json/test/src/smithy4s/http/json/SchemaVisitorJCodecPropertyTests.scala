@@ -35,7 +35,7 @@ import codecs.schemaVisitorJCodec
 import org.scalacheck.Prop
 import Prop._
 
-class SchematicJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
+class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- SchemaGenerator.genSchema(2, 2)
