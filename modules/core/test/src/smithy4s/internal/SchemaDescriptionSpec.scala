@@ -30,7 +30,7 @@ class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
 
   def simple[A](s: Schema[A]): String = s.compile(SchemaDescription)
   def detailed[A](s: Schema[A]): String =
-    s.compile(SchemaDescriptionDetailed)(Set.empty)._2
+    s.compile(SchemaDescriptionDetailed)
 
   case class TestCase[A](schema: Schema[A], simple: String, detailed: String)
 

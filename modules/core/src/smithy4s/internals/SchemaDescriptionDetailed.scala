@@ -27,33 +27,33 @@ import smithy4s.schema.{
   CollectionTag
 }
 
-trait SchemaDescriptionDetailed[A]
+private[internals] trait SchemaDescriptionDetailedImpl[A]
     extends (Set[ShapeId] => (Set[ShapeId], String)) {
-  def mapResult[B](f: String => String): SchemaDescriptionDetailed[B] = {
+  def mapResult[B](f: String => String): SchemaDescriptionDetailedImpl[B] = {
     seen =>
       val (s1, desc) = apply(seen)
       (s1 ++ seen, f(desc))
   }
   def flatMapResult[B](
-      f: String => SchemaDescriptionDetailed[B]
-  ): SchemaDescriptionDetailed[B] = { seen =>
+      f: String => SchemaDescriptionDetailedImpl[B]
+  ): SchemaDescriptionDetailedImpl[B] = { seen =>
     val (s1, desc) = apply(seen)
     f(desc)(s1 ++ seen)
   }
 }
 
-object SchemaDescriptionDetailed
-    extends SchemaVisitor[SchemaDescriptionDetailed] { self =>
+private[internals] object SchemaDescriptionDetailedImpl
+    extends SchemaVisitor[SchemaDescriptionDetailedImpl] { self =>
 
-  def of[A](shapeId: ShapeId, value: String): SchemaDescriptionDetailed[A] =
+  def of[A](shapeId: ShapeId, value: String): SchemaDescriptionDetailedImpl[A] =
     s => (s + shapeId, value)
 
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): SchemaDescriptionDetailed[P] = {
-    SchemaDescriptionDetailed.of(
+  ): SchemaDescriptionDetailedImpl[P] = {
+    SchemaDescriptionDetailedImpl.of(
       shapeId,
       SchemaDescription.apply(tag.schema(shapeId))
     )
@@ -63,7 +63,7 @@ object SchemaDescriptionDetailed
       hints: Hints,
       tag: CollectionTag[C],
       member: Schema[A]
-  ): SchemaDescriptionDetailed[C[A]] = {
+  ): SchemaDescriptionDetailedImpl[C[A]] = {
     apply(member).mapResult(s => s"${tag.name}[$s]")
   }
   override def map[K, V](
@@ -71,7 +71,7 @@ object SchemaDescriptionDetailed
       hints: Hints,
       key: Schema[K],
       value: Schema[V]
-  ): SchemaDescriptionDetailed[Map[K, V]] = {
+  ): SchemaDescriptionDetailedImpl[Map[K, V]] = {
     apply(key).flatMapResult { kDesc =>
       apply(value).mapResult { vDesc =>
         s"Map[$kDesc, $vDesc]"
@@ -83,9 +83,9 @@ object SchemaDescriptionDetailed
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): SchemaDescriptionDetailed[E] = {
+  ): SchemaDescriptionDetailedImpl[E] = {
     val vDesc = values.map(e => e.stringValue).mkString(", ")
-    SchemaDescriptionDetailed.of(shapeId, s"Enumeration{ $vDesc }")
+    SchemaDescriptionDetailedImpl.of(shapeId, s"Enumeration{ $vDesc }")
   }
 
   override def struct[S](
@@ -93,7 +93,7 @@ object SchemaDescriptionDetailed
       hints: Hints,
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
-  ): SchemaDescriptionDetailed[S] = { seen =>
+  ): SchemaDescriptionDetailedImpl[S] = { seen =>
     def forField[T](sf: SchemaField[S, T]): (String, (Set[ShapeId], String)) = {
       apply(sf.instance)(seen)
       sf.label -> apply(sf.instance)(seen)
@@ -114,7 +114,7 @@ object SchemaDescriptionDetailed
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: U => Alt.SchemaAndValue[U, _]
-  ): SchemaDescriptionDetailed[U] = { seen =>
+  ): SchemaDescriptionDetailedImpl[U] = { seen =>
     def forAlt[T](alt: SchemaAlt[U, T]): (String, (Set[ShapeId], String)) = {
       val desc = apply(alt.instance)(seen)
       alt.label -> desc
@@ -134,7 +134,7 @@ object SchemaDescriptionDetailed
       schema: Schema[A],
       to: A => B,
       from: B => A
-  ): SchemaDescriptionDetailed[B] = {
+  ): SchemaDescriptionDetailedImpl[B] = {
     apply(schema).mapResult { desc => s"Bijection{ $desc }" }
   }
 
@@ -142,13 +142,13 @@ object SchemaDescriptionDetailed
       schema: Schema[A],
       to: Refinement[A, B],
       from: B => A
-  ): SchemaDescriptionDetailed[B] = {
+  ): SchemaDescriptionDetailedImpl[B] = {
     apply(schema).mapResult { desc => s"Surjection{ $desc }" }
   }
   override def lazily[A](
       suspend: Lazy[Schema[A]]
-  ): SchemaDescriptionDetailed[A] = {
-    new SchemaDescriptionDetailed[A] {
+  ): SchemaDescriptionDetailedImpl[A] = {
+    new SchemaDescriptionDetailedImpl[A] {
       val rec = suspend.map(s => s -> self.apply(s))
       override def apply(seen: Set[ShapeId]): (Set[ShapeId], String) = {
         val (schema, f) = rec.value
@@ -160,4 +160,11 @@ object SchemaDescriptionDetailed
       }
     }
   }
+
+  val conversion: SchemaDescriptionDetailedImpl ~> SchemaDescription =
+    new PolyFunction[SchemaDescriptionDetailedImpl, SchemaDescription] {
+      def apply[A](
+          fa: SchemaDescriptionDetailedImpl[A]
+      ): SchemaDescription[A] = fa(Set.empty)._2
+    }
 }
