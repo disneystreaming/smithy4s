@@ -16,8 +16,6 @@
 
 package smithy4s
 
-import smithy4s.schema.PassthroughSchematic
-
 sealed abstract class HintMask {
   def ++(other: HintMask): HintMask
   def apply(hints: Hints): Hints
@@ -55,14 +53,4 @@ object HintMask {
     }
   }
 
-  private[this] final class MaskSchematic[F[_]](
-      schematic: Schematic[F],
-      mask: HintMask
-  ) extends PassthroughSchematic[F](schematic) {
-    override def withHints[A](fa: F[A], hints: Hints): F[A] =
-      schematic.withHints(fa, mask(hints))
-  }
-
-  def mask[F[_]](schematic: Schematic[F], mask: HintMask): Schematic[F] =
-    new MaskSchematic[F](schematic, mask)
 }
