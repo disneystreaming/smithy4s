@@ -55,7 +55,8 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
         schema.compile(schemaVisitorJCodec)
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
-      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
+      val schemaStr =
+        schema.compile(smithy4s.internals.SchemaDescriptionDetailed)
       val document = encoder.encode(data)
       val jsonFromDocument = writeToString(document)
       val jsonDirect = writeToString(data)

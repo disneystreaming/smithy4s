@@ -56,7 +56,8 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
         schema.compile(schemaVisitorJCodec)
-      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
+      val schemaStr =
+        schema.compile(smithy4s.internals.SchemaDescriptionDetailed)
       val json = writeToString(data)
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
       val result = scala.util.Try(readFromString[Any](json, config)).toEither
