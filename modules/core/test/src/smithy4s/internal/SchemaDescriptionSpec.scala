@@ -51,25 +51,25 @@ class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
   case class TestCase[A](schema: Schema[A], simple: String, detailed: String)
 
   val testCases = Seq(
-    TestCase(SomeInt.schema, "Int", "Bijection { Int }"),
-    TestCase(SomeSet.schema, "Set", "Bijection { Set[String] }"),
-    TestCase(SomeList.schema, "List", "Bijection { List[String] }"),
-    TestCase(SomeMap.schema, "Map", "Bijection { Map[String, String] }"),
+    TestCase(SomeInt.schema, "Int", "Bijection{ Int }"),
+    TestCase(SomeSet.schema, "Set", "Bijection{ Set[String] }"),
+    TestCase(SomeList.schema, "List", "Bijection{ List[String] }"),
+    TestCase(SomeMap.schema, "Map", "Bijection{ Map[String, String] }"),
     TestCase(
       UntaggedUnion.schema,
       "Union",
-      "Union { three: Bijection { Structure Three { three: String } }, four: Bijection { Structure Four { four: Int } } }"
+      "Union{ three: Bijection{ Structure Three{ three: String } }, four: Bijection{ Structure Four{ four: Int } } }"
     ),
     TestCase(
       BlobBody.schema,
       "Structure",
-      "Structure BlobBody { blob: Bytes }"
+      "Structure BlobBody{ blob: Bytes }"
     ),
     TestCase(FooEnum.schema, "Enumeration", "Enumeration{ Foo }"),
     TestCase(
       IntList.schema,
       "Structure",
-      "Structure IntList { head: Int, tail: Recursive { IntList } }"
+      "Structure IntList{ head: Int, tail: Recursive{ IntList } }"
     ) // recursive
   )
 
