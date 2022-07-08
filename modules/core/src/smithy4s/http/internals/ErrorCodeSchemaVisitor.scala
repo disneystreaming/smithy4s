@@ -20,42 +20,53 @@ package internals
 
 import smithy4s.schema._
 
-private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
+private[smithy4s] object ErrorCodeSchemaVisitor
+    extends SchemaVisitor.Default[HttpCode] {
+  def default[A]: A => Option[Int] = _ => None
 
-  def default[A]: (A, Hints) => Option[Int] = (_, _) => None
-
-  override def union[S](
-      first: Alt[HttpCode, S, _],
-      rest: Vector[Alt[HttpCode, S, _]]
-  )(total: S => Alt.WithValue[HttpCode, S, _]): HttpCode[S] = { (s, hints) =>
-    processAltWithValue(total(s), hints)
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: U => Alt.SchemaAndValue[U, _]
+  ): HttpCode[U] = { (s) =>
+    processAltWithValue(dispatch(s))
   }
 
   def processAltWithValue[S, B](
-      withValue: Alt.WithValue[HttpCode, S, B],
-      hints: Hints
-  ): Option[Int] =
-    withValue.alt.instance(withValue.value, hints)
+      withValue: Alt.WithValue[Schema, S, B]
+  ): Option[Int] = {
+    val httpCode = apply(withValue.alt.instance)
+    httpCode(withValue.value)
+  }
 
-  override def suspend[A](f: Lazy[HttpCode[A]]): HttpCode[A] = f.value
+  override def lazily[A](suspend: Lazy[Schema[A]]): HttpCode[A] =
+    apply(suspend.value)
 
-  override def bijection[A, B](
-      f: HttpCode[A],
+  override def biject[A, B](
+      schema: Schema[A],
       to: A => B,
       from: B => A
-  ): HttpCode[B] =
-    (b, hints) => f(from(b), hints)
+  ): HttpCode[B] = {
+    val httpCode = apply(schema)
+    b => httpCode(from(b))
+  }
 
-  override def surjection[A, B](
-      f: HttpCode[A],
+  override def surject[A, B](
+      schema: Schema[A],
       to: Refinement[A, B],
       from: B => A
-  ): HttpCode[B] =
-    (b, hints) => f(from(b), hints)
+  ): HttpCode[B] = {
+    val httpCode = apply(schema)
+    b => httpCode(from(b))
+  }
 
   override def struct[S](
-      fields: Vector[Field[HttpCode, S, _]]
-  )(f: Vector[Any] => S): HttpCode[S] = (_, hints) =>
+      shapeId: ShapeId,
+      hints: Hints,
+      fields: Vector[SchemaField[S, _]],
+      make: IndexedSeq[Any] => S
+  ): HttpCode[S] = { _ =>
     hints
       .get(smithy.api.HttpError)
       .map(_.value)
@@ -63,8 +74,6 @@ private[smithy4s] object SchematicErrorCode extends StubSchematic[HttpCode] {
         case smithy.api.Error.CLIENT => 400
         case smithy.api.Error.SERVER => 500
       })
-
-  override def withHints[A](fa: HttpCode[A], hints: Hints): HttpCode[A] =
-    (a: A, _: Hints) => fa(a, hints)
+  }
 
 }
