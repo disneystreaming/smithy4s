@@ -20,7 +20,7 @@ package http
 import java.nio.ByteBuffer
 import scala.collection.{Map => MMap}
 
-import internals.StringAndBlobCodecSchematic
+import internals.StringAndBlobCodecSchemaVisitor
 
 /**
   * An abstraction exposing serialisation functions to decode from bytes /
@@ -171,9 +171,9 @@ object CodecAPI {
           schema: Schema[A]
       ): this.Codec[A] = {
         val stringAndBlobResult =
-          schema.compile(new internals.StringAndBlobCodecSchematic())
-        stringAndBlobResult.get match {
-          case StringAndBlobCodecSchematic.BodyCodecResult(bodyCodec) =>
+          schema.compile(new internals.StringAndBlobCodecSchemaVisitor())
+        stringAndBlobResult match {
+          case StringAndBlobCodecSchemaVisitor.BodyCodecResult(bodyCodec) =>
             bodyCodec
           case _ =>
             val underlyingCodec = underlying.compileCodec(schema)
