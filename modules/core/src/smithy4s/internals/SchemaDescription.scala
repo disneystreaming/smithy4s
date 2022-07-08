@@ -84,7 +84,7 @@ trait SchemaDescriptionDetailed[A] extends (Set[ShapeId] => (Set[ShapeId], Strin
   }
 }
 
-object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed] {
+object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed] { self =>
 
   def of[A](shapeId: ShapeId, value: String): SchemaDescriptionDetailed[A] = s => (s + shapeId, value)
 
@@ -116,13 +116,13 @@ object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed
       sf.label -> apply(sf.instance)(seen)
     }
     val (sFinal, res) = fields
-      .map(f => forField(f))
       .foldLeft((Set.empty[ShapeId], Seq.empty[(String, String)])) { 
-        case ((shapes, fieldDesc), (label, (s2, desc))) =>
+        case ((shapes, fieldDesc), field) =>
+          val (label, (s2, desc)) = forField(field)
           (shapes ++ s2, fieldDesc :+ (label -> desc))
       }
     val fieldDesc = res.map { case (label, desc) => s"$label: $desc" }.mkString(", ")
-    sFinal -> s"Structure { $fieldDesc }"
+    sFinal -> s"Structure ${shapeId.name} { $fieldDesc }"
   }
   
   override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]): SchemaDescriptionDetailed[U] = { seen =>
@@ -131,9 +131,9 @@ object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed
       alt.label -> desc
     }
     val (sFinal, res) = alternatives
-      .map(f => forAlt(f))
       .foldLeft((Set.empty[ShapeId], Seq.empty[(String, String)])) { 
-        case ((shapes, fieldDesc), (label, (s2, desc))) =>
+        case ((shapes, fieldDesc), alt) =>
+          val (label, (s2, desc)) = forAlt(alt)
           (shapes ++ s2, fieldDesc :+ (label -> desc))
       }
     val fieldDesc = res.map { case (label, desc) => s"$label: $desc" }.mkString(", ")
@@ -148,17 +148,17 @@ object SchemaDescriptionDetailed extends SchemaVisitor[SchemaDescriptionDetailed
     apply(schema).mapResult { desc => s"Surjection { $desc }" }
   }
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescriptionDetailed[A] = {
-    // can't nail this one
-    (seen: Set[ShapeId]) =>
-      suspend.map { schema => 
-        val (s2, desc) = apply(schema)(seen)
+    new SchemaDescriptionDetailed[A] {
+      val rec = suspend.map(s => s -> self.apply(s))
+      override def apply(seen: Set[ShapeId]): (Set[ShapeId], String) = {
+        val (schema, f) = rec.value
         if (seen(schema.shapeId)) {
-          s2 -> s"Lazy { $desc }"
+          seen -> s"Recursive { ${schema.shapeId.name} }"
         } else {
-          apply(schema)(seen ++ s2)
+          f(seen + schema.shapeId)
         }
       }
-      .value
+    }
   }
 // format: on
 }
