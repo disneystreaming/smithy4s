@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s
 package internals
 
@@ -35,25 +51,25 @@ class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
   case class TestCase[A](schema: Schema[A], simple: String, detailed: String)
 
   val testCases = Seq(
-    TestCase(SomeInt.schema, "Int", "Bijection{ Int }"),
-    TestCase(SomeSet.schema, "Set", "Bijection{ Set[String] }"),
-    TestCase(SomeList.schema, "List", "Bijection{ List[String] }"),
-    TestCase(SomeMap.schema, "Map", "Bijection{ Map[String, String] }"),
+    TestCase(SomeInt.schema, "Int", "Int"),
+    TestCase(SomeSet.schema, "Set", "Set[String]"),
+    TestCase(SomeList.schema, "List", "List[String]"),
+    TestCase(SomeMap.schema, "Map", "Map[String, String]"),
     TestCase(
       UntaggedUnion.schema,
       "Union",
-      "Union{ three: Bijection{ Structure Three{ three: String } }, four: Bijection{ Structure Four{ four: Int } } }"
+      "union UntaggedUnion(three: structure Three(three: String) | four: structure Four(four: Int))"
     ),
     TestCase(
       BlobBody.schema,
       "Structure",
-      "Structure BlobBody{ blob: Bytes }"
+      "structure BlobBody(blob: Bytes)"
     ),
-    TestCase(FooEnum.schema, "Enumeration", "Enumeration{ Foo }"),
+    TestCase(FooEnum.schema, "Enumeration", "enum(\"Foo\")"),
     TestCase(
       IntList.schema,
       "Structure",
-      "Structure IntList{ head: Int, tail: Recursive{ IntList } }"
+      "structure IntList(head: Int, tail: Recursive[IntList])"
     ) // recursive
   )
 

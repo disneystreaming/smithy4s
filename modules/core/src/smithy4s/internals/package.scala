@@ -16,10 +16,8 @@
 
 package smithy4s
 
-import smithy4s.schema.SchemaVisitor
-
 package object internals {
   type SchemaDescription[A] = String
-  val SchemaDescriptionDetailed: SchemaVisitor[SchemaDescription] =
+  val SchemaDescriptionDetailed: Schema ~> SchemaDescription =
     SchemaDescriptionDetailedImpl.mapK(SchemaDescriptionDetailedImpl.conversion)
 }
