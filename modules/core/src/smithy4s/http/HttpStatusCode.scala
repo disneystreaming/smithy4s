@@ -32,9 +32,9 @@ object HttpStatusCode {
     instance
 
   def fromSchema[A](schema: Schema[A]): HttpStatusCode[A] = {
-    val go = schema.compile(internals.SchematicErrorCode)
+    val go = schema.compile(internals.ErrorCodeSchemaVisitor)
     new HttpStatusCode[A] {
-      def code(a: A, default: Int): Int = go(a, Hints()).getOrElse(default)
+      def code(a: A, default: Int): Int = go(a).getOrElse(default)
     }
   }
 

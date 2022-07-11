@@ -19,17 +19,12 @@ package http
 package internals
 
 import smithy4s.capability.Contravariant
-import smithy4s.internals.Hinted
 import HttpBinding._
 import MetaEncode._
 
 // Metadata encoders can only be used to encode a subset of the metamodel.
 // See https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html for more information
 sealed trait MetaEncode[-A] {
-  // def getBinding(label: String): Option[HttpBinding] = this match {
-  //   case HintedMetaEncode(_, hints) => HttpBinding.fromHints(label, hints)
-  //   case _                       => None
-  // }
 
   private[internals] def updateMetadata(
       binding: HttpBinding
@@ -97,15 +92,5 @@ object MetaEncode {
 
   def fromToString[A]: MetaEncode[A] = StringValueMetaEncode(_.toString())
   def empty[A]: MetaEncode[A] = EmptyMetaEncode
-
-  type Make[A] = Hinted[MetaEncode, A]
-
-  object Make {
-    def stringValue[A](f: A => String): MetaEncode.Make[A] =
-      Hinted.static(StringValueMetaEncode[A](f))
-
-    def fromToString[A]: MetaEncode.Make[A] = stringValue(_.toString())
-    def empty[A]: MetaEncode.Make[A] = Hinted.static(MetaEncode.empty[A])
-  }
 
 }

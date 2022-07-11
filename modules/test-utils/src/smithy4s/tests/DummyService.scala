@@ -34,7 +34,7 @@ object DummyService {
             def apply[I, E, O, SI, SO](
                 ep: Endpoint[Op, I, E, O, SI, SO]
             ): F[O] =
-              F.pure(ep.output.compile(DefaultSchematic))
+              F.pure(ep.output.compile(DefaultSchemaVisitor))
           }
         )
       }

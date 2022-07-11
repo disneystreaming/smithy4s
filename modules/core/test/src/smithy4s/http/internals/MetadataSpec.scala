@@ -52,7 +52,7 @@ class MetadataSpec() extends FunSuite {
       .left
       .map(_.getMessage())
       .flatMap { partial =>
-        s.compile(FromMetadataSchematic).read(partial.decoded.toMap)
+        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
     expect.same(encoded, expectedEncoding)
     expect(result == Right(a))
@@ -70,7 +70,7 @@ class MetadataSpec() extends FunSuite {
       .left
       .map(_.getMessage())
       .flatMap { partial =>
-        s.compile(FromMetadataSchematic).read(partial.decoded.toMap)
+        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
     expect.same(encoded, expectedEncoding)
     expect.same(result, Left(message))

@@ -18,8 +18,8 @@ package smithy4s
 
 import smithy4s.Document._
 import smithy4s.http.PayloadError
-import smithy4s.internals.SchematicDocumentDecoder
-import smithy4s.internals.SchematicDocumentEncoder
+import smithy4s.internals.DocumentDecoderSchemaVisitor
+import smithy4s.internals.DocumentEncoderSchemaVisitor
 
 /**
   * A json-like free-form structure serving as a model for
@@ -91,10 +91,11 @@ object Document {
   object Encoder {
 
     def fromSchema[A](schema: Schema[A]): Encoder[A] = {
-      val makeEncoder = schema.compile(SchematicDocumentEncoder).get
+      val makeEncoder = schema.compile(DocumentEncoderSchemaVisitor)
       new Encoder[A] {
-        val encodeFunction = makeEncoder.apply
-        def encode(a: A): Document = encodeFunction(a)
+        def encode(a: A): Document = {
+          makeEncoder.apply(a)
+        }
       }
     }
 
@@ -120,9 +121,8 @@ object Document {
   object Decoder {
 
     def fromSchema[A](schema: Schema[A]): Decoder[A] = {
-      val makeDecoder = schema.compile(SchematicDocumentDecoder)
+      val decodeFunction = schema.compile(DocumentDecoderSchemaVisitor)
       new Decoder[A] {
-        val decodeFunction = makeDecoder.get
         def decode(a: Document): Either[PayloadError, A] =
           try { Right(decodeFunction(Nil, a)) }
           catch {

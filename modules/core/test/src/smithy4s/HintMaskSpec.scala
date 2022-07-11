@@ -19,8 +19,6 @@ package smithy4s
 import cats.kernel.Eq
 import smithy.api._
 import smithy4s.api.Discriminated
-import smithy4s.schema._
-import smithy4s.schema.Schema._
 
 class HintMaskSpec() extends munit.FunSuite {
 
@@ -40,26 +38,5 @@ class HintMaskSpec() extends munit.FunSuite {
     val mask = HintMask.empty
     val result = mask(hints)
     expect.eql(Hints(), result)
-  }
-
-  type ToHints[A] = Hints
-
-  object TestCompiler extends StubSchematic[ToHints] {
-    def default[A]: Hints = Hints()
-
-    override def withHints[A](fa: ToHints[A], hints: Hints): ToHints[A] =
-      fa ++ hints
-  }
-
-  test("hint mask is applied in schematic mask") {
-    val schema = string.addHints(Readonly(), Paginated())
-    val mask = HintMask(Readonly)
-    val newSchematic = HintMask.mask(TestCompiler, mask)
-    val result = schema.compile(newSchematic)
-    val expected = Hints(Readonly())
-    expect.eql(
-      expected,
-      result
-    )
   }
 }

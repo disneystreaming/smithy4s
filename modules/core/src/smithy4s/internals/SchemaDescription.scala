@@ -51,20 +51,20 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     }
     SchemaDescription.of(value)
   }
-  override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescription[C[A]] = 
+  override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescription[C[A]] =
     SchemaDescription.of(tag.name)
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
-  
+
   override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
-  
+
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =
     SchemaDescription.of("Structure")
-  
-  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]): SchemaDescription[U] =
+
+  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): SchemaDescription[U] =
     SchemaDescription.of("Union")
-  
+
   override def biject[A, B](schema: Schema[A], to: A => B, from: B => A): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
   override def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): SchemaDescription[B] =

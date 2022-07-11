@@ -34,7 +34,8 @@ class JsonBenchmark {
 
   import Circe._
 
-  val s3objectGen = S3Object.schema.compile(smithy4s.scalacheck.SchematicGen)
+  val s3objectGen =
+    S3Object.schema.compile(smithy4s.scalacheck.SchemaVisitorGen)
   val schema = S3Object.schema
   val jsonCodecs = smithy4s.http.json.codecs
   val jsonCodec =

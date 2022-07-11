@@ -17,14 +17,17 @@
 package smithy4s
 
 import munit._
+import smithy4s.internals.SchemaDescriptionDetailed
 
 class BigStructSmokeSpec() extends FunSuite {
 
+  type Repr[A] = String
+
   test("Big structures do have a schema") {
     val expected =
-      "struct23(a1: int, a2: int, a3: int, a4: int, a5: int, a6: int, a7: int, a8: int, a9: int, a10: int, a11: int, a12: int, a13: int, a14: int, a15: int, a16: int, a17: int, a18: int, a19: int, a20: int, a21: int, a22: int, a23: int)"
+      "structure BigStruct(a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int, a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int, a21: Int, a22: Int, a23: Int)"
     val schemaRepr =
-      smithy4s.example.BigStruct.schema.compile(schema.SchematicRepr)
+      smithy4s.example.BigStruct.schema.compile(SchemaDescriptionDetailed)
     expect.same(schemaRepr, expected)
   }
 

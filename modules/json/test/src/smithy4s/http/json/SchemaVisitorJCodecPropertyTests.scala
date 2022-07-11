@@ -35,11 +35,11 @@ import codecs.schemaVisitorJCodec
 import org.scalacheck.Prop
 import Prop._
 
-class SchematicJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
+class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- SchemaGenerator.genSchema(2, 2)
-    data <- schema.compile(smithy4s.scalacheck.SchematicGen)
+    data <- schema.compile(smithy4s.scalacheck.SchemaVisitorGen)
   } yield (schema -> data)
 
   implicit val schemaAndDataShow: Show[(Schema[DynData], Any)] =
@@ -56,7 +56,8 @@ class SchematicJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
       val (schema, data) = schemaAndData
       implicit val codec: JCodec[Any] =
         schema.compile(schemaVisitorJCodec)
-      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
+      val schemaStr =
+        schema.compile(smithy4s.internals.SchemaDescriptionDetailed)
       val json = writeToString(data)
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
       val result = scala.util.Try(readFromString[Any](json, config)).toEither
@@ -74,7 +75,7 @@ class SchematicJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
   property("constraint validation") {
     val gen = for {
       (hint, sch) <- genSchemaWithHints
-      data <- sch.compile(smithy4s.scalacheck.SchematicGen)
+      data <- sch.compile(smithy4s.scalacheck.SchemaVisitorGen)
     } yield (Hints(hint), sch, data)
     forAll(gen) { case (hints, schema, data) =>
       val hint = hints.all.collect { case b: Hints.Binding.StaticBinding[_] =>

@@ -22,38 +22,62 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
 
   type ToShapeIds[A] = List[ShapeId]
 
-  object TestCompiler extends StubSchematic[ToShapeIds] {
+  object TestCompiler extends SchemaVisitor.Default[ToShapeIds] {
     def default[A]: List[ShapeId] = Nil
 
-    override def bijection[A, B](
-        f: ToShapeIds[A],
+    override def primitive[P](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: Primitive[P]
+    ): ToShapeIds[P] = List(shapeId)
+
+    override def biject[A, B](
+        schema: Schema[A],
         to: A => B,
         from: B => A
-    ): ToShapeIds[B] = f
+    ): ToShapeIds[B] = apply[A](schema)
 
-    override def struct[S](fields: Vector[Field[ToShapeIds, S, _]])(
-        const: Vector[Any] => S
-    ): ToShapeIds[S] =
-      fields.flatMap(_.instance).toList
-
-    override def collection[C[_], S](
-        tag: CollectionTag[C],
-        fs: ToShapeIds[S]
-    ): ToShapeIds[C[S]] = fs
-
-    override def union[S](
-        first: Alt[ToShapeIds, S, _],
-        rest: Vector[Alt[ToShapeIds, S, _]]
-    )(total: S => Alt.WithValue[ToShapeIds, S, _]): ToShapeIds[S] = {
-      first.instance ++ rest.flatMap(_.instance)
+    override def surject[A, B](
+        schema: Schema[A],
+        to: Refinement[A, B],
+        from: B => A
+    ): ToShapeIds[B] = {
+      apply[A](schema)
     }
 
-    override def withHints[A](fa: ToShapeIds[A], hints: Hints): ToShapeIds[A] =
-      fa ++ hints.get(ShapeId)
+    override def struct[S](
+        shapeId: ShapeId,
+        hints: Hints,
+        fields: Vector[SchemaField[S, _]],
+        make: IndexedSeq[Any] => S
+    ): ToShapeIds[S] = {
+      fields.flatMap(field => apply(field.instance)).toList ++ List(
+        shapeId
+      )
+    }
+
+    override def collection[C[_], A](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: CollectionTag[C],
+        member: Schema[A]
+    ): ToShapeIds[C[A]] = apply[A](member) ++ List(shapeId)
+
+    override def union[U](
+        shapeId: ShapeId,
+        hints: Hints,
+        alternatives: Vector[SchemaAlt[U, _]],
+        dispatch: Alt.Dispatcher[Schema, U]
+    ): ToShapeIds[U] = {
+      alternatives.flatMap(field => apply(field.instance)).toList ++ List(
+        shapeId
+      )
+    }
   }
 
   test("newtypes contain ShapeId in hints") {
     val shapeIds = example.CityId.schema.compile(TestCompiler)
+    println(s"YEAH $shapeIds")
     expect(
       shapeIds.contains(
         ShapeId(

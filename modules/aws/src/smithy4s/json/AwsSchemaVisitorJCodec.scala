@@ -25,7 +25,7 @@ import smithy4s.http.json.JCodec
 import smithy4s.http.json.SchemaVisitorJCodec
 import smithy4s.schema.Primitive
 
-private[aws] object AwsSchematicJCodec
+private[aws] object AwsSchemaVisitorJCodec
     extends SchemaVisitorJCodec(maxArity = 1024) {
 
   override def primitive[P](
