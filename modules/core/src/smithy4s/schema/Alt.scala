@@ -65,7 +65,7 @@ object Alt {
 
   object Dispatcher {
 
-    def apply[F[_], U](
+    private[smithy4s] def apply[F[_], U](
         alts: Vector[Alt[F, U, _]],
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
@@ -96,13 +96,6 @@ object Alt {
   ): PolyFunction[Alt[F, U, *], Alt[G, U, *]] =
     new PolyFunction[Alt[F, U, *], Alt[G, U, *]] {
       def apply[A](fa: Alt[F, U, A]): Alt[G, U, A] = fa.mapK(fk)
-    }
-
-  def labelledLiftK[F[_], G[_], U](
-      fk: String => PolyFunction[F, G]
-  ): PolyFunction[Alt[F, U, *], Alt[G, U, *]] =
-    new PolyFunction[Alt[F, U, *], Alt[G, U, *]] {
-      def apply[A](fa: Alt[F, U, A]): Alt[G, U, A] = fa.mapK(fk(fa.label))
     }
 
   implicit class SchemaAltOps[U, A](private val alt: SchemaAlt[U, A])
