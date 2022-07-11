@@ -84,8 +84,8 @@ private[internals] object SchemaDescriptionDetailedImpl
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): SchemaDescriptionDetailedImpl[E] = {
-    val vDesc = values.map(e => e.stringValue).mkString(", ")
-    SchemaDescriptionDetailedImpl.of(shapeId, s"Enumeration{ $vDesc }")
+    val vDesc = values.map(e => s"\"${e.stringValue}\"").mkString(", ")
+    SchemaDescriptionDetailedImpl.of(shapeId, s"enum($vDesc)")
   }
 
   override def struct[S](
@@ -106,7 +106,7 @@ private[internals] object SchemaDescriptionDetailedImpl
       }
     val fieldDesc =
       res.map { case (label, desc) => s"$label: $desc" }.mkString(", ")
-    sFinal -> s"Structure ${shapeId.name}{ $fieldDesc }"
+    sFinal -> s"structure ${shapeId.name}($fieldDesc)"
   }
 
   override def union[U](
@@ -126,8 +126,8 @@ private[internals] object SchemaDescriptionDetailedImpl
           (shapes ++ s2, fieldDesc :+ (label -> desc))
       }
     val fieldDesc =
-      res.map { case (label, desc) => s"$label: $desc" }.mkString(", ")
-    sFinal -> s"Union{ $fieldDesc }"
+      res.map { case (label, desc) => s"$label: $desc" }.mkString(" | ")
+    sFinal -> s"union ${shapeId.name}($fieldDesc)"
   }
 
   override def biject[A, B](
@@ -135,7 +135,7 @@ private[internals] object SchemaDescriptionDetailedImpl
       to: A => B,
       from: B => A
   ): SchemaDescriptionDetailedImpl[B] = {
-    apply(schema).mapResult { desc => s"Bijection{ $desc }" }
+    apply(schema).mapResult(identity)
   }
 
   override def surject[A, B](
@@ -143,7 +143,7 @@ private[internals] object SchemaDescriptionDetailedImpl
       to: Refinement[A, B],
       from: B => A
   ): SchemaDescriptionDetailedImpl[B] = {
-    apply(schema).mapResult { desc => s"Surjection{ $desc }" }
+    apply(schema).mapResult { desc => s"Refinement[$desc]" }
   }
   override def lazily[A](
       suspend: Lazy[Schema[A]]
@@ -153,7 +153,7 @@ private[internals] object SchemaDescriptionDetailedImpl
       override def apply(seen: Set[ShapeId]): (Set[ShapeId], String) = {
         val (schema, f) = rec.value
         if (seen(schema.shapeId)) {
-          seen -> s"Recursive{ ${schema.shapeId.name} }"
+          seen -> s"Recursive[${schema.shapeId.name}]"
         } else {
           f(seen + schema.shapeId)
         }
