@@ -20,7 +20,7 @@ package schema
 import Schema._
 
 // format: off
-trait SchemaVisitor[F[_]] extends (Schema ~> F) {
+trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) : F[P]
   def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]]
   def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K, V]]
@@ -42,4 +42,5 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) {
     case SurjectionSchema(schema, to, from) => surject(schema, to, from)
     case LazySchema(make) => lazily(make)
   }
+
 }

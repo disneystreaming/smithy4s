@@ -360,22 +360,24 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         } else if (b == '[') {
           new DArray({
             if (in.isNextToken(']')) ArraySeq.empty[Document]
-            else ArraySeq.unsafeWrapArray {
-              in.rollbackToken()
-              var arr = new Array[Document](4)
-              var i = 0
-              while ({
-                if (i >= maxArity) maxArityError(cursor)
-                if (i == arr.length) arr = java.util.Arrays.copyOf(arr, i << 1)
-                arr(i) = decodeValue(in, null)
-                i += 1
-                in.isNextToken(',')
-              }) {}
-              if (in.isCurrentToken(']')) {
-                if (i == arr.length) arr
-                else java.util.Arrays.copyOf(arr, i)
-              } else in.arrayEndOrCommaError()
-            }
+            else
+              ArraySeq.unsafeWrapArray {
+                in.rollbackToken()
+                var arr = new Array[Document](4)
+                var i = 0
+                while ({
+                  if (i >= maxArity) maxArityError(cursor)
+                  if (i == arr.length)
+                    arr = java.util.Arrays.copyOf(arr, i << 1)
+                  arr(i) = decodeValue(in, null)
+                  i += 1
+                  in.isNextToken(',')
+                }) {}
+                if (in.isCurrentToken(']')) {
+                  if (i == arr.length) arr
+                  else java.util.Arrays.copyOf(arr, i)
+                } else in.arrayEndOrCommaError()
+              }
           })
         } else if (b == '{') {
           new DObject({
