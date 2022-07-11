@@ -296,7 +296,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             if (_hints.contains(Hint.UniqueItems)) {
               Type.Set.apply(tpe)
             } else {
-              Type.List.apply(tpe, hints(x))
+              Type.List.apply(tpe, _hints)
             }
           }
           .map { tpe =>
