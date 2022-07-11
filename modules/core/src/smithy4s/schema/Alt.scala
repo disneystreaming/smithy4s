@@ -53,7 +53,10 @@ object Alt {
   }
 
   /**
-    * Handles the logic
+    * Construct that does the heavily lifting for encoding union values, by
+    * memoising the compilation of the alternatives, dispatching the union
+    * instance to the correct pre-compiled encoder, and lift the resulting
+    * function into an encoder that works on the union.
     */
   trait Dispatcher[F[_], U] {
     def underlying: U => Alt.WithValue[F, U, _]
