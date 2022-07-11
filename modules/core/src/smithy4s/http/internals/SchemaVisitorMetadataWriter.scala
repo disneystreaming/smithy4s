@@ -20,7 +20,6 @@ package internals
 
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.schema.Alt.SchemaAndValue
 import smithy4s.schema.{
   CollectionTag,
   EnumValue,
@@ -32,6 +31,7 @@ import smithy4s.schema.{
 }
 
 import java.util.Base64
+import smithy4s.schema.Alt
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -172,7 +172,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => SchemaAndValue[U, _]
+      dispatcher: Alt.Dispatcher[Schema, U]
   ): MetaEncode[U] = MetaEncode.empty
 
   override def biject[A, B](

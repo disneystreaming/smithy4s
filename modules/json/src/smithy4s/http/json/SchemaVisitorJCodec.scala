@@ -947,11 +947,13 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatch: Alt.Dispatcher[Schema, U]
   ): JCodec[U] = hints match {
-    case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
-    case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
-    case _                     => taggedUnion(alternatives)(dispatch)
+    // format: off
+    case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch.underlying)
+    case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch.underlying)
+    case _                     => taggedUnion(alternatives)(dispatch.underlying)
+    // format: on
   }
 
   override def enumeration[E](

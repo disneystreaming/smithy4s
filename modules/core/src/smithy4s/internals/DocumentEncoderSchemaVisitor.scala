@@ -23,7 +23,7 @@ import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
 import smithy4s.api.Discriminated
-import smithy4s.capability.Contravariant
+import smithy4s.capability.EncoderK
 import smithy4s.schema._
 
 import java.util.Base64
@@ -45,17 +45,23 @@ import smithy4s.schema.Primitive.PUUID
 import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PString
+import smithy4s.api.Untagged
 
 trait DocumentEncoder[A] { self =>
 
   def canBeKey: Boolean
 
   def apply: A => Document
-  def contramap[B](f: B => A): DocumentEncoder[B] =
+  final def contramap[B](f: B => A): DocumentEncoder[B] =
     new DocumentEncoder[B] {
-
       def apply: B => Document = f andThen self.apply
 
+      def canBeKey: Boolean = self.canBeKey
+    }
+
+  final def mapDocument(f: Document => Document): DocumentEncoder[A] =
+    new DocumentEncoder[A] {
+      def apply: A => Document = self.apply andThen f
       def canBeKey: Boolean = self.canBeKey
     }
 
@@ -63,15 +69,20 @@ trait DocumentEncoder[A] { self =>
 
 object DocumentEncoder {
 
-  implicit val contraInstance: Contravariant[DocumentEncoder] =
-    new Contravariant[DocumentEncoder] {
-      def contramap[A, B](fa: DocumentEncoder[A])(
-          f: B => A
-      ): DocumentEncoder[B] = fa.contramap(f)
+  implicit val encoderKInstance: EncoderK[DocumentEncoder, Document] =
+    new EncoderK[DocumentEncoder, Document] {
+      def apply[A](fa: DocumentEncoder[A], a: A): Document = fa.apply(a)
+      def absorb[A](f: A => Document): DocumentEncoder[A] =
+        new DocumentEncoder[A] {
+          def apply: A => Document = f
+          override def canBeKey: Boolean = false
+        }
     }
+
 }
 
 object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
+  self =>
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -196,65 +207,30 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
     }
   }
 
-  private def handleUnion[U](
-      alternatives: Vector[Alt[Schema, U, _]],
-      total: U => Alt.WithValue[Schema, U, _]
-  )(
-      alterEncoder: Alt[Schema, U, _] => DocumentEncoder[_],
-      alterDocument: (Alt[Schema, U, _], Document) => Document
-  ): DocumentEncoder[U] = {
-    val encoders: Map[Alt[Schema, U, Any], Any => Document] =
-      alternatives.map { alt =>
-        val encoder = alterEncoder(alt)
-        alt.asInstanceOf[Alt[Schema, U, Any]] -> encoder.apply
-          .asInstanceOf[Any => Document]
-      }.toMap
-
-    new DocumentEncoder[U] {
-      def apply: U => Document = { s =>
-        val awv = total(s)
-        val altDoc =
-          encoders(awv.alt.asInstanceOf[Alt[Schema, U, Any]])(
-            awv.value
-          )
-        alterDocument(awv.alt, altDoc)
-      }
-      def canBeKey: Boolean = false
-    }
-  }
-
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatcher: Alt.Dispatcher[Schema, U]
   ): DocumentEncoder[U] = {
-    def jsonLabel[A](alt: Alt[Schema, U, A]): String =
-      alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
-    val handle = handleUnion(alternatives, dispatch) _
-    Discriminated.hint.unapply(hints) match {
-      case Some(discriminated) =>
-        handle(
-          (alt: Alt[Schema, U, _]) =>
-            apply(
-              alt.instance.addHints(
-                Hints(
-                  DiscriminatedUnionMember(
-                    discriminated.value,
-                    jsonLabel(alt)
-                  )
-                )
-              )
-            ),
-          (alt: Alt[Schema, U, _], doc: Document) => doc
-        )
-      case None =>
-        handle(
-          (alt: Alt[Schema, U, _]) => apply(alt.instance),
-          (alt: Alt[Schema, U, _], doc: Document) =>
-            Document.obj(jsonLabel(alt) -> doc)
-        )
+    val precompile = new Alt.Precompiler[Schema, DocumentEncoder] {
+      def apply[A](label: String, schema: Schema[A]): DocumentEncoder[A] = {
+        val jsonLabel =
+          schema.hints.get(JsonName).map(_.value).getOrElse(label)
+        hints match {
+          case Discriminated.hint(discriminated) =>
+            val unionMemberHint = DiscriminatedUnionMember(
+              discriminated.value,
+              jsonLabel
+            )
+            self.apply(schema.addHints(unionMemberHint))
+          case Untagged.hint(_) => self.apply(schema)
+          case _ =>
+            self.apply(schema).mapDocument(d => Document.obj(jsonLabel -> d))
+        }
+      }
     }
+    dispatcher.compile(precompile)
   }
 
   override def biject[A, B](

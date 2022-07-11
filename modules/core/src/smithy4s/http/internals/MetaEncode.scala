@@ -93,5 +93,4 @@ object MetaEncode {
   def fromToString[A]: MetaEncode[A] = StringValueMetaEncode(_.toString())
   def empty[A]: MetaEncode[A] = EmptyMetaEncode
 
-
 }

@@ -28,9 +28,9 @@ private[smithy4s] object ErrorCodeSchemaVisitor
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatcher: Alt.Dispatcher[Schema, U]
   ): HttpCode[U] = { (s) =>
-    processAltWithValue(dispatch(s))
+    processAltWithValue(dispatcher.underlying(s))
   }
 
   def processAltWithValue[S, B](

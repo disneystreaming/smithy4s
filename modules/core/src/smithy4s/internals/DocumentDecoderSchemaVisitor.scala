@@ -425,7 +425,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatch: Alt.Dispatcher[Schema, U]
   ): DocumentDecoder[U] = {
     def jsonLabel[A](alt: Alt[Schema, U, A]): String =
       alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)

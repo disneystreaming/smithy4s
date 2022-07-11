@@ -110,7 +110,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatch: Alt.Dispatcher[Schema, U]
   ): Id[U] = {
     def processAlt[A](alt: Alt[Schema, U, A]) = alt.inject(apply(alt.instance))
     processAlt(alternatives.head)

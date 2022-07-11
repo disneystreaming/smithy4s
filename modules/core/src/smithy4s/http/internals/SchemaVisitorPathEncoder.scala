@@ -22,10 +22,10 @@ import smithy.api.TimestampFormat
 import smithy4s.http.PathSegment
 import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
 import smithy4s.{Hints, Lazy, Refinement, ShapeId}
-import smithy4s.schema.Alt._
 import smithy.api.Http
 
-object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
+object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
+  self =>
 
   def default[A]: MaybePathEncode[A] = None
 
@@ -56,20 +56,6 @@ object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
         struct(shapeId, hints, fields = Vector.empty, make = _ => ())
     }
   }
-
-  override def collection[C[_], A](
-      shapeId: ShapeId,
-      hints: Hints,
-      tag: CollectionTag[C],
-      member: Schema[A]
-  ): MaybePathEncode[C[A]] = default
-
-  override def map[K, V](
-      shapeId: ShapeId,
-      hints: Hints,
-      key: Schema[K],
-      value: Schema[V]
-  ): MaybePathEncode[Map[K, V]] = default
 
   override def enumeration[E](
       shapeId: ShapeId,
@@ -134,13 +120,6 @@ object SchemaVisitorPathEncoder extends SchemaVisitor[MaybePathEncode] { self =>
       def encodeGreedy(s: S): List[String] = Nil
     }
   }
-
-  override def union[U](
-      shapeId: ShapeId,
-      hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => SchemaAndValue[U, _]
-  ): MaybePathEncode[U] = default
 
   override def biject[A, B](
       schema: Schema[A],
