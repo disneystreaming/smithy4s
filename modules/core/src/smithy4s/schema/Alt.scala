@@ -17,6 +17,8 @@
 package smithy4s
 package schema
 
+import smithy4s.capability.EncoderK
+
 /**
   * Represents a member of coproduct type (sealed trait)
   */
@@ -39,11 +41,68 @@ object Alt {
       WithValue(alt.mapK(fk), value)
   }
 
+  /**
+    * Precompiles an Alt to produce an instance of `G`
+    */
+  trait Precompiler[F[_], G[_]] { self =>
+    def apply[A](label: String, instance: F[A]): G[A]
+    def toPolyFunction[U]: PolyFunction[Alt[F, U, *], G] =
+      new PolyFunction[Alt[F, U, *], G] {
+        def apply[A](fa: Alt[F, U, A]): G[A] = self.apply(fa.label, fa.instance)
+      }
+  }
+
+  /**
+    * Handles the logic
+    */
+  trait Dispatcher[F[_], U] {
+    def underlying: U => Alt.WithValue[F, U, _]
+
+    def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
+        encoderK: EncoderK[G, Result]
+    ): G[U]
+  }
+
+  object Dispatcher {
+
+    def apply[F[_], U](
+        alts: Vector[Alt[F, U, _]],
+        dispatchF: U => Alt.WithValue[F, U, _]
+    ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
+
+    private[smithy4s] class Impl[F[_], U](
+        alts: Vector[Alt[F, U, _]],
+        val underlying: U => Alt.WithValue[F, U, _]
+    ) extends Dispatcher[F, U] {
+      def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
+          encoderK: EncoderK[G, Result]
+      ): G[U] = {
+        val precompiledAlts =
+          precompile.toPolyFunction
+            .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
+
+        encoderK.absorb[U] { u =>
+          underlying(u) match {
+            case awv: Alt.WithValue[F, U, a] =>
+              encoderK(precompiledAlts(awv.alt), awv.value)
+          }
+        }
+      }
+    }
+  }
+
   def liftK[F[_], G[_], U](
       fk: PolyFunction[F, G]
   ): PolyFunction[Alt[F, U, *], Alt[G, U, *]] =
     new PolyFunction[Alt[F, U, *], Alt[G, U, *]] {
       def apply[A](fa: Alt[F, U, A]): Alt[G, U, A] = fa.mapK(fk)
+    }
+
+  def labelledLiftK[F[_], G[_], U](
+      fk: String => PolyFunction[F, G]
+  ): PolyFunction[Alt[F, U, *], Alt[G, U, *]] =
+    new PolyFunction[Alt[F, U, *], Alt[G, U, *]] {
+      def apply[A](fa: Alt[F, U, A]): Alt[G, U, A] = fa.mapK(fk(fa.label))
     }
 
   implicit class SchemaAltOps[U, A](private val alt: SchemaAlt[U, A])

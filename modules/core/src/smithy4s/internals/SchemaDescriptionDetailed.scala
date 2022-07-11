@@ -113,7 +113,7 @@ private[internals] object SchemaDescriptionDetailedImpl
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatch: Alt.Dispatcher[Schema, U]
   ): SchemaDescriptionDetailedImpl[U] = { seen =>
     def forAlt[T](alt: SchemaAlt[U, T]): (String, (Set[ShapeId], String)) = {
       val desc = apply(alt.instance)(seen)
