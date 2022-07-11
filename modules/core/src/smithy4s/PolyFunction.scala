@@ -30,6 +30,8 @@ trait PolyFunction[F[_], G[_]] { self =>
       def apply[A](fa: F[A]): H[A] = other(self(fa))
     }
 
+  final def mapK[H[_]](fk: PolyFunction[G, H]): PolyFunction[F, H] = andThen(fk)
+
   /**
     * Creates a memoised version of this function.
     *

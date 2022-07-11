@@ -43,26 +43,4 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case LazySchema(make) => lazily(make)
   }
 
-  def mapK[G[_]](f: F ~> G): SchemaVisitor[G] = {
-    new SchemaVisitor[G] {
-      def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) : G[P] =
-        f(self.primitive(shapeId, hints, tag))
-      def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): G[C[A]] =
-        f(self.collection(shapeId, hints, tag, member))
-      def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): G[Map[K, V]] =
-        f(self.map(shapeId, hints, key, value))
-      def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]) : G[E] =
-        f(self.enumeration(shapeId, hints, values, total))
-      def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : G[S] =
-        f(self.struct(shapeId, hints, fields, make))
-      def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]) : G[U] =
-        f(self.union(shapeId, hints, alternatives, dispatch))
-      def biject[A, B](schema: Schema[A], to: A => B, from: B => A) : G[B] =
-        f(self.biject(schema, to, from))
-      def surject[A, B](schema: Schema[A], to: Refinement[A, B], from: B => A) : G[B] =
-        f(self.surject(schema, to, from))
-      def lazily[A](suspend: Lazy[Schema[A]]) : G[A] =
-        f(self.lazily(suspend))
-    }
-  }
 }
