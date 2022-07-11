@@ -650,8 +650,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   implicit class TypeExt(tpe: Type) {
     def schemaRef: Line = tpe match {
       case Type.PrimitiveType(p) => Line(schemaRefP(p))
-      case Type.List(member)     => line"list(${member.schemaRef})"
-      case Type.Set(member)      => line"set(${member.schemaRef})"
+      case Type.List(member, hints) =>
+        val col = hints
+          .collectFirst {
+            case Hint.SpecializedList.Vector     => "vector"
+            case Hint.SpecializedList.IndexedSeq => "indexedSeq"
+          }
+          .getOrElse { "list" }
+        line"$col(${member.schemaRef})"
+      case Type.Set(member) => line"set(${member.schemaRef})"
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>

@@ -93,7 +93,7 @@ object CollisionAvoidance {
   }
 
   private def modType(tpe: Type): Type = tpe match {
-    case Type.List(member)         => Type.List(modType(member))
+    case Type.List(member, hints)  => Type.List(modType(member), hints)
     case Type.Set(member)          => Type.Set(modType(member))
     case Type.Map(key, value)      => Type.Map(modType(key), modType(value))
     case Type.Ref(namespace, name) => Type.Ref(namespace, name.capitalize)

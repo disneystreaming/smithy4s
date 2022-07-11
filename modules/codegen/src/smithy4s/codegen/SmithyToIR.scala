@@ -18,7 +18,10 @@ package smithy4s.codegen
 
 import cats.data.NonEmptyList
 import cats.implicits._
+import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
+import smithy4s.meta.VectorTrait
 import smithy4s.recursion._
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -28,8 +31,8 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
-import smithy4s.meta.AdtMemberTrait
 import software.amazon.smithy.model.selector.PathFinder
+import scala.annotation.nowarn
 
 object SmithyToIR {
 
@@ -286,9 +289,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         primitive(x, "smithy.api#Boolean", Primitive.Bool)
 
       def listShape(x: ListShape): Option[Type] =
-        x.getMember().accept(this).map(Type.List.apply).map { tpe =>
-          Type.Alias(x.namespace, x.name, tpe)
-        }
+        x.getMember()
+          .accept(this)
+          .map { tpe =>
+            val _hints = hints(x)
+            if (_hints.contains(Hint.UniqueItems)) {
+              Type.Set.apply(tpe)
+            } else {
+              Type.List.apply(tpe, hints(x))
+            }
+          }
+          .map { tpe =>
+            Type.Alias(x.namespace, x.name, tpe)
+          }
 
       def setShape(x: SetShape): Option[Type] =
         x.getMember().accept(this).map(Type.Set.apply).map { tpe =>
@@ -389,6 +402,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
   }
 
+  // Remove when upgrading to smithy 2.0
+  @nowarn(
+    "msg=class UniqueItemsTrait in package traits is deprecated"
+  )
   private val traitToHint: PartialFunction[Trait, Hint] = {
     case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>
@@ -399,6 +416,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.Protocol(refs.toList)
     case _: PackedInputsTrait =>
       Hint.PackedInputs
+    case _: VectorTrait =>
+      Hint.SpecializedList.Vector
+    case _: IndexedSeqTrait =>
+      Hint.SpecializedList.IndexedSeq
+    case _: UniqueItemsTrait =>
+      Hint.UniqueItems
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr))
@@ -607,7 +630,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           enumDef.getName().asScala
         )
       // List
-      case (N.ArrayNode(list), Type.List(mem)) =>
+      case (N.ArrayNode(list), Type.List(mem, _)) => // todo sure ?
         TypedNode.ListTN(list.map(NodeAndType(_, mem)))
       // Set
       case (N.ArrayNode(set), Type.Set(mem)) =>

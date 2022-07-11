@@ -1,6 +1,8 @@
 namespace smithy4s.example
 
 use smithy4s.api#untagged
+use smithy4s.meta#vector
+use smithy4s.meta#indexedSeq
 
 service EmptyService {
   version: "1.0"

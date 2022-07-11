@@ -32,9 +32,18 @@ object ToLine {
   implicit val stringToLine: ToLine[String] = s => Line(s)
   implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
     override def render(a: Type): Line = a match {
-      case Type.List(member) =>
+      case Type.List(member, hints) =>
         val (imports, m) = render(member).tupled
-        Line(imports, s"List[${m.mkString("")}]")
+        hints
+          .collectFirst {
+            case Hint.SpecializedList.Vector =>
+              Line(imports, s"Vector[${m.mkString("")}]")
+            case Hint.SpecializedList.IndexedSeq =>
+              Line(imports, s"IndexedSeq[${m.mkString("")}]")
+          }
+          .getOrElse {
+            Line(imports, s"List[${m.mkString("")}]")
+          }
       case Type.Set(member) =>
         val (imports, m) = render(member).tupled
         Line(imports, s"Set[${m.mkString("")}]")

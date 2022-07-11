@@ -152,6 +152,8 @@ sealed trait Type {
     case Type.Alias(_, _, tpe) => tpe.dealiased
     case other                 => other
   }
+
+  def hints: List[Hint] = Nil
 }
 
 sealed trait Primitive {
@@ -179,10 +181,11 @@ object Primitive {
 }
 
 object Type {
-
+  import scala.collection.{immutable => cols}
   val unit = PrimitiveType(Primitive.Unit)
 
-  case class List(member: Type) extends Type
+  case class List(member: Type, override val hints: cols.List[Hint])
+      extends Type
   case class Set(member: Type) extends Type
   case class Map(key: Type, value: Type) extends Type
   case class Ref(namespace: String, name: String) extends Type {
@@ -202,6 +205,13 @@ object Hint {
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
+
+  sealed trait SpecializedList extends Hint
+  object SpecializedList {
+    case object Vector extends SpecializedList
+    case object IndexedSeq extends SpecializedList
+  }
+  case object UniqueItems extends Hint
 }
 
 sealed trait Segment extends scala.Product with Serializable

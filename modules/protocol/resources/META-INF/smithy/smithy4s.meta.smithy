@@ -24,3 +24,16 @@ structure packedInputs {}
 @trait(selector: "structure :not([trait|error])")
 @idRef(failWhenMissing: true, selector: "union")
 string adtMember
+
+@trait(selector: """
+        list
+        :not(:test([trait|smithy4s.meta#vector],
+                   [trait|smithy.api#uniqueItems]))""")
+structure indexedSeq {}
+
+
+@trait(selector: """
+        list
+        :not(:test([trait|smithy4s.meta#indexedSeq],
+                   [trait|smithy.api#uniqueItems]))""")
+structure vector {}
