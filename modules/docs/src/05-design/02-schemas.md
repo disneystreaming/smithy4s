@@ -250,7 +250,7 @@ Smithy supports three types of collections out of the box :
 * list
 * map
 
-Additionally, Smithy4s allows users to [annotate list shapes](../../04-codegen/01-customisation.md) to customise the type of collection used during code-generation.
+Additionally, Smithy4s allows users to [annotate list shapes](../04-codegen/01-customisation.md) to customise the type of collection used during code-generation.
 
 Smithy does not support generics, therefore all collection are named. Though seemingly tedious, it makes it easier to build tooling
 (and probably helps languages that do not support generics). Provided the following shape :
