@@ -294,9 +294,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { tpe =>
             val _hints = hints(x)
             if (_hints.contains(Hint.UniqueItems)) {
-              Type.Set.apply(tpe)
+              Type.Collection(CollectionType.Set, tpe)
+            } else if (_hints.contains(Hint.SpecializedList.Vector)) {
+              Type.Collection(CollectionType.Vector, tpe)
+            } else if (_hints.contains(Hint.SpecializedList.IndexedSeq)) {
+              Type.Collection(CollectionType.IndexedSeq, tpe)
             } else {
-              Type.List.apply(tpe, _hints)
+              Type.Collection(CollectionType.List, tpe)
             }
           }
           .map { tpe =>
@@ -304,9 +308,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
 
       def setShape(x: SetShape): Option[Type] =
-        x.getMember().accept(this).map(Type.Set.apply).map { tpe =>
-          Type.Alias(x.namespace, x.name, tpe)
-        }
+        x.getMember()
+          .accept(this)
+          .map(Type.Collection(CollectionType.Set, _))
+          .map { tpe =>
+            Type.Alias(x.namespace, x.name, tpe)
+          }
 
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
@@ -630,11 +637,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           enumDef.getName().asScala
         )
       // List
-      case (N.ArrayNode(list), Type.List(mem, _)) => // todo sure ?
-        TypedNode.ListTN(list.map(NodeAndType(_, mem)))
-      // Set
-      case (N.ArrayNode(set), Type.Set(mem)) =>
-        TypedNode.SetTN(set.map(NodeAndType(_, mem)))
+      case (
+            N.ArrayNode(list),
+            Type.Collection(collectionType, mem)
+          ) =>
+        TypedNode.CollectionTN(collectionType, list.map(NodeAndType(_, mem)))
       // Map
       case (N.MapNode(map), Type.Map(keyType, valueType)) =>
         TypedNode.MapTN(map.map { case (k, v) =>

@@ -650,15 +650,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   implicit class TypeExt(tpe: Type) {
     def schemaRef: Line = tpe match {
       case Type.PrimitiveType(p) => Line(schemaRefP(p))
-      case Type.List(member, hints) =>
-        val col = hints
-          .collectFirst {
-            case Hint.SpecializedList.Vector     => "vector"
-            case Hint.SpecializedList.IndexedSeq => "indexedSeq"
-          }
-          .getOrElse { "list" }
+      case Type.Collection(collectionType, member) =>
+        val col = collectionType match {
+          case CollectionType.List       => "list"
+          case CollectionType.Set        => "set"
+          case CollectionType.Vector     => "vector"
+          case CollectionType.IndexedSeq => "indexedSeq"
+        }
         line"$col(${member.schemaRef})"
-      case Type.Set(member) => line"set(${member.schemaRef})"
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
@@ -814,10 +813,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
 
-    case ListTN(values) =>
-      s"List(${values.map(_.runDefault).mkString(", ")})".writeCollection
-    case SetTN(values) =>
-      s"Set(${values.map(_.runDefault).mkString(", ")})".writeCollection
+    case CollectionTN(collectionType, values) =>
+      val col = collectionType.tpe
+      s"$col(${values.map(_.runDefault).mkString(", ")})".writeCollection
     case MapTN(values) =>
       s"Map(${values
         .map { case (k, v) => k.runDefault + " -> " + v.runDefault }

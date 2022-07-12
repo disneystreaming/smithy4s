@@ -93,8 +93,8 @@ object CollisionAvoidance {
   }
 
   private def modType(tpe: Type): Type = tpe match {
-    case Type.List(member, hints)  => Type.List(modType(member), hints)
-    case Type.Set(member)          => Type.Set(modType(member))
+    case Type.Collection(collectionType, member) =>
+      Type.Collection(collectionType, modType(member))
     case Type.Map(key, value)      => Type.Map(modType(key), modType(value))
     case Type.Ref(namespace, name) => Type.Ref(namespace, name.capitalize)
     case Alias(namespace, name, tpe) =>
@@ -165,10 +165,8 @@ object CollisionAvoidance {
           AltTN(modRef(ref), altName, alt)
         case MapTN(values) =>
           MapTN(values)
-        case ListTN(values) =>
-          ListTN(values)
-        case SetTN(values) =>
-          SetTN(values)
+        case CollectionTN(collectionType, values) =>
+          CollectionTN(collectionType, values)
         case PrimitiveTN(prim, value) =>
           PrimitiveTN(prim, value)
       }
