@@ -179,17 +179,24 @@ object Primitive {
 }
 
 object Type {
-
   val unit = PrimitiveType(Primitive.Unit)
 
-  case class List(member: Type) extends Type
-  case class Set(member: Type) extends Type
+  case class Collection(collectionType: CollectionType, member: Type)
+      extends Type
   case class Map(key: Type, value: Type) extends Type
   case class Ref(namespace: String, name: String) extends Type {
     def show = namespace + "." + name
   }
   case class Alias(namespace: String, name: String, tpe: Type) extends Type
   case class PrimitiveType(prim: Primitive) extends Type
+}
+
+sealed abstract class CollectionType(val tpe: String)
+object CollectionType {
+  case object List extends CollectionType("List")
+  case object Set extends CollectionType("Set")
+  case object Vector extends CollectionType("Vector")
+  case object IndexedSeq extends CollectionType("IndexedSeq")
 }
 
 sealed trait Hint
@@ -202,6 +209,13 @@ object Hint {
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
+
+  sealed trait SpecializedList extends Hint
+  object SpecializedList {
+    case object Vector extends SpecializedList
+    case object IndexedSeq extends SpecializedList
+  }
+  case object UniqueItems extends Hint
 }
 
 sealed trait Segment extends scala.Product with Serializable
@@ -261,10 +275,8 @@ object TypedNode {
         AltTN(ref, altName, alt.map(f))
       case MapTN(values) =>
         MapTN(values.map(_.leftMap(f).map(f)))
-      case ListTN(values) =>
-        ListTN(values.map(f))
-      case SetTN(values) =>
-        SetTN(values.map(f))
+      case CollectionTN(collectionType, values) =>
+        CollectionTN(collectionType, values.map(f))
       case PrimitiveTN(prim, value) =>
         PrimitiveTN(prim, value)
     }
@@ -284,8 +296,8 @@ object TypedNode {
   case class AltTN[A](ref: Type.Ref, altName: String, alt: AltValueTN[A])
       extends TypedNode[A]
   case class MapTN[A](values: List[(A, A)]) extends TypedNode[A]
-  case class ListTN[A](values: List[A]) extends TypedNode[A]
-  case class SetTN[A](values: List[A]) extends TypedNode[A]
+  case class CollectionTN[A](collectionType: CollectionType, values: List[A])
+      extends TypedNode[A]
   case class PrimitiveTN[T](prim: Primitive.Aux[T], value: T)
       extends TypedNode[Nothing]
 

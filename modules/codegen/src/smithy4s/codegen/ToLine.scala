@@ -32,12 +32,10 @@ object ToLine {
   implicit val stringToLine: ToLine[String] = s => Line(s)
   implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
     override def render(a: Type): Line = a match {
-      case Type.List(member) =>
+      case Type.Collection(collectionType, member) =>
         val (imports, m) = render(member).tupled
-        Line(imports, s"List[${m.mkString("")}]")
-      case Type.Set(member) =>
-        val (imports, m) = render(member).tupled
-        Line(imports, s"Set[${m.mkString("")}]")
+        val col = collectionType.tpe
+        Line(imports, s"$col[${m.mkString("")}]")
       case Type.Map(key, value) =>
         val (kimports, k) = render(key).tupled
         val (vimports, v) = render(value).tupled
