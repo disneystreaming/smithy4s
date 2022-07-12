@@ -21,8 +21,9 @@ case class EnumValue[E](
     stringValue: String,
     ordinal: Int,
     value: E,
+    name: String,
     hints: Hints
 ) {
   def transformHints(f: Hints => Hints): EnumValue[E] =
-    EnumValue(stringValue, ordinal, value, f(hints))
+    copy(hints = f(hints))
 }

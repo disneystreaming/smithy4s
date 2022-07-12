@@ -575,9 +575,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): Lines = lines(
     block(
-      line"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
+      line"sealed abstract class $name(_value: String, _name: String, _ordinal: Int) extends $Enumeration_.Value"
     )(
-      line"override val value : String = _value",
+      line"override val value: String = _value",
+      line"override val name: String = _name",
       line"override val ordinal: Int = _ordinal",
       line"override val hints: $Hints_ = $Hints_.empty",
       line"@inline final def widen: $name = this"
@@ -588,7 +589,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${e.className} extends $name("$value", $ordinal)"""
+        line"""case object ${e.className} extends $name("$value", "${e.className}", $ordinal)"""
       },
       newline,
       line"val values: List[$name] = List".args(

@@ -223,12 +223,15 @@ private[dynamic] object Compiler {
         case (Some(_), _) => update(id, shape.traits, uuid)
         case (None, Some(e)) => {
           // Using the ordinal as a runtime value
-          val values = e.value.map(_.value.value).zipWithIndex.map {
-            case (stringValue, ordinal) =>
+          val values = e.value.zipWithIndex.map {
+            case (enumDefinition, ordinal) =>
               EnumValue(
-                stringValue,
+                enumDefinition.value.value,
                 ordinal,
                 ordinal,
+                enumDefinition.name
+                  .map(_.value)
+                  .getOrElse(enumDefinition.value.value.toUpperCase()),
                 Hints.empty
               )
           }
