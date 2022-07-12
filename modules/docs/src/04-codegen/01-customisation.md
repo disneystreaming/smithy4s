@@ -7,7 +7,7 @@ Smithy4s is opinionated in what the generated code look like, there are a few th
 
 #### Packed inputs
 
-By default, smithy4s generates methods the parameters of which map to the fields of the input structure of the corresponding operation.
+By default, Smithy4s generates methods the parameters of which map to the fields of the input structure of the corresponding operation.
 
 For instance :
 
@@ -65,7 +65,7 @@ trait PackedInputServiceGen[F[_]] {
 
 #### ADT Member Trait
 
-The default behavior of smithy4s when rendering unions that target structures is to render the structure
+The default behavior of Smithy4s when rendering unions that target structures is to render the structure
 in a separate file from the union that targets it. This makes sense if the structure is used in other
 contexts other than the union. However, it also causes an extra level of nesting within the union.
 This is because the union will create another case class to contain your structure case class.
@@ -131,7 +131,7 @@ The structure annotated with `adtMember` (e.g. `InStoreOrder`) also must not be 
 structures or unions in the model. There is a validator that will make sure these requirements are met
 whenever the `adtMember` trait is in use.
 
-Note: The `adtMember` trait has NO impact on the serialization/deserialization behaviors of smithy4s.
+Note: The `adtMember` trait has NO impact on the serialization/deserialization behaviors of Smithy4s.
 The only thing it changes is what the generated code looks like. This is accomplished by keeping the
 rendered schemas equivalent, even if the case class is rendered in a different place.
 

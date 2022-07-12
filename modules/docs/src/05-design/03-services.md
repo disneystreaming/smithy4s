@@ -67,7 +67,7 @@ def fromNaturalTransformation[Context[_]](run: KVStoreOp ~> Context) = new KVSto
 }
 ```
 
-This duality is heavily used by Smithy4s : finally-encoded interfaces are generally more natural to Scala developers, and are better supported in editors (autocompletion, etc). But from an implementation's perspective, the initial, data-based encoding is really interesting, because operations are reified as **data-types** that can be associated with instances of generic typeclasses : it is possible to abstract over data, it is not possible to abstract over method calls.
+This duality is heavily used by Smithy4s : finally-encoded interfaces are generally more natural to Scala developers, and are better supported in editors (autocompletion, etc). But from an implementation's perspective, the initial, data-based encoding is really interesting, because operations are reified as **data-types** that can be associated with instances of generic type-classes : it is possible to abstract over data, it is not possible to abstract over method calls.
 
 ### A detour around kinds
 
@@ -90,7 +90,7 @@ It's the input type of an operation. Typically, a case class that holds fields m
 
 #### Error
 
-The execution of an operation can result in errors. The Smithy language allows for tying a list of errors to operations. When generating the associated code, Smithy4s synthesize a union. This allows the coproduct of errors associated to an operation to be represented as a bona fide Scala type, which we can abstract over via some typeclass instance. This is also very useful for the writing of bi-functor interpreters, for users that are interested in this kind of UX.
+The execution of an operation can result in errors. The Smithy language allows for tying a list of errors to operations. When generating the associated code, Smithy4s synthesize a union. This allows the coproduct of errors associated to an operation to be represented as a bona fide Scala type, which we can abstract over via some type-class instance. This is also very useful for the writing of bi-functor interpreters, for users that are interested in this kind of UX.
 
 #### Output
 
@@ -168,7 +168,7 @@ The server side is different in that we want to derive the `Request => Response`
 
 So we get `Request => KVStoreOp.GetInput => KVStoreOp.Get => kvstore.get => GetOutput => Response`, which gives us the full data flow, service side.
 
-Both the service-side and client-side logical flows guide the design of the abstractions that are exposed by smithy4s.
+Both the service-side and client-side logical flows guide the design of the abstractions that are exposed by Smithy4s.
 
 ### A note about efficiency
 
@@ -192,7 +192,7 @@ trait Endpoint[Initial[_, _, _, _, _], I, E, O, SI, SO] {
 }
 ```
 
-Endpoints are not typeclasses. Instead, the `Endpoint` trait is extended by the companion object of each member of the `GADT` forming the initial-encoding of the service interface. So, going back to our `KVStore`, the corresponding sealed-trait would look like this :
+Endpoints are not type-classes. Instead, the `Endpoint` trait is extended by the companion object of each member of the `GADT` forming the initial-encoding of the service interface. So, going back to our `KVStore`, the corresponding sealed-trait would look like this :
 
 ```scala
 sealed trait KVStoreOp[Input, Error, Output, StreamedInput, StreamedOutput]
@@ -214,9 +214,9 @@ object Put extends Endpoint[KVStoreOp, PutRequest, PutError, PutResult, Nothing,
 
 ### A note on errors
 
-As stated previously, smithy4s generates a coproduct type for each operation, where the members of the coproduct point to the various errors listed in the smithy operation shape. Additionally, each structure annotated with `@error` in smithy is rendered as a case-class that extends `Throwable`, because `Throwables` are the de-facto standard of doing error handling on the JVM. Even libraries that use `Either` to perform error handling often represent the left-hand-side of the Either as some throwable type, to facilitate the absorption of errors into the error-channels of monadic constructs (`IO.raiseError`, etc)
+As stated previously, Smithy4s generates a coproduct type for each operation, where the members of the coproduct point to the various errors listed in the smithy operation shape. Additionally, each structure annotated with `@error` in smithy is rendered as a case-class that extends `Throwable`, because `Throwables` are the de-facto standard of doing error handling on the JVM. Even libraries that use `Either` to perform error handling often represent the left-hand-side of the Either as some throwable type, to facilitate the absorption of errors into the error-channels of monadic constructs (`IO.raiseError`, etc)
 
-As a result, it is important for smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the wire. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turned into `Throwable` at the client call site, in order to populate the relevant error channel when exposing mono-functor semantics.
+As a result, it is important for Smithy4s to expose functions that generically enable the filtering of throwables against the `Error` type parameter of an operation, so that interpreters can intercept errors and apply the correct encoding (dictated via `Schema`) before communicating them back to the caller over the wire. Conversely, it is important to expose a function that allows to go from the generic `Error` type parameter to `Throwable`, so that errors received via low-level communication channels can be turned into `Throwable` at the client call site, in order to populate the relevant error channel when exposing mono-functor semantics.
 
 Therefore, when a smithy operation has `errors` defined, the corresponding `smithy4s.Endpoint` also extends the `Errorable` interface, which looks like this :
 
