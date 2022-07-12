@@ -96,7 +96,7 @@ union Foo {
   bDec: BigDecimal
 }
 
-@enum([{value : "Low"}, {value : "High"}])
+@enum([{value : "Low", name: "LOW"}, {value : "High", name: "HIGH"}])
 string LowHigh
 
 @uuidFormat

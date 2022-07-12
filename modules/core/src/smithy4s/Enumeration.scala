@@ -30,13 +30,14 @@ object Enumeration {
 
   abstract class Value extends Product with Serializable {
     def value: String
+    def name: String
     def ordinal: Int
     def hints: Hints
   }
 
   object Value {
     def toSchema[E <: Value](e: E): EnumValue[E] = {
-      EnumValue(e.value, e.ordinal, e, e.hints)
+      EnumValue(e.value, e.ordinal, e, e.name, e.hints)
     }
   }
 
