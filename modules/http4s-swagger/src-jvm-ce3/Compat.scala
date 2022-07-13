@@ -29,7 +29,7 @@ private[smithy4s] object Compat {
     private[smithy4s] val EffectCompat = cats.effect.Concurrent
 
     def docs[F[_]]: PartiallyAppliedDocs[F] =
-      new PartiallyAppliedDocs[F]("docs", "swagger-ui")
+      new PartiallyAppliedDocs[F]("docs", swaggerUiResourcePath)
 
     case class PartiallyAppliedDocs[F[_]](path: String, swaggerUiPath: String) {
       def apply(
