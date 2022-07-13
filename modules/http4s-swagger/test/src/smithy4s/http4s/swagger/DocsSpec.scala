@@ -120,7 +120,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
   }
 
   pureTest("Default swagger-ui-path") {
-    val docs = smithy4s.http4s.swagger.docs[IO]
+    val docs = mkDocs
     expect(
       docs.swaggerUiPath.startsWith(
         "META-INF/resources/webjars/swagger-ui-dist/"
