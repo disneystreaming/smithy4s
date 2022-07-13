@@ -101,8 +101,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   )
 
   override lazy val projectSettings =
-    defaultSettings(Compile) ++
-      defaultSettings(Test)
+    defaultSettings(Compile)
 
   private type CacheKey = (
       FilesInfo[HashFileInfo],
