@@ -326,7 +326,7 @@ lazy val `codegen-cli` = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % "2.2.0",
+      "com.monovore" %% "decline" % "2.3.0",
       Dependencies.Weaver.cats.value % Test
     )
   )
