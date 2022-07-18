@@ -129,7 +129,7 @@ object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
     self(schema).map(_.contramap(bijection.from))
   }
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): MaybePathEncode[B] = {

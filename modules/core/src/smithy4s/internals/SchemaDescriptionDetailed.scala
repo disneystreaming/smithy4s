@@ -137,7 +137,7 @@ private[internals] object SchemaDescriptionDetailedImpl
     apply(schema).mapResult(identity)
   }
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): SchemaDescriptionDetailedImpl[B] = {

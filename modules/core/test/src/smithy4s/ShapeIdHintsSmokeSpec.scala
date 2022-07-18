@@ -36,7 +36,7 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
         bijection: Bijection[A, B]
     ): ToShapeIds[B] = apply[A](schema)
 
-    override def surject[A, B](
+    override def refine[A, B](
         schema: Schema[A],
         refinement: Refinement[A, B]
     ): ToShapeIds[B] = {

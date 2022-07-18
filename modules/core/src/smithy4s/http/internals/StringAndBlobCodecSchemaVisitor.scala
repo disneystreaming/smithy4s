@@ -221,7 +221,7 @@ private[smithy4s] class StringAndBlobCodecSchemaVisitor
   ): CodecResult[B] =
     CodecResult.invariantInstance.biject(apply(schema))(bijection)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): CodecResult[B] =

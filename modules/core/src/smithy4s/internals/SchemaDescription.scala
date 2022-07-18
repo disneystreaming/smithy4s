@@ -67,7 +67,7 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
 
   override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
-  override def surject[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
+  override def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
     suspend.map(s => SchemaDescription.of(apply(s))).value

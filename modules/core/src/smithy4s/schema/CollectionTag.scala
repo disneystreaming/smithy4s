@@ -123,7 +123,7 @@ object CollectionTag {
       if (bijection.isInstanceOf[Newtype.Make[_, _]]) apply(schema).asInstanceOf[MaybeCT[B]]
       else None
     }
-    def surject[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
+    def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
     def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
   }
   // format: off

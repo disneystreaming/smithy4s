@@ -28,7 +28,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : F[S]
   def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]) : F[U]
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]) : F[B]
-  def surject[A, B](schema: Schema[A], refinement: Refinement[A, B]) : F[B]
+  def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]) : F[B]
   def lazily[A](suspend: Lazy[Schema[A]]) : F[A]
 
   def apply[A](schema: Schema[A]) : F[A] = schema match {
@@ -39,7 +39,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case StructSchema(shapeId, hints, fields, make) => struct(shapeId, hints, fields, make)
     case UnionSchema(shapeId, hints, alts, dispatch) => union(shapeId, hints, alts, Alt.Dispatcher(alts, dispatch))
     case BijectionSchema(schema, bijection) => biject(schema, bijection)
-    case SurjectionSchema(schema, refinement) => surject(schema, refinement)
+    case RefinementSchema(schema, refinement) => refine(schema, refinement)
     case LazySchema(make) => lazily(make)
   }
 
@@ -56,7 +56,7 @@ object SchemaVisitor {
     override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : F[S] = default
     override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]) : F[U] = default
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default
-    override def surject[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
+    override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
     override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
   }
 

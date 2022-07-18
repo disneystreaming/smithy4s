@@ -452,7 +452,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       bijection: Bijection[A, B]
   ): DocumentDecoder[B] = apply(schema).map(bijection)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): DocumentDecoder[B] = apply(schema).emap(refinement.asFunction)

@@ -275,10 +275,10 @@ private[http] class SchemaVisitorMetadataReader()
       bijection: Bijection[A, B]
   ): MetaDecode[B] = self(schema).map(bijection)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      surjection: Refinement[A, B]
-  ): MetaDecode[B] = self(schema).map(surjection.asThrowingFunction)
+      refinement: Refinement[A, B]
+  ): MetaDecode[B] = self(schema).map(refinement.asThrowingFunction)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
     EmptyMetaDecode

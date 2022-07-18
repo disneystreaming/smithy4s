@@ -41,7 +41,7 @@ sealed trait Schema[A]{
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
-    case SurjectionSchema(schema, refinement) => SurjectionSchema(schema.withId(newId), refinement)
+    case RefinementSchema(schema, refinement) => RefinementSchema(schema.withId(newId), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
@@ -56,7 +56,7 @@ sealed trait Schema[A]{
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
-    case SurjectionSchema(schema, refinement) => SurjectionSchema(schema.transformHintsLocally(f), refinement)
+    case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsLocally(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
   }
 
@@ -68,14 +68,14 @@ sealed trait Schema[A]{
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.mapK(Schema.transformHintsTransitivelyK(f))), make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsTransitively(f), bijection)
-    case SurjectionSchema(schema, refinement) => SurjectionSchema(schema.transformHintsTransitively(f), refinement)
+    case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsTransitively(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
   }
 
   private[smithy4s] def validatedAgainstHints[C](hints: Hints)(implicit constraint: Validator.Simple[C, A]): Schema[A] = {
     hints.get(constraint.tag) match {
       case Some(hint) =>
-        SurjectionSchema(this, constraint.make(hint))
+        RefinementSchema(this, constraint.make(hint))
       case None => this
     }
   }
@@ -96,7 +96,7 @@ object Schema {
     def shapeId = underlying.shapeId
     def hints = underlying.hints
   }
-  final case class SurjectionSchema[A, B](underlying: Schema[A], refinement: Refinement[A, B]) extends Schema[B]{
+  final case class RefinementSchema[A, B](underlying: Schema[A], refinement: Refinement[A, B]) extends Schema[B]{
     def shapeId = underlying.shapeId
     def hints = underlying.hints
   }

@@ -239,7 +239,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
   ): DocumentEncoder[B] =
     apply(schema).contramap(bijection.from)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): DocumentEncoder[B] = apply(schema).contramap(refinement.from)

@@ -51,7 +51,7 @@ private[smithy4s] object ErrorCodeSchemaVisitor
     b => httpCode(bijection.from(b))
   }
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): HttpCode[B] = {
