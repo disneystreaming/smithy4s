@@ -167,7 +167,7 @@ object Field {
 
     def validated[C, A2](implicit
         FieldValidator: Field.FieldValidator[C, A, A2],
-        constraint: Validator.Simple[C, A2]
+        constraint: RefinementProvider.Simple[C, A2]
     ): SchemaField[S, A] = FieldValidator(field, constraint)
   }
 
@@ -178,7 +178,7 @@ object Field {
   trait FieldValidator[C, A, T] {
     def apply[S](
         field: SchemaField[S, A],
-        constraint: Validator.Simple[C, T]
+        constraint: RefinementProvider.Simple[C, T]
     ): SchemaField[S, A]
   }
 
@@ -187,7 +187,7 @@ object Field {
       new FieldValidator[C, A, A] {
         def apply[S](
             field: SchemaField[S, A],
-            constraint: Validator.Simple[C, A]
+            constraint: RefinementProvider.Simple[C, A]
         ): SchemaField[S, A] = field match {
           case Required(label, instance, get) =>
             Required(
@@ -203,7 +203,7 @@ object Field {
       new FieldValidator[C, Option[A], A] {
         def apply[S](
             field: SchemaField[S, Option[A]],
-            constraint: Validator.Simple[C, A]
+            constraint: RefinementProvider.Simple[C, A]
         ): SchemaField[S, Option[A]] = field match {
           case opt: Optional[Schema, S, A] =>
             Optional(

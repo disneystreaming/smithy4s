@@ -72,7 +72,7 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
   }
 
-  private[smithy4s] def validatedAgainstHints[C](hints: Hints)(implicit constraint: Validator.Simple[C, A]): Schema[A] = {
+  private[smithy4s] def validatedAgainstHints[C](hints: Hints)(implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
     hints.get(constraint.tag) match {
       case Some(hint) =>
         RefinementSchema(this, constraint.make(hint))
@@ -80,7 +80,7 @@ sealed trait Schema[A]{
     }
   }
 
-  final def validated[C](implicit constraint: Validator.Simple[C, A]): Schema[A] = {
+  final def validated[C](implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
     validatedAgainstHints(this.hints)
   }
 }

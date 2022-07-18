@@ -20,29 +20,29 @@ import smithy.api.Length
 import smithy.api.Pattern
 
 /**
-   * Given a constraint of type C, an Validator can produce a Refinement that
+   * Given a constraint of type C, an RefinementProvider can produce a Refinement that
    * allows to go from A to B.
    *
-   * A Validator can be used as a typeclass.
+   * A RefinementProvider can be used as a typeclass.
    */
-trait Validator[C, A, B] { self =>
+trait RefinementProvider[C, A, B] { self =>
   def tag: ShapeTag[C]
   def make(c: C): Refinement.Aux[C, A, B]
   def imapFull[A0, B0](
       bijectSource: Bijection[A, A0],
       bijectTarget: Bijection[B, B0]
-  ): Validator[C, A0, B0] =
-    new Validator[C, A0, B0] {
+  ): RefinementProvider[C, A0, B0] =
+    new RefinementProvider[C, A0, B0] {
       def tag = self.tag
       def make(c: C): Refinement[A0, B0] { type Constraint = C } =
         self.make(c).imapFull(bijectSource, bijectTarget)
     }
 }
 
-object Validator {
+object RefinementProvider {
 
   private abstract class SimpleImpl[C, A](implicit _tag: ShapeTag[C])
-      extends Validator[C, A, A] {
+      extends RefinementProvider[C, A, A] {
 
     val tag: ShapeTag[C] = _tag
 
@@ -61,7 +61,7 @@ object Validator {
 
   }
 
-  type Simple[C, A] = Validator[C, A, A]
+  type Simple[C, A] = RefinementProvider[C, A, A]
 
   implicit def isomorphismConstraint[C, A, A0](implicit
       constraintOnA: Simple[C, A],

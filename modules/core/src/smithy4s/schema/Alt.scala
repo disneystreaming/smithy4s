@@ -113,7 +113,7 @@ object Alt {
       Alt(alt.label, alt.instance.addHints(newHints), alt.inject)
 
     def validated[C](implicit
-        constraint: Validator.Simple[C, A]
+        constraint: RefinementProvider.Simple[C, A]
     ): SchemaAlt[U, A] =
       Alt(
         alt.label,
