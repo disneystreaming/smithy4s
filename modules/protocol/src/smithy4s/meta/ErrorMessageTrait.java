@@ -41,7 +41,6 @@ public class ErrorMessageTrait extends AnnotationTrait {
 
 		@Override
 		public ErrorMessageTrait createTrait(ShapeId target, Node node) {
-			// probably not an object node
 			return new ErrorMessageTrait(node.expectObjectNode());
 		}
 	}
