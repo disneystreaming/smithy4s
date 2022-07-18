@@ -74,6 +74,51 @@ trait Refinement[A, B] { self =>
 
 object Refinement {
 
+  def drivenBy[C]: PartiallyApplyRefinementProvider[C] =
+    new PartiallyApplyRefinementProvider[C]
+
+  class PartiallyApplyRefinementProvider[C] {
+
+    def apply[A, B](
+        surjection: Surjection[A, B]
+    )(implicit C: ShapeTag[C]): RefinementProvider[C, A, B] =
+      new RefinementProvider[C, A, B] {
+        val tag: ShapeTag[C] = ShapeTag[C]
+        def make(c: C): Aux[C, A, B] = new Refinement[A, B] {
+          type Constraint = C
+          val tag: ShapeTag[C] = ShapeTag[C]
+          def constraint: C = c
+          def apply(a: A): Either[String, B] = surjection.to(a)
+          def from(b: B): A = surjection.from(b)
+          def unsafe(a: A): B = asThrowingFunction(a)
+        }
+      }
+
+    def apply[A, B](
+        to: A => Either[String, B],
+        from: B => A
+    )(implicit C: ShapeTag[C]): RefinementProvider[C, A, B] = apply(
+      Surjection(to, from)
+    )
+
+    def contextual[A, B](build: C => Surjection[A, B])(implicit
+        tagEvidence: ShapeTag[C]
+    ): RefinementProvider[C, A, B] = new RefinementProvider[C, A, B] {
+      val tag: ShapeTag[C] = tagEvidence
+      def make(c: C): Aux[C, A, B] = {
+        val surjection = build(c)
+        new Refinement[A, B] {
+          type Constraint = C
+          val tag: ShapeTag[C] = tagEvidence
+          def constraint: C = c
+          def apply(a: A): Either[String, B] = surjection.to(a)
+          def from(b: B): A = surjection.from(b)
+          def unsafe(a: A): B = asThrowingFunction(a)
+        }
+      }
+    }
+  }
+
   type Aux[C, A, B] = Refinement[A, B] { type Constraint = C }
 
 }
