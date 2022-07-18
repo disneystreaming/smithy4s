@@ -43,3 +43,8 @@ structure indexedSeq {}
         :not(:test([trait|smithy4s.meta#indexedSeq],
                    [trait|smithy.api#uniqueItems]))""")
 structure vector {}
+
+@trait(
+    selector: ":is(structure) > member",
+)
+structure errorMessage {}

@@ -345,22 +345,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       if (hints.contains(Hint.Error)) {
         block(line"${decl} extends Throwable") {
           fields
-            .find(_.name == "message")
-            .map(field => (field.tpe, field.required))
-            .filter { case (tpe, _) =>
-              tpe.dealiased == Type.PrimitiveType(Primitive.String)
-            } match {
-            case Some((tpe, true)) if (tpe.dealiased == tpe) =>
-              line"override def getMessage() : String = message"
-            case Some((tpe, false)) if (tpe.dealiased == tpe) =>
-              line"override def getMessage() : String = message.orNull"
-            case Some((_, true)) =>
-              line"override def getMessage() : String = message.value"
-            case Some((_, false)) =>
-              line"override def getMessage() : String = message.map(_.value).orNull"
-
-            case None => Line.empty
-          }
+            .find { f =>
+              f.hints.contains_(Hint.ErrorMessage) ||
+              f.name === "message"
+            }
+            .filter {
+              _.tpe.dealiased == Type.PrimitiveType(Primitive.String)
+            }
+            .foldMap(renderGetMessage)
         }
       } else {
         val extend = adtParent.map(t => s" extends $t").getOrElse("")
@@ -420,6 +412,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         additionalLines
       )
     ).addImports(imports)
+  }
+
+  private def renderGetMessage(field: Field) = field match {
+    case field if field.tpe.isResolved && field.required =>
+      line"override def getMessage() : String = ${field.name}"
+    case field if field.tpe.isResolved =>
+      line"override def getMessage() : String = ${field.name}.orNull"
+    case field if field.required =>
+      line"override def getMessage() : String = ${field.name}.value"
+    case field =>
+      line"override def getMessage() : String = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {

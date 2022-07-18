@@ -27,6 +27,7 @@ import software.amazon.smithy.model.node.Node
 import smithy4s.codegen.TypedNode.AltValueTN.ProductAltTN
 import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
 import smithy4s.codegen.UnionMember._
+import cats.kernel.Eq
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
@@ -152,6 +153,8 @@ sealed trait Type {
     case Type.Alias(_, _, tpe) => tpe.dealiased
     case other                 => other
   }
+
+  def isResolved: Boolean = dealiased == this
 }
 
 sealed trait Primitive {
@@ -205,6 +208,7 @@ object Hint {
   case object Trait extends Hint
   case object Error extends Hint
   case object PackedInputs extends Hint
+  case object ErrorMessage extends Hint
   case class Constraint(tr: Type.Ref) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
@@ -216,6 +220,8 @@ object Hint {
     case object IndexedSeq extends SpecializedList
   }
   case object UniqueItems extends Hint
+
+  implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }
 
 sealed trait Segment extends scala.Product with Serializable
