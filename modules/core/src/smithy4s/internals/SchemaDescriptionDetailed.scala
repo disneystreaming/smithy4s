@@ -132,16 +132,14 @@ private[internals] object SchemaDescriptionDetailedImpl
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
+      bijection: Bijection[A, B]
   ): SchemaDescriptionDetailedImpl[B] = {
     apply(schema).mapResult(identity)
   }
 
   override def surject[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
+      refinement: Refinement[A, B]
   ): SchemaDescriptionDetailedImpl[B] = {
     apply(schema).mapResult { desc => s"Refinement[$desc]" }
   }

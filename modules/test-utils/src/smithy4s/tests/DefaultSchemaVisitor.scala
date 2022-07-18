@@ -118,15 +118,13 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): Id[B] = to(apply(schema))
+      bijection: Bijection[A, B]
+  ): Id[B] = bijection(apply(schema))
 
   override def surject[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): Id[B] = to.unchecked(apply(schema))
+      refinement: Refinement[A, B]
+  ): Id[B] = refinement.unsafe(apply(schema))
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 

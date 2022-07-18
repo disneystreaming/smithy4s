@@ -18,7 +18,6 @@ package smithy4s
 
 import smithy.api.Length
 import smithy.api.Pattern
-import smithy4s.capability.Isomorphism
 
 /**
    * Given a constraint of type C, an Validator can produce a Refinement that
@@ -28,19 +27,15 @@ import smithy4s.capability.Isomorphism
    */
 trait Validator[C, A, B] { self =>
   def tag: ShapeTag[C]
-  def make(c: C): Refinement[A, B] { type Constraint = C }
-  def contramap[A0](f: A0 => A): Validator[C, A0, B] =
-    new Validator[C, A0, B] {
+  def make(c: C): Refinement.Aux[C, A, B]
+  def imapFull[A0, B0](
+      bijectSource: Bijection[A, A0],
+      bijectTarget: Bijection[B, B0]
+  ): Validator[C, A0, B0] =
+    new Validator[C, A0, B0] {
       def tag = self.tag
-      def make(c: C): Refinement[A0, B] { type Constraint = C } =
-        self.make(c).contramap(f)
-    }
-
-  def map[B0](f: B => B0): Validator[C, A, B0] =
-    new Validator[C, A, B0] {
-      def tag = self.tag
-      def make(c: C): Refinement[A, B0] { type Constraint = C } =
-        self.make(c).map(f)
+      def make(c: C): Refinement[A0, B0] { type Constraint = C } =
+        self.make(c).imapFull(bijectSource, bijectTarget)
     }
 }
 
@@ -52,14 +47,17 @@ object Validator {
     val tag: ShapeTag[C] = _tag
 
     def get(c: C): A => Either[String, Unit]
+
     final def make(c: C): Refinement.Aux[C, A, A] = new Refinement[A, A] {
       type Constraint = C
       final val tag: ShapeTag[C] = _tag
       final val constraint: C = c
       final val run = get(c)
       final def apply(a: A): Either[String, A] = run(a).map(_ => a)
-      final def unchecked(a: A): A = a
+      final def unsafe(a: A): A = a
+      final def from(a: A): A = a
     }
+    final def from(c: C): A => A = identity[A]
 
   }
 
@@ -67,8 +65,8 @@ object Validator {
 
   implicit def isomorphismConstraint[C, A, A0](implicit
       constraintOnA: Simple[C, A],
-      iso: Isomorphism[A, A0]
-  ): Simple[C, A0] = constraintOnA.contramap(iso.from).map(iso.to)
+      iso: Bijection[A, A0]
+  ): Simple[C, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
 
   implicit val stringLengthConstraint: Simple[Length, String] =
     new LengthConstraint[String](_.length)

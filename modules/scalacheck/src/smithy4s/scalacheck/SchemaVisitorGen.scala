@@ -113,14 +113,13 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
       )
   }
 
-  def biject[A, B](schema: Schema[A], to: A => B, from: B => A): Gen[B] =
-    schema.compile(this).map(to)
+  def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Gen[B] =
+    schema.compile(this).map(bijection)
 
   def surject[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): Gen[B] = schema.compile(this).map(to.unchecked)
+      refinement: Refinement[A, B]
+  ): Gen[B] = schema.compile(this).map(refinement.unsafe)
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 

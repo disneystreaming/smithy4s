@@ -615,7 +615,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
-          s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name.make, (_ : $name).value)"
+          s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, asBijection)"
         )
       )
     ).addImports(imports)

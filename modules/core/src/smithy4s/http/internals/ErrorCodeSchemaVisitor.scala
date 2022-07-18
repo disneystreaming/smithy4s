@@ -45,20 +45,18 @@ private[smithy4s] object ErrorCodeSchemaVisitor
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
+      bijection: Bijection[A, B]
   ): HttpCode[B] = {
     val httpCode = apply(schema)
-    b => httpCode(from(b))
+    b => httpCode(bijection.from(b))
   }
 
   override def surject[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
+      refinement: Refinement[A, B]
   ): HttpCode[B] = {
     val httpCode = apply(schema)
-    b => httpCode(from(b))
+    b => httpCode(refinement.from(b))
   }
 
   override def struct[S](

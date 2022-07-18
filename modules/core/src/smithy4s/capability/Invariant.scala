@@ -19,6 +19,8 @@ package capability
 
 trait Invariant[F[_]] {
   def imap[A, B](fa: F[A])(to: A => B, from: B => A): F[B]
+  final def biject[A, B](fa: F[A])(bijection: Bijection[A, B]): F[B] =
+    imap(fa)(bijection(_), bijection.from(_))
   def xmap[A, B](
       fa: F[A]
   )(to: A => Either[ConstraintError, B], from: B => A): F[B]

@@ -31,13 +31,17 @@ trait Refinement[A, B] { self =>
   def tag: ShapeTag[Constraint]
   def constraint: Constraint
   def apply(a: A): Either[String, B]
+  def from(b: B): A
 
   /**
     * Short circuits validation. This should only be used as last-resort
     * when it is impossible to implement schema compilers otherwise, such as ones
     * that create data out of thin air (random generators/default values/etc).
     */
-  def unchecked(a: A): B
+  def unsafe(a: A): B
+
+  @deprecated("use unsafe instead")
+  def unchecked(a: A): B = unsafe(a)
 
   final val asFunction: A => Either[ConstraintError, B] =
     (a: A) =>
@@ -52,22 +56,18 @@ trait Refinement[A, B] { self =>
       case Right(b) => b
     }
 
-  final def contramap[A0](f: A0 => A): Refinement.Aux[Constraint, A0, B] =
-    new Refinement[A0, B] {
+  final def imapFull[A0, B0](
+      bijectSource: Bijection[A, A0],
+      bijectTarget: Bijection[B, B0]
+  ): Refinement.Aux[Constraint, A0, B0] =
+    new Refinement[A0, B0] {
       type Constraint = self.Constraint
       def tag: ShapeTag[Constraint] = self.tag
       def constraint: Constraint = self.constraint
-      def apply(a0: A0): Either[String, B] = self(f(a0))
-      def unchecked(a0: A0): B = self.unchecked(f(a0))
-    }
-
-  final def map[B0](f: B => B0): Refinement.Aux[Constraint, A, B0] =
-    new Refinement[A, B0] {
-      type Constraint = self.Constraint
-      def tag: ShapeTag[Constraint] = self.tag
-      def constraint: Constraint = self.constraint
-      def apply(a: A): Either[String, B0] = self(a).map(f)
-      def unchecked(a: A): B0 = f(self.unchecked(a))
+      def apply(a0: A0): Either[String, B0] =
+        self(bijectSource.from(a0)).map(bijectTarget)
+      def unsafe(a0: A0): B0 = bijectTarget(self.unsafe(bijectSource.from(a0)))
+      def from(b: B0): A0 = bijectSource(self.from(bijectTarget.from(b)))
     }
 
 }

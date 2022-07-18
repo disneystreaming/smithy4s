@@ -40,8 +40,8 @@ sealed trait Schema[A]{
     case EnumerationSchema(_, hints, values, total) => EnumerationSchema(newId, hints, values, total)
     case StructSchema(_, hints, fields, make) => StructSchema(newId, hints, fields, make)
     case UnionSchema(_, hints, alternatives, dispatch) => UnionSchema(newId, hints, alternatives, dispatch)
-    case BijectionSchema(schema, to, from) => BijectionSchema(schema.withId(newId), to, from)
-    case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.withId(newId), to, from)
+    case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
+    case SurjectionSchema(schema, refinement) => SurjectionSchema(schema.withId(newId), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
@@ -55,8 +55,8 @@ sealed trait Schema[A]{
     case EnumerationSchema(shapeId, hints, values, total) => EnumerationSchema(shapeId, f(hints), values, total)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields, make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives, dispatch)
-    case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsLocally(f), to, from)
-    case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.transformHintsLocally(f), to, from)
+    case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
+    case SurjectionSchema(schema, refinement) => SurjectionSchema(schema.transformHintsLocally(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
   }
 
@@ -67,15 +67,15 @@ sealed trait Schema[A]{
     case EnumerationSchema(shapeId, hints, values, total) => EnumerationSchema(shapeId, f(hints), values.map(_.transformHints(f)), total)
     case StructSchema(shapeId, hints, fields, make) => StructSchema(shapeId, f(hints), fields.map(_.mapK(Schema.transformHintsTransitivelyK(f))), make)
     case UnionSchema(shapeId, hints, alternatives, dispatch) => UnionSchema(shapeId, f(hints), alternatives.map(_.mapK(Schema.transformHintsTransitivelyK(f))), dispatch)
-    case BijectionSchema(schema, to, from) => BijectionSchema(schema.transformHintsTransitively(f), to, from)
-    case SurjectionSchema(schema, to, from) => SurjectionSchema(schema.transformHintsTransitively(f), to, from)
+    case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsTransitively(f), bijection)
+    case SurjectionSchema(schema, refinement) => SurjectionSchema(schema.transformHintsTransitively(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
   }
 
   private[smithy4s] def validatedAgainstHints[C](hints: Hints)(implicit constraint: Validator.Simple[C, A]): Schema[A] = {
     hints.get(constraint.tag) match {
       case Some(hint) =>
-        SurjectionSchema(this, constraint.make(hint), identity[A](_))
+        SurjectionSchema(this, constraint.make(hint))
       case None => this
     }
   }
@@ -92,11 +92,11 @@ object Schema {
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]) extends Schema[U]
-  final case class BijectionSchema[A, B](underlying: Schema[A], to: A => B, from: B => A) extends Schema[B]{
+  final case class BijectionSchema[A, B](underlying: Schema[A], bijection: Bijection[A, B]) extends Schema[B]{
     def shapeId = underlying.shapeId
     def hints = underlying.hints
   }
-  final case class SurjectionSchema[A, B](underlying: Schema[A], refinement: Refinement[A, B], from: B => A) extends Schema[B]{
+  final case class SurjectionSchema[A, B](underlying: Schema[A], refinement: Refinement[A, B]) extends Schema[B]{
     def shapeId = underlying.shapeId
     def hints = underlying.hints
   }
@@ -156,8 +156,11 @@ object Schema {
   def enumeration[E <: Enumeration.Value](values: List[E]) : Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
 
+  def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]) : Schema[B] =
+    Schema.BijectionSchema(a, bijection)
+
   def bijection[A, B](a: Schema[A], to: A => B, from: B => A) : Schema[B] =
-    Schema.BijectionSchema(a, to, from)
+    Schema.BijectionSchema(a, Bijection(to, from))
 
   def constant[A](a : A) : Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 

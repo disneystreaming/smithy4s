@@ -27,8 +27,8 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]) : F[E]
   def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : F[S]
   def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]) : F[U]
-  def biject[A, B](schema: Schema[A], to: A => B, from: B => A) : F[B]
-  def surject[A, B](schema: Schema[A], to: Refinement[A, B], from: B => A) : F[B]
+  def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]) : F[B]
+  def surject[A, B](schema: Schema[A], refinement: Refinement[A, B]) : F[B]
   def lazily[A](suspend: Lazy[Schema[A]]) : F[A]
 
   def apply[A](schema: Schema[A]) : F[A] = schema match {
@@ -38,8 +38,8 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case EnumerationSchema(shapeId, hints, values, total) => enumeration(shapeId, hints, values, total)
     case StructSchema(shapeId, hints, fields, make) => struct(shapeId, hints, fields, make)
     case UnionSchema(shapeId, hints, alts, dispatch) => union(shapeId, hints, alts, Alt.Dispatcher(alts, dispatch))
-    case BijectionSchema(schema, to, from) => biject(schema, to, from)
-    case SurjectionSchema(schema, to, from) => surject(schema, to, from)
+    case BijectionSchema(schema, bijection) => biject(schema, bijection)
+    case SurjectionSchema(schema, refinement) => surject(schema, refinement)
     case LazySchema(make) => lazily(make)
   }
 
@@ -55,8 +55,8 @@ object SchemaVisitor {
     override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default
     override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) : F[S] = default
     override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]) : F[U] = default
-    override def biject[A, B](schema: Schema[A], to: A => B, from: B => A): F[B] = default
-    override def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): F[B] = default
+    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default
+    override def surject[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
     override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
   }
 

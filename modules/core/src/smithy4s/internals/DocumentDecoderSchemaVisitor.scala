@@ -449,15 +449,13 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): DocumentDecoder[B] = apply(schema).map(to)
+      bijection: Bijection[A, B]
+  ): DocumentDecoder[B] = apply(schema).map(bijection)
 
   override def surject[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): DocumentDecoder[B] = apply(schema).emap(to.asFunction)
+      refinement: Refinement[A, B]
+  ): DocumentDecoder[B] = apply(schema).emap(refinement.asFunction)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): DocumentDecoder[A] = {
     lazy val underlying = apply(suspend.value)
