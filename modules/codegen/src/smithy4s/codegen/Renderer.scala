@@ -416,13 +416,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderGetMessage(field: Field) = field match {
     case field if field.tpe.isResolved && field.required =>
-      line"override def getMessage() : String = ${field.name}"
+      line"override def getMessage(): String = ${field.name}"
     case field if field.tpe.isResolved =>
-      line"override def getMessage() : String = ${field.name}.orNull"
+      line"override def getMessage(): String = ${field.name}.orNull"
     case field if field.required =>
-      line"override def getMessage() : String = ${field.name}.value"
+      line"override def getMessage(): String = ${field.name}.value"
     case field =>
-      line"override def getMessage() : String = ${field.name}.map(_.value).orNull"
+      line"override def getMessage(): String = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {
