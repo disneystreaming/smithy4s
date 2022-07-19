@@ -27,7 +27,7 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     smithy4s.api.SimpleRestJson(),
   )
 
-  val endpoints = List(
+  val endpoints: List[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(
     PutObject,
     GetObject,
   )

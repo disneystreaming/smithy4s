@@ -128,10 +128,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       lines(
         s"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
         block(
-          s"object $name extends smithy4s.Service.Provider[${name}Gen, ${name}Operation]"
+          s"object $name extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
           s"def apply[F[_]](implicit F: $name[F]): F.type = F",
-          s"def service : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen",
+          s"def service: $Service_[${name}Gen, ${name}Operation] = ${name}Gen",
           s"val id: $ShapeId_ = service.id"
         )
       )
@@ -180,7 +180,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints = List".args(ops.map(_.name)),
+        line"val endpoints: List[$Endpoint_[$opTraitName, _, _, _, _, _]] = List"
+          .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
         newline,
@@ -211,12 +212,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
+        line"def transform[P[_, _, _, _, _]](transformation: $Transformation_[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
         newline,
-        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: smithy4s.Transformation[P, P1]): $genName[P1] = alg.transform(transformation)",
+        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: $Transformation_[P, P1]): $genName[P1] = alg.transform(transformation)",
         newline,
         block(
-          line"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
+          line"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): $Transformation_[$opTraitName, P] = new $Transformation_[$opTraitName, P]"
         ) {
           if (ops.isEmpty) {
             line"""def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")""".toLines

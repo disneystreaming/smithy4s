@@ -26,7 +26,7 @@ object ImportServiceGen extends smithy4s.Service[ImportServiceGen, ImportService
     smithy4s.api.SimpleRestJson(),
   )
 
-  val endpoints = List(
+  val endpoints: List[smithy4s.Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(
     ImportOperation,
   )
 
