@@ -23,7 +23,7 @@ object StreamedObjectsGen extends smithy4s.Service[StreamedObjectsGen, StreamedO
 
   val hints : smithy4s.Hints = smithy4s.Hints.empty
 
-  val endpoints = List(
+  val endpoints: List[smithy4s.Endpoint[StreamedObjectsOperation, _, _, _, _, _]] = List(
     PutStreamedObject,
     GetStreamedObject,
   )
