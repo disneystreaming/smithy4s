@@ -7,7 +7,7 @@ object TestTrait extends smithy4s.ShapeTag.Companion[TestTrait] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "testTrait")
 
   val hints : smithy4s.Hints = smithy4s.Hints(
-    smithy.api.Trait(None, None, None),
+    smithy.api.Trait(None, None, None, None),
   )
 
   implicit val schema: smithy4s.Schema[TestTrait] = struct(
