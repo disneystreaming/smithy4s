@@ -30,3 +30,8 @@ case class CodegenArgs(
     transformers: List[String],
     localJars: List[os.Path]
 )
+
+case class ProtoTypeArgs(
+                          smithyString:String,
+                          output: os.Path
+                        )
