@@ -83,25 +83,25 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   override def projectConfigurations: Seq[Configuration] = Seq(Smithy4s)
 
-  override lazy val projectSettings =
-    Seq(
-      Compile / smithy4sInputDir := (Compile / sourceDirectory).value / "smithy",
-      Compile / smithy4sOutputDir := (Compile / sourceManaged).value,
-      Compile / smithy4sOpenapiDir := (Compile / resourceManaged).value,
-      Compile / smithy4sCodegen := cachedSmithyCodegen(Compile).value,
-      Compile / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
-      Compile / sourceGenerators += (Compile / smithy4sCodegen).map(
-        _.filter(_.ext == "scala")
-      ),
-      Compile / resourceGenerators += (Compile / smithy4sCodegen).map(
-        _.filter(_.ext != "scala")
-      ),
-      cleanFiles += (Compile / smithy4sOutputDir).value,
-      Compile / smithy4sModelTransformers := List.empty
-    )
+  // Use this with any configuration to enable the codegen in it.
+  def defaultSettings(config: Configuration) = Seq(
+    config / smithy4sInputDir := (config / sourceDirectory).value / "smithy",
+    config / smithy4sOutputDir := (config / sourceManaged).value,
+    config / smithy4sOpenapiDir := (config / resourceManaged).value,
+    config / smithy4sCodegen := cachedSmithyCodegen(config).value,
+    config / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
+    config / sourceGenerators += (config / smithy4sCodegen).map(
+      _.filter(_.ext == "scala")
+    ),
+    config / resourceGenerators += (config / smithy4sCodegen).map(
+      _.filter(_.ext != "scala")
+    ),
+    cleanFiles += (config / smithy4sOutputDir).value,
+    config / smithy4sModelTransformers := List.empty
+  )
 
-  private def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) =>
-    f((a, b))
+  override lazy val projectSettings =
+    defaultSettings(Compile)
 
   private type CacheKey = (
       FilesInfo[HashFileInfo],
@@ -144,7 +144,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       Tracked.inputChanged[CacheKey, Seq[File]](
         s.cacheStoreFactory.make("input")
       ) {
-        untupled {
+        Function.untupled {
           Tracked
             .lastOutput[(Boolean, CacheKey), Seq[File]](
               s.cacheStoreFactory.make("output")

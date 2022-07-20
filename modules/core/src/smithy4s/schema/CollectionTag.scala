@@ -46,6 +46,7 @@ object CollectionTag {
 
   }
 
+  // TODO: remove when upgrading smithy
   case object SetTag extends CollectionTag[Set] {
     override def name: String = "Set"
     override def iterator[A](c: Set[A]): Iterator[A] = c.iterator

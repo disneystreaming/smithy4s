@@ -4,25 +4,25 @@ package object example {
   type StreamedObjects[F[_]] = smithy4s.Monadic[StreamedObjectsGen, F]
   object StreamedObjects extends smithy4s.Service.Provider[StreamedObjectsGen, StreamedObjectsOperation] {
     def apply[F[_]](implicit F: StreamedObjects[F]): F.type = F
-    def service : smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] = StreamedObjectsGen
+    def service: smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] = StreamedObjectsGen
     val id: smithy4s.ShapeId = service.id
   }
   type FooService[F[_]] = smithy4s.Monadic[FooServiceGen, F]
   object FooService extends smithy4s.Service.Provider[FooServiceGen, FooServiceOperation] {
     def apply[F[_]](implicit F: FooService[F]): F.type = F
-    def service : smithy4s.Service[FooServiceGen, FooServiceOperation] = FooServiceGen
+    def service: smithy4s.Service[FooServiceGen, FooServiceOperation] = FooServiceGen
     val id: smithy4s.ShapeId = service.id
   }
   type BrandService[F[_]] = smithy4s.Monadic[BrandServiceGen, F]
   object BrandService extends smithy4s.Service.Provider[BrandServiceGen, BrandServiceOperation] {
     def apply[F[_]](implicit F: BrandService[F]): F.type = F
-    def service : smithy4s.Service[BrandServiceGen, BrandServiceOperation] = BrandServiceGen
+    def service: smithy4s.Service[BrandServiceGen, BrandServiceOperation] = BrandServiceGen
     val id: smithy4s.ShapeId = service.id
   }
   type ObjectService[F[_]] = smithy4s.Monadic[ObjectServiceGen, F]
   object ObjectService extends smithy4s.Service.Provider[ObjectServiceGen, ObjectServiceOperation] {
     def apply[F[_]](implicit F: ObjectService[F]): F.type = F
-    def service : smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
+    def service: smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
     val id: smithy4s.ShapeId = service.id
   }
 
