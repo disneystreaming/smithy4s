@@ -32,7 +32,6 @@ import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.selector.PathFinder
-import scala.annotation.nowarn
 
 object SmithyToIR {
 
@@ -213,7 +212,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def blobShape(x: BlobShape): Shape = x.toBuilder().addTraits(traits).build()
       def booleanShape(x: BooleanShape): Shape = x.toBuilder().addTraits(traits).build()
       def listShape(x: ListShape): Shape = x.toBuilder().addTraits(traits).build()
-      def setShape(x: SetShape): Shape = x.toBuilder().addTraits(traits).build()
       def mapShape(x: MapShape): Shape = x.toBuilder().addTraits(traits).build()
       def byteShape(x: ByteShape): Shape = x.toBuilder().addTraits(traits).build()
       def shortShape(x: ShortShape): Shape = x.toBuilder().addTraits(traits).build()
@@ -303,14 +301,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               Type.Collection(CollectionType.List, tpe)
             }
           }
-          .map { tpe =>
-            Type.Alias(x.namespace, x.name, tpe)
-          }
-
-      def setShape(x: SetShape): Option[Type] =
-        x.getMember()
-          .accept(this)
-          .map(Type.Collection(CollectionType.Set, _))
           .map { tpe =>
             Type.Alias(x.namespace, x.name, tpe)
           }
@@ -409,10 +399,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
   }
 
-  // Remove when upgrading to smithy 2.0
-  @nowarn(
-    "msg=class UniqueItemsTrait in package traits is deprecated"
-  )
   private val traitToHint: PartialFunction[Trait, Hint] = {
     case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>

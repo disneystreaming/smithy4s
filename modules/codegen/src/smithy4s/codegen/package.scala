@@ -112,7 +112,8 @@ package object codegen {
     object BigDecimal extends ShapeExtractor(_.asBigDecimalShape())
     object BigInteger extends ShapeExtractor(_.asBigIntegerShape())
     object List extends ShapeExtractor(_.asListShape())
-    object Set extends ShapeExtractor(_.asSetShape())
+    // TODO: remove when upgrading smithy
+    object Set extends ShapeExtractor(_.asListShape())
     object Map extends ShapeExtractor(_.asMapShape())
     object Structure extends ShapeExtractor(_.asStructureShape())
     object Union extends ShapeExtractor(_.asUnionShape())
