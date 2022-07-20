@@ -48,5 +48,6 @@ structure vector {}
 // for the generated exception's error message.
 @trait(
     selector: ":is(structure) > member",
+    structurallyExclusive: "member"
 )
 structure errorMessage {}

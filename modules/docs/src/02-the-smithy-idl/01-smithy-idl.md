@@ -140,7 +140,12 @@ structure BadInput {
 
 #### Errors
 
-Regarding errors, `smithy4s` translates them as case classes extending `Throwable`. If the structure shape contains a `message` field, the `getMessage` method of the throwable is implemented in terms of this field.
+Regarding errors, `smithy4s` translates them as case classes extending `Throwable`.
+
+The `getMessage` method of the throwable is implemented in terms of the following (based on the first match):
+
+- a field annotated with the `@errorMessage` trait
+- a field named `message`
 
 
 #### Services
