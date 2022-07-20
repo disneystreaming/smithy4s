@@ -134,6 +134,13 @@ jobs:
       - name: Build Microsite
         run: cd ./modules/website && yarn && yarn build
 
+      - name: npm build index search
+        working-directory: website
+        run: |
+          npm install
+          npm  run swizzle docusaurus-lunr-search SearchBar -- --danger --wrap
+          npm  run build    
+
       - name: Publish Microsite
         uses: peaceiris/actions-gh-pages@v3
         with:
