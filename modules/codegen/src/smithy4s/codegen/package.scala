@@ -31,6 +31,7 @@ import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits.TimestampFormatTrait
 
 import java.{util => ju}
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 package object codegen {
@@ -112,8 +113,8 @@ package object codegen {
     object BigDecimal extends ShapeExtractor(_.asBigDecimalShape())
     object BigInteger extends ShapeExtractor(_.asBigIntegerShape())
     object List extends ShapeExtractor(_.asListShape())
-    // TODO: remove when upgrading smithy
-    object Set extends ShapeExtractor(_.asListShape())
+    @nowarn("msg=method asSetShape in class Shape is deprecated")
+    object Set extends ShapeExtractor(_.asSetShape())
     object Map extends ShapeExtractor(_.asMapShape())
     object Structure extends ShapeExtractor(_.asStructureShape())
     object Union extends ShapeExtractor(_.asUnionShape())
