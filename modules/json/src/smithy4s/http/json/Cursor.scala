@@ -22,7 +22,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException
 import smithy4s.http.PayloadError
 
 class Cursor private () {
-  private[this] var stack: Array[PayloadPath.Segment] = new Array[PayloadPath.Segment](8)
+  private[this] var stack: Array[PayloadPath.Segment] =
+    new Array[PayloadPath.Segment](8)
   private[this] var top: Int = 0
   private var expecting: String = null
 
@@ -40,9 +41,11 @@ class Cursor private () {
     res
   }
 
-  def under[A](label: String)(f: => A): A = under(new PayloadPath.Segment.Label(label))(f)
+  def under[A](label: String)(f: => A): A =
+    under(new PayloadPath.Segment.Label(label))(f)
 
-  def under[A](index: Int)(f: => A): A = under(new PayloadPath.Segment.Index(index))(f)
+  def under[A](index: Int)(f: => A): A =
+    under(new PayloadPath.Segment.Index(index))(f)
 
   def payloadError[A](codec: JCodec[A], message: String): Nothing =
     throw PayloadError(getPath(), codec.expecting, message)
@@ -87,7 +90,7 @@ object Cursor {
       f(cursor)
     } catch {
       case e: JsonReaderException => payloadError(cursor, e.getMessage())
-      case e: ConstraintError => payloadError(cursor, e.message)
+      case e: ConstraintError     => payloadError(cursor, e.message)
     }
   }
 
