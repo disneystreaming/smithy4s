@@ -15,6 +15,7 @@ const config = {
   favicon: 'img/favicon-32x32.png',
   organizationName: 'disneystreaming', // Usually your GitHub org/user name.
   projectName: 'smithy4s', // Usually your repo name.
+  plugins: [require.resolve('docusaurus-lunr-search')],
 
   presets: [
     [
