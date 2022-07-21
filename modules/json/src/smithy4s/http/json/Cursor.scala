@@ -22,9 +22,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException
 import smithy4s.http.PayloadError
 
 class Cursor private () {
-
+  private[this] var stack: Array[PayloadPath.Segment] =
+    new Array[PayloadPath.Segment](8)
+  private[this] var top: Int = 0
   private var expecting: String = null
-  private var stack: List[PayloadPath.Segment] = Nil
 
   def decode[A](codec: JCodec[A], in: JsonReader): A = {
     this.expecting = codec.expecting
@@ -32,38 +33,52 @@ class Cursor private () {
   }
 
   def under[A](segment: PayloadPath.Segment)(f: => A): A = {
-    val prev = stack
-    stack = segment :: stack
+    if (top >= stack.length) stack = java.util.Arrays.copyOf(stack, top << 1)
+    stack(top) = segment
+    top += 1
     val res = f
-    stack = prev
+    top -= 1
     res
   }
 
   def under[A](label: String)(f: => A): A =
-    under(PayloadPath.Segment.Label(label))(f)
+    under(new PayloadPath.Segment.Label(label))(f)
+
   def under[A](index: Int)(f: => A): A =
-    under(PayloadPath.Segment.Index(index))(f)
+    under(new PayloadPath.Segment.Index(index))(f)
 
-  def payloadError[A](codec: JCodec[A], message: String): Nothing = {
-    val path = PayloadPath(stack.reverse)
-    throw PayloadError(path, codec.expecting, message)
-  }
+  def payloadError[A](codec: JCodec[A], message: String): Nothing =
+    throw PayloadError(getPath(), codec.expecting, message)
 
-  def requiredFieldError[A](codec: JCodec[A], field: String): Nothing = {
+  def requiredFieldError[A](codec: JCodec[A], field: String): Nothing =
     requiredFieldError(codec.expecting, field)
-  }
 
   def requiredFieldError[A](expecting: String, field: String): Nothing = {
-    val path = PayloadPath((PayloadPath.Segment.Label(field) :: stack).reverse)
-    throw PayloadError(path, expecting, "Missing required field")
+    var top = this.top
+    if (top >= stack.length) stack = java.util.Arrays.copyOf(stack, top << 1)
+    stack(top) = new PayloadPath.Segment.Label(field)
+    top += 1
+    var list: List[PayloadPath.Segment] = Nil
+    while (top > 0) {
+      top -= 1
+      list = stack(top) :: list
+    }
+    throw PayloadError(PayloadPath(list), expecting, "Missing required field")
   }
 
-  private def getPath(): PayloadPath = PayloadPath(stack.reverse)
+  private def getPath(): PayloadPath = {
+    var top = this.top
+    var list: List[PayloadPath.Segment] = Nil
+    while (top > 0) {
+      top -= 1
+      list = stack(top) :: list
+    }
+    PayloadPath(list)
+  }
 
-  private def getExpected() =
+  private def getExpected(): String =
     if (expecting != null) expecting
     else throw new IllegalStateException("Expected should have been fulfilled")
-
 }
 
 object Cursor {
@@ -74,19 +89,11 @@ object Cursor {
     try {
       f(cursor)
     } catch {
-      case e: JsonReaderException =>
-        throw PayloadError(
-          cursor.getPath(),
-          cursor.getExpected(),
-          e.getMessage()
-        )
-      case ConstraintError(_, message) =>
-        throw PayloadError(
-          cursor.getPath(),
-          cursor.getExpected(),
-          message
-        )
+      case e: JsonReaderException => payloadError(cursor, e.getMessage())
+      case e: ConstraintError     => payloadError(cursor, e.message)
     }
   }
 
+  private[this] def payloadError(cursor: Cursor, message: String): Nothing =
+    throw PayloadError(cursor.getPath(), cursor.getExpected(), message)
 }
