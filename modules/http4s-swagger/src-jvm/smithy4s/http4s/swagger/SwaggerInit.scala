@@ -22,9 +22,14 @@ import cats.data.NonEmptyList
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`Content-Type`
+import scala.io.Source
 
 object SwaggerInit {
   final case class SwaggerUrl(url: String, name: String)
+
+  final val swaggerInitializerJs = {
+    Source.fromResource("swagger-initializer.js").getLines().mkString("\n")
+  }
 
   private abstract class response[F[_]: Applicative] extends Http4sDsl[F] {
     def build(urls: NonEmptyList[SwaggerUrl]): F[Response[F]] = {
@@ -48,28 +53,9 @@ object SwaggerInit {
     val finalUrls =
       urls.map(u => s""" {"url": "${u.url}", "name": "${u.name}"} """)
     val renderedUrls = finalUrls.toList.mkString(",")
-    // copied from https://github.com/swagger-api/swagger-ui/blob/v4.12.0/dist/swagger-initializer.js
-    // configuration documented here: https://github.com/swagger-api/swagger-ui/blob/v4.12.0/docs/usage/configuration.md#core
-    s"""|window.onload = function() {
-        |  //<editor-fold desc="Changeable Configuration Block">
-        |
-        |  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
-        |  window.ui = SwaggerUIBundle({
-        |    urls: [$renderedUrls],
-        |    dom_id: '#swagger-ui',
-        |    deepLinking: true,
-        |    presets: [
-        |      SwaggerUIBundle.presets.apis,
-        |      SwaggerUIStandalonePreset
-        |    ],
-        |    plugins: [
-        |      SwaggerUIBundle.plugins.DownloadUrl
-        |    ],
-        |    layout: "StandaloneLayout"
-        |  });
-        |
-        |  //</editor-fold>
-        |};
-        |""".stripMargin
+    swaggerInitializerJs.replaceAll(
+      "( *)url:.*,",
+      s"$$1urls: [$renderedUrls],"
+    )
   }
 }
