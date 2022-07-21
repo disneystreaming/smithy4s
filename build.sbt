@@ -518,6 +518,15 @@ lazy val http4s = projectMatrix
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
 /**
+  We have a copy of one of the file contained in the JAR in this repository.
+  This task is meant to ensure that the copy we have is still in sync with
+  whatever is in the webjar that we pull (when updating).
+ */
+lazy val checkSwaggerInit = taskKey[Unit](
+  "Validates that the content we have matches the dist version, or else fail."
+)
+
+/**
  * Module that contains a function to derive a documentation endpoint
  */
 lazy val `http4s-swagger` = projectMatrix
@@ -536,6 +545,33 @@ lazy val `http4s-swagger` = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
+    },
+    Test / test := (Test / test).dependsOn(checkSwaggerInit).value,
+    checkSwaggerInit := {
+      val version = Dependencies.Webjars.swaggerUi.revision
+      val name = Dependencies.Webjars.swaggerUi.name
+
+      val swaggerJarUrl = SwaggerCheck
+        .findJar(update.value, name)
+        .headOption
+        .getOrElse(
+          sys.error(
+            s"Did not found $name jar on the classpath."
+          )
+        )
+
+      val inJarPath =
+        s"META-INF/resources/webjars/swagger-ui-dist/$version/swagger-initializer.js"
+      val inJarSha = SwaggerCheck.sha1(swaggerJarUrl, inJarPath)
+
+      val copiedFile =
+        file("modules/http4s-swagger/resources/swagger-initializer.js")
+      val copySha = SwaggerCheck.sha1(copiedFile)
+      require(
+        inJarSha == copySha,
+        s"The content of ${copiedFile} should match the content of the same file in ${inJarPath} in the jar."
+      )
+      sLog.value.info("swagger-initializer.js local copy is in sync.")
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
