@@ -33,6 +33,7 @@ import software.amazon.smithy.model.traits._
 import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.selector.PathFinder
 import scala.annotation.nowarn
+import smithy4s.meta.ErrorMessageTrait
 
 object SmithyToIR {
 
@@ -421,6 +422,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.Protocol(refs.toList)
     case _: PackedInputsTrait =>
       Hint.PackedInputs
+    case _: ErrorMessageTrait =>
+      Hint.ErrorMessage
     case _: VectorTrait =>
       Hint.SpecializedList.Vector
     case _: IndexedSeqTrait =>

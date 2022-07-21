@@ -159,6 +159,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),

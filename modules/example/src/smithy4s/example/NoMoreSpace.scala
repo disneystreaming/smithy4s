@@ -3,7 +3,7 @@ package smithy4s.example
 import smithy4s.schema.Schema._
 
 case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
-  override def getMessage() : String = message
+  override def getMessage(): String = message
 }
 object NoMoreSpace extends smithy4s.ShapeTag.Companion[NoMoreSpace] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "NoMoreSpace")

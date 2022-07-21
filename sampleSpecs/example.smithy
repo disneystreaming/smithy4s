@@ -5,6 +5,7 @@ use smithy4s.api#UUID
 use smithy4s.api#uuidFormat
 use smithy4s.meta#indexedSeq
 use smithy4s.meta#vector
+use smithy4s.meta#errorMessage
 
 @simpleRestJson
 service ObjectService {
@@ -110,6 +111,13 @@ integer ObjectSize
 @error("server")
 structure ServerError {
   message: String
+}
+
+
+@error("server")
+structure ServerErrorCustomMessage {
+  @errorMessage
+  messageField: String
 }
 
 @trait
