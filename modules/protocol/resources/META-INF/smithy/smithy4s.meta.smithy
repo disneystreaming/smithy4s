@@ -47,7 +47,7 @@ structure vector {}
 // the errorMessage trait marks a structure's field as one that will be used
 // for the generated exception's error message.
 @trait(
-    selector: "structure [trait|smithy.api#error] > member",
+    selector: "structure > member",
     structurallyExclusive: "member"
 )
 structure errorMessage {}
