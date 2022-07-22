@@ -33,9 +33,6 @@ import smithy4s.schema._
 import smithy4s.schema.Primitive._
 
 trait DocumentDecoder[A] { self =>
-
-  def canBeKey: Boolean
-
   def apply(history: List[PayloadPath.Segment], document: Document): A
   def expected: String
 
@@ -46,8 +43,6 @@ trait DocumentDecoder[A] { self =>
     }
 
     def expected: String = self.expected
-    def canBeKey: Boolean = self.canBeKey
-
   }
 
   def emap[B](f: A => Either[ConstraintError, B]): DocumentDecoder[B] =
@@ -62,10 +57,7 @@ trait DocumentDecoder[A] { self =>
       }
 
       def expected: String = self.expected
-      def canBeKey: Boolean = self.canBeKey
-
     }
-
 }
 
 object DocumentDecoder {
@@ -83,8 +75,7 @@ object DocumentDecoder {
 
   def instance[A](
       expectedType: String,
-      expectedJsonShape: String,
-      key: Boolean
+      expectedJsonShape: String
   )(
       f: PartialFunction[(List[PayloadPath.Segment], Document), A]
   ): DocumentDecoder[A] = new DocumentDecoder[A] {
@@ -98,7 +89,6 @@ object DocumentDecoder {
           s"Expected Json $expectedJsonShape"
         )
     }
-    def canBeKey: Boolean = key
     def expected: String = expectedType
   }
 
@@ -116,7 +106,6 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
         def apply(path: List[PayloadPath.Segment], d: Document): Document = d
 
         def expected: String = "Json document"
-        def canBeKey: Boolean = false
       }
     case PShort =>
       from("Short") {
@@ -135,14 +124,13 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
         case FlexibleNumber(bd) if bd.isDecimalDouble => bd.toDouble
       }
     case PUnit =>
-      DocumentDecoder.instance("Unit", "Object", false) {
-        case (_, DObject(_)) =>
-          ()
+      DocumentDecoder.instance("Unit", "Object") { case (_, DObject(_)) =>
+        ()
       }
     case PTimestamp =>
       def forFormat(format: TimestampFormat) = {
         val formatRepr = Timestamp.showFormat(format)
-        DocumentDecoder.instance("Timestamp", "String", false) {
+        DocumentDecoder.instance("Timestamp", "String") {
           case (pp, DString(value)) =>
             Timestamp
               .parse(value, format)
@@ -160,7 +148,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
           format match {
             case DATE_TIME | HTTP_DATE => forFormat(format)
             case EPOCH_SECONDS =>
-              DocumentDecoder.instance("Timestamp", "Number", false) {
+              DocumentDecoder.instance("Timestamp", "Number") {
                 case (_, DNumber(value)) =>
                   val epochSeconds = value.toLong
                   Timestamp(
@@ -216,13 +204,12 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       member: Schema[A]
   ): DocumentDecoder[C[A]] = {
     val fa = apply(member)
-    DocumentDecoder.instance(tag.name, "Array", false) {
-      case (pp, DArray(value)) =>
-        tag.fromIterator(value.iterator.zipWithIndex.map {
-          case (document, index) =>
-            val localPath = PayloadPath.Segment(index) :: pp
-            fa(localPath, document)
-        })
+    DocumentDecoder.instance(tag.name, "Array") { case (pp, DArray(value)) =>
+      tag.fromIterator(value.iterator.zipWithIndex.map {
+        case (document, index) =>
+          val localPath = PayloadPath.Segment(index) :: pp
+          fa(localPath, document)
+      })
     }
   }
 
@@ -232,22 +219,32 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       key: Schema[K],
       value: Schema[V]
   ): DocumentDecoder[Map[K, V]] = {
-    val keyDecoder = apply(key)
+    val maybeKeyDecoder = DocumentKeyDecoder.trySchemaVisitor(key)
     val valueDecoder = apply(value)
-    if (keyDecoder.canBeKey) {
-      DocumentDecoder.instance("Map", "Object", false) {
-        case (pp, DObject(map)) =>
+    maybeKeyDecoder match {
+      case Some(keyDecoder) =>
+        DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
           val builder = Map.newBuilder[K, V]
           map.foreach { case (key, value) =>
-            val decodedKey = keyDecoder(key :: pp, DString(key))
+            val decodedKey = keyDecoder(DString(key)).fold(
+              { case DocumentKeyDecoder.DecodeError(expectedType) =>
+                val path = PayloadPath.Segment.fromString(key) :: pp
+                throw PayloadError(
+                  PayloadPath(path.reverse),
+                  expectedType,
+                  "Wrong Json shape"
+                )
+              },
+              identity
+            )
             val decodedValue = valueDecoder(key :: pp, value)
             builder.+=((decodedKey, decodedValue))
           }
           builder.result()
-      }
-    } else {
-      DocumentDecoder.instance("Map", "Array", false) {
-        case (pp, DArray(value)) =>
+        }
+      case None =>
+        val keyDecoder = apply(key)
+        DocumentDecoder.instance("Map", "Array") { case (pp, DArray(value)) =>
           val builder = Map.newBuilder[K, V]
           var i = 0
           val newPP = PayloadPath.Segment(i) :: pp
@@ -267,7 +264,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
               )
           }
           builder.result()
-      }
+        }
     }
   }
 
@@ -338,7 +335,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
 
     val fieldDecoders = fields.map(field => fieldDecoder(field))
 
-    DocumentDecoder.instance("Structure", "Object", false) {
+    DocumentDecoder.instance("Structure", "Object") {
       case (pp, DObject(value)) =>
         val buffer = Vector.newBuilder[Any]
         fieldDecoders.foreach(fd => fd(pp, buffer.+=(_), value))
@@ -353,7 +350,6 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       def expected: String = "Union"
       def apply(pp: List[PayloadPath.Segment], document: Document): S =
         f(pp, document)
-      def canBeKey: Boolean = false
     }
 
   private type DecoderMap[S] =
@@ -462,7 +458,6 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
   override def lazily[A](suspend: Lazy[Schema[A]]): DocumentDecoder[A] = {
     lazy val underlying = apply(suspend.value)
     new DocumentDecoder[A] {
-      def canBeKey: Boolean = underlying.canBeKey
 
       def apply(history: List[PayloadPath.Segment], document: Document): A =
         underlying.apply(history, document)
@@ -502,7 +497,6 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
             "Wrong Json shape"
           )
       }
-      def canBeKey: Boolean = true
       def expected: String = expectedType
     }
 
@@ -530,7 +524,6 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
           )
       }
 
-      def canBeKey: Boolean = true
       def expected: String = expectedType
     }
 }
