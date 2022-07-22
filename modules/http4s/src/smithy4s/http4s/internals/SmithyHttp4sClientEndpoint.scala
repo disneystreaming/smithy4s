@@ -35,6 +35,7 @@ import smithy4s.schema.SchemaAlt
   */
 // format: off
 private[smithy4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
+  def build(input: I): (Request[F], Response[F] => F[O])
   def send(input: I): F[O]
 }
 // format: on
@@ -69,16 +70,20 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
+  def build(input: I): (Request[F], Response[F] => F[O]) = (
+    inputToRequest(input),
+    outputFromResponse
+  )
+
   def send(input: I): F[O] = {
+    val (request, responseToOutput) = build(input)
+
     clientOrApp match {
       case Left(client) =>
-        client
-          .run(inputToRequest(input))
-          .use { response =>
-            outputFromResponse(response)
-          }
+        client.run(request).use(responseToOutput)
+
       case Right(httpApp) =>
-        httpApp.run(inputToRequest(input)).flatMap(outputFromResponse)
+        httpApp.run(request).flatMap(responseToOutput)
     }
   }
 
