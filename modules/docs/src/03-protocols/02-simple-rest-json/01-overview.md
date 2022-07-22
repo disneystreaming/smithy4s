@@ -70,80 +70,10 @@ This protocol and its interpreters, are aware of the following traits provided o
 
 ## Decoding and encoding unions
 
-There is no one way to encode a union in JSON. You can use tagged union, untagged union or discriminated union. Smithy4s supports all three of them. The following example assume the following shapes are available:
+The `SimpleRestJson` protocol supports 3 different union encodings :
 
-```
-structure One {
-  one: String
-}
+* tagged (default)
+* untagged
+* discriminated
 
-structure Two {
-  two: Int
-}
-```
-
-### Tagged union
-
-This is the default behaviour, and it matches Smithy's encoding of union. The rational is simple: there is a key indicating what shape we should decode/encode to. Given the following union:
-
-```
-union Tagged {
-  first: One,
-  second: Two
-}
-```
-
-Smithy4s will render encode / decode an array of `Tagged` this way:
-
-```json
-[
-  { "first": { "one": "smithy4s" } },
-  { "second": { "two": 42 } },
-]
-```
-
-### Untagged union
-
-Untagged union are supported via an annotation: `@untagged`. Here, there is no way for the encoder/decoder to know what it is working with. It will do a best effort to figure out what shape it is working with given the content. Given the following union:
-
-```
-use smithy4s.api#untagged
-
-@untagged
-union Untagged {
-  first: One,
-  second: Two
-}
-```
-
-Smithy4s will render encode / decode an array of `Untagged` this way:
-
-```json
-[
-  { "one": "smithy4s" },
-  { "two": 42 },
-]
-```
-
-### Discriminated union
-
-Discriminated union are supported via an annotation: `@discriminated("tpe")`. Here, the encoder/decoder looks for the field specified in the annotation to know what shape it is working with. Given the following union:
-
-```
-use smithy4s.api#discriminated
-
-@discriminated("tpe")
-union Untagged {
-  first: One,
-  second: Two
-}
-```
-
-Smithy4s will render encode / decode an array of `Untagged` this way:
-
-```json
-[
-  { "tpe": "first",  "one": "smithy4s" },
-  { "tpe": "seconf", "two": 42 },
-]
-```
+See the section about [unions](../../04-codegen/02-unions.md) for a detailed description.

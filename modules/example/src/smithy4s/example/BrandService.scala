@@ -21,7 +21,7 @@ object BrandServiceGen extends smithy4s.Service[BrandServiceGen, BrandServiceOpe
 
   val hints : smithy4s.Hints = smithy4s.Hints.empty
 
-  val endpoints = List(
+  val endpoints: List[smithy4s.Endpoint[BrandServiceOperation, _, _, _, _, _]] = List(
     AddBrands,
   )
 

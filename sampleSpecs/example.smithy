@@ -3,6 +3,8 @@ namespace smithy4s.example
 use smithy4s.api#simpleRestJson
 use smithy4s.api#UUID
 use smithy4s.api#uuidFormat
+use smithy4s.meta#indexedSeq
+use smithy4s.meta#vector
 
 @simpleRestJson
 service ObjectService {
@@ -96,7 +98,7 @@ union Foo {
   bDec: BigDecimal
 }
 
-@enum([{value : "Low"}, {value : "High"}])
+@enum([{value : "Low", name: "LOW"}, {value : "High", name: "HIGH"}])
 string LowHigh
 
 @uuidFormat
@@ -115,3 +117,13 @@ document arbitraryData
 
 @arbitraryData(str: "hello", int: 1, bool: true, arr: ["one", "two", "three"], obj: { str: "s", i : 1})
 structure ArbitraryDataTest {}
+
+@indexedSeq
+list SomeIndexSeq {
+  member: String
+}
+
+@vector
+list SomeVector {
+  member: String
+}

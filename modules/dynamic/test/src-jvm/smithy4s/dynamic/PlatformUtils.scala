@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,33 +16,30 @@
 
 package smithy4s.dynamic
 
-import model.Model
 import software.amazon.smithy.model.{Model => SModel}
-import software.amazon.smithy.model.shapes.ModelSerializer
 import cats.syntax.all._
-import cats.effect.IO
+import DummyIO._
 
 private[dynamic] trait PlatformUtils { self: Utils.type =>
 
   def compile(string: String): IO[DynamicSchemaIndex] =
-    parse(string).map(self.compile)
+    parse(string).map(DynamicSchemaIndex.loadModel).flatMap(_.liftTo[IO])
 
   def compileSampleSpec(string: String): IO[DynamicSchemaIndex] =
-    parseSampleSpec(string).map(self.compile)
+    parseSampleSpec(string)
+      .map(DynamicSchemaIndex.loadModel)
+      .flatMap(_.liftTo[IO])
 
-  def parse(string: String): IO[Model] =
+  private def parse(string: String): IO[SModel] =
     IO(
       SModel
         .assembler()
         .addUnparsedModel("dynamic.smithy", string)
         .assemble()
         .unwrap()
-    ).map(ModelSerializer.builder().build.serialize(_))
-      .map(NodeToDocument(_))
-      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
-      .flatMap(_.liftTo[IO])
+    )
 
-  def parseSampleSpec(fileName: String): IO[Model] =
+  private def parseSampleSpec(fileName: String): IO[SModel] =
     IO(
       SModel
         .assembler()
@@ -53,9 +50,6 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
         .discoverModels()
         .assemble()
         .unwrap()
-    ).map(ModelSerializer.builder().build.serialize(_))
-      .map(NodeToDocument(_))
-      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
-      .flatMap(_.liftTo[IO])
+    )
 
 }

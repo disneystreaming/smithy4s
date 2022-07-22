@@ -128,10 +128,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       lines(
         s"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
         block(
-          s"object $name extends smithy4s.Service.Provider[${name}Gen, ${name}Operation]"
+          s"object $name extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
           s"def apply[F[_]](implicit F: $name[F]): F.type = F",
-          s"def service : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen",
+          s"def service: $Service_[${name}Gen, ${name}Operation] = ${name}Gen",
           s"val id: $ShapeId_ = service.id"
         )
       )
@@ -180,7 +180,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints = List".args(ops.map(_.name)),
+        line"val endpoints: List[$Endpoint_[$opTraitName, _, _, _, _, _]] = List"
+          .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
         newline,
@@ -211,12 +212,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
+        line"def transform[P[_, _, _, _, _]](transformation: $Transformation_[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
         newline,
-        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: smithy4s.Transformation[P, P1]): $genName[P1] = alg.transform(transformation)",
+        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: $Transformation_[P, P1]): $genName[P1] = alg.transform(transformation)",
         newline,
         block(
-          line"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
+          line"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): $Transformation_[$opTraitName, P] = new $Transformation_[$opTraitName, P]"
         ) {
           if (ops.isEmpty) {
             line"""def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")""".toLines
@@ -457,10 +458,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     def caseName(alt: Alt) = alt.member match {
       case UnionMember.ProductCase(product) => product.name
-      case UnionMember.TypeCase(_) =>
+      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
         alt.name.dropWhile(_ == '_').capitalize + "Case"
     }
     val caseNames = alts.map(caseName)
+    val caseNamesAndIsUnit =
+      caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
     val imports = /*alts.foldMap(_.tpe.imports) ++*/ syntaxImport
 
     lines(
@@ -475,6 +478,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         newline,
         alts.map {
+          case a @ Alt(_, realName, UnionMember.UnitCase, altHints) =>
+            val cn = caseName(a)
+            // format: off
+            lines(
+              line"case object $cn extends $name",
+              line"""private val ${cn}Alt = $Schema_.constant($cn).oneOf[$name]("$realName").addHints(hints)${renderConstraintValidation(altHints)}""",
+              line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
+            )
+            // format: on
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
@@ -508,7 +520,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               renderHintsVal(altHints),
             // format: off
             line"val schema: $Schema_[$cn] = bijection(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
-            s"""val alt = schema.oneOf[$name]("$realName")"""
+            line"""val alt = schema.oneOf[$name]("$realName")""",
             // format: on
             )
         },
@@ -522,11 +534,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"implicit val schema: $Schema_[$name] = union"
           union
             .args {
-              caseNames.map(_ + ".alt")
+              caseNamesAndIsUnit.map {
+                case (caseName, false) => caseName + ".alt"
+                case (caseName, true)  => caseName + "Alt"
+              }
             }
             .block {
-              caseNames.map { caseName =>
-                s"case c : $caseName => $caseName.alt(c)"
+              caseNamesAndIsUnit.map {
+                case (caseName, true) =>
+                  s"case $caseName => ${caseName}AltWithValue"
+                case (caseName, false) =>
+                  s"case c : $caseName => $caseName.alt(c)"
               }
             }
             .appendToLast(
@@ -558,9 +576,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): Lines = lines(
     block(
-      line"sealed abstract class $name(_value: String, _ordinal: Int) extends $Enumeration_.Value"
+      line"sealed abstract class $name(_value: String, _name: String, _ordinal: Int) extends $Enumeration_.Value"
     )(
-      line"override val value : String = _value",
+      line"override val value: String = _value",
+      line"override val name: String = _name",
       line"override val ordinal: Int = _ordinal",
       line"override val hints: $Hints_ = $Hints_.empty",
       line"@inline final def widen: $name = this"
@@ -571,7 +590,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${e.className} extends $name("$value", $ordinal)"""
+        line"""case object ${e.className} extends $name("$value", "${e.className}", $ordinal)"""
       },
       newline,
       line"val values: List[$name] = List".args(
@@ -597,7 +616,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
-          s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name(_), (_ : $name).value)"
+          s"implicit val schema : $Schema_[$name] = bijection(underlyingSchema, $name.make, (_ : $name).value)"
         )
       )
     ).addImports(imports)
@@ -633,8 +652,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   implicit class TypeExt(tpe: Type) {
     def schemaRef: Line = tpe match {
       case Type.PrimitiveType(p) => Line(schemaRefP(p))
-      case Type.List(member)     => line"list(${member.schemaRef})"
-      case Type.Set(member)      => line"set(${member.schemaRef})"
+      case Type.Collection(collectionType, member) =>
+        val col = collectionType match {
+          case CollectionType.List       => "list"
+          case CollectionType.Set        => "set"
+          case CollectionType.Vector     => "vector"
+          case CollectionType.IndexedSeq => "indexedSeq"
+        }
+        line"$col(${member.schemaRef})"
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
@@ -790,10 +815,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
 
-    case ListTN(values) =>
-      s"List(${values.map(_.runDefault).mkString(", ")})".writeCollection
-    case SetTN(values) =>
-      s"Set(${values.map(_.runDefault).mkString(", ")})".writeCollection
+    case CollectionTN(collectionType, values) =>
+      val col = collectionType.tpe
+      s"$col(${values.map(_.runDefault).mkString(", ")})".writeCollection
     case MapTN(values) =>
       s"Map(${values
         .map { case (k, v) => k.runDefault + " -> " + v.runDefault }

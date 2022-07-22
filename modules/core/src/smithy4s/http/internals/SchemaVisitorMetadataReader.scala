@@ -22,12 +22,13 @@ import smithy4s.http.internals.MetaDecode.{
   EmptyMetaDecode,
   PutField,
   StringListMapMetaDecode,
-  StringListMetaDecode,
+  StringCollectionMetaDecode,
   StringMapMetaDecode,
   StringValueMetaDecode,
   StructureMetaDecode
 }
 import smithy4s.schema._
+import smithy4s.internals.SchemaDescription
 
 import java.{util => ju}
 import scala.collection.mutable.{Map => MMap}
@@ -44,25 +45,28 @@ private[http] class SchemaVisitorMetadataReader()
       hints: Hints,
       tag: Primitive[P]
   ): MetaDecode[P] = {
+    val desc = tag.schema(shapeId).compile(SchemaDescription)
+    def withDesc[A](f: String => Option[A]) =
+      MetaDecode.from[A](desc)(f)
+    def withDescUnsafe[A](f: String => A) =
+      MetaDecode.fromUnsafe[A](desc)(f)
     tag match {
-      case Primitive.PShort  => MetaDecode.from("Short")(_.toShortOption)
-      case Primitive.PInt    => MetaDecode.from("Int")(_.toIntOption)
-      case Primitive.PFloat  => MetaDecode.from("Float")(_.toFloatOption)
-      case Primitive.PLong   => MetaDecode.from("Long")(_.toLongOption)
-      case Primitive.PDouble => MetaDecode.from("Double")(_.toDoubleOption)
-      case Primitive.PBigInt => MetaDecode.fromUnsafe("BigInt")(BigInt(_))
-      case Primitive.PBigDecimal =>
-        MetaDecode.fromUnsafe("BigDecimal")(BigDecimal(_))
-      case Primitive.PBoolean => MetaDecode.from("Boolean")(_.toBooleanOption)
-      case Primitive.PString  => MetaDecode.fromUnsafe("String")(identity)
-      case Primitive.PUUID =>
-        MetaDecode.fromUnsafe[ju.UUID]("UUID")(ju.UUID.fromString)
-      case Primitive.PByte => EmptyMetaDecode
+      case Primitive.PShort      => withDesc(_.toShortOption)
+      case Primitive.PInt        => withDesc(_.toIntOption)
+      case Primitive.PFloat      => withDesc(_.toFloatOption)
+      case Primitive.PLong       => withDesc(_.toLongOption)
+      case Primitive.PDouble     => withDesc(_.toDoubleOption)
+      case Primitive.PBoolean    => withDesc(_.toBooleanOption)
+      case Primitive.PBigInt     => withDescUnsafe(BigInt(_))
+      case Primitive.PBigDecimal => withDescUnsafe(BigDecimal(_))
+      case Primitive.PString     => withDescUnsafe(identity)
+      case Primitive.PUUID       => withDescUnsafe(ju.UUID.fromString)
       case Primitive.PBlob =>
-        MetaDecode.fromUnsafe("Bytes")(string =>
+        withDescUnsafe(string =>
           ByteArray(ju.Base64.getDecoder().decode(string))
         )
       case Primitive.PDocument => EmptyMetaDecode
+      case Primitive.PByte     => EmptyMetaDecode
       case Primitive.PTimestamp =>
         (
           hints.get(HttpBinding).map(_.tpe),
@@ -98,28 +102,20 @@ private[http] class SchemaVisitorMetadataReader()
     }
   }
 
-  override def list[A](
+  override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
+      tag: CollectionTag[C],
       member: Schema[A]
-  ): MetaDecode[List[A]] = {
+  ): MetaDecode[C[A]] = {
     self(member) match {
       case MetaDecode.StringValueMetaDecode(f) =>
-        MetaDecode.StringListMetaDecode[List[A]](_.map(f).toList)
+        MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
+          tag.fromIterator(it.map(f))
+        }
       case _ => EmptyMetaDecode
     }
   }
-
-  override def set[A](
-      shapeId: ShapeId,
-      hints: Hints,
-      member: Schema[A]
-  ): MetaDecode[Set[A]] =
-    self(member) match {
-      case MetaDecode.StringValueMetaDecode(f) =>
-        MetaDecode.StringListMetaDecode[Set[A]](_.map(f).toSet)
-      case _ => EmptyMetaDecode
-    }
 
   override def map[K, V](
       shapeId: ShapeId,
@@ -132,7 +128,7 @@ private[http] class SchemaVisitorMetadataReader()
         StringMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap
         )
-      case (StringValueMetaDecode(readK), StringListMetaDecode(readV)) =>
+      case (StringValueMetaDecode(readK), StringCollectionMetaDecode(readV)) =>
         StringListMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap
         )
@@ -271,7 +267,7 @@ private[http] class SchemaVisitorMetadataReader()
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatch: Alt.Dispatcher[Schema, U]
   ): MetaDecode[U] = EmptyMetaDecode
 
   override def biject[A, B](

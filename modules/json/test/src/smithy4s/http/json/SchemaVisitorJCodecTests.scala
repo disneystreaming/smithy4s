@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -379,7 +379,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      (if (Platform.isJVM)
+      (if (!Platform.isJS)
          "Input must be <= 10, but was 11.0"
        else "Input must be <= 10, but was 11")
     )
@@ -454,7 +454,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input map exceeded max arity of `1024`")
+        expect(message == "Input map exceeded max arity of 1024")
     }
   }
 
@@ -469,7 +469,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "input list exceeded max arity of `1024`")
+        expect.same(message, "Input list exceeded max arity of 1024")
     }
   }
 
@@ -480,7 +480,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "input JSON document exceeded max arity of `1024`")
+        expect.same(message, "Input JSON document exceeded max arity of 1024")
     }
   }
 
@@ -492,7 +492,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "input JSON document exceeded max arity of `1024`")
+        expect.same(message, "Input JSON document exceeded max arity of 1024")
     }
   }
 

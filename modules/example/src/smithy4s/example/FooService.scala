@@ -21,7 +21,7 @@ object FooServiceGen extends smithy4s.Service[FooServiceGen, FooServiceOperation
 
   val hints : smithy4s.Hints = smithy4s.Hints.empty
 
-  val endpoints = List(
+  val endpoints: List[smithy4s.Endpoint[FooServiceOperation, _, _, _, _, _]] = List(
     GetFoo,
   )
 

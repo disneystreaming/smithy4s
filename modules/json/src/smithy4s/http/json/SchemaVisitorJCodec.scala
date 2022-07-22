@@ -315,7 +315,17 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         case n: DNumber  => out.writeVal(n.value)
         case a: DArray =>
           out.writeArrayStart()
-          a.value.foreach(encodeValue(_, out))
+          a.value match {
+            case x: ArraySeq[Document] =>
+              val xs = x.unsafeArray.asInstanceOf[Array[Document]]
+              var i = 0
+              while (i < xs.length) {
+                encodeValue(xs(i), out)
+                i += 1
+              }
+            case xs =>
+              xs.foreach(encodeValue(_, out))
+          }
           out.writeArrayEnd()
         case o: DObject =>
           out.writeObjectStart()
@@ -349,25 +359,25 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           new DNumber(in.readBigDecimal(null))
         } else if (b == '[') {
           new DArray({
-            if (in.isNextToken(']')) IndexedSeq.empty[Document]
-            else {
-              in.rollbackToken()
-              var arr = new Array[Document](4)
-              var i = 0
-              while ({
-                if (i >= maxArity) maxArityError(cursor)
-                if (i == arr.length) arr = java.util.Arrays.copyOf(arr, i << 1)
-                arr(i) = decodeValue(in, null)
-                i += 1
-                in.isNextToken(',')
-              }) {}
-
-              if (in.isCurrentToken(']')) ArraySeq.unsafeWrapArray {
-                if (i == arr.length) arr
-                else java.util.Arrays.copyOf(arr, i)
+            if (in.isNextToken(']')) ArraySeq.empty[Document]
+            else
+              ArraySeq.unsafeWrapArray {
+                in.rollbackToken()
+                var arr = new Array[Document](4)
+                var i = 0
+                while ({
+                  if (i >= maxArity) maxArityError(cursor)
+                  if (i == arr.length)
+                    arr = java.util.Arrays.copyOf(arr, i << 1)
+                  arr(i) = decodeValue(in, null)
+                  i += 1
+                  in.isNextToken(',')
+                }) {}
+                if (in.isCurrentToken(']')) {
+                  if (i == arr.length) arr
+                  else java.util.Arrays.copyOf(arr, i)
+                } else in.arrayEndOrCommaError()
               }
-              else in.arrayEndOrCommaError()
-            }
           })
         } else if (b == '{') {
           new DObject({
@@ -393,7 +403,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       private def maxArityError(cursor: Cursor): Nothing =
         throw cursor.payloadError(
           this,
-          s"input $expecting exceeded max arity of `$maxArity`"
+          s"Input $expecting exceeded max arity of $maxArity"
         )
     }
   }
@@ -431,6 +441,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
   private def listImpl[A](member: Schema[A]) = new JCodec[List[A]] {
     private[this] val a: JCodec[A] = apply(member)
+
     def expecting: String = "list"
 
     override def canBeKey: Boolean = false
@@ -443,11 +454,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           val builder = new ListBuffer[A]
           var i = 0
           while ({
-            if (i >= maxArity)
-              throw cursor.payloadError(
-                this,
-                s"input $expecting exceeded max arity of `$maxArity`"
-              )
+            if (i >= maxArity) maxArityError(cursor)
             builder += cursor.under(i)(cursor.decode(a, in))
             i += 1
             in.isNextToken(',')
@@ -472,17 +479,120 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     def encodeKey(xs: List[A], out: JsonWriter): Unit =
       out.encodeError("Cannot use vectors as keys")
+
+    private[this] def maxArityError(cursor: Cursor): Nothing =
+      throw cursor.payloadError(
+        this,
+        s"Input $expecting exceeded max arity of $maxArity"
+      )
   }
 
-  override def list[A](
-      shapeId: ShapeId,
-      hints: Hints,
+  private def vector[A](
       member: Schema[A]
-  ): JCodec[List[A]] = listImpl(member)
+  ): JCodec[Vector[A]] = new JCodec[Vector[A]] {
+    private[this] val a = apply(member)
 
-  override def set[A](
-      shapeId: ShapeId,
-      hints: Hints,
+    def expecting: String = "list"
+
+    override def canBeKey: Boolean = false
+
+    def decodeValue(cursor: Cursor, in: JsonReader): Vector[A] =
+      if (in.isNextToken('[')) {
+        if (in.isNextToken(']')) Vector.empty
+        else {
+          in.rollbackToken()
+          val builder = Vector.newBuilder[A]
+          var i = 0
+          while ({
+            if (i >= maxArity) maxArityError(cursor)
+            builder += cursor.under(i)(cursor.decode(a, in))
+            i += 1
+            in.isNextToken(',')
+          }) ()
+          if (in.isCurrentToken(']')) builder.result()
+          else in.arrayEndOrCommaError()
+        }
+      } else in.decodeError("Expected JSON array")
+
+    def encodeValue(xs: Vector[A], out: JsonWriter): Unit = {
+      out.writeArrayStart()
+      xs.foreach(x => a.encodeValue(x, out))
+      out.writeArrayEnd()
+    }
+
+    def decodeKey(in: JsonReader): Vector[A] =
+      in.decodeError("Cannot use vectors as keys")
+
+    def encodeKey(xs: Vector[A], out: JsonWriter): Unit =
+      out.encodeError("Cannot use vectors as keys")
+
+    private[this] def maxArityError(cursor: Cursor): Nothing =
+      throw cursor.payloadError(
+        this,
+        s"Input $expecting exceeded max arity of $maxArity"
+      )
+  }
+
+  private def indexedSeq[A](
+      member: Schema[A]
+  ): JCodec[IndexedSeq[A]] = new JCodec[IndexedSeq[A]] {
+    private[this] val a = apply(member)
+    def expecting: String = "list"
+
+    override def canBeKey: Boolean = false
+
+    val withBuilder = CollectionTag.IndexedSeqTag.compactBuilder(member)
+
+    def decodeValue(cursor: Cursor, in: JsonReader): IndexedSeq[A] =
+      if (in.isNextToken('[')) {
+        if (in.isNextToken(']')) Vector.empty
+        else {
+          in.rollbackToken()
+          withBuilder { put =>
+            var i = 0
+            while ({
+              if (i >= maxArity) maxArityError(cursor)
+              put(cursor.under(i)(cursor.decode(a, in)))
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (!in.isCurrentToken(']')) {
+              in.arrayEndOrCommaError()
+            }
+          }
+        }
+      } else in.decodeError("Expected JSON array")
+
+    def encodeValue(xs: IndexedSeq[A], out: JsonWriter): Unit = {
+      out.writeArrayStart()
+      xs match {
+        case x: ArraySeq[A] =>
+          val xs = x.unsafeArray.asInstanceOf[Array[A]]
+          var i = 0
+          while (i < xs.length) {
+            a.encodeValue(xs(i), out)
+            i += 1
+          }
+        case _ =>
+          xs.foreach(x => a.encodeValue(x, out))
+      }
+      out.writeArrayEnd()
+    }
+
+    def decodeKey(in: JsonReader): IndexedSeq[A] =
+      in.decodeError("Cannot use vectors as keys")
+
+    def encodeKey(xs: IndexedSeq[A], out: JsonWriter): Unit =
+      out.encodeError("Cannot use vectors as keys")
+
+    private[this] def maxArityError(cursor: Cursor): Nothing =
+      throw cursor.payloadError(
+        this,
+        s"Input $expecting exceeded max arity of $maxArity"
+      )
+  }
+
+  private def set[A](
       member: Schema[A]
   ): JCodec[Set[A]] = new JCodec[Set[A]] {
     private[this] val a = apply(member)
@@ -498,11 +608,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           val builder = Set.newBuilder[A]
           var i = 0
           while ({
-            if (i >= maxArity)
-              throw cursor.payloadError(
-                this,
-                s"input $expecting exceeded max arity of `$maxArity`"
-              )
+            if (i >= maxArity) maxArityError(cursor)
             builder += cursor.under(i)(cursor.decode(a, in))
             i += 1
             in.isNextToken(',')
@@ -523,59 +629,65 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     def encodeKey(xs: Set[A], out: JsonWriter): Unit =
       out.encodeError("Cannot use vectors as keys")
+
+    private[this] def maxArityError(cursor: Cursor): Nothing =
+      throw cursor.payloadError(
+        this,
+        s"Input $expecting exceeded max arity of $maxArity"
+      )
   }
 
   private def objectMap[K, V](
       jk: JCodec[K],
       jv: JCodec[V]
-  ): JCodec[Map[K, V]] = {
-    new JCodec[Map[K, V]] {
-      val expecting: String = "map"
+  ): JCodec[Map[K, V]] = new JCodec[Map[K, V]] {
+    val expecting: String = "map"
 
-      override def canBeKey: Boolean = false
+    override def canBeKey: Boolean = false
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] =
-        if (in.isNextToken('{')) {
-          if (in.isNextToken('}')) Map.empty
-          else {
-            in.rollbackToken()
-            val builder = Map.newBuilder[K, V]
-            var i = 0
-            while ({
-              if (i >= maxArity)
-                throw cursor.payloadError(
-                  this,
-                  s"input $expecting exceeded max arity of `$maxArity`"
-                )
-              builder += (
-                (
-                  jk.decodeKey(in),
-                  cursor.under(i)(cursor.decode(jv, in))
-                )
+    def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] =
+      if (in.isNextToken('{')) {
+        if (in.isNextToken('}')) Map.empty
+        else {
+          in.rollbackToken()
+          val builder = Map.newBuilder[K, V]
+          var i = 0
+          while ({
+            if (i >= maxArity) maxArityError(cursor)
+            builder += (
+              (
+                jk.decodeKey(in),
+                cursor.under(i)(cursor.decode(jv, in))
               )
-              i += 1
-              in.isNextToken(',')
-            }) ()
-            if (in.isCurrentToken('}')) builder.result()
-            else in.objectEndOrCommaError()
-          }
-        } else in.decodeError("Expected JSON object")
-
-      def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
-        out.writeObjectStart()
-        xs.foreach { case (key, value) =>
-          jk.encodeKey(key, out)
-          jv.encodeValue(value, out)
+            )
+            i += 1
+            in.isNextToken(',')
+          }) ()
+          if (in.isCurrentToken('}')) builder.result()
+          else in.objectEndOrCommaError()
         }
-        out.writeObjectEnd()
+      } else in.decodeError("Expected JSON object")
+
+    def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
+      out.writeObjectStart()
+      xs.foreach { kv =>
+        jk.encodeKey(kv._1, out)
+        jv.encodeValue(kv._2, out)
       }
-
-      def decodeKey(in: JsonReader): Map[K, V] =
-        in.decodeError("Cannot use maps as keys")
-
-      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit =
-        out.encodeError("Cannot use maps as keys")
+      out.writeObjectEnd()
     }
+
+    def decodeKey(in: JsonReader): Map[K, V] =
+      in.decodeError("Cannot use maps as keys")
+
+    def encodeKey(xs: Map[K, V], out: JsonWriter): Unit =
+      out.encodeError("Cannot use maps as keys")
+
+    private[this] def maxArityError(cursor: Cursor): Nothing =
+      throw cursor.payloadError(
+        this,
+        s"Input $expecting exceeded max arity of $maxArity"
+      )
   }
 
   private def arrayMap[K, V](
@@ -584,10 +696,24 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   ): JCodec[Map[K, V]] = {
     val kField = Field.required[Schema, (K, V), K]("key", k, _._1)
     val vField = Field.required[Schema, (K, V), V]("value", v, _._2)
-    val kvCodec = Schema.struct(Vector(kField, vField))(vec =>
-      (vec(0).asInstanceOf[K], vec(1).asInstanceOf[V])
+    val kvCodec = Schema.struct(Vector(kField, vField))(fields =>
+      (fields(0).asInstanceOf[K], fields(1).asInstanceOf[V])
     )
     listImpl(kvCodec).biject(_.toMap, _.toList)
+  }
+
+  override def collection[C[_], A](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: CollectionTag[C],
+      member: Schema[A]
+  ): JCodec[C[A]] = {
+    tag match {
+      case CollectionTag.ListTag       => listImpl(member)
+      case CollectionTag.SetTag        => set(member)
+      case CollectionTag.VectorTag     => vector(member)
+      case CollectionTag.IndexedSeqTag => indexedSeq(member)
+    }
   }
 
   override def map[K, V](
@@ -606,15 +732,14 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       schema: Schema[A],
       to: A => B,
       from: B => A
-  ): JCodec[B] =
-    apply(schema).biject(to, from)
+  ): JCodec[B] = apply(schema).biject(to, from)
+
   override def surject[A, B](
       schema: Schema[A],
       to: Refinement[A, B],
       from: B => A
-  ): JCodec[B] =
-    JCodec.jcodecInvariant
-      .xmap(apply(schema))(to.asFunction, from)
+  ): JCodec[B] = JCodec.jcodecInvariant.xmap(apply(schema))(to.asFunction, from)
+
   override def lazily[A](suspend: Lazy[Schema[A]]): JCodec[A] = new JCodec[A] {
     lazy val underlying = apply(suspend.value)
 
@@ -640,10 +765,12 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       override def canBeKey: Boolean = false
 
       def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
-        alt.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+        alt.hints.get(JsonName) match {
+          case None    => alt.label
+          case Some(x) => x.value
+        }
 
-      private[this] val handlerMap
-          : util.HashMap[String, (Cursor, JsonReader) => Z] =
+      private[this] val handlerMap =
         new util.HashMap[String, (Cursor, JsonReader) => Z] {
           def handler[A](alt: Alt[Schema, Z, A]) = {
             val codec = apply(alt.instance)
@@ -684,8 +811,8 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
           altCache(awv.alt).encodeValue(awv.value, out)
 
-        val awv = total(z)
         out.writeObjectStart()
+        val awv = total(z)
         out.writeKey(jsonLabel(awv.alt))
         writeValue(awv)
         out.writeObjectEnd()
@@ -707,11 +834,13 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     private[this] val handlerList: Array[(Cursor, JsonReader) => Z] = {
       val res = Array.newBuilder[(Cursor, JsonReader) => Z]
+
       def handler[A](alt: Alt[Schema, Z, A]) = {
         val codec = apply(alt.instance)
         (cursor: Cursor, reader: JsonReader) =>
           alt.inject(cursor.decode(codec, reader))
       }
+
       alternatives.foreach(alt => res += handler(alt))
       res.result()
     }
@@ -744,8 +873,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
         altCache(awv.alt).encodeValue(awv.value, out)
 
-      val awv = total(z)
-      writeValue(awv)
+      writeValue(total(z))
     }
 
     def decodeKey(in: JsonReader): Z =
@@ -765,10 +893,12 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       override def canBeKey: Boolean = false
 
       def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
-        alt.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+        alt.hints.get(JsonName) match {
+          case None    => alt.label
+          case Some(x) => x.value
+        }
 
-      private[this] val handlerMap
-          : util.HashMap[String, (Cursor, JsonReader) => Z] =
+      private[this] val handlerMap =
         new util.HashMap[String, (Cursor, JsonReader) => Z] {
           def handler[A](
               alt: Alt[Schema, Z, A]
@@ -816,8 +946,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
           altCache(awv.alt).encodeValue(awv.value, out)
 
-        val awv = total(z)
-        writeValue(awv)
+        writeValue(total(z))
       }
 
       def decodeKey(in: JsonReader): Z =
@@ -831,11 +960,12 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => Alt.SchemaAndValue[U, _]
+      dispatch: Alt.Dispatcher[Schema, U]
   ): JCodec[U] = hints match {
-    case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
-    case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
-    case _                     => taggedUnion(alternatives)(dispatch)
+    case Untagged.hint(_) => untaggedUnion(alternatives)(dispatch.underlying)
+    case Discriminated.hint(d) =>
+      discriminatedUnion(alternatives, d)(dispatch.underlying)
+    case _ => taggedUnion(alternatives)(dispatch.underlying)
   }
 
   override def enumeration[E](
@@ -873,10 +1003,10 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   }
 
   private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =
-    field.hints
-      .get(JsonName)
-      .map(_.value)
-      .getOrElse(field.label)
+    field.hints.get(JsonName) match {
+      case None    => field.label
+      case Some(x) => x.value
+    }
 
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
@@ -973,7 +1103,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         }
 
       private[this] val handlers =
-        new util.HashMap[String, Handler](documentFields.length) {
+        new util.HashMap[String, Handler](documentFields.length << 1, 0.5f) {
           documentFields.foreach(field =>
             put(jsonLabel(field), fieldHandler(field))
           )
@@ -998,7 +1128,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val buffer = new util.HashMap[String, Any](handlers.size)
+        val buffer = new util.HashMap[String, Any](handlers.size << 1, 0.5f)
         if (in.isNextToken('{')) {
           // In this case, metadata and payload are mixed together
           // and values field values must be sought from either.
@@ -1067,7 +1197,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           cursor: Cursor,
           in: JsonReader
       ): scala.collection.Map[String, Any] => Z = {
-        val buffer = new util.HashMap[String, Any](1)
+        val buffer = new util.HashMap[String, Any](2, 0.5f)
         // In this case, one field assumes the whole payload. We use
         // its associated codec.
         buffer.put(payloadField.label, cursor.decode(codec, in))
@@ -1121,6 +1251,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     nonPayloadStruct(fields, structHints)(make, encode)
   }
+
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -1164,5 +1295,4 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         basicStruct(fields, hints)(make)
     }
   }
-
 }

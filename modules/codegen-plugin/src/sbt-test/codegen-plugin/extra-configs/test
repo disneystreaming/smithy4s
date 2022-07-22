@@ -1,0 +1,7 @@
+# check if main sources are generated
+> compile
+$ exists target/scala-2.13/src_managed/main/example/ExampleStruct.scala
+
+# check if test sources are generated
+> Test/compile
+$ exists target/scala-2.13/src_managed/test/testexample/TestStruct.scala

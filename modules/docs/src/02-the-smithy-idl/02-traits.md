@@ -53,7 +53,7 @@ structure MyStructure {
 }
 ```
 
-### Regarding smithy4s handling of traits
+### Regarding Smithy4s handling of traits
 
 Smithy4s automatically creates corresponding values in the generated Scala code, for all the annotations it finds, whether defined in the smithy prelude, or defined by users.
 

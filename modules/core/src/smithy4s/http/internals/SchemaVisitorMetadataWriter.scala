@@ -20,8 +20,8 @@ package internals
 
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.schema.Alt.SchemaAndValue
 import smithy4s.schema.{
+  CollectionTag,
   EnumValue,
   Field,
   Primitive,
@@ -31,6 +31,7 @@ import smithy4s.schema.{
 }
 
 import java.util.Base64
+import smithy4s.schema.Alt
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -84,26 +85,15 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
     }
   }
 
-  override def list[A](
+  override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
+      tag: CollectionTag[C],
       member: Schema[A]
-  ): MetaEncode[List[A]] = {
+  ): MetaEncode[C[A]] = {
     self(member) match {
       case StringValueMetaEncode(f) =>
-        StringListMetaEncode[List[A]](listA => listA.map(f))
-      case _ => MetaEncode.empty
-    }
-  }
-
-  override def set[A](
-      shapeId: ShapeId,
-      hints: Hints,
-      member: Schema[A]
-  ): MetaEncode[Set[A]] = {
-    self(member) match {
-      case StringValueMetaEncode(f) =>
-        StringListMetaEncode[Set[A]](set => set.map(f).toList)
+        StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
       case _ => MetaEncode.empty
     }
   }
@@ -182,7 +172,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: U => SchemaAndValue[U, _]
+      dispatcher: Alt.Dispatcher[Schema, U]
   ): MetaEncode[U] = MetaEncode.empty
 
   override def biject[A, B](

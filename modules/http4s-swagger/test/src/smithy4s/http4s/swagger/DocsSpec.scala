@@ -118,4 +118,13 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
       expect(response.status == Status.NotFound)
     }
   }
+
+  pureTest("Default swagger-ui-path") {
+    val docs = mkDocs
+    expect(
+      docs.swaggerUiPath.startsWith(
+        "META-INF/resources/webjars/swagger-ui-dist/"
+      )
+    )
+  }
 }

@@ -19,7 +19,7 @@ package http
 
 package object internals {
 
-  private[http] type HttpCode[A] = (A, Hints) => Option[Int]
+  private[http] type HttpCode[A] = A => Option[Int]
 
   private[internals] implicit class vectorOps[A](val vector: Vector[A])
       extends AnyVal {

@@ -1,0 +1,3 @@
+namespace example
+
+structure ExampleStruct {}

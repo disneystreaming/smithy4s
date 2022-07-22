@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class MetadataSpec() extends FunSuite {
       .left
       .map(_.getMessage())
       .flatMap { partial =>
-        s.compile(FromMetadataSchematic).read(partial.decoded.toMap)
+        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
     expect.same(encoded, expectedEncoding)
     expect(result == Right(a))
@@ -70,7 +70,7 @@ class MetadataSpec() extends FunSuite {
       .left
       .map(_.getMessage())
       .flatMap { partial =>
-        s.compile(FromMetadataSchematic).read(partial.decoded.toMap)
+        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
     expect.same(encoded, expectedEncoding)
     expect.same(result, Left(message))
@@ -119,7 +119,7 @@ class MetadataSpec() extends FunSuite {
     "length required to be >= 1 and <= 10, but was 11"
 
   val constraintMessage2 =
-    if (Platform.isJVM) "Input must be >= 1.0 and <= 10.0, but was 11.0"
+    if (!Platform.isJS) "Input must be >= 1.0 and <= 10.0, but was 11.0"
     else "Input must be >= 1 and <= 10, but was 11"
 
   // ///////////////////////////////////////////////////////////

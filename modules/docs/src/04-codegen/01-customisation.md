@@ -7,7 +7,7 @@ Smithy4s is opinionated in what the generated code look like, there are a few th
 
 #### Packed inputs
 
-By default, smithy4s generates methods the parameters of which map to the fields of the input structure of the corresponding operation.
+By default, Smithy4s generates methods the parameters of which map to the fields of the input structure of the corresponding operation.
 
 For instance :
 
@@ -55,7 +55,7 @@ service PackedInputsService {
 
 will produce the following Scala code
 
-```scala  
+```scala
 trait PackedInputServiceGen[F[_]] {
 
   def packedInputOperation(input: PackedInput) : F[Unit]
@@ -65,7 +65,7 @@ trait PackedInputServiceGen[F[_]] {
 
 #### ADT Member Trait
 
-The default behavior of smithy4s when rendering unions that target structures is to render the structure
+The default behavior of Smithy4s when rendering unions that target structures is to render the structure
 in a separate file from the union that targets it. This makes sense if the structure is used in other
 contexts other than the union. However, it also causes an extra level of nesting within the union.
 This is because the union will create another case class to contain your structure case class.
@@ -131,6 +131,29 @@ The structure annotated with `adtMember` (e.g. `InStoreOrder`) also must not be 
 structures or unions in the model. There is a validator that will make sure these requirements are met
 whenever the `adtMember` trait is in use.
 
-Note: The `adtMember` trait has NO impact on the serialization/deserialization behaviors of smithy4s.
+Note: The `adtMember` trait has NO impact on the serialization/deserialization behaviors of Smithy4s.
 The only thing it changes is what the generated code looks like. This is accomplished by keeping the
 rendered schemas equivalent, even if the case class is rendered in a different place.
+
+#### Specialized collection types
+
+Smithy supports `list` and `set`, Smithy4s renders that to `List[A]` and `Set[A]` respectively. You can also use the `@uniqueItems` annotation on `list` which is equivalent to `set`.
+
+Smithy4s has support for two specialized collection types: `Vector` and `IndexedSeq`. The following examples show how to use them:
+
+```kotlin
+use smithy4s.meta#indexedSeq
+use smithy4s.meta#vector
+
+@indexedSeq
+list SomeIndexSeq {
+  member: String
+}
+
+@vector
+list SomeVector {
+  member: String
+}
+```
+
+Both annotations are only applicable on `list` shapes. You can't mix `@vector` with `@indexedSeq`, and neither one can be used with `@uniqueItems`.

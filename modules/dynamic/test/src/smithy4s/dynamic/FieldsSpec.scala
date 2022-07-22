@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 
 package smithy4s.dynamic
 
-import weaver._
 import smithy4s.Lazy
 import smithy4s.Service
 import smithy4s.Hints
-import smithy4s.schema.Field
-import smithy4s.schema.StubSchematic
+import smithy4s.schema.SchemaVisitor
 import Fixtures._
+import smithy4s.ShapeId
+import smithy4s.schema.SchemaField
+import smithy4s.schema.Schema
 
-object FieldsSpec extends SimpleIOSuite {
+class FieldsSpec() extends munit.FunSuite {
 
-  pureTest(
+  test(
     "Extract field names from all structures in a service's endpoints"
   ) {
     val svc = Utils.compile(pizzaModel).allServices.head.service
@@ -39,23 +40,22 @@ object FieldsSpec extends SimpleIOSuite {
   object Interpreter {
     type ToFieldNames[A] = () => List[String]
 
-    object GetFieldNames extends StubSchematic[ToFieldNames] {
+    object GetFieldNames extends SchemaVisitor.Default[ToFieldNames] {
       def default[A]: ToFieldNames[A] = () => Nil
 
-      override def withHints[A](
-          fa: ToFieldNames[A],
-          hints: Hints
-      ): ToFieldNames[A] = fa
-
       override def struct[S](
-          fields: Vector[Field[ToFieldNames, S, _]]
-      )(const: Vector[Any] => S): ToFieldNames[S] = () =>
+          shapeId: ShapeId,
+          hints: Hints,
+          fields: Vector[SchemaField[S, _]],
+          make: IndexedSeq[Any] => S
+      ): ToFieldNames[S] = { () =>
         fields.flatMap { f =>
-          f.label :: f.instance()
+          f.label :: apply(f.instance)()
         }.toList
+      }
 
-      override def suspend[A](f: Lazy[ToFieldNames[A]]): ToFieldNames[A] =
-        () => f.value()
+      override def lazily[A](suspend: Lazy[Schema[A]]): ToFieldNames[A] =
+        () => apply(suspend.value)()
 
       // these will be needed later but are irrelevant for now
       // override def union[S](

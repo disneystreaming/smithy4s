@@ -2,8 +2,9 @@ package smithy4s.example
 
 import smithy4s.schema.Schema._
 
-sealed abstract class LowHigh(_value: String, _ordinal: Int) extends smithy4s.Enumeration.Value {
-  override val value : String = _value
+sealed abstract class LowHigh(_value: String, _name: String, _ordinal: Int) extends smithy4s.Enumeration.Value {
+  override val value: String = _value
+  override val name: String = _name
   override val ordinal: Int = _ordinal
   override val hints: smithy4s.Hints = smithy4s.Hints.empty
   @inline final def widen: LowHigh = this
@@ -13,12 +14,12 @@ object LowHigh extends smithy4s.Enumeration[LowHigh] with smithy4s.ShapeTag.Comp
 
   val hints : smithy4s.Hints = smithy4s.Hints.empty
 
-  case object Low extends LowHigh("Low", 0)
-  case object High extends LowHigh("High", 1)
+  case object LOW extends LowHigh("Low", "LOW", 0)
+  case object HIGH extends LowHigh("High", "HIGH", 1)
 
   val values: List[LowHigh] = List(
-    Low,
-    High,
+    LOW,
+    HIGH,
   )
   implicit val schema: smithy4s.Schema[LowHigh] = enumeration(values).withId(id).addHints(hints)
 }

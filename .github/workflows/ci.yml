@@ -25,11 +25,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
-        java: [temurin@17]
         scalaVersion: ["2_12", "2_13", "3_0"]
         scalaPlatform: ["jvm", "js"]
-        ceVersion: ["CE2", "CE3"]
+        ceVersion: ["CE2", "default"]
         exclude:
           # Do not build CE2 artifacts for Scala 3
           - scalaVersion: "3_0"
@@ -40,7 +38,11 @@ jobs:
           # Do not build 2.12 artifacts for Scalajs
           - scalaVersion: "2_12"
             scalaPlatform: "js"
-    runs-on: ${{ matrix.os }}
+        include:
+          - scalaVersion: "3_0"
+            scalaPlatform: "native"
+            ceVersion: "default"
+    runs-on: ubuntu-latest
     env:
       BUILD_KEY: ${{matrix.ceVersion}}_${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
@@ -57,7 +59,7 @@ jobs:
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v13
         with:
-          java-version: ${{ matrix.java }}
+          java-version: temurin@17
 
       - name: Run tests
         run: |
@@ -130,7 +132,7 @@ jobs:
         run: sbt "docs/mdoc"
 
       - name: Build Microsite
-        run: cd ./modules/website && yarn && yarn build
+        run: cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger && yarn build
 
       - name: Publish Microsite
         uses: peaceiris/actions-gh-pages@v3

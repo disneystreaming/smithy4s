@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Disney Streaming
+ *  Copyright 2021-2022 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
     schema <- Gen.const(
       Schema.float.asInstanceOf[Schema[DynData]]
     ) // SchemaGenerator.genSchema(1, 1)
-    data <- schema.compile(smithy4s.scalacheck.SchematicGen)
+    data <- schema.compile(smithy4s.scalacheck.SchemaVisitorGen)
   } yield (schema -> data)
 
   implicit val schemaAndDataShow: Show[(Schema[DynData], Any)] =
@@ -55,7 +55,8 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
         schema.compile(schemaVisitorJCodec)
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
-      val schemaStr = schema.compile(smithy4s.schema.SchematicRepr)
+      val schemaStr =
+        schema.compile(smithy4s.internals.SchemaDescriptionDetailed)
       val document = encoder.encode(data)
       val jsonFromDocument = writeToString(document)
       val jsonDirect = writeToString(data)

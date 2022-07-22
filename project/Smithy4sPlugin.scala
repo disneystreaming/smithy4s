@@ -27,7 +27,7 @@ object Smithy4sPlugin extends AutoPlugin {
   val CatsEffect3Axis = CatsEffectAxis("_CE3", "ce3")
   val CatsEffect2Axis = CatsEffectAxis("_CE2", "ce2")
 
-  val Scala212 = "2.12.15"
+  val Scala212 = "2.12.16"
   val Scala213 = "2.13.8"
   val Scala3 = "3.1.1"
 
@@ -350,6 +350,7 @@ object Smithy4sPlugin extends AutoPlugin {
   }
 
   lazy val jvmDimSettings = simpleJVMLayout
+  lazy val nativeDimSettings = simpleNativeLayout
 
   lazy val simpleJSLayout = simpleLayout(JSPlatform)
   lazy val simpleJVMLayout = simpleLayout(JVMPlatform)
@@ -422,6 +423,7 @@ object Smithy4sPlugin extends AutoPlugin {
     val scala213Suffix = VirtualAxis.scalaABIVersion(Scala213).idSuffix
     val scala212Suffix = VirtualAxis.scalaABIVersion(Scala212).idSuffix
     val jsSuffix = VirtualAxis.js.idSuffix
+    val nativeSuffix = VirtualAxis.native.idSuffix
     val ce3Suffix = CatsEffect3Axis.idSuffix
     val ce2Suffix = CatsEffect2Axis.idSuffix
 
@@ -445,15 +447,21 @@ object Smithy4sPlugin extends AutoPlugin {
           val platformAxis =
             if (projectId.endsWith(jsSuffix)) {
               projectId = projectId.dropRight(jsSuffix.length)
-
               "js"
-            } else "jvm"
+            } else if (projectId.endsWith(nativeSuffix)) {
+              projectId = projectId.dropRight(nativeSuffix.length)
+              "native"
+            } else {
+              "jvm"
+            }
 
           val ceAxis =
             if (projectId.endsWith(ce2Suffix)) {
               projectId = projectId.dropRight(ce2Suffix.length)
               "CE2"
-            } else "CE3"
+            } else {
+              "default"
+            }
 
           Triplet(ceAxis, scalaAxis, platformAxis) -> lp.project
         }

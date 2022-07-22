@@ -17,6 +17,8 @@
 package smithy4s
 package schema
 
+import smithy4s.capability.EncoderK
+
 /**
   * Represents a member of coproduct type (sealed trait)
   */
@@ -39,6 +41,59 @@ object Alt {
       WithValue(alt.mapK(fk), value)
   }
 
+  /**
+    * Precompiles an Alt to produce an instance of `G`
+    */
+  trait Precompiler[F[_], G[_]] { self =>
+    def apply[A](label: String, instance: F[A]): G[A]
+    def toPolyFunction[U]: PolyFunction[Alt[F, U, *], G] =
+      new PolyFunction[Alt[F, U, *], G] {
+        def apply[A](fa: Alt[F, U, A]): G[A] = self.apply(fa.label, fa.instance)
+      }
+  }
+
+  /**
+    * Construct that does the heavily lifting for encoding union values, by
+    * memoising the compilation of the alternatives, dispatching the union
+    * instance to the correct pre-compiled encoder, and lift the resulting
+    * function into an encoder that works on the union.
+    */
+  trait Dispatcher[F[_], U] {
+    def underlying: U => Alt.WithValue[F, U, _]
+
+    def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
+        encoderK: EncoderK[G, Result]
+    ): G[U]
+  }
+
+  object Dispatcher {
+
+    private[smithy4s] def apply[F[_], U](
+        alts: Vector[Alt[F, U, _]],
+        dispatchF: U => Alt.WithValue[F, U, _]
+    ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
+
+    private[smithy4s] class Impl[F[_], U](
+        alts: Vector[Alt[F, U, _]],
+        val underlying: U => Alt.WithValue[F, U, _]
+    ) extends Dispatcher[F, U] {
+      def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
+          encoderK: EncoderK[G, Result]
+      ): G[U] = {
+        val precompiledAlts =
+          precompile.toPolyFunction
+            .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
+
+        encoderK.absorb[U] { u =>
+          underlying(u) match {
+            case awv: Alt.WithValue[F, U, a] =>
+              encoderK(precompiledAlts(awv.alt), awv.value)
+          }
+        }
+      }
+    }
+  }
+
   def liftK[F[_], G[_], U](
       fk: PolyFunction[F, G]
   ): PolyFunction[Alt[F, U, *], Alt[G, U, *]] =
@@ -53,6 +108,9 @@ object Alt {
 
     def addHints(newHints: Hint*) =
       Alt(alt.label, alt.instance.addHints(newHints: _*), alt.inject)
+
+    def addHints(newHints: Hints) =
+      Alt(alt.label, alt.instance.addHints(newHints), alt.inject)
 
     def validated[C](implicit
         constraint: Validator.Simple[C, A]

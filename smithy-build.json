@@ -1,6 +1,6 @@
 {
-  "imports": ["./sampleSpecs", "./modules/protocol"],
+  "imports": ["./sampleSpecs", "./modules/protocol/resources"],
   "mavenDependencies": [
-    "software.amazon.smithy:smithy-protocol-test-traits:1.21.0"
+    "software.amazon.smithy:smithy-protocol-test-traits:1.22.0"
   ]
 }
