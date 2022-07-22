@@ -9,5 +9,5 @@ object StreamedBlob extends Newtype[Byte] {
     smithy.api.Streaming(),
   )
   val underlyingSchema : smithy4s.Schema[Byte] = byte.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[StreamedBlob] = bijection(underlyingSchema, StreamedBlob.make, (_ : StreamedBlob).value)
+  implicit val schema : smithy4s.Schema[StreamedBlob] = bijection(underlyingSchema, asBijection)
 }

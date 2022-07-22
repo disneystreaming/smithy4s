@@ -10,5 +10,5 @@ object ObjectKey extends Newtype[UUID] {
     smithy4s.api.UuidFormat(),
   )
   val underlyingSchema : smithy4s.Schema[UUID] = uuid.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[ObjectKey] = bijection(underlyingSchema, ObjectKey.make, (_ : ObjectKey).value)
+  implicit val schema : smithy4s.Schema[ObjectKey] = bijection(underlyingSchema, asBijection)
 }

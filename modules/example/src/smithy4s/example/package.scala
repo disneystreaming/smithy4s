@@ -30,8 +30,10 @@ package object example {
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type SomeValue = smithy4s.example.SomeValue.Type
+  type PersonAge = smithy4s.example.PersonAge.Type
   type TestString = smithy4s.example.TestString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
+  type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
