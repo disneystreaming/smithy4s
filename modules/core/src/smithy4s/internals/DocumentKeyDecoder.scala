@@ -26,37 +26,37 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
 
-trait KeyDecoder[A] { self =>
-  def apply(v: Document): Either[KeyDecoder.DecodeError, A] =
+trait DocumentKeyDecoder[A] { self =>
+  def apply(v: Document): Either[DocumentKeyDecoder.DecodeError, A] =
     try { Right(unsafeDecode(v)) }
-    catch { case ex: KeyDecoder.DecodeError => Left(ex) }
+    catch { case ex: DocumentKeyDecoder.DecodeError => Left(ex) }
 
   def unsafeDecode(v: Document): A
 
-  def map[B](f: A => B): KeyDecoder[B] = new KeyDecoder[B] {
+  def map[B](f: A => B): DocumentKeyDecoder[B] = new DocumentKeyDecoder[B] {
     def unsafeDecode(v: Document): B = f(self.unsafeDecode(v))
   }
 }
 
-object KeyDecoder {
+object DocumentKeyDecoder {
   case class DecodeError(expectedType: String)
       extends RuntimeException("Cannot decode a key.", null)
 
-  type OptKeyDecoder[A] = Option[KeyDecoder[A]]
-  val trySchemaVisitor: SchemaVisitor[OptKeyDecoder] =
-    new SchemaVisitor.Default[OptKeyDecoder] {
-      def default[A]: OptKeyDecoder[A] = None
+  type OptDocumentKeyDecoder[A] = Option[DocumentKeyDecoder[A]]
+  val trySchemaVisitor: SchemaVisitor[OptDocumentKeyDecoder] =
+    new SchemaVisitor.Default[OptDocumentKeyDecoder] {
+      def default[A]: OptDocumentKeyDecoder[A] = None
 
       def from[A](
           expectedType: String
-      )(f: PartialFunction[Document, A]): OptKeyDecoder[A] =
+      )(f: PartialFunction[Document, A]): OptDocumentKeyDecoder[A] =
         Some { doc =>
           if (f.isDefinedAt(doc)) f(doc)
           else throw DecodeError(expectedType)
         }
       def fromUnsafe[A](
           expectedType: String
-      )(f: PartialFunction[Document, A]): OptKeyDecoder[A] =
+      )(f: PartialFunction[Document, A]): OptDocumentKeyDecoder[A] =
         Some { doc =>
           if (f.isDefinedAt(doc)) {
             f(doc)
@@ -69,7 +69,7 @@ object KeyDecoder {
           shapeId: ShapeId,
           hints: Hints,
           tag: Primitive[P]
-      ): OptKeyDecoder[P] = {
+      ): OptDocumentKeyDecoder[P] = {
         val shortDesc = tag.schema(shapeId).compile(SchemaDescription)
         tag match {
           case PShort =>
@@ -132,7 +132,7 @@ object KeyDecoder {
           hints: Hints,
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
-      ): OptKeyDecoder[E] = {
+      ): OptDocumentKeyDecoder[E] = {
         val fromName = values.map(e => e.stringValue -> e.value).toMap
         from(s"value in [${fromName.keySet.mkString(", ")}]") {
           case DString(value) if fromName.contains(value) => fromName(value)
@@ -143,14 +143,14 @@ object KeyDecoder {
           schema: Schema[A],
           to: A => B,
           from: B => A
-      ): OptKeyDecoder[B] =
+      ): OptDocumentKeyDecoder[B] =
         apply(schema).map(_.map(to))
 
       override def surject[A, B](
           schema: Schema[A],
           to: Refinement[A, B],
           from: B => A
-      ): OptKeyDecoder[B] =
+      ): OptDocumentKeyDecoder[B] =
         apply(schema).map(_.map(to.asThrowingFunction))
     }
 

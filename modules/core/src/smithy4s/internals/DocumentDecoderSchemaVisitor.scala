@@ -219,7 +219,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       key: Schema[K],
       value: Schema[V]
   ): DocumentDecoder[Map[K, V]] = {
-    val maybeKeyDecoder = KeyDecoder.trySchemaVisitor(key)
+    val maybeKeyDecoder = DocumentKeyDecoder.trySchemaVisitor(key)
     val valueDecoder = apply(value)
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
@@ -227,7 +227,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
           val builder = Map.newBuilder[K, V]
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
-              { case KeyDecoder.DecodeError(expectedType) =>
+              { case DocumentKeyDecoder.DecodeError(expectedType) =>
                 val path = PayloadPath.Segment.fromString(key) :: pp
                 throw PayloadError(
                   PayloadPath(path.reverse),

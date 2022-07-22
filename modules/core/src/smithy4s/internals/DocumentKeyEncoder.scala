@@ -26,29 +26,34 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
 
-trait KeyEncoder[A] {
+trait DocumentKeyEncoder[A] {
   def apply(a: A): String
 }
 
-object KeyEncoder {
-  type OptKeyEncoder[A] = Option[KeyEncoder[A]]
-  val trySchemaVisitor: SchemaVisitor[OptKeyEncoder] =
-    new SchemaVisitor.Default[OptKeyEncoder] {
-      private def instance[A](f: A => String): OptKeyEncoder[A] = Some { a =>
-        a.toString()
+object DocumentKeyEncoder {
+  type OptDocumentKeyEncoder[A] = Option[DocumentKeyEncoder[A]]
+  val trySchemaVisitor: SchemaVisitor[OptDocumentKeyEncoder] =
+    new SchemaVisitor.Default[OptDocumentKeyEncoder] {
+      private def instance[A](f: A => String): OptDocumentKeyEncoder[A] = Some {
+        a =>
+          a.toString()
       }
-      private def forBigDecimal[A](f: A => BigDecimal): OptKeyEncoder[A] =
+      private def forBigDecimal[A](
+          f: A => BigDecimal
+      ): OptDocumentKeyEncoder[A] =
         Some { a =>
           a.toString()
         }
-      private def asString[A]: OptKeyEncoder[A] = instance { _.toString() }
-      def default[A]: OptKeyEncoder[A] = None
+      private def asString[A]: OptDocumentKeyEncoder[A] = instance {
+        _.toString()
+      }
+      def default[A]: OptDocumentKeyEncoder[A] = None
 
       override def primitive[P](
           shapeId: ShapeId,
           hints: Hints,
           tag: Primitive[P]
-      ): OptKeyEncoder[P] = {
+      ): OptDocumentKeyEncoder[P] = {
         tag match {
           case PBoolean    => asString
           case PBigDecimal => asString
@@ -83,6 +88,6 @@ object KeyEncoder {
           hints: Hints,
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
-      ): OptKeyEncoder[E] = Some { a => total(a).stringValue }
+      ): OptDocumentKeyEncoder[E] = Some { a => total(a).stringValue }
     }
 }

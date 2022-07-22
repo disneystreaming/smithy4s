@@ -126,7 +126,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       key: Schema[K],
       value: Schema[V]
   ): DocumentEncoder[Map[K, V]] = {
-    val maybeKeyEncoder = KeyEncoder.trySchemaVisitor(key)
+    val maybeKeyEncoder = DocumentKeyEncoder.trySchemaVisitor(key)
     val valueEncoder = apply(value)
     from[Map[K, V]] { map =>
       maybeKeyEncoder match {
