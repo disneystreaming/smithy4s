@@ -177,16 +177,13 @@ abstract class WeaverTests[
       Deferred[IO, Request[IO]]
         .flatMap { requestDeferred =>
           val theClient: IO[smithy4s.Monadic[Alg, IO]] = client(
-            {
-
-              HttpApp[IO] { req =>
-                // Save consumed stream for later reuse
-                req.body.compile.toVector
-                  .map(fs2.Stream.emits(_))
-                  .map(req.withBodyStream(_))
-                  .flatMap(requestDeferred.complete(_))
-                  .as(Response[IO]())
-              }
+            HttpApp[IO] { req =>
+              // Save consumed stream for later reuse
+              req.body.compile.toVector
+                .map(fs2.Stream.emits(_))
+                .map(req.withBodyStream(_))
+                .flatMap(requestDeferred.complete(_))
+                .as(Response[IO]())
             },
             baseUri
           ).liftTo[IO]
