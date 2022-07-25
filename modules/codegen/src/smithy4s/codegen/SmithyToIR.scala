@@ -22,6 +22,7 @@ import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.VectorTrait
+import smithy4s.meta.RefinedTrait
 import smithy4s.recursion._
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -57,12 +58,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   val finder = PathFinder.create(model)
 
+  val allCanonicalShapeIds = model
+    .getShapesWithTrait(classOf[RefinedTrait])
+    .asScala
+    .flatMap(_.getTrait(classOf[RefinedTrait]).asScala)
+    .flatMap(_.getCanonicalShapeId.asScala)
+    .toSet
+
   val allShapes =
     model
       .shapes()
       .iterator()
       .asScala
       .toList
+      .filterNot(s => allCanonicalShapeIds(s.toShapeId))
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)

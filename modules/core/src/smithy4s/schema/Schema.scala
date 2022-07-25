@@ -162,6 +162,9 @@ object Schema {
   def bijection[A, B](a: Schema[A], to: A => B, from: B => A) : Schema[B] =
     Schema.BijectionSchema(a, Bijection(to, from))
 
+  def refinement[A, B](a: Schema[A], refinement: Refinement[A, B]) : Schema[B] =
+    Schema.RefinementSchema(a, refinement)
+
   def constant[A](a : A) : Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 
   def struct[S] : PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
