@@ -74,7 +74,7 @@ Tagged.SecondCase(IntWrapper(42)))
 are encoded as such :
 
 ```json
-{ "one": "smithy4s" }
+{ "first": "smithy4s" }
 { "second": { "int": 42 } }
 ```
 
