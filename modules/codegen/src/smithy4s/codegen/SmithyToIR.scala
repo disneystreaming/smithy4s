@@ -72,10 +72,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   def toIRVisitor(
       renderAdtMemberStructures: Boolean
-  ): ShapeVisitor[List[Decl]] =
-    new ShapeVisitor.Default[List[Decl]] {
+  ): ShapeVisitor[Option[Decl]] =
+    new ShapeVisitor.Default[Option[Decl]] {
 
-      def getDefault(shape: Shape): List[Decl] = {
+      def getDefault(shape: Shape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
 
         if (shape.isMemberShape()) None
@@ -92,9 +92,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             case Type.PrimitiveType(_) => None
             case other => TypeAlias(shape.name, shape.name, other, hints).some
           }
-      }.toList
+      }
 
-      override def structureShape(shape: StructureShape): List[Decl] = {
+      override def structureShape(shape: StructureShape): Option[Decl] = {
         val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
@@ -102,32 +102,33 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
           if (renderAdtMemberStructures) p else None
         } else p
-      }.toList
+      }
 
-      override def unionShape(shape: UnionShape): List[Decl] = {
+      override def unionShape(shape: UnionShape): Option[Decl] = {
         val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         NonEmptyList.fromList(shape.alts).map { case alts =>
           Union(shape.name, shape.name, alts, rec, hints)
         }
-      }.toList
+      }
 
-      override def stringShape(shape: StringShape): List[Decl] = (shape match {
-        case T.enumeration(e) =>
-          val values = e
-            .getValues()
-            .asScala
-            .zipWithIndex
-            .map { case (value, index) =>
-              EnumValue(value.getValue(), index, value.getName().asScala)
-            }
-            .toList
-          List(Enumeration(shape.name, shape.name, values))
-        case _ => this.getDefault(shape)
-      })
+      override def stringShape(shape: StringShape): Option[Decl] =
+        (shape match {
+          case T.enumeration(e) =>
+            val values = e
+              .getValues()
+              .asScala
+              .zipWithIndex
+              .map { case (value, index) =>
+                EnumValue(value.getValue(), index, value.getName().asScala)
+              }
+              .toList
+            Enumeration(shape.name, shape.name, values).some
+          case _ => this.getDefault(shape)
+        })
 
-      override def serviceShape(shape: ServiceShape): List[Decl] = {
+      override def serviceShape(shape: ServiceShape): Option[Decl] = {
         val generalErrors: List[Type] =
           shape
             .getErrors()
@@ -200,7 +201,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           serviceHints,
           shape.getVersion()
         ).some
-      }.toList
+      }
     }
 
   private def isRecursive(id: ShapeId): Boolean = {
@@ -526,7 +527,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
               .map(Left(_))
-              .headOption // TODO: Will this ever be a problem??
             (member.getMemberName(), s, hints(member))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)), hints(member))
