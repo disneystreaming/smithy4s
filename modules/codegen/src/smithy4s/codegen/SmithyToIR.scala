@@ -84,6 +84,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             case Type.Alias(_, name, tpe) =>
               TypeAlias(name, name, tpe, hints).some
             case Type.PrimitiveType(_) => None
+            case e: Type.ExternalType =>
+              val newHints = hints.filterNot(_ == e.refinedHint)
+              TypeAlias(shape.name, shape.name, e, newHints).some
             case other => TypeAlias(shape.name, shape.name, other, hints).some
           }
       }.toList
@@ -467,7 +470,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   private def traitsToHints(traits: List[Trait]): List[Hint] = {
     val nonMetaTraits =
       traits.filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
-    traits.collect(traitToHint) ++ nonMetaTraits.map(unfoldTrait)
+    val nonConstraintNonMetaTraits = nonMetaTraits.collect {
+      case t if ConstraintTrait.unapply(t).isEmpty => t
+    }
+    traits.collect(traitToHint) ++ nonConstraintNonMetaTraits.map(unfoldTrait)
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
