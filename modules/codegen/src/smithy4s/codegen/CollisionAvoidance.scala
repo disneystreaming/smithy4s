@@ -23,6 +23,7 @@ import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.Type.ExternalType
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -88,6 +89,14 @@ object CollisionAvoidance {
           newValues,
           hints.map(modHint)
         )
+      case External(name, fqn, providerFqn, underlyingType, hints) =>
+        External(
+          protect(name),
+          fqn,
+          providerFqn,
+          modType(underlyingType),
+          hints.map(modHint)
+        )
     }
     CompilationUnit(compilationUnit.namespace, declarations)
   }
@@ -100,6 +109,8 @@ object CollisionAvoidance {
     case Alias(namespace, name, tpe) =>
       Alias(namespace, protect(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
+    case ExternalType(name, fqn, pFqn, under) =>
+      ExternalType(protect(name), fqn, pFqn, modType(under))
   }
 
   private def modField(field: Field): Field = {

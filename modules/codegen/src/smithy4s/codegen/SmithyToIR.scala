@@ -58,34 +58,24 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   val finder = PathFinder.create(model)
 
-  val allCanonicalShapeIds = model
-    .getShapesWithTrait(classOf[RefinedTrait])
-    .asScala
-    .flatMap(_.getTrait(classOf[RefinedTrait]).asScala)
-    .flatMap(_.getCanonicalShapeId.asScala)
-    .toSet
-
   val allShapes =
     model
       .shapes()
       .iterator()
       .asScala
       .toList
-      .filterNot(s => allCanonicalShapeIds(s.toShapeId))
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
-    .map(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
-    .collect { case Some(decl) =>
-      decl
-    }
+    .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
     .toList
 
   def toIRVisitor(
       renderAdtMemberStructures: Boolean
-  ): ShapeVisitor[Option[Decl]] =
-    new ShapeVisitor.Default[Option[Decl]] {
-      def getDefault(shape: Shape): Option[Decl] = {
+  ): ShapeVisitor[List[Decl]] =
+    new ShapeVisitor.Default[List[Decl]] {
+
+      def getDefault(shape: Shape): List[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
 
         if (shape.isMemberShape()) None
@@ -94,11 +84,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             case Type.Alias(_, name, tpe) =>
               TypeAlias(name, name, tpe, hints).some
             case Type.PrimitiveType(_) => None
+            case Type.ExternalType(name, fqn, providerFqn, underlying) =>
+              External(name, fqn, providerFqn, underlying, hints).some
             case other => TypeAlias(shape.name, shape.name, other, hints).some
           }
-      }
+      }.toList
 
-      override def structureShape(shape: StructureShape): Option[Decl] = {
+      override def structureShape(shape: StructureShape): List[Decl] = {
         val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
@@ -106,18 +98,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
           if (renderAdtMemberStructures) p else None
         } else p
-      }
+      }.toList
 
-      override def unionShape(shape: UnionShape): Option[Decl] = {
+      override def unionShape(shape: UnionShape): List[Decl] = {
         val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         NonEmptyList.fromList(shape.alts).map { case alts =>
           Union(shape.name, shape.name, alts, rec, hints)
         }
-      }
+      }.toList
 
-      override def stringShape(shape: StringShape): Option[Decl] = shape match {
+      override def stringShape(shape: StringShape): List[Decl] = (shape match {
         case T.enumeration(e) =>
           val values = e
             .getValues()
@@ -127,11 +119,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               EnumValue(value.getValue(), index, value.getName().asScala)
             }
             .toList
-          Enumeration(shape.name, shape.name, values).some
+          List(Enumeration(shape.name, shape.name, values))
         case _ => super.stringShape(shape)
-      }
+      })
 
-      override def serviceShape(shape: ServiceShape): Option[Decl] = {
+      override def serviceShape(shape: ServiceShape): List[Decl] = {
         val generalErrors: List[Type] =
           shape
             .getErrors()
@@ -204,7 +196,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           serviceHints,
           shape.getVersion()
         ).some
-      }
+      }.toList
     }
 
   private def isRecursive(id: ShapeId): Boolean = {
@@ -262,23 +254,59 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shapeId.getName()
         )
 
+      private def getExternalTypeInfo(
+          shape: Shape
+      ): Option[RefinedTrait] = {
+        shape
+          .getAllTraits()
+          .asScala
+          .flatMap { case (_, trt) =>
+            model
+              .getShape(trt.toShapeId)
+              .asScala
+              .flatMap(_.getTrait(classOf[RefinedTrait]).asScala.flatMap {
+                refTrait =>
+                  if (
+                    refTrait.getCanonicalShapeId.asScala.contains(shape.getId)
+                  ) // Only return if is canonical shape
+                    Some(refTrait)
+                  else None
+              })
+          }
+          .headOption // TODO: Currently shapes could have multiple traits that have the refined trait. A validator should be added to prevent this
+      }
+
       def primitive(
           shape: Shape,
           primitiveId: String,
           primitive: Primitive
       ): Option[Type] = {
-        if (
-          shape.getId() != ShapeId
-            .from(primitiveId) && !isUnboxedPrimitive(shape.getId())
-        ) {
-          Type
-            .Alias(
-              shape.getId().getNamespace(),
-              shape.getId().getName(),
-              Type.PrimitiveType(primitive)
+        val res =
+          if (
+            shape.getId() != ShapeId
+              .from(primitiveId) && !isUnboxedPrimitive(shape.getId())
+          ) {
+            Type
+              .Alias(
+                shape.getId().getNamespace(),
+                shape.getId().getName(),
+                Type.PrimitiveType(primitive)
+              )
+              .some
+          } else Type.PrimitiveType(primitive).some
+
+        getExternalTypeInfo(shape) match {
+          case None => res
+          case Some(refined) =>
+            Some(
+              Type.ExternalType(
+                shape.name,
+                refined.getTargetClasspath(),
+                refined.getProviderClasspath(),
+                Type.PrimitiveType(primitive)
+              )
             )
-            .some
-        } else Type.PrimitiveType(primitive).some
+        }
       }
 
       def blobShape(x: BlobShape): Option[Type] =
@@ -487,6 +515,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
               .map(Left(_))
+              .headOption // TODO: Will this ever be a problem??
             (member.getMemberName(), s, hints(member))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)), hints(member))

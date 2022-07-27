@@ -83,6 +83,13 @@ sealed trait Schema[A]{
   final def validated[C](implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
     validatedAgainstHints(this.hints)
   }
+
+  final def refined[C, B](implicit constraint: RefinementProvider[C, A, B]): Schema[B] =
+    hints.get(constraint.tag) match {
+      case Some(hint) =>
+        RefinementSchema(this, constraint.make(hint))
+      case None => ??? // TODO:
+    }
 }
 
 object Schema {
@@ -161,9 +168,6 @@ object Schema {
 
   def bijection[A, B](a: Schema[A], to: A => B, from: B => A) : Schema[B] =
     Schema.BijectionSchema(a, Bijection(to, from))
-
-  def refinement[A, B](a: Schema[A], refinement: Refinement[A, B]) : Schema[B] =
-    Schema.RefinementSchema(a, refinement)
 
   def constant[A](a : A) : Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 

@@ -78,6 +78,14 @@ case class TypeAlias(
     hints: List[Hint] = Nil
 ) extends Decl
 
+case class External(
+    name: String,
+    fqn: String,
+    providerFqn: String,
+    underlyingType: Type,
+    hints: List[Hint] = Nil
+) extends Decl
+
 case class Enumeration(
     name: String,
     originalName: String,
@@ -189,6 +197,12 @@ object Type {
   }
   case class Alias(namespace: String, name: String, tpe: Type) extends Type
   case class PrimitiveType(prim: Primitive) extends Type
+  case class ExternalType(
+      name: String,
+      fullyQualifiedName: String,
+      providerFullyQualifiedName: String,
+      underlyingTpe: Type
+  ) extends Type
 }
 
 sealed abstract class CollectionType(val tpe: String)

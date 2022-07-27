@@ -94,6 +94,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderTypeAlias(name, originalName, tpe, hints)
     case Enumeration(name, originalName, values, hints) =>
       renderEnum(name, originalName, values, hints)
+    case External(name, fqn, providerFqn, underlyingType, hints) =>
+      renderExternal(name, fqn, providerFqn, underlyingType, hints)
     case _ => Lines.empty
   }
 
@@ -621,6 +623,25 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     ).addImports(imports)
   }
 
+  private def renderExternal(
+      name: String,
+      fqn: String,
+      providerFqn: String,
+      underlyingType: Type,
+      hints: List[Hint]
+  ): Lines = {
+    val imports = syntaxImport
+
+    lines(
+      obj(s"`$$$name`")(
+        renderHintsVal(hints),
+        lines(
+          line"implicit val schema : $Schema_[$fqn] = ${underlyingType.schemaRef}.refined($providerFqn)"
+        )
+      )
+    ).addImports(imports)
+  }
+
   private implicit class OperationExt(op: Operation) {
     def renderArgs =
       if (op.input == Type.unit) Line.empty
@@ -666,6 +687,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(ns, name, _) =>
         line"$name.underlyingSchema".addImport(ns + "." + name)
       case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
+      case Type.ExternalType(name, _, _, _) => line"`$$$name`.schema"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
