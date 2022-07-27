@@ -6,3 +6,4 @@ smithy4s.meta.PackedInputsTrait$Provider
 smithy4s.meta.AdtMemberTrait$Provider
 smithy4s.meta.VectorTrait$Provider
 smithy4s.meta.IndexedSeqTrait$Provider
+smithy4s.meta.ErrorMessageTrait$Provider
