@@ -339,16 +339,13 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     implicit val schema: Schema[Bar] = {
       val str = string
         .optional[Bar]("str", _.str)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, String]
+        .validated[smithy.api.Length, String](lengthHint)
       val lst = list[Int](int)
         .optional[Bar]("lst", _.lst)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, List[Int]]
+        .validated[smithy.api.Length, List[Int]](lengthHint)
       val intS = int
         .optional[Bar]("int", _.int)
-        .addHints(rangeHint)
-        .validated[smithy.api.Range, Int]
+        .validated[smithy.api.Range, Int](rangeHint)
       struct(str, lst, intS)(Bar.apply)
     }
   }
@@ -394,8 +391,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     implicit val schema: Schema[Foo2] = {
       val str = string
         .required[Bar2]("str", _.str)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, String]
+        .validated[smithy.api.Length, String](lengthHint)
       val bar = struct(str)(Bar2.apply).required[Foo2]("bar", _.bar)
       struct(bar)(Foo2.apply)
     }
@@ -420,8 +416,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     implicit val schema: Schema[Foo3] = {
       val str = string
         .required[Bar2]("str", _.str)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, String]
+        .validated[smithy.api.Length, String](lengthHint)
       val bar = list(struct(str)(Bar2.apply)).required[Foo3]("bar", _.bar)
       struct(bar)(Foo3.apply)
     }
