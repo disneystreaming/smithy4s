@@ -139,4 +139,43 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
     expect.same(result, expected)
   }
 
+  test(
+    "validation events are returned when using refinement trait on disallowed shape"
+  ) {
+    val modelString = """|namespace test
+                         |
+                         |use smithy4s.meta#refined
+                         |
+                         |@trait()
+                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |structure trtOne {}
+                         |
+                         |@trtOne
+                         |structure TestIt {}
+                         |""".stripMargin
+
+    val model = Model
+      .assembler()
+      .disableValidation()
+      .discoverModels()
+      .addUnparsedModel("test.smithy", modelString)
+      .assemble()
+      .unwrap()
+
+    val result = validator.validate(model).asScala.toList
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .sourceLocation(new SourceLocation("test.smithy", 10, 1))
+        .id("RefinedTrait")
+        .shapeId(ShapeId.fromParts("test", "TestIt"))
+        .severity(Severity.ERROR)
+        .message(
+          "refinements can only be used on simpleShapes, list, set, and map"
+        )
+        .build()
+    )
+    expect.same(result, expected)
+  }
+
 }
