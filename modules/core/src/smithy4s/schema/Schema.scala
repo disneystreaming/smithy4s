@@ -80,16 +80,15 @@ sealed trait Schema[A]{
     }
   }
 
-  final def validated[C](implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
-    validatedAgainstHints(this.hints)
+  final def validated[C](c: C)(implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
+    val hint = Hints.Binding.fromValue(c)(constraint.tag)
+    RefinementSchema(this.addHints(hint), constraint.make(c))
   }
 
-  final def refined[C, B](implicit constraint: RefinementProvider[C, A, B]): Schema[B] =
-    hints.get(constraint.tag) match {
-      case Some(hint) =>
-        RefinementSchema(this, constraint.make(hint))
-      case None => ??? // TODO:
-    }
+  final def refined[C, B](c: C)(implicit constraint: RefinementProvider[C, A, B]): Schema[B] = {
+    val hint = Hints.Binding.fromValue(c)(constraint.tag)
+    RefinementSchema(this.addHints(hint), constraint.make(c))
+  }
 }
 
 object Schema {

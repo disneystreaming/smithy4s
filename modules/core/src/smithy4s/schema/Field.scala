@@ -165,10 +165,10 @@ object Field {
       }
     }
 
-    def validated[C, A2](implicit
+    def validated[C, A2](c: C)(implicit
         FieldValidator: Field.FieldValidator[C, A, A2],
         constraint: RefinementProvider.Simple[C, A2]
-    ): SchemaField[S, A] = FieldValidator(field, constraint)
+    ): SchemaField[S, A] = FieldValidator(c, field, constraint)
   }
 
   /**
@@ -177,6 +177,7 @@ object Field {
    */
   trait FieldValidator[C, A, T] {
     def apply[S](
+        c: C,
         field: SchemaField[S, A],
         constraint: RefinementProvider.Simple[C, T]
     ): SchemaField[S, A]
@@ -186,13 +187,14 @@ object Field {
     implicit def requiredCase[C, A]: FieldValidator[C, A, A] =
       new FieldValidator[C, A, A] {
         def apply[S](
+            c: C,
             field: SchemaField[S, A],
             constraint: RefinementProvider.Simple[C, A]
         ): SchemaField[S, A] = field match {
           case Required(label, instance, get) =>
             Required(
               label,
-              instance.validatedAgainstHints(instance.hints)(constraint),
+              instance.validated(c)(constraint),
               get
             )
           case other => other
@@ -202,15 +204,14 @@ object Field {
     implicit def optionalCase[C, A]: FieldValidator[C, Option[A], A] =
       new FieldValidator[C, Option[A], A] {
         def apply[S](
+            c: C,
             field: SchemaField[S, Option[A]],
             constraint: RefinementProvider.Simple[C, A]
         ): SchemaField[S, Option[A]] = field match {
           case opt: Optional[Schema, S, A] =>
             Optional(
               opt.label,
-              opt.instance.validatedAgainstHints(opt.instance.hints)(
-                constraint
-              ),
+              opt.instance.validated(c)(constraint),
               opt.get
             )
           case other => other

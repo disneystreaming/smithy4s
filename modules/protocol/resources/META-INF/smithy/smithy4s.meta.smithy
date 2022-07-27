@@ -48,12 +48,10 @@ structure vector {}
 /// the model. `targetClasspath` should point to the type that you want
 /// to use in the place of the standard smithy4s type. `providerClasspath`
 /// should point to an instance of the RefinementProvider for the type specified by `targetClasspath`.
-/// Finally, `canconicalShape` can optionally point to a shape which you wish to have
-/// rendered without a newtype wrapping it.
 /// For example:
 /// namespace test
 /// @trait(selector: "string")
-/// sturcture emailFormat {}
+/// structure emailFormat {}
 ///
 /// @emailFormat()
 /// string Email
@@ -61,23 +59,18 @@ structure vector {}
 /// namespace test.meta
 /// apply test#emailFormat @refined(
 ///   targetClasspath: "myapp.types.Email",
-///   providerClasspath: "myapp.types.Email.provider",
-///   canonicalShape: test#Email
+///   providerClasspath: "myapp.types.Email.provider"
 /// )
 ///
 /// Here we are applying the refined trait to the `test#emailFormat` trait.
 /// We tell it which type it should be represented by in scala code
-/// and where to find the provider. We also tell it that when it
-/// encounters the `test#Email` shape, it should render that directly as
-/// "myapp.types.Email" without any newtype wrapping it.
+/// and where to find the provider.
 @trait(selector: "* [trait|trait]")
 structure refined {
     @required
     targetClasspath: Classpath,
     @required
-    providerClasspath: Classpath,
-    @idRef(failWhenMissing: true)
-    canonicalShape: String
+    providerClasspath: Classpath
 }
 
 @pattern("^(?:[a-zA-Z][\\w]*\\.?)*$")

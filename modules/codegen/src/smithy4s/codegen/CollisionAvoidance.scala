@@ -89,14 +89,6 @@ object CollisionAvoidance {
           newValues,
           hints.map(modHint)
         )
-      case External(name, fqn, providerFqn, underlyingType, hints) =>
-        External(
-          protect(name),
-          fqn,
-          providerFqn,
-          modType(underlyingType),
-          hints.map(modHint)
-        )
     }
     CompilationUnit(compilationUnit.namespace, declarations)
   }
@@ -109,8 +101,14 @@ object CollisionAvoidance {
     case Alias(namespace, name, tpe) =>
       Alias(namespace, protect(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
-    case ExternalType(name, fqn, pFqn, under) =>
-      ExternalType(protect(name), fqn, pFqn, modType(under))
+    case ExternalType(name, fqn, pFqn, under, refinedHint) =>
+      ExternalType(
+        protect(name),
+        fqn,
+        pFqn,
+        modType(under),
+        modNativeHint(refinedHint)
+      )
   }
 
   private def modField(field: Field): Field = {
@@ -145,10 +143,13 @@ object CollisionAvoidance {
   private def modRef(ref: Type.Ref): Type.Ref =
     Type.Ref(ref.namespace, ref.name.capitalize)
 
+  private def modNativeHint(hint: Hint.Native): Hint.Native =
+    Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+
   private def modHint(hint: Hint): Hint = hint match {
-    case Native(nt) => Native(smithy4s.recursion.preprocess(modTypedNode)(nt))
-    case Constraint(tr) => Constraint(modRef(tr))
-    case other          => other
+    case n: Native           => modNativeHint(n)
+    case Constraint(tr, nat) => Constraint(modRef(tr), modNativeHint(nat))
+    case other               => other
   }
 
   private def modProduct(p: Product): Product = {

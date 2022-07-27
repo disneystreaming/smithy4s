@@ -47,8 +47,8 @@ object ToLine {
       case Type.Ref(namespace, name) =>
         val imports = Set(s"$namespace.$name")
         Line(imports, name)
-      case Type.PrimitiveType(prim)        => primitiveLine(prim)
-      case Type.ExternalType(_, fqn, _, _) => line"$fqn"
+      case Type.PrimitiveType(prim)           => primitiveLine(prim)
+      case Type.ExternalType(_, fqn, _, _, _) => line"$fqn"
     }
   }
   private def primitiveLine(p: Primitive): Line =

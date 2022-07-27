@@ -94,8 +94,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderTypeAlias(name, originalName, tpe, hints)
     case Enumeration(name, originalName, values, hints) =>
       renderEnum(name, originalName, values, hints)
-    case External(name, fqn, providerFqn, underlyingType, hints) =>
-      renderExternal(name, fqn, providerFqn, underlyingType, hints)
     case _ => Lines.empty
   }
 
@@ -623,25 +621,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     ).addImports(imports)
   }
 
-  private def renderExternal(
-      name: String,
-      fqn: String,
-      providerFqn: String,
-      underlyingType: Type,
-      hints: List[Hint]
-  ): Lines = {
-    val imports = syntaxImport
-
-    lines(
-      obj(s"`$$$name`")(
-        renderHintsVal(hints),
-        lines(
-          line"implicit val schema : $Schema_[$fqn] = ${underlyingType.schemaRef}.refined($providerFqn)"
-        )
-      )
-    ).addImports(imports)
-  }
-
   private implicit class OperationExt(op: Operation) {
     def renderArgs =
       if (op.input == Type.unit) Line.empty
@@ -687,7 +666,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(ns, name, _) =>
         line"$name.underlyingSchema".addImport(ns + "." + name)
       case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
-      case Type.ExternalType(name, _, _, _) => line"`$$$name`.schema"
+      case Type.ExternalType(_, _, providerFqn, underlyingTpe, hint) =>
+        line"${underlyingTpe.schemaRef}.refined(${renderNativeHint(hint)})($providerFqn)"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
@@ -747,15 +727,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
   }
 
-  private def renderHint(hint: Hint): Option[Line] = hint match {
-    case Hint.Native(typedNode) =>
+  private def renderNativeHint(hint: Hint.Native): Line =
+    Line(
       smithy4s.recursion
-        .cata(renderTypedNode)(typedNode)
+        .cata(renderTypedNode)(hint.typedNode)
         .run(true)
         ._2
-        .some
-        .map(Line(_))
-    case _ => None
+    )
+
+  private def renderHint(hint: Hint): Option[Line] = hint match {
+    case h: Hint.Native => renderNativeHint(h).some
+    case _              => None
   }
 
   def renderId(name: String, ns: String = namespace): Line =
@@ -775,19 +757,25 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderConstraintValidation(hints: List[Hint]): Line = {
-    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    val tags = hints.collect { case t: Hint.Constraint => t }
     if (tags.isEmpty) Line.empty
     else {
-      tags.map(t => line".validated[${t.renderFull}]").intercalate(Line.empty)
+      tags
+        .map { tag =>
+          line".validated[${tag.tr.renderFull}](${renderNativeHint(tag.native)})"
+        }
+        .intercalate(Line.empty)
     }
   }
 
   def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): Line = {
-    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    val tags = hints.collect { case t: Hint.Constraint => t }
     if (tags.isEmpty) Line.empty
     else {
       tags
-        .map(t => line".validated[${t.renderFull}, $tpe]")
+        .map(t =>
+          line".validated[${t.tr.renderFull}, $tpe](${renderNativeHint(t.native)})"
+        )
         .intercalate(Line.dot)
     }
   }

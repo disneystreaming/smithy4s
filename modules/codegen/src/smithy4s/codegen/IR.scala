@@ -78,14 +78,6 @@ case class TypeAlias(
     hints: List[Hint] = Nil
 ) extends Decl
 
-case class External(
-    name: String,
-    fqn: String,
-    providerFqn: String,
-    underlyingType: Type,
-    hints: List[Hint] = Nil
-) extends Decl
-
 case class Enumeration(
     name: String,
     originalName: String,
@@ -201,7 +193,8 @@ object Type {
       name: String,
       fullyQualifiedName: String,
       providerFullyQualifiedName: String,
-      underlyingTpe: Type
+      underlyingTpe: Type,
+      refinedHint: Hint.Native
   ) extends Type
 }
 
@@ -219,7 +212,7 @@ object Hint {
   case object Trait extends Hint
   case object Error extends Hint
   case object PackedInputs extends Hint
-  case class Constraint(tr: Type.Ref) extends Hint
+  case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint

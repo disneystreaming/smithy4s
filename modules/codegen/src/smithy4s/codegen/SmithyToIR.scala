@@ -84,8 +84,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             case Type.Alias(_, name, tpe) =>
               TypeAlias(name, name, tpe, hints).some
             case Type.PrimitiveType(_) => None
-            case Type.ExternalType(name, fqn, providerFqn, underlying) =>
-              External(name, fqn, providerFqn, underlying, hints).some
             case other => TypeAlias(shape.name, shape.name, other, hints).some
           }
       }.toList
@@ -256,7 +254,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       private def getExternalTypeInfo(
           shape: Shape
-      ): Option[RefinedTrait] = {
+      ): Option[(Trait, RefinedTrait)] = {
         shape
           .getAllTraits()
           .asScala
@@ -264,16 +262,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             model
               .getShape(trt.toShapeId)
               .asScala
-              .flatMap(_.getTrait(classOf[RefinedTrait]).asScala.flatMap {
-                refTrait =>
-                  if (
-                    refTrait.getCanonicalShapeId.asScala.contains(shape.getId)
-                  ) // Only return if is canonical shape
-                    Some(refTrait)
-                  else None
-              })
+              .flatMap(_.getTrait(classOf[RefinedTrait]).asScala)
+              .map(trt -> _)
           }
-          .headOption // TODO: Currently shapes could have multiple traits that have the refined trait. A validator should be added to prevent this
+          .headOption // Shapes can have at most ONE trait that has the refined trait
       }
 
       def primitive(
@@ -297,15 +289,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
         getExternalTypeInfo(shape) match {
           case None => res
-          case Some(refined) =>
-            Some(
-              Type.ExternalType(
+          case Some((trt, refined)) =>
+            Type
+              .ExternalType(
                 shape.name,
                 refined.getTargetClasspath(),
                 refined.getProviderClasspath(),
-                Type.PrimitiveType(primitive)
+                Type.PrimitiveType(primitive),
+                unfoldTrait(trt)
               )
-            )
+              .some
         }
       }
 
@@ -468,7 +461,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.UniqueItems
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
-    case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr))
+    case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
   }
 
   private def traitsToHints(traits: List[Trait]): List[Hint] = {
@@ -620,7 +613,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       s"Unhandled trait binding:\ntype: $tpe\nvalue: ${Node.printJson(node)}"
   }
 
-  private def unfoldTrait(tr: Trait): Hint = {
+  private def unfoldTrait(tr: Trait): Hint.Native = {
     val nodeAndType = NodeAndType(tr.toNode(), tr.toShapeId().tpe.get)
     Hint.Native(ana(unfoldNodeAndType)(nodeAndType))
   }

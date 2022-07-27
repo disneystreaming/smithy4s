@@ -17,13 +17,11 @@ public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder
 
 	private final String targetClasspath;
 	private final String providerClasspath;
-	private final Optional<ShapeId> canonicalShapeId;
 
 	private RefinedTrait(RefinedTrait.Builder builder) {
 		super(ID, builder.getSourceLocation());
 		this.targetClasspath = builder.targetClasspath;
 		this.providerClasspath = builder.providerClasspath;
-		this.canonicalShapeId = builder.canonicalShapeId;
 
 		if (targetClasspath == null) {
 			throw new SourceException("A targetClasspath must be provided.", getSourceLocation());
@@ -42,24 +40,18 @@ public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder
 		return this.providerClasspath;
 	}
 
-	public Optional<ShapeId> getCanonicalShapeId() {
-		return this.canonicalShapeId;
-	}
-
 	@Override
 	protected Node createNode() {
 		ObjectNode.Builder builder = Node.objectNodeBuilder();
 		builder.withMember("targetClasspath", getTargetClasspath());
 		builder.withMember("providerClasspath", getProviderClasspath());
-
-		builder.withOptionalMember("canonicalShape", getCanonicalShapeId().map(sId -> Node.from(sId.toString())));
 		return builder.build();
 	}
 
 	@Override
 	public SmithyBuilder<RefinedTrait> toBuilder() {
 		return builder().targetClasspath(targetClasspath).providerClasspath(providerClasspath)
-				.canonicalShapeId(canonicalShapeId).sourceLocation(getSourceLocation());
+				.sourceLocation(getSourceLocation());
 	}
 
 	/**
@@ -73,7 +65,6 @@ public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder
 
 		private String targetClasspath;
 		private String providerClasspath;
-		private Optional<ShapeId> canonicalShapeId;
 
 		public RefinedTrait.Builder providerClasspath(String providerClasspath) {
 			this.providerClasspath = providerClasspath;
@@ -82,16 +73,6 @@ public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder
 
 		public RefinedTrait.Builder targetClasspath(String targetClasspath) {
 			this.targetClasspath = targetClasspath;
-			return this;
-		}
-
-		public RefinedTrait.Builder canonicalShapeId(ShapeId canonicalShapeId) {
-			this.canonicalShapeId = Optional.ofNullable(canonicalShapeId);
-			return this;
-		}
-
-		public RefinedTrait.Builder canonicalShapeId(Optional<ShapeId> canonicalShapeId) {
-			this.canonicalShapeId = canonicalShapeId;
 			return this;
 		}
 
@@ -115,10 +96,8 @@ public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder
 					.map(node -> node.expectStringNode().getValue()).orElse(null);
 			String providerClasspath = objectNode.getMember("providerClasspath")
 					.map(node -> node.expectStringNode().getValue()).orElse(null);
-			Optional<ShapeId> canonicalShapeId = objectNode.getMember("canonicalShape")
-					.map(node -> ShapeId.from(node.expectStringNode().getValue()));
 			return builder().sourceLocation(value).targetClasspath(targetClasspath).providerClasspath(providerClasspath)
-					.canonicalShapeId(canonicalShapeId).build();
+					.build();
 		}
 	}
 }
