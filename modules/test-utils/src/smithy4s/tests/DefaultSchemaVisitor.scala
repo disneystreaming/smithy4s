@@ -121,7 +121,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       bijection: Bijection[A, B]
   ): Id[B] = bijection(apply(schema))
 
-  override def refinement[A, B](
+  override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): Id[B] = refinement.unsafe(apply(schema))
