@@ -81,12 +81,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         if (shape.isMemberShape()) None
         else
           shape.tpe.flatMap {
-            case Type.Alias(_, name, tpe) =>
-              TypeAlias(name, name, tpe, hints).some
-            case Type.PrimitiveType(_) => None
             case e: Type.ExternalType =>
               val newHints = hints.filterNot(_ == e.refinedHint)
               TypeAlias(shape.name, shape.name, e, newHints).some
+            case Type.Alias(_, name, tpe: Type.ExternalType) =>
+              val newHints = hints.filterNot(_ == tpe.refinedHint)
+              TypeAlias(name, name, tpe, newHints).some
+            case Type.Alias(_, name, tpe) =>
+              TypeAlias(name, name, tpe, hints).some
+            case Type.PrimitiveType(_) => None
             case other => TypeAlias(shape.name, shape.name, other, hints).some
           }
       }.toList
@@ -271,38 +274,41 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .headOption // Shapes can have at most ONE trait that has the refined trait
       }
 
-      def primitive(
-          shape: Shape,
-          primitiveId: String,
-          primitive: Primitive
-      ): Option[Type] = {
-        val res =
-          if (
-            shape.getId() != ShapeId
-              .from(primitiveId) && !isUnboxedPrimitive(shape.getId())
-          ) {
-            Type
-              .Alias(
-                shape.getId().getNamespace(),
-                shape.getId().getName(),
-                Type.PrimitiveType(primitive)
-              )
-              .some
-          } else Type.PrimitiveType(primitive).some
-
-        getExternalTypeInfo(shape) match {
-          case None => res
+      private def getExternalOrBase(shape: Shape, base: Type): Type = {
+        (getExternalTypeInfo(shape) match {
+          case None => None
           case Some((trt, refined)) =>
             Type
               .ExternalType(
                 shape.name,
                 refined.getTargetClasspath(),
                 refined.getProviderClasspath(),
-                Type.PrimitiveType(primitive),
+                base,
                 unfoldTrait(trt)
               )
               .some
-        }
+        }).getOrElse(base)
+      }
+
+      def primitive(
+          shape: Shape,
+          primitiveId: String,
+          primitive: Primitive
+      ): Option[Type] = {
+        val externalOrBase =
+          getExternalOrBase(shape, Type.PrimitiveType(primitive))
+        if (
+          shape.getId() != ShapeId
+            .from(primitiveId) && !isUnboxedPrimitive(shape.getId())
+        ) {
+          Type
+            .Alias(
+              shape.getId().getNamespace(),
+              shape.getId().getName(),
+              externalOrBase
+            )
+            .some
+        } else externalOrBase.some
       }
 
       def blobShape(x: BlobShape): Option[Type] =
@@ -337,7 +343,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             }
           }
           .map { tpe =>
-            Type.Alias(x.namespace, x.name, tpe)
+            val externalOrBase =
+              getExternalOrBase(x, tpe)
+            Type.Alias(x.namespace, x.name, externalOrBase)
           }
 
       def setShape(x: SetShape): Option[Type] =
@@ -345,14 +353,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .accept(this)
           .map(Type.Collection(CollectionType.Set, _))
           .map { tpe =>
-            Type.Alias(x.namespace, x.name, tpe)
+            val externalOrBase =
+              getExternalOrBase(x, tpe)
+            Type.Alias(x.namespace, x.name, externalOrBase)
           }
 
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
         v <- x.getValue().accept(this)
       } yield Type.Map(k, v)).map { tpe =>
-        Type.Alias(x.namespace, x.name, tpe)
+        val externalOrBase =
+          getExternalOrBase(x, tpe)
+        Type.Alias(x.namespace, x.name, externalOrBase)
       }
 
       def byteShape(x: ByteShape): Option[Type] =

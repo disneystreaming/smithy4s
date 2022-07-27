@@ -29,6 +29,7 @@ package object example {
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type SomeVector = smithy4s.example.SomeVector.Type
+  type FancyList = smithy4s.example.FancyList.Type
   type SomeValue = smithy4s.example.SomeValue.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type TestString = smithy4s.example.TestString.Type

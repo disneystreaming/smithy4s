@@ -9,6 +9,18 @@ use smithy4s.meta#refined
 )
 structure ageFormat {}
 
+@trait(selector: "list")
+@refined(
+  targetClasspath: "smithy4s.example.refined.FancyList",
+  providerClasspath: "smithy4s.example.refined.FancyList.provider"
+)
+structure fancyListFormat {}
+
+@fancyListFormat
+list FancyList {
+  member: String
+}
+
 @ageFormat
 integer Age
 
@@ -17,5 +29,6 @@ integer PersonAge
 
 structure TestItOut {
   age: Age,
-  personAge: PersonAge
+  personAge: PersonAge,
+  fancyList: FancyList
 }
