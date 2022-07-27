@@ -36,6 +36,7 @@ package object example {
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type
+  type Name = smithy4s.example.Name.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type

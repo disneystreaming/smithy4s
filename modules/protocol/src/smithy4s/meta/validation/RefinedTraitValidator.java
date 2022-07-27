@@ -19,6 +19,7 @@ package smithy4s.meta.validation;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeType;
+import software.amazon.smithy.model.traits.*;
 import software.amazon.smithy.model.validation.AbstractValidator;
 import software.amazon.smithy.model.validation.ValidationEvent;
 import smithy4s.meta.RefinedTrait;
@@ -30,7 +31,12 @@ import java.util.stream.Stream;
 public final class RefinedTraitValidator extends AbstractValidator {
 
 	boolean isAllowedType(Shape shape) {
-		boolean isSimple = shape.getType().getCategory() == ShapeType.Category.SIMPLE;
+		boolean notConstrained = shape.getAllTraits().values().stream().allMatch(t -> {
+			boolean isConstrained = t instanceof EnumTrait || t instanceof LengthTrait || t instanceof RangeTrait
+					|| t instanceof PatternTrait;
+			return !isConstrained;
+		});
+		boolean isSimple = shape.getType().getCategory() == ShapeType.Category.SIMPLE && notConstrained;
 		boolean isCollection = shape.isListShape() || shape.isMapShape() || shape.isSetShape();
 		return isSimple || isCollection;
 	}
@@ -46,7 +52,8 @@ public final class RefinedTraitValidator extends AbstractValidator {
 			if (numRefinedTraits > 1) {
 				return Stream.of(error(s, "Shapes may only be annotated with one refinement trait"));
 			} else if (numRefinedTraits == 1 && !isAllowedType(s)) {
-				return Stream.of(error(s, "refinements can only be used on simpleShapes, list, set, and map"));
+				return Stream.of(error(s,
+						"refinements can only be used on simpleShapes, list, set, and map. Simple shapes must not be constrained by enum, length, range, or pattern traits"));
 			} else {
 				return Stream.empty();
 			}

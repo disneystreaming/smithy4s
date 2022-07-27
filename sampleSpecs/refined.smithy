@@ -16,10 +16,12 @@ structure ageFormat {}
 )
 structure fancyListFormat {}
 
-@fancyListFormat
-list FancyList {
-  member: String
-}
+@trait(selector: "string")
+@refined(
+  targetClasspath: "smithy4s.example.refined.Name",
+  providerClasspath: "smithy4s.example.refined.Name.provider"
+)
+structure nameFormat {}
 
 @ageFormat
 integer Age
@@ -27,8 +29,17 @@ integer Age
 @ageFormat
 integer PersonAge
 
+@fancyListFormat
+list FancyList {
+  member: String
+}
+
+@nameFormat
+string Name
+
 structure TestItOut {
   age: Age,
   personAge: PersonAge,
-  fancyList: FancyList
+  fancyList: FancyList,
+  name: Name
 }

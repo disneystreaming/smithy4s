@@ -171,7 +171,50 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
         .shapeId(ShapeId.fromParts("test", "TestIt"))
         .severity(Severity.ERROR)
         .message(
-          "refinements can only be used on simpleShapes, list, set, and map"
+          "refinements can only be used on simpleShapes, list, set, and map. Simple shapes must not be constrained by enum, length, range, or pattern traits"
+        )
+        .build()
+    )
+    expect.same(result, expected)
+  }
+
+  test(
+    "validation events are returned when using refinement trait on disallowed shape - enum"
+  ) {
+    val modelString = """|namespace test
+                         |
+                         |use smithy4s.meta#refined
+                         |
+                         |@trait()
+                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |structure trtOne {}
+                         |
+                         |@trtOne
+                         |@enum([
+                         |  { value: "A" },
+                         |  { value: "B" }
+                         |])
+                         |string TestIt
+                         |""".stripMargin
+
+    val model = Model
+      .assembler()
+      .disableValidation()
+      .discoverModels()
+      .addUnparsedModel("test.smithy", modelString)
+      .assemble()
+      .unwrap()
+
+    val result = validator.validate(model).asScala.toList
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .sourceLocation(new SourceLocation("test.smithy", 14, 1))
+        .id("RefinedTrait")
+        .shapeId(ShapeId.fromParts("test", "TestIt"))
+        .severity(Severity.ERROR)
+        .message(
+          "refinements can only be used on simpleShapes, list, set, and map. Simple shapes must not be constrained by enum, length, range, or pattern traits"
         )
         .build()
     )

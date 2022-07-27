@@ -124,7 +124,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             }
             .toList
           List(Enumeration(shape.name, shape.name, values))
-        case _ => super.stringShape(shape)
+        case _ => this.getDefault(shape)
       })
 
       override def serviceShape(shape: ServiceShape): List[Decl] = {
