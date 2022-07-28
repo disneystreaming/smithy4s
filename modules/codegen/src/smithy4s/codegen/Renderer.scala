@@ -382,7 +382,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 } else {
                   val mh = memberHints(hints)
                   // format: off
-                  line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
+                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
                   // format: on
                 }
             }
@@ -482,7 +482,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             // format: off
             lines(
               line"case object $cn extends $name",
-              line"""private val ${cn}Alt = $Schema_.constant($cn).oneOf[$name]("$realName").addHints(hints)${renderConstraintValidation(altHints)}""",
+              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
             // format: on
@@ -762,21 +762,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     else {
       tags
         .map { tag =>
-          line".validated[${tag.tr.renderFull}](${renderNativeHint(tag.native)})"
+          line".validated(${renderNativeHint(tag.native)})"
         }
         .intercalate(Line.empty)
-    }
-  }
-
-  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): Line = {
-    val tags = hints.collect { case t: Hint.Constraint => t }
-    if (tags.isEmpty) Line.empty
-    else {
-      tags
-        .map(t =>
-          line".validated[${t.tr.renderFull}, $tpe](${renderNativeHint(t.native)})"
-        )
-        .intercalate(Line.dot)
     }
   }
 
