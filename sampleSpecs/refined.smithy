@@ -1,6 +1,7 @@
 namespace smithy4s.example
 
 use smithy4s.meta#refinement
+use smithy4s.meta#unwrap
 
 @trait(selector: "integer")
 @refinement(
@@ -37,9 +38,14 @@ list FancyList {
 @nameFormat
 string Name
 
+@nameFormat
+@unwrap
+string DogName
+
 structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
   fancyList: FancyList,
-  name: Name
+  name: Name,
+  dogName: DogName
 }

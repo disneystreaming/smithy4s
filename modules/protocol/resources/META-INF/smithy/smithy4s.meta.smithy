@@ -75,3 +75,18 @@ structure refinement {
 
 @pattern("^(?:[a-zA-Z][\\w]*\\.?)*$")
 string Classpath
+
+/// This trait is used to signal that this type should not be wrapped
+/// in a newtype at usage sites. For example:
+/// 
+/// @unwrap
+/// string Email
+///
+/// structure Test {
+///   email: Email
+/// }
+///
+/// Here the generated code for the field `email` in the structure `Test`
+/// will refer directly to `String` rather than the newtype `Email`.
+@trait(selector: "simpleType")
+structure unwrap {}
