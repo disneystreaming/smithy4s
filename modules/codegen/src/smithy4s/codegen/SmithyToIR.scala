@@ -293,6 +293,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getOrElse(base)
       }
 
+      private def isExternal(tpe: Type): Boolean = tpe match {
+        case _: Type.ExternalType => true
+        case _                    => false
+      }
+
       private def isUnwrappedShape(shape: Shape): Boolean = {
         shape.hasTrait(classOf[smithy4s.meta.UnwrapTrait])
       }
@@ -354,7 +359,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
-            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped = false)
+            val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
           }
 
       def setShape(x: SetShape): Option[Type] =
@@ -364,8 +370,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
-            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped = false)
-          // TODO: Unwrap all collections this way?
+            val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+            Type.Alias(
+              x.namespace,
+              x.name,
+              externalOrBase,
+              isUnwrapped
+            )
           }
 
       def mapShape(x: MapShape): Option[Type] = (for {
@@ -374,7 +385,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       } yield Type.Map(k, v)).map { tpe =>
         val externalOrBase =
           getExternalOrBase(x, tpe)
-        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped = false)
+        val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
       }
 
       def byteShape(x: ByteShape): Option[Type] =

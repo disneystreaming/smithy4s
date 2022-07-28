@@ -88,5 +88,8 @@ string Classpath
 ///
 /// Here the generated code for the field `email` in the structure `Test`
 /// will refer directly to `String` rather than the newtype `Email`.
-@trait(selector: "simpleType")
+/// Note that collections (lists, maps, and sets) are already unwrapped at usage sites
+/// by default except when the collection has been refined. In this case, it is wrapped
+/// by default. Adding this trait will cause the collection to become unwrapped.
+@trait(selector: ":is(simpleType, list, map, set)")
 structure unwrap {}

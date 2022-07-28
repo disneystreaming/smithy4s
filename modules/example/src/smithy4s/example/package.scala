@@ -41,5 +41,6 @@ package object example {
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
+  type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
 
 }

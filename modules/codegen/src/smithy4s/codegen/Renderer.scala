@@ -664,7 +664,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(
             ns,
             name,
-            Type.PrimitiveType(_) | _: Type.ExternalType,
+            _,
             false
           ) =>
         line"$name.schema".addImport(ns + "." + name)

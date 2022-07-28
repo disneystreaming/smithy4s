@@ -10,7 +10,7 @@ use smithy4s.meta#unwrap
 )
 structure ageFormat {}
 
-@trait(selector: "list")
+@trait(selector: "list:test(> member > string)") // lists with string members
 @refinement(
   targetType: "smithy4s.example.refined.FancyList",
   providerInstance: "smithy4s.example.refined.FancyList.provider"
@@ -35,6 +35,12 @@ list FancyList {
   member: String
 }
 
+@fancyListFormat
+@unwrap
+list UnwrappedFancyList {
+  member: String
+}
+
 @nameFormat
 string Name
 
@@ -46,6 +52,12 @@ structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
   fancyList: FancyList,
+  unwrappedFancyList: UnwrappedFancyList,
   name: Name,
+  dogName: DogName
+}
+
+union UnionWithRefinedTypes {
+  age: Age,
   dogName: DogName
 }
