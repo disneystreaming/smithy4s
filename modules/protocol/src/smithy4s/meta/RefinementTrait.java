@@ -27,74 +27,74 @@ import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.ToSmithyBuilder;
 import java.util.Optional;
 
-public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder<RefinedTrait> {
+public final class RefinementTrait extends AbstractTrait implements ToSmithyBuilder<RefinementTrait> {
 
-	public static final ShapeId ID = ShapeId.from("smithy4s.meta#refined");
+	public static final ShapeId ID = ShapeId.from("smithy4s.meta#refinement");
 
-	private final String targetClasspath;
-	private final String providerClasspath;
+	private final String targetType;
+	private final String providerInstance;
 
-	private RefinedTrait(RefinedTrait.Builder builder) {
+	private RefinementTrait(RefinementTrait.Builder builder) {
 		super(ID, builder.getSourceLocation());
-		this.targetClasspath = builder.targetClasspath;
-		this.providerClasspath = builder.providerClasspath;
+		this.targetType = builder.targetType;
+		this.providerInstance = builder.providerInstance;
 
-		if (targetClasspath == null) {
-			throw new SourceException("A targetClasspath must be provided.", getSourceLocation());
+		if (targetType == null) {
+			throw new SourceException("A targetType must be provided.", getSourceLocation());
 		}
 
-		if (providerClasspath == null) {
-			throw new SourceException("A providerClasspath must be provided.", getSourceLocation());
+		if (providerInstance == null) {
+			throw new SourceException("A providerInstance must be provided.", getSourceLocation());
 		}
 	}
 
-	public String getTargetClasspath() {
-		return this.targetClasspath;
+	public String getTargetType() {
+		return this.targetType;
 	}
 
-	public String getProviderClasspath() {
-		return this.providerClasspath;
+	public String getProviderInstance() {
+		return this.providerInstance;
 	}
 
 	@Override
 	protected Node createNode() {
 		ObjectNode.Builder builder = Node.objectNodeBuilder();
-		builder.withMember("targetClasspath", getTargetClasspath());
-		builder.withMember("providerClasspath", getProviderClasspath());
+		builder.withMember("targetType", getTargetType());
+		builder.withMember("providerInstance", getProviderInstance());
 		return builder.build();
 	}
 
 	@Override
-	public SmithyBuilder<RefinedTrait> toBuilder() {
-		return builder().targetClasspath(targetClasspath).providerClasspath(providerClasspath)
+	public SmithyBuilder<RefinementTrait> toBuilder() {
+		return builder().targetType(targetType).providerInstance(providerInstance)
 				.sourceLocation(getSourceLocation());
 	}
 
 	/**
 	 * @return Returns a new RefinedTrait builder.
 	 */
-	public static RefinedTrait.Builder builder() {
+	public static RefinementTrait.Builder builder() {
 		return new Builder();
 	}
 
-	public static final class Builder extends AbstractTraitBuilder<RefinedTrait, RefinedTrait.Builder> {
+	public static final class Builder extends AbstractTraitBuilder<RefinementTrait, RefinementTrait.Builder> {
 
-		private String targetClasspath;
-		private String providerClasspath;
+		private String targetType;
+		private String providerInstance;
 
-		public RefinedTrait.Builder providerClasspath(String providerClasspath) {
-			this.providerClasspath = providerClasspath;
+		public RefinementTrait.Builder providerInstance(String providerInstance) {
+			this.providerInstance = providerInstance;
 			return this;
 		}
 
-		public RefinedTrait.Builder targetClasspath(String targetClasspath) {
-			this.targetClasspath = targetClasspath;
+		public RefinementTrait.Builder targetType(String targetType) {
+			this.targetType = targetType;
 			return this;
 		}
 
 		@Override
-		public RefinedTrait build() {
-			return new RefinedTrait(this);
+		public RefinementTrait build() {
+			return new RefinementTrait(this);
 		}
 	}
 
@@ -106,13 +106,13 @@ public final class RefinedTrait extends AbstractTrait implements ToSmithyBuilder
 		}
 
 		@Override
-		public RefinedTrait createTrait(ShapeId target, Node value) {
+		public RefinementTrait createTrait(ShapeId target, Node value) {
 			ObjectNode objectNode = value.expectObjectNode();
-			String targetClasspath = objectNode.getMember("targetClasspath")
+			String targetType = objectNode.getMember("targetType")
 					.map(node -> node.expectStringNode().getValue()).orElse(null);
-			String providerClasspath = objectNode.getMember("providerClasspath")
+			String providerInstance = objectNode.getMember("providerInstance")
 					.map(node -> node.expectStringNode().getValue()).orElse(null);
-			return builder().sourceLocation(value).targetClasspath(targetClasspath).providerClasspath(providerClasspath)
+			return builder().sourceLocation(value).targetType(targetType).providerInstance(providerInstance)
 					.build();
 		}
 	}

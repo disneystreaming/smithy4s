@@ -1,25 +1,25 @@
 namespace smithy4s.example
 
-use smithy4s.meta#refined
+use smithy4s.meta#refinement
 
 @trait(selector: "integer")
-@refined(
-  targetClasspath: "smithy4s.example.refined.Age",
-  providerClasspath: "smithy4s.example.refined.Age.provider"
+@refinement(
+  targetType: "smithy4s.example.refined.Age",
+  providerInstance: "smithy4s.example.refined.Age.provider"
 )
 structure ageFormat {}
 
 @trait(selector: "list")
-@refined(
-  targetClasspath: "smithy4s.example.refined.FancyList",
-  providerClasspath: "smithy4s.example.refined.FancyList.provider"
+@refinement(
+  targetType: "smithy4s.example.refined.FancyList",
+  providerInstance: "smithy4s.example.refined.FancyList.provider"
 )
 structure fancyListFormat {}
 
 @trait(selector: "string")
-@refined(
-  targetClasspath: "smithy4s.example.refined.Name",
-  providerClasspath: "smithy4s.example.refined.Name.provider"
+@refinement(
+  targetType: "smithy4s.example.refined.Name",
+  providerInstance: "smithy4s.example.refined.Name.provider"
 )
 structure nameFormat {}
 
@@ -37,7 +37,7 @@ list FancyList {
 @nameFormat
 string Name
 
-structure TestItOut {
+structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
   fancyList: FancyList,

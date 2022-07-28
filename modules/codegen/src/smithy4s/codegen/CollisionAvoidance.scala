@@ -101,13 +101,13 @@ object CollisionAvoidance {
     case Alias(namespace, name, tpe) =>
       Alias(namespace, protect(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
-    case ExternalType(name, fqn, pFqn, under, refinedHint) =>
+    case ExternalType(name, fqn, pFqn, under, refinementHint) =>
       ExternalType(
         protect(name),
         fqn,
         pFqn,
         modType(under),
-        modNativeHint(refinedHint)
+        modNativeHint(refinementHint)
       )
   }
 

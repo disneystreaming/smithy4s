@@ -21,26 +21,26 @@ import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.validation._
 
 import scala.jdk.CollectionConverters._
-import smithy4s.meta.validation.RefinedTraitValidator
+import smithy4s.meta.validation.RefinementTraitValidator
 import software.amazon.smithy.model.SourceLocation
 
-object RefinedTraitValidatorSpec extends weaver.FunSuite {
+object RefinementTraitValidatorSpec extends weaver.FunSuite {
 
-  private def validator = new RefinedTraitValidator()
+  private def validator = new RefinementTraitValidator()
 
   test(
     "validation events are returned when multiple refinements are applied to one shape"
   ) {
     val modelString = """|namespace test
                          |
-                         |use smithy4s.meta#refined
+                         |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.two", providerClasspath: "test.two.prov")
+                         |@refinement(targetType: "test.two", providerInstance: "test.two.prov")
                          |structure trtTwo {}
                          |
                          |@trtOne
@@ -61,7 +61,7 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
       ValidationEvent
         .builder()
         .sourceLocation(new SourceLocation("test.smithy", 15, 1))
-        .id("RefinedTrait")
+        .id("RefinementTrait")
         .shapeId(ShapeId.fromParts("test", "TestIt"))
         .severity(Severity.ERROR)
         .message(
@@ -77,14 +77,14 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
   ) {
     val modelString = """|namespace test
                          |
-                         |use smithy4s.meta#refined
+                         |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.two", providerClasspath: "test.two.prov")
+                         |@refinement(targetType: "test.two", providerInstance: "test.two.prov")
                          |structure trtTwo {}
                          |
                          |@trtOne
@@ -109,14 +109,14 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
   ) {
     val modelString = """|namespace test
                          |
-                         |use smithy4s.meta#refined
+                         |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.two", providerClasspath: "test.two.prov")
+                         |@refinement(targetType: "test.two", providerInstance: "test.two.prov")
                          |structure trtTwo {}
                          |
                          |@trtOne
@@ -144,10 +144,10 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
   ) {
     val modelString = """|namespace test
                          |
-                         |use smithy4s.meta#refined
+                         |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trtOne
@@ -167,7 +167,7 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
       ValidationEvent
         .builder()
         .sourceLocation(new SourceLocation("test.smithy", 10, 1))
-        .id("RefinedTrait")
+        .id("RefinementTrait")
         .shapeId(ShapeId.fromParts("test", "TestIt"))
         .severity(Severity.ERROR)
         .message(
@@ -183,10 +183,10 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
   ) {
     val modelString = """|namespace test
                          |
-                         |use smithy4s.meta#refined
+                         |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refined(targetClasspath: "test.one", providerClasspath: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trtOne
@@ -210,7 +210,7 @@ object RefinedTraitValidatorSpec extends weaver.FunSuite {
       ValidationEvent
         .builder()
         .sourceLocation(new SourceLocation("test.smithy", 14, 1))
-        .id("RefinedTrait")
+        .id("RefinementTrait")
         .shapeId(ShapeId.fromParts("test", "TestIt"))
         .severity(Severity.ERROR)
         .message(

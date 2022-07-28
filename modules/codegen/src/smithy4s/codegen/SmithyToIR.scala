@@ -22,7 +22,7 @@ import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.VectorTrait
-import smithy4s.meta.RefinedTrait
+import smithy4s.meta.RefinementTrait
 import smithy4s.recursion._
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -81,11 +81,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         if (shape.isMemberShape()) None
         else
           shape.tpe.flatMap {
-            case e: Type.ExternalType =>
-              val newHints = hints.filterNot(_ == e.refinedHint)
-              TypeAlias(shape.name, shape.name, e, newHints).some
             case Type.Alias(_, name, tpe: Type.ExternalType) =>
-              val newHints = hints.filterNot(_ == tpe.refinedHint)
+              val newHints = hints.filterNot(_ == tpe.refinementHint)
               TypeAlias(name, name, tpe, newHints).some
             case Type.Alias(_, name, tpe) =>
               TypeAlias(name, name, tpe, hints).some
@@ -261,7 +258,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       private def getExternalTypeInfo(
           shape: Shape
-      ): Option[(Trait, RefinedTrait)] = {
+      ): Option[(Trait, RefinementTrait)] = {
         shape
           .getAllTraits()
           .asScala
@@ -269,26 +266,24 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             model
               .getShape(trt.toShapeId)
               .asScala
-              .flatMap(_.getTrait(classOf[RefinedTrait]).asScala)
+              .flatMap(_.getTrait(classOf[RefinementTrait]).asScala)
               .map(trt -> _)
           }
           .headOption // Shapes can have at most ONE trait that has the refined trait
       }
 
       private def getExternalOrBase(shape: Shape, base: Type): Type = {
-        (getExternalTypeInfo(shape) match {
-          case None => None
-          case Some((trt, refined)) =>
-            Type
-              .ExternalType(
-                shape.name,
-                refined.getTargetClasspath(),
-                refined.getProviderClasspath(),
-                base,
-                unfoldTrait(trt)
-              )
-              .some
-        }).getOrElse(base)
+        getExternalTypeInfo(shape)
+          .map { case (trt, refined) =>
+            Type.ExternalType(
+              shape.name,
+              refined.getTargetType(),
+              refined.getProviderInstance(),
+              base,
+              unfoldTrait(trt)
+            )
+          }
+          .getOrElse(base)
       }
 
       def primitive(

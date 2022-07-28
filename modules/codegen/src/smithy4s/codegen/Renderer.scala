@@ -337,6 +337,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       adtParent: Option[String] = None,
       additionalLines: Lines = Lines.empty
   ): Lines = {
+
     val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
@@ -374,17 +375,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map {
-              case Field(fieldName, realName, tpe, required, hints) =>
-                val req = if (required) "required" else "optional"
-                if (hints.isEmpty) {
-                  line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
-                } else {
-                  val mh = memberHints(hints)
+            fields.map { case Field(fieldName, realName, tpe, required, hints) =>
+              val req = if (required) "required" else "optional"
+              if (hints.isEmpty) {
+                line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
+              } else {
+                val mh = memberHints(hints)
                   // format: off
                   line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
                   // format: on
-                }
+              }
             }
           if (fields.size <= 22) {
             val definition = if (recursive) "recursive(struct" else "struct"
@@ -661,7 +661,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"$col(${member.schemaRef})"
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
-      case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
+      case Type.Alias(ns, name, Type.PrimitiveType(_) | _: Type.ExternalType) =>
         line"$name.schema".addImport(ns + "." + name)
       case Type.Alias(ns, name, _) =>
         line"$name.underlyingSchema".addImport(ns + "." + name)

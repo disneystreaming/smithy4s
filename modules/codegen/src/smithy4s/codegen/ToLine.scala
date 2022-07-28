@@ -40,7 +40,7 @@ object ToLine {
         val (kimports, k) = render(key).tupled
         val (vimports, v) = render(value).tupled
         Line(kimports ++ vimports, s"Map[${k.mkString("")}, ${v.mkString("")}]")
-      case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
+      case Type.Alias(ns, name, Type.PrimitiveType(_) | _: Type.ExternalType) =>
         Line(Set(s"$ns.$name"), name)
       case Type.Alias(_, _, aliased) =>
         render(aliased)

@@ -194,7 +194,7 @@ object Type {
       fullyQualifiedName: String,
       providerFullyQualifiedName: String,
       underlyingTpe: Type,
-      refinedHint: Hint.Native
+      refinementHint: Hint.Native
   ) extends Type
 }
 

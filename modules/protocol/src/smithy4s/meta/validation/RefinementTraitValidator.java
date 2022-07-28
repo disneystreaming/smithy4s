@@ -22,13 +22,13 @@ import software.amazon.smithy.model.shapes.ShapeType;
 import software.amazon.smithy.model.traits.*;
 import software.amazon.smithy.model.validation.AbstractValidator;
 import software.amazon.smithy.model.validation.ValidationEvent;
-import smithy4s.meta.RefinedTrait;
+import smithy4s.meta.RefinementTrait;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class RefinedTraitValidator extends AbstractValidator {
+public final class RefinementTraitValidator extends AbstractValidator {
 
 	boolean isAllowedType(Shape shape) {
 		boolean notConstrained = shape.getAllTraits().values().stream().allMatch(t -> {
@@ -46,7 +46,7 @@ public final class RefinedTraitValidator extends AbstractValidator {
 		return model.shapes().flatMap(s -> {
 			long numRefinedTraits = s.getAllTraits().values().stream().flatMap(t -> {
 				return OptionHelper.toStream(model.getShape(t.toShapeId())).flatMap(traitShape -> {
-					return OptionHelper.toStream(traitShape.getTrait(RefinedTrait.class));
+					return OptionHelper.toStream(traitShape.getTrait(RefinementTrait.class));
 				});
 			}).count();
 			if (numRefinedTraits > 1) {
