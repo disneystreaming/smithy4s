@@ -71,11 +71,12 @@ object CollisionAvoidance {
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, originalName, tpe, hints) =>
+      case TypeAlias(name, originalName, tpe, isUnwrapped, hints) =>
         TypeAlias(
           protect(name.capitalize),
           originalName,
           modType(tpe),
+          isUnwrapped,
           hints.map(modHint)
         )
       case Enumeration(name, originalName, values, hints) =>
@@ -98,8 +99,8 @@ object CollisionAvoidance {
       Type.Collection(collectionType, modType(member))
     case Type.Map(key, value)      => Type.Map(modType(key), modType(value))
     case Type.Ref(namespace, name) => Type.Ref(namespace, name.capitalize)
-    case Alias(namespace, name, tpe) =>
-      Alias(namespace, protect(name.capitalize), modType(tpe))
+    case Alias(namespace, name, tpe, isUnwrapped) =>
+      Alias(namespace, protect(name.capitalize), modType(tpe), isUnwrapped)
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, pFqn, under, refinementHint) =>
       ExternalType(

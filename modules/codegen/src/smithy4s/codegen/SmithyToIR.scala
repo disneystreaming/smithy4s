@@ -81,13 +81,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         if (shape.isMemberShape()) None
         else
           shape.tpe.flatMap {
-            case Type.Alias(_, name, tpe: Type.ExternalType) =>
+            case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
               val newHints = hints.filterNot(_ == tpe.refinementHint)
-              TypeAlias(name, name, tpe, newHints).some
-            case Type.Alias(_, name, tpe) =>
-              TypeAlias(name, name, tpe, hints).some
+              TypeAlias(name, name, tpe, isUnwrapped, newHints).some
+            case Type.Alias(_, name, tpe, isUnwrapped) =>
+              TypeAlias(name, name, tpe, isUnwrapped, hints).some
             case Type.PrimitiveType(_) => None
-            case other => TypeAlias(shape.name, shape.name, other, hints).some
+            case other =>
+              TypeAlias(
+                shape.name,
+                shape.name,
+                other,
+                isUnwrapped = false,
+                hints
+              ).some
           }
       }
 
@@ -286,6 +293,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getOrElse(base)
       }
 
+      private def isUnwrappedShape(shape: Shape): Boolean = {
+        shape.hasTrait(classOf[smithy4s.meta.UnwrapTrait])
+      }
+
       def primitive(
           shape: Shape,
           primitiveId: String,
@@ -294,14 +305,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val externalOrBase =
           getExternalOrBase(shape, Type.PrimitiveType(primitive))
         if (
-          shape.getId() != ShapeId
-            .from(primitiveId) && !isUnboxedPrimitive(shape.getId())
+          shape.getId() != ShapeId.from(primitiveId) &&
+          !isUnboxedPrimitive(shape.getId())
         ) {
           Type
             .Alias(
               shape.getId().getNamespace(),
               shape.getId().getName(),
-              externalOrBase
+              externalOrBase,
+              isUnwrappedShape(shape)
             )
             .some
         } else externalOrBase.some
@@ -313,7 +325,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             .Alias(
               x.getId().getNamespace(),
               x.getId().getName,
-              Type.PrimitiveType(Primitive.Byte)
+              Type.PrimitiveType(Primitive.Byte),
+              isUnwrappedShape(x)
             )
             .some
         } else {
@@ -341,7 +354,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
-            Type.Alias(x.namespace, x.name, externalOrBase)
+            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped = false)
           }
 
       def setShape(x: SetShape): Option[Type] =
@@ -351,7 +364,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
-            Type.Alias(x.namespace, x.name, externalOrBase)
+            Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped = false)
+          // TODO: Unwrap all collections this way?
           }
 
       def mapShape(x: MapShape): Option[Type] = (for {
@@ -360,7 +374,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       } yield Type.Map(k, v)).map { tpe =>
         val externalOrBase =
           getExternalOrBase(x, tpe)
-        Type.Alias(x.namespace, x.name, externalOrBase)
+        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped = false)
       }
 
       def byteShape(x: ByteShape): Option[Type] =
@@ -403,7 +417,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           Type.PrimitiveType(Primitive.Uuid).some
         case T.uuidFormat(_) =>
           Type
-            .Alias(x.namespace, x.name, Type.PrimitiveType(Primitive.Uuid))
+            .Alias(
+              x.namespace,
+              x.name,
+              Type.PrimitiveType(Primitive.Uuid),
+              isUnwrapped = false
+            )
             .some
         case _ =>
           primitive(x, "smithy.api#String", Primitive.String)
@@ -666,7 +685,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
         TypedNode.AltTN(ref, name, a)
       // Alias
-      case (node, Type.Alias(ns, name, tpe)) =>
+      case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
       // Enumeration
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>

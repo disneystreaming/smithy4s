@@ -75,6 +75,7 @@ case class TypeAlias(
     name: String,
     originalName: String,
     tpe: Type,
+    isUnwrapped: Boolean,
     hints: List[Hint] = Nil
 ) extends Decl
 
@@ -149,8 +150,8 @@ object Alt {
 
 sealed trait Type {
   def dealiased: Type = this match {
-    case Type.Alias(_, _, tpe) => tpe.dealiased
-    case other                 => other
+    case Type.Alias(_, _, tpe, _) => tpe.dealiased
+    case other                    => other
   }
 }
 
@@ -187,7 +188,12 @@ object Type {
   case class Ref(namespace: String, name: String) extends Type {
     def show = namespace + "." + name
   }
-  case class Alias(namespace: String, name: String, tpe: Type) extends Type
+  case class Alias(
+      namespace: String,
+      name: String,
+      tpe: Type,
+      isUnwrapped: Boolean
+  ) extends Type
   case class PrimitiveType(prim: Primitive) extends Type
   case class ExternalType(
       name: String,
