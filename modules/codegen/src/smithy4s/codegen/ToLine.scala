@@ -40,14 +40,15 @@ object ToLine {
         val (kimports, k) = render(key).tupled
         val (vimports, v) = render(value).tupled
         Line(kimports ++ vimports, s"Map[${k.mkString("")}, ${v.mkString("")}]")
-      case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
+      case Type.Alias(ns, name, Type.PrimitiveType(_) | _: Type.ExternalType) =>
         Line(Set(s"$ns.$name"), name)
       case Type.Alias(_, _, aliased) =>
         render(aliased)
       case Type.Ref(namespace, name) =>
         val imports = Set(s"$namespace.$name")
         Line(imports, name)
-      case Type.PrimitiveType(prim) => primitiveLine(prim)
+      case Type.PrimitiveType(prim)           => primitiveLine(prim)
+      case Type.ExternalType(_, fqn, _, _, _) => line"$fqn"
     }
   }
   private def primitiveLine(p: Primitive): Line =

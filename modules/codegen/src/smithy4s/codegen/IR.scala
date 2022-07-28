@@ -189,6 +189,13 @@ object Type {
   }
   case class Alias(namespace: String, name: String, tpe: Type) extends Type
   case class PrimitiveType(prim: Primitive) extends Type
+  case class ExternalType(
+      name: String,
+      fullyQualifiedName: String,
+      providerFullyQualifiedName: String,
+      underlyingTpe: Type,
+      refinementHint: Hint.Native
+  ) extends Type
 }
 
 sealed abstract class CollectionType(val tpe: String)
@@ -205,7 +212,7 @@ object Hint {
   case object Trait extends Hint
   case object Error extends Hint
   case object PackedInputs extends Hint
-  case class Constraint(tr: Type.Ref) extends Hint
+  case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint

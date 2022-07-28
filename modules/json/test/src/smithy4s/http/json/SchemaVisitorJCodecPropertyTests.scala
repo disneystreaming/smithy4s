@@ -136,22 +136,22 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
   ): Gen[Schema[DynData]] = {
     def lengthGen(l: Length) = Gen.oneOf(
       Vector(
-        string.addHints(l).validated[Length],
-        map(string, string).addHints(l).validated[Length],
-        string.addHints(l).validated[Length],
-        bytes.addHints(l).validated[Length]
+        string.validated[Length](l),
+        map(string, string).validated[Length](l),
+        string.validated[Length](l),
+        bytes.validated[Length](l)
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
 
     def rangeGen(r: Range) = Gen.oneOf(
       Vector(
-        short.addHints(r).validated[Range],
-        int.addHints(r).validated[Range],
-        long.addHints(r).validated[Range],
-        float.addHints(r).validated[Range],
-        double.addHints(r).validated[Range],
-        bigdecimal.addHints(r).validated[Range],
-        bigint.addHints(r).validated[Range]
+        short.validated[Range](r),
+        int.validated[Range](r),
+        long.validated[Range](r),
+        float.validated[Range](r),
+        double.validated[Range](r),
+        bigdecimal.validated[Range](r),
+        bigint.validated[Range](r)
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
     hint match {

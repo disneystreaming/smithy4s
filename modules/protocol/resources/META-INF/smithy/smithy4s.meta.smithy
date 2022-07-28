@@ -43,3 +43,35 @@ structure indexedSeq {}
         :not(:test([trait|smithy4s.meta#indexedSeq],
                    [trait|smithy.api#uniqueItems]))""")
 structure vector {}
+
+/// Allows specifying a custom type that smithy4s will use for rendering
+/// the model. `targetType` should point to the type that you want
+/// to use in the place of the standard smithy4s type. `providerInstance`
+/// should point to an instance of the RefinementProvider for the type specified by `targetType`.
+/// For example:
+/// namespace test
+/// @trait(selector: "string")
+/// structure emailFormat {}
+///
+/// @emailFormat()
+/// string Email
+/// ---
+/// namespace test.meta
+/// apply test#emailFormat @refinement(
+///   targetType: "myapp.types.Email",
+///   providerInstance: "myapp.types.Email.provider"
+/// )
+///
+/// Here we are applying the refinement trait to the `test#emailFormat` trait.
+/// We tell it which type it should be represented by in scala code
+/// and where to find the provider.
+@trait(selector: "* [trait|trait]")
+structure refinement {
+    @required
+    targetType: Classpath,
+    @required
+    providerInstance: Classpath
+}
+
+@pattern("^(?:[a-zA-Z][\\w]*\\.?)*$")
+string Classpath

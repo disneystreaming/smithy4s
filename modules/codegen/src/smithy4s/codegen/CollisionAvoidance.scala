@@ -23,6 +23,7 @@ import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.Type.ExternalType
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -100,6 +101,14 @@ object CollisionAvoidance {
     case Alias(namespace, name, tpe) =>
       Alias(namespace, protect(name.capitalize), modType(tpe))
     case PrimitiveType(prim) => PrimitiveType(prim)
+    case ExternalType(name, fqn, pFqn, under, refinementHint) =>
+      ExternalType(
+        protect(name),
+        fqn,
+        pFqn,
+        modType(under),
+        modNativeHint(refinementHint)
+      )
   }
 
   private def modField(field: Field): Field = {
@@ -134,10 +143,13 @@ object CollisionAvoidance {
   private def modRef(ref: Type.Ref): Type.Ref =
     Type.Ref(ref.namespace, ref.name.capitalize)
 
+  private def modNativeHint(hint: Hint.Native): Hint.Native =
+    Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+
   private def modHint(hint: Hint): Hint = hint match {
-    case Native(nt) => Native(smithy4s.recursion.preprocess(modTypedNode)(nt))
-    case Constraint(tr) => Constraint(modRef(tr))
-    case other          => other
+    case n: Native           => modNativeHint(n)
+    case Constraint(tr, nat) => Constraint(modRef(tr), modNativeHint(nat))
+    case other               => other
   }
 
   private def modProduct(p: Product): Product = {

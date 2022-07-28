@@ -112,12 +112,12 @@ object Alt {
     def addHints(newHints: Hints) =
       Alt(alt.label, alt.instance.addHints(newHints), alt.inject)
 
-    def validated[C](implicit
+    def validated[C](c: C)(implicit
         constraint: RefinementProvider.Simple[C, A]
     ): SchemaAlt[U, A] =
       Alt(
         alt.label,
-        alt.instance.validatedAgainstHints(alt.instance.hints),
+        alt.instance.validated(c)(constraint),
         alt.inject
       )
   }

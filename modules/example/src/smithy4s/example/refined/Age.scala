@@ -1,0 +1,17 @@
+package smithy4s.example.refined
+
+import smithy4s._
+
+final case class Age private (value: Int)
+
+object Age {
+
+  def apply(value: Int): Either[String, Age] =
+    if (value > 0) Right(new Age(value))
+    else Left("Age must be > 0")
+
+  val provider = Refinement.drivenBy[smithy4s.example.AgeFormat](
+    Age.apply,
+    (b: Age) => b.value
+  )
+}

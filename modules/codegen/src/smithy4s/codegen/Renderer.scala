@@ -337,6 +337,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       adtParent: Option[String] = None,
       additionalLines: Lines = Lines.empty
   ): Lines = {
+
     val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
@@ -374,17 +375,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map {
-              case Field(fieldName, realName, tpe, required, hints) =>
-                val req = if (required) "required" else "optional"
-                if (hints.isEmpty) {
-                  line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
-                } else {
-                  val mh = memberHints(hints)
+            fields.map { case Field(fieldName, realName, tpe, required, hints) =>
+              val req = if (required) "required" else "optional"
+              if (hints.isEmpty) {
+                line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
+              } else {
+                val mh = memberHints(hints)
                   // format: off
-                  line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName).addHints($mh)${renderFieldConstraintValidation(hints, tpe)}"""
+                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
                   // format: on
-                }
+              }
             }
           if (fields.size <= 22) {
             val definition = if (recursive) "recursive(struct" else "struct"
@@ -482,7 +482,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             // format: off
             lines(
               line"case object $cn extends $name",
-              line"""private val ${cn}Alt = $Schema_.constant($cn).oneOf[$name]("$realName").addHints(hints)${renderConstraintValidation(altHints)}""",
+              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
             // format: on
@@ -661,11 +661,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"$col(${member.schemaRef})"
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
-      case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
+      case Type.Alias(ns, name, Type.PrimitiveType(_) | _: Type.ExternalType) =>
         line"$name.schema".addImport(ns + "." + name)
       case Type.Alias(ns, name, _) =>
         line"$name.underlyingSchema".addImport(ns + "." + name)
       case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
+      case Type.ExternalType(_, _, providerFqn, underlyingTpe, hint) =>
+        line"${underlyingTpe.schemaRef}.refined(${renderNativeHint(hint)})($providerFqn)"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
@@ -725,15 +727,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
   }
 
-  private def renderHint(hint: Hint): Option[Line] = hint match {
-    case Hint.Native(typedNode) =>
+  private def renderNativeHint(hint: Hint.Native): Line =
+    Line(
       smithy4s.recursion
-        .cata(renderTypedNode)(typedNode)
+        .cata(renderTypedNode)(hint.typedNode)
         .run(true)
         ._2
-        .some
-        .map(Line(_))
-    case _ => None
+    )
+
+  private def renderHint(hint: Hint): Option[Line] = hint match {
+    case h: Hint.Native => renderNativeHint(h).some
+    case _              => None
   }
 
   def renderId(name: String, ns: String = namespace): Line =
@@ -753,20 +757,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderConstraintValidation(hints: List[Hint]): Line = {
-    val tags = hints.collect { case Hint.Constraint(tr) => tr }
-    if (tags.isEmpty) Line.empty
-    else {
-      tags.map(t => line".validated[${t.renderFull}]").intercalate(Line.empty)
-    }
-  }
-
-  def renderFieldConstraintValidation(hints: List[Hint], tpe: Type): Line = {
-    val tags = hints.collect { case Hint.Constraint(tr) => tr }
+    val tags = hints.collect { case t: Hint.Constraint => t }
     if (tags.isEmpty) Line.empty
     else {
       tags
-        .map(t => line".validated[${t.renderFull}, $tpe]")
-        .intercalate(Line.dot)
+        .map { tag =>
+          line".validated(${renderNativeHint(tag.native)})"
+        }
+        .intercalate(Line.empty)
     }
   }
 
