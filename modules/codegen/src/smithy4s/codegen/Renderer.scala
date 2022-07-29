@@ -90,7 +90,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderProduct(name, originalName, fields, recursive, hints)
     case Union(name, originalName, alts, recursive, hints) =>
       renderUnion(name, originalName, alts, recursive, hints)
-    case TypeAlias(name, originalName, tpe, hints) =>
+    case TypeAlias(name, originalName, tpe, _, hints) =>
       renderTypeAlias(name, originalName, tpe, hints)
     case Enumeration(name, originalName, values, hints) =>
       renderEnum(name, originalName, values, hints)
@@ -99,7 +99,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(name, _, _, _) =>
+      case TypeAlias(name, _, _, _, _) =>
         s"type $name = ${compilationUnit.namespace}.${name}.Type"
     }
 
@@ -661,9 +661,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"$col(${member.schemaRef})"
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
-      case Type.Alias(ns, name, Type.PrimitiveType(_) | _: Type.ExternalType) =>
+      case Type.Alias(
+            ns,
+            name,
+            _,
+            false
+          ) =>
         line"$name.schema".addImport(ns + "." + name)
-      case Type.Alias(ns, name, _) =>
+      case Type.Alias(ns, name, _, _) =>
         line"$name.underlyingSchema".addImport(ns + "." + name)
       case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
       case Type.ExternalType(_, _, providerFqn, underlyingTpe, hint) =>
@@ -690,9 +695,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     def name: Option[String] = tpe match {
-      case Type.Alias(_, name, _) => Some(name)
-      case Type.Ref(_, name)      => Some(name)
-      case _                      => None
+      case Type.Alias(_, name, _, _) => Some(name)
+      case Type.Ref(_, name)         => Some(name)
+      case _                         => None
     }
   }
 

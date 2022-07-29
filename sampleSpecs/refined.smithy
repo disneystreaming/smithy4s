@@ -1,6 +1,7 @@
 namespace smithy4s.example
 
 use smithy4s.meta#refinement
+use smithy4s.meta#unwrap
 
 @trait(selector: "integer")
 @refinement(
@@ -9,7 +10,7 @@ use smithy4s.meta#refinement
 )
 structure ageFormat {}
 
-@trait(selector: "list")
+@trait(selector: "list:test(> member > string)") // lists with string members
 @refinement(
   targetType: "smithy4s.example.refined.FancyList",
   providerInstance: "smithy4s.example.refined.FancyList.provider"
@@ -34,12 +35,29 @@ list FancyList {
   member: String
 }
 
+@fancyListFormat
+@unwrap
+list UnwrappedFancyList {
+  member: String
+}
+
 @nameFormat
 string Name
+
+@nameFormat
+@unwrap
+string DogName
 
 structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
   fancyList: FancyList,
-  name: Name
+  unwrappedFancyList: UnwrappedFancyList,
+  name: Name,
+  dogName: DogName
+}
+
+union UnionWithRefinedTypes {
+  age: Age,
+  dogName: DogName
 }
