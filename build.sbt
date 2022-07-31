@@ -417,7 +417,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.0",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
       Dependencies.Cats.core.value
     ),
     libraryDependencies ++= munitDeps.value,
@@ -457,7 +457,7 @@ lazy val openapi = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.openapi,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -660,7 +660,7 @@ lazy val Dependencies = new {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1"
     )
 
   val Jsoniter =
