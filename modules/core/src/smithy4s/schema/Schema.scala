@@ -77,10 +77,7 @@ sealed trait Schema[A]{
     RefinementSchema(this.addHints(hint), constraint.make(c))
   }
 
-  final def refined[C, B](c: C)(implicit constraint: RefinementProvider[C, A, B]): Schema[B] = {
-    val hint = Hints.Binding.fromValue(c)(constraint.tag)
-    RefinementSchema(this.addHints(hint), constraint.make(c))
-  }
+  final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 }
 
 object Schema {
@@ -175,5 +172,12 @@ object Schema {
   private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String)(implicit ev: A <:< U): SchemaAlt[U, A] = Alt(label, schema, ev)
     def apply(label: String, inject: A => U): SchemaAlt[U, A] = Alt(label, schema, inject)
+  }
+
+  private [smithy4s] class PartiallyAppliedRefinement[A, B](private val schema: Schema[A]) extends AnyVal {
+    def apply[C](c: C)(implicit refinementProvider: RefinementProvider[C, A, B]) : Schema[B] = {
+      val hint = Hints.Binding.fromValue(c)(refinementProvider.tag)
+      RefinementSchema(schema.addHints(hint), refinementProvider.make(c))
+    }
   }
 }

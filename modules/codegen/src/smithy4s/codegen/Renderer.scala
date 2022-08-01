@@ -678,8 +678,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined(${renderNativeHint(hint)})"
-          .addImport(maybeProviderImport.getOrElse(s"$fqn._"))
+        line"${underlyingTpe.schemaRef}.refined[$fqn](${renderNativeHint(hint)})"
+          .addImport(maybeProviderImport.getOrElse(""))
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
