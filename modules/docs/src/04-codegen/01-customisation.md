@@ -194,7 +194,7 @@ object Email {
 }
 ```
 
-Next, we will need to provide a way for smithy4s to understand how to construct and deconstruct our `Email` type. We do this by defining an instance of a `RefinementProvider`.
+Next, we will need to provide a way for smithy4s to understand how to construct and deconstruct our `Email` type. We do this by defining an instance of a `RefinementProvider`. Note that the `RefinementProvider` we create MUST be `implicit`.
 
 ```scala mdoc:reset:invisible
 // this is just here so the lower blocks will compile
@@ -224,7 +224,7 @@ object Email {
     else Left("Email is not valid")
 
   // highlight-start
-  val provider = Refinement.drivenBy[EmailFormat](
+  implicit val provider = Refinement.drivenBy[EmailFormat](
     Email.apply, // Tells smithy4s how to create an Email (or get an error message) given a string
     (e: Email) => e.value // Tells smithy4s how to get a string from an Email
   )
@@ -238,20 +238,37 @@ The `EmailFormat` type passed as a type parameter to `Refinement.drivenBy` is th
 
 :::
 
-Now, we just have one thing left to do: tell smithy4s where to find our custom `Email` type along with its provider. We do this using a trait called `smithy4s.meta#refinement`.
+Now, we just have one thing left to do: tell smithy4s where to find our custom `Email` type. We do this using a trait called `smithy4s.meta#refinement`.
+
+```kotlin
+use smithy4s.meta#refinement
+
+apply test#emailFormat @refinement(
+  targetType: "myapp.types.Email"
+)
+```
+
+Here we are applying the refinement trait to our `emailFormat` trait we defined earlier. We are providing the `targetType` which is our `Email` case class we defined. 
+
+Smithy4s will now be able to update how it does code generation to reference our custom `Email` type.
+
+:::info
+
+If the provider was not in the companion object of our `targetType`, we would need to provide the `providerImport` to the `refinement` trait
+so that smithy4s would be able to find it. For example:
 
 ```kotlin
 use smithy4s.meta#refinement
 
 apply test#emailFormat @refinement(
   targetType: "myapp.types.Email",
-  providerInstance: "myapp.types.Email.provider"
+  providerImport: "myapp.types.providers._"
 )
 ```
 
-Here we are applying the refinement trait to our `emailFormat` trait we defined earlier. We are providing the `targetType` which is our `Email` case class we defined. Finally, we give it a `providerInstance` which is the path to get to the provider that we created above.
+Whether the provider is in the companion object or not, it must be `implicit`.
 
-Smithy4s will now be able to update how it does code generation to reference our custom `Email` type. It will also be able to use the provider to perform the necessary validation and construction of our Email type.
+:::
 
 ## Unwrapping
 

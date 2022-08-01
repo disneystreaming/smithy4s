@@ -10,7 +10,7 @@ object Name {
     if (value.size > 1) Right(new Name(value))
     else Left("Name length must be > 1")
 
-  val provider = Refinement.drivenBy[smithy4s.example.NameFormat](
+  implicit val provider = Refinement.drivenBy[smithy4s.example.NameFormat](
     Name.apply,
     (b: Name) => b.value
   )

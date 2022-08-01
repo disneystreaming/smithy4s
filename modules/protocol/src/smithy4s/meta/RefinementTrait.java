@@ -32,19 +32,15 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 	public static final ShapeId ID = ShapeId.from("smithy4s.meta#refinement");
 
 	private final String targetType;
-	private final String providerInstance;
+	private final Optional<String> providerImport;
 
 	private RefinementTrait(RefinementTrait.Builder builder) {
 		super(ID, builder.getSourceLocation());
 		this.targetType = builder.targetType;
-		this.providerInstance = builder.providerInstance;
+		this.providerImport = builder.providerImport;
 
 		if (targetType == null) {
 			throw new SourceException("A targetType must be provided.", getSourceLocation());
-		}
-
-		if (providerInstance == null) {
-			throw new SourceException("A providerInstance must be provided.", getSourceLocation());
 		}
 	}
 
@@ -52,22 +48,24 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 		return this.targetType;
 	}
 
-	public String getProviderInstance() {
-		return this.providerInstance;
+	public Optional<String> getProviderImport() {
+		return this.providerImport;
 	}
 
 	@Override
 	protected Node createNode() {
 		ObjectNode.Builder builder = Node.objectNodeBuilder();
 		builder.withMember("targetType", getTargetType());
-		builder.withMember("providerInstance", getProviderInstance());
+		Optional<String> maybeImport = getProviderImport();
+		if (maybeImport.isPresent()) {
+			builder.withMember("providerImport", maybeImport.get());
+		}
 		return builder.build();
 	}
 
 	@Override
 	public SmithyBuilder<RefinementTrait> toBuilder() {
-		return builder().targetType(targetType).providerInstance(providerInstance)
-				.sourceLocation(getSourceLocation());
+		return builder().targetType(targetType).providerImport(providerImport).sourceLocation(getSourceLocation());
 	}
 
 	/**
@@ -80,10 +78,15 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 	public static final class Builder extends AbstractTraitBuilder<RefinementTrait, RefinementTrait.Builder> {
 
 		private String targetType;
-		private String providerInstance;
+		private Optional<String> providerImport;
 
-		public RefinementTrait.Builder providerInstance(String providerInstance) {
-			this.providerInstance = providerInstance;
+		public RefinementTrait.Builder providerImport(String providerImport) {
+			this.providerImport = Optional.ofNullable(providerImport);
+			return this;
+		}
+
+		public RefinementTrait.Builder providerImport(Optional<String> providerImport) {
+			this.providerImport = providerImport;
 			return this;
 		}
 
@@ -108,12 +111,11 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 		@Override
 		public RefinementTrait createTrait(ShapeId target, Node value) {
 			ObjectNode objectNode = value.expectObjectNode();
-			String targetType = objectNode.getMember("targetType")
-					.map(node -> node.expectStringNode().getValue()).orElse(null);
-			String providerInstance = objectNode.getMember("providerInstance")
-					.map(node -> node.expectStringNode().getValue()).orElse(null);
-			return builder().sourceLocation(value).targetType(targetType).providerInstance(providerInstance)
-					.build();
+			String targetType = objectNode.getMember("targetType").map(node -> node.expectStringNode().getValue())
+					.orElse(null);
+			Optional<String> providerImport = objectNode.getMember("providerImport")
+					.map(node -> node.expectStringNode().getValue());
+			return builder().sourceLocation(value).targetType(targetType).providerImport(providerImport).build();
 		}
 	}
 }

@@ -198,7 +198,7 @@ object Type {
   case class ExternalType(
       name: String,
       fullyQualifiedName: String,
-      providerFullyQualifiedName: String,
+      providerImport: Option[String],
       underlyingTpe: Type,
       refinementHint: Hint.Native
   ) extends Type
