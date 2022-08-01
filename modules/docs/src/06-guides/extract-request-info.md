@@ -73,7 +73,7 @@ See our [getting started documentation](../01-overview/01-intro.md) for instruct
 Let's start by creating a case class that we will use to hold the value of some headers from our request.
 
 ```scala mdoc:silent
-case class RequestInfo(contentType: Option[String], userAgent: Option[String])
+case class RequestInfo(contentType: String, userAgent: String)
 ```
 
 This class will give us a spot to place the `Content-Type` and `User-Agent` headers, respectively. These are just shown
@@ -86,9 +86,9 @@ import smithy4s.hello._
 import cats.effect.IO
 import cats.effect.IOLocal
 
-final class HelloWorldServiceImpl(local: IOLocal[RequestInfo]) extends HelloWorldService[IO] {
+final class HelloWorldServiceImpl(requestInfo: IO[RequestInfo]) extends HelloWorldService[IO] {
   def hello(name: String, town: Option[String]): IO[Greeting] =
-    local.get.flatMap { reqInfo: RequestInfo =>
+    requestInfo.flatMap { reqInfo: RequestInfo =>
       IO.println("REQUEST_INFO: " + reqInfo)
         .as(Greeting(s"Hello, $name"))
     }
@@ -96,9 +96,9 @@ final class HelloWorldServiceImpl(local: IOLocal[RequestInfo]) extends HelloWorl
 ```
 
 This is a basic implementation that, in addition to returning a `Greeting`, prints the `RequestInfo` out to the console.
-Note that it is getting the `RequestInfo` from the `IOLocal` that is being passed in as a constructor parameter. We need to
-make sure this same `IOLocal` instance is passed to our middleware implementation. That way, the middleware can set the `RequestInfo`
-value that we are reading here.
+Note that it is getting the `RequestInfo` from the `IO[RequestInfo] that is being passed in as a constructor parameter. This `IO`
+will be created using the same `IOLocal` instance is passed to our middleware implementation.
+That way, the middleware can set the `RequestInfo` value that we are reading here.
 
 ### Middleware
 
@@ -115,12 +115,15 @@ object Middleware {
 
   def withRequestInfo(
       routes: HttpRoutes[IO],
-      local: IOLocal[RequestInfo]
+      local: IOLocal[Option[RequestInfo]]
   ): HttpRoutes[IO] =
     HttpRoutes[IO] { request =>
-      val requestInfo = RequestInfo(
-        request.headers.get[`Content-Type`].map(ct => s"${ct.mediaType.mainType}/${ct.mediaType.subType}"),
-        request.headers.get[`User-Agent`].map(_.product.toString)
+      val requestInfo = for {
+        contentType <- request.headers.get[`Content-Type`].map(ct => s"${ct.mediaType.mainType}/${ct.mediaType.subType}")
+        userAgent <- request.headers.get[`User-Agent`].map(_.product.toString)
+      } yield RequestInfo(
+        contentType,
+        userAgent
       )
       OptionT.liftF(local.set(requestInfo)) *> routes(request)
     }
@@ -138,9 +141,13 @@ import cats.effect.kernel.Resource
 object Routes {
   private val docs =
     smithy4s.http4s.swagger.docs[IO](smithy4s.hello.HelloWorldService)
-  def getAll(local: IOLocal[RequestInfo]): Resource[IO, HttpRoutes[IO]] = {
+  def getAll(local: IOLocal[Option[RequestInfo]]): Resource[IO, HttpRoutes[IO]] = {
+    val getRequestInfo: IO[RequestInfo] = local.get.flatMap {
+      case Some(value) => IO.pure(value)
+      case None => IO.raiseError(new IllegalAccessException("Tried to access the value outside of the lifecycle of an http request"))
+    }
     smithy4s.http4s.SimpleRestJsonBuilder
-      .routes(new HelloWorldServiceImpl(local))
+      .routes(new HelloWorldServiceImpl(getRequestInfo))
       .resource
       .map { routes =>
         Middleware.withRequestInfo(routes <+> docs, local)
@@ -152,6 +159,10 @@ object Routes {
 Here we are creating our routes (with swagger docs) and passing them to our middleware. The result of applying the Middleware
 is our final routes.
 
+We also turn our `IOLocal` into an `IO[RequestInfo]` for the `HelloWorldServiceImpl`. We do this because the service implementation
+does not need to know that the value is coming from an `IOLocal` or that the value is optional (since it will always be populated by
+our middleware). Doing it this way allows us to reduce the complexity in the service implementation.
+
 Finally, we create our main class and construct the http4s server.
 
 ```scala mdoc:silent
@@ -160,7 +171,7 @@ import com.comcast.ip4s._
 import org.http4s.ember.server.EmberServerBuilder
 
 object Main extends IOApp.Simple {
-  def run: IO[Unit] = IOLocal(RequestInfo(None, None)).flatMap { local =>
+  def run: IO[Unit] = IOLocal(Option.empty[RequestInfo]).flatMap { local =>
     Routes
       .getAll(local)
       .flatMap { routes =>
@@ -176,7 +187,7 @@ object Main extends IOApp.Simple {
 }
 ```
 
-Notice that we create the `IOLocal` with `RequestInfo(None, None)`. This is because `IOLocal` requires a value
+Notice that we create the `IOLocal` with `Option.empty[RequestInfo]`. This is because `IOLocal` requires a value
 to be constructed. However, this value will never be used in practice. This is because we are setting the value in
 the middleware on every request prior to the request being handled by our `HelloWorldService` implementation.
 
@@ -197,9 +208,12 @@ Running this `curl` will cause the following to print out to the console:
 REQUEST_INFO: RequestInfo(Some(application/json),Some(Chrome/103.0.0.0))
 ```
 
-## Note about Kleisli/ReaderT
+## Alternative Methods
 
-You can use `Kleisli` to accomplish the same things we showed in this tutorial and you are welcome to do so if you prefer that.
+If you are working with a tagless `F[_]` rather than `IO` directly, you may want to check out Chris Davenport's [implementation
+of FiberLocal](https://github.com/davenverse/fiberlocal/).
+
+You can also use `Kleisli` to accomplish the same things we showed in this tutorial and you are welcome to do so if you prefer that.
 We opted to show an example with `IOLocal` since it allows users to use `IO` directly, without monad transformers, which many
 users will be more comfortable with. Similarly, you could use `Local` from cats-mtl or probably a variety of other approaches.
 We recommend you use whatever fits the best with your current application design.
