@@ -37,6 +37,13 @@ trait RefinementProvider[C, A, B] { self =>
       def make(c: C): Refinement[A0, B0] { type Constraint = C } =
         self.make(c).imapFull(bijectSource, bijectTarget)
     }
+
+  def validateOnly: RefinementProvider.Simple[C, A] =
+    Refinement
+      .drivenBy[C]
+      .contextual[A, A](c =>
+        Surjection(v => this.make(c).apply(v).map(_ => v), identity)
+      )(tag)
 }
 
 object RefinementProvider {
