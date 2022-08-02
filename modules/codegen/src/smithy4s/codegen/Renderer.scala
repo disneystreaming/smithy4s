@@ -671,8 +671,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(ns, name, _, _) =>
         line"$name.underlyingSchema".addImport(ns + "." + name)
       case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
-      case Type.ExternalType(_, _, providerFqn, underlyingTpe, hint) =>
-        line"${underlyingTpe.schemaRef}.refined(${renderNativeHint(hint)})($providerFqn)"
+      case Type.ExternalType(
+            _,
+            fqn,
+            maybeProviderImport,
+            underlyingTpe,
+            hint
+          ) =>
+        line"${underlyingTpe.schemaRef}.refined[$fqn](${renderNativeHint(hint)})"
+          .addImport(maybeProviderImport.getOrElse(""))
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {

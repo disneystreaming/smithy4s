@@ -285,7 +285,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             Type.ExternalType(
               shape.name,
               refined.getTargetType(),
-              refined.getProviderInstance(),
+              refined.getProviderImport().asScala,
               base,
               unfoldTrait(trt)
             )

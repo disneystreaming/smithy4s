@@ -46,8 +46,11 @@ structure vector {}
 
 /// Allows specifying a custom type that smithy4s will use for rendering
 /// the model. `targetType` should point to the type that you want
-/// to use in the place of the standard smithy4s type. `providerInstance`
-/// should point to an instance of the RefinementProvider for the type specified by `targetType`.
+/// to use in the place of the standard smithy4s type. `providerImport`
+/// should be an import that will bring in the implicit RefinementProvider
+/// for the type specified by `targetType`. `providerImport` is optional
+/// because it is unnecessary if the RefinementProvider is inside of the
+/// companion object of the `targetType`.
 /// For example:
 /// namespace test
 /// @trait(selector: "string")
@@ -59,22 +62,26 @@ structure vector {}
 /// namespace test.meta
 /// apply test#emailFormat @refinement(
 ///   targetType: "myapp.types.Email",
-///   providerInstance: "myapp.types.Email.provider"
+///   providerImport: "myapp.types.Email.provider._"
 /// )
 ///
 /// Here we are applying the refinement trait to the `test#emailFormat` trait.
 /// We tell it which type it should be represented by in scala code
-/// and where to find the provider.
+/// and where to find the provider implicit.
 @trait(selector: "* [trait|trait]")
 structure refinement {
     @required
     targetType: Classpath,
-    @required
-    providerInstance: Classpath
+    providerImport: Import
 }
 
+/// e.g. com.test_out.v2.Something
 @pattern("^(?:[a-zA-Z][\\w]*\\.?)*$")
 string Classpath
+
+/// e.g. com.test_out.v2.Something._
+@pattern("^(?:[a-zA-Z][\\w]*\\.?)*\\._$")
+string Import
 
 /// This trait is used to signal that this type should not be wrapped
 /// in a newtype at usage sites. For example:

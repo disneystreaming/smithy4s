@@ -6,21 +6,19 @@ use smithy4s.meta#unwrap
 @trait(selector: "integer")
 @refinement(
   targetType: "smithy4s.example.refined.Age",
-  providerInstance: "smithy4s.example.refined.Age.provider"
+  providerImport: "smithy4s.example.refined.Age.provider._"
 )
 structure ageFormat {}
 
 @trait(selector: "list:test(> member > string)") // lists with string members
 @refinement(
-  targetType: "smithy4s.example.refined.FancyList",
-  providerInstance: "smithy4s.example.refined.FancyList.provider"
+  targetType: "smithy4s.example.refined.FancyList"
 )
 structure fancyListFormat {}
 
 @trait(selector: "string")
 @refinement(
-  targetType: "smithy4s.example.refined.Name",
-  providerInstance: "smithy4s.example.refined.Name.provider"
+  targetType: "smithy4s.example.refined.Name"
 )
 structure nameFormat {}
 

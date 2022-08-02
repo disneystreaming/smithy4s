@@ -10,8 +10,11 @@ object Age {
     if (value > 0) Right(new Age(value))
     else Left("Age must be > 0")
 
-  val provider = Refinement.drivenBy[smithy4s.example.AgeFormat](
-    Age.apply,
-    (b: Age) => b.value
-  )
+  // Done like this just to test the import functionality. Not normally recommended.
+  object provider {
+    implicit val provider = Refinement.drivenBy[smithy4s.example.AgeFormat](
+      Age.apply,
+      (b: Age) => b.value
+    )
+  }
 }
