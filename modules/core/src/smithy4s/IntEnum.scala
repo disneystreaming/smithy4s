@@ -16,8 +16,6 @@
 
 package smithy4s
 
-import smithy4s.schema.Schema
-
 final case class IntEnum()
 object IntEnum extends ShapeTag.Companion[IntEnum] {
   val id: ShapeId = ShapeId("smithy4s", "IntEnum")
