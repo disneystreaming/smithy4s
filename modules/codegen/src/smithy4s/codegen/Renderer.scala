@@ -128,10 +128,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       lines(
         s"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
         block(
-          s"object $name extends smithy4s.Service.Provider[${name}Gen, ${name}Operation]"
+          s"object $name extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
           s"def apply[F[_]](implicit F: $name[F]): F.type = F",
-          s"def service : smithy4s.Service[${name}Gen, ${name}Operation] = ${name}Gen",
+          s"def service: $Service_[${name}Gen, ${name}Operation] = ${name}Gen",
           s"val id: $ShapeId_ = service.id"
         )
       )
@@ -180,7 +180,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints = List".args(ops.map(_.name)),
+        line"val endpoints: List[$Endpoint_[$opTraitName, _, _, _, _, _]] = List"
+          .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
         newline,
@@ -211,12 +212,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
+        line"def transform[P[_, _, _, _, _]](transformation: $Transformation_[$opTraitName, P]): $genName[P] = reified.transform(transformation)",
         newline,
-        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: smithy4s.Transformation[P, P1]): $genName[P1] = alg.transform(transformation)",
+        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genName[P], transformation: $Transformation_[P, P1]): $genName[P1] = alg.transform(transformation)",
         newline,
         block(
-          line"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): smithy4s.Transformation[$opTraitName, P] = new smithy4s.Transformation[$opTraitName, P]"
+          line"def asTransformation[P[_, _, _, _, _]](impl : $genName[P]): $Transformation_[$opTraitName, P] = new $Transformation_[$opTraitName, P]"
         ) {
           if (ops.isEmpty) {
             line"""def apply[I, E, O, SI, SO](op : $opTraitName[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")""".toLines
@@ -346,22 +347,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       if (hints.contains(Hint.Error)) {
         block(line"${decl} extends Throwable") {
           fields
-            .find(_.name == "message")
-            .map(field => (field.tpe, field.required))
-            .filter { case (tpe, _) =>
-              tpe.dealiased == Type.PrimitiveType(Primitive.String)
-            } match {
-            case Some((tpe, true)) if (tpe.dealiased == tpe) =>
-              line"override def getMessage() : String = message"
-            case Some((tpe, false)) if (tpe.dealiased == tpe) =>
-              line"override def getMessage() : String = message.orNull"
-            case Some((_, true)) =>
-              line"override def getMessage() : String = message.value"
-            case Some((_, false)) =>
-              line"override def getMessage() : String = message.map(_.value).orNull"
-
-            case None => Line.empty
-          }
+            .find { f =>
+              f.hints.contains_(Hint.ErrorMessage) ||
+              f.name === "message"
+            }
+            .filter {
+              _.tpe.dealiased == Type.PrimitiveType(Primitive.String)
+            }
+            .foldMap(renderGetMessage)
         }
       } else {
         val extend = adtParent.map(t => s" extends $t").getOrElse("")
@@ -420,6 +413,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         additionalLines
       )
     ).addImports(imports)
+  }
+
+  private def renderGetMessage(field: Field) = field match {
+    case field if field.tpe.isResolved && field.required =>
+      line"override def getMessage(): String = ${field.name}"
+    case field if field.tpe.isResolved =>
+      line"override def getMessage(): String = ${field.name}.orNull"
+    case field if field.required =>
+      line"override def getMessage(): String = ${field.name}.value"
+    case field =>
+      line"override def getMessage(): String = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {

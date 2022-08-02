@@ -11,7 +11,7 @@ to generate code from specs that may be found in Maven Central or other artifact
 ## SBT
 
 Using the SBT plugin, the `Smithy4s` config object can be used to tag dependencies that Smithy4s should feed to the code generator.
-For instance, AWS publishes a number of [api-gateway specific traits](https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy) to [Maven central](https://search.maven.org/artifact/software.amazon.smithy/smithy-aws-apigateway-traits/1.21.0/jar) (the shapes are defined there in a smithy-compliant Json file).
+For instance, AWS publishes a number of [api-gateway specific traits](https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy) to [Maven central](https://search.maven.org/artifact/software.amazon.smithy/smithy-aws-apigateway-traits) (the shapes are defined there in a smithy-compliant Json file).
 
 You can declare your intent to depend on these smithy definitions as such :
 

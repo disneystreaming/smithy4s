@@ -449,7 +449,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect(message == "input map exceeded max arity of `1024`")
+        expect(message == "Input map exceeded max arity of 1024")
     }
   }
 
@@ -464,7 +464,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "input list exceeded max arity of `1024`")
+        expect.same(message, "Input list exceeded max arity of 1024")
     }
   }
 
@@ -475,7 +475,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "input JSON document exceeded max arity of `1024`")
+        expect.same(message, "Input JSON document exceeded max arity of 1024")
     }
   }
 
@@ -487,7 +487,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(_, _, message) =>
-        expect.same(message, "input JSON document exceeded max arity of `1024`")
+        expect.same(message, "Input JSON document exceeded max arity of 1024")
     }
   }
 

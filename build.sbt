@@ -159,6 +159,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
@@ -326,7 +328,7 @@ lazy val `codegen-cli` = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % "2.2.0",
+      "com.monovore" %% "decline" % "2.3.0",
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -415,7 +417,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
       Dependencies.Cats.core.value
     ),
     libraryDependencies ++= munitDeps.value,
@@ -455,7 +457,7 @@ lazy val openapi = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.openapi,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.7.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -659,16 +661,16 @@ lazy val Dependencies = new {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.7.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1"
     )
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.36"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.13.38"
     )
 
   val Smithy = new {
-    val smithyVersion = "1.21.0"
+    val smithyVersion = "1.22.0"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
@@ -684,7 +686,7 @@ lazy val Dependencies = new {
 
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.10")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.2.11")
   }
 
   val Circe = new {
@@ -702,10 +704,10 @@ lazy val Dependencies = new {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.12")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.14")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.12" else "0.22.13")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.14" else "0.22.14")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
@@ -723,7 +725,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.13" else "0.6.13")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.7.14" else "0.6.14")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)

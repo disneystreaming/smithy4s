@@ -44,6 +44,14 @@ structure indexedSeq {}
                    [trait|smithy.api#uniqueItems]))""")
 structure vector {}
 
+// the errorMessage trait marks a structure's field as one that will be used
+// for the generated exception's error message.
+@trait(
+    selector: "structure > member",
+    structurallyExclusive: "member"
+)
+structure errorMessage {}
+
 /// Allows specifying a custom type that smithy4s will use for rendering
 /// the model. `targetType` should point to the type that you want
 /// to use in the place of the standard smithy4s type. `providerImport`
