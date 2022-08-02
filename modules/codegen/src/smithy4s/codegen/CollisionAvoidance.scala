@@ -23,6 +23,7 @@ import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.Type.ExternalType
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -70,11 +71,12 @@ object CollisionAvoidance {
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, originalName, tpe, hints) =>
+      case TypeAlias(name, originalName, tpe, isUnwrapped, hints) =>
         TypeAlias(
           protect(name.capitalize),
           originalName,
           modType(tpe),
+          isUnwrapped,
           hints.map(modHint)
         )
       case Enumeration(name, originalName, values, hints) =>
@@ -97,9 +99,17 @@ object CollisionAvoidance {
       Type.Collection(collectionType, modType(member))
     case Type.Map(key, value)      => Type.Map(modType(key), modType(value))
     case Type.Ref(namespace, name) => Type.Ref(namespace, name.capitalize)
-    case Alias(namespace, name, tpe) =>
-      Alias(namespace, protect(name.capitalize), modType(tpe))
+    case Alias(namespace, name, tpe, isUnwrapped) =>
+      Alias(namespace, protect(name.capitalize), modType(tpe), isUnwrapped)
     case PrimitiveType(prim) => PrimitiveType(prim)
+    case ExternalType(name, fqn, pFqn, under, refinementHint) =>
+      ExternalType(
+        protect(name),
+        fqn,
+        pFqn,
+        modType(under),
+        modNativeHint(refinementHint)
+      )
   }
 
   private def modField(field: Field): Field = {
@@ -134,10 +144,13 @@ object CollisionAvoidance {
   private def modRef(ref: Type.Ref): Type.Ref =
     Type.Ref(ref.namespace, ref.name.capitalize)
 
+  private def modNativeHint(hint: Hint.Native): Hint.Native =
+    Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+
   private def modHint(hint: Hint): Hint = hint match {
-    case Native(nt) => Native(smithy4s.recursion.preprocess(modTypedNode)(nt))
-    case Constraint(tr) => Constraint(modRef(tr))
-    case other          => other
+    case n: Native           => modNativeHint(n)
+    case Constraint(tr, nat) => Constraint(modRef(tr), modNativeHint(nat))
+    case other               => other
   }
 
   private def modProduct(p: Product): Product = {

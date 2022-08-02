@@ -76,6 +76,7 @@ case class TypeAlias(
     name: String,
     originalName: String,
     tpe: Type,
+    isUnwrapped: Boolean,
     hints: List[Hint] = Nil
 ) extends Decl
 
@@ -150,8 +151,8 @@ object Alt {
 
 sealed trait Type {
   def dealiased: Type = this match {
-    case Type.Alias(_, _, tpe) => tpe.dealiased
-    case other                 => other
+    case Type.Alias(_, _, tpe, _) => tpe.dealiased
+    case other                    => other
   }
 
   def isResolved: Boolean = dealiased == this
@@ -190,8 +191,20 @@ object Type {
   case class Ref(namespace: String, name: String) extends Type {
     def show = namespace + "." + name
   }
-  case class Alias(namespace: String, name: String, tpe: Type) extends Type
+  case class Alias(
+      namespace: String,
+      name: String,
+      tpe: Type,
+      isUnwrapped: Boolean
+  ) extends Type
   case class PrimitiveType(prim: Primitive) extends Type
+  case class ExternalType(
+      name: String,
+      fullyQualifiedName: String,
+      providerImport: Option[String],
+      underlyingTpe: Type,
+      refinementHint: Hint.Native
+  ) extends Type
 }
 
 sealed abstract class CollectionType(val tpe: String)
@@ -209,7 +222,7 @@ object Hint {
   case object Error extends Hint
   case object PackedInputs extends Hint
   case object ErrorMessage extends Hint
-  case class Constraint(tr: Type.Ref) extends Hint
+  case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint

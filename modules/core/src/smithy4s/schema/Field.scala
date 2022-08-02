@@ -165,57 +165,6 @@ object Field {
       }
     }
 
-    def validated[C, A2](implicit
-        FieldValidator: Field.FieldValidator[C, A, A2],
-        constraint: Validator.Simple[C, A2]
-    ): SchemaField[S, A] = FieldValidator(field, constraint)
-  }
-
-  /**
-   * Construct aiming at facilitate the application of Refinements
-   * on fields, as it's made tricky due to the GADT nature of fields.
-   */
-  trait FieldValidator[C, A, T] {
-    def apply[S](
-        field: SchemaField[S, A],
-        constraint: Validator.Simple[C, T]
-    ): SchemaField[S, A]
-  }
-
-  object FieldValidator {
-    implicit def requiredCase[C, A]: FieldValidator[C, A, A] =
-      new FieldValidator[C, A, A] {
-        def apply[S](
-            field: SchemaField[S, A],
-            constraint: Validator.Simple[C, A]
-        ): SchemaField[S, A] = field match {
-          case Required(label, instance, get) =>
-            Required(
-              label,
-              instance.validatedAgainstHints(instance.hints)(constraint),
-              get
-            )
-          case other => other
-        }
-      }
-
-    implicit def optionalCase[C, A]: FieldValidator[C, Option[A], A] =
-      new FieldValidator[C, Option[A], A] {
-        def apply[S](
-            field: SchemaField[S, Option[A]],
-            constraint: Validator.Simple[C, A]
-        ): SchemaField[S, Option[A]] = field match {
-          case opt: Optional[Schema, S, A] =>
-            Optional(
-              opt.label,
-              opt.instance.validatedAgainstHints(opt.instance.hints)(
-                constraint
-              ),
-              opt.get
-            )
-          case other => other
-        }
-      }
   }
 
 }

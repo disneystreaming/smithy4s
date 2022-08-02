@@ -3,3 +3,4 @@ smithy4s.api.validation.HttpHeaderValidator
 smithy4s.api.validation.DiscriminatedUnionValidator
 smithy4s.meta.validation.AdtMemberTraitValidator
 smithy4s.meta.validation.ErrorMessageTraitValidator
+smithy4s.meta.validation.RefinementTraitValidator

@@ -177,15 +177,13 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): MetaEncode[B] = self(schema).contramap(from)
+      bijection: Bijection[A, B]
+  ): MetaEncode[B] = self(schema).contramap(bijection.from)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): MetaEncode[B] = self(schema).contramap(from)
+      refinement: Refinement[A, B]
+  ): MetaEncode[B] = self(schema).contramap(refinement.from)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaEncode[A] =
     MetaEncode.empty
