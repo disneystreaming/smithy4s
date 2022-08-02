@@ -244,7 +244,8 @@ object CollisionAvoidance {
     "BigDecimal",
     "Map",
     "List",
-    "Set"
+    "Set",
+    "None"
   )
 
   private val reservedNames = reservedKeywords ++ reservedTypes
