@@ -71,12 +71,13 @@ class PathSpec() extends munit.FunSuite {
           Timestamp(0L, 0),
           Timestamp(0L, 0),
           Timestamp(0L, 0),
-          true
+          true,
+          smithy4s.example.Numbers.TWO
         )
       )
 
     val expected =
-      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
+      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: "2" :: Nil
 
     expect.eql(result, expected)
   }

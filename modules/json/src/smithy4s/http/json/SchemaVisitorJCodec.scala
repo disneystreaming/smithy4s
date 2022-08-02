@@ -974,6 +974,17 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
+  ): JCodec[E] = if (hints.get[IntEnum].isDefined) {
+    handleIntEnum(shapeId, hints, values, total)
+  } else {
+    handleEnum(shapeId, hints, values, total)
+  }
+
+  private def handleEnum[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
   ): JCodec[E] = new JCodec[E] {
     def fromName(v: String): Option[E] =
       values.find(_.stringValue == v).map(_.value)
@@ -1001,6 +1012,40 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
     def encodeKey(x: E, out: JsonWriter): Unit =
       out.writeKey(total(x).stringValue)
+  }
+
+  private def handleIntEnum[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): JCodec[E] = new JCodec[E] {
+    def fromOrdinal(v: Int): Option[E] =
+      values.find(_.ordinal == v).map(_.value)
+    val expecting: String =
+      s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
+
+    def decodeValue(cursor: Cursor, in: JsonReader): E = {
+      val i = in.readInt()
+      fromOrdinal(i) match {
+        case Some(value) => value
+        case None        => in.enumValueError(i)
+      }
+    }
+
+    def encodeValue(x: E, out: JsonWriter): Unit =
+      out.writeVal(total(x).ordinal)
+
+    def decodeKey(in: JsonReader): E = {
+      val i = in.readKeyAsInt()
+      fromOrdinal(i) match {
+        case Some(value) => value
+        case None        => in.enumValueError(i)
+      }
+    }
+
+    def encodeKey(x: E, out: JsonWriter): Unit =
+      out.writeKey(total(x).ordinal)
   }
 
   private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =

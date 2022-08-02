@@ -161,7 +161,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
@@ -617,7 +618,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "brands.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "brandscommon.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "refined.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "refined.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
@@ -670,7 +672,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.22.0"
+    val smithyVersion = "1.21.0-rc1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =

@@ -167,7 +167,11 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): DocumentEncoder[E] = from(a => DString(total(a).stringValue))
+  ): DocumentEncoder[E] = if (hints.get[IntEnum].isDefined) {
+    from(a => Document.fromInt(total(a).ordinal))
+  } else {
+    from(a => DString(total(a).stringValue))
+  }
 
   override def struct[S](
       shapeId: ShapeId,

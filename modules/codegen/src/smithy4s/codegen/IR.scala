@@ -89,7 +89,7 @@ case class Enumeration(
 case class EnumValue(
     value: String,
     ordinal: Int,
-    name: Option[String],
+    name: String,
     hints: List[Hint] = Nil
 )
 
@@ -226,6 +226,7 @@ object Hint {
   case class Protocol(traits: List[Type.Ref]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
+  case object IntEnum extends Hint
 
   sealed trait SpecializedList extends Hint
   object SpecializedList {
@@ -305,7 +306,7 @@ object TypedNode {
       ref: Type.Ref,
       value: String,
       ordinal: Int,
-      name: Option[String]
+      name: String
   ) extends TypedNode[Nothing]
   case class StructureTN[A](
       ref: Type.Ref,

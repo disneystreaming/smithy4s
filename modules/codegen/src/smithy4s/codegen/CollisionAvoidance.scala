@@ -82,7 +82,7 @@ object CollisionAvoidance {
       case Enumeration(name, originalName, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, ordinal, name, hints) =>
-            EnumValue(value, ordinal, name.map(protect), hints.map(modHint))
+            EnumValue(value, ordinal, protect(name), hints.map(modHint))
         }
         Enumeration(
           protect(name.capitalize),
