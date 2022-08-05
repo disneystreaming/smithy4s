@@ -106,8 +106,8 @@ object LineSegment {
   }
   implicit val lineSegmentShow:Show[LineSegment] = Show.show {
     case Hardcoded(value) => value
-    case TypeDefinition(pkg, name) =>   s"${(pkg + name).mkString(".")}"
-    case TypeReference(pkg, name) =>  s"${(pkg + name).mkString(".")}"
+    case td:TypeDefinition=>   td.show
+    case tr:TypeReference =>  tr.show
   }
   implicit val lineShow:Show[Line] = Show.show(line => line.segments.toList.map(_.show).mkString(""))
 
@@ -133,10 +133,10 @@ case class Line(segments:Chain[LineSegment]) {
 
   def toLines = Lines(self)
 
-  def args(l: LinesWithValue*): Lines = {
+  def args(linesWithValue: LinesWithValue*): Lines = {
     if (segments.nonEmpty) {
-      if (l.exists(_.render.list.nonEmpty))
-        Lines(List(self + Hardcoded("("))) ++ indent(l.toList.foldMap(_.render).mapLines(_ + Hardcoded(","))) ++ Lines(")")
+      if (linesWithValue.exists(_.render.list.nonEmpty))
+        Lines(List(self + Hardcoded("("))) ++ indent(linesWithValue.toList.foldMap(_.render).mapLines(_ + Hardcoded(","))) ++ Lines(")")
       else
         Lines(self  + Hardcoded("()"))
     }
