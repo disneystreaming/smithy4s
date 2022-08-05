@@ -50,13 +50,13 @@ package object codegen {
   }
 
   private[codegen] val empty: Lines = Lines.empty
-  private[codegen] val newline: Lines = Lines(List(""))
+  private[codegen] val newline: Lines = Lines(List(Line("")))
   private[codegen] def lines(l: LinesWithValue*): Lines =
     l.toList.foldMap(_.render)
 
-  private[codegen] def indent(l: List[String]): List[String] = l.map { line =>
-    if (line.length > 0)
-      "  " + line
+  private[codegen] def indent(l: List[Line]): List[Line] = l.map { line =>
+    if (line.segments.length > 0)
+      Line("  ") :++ line
     else
       line
   }

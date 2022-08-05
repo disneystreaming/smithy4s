@@ -19,6 +19,7 @@ package smithy4s.codegen
 import cats.data.NonEmptyList
 import cats.kernel.Monoid
 import cats.syntax.all._
+import smithy4s.codegen.LineSegment.{Hardcoded, TypeReference}
 
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
@@ -34,9 +35,8 @@ object ToLines {
 
   implicit def listToLines[A](implicit A: ToLines[A]): ToLines[List[A]] = {
     (l: List[A]) =>
-      val (imports, lines) =
-        l.map(A.render).map(r => (r.imports, r.lines)).unzip
-      Lines(imports.fold(Set.empty)(_ ++ _), lines.flatten)
+      val lines: List[List[Line]] = l.map(A.render).map(r => r.list)
+      Lines(lines.flatten)
   }
 
   implicit def tupleRenderable[A](implicit
@@ -49,56 +49,56 @@ object ToLines {
     (l: NonEmptyList[A]) => listToLines(A).render(l.toList)
 
   implicit def lineToLines[A: ToLine]: ToLines[A] = (a: A) => {
-    val (imports, line) = ToLine[A].render(a).tupled
+    val line = ToLine[A].render(a)
     // empty string must be treated like an empty list which is a Monoid Empty as oposed to wrapping in a singleton list which will render a new line character`
-    if (line.isEmpty) Lines.empty else Lines(imports, List(line))
+    if (line.segments.isEmpty) Lines.empty else Lines(line)
   }
 
 }
 
 // Models
 
-case class Lines(imports: Set[String], lines: List[String]) {
-  def tupled = (imports, lines)
+case class Lines(list: List[Line]) {
   def block(l: LinesWithValue*): Lines = {
-    val openBlock = lines.lastOption.map {
-      case ")"   => "){"
-      case "}"   => "}{"
-      case other => other + " {"
+    val openBlock: List[Line] = list.lastOption.flatMap(_.segments.lastOption).collect {
+      case hardcoded: Hardcoded => hardcoded.value match {
+        case ")" => Line("){")
+        case "}" => Line("}{")
+        case other => Line(other + " {")
+      }
     } match {
-      case Some(value) => lines.dropRight(1) ::: value :: Nil
-      case None        => lines
+      case Some(value) => list.dropRight(1) :+ value
+      case None        => list
     }
 
-    Lines(imports, openBlock) ++ indent(
+    Lines( openBlock) ++ indent(
       l.toList.foldMap(_.render)
     ) ++ Lines("}")
   }
 
   def appendToLast(s: String): Lines = {
-    val newLines = lines.lastOption.map(_ + s) match {
-      case Some(value) => lines.dropRight(1).:+(value)
-      case None        => lines
+    val newLines = list.lastOption.map(_ :++ Line(s)) match {
+      case Some(value) => list.dropRight(1) :+ value
+      case None        => list
     }
-    Lines(imports, newLines)
+    Lines( newLines)
   }
 
-  def transformLines(f: List[String] => List[String]): Lines =
-    Lines(imports, f(lines))
-  def mapLines(f: String => String): Lines = transformLines(_.map(f))
+  def transformLines(f: List[Line] => List[Line]): Lines = Lines(f(list))
+  def mapLines(f: Line => Line): Lines = transformLines(_.map(f))
 
   def ++(other: Lines): Lines =
-    Lines(imports ++ other.imports, lines ++ other.lines)
+    Lines(list ++ other.list)
 
   def addImport(im: String): Lines =
-    if (im.nonEmpty) Lines(imports + im, lines) else this
+    if (im.nonEmpty) Lines(list :+ TypeReference(im)) else this
   def addImports(im: Set[String]): Lines =
-    Lines(imports ++ im, lines)
+  Lines(list ::: im.map(s => TypeReference(s)).toList)
 
 }
 object Lines {
-  def apply(line: String): Lines = Lines(Set.empty, List(line))
-  def apply(lines: List[String]): Lines = Lines(Set.empty, lines)
-  val empty = Lines(Set.empty, List.empty)
+  def apply(line: Line): Lines = Lines(List(line))
+  def apply(str:String):Lines = Lines(List(Line(str)))
+  val empty = Lines( List.empty[Line])
   implicit val linesMonoid: Monoid[Lines] = Monoid.instance(empty, _ ++ _)
 }

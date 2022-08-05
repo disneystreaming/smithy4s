@@ -18,86 +18,149 @@ package smithy4s.codegen
 
 import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
-import smithy4s.codegen.LineSyntax.LineInterpolator
+import cats.data.Chain
+import cats.Show
+import cats.syntax.all._
+import smithy4s.codegen.LineSegment.{Hardcoded, TypeDefinition, TypeReference}
+
 
 trait ToLine[A] {
   def render(a: A): Line
 }
+
 object ToLine {
   def apply[A](implicit A: ToLine[A]): ToLine[A] = A
-
+  implicit val lineSegment:ToLine[LineSegment] = l => Line(l)
   implicit val identity: ToLine[Line] = r => r
-
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
   implicit val stringToLine: ToLine[String] = s => Line(s)
   implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
     override def render(a: Type): Line = a match {
       case Type.Collection(collectionType, member) =>
-        val (imports, m) = render(member).tupled
+        val line  = render(member)
         val col = collectionType.tpe
-        Line(imports, s"$col[${m.mkString("")}]")
+       TypeReference(col) :+ Hardcoded("[") :++ line :+ Hardcoded("]")
       case Type.Map(key, value) =>
-        val (kimports, k) = render(key).tupled
-        val (vimports, v) = render(value).tupled
-        Line(kimports ++ vimports, s"Map[${k.mkString("")}, ${v.mkString("")}]")
-      case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
-        Line(Set(s"$ns.$name"), name)
-      case Type.Alias(_, _, aliased) =>
-        render(aliased)
-      case Type.Ref(namespace, name) =>
-        val imports = Set(s"$namespace.$name")
-        Line(imports, name)
+        val keyLine = render(key)
+        val valueLine = render(value)
+        TypeReference("Map") :+ Hardcoded("[") :++ Line((keyLine.segments :+ Hardcoded(",")) ++ valueLine.segments :+ Hardcoded("]"))
+      case Type.Alias(ns, name, Type.PrimitiveType(_)) => TypeReference(ns, name)
+      case Type.Alias(_, _, aliased) => render(aliased)
+      case Type.Ref(namespace, name) => TypeReference(namespace, name)
       case Type.PrimitiveType(prim) => primitiveLine(prim)
     }
   }
   private def primitiveLine(p: Primitive): Line =
     p match {
-      case Primitive.Unit       => line"Unit"
-      case Primitive.ByteArray  => Line(Set("smithy4s.ByteArray"), "ByteArray")
-      case Primitive.Bool       => line"Boolean"
-      case Primitive.String     => line"String"
-      case Primitive.Timestamp  => Line(Set("smithy4s.Timestamp"), "Timestamp")
-      case Primitive.Byte       => line"Byte"
-      case Primitive.Int        => line"Int"
-      case Primitive.Short      => line"Short"
-      case Primitive.Long       => line"Long"
-      case Primitive.Float      => line"Float"
-      case Primitive.Double     => line"Double"
-      case Primitive.BigDecimal => line"BigDecimal"
-      case Primitive.BigInteger => line"BigInt"
-      case Primitive.Uuid       => Line(Set("java.util.UUID"), "UUID")
-      case Primitive.Document   => Line(Set("smithy4s.Document"), "Document")
-      case Primitive.Nothing    => line"Nothing"
+      case Primitive.Unit       => TypeReference("Unit")
+      case Primitive.ByteArray  => TypeReference("smithy4s", "ByteArray")
+      case Primitive.Bool       => TypeReference("Boolean")
+      case Primitive.String     => TypeReference("String")
+      case Primitive.Timestamp  => TypeReference("smithy4s", "Timestamp")
+      case Primitive.Byte       => TypeReference("Byte")
+      case Primitive.Int        => TypeReference("Int")
+      case Primitive.Short      => TypeReference("Short")
+      case Primitive.Long       => TypeReference("Long")
+      case Primitive.Float      => TypeReference("Float")
+      case Primitive.Double     => TypeReference("Double")
+      case Primitive.BigDecimal => TypeReference("BigDecimal")
+      case Primitive.BigInteger => TypeReference("BigInt")
+      case Primitive.Uuid       => TypeReference("java.util", "UUID")
+      case Primitive.Document   => TypeReference("smithy4s", "Document")
+      case Primitive.Nothing    => TypeReference("Nothing")
     }
 }
 
 // Models
-case class Line(imports: Set[String], line: String) {
-  def tupled = (imports, line)
-  def suffix(suffix: Line) = modify(s => s"$s $suffix")
-  def addImport(imp: String) = copy(imports = imports + imp)
-  def modify(f: String => String) = Line(imports, f(line))
-  def nonEmpty = line.nonEmpty
-  def toLines = Lines(imports, List(line))
 
-  def args(l: LinesWithValue*): Lines = if (l.exists(_.render.lines.nonEmpty)) {
-    val openBlock = if (line.nonEmpty) line + "(" else ""
-    Lines(imports, List(openBlock)) ++ indent(
-      l.toList.foldMap(_.render).mapLines(_ + ",")
-    ) ++ Lines(")")
-  } else Lines(line + "()").addImports(imports)
-
+sealed trait LineSegment{ self =>
+  def toLine: Line = Line(Chain.one(self))
 }
+object LineSegment {
+  case class Hardcoded(value: String) extends LineSegment
+  case class TypeDefinition(pkg: Set[String], name: String)  extends LineSegment
+  case class TypeReference(pkg: Set[String], name: String) extends LineSegment
+  object TypeReference{
+    def apply(pkg: String, name: String): Line = TypeReference(pkg.split("\\.").toSet, name).toLine
+    def apply(fqn:String):Line = {
+      val parts = fqn.split("\\.").toList
+      TypeReference(parts.dropRight(1).toSet,parts.last).toLine
+    }
+
+  }
+
+  implicit val hardcodedShow = Show.show[Hardcoded](hc => hc.value)
+  implicit val typeDefShow:Show[TypeDefinition] = Show.show{
+    td =>  s"${(td.pkg + td.name).mkString(".")}"
+  }
+  implicit val typeRefShow:Show[TypeReference] = Show.show{
+    tr =>  s"${(tr.pkg + tr.name).mkString(".")}"
+  }
+  implicit val lineSegmentShow:Show[LineSegment] = Show.show {
+    case Hardcoded(value) => value
+    case TypeDefinition(pkg, name) =>   s"${(pkg + name).mkString(".")}"
+    case TypeReference(pkg, name) =>  s"${(pkg + name).mkString(".")}"
+  }
+  implicit val lineShow:Show[Line] = Show.show(line => line.segments.toList.map(_.show).mkString(""))
+
+    implicit def chainShow[A:Show]: Show[Chain[A]] = Show.show{
+      chain => chain.toList.map(_.show).mkString
+    }
+}
+case class Line(segments:Chain[LineSegment]) {
+  self =>
+  def :++(other: Line): Line = Line(self.segments ++ other.segments)
+
+  def +(segment: LineSegment): Line = Line(self.segments :+ segment)
+
+  def :+(segment: LineSegment): Line = Line(self.segments :+ segment)
+
+  def +:(segment:LineSegment):Line = Line(segment +: self.segments)
+
+
+  def nonEmpty: Boolean = segments.nonEmpty
+
+  /* def suffix(suffix: Line) = modify(s => s"$s $suffix")
+  def addImport(imp: String) = copy(imports = imports + imp)*/
+
+  def toLines = Lines(self)
+
+  def args(l: LinesWithValue*): Lines = {
+    if (segments.nonEmpty) {
+      if (l.exists(_.render.list.nonEmpty))
+        Lines(List(self + Hardcoded("("))) ++ indent(l.toList.foldMap(_.render).mapLines(_ + Hardcoded(","))) ++ Lines(")")
+      else
+        Lines(self  + Hardcoded("()"))
+    }
+    else {
+      Lines.empty
+    }
+  }
+}
+
 object Line {
-  def apply(line: String): Line = Line(Set.empty, line)
-  def apply(importsAndLine: (Set[String], String)): Line =
-    Line(importsAndLine._1, importsAndLine._2)
-  val empty: Line = Line("")
+
+
+  def optional(line: Line, default:Boolean=false):Line = {
+   val option = TypeReference("Option") :+ Hardcoded("[") :++ line + Hardcoded("]")
+    if(default)
+      option :+ Hardcoded("=") :++ TypeReference("None")
+    else
+      option
+  }
+
+  def apply(value: String): Line = Line(Chain.one(Hardcoded(value)))
+
+  def apply(values: LineSegment*): Line = Line(Chain(values: _*))
+
+  def typeDefinition(pkg: String, name: String): Line = TypeDefinition(pkg.split(".").toSet, name).toLine
+
+  def typeDefinition(name: String): Line = TypeDefinition(Set.empty, name).toLine
+
+
+  val empty: Line = Line(Chain.empty)
   val comma: Line = Line(", ")
   val dot: Line = Line(".")
-  implicit val monoid: Monoid[Line] = new Monoid[Line] {
-    def empty = Line.empty
-    def combine(a: Line, b: Line) =
-      Line(a.imports ++ b.imports, a.line + b.line)
-  }
+  implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ :++ _)
+
 }

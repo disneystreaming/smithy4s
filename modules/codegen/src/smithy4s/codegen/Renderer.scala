@@ -23,11 +23,11 @@ import smithy4s.codegen.Primitive.Nothing
 import smithy4s.codegen.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
-
+import Line._
 import scala.jdk.CollectionConverters._
-
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
+import smithy4s.codegen.LineSegment._
 
 object Renderer {
 
@@ -39,27 +39,65 @@ object Renderer {
     val pack = Result(
       unit.namespace,
       "package",
-      r.renderPackageContents.lines.mkString(
-        System.lineSeparator()
-      )
+      r.renderPackageContents.list
+        .flatMap(_.segments.toList.map(_.show))
+        .mkString(
+          System.lineSeparator()
+        )
     )
 
     val classes = unit.declarations.map { decl =>
       val renderResult = r.renderDecl(decl)
       val p = s"package ${unit.namespace}"
 
-      val allImports =
-        renderResult.imports.filter(
+      //  navigate through both segments and remove
+      val allImports: List[String] = renderResult.list
+        .flatMap { line =>
+          line.segments.toList.collect { case tr: TypeReference =>
+            tr.show
+          }
+        }
+        .filter(
           _.replaceAll(unit.namespace, "")
             .split('.')
             .count(_.nonEmpty) > 1
         )
 
+      /*     val (imports,code) =  renderResult.list.flatMap{
+      line => line.segments.toList.map{
+        case tr:TypeReference => tr.show
+        case td:TypeDefinition => td.show
+        case hardcoded: Hardcoded => hardcoded.show
+      }
+    }*/
+      // todo remove imports from code
+      // isolate imports
+      // remove unused imports
+      // deduplicate imports - simply convert to set
+      // check for namespace collision
+      // condense imports
+
+      def condense(imports: Set[String]): Set[String] = {
+        imports
+          .groupBy(str => str.substring(0, str.lastIndexOf('.')))
+          .foldLeft(Set.empty[String]) { case (acc, (k, v)) =>
+            if (v.size > 1) acc + (k + "._") else acc ++ v
+          }
+      }
       // TODO iterate through imports and remove unused ones , based off the current namespace
-      val allLines = List(p, "") ++
-        allImports.toList.sorted.map("import " + _) ++
+      val allLines: List[String] = List(p, "") ++
+        condense(allImports.sorted.map("import " + _).toSet) ++
         List("") ++
-        renderResult.lines
+        renderResult.list
+          .filterNot(str => allImports.contains(str.show))
+          .map { line =>
+            line.segments.toList.map {
+              case Hardcoded(value)        => value
+              case TypeDefinition(_, name) => name
+              case TypeReference(_, name)  => name
+            }.mkString
+          }
+
 
       val content = allLines.mkString(System.lineSeparator())
 
@@ -135,7 +173,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           s"val id: $ShapeId_ = service.id"
         )
       )
-    case _ => empty
+    case _ => Lines.empty
   }
 
   private def renderService(
@@ -404,11 +442,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 line"arr => new $name".args(
                   fields.zipWithIndex.map {
                     case (Field(_, _, tpe, required, _), idx) =>
-                      val scalaTpe = line"${tpe}"
-                        .modify(line => {
-                          if (required) line else s"Option[$line]"
-                        })
-                      line"arr($idx).asInstanceOf[$scalaTpe]"
+                      val scalaTpe = line"$tpe"
+                      val optional =
+                        if (required) scalaTpe else Line.optional(scalaTpe)
+
+                      line"arr($idx).asInstanceOf[$optional]"
                   }
                 )
               )
@@ -464,7 +502,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val caseNames = alts.map(caseName)
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
-    val imports = /*alts.foldMap(_.tpe.imports) ++*/ syntaxImport
+    val imports = /* alts.foldMap(_.tpe.imports) ++*/ syntaxImport
 
     lines(
       block(
@@ -559,10 +597,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def fieldToRenderLine(field: Field): Line = {
     field match {
       case Field(name, _, tpe, required, _) =>
-        line"$tpe"
-          .modify(line =>
-            name + ": " + { if (required) line else s"Option[$line] = None" }
-          )
+        val line = line"$tpe"
+        line"$name: " :++ (if (required) line else Line.optional(line, true))
+
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
@@ -663,10 +700,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Map(key, value) =>
         line"map(${key.schemaRef}, ${value.schemaRef})"
       case Type.Alias(ns, name, Type.PrimitiveType(_)) =>
-        line"$name.schema".addImport(ns + "." + name)
+        TypeReference(ns, s"$name.schema")
       case Type.Alias(ns, name, _) =>
-        line"$name.underlyingSchema".addImport(ns + "." + name)
-      case Type.Ref(ns, name) => line"$name.schema".addImport(ns + "." + name)
+        TypeReference(ns, s"$name.underlyingSchema")
+      case Type.Ref(ns, name) =>
+        TypeReference(ns, s"$name.schema")
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
