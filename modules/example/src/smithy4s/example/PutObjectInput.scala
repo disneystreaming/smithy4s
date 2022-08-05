@@ -1,13 +1,17 @@
 package smithy4s.example
 
 import smithy4s.schema.Schema._
+import smithy4s.example.SomeValue.schema
+import smithy4s.example.BucketName.schema
+import smithy4s.example.ObjectKey.schema
+import smithy4s.example.LowHigh.schema
 
-case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
+case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh]=None, someValue: Option[SomeValue]=None)
 object PutObjectInput extends smithy4s.ShapeTag.Companion[PutObjectInput] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectInput")
-
+  
   val hints : smithy4s.Hints = smithy4s.Hints.empty
-
+  
   implicit val schema: smithy4s.Schema[PutObjectInput] = struct(
     ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
     BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.Required(), smithy.api.HttpLabel()),

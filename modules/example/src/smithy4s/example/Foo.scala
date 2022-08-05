@@ -7,14 +7,14 @@ sealed trait Foo extends scala.Product with scala.Serializable {
 }
 object Foo extends smithy4s.ShapeTag.Companion[Foo] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "Foo")
-
+  
   val hints : smithy4s.Hints = smithy4s.Hints.empty
-
+  
   case class IntCase(int: Int) extends Foo
   case class StrCase(str: String) extends Foo
   case class BIntCase(bInt: BigInt) extends Foo
   case class BDecCase(bDec: BigDecimal) extends Foo
-
+  
   object IntCase {
     val hints : smithy4s.Hints = smithy4s.Hints.empty
     val schema: smithy4s.Schema[IntCase] = bijection(int.addHints(hints), IntCase(_), _.int)
@@ -35,7 +35,7 @@ object Foo extends smithy4s.ShapeTag.Companion[Foo] {
     val schema: smithy4s.Schema[BDecCase] = bijection(bigdecimal.addHints(hints), BDecCase(_), _.bDec)
     val alt = schema.oneOf[Foo]("bDec")
   }
-
+  
   implicit val schema: smithy4s.Schema[Foo] = union(
     IntCase.alt,
     StrCase.alt,

@@ -14,9 +14,13 @@
  *  limitations under the License.
  */
 
-package smithy4s.capability
+package smithy4s;
 
-trait Isomorphism[A, B] {
-  def to(a: A): B
-  def from(b: B): A
+import java.util.Optional;
+import java.util.stream.Stream;
+
+public class OptionHelper {
+	static public <T> Stream<T> toStream(Optional<T> opt) {
+		return opt.isPresent() ? Stream.of(opt.get()) : Stream.empty();
+	}
 }

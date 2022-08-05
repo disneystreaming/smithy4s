@@ -44,10 +44,18 @@ object ToLine {
         val keyLine = render(key)
         val valueLine = render(value)
         TypeReference("Map") :+ Hardcoded("[") :++ Line((keyLine.segments :+ Hardcoded(",")) ++ valueLine.segments :+ Hardcoded("]"))
-      case Type.Alias(ns, name, Type.PrimitiveType(_)) => TypeReference(ns, name)
-      case Type.Alias(_, _, aliased) => render(aliased)
+      case Type.Alias(
+            ns,
+            name,
+            Type.PrimitiveType(_) | _: Type.ExternalType,
+            false
+          ) =>
+        TypeReference(ns, name)
+      case Type.Alias(_, _, aliased, _) =>
+        render(aliased)
       case Type.Ref(namespace, name) => TypeReference(namespace, name)
-      case Type.PrimitiveType(prim) => primitiveLine(prim)
+      case Type.PrimitiveType(prim)           => primitiveLine(prim)
+      case Type.ExternalType(_, fqn, _, _, _) => TypeReference(fqn)
     }
   }
   private def primitiveLine(p: Primitive): Line =

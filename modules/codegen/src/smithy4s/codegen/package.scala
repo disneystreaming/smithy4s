@@ -81,7 +81,7 @@ package object codegen {
   private[codegen] def obj(
       name: String
   ): PartialBlock = {
-    new PartialBlock(Line(name))
+    obj(name, Line.empty)
   }
 
   private[codegen] def obj(

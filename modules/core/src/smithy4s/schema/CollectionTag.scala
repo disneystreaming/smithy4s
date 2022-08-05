@@ -120,11 +120,11 @@ object CollectionTag {
     def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): MaybeCT[E] = None
     def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
     def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): MaybeCT[U] = None
-    def biject[A, B](schema: Schema[A], to: A => B, from: B => A): MaybeCT[B] = {
-      if (to.isInstanceOf[Newtype.Make[_, _]]) apply(schema).asInstanceOf[MaybeCT[B]]
+    def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): MaybeCT[B] = {
+      if (bijection.isInstanceOf[Newtype.Make[_, _]]) apply(schema).asInstanceOf[MaybeCT[B]]
       else None
     }
-    def surject[A, B](schema: Schema[A], to: Refinement[A,B], from: B => A): MaybeCT[B] = None
+    def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
     def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
   }
   // format: off

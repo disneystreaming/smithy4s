@@ -1,7 +1,6 @@
 package smithy4s.example
 
-import smithy4s.Document
-import smithy4s.Newtype
+import smithy4s._
 import smithy4s.schema.Schema._
 
 object ArbitraryData extends Newtype[Document] {
@@ -10,5 +9,5 @@ object ArbitraryData extends Newtype[Document] {
     smithy.api.Trait(None, None, None, None),
   )
   val underlyingSchema : smithy4s.Schema[Document] = document.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[ArbitraryData] = bijection(underlyingSchema, ArbitraryData.make, (_ : ArbitraryData).value)
+  implicit val schema : smithy4s.Schema[ArbitraryData] = bijection(underlyingSchema, asBijection)
 }

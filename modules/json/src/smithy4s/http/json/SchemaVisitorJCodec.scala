@@ -730,15 +730,16 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): JCodec[B] = apply(schema).biject(to, from)
+      bijection: Bijection[A, B]
+  ): JCodec[B] =
+    apply(schema).biject(bijection, bijection.from)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): JCodec[B] = JCodec.jcodecInvariant.xmap(apply(schema))(to.asFunction, from)
+      refinement: Refinement[A, B]
+  ): JCodec[B] =
+    JCodec.jcodecInvariant
+      .xmap(apply(schema))(refinement.asFunction, refinement.from)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): JCodec[A] = new JCodec[A] {
     lazy val underlying = apply(suspend.value)
