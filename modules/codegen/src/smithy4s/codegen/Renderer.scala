@@ -593,11 +593,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${e.className} extends $name("$value", "${e.className}", $ordinal)"""
+        line"""case object ${e.name} extends $name("$value", "${e.name}", $ordinal)"""
       },
       newline,
       line"val values: List[$name] = List".args(
-        values.map(_.className)
+        values.map(_.name)
       ),
       line"implicit val schema: $Schema_[$name] = enumeration(values).withId(id).addHints(hints)"
     )
@@ -712,37 +712,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def toCamelCase(value: String): String = {
-    val (_, output) = value.foldLeft((false, "")) {
-      case ((wasLastSkipped, str), c) =>
-        if (c.isLetterOrDigit) {
-          val newC =
-            if (wasLastSkipped) c.toString.capitalize else c.toString
-          (false, str + newC)
-        } else {
-          (true, str)
-        }
-    }
-    output
-  }
-
-  private def enumValueClassName(
-      name: Option[String],
-      value: String,
-      ordinal: Int
-  ) = {
-    name.getOrElse {
-      val camel = toCamelCase(value).capitalize
-      if (camel.nonEmpty) camel else "Value" + ordinal
-    }
-
-  }
-
-  private implicit class EnumValueOps(enumValue: EnumValue) {
-    def className =
-      enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
-  }
-
   private def renderNativeHint(hint: Hint.Native): Line =
     Line(
       smithy4s.recursion
@@ -753,6 +722,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
+    case Hint.IntEnum   => line"smithy4s.IntEnum()".some
     case _              => None
   }
 
@@ -803,9 +773,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
-    case EnumerationTN(ref, value, ordinal, name) =>
-      val className = enumValueClassName(name, value, ordinal)
-      (ref.show + "." + className + ".widen").write
+    case EnumerationTN(ref, _, _, name) =>
+      (ref.show + "." + name + ".widen").write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (_, FieldTN.RequiredTN(value))     => value.runDefault

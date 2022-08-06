@@ -142,10 +142,19 @@ private[http] class SchemaVisitorMetadataReader()
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaDecode[E] = {
-    MetaDecode
-      .from(
-        s"Enum[${values.map(_.stringValue).mkString(",")}]"
-      )(string => values.find(_.stringValue == string).map(_.value))
+    if (hints.get[IntEnum].isDefined) {
+      MetaDecode
+        .from(
+          s"Enum[${values.map(_.stringValue).mkString(",")}]"
+        )(string =>
+          values.find(v => string.toIntOption.contains(v.ordinal)).map(_.value)
+        )
+    } else {
+      MetaDecode
+        .from(
+          s"Enum[${values.map(_.stringValue).mkString(",")}]"
+        )(string => values.find(_.stringValue == string).map(_.value))
+    }
   }
 
   private case class FieldDecode(

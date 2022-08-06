@@ -286,6 +286,14 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(twoRes, UntaggedUnion.FourCase(Four(4)))
   }
 
+  test("Int Enum gets encoded/decoded correctly") {
+    val jsonInt = "1"
+    val int = writeToString[FaceCard](FaceCard.JACK)
+    val roundTripped = readFromString[FaceCard](int)
+    expect.same(int, jsonInt)
+    expect.same(roundTripped, FaceCard.JACK)
+  }
+
   implicit val byteArraySchema: Schema[ByteArray] = bytes
 
   test("byte arrays are encoded as base64") {

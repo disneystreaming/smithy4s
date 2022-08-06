@@ -34,7 +34,7 @@ class FieldsSpec() extends munit.FunSuite {
 
     //  NoSuchElementException: key not found: smithy.api#String
     val result = Interpreter.toFieldNames(svc)
-    assert(result == List("name", "greeting", "someFloat"))
+    assert(result == List("name", "someFloat", "greeting"))
   }
 
   object Interpreter {

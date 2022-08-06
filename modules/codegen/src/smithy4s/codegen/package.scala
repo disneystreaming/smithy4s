@@ -118,6 +118,7 @@ package object codegen {
     object Map extends ShapeExtractor(_.asMapShape())
     object Structure extends ShapeExtractor(_.asStructureShape())
     object Union extends ShapeExtractor(_.asUnionShape())
+    object Enumeration extends ShapeExtractor(_.asEnumShape())
     object Service extends ShapeExtractor(_.asServiceShape())
     object Resource extends ShapeExtractor(_.asResourceShape())
     object Operation extends ShapeExtractor(_.asOperationShape())
@@ -129,6 +130,7 @@ package object codegen {
     object error extends TraitExtractor[ErrorTrait]
     object httpError extends TraitExtractor[HttpErrorTrait]
     object required extends TraitExtractor[RequiredTrait]
+    @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")
     object enumeration extends TraitExtractor[EnumTrait]
     object timestampFormat extends TraitExtractor[TimestampFormatTrait]
     object uuidFormat extends TraitExtractor[UuidFormatTrait]

@@ -12,7 +12,9 @@ sealed abstract class LowHigh(_value: String, _name: String, _ordinal: Int) exte
 object LowHigh extends smithy4s.Enumeration[LowHigh] with smithy4s.ShapeTag.Companion[LowHigh] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "LowHigh")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : smithy4s.Hints = smithy4s.Hints(
+    smithy.api.Enum(List(smithy.api.EnumDefinition(smithy.api.NonEmptyString("Low"), Some(smithy.api.EnumConstantBodyName("LOW")), None, None, None), smithy.api.EnumDefinition(smithy.api.NonEmptyString("High"), Some(smithy.api.EnumConstantBodyName("HIGH")), None, None, None))),
+  )
 
   case object LOW extends LowHigh("Low", "LOW", 0)
   case object HIGH extends LowHigh("High", "HIGH", 1)
