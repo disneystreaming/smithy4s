@@ -143,7 +143,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
-        val p = Product(shape.name, shape.name, shape.fields, rec, hints).some
+        val mixins = shape.getMixins.asScala.flatMap(_.tpe).toList
+        val isMixin = shape.hasTrait(classOf[MixinTrait])
+        val p =
+          Product(
+            shape.name,
+            shape.name,
+            shape.fields,
+            mixins,
+            rec,
+            hints,
+            isMixin
+          ).some
         if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
           if (renderAdtMemberStructures) p else None
         } else p

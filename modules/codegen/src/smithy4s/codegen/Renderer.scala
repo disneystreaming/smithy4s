@@ -86,8 +86,24 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderDecl(decl: Decl): Lines = decl match {
     case Service(name, originalName, ops, hints, version) =>
       renderService(name, originalName, ops, hints, version)
-    case Product(name, originalName, fields, recursive, hints) =>
-      renderProduct(name, originalName, fields, recursive, hints)
+    case Product(
+          name,
+          originalName,
+          fields,
+          mixins,
+          recursive,
+          hints,
+          isMixin
+        ) =>
+      renderProduct(
+        name,
+        originalName,
+        fields,
+        mixins,
+        recursive,
+        hints,
+        isMixin
+      )
     case Union(name, originalName, alts, recursive, hints) =>
       renderUnion(name, originalName, alts, recursive, hints)
     case TypeAlias(name, originalName, tpe, _, hints) =>
@@ -329,17 +345,19 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def renderProduct(
+  private def renderProductNonMixin(
       name: String,
       originalName: String,
       fields: List[Field],
+      mixins: List[Type],
       recursive: Boolean,
       hints: List[Hint],
-      adtParent: Option[String] = None,
-      additionalLines: Lines = Lines.empty
+      mixinExtensions: Line,
+      adtParent: Option[String],
+      additionalLines: Lines
   ): Lines = {
 
-    val decl = line"case class $name(${renderArgs(fields)})"
+    val decl = line"case class $name(${renderArgs(fields)})$mixinExtensions"
     val imports = syntaxImport
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
@@ -413,6 +431,66 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         additionalLines
       )
     ).addImports(imports)
+  }
+
+  private def renderProductMixin(
+      name: String,
+      originalName: String,
+      fields: List[Field],
+      mixins: List[Type],
+      recursive: Boolean,
+      hints: List[Hint],
+      mixinExtensions: Line,
+      adtParent: Option[String],
+      additionalLines: Lines
+  ): Lines = {
+    block(line"trait $name$mixinExtensions") {
+      lines(
+        // TODO: noDefault is probably not the right move, just putting for quick sanity check
+        fields.map(f => line"def ${fieldToRenderLine(f, noDefault = true)}")
+      )
+    }
+  }
+
+  private def renderProduct(
+      name: String,
+      originalName: String,
+      fields: List[Field],
+      mixins: List[Type],
+      recursive: Boolean,
+      hints: List[Hint],
+      isMixin: Boolean,
+      adtParent: Option[String] = None,
+      additionalLines: Lines = Lines.empty
+  ): Lines = {
+    val mixinExtensions = if (mixins.nonEmpty) {
+      val mx = mixins.map(m => line"$m").intercalate(line" with ")
+      line" extends $mx"
+    } else Line.empty
+    if (isMixin)
+      renderProductMixin(
+        name,
+        originalName,
+        fields,
+        mixins,
+        recursive,
+        hints,
+        mixinExtensions,
+        adtParent,
+        additionalLines
+      )
+    else
+      renderProductNonMixin(
+        name,
+        originalName,
+        fields,
+        mixins,
+        recursive,
+        hints,
+        mixinExtensions,
+        adtParent,
+        additionalLines
+      )
   }
 
   private def renderGetMessage(field: Field) = field match {
@@ -504,8 +582,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               struct.name,
               struct.originalName,
               struct.fields,
+              struct.mixins,
               struct.recursive,
               struct.hints,
+              struct.isMixin,
               adtParent = Some(name),
               additionalLines
             )
@@ -559,17 +639,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     ).addImports(imports)
   }
 
-  private def fieldToRenderLine(field: Field): Line = {
+  private def fieldToRenderLine(
+      field: Field,
+      noDefault: Boolean = false
+  ): Line = {
     field match {
       case Field(name, _, tpe, required, _) =>
         line"$tpe"
-          .modify(line =>
-            name + ": " + { if (required) line else s"Option[$line] = None" }
-          )
+          .modify { line =>
+            val default = if (noDefault) "" else " = None"
+            name + ": " + { if (required) line else s"Option[$line]$default" }
+          }
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
-    .map(fieldToRenderLine)
+    .map(fieldToRenderLine(_))
     .intercalate(Line.comma)
 
   private def renderEnum(

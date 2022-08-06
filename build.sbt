@@ -619,7 +619,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "brands.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "brandscommon.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "refined.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,

@@ -60,8 +60,10 @@ case class Product(
     name: String,
     originalName: String,
     fields: List[Field],
+    mixins: List[Type],
     recursive: Boolean = false,
-    hints: List[Hint] = Nil
+    hints: List[Hint] = Nil,
+    isMixin: Boolean = false
 ) extends Decl
 
 case class Union(
