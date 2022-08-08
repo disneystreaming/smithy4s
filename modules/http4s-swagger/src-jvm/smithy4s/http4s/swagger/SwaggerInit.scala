@@ -44,7 +44,7 @@ object SwaggerInit {
     new response[F] {}.build(urls)
   }
 
-  private def javascript(urls: NonEmptyList[SwaggerUrl]): String = {
+  private[swagger] def javascript(urls: NonEmptyList[SwaggerUrl]): String = {
     val finalUrls =
       urls.map(u => s""" {"url": "${u.url}", "name": "${u.name}"} """)
     val renderedUrls = finalUrls.toList.mkString(",")
