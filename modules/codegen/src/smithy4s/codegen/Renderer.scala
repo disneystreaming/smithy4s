@@ -50,18 +50,27 @@ object Renderer {
       val renderResult = r.renderDecl(decl)
       val p = s"package ${unit.namespace}"
 
-      //  navigate through both segments and remove
+      val nameCollisions: Map[String, Set[TypeReference]] = renderResult.list
+        .flatMap(_.segments.toList)
+        .collect { case tr: TypeReference => tr}
+        .toSet
+        .groupBy((tr: TypeReference) => tr.name)
+        .filter((tuple: (String, Set[TypeReference])) => tuple._2.size > 1)
+
+      def predicate(string: String): String = {
+        if (string.contains(".")) string.substring(0, string.lastIndexOf('.'))
+        else string
+      }
+
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
-          line.segments.toList.collect { case tr: TypeReference =>
-            tr.show
+          line.segments.toList.collect {
+            case tr @ TypeReference(pkg, name)
+                if pkg.nonEmpty && !nameCollisions.contains(name) &&
+                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace)  =>
+              tr.show
           }
         }
-        .filter(
-          _.replaceAll(unit.namespace, "")
-            .split('.')
-            .count(_.nonEmpty) > 1
-        )
 
       /*     val (imports,code) =  renderResult.list.flatMap{
       line => line.segments.toList.map{
@@ -76,15 +85,22 @@ object Renderer {
       // deduplicate imports - simply convert to set
       // check for namespace collision
       // condense imports
+      /*
+      def detectCollisions(lines: Lines) = { ???
+        // make a list of names and check for duplicates
+        // produce separate list of those duplicates
+        // qualify the name if its a duplicate
+        // issues will arise from smithy definitions and our core code
+        // so we are checking against the name itself
+      }*/
 
       def condense(imports: Set[String]): Set[String] = {
         imports
-          .groupBy(str => str.substring(0, str.lastIndexOf('.')))
+          .groupBy(str => predicate(str))
           .foldLeft(Set.empty[String]) { case (acc, (k, v)) =>
             if (v.size > 1) acc + (k + "._") else acc ++ v
           }
       }
-     
 
       val allLines: List[String] = List(p, "") ++
         condense(allImports.sorted.map("import " + _).toSet) ++
@@ -94,10 +110,10 @@ object Renderer {
             line.segments.toList.map {
               case Hardcoded(value)        => value
               case TypeDefinition(_, name) => name
-              case TypeReference(_, name)  => name
+              case tr: TypeReference =>
+                if (nameCollisions.contains(tr.name)) tr.show else tr.name
             }.mkString
           }
-
 
       val content = allLines.mkString(System.lineSeparator())
 
@@ -164,7 +180,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case s: Service =>
       val name = s.name
       lines(
-        line"type $name[F[_]] = smithy4s.Monadic[${name}Gen, F]",
+        line"type $name[F[_]] = $Monadic_[${name}Gen, F]",
         block(
           line"object $name extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
@@ -188,7 +204,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opTraitName = name + "Operation"
 
     lines(
-      block(line"trait $genName[F[_, _, _, _, _]]")(
+      block(line"trait ${TypeDefinition(genName)}[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
@@ -198,11 +214,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"def transform[G[_, _, _, _, _]](transformation : $Transformation_[F, G]) : $genName[G] = new Transformed(transformation)",
         block(
-          line"class Transformed[G[_, _, _, _, _]](transformation : $Transformation_[F, G]) extends $genName[G]"
+          line"class $Transformed_[G[_, _, _, _, _]](transformation : $Transformation_[F, G]) extends $genName[G]"
         ) {
           ops.map { op =>
             val opName = op.methodName
-            line"def $opName(${op.renderArgs}) = transformation[${op.renderAlgParams(genName)}](self.$opName(${op.renderParams}))"
+            line"def $opName(${op.renderArgs}) = transformation[${op
+              .renderAlgParams(genName)}](self.$opName(${op.renderParams}))"
           }
         }
       ),
@@ -212,7 +229,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_[$genName, $opTraitName]"
       )(
         newline,
-        line"def apply[F[_]](implicit F: smithy4s.Monadic[$genName, F]): F.type = F",
+        line"def apply[F[_]](implicit F: $Monadic_[$genName, F]): F.type = F",
         newline,
         renderId(originalName),
         newline,
@@ -293,7 +310,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val traitName = line"${serviceName}Operation"
     val input =
       if (op.input == Type.unit) "" else "input"
-    val errorName = if (op.errors.isEmpty) line"Nothing" else line"${op.name}Error"
+    val errorName =
+      if (op.errors.isEmpty) line"Nothing" else line"${op.name}Error"
 
     val errorable = if (op.errors.nonEmpty) {
       line" with $Errorable_[$errorName]"
@@ -313,10 +331,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     lines(
-      line"case class $opName($params) extends $traitName[${op.renderAlgParams(serviceName+"Gen")}]",
+      line"case class ${TypeDefinition(opName)}($params) extends $traitName[${op
+        .renderAlgParams(serviceName + "Gen")}]",
       obj(
         opName,
-        ext = line"$Endpoint_[${traitName}, ${op.renderAlgParams(serviceName+"Gen")}]$errorable"
+        ext =
+          line"$Endpoint_[${traitName}, ${op.renderAlgParams(serviceName + "Gen")}]$errorable"
       )(
         renderId(op.name, op.originalNamespace),
         line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",
@@ -370,7 +390,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       additionalLines: Lines = Lines.empty
   ): Lines = {
 
-    val decl = line"case class $name(${renderArgs(fields)})"
+    val decl = line"case class ${TypeDefinition(name)}(${renderArgs(fields)})"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -410,7 +430,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
           if (fields.size <= 22) {
-            val definition = if (recursive) line"$recursive_($struct_" else line"$struct_"
+            val definition =
+              if (recursive) line"$recursive_($struct_" else line"$struct_"
             line"${schemaImplicit}val schema: $Schema_[$name] = $definition"
               .args(renderedFields)
               .block(line"$name.apply")
@@ -500,7 +521,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       block(
-        s"sealed trait $name extends scala.Product with scala.Serializable"
+        line"sealed trait ${TypeDefinition(name)} extends scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this"
       ),
@@ -522,7 +543,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
-              line"case class $cn(${uncapitalise(altName)}: ${tpe}) extends $name"
+              line"case class ${TypeDefinition(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
             val additionalLines = lines(
@@ -666,8 +687,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def methodName = uncapitalise(op.name)
 
-    def renderAlgParams(serviceName:String) = {
-      line"${op.input}, ${if (op.errors.isEmpty) line"Nothing" else TypeReference(s"$serviceName.${op.name}Error")}, ${op.output}, ${op.streamedInput.map(_.tpe).getOrElse(Type.PrimitiveType(Nothing))}, ${op.streamedOutput
+    def renderAlgParams(serviceName: String) = {
+      line"${op.input}, ${if (op.errors.isEmpty) line"Nothing"
+      else TypeReference(s"$serviceName.${op.name}Error")}, ${op.output}, ${op.streamedInput
+        .map(_.tpe)
+        .getOrElse(Type.PrimitiveType(Nothing))}, ${op.streamedOutput
         .map(_.tpe)
         .getOrElse(Type.PrimitiveType(Nothing))}"
     }
@@ -700,7 +724,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         TypeReference(ns, s"$name.schema")
       case Type.Alias(ns, name, _, _) =>
         TypeReference(ns, s"$name.underlyingSchema")
-      case Type.Ref(ns, name) =>  TypeReference(ns, s"$name.schema")
+      case Type.Ref(ns, name) => TypeReference(ns, s"$name.schema")
       case Type.ExternalType(
             _,
             fqn,
@@ -708,7 +732,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined[$fqn](${renderNativeHint(hint)})" :++ maybeProviderImport.map(TypeReference(_)).getOrElse(Line.empty)
+    line"${underlyingTpe.schemaRef}.refined[$fqn]${maybeProviderImport.map{
+          provider =>
+          line"(${TypeReference(provider)})"
+        }.getOrElse(Line.empty)}(${renderNativeHint(hint)})"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
@@ -907,7 +934,5 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
       case _ => _ => "null"
     }
-
-  val syntaxImport = Set("smithy4s.schema.Schema._")
 
 }
