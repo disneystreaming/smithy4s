@@ -86,24 +86,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderDecl(decl: Decl): Lines = decl match {
     case Service(name, originalName, ops, hints, version) =>
       renderService(name, originalName, ops, hints, version)
-    case Product(
-          name,
-          originalName,
-          fields,
-          mixins,
-          recursive,
-          hints,
-          isMixin
-        ) =>
-      renderProduct(
-        name,
-        originalName,
-        fields,
-        mixins,
-        recursive,
-        hints,
-        isMixin
-      )
+    case p: Product => renderProduct(p)
     case Union(name, originalName, alts, recursive, hints) =>
       renderUnion(name, originalName, alts, recursive, hints)
     case TypeAlias(name, originalName, tpe, _, hints) =>
@@ -346,24 +329,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProductNonMixin(
-      name: String,
-      originalName: String,
-      fields: List[Field],
-      mixins: List[Type],
-      recursive: Boolean,
-      hints: List[Hint],
-      mixinExtensions: Line,
+      product: Product,
       adtParent: Option[String],
       additionalLines: Lines
   ): Lines = {
-
-    val decl = line"case class $name(${renderArgs(fields)})$mixinExtensions"
+    import product._
+    val decl = line"case class $name(${renderArgs(fields)})"
     val imports = syntaxImport
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
       if (hints.contains(Hint.Error)) {
-        block(line"${decl} extends Throwable") {
+        val mixinExtensions = if (mixins.nonEmpty) {
+          val ext = mixins.map(m => line"$m").intercalate(line" with ")
+          line" with $ext"
+        } else Line.empty
+        block(line"${decl} extends Throwable$mixinExtensions") {
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||
@@ -375,8 +356,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             .foldMap(renderGetMessage)
         }
       } else {
-        val extend = adtParent.map(t => s" extends $t").getOrElse("")
-        line"$decl$extend"
+        val extendAdt = adtParent.map(t => line"$t").toList
+        val mixinLines = mixins.map(m => line"$m")
+        val extend = (extendAdt ++ mixinLines).intercalate(line" with ")
+        val ext =
+          if (extend.nonEmpty) line" extends $extend"
+          else Line.empty
+        line"$decl$ext"
       },
       obj(name, line"${shapeTag(name)}")(
         renderId(originalName),
@@ -434,60 +420,37 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProductMixin(
-      name: String,
-      originalName: String,
-      fields: List[Field],
-      mixins: List[Type],
-      recursive: Boolean,
-      hints: List[Hint],
-      mixinExtensions: Line,
+      product: Product,
       adtParent: Option[String],
       additionalLines: Lines
   ): Lines = {
-    block(line"trait $name$mixinExtensions") {
+    import product._
+    val ext = if (mixins.nonEmpty) {
+      val mixinExtensions = mixins.map(m => line"$m").intercalate(line" with ")
+      line" extends $mixinExtensions"
+    } else Line.empty
+    block(line"trait $name$ext") {
       lines(
-        // TODO: noDefault is probably not the right move, just putting for quick sanity check
         fields.map(f => line"def ${fieldToRenderLine(f, noDefault = true)}")
       )
     }
   }
 
   private def renderProduct(
-      name: String,
-      originalName: String,
-      fields: List[Field],
-      mixins: List[Type],
-      recursive: Boolean,
-      hints: List[Hint],
-      isMixin: Boolean,
+      product: Product,
       adtParent: Option[String] = None,
       additionalLines: Lines = Lines.empty
   ): Lines = {
-    val mixinExtensions = if (mixins.nonEmpty) {
-      val mx = mixins.map(m => line"$m").intercalate(line" with ")
-      line" extends $mx"
-    } else Line.empty
+    import product._
     if (isMixin)
       renderProductMixin(
-        name,
-        originalName,
-        fields,
-        mixins,
-        recursive,
-        hints,
-        mixinExtensions,
+        product,
         adtParent,
         additionalLines
       )
     else
       renderProductNonMixin(
-        name,
-        originalName,
-        fields,
-        mixins,
-        recursive,
-        hints,
-        mixinExtensions,
+        product,
         adtParent,
         additionalLines
       )
@@ -579,13 +542,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"""val alt = schema.oneOf[$name]("$realName")"""
             )
             renderProduct(
-              struct.name,
-              struct.originalName,
-              struct.fields,
-              struct.mixins,
-              struct.recursive,
-              struct.hints,
-              struct.isMixin,
+              struct,
               adtParent = Some(name),
               additionalLines
             )

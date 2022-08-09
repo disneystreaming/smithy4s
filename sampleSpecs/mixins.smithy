@@ -17,3 +17,9 @@ structure MixinExample with [CommonFieldsOne, CommonFieldsTwo] {
   c: Long
   d: Boolean
 }
+
+@error("client")
+structure MixinErrorExample with [CommonFieldsOne, CommonFieldsTwo] {
+  c: Long
+  d: Boolean
+}
