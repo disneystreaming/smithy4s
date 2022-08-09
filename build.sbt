@@ -162,7 +162,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
@@ -300,6 +301,7 @@ lazy val codegen = projectMatrix
     buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
+    resolvers += Resolver.mavenLocal,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,
@@ -390,6 +392,7 @@ lazy val protocol = projectMatrix
       .filterNot { case (file, path) =>
         path.equalsIgnoreCase("META-INF/smithy/manifest")
       },
+    resolvers += Resolver.mavenLocal,
     libraryDependencies += Dependencies.Smithy.model,
     javacOptions ++= Seq("--release", "8")
   )
@@ -620,7 +623,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "brandscommon.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "refined.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
@@ -673,7 +677,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.21.0-rc1"
+    val smithyVersion = "1.21.0-SNAPSHOT"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =

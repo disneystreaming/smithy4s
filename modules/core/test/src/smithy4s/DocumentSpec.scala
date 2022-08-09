@@ -17,6 +17,7 @@
 package smithy4s
 
 import smithy.api.JsonName
+import smithy.api.Default
 import smithy4s.api.Discriminated
 import smithy4s.example.IntList
 import munit._
@@ -182,6 +183,54 @@ class DocumentSpec() extends FunSuite {
 
     assertEquals(document, expectedDocument)
     assertEquals(roundTripped, Right(faceCard))
+  }
+
+  case class DefTest(int: Option[Int], str: Option[String])
+  implicit val withDefaultsSchema: Schema[DefTest] = {
+    val i = int
+      .optional[DefTest]("int", _.int)
+      .addHints(Default(Document.fromInt(11)))
+    val s =
+      string
+        .optional[DefTest]("str", _.str)
+        .addHints(Default(Document.fromString("test")))
+    struct(i, s)(DefTest.apply)
+  }
+
+  test("defaults should be applied when fields missing") {
+    val defTest = DefTest(None, None)
+
+    val document = Document.encode(defTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "int" -> fromInt(11),
+        "str" -> fromString("test")
+      )
+
+    val expectedRoundTripped = DefTest(Some(11), Some("test"))
+
+    val fromEmpty = Document.decode[DefTest](obj())
+
+    expect(document == expectedDocument)
+    expect(fromEmpty == Right(expectedRoundTripped))
+  }
+
+  test("defaults should not be applied when field is provided") {
+    val defTest = DefTest(Some(12), Some("test2"))
+
+    val document = Document.encode(defTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "int" -> fromInt(12),
+        "str" -> fromString("test2")
+      )
+
+    val roundTripped = Document.decode[DefTest](document)
+
+    expect(document == expectedDocument)
+    expect(roundTripped == Right(defTest))
   }
 
 }

@@ -38,6 +38,7 @@ import smithy4s.api.Discriminated
 import scala.collection.immutable.ListMap
 import scala.util.Try
 import munit.FunSuite
+import smithy.api.Default
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -47,6 +48,17 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val a = int.required[Foo]("a", _.a)
       val b = int.optional[Foo]("b", _.b).addHints(JsonName("_b"))
       struct(a, b)(Foo.apply)
+    }
+  }
+
+  case class FooDefaulted(a: Option[Int])
+  object FooDefaulted {
+    implicit val schema: Schema[FooDefaulted] = {
+      val a =
+        int
+          .optional[FooDefaulted]("a", _.a)
+          .addHints(Default(Document.fromInt(11)))
+      struct(a)(FooDefaulted.apply)
     }
   }
 
@@ -120,6 +132,25 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = """{"a" : 1, "_b": 2}"""
     val result = readFromString[Foo](json)
     expect.same(result, Foo(1, Some(2)))
+  }
+
+  test("Optional encode from defaulted value") {
+    val foo = FooDefaulted(None)
+    val json = """{"a":11}"""
+    val result = writeToString[FooDefaulted](foo)
+    expect.same(result, json)
+  }
+
+  test("Optional decode from defaulted value - missing") {
+    val json = """{}"""
+    val result = readFromString[FooDefaulted](json)
+    expect.same(result, FooDefaulted(Some(11)))
+  }
+
+  test("Optional decode from defaulted value - null") {
+    val json = """{"a":null}"""
+    val result = readFromString[FooDefaulted](json)
+    expect.same(result, FooDefaulted(Some(11)))
   }
 
   test("Optional decode from absent value") {

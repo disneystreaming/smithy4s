@@ -29,6 +29,7 @@ import smithy4s.http.internals.MetaDecode.{
 }
 import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
+import smithy.api.Default
 
 import java.{util => ju}
 import scala.collection.mutable.{Map => MMap}
@@ -183,11 +184,17 @@ private[http] class SchemaVisitorMetadataReader()
       val schema = field.instance
       val label = field.label
       val fieldHints = field.hints
+      val _ = fieldHints.get(Default).map(_.value)
       HttpBinding.fromHints(label, fieldHints, hints).map { binding =>
         val decoder: MetaDecode[_] =
           self(schema.addHints(Hints(binding)))
         val update = decoder
-          .updateMetadata(binding, label, field.isOptional, reservedQueries)
+          .updateMetadata(
+            binding,
+            label,
+            field.isOptional,
+            reservedQueries
+          )
         FieldDecode(label, binding, update)
       }
     }

@@ -18,6 +18,7 @@ package smithy4s
 package internals
 
 import smithy.api.JsonName
+import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
@@ -190,13 +191,21 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
       val encoder = apply(field.instance)
       (s, builder) =>
-        field.foreachT(s) { t =>
-          val jsonLabel = field.instance.hints
+        field.foreachT(s) { maybeT =>
+          val hints = field.instance.hints
+          val jsonLabel = hints
             .get(JsonName)
             .map(_.value)
             .getOrElse(field.label)
+          val maybeDefault = hints.get(Default).map(_.value)
 
-          builder.+=(jsonLabel -> encoder.apply(t))
+          (maybeT, maybeDefault) match {
+            case (Some(t), _) =>
+              builder.+=(jsonLabel -> encoder.apply(t))
+            case (_, Some(default)) =>
+              builder.+=(jsonLabel -> default)
+            case _ => ()
+          }
         }
     }
 

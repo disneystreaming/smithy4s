@@ -103,6 +103,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       override def listShape(x: ListShape): Option[Decl] = getDefault(x)
 
+      @annotation.nowarn("msg=class SetShape in package shapes is deprecated")
       override def setShape(x: SetShape): Option[Decl] = getDefault(x)
 
       override def mapShape(x: MapShape): Option[Decl] = getDefault(x)

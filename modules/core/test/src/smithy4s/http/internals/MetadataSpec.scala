@@ -131,6 +131,12 @@ class MetadataSpec() extends FunSuite {
     checkRoundTrip(queries, expected)
   }
 
+  test("String query parameter with default") {
+    val queries = Queries(dflt = None)
+    val expected = Metadata(query = Map("dflt" -> List("test")))
+    checkRoundTrip(queries, expected)
+  }
+
   test("String length constraint violation") {
     val string = "1" * 11
     val queries = ValidationChecks(str = Some(string))
@@ -232,6 +238,12 @@ class MetadataSpec() extends FunSuite {
   test("String header") {
     val headers = Headers(str = Some("hello"))
     val expected = Metadata.empty.addHeader("str", "hello")
+    checkRoundTrip(headers, expected)
+  }
+
+  test("String header with default") {
+    val headers = Headers(dflt = None)
+    val expected = Metadata.empty.addHeader("dflt", "test")
     checkRoundTrip(headers, expected)
   }
 
