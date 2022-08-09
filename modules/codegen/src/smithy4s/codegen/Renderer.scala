@@ -57,18 +57,15 @@ object Renderer {
         .groupBy((tr: TypeReference) => tr.name)
         .filter((tuple: (String, Set[TypeReference])) => tuple._2.size > 1)
 
-      def predicate(string: String): String = {
-        if (string.contains(".")) string.substring(0, string.lastIndexOf('.'))
-        else string
-      }
 
-      val allImports: List[String] = renderResult.list
+
+      val allImports: List[TypeReference] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
             case tr @ TypeReference(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(name) &&
                   !pkg.mkString(".").equalsIgnoreCase(unit.namespace)  =>
-              tr.show
+              tr
           }
         }
 
@@ -94,16 +91,17 @@ object Renderer {
         // so we are checking against the name itself
       }*/
 
-      def condense(imports: Set[String]): Set[String] = {
+      // check for all paths that end in wildcard
+      def condense(imports: Set[TypeReference]): Set[String] = {
         imports
-          .groupBy(str => predicate(str))
+          .groupBy(_.pkg.mkString("."))
           .foldLeft(Set.empty[String]) { case (acc, (k, v)) =>
-            if (v.size > 1) acc + (k + "._") else acc ++ v
+            if (v.size > 1) acc + (k + "._") else acc ++ v.map(_.show)
           }
       }
 
       val allLines: List[String] = List(p, "") ++
-        condense(allImports.sorted.map("import " + _).toSet) ++
+        condense(allImports.toSet).map("import " + _) ++
         List("") ++
         renderResult.list
           .map { line =>

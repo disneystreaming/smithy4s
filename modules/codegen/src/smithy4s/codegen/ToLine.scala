@@ -89,11 +89,11 @@ sealed trait LineSegment { self =>
 }
 object LineSegment {
   case class Hardcoded(value: String) extends LineSegment
-  case class TypeDefinition(pkg: Set[String], name: String) extends LineSegment
+  case class TypeDefinition(pkg: List[String], name: String) extends LineSegment
   object TypeDefinition {
     def apply(fqn: String): Line = {
       val parts = fqn.split("\\.").toList
-      TypeDefinition(parts.dropRight(1).toSet, parts.last).toLine
+      TypeDefinition(parts.dropRight(1), parts.last).toLine
     }
   }
   case class TypeReference(pkg: List[String], name: String) extends LineSegment
@@ -109,7 +109,7 @@ object LineSegment {
 
   implicit val hardcodedShow = Show.show[Hardcoded](hc => hc.value)
   implicit val typeDefShow: Show[TypeDefinition] = Show.show { td =>
-    s"${(td.pkg + td.name).mkString(".")}"
+    s"${(td.pkg :+ td.name).mkString(".")}"
   }
   implicit val typeRefShow: Show[TypeReference] = Show.show { tr =>
     s"${(tr.pkg :+ tr.name).mkString(".")}"
@@ -173,10 +173,10 @@ object Line {
   def apply(values: LineSegment*): Line = Line(Chain(values: _*))
 
   def typeDefinition(pkg: String, name: String): Line =
-    TypeDefinition(pkg.split(".").toSet, name).toLine
+    TypeDefinition(pkg.split(".").toList, name).toLine
 
   def typeDefinition(name: String): Line =
-    TypeDefinition(Set.empty, name).toLine
+    TypeDefinition(List.empty, name).toLine
 
   val empty: Line = Line(Chain.empty)
   val comma: Line = Line(", ")
