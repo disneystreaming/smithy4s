@@ -159,8 +159,10 @@ object CollisionAvoidance {
       protect(name.capitalize),
       originalName,
       fields.map(modField),
+      mixins.map(modType),
       recursive,
-      hints.map(modHint)
+      hints.map(modHint),
+      isMixin
     )
   }
 
