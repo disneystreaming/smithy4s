@@ -24,6 +24,14 @@ final case class ShapeId(namespace: String, name: String) extends HasId {
 }
 
 object ShapeId extends ShapeTag.Has[ShapeId] {
+  def parse(string: String): Option[ShapeId] = {
+    if (!string.contains('#')) None
+    else {
+      val segments = string.split("#")
+      if (segments.length > 1) None
+      else Some(ShapeId(segments(0), segments(1)))
+    }
+  }
 
   final case class Member(shapeId: ShapeId, member: String)
 

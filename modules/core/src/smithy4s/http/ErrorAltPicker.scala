@@ -18,9 +18,12 @@ package smithy4s
 package http
 
 import smithy.api.Error
-import smithy.api.Error.CLIENT
-import smithy.api.Error.SERVER
 import smithy4s.schema.SchemaAlt
+import ErrorAltPicker.ErrorDiscriminator
+import smithy.api.HttpError
+import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.FullId
+import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.NameOnly
+import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.StatusCode
 
 /**
   * Utility class to help find the best alternative out of a error union
@@ -30,42 +33,41 @@ import smithy4s.schema.SchemaAlt
   * @param alts alternatives of the error union to choose from
   */
 final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
-  private lazy val withHints = alts.map(a => a -> a.hints)
-  private lazy val (generic, rest) = withHints.partition {
-    case (_, Error.hint(_)) => true
-    case (_, _)             => false
-  }
-  private lazy val clientErrors = generic.collect {
-    case (a, Error.hint(CLIENT)) => a
-  }
-  private lazy val serverErrors = generic.collect {
-    case (a, Error.hint(SERVER)) => a
-  }
-  private lazy val others = rest.collect {
-    case (a, smithy.api.HttpError.hint(extracted)) =>
-      a -> extracted.value
-  }
-
-  def orderedForStatus(status: Int): Vector[SchemaAlt[E, _]] = {
-    val generics =
-      if (status >= 400 && status < 500) {
-        clientErrors ++ serverErrors
-      } else {
-        serverErrors ++ clientErrors
+  private val byShapeId = alts.map { alt => alt.instance.shapeId -> alt }.toMap
+  private val byName = alts.map(alt => alt.instance.shapeId.name -> alt).toMap
+  private val byStatusCode = {
+    alts
+      .groupBy { alt =>
+        alt.hints
+          .get(HttpError)
+          .map(_.value)
+          .orElse(alt.hints.get(Error).map {
+            case Error.CLIENT => 400
+            case Error.SERVER => 500
+          })
       }
-    generics ++ others.map(_._1)
-  }
+      .collect {
+        case (Some(key), values) if values.size == 1 => key -> values.head
+      }
+  }.toMap
 
-  def getPreciseAlternative(status: Int): Option[SchemaAlt[E, _]] = {
-    others
-      .find(_._2 == status)
-      .map(_._1)
-      .orElse(
-        if (status == 400 && clientErrors.size == 1)
-          clientErrors.headOption
-        else if (status == 500 && serverErrors.size == 1)
-          serverErrors.headOption
-        else None
-      )
+  def getPreciseAlternative(
+      discriminator: ErrorDiscriminator
+  ): Option[SchemaAlt[E, _]] = {
+    discriminator match {
+      case FullId(shapeId) => byShapeId.get(shapeId)
+      case NameOnly(name)  => byName.get(name)
+      case StatusCode(int) => byStatusCode.get(int)
+    }
+  }
+}
+
+object ErrorAltPicker {
+  sealed trait ErrorDiscriminator extends Product with Serializable
+
+  object ErrorDiscriminator {
+    case class FullId(shapeId: ShapeId) extends ErrorDiscriminator
+    case class NameOnly(name: String) extends ErrorDiscriminator
+    case class StatusCode(int: Int) extends ErrorDiscriminator
   }
 }

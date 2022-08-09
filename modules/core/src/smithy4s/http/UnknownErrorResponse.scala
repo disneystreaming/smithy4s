@@ -22,5 +22,5 @@ case class UnknownErrorResponse(
     body: String
 ) extends Throwable {
   override def getMessage(): String =
-    s"Received unknown response: status $code, body:\n$body"
+    s"status $code, headers: $headers, body:\n$body"
 }
