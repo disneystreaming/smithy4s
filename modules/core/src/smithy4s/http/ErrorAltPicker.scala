@@ -33,8 +33,14 @@ import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.StatusCode
   * @param alts alternatives of the error union to choose from
   */
 final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
-  private val byShapeId = alts.map { alt => alt.instance.shapeId -> alt }.toMap
-  private val byName = alts.map(alt => alt.instance.shapeId.name -> alt).toMap
+  private val byShapeId = alts
+    .map { alt => alt.instance.shapeId -> alt }
+    .toMap[ShapeId, SchemaAlt[E, _]]
+
+  private val byName = alts
+    .map(alt => alt.instance.shapeId.name -> alt)
+    .toMap[String, SchemaAlt[E, _]]
+
   private val byStatusCode = {
     alts
       .groupBy { alt =>
@@ -49,7 +55,7 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
       .collect {
         case (Some(key), values) if values.size == 1 => key -> values.head
       }
-  }.toMap
+  }.toMap[Int, SchemaAlt[E, _]]
 
   def getPreciseAlternative(
       discriminator: ErrorDiscriminator
