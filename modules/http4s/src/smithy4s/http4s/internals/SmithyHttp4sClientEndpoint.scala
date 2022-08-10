@@ -161,7 +161,7 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
                 .map(alt.inject)
             }
           }
-        }.unsafeCache(allAlternatives)
+        }.unsafeCache(allAlternatives.map(Existential.wrap(_)))
 
         (response: Response[F]) => {
           val discriminator = getErrorDiscriminator(response)
