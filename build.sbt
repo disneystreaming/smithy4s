@@ -724,7 +724,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.14" else "0.6.14")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.7.15" else "0.6.14")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
