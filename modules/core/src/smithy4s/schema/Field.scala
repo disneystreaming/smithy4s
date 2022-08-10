@@ -56,7 +56,7 @@ sealed abstract class Field[F[_], S, A] {
     * Applies a side-effecting thunk on the field's value, unpacking
     * the option in case of an optional field.
     */
-  def foreachT(s: S)(f: Option[T] => Unit): Unit
+  def foreachT(s: S)(f: T => Unit): Unit
 
   /**
     * Applies a side-effecting thunk on the field's value,
@@ -102,7 +102,7 @@ object Field {
       (b, s) => partiallyApplied(b, get(s))
     }
     override def isRequired: Boolean = true
-    override def foreachT(s: S)(f: Option[A] => Unit): Unit = f(Some(get(s)))
+    override def foreachT(s: S)(f: A => Unit): Unit = f(get(s))
   }
 
   private final case class Optional[F[_], S, A](
@@ -129,7 +129,7 @@ object Field {
         }
     }
     override def isRequired: Boolean = false
-    override def foreachT(s: S)(f: Option[A] => Unit): Unit = f(get(s))
+    override def foreachT(s: S)(f: A => Unit): Unit = get(s).foreach(f)
   }
 
 
@@ -164,6 +164,9 @@ object Field {
           fa.addHints(hints: _*)
       }
     }
+
+    def getDefault: Option[Document] =
+      field.instance.hints.get(smithy.api.Default).map(_.value)
 
   }
 

@@ -202,18 +202,14 @@ class DocumentSpec() extends FunSuite {
 
     val document = Document.encode(defTest)
     import Document._
-    val expectedDocument =
-      obj(
-        "int" -> fromInt(11),
-        "str" -> fromString("test")
-      )
+    val expectedEncoded = obj()
 
-    val expectedRoundTripped = DefTest(Some(11), Some("test"))
+    val expectedDecoded = DefTest(Some(11), Some("test"))
 
     val fromEmpty = Document.decode[DefTest](obj())
 
-    expect(document == expectedDocument)
-    expect(fromEmpty == Right(expectedRoundTripped))
+    expect(document == expectedEncoded)
+    expect(fromEmpty == Right(expectedDecoded))
   }
 
   test("defaults should not be applied when field is provided") {

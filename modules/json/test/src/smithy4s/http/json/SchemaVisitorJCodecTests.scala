@@ -134,9 +134,9 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, Foo(1, Some(2)))
   }
 
-  test("Optional encode from defaulted value") {
+  test("Optional encode from defaulted value - no default added") {
     val foo = FooDefaulted(None)
-    val json = """{"a":11}"""
+    val json = """{}"""
     val result = writeToString[FooDefaulted](foo)
     expect.same(result, json)
   }
@@ -144,7 +144,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   test("Optional decode from defaulted value - missing") {
     val json = """{}"""
     val result = readFromString[FooDefaulted](json)
-    expect.same(result, FooDefaulted(Some(11)))
+    val expected = FooDefaulted(Some(11))
+    expect.same(result, expected)
   }
 
   test("Optional decode from defaulted value - null") {

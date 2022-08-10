@@ -45,7 +45,8 @@ private[http] sealed abstract class MetaDecode[+A] {
       binding: HttpBinding,
       fieldName: String,
       optional: Boolean,
-      reservedQueries: Set[String]
+      reservedQueries: Set[String],
+      maybeDefault: Option[Any]
   ): (Metadata, PutField) => Unit = {
     // format: off
 
@@ -59,6 +60,7 @@ private[http] sealed abstract class MetaDecode[+A] {
         m(metadata).get(key) match {
           case Some(value) if optional => process(value, fieldName, putField.putSome(_, _))
           case Some(value)             => process(value, fieldName, putField.putRequired(_, _))
+          case None if optional && maybeDefault.isDefined => putField.putSome(fieldName, maybeDefault.get)
           case None if optional        => putField.putNone(fieldName)
           case None => throw new MetadataError.NotFound(fieldName, binding)
         }

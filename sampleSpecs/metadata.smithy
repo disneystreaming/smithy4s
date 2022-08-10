@@ -43,10 +43,13 @@ structure Queries {
   sl : StringList,
   @httpQuery("nums")
   ie: Numbers,
-  @httpQuery("dflt")
-  dflt: String = "test",
   @httpQueryParams
   slm: StringMap
+}
+
+structure QueriesWithDefaults {
+  @httpQuery("dflt")
+  dflt: String = "test"
 }
 
 structure Headers {
@@ -71,10 +74,13 @@ structure Headers {
   sl : StringList,
   @httpHeader("nums")
   ie: Numbers,
-  @httpHeader("dflt")
-  dflt: String = "test",
   @httpPrefixHeaders("foo-")
   slm: StringMap
+}
+
+structure HeadersWithDefaults {
+  @httpHeader("dflt")
+  dflt: String = "test"
 }
 
 

@@ -26,7 +26,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy.api.Default
 import smithy4s.api.Discriminated
 import smithy4s.api.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
@@ -1055,9 +1054,6 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       case Some(x) => x.value
     }
 
-  private def getDefault[A, Z](field: Field[Schema, Z, A]): Option[Document] =
-    field.hints.get(Default).map(_.value)
-
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
@@ -1065,19 +1061,12 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   ): Handler = {
     val codec = apply(field.instance)
     val label = field.label
-    val default = getDefault(field)
     if (field.isRequired) { (cursor, in, mmap) =>
       val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
     } else { (cursor, in, mmap) =>
       cursor.under[Unit](label) {
-        if (in.isNextToken('n')) {
-          if (default.isDefined) {
-            in.readNullOrError[Unit]((), "Expected null")
-            val _ = mmap.put(label, cursor.decode(documentJCodec, in))
-          } else {
-            in.readNullOrError[Unit]((), "Expected null")
-          }
-        } else {
+        if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
+        else {
           in.rollbackToken()
           val _ = mmap.put(label, cursor.decode(codec, in))
         }
@@ -1117,7 +1106,6 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       ): (Z, JsonWriter) => Unit = {
         val codec = apply(instance)
         val jLabel = jsonLabel(field)
-        val default = getDefault(field)
         if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
           (z: Z, out: JsonWriter) =>
             {
@@ -1125,9 +1113,6 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
                 case Some(aa) =>
                   out.writeNonEscapedAsciiKey(jLabel)
                   codec.encodeValue(aa, out)
-                case None if default.isDefined =>
-                  out.writeNonEscapedAsciiKey(jLabel)
-                  documentJCodec.encodeValue(default.get, out)
                 case _ =>
               }
             }
@@ -1168,6 +1153,21 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           documentFields.foreach(field =>
             put(jsonLabel(field), fieldHandler(field))
           )
+        }
+
+      private[this] val defaults =
+        new util.HashMap[String, Any](
+          documentFields.length << 1,
+          0.5f
+        ) {
+          documentFields.foreach { field =>
+            val decode: Document => Option[Any] =
+              Document.Decoder.fromSchema(field.instance).decode(_).toOption
+            field.getDefault.foreach { d =>
+              val result = decode(d)
+              result.foreach(put(jsonLabel(field), _))
+            }
+          }
         }
 
       private[this] val documentEncoders =
@@ -1220,7 +1220,11 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
               if (f.isRequired) {
                 if (value == null) cursor.requiredFieldError(f.label, f.label)
                 value
-              } else Option(value)
+              } else {
+                Option(value).orElse {
+                  Option(defaults.get(f.label))
+                }
+              }
             }
           )
           const(stage2.result())
