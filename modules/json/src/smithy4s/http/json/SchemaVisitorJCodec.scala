@@ -1290,7 +1290,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       }
 
       def encodeValue(z: Z, out: JsonWriter): Unit =
-        payloadField.foreachT(z)(_.foreach(codec.encodeValue(_, out)))
+        payloadField.foreachT(z)(codec.encodeValue(_, out))
 
       def decodeKey(in: JsonReader): Z =
         in.decodeError("Cannot use products as keys")
