@@ -169,6 +169,7 @@ object Metadata {
     def decode(metadata: Metadata): Either[MetadataError, MetadataPartial[A]]
 
     def total: Option[TotalDecoder[A]]
+
   }
 
   object PartialDecoder {

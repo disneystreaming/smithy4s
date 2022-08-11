@@ -220,6 +220,12 @@ class MetadataSpec() extends FunSuite {
     checkRoundTrip(queries, expected)
   }
 
+  test("Int Enum query parameter") {
+    val queries = Queries(ie = Some(smithy4s.example.Numbers.ONE))
+    val expected = Metadata(query = Map("nums" -> List("1")))
+    checkRoundTrip(queries, expected)
+  }
+
   // ///////////////////////////////////////////////////////////
   // HEADERS
   // ///////////////////////////////////////////////////////////
@@ -294,6 +300,12 @@ class MetadataSpec() extends FunSuite {
     checkRoundTrip(headers, expected)
   }
 
+  test("Int enum header") {
+    val headers = Headers(ie = Some(smithy4s.example.Numbers.ONE))
+    val expected = Metadata.empty.addHeader("nums", "1")
+    checkRoundTrip(headers, expected)
+  }
+
   // ///////////////////////////////////////////////////////////
   // PATH PARAMS
   // ///////////////////////////////////////////////////////////
@@ -308,7 +320,8 @@ class MetadataSpec() extends FunSuite {
       ts2 = ts,
       ts3 = Timestamp(1234567890L, 0),
       ts4 = ts,
-      b = false
+      b = false,
+      ie = smithy4s.example.Numbers.ONE
     )
 
     val expected =
@@ -320,7 +333,8 @@ class MetadataSpec() extends FunSuite {
           "ts1" -> epochString,
           "ts2" -> epochString,
           "ts3" -> "1234567890",
-          "ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"
+          "ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT",
+          "ie" -> "1"
         )
       )
     checkRoundTrip(pathParams, expected)

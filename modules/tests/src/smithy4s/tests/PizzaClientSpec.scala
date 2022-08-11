@@ -29,6 +29,7 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.typelevel.ci.CIString
 import smithy4s.Timestamp
 import smithy4s.example._
+import cats.Show
 import weaver._
 
 abstract class PizzaClientSpec extends IOSuite {
@@ -110,30 +111,16 @@ abstract class PizzaClientSpec extends IOSuite {
   )
 
   clientTestForError(
-    "Handle error w/o a discriminator header and a unique status code (4xx)",
+    "Handle error w/o a discriminator header nor a unique status code",
     Response(status = Status.ProxyAuthenticationRequired)
       .withEntity(
         Json.obj("message" -> Json.fromString("generic client error message"))
       ),
-    GenericClientError("generic client error message")
-  )
-
-  clientTestForError(
-    "Handle error w/o a discriminator header and a unique status code (4xx) but matches one error type",
-    Response(status = Status.ProxyAuthenticationRequired)
-      .withEntity(
-        Json.obj("error" -> Json.fromString("error key in json"))
-      ),
-    FallbackError("error key in json")
-  )
-
-  clientTestForError(
-    "Handle error w/o a discriminator header and a unique status code (5xx)",
-    Response(status = Status.VariantAlsoNegotiates)
-      .withEntity(
-        Json.obj("message" -> Json.fromString("generic error server message"))
-      ),
-    GenericServerError("generic error server message")
+    smithy4s.http.UnknownErrorResponse(
+      407,
+      Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
+      """{"message":"generic client error message"}"""
+    )
   )
 
   clientTest("Headers are case insensitive") { (client, backend, log) =>
@@ -171,10 +158,14 @@ abstract class PizzaClientSpec extends IOSuite {
     }
   }
 
-  def clientTestForError[T](
+  def clientTestForError[E](
       name: String,
       response: Response[IO],
-      expected: Throwable
+      expected: E
+  )(implicit
+      loc: SourceLocation,
+      ct: scala.reflect.ClassTag[E],
+      show: Show[E] = Show.fromToString[E]
   ) = {
     clientTest(name) { (client, backend, log) =>
       for {
@@ -185,8 +176,11 @@ abstract class PizzaClientSpec extends IOSuite {
         maybeResult <- client.getMenu(name).attempt
       } yield maybeResult match {
         case Right(_) => failure("expected failure")
+        case Left(error: E) =>
+          expect.same[E](error, expected)
         case Left(error) =>
-          expect(error == expected)
+          failure(s"Error of unexpected type: $error")
+
       }
     }
   }

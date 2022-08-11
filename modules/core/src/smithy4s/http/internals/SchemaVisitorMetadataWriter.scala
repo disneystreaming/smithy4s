@@ -127,7 +127,11 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaEncode[E] = {
-    StringValueMetaEncode(e => total(e).stringValue)
+    if (hints.get[IntEnum].isDefined) {
+      StringValueMetaEncode(e => total(e).ordinal.toString())
+    } else {
+      StringValueMetaEncode(e => total(e).stringValue)
+    }
   }
 
   override def struct[S](

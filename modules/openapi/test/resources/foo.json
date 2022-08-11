@@ -207,8 +207,7 @@
             "properties": {
               "float": {
                 "type": "number",
-                "format": "float",
-                "nullable": true
+                "format": "float"
               }
             },
             "required": [
@@ -221,8 +220,7 @@
             "properties": {
               "double": {
                 "type": "number",
-                "format": "double",
-                "nullable": true
+                "format": "double"
               }
             },
             "required": [
@@ -275,8 +273,7 @@
             "properties": {
               "int": {
                 "type": "integer",
-                "format": "int32",
-                "nullable": true
+                "format": "int32"
               }
             },
             "required": [
@@ -317,8 +314,7 @@
             "properties": {
               "value": {
                 "type": "integer",
-                "format": "int32",
-                "nullable": true
+                "format": "int32"
               }
             },
             "required": [

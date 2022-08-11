@@ -83,7 +83,7 @@ object CollisionAvoidance {
       case Enumeration(name, originalName, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, ordinal, name, hints) =>
-            EnumValue(value, ordinal, name.map(protect), hints.map(modHint))
+            EnumValue(value, ordinal, protect(name), hints.map(modHint))
         }
         Enumeration(
           protect(name.capitalize),
@@ -160,8 +160,10 @@ object CollisionAvoidance {
       protect(name.capitalize),
       originalName,
       fields.map(modField),
+      mixins.map(modType),
       recursive,
-      hints.map(modHint)
+      hints.map(modHint),
+      isMixin
     )
   }
 
@@ -245,7 +247,8 @@ object CollisionAvoidance {
     "BigDecimal",
     "Map",
     "List",
-    "Set"
+    "Set",
+    "None"
   )
 
   private val reservedNames = reservedKeywords ++ reservedTypes

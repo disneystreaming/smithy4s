@@ -14,13 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s
 
-case class UnknownErrorResponse(
-    code: Int,
-    headers: Map[String, String],
-    body: String
-) extends Throwable {
-  override def getMessage(): String =
-    s"status $code, headers: $headers, body:\n$body"
+final case class IntEnum()
+object IntEnum extends ShapeTag.Companion[IntEnum] {
+  val id: ShapeId = ShapeId("smithy4s", "IntEnum")
+  val schema = Schema.constant(IntEnum())
 }

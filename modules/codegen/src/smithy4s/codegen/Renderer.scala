@@ -120,8 +120,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderDecl(decl: Decl): Lines = decl match {
     case Service(name, originalName, ops, hints, version) =>
       renderService(name, originalName, ops, hints, version)
-    case Product(name, originalName, fields, recursive, hints) =>
-      renderProduct(name, originalName, fields, recursive, hints)
+    case p: Product => renderProduct(p)
     case Union(name, originalName, alts, recursive, hints) =>
       renderUnion(name, originalName, alts, recursive, hints)
     case TypeAlias(name, originalName, tpe, _, hints) =>
@@ -183,7 +182,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val genName = name + "Gen"
     val opTraitName = name + "Operation"
 
-    implicitly[ToLine[LineSegment]]
     lines(
       block(line"trait ${TypeDefinition.line(genName)}[F[_, _, _, _, _]]")(
         line"self =>",
@@ -363,23 +361,23 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def renderProduct(
-      name: String,
-      originalName: String,
-      fields: List[Field],
-      recursive: Boolean,
-      hints: List[Hint],
-      adtParent: Option[String] = None,
-      additionalLines: Lines = Lines.empty
+  private def renderProductNonMixin(
+      product: Product,
+      adtParent: Option[String],
+      additionalLines: Lines
   ): Lines = {
-
+    import product._
     val decl =
       line"case class ${TypeDefinition.line(name)}(${renderArgs(fields)})"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
       if (hints.contains(Hint.Error)) {
-        block(line"$decl extends Throwable") {
+        val mixinExtensions = if (mixins.nonEmpty) {
+          val ext = mixins.map(m => line"$m").intercalate(line" with ")
+          line" with $ext"
+        } else Line.empty
+        block(line"${decl} extends Throwable$mixinExtensions") {
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||
@@ -391,8 +389,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             .foldMap(renderGetMessage)
         }
       } else {
-        val extend = adtParent.map(t => s" extends $t").getOrElse("")
-        line"$decl$extend"
+        val extendAdt = adtParent.map(t => line"$t").toList
+        val mixinLines = mixins.map(m => line"$m")
+        val extend = (extendAdt ++ mixinLines).intercalate(line" with ")
+        val ext =
+          if (extend.nonEmpty) line" extends $extend"
+          else Line.empty
+        line"$decl$ext"
       },
       obj(name, shapeTag(name))(
         renderId(originalName),
@@ -450,7 +453,44 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
-  private def renderGetMessage(field: Field): String = field match {
+  private def renderProductMixin(
+      product: Product,
+      adtParent: Option[String],
+      additionalLines: Lines
+  ): Lines = {
+    import product._
+    val ext = if (mixins.nonEmpty) {
+      val mixinExtensions = mixins.map(m => line"$m").intercalate(line" with ")
+      line" extends $mixinExtensions"
+    } else Line.empty
+    block(line"trait $name$ext") {
+      lines(
+        fields.map(f => line"def ${fieldToRenderLine(f, noDefault = true)}")
+      )
+    }
+  }
+
+  private def renderProduct(
+      product: Product,
+      adtParent: Option[String] = None,
+      additionalLines: Lines = Lines.empty
+  ): Lines = {
+    import product._
+    if (isMixin)
+      renderProductMixin(
+        product,
+        adtParent,
+        additionalLines
+      )
+    else
+      renderProductNonMixin(
+        product,
+        adtParent,
+        additionalLines
+      )
+  }
+
+  private def renderGetMessage(field: Field) = field match {
     case field if field.tpe.isResolved && field.required =>
       s"override def getMessage(): String = ${field.name}"
     case field if field.tpe.isResolved =>
@@ -536,11 +576,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"""val alt = schema.oneOf[$name]("$realName")"""
             )
             renderProduct(
-              struct.name,
-              struct.originalName,
-              struct.fields,
-              struct.recursive,
-              struct.hints,
+              struct,
               adtParent = Some(name),
               additionalLines
             )
@@ -594,16 +630,19 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
-  private def fieldToRenderLine(field: Field): Line = {
+  private def fieldToRenderLine(
+      field: Field,
+      noDefault: Boolean = false
+  ): Line = {
     field match {
       case Field(name, _, tpe, required, _) =>
         val line = line"$tpe"
-        line"$name: " :++ (if (required) line else Line.optional(line, true))
+        line"$name: " :++ (if (required) line else Line.optional(line, !noDefault))
 
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
-    .map(fieldToRenderLine)
+    .map(fieldToRenderLine(_))
     .intercalate(Line.comma)
 
   private def renderEnum(
@@ -627,13 +666,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${TypeReference(
-          e.className
-        )} extends $name("$value", "${e.className}", $ordinal)"""
+        line"""case object ${TypeReference(e.name)} extends $name("$value", "${e.name}", $ordinal)"""
       },
       newline,
       line"val values: List[$name] = List".args(
-        values.map(_.className)
+        values.map(_.name)
       ),
       line"implicit val schema: $Schema_[$name] = $enumeration_(values).withId(id).addHints(hints)"
     )
@@ -750,37 +787,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  private def toCamelCase(value: String): String = {
-    val (_, output) = value.foldLeft((false, "")) {
-      case ((wasLastSkipped, str), c) =>
-        if (c.isLetterOrDigit) {
-          val newC =
-            if (wasLastSkipped) c.toString.capitalize else c.toString
-          (false, str + newC)
-        } else {
-          (true, str)
-        }
-    }
-    output
-  }
-
-  private def enumValueClassName(
-      name: Option[String],
-      value: String,
-      ordinal: Int
-  ) = {
-    name.getOrElse {
-      val camel = toCamelCase(value).capitalize
-      if (camel.nonEmpty) camel else "Value" + ordinal
-    }
-
-  }
-
-  private implicit class EnumValueOps(enumValue: EnumValue) {
-    def className =
-      enumValueClassName(enumValue.name, enumValue.value, enumValue.ordinal)
-  }
-
   private def renderNativeHint(hint: Hint.Native): Line =
     Line(
       smithy4s.recursion
@@ -791,6 +797,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
+    case Hint.IntEnum   => line"${TypeReference("smithy4s","IntEnum")}()".some
     case _              => None
   }
 
@@ -841,9 +848,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
-    case EnumerationTN(ref, value, ordinal, name) =>
-      val className = enumValueClassName(name, value, ordinal)
-      (ref.show + "." + className + ".widen").write
+    case EnumerationTN(ref, _, _, name) =>
+      (ref.show + "." + name + ".widen").write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (_, FieldTN.RequiredTN(value))     => value.runDefault

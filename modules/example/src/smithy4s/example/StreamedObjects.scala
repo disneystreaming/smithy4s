@@ -56,7 +56,7 @@ object StreamedObjectsGen extends Service[StreamedObjectsGen, StreamedObjectsOpe
     val id: ShapeId = ShapeId("smithy4s.example", "PutStreamedObject")
     val input: Schema[PutStreamedObjectInput] = PutStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[StreamedBlob] = StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema)
+    val streamedInput : StreamingSchema[StreamedBlob] = StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString(""))))
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints.empty
     def wrap(input: PutStreamedObjectInput) = PutStreamedObject(input)
@@ -67,7 +67,7 @@ object StreamedObjectsGen extends Service[StreamedObjectsGen, StreamedObjectsOpe
     val input: Schema[GetStreamedObjectInput] = GetStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetStreamedObjectOutput] = GetStreamedObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[StreamedBlob] = StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema)
+    val streamedOutput : StreamingSchema[StreamedBlob] = StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString(""))))
     val hints : Hints = Hints.empty
     def wrap(input: GetStreamedObjectInput) = GetStreamedObject(input)
   }

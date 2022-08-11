@@ -61,8 +61,8 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Idempotent(),
       smithy.api.Http(smithy.api.NonEmptyString("PUT"), smithy.api.NonEmptyString("/{bucketName}/{key}"), Some(200)),
+      smithy.api.Idempotent(),
     )
     def wrap(input: PutObjectInput) = PutObject(input)
     override val errorable: Option[Errorable[PutObjectError]] = Some(this)
