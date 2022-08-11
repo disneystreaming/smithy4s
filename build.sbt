@@ -305,7 +305,6 @@ lazy val codegen = projectMatrix
     ),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
-    resolvers += Resolver.mavenLocal,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,

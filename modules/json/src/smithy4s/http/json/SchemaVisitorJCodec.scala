@@ -1155,19 +1155,12 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           )
         }
 
-      private[this] val defaults =
-        new util.HashMap[String, Any](
-          documentFields.length << 1,
-          0.5f
-        ) {
-          documentFields.foreach { field =>
-            val decode: Document => Option[Any] =
-              Document.Decoder.fromSchema(field.instance).decode(_).toOption
-            field.getDefault.foreach { d =>
-              val result = decode(d)
-              result.foreach(put(jsonLabel(field), _))
-            }
-          }
+      private[this] val fieldsWithDefaults =
+        fields.map { field =>
+          val decode: Document => Option[Any] =
+            Document.Decoder.fromSchema(field.instance).decode(_).toOption
+          val decoded = field.getDefault.flatMap(decode)
+          (field, decoded)
         }
 
       private[this] val documentEncoders =
@@ -1214,19 +1207,17 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
-          fields.foreach(f =>
+          fieldsWithDefaults.foreach { case (f, maybeDefault) =>
             stage2 += {
               val value = buffer.get(f.label)
               if (f.isRequired) {
                 if (value == null) cursor.requiredFieldError(f.label, f.label)
                 value
               } else {
-                Option(value).orElse {
-                  Option(defaults.get(f.label))
-                }
+                if (value != null) Some(value) else maybeDefault
               }
             }
-          )
+          }
           const(stage2.result())
         }
       }
