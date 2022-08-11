@@ -1,7 +1,10 @@
 package smithy4s.example
 
-import smithy4s._
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.constant
+import smithy4s.Hints
 
 case class AgeFormat()
 object AgeFormat extends ShapeTag.Companion[AgeFormat] {

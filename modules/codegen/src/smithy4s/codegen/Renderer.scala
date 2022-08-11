@@ -62,7 +62,7 @@ object Renderer {
         .filter(_._2.size > 1)
         .keySet
 
-      def condenseSmithy4sImports(
+/*      def condenseSmithy4sImports(
           typeReference: TypeReference
       ): TypeReference = {
         typeReference match {
@@ -71,7 +71,7 @@ object Renderer {
             tr.copy(name = "_")
           case tr => tr
         }
-      }
+      }*/
 
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
@@ -79,7 +79,7 @@ object Renderer {
             case tr @ TypeReference(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(name) &&
                   !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
-              condenseSmithy4sImports(tr).show
+             tr.show
             case Import(value) => value
           }
         }

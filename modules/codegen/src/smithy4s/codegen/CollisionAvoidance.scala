@@ -272,7 +272,7 @@ object CollisionAvoidance {
     val Hints_ = TypeReference("smithy4s", "Hints")
     val ShapeTag_ = TypeReference("smithy4s", "ShapeTag")
     val Errorable_ = TypeReference("smithy4s", "Errorable")
-    val unionSchema_ = TypeReference("smithy4s", "UnionSchema")
+    val unionSchema_ = TypeReference("smithy4s.schema.Schema", "UnionSchema")
     val union_ = TypeReference("smithy4s.schema.Schema", "union")
     val recursive_ = TypeReference("smithy4s.schema.Schema", "recursive")
     val enumeration_ = TypeReference("smithy4s.schema.Schema", "enumeration")

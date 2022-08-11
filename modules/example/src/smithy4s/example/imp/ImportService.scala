@@ -1,9 +1,21 @@
 package smithy4s.example.imp
 
+import smithy4s.Errorable
 import smithy4s.example.import_test.OpOutput
-import smithy4s._
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.schema.Schema.unit
+import smithy4s.Transformation
+import smithy4s.Monadic
+import smithy4s.Service
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.bijection
 import smithy4s.example.error.NotFoundError
+import smithy4s.schema.Schema.union
+import smithy4s.schema.Schema.UnionSchema
+import smithy4s.Hints
+import smithy4s.StreamingSchema
+import smithy4s.ShapeId
+import smithy4s.Endpoint
 
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>

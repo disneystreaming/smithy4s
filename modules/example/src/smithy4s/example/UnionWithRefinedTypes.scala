@@ -1,8 +1,12 @@
 package smithy4s.example
 
-import smithy4s._
+import smithy4s.Schema
+import smithy4s.Hints
 import smithy4s.example.refined.Name
-import smithy4s.schema.Schema._
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.union
 
 sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
   @inline final def widen: UnionWithRefinedTypes = this

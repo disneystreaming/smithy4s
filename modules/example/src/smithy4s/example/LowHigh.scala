@@ -1,7 +1,11 @@
 package smithy4s.example
 
-import smithy4s._
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.Enumeration
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.enumeration
 
 sealed abstract class LowHigh(_value: String, _name: String, _ordinal: Int) extends Enumeration.Value {
   override val value: String = _value

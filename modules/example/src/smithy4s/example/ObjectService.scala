@@ -1,7 +1,19 @@
 package smithy4s.example
 
-import smithy4s._
-import smithy4s.schema.Schema._
+import smithy4s.Errorable
+import smithy4s.Schema
+import smithy4s.schema.Schema.unit
+import smithy4s.Transformation
+import smithy4s.Monadic
+import smithy4s.Service
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.union
+import smithy4s.schema.Schema.UnionSchema
+import smithy4s.Hints
+import smithy4s.StreamingSchema
+import smithy4s.ShapeId
+import smithy4s.Endpoint
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
