@@ -294,7 +294,7 @@ object CollisionAvoidance {
     val timestamp_ = TypeReference("smithy4s.schema.Schema", "Timestamp")
     val document_ = TypeReference("smithy4s.schema.Schema", "Document")
     val uuid_ = TypeReference("smithy4s.schema.Schema", "UUID")
-    val Transformed_ = TypeDefinition.line("Transformed")
+    val Transformed_ = TypeDefinition("Transformed")
 
     def reconcile(str: String): String = {
       val last = str.split('.').last

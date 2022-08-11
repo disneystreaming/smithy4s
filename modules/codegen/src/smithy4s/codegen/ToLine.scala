@@ -21,7 +21,7 @@ import cats.kernel.Monoid
 import cats.data.Chain
 import cats.Show
 import cats.syntax.all._
-import smithy4s.codegen.LineSegment.{Hardcoded, Import, TypeReference}
+import smithy4s.codegen.LineSegment.{Hardcoded,TypeReference}
 
 trait ToLine[A] {
   def render(a: A): Line
@@ -29,10 +29,7 @@ trait ToLine[A] {
 
 object ToLine {
   def apply[A](implicit A: ToLine[A]): ToLine[A] = A
-  implicit val lineSegment: ToLine[LineSegment] = l => Line(l)
-  implicit val hardcoded: ToLine[Hardcoded] = h => Line(h)
-  implicit val typeReference: ToLine[TypeReference] = t => Line(t)
-  implicit val importStatement: ToLine[Import] = i => Line(i)
+  implicit def lineSegmentToLine[A<:LineSegment]:ToLine[A] = l => Line(l)
   implicit val identity: ToLine[Line] = r => r
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
   implicit val stringToLine: ToLine[String] = s => Line(s)
@@ -94,13 +91,9 @@ object LineSegment {
   case class Import(value: String) extends LineSegment
   case class Hardcoded(value: String) extends LineSegment
   case class TypeDefinition(name: String) extends LineSegment
-  object TypeDefinition {
-    def line(name: String): Line = TypeDefinition(name).toLine
-  }
   case class TypeReference(pkg: List[String], name: String)
       extends LineSegment { self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
-    def asImport: String = self.show
   }
   object TypeReference {
     def apply(pkg: String, name: String): Line =

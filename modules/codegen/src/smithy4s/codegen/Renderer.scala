@@ -55,17 +55,20 @@ object Renderer {
         .flatMap(_.segments.toList)
         .distinct
         .collect {
-          case TypeReference(_,name)    => name
-          case TypeDefinition(name) => name
+          case TypeReference(_, name) => name
+          case TypeDefinition(name)   => name
         }
         .groupBy(identity)
         .filter(_._2.size > 1)
         .keySet
 
-      def condenseSmithy4sImports(typeReference: TypeReference):TypeReference = {
+      def condenseSmithy4sImports(
+          typeReference: TypeReference
+      ): TypeReference = {
         typeReference match {
-          case tr@TypeReference(List("smithy4s"), _) => tr.copy(name = "_")
-          case tr@TypeReference(List("smithy4s", "schema", "Schema"), _) => tr.copy(name = "_")
+          case tr @ TypeReference(List("smithy4s"), _) => tr.copy(name = "_")
+          case tr @ TypeReference(List("smithy4s", "schema", "Schema"), _) =>
+            tr.copy(name = "_")
           case tr => tr
         }
       }
@@ -75,9 +78,10 @@ object Renderer {
           line.segments.toList.collect {
             case tr @ TypeReference(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(name) &&
-                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) => condenseSmithy4sImports(tr).show
+                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
+              condenseSmithy4sImports(tr).show
             case Import(value) => value
-              }
+          }
         }
 
       val code: List[String] = renderResult.list
@@ -89,7 +93,6 @@ object Renderer {
               if (nameCollisions.contains(tr.name)) tr.asValue else tr.name
           }.mkString
         }
-
 
       val allLines: List[String] = List(p, "") ++
         allImports.toSet.map("import " + _) ++
@@ -159,7 +162,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case s: Service =>
       val name = s.name
       lines(
-        line"type $name[F[_]] = $Monadic_[${name}Gen, F]",
+        line"type ${TypeDefinition(name)}[F[_]] = $Monadic_[${name}Gen, F]",
         block(
           line"object ${TypeReference(name)} extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
@@ -183,7 +186,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opTraitName = name + "Operation"
 
     lines(
-      block(line"trait ${TypeDefinition.line(genName)}[F[_, _, _, _, _]]")(
+      block(line"trait ${TypeDefinition(genName)}[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
@@ -312,7 +315,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     lines(
-      line"case class ${TypeDefinition.line(opName)}($params) extends $traitName[${op
+      line"case class ${TypeDefinition(opName)}($params) extends $traitName[${op
         .renderAlgParams(serviceName + "Gen")}]",
       obj(
         opName,
@@ -368,7 +371,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     import product._
     val decl =
-      line"case class ${TypeDefinition.line(name)}(${renderArgs(fields)})"
+      line"case class ${TypeDefinition(name)}(${renderArgs(fields)})"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -545,7 +548,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       block(
-        line"sealed trait ${TypeDefinition.line(name)} extends scala.Product with scala.Serializable"
+        line"sealed trait ${TypeDefinition(name)} extends scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this"
       ),
@@ -637,7 +640,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     field match {
       case Field(name, _, tpe, required, _) =>
         val line = line"$tpe"
-        line"$name: " :++ (if (required) line else Line.optional(line, !noDefault))
+        line"$name: " :++ (if (required) line
+                           else Line.optional(line, !noDefault))
 
     }
   }
@@ -666,7 +670,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${TypeReference(e.name)} extends $name("$value", "${e.name}", $ordinal)"""
+        line"""case object ${TypeReference(
+          e.name
+        )} extends $name("$value", "${e.name}", $ordinal)"""
       },
       newline,
       line"val values: List[$name] = List".args(
@@ -797,7 +803,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
-    case Hint.IntEnum   => line"${TypeReference("smithy4s","IntEnum")}()".some
+    case Hint.IntEnum   => line"${TypeReference("smithy4s", "IntEnum")}()".some
     case _              => None
   }
 
