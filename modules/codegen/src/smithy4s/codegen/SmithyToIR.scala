@@ -103,8 +103,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       override def listShape(x: ListShape): Option[Decl] = getDefault(x)
 
-      override def setShape(x: SetShape): Option[Decl] = getDefault(x)
-
       override def mapShape(x: MapShape): Option[Decl] = getDefault(x)
 
       override def byteShape(x: ByteShape): Option[Decl] = getDefault(x)

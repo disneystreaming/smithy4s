@@ -297,7 +297,11 @@ lazy val codegen = projectMatrix
   .dependsOn(openapi)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
-    buildInfoKeys := Seq[BuildInfoKey](version, scalaBinaryVersion),
+    buildInfoKeys := Seq[BuildInfoKey](
+      version,
+      scalaBinaryVersion,
+      "smithyVersion" -> Dependencies.Smithy.smithyVersion
+    ),
     buildInfoPackage := "smithy4s.codegen",
     isCE3 := true,
     libraryDependencies ++= Seq(
@@ -673,7 +677,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.21.0-rc1"
+    val smithyVersion = "1.23.0"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
