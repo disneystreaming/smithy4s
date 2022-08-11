@@ -21,6 +21,7 @@ import smithy4s.api.UuidFormatTrait
 import smithy4s.codegen.LineSyntax.LineInterpolator
 import smithy4s.codegen.WithValue.ToLineWithValue
 import smithy4s.codegen.WithValue.ToLinesWithValue
+import smithy4s.codegen.LineSegment.TypeReference
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait
@@ -73,7 +74,7 @@ package object codegen {
       ext: Line,
       w: Line = Line.empty
   ): PartialBlock = {
-    val start = line"object $name"
+    val start = line"object ${TypeReference(name)}"
     val withExt = if (ext.nonEmpty) start combine line" extends $ext" else start
     val withW = if (w.nonEmpty) withExt combine line" with $w" else withExt
     new PartialBlock(withW)

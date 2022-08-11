@@ -21,7 +21,7 @@ import cats.kernel.Monoid
 import cats.data.Chain
 import cats.Show
 import cats.syntax.all._
-import smithy4s.codegen.LineSegment.{Hardcoded, TypeDefinition, TypeReference}
+import smithy4s.codegen.LineSegment.{Hardcoded, Import, TypeReference}
 
 trait ToLine[A] {
   def render(a: A): Line
@@ -30,6 +30,9 @@ trait ToLine[A] {
 object ToLine {
   def apply[A](implicit A: ToLine[A]): ToLine[A] = A
   implicit val lineSegment: ToLine[LineSegment] = l => Line(l)
+  implicit val hardcoded: ToLine[Hardcoded] = h => Line(h)
+  implicit val typeReference: ToLine[TypeReference] = t => Line(t)
+  implicit val importStatement: ToLine[Import] = i => Line(i)
   implicit val identity: ToLine[Line] = r => r
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
   implicit val stringToLine: ToLine[String] = s => Line(s)
@@ -88,15 +91,17 @@ sealed trait LineSegment { self =>
   def toLine: Line = Line(Chain.one(self))
 }
 object LineSegment {
+  case class Import(value: String) extends LineSegment
   case class Hardcoded(value: String) extends LineSegment
-  case class TypeDefinition(pkg: List[String], name: String) extends LineSegment
+  case class TypeDefinition(name: String) extends LineSegment
   object TypeDefinition {
-    def apply(fqn: String): Line = {
-      val parts = fqn.split("\\.").toList
-      TypeDefinition(parts.dropRight(1), parts.last).toLine
-    }
+    def line(name: String): Line = TypeDefinition(name).toLine
   }
-  case class TypeReference(pkg: List[String], name: String) extends LineSegment
+  case class TypeReference(pkg: List[String], name: String)
+      extends LineSegment { self =>
+    def asValue: String = s"${(pkg :+ name).mkString(".")}"
+    def asImport: String = self.show
+  }
   object TypeReference {
     def apply(pkg: String, name: String): Line =
       TypeReference(pkg.split("\\.").toList, name).toLine
@@ -107,14 +112,16 @@ object LineSegment {
 
   }
 
-  implicit val hardcodedShow = Show.show[Hardcoded](hc => hc.value)
+  implicit val hardcodedShow = Show.show[Hardcoded](_.value)
+  implicit val importShow = Show.show[Import](_.value)
   implicit val typeDefShow: Show[TypeDefinition] = Show.show { td =>
-    s"${(td.pkg :+ td.name).mkString(".")}"
+    s"${td.name}"
   }
   implicit val typeRefShow: Show[TypeReference] = Show.show { tr =>
-    s"${(tr.pkg :+ tr.name).mkString(".")}"
+    s"${(tr.pkg :+ tr.name.split("\\.")(0)).mkString(".")}"
   }
   implicit val lineSegmentShow: Show[LineSegment] = Show.show {
+    case Import(value)      => value
     case Hardcoded(value)   => value
     case td: TypeDefinition => td.show
     case tr: TypeReference  => tr.show
@@ -171,12 +178,6 @@ object Line {
   def apply(value: String): Line = Line(Chain.one(Hardcoded(value)))
 
   def apply(values: LineSegment*): Line = Line(Chain(values: _*))
-
-  def typeDefinition(pkg: String, name: String): Line =
-    TypeDefinition(pkg.split(".").toList, name).toLine
-
-  def typeDefinition(name: String): Line =
-    TypeDefinition(List.empty, name).toLine
 
   val empty: Line = Line(Chain.empty)
   val comma: Line = Line(", ")

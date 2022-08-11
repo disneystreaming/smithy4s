@@ -24,6 +24,7 @@ import smithy4s.codegen.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
 import Line._
+
 import scala.jdk.CollectionConverters._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
@@ -50,68 +51,56 @@ object Renderer {
       val renderResult = r.renderDecl(decl)
       val p = s"package ${unit.namespace}"
 
-      val nameCollisions: Map[String, Set[TypeReference]] = renderResult.list
-        .flatMap(_.segments.toList)
-        .collect { case tr: TypeReference => tr}
-        .toSet
-        .groupBy((tr: TypeReference) => tr.name)
-        .filter((tuple: (String, Set[TypeReference])) => tuple._2.size > 1)
+      val nameCollisions: Set[String] = renderResult.list
+        .flatMap(_.segments.toList).distinct
+        .collect {
+          case tr: TypeReference => tr.name
+          case TypeDefinition(name) => name
+        }
+        .groupBy(identity)
+        .filter(_._2.size > 1)
+        .keySet
 
 
-
-      val allImports: List[TypeReference] = renderResult.list
+      val allTypeRefs: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
             case tr @ TypeReference(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(name) &&
-                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace)  =>
-              tr
+                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
+              tr.show
           }
         }
 
-      /*     val (imports,code) =  renderResult.list.flatMap{
-      line => line.segments.toList.map{
-        case tr:TypeReference => tr.show
-        case td:TypeDefinition => td.show
-        case hardcoded: Hardcoded => hardcoded.show
-      }
-    }*/
-      // todo remove imports from code
-      // isolate imports
-      // remove unused imports
-      // deduplicate imports - simply convert to set
-      // check for namespace collision
-      // condense imports
-      /*
-      def detectCollisions(lines: Lines) = { ???
-        // make a list of names and check for duplicates
-        // produce separate list of those duplicates
-        // qualify the name if its a duplicate
-        // issues will arise from smithy definitions and our core code
-        // so we are checking against the name itself
-      }*/
+      val allImports: List[String] = renderResult.list.flatMap { line =>
+        line.segments.toList.collect { case Import(value) =>
+          value
+        }
+      } ++ allTypeRefs
 
-      // check for all paths that end in wildcard
-      def condense(imports: Set[TypeReference]): Set[String] = {
-        imports
-          .groupBy(_.pkg.mkString("."))
-          .foldLeft(Set.empty[String]) { case (acc, (k, v)) =>
-            if (v.size > 1) acc + (k + "._") else acc ++ v.map(_.show)
+      val code: List[String] = renderResult.list
+        .map { line =>
+          line.segments.toList.collect {
+            case Hardcoded(value)     => value
+            case TypeDefinition(name) => name
+            case tr: TypeReference =>
+              if (nameCollisions.contains(tr.name)) tr.asValue else tr.name
+          }.mkString
+        }
+
+      def smithy4sImport(imports:List[String]):List[String] = {
+        imports.foldLeft(List.empty[String]) { (acc, imp) =>
+          val line =  imp.split("\\.").toList match {
+            case "smithy4s" :: _ :: Nil => s"import smithy4s._"
+            case  "smithy4s" :: "schema" :: "Schema" :: _ :: Nil =>  s"import smithy4s.schema.Schema._"
+            case general => s"import ${general.mkString(".")}"
           }
+          acc :+ line
+        }
       }
-
       val allLines: List[String] = List(p, "") ++
-        condense(allImports.toSet).map("import " + _) ++
-        List("") ++
-        renderResult.list
-          .map { line =>
-            line.segments.toList.map {
-              case Hardcoded(value)        => value
-              case TypeDefinition(_, name) => name
-              case tr: TypeReference =>
-                if (nameCollisions.contains(tr.name)) tr.show else tr.name
-            }.mkString
-          }
+        smithy4sImport(allImports).toSet ++
+        List("") ++ code
 
       val content = allLines.mkString(System.lineSeparator())
 
@@ -180,7 +169,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       lines(
         line"type $name[F[_]] = $Monadic_[${name}Gen, F]",
         block(
-          line"object $name extends $Service_.Provider[${name}Gen, ${name}Operation]"
+          line"object ${TypeReference(name)} extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
           line"def apply[F[_]](implicit F: $name[F]): F.type = F",
           line"def service: $Service_[${name}Gen, ${name}Operation] = ${name}Gen",
@@ -201,8 +190,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val genName = name + "Gen"
     val opTraitName = name + "Operation"
 
+    implicitly[ToLine[LineSegment]]
     lines(
-      block(line"trait ${TypeDefinition(genName)}[F[_, _, _, _, _]]")(
+      block(line"trait ${TypeDefinition.line(genName)}[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
@@ -254,7 +244,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        block(line"object reified extends $genName[$opTraitName]") {
+        block(
+          line"object ${TypeReference("reified")} extends $genName[$opTraitName]"
+        ) {
           ops.map {
             case op if op.input == Type.unit =>
               line"def ${op.methodName}(${op.renderArgs}) = ${op.name}()"
@@ -329,7 +321,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     lines(
-      line"case class ${TypeDefinition(opName)}($params) extends $traitName[${op
+      line"case class ${TypeDefinition.line(opName)}($params) extends $traitName[${op
         .renderAlgParams(serviceName + "Gen")}]",
       obj(
         opName,
@@ -388,7 +380,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       additionalLines: Lines = Lines.empty
   ): Lines = {
 
-    val decl = line"case class ${TypeDefinition(name)}(${renderArgs(fields)})"
+    val decl =
+      line"case class ${TypeDefinition.line(name)}(${renderArgs(fields)})"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -519,7 +512,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       block(
-        line"sealed trait ${TypeDefinition(name)} extends scala.Product with scala.Serializable"
+        line"sealed trait ${TypeDefinition.line(name)} extends scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this"
       ),
@@ -533,7 +526,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             // format: off
             lines(
-              line"case object $cn extends $name",
+              line"case object ${TypeReference(cn)} extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
@@ -541,7 +534,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
-              line"case class ${TypeDefinition(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
+              line"case class ${TypeDefinition
+                .line(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
             val additionalLines = lines(
@@ -567,7 +561,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 altHints
               ) =>
             val cn = caseName(a)
-            block(line"object $cn")(
+            block(line"object ${TypeReference(cn)}")(
               renderHintsVal(altHints),
             // format: off
             line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
@@ -640,7 +634,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${e.className} extends $name("$value", "${e.className}", $ordinal)"""
+        line"""case object ${TypeReference(
+          e.className
+        )} extends $name("$value", "${e.className}", $ordinal)"""
       },
       newline,
       line"val values: List[$name] = List".args(
@@ -730,10 +726,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-    line"${underlyingTpe.schemaRef}.refined[$fqn]${maybeProviderImport.map{
-          provider =>
-          line"(${TypeReference(provider)})"
-        }.getOrElse(Line.empty)}(${renderNativeHint(hint)})"
+        line"${underlyingTpe.schemaRef}.refined[$fqn](${renderNativeHint(hint)})${maybeProviderImport
+          .map { providerImport => Import(providerImport).toLine }
+          .getOrElse(Line.empty)}"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {

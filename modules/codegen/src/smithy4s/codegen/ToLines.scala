@@ -60,18 +60,20 @@ object ToLines {
 
 case class Lines(list: List[Line]) {
   def block(l: LinesWithValue*): Lines = {
-    val openBlock: List[Line] = list.lastOption.flatMap(_.segments.lastOption).collect {
-      case hardcoded: Hardcoded => hardcoded.value match {
-        case ")" => Line("){")
-        case "}" => Line("}{")
-        case other => Line(other + " {")
+    val openBlock: List[Line] =
+      list.lastOption.flatMap(_.segments.lastOption).collect {
+        case hardcoded: Hardcoded =>
+          hardcoded.value match {
+            case ")"   => Line("){")
+            case "}"   => Line("}{")
+            case other => Line(other + " {")
+          }
+      } match {
+        case Some(value) => list.dropRight(1) :+ value
+        case None        => list
       }
-    } match {
-      case Some(value) => list.dropRight(1) :+ value
-      case None        => list
-    }
 
-    Lines( openBlock) ++ indent(
+    Lines(openBlock) ++ indent(
       l.toList.foldMap(_.render)
     ) ++ Lines("}")
   }
@@ -81,7 +83,7 @@ case class Lines(list: List[Line]) {
       case Some(value) => list.dropRight(1) :+ value
       case None        => list
     }
-    Lines( newLines)
+    Lines(newLines)
   }
 
   def transformLines(f: List[Line] => List[Line]): Lines = Lines(f(list))
@@ -93,12 +95,12 @@ case class Lines(list: List[Line]) {
   def addImport(im: String): Lines =
     if (im.nonEmpty) Lines(list :+ TypeReference(im)) else this
   def addImports(im: Set[String]): Lines =
-  Lines(list ::: im.map(s => TypeReference(s)).toList)
+    Lines(list ::: im.map(s => TypeReference(s)).toList)
 
 }
 object Lines {
   def apply(line: Line): Lines = Lines(List(line))
-  def apply(str:String):Lines = Lines(List(Line(str)))
-  val empty = Lines( List.empty[Line])
+  def apply(str: String): Lines = Lines(List(Line(str)))
+  val empty = Lines(List.empty[Line])
   implicit val linesMonoid: Monoid[Lines] = Monoid.instance(empty, _ ++ _)
 }

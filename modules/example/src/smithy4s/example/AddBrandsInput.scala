@@ -1,15 +1,16 @@
 package smithy4s.example
 
-import smithy4s.example.common.BrandList.underlyingSchema
+import smithy4s._
 import smithy4s.schema.Schema._
+import smithy4s.example.common.BrandList
 
 case class AddBrandsInput(brands: Option[List[String]]=None)
-object AddBrandsInput extends smithy4s.ShapeTag.Companion[AddBrandsInput] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "AddBrandsInput")
+object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
+  val id: ShapeId = ShapeId("smithy4s.example", "AddBrandsInput")
   
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : Hints = Hints.empty
   
-  implicit val schema: smithy4s.Schema[AddBrandsInput] = struct(
+  implicit val schema: Schema[AddBrandsInput] = struct(
     BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands),
   ){
     AddBrandsInput.apply

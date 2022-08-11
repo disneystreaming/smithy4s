@@ -22,7 +22,9 @@ import smithy4s.codegen.LineSegment.Hardcoded
 class PartialBlock(l: Line) {
   def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
     A.render(inner)
-      .transformLines(lines => (l + Hardcoded(" {")) :: indent(lines) ::: List(Line("}")))
+      .transformLines(lines =>
+        (l + Hardcoded(" {")) :: indent(lines) ::: List(Line("}"))
+      )
   }
 
   def apply(inner: LinesWithValue*): Lines =
