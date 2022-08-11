@@ -52,31 +52,33 @@ object Renderer {
       val p = s"package ${unit.namespace}"
 
       val nameCollisions: Set[String] = renderResult.list
-        .flatMap(_.segments.toList).distinct
+        .flatMap(_.segments.toList)
+        .distinct
         .collect {
-          case tr: TypeReference => tr.name
+          case TypeReference(_,name)    => name
           case TypeDefinition(name) => name
         }
         .groupBy(identity)
         .filter(_._2.size > 1)
         .keySet
 
+      def condenseSmithy4sImports(typeReference: TypeReference):TypeReference = {
+        typeReference match {
+          case tr@TypeReference(List("smithy4s"), _) => tr.copy(name = "_")
+          case tr@TypeReference(List("smithy4s", "schema", "Schema"), _) => tr.copy(name = "_")
+          case tr => tr
+        }
+      }
 
-      val allTypeRefs: List[String] = renderResult.list
+      val allImports: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
             case tr @ TypeReference(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(name) &&
-                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
-              tr.show
-          }
+                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) => condenseSmithy4sImports(tr).show
+            case Import(value) => value
+              }
         }
-
-      val allImports: List[String] = renderResult.list.flatMap { line =>
-        line.segments.toList.collect { case Import(value) =>
-          value
-        }
-      } ++ allTypeRefs
 
       val code: List[String] = renderResult.list
         .map { line =>
@@ -88,18 +90,9 @@ object Renderer {
           }.mkString
         }
 
-      def smithy4sImport(imports:List[String]):List[String] = {
-        imports.foldLeft(List.empty[String]) { (acc, imp) =>
-          val line =  imp.split("\\.").toList match {
-            case "smithy4s" :: _ :: Nil => s"import smithy4s._"
-            case  "smithy4s" :: "schema" :: "Schema" :: _ :: Nil =>  s"import smithy4s.schema.Schema._"
-            case general => s"import ${general.mkString(".")}"
-          }
-          acc :+ line
-        }
-      }
+
       val allLines: List[String] = List(p, "") ++
-        smithy4sImport(allImports).toSet ++
+        allImports.toSet.map("import " + _) ++
         List("") ++ code
 
       val content = allLines.mkString(System.lineSeparator())
