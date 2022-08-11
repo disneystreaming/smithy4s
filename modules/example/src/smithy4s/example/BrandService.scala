@@ -52,7 +52,7 @@ object BrandServiceGen extends smithy4s.Service[BrandServiceGen, BrandServiceOpe
     val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
     val hints : smithy4s.Hints = smithy4s.Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/brands"), Some(200)),
+      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/brands"), 200),
     )
     def wrap(input: AddBrandsInput) = AddBrands(input)
   }

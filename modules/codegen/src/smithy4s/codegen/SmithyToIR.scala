@@ -29,6 +29,7 @@ import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
@@ -627,7 +628,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         (
           member.getMemberName(),
           member.tpe,
-          member.hasTrait(classOf[RequiredTrait]),
+          member.hasTrait(classOf[RequiredTrait]) ||
+            member.hasTrait(classOf[DefaultTrait]),
           hints(member)
         )
       }
@@ -767,7 +769,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, true, _) =>
-            val node = map(realName) // validated by smithy
+            val node = map.get(realName).getOrElse {
+              struct
+                .getMember(realName)
+                .get
+                .getTrait(classOf[DefaultTrait])
+                .get
+                .toNode
+            } // value or default must be present on required field
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
           case Field(_, realName, tpe, false, _) =>
             map.get(realName) match {
