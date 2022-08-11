@@ -185,35 +185,30 @@ class DocumentSpec() extends FunSuite {
     assertEquals(roundTripped, Right(faceCard))
   }
 
-  case class DefTest(int: Option[Int], str: Option[String])
+  case class DefTest(int: Int, str: String)
   implicit val withDefaultsSchema: Schema[DefTest] = {
     val i = int
-      .optional[DefTest]("int", _.int)
+      .required[DefTest]("int", _.int)
       .addHints(Default(Document.fromInt(11)))
     val s =
       string
-        .optional[DefTest]("str", _.str)
+        .required[DefTest]("str", _.str)
         .addHints(Default(Document.fromString("test")))
     struct(i, s)(DefTest.apply)
   }
 
   test("defaults should be applied when fields missing") {
-    val defTest = DefTest(None, None)
-
-    val document = Document.encode(defTest)
     import Document._
-    val expectedEncoded = obj()
 
-    val expectedDecoded = DefTest(Some(11), Some("test"))
+    val expectedDecoded = DefTest(11, "test")
 
     val fromEmpty = Document.decode[DefTest](obj())
 
-    expect(document == expectedEncoded)
     expect(fromEmpty == Right(expectedDecoded))
   }
 
   test("defaults should not be applied when field is provided") {
-    val defTest = DefTest(Some(12), Some("test2"))
+    val defTest = DefTest(12, "test2")
 
     val document = Document.encode(defTest)
     import Document._

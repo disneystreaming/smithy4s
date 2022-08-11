@@ -1061,9 +1061,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   ): Handler = {
     val codec = apply(field.instance)
     val label = field.label
-    if (field.isRequired) { (cursor, in, mmap) =>
-      val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
-    } else { (cursor, in, mmap) =>
+    (cursor, in, mmap) =>
       cursor.under[Unit](label) {
         if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
         else {
@@ -1071,7 +1069,6 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           val _ = mmap.put(label, cursor.decode(codec, in))
         }
       }
-    }
   }
 
   private def fieldEncoder[Z, A](
@@ -1160,7 +1157,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           val decode: Document => Option[Any] =
             Document.Decoder.fromSchema(field.instance).decode(_).toOption
           val decoded = field.getDefault.flatMap(decode)
-          (field, decoded)
+          (field, decoded.orNull)
         }
 
       private[this] val documentEncoders =
@@ -1207,14 +1204,17 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
-          fieldsWithDefaults.foreach { case (f, maybeDefault) =>
+          fieldsWithDefaults.foreach { case (f, default) =>
             stage2 += {
               val value = buffer.get(f.label)
               if (f.isRequired) {
-                if (value == null) cursor.requiredFieldError(f.label, f.label)
-                value
+                if (value == null) {
+                  if (default == null)
+                    cursor.requiredFieldError(f.label, f.label)
+                  else default
+                } else value
               } else {
-                if (value != null) Some(value) else maybeDefault
+                Option(value)
               }
             }
           }

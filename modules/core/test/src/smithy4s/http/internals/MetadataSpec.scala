@@ -65,22 +65,19 @@ class MetadataSpec() extends FunSuite {
     checkRoundTripTotal(a, expectedEncoding)
   }
 
-  def checkRoundTripDefault[A](a: A, expectedDecoded: A)(implicit
+  def checkRoundTripDefault[A](expectedDecoded: A)(implicit
       s: Schema[A],
       loc: Location
   ): Unit = {
-    val encoded = Metadata.encode(a)
     val result = Metadata
-      .decodePartial[A](encoded)
+      .decodePartial[A](Metadata.empty)
       .left
       .map(_.getMessage())
       .flatMap { partial =>
         s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
-    val expectedEncoding = Metadata.empty
-    expect.same(encoded, expectedEncoding)
     expect.same(result, Right(expectedDecoded))
-    checkRoundTripTotalDefault(a, expectedDecoded)
+    checkRoundTripTotalDefault(expectedDecoded)
   }
 
   def checkRoundTripError[A](a: A, expectedEncoding: Metadata, message: String)(
@@ -137,19 +134,16 @@ class MetadataSpec() extends FunSuite {
     expect.same(result, Some(Right(a)))
   }
 
-  def checkRoundTripTotalDefault[A](a: A, expectedDecoded: A)(implicit
+  def checkRoundTripTotalDefault[A](expectedDecoded: A)(implicit
       s: Schema[A],
       loc: Location
   ): Unit = {
-    val encoded = Metadata.encode(a)
     val result = Metadata
-      .decodeTotal[A](encoded)
+      .decodeTotal[A](Metadata.empty)
       .map(
         _.left
           .map(_.getMessage())
       )
-    val expectedEncoding = Metadata.empty
-    expect.same(encoded, expectedEncoding)
     expect.same(result, Some(Right(expectedDecoded)))
   }
 
@@ -172,9 +166,8 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("String query parameter with default") {
-    val queries = QueriesWithDefaults(dflt = None)
-    val expectedDecoded = QueriesWithDefaults(dflt = Some("test"))
-    checkRoundTripDefault(queries, expectedDecoded)
+    val expectedDecoded = QueriesWithDefaults(dflt = "test")
+    checkRoundTripDefault(expectedDecoded)
   }
 
   test("String length constraint violation") {
@@ -282,9 +275,8 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("String header with default") {
-    val headers = HeadersWithDefaults(dflt = None)
-    val expected = HeadersWithDefaults(dflt = Some("test"))
-    checkRoundTripDefault(headers, expected)
+    val expected = HeadersWithDefaults(dflt = "test")
+    checkRoundTripDefault(expected)
   }
 
   test("Integer header") {

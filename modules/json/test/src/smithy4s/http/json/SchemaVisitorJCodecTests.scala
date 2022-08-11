@@ -51,12 +51,12 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
-  case class FooDefaulted(a: Option[Int])
+  case class FooDefaulted(a: Int)
   object FooDefaulted {
     implicit val schema: Schema[FooDefaulted] = {
       val a =
         int
-          .optional[FooDefaulted]("a", _.a)
+          .required[FooDefaulted]("a", _.a)
           .addHints(Default(Document.fromInt(11)))
       struct(a)(FooDefaulted.apply)
     }
@@ -134,24 +134,17 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, Foo(1, Some(2)))
   }
 
-  test("Optional encode from defaulted value - no default added") {
-    val foo = FooDefaulted(None)
-    val json = """{}"""
-    val result = writeToString[FooDefaulted](foo)
-    expect.same(result, json)
-  }
-
   test("Optional decode from defaulted value - missing") {
     val json = """{}"""
     val result = readFromString[FooDefaulted](json)
-    val expected = FooDefaulted(Some(11))
+    val expected = FooDefaulted(11)
     expect.same(result, expected)
   }
 
   test("Optional decode from defaulted value - null") {
     val json = """{"a":null}"""
     val result = readFromString[FooDefaulted](json)
-    expect.same(result, FooDefaulted(Some(11)))
+    expect.same(result, FooDefaulted(11))
   }
 
   test("Optional decode from absent value") {

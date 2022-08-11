@@ -329,8 +329,6 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
             .get(jLabel) match {
             case Some(document) =>
               buffer(Some(apply(field.instance)(path, document)))
-            case None if maybeDefault.isDefined =>
-              buffer(Some(apply(field.instance)(path, maybeDefault.get)))
             case None => buffer(None)
           }
       } else {
@@ -340,16 +338,19 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
             fields: Map[String, Document]
         ) =>
           val path = PayloadPath.Segment(jLabel) :: pp
-          val document = fields
-            .get(jLabel)
-            .getOrElse(
+          fields
+            .get(jLabel) match {
+            case Some(document) =>
+              buffer(apply(field.instance)(path, document))
+            case None if maybeDefault.isDefined =>
+              buffer(apply(field.instance)(path, maybeDefault.get))
+            case None =>
               throw new PayloadError(
                 PayloadPath(path.reverse),
                 "",
                 "Required field not found"
               )
-            )
-          buffer(apply(field.instance)(path, document))
+          }
       }
     }
 

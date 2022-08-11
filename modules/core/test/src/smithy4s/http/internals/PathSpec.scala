@@ -35,7 +35,8 @@ class PathSpec() extends munit.FunSuite {
         .addHints(
           Http(
             method = NonEmptyString("GET"),
-            uri = NonEmptyString("/{label}")
+            uri = NonEmptyString("/{label}"),
+            code = 200
           )
         )
       SchemaVisitorPathEncoder(schemaA)
@@ -91,7 +92,8 @@ class PathSpec() extends munit.FunSuite {
       .addHints(
         Http(
           method = NonEmptyString("GET"),
-          uri = NonEmptyString("/{label}/const/{secondLabel}")
+          uri = NonEmptyString("/{label}/const/{secondLabel}"),
+          code = 200
         )
       )
     val result = SchemaVisitorPathEncoder(schema)
@@ -112,7 +114,8 @@ class PathSpec() extends munit.FunSuite {
       .addHints(
         Http(
           method = NonEmptyString("GET"),
-          uri = NonEmptyString("/{label}/const/{greedyLabel+}")
+          uri = NonEmptyString("/{label}/const/{greedyLabel+}"),
+          code = 200
         )
       )
     val result = SchemaVisitorPathEncoder(schema)
