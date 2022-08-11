@@ -127,84 +127,53 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
     }
   }
 
-  private def outputFromErrorResponse(response: Response[F]): F[O] = {
+  private def getErrorDiscriminator(response: Response[F]) = {
+    getFirstHeader(response, errorTypeHeader)
+      .map(errorType =>
+        ShapeId
+          .parse(errorType)
+          .map(ErrorAltPicker.ErrorDiscriminator.FullId(_))
+          .getOrElse(ErrorAltPicker.ErrorDiscriminator.NameOnly(errorType))
+      )
+      .getOrElse(
+        ErrorAltPicker.ErrorDiscriminator.StatusCode(response.status.code)
+      )
+  }
 
-    /**
-      * Find the error schema alternative that matches the errorTypeHeader.
-      */
-    def findErrorAltForHeader(err: Errorable[E]) = for {
-      discriminator <- getFirstHeader(response, errorTypeHeader)
-      oneOf <- err.error.alternatives.find(_.label == discriminator)
-    } yield oneOf
-
-    /**
-      * Attempt to decode for all union member, return as soon as one
-      * decodes successfully.
-      */
-    def bestEffort(
-        errorable: Errorable[E],
-        alts: Vector[SchemaAlt[E, _]]
-    ): F[O] = {
-      alts
-        .collectFirstSomeM { oneOf =>
-          tryProcessError(errorable, oneOf, response)
-            .map(_.toOption)
-            .handleError { case _: PayloadError => None }
-        }
-        .flatMap {
-          case Some(e) =>
-            effect.raiseError(errorable.unliftError(e))
-          case None =>
-            errorResponseFallBack(response)
-        }
-    }
-
+  private val outputFromErrorResponse: Response[F] => F[O] = {
     endpoint.errorable match {
-      case None => // can't do anything w/o the errorable
-        errorResponseFallBack(response)
-      case Some(errorable) =>
-        val statusInt = response.status.code
-        val errorAltPicker =
-          new ErrorAltPicker(errorable.error.alternatives)
-        // try to find precisely either by status code unique match
-        // or by matching the errorTypeHeader
-        val maybePreciseAlt =
-          errorAltPicker
-            .getPreciseAlternative(statusInt)
-            .orElse(findErrorAltForHeader(errorable))
+      case None => errorResponseFallBack(_)
+      case Some(err) =>
+        val allAlternatives = err.error.alternatives
+        val picker = new ErrorAltPicker(allAlternatives)
+        type ErrorDecoder[A] = Response[F] => F[E]
+        val decodeFunction = new PolyFunction[SchemaAlt[E, *], ErrorDecoder] {
+          def apply[A](alt: SchemaAlt[E, A]): Response[F] => F[E] = {
+            val schema = alt.instance
+            val errorMetadataDecoder =
+              Metadata.PartialDecoder.fromSchema(schema)
+            implicit val errorCodec =
+              entityCompiler.compilePartialEntityDecoder(schema)
 
-        val maybeError = maybePreciseAlt.map { alt =>
-          processError(errorable, alt, response)
-        }
+            (response: Response[F]) => {
+              decodeResponse[A](response, errorMetadataDecoder)
+                .flatMap(_.liftTo[F])
+                .map(alt.inject)
+            }
+          }
+        }.unsafeCache(allAlternatives.map(Existential.wrap(_)))
 
-        // if no response is rendered by then, do a best effort
-        maybeError.getOrElse {
-          val sortedAlts = errorAltPicker.orderedForStatus(statusInt)
-          bestEffort(errorable, sortedAlts)
+        (response: Response[F]) => {
+          val discriminator = getErrorDiscriminator(response)
+          picker.getPreciseAlternative(discriminator) match {
+            case None => errorResponseFallBack(response)
+            case Some(alt) =>
+              decodeFunction(alt)(response)
+                .map(err.unliftError)
+                .flatMap(effect.raiseError)
+          }
         }
     }
-  }
-
-  private def processError[ErrorType](
-      errorable: Errorable[E],
-      oneOf: SchemaAlt[E, ErrorType],
-      response: Response[F]
-  ): F[O] = {
-    tryProcessError(errorable, oneOf, response).rethrow
-      .map(errorable.unliftError)
-      .flatMap(effect.raiseError)
-  }
-
-  private def tryProcessError[ErrorType](
-      errorable: Errorable[E],
-      oneOf: SchemaAlt[E, ErrorType],
-      response: Response[F]
-  ): F[Either[MetadataError, E]] = {
-    val schema = oneOf.instance
-    val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
-    implicit val errorCodec = entityCompiler.compilePartialEntityDecoder(schema)
-    decodeResponse[ErrorType](response, errorMetadataDecoder)
-      .map(_.map(oneOf.inject))
   }
 
   private def decodeResponse[T](
