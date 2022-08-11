@@ -570,8 +570,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
-              line"case class ${TypeDefinition
-                .line(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
+              line"case class ${TypeDefinition(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
             val additionalLines = lines(
