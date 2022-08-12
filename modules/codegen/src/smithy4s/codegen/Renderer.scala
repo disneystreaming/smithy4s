@@ -414,30 +414,30 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             fields.map { case Field(fieldName, realName, tpe, required, hints) =>
               val req = if (required) "required" else "optional"
               if (hints.isEmpty) {
-                line"""${tpe.schemaRef}.$req[$name]("$realName", _.$fieldName)"""
+                line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
                 val mh = memberHints(hints)
                   // format: off
-                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[$name]("$realName", _.$fieldName).addHints($mh)"""
+                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName).addHints($mh)"""
                   // format: on
               }
             }
           if (fields.size <= 22) {
             val definition =
               if (recursive) line"$recursive_($struct_" else line"$struct_"
-            line"${schemaImplicit}val schema: $Schema_[$name] = $definition"
+            line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
-              .block(line"$name.apply")
+              .block(line"${product.nameRef}.apply")
               .appendToLast(".withId(id).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
               if (recursive) line"$recursive_($struct_.genericArity"
               else line"$struct_.genericArity"
-            line"${schemaImplicit}val schema: $Schema_[$name] = $definition"
+            line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(renderedFields)
               .block(
-                line"arr => new $name".args(
+                line"arr => new ${product.nameRef}".args(
                   fields.zipWithIndex.map {
                     case (Field(_, _, tpe, required, _), idx) =>
                       val scalaTpe = line"$tpe"
@@ -452,7 +452,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .appendToLast(if (recursive) ")" else "")
           }
         } else {
-          line"implicit val schema: $Schema_[$name] = $constant_($name()).withId(id).addHints(hints)"
+          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
         additionalLines
       )
