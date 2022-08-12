@@ -62,17 +62,6 @@ object Renderer {
         .filter(_._2.size > 1)
         .keySet
 
-      /*      def condenseSmithy4sImports(
-          typeReference: TypeReference
-      ): TypeReference = {
-        typeReference match {
-          case tr @ TypeReference(List("smithy4s"), _) => tr.copy(name = "_")
-          case tr @ TypeReference(List("smithy4s", "schema", "Schema"), _) =>
-            tr.copy(name = "_")
-          case tr => tr
-        }
-      }*/
-
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
