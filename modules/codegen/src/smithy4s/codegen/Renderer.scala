@@ -55,14 +55,14 @@ object Renderer {
         .flatMap(_.segments.toList)
         .distinct
         .collect {
-          case TypeReference(_, name) => name
-          case TypeDefinition(name)   => name
+          case NameRef(_, name) => name
+          case NameDef(name)   => name
         }
         .groupBy(identity)
         .filter(_._2.size > 1)
         .keySet
 
-/*      def condenseSmithy4sImports(
+      /*      def condenseSmithy4sImports(
           typeReference: TypeReference
       ): TypeReference = {
         typeReference match {
@@ -76,10 +76,10 @@ object Renderer {
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
-            case tr @ TypeReference(pkg, name)
+            case tr @ NameRef(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(name) &&
                   !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
-             tr.show
+              tr.show
             case Import(value) => value
           }
         }
@@ -87,9 +87,9 @@ object Renderer {
       val code: List[String] = renderResult.list
         .map { line =>
           line.segments.toList.collect {
-            case Hardcoded(value)     => value
-            case TypeDefinition(name) => name
-            case tr: TypeReference =>
+            case Literal(value)     => value
+            case NameDef(name) => name
+            case tr: NameRef =>
               if (nameCollisions.contains(tr.name)) tr.asValue else tr.name
           }.mkString
         }
@@ -162,9 +162,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case s: Service =>
       val name = s.name
       lines(
-        line"type ${TypeDefinition(name)}[F[_]] = $Monadic_[${name}Gen, F]",
+        line"type ${NameDef(name)}[F[_]] = $Monadic_[${name}Gen, F]",
         block(
-          line"object ${TypeReference(name)} extends $Service_.Provider[${name}Gen, ${name}Operation]"
+          line"object ${NameRef(name)} extends $Service_.Provider[${name}Gen, ${name}Operation]"
         )(
           line"def apply[F[_]](implicit F: $name[F]): F.type = F",
           line"def service: $Service_[${name}Gen, ${name}Operation] = ${name}Gen",
@@ -186,7 +186,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opTraitName = name + "Operation"
 
     lines(
-      block(line"trait ${TypeDefinition(genName)}[F[_, _, _, _, _]]")(
+      block(line"trait ${NameDef(genName)}[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
@@ -239,7 +239,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         },
         newline,
         block(
-          line"object ${TypeReference("reified")} extends $genName[$opTraitName]"
+          line"object ${NameRef("reified")} extends $genName[$opTraitName]"
         ) {
           ops.map {
             case op if op.input == Type.unit =>
@@ -315,7 +315,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     lines(
-      line"case class ${TypeDefinition(opName)}($params) extends $traitName[${op
+      line"case class ${NameDef(opName)}($params) extends $traitName[${op
         .renderAlgParams(serviceName + "Gen")}]",
       obj(
         opName,
@@ -371,7 +371,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     import product._
     val decl =
-      line"case class ${TypeDefinition(name)}(${renderArgs(fields)})"
+      line"case class ${NameDef(name)}(${renderArgs(fields)})"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -495,13 +495,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderGetMessage(field: Field) = field match {
     case field if field.tpe.isResolved && field.required =>
-      s"override def getMessage(): String = ${field.name}"
+      line"override def getMessage(): String = ${field.name}"
     case field if field.tpe.isResolved =>
-      s"override def getMessage(): String = ${field.name}.orNull"
+      line"override def getMessage(): String = ${field.name}.orNull"
     case field if field.required =>
-      s"override def getMessage(): String = ${field.name}.value"
+      line"override def getMessage(): String = ${field.name}.value"
     case field =>
-      s"override def getMessage(): String = ${field.name}.map(_.value).orNull"
+      line"override def getMessage(): String = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {
@@ -548,7 +548,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       block(
-        line"sealed trait ${TypeDefinition(name)} extends scala.Product with scala.Serializable"
+        line"sealed trait ${NameDef(name)} extends scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this"
       ),
@@ -562,7 +562,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             // format: off
             lines(
-              line"case object ${TypeReference(cn)} extends $name",
+              line"case object ${NameRef(cn)} extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
@@ -570,7 +570,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
-              line"case class ${TypeDefinition(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
+              line"case class ${NameDef(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
             val additionalLines = lines(
@@ -592,7 +592,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 altHints
               ) =>
             val cn = caseName(a)
-            block(line"object ${TypeReference(cn)}")(
+            block(line"object ${NameRef(cn)}")(
               renderHintsVal(altHints),
             // format: off
             line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
@@ -639,7 +639,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     field match {
       case Field(name, _, tpe, required, _) =>
         val line = line"$tpe"
-        line"$name: " :++ (if (required) line
+        line"$name: " + (if (required) line
                            else Line.optional(line, !noDefault))
 
     }
@@ -669,7 +669,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, ordinal, _, _) =>
-        line"""case object ${TypeReference(
+        line"""case object ${NameRef(
           e.name
         )} extends $name("$value", "${e.name}", $ordinal)"""
       },
@@ -718,7 +718,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     def renderAlgParams(serviceName: String) = {
       line"${op.input}, ${if (op.errors.isEmpty) line"Nothing"
-      else TypeReference(s"$serviceName.${op.name}Error")}, ${op.output}, ${op.streamedInput
+      else NameRef(s"$serviceName.${op.name}Error")}, ${op.output}, ${op.streamedInput
         .map(_.tpe)
         .getOrElse(Type.PrimitiveType(Nothing))}, ${op.streamedOutput
         .map(_.tpe)
@@ -733,7 +733,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   implicit class TypeExt(tpe: Type) {
     val schemaPkg_ = "smithy4s.schema.Schema"
     def schemaRef: Line = tpe match {
-      case Type.PrimitiveType(p) => TypeReference(schemaRefP(p))
+      case Type.PrimitiveType(p) => NameRef(schemaRefP(p))
       case Type.Collection(collectionType, member) =>
         val col = collectionType match {
           case CollectionType.List       => s"$schemaPkg_.list"
@@ -741,19 +741,19 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           case CollectionType.Vector     => s"$schemaPkg_.vector"
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
-        line"${TypeReference(col)}(${member.schemaRef})"
+        line"${NameRef(col)}(${member.schemaRef})"
       case Type.Map(key, value) =>
-        line"${TypeReference(s"$schemaPkg_.map")}(${key.schemaRef}, ${value.schemaRef})"
+        line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}, ${value.schemaRef})"
       case Type.Alias(
             ns,
             name,
             _,
             false
           ) =>
-        TypeReference(ns, s"$name.schema")
+        NameRef(ns, s"$name.schema")
       case Type.Alias(ns, name, _, _) =>
-        TypeReference(ns, s"$name.underlyingSchema")
-      case Type.Ref(ns, name) => TypeReference(ns, s"$name.schema")
+        NameRef(ns, s"$name.underlyingSchema")
+      case Type.Ref(ns, name) => NameRef(ns, s"$name.schema")
       case Type.ExternalType(
             _,
             fqn,
@@ -802,7 +802,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
-    case Hint.IntEnum   => line"${TypeReference("smithy4s", "IntEnum")}()".some
+    case Hint.IntEnum   => line"${NameRef("smithy4s", "IntEnum")}()".some
     case _              => None
   }
 

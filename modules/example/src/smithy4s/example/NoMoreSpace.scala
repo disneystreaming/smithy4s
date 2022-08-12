@@ -7,7 +7,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class NoMoreSpace(message: String, foo: Option[Foo]=None) extends Throwable {
+case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
   override def getMessage(): String = message
 }
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {

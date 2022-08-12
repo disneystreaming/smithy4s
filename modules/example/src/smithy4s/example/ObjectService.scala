@@ -18,12 +18,12 @@ import smithy4s.Endpoint
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
   
-  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh]=None, someValue: Option[SomeValue]=None) : F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
+  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
   def getObject(key: ObjectKey, bucketName: BucketName) : F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
   
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ObjectServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ObjectServiceGen[G] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh]=None, someValue: Option[SomeValue]=None) = transformation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing](self.putObject(key, bucketName, data, foo, someValue))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = transformation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing](self.putObject(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName) = transformation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing](self.getObject(key, bucketName))
   }
 }
@@ -51,7 +51,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
   }
   
   object reified extends ObjectServiceGen[ObjectServiceOperation] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh]=None, someValue: Option[SomeValue]=None) = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName) = GetObject(GetObjectInput(key, bucketName))
   }
   

@@ -7,7 +7,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class ServerError(message: Option[String]=None) extends Throwable {
+case class ServerError(message: Option[String] = None) extends Throwable {
   override def getMessage(): String = message.orNull
 }
 object ServerError extends ShapeTag.Companion[ServerError] {

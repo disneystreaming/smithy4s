@@ -19,7 +19,7 @@ package smithy4s.codegen
 import cats.data.NonEmptyList
 import cats.kernel.Monoid
 import cats.syntax.all._
-import smithy4s.codegen.LineSegment.{Hardcoded, TypeReference}
+import smithy4s.codegen.LineSegment.{Literal, NameRef}
 
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
@@ -62,7 +62,7 @@ case class Lines(list: List[Line]) {
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =
       list.lastOption.flatMap(_.segments.lastOption).collect {
-        case hardcoded: Hardcoded =>
+        case hardcoded: Literal =>
           hardcoded.value match {
             case ")"   => Line("){")
             case "}"   => Line("}{")
@@ -79,7 +79,7 @@ case class Lines(list: List[Line]) {
   }
 
   def appendToLast(s: String): Lines = {
-    val newLines = list.lastOption.map(_ :++ Line(s)) match {
+    val newLines = list.lastOption.map(_ + Line(s)) match {
       case Some(value) => list.dropRight(1) :+ value
       case None        => list
     }
@@ -93,9 +93,9 @@ case class Lines(list: List[Line]) {
     Lines(list ++ other.list)
 
   def addImport(im: String): Lines =
-    if (im.nonEmpty) Lines(list :+ TypeReference(im)) else this
+    if (im.nonEmpty) Lines(list :+ NameRef(im)) else this
   def addImports(im: Set[String]): Lines =
-    Lines(list ::: im.map(s => TypeReference(s)).toList)
+    Lines(list ::: im.map(s => NameRef(s)).toList)
 
 }
 object Lines {

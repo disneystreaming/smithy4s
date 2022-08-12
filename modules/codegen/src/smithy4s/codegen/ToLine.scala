@@ -21,7 +21,7 @@ import cats.kernel.Monoid
 import cats.data.Chain
 import cats.Show
 import cats.syntax.all._
-import smithy4s.codegen.LineSegment.{Hardcoded,TypeReference}
+import smithy4s.codegen.LineSegment.{Literal, NameRef}
 
 trait ToLine[A] {
   def render(a: A): Line
@@ -29,7 +29,7 @@ trait ToLine[A] {
 
 object ToLine {
   def apply[A](implicit A: ToLine[A]): ToLine[A] = A
-  implicit def lineSegmentToLine[A<:LineSegment]:ToLine[A] = l => Line(l)
+  implicit def lineSegmentToLine[A <: LineSegment]: ToLine[A] = l => Line(l)
   implicit val identity: ToLine[Line] = r => r
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
   implicit val stringToLine: ToLine[String] = s => Line(s)
@@ -38,47 +38,43 @@ object ToLine {
       case Type.Collection(collectionType, member) =>
         val line = render(member)
         val col = collectionType.tpe
-        TypeReference(col) :+ Hardcoded("[") :++ line :+ Hardcoded("]")
+        NameRef(col) + Literal("[") + line + Literal("]")
       case Type.Map(key, value) =>
         val keyLine = render(key)
         val valueLine = render(value)
-        TypeReference("Map") :+ Hardcoded("[") :++ Line(
-          (keyLine.segments :+ Hardcoded(
-            ","
-          )) ++ valueLine.segments :+ Hardcoded("]")
-        )
+        NameRef("Map") + Literal("[") + keyLine + Literal(",") + valueLine + Literal("]")
       case Type.Alias(
             ns,
             name,
             Type.PrimitiveType(_) | _: Type.ExternalType,
             false
           ) =>
-        TypeReference(ns, name)
+        NameRef(ns, name)
       case Type.Alias(_, _, aliased, _) =>
         render(aliased)
-      case Type.Ref(namespace, name)          => TypeReference(namespace, name)
+      case Type.Ref(namespace, name)          => NameRef(namespace, name)
       case Type.PrimitiveType(prim)           => primitiveLine(prim)
-      case Type.ExternalType(_, fqn, _, _, _) => TypeReference(fqn)
+      case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn)
     }
   }
   private def primitiveLine(p: Primitive): Line =
     p match {
-      case Primitive.Unit       => TypeReference("Unit")
-      case Primitive.ByteArray  => TypeReference("smithy4s", "ByteArray")
-      case Primitive.Bool       => TypeReference("Boolean")
-      case Primitive.String     => TypeReference("String")
-      case Primitive.Timestamp  => TypeReference("smithy4s", "Timestamp")
-      case Primitive.Byte       => TypeReference("Byte")
-      case Primitive.Int        => TypeReference("Int")
-      case Primitive.Short      => TypeReference("Short")
-      case Primitive.Long       => TypeReference("Long")
-      case Primitive.Float      => TypeReference("Float")
-      case Primitive.Double     => TypeReference("Double")
-      case Primitive.BigDecimal => TypeReference("BigDecimal")
-      case Primitive.BigInteger => TypeReference("BigInt")
-      case Primitive.Uuid       => TypeReference("java.util", "UUID")
-      case Primitive.Document   => TypeReference("smithy4s", "Document")
-      case Primitive.Nothing    => TypeReference("Nothing")
+      case Primitive.Unit       => NameRef("Unit")
+      case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
+      case Primitive.Bool       => NameRef("Boolean")
+      case Primitive.String     => NameRef("String")
+      case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
+      case Primitive.Byte       => NameRef("Byte")
+      case Primitive.Int        => NameRef("Int")
+      case Primitive.Short      => NameRef("Short")
+      case Primitive.Long       => NameRef("Long")
+      case Primitive.Float      => NameRef("Float")
+      case Primitive.Double     => NameRef("Double")
+      case Primitive.BigDecimal => NameRef("BigDecimal")
+      case Primitive.BigInteger => NameRef("BigInt")
+      case Primitive.Uuid       => NameRef("java.util", "UUID")
+      case Primitive.Document   => NameRef("smithy4s", "Document")
+      case Primitive.Nothing    => NameRef("Nothing")
     }
 }
 
@@ -89,35 +85,38 @@ sealed trait LineSegment { self =>
 }
 object LineSegment {
   case class Import(value: String) extends LineSegment
-  case class Hardcoded(value: String) extends LineSegment
-  case class TypeDefinition(name: String) extends LineSegment
-  case class TypeReference(pkg: List[String], name: String)
+  object Import {
+    implicit val importShow = Show.show[Import](_.value)
+  }
+  case class Literal(value: String) extends LineSegment
+  object Literal {
+    implicit val literalShow = Show.show[Literal](_.value)
+  }
+  case class NameDef(name: String) extends LineSegment
+  object NameDef {
+    implicit val typeDefinitionShow = Show.show[NameDef](_.name)
+  }
+  case class NameRef(pkg: List[String], name: String)
       extends LineSegment { self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
+    def asImport: String = s"${(pkg :+ name.split("\\.")(0)).mkString(".")}"
   }
-  object TypeReference {
+  object NameRef {
+    implicit val typeReferenceShow = Show.show[NameRef](_.asImport)
     def apply(pkg: String, name: String): Line =
-      TypeReference(pkg.split("\\.").toList, name).toLine
+      NameRef(pkg.split("\\.").toList, name).toLine
     def apply(fqn: String): Line = {
       val parts = fqn.split("\\.").toList
-      TypeReference(parts.dropRight(1), parts.last).toLine
+      NameRef(parts.dropRight(1), parts.last).toLine
     }
 
   }
 
-  implicit val hardcodedShow = Show.show[Hardcoded](_.value)
-  implicit val importShow = Show.show[Import](_.value)
-  implicit val typeDefShow: Show[TypeDefinition] = Show.show { td =>
-    s"${td.name}"
-  }
-  implicit val typeRefShow: Show[TypeReference] = Show.show { tr =>
-    s"${(tr.pkg :+ tr.name.split("\\.")(0)).mkString(".")}"
-  }
   implicit val lineSegmentShow: Show[LineSegment] = Show.show {
     case Import(value)      => value
-    case Hardcoded(value)   => value
-    case td: TypeDefinition => td.show
-    case tr: TypeReference  => tr.show
+    case Literal(value)   => value
+    case td: NameDef => td.show
+    case tr: NameRef  => tr.show
   }
   implicit val lineShow: Show[Line] =
     Show.show(line => line.segments.toList.map(_.show).mkString(""))
@@ -128,13 +127,9 @@ object LineSegment {
 }
 case class Line(segments: Chain[LineSegment]) {
   self =>
-  def :++(other: Line): Line = Line(self.segments ++ other.segments)
+  def +(other: Line): Line = Line(self.segments ++ other.segments)
 
   def +(segment: LineSegment): Line = Line(self.segments :+ segment)
-
-  def :+(segment: LineSegment): Line = Line(self.segments :+ segment)
-
-  def +:(segment: LineSegment): Line = Line(segment +: self.segments)
 
   def nonEmpty: Boolean = segments.nonEmpty
 
@@ -146,11 +141,11 @@ case class Line(segments: Chain[LineSegment]) {
   def args(linesWithValue: LinesWithValue*): Lines = {
     if (segments.nonEmpty) {
       if (linesWithValue.exists(_.render.list.nonEmpty))
-        Lines(List(self + Hardcoded("("))) ++ indent(
-          linesWithValue.toList.foldMap(_.render).mapLines(_ + Hardcoded(","))
+        Lines(List(self + Literal("("))) ++ indent(
+          linesWithValue.toList.foldMap(_.render).mapLines(_ + Literal(","))
         ) ++ Lines(")")
       else
-        Lines(self + Hardcoded("()"))
+        Lines(self + Literal("()"))
     } else {
       Lines.empty
     }
@@ -161,20 +156,20 @@ object Line {
 
   def optional(line: Line, default: Boolean = false): Line = {
     val option =
-      TypeReference("Option") :+ Hardcoded("[") :++ line + Hardcoded("]")
+      NameRef("Option") + Literal("[") + line + Literal("]")
     if (default)
-      option :+ Hardcoded(" = ") :++ TypeReference("None")
+      option + Literal(" = ") + NameRef("None")
     else
       option
   }
 
-  def apply(value: String): Line = Line(Chain.one(Hardcoded(value)))
+  def apply(value: String): Line = Line(Chain.one(Literal(value)))
 
   def apply(values: LineSegment*): Line = Line(Chain(values: _*))
 
   val empty: Line = Line(Chain.empty)
   val comma: Line = Line(", ")
   val dot: Line = Line(".")
-  implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ :++ _)
+  implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ + _)
 
 }

@@ -18,7 +18,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   val hints : Hints = Hints.empty
   
   case class OnlineCase(online: OrderNumber) extends OrderType
-  case class InStoreOrder(id: OrderNumber, locationId: Option[String]=None) extends OrderType
+  case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
     

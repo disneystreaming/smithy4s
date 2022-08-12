@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class TestTrait(orderType: Option[OrderType]=None)
+case class TestTrait(orderType: Option[OrderType] = None)
 object TestTrait extends ShapeTag.Companion[TestTrait] {
   val id: ShapeId = ShapeId("smithy4s.example", "testTrait")
   

@@ -21,7 +21,7 @@ import smithy4s.api.UuidFormatTrait
 import smithy4s.codegen.LineSyntax.LineInterpolator
 import smithy4s.codegen.WithValue.ToLineWithValue
 import smithy4s.codegen.WithValue.ToLinesWithValue
-import smithy4s.codegen.LineSegment.TypeReference
+import smithy4s.codegen.LineSegment.NameRef
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait
@@ -57,7 +57,7 @@ package object codegen {
 
   private[codegen] def indent(l: List[Line]): List[Line] = l.map { line =>
     if (line.segments.length > 0)
-      Line("  ") :++ line
+      Line("  ") + line
     else
       line
   }
@@ -74,7 +74,7 @@ package object codegen {
       ext: Line,
       w: Line = Line.empty
   ): PartialBlock = {
-    val start = line"object ${TypeReference(name)}"
+    val start = line"object ${NameRef(name)}"
     val withExt = if (ext.nonEmpty) start combine line" extends $ext" else start
     val withW = if (w.nonEmpty) withExt combine line" with $w" else withExt
     new PartialBlock(withW)

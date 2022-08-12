@@ -17,7 +17,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   
   val hints : Hints = Hints.empty
   
-  case class TestAdtMemberWithMixin(a: Option[String]=None, b: Option[Int]=None) extends TestMixinAdt with CommonFieldsOne
+  case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
     

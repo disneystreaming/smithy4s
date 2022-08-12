@@ -7,7 +7,7 @@ import smithy4s.example.common.BrandList
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class AddBrandsInput(brands: Option[List[String]]=None)
+case class AddBrandsInput(brands: Option[List[String]] = None)
 object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "AddBrandsInput")
   

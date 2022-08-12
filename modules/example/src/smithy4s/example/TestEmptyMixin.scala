@@ -7,7 +7,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.long
 
-case class TestEmptyMixin(a: Option[Long]=None) extends EmptyMixin
+case class TestEmptyMixin(a: Option[Long] = None) extends EmptyMixin
 object TestEmptyMixin extends ShapeTag.Companion[TestEmptyMixin] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestEmptyMixin")
   
