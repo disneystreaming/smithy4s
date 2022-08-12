@@ -163,7 +163,7 @@ object Line {
     val option =
       TypeReference("Option") :+ Hardcoded("[") :++ line + Hardcoded("]")
     if (default)
-      option :+ Hardcoded("=") :++ TypeReference("None")
+      option :+ Hardcoded(" = ") :++ TypeReference("None")
     else
       option
   }
