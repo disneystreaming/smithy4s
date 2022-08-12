@@ -70,23 +70,23 @@ package object codegen {
   )
 
   private[codegen] def obj(
-      name: String,
+      name: NameRef,
       ext: Line,
       w: Line = Line.empty
   ): PartialBlock = {
-    val start = line"object ${NameRef(name)}"
+    val start = line"object $name"
     val withExt = if (ext.nonEmpty) start combine line" extends $ext" else start
     val withW = if (w.nonEmpty) withExt combine line" with $w" else withExt
     new PartialBlock(withW)
   }
   private[codegen] def obj(
-      name: String
+      name: NameRef
   ): PartialBlock = {
     obj(name, Line.empty)
   }
 
   private[codegen] def obj(
-      name: String,
+      name: NameRef,
       extensions: List[Line]
   ): PartialBlock = {
     obj(name, extensions.intercalate(Line(" with ")))

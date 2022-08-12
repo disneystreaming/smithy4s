@@ -93,9 +93,9 @@ case class Lines(list: List[Line]) {
     Lines(list ++ other.list)
 
   def addImport(im: String): Lines =
-    if (im.nonEmpty) Lines(list :+ NameRef(im)) else this
+    if (im.nonEmpty) Lines(list :+ NameRef(im).toLine) else this
   def addImports(im: Set[String]): Lines =
-    Lines(list ::: im.map(s => NameRef(s)).toList)
+    Lines(list ::: im.map(s => NameRef(s).toLine).toList)
 
 }
 object Lines {

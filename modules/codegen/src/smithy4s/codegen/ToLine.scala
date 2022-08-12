@@ -38,26 +38,28 @@ object ToLine {
       case Type.Collection(collectionType, member) =>
         val line = render(member)
         val col = collectionType.tpe
-        NameRef(col) + Literal("[") + line + Literal("]")
+        NameRef(col).toLine + Literal("[") + line + Literal("]")
       case Type.Map(key, value) =>
         val keyLine = render(key)
         val valueLine = render(value)
-        NameRef("Map") + Literal("[") + keyLine + Literal(",") + valueLine + Literal("]")
+        NameRef("Map").toLine + Literal("[") + keyLine + Literal(
+          ","
+        ) + valueLine + Literal("]")
       case Type.Alias(
             ns,
             name,
             Type.PrimitiveType(_) | _: Type.ExternalType,
             false
           ) =>
-        NameRef(ns, name)
+        NameRef(ns, name).toLine
       case Type.Alias(_, _, aliased, _) =>
         render(aliased)
-      case Type.Ref(namespace, name)          => NameRef(namespace, name)
-      case Type.PrimitiveType(prim)           => primitiveLine(prim)
-      case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn)
+      case Type.Ref(namespace, name)          => NameRef(namespace, name).toLine
+      case Type.PrimitiveType(prim)           => primitiveLine(prim).toLine
+      case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn).toLine
     }
   }
-  private def primitiveLine(p: Primitive): Line =
+  private def primitiveLine(p: Primitive): NameRef =
     p match {
       case Primitive.Unit       => NameRef("Unit")
       case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
@@ -94,29 +96,29 @@ object LineSegment {
   }
   case class NameDef(name: String) extends LineSegment
   object NameDef {
-    implicit val typeDefinitionShow = Show.show[NameDef](_.name)
+    implicit val nameDefShow: Show[NameDef] = Show.show[NameDef](_.name)
   }
-  case class NameRef(pkg: List[String], name: String)
-      extends LineSegment { self =>
+  case class NameRef(pkg: List[String], name: String) extends LineSegment {
+    self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
     def asImport: String = s"${(pkg :+ name.split("\\.")(0)).mkString(".")}"
   }
   object NameRef {
-    implicit val typeReferenceShow = Show.show[NameRef](_.asImport)
-    def apply(pkg: String, name: String): Line =
-      NameRef(pkg.split("\\.").toList, name).toLine
-    def apply(fqn: String): Line = {
+    implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
+    def apply(pkg: String, name: String): NameRef =
+      NameRef(pkg.split("\\.").toList, name)
+    def apply(fqn: String): NameRef = {
       val parts = fqn.split("\\.").toList
-      NameRef(parts.dropRight(1), parts.last).toLine
+      NameRef(parts.dropRight(1), parts.last)
     }
 
   }
 
   implicit val lineSegmentShow: Show[LineSegment] = Show.show {
-    case Import(value)      => value
-    case Literal(value)   => value
-    case td: NameDef => td.show
-    case tr: NameRef  => tr.show
+    case Import(value)  => value
+    case Literal(value) => value
+    case td: NameDef    => td.show
+    case tr: NameRef    => tr.show
   }
   implicit val lineShow: Show[Line] =
     Show.show(line => line.segments.toList.map(_.show).mkString(""))
@@ -156,7 +158,7 @@ object Line {
 
   def optional(line: Line, default: Boolean = false): Line = {
     val option =
-      NameRef("Option") + Literal("[") + line + Literal("]")
+      NameRef("Option").toLine + Literal("[") + line + Literal("]")
     if (default)
       option + Literal(" = ") + NameRef("None")
     else
