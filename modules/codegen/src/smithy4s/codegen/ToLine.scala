@@ -82,22 +82,27 @@ object ToLine {
 
 // Models
 
+// LineSegment models segments of a line of code.
 sealed trait LineSegment { self =>
   def toLine: Line = Line(Chain.one(self))
 }
 object LineSegment {
+  // Models an Import statement.
   case class Import(value: String) extends LineSegment
   object Import {
-    implicit val importShow = Show.show[Import](_.value)
+    implicit val importShow: Show[Import] = Show.show[Import](_.value)
   }
+    // Models a piece of scala code.
   case class Literal(value: String) extends LineSegment
   object Literal {
-    implicit val literalShow = Show.show[Literal](_.value)
+    implicit val literalShow: Show[Literal] = Show.show[Literal](_.value)
   }
+  // Definition of a type like trait, class.
   case class NameDef(name: String) extends LineSegment
   object NameDef {
     implicit val nameDefShow: Show[NameDef] = Show.show[NameDef](_.name)
   }
+  // A Reference to a type or a value.
   case class NameRef(pkg: List[String], name: String) extends LineSegment {
     self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
