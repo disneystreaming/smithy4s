@@ -63,7 +63,12 @@ class Cursor private () {
       top -= 1
       list = stack(top) :: list
     }
-    throw PayloadError(PayloadPath(list), expecting, "Missing required field")
+    val path = PayloadPath(list)
+    throw PayloadError(
+      path,
+      expecting,
+      s"Missing required field at $path"
+    )
   }
 
   private def getPath(): PayloadPath = {
