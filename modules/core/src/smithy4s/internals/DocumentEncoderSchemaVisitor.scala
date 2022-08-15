@@ -128,9 +128,9 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
   ): DocumentEncoder[Map[K, V]] = {
     val maybeKeyEncoder = DocumentKeyEncoder.trySchemaVisitor(key)
     val valueEncoder = apply(value)
-    from[Map[K, V]] { map =>
-      maybeKeyEncoder match {
-        case Some(keyEncoder) =>
+    maybeKeyEncoder match {
+      case Some(keyEncoder) =>
+        from[Map[K, V]] { map =>
           val mapBuilder = Map.newBuilder[String, Document]
           map.foreach { case (k, v) =>
             val key = keyEncoder.apply(k)
@@ -138,7 +138,9 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
             mapBuilder.+=((key, value))
           }
           DObject(mapBuilder.result())
-        case None =>
+        }
+      case None =>
+        from[Map[K, V]] { map =>
           val keyAsValueEncoder = apply(key)
           val arrayBuilder = IndexedSeq.newBuilder[Document]
           map.map { case (k, v) =>
@@ -152,7 +154,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
             )
           }
           DArray(arrayBuilder.result())
-      }
+        }
     }
   }
 
