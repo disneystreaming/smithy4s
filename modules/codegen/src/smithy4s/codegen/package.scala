@@ -51,13 +51,13 @@ package object codegen {
   }
 
   private[codegen] val empty: Lines = Lines.empty
-  private[codegen] val newline: Lines = Lines(List(Line("")))
+  private[codegen] val newline: Lines = Lines(Line.empty)
   private[codegen] def lines(l: LinesWithValue*): Lines =
     l.toList.foldMap(_.render)
 
   private[codegen] def indent(l: List[Line]): List[Line] = l.map { line =>
     if (line.segments.length > 0)
-      Line("  ") + line
+      line"  " + line
     else
       line
   }
@@ -65,9 +65,6 @@ package object codegen {
     lines(l: _*).transformLines(indent)
 
   private[codegen] def block(l: Line): PartialBlock = new PartialBlock(l)
-  private[codegen] def block(s: String): PartialBlock = new PartialBlock(
-    Line(s)
-  )
 
   private[codegen] def obj(
       name: NameRef,
@@ -83,13 +80,6 @@ package object codegen {
       name: NameRef
   ): PartialBlock = {
     obj(name, Line.empty)
-  }
-
-  private[codegen] def obj(
-      name: NameRef,
-      extensions: List[Line]
-  ): PartialBlock = {
-    obj(name, extensions.intercalate(Line(" with ")))
   }
 
   private[codegen] def commas(lines: List[String]): List[String] =

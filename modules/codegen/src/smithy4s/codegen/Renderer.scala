@@ -125,12 +125,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
       case TypeAlias(name, _, _, _, _) =>
-        s"type $name = ${compilationUnit.namespace}.${name}.Type"
+        line"type $name = ${compilationUnit.namespace}.${name}.Type"
     }
 
     val blk =
       block(
-        s"package object ${compilationUnit.namespace.split('.').last}"
+        line"package object ${compilationUnit.namespace.split('.').last}"
       )(
         compilationUnit.declarations.map(renderDeclPackageContents),
         newline,
@@ -140,7 +140,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
     if (parts.size > 1) {
       lines(
-        s"package ${parts.dropRight(1).mkString(".")}",
+        line"package ${parts.dropRight(1).mkString(".")}",
         newline,
         blk
       )
