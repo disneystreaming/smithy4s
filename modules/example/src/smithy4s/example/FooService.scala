@@ -12,9 +12,9 @@ import smithy4s.Endpoint
 
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
-  
+
   def getFoo() : F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
-  
+
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : FooServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends FooServiceGen[G] {
     def getFoo() = transformation[Unit, Nothing, GetFooOutput, Nothing, Nothing](self.getFoo())
@@ -22,31 +22,31 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 }
 
 object FooServiceGen extends Service[FooServiceGen, FooServiceOperation] {
-  
+
   def apply[F[_]](implicit F: Monadic[FooServiceGen, F]): F.type = F
-  
+
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
-  
+
   val hints : Hints = Hints.empty
-  
+
   val endpoints: List[Endpoint[FooServiceOperation, _, _, _, _, _]] = List(
     GetFoo,
   )
-  
+
   val version: String = "1.0.0"
-  
+
   def endpoint[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) = op match {
     case GetFoo() => ((), GetFoo)
   }
-  
+
   object reified extends FooServiceGen[FooServiceOperation] {
     def getFoo() = GetFoo()
   }
-  
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[FooServiceOperation, P]): FooServiceGen[P] = reified.transform(transformation)
-  
+
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], transformation: Transformation[P, P1]): FooServiceGen[P1] = alg.transform(transformation)
-  
+
   def asTransformation[P[_, _, _, _, _]](impl : FooServiceGen[P]): Transformation[FooServiceOperation, P] = new Transformation[FooServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case GetFoo() => impl.getFoo()

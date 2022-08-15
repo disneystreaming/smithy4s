@@ -9,8 +9,8 @@ import smithy4s.Hints
 case class GetStreamedObjectOutput()
 object GetStreamedObjectOutput extends ShapeTag.Companion[GetStreamedObjectOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetStreamedObjectOutput")
-  
+
   val hints : Hints = Hints.empty
-  
+
   implicit val schema: Schema[GetStreamedObjectOutput] = constant(GetStreamedObjectOutput()).withId(id).addHints(hints)
 }

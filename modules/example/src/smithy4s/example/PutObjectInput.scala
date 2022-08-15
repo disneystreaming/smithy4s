@@ -10,9 +10,9 @@ import smithy4s.ShapeTag
 case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
 object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
-  
+
   val hints : Hints = Hints.empty
-  
+
   implicit val schema: Schema[PutObjectInput] = struct(
     ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
     BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required()),

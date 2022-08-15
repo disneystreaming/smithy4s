@@ -25,7 +25,7 @@ package object example {
     def service: smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
     val id: smithy4s.ShapeId = service.id
   }
-  
+
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type DogName = smithy4s.example.DogName.Type
@@ -42,5 +42,5 @@ package object example {
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
-  
+
 }

@@ -17,10 +17,10 @@ import smithy4s.Endpoint
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
-  
+
   def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
   def getObject(key: ObjectKey, bucketName: BucketName) : F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
-  
+
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ObjectServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ObjectServiceGen[G] {
     def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = transformation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing](self.putObject(key, bucketName, data, foo, someValue))
@@ -29,36 +29,36 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 }
 
 object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation] {
-  
+
   def apply[F[_]](implicit F: Monadic[ObjectServiceGen, F]): F.type = F
-  
+
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
-  
+
   val hints : Hints = Hints(
     smithy4s.api.SimpleRestJson(),
   )
-  
+
   val endpoints: List[Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(
     PutObject,
     GetObject,
   )
-  
+
   val version: String = "1.0.0"
-  
+
   def endpoint[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) = op match {
     case PutObject(input) => (input, PutObject)
     case GetObject(input) => (input, GetObject)
   }
-  
+
   object reified extends ObjectServiceGen[ObjectServiceOperation] {
     def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName) = GetObject(GetObjectInput(key, bucketName))
   }
-  
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[ObjectServiceOperation, P]): ObjectServiceGen[P] = reified.transform(transformation)
-  
+
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)
-  
+
   def asTransformation[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): Transformation[ObjectServiceOperation, P] = new Transformation[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutObject(PutObjectInput(key, bucketName, data, foo, someValue)) => impl.putObject(key, bucketName, data, foo, someValue)
@@ -94,12 +94,12 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
   }
   object PutObjectError extends ShapeTag.Companion[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
-    
+
     val hints : Hints = Hints.empty
-    
+
     case class ServerErrorCase(serverError: ServerError) extends PutObjectError
     case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
-    
+
     object ServerErrorCase {
       val hints : Hints = Hints.empty
       val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
@@ -110,7 +110,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
       val schema: Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema.addHints(hints), NoMoreSpaceCase(_), _.noMoreSpace)
       val alt = schema.oneOf[PutObjectError]("NoMoreSpace")
     }
-    
+
     implicit val schema: UnionSchema[PutObjectError] = union(
       ServerErrorCase.alt,
       NoMoreSpaceCase.alt,
@@ -146,17 +146,17 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
   }
   object GetObjectError extends ShapeTag.Companion[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
-    
+
     val hints : Hints = Hints.empty
-    
+
     case class ServerErrorCase(serverError: ServerError) extends GetObjectError
-    
+
     object ServerErrorCase {
       val hints : Hints = Hints.empty
       val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[GetObjectError]("ServerError")
     }
-    
+
     implicit val schema: UnionSchema[GetObjectError] = union(
       ServerErrorCase.alt,
     ){

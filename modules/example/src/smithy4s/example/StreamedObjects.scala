@@ -12,10 +12,10 @@ import smithy4s.Endpoint
 
 trait StreamedObjectsGen[F[_, _, _, _, _]] {
   self =>
-  
+
   def putStreamedObject(key: String) : F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
   def getStreamedObject(key: String) : F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
-  
+
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : StreamedObjectsGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends StreamedObjectsGen[G] {
     def putStreamedObject(key: String) = transformation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](self.putStreamedObject(key))
@@ -24,34 +24,34 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
 }
 
 object StreamedObjectsGen extends Service[StreamedObjectsGen, StreamedObjectsOperation] {
-  
+
   def apply[F[_]](implicit F: Monadic[StreamedObjectsGen, F]): F.type = F
-  
+
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedObjects")
-  
+
   val hints : Hints = Hints.empty
-  
+
   val endpoints: List[Endpoint[StreamedObjectsOperation, _, _, _, _, _]] = List(
     PutStreamedObject,
     GetStreamedObject,
   )
-  
+
   val version: String = "1.0.0"
-  
+
   def endpoint[I, E, O, SI, SO](op : StreamedObjectsOperation[I, E, O, SI, SO]) = op match {
     case PutStreamedObject(input) => (input, PutStreamedObject)
     case GetStreamedObject(input) => (input, GetStreamedObject)
   }
-  
+
   object reified extends StreamedObjectsGen[StreamedObjectsOperation] {
     def putStreamedObject(key: String) = PutStreamedObject(PutStreamedObjectInput(key))
     def getStreamedObject(key: String) = GetStreamedObject(GetStreamedObjectInput(key))
   }
-  
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[StreamedObjectsOperation, P]): StreamedObjectsGen[P] = reified.transform(transformation)
-  
+
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: StreamedObjectsGen[P], transformation: Transformation[P, P1]): StreamedObjectsGen[P1] = alg.transform(transformation)
-  
+
   def asTransformation[P[_, _, _, _, _]](impl : StreamedObjectsGen[P]): Transformation[StreamedObjectsOperation, P] = new Transformation[StreamedObjectsOperation, P] {
     def apply[I, E, O, SI, SO](op : StreamedObjectsOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutStreamedObject(PutStreamedObjectInput(key)) => impl.putStreamedObject(key)

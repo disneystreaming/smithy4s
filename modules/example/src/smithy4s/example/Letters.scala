@@ -16,13 +16,13 @@ sealed abstract class Letters(_value: String, _name: String, _ordinal: Int) exte
 }
 object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
   val id: ShapeId = ShapeId("smithy4s.example", "Letters")
-  
+
   val hints : Hints = Hints.empty
-  
+
   case object A extends Letters("a", "A", 0)
   case object B extends Letters("b", "B", 1)
   case object C extends Letters("c", "C", 2)
-  
+
   val values: List[Letters] = List(
     A,
     B,

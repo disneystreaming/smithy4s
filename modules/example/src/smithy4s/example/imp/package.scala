@@ -7,6 +7,6 @@ package object imp {
     def service: smithy4s.Service[ImportServiceGen, ImportServiceOperation] = ImportServiceGen
     val id: smithy4s.ShapeId = service.id
   }
-  
-  
+
+
 }

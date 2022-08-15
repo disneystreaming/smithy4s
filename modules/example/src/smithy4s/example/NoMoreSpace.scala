@@ -12,12 +12,12 @@ case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwab
 }
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
-  
+
   val hints : Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(507),
   )
-  
+
   implicit val schema: Schema[NoMoreSpace] = struct(
     string.required[NoMoreSpace]("message", _.message).addHints(smithy.api.Required()),
     Foo.schema.optional[NoMoreSpace]("foo", _.foo),

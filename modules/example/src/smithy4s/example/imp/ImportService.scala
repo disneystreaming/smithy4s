@@ -19,9 +19,9 @@ import smithy4s.Endpoint
 
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>
-  
+
   def importOperation() : F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]
-  
+
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ImportServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ImportServiceGen[G] {
     def importOperation() = transformation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing](self.importOperation())
@@ -29,33 +29,33 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
 }
 
 object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation] {
-  
+
   def apply[F[_]](implicit F: Monadic[ImportServiceGen, F]): F.type = F
-  
+
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
-  
+
   val hints : Hints = Hints(
     smithy4s.api.SimpleRestJson(),
   )
-  
+
   val endpoints: List[Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(
     ImportOperation,
   )
-  
+
   val version: String = "1.0.0"
-  
+
   def endpoint[I, E, O, SI, SO](op : ImportServiceOperation[I, E, O, SI, SO]) = op match {
     case ImportOperation() => ((), ImportOperation)
   }
-  
+
   object reified extends ImportServiceGen[ImportServiceOperation] {
     def importOperation() = ImportOperation()
   }
-  
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[ImportServiceOperation, P]): ImportServiceGen[P] = reified.transform(transformation)
-  
+
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], transformation: Transformation[P, P1]): ImportServiceGen[P1] = alg.transform(transformation)
-  
+
   def asTransformation[P[_, _, _, _, _]](impl : ImportServiceGen[P]): Transformation[ImportServiceOperation, P] = new Transformation[ImportServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ImportServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case ImportOperation() => impl.importOperation()
@@ -87,17 +87,17 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportOperationError")
-    
+
     val hints : Hints = Hints.empty
-    
+
     case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
-    
+
     object NotFoundErrorCase {
       val hints : Hints = Hints.empty
       val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
       val alt = schema.oneOf[ImportOperationError]("NotFoundError")
     }
-    
+
     implicit val schema: UnionSchema[ImportOperationError] = union(
       NotFoundErrorCase.alt,
     ){

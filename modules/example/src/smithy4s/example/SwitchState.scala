@@ -16,12 +16,12 @@ sealed abstract class SwitchState(_value: String, _name: String, _ordinal: Int) 
 }
 object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[SwitchState] {
   val id: ShapeId = ShapeId("smithy4s.example", "SwitchState")
-  
+
   val hints : Hints = Hints.empty
-  
+
   case object ON extends SwitchState("ON", "ON", 0)
   case object OFF extends SwitchState("OFF", "OFF", 1)
-  
+
   val values: List[SwitchState] = List(
     ON,
     OFF,

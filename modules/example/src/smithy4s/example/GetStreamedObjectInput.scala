@@ -10,9 +10,9 @@ import smithy4s.ShapeTag
 case class GetStreamedObjectInput(key: String)
 object GetStreamedObjectInput extends ShapeTag.Companion[GetStreamedObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetStreamedObjectInput")
-  
+
   val hints : Hints = Hints.empty
-  
+
   implicit val schema: Schema[GetStreamedObjectInput] = struct(
     string.required[GetStreamedObjectInput]("key", _.key).addHints(smithy.api.Required()),
   ){
