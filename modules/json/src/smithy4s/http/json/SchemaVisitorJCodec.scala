@@ -1203,7 +1203,10 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
             stage2 += {
               val value = buffer.get(f.label)
               if (f.isRequired) {
-                if (value == null) cursor.requiredFieldError(f.label, f.label)
+                if (value == null) {
+                  val label = jsonLabel(f)
+                  cursor.requiredFieldError(label, label)
+                }
                 value
               } else Option(value)
             }
@@ -1261,7 +1264,10 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
             stage2 += {
               val value = buffer.get(f.label)
               if (f.isRequired) {
-                if (value == null) cursor.requiredFieldError(f.label, f.label)
+                if (value == null) {
+                  val label = jsonLabel(f)
+                  cursor.requiredFieldError(label, label)
+                }
                 value
               } else Option(value)
             }
