@@ -146,6 +146,29 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
+  test(
+    "Required: JsonName is used when missing required field is annotated".only
+  ) {
+    val jsonNameValue = "oldName"
+    case class Bar(name: String)
+    object Bar {
+      implicit val schema: Schema[Bar] = {
+        val name =
+          string.required[Bar]("name", _.name).addHints(JsonName(jsonNameValue))
+        struct(name)(Bar.apply)
+      }
+    }
+    val json = """{"missing" : "oops"}"""
+    try {
+      val _ = readFromString[Bar](json)
+      fail("Unexpected success")
+    } catch {
+      case PayloadError(path, expected, _) =>
+        expect(path == PayloadPath(jsonNameValue))
+        expect(expected == jsonNameValue)
+    }
+  }
+
   implicit val eitherIntStringSchema: Schema[Either[Int, String]] = {
     val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
     val right =
