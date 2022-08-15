@@ -146,9 +146,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
-  test(
-    "Required: JsonName is used when missing required field is annotated".only
-  ) {
+  test("Required: JsonName is used when missing required field is annotated") {
     val jsonNameValue = "oldName"
     case class Bar(name: String)
     object Bar {
