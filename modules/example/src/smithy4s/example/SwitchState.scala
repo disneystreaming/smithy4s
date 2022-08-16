@@ -1,18 +1,23 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.Enumeration
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.enumeration
 
-sealed abstract class SwitchState(_value: String, _name: String, _ordinal: Int) extends smithy4s.Enumeration.Value {
+sealed abstract class SwitchState(_value: String, _name: String, _ordinal: Int) extends Enumeration.Value {
   override val value: String = _value
   override val name: String = _name
   override val ordinal: Int = _ordinal
-  override val hints: smithy4s.Hints = smithy4s.Hints.empty
+  override val hints: Hints = Hints.empty
   @inline final def widen: SwitchState = this
 }
-object SwitchState extends smithy4s.Enumeration[SwitchState] with smithy4s.ShapeTag.Companion[SwitchState] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "SwitchState")
+object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[SwitchState] {
+  val id: ShapeId = ShapeId("smithy4s.example", "SwitchState")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : Hints = Hints.empty
 
   case object ON extends SwitchState("ON", "ON", 0)
   case object OFF extends SwitchState("OFF", "OFF", 1)
@@ -21,5 +26,5 @@ object SwitchState extends smithy4s.Enumeration[SwitchState] with smithy4s.Shape
     ON,
     OFF,
   )
-  implicit val schema: smithy4s.Schema[SwitchState] = enumeration(values).withId(id).addHints(hints)
+  implicit val schema: Schema[SwitchState] = enumeration(values).withId(id).addHints(hints)
 }

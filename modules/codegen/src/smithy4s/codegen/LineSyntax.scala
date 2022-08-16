@@ -29,8 +29,7 @@ object LineSyntax {
         renderables: List[ToLineWithValue[_]]
     ): Line = {
       def aux[A](binding: ToLineWithValue[A]): Line = {
-        val (imports, lines) = binding.render.tupled
-        Line(imports, lines.mkString(""))
+        binding.render
       }
       val renderLines: List[Line] = renderables.map(r => aux(r))
       sc.parts.toList

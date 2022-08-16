@@ -1,20 +1,26 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.IntEnum
+import smithy4s.Schema
+import smithy4s.Enumeration
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.enumeration
 
-sealed abstract class FaceCard(_value: String, _name: String, _ordinal: Int) extends smithy4s.Enumeration.Value {
+sealed abstract class FaceCard(_value: String, _name: String, _ordinal: Int) extends Enumeration.Value {
   override val value: String = _value
   override val name: String = _name
   override val ordinal: Int = _ordinal
-  override val hints: smithy4s.Hints = smithy4s.Hints.empty
+  override val hints: Hints = Hints.empty
   @inline final def widen: FaceCard = this
 }
-object FaceCard extends smithy4s.Enumeration[FaceCard] with smithy4s.ShapeTag.Companion[FaceCard] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "FaceCard")
+object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {
+  val id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
 
-  val hints : smithy4s.Hints = smithy4s.Hints(
+  val hints : Hints = Hints(
     smithy.api.Documentation("FaceCard types"),
-    smithy4s.IntEnum(),
+    IntEnum(),
   )
 
   case object JACK extends FaceCard("JACK", "JACK", 1)
@@ -30,5 +36,5 @@ object FaceCard extends smithy4s.Enumeration[FaceCard] with smithy4s.ShapeTag.Co
     ACE,
     JOKER,
   )
-  implicit val schema: smithy4s.Schema[FaceCard] = enumeration(values).withId(id).addHints(hints)
+  implicit val schema: Schema[FaceCard] = enumeration(values).withId(id).addHints(hints)
 }

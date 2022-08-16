@@ -1,14 +1,19 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.Hints
+import smithy4s.schema.Schema.string
+import smithy4s.ShapeId
+import smithy4s.schema.Schema.struct
+import smithy4s.ShapeTag
 
 case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
-object PutObjectInput extends smithy4s.ShapeTag.Companion[PutObjectInput] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectInput")
+object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
+  val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : Hints = Hints.empty
 
-  implicit val schema: smithy4s.Schema[PutObjectInput] = struct(
+  implicit val schema: Schema[PutObjectInput] = struct(
     ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
     BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
     string.required[PutObjectInput]("data", _.data).addHints(smithy.api.HttpPayload(), smithy.api.Required()),

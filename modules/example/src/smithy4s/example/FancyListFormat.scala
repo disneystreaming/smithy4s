@@ -1,14 +1,18 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.constant
+import smithy4s.Hints
 
 case class FancyListFormat()
-object FancyListFormat extends smithy4s.ShapeTag.Companion[FancyListFormat] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "fancyListFormat")
+object FancyListFormat extends ShapeTag.Companion[FancyListFormat] {
+  val id: ShapeId = ShapeId("smithy4s.example", "fancyListFormat")
 
-  val hints : smithy4s.Hints = smithy4s.Hints(
+  val hints : Hints = Hints(
     smithy.api.Trait(Some("list:test(> member > string)"), None, None, None),
   )
 
-  implicit val schema: smithy4s.Schema[FancyListFormat] = constant(FancyListFormat()).withId(id).addHints(hints)
+  implicit val schema: Schema[FancyListFormat] = constant(FancyListFormat()).withId(id).addHints(hints)
 }

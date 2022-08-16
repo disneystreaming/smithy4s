@@ -17,7 +17,7 @@
 package smithy4s.dynamic.internals
 
 import smithy4s.Errorable
-import smithy4s.UnionSchema
+import smithy4s.schema.Schema._
 
 private[internals] case class DynamicErrorable[E](error: UnionSchema[E])
     extends Errorable[E] {

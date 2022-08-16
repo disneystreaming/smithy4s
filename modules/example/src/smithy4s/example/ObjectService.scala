@@ -1,33 +1,44 @@
 package smithy4s.example
 
-import ObjectServiceGen.GetObjectError
-import ObjectServiceGen.PutObjectError
-import smithy4s.schema.Schema._
+import smithy4s.Errorable
+import smithy4s.Schema
+import smithy4s.schema.Schema.unit
+import smithy4s.Transformation
+import smithy4s.Monadic
+import smithy4s.Service
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.union
+import smithy4s.schema.Schema.UnionSchema
+import smithy4s.Hints
+import smithy4s.StreamingSchema
+import smithy4s.ShapeId
+import smithy4s.Endpoint
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
-  def getObject(key: ObjectKey, bucketName: BucketName) : F[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
+  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
+  def getObject(key: ObjectKey, bucketName: BucketName) : F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : ObjectServiceGen[G] = new Transformed(transformation)
-  class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends ObjectServiceGen[G] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = transformation[PutObjectInput, PutObjectError, Unit, Nothing, Nothing](self.putObject(key, bucketName, data, foo, someValue))
-    def getObject(key: ObjectKey, bucketName: BucketName) = transformation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing](self.getObject(key, bucketName))
+  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ObjectServiceGen[G] = new Transformed(transformation)
+  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ObjectServiceGen[G] {
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = transformation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing](self.putObject(key, bucketName, data, foo, someValue))
+    def getObject(key: ObjectKey, bucketName: BucketName) = transformation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing](self.getObject(key, bucketName))
   }
 }
 
-object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] {
+object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation] {
 
-  def apply[F[_]](implicit F: smithy4s.Monadic[ObjectServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: Monadic[ObjectServiceGen, F]): F.type = F
 
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ObjectService")
+  val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
 
-  val hints : smithy4s.Hints = smithy4s.Hints(
+  val hints : Hints = Hints(
     smithy4s.api.SimpleRestJson(),
   )
 
-  val endpoints: List[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(
     PutObject,
     GetObject,
   )
@@ -44,30 +55,30 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
     def getObject(key: ObjectKey, bucketName: BucketName) = GetObject(GetObjectInput(key, bucketName))
   }
 
-  def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[ObjectServiceOperation, P]): ObjectServiceGen[P] = reified.transform(transformation)
+  def transform[P[_, _, _, _, _]](transformation: Transformation[ObjectServiceOperation, P]): ObjectServiceGen[P] = reified.transform(transformation)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: smithy4s.Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)
+  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)
 
-  def asTransformation[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): smithy4s.Transformation[ObjectServiceOperation, P] = new smithy4s.Transformation[ObjectServiceOperation, P] {
+  def asTransformation[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): Transformation[ObjectServiceOperation, P] = new Transformation[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutObject(PutObjectInput(key, bucketName, data, foo, someValue)) => impl.putObject(key, bucketName, data, foo, someValue)
       case GetObject(GetObjectInput(key, bucketName)) => impl.getObject(key, bucketName)
     }
   }
-  case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, PutObjectError, Unit, Nothing, Nothing]
-  object PutObject extends smithy4s.Endpoint[ObjectServiceOperation, PutObjectInput, PutObjectError, Unit, Nothing, Nothing] with smithy4s.Errorable[PutObjectError] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObject")
-    val input: smithy4s.Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val hints : smithy4s.Hints = smithy4s.Hints(
+  case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
+  object PutObject extends Endpoint[ObjectServiceOperation, PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
+    val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
+    val input: Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints : Hints = Hints(
       smithy.api.Http(smithy.api.NonEmptyString("PUT"), smithy.api.NonEmptyString("/{bucketName}/{key}"), Some(200)),
       smithy.api.Idempotent(),
     )
     def wrap(input: PutObjectInput) = PutObject(input)
-    override val errorable: Option[smithy4s.Errorable[PutObjectError]] = Some(this)
-    val error: smithy4s.UnionSchema[PutObjectError] = PutObjectError.schema
+    override val errorable: Option[Errorable[PutObjectError]] = Some(this)
+    val error: UnionSchema[PutObjectError] = PutObjectError.schema
     def liftError(throwable: Throwable) : Option[PutObjectError] = throwable match {
       case e: ServerError => Some(PutObjectError.ServerErrorCase(e))
       case e: NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
@@ -81,26 +92,26 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   sealed trait PutObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: PutObjectError = this
   }
-  object PutObjectError extends smithy4s.ShapeTag.Companion[PutObjectError] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "PutObjectError")
+  object PutObjectError extends ShapeTag.Companion[PutObjectError] {
+    val id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
 
-    val hints : smithy4s.Hints = smithy4s.Hints.empty
+    val hints : Hints = Hints.empty
 
     case class ServerErrorCase(serverError: ServerError) extends PutObjectError
     case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
 
     object ServerErrorCase {
-      val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
+      val hints : Hints = Hints.empty
+      val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[PutObjectError]("ServerError")
     }
     object NoMoreSpaceCase {
-      val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema.addHints(hints), NoMoreSpaceCase(_), _.noMoreSpace)
+      val hints : Hints = Hints.empty
+      val schema: Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema.addHints(hints), NoMoreSpaceCase(_), _.noMoreSpace)
       val alt = schema.oneOf[PutObjectError]("NoMoreSpace")
     }
 
-    implicit val schema: smithy4s.UnionSchema[PutObjectError] = union(
+    implicit val schema: UnionSchema[PutObjectError] = union(
       ServerErrorCase.alt,
       NoMoreSpaceCase.alt,
     ){
@@ -108,20 +119,20 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
       case c : NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
     }
   }
-  case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing]
-  object GetObject extends smithy4s.Endpoint[ObjectServiceOperation, GetObjectInput, GetObjectError, GetObjectOutput, Nothing, Nothing] with smithy4s.Errorable[GetObjectError] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObject")
-    val input: smithy4s.Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: smithy4s.Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val hints : smithy4s.Hints = smithy4s.Hints(
+  case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
+  object GetObject extends Endpoint[ObjectServiceOperation, GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
+    val id: ShapeId = ShapeId("smithy4s.example", "GetObject")
+    val input: Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints : Hints = Hints(
       smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/{bucketName}/{key}"), Some(200)),
       smithy.api.Readonly(),
     )
     def wrap(input: GetObjectInput) = GetObject(input)
-    override val errorable: Option[smithy4s.Errorable[GetObjectError]] = Some(this)
-    val error: smithy4s.UnionSchema[GetObjectError] = GetObjectError.schema
+    override val errorable: Option[Errorable[GetObjectError]] = Some(this)
+    val error: UnionSchema[GetObjectError] = GetObjectError.schema
     def liftError(throwable: Throwable) : Option[GetObjectError] = throwable match {
       case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
       case _ => None
@@ -133,20 +144,20 @@ object ObjectServiceGen extends smithy4s.Service[ObjectServiceGen, ObjectService
   sealed trait GetObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: GetObjectError = this
   }
-  object GetObjectError extends smithy4s.ShapeTag.Companion[GetObjectError] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetObjectError")
+  object GetObjectError extends ShapeTag.Companion[GetObjectError] {
+    val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
 
-    val hints : smithy4s.Hints = smithy4s.Hints.empty
+    val hints : Hints = Hints.empty
 
     case class ServerErrorCase(serverError: ServerError) extends GetObjectError
 
     object ServerErrorCase {
-      val hints : smithy4s.Hints = smithy4s.Hints.empty
-      val schema: smithy4s.Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
+      val hints : Hints = Hints.empty
+      val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[GetObjectError]("ServerError")
     }
 
-    implicit val schema: smithy4s.UnionSchema[GetObjectError] = union(
+    implicit val schema: UnionSchema[GetObjectError] = union(
       ServerErrorCase.alt,
     ){
       case c : ServerErrorCase => ServerErrorCase.alt(c)

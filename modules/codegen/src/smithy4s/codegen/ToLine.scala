@@ -18,92 +18,113 @@ package smithy4s.codegen
 
 import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
-import smithy4s.codegen.LineSyntax.LineInterpolator
+import cats.data.Chain
+import smithy4s.codegen.LineSegment._
 
 trait ToLine[A] {
   def render(a: A): Line
 }
+
 object ToLine {
   def apply[A](implicit A: ToLine[A]): ToLine[A] = A
-
+  implicit def lineSegmentToLine[A <: LineSegment]: ToLine[A] = l => Line(l)
   implicit val identity: ToLine[Line] = r => r
-
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
   implicit val stringToLine: ToLine[String] = s => Line(s)
   implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
     override def render(a: Type): Line = a match {
       case Type.Collection(collectionType, member) =>
-        val (imports, m) = render(member).tupled
+        val line = render(member)
         val col = collectionType.tpe
-        Line(imports, s"$col[${m.mkString("")}]")
+        NameRef(col).toLine + Literal("[") + line + Literal("]")
       case Type.Map(key, value) =>
-        val (kimports, k) = render(key).tupled
-        val (vimports, v) = render(value).tupled
-        Line(kimports ++ vimports, s"Map[${k.mkString("")}, ${v.mkString("")}]")
+        val keyLine = render(key)
+        val valueLine = render(value)
+        NameRef("Map").toLine + Literal("[") + keyLine + Literal(
+          ","
+        ) + valueLine + Literal("]")
       case Type.Alias(
             ns,
             name,
             Type.PrimitiveType(_) | _: Type.ExternalType,
             false
           ) =>
-        Line(Set(s"$ns.$name"), name)
+        NameRef(ns, name).toLine
       case Type.Alias(_, _, aliased, _) =>
         render(aliased)
-      case Type.Ref(namespace, name) =>
-        val imports = Set(s"$namespace.$name")
-        Line(imports, name)
-      case Type.PrimitiveType(prim)           => primitiveLine(prim)
-      case Type.ExternalType(_, fqn, _, _, _) => line"$fqn"
+      case Type.Ref(namespace, name)          => NameRef(namespace, name).toLine
+      case Type.PrimitiveType(prim)           => primitiveLine(prim).toLine
+      case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn).toLine
     }
   }
-  private def primitiveLine(p: Primitive): Line =
+  private def primitiveLine(p: Primitive): NameRef =
     p match {
-      case Primitive.Unit       => line"Unit"
-      case Primitive.ByteArray  => Line(Set("smithy4s.ByteArray"), "ByteArray")
-      case Primitive.Bool       => line"Boolean"
-      case Primitive.String     => line"String"
-      case Primitive.Timestamp  => Line(Set("smithy4s.Timestamp"), "Timestamp")
-      case Primitive.Byte       => line"Byte"
-      case Primitive.Int        => line"Int"
-      case Primitive.Short      => line"Short"
-      case Primitive.Long       => line"Long"
-      case Primitive.Float      => line"Float"
-      case Primitive.Double     => line"Double"
-      case Primitive.BigDecimal => line"BigDecimal"
-      case Primitive.BigInteger => line"BigInt"
-      case Primitive.Uuid       => Line(Set("java.util.UUID"), "UUID")
-      case Primitive.Document   => Line(Set("smithy4s.Document"), "Document")
-      case Primitive.Nothing    => line"Nothing"
+      case Primitive.Unit       => NameRef("Unit")
+      case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
+      case Primitive.Bool       => NameRef("Boolean")
+      case Primitive.String     => NameRef("String")
+      case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
+      case Primitive.Byte       => NameRef("Byte")
+      case Primitive.Int        => NameRef("Int")
+      case Primitive.Short      => NameRef("Short")
+      case Primitive.Long       => NameRef("Long")
+      case Primitive.Float      => NameRef("Float")
+      case Primitive.Double     => NameRef("Double")
+      case Primitive.BigDecimal => NameRef("BigDecimal")
+      case Primitive.BigInteger => NameRef("BigInt")
+      case Primitive.Uuid       => NameRef("java.util", "UUID")
+      case Primitive.Document   => NameRef("smithy4s", "Document")
+      case Primitive.Nothing    => NameRef("Nothing")
     }
 }
 
 // Models
-case class Line(imports: Set[String], line: String) {
-  def tupled = (imports, line)
-  def suffix(suffix: Line) = modify(s => s"$s $suffix")
-  def addImport(imp: String) = copy(imports = imports + imp)
-  def modify(f: String => String) = Line(imports, f(line))
-  def nonEmpty = line.nonEmpty
-  def toLines = Lines(imports, List(line))
 
-  def args(l: LinesWithValue*): Lines = if (l.exists(_.render.lines.nonEmpty)) {
-    val openBlock = if (line.nonEmpty) line + "(" else ""
-    Lines(imports, List(openBlock)) ++ indent(
-      l.toList.foldMap(_.render).mapLines(_ + ",")
-    ) ++ Lines(")")
-  } else Lines(line + "()").addImports(imports)
+case class Line(segments: Chain[LineSegment]) {
+  self =>
+  def +(other: Line): Line = Line(self.segments ++ other.segments)
 
+  def +(segment: LineSegment): Line = Line(self.segments :+ segment)
+
+  def nonEmpty: Boolean = segments.nonEmpty
+
+  /* def suffix(suffix: Line) = modify(s => s"$s $suffix")
+  def addImport(imp: String) = copy(imports = imports + imp)*/
+
+  def toLines = Lines(self)
+
+  def args(linesWithValue: LinesWithValue*): Lines = {
+    if (segments.nonEmpty) {
+      if (linesWithValue.exists(_.render.list.nonEmpty))
+        Lines(List(self + Literal("("))) ++ indent(
+          linesWithValue.toList.foldMap(_.render).mapLines(_ + Literal(","))
+        ) ++ Lines(")")
+      else
+        Lines(self + Literal("()"))
+    } else {
+      Lines.empty
+    }
+  }
 }
+
 object Line {
-  def apply(line: String): Line = Line(Set.empty, line)
-  def apply(importsAndLine: (Set[String], String)): Line =
-    Line(importsAndLine._1, importsAndLine._2)
-  val empty: Line = Line("")
+
+  def optional(line: Line, default: Boolean = false): Line = {
+    val option =
+      NameRef("Option").toLine + Literal("[") + line + Literal("]")
+    if (default)
+      option + Literal(" = ") + NameRef("None")
+    else
+      option
+  }
+
+  def apply(value: String): Line = Line(Chain.one(Literal(value)))
+
+  def apply(values: LineSegment*): Line = Line(Chain(values: _*))
+
+  val empty: Line = Line(Chain.empty)
   val comma: Line = Line(", ")
   val dot: Line = Line(".")
-  implicit val monoid: Monoid[Line] = new Monoid[Line] {
-    def empty = Line.empty
-    def combine(a: Line, b: Line) =
-      Line(a.imports ++ b.imports, a.line + b.line)
-  }
+  implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ + _)
+
 }
