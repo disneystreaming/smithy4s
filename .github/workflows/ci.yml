@@ -92,7 +92,7 @@ jobs:
           path: /tmp/remote-cache
 
   build-success-checkpoint:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Build matrix completed
