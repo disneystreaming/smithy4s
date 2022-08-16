@@ -19,9 +19,7 @@ package smithy4s.codegen
 import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
 import cats.data.Chain
-import cats.Show
-import cats.syntax.all._
-import smithy4s.codegen.LineSegment.{Literal, NameRef}
+import smithy4s.codegen.LineSegment._
 
 trait ToLine[A] {
   def render(a: A): Line
@@ -82,56 +80,6 @@ object ToLine {
 
 // Models
 
-// LineSegment models segments of a line of code.
-sealed trait LineSegment { self =>
-  def toLine: Line = Line(Chain.one(self))
-}
-object LineSegment {
-  // Models an Import statement.
-  case class Import(value: String) extends LineSegment
-  object Import {
-    implicit val importShow: Show[Import] = Show.show[Import](_.value)
-  }
-    // Models a piece of scala code.
-  case class Literal(value: String) extends LineSegment
-  object Literal {
-    implicit val literalShow: Show[Literal] = Show.show[Literal](_.value)
-  }
-  // Definition of a type like trait, class.
-  case class NameDef(name: String) extends LineSegment
-  object NameDef {
-    implicit val nameDefShow: Show[NameDef] = Show.show[NameDef](_.name)
-  }
-  // A Reference to a type or a value.
-  case class NameRef(pkg: List[String], name: String) extends LineSegment {
-    self =>
-    def asValue: String = s"${(pkg :+ name).mkString(".")}"
-    def asImport: String = s"${(pkg :+ name.split("\\.")(0)).mkString(".")}"
-  }
-  object NameRef {
-    implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
-    def apply(pkg: String, name: String): NameRef =
-      NameRef(pkg.split("\\.").toList, name)
-    def apply(fqn: String): NameRef = {
-      val parts = fqn.split("\\.").toList
-      NameRef(parts.dropRight(1), parts.last)
-    }
-
-  }
-
-  implicit val lineSegmentShow: Show[LineSegment] = Show.show {
-    case Import(value)  => value
-    case Literal(value) => value
-    case td: NameDef    => td.show
-    case tr: NameRef    => tr.show
-  }
-  implicit val lineShow: Show[Line] =
-    Show.show(line => line.segments.toList.map(_.show).mkString(""))
-
-  implicit def chainShow[A: Show]: Show[Chain[A]] = Show.show { chain =>
-    chain.toList.map(_.show).mkString
-  }
-}
 case class Line(segments: Chain[LineSegment]) {
   self =>
   def +(other: Line): Line = Line(self.segments ++ other.segments)
