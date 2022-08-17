@@ -7,7 +7,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-
+ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -166,7 +166,6 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
       val files = (Compile / managedSources).value
@@ -214,7 +213,6 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     genDiscoverModels := true,
     Compile / allowedNamespaces := Seq(
       "aws.api",
@@ -252,7 +250,6 @@ lazy val aws = projectMatrix
         Dependencies.Weaver.scalacheck.value % Test
       )
     },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / fork := true
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -313,7 +310,6 @@ lazy val codegen = projectMatrix
       "io.get-coursier" %% "coursier" % "2.0.16",
       Dependencies.Weaver.cats.value % Test
     ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
   )
@@ -373,7 +369,6 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
 lazy val cli = (projectMatrix in file("modules/cli"))
   .settings(
     name := "smithy4s-cli",
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     isCE3 := true,
     libraryDependencies ++= List(
       "org.typelevel" %%% "cats-core" % "2.7.0",
@@ -381,8 +376,8 @@ lazy val cli = (projectMatrix in file("modules/cli"))
       "com.monovore" %%% "decline-effect" % "2.2.0",
       Dependencies.Weaver.cats.value % Test,
     )).dependsOn(json)
-  .jvmPlatform(allJvmScalaVersions)
-  .jsPlatform(allJsScalaVersions)
+  .jvmPlatform(allJvmScalaVersions,jvmDimSettings)
+  .jsPlatform(allJsScalaVersions,jsDimSettings)
 
 /**
  * This module contains the smithy specification of a bunch of types
