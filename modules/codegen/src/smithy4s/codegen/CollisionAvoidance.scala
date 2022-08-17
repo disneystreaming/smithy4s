@@ -18,8 +18,6 @@ package smithy4s.codegen
 
 import cats.syntax.all._
 import cats.~>
-import smithy4s.codegen.Hint.Constraint
-import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
@@ -146,12 +144,13 @@ object CollisionAvoidance {
     Type.Ref(ref.namespace, ref.name.capitalize)
 
   private def modNativeHint(hint: Hint.Native): Hint.Native =
-    Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+    Hint.Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
 
   private def modHint(hint: Hint): Hint = hint match {
-    case n: Native           => modNativeHint(n)
-    case Constraint(tr, nat) => Constraint(modRef(tr), modNativeHint(nat))
-    case other               => other
+    case n: Hint.Native => modNativeHint(n)
+    case Hint.Constraint(tr, nat) =>
+      Hint.Constraint(modRef(tr), modNativeHint(nat))
+    case other            => other
   }
 
   private def modProduct(p: Product): Product = {
