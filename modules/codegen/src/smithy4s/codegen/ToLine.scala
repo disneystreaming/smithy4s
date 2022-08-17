@@ -109,6 +109,13 @@ case class Line(segments: Chain[LineSegment]) {
 
 object Line {
 
+  def required(line: Line, default: Option[Line]): Line = {
+    default match {
+      case None        => line
+      case Some(value) => line + Literal(" = ") + value
+    }
+  }
+
   def optional(line: Line, default: Boolean = false): Line = {
     val option =
       NameRef("Option").toLine + Literal("[") + line + Literal("]")

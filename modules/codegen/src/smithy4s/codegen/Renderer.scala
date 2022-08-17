@@ -303,7 +303,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val renderedErrorUnion = errorUnion.foldMap {
       case union @ Union(_, originalName, alts, recursive, hints) =>
-        renderUnion(union.nameRef, originalName, alts, recursive, hints, error = true)
+        renderUnion(
+          union.nameRef,
+          originalName,
+          alts,
+          recursive,
+          hints,
+          error = true
+        )
     }
 
     lines(
@@ -629,11 +636,18 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       noDefault: Boolean = false
   ): Line = {
     field match {
-      case Field(name, _, tpe, required, _) =>
+      case Field(name, _, tpe, required, hints) =>
         val line = line"$tpe"
-        line"$name: " + (if (required) line
-                         else Line.optional(line, !noDefault))
+        val tpeAndDefault = if (required) {
+          val maybeDefault = hints
+            .collectFirst { case d @ Hint.Default(_) => d }
+            .map(renderDefault)
+          Line.required(line, maybeDefault)
+        } else {
+          Line.optional(line, !noDefault)
+        }
 
+        line"$name: " + tpeAndDefault
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
@@ -785,6 +799,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderNativeHint(hint: Hint.Native): Line =
+    Line(
+      smithy4s.recursion
+        .cata(renderTypedNode)(hint.typedNode)
+        .run(true)
+        ._2
+    )
+
+  private def renderDefault(hint: Hint.Default): Line =
     Line(
       smithy4s.recursion
         .cata(renderTypedNode)(hint.typedNode)

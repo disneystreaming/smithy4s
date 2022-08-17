@@ -576,6 +576,24 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
   }
 
+  private def maybeDefault(shape: MemberShape): List[Hint.Default] = {
+    val maybeTrait = shape.getTrait(classOf[DefaultTrait])
+    if (maybeTrait.isPresent()) {
+      val tr = maybeTrait.get()
+      def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
+        nodeAndType.tpe match {
+          case _: Type.ExternalType => None
+          case _                    => Some(unfoldNodeAndType(nodeAndType))
+        }
+      }
+      val nodeAndType = NodeAndType(tr.toNode(), shape.getTarget.tpe.get)
+      val maybeTree = anaM(unfoldNodeAndTypeIfNotExternal)(nodeAndType)
+      maybeTree.map(Hint.Default(_)).toList
+    } else {
+      List.empty
+    }
+  }
+
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
@@ -630,7 +648,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           member.tpe,
           member.hasTrait(classOf[RequiredTrait]) ||
             member.hasTrait(classOf[DefaultTrait]),
-          hints(member)
+          hints(member) ++ maybeDefault(member)
         )
       }
       .collect { case (name, Some(tpe), required, hints) =>
