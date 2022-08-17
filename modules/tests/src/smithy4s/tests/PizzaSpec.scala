@@ -401,6 +401,18 @@ abstract class PizzaSpec
     "X-mIxEd-HeAdEr"
   )
 
+  routerTest("httpResponsecode") { (client, uri, log) =>
+    for {
+      res <- client.send[Unit](
+        GET(uri = uri / "custom-code" / "201"),
+        log
+      )
+    } yield {
+      val (code, _, _) = res
+      expect.same(code, 201)
+    }
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {

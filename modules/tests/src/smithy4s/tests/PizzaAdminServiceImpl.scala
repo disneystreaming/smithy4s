@@ -103,4 +103,7 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
     RoundTripData(label, header, query, body)
   )
 
+  def customCode(code: Int): IO[CustomCodeOutput] =
+    IO.pure(CustomCodeOutput(if (code != 0) Some(code) else None))
+
 }
