@@ -1,4 +1,5 @@
 import org.scalajs.jsenv.nodejs.NodeJSEnv
+
 import java.io.File
 import sys.process._
 
@@ -49,6 +50,7 @@ lazy val allModules = Seq(
   tests.projectRefs,
   http4s.projectRefs,
   `http4s-swagger`.projectRefs,
+  cli.projectRefs,
   codegenPlugin.projectRefs,
   benchmark.projectRefs,
   protocol.projectRefs,
@@ -367,6 +369,20 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     },
     scriptedBufferLog := false
   )
+
+lazy val cli = (projectMatrix in file("modules/cli"))
+  .settings(
+    name := "smithy4s-cli",
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    isCE3 := true,
+    libraryDependencies ++= List(
+      "org.typelevel" %%% "cats-core" % "2.7.0",
+      "co.fs2" %%% "fs2-io" % "3.2.4",
+      "com.monovore" %%% "decline-effect" % "2.2.0",
+      Dependencies.Weaver.cats.value % Test,
+    )).dependsOn(json)
+  .jvmPlatform(allJvmScalaVersions)
+  .jsPlatform(allJsScalaVersions)
 
 /**
  * This module contains the smithy specification of a bunch of types
