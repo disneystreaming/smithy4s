@@ -39,6 +39,8 @@ import smithy4s.schema.SchemaAlt
 import smithy4s.schema.SchemaField
 import smithy4s.schema.SchemaVisitor
 import java.util.UUID
+import smithy4s.schema.CollectionTag
+import smithy4s.schema.CollectionTag.ListTag
 
 object OptsVisitor {
   type OptsF[F[_], A] = Opts[F[A]]
@@ -49,9 +51,8 @@ import OptsVisitor.OptsF
 class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] { self =>
 
   private def field[P: Argument](
-    hints: Hints
-  ): Opts[F[P]] = {
-
+                                  hints: Hints
+                                ): Opts[F[P]] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
     val doc = hints.get(Documentation).fold("")(_.value)
@@ -65,8 +66,8 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
   }.map(_.pure[F])
 
   private def fieldPlural[P: Argument](
-    hints: Hints
-  ): Opts[F[List[P]]] = {
+                                        hints: Hints
+                                      ): Opts[F[List[P]]] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
     val doc = hints.get(Documentation).fold("")(_.value)
@@ -80,9 +81,9 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
   }.map(_.toList.pure[F])
 
   private def timestampArg(
-    fieldName: CoreHints.FieldName,
-    formatOpt: Option[TimestampFormat],
-  ): Argument[Timestamp] = {
+                            fieldName: CoreHints.FieldName,
+                            formatOpt: Option[TimestampFormat],
+                          ): Argument[Timestamp] = {
     val format = formatOpt.getOrElse(TimestampFormat.DATE_TIME)
     Argument.from("timestamp") { s =>
       smithy4s
@@ -97,9 +98,9 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
   }
 
   private def enumArg[E](
-    values: List[EnumValue[E]],
-    fieldName: CoreHints.FieldName,
-  ): Argument[E] =
+                          values: List[EnumValue[E]],
+                          fieldName: CoreHints.FieldName,
+                        ): Argument[E] =
     Argument.from("enum") { name =>
       values
         .find(_.stringValue == name)
@@ -153,7 +154,8 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
         field(hints)
 
       case PBoolean =>
-        val fieldName: FieldName = FieldName.require(hints)
+        val fieldName = FieldName.require(hints)
+
         Opts
           .flag(
             long = fieldName.value,
@@ -167,8 +169,8 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
     }
 
   private def primitives[P](
-    member: Schema.PrimitiveSchema[P]
-  ): Opts[F[List[P]]] =
+                             member: Schema.PrimitiveSchema[P]
+                           ): Opts[F[List[P]]] =
     member.tag match {
       case PByte       => fieldPlural[Byte](member.hints)
       case PShort      => fieldPlural[Short](member.hints)
@@ -193,7 +195,20 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
       case PUnit | PBoolean | PDocument => jsonFieldPlural(member)
     }
 
-  def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): Opts[F[List[A]]] =
+  def collection[C[_], A](
+                           shapeId: ShapeId,
+                           hints: Hints,
+                           tag: CollectionTag[C],
+                           member: Schema[A],
+                         ): Opts[F[C[A]]] =
+    tag match {
+      case ListTag                     => list(shapeId, hints, member)
+      case CollectionTag.IndexedSeqTag => list(shapeId, hints, member).map(_.map(_.toIndexedSeq))
+      case CollectionTag.SetTag        => list(shapeId, hints, member).map(_.map(_.toSet))
+      case CollectionTag.VectorTag     => list(shapeId, hints, member).map(_.map(_.toVector))
+    }
+
+  private def list[A](shapeId: ShapeId, hints: Hints, member: Schema[A]): Opts[F[List[A]]] =
     member match {
       case p: Schema.PrimitiveSchema[a] => primitives(p.copy(hints = p.hints ++ hints))
       case b: BijectionSchema[a, b] => list(shapeId, hints, b.underlying).map(_.map(_.map(b.to)))
@@ -207,45 +222,39 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
 
         fieldPlural(hints)
 
-      case _: StructSchema[_] | _: Schema.ListSchema[_] | _: Schema.SetSchema[_] |
-          _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] | _: Schema.MapSchema[_, _] =>
+      case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] | _: Schema.UnionSchema[_] |
+           _: Schema.LazySchema[_] | _: Schema.MapSchema[_, _] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
 
-  def set[A](
-    shapeId: ShapeId,
-    hints: Hints,
-    member: Schema[A],
-  ): Opts[F[Set[A]]] = list(shapeId, hints, member).map(_.map(_.toSet))
-
   def map[K, V](
-    shapeId: ShapeId,
-    hints: Hints,
-    key: Schema[K],
-    value: Schema[V],
-  ): Opts[F[Map[K, V]]] = jsonField(Schema.MapSchema(shapeId, hints, key, value))
+                 shapeId: ShapeId,
+                 hints: Hints,
+                 key: Schema[K],
+                 value: Schema[V],
+               ): Opts[F[Map[K, V]]] = jsonField(Schema.MapSchema(shapeId, hints, key, value))
 
   def enumeration[E](
-    shapeId: ShapeId,
-    hints: Hints,
-    values: List[EnumValue[E]],
-    total: E => EnumValue[E],
-  ): Opts[F[E]] = {
+                      shapeId: ShapeId,
+                      hints: Hints,
+                      values: List[EnumValue[E]],
+                      total: E => EnumValue[E],
+                    ): Opts[F[E]] = {
     implicit val arg: Argument[E] = enumArg(values, FieldName.require(hints))
 
     field(hints)
   }
 
   def struct[A](
-    shapeId: ShapeId,
-    hints: Hints,
-    fields: Vector[SchemaField[A, _]],
-    make: IndexedSeq[Any] => A,
-  ): Opts[F[A]] = {
+                 shapeId: ShapeId,
+                 hints: Hints,
+                 fields: Vector[SchemaField[A, _]],
+                 make: IndexedSeq[Any] => A,
+               ): Opts[F[A]] = {
     def structField[X](
-      f: smithy4s.schema.Field[Schema, A, X]
-    ): Opts[F[X]] = {
+                        f: smithy4s.schema.Field[Schema, A, X]
+                      ): Opts[F[X]] = {
       val childHints = Hints(
         FieldName(f.label),
         // Top-level gets a free pass: IsNested(false)
@@ -255,16 +264,16 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
 
       f.foldK[OptsF[F, *]](new smithy4s.schema.Field.FolderK[Schema, A, OptsF[F, *]] {
         def onRequired[Y](
-          label: String,
-          instance: Schema[Y],
-          get: A => Y,
-        ): Opts[F[Y]] = instance.addHints(childHints).compile[OptsF[F, *]](self)
+                           label: String,
+                           instance: Schema[Y],
+                           get: A => Y,
+                         ): Opts[F[Y]] = instance.addHints(childHints).compile[OptsF[F, *]](self)
 
         def onOptional[Y](
-          label: String,
-          instance: Schema[Y],
-          get: A => Option[Y],
-        ): Opts[F[Option[Y]]] = instance
+                           label: String,
+                           instance: Schema[Y],
+                           get: A => Option[Y],
+                         ): Opts[F[Option[Y]]] = instance
           .addHints(childHints)
           .compile[OptsF[F, *]](self)
           .orNone
@@ -278,12 +287,15 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
   }
 
   def union[A](
-    shapeId: ShapeId,
-    hints: Hints,
-    alternatives: Vector[SchemaAlt[A, _]],
-    dispatch: A => Alt.SchemaAndValue[A, _],
-  ): Opts[F[A]] = {
-    def go[X](alt: Alt[Schema, A, X]): Opts[F[A]] = alt.instance
+                shapeId: ShapeId,
+                hints: Hints,
+                alternatives: Vector[SchemaAlt[A, _]],
+                dispatch: Alt.Dispatcher[Schema, A],
+              ): Opts[F[A]] = {
+    def go[X](
+               alt: Alt[Schema, A, X]
+             ): Opts[F[A]] = alt
+      .instance
       .addHints(hints)
       .compile[OptsF[F, *]](this)
       .map(_.map(alt.inject))
@@ -295,16 +307,16 @@ class OptsVisitor[F[_]: MonadThrow: PathOps] extends SchemaVisitor[OptsF[F, *]] 
   }
 
   def biject[A, B](
-    schema: Schema[A],
-    to: A => B,
-    from: B => A,
-  ): Opts[F[B]] = schema.compile[OptsF[F, *]](this).map(_.map(to))
+                    schema: Schema[A],
+                    to: A => B,
+                    from: B => A,
+                  ): Opts[F[B]] = schema.compile[OptsF[F, *]](this).map(_.map(to))
 
   def surject[A, B](
-    schema: Schema[A],
-    to: Refinement[A, B],
-    from: B => A,
-  ): Opts[F[B]] = schema
+                     schema: Schema[A],
+                     to: Refinement[A, B],
+                     from: B => A,
+                   ): Opts[F[B]] = schema
     .compile[OptsF[F, *]](this)
     .map(_.flatMap(to(_).leftMap(RefinementFailed(_)).liftTo[F]))
 

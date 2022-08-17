@@ -39,10 +39,10 @@ object OptsSchematicSpec extends SimpleIOSuite {
     }
 
   def parseOpts[A](
-    schema: Schema[A]
-  )(
-    input: String*
-  ): Either[Help, EitherThrow[A]] = Command("test-command", "test-header")(
+                    schema: Schema[A]
+                  )(
+                    input: String*
+                  ): Either[Help, EitherThrow[A]] = Command("test-command", "test-header")(
     schema.compile[OptsVisitor.OptsF[EitherThrow, *]](compiler)
   )
     .parse(input)
@@ -74,9 +74,9 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
     val schema: Schema[Superpower] = {
 
-      val fire: EnumValue[Superpower] = EnumValue("Fire", 0, Fire, Hints.empty)
-      val ice: EnumValue[Superpower] = EnumValue("Ice", 1, Ice, Hints.empty)
-      val water: EnumValue[Superpower] = EnumValue("Water", 2, Water, Hints.empty)
+      val fire: EnumValue[Superpower] = EnumValue("Fire", 0, Fire, "FIRE", Hints.empty)
+      val ice: EnumValue[Superpower] = EnumValue("Ice", 1, Ice, "ICE", Hints.empty)
+      val water: EnumValue[Superpower] = EnumValue("Water", 2, Water, "WATER", Hints.empty)
 
       sampleStruct(
         "superpower",
@@ -171,26 +171,26 @@ object OptsSchematicSpec extends SimpleIOSuite {
     implicit val eqThrowable: Eq[Throwable] = Eq.fromUniversalEquals
 
     def parsed[A: Eq](
-      actual: Either[Help, EitherThrow[A]],
-      expected: A,
-    ): Expectations = expect.eql(actual, Right(Right(expected)))
+                       actual: Either[Help, EitherThrow[A]],
+                       expected: A,
+                     ): Expectations = expect.eql(actual, Right(Right(expected)))
 
     def failureSubstring(
-      actual: Either[Help, Any],
-      expected: String,
-    )(
-      implicit loc: SourceLocation
-    ): Expectations = actual.fold(
+                          actual: Either[Help, Any],
+                          expected: String,
+                        )(
+                          implicit loc: SourceLocation
+                        ): Expectations = actual.fold(
       result => assert(result.toString().contains(expected)),
       fail("Expected failure, but got success 😩"),
     )
 
     def effectFailureSubstring(
-      actual: Either[Help, EitherThrow[Any]],
-      expected: String,
-    )(
-      implicit loc: SourceLocation
-    ): Expectations = actual.fold(
+                                actual: Either[Help, EitherThrow[Any]],
+                                expected: String,
+                              )(
+                                implicit loc: SourceLocation
+                              ): Expectations = actual.fold(
       _ => failure("Expected effect failure, got parsing failure"),
       _.fold(
         result => assert(result.getMessage().contains(expected)),
@@ -382,15 +382,21 @@ object OptsSchematicSpec extends SimpleIOSuite {
   }
 
   pureTest("timestamp with DATE_TIME format hint") {
-    timestampTest(timestamp.addHints(TimestampFormat.DATE_TIME), "2020-01-01T00:00:00.000Z")
+    timestampTest(
+      timestamp.addHints(TimestampFormat.DATE_TIME.widen),
+      "2020-01-01T00:00:00.000Z",
+    )
   }
 
   pureTest("timestamp with EPOCH_SECONDS format hint") {
-    timestampTest(timestamp.addHints(TimestampFormat.EPOCH_SECONDS), "1577836800")
+    timestampTest(timestamp.addHints(TimestampFormat.EPOCH_SECONDS.widen), "1577836800")
   }
 
   pureTest("timestamp with HTTP_DATE format hint") {
-    timestampTest(timestamp.addHints(TimestampFormat.HTTP_DATE), "Wed, 01 Jan 2020 00:00:00 GMT")
+    timestampTest(
+      timestamp.addHints(TimestampFormat.HTTP_DATE.widen),
+      "Wed, 01 Jan 2020 00:00:00 GMT",
+    )
   }
 
   pureTest("compile document") {
