@@ -8,7 +8,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = smithy4s.example.StringList(List()))
+case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List())
 object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultTest")
 

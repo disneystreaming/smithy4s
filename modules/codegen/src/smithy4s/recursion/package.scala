@@ -26,6 +26,16 @@ package recursion {
   case class Fix[F[_]](unfix: F[Fix[F]])
 }
 
+/**
+  * This package contains recursion-scheme implementations.
+  * Because of the concision and the fact that we need a small subset of them,
+  * we re-implement them as opposed to depending on a library.
+  *
+  * See libraries that offer larger sets of recursion-schemes (and docs) :
+  * * Droste https://index.scala-lang.org/higherkindness/droste
+  * * Matryoshka https://index.scala-lang.org/precog/matryoshka
+  *
+  */
 package object recursion {
 
   def hylo[F[_]: Functor, A, B](unfold: A => F[A], fold: F[B] => B)(a: A): B =
