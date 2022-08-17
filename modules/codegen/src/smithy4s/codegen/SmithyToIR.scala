@@ -36,6 +36,7 @@ import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.selector.PathFinder
 import scala.annotation.nowarn
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.codegen.Type.Alias
 
 object SmithyToIR {
 
@@ -576,6 +577,32 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
   }
 
+  // Captures the data representing the default value of a member shape.
+  private def maybeDefault(shape: MemberShape): List[Hint.Default] = {
+    val maybeTrait = shape.getTrait(classOf[DefaultTrait])
+    if (maybeTrait.isPresent()) {
+      val tr = maybeTrait.get()
+      // We're short-circuiting when encountering any external type,
+      // as we do not have the means to instantiate them in a safe manner.
+      def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
+        nodeAndType.tpe match {
+          case _: Type.ExternalType => None
+          case _                    => Some(unfoldNodeAndType(nodeAndType))
+        }
+      }
+      val targetTpe = shape.getTarget.tpe.get
+      // Constructing the initial value for the refold
+      val nodeAndType = targetTpe match {
+        case Alias(_, _, tpe, true) => NodeAndType(tr.toNode(), tpe)
+        case _                      => NodeAndType(tr.toNode(), targetTpe)
+      }
+      val maybeTree = anaM(unfoldNodeAndTypeIfNotExternal)(nodeAndType)
+      maybeTree.map(Hint.Default(_)).toList
+    } else {
+      List.empty
+    }
+  }
+
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
@@ -630,7 +657,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           member.tpe,
           member.hasTrait(classOf[RequiredTrait]) ||
             member.hasTrait(classOf[DefaultTrait]),
-          hints(member)
+          hints(member) ++ maybeDefault(member)
         )
       }
       .collect { case (name, Some(tpe), required, hints) =>
