@@ -27,6 +27,7 @@ import software.amazon.smithy.model.node.Node
 import smithy4s.codegen.TypedNode.AltValueTN.ProductAltTN
 import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
 import smithy4s.codegen.UnionMember._
+import smithy4s.codegen.LineSegment.{NameDef, NameRef}
 import cats.kernel.Eq
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
@@ -34,6 +35,8 @@ case class CompilationUnit(namespace: String, declarations: List[Decl])
 sealed trait Decl {
   def name: String
   def hints: List[Hint]
+  def nameDef: NameDef = NameDef(name)
+  def nameRef: NameRef = NameRef(List.empty,name)
 }
 
 case class Service(

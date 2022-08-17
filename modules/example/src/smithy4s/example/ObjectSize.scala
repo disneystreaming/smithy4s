@@ -1,11 +1,15 @@
 package smithy4s.example
 
+import smithy4s.Schema
+import smithy4s.schema.Schema.int
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
-import smithy4s.schema.Schema._
 
 object ObjectSize extends Newtype[Int] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "ObjectSize")
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
-  val underlyingSchema : smithy4s.Schema[Int] = int.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[ObjectSize] = bijection(underlyingSchema, asBijection)
+  val id: ShapeId = ShapeId("smithy4s.example", "ObjectSize")
+  val hints : Hints = Hints.empty
+  val underlyingSchema : Schema[Int] = int.withId(id).addHints(hints)
+  implicit val schema : Schema[ObjectSize] = bijection(underlyingSchema, asBijection)
 }

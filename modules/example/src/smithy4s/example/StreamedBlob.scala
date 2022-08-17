@@ -1,13 +1,17 @@
 package smithy4s.example
 
+import smithy4s.Schema
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
-import smithy4s.schema.Schema._
+import smithy4s.schema.Schema.byte
 
 object StreamedBlob extends Newtype[Byte] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "StreamedBlob")
-  val hints : smithy4s.Hints = smithy4s.Hints(
+  val id: ShapeId = ShapeId("smithy4s.example", "StreamedBlob")
+  val hints : Hints = Hints(
     smithy.api.Streaming(),
   )
-  val underlyingSchema : smithy4s.Schema[Byte] = byte.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[StreamedBlob] = bijection(underlyingSchema, asBijection)
+  val underlyingSchema : Schema[Byte] = byte.withId(id).addHints(hints)
+  implicit val schema : Schema[StreamedBlob] = bijection(underlyingSchema, asBijection)
 }

@@ -24,6 +24,7 @@ import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
 import smithy4s.codegen.Type.ExternalType
+import LineSegment._
 
 object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -257,19 +258,43 @@ object CollisionAvoidance {
     // TODO : implement better avoidance
     val definitions = compilationUnit.declarations.foldMap { d => Set(d.name) }
 
-    val Transformation_ = "smithy4s.Transformation"
-    val Service_ = "smithy4s.Service"
-    val Endpoint_ = "smithy4s.Endpoint"
-    val NoInput_ = "smithy4s.NoInput"
-    val ShapeId_ = "smithy4s.ShapeId"
-    val Schema_ = "smithy4s.Schema"
-    val StreamingSchema_ = "smithy4s.StreamingSchema"
-    val Enumeration_ = "smithy4s.Enumeration"
-    val EnumValue_ = "smithy4s.schema.EnumValue"
-    val Hints_ = "smithy4s.Hints"
-    val ShapeTag_ = "smithy4s.ShapeTag"
-    val Errorable_ = "smithy4s.Errorable"
-    val unionSchema_ = "smithy4s.UnionSchema"
+    val Transformation_ = NameRef("smithy4s", "Transformation")
+    val Service_ = NameRef("smithy4s", "Service")
+    val Endpoint_ = NameRef("smithy4s", "Endpoint")
+    val NoInput_ = NameRef("smithy4s", "NoInput")
+    val ShapeId_ = NameRef("smithy4s", "ShapeId")
+    val Schema_ = NameRef("smithy4s", "Schema")
+    val Monadic_ = NameRef("smithy4s", "Monadic")
+    val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
+    val Enumeration_ = NameRef("smithy4s", "Enumeration")
+    val EnumValue_ = NameRef("smithy4s", "schema.EnumValue")
+    val Newtype_ = NameRef("smithy4s", "Newtype")
+    val Hints_ = NameRef("smithy4s", "Hints")
+    val ShapeTag_ = NameRef("smithy4s", "ShapeTag")
+    val Errorable_ = NameRef("smithy4s", "Errorable")
+    val unionSchema_ = NameRef("smithy4s.schema.Schema", "UnionSchema")
+    val union_ = NameRef("smithy4s.schema.Schema", "union")
+    val recursive_ = NameRef("smithy4s.schema.Schema", "recursive")
+    val enumeration_ = NameRef("smithy4s.schema.Schema", "enumeration")
+    val constant_ = NameRef("smithy4s.schema.Schema", "constant")
+    val struct_ = NameRef("smithy4s.schema.Schema", "struct")
+    val bijection_ = NameRef("smithy4s.schema.Schema", "bijection")
+    val short_ = NameRef("smithy4s.schema.Schema", "Short")
+    val int_ = NameRef("smithy4s.schema.Schema", "Integer")
+    val long_ = NameRef("smithy4s.schema.Schema", "Long")
+    val double_ = NameRef("smithy4s.schema.Schema", "Double")
+    val float_ = NameRef("smithy4s.schema.Schema", "Float")
+    val bigint_ = NameRef("smithy4s.schema.Schema", "BigInteger")
+    val bigdecimal_ = NameRef("smithy4s.schema.Schema", "BigDecimal")
+    val string_ = NameRef("smithy4s.schema.Schema", "String")
+    val boolean_ = NameRef("smithy4s.schema.Schema", "Boolean")
+    val byte_ = NameRef("smithy4s.schema.Schema", "Byte")
+    val bytes_ = NameRef("smithy4s.schema.Schema", "Blob")
+    val unit_ = NameRef("smithy4s.schema.Schema", "Unit")
+    val timestamp_ = NameRef("smithy4s.schema.Schema", "Timestamp")
+    val document_ = NameRef("smithy4s.schema.Schema", "Document")
+    val uuid_ = NameRef("smithy4s.schema.Schema", "UUID")
+    val Transformed_ = NameDef("Transformed")
 
     def reconcile(str: String): String = {
       val last = str.split('.').last

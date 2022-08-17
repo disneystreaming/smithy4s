@@ -20,7 +20,6 @@ package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
   type Hint = Hints.Binding
   type Schema[A] = schema.Schema[A]
   val Schema: schema.Schema.type = schema.Schema
-  type UnionSchema[A] = schema.Schema.UnionSchema[A]
   type Wrapped[F[_], G[_], A] = F[G[A]]
 
   val errorTypeHeader = "X-Error-Type"

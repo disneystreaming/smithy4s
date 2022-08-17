@@ -1,12 +1,16 @@
 package smithy4s.example
 
+import smithy4s.schema.Schema.int
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
 import smithy4s.example.refined.Age.provider._
-import smithy4s.schema.Schema._
+import smithy4s.Schema
 
 object Age extends Newtype[smithy4s.example.refined.Age] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "Age")
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
-  val underlyingSchema : smithy4s.Schema[smithy4s.example.refined.Age] = int.refined[smithy4s.example.refined.Age](smithy4s.example.AgeFormat()).withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[Age] = bijection(underlyingSchema, asBijection)
+  val id: ShapeId = ShapeId("smithy4s.example", "Age")
+  val hints : Hints = Hints.empty
+  val underlyingSchema : Schema[smithy4s.example.refined.Age] = int.refined[smithy4s.example.refined.Age](smithy4s.example.AgeFormat()).withId(id).addHints(hints)
+  implicit val schema : Schema[Age] = bijection(underlyingSchema, asBijection)
 }

@@ -21,6 +21,7 @@ import smithy4s.api.UuidFormatTrait
 import smithy4s.codegen.LineSyntax.LineInterpolator
 import smithy4s.codegen.WithValue.ToLineWithValue
 import smithy4s.codegen.WithValue.ToLinesWithValue
+import smithy4s.codegen.LineSegment.NameRef
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait
@@ -50,13 +51,13 @@ package object codegen {
   }
 
   private[codegen] val empty: Lines = Lines.empty
-  private[codegen] val newline: Lines = Lines(List(""))
+  private[codegen] val newline: Lines = Lines(Line.empty)
   private[codegen] def lines(l: LinesWithValue*): Lines =
     l.toList.foldMap(_.render)
 
-  private[codegen] def indent(l: List[String]): List[String] = l.map { line =>
-    if (line.length > 0)
-      "  " + line
+  private[codegen] def indent(l: List[Line]): List[Line] = l.map { line =>
+    if (line.segments.length > 0)
+      line"  " + line
     else
       line
   }
@@ -64,12 +65,9 @@ package object codegen {
     lines(l: _*).transformLines(indent)
 
   private[codegen] def block(l: Line): PartialBlock = new PartialBlock(l)
-  private[codegen] def block(s: String): PartialBlock = new PartialBlock(
-    Line(s)
-  )
 
   private[codegen] def obj(
-      name: String,
+      name: NameRef,
       ext: Line,
       w: Line = Line.empty
   ): PartialBlock = {
@@ -79,16 +77,9 @@ package object codegen {
     new PartialBlock(withW)
   }
   private[codegen] def obj(
-      name: String
+      name: NameRef
   ): PartialBlock = {
     obj(name, Line.empty)
-  }
-
-  private[codegen] def obj(
-      name: String,
-      extensions: List[Line]
-  ): PartialBlock = {
-    obj(name, extensions.intercalate(Line(" with ")))
   }
 
   private[codegen] def commas(lines: List[String]): List[String] =
