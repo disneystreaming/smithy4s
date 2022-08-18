@@ -21,6 +21,7 @@ import java.util.Base64
 import java.util.UUID
 
 import smithy.api.JsonName
+import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
@@ -275,10 +276,20 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       total: E => EnumValue[E]
   ): DocumentDecoder[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
-    from(
-      s"value in [${fromName.keySet.mkString(", ")}]"
-    ) {
-      case DString(value) if fromName.contains(value) => fromName(value)
+    if (hints.get[IntEnum].isDefined) {
+      val fromOrdinal =
+        values.map(e => BigDecimal(e.intValue) -> e.value).toMap
+      from(
+        s"value in [${fromName.keySet.mkString(", ")}]"
+      ) {
+        case DNumber(value) if fromOrdinal.contains(value) => fromOrdinal(value)
+      }
+    } else {
+      from(
+        s"value in [${fromName.keySet.mkString(", ")}]"
+      ) {
+        case DString(value) if fromName.contains(value) => fromName(value)
+      }
     }
   }
 
@@ -290,6 +301,8 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
   ): DocumentDecoder[S] = {
     def jsonLabel[A](field: Field[Schema, S, A]): String =
       field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
+    def getDefault[A](field: Field[Schema, S, A]): Option[Document] =
+      field.instance.hints.get(Default).map(_.value)
 
     def fieldDecoder[A](
         field: Field[Schema, S, A]
@@ -299,6 +312,8 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
+
+      val maybeDefault = getDefault(field)
 
       if (field.isOptional) {
         (
@@ -320,16 +335,19 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
             fields: Map[String, Document]
         ) =>
           val path = PayloadPath.Segment(jLabel) :: pp
-          val document = fields
-            .get(jLabel)
-            .getOrElse(
+          fields
+            .get(jLabel) match {
+            case Some(document) =>
+              buffer(apply(field.instance)(path, document))
+            case None if maybeDefault.isDefined =>
+              buffer(apply(field.instance)(path, maybeDefault.get))
+            case None =>
               throw new PayloadError(
                 PayloadPath(path.reverse),
                 "",
                 "Required field not found"
               )
-            )
-          buffer(apply(field.instance)(path, document))
+          }
       }
     }
 
@@ -445,15 +463,13 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): DocumentDecoder[B] = apply(schema).map(to)
+      bijection: Bijection[A, B]
+  ): DocumentDecoder[B] = apply(schema).map(bijection)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): DocumentDecoder[B] = apply(schema).emap(to.asFunction)
+      refinement: Refinement[A, B]
+  ): DocumentDecoder[B] = apply(schema).emap(refinement.asFunction)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): DocumentDecoder[A] = {
     lazy val underlying = apply(suspend.value)

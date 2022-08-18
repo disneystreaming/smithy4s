@@ -1,23 +1,30 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.Hints
+import smithy4s.schema.Schema.string
+import smithy4s.ShapeId
+import smithy4s.schema.Schema.struct
+import smithy4s.ShapeTag
+import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.union
 
 sealed trait OrderType extends scala.Product with scala.Serializable {
   @inline final def widen: OrderType = this
 }
-object OrderType extends smithy4s.ShapeTag.Companion[OrderType] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "OrderType")
+object OrderType extends ShapeTag.Companion[OrderType] {
+  val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : Hints = Hints.empty
 
   case class OnlineCase(online: OrderNumber) extends OrderType
   case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
-  object InStoreOrder extends smithy4s.ShapeTag.Companion[InStoreOrder] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "InStoreOrder")
+  object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
+    val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
-    val hints : smithy4s.Hints = smithy4s.Hints.empty
+    val hints : Hints = Hints.empty
 
-    val schema: smithy4s.Schema[InStoreOrder] = struct(
+    val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Required()),
       string.optional[InStoreOrder]("locationId", _.locationId),
     ){
@@ -27,16 +34,16 @@ object OrderType extends smithy4s.ShapeTag.Companion[OrderType] {
     val alt = schema.oneOf[OrderType]("inStore")
   }
   case object PreviewCase extends OrderType
-  private val PreviewCaseAlt = smithy4s.Schema.constant(PreviewCase).oneOf[OrderType]("preview").addHints(hints)
+  private val PreviewCaseAlt = Schema.constant(PreviewCase).oneOf[OrderType]("preview").addHints(hints)
   private val PreviewCaseAltWithValue = PreviewCaseAlt(PreviewCase)
 
   object OnlineCase {
-    val hints : smithy4s.Hints = smithy4s.Hints.empty
-    val schema: smithy4s.Schema[OnlineCase] = bijection(OrderNumber.schema.addHints(hints), OnlineCase(_), _.online)
+    val hints : Hints = Hints.empty
+    val schema: Schema[OnlineCase] = bijection(OrderNumber.schema.addHints(hints), OnlineCase(_), _.online)
     val alt = schema.oneOf[OrderType]("online")
   }
 
-  implicit val schema: smithy4s.Schema[OrderType] = union(
+  implicit val schema: Schema[OrderType] = union(
     OnlineCase.alt,
     InStoreOrder.alt,
     PreviewCaseAlt,

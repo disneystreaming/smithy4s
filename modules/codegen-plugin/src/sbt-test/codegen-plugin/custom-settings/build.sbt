@@ -6,7 +6,7 @@ lazy val commonSettings = Def.settings(
     "smithy4s.example"
   ),
   libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
-  libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1" % Smithy4s
+  libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % smithy4s.codegen.BuildInfo.smithyVersion % Smithy4s
 )
 
 lazy val p1 = project

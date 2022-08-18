@@ -34,7 +34,7 @@ use smithy4s.api#simpleRestJson
 
 @simpleRestJson
 service HelloWorldService {
-  version: "1.0.0",
+  version: "1.0.0"
   // Indicates that all operations in `HelloWorldService`,
   // here limited to Hello, can return `GenericServerError`.
   errors: [GenericServerError],
@@ -49,7 +49,7 @@ structure GenericServerError {
 
 @http(method: "POST", uri: "/{name}", code: 200)
 operation Hello {
-  input: Person,
+  input: Person
   output: Greeting
 }
 
@@ -196,8 +196,8 @@ the middleware on every request prior to the request being handled by our `Hello
 With the above in place, we can run our application and test it out.
 
 ```
-curl -X 'POST' \  
-  'http://localhost:9000/Test' \  
+curl -X 'POST' \
+  'http://localhost:9000/Test' \
   -H 'User-Agent: Chrome/103.0.0.0' \
   -H 'Content-Type: application/json'
 ```

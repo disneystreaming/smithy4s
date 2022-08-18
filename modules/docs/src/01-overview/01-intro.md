@@ -12,3 +12,5 @@ Smithy4s can be used to:
 * derive pure-scala AWS clients
 * derive CLI tools
 * and has the potential for much, much more!
+
+Smithy4s supports both Smithy 2.0 and Smithy 1.0 models. You can read about the differences in [this blogpost](https://aws.amazon.com/blogs/developer/introducing-smithy-idl-2-0/) from AWS.
