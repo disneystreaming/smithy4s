@@ -16,12 +16,13 @@
 
 package smithy4s.http.internals
 
+import smithy4s.capability.Contravariant
 import smithy4s.Hints
+import smithy4s.schema.Field
+import smithy4s.schema.Schema
 import smithy4s.schema.SchemaField
 import smithy4s.schema.SchemaVisitor
 import smithy4s.ShapeId
-import smithy4s.schema.Field
-import smithy4s.schema.Schema
 
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   ResponseCodeExtractor,
@@ -86,13 +87,7 @@ class HttpResponseCodeSchemaVisitor
             get: S => AA
         ): ResponseCodeExtractor[S] = {
           val aExt = apply(instance)
-          aExt match {
-            case NoResponseCode => NoResponseCode
-            case RequiredResponseCode(f) =>
-              RequiredResponseCode { s => f(get(s)) }
-            case OptionalResponseCode(f) =>
-              OptionalResponseCode { s => f(get(s)) }
-          }
+          Contravariant[ResponseCodeExtractor].contramap(aExt)(get)
         }
       }
 
@@ -111,6 +106,19 @@ object HttpResponseCodeSchemaVisitor {
       extends ResponseCodeExtractor[A]
   case class OptionalResponseCode[A](f: A => Option[Int])
       extends ResponseCodeExtractor[A]
+
+  implicit val contravariant: Contravariant[ResponseCodeExtractor] =
+    new Contravariant[ResponseCodeExtractor]() {
+      def contramap[A, B](
+          fa: ResponseCodeExtractor[A]
+      )(f: B => A): ResponseCodeExtractor[B] = {
+        fa match {
+          case NoResponseCode          => NoResponseCode
+          case RequiredResponseCode(g) => RequiredResponseCode { b => g(f(b)) }
+          case OptionalResponseCode(g) => OptionalResponseCode { b => g(f(b)) }
+        }
+      }
+    }
 
   implicit val short: ResponseCodeExtractor[Short] = NoResponseCode
   implicit val int: ResponseCodeExtractor[Int] = {
