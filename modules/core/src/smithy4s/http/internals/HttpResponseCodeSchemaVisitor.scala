@@ -29,10 +29,28 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   RequiredResponseCode,
   OptionalResponseCode
 }
+import smithy4s.schema.Primitive
+import smithy4s.schema.Primitive._
+import smithy4s.ByteArray
+import smithy4s.Document
+import smithy4s.Timestamp
 
 class HttpResponseCodeSchemaVisitor
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
   def default[A]: ResponseCodeExtractor[A] = NoResponseCode
+  private val primPf = Primitive.deriving[ResponseCodeExtractor]
+  override def primitive[P](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): ResponseCodeExtractor[P] = tag match {
+    case PInt =>
+      hints.get[smithy.api.HttpResponseCode] match {
+        case None    => NoResponseCode
+        case Some(_) => primPf(tag)
+      }
+    case _ => NoResponseCode
+  }
 
   override def struct[S](
       shapeId: ShapeId,
@@ -48,14 +66,34 @@ class HttpResponseCodeSchemaVisitor
             label: String,
             instance: Schema[AA],
             get: S => Option[AA]
-        ): ResponseCodeExtractor[S] =
-          OptionalResponseCode { (s: S) => get(s).map(_.asInstanceOf[Int]) }
+        ): ResponseCodeExtractor[S] = {
+          val aExt = apply(instance)
+          OptionalResponseCode { s =>
+            get(s) match {
+              case None => None
+              case Some(value) =>
+                aExt match {
+                  case NoResponseCode          => None
+                  case RequiredResponseCode(f) => Some(f(value))
+                  case OptionalResponseCode(f) => f(value)
+                }
+            }
+          }
+        }
         def onRequired[AA](
             label: String,
             instance: Schema[AA],
             get: S => AA
-        ): ResponseCodeExtractor[S] =
-          RequiredResponseCode((s: S) => get(s).asInstanceOf[Int])
+        ): ResponseCodeExtractor[S] = {
+          val aExt = apply(instance)
+          aExt match {
+            case NoResponseCode => NoResponseCode
+            case RequiredResponseCode(f) =>
+              RequiredResponseCode { s => f(get(s)) }
+            case OptionalResponseCode(f) =>
+              OptionalResponseCode { s => f(get(s)) }
+          }
+        }
       }
 
       field.hints
@@ -73,4 +111,22 @@ object HttpResponseCodeSchemaVisitor {
       extends ResponseCodeExtractor[A]
   case class OptionalResponseCode[A](f: A => Option[Int])
       extends ResponseCodeExtractor[A]
+
+  implicit val short: ResponseCodeExtractor[Short] = NoResponseCode
+  implicit val int: ResponseCodeExtractor[Int] = {
+    RequiredResponseCode(identity)
+  }
+  implicit val float: ResponseCodeExtractor[Float] = NoResponseCode
+  implicit val long: ResponseCodeExtractor[Long] = NoResponseCode
+  implicit val double: ResponseCodeExtractor[Double] = NoResponseCode
+  implicit val bigint: ResponseCodeExtractor[BigInt] = NoResponseCode
+  implicit val bigdecimal: ResponseCodeExtractor[BigDecimal] = NoResponseCode
+  implicit val boolean: ResponseCodeExtractor[Boolean] = NoResponseCode
+  implicit val string: ResponseCodeExtractor[String] = NoResponseCode
+  implicit val uuid: ResponseCodeExtractor[java.util.UUID] = NoResponseCode
+  implicit val byte: ResponseCodeExtractor[Byte] = NoResponseCode
+  implicit val blob: ResponseCodeExtractor[ByteArray] = NoResponseCode
+  implicit val document: ResponseCodeExtractor[Document] = NoResponseCode
+  implicit val timestamp: ResponseCodeExtractor[Timestamp] = NoResponseCode
+  implicit val unit: ResponseCodeExtractor[Unit] = NoResponseCode
 }
