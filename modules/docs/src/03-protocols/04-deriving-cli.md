@@ -72,12 +72,15 @@ object HelloWorldServiceInstance{
    - The Input structure is flattened to top level fields with no nesting
      - All primitives are mapped to Positional `decline` Arguments , except for boolean fields
      - Boolean fields are mapped to a `decline` Flag
+     - Blobs are mapped to take in either stdin(by passing in `-` ) or a full file path and will produce a Byte array 
      - Lists and recursive types
-       - 
+       - a top level list is converted to a repeated positional argument (or flag in case of Boolean)
    - How is Nesting handled
      - all nested fields are converted to Options 
+     - a nested list is converted to expect a json i.e. List[String] would expect ```'["foo","baz","qux"]'``` as a decline Option
+       - when the nested list contains blobs , it will expect a json of base64 encoded strings 
    - Help
-     - 
+     - Documentation is added to every field, operation and service - if available. For HTTP operations a path template is provided as well.
 
 # Missing Features
    - ExternalDocumentation trait support for Services and Fields
