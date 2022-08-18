@@ -68,10 +68,10 @@ object RefinementProvider {
       iso: Bijection[A, A0]
   ): Simple[C, A0] = constraintOnA.imapFull[A0, A0](iso, iso)
 
-  implicit def stringLengthConstraint: Simple[Length, String] =
+  implicit val stringLengthConstraint: Simple[Length, String] =
     new LengthConstraint[String](_.length)
 
-  implicit def byteArrayLengthConstraint: Simple[Length, ByteArray] =
+  implicit val byteArrayLengthConstraint: Simple[Length, ByteArray] =
     new LengthConstraint[ByteArray](_.array.length)
 
   implicit def iterableLengthConstraint[C[_], A](implicit
@@ -111,7 +111,7 @@ object RefinementProvider {
     }
   }
 
-  implicit def stringPatternConstraints: Simple[Pattern, String] =
+  implicit val stringPatternConstraints: Simple[Pattern, String] =
     new SimpleImpl[Pattern, String] {
 
       def get(
