@@ -33,7 +33,7 @@ final class IntEnumSmokeSpec extends FunSuite {
     )
     val hints = smithy4s.example.FaceCard.hints
     assertEquals(values, expected)
-    assert(hints.get[IntEnum].isDefined, "int enum should be in hints")
+    assert(hints.has[IntEnum], "int enum should be in hints")
   }
 
 }

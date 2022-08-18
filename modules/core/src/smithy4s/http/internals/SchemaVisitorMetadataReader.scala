@@ -144,7 +144,7 @@ private[http] class SchemaVisitorMetadataReader()
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaDecode[E] = {
-    if (hints.get[IntEnum].isDefined) {
+    if (hints.has[IntEnum]) {
       MetaDecode
         .from(
           s"Enum[${values.map(_.stringValue).mkString(",")}]"
