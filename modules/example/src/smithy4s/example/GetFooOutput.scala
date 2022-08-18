@@ -1,14 +1,18 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.schema.Schema.struct
+import smithy4s.ShapeTag
 
 case class GetFooOutput(foo: Option[Foo] = None)
-object GetFooOutput extends smithy4s.ShapeTag.Companion[GetFooOutput] {
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "GetFooOutput")
+object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
+  val id: ShapeId = ShapeId("smithy4s.example", "GetFooOutput")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : Hints = Hints.empty
 
-  implicit val schema: smithy4s.Schema[GetFooOutput] = struct(
+  implicit val schema: Schema[GetFooOutput] = struct(
     Foo.schema.optional[GetFooOutput]("foo", _.foo),
   ){
     GetFooOutput.apply

@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.capability
+package smithy4s
 
-trait Isomorphism[A, B] {
-  def to(a: A): B
-  def from(b: B): A
+final case class IntEnum()
+object IntEnum extends ShapeTag.Companion[IntEnum] {
+  val id: ShapeId = ShapeId("smithy4s", "IntEnum")
+  val schema = Schema.constant(IntEnum())
 }

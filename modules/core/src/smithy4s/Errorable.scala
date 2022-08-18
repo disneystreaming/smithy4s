@@ -17,7 +17,7 @@
 package smithy4s
 
 trait Errorable[E] {
-  def error: UnionSchema[E]
+  def error: schema.Schema.UnionSchema[E]
   def liftError(throwable: Throwable): Option[E]
   def unliftError(e: E): Throwable
 }

@@ -38,6 +38,7 @@ import smithy4s.api.Discriminated
 import scala.collection.immutable.ListMap
 import scala.util.Try
 import munit.FunSuite
+import smithy.api.Default
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -47,6 +48,17 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       val a = int.required[Foo]("a", _.a)
       val b = int.optional[Foo]("b", _.b).addHints(JsonName("_b"))
       struct(a, b)(Foo.apply)
+    }
+  }
+
+  case class FooDefaulted(a: Int)
+  object FooDefaulted {
+    implicit val schema: Schema[FooDefaulted] = {
+      val a =
+        int
+          .required[FooDefaulted]("a", _.a)
+          .addHints(Default(Document.fromInt(11)))
+      struct(a)(FooDefaulted.apply)
     }
   }
 
@@ -122,6 +134,24 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(result, Foo(1, Some(2)))
   }
 
+  test("Optional decode from defaulted value - missing") {
+    val json = """{}"""
+    val result = readFromString[FooDefaulted](json)
+    val expected = FooDefaulted(11)
+    expect.same(result, expected)
+  }
+
+  test("Optional decode from defaulted value - null") {
+    val json = """{"a": null}"""
+    try {
+      readFromString[FooDefaulted](json)
+      fail("Expected decoding to fail")
+    } catch {
+      case e: smithy4s.http.PayloadError =>
+        expect.same(e.path, PayloadPath.fromString(".a"))
+    }
+  }
+
   test("Optional decode from absent value") {
     val json = """{"a" : 1}"""
     val result = readFromString[Foo](json)
@@ -143,6 +173,28 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       case PayloadError(path, expected, _) =>
         expect(path == PayloadPath("b"))
         expect(expected == "int")
+    }
+  }
+
+  test("Required: JsonName is used when missing required field is annotated") {
+    val jsonNameValue = "oldName"
+    case class Bar(name: String)
+    object Bar {
+      implicit val schema: Schema[Bar] = {
+        val name =
+          string.required[Bar]("name", _.name).addHints(JsonName(jsonNameValue))
+        struct(name)(Bar.apply)
+      }
+    }
+    val json = """{"missing" : "oops"}"""
+    try {
+      val _ = readFromString[Bar](json)
+      fail("Unexpected success")
+    } catch {
+      case ex @ PayloadError(path, expected, _) =>
+        expect(path == PayloadPath(jsonNameValue))
+        expect(expected == jsonNameValue)
+        expect.same(ex.getMessage(), "Missing required field (path: .oldName)")
     }
   }
 
@@ -286,6 +338,14 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(twoRes, UntaggedUnion.FourCase(Four(4)))
   }
 
+  test("Int Enum gets encoded/decoded correctly") {
+    val jsonInt = "1"
+    val int = writeToString[FaceCard](FaceCard.JACK)
+    val roundTripped = readFromString[FaceCard](int)
+    expect.same(int, jsonInt)
+    expect.same(roundTripped, FaceCard.JACK)
+  }
+
   implicit val byteArraySchema: Schema[ByteArray] = bytes
 
   test("byte arrays are encoded as base64") {
@@ -322,8 +382,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = """{"qty":0}"""
     val result = util.Try(readFromString[RangeCheck](json))
     expect(
-      result.failed.get.getMessage == "Input must be >= 1.0, but was 0.0" ||
-        result.failed.get.getMessage == "Input must be >= 1, but was 0" // js
+      result.failed.get.getMessage == "Input must be >= 1.0, but was 0.0 (path: .qty)" ||
+        result.failed.get.getMessage == "Input must be >= 1, but was 0 (path: .qty)" // js
     )
   }
 
@@ -338,17 +398,14 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val rangeHint = smithy.api.Range(max = Some(maxLength.toLong))
     implicit val schema: Schema[Bar] = {
       val str = string
+        .validated(lengthHint)
         .optional[Bar]("str", _.str)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, String]
       val lst = list[Int](int)
+        .validated(lengthHint)
         .optional[Bar]("lst", _.lst)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, List[Int]]
       val intS = int
+        .validated(rangeHint)
         .optional[Bar]("int", _.int)
-        .addHints(rangeHint)
-        .validated[smithy.api.Range, Int]
       struct(str, lst, intS)(Bar.apply)
     }
   }
@@ -359,7 +416,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      "length required to be <= 10, but was 11"
+      "length required to be <= 10, but was 11 (path: .str)"
     )
   }
 
@@ -369,7 +426,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      "length required to be <= 10, but was 11"
+      "length required to be <= 10, but was 11 (path: .lst)"
     )
   }
 
@@ -380,8 +437,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(
       result.failed.get.getMessage,
       (if (!Platform.isJS)
-         "Input must be <= 10, but was 11.0"
-       else "Input must be <= 10, but was 11")
+         "Input must be <= 10, but was 11.0 (path: .int)"
+       else "Input must be <= 10, but was 11 (path: .int)")
     )
   }
 
@@ -393,9 +450,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val lengthHint = smithy.api.Length(max = Some(maxLength.toLong))
     implicit val schema: Schema[Foo2] = {
       val str = string
+        .validated(lengthHint)
         .required[Bar2]("str", _.str)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, String]
       val bar = struct(str)(Bar2.apply).required[Foo2]("bar", _.bar)
       struct(bar)(Foo2.apply)
     }
@@ -409,7 +465,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Foo2](json))
     expect.same(
       result.failed.get.getMessage,
-      "length required to be <= 10, but was 11"
+      "length required to be <= 10, but was 11 (path: .bar.str)"
     )
   }
 
@@ -419,9 +475,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val lengthHint = smithy.api.Length(max = Some(maxLength.toLong))
     implicit val schema: Schema[Foo3] = {
       val str = string
+        .validated(lengthHint)
         .required[Bar2]("str", _.str)
-        .addHints(lengthHint)
-        .validated[smithy.api.Length, String]
       val bar = list(struct(str)(Bar2.apply)).required[Foo3]("bar", _.bar)
       struct(bar)(Foo3.apply)
     }

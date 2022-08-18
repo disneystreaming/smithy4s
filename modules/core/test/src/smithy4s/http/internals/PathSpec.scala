@@ -35,7 +35,8 @@ class PathSpec() extends munit.FunSuite {
         .addHints(
           Http(
             method = NonEmptyString("GET"),
-            uri = NonEmptyString("/{label}")
+            uri = NonEmptyString("/{label}"),
+            code = 200
           )
         )
       SchemaVisitorPathEncoder(schemaA)
@@ -71,12 +72,13 @@ class PathSpec() extends munit.FunSuite {
           Timestamp(0L, 0),
           Timestamp(0L, 0),
           Timestamp(0L, 0),
-          true
+          true,
+          smithy4s.example.Numbers.TWO
         )
       )
 
     val expected =
-      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: Nil
+      "dummy-path" :: "example with spaces, %, / and \\" :: "10" :: "1970-01-01T00:00:00Z" :: "1970-01-01T00:00:00Z" :: "0" :: "Thu, 01 Jan 1970 00:00:00 GMT" :: "true" :: "2" :: Nil
 
     expect.eql(result, expected)
   }
@@ -90,7 +92,8 @@ class PathSpec() extends munit.FunSuite {
       .addHints(
         Http(
           method = NonEmptyString("GET"),
-          uri = NonEmptyString("/{label}/const/{secondLabel}")
+          uri = NonEmptyString("/{label}/const/{secondLabel}"),
+          code = 200
         )
       )
     val result = SchemaVisitorPathEncoder(schema)
@@ -111,7 +114,8 @@ class PathSpec() extends munit.FunSuite {
       .addHints(
         Http(
           method = NonEmptyString("GET"),
-          uri = NonEmptyString("/{label}/const/{greedyLabel+}")
+          uri = NonEmptyString("/{label}/const/{greedyLabel+}"),
+          code = 200
         )
       )
     val result = SchemaVisitorPathEncoder(schema)

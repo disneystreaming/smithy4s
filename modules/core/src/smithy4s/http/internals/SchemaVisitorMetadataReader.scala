@@ -142,10 +142,19 @@ private[http] class SchemaVisitorMetadataReader()
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaDecode[E] = {
-    MetaDecode
-      .from(
-        s"Enum[${values.map(_.stringValue).mkString(",")}]"
-      )(string => values.find(_.stringValue == string).map(_.value))
+    if (hints.get[IntEnum].isDefined) {
+      MetaDecode
+        .from(
+          s"Enum[${values.map(_.stringValue).mkString(",")}]"
+        )(string =>
+          values.find(v => string.toIntOption.contains(v.intValue)).map(_.value)
+        )
+    } else {
+      MetaDecode
+        .from(
+          s"Enum[${values.map(_.stringValue).mkString(",")}]"
+        )(string => values.find(_.stringValue == string).map(_.value))
+    }
   }
 
   private case class FieldDecode(
@@ -174,11 +183,20 @@ private[http] class SchemaVisitorMetadataReader()
       val schema = field.instance
       val label = field.label
       val fieldHints = field.hints
+      val maybeDefault = field.getDefault.flatMap(d =>
+        Document.Decoder.fromSchema(field.instance).decode(d).toOption
+      )
       HttpBinding.fromHints(label, fieldHints, hints).map { binding =>
         val decoder: MetaDecode[_] =
           self(schema.addHints(Hints(binding)))
         val update = decoder
-          .updateMetadata(binding, label, field.isOptional, reservedQueries)
+          .updateMetadata(
+            binding,
+            label,
+            field.isOptional,
+            reservedQueries,
+            maybeDefault
+          )
         FieldDecode(label, binding, update)
       }
     }
@@ -272,15 +290,13 @@ private[http] class SchemaVisitorMetadataReader()
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): MetaDecode[B] = self(schema).map(to)
+      bijection: Bijection[A, B]
+  ): MetaDecode[B] = self(schema).map(bijection)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): MetaDecode[B] = self(schema).map(to.asThrowingFunction)
+      refinement: Refinement[A, B]
+  ): MetaDecode[B] = self(schema).map(refinement.asThrowingFunction)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
     EmptyMetaDecode

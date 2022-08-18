@@ -21,6 +21,7 @@ import smithy4s.api.UuidFormatTrait
 import smithy4s.codegen.LineSyntax.LineInterpolator
 import smithy4s.codegen.WithValue.ToLineWithValue
 import smithy4s.codegen.WithValue.ToLinesWithValue
+import smithy4s.codegen.LineSegment.NameRef
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait
@@ -50,13 +51,13 @@ package object codegen {
   }
 
   private[codegen] val empty: Lines = Lines.empty
-  private[codegen] val newline: Lines = Lines(List(""))
+  private[codegen] val newline: Lines = Lines(Line.empty)
   private[codegen] def lines(l: LinesWithValue*): Lines =
     l.toList.foldMap(_.render)
 
-  private[codegen] def indent(l: List[String]): List[String] = l.map { line =>
-    if (line.length > 0)
-      "  " + line
+  private[codegen] def indent(l: List[Line]): List[Line] = l.map { line =>
+    if (line.segments.length > 0)
+      line"  " + line
     else
       line
   }
@@ -64,12 +65,9 @@ package object codegen {
     lines(l: _*).transformLines(indent)
 
   private[codegen] def block(l: Line): PartialBlock = new PartialBlock(l)
-  private[codegen] def block(s: String): PartialBlock = new PartialBlock(
-    Line(s)
-  )
 
   private[codegen] def obj(
-      name: String,
+      name: NameRef,
       ext: Line,
       w: Line = Line.empty
   ): PartialBlock = {
@@ -79,16 +77,9 @@ package object codegen {
     new PartialBlock(withW)
   }
   private[codegen] def obj(
-      name: String
+      name: NameRef
   ): PartialBlock = {
-    new PartialBlock(Line(name))
-  }
-
-  private[codegen] def obj(
-      name: String,
-      extensions: List[Line]
-  ): PartialBlock = {
-    obj(name, extensions.intercalate(Line(" with ")))
+    obj(name, Line.empty)
   }
 
   private[codegen] def commas(lines: List[String]): List[String] =
@@ -118,6 +109,7 @@ package object codegen {
     object Map extends ShapeExtractor(_.asMapShape())
     object Structure extends ShapeExtractor(_.asStructureShape())
     object Union extends ShapeExtractor(_.asUnionShape())
+    object Enumeration extends ShapeExtractor(_.asEnumShape())
     object Service extends ShapeExtractor(_.asServiceShape())
     object Resource extends ShapeExtractor(_.asResourceShape())
     object Operation extends ShapeExtractor(_.asOperationShape())
@@ -129,6 +121,7 @@ package object codegen {
     object error extends TraitExtractor[ErrorTrait]
     object httpError extends TraitExtractor[HttpErrorTrait]
     object required extends TraitExtractor[RequiredTrait]
+    @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")
     object enumeration extends TraitExtractor[EnumTrait]
     object timestampFormat extends TraitExtractor[TimestampFormatTrait]
     object uuidFormat extends TraitExtractor[UuidFormatTrait]

@@ -33,14 +33,12 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
 
     override def biject[A, B](
         schema: Schema[A],
-        to: A => B,
-        from: B => A
+        bijection: Bijection[A, B]
     ): ToShapeIds[B] = apply[A](schema)
 
-    override def surject[A, B](
+    override def refine[A, B](
         schema: Schema[A],
-        to: Refinement[A, B],
-        from: B => A
+        refinement: Refinement[A, B]
     ): ToShapeIds[B] = {
       apply[A](schema)
     }
@@ -77,7 +75,6 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
 
   test("newtypes contain ShapeId in hints") {
     val shapeIds = example.CityId.schema.compile(TestCompiler)
-    println(s"YEAH $shapeIds")
     expect(
       shapeIds.contains(
         ShapeId(

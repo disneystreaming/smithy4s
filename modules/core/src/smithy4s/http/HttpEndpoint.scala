@@ -57,7 +57,7 @@ object HttpEndpoint {
         def path(input: I): List[String] = encoder.encode(input)
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod
-        val code: Int = http.code.getOrElse(200)
+        val code: Int = http.code
       }
     }
   }

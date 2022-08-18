@@ -1,27 +1,35 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema._
+import smithy4s.Schema
+import smithy4s.schema.Schema.unit
+import smithy4s.Transformation
+import smithy4s.Monadic
+import smithy4s.Service
+import smithy4s.Hints
+import smithy4s.StreamingSchema
+import smithy4s.ShapeId
+import smithy4s.Endpoint
 
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
 
   def addBrands(brands: Option[List[String]] = None) : F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) : BrandServiceGen[G] = new Transformed(transformation)
-  class Transformed[G[_, _, _, _, _]](transformation : smithy4s.Transformation[F, G]) extends BrandServiceGen[G] {
+  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : BrandServiceGen[G] = new Transformed(transformation)
+  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends BrandServiceGen[G] {
     def addBrands(brands: Option[List[String]] = None) = transformation[AddBrandsInput, Nothing, Unit, Nothing, Nothing](self.addBrands(brands))
   }
 }
 
-object BrandServiceGen extends smithy4s.Service[BrandServiceGen, BrandServiceOperation] {
+object BrandServiceGen extends Service[BrandServiceGen, BrandServiceOperation] {
 
-  def apply[F[_]](implicit F: smithy4s.Monadic[BrandServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: Monadic[BrandServiceGen, F]): F.type = F
 
-  val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "BrandService")
+  val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints : Hints = Hints.empty
 
-  val endpoints: List[smithy4s.Endpoint[BrandServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[Endpoint[BrandServiceOperation, _, _, _, _, _]] = List(
     AddBrands,
   )
 
@@ -35,24 +43,24 @@ object BrandServiceGen extends smithy4s.Service[BrandServiceGen, BrandServiceOpe
     def addBrands(brands: Option[List[String]] = None) = AddBrands(AddBrandsInput(brands))
   }
 
-  def transform[P[_, _, _, _, _]](transformation: smithy4s.Transformation[BrandServiceOperation, P]): BrandServiceGen[P] = reified.transform(transformation)
+  def transform[P[_, _, _, _, _]](transformation: Transformation[BrandServiceOperation, P]): BrandServiceGen[P] = reified.transform(transformation)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: BrandServiceGen[P], transformation: smithy4s.Transformation[P, P1]): BrandServiceGen[P1] = alg.transform(transformation)
+  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: BrandServiceGen[P], transformation: Transformation[P, P1]): BrandServiceGen[P1] = alg.transform(transformation)
 
-  def asTransformation[P[_, _, _, _, _]](impl : BrandServiceGen[P]): smithy4s.Transformation[BrandServiceOperation, P] = new smithy4s.Transformation[BrandServiceOperation, P] {
+  def asTransformation[P[_, _, _, _, _]](impl : BrandServiceGen[P]): Transformation[BrandServiceOperation, P] = new Transformation[BrandServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : BrandServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case AddBrands(AddBrandsInput(brands)) => impl.addBrands(brands)
     }
   }
   case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
-  object AddBrands extends smithy4s.Endpoint[BrandServiceOperation, AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "AddBrands")
-    val input: smithy4s.Schema[AddBrandsInput] = AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: smithy4s.Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val streamedOutput : smithy4s.StreamingSchema[Nothing] = smithy4s.StreamingSchema.nothing
-    val hints : smithy4s.Hints = smithy4s.Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/brands"), Some(200)),
+  object AddBrands extends Endpoint[BrandServiceOperation, AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
+    val id: ShapeId = ShapeId("smithy4s.example", "AddBrands")
+    val input: Schema[AddBrandsInput] = AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints : Hints = Hints(
+      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/brands"), 200),
     )
     def wrap(input: AddBrandsInput) = AddBrands(input)
   }
