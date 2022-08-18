@@ -2,7 +2,7 @@ pull_request_rules:
   - name: Automatically approve/merge Scala Steward PRs on CI success
     conditions:
       - author=scala-steward
-      - status-success="Build matrix completed"
+      - status-success="build-success-checkpoint"
       - body~=labels:.*semver-spec-patch
     actions:
       review:
