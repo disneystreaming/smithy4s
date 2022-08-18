@@ -70,12 +70,13 @@ object CollisionAvoidance {
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, originalName, tpe, isUnwrapped, hints) =>
+      case TypeAlias(name, originalName, tpe, isUnwrapped, rec, hints) =>
         TypeAlias(
           protect(name.capitalize),
           originalName,
           modType(tpe),
           isUnwrapped,
+          rec,
           hints.map(modHint)
         )
       case Enumeration(name, originalName, values, hints) =>

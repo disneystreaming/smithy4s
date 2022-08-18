@@ -84,6 +84,7 @@ case class TypeAlias(
     originalName: String,
     tpe: Type,
     isUnwrapped: Boolean,
+    recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl
 

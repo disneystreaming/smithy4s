@@ -115,8 +115,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case p: Product => renderProduct(p)
     case union @ Union(_, originalName, alts, recursive, hints) =>
       renderUnion(union.nameRef, originalName, alts, recursive, hints)
-    case ta @ TypeAlias(_, originalName, tpe, _, hints) =>
-      renderTypeAlias(ta.nameRef, originalName, tpe, hints)
+    case ta @ TypeAlias(_, originalName, tpe, _, recursive, hints) =>
+      renderTypeAlias(ta.nameRef, originalName, tpe, recursive, hints)
     case enumeration @ Enumeration(_, originalName, values, hints) =>
       renderEnum(enumeration.nameRef, originalName, values, hints)
     case _ => Lines.empty
@@ -124,7 +124,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(name, _, _, _, _) =>
+      case TypeAlias(name, _, _, _, _, _) =>
         line"type $name = ${compilationUnit.namespace}.${name}.Type"
     }
 
@@ -691,17 +691,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       name: NameRef,
       originalName: String,
       tpe: Type,
+      recursive: Boolean,
       hints: List[Hint]
   ): Lines = {
+    val definition =
+      if (recursive) line"$recursive_("
+      else Line.empty
     val trailingCalls =
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+    val closing = if (recursive) ")" else ""
     lines(
       obj(name, line"$Newtype_[$tpe]")(
         renderId(originalName),
         renderHintsVal(hints),
         line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
-          line"implicit val schema : $Schema_[$name] = $bijection_(underlyingSchema, asBijection)"
+          line"implicit val schema : $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         )
       )
     )
