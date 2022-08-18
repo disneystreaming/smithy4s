@@ -46,9 +46,10 @@ class HttpResponseCodeSchemaVisitor
       tag: Primitive[P]
   ): ResponseCodeExtractor[P] = tag match {
     case PInt =>
-      hints.get[smithy.api.HttpResponseCode] match {
-        case None    => NoResponseCode
-        case Some(_) => primPf(tag)
+      if (hints.has[smithy.api.HttpResponseCode]) {
+        primPf(tag)
+      } else {
+        NoResponseCode
       }
     case _ => NoResponseCode
   }
