@@ -249,3 +249,6 @@ structure GetEnumOutput {
   {value: "v2", name: "V2"}
 ])
 string TheEnum
+
+@length(min: 1)
+string SomeString

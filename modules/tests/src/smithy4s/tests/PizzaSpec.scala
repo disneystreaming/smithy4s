@@ -403,6 +403,11 @@ abstract class PizzaSpec
 
   // note: these aren't really part of the pizza suite
 
+  pureTest("weird") {
+    smithy4s.example.SomeString("u")
+    expect(true)
+  }
+
   pureTest("Happy path: httpMatch") {
     val matchResult = smithy4s.http
       .httpMatch(
