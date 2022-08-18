@@ -91,6 +91,8 @@ private[http] class SchemaVisitorMetadataReader()
             MetaDecode.from(formatString)(str =>
               Timestamp.parse(str, smithy.api.TimestampFormat.HTTP_DATE)
             )
+          case (Some(HttpBinding.Type.StatusCodeType), _) =>
+            MetaDecode.EmptyMetaDecode
           case (None, None) =>
             EmptyMetaDecode
         }

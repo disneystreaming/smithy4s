@@ -39,6 +39,7 @@ import weaver._
 import java.util.UUID
 import cats.Show
 import org.http4s.EntityDecoder
+import org.http4s.MalformedMessageBodyFailure
 
 abstract class PizzaSpec
     extends IOSuite
@@ -401,15 +402,28 @@ abstract class PizzaSpec
     "X-mIxEd-HeAdEr"
   )
 
-  routerTest("httpResponsecode") { (client, uri, log) =>
+  routerTest("httpResponseCode") { (client, uri, log) =>
     for {
       res <- client.send[Unit](
         GET(uri = uri / "custom-code" / "201"),
         log
       )
+      caught <- client
+        .send[Json](
+          GET(uri = uri / "custom-code" / "201"),
+          log
+        )
+        .map(_ => false)
+        .handleError { case _: MalformedMessageBodyFailure =>
+          true
+        }
     } yield {
       val (code, _, _) = res
-      expect.same(code, 201)
+      expect.same(code, 201) &&
+      expect(
+        caught,
+        "MalformedMessageBodyFailure is expected because body should be empty"
+      )
     }
   }
 
