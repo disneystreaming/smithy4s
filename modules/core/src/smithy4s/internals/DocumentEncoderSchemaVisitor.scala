@@ -49,20 +49,15 @@ import smithy4s.api.Untagged
 
 trait DocumentEncoder[A] { self =>
 
-  def canBeKey: Boolean
-
   def apply: A => Document
   final def contramap[B](f: B => A): DocumentEncoder[B] =
     new DocumentEncoder[B] {
       def apply: B => Document = f andThen self.apply
-
-      def canBeKey: Boolean = self.canBeKey
     }
 
   final def mapDocument(f: Document => Document): DocumentEncoder[A] =
     new DocumentEncoder[A] {
       def apply: A => Document = self.apply andThen f
-      def canBeKey: Boolean = self.canBeKey
     }
 
 }
@@ -75,7 +70,6 @@ object DocumentEncoder {
       def absorb[A](f: A => Document): DocumentEncoder[A] =
         new DocumentEncoder[A] {
           def apply: A => Document = f
-          override def canBeKey: Boolean = false
         }
     }
 
@@ -96,11 +90,9 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
     case PInt        => from(int => DNumber(BigDecimal(int)))
     case PBlob =>
       from(bytes => DString(Base64.getEncoder().encodeToString(bytes.array)))
-    case PUnit => fromNotKey(_ => DObject(Map.empty))
+    case PUnit => from(_ => DObject(Map.empty))
     case PTimestamp =>
       new DocumentEncoder[Timestamp] {
-        def canBeKey: Boolean = true
-
         def apply: Timestamp => Document =
           hints
             .get(TimestampFormat)
@@ -110,7 +102,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
             case EPOCH_SECONDS => ts => DNumber(BigDecimal(ts.epochSecond))
           }
       }
-    case PDocument => fromNotKey(identity)
+    case PDocument => from(identity)
     case PFloat    => from(float => DNumber(BigDecimal(float.toDouble)))
     case PUUID     => from(uuid => DString(uuid.toString()))
     case PDouble   => from(double => DNumber(BigDecimal(double)))
@@ -125,9 +117,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       member: Schema[A]
   ): DocumentEncoder[C[A]] = {
     val encoderS = apply(member)
-    fromNotKey[C[A]](c =>
-      DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq)
-    )
+    from[C[A]](c => DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq))
   }
 
   override def map[K, V](
@@ -136,29 +126,35 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       key: Schema[K],
       value: Schema[V]
   ): DocumentEncoder[Map[K, V]] = {
-    val keyEncoder = apply(key)
+    val maybeKeyEncoder = DocumentKeyEncoder.trySchemaVisitor(key)
     val valueEncoder = apply(value)
-    fromNotKey[Map[K, V]] { map =>
-      val keysAndValues: Iterator[(Document, Document)] = map.map {
-        case (k, v) =>
-          (keyEncoder.apply(k), valueEncoder.apply(v))
-      }.iterator
-      if (keyEncoder.canBeKey) {
-        val mapBuilder = Map.newBuilder[String, Document]
-        keysAndValues.foreach {
-          case (DString(s), value)  => mapBuilder.+=((s, value))
-          case (DNumber(b), value)  => mapBuilder.+=((b.toString(), value))
-          case (DBoolean(b), value) => mapBuilder.+=((b.toString(), value))
-          case _                    => ()
+    maybeKeyEncoder match {
+      case Some(keyEncoder) =>
+        from[Map[K, V]] { map =>
+          val mapBuilder = Map.newBuilder[String, Document]
+          map.foreach { case (k, v) =>
+            val key = keyEncoder.apply(k)
+            val value = valueEncoder.apply(v)
+            mapBuilder.+=((key, value))
+          }
+          DObject(mapBuilder.result())
         }
-        DObject(mapBuilder.result())
-      } else {
-        val arrayBuilder = IndexedSeq.newBuilder[Document]
-        keysAndValues.foreach { case (k, v) =>
-          arrayBuilder.+=(DObject(Map("key" -> k, "value" -> v)))
+      case None =>
+        from[Map[K, V]] { map =>
+          val keyAsValueEncoder = apply(key)
+          val arrayBuilder = IndexedSeq.newBuilder[Document]
+          map.map { case (k, v) =>
+            arrayBuilder.+=(
+              DObject(
+                Map(
+                  "key" -> keyAsValueEncoder.apply(k),
+                  "value" -> valueEncoder.apply(v)
+                )
+              )
+            )
+          }
+          DArray(arrayBuilder.result())
         }
-        DArray(arrayBuilder.result())
-      }
     }
   }
 
@@ -207,7 +203,6 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
         encoders.foreach(_(s, builder))
         DObject(builder.result() ++ discriminator)
       }
-      def canBeKey: Boolean = false
     }
   }
 
@@ -251,8 +246,6 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
   override def lazily[A](suspend: Lazy[Schema[A]]): DocumentEncoder[A] = {
     lazy val underlying = apply(suspend.value)
     new DocumentEncoder[A] {
-      def canBeKey: Boolean = underlying.canBeKey
-
       def apply: A => Document = underlying.apply
     }
   }
@@ -260,13 +253,5 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
   def from[A](f: A => Document): DocumentEncoder[A] =
     new DocumentEncoder[A] {
       def apply: A => Document = f
-      def canBeKey: Boolean = true
     }
-
-  def fromNotKey[A](f: A => Document): DocumentEncoder[A] =
-    new DocumentEncoder[A] {
-      def apply: A => Document = f
-      def canBeKey: Boolean = false
-    }
-
 }

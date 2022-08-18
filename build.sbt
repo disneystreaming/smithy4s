@@ -676,7 +676,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.14.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.15.0"
     )
 
   val Smithy = new {
@@ -696,7 +696,7 @@ lazy val Dependencies = new {
 
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.11")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.2.12")
   }
 
   val Circe = new {
@@ -735,7 +735,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.14" else "0.6.14")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.7.15" else "0.6.15")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
@@ -762,7 +762,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.12.0"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.13.2"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }
