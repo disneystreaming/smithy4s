@@ -73,9 +73,9 @@ jobs:
           sbt scripted
 
       - name: Run checks
-        if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
+        if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'default'
         run: |
-          sbt scalafmt_$BUILD_KEY \
+          sbt scalafmtCheckAll \
               headerCheck \
               "docs/mdoc"
 
