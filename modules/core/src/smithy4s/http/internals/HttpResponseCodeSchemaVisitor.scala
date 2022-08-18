@@ -67,8 +67,8 @@ class HttpResponseCodeSchemaVisitor
 }
 
 object HttpResponseCodeSchemaVisitor {
-  sealed trait ResponseCodeExtractor[+A]
-  object NoResponseCode extends ResponseCodeExtractor[Nothing]
+  sealed trait ResponseCodeExtractor[-A]
+  object NoResponseCode extends ResponseCodeExtractor[Any]
   case class RequiredResponseCode[A](f: A => Int)
       extends ResponseCodeExtractor[A]
   case class OptionalResponseCode[A](f: A => Option[Int])

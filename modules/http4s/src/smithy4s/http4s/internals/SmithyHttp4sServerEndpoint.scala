@@ -168,7 +168,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
     val outputMetadata = outputMetadataEncoder.encode(output)
     val outputHeaders = toHeaders(outputMetadata.headers)
 
-    val successCode = outputStatusCode match {
+    val successCode: Int = outputStatusCode match {
       case HttpResponseCodeSchemaVisitor.NoResponseCode =>
         httpEndpoint.code
       case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
