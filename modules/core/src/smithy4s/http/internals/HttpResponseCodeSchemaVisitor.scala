@@ -23,50 +23,54 @@ import smithy4s.ShapeId
 import smithy4s.schema.Field
 import smithy4s.schema.Schema
 
-import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.MaybeExtractor
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
+  ResponseCodeExtractor,
+  NoResponseCode,
+  RequiredResponseCode,
+  OptionalResponseCode
+}
 
 class HttpResponseCodeSchemaVisitor
-    extends SchemaVisitor.Default[MaybeExtractor] {
-  def default[A]: MaybeExtractor[A] = None
+    extends SchemaVisitor.Default[ResponseCodeExtractor] {
+  def default[A]: ResponseCodeExtractor[A] = NoResponseCode
 
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
-  ): MaybeExtractor[S] = {
-    def compileField[A](field: SchemaField[S, A]): MaybeExtractor[S] = {
+  ): ResponseCodeExtractor[S] = {
+    def compileField[A](
+        field: SchemaField[S, A]
+    ): Option[ResponseCodeExtractor[S]] = {
       val folder = new Field.Folder[Schema, S, ResponseCodeExtractor[S]]() {
         def onOptional[AA](
             label: String,
             instance: Schema[AA],
             get: S => Option[AA]
         ): ResponseCodeExtractor[S] =
-          new ResponseCodeExtractor[S] {
-            def apply(s: S): Option[Int] = get(s).map(_.asInstanceOf[Int])
-          }
+          OptionalResponseCode { (s: S) => get(s).map(_.asInstanceOf[Int]) }
         def onRequired[AA](
             label: String,
             instance: Schema[AA],
             get: S => AA
         ): ResponseCodeExtractor[S] =
-          new ResponseCodeExtractor[S] {
-            def apply(s: S): Option[Int] = Some(get(s).asInstanceOf[Int])
-          }
+          RequiredResponseCode((s: S) => get(s).asInstanceOf[Int])
       }
 
       field.hints
         .get[smithy.api.HttpResponseCode]
         .map(_ => field.fold(folder))
     }
-    fields.flatMap(f => compileField(f)).headOption
+    fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
 }
 
 object HttpResponseCodeSchemaVisitor {
-  type MaybeExtractor[A] = Option[ResponseCodeExtractor[A]]
-}
-
-trait ResponseCodeExtractor[A] {
-  def apply(a: A): Option[Int]
+  sealed trait ResponseCodeExtractor[+A]
+  object NoResponseCode extends ResponseCodeExtractor[Nothing]
+  case class RequiredResponseCode[A](f: A => Int)
+      extends ResponseCodeExtractor[A]
+  case class OptionalResponseCode[A](f: A => Option[Int])
+      extends ResponseCodeExtractor[A]
 }

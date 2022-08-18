@@ -110,7 +110,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   private val outputMetadataEncoder =
     Metadata.Encoder.fromSchema(outputSchema)
   private val outputStatusCode
-      : HttpResponseCodeSchemaVisitor.MaybeExtractor[O] =
+      : HttpResponseCodeSchemaVisitor.ResponseCodeExtractor[O] =
     new HttpResponseCodeSchemaVisitor().apply(outputSchema)
   private implicit val httpContractErrorCodec
       : EntityEncoder[F, HttpContractError] =
@@ -168,10 +168,16 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
     val outputMetadata = outputMetadataEncoder.encode(output)
     val outputHeaders = toHeaders(outputMetadata.headers)
 
-    val maybeStatusCode = outputStatusCode.flatMap(ext => ext.apply(output))
-    val successCode = status(maybeStatusCode.getOrElse(httpEndpoint.code))
+    val successCode = outputStatusCode match {
+      case HttpResponseCodeSchemaVisitor.NoResponseCode =>
+        httpEndpoint.code
+      case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
+        ext(output)
+      case HttpResponseCodeSchemaVisitor.OptionalResponseCode(ext) =>
+        ext(output).getOrElse(httpEndpoint.code)
+    }
 
-    putHeaders(Response[F](successCode), outputHeaders)
+    putHeaders(Response[F](status(successCode)), outputHeaders)
       .withEntity(output)
       .pure[F]
   }
