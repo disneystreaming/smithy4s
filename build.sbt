@@ -366,9 +366,9 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     scriptedBufferLog := false
   )
 
-lazy val cli = (projectMatrix in file("modules/cli"))
+lazy val cli = (projectMatrix in file("modules/decline"))
   .settings(
-    name := "smithy4s-cli",
+    name := "decline",
     isCE3 := true,
     libraryDependencies ++= List(
       "org.typelevel" %%% "cats-core" % "2.7.0",

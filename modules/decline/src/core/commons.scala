@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli.core
+package smithy4s.decline.core
 
 import cats.Functor
 import smithy4s.capability.Covariant
@@ -26,14 +26,16 @@ import smithy4s.ConstraintError
 import cats.MonadError
 
 object commons {
-  def toKebabCase(s: String): String = s.replaceAll("([A-Z])", "-$1").toLowerCase.drop(1)
+  def toKebabCase(s: String): String =
+    s.replaceAll("([A-Z])", "-$1").toLowerCase.drop(1)
 
-  implicit def covariantAnyFunctor[F[_]](
-    implicit ev: MonadError[F, ConstraintError]
+  implicit def covariantAnyFunctor[F[_]](implicit
+      ev: MonadError[F, ConstraintError]
   ): Covariant[F] =
     new Covariant[F] {
       def map[A, B](fa: F[A])(f: A => B): F[B] = Functor[F].map(fa)(f)
-      def emap[A, B](fa: F[A])(f: A => Either[ConstraintError, B]): F[B] = fa.map(f).rethrow
+      def emap[A, B](fa: F[A])(f: A => Either[ConstraintError, B]): F[B] =
+        fa.map(f).rethrow
     }
 
   def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
@@ -55,4 +57,4 @@ object commons {
 }
 
 final case class RefinementFailed(message: String)
-  extends Exception("Refinement failed: " + message)
+    extends Exception("Refinement failed: " + message)

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli
+package smithy4s.decline
 
 import cats.effect.ExitCode
 import cats.effect.IO
@@ -28,47 +28,45 @@ import smithy4s.Endpoint
 import smithy4s.GenLift
 import smithy4s.Monadic
 import smithy4s.Service
-import smithy4s.cli.core.PathOps
-import smithy4s.cli.core._
-import smithy4s.cli.util.PrinterApi
+import smithy4s.decline.core.PathOps
+import smithy4s.decline.core._
+import smithy4s.decline.util.PrinterApi
 import smithy4s.http.HttpEndpoint
 
 import commons._
 
 final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
-  interpreter: Monadic[Alg, F],
-  printerApi: PrinterApi[F],
+    interpreter: Monadic[Alg, F],
+    printerApi: PrinterApi[F]
 )
 
-/** Main entrypoint to Smithy4s CLIs. For convenience, see other modules like smithy4s-cli-ember. //
+/** Main entrypoint to Smithy4s CLIs. For convenience, see other modules like smithy4s-decline-ember. //
   * @param mainOpts
   *   Opts providing an interpreter to execut commands, and printer to use when displaying the
-  *   input/output/errors. See [[smithy4s.cli.util.PrinterApi]] for default options
+  *   input/output/errors. See [[smithy4s.decline.util.PrinterApi]] for default options
   * @param service
   *   The service to build a client call for
   */
 class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-  mainOpts: Opts[Entrypoint[Alg, IO]],
-  service: Service[Alg, Op],
+    mainOpts: Opts[Entrypoint[Alg, IO]],
+    service: Service[Alg, Op]
 ) extends CommandIOApp(
-    toKebabCase(service.id.name),
-    header = service
-      .hints
-      .get[Documentation]
-      .map(_.value)
-      .getOrElse(s"Command line interface for ${service.id.show}"),
-    helpFlag = true,
-    version = service.version,
-  ) {
+      toKebabCase(service.id.name),
+      header = service.hints
+        .get[Documentation]
+        .map(_.value)
+        .getOrElse(s"Command line interface for ${service.id.show}"),
+      helpFlag = true,
+      version = service.version
+    ) {
 
   private def protocolSpecificHelp(
-    endpoint: Endpoint[Op, _, _, _, _, _]
+      endpoint: Endpoint[Op, _, _, _, _, _]
   ): List[String] =
     HttpEndpoint
       .cast(endpoint)
       .map { httpEndpoint =>
-        val path = endpoint
-          .hints
+        val path = endpoint.hints
           .get(Http)
           .map(_.uri.value)
           .getOrElse(
@@ -82,12 +80,11 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       .toList
 
   private def makeHelpBlocks(
-    endpoint: Endpoint[Op, _, _, _, _, _]
+      endpoint: Endpoint[Op, _, _, _, _, _]
   ): List[String] =
     protocolSpecificHelp(endpoint) ++
       endpoint.hints.get[Documentation].map(_.value) ++
-      endpoint
-        .hints
+      endpoint.hints
         .get[ExternalDocumentation]
         .map(
           _.value
@@ -96,24 +93,25 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
         )
 
   private def endpointSubcommand[I, E, O](
-    endpoint: Endpoint[Op, I, E, O, _, _]
+      endpoint: Endpoint[Op, I, E, O, _, _]
   ): Opts[IO[ExitCode]] = {
     implicit val ioPathOps: PathOps[IO] = PathOps.instance(4096)
 
     def compileToOpts[A](
-      schema: smithy4s.Schema[A]
-    ): Opts[IO[A]] = schema.compile[OptsVisitor.OptsF[IO, *]](new OptsVisitor[IO])
+        schema: smithy4s.Schema[A]
+    ): Opts[IO[A]] =
+      schema.compile[OptsVisitor.OptsF[IO, *]](new OptsVisitor[IO])
 
     val inputOpts = compileToOpts(endpoint.input)
 
     Opts
       .subcommand(
         name = toKebabCase(endpoint.name),
-        help = makeHelpBlocks(endpoint).mkString_("\n\n"),
+        help = makeHelpBlocks(endpoint).mkString_("\n\n")
       ) {
         (
           inputOpts,
-          mainOpts,
+          mainOpts
         ).mapN { (inputF, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
@@ -121,11 +119,14 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
           inputF.flatMap { input =>
             printer.printInput(input) *>
               service
-                .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(endpoint.wrap(input))
+                .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(
+                  endpoint.wrap(input)
+                )
                 .flatMap(printer.printOutput)
                 .as(ExitCode.Success)
                 .recoverWith {
-                  case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
+                  case e
+                      if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
                     printer
                       .printError(e)
                       .as(ExitCode.Error)
@@ -135,8 +136,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       }
   }
 
-  def main: Opts[IO[ExitCode]] = service
-    .endpoints
+  def main: Opts[IO[ExitCode]] = service.endpoints
     .foldMapK(endpointSubcommand(_))
 
 }

@@ -1,6 +1,6 @@
 ---
-sidebar_label: Advanced Usage
-title: Advanced Usage
+sidebar_label: Deriving CLIs
+title: Deriving CLIs
 ---
 
 - The Smithy4s-Cli module provide the capability to derive a [Decline](https://ben.kirw.in/decline/) cli for your service.

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli.core
+package smithy4s.decline.core
 
 import cats.implicits._
 import fs2.io.file.Files
@@ -30,7 +30,7 @@ object PathOps {
   def apply[F[_]](implicit F: PathOps[F]): PathOps[F] = F
 
   def instance[F[_]: Async](
-    bufSize: Int = 4096
+      bufSize: Int = 4096
   ): PathOps[F] =
     path => {
       val input =

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli
+package smithy4s.decline
 
 import cats.Applicative
 import cats.implicits._
@@ -27,8 +27,8 @@ import smithy4s.ByteArray
 import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Timestamp
-import smithy4s.cli.core.OptsVisitor
-import smithy4s.cli.core.PathOps
+import smithy4s.decline.core.OptsVisitor
+import smithy4s.decline.core.PathOps
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
@@ -156,7 +156,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   case class Recursive(name: String, parent: Option[Recursive] = None)
 
   object Recursive extends smithy4s.ShapeTag.Companion[Recursive] {
-    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.cli.test", "Recursive")
+    val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.decline.test", "Recursive")
 
     val schema: smithy4s.Schema[Recursive] = recursive(
       struct(

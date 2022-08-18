@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.cli.core
+package smithy4s.decline.core
 
 import cats.Applicative
 import cats.effect.std.Console
@@ -31,8 +31,8 @@ trait Printer[F[_], -I, -O] {
 object Printer {
 
   def fromCodecs[F[_]: Console: Applicative, Op[_, _, _, _, _], I, O](
-    endpoint: Endpoint[Op, I, _, O, _, _],
-    codecs: CodecAPI,
+      endpoint: Endpoint[Op, I, _, O, _, _],
+      codecs: CodecAPI
   ): Printer[F, I, O] =
     new Printer[F, I, O] {
       private val outCodec = codecs.compileCodec(endpoint.output)
