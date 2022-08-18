@@ -24,9 +24,6 @@ abstract class Newtype[A] extends HasId { self =>
   type Type <: Base with _Tag
 
   @inline final def apply(a: A): Type = a.asInstanceOf[Type]
-  final val make: A => Type = new Newtype.Make[A, Type] {
-    def apply(a: A) = self.apply(a)
-  }
 
   @inline final def value(x: Type): A =
     x.asInstanceOf[A]
@@ -44,11 +41,10 @@ abstract class Newtype[A] extends HasId { self =>
 
   def unapply(t: Type): Some[A] = Some(t.value)
 
-  implicit val isomorphismInstance: capability.Isomorphism[A, Type] =
-    new capability.Isomorphism[A, Type] {
-      @inline final def from(b: Type): A = b.value
-      @inline final def to(a: A): Type = apply(a)
-    }
+  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
+    def to(a: A): Type = self.apply(a)
+    def from(t: Type): A = value(t)
+  }
 
   object hint {
     def unapply(h: Hints): Option[Type] = h.get(tag)
@@ -56,5 +52,5 @@ abstract class Newtype[A] extends HasId { self =>
 }
 
 object Newtype {
-  private[smithy4s] trait Make[A, B] extends Function[A, B]
+  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
 }

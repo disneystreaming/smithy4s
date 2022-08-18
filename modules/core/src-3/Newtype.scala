@@ -20,9 +20,6 @@ abstract class Newtype[A] extends HasId { self =>
   opaque type Type = A
 
   def apply(a: A): Type = a
-  final val make: A => Type = new Newtype.Make[A, Type] {
-    def apply(a: A) = self.apply(a)
-  }
 
   extension (orig: Type) def value: A = orig
 
@@ -35,11 +32,10 @@ abstract class Newtype[A] extends HasId { self =>
     def schema: Schema[Type] = self.schema
   }
 
-  implicit val isomorphismInstance: capability.Isomorphism[A, Type] =
-    new capability.Isomorphism[A, Type] {
-      inline def from(b: Type): A = b.value
-      inline def to(a: A): Type = apply(a)
-    }
+  implicit val asBijection: Bijection[A, Type] = new Newtype.Make[A, Type] {
+    def to(a: A): Type = self.apply(a)
+    def from(t: Type): A = value(t)
+  }
 
   object hint {
     def unapply(h: Hints): Option[Type] = h.get(tag)
@@ -47,5 +43,5 @@ abstract class Newtype[A] extends HasId { self =>
 }
 
 object Newtype {
-  private[smithy4s] trait Make[A, B] extends Function[A, B]
+  private[smithy4s] trait Make[A, B] extends Bijection[A, B]
 }

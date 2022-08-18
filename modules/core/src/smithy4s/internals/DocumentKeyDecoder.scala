@@ -141,15 +141,13 @@ object DocumentKeyDecoder {
 
       override def biject[A, B](
           schema: Schema[A],
-          to: A => B,
-          from: B => A
+          bijection: Bijection[A, B]
       ): OptDocumentKeyDecoder[B] =
-        apply(schema).map(_.map(to))
+        apply(schema).map(_.map(bijection.to))
 
-      override def surject[A, B](
+      override def refine[A, B](
           schema: Schema[A],
-          to: Refinement[A, B],
-          from: B => A
+          to: Refinement[A, B]
       ): OptDocumentKeyDecoder[B] =
         apply(schema).map(_.map(to.asThrowingFunction))
     }

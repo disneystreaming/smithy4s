@@ -17,13 +17,14 @@
 package smithy4s.codegen
 
 import cats.syntax.all._
+import smithy4s.codegen.LineSegment.Literal
 
 class PartialBlock(l: Line) {
   def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    val (imports, line) = l.tupled
     A.render(inner)
-      .transformLines(lines => (line + " {") :: indent(lines) ::: "}" :: Nil)
-      .addImports(imports)
+      .transformLines(lines =>
+        (l + Literal(" {")) :: indent(lines) ::: List(Line("}"))
+      )
   }
 
   def apply(inner: LinesWithValue*): Lines =

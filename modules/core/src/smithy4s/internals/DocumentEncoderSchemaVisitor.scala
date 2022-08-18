@@ -163,7 +163,11 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): DocumentEncoder[E] = from(a => DString(total(a).stringValue))
+  ): DocumentEncoder[E] = if (hints.get[IntEnum].isDefined) {
+    from(a => Document.fromInt(total(a).intValue))
+  } else {
+    from(a => DString(total(a).stringValue))
+  }
 
   override def struct[S](
       shapeId: ShapeId,
@@ -230,16 +234,14 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
+      bijection: Bijection[A, B]
   ): DocumentEncoder[B] =
-    apply(schema).contramap(from)
+    apply(schema).contramap(bijection.from)
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): DocumentEncoder[B] = apply(schema).contramap(from)
+      refinement: Refinement[A, B]
+  ): DocumentEncoder[B] = apply(schema).contramap(refinement.from)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): DocumentEncoder[A] = {
     lazy val underlying = apply(suspend.value)

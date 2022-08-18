@@ -1,3 +1,5 @@
+$version: "2.0"
+
 namespace smithy4s.example
 
 /// Just a dummy service to ensure that the rendered services compile
@@ -13,7 +15,7 @@ operation Dummy {
   input: Queries
 }
 
-@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}")
+@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}")
 @readonly
 operation DummyPath {
   input: PathParams
@@ -39,8 +41,15 @@ structure Queries {
   b: Boolean,
   @httpQuery("sl")
   sl : StringList,
+  @httpQuery("nums")
+  ie: Numbers,
   @httpQueryParams
   slm: StringMap
+}
+
+structure QueriesWithDefaults {
+  @httpQuery("dflt")
+  dflt: String = "test"
 }
 
 structure Headers {
@@ -63,8 +72,15 @@ structure Headers {
   b: Boolean,
   @httpHeader("sl")
   sl : StringList,
+  @httpHeader("nums")
+  ie: Numbers,
   @httpPrefixHeaders("foo-")
   slm: StringMap
+}
+
+structure HeadersWithDefaults {
+  @httpHeader("dflt")
+  dflt: String = "test"
 }
 
 
@@ -92,7 +108,10 @@ structure PathParams {
   ts4: Timestamp,
   @httpLabel
   @required
-  b: Boolean
+  b: Boolean,
+  @httpLabel
+  @required
+  ie: Numbers
 }
 
 list StringList {
@@ -114,4 +133,11 @@ structure ValidationChecks {
   @httpQuery("int")
   @range(min: 1, max: 10)
   int: Integer
+}
+
+intEnum Numbers {
+    @enumValue(1)
+    ONE
+    @enumValue(2)
+    TWO
 }

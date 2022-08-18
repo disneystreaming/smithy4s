@@ -19,9 +19,10 @@ package smithy4s.http.internals
 import smithy4s.schema._
 import PathEncode.MaybePathEncode
 import smithy.api.TimestampFormat
+import smithy4s.Bijection
 import smithy4s.http.PathSegment
 import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
-import smithy4s.{Hints, Lazy, Refinement, ShapeId}
+import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 import smithy.api.Http
 
 object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
@@ -63,7 +64,11 @@ object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePathEncode[E] = {
-    PathEncode.from(e => total(e).stringValue)
+    if (hints.get[IntEnum].isDefined) {
+      PathEncode.from(e => total(e).intValue.toString)
+    } else {
+      PathEncode.from(e => total(e).stringValue)
+    }
   }
 
   override def struct[S](
@@ -123,18 +128,16 @@ object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
 
   override def biject[A, B](
       schema: Schema[A],
-      to: A => B,
-      from: B => A
+      bijection: Bijection[A, B]
   ): MaybePathEncode[B] = {
-    self(schema).map(_.contramap(from))
+    self(schema).map(_.contramap(bijection.from))
   }
 
-  override def surject[A, B](
+  override def refine[A, B](
       schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
+      refinement: Refinement[A, B]
   ): MaybePathEncode[B] = {
-    self(schema).map(_.contramap(from))
+    self(schema).map(_.contramap(refinement.from))
   }
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = {
