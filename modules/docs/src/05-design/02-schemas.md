@@ -85,9 +85,9 @@ namespace example
 
 structure Foo {
   @required
-  a: Integer,
+  a: Integer
   @length(min: 1)
-  b: String,
+  b: String
 }
 ```
 
@@ -147,7 +147,7 @@ The way this is expressed in Smithy looks like this:
 namespace example
 
 union Bar {
-  a: Integer,
+  a: Integer
   b: String
 }
 ```

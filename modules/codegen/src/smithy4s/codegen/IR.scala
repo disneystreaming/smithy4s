@@ -95,7 +95,7 @@ case class Enumeration(
 ) extends Decl
 case class EnumValue(
     value: String,
-    ordinal: Int,
+    intValue: Int,
     name: String,
     hints: List[Hint] = Nil
 )
@@ -326,8 +326,8 @@ object TypedNode {
       def traverse[G[_], A, B](
           fa: TypedNode[A]
       )(f: A => G[B])(implicit F: Applicative[G]): G[TypedNode[B]] = fa match {
-        case EnumerationTN(ref, value, ordinal, name) =>
-          F.pure(EnumerationTN(ref, value, ordinal, name))
+        case EnumerationTN(ref, value, intValue, name) =>
+          F.pure(EnumerationTN(ref, value, intValue, name))
         case StructureTN(ref, fields) =>
           fields.traverse(_.traverse(_.traverse(f))).map(StructureTN(ref, _))
         case NewTypeTN(ref, target) =>
@@ -354,7 +354,7 @@ object TypedNode {
   case class EnumerationTN(
       ref: Type.Ref,
       value: String,
-      ordinal: Int,
+      intValue: Int,
       name: String
   ) extends TypedNode[Nothing]
   case class StructureTN[A](

@@ -164,7 +164,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): DocumentEncoder[E] = if (hints.get[IntEnum].isDefined) {
-    from(a => Document.fromInt(total(a).ordinal))
+    from(a => Document.fromInt(total(a).intValue))
   } else {
     from(a => DString(total(a).stringValue))
   }

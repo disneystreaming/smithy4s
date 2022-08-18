@@ -80,8 +80,8 @@ object CollisionAvoidance {
         )
       case Enumeration(name, originalName, values, hints) =>
         val newValues = values.map {
-          case EnumValue(value, ordinal, name, hints) =>
-            EnumValue(value, ordinal, protect(name), hints.map(modHint))
+          case EnumValue(value, intValue, name, hints) =>
+            EnumValue(value, intValue, protect(name), hints.map(modHint))
         }
         Enumeration(
           protect(name.capitalize),
@@ -175,8 +175,8 @@ object CollisionAvoidance {
     new (TypedNode ~> TypedNode) {
 
       def apply[A](fa: TypedNode[A]): TypedNode[A] = fa match {
-        case EnumerationTN(ref, value, ordinal, name) =>
-          EnumerationTN(modRef(ref), value, ordinal, name)
+        case EnumerationTN(ref, value, intValue, name) =>
+          EnumerationTN(modRef(ref), value, intValue, name)
         case StructureTN(ref, fields) =>
           StructureTN(modRef(ref), fields)
         case NewTypeTN(ref, target) =>
@@ -259,7 +259,6 @@ object CollisionAvoidance {
 
   class Names(compilationUnit: CompilationUnit) {
 
-    // TODO : implement better avoidance
     val definitions = compilationUnit.declarations.foldMap { d => Set(d.name) }
 
     val Transformation_ = NameRef("smithy4s", "Transformation")

@@ -128,7 +128,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
       total: E => EnumValue[E]
   ): MetaEncode[E] = {
     if (hints.get[IntEnum].isDefined) {
-      StringValueMetaEncode(e => total(e).ordinal.toString())
+      StringValueMetaEncode(e => total(e).intValue.toString())
     } else {
       StringValueMetaEncode(e => total(e).stringValue)
     }

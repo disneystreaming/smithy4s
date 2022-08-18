@@ -34,11 +34,11 @@ object EnumUtil {
   def enumValueClassName(
       name: Option[String],
       value: String,
-      ordinal: Int
+      intValue: Int
   ) = {
     name.getOrElse {
       val camel = toCamelCase(value).capitalize
-      if (camel.nonEmpty) camel else "Value" + ordinal
+      if (camel.nonEmpty) camel else "Value" + intValue
     }
 
   }

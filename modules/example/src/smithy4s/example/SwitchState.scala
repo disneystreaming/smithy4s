@@ -7,10 +7,10 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.enumeration
 
-sealed abstract class SwitchState(_value: String, _name: String, _ordinal: Int) extends Enumeration.Value {
+sealed abstract class SwitchState(_value: String, _name: String, _intValue: Int) extends Enumeration.Value {
   override val value: String = _value
   override val name: String = _name
-  override val ordinal: Int = _ordinal
+  override val intValue: Int = _intValue
   override val hints: Hints = Hints.empty
   @inline final def widen: SwitchState = this
 }

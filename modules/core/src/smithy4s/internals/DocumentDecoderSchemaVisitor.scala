@@ -278,7 +278,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
     if (hints.get[IntEnum].isDefined) {
       val fromOrdinal =
-        values.map(e => BigDecimal(e.ordinal) -> e.value).toMap
+        values.map(e => BigDecimal(e.intValue) -> e.value).toMap
       from(
         s"value in [${fromName.keySet.mkString(", ")}]"
       ) {

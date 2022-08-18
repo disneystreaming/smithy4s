@@ -1021,7 +1021,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       total: E => EnumValue[E]
   ): JCodec[E] = new JCodec[E] {
     def fromOrdinal(v: Int): Option[E] =
-      values.find(_.ordinal == v).map(_.value)
+      values.find(_.intValue == v).map(_.value)
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
@@ -1034,7 +1034,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
 
     def encodeValue(x: E, out: JsonWriter): Unit =
-      out.writeVal(total(x).ordinal)
+      out.writeVal(total(x).intValue)
 
     def decodeKey(in: JsonReader): E = {
       val i = in.readKeyAsInt()
@@ -1045,7 +1045,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
 
     def encodeKey(x: E, out: JsonWriter): Unit =
-      out.writeKey(total(x).ordinal)
+      out.writeKey(total(x).intValue)
   }
 
   private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =

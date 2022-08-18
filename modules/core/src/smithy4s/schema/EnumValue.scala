@@ -19,7 +19,7 @@ package schema
 
 case class EnumValue[E](
     stringValue: String,
-    ordinal: Int,
+    intValue: Int,
     value: E,
     name: String,
     hints: Hints

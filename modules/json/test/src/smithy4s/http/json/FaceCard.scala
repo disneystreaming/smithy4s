@@ -2,11 +2,11 @@ package smithy4s.http.json
 
 import smithy4s.schema.Schema._
 
-sealed abstract class FaceCard(_value: String, _name: String, _ordinal: Int)
+sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int)
     extends smithy4s.Enumeration.Value {
   override val value: String = _value
   override val name: String = _name
-  override val ordinal: Int = _ordinal
+  override val intValue: Int = _intValue
   override val hints: smithy4s.Hints = smithy4s.Hints.empty
   @inline final def widen: FaceCard = this
 }

@@ -147,7 +147,7 @@ private[http] class SchemaVisitorMetadataReader()
         .from(
           s"Enum[${values.map(_.stringValue).mkString(",")}]"
         )(string =>
-          values.find(v => string.toIntOption.contains(v.ordinal)).map(_.value)
+          values.find(v => string.toIntOption.contains(v.intValue)).map(_.value)
         )
     } else {
       MetaDecode
