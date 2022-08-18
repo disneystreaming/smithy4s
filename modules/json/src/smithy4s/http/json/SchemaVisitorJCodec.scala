@@ -1160,13 +1160,13 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
       private[this] val handlers =
         new util.HashMap[String, Handler](documentFields.length << 1, 0.5f) {
-          documentFields.foreach { case (field, _, _) =>
-            put(jsonLabel(field), fieldHandler(field))
+          documentFields.foreach { case (field, jLabel, _) =>
+            put(jLabel, fieldHandler(field))
           }
         }
 
       private[this] val documentEncoders =
-        documentFields.map(field => fieldEncoder(field._1))
+        documentFields.map(labelledField => fieldEncoder(labelledField._1))
 
       def expecting: String = "object"
 

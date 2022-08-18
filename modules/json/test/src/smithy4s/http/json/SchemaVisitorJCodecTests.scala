@@ -142,9 +142,14 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Optional decode from defaulted value - null") {
-    val json = """{"a":null}"""
-    val result = readFromString[FooDefaulted](json)
-    expect.same(result, FooDefaulted(11))
+    val json = """{"a": null}"""
+    try {
+      readFromString[FooDefaulted](json)
+      fail("Expected decoding to fail")
+    } catch {
+      case e: smithy4s.http.PayloadError =>
+        expect.same(e.path, PayloadPath.fromString(".a"))
+    }
   }
 
   test("Optional decode from absent value") {
@@ -168,6 +173,28 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       case PayloadError(path, expected, _) =>
         expect(path == PayloadPath("b"))
         expect(expected == "int")
+    }
+  }
+
+  test("Required: JsonName is used when missing required field is annotated") {
+    val jsonNameValue = "oldName"
+    case class Bar(name: String)
+    object Bar {
+      implicit val schema: Schema[Bar] = {
+        val name =
+          string.required[Bar]("name", _.name).addHints(JsonName(jsonNameValue))
+        struct(name)(Bar.apply)
+      }
+    }
+    val json = """{"missing" : "oops"}"""
+    try {
+      val _ = readFromString[Bar](json)
+      fail("Unexpected success")
+    } catch {
+      case ex @ PayloadError(path, expected, _) =>
+        expect(path == PayloadPath(jsonNameValue))
+        expect(expected == jsonNameValue)
+        expect.same(ex.getMessage(), "Missing required field (path: .oldName)")
     }
   }
 
@@ -355,8 +382,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val json = """{"qty":0}"""
     val result = util.Try(readFromString[RangeCheck](json))
     expect(
-      result.failed.get.getMessage == "Input must be >= 1.0, but was 0.0" ||
-        result.failed.get.getMessage == "Input must be >= 1, but was 0" // js
+      result.failed.get.getMessage == "Input must be >= 1.0, but was 0.0 (path: .qty)" ||
+        result.failed.get.getMessage == "Input must be >= 1, but was 0 (path: .qty)" // js
     )
   }
 
@@ -389,7 +416,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      "length required to be <= 10, but was 11"
+      "length required to be <= 10, but was 11 (path: .str)"
     )
   }
 
@@ -399,7 +426,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Bar](json))
     expect.same(
       result.failed.get.getMessage,
-      "length required to be <= 10, but was 11"
+      "length required to be <= 10, but was 11 (path: .lst)"
     )
   }
 
@@ -410,8 +437,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(
       result.failed.get.getMessage,
       (if (!Platform.isJS)
-         "Input must be <= 10, but was 11.0"
-       else "Input must be <= 10, but was 11")
+         "Input must be <= 10, but was 11.0 (path: .int)"
+       else "Input must be <= 10, but was 11 (path: .int)")
     )
   }
 
@@ -438,7 +465,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val result = util.Try(readFromString[Foo2](json))
     expect.same(
       result.failed.get.getMessage,
-      "length required to be <= 10, but was 11"
+      "length required to be <= 10, but was 11 (path: .bar.str)"
     )
   }
 
