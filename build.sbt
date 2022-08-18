@@ -50,7 +50,7 @@ lazy val allModules = Seq(
   tests.projectRefs,
   http4s.projectRefs,
   `http4s-swagger`.projectRefs,
-  cli.projectRefs,
+  decline.projectRefs,
   codegenPlugin.projectRefs,
   benchmark.projectRefs,
   protocol.projectRefs,
@@ -366,7 +366,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     scriptedBufferLog := false
   )
 
-lazy val cli = (projectMatrix in file("modules/decline"))
+lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
     name := "decline",
     isCE3 := true,
