@@ -29,12 +29,14 @@ import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.traits._
 
 import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.selector.PathFinder
 import scala.annotation.nowarn
 import smithy4s.meta.ErrorMessageTrait
+import smithy4s.codegen.Type.Alias
 
 object SmithyToIR {
 
@@ -102,6 +104,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       override def booleanShape(x: BooleanShape): Option[Decl] = getDefault(x)
 
       override def listShape(x: ListShape): Option[Decl] = getDefault(x)
+
+      @annotation.nowarn("msg=class SetShape in package shapes is deprecated")
+      override def setShape(x: SetShape): Option[Decl] = getDefault(x)
 
       override def mapShape(x: MapShape): Option[Decl] = getDefault(x)
 
@@ -572,6 +577,32 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
   }
 
+  // Captures the data representing the default value of a member shape.
+  private def maybeDefault(shape: MemberShape): List[Hint.Default] = {
+    val maybeTrait = shape.getTrait(classOf[DefaultTrait])
+    if (maybeTrait.isPresent()) {
+      val tr = maybeTrait.get()
+      // We're short-circuiting when encountering any external type,
+      // as we do not have the means to instantiate them in a safe manner.
+      def unfoldNodeAndTypeIfNotExternal(nodeAndType: NodeAndType) = {
+        nodeAndType.tpe match {
+          case _: Type.ExternalType => None
+          case _                    => Some(unfoldNodeAndType(nodeAndType))
+        }
+      }
+      val targetTpe = shape.getTarget.tpe.get
+      // Constructing the initial value for the refold
+      val nodeAndType = targetTpe match {
+        case Alias(_, _, tpe, true) => NodeAndType(tr.toNode(), tpe)
+        case _                      => NodeAndType(tr.toNode(), targetTpe)
+      }
+      val maybeTree = anaM(unfoldNodeAndTypeIfNotExternal)(nodeAndType)
+      maybeTree.map(Hint.Default(_)).toList
+    } else {
+      List.empty
+    }
+  }
+
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
@@ -624,8 +655,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         (
           member.getMemberName(),
           member.tpe,
-          member.hasTrait(classOf[RequiredTrait]),
-          hints(member)
+          member.hasTrait(classOf[RequiredTrait]) ||
+            member.hasTrait(classOf[DefaultTrait]),
+          hints(member) ++ maybeDefault(member)
         )
       }
       .collect { case (name, Some(tpe), required, hints) =>
@@ -764,7 +796,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
           case Field(_, realName, tpe, true, _) =>
-            val node = map(realName) // validated by smithy
+            val node = map.get(realName).getOrElse {
+              struct
+                .getMember(realName)
+                .get
+                .getTrait(classOf[DefaultTrait])
+                .get
+                .toNode
+            } // value or default must be present on required field
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
           case Field(_, realName, tpe, false, _) =>
             map.get(realName) match {

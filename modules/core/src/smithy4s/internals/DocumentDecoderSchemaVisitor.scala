@@ -21,6 +21,7 @@ import java.util.Base64
 import java.util.UUID
 
 import smithy.api.JsonName
+import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
@@ -303,6 +304,8 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
   ): DocumentDecoder[S] = {
     def jsonLabel[A](field: Field[Schema, S, A]): String =
       field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
+    def getDefault[A](field: Field[Schema, S, A]): Option[Document] =
+      field.instance.hints.get(Default).map(_.value)
 
     def fieldDecoder[A](
         field: Field[Schema, S, A]
@@ -312,6 +315,8 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
+
+      val maybeDefault = getDefault(field)
 
       if (field.isOptional) {
         (
@@ -333,16 +338,19 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
             fields: Map[String, Document]
         ) =>
           val path = PayloadPath.Segment(jLabel) :: pp
-          val document = fields
-            .get(jLabel)
-            .getOrElse(
+          fields
+            .get(jLabel) match {
+            case Some(document) =>
+              buffer(apply(field.instance)(path, document))
+            case None if maybeDefault.isDefined =>
+              buffer(apply(field.instance)(path, maybeDefault.get))
+            case None =>
               throw new PayloadError(
                 PayloadPath(path.reverse),
                 "",
                 "Required field not found"
               )
-            )
-          buffer(apply(field.instance)(path, document))
+          }
       }
     }
 
