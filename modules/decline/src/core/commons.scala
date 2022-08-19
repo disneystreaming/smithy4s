@@ -52,9 +52,8 @@ object commons {
 
     Argument.from("json")(parse(_).toValidatedNel)
   }
-  val byteArrayArgument: Argument[ByteArray] = Argument.from("base64")(
-    s =>
-     Valid(ByteArray(s.getBytes("UTF-8"))))
+  val byteArrayArgument: Argument[ByteArray] =
+    Argument.from("base64")(s => Valid(ByteArray(s.getBytes("UTF-8"))))
 }
 
 final case class RefinementFailed(message: String)

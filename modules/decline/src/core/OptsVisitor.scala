@@ -22,7 +22,15 @@ import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.Documentation
 import smithy.api.TimestampFormat
-import smithy4s.{Bijection, ByteArray, Hints, Lazy, Refinement, ShapeId, Timestamp}
+import smithy4s.{
+  Bijection,
+  ByteArray,
+  Hints,
+  Lazy,
+  Refinement,
+  ShapeId,
+  Timestamp
+}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -35,8 +43,7 @@ import java.util.UUID
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.CollectionTag.ListTag
 
-object OptsVisitor
-    extends SchemaVisitor[Opts] { self =>
+object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
   private def field[P: Argument](
       hints: Hints
@@ -158,8 +165,8 @@ object OptsVisitor
       }
 
       case PDocument => jsonField(tag.schema(shapeId).addHints(hints))
-      case PBlob     => {
-    implicit val byteArrayArgument = commons.byteArrayArgument
+      case PBlob => {
+        implicit val byteArrayArgument = commons.byteArrayArgument
         field[ByteArray](hints)
       }
     }
@@ -221,12 +228,15 @@ object OptsVisitor
         list(shapeId, hints, b.underlying).map(_.map(b.bijection.to))
       case s: Schema.RefinementSchema[a, b] =>
         list(shapeId, hints, s.underlying).map(
-          _.map(value =>s.refinement(value).fold(message =>throw RefinementFailed(message),identity))
+          _.map(value =>
+            s.refinement(value)
+              .fold(message => throw RefinementFailed(message), identity)
           )
-
+        )
 
       case e: EnumerationSchema[e] =>
-        implicit val arg: Argument[e] = enumArg(e.values, FieldName.require(hints))
+        implicit val arg: Argument[e] =
+          enumArg(e.values, FieldName.require(hints))
 
         fieldPlural(hints)
 
@@ -294,7 +304,7 @@ object OptsVisitor
       )
     }
 
-     fields
+    fields
       .traverse(structField(_))
       .map(make)
   }
@@ -326,5 +336,9 @@ object OptsVisitor
     schema.compile[Opts](this).map(bijection.to)
 
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]) =
-    schema.compile[Opts](this).map(refinement(_).fold(message =>throw RefinementFailed(message),identity))
+    schema
+      .compile[Opts](this)
+      .map(
+        refinement(_).fold(message => throw RefinementFailed(message), identity)
+      )
 }

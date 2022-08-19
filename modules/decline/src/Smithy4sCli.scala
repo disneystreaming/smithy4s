@@ -95,9 +95,10 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       endpoint: Endpoint[Op, I, E, O, _, _]
   ): Opts[IO[ExitCode]] = {
 
-    def compileToOpts[A](schema: smithy4s.Schema[A]): Opts[A] = schema.compile[Opts](OptsVisitor)
+    def compileToOpts[A](schema: smithy4s.Schema[A]): Opts[A] =
+      schema.compile[Opts](OptsVisitor)
 
-    val inputOpts:Opts[I] = compileToOpts(endpoint.input)
+    val inputOpts: Opts[I] = compileToOpts(endpoint.input)
 
     Opts
       .subcommand(
@@ -110,20 +111,19 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
         ).mapN { (input, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
-            printer.printInput(input) *>
-              service
-                .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(
-                  endpoint.wrap(input)
-                )
-                .flatMap(printer.printOutput)
-                .as(ExitCode.Success)
-                .recoverWith {
-                  case e
-                      if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
-                    printer
-                      .printError(e)
-                      .as(ExitCode.Error)
-                }
+          printer.printInput(input) *>
+            service
+              .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(
+                endpoint.wrap(input)
+              )
+              .flatMap(printer.printOutput)
+              .as(ExitCode.Success)
+              .recoverWith {
+                case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
+                  printer
+                    .printError(e)
+                    .as(ExitCode.Error)
+              }
         }
       }
   }
