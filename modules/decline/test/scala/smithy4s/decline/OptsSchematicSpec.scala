@@ -28,7 +28,6 @@ import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Timestamp
 import smithy4s.decline.core.OptsVisitor
-import smithy4s.decline.core.PathOps
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
@@ -42,17 +41,6 @@ object OptsSchematicSpec extends SimpleIOSuite {
     struct(
       schema.required[A](name, identity)
     )(identity)
-
-  implicit def pathOpsF[F[_]: Applicative]: PathOps[F] =
-    new PathOps[F] {
-
-      def path(path: String): F[ByteArray] =
-        path match {
-          case "/home/file.txt" => ByteArray("hello world".getBytes).pure[F]
-          case _                => sys.error("File unavailable")
-        }
-
-    }
 
   def parseOpts[A](
                     schema: Schema[A]
@@ -454,15 +442,6 @@ object OptsSchematicSpec extends SimpleIOSuite {
     assert.parsed(
       parseOpts(sampleStruct("set", set(string)))("a", "b", "a"),
       Set("a", "b"),
-    )
-  }
-
-  pureTest("compile bytes as path to read") {
-    implicit val baeq: Eq[ByteArray] = Eq.fromUniversalEquals
-
-    assert.parsed(
-      parseOpts(sampleStruct("bytes", bytes))("/home/file.txt"),
-      ByteArray("hello world".getBytes()),
     )
   }
 
