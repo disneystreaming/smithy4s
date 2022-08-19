@@ -38,7 +38,8 @@ import scala.collection.mutable.{Map => MMap}
 case class Metadata(
     path: Map[String, String] = Map.empty,
     query: Map[String, Seq[String]] = Map.empty,
-    headers: Map[CaseInsensitive, Seq[String]] = Map.empty
+    headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
+    statusCode: Option[Int] = None
 ) { self =>
 
   def headersFlattened: Vector[(CaseInsensitive, String)] =
@@ -106,7 +107,8 @@ case class Metadata(
     Metadata(
       this.path ++ other.path,
       mergeMaps(this.query, other.query),
-      mergeMaps(this.headers, other.headers)
+      mergeMaps(this.headers, other.headers),
+      this.statusCode.orElse(other.statusCode)
     )
   }
 
@@ -152,7 +154,7 @@ object Metadata {
   /**
     * If possible, attempts to decode the whole data from http metadata.
     * This will only return a non-empty value when all fields of the datatype
-    * are bound to http metadata (ie path parameters, headers, query)
+    * are bound to http metadata (ie path parameters, headers, query, status code)
     *
     * @return None when the value cannot be decoded just from metadata
     */
