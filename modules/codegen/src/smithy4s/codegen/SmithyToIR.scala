@@ -81,12 +81,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       private def getDefault(shape: Shape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
 
+        val recursive = hints.exists {
+          case Hint.Trait => true
+          case _          => false
+        }
+
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            TypeAlias(name, name, tpe, isUnwrapped, newHints).some
+            TypeAlias(name, name, tpe, isUnwrapped, recursive, newHints).some
           case Type.Alias(_, name, tpe, isUnwrapped) =>
-            TypeAlias(name, name, tpe, isUnwrapped, hints).some
+            TypeAlias(name, name, tpe, isUnwrapped, recursive, hints).some
           case Type.PrimitiveType(_) => None
           case other =>
             TypeAlias(
@@ -94,6 +99,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               shape.name,
               other,
               isUnwrapped = false,
+              recursive,
               hints
             ).some
         }
@@ -143,9 +149,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       )
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
-        val rec = isRecursive(shape.getId())
-
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val isTrait = hints.exists {
+          case Hint.Trait => true
+          case _          => false
+        }
+        val rec = isRecursive(shape.getId()) || isTrait
+
         val mixins = shape.getMixins.asScala.flatMap(_.tpe).toList
         val isMixin = shape.hasTrait(classOf[MixinTrait])
         val p =
@@ -167,8 +177,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val rec = isRecursive(shape.getId())
 
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val isTrait = hints.exists {
+          case Hint.Trait => true
+          case _          => false
+        }
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.name, shape.name, alts, rec, hints)
+          Union(shape.name, shape.name, alts, rec || isTrait, hints)
         }
       }
 
