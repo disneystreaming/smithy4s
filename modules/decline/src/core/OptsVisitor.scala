@@ -49,19 +49,20 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   ): Opts[P] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
-    val doc = hints.get(Documentation).map(_.value).toList ::: hints
+    if (isNested)
+      Opts.option[P](long = fieldName.value, help = docs(hints))
+    else
+      Opts.argument[P](fieldName.value)
+
+  }
+
+  private def docs[P: Argument](hints: Hints): String = {
+    (hints.get(Documentation).map(_.value).toList ::: hints
       .get(ExternalDocumentation)
       .toList
       .flatMap(_.value.map { case (description, link) =>
         s"\n\n$description\n\n[See more]($link)"
-      }.toList)
-
-    {
-      if (isNested)
-        Opts.option[P](long = fieldName.value, help = doc.mkString("\n"))
-      else
-        Opts.argument[P](fieldName.value)
-    }
+      }.toList)).mkString("\n")
   }
 
   private def fieldPlural[P: Argument](
@@ -69,14 +70,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   ): Opts[List[P]] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
-    val doc = hints.get(Documentation).fold("")(_.value)
+    if (isNested)
+      Opts.options[P](long = fieldName.value, help = docs(hints))
+    else
+      Opts.arguments[P](fieldName.value)
 
-    {
-      if (isNested)
-        Opts.options[P](long = fieldName.value, help = doc)
-      else
-        Opts.arguments[P](fieldName.value)
-    }
   }.map(_.toList)
 
   private def timestampArg(
