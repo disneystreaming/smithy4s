@@ -21,7 +21,15 @@ import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{Bijection, ByteArray, Hints, Lazy, Refinement, ShapeId, Timestamp}
+import smithy4s.{
+  Bijection,
+  ByteArray,
+  Hints,
+  Lazy,
+  Refinement,
+  ShapeId,
+  Timestamp
+}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -41,10 +49,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   ): Opts[P] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
-    val doc = hints.get(Documentation).map(_.value).toList ::: hints.get(ExternalDocumentation).toList.flatMap(_.value.map{
-      case (description, link) => s"\n\n$description\n\n[See more]($link)"
-    }.toList)
-
+    val doc = hints.get(Documentation).map(_.value).toList ::: hints
+      .get(ExternalDocumentation)
+      .toList
+      .flatMap(_.value.map { case (description, link) =>
+        s"\n\n$description\n\n[See more]($link)"
+      }.toList)
 
     {
       if (isNested)
@@ -310,7 +320,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       dispatch: Alt.Dispatcher[Schema, A]
   ): Opts[A] = {
     def go[X](
-        alt: SchemaAlt[ A, X]
+        alt: SchemaAlt[A, X]
     ): Opts[A] = alt.instance
       .addHints(hints)
       .compile[Opts](this)
