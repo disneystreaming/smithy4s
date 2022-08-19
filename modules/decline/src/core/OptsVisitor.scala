@@ -16,18 +16,13 @@
 
 package smithy4s.decline.core
 
-import cats.MonadThrow
 import cats.data.NonEmptyVector
 import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.Documentation
 import smithy.api.TimestampFormat
-import smithy4s.Hints
-import smithy4s.Lazy
-import smithy4s.Refinement
-import smithy4s.ShapeId
-import smithy4s.Timestamp
+import smithy4s.{Bijection, ByteArray, Hints, Lazy, Refinement, ShapeId, Timestamp}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -35,22 +30,17 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.Schema._
 import smithy4s.schema._
+
 import java.util.UUID
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.CollectionTag.ListTag
 
-object OptsVisitor {
-  type OptsF[F[_], A] = Opts[F[A]]
-}
-
-import OptsVisitor.OptsF
-
-class OptsVisitor[F[_]: MonadThrow: PathOps]
-    extends SchemaVisitor[OptsF[F, *]] { self =>
+object OptsVisitor
+    extends SchemaVisitor[Opts] { self =>
 
   private def field[P: Argument](
       hints: Hints
-  ): Opts[F[P]] = {
+  ): Opts[P] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
     val doc = hints.get(Documentation).fold("")(_.value)
@@ -61,11 +51,11 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       else
         Opts.argument[P](fieldName.value)
     }
-  }.map(_.pure[F])
+  }
 
   private def fieldPlural[P: Argument](
       hints: Hints
-  ): Opts[F[List[P]]] = {
+  ): Opts[List[P]] = {
     val fieldName = FieldName.require(hints)
     val isNested = IsNested.orFalse(hints)
     val doc = hints.get(Documentation).fold("")(_.value)
@@ -76,7 +66,7 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       else
         Opts.arguments[P](fieldName.value)
     }
-  }.map(_.toList.pure[F])
+  }.map(_.toList)
 
   private def timestampArg(
       fieldName: CoreHints.FieldName,
@@ -108,7 +98,7 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
         )
     }
 
-  private def jsonField[A](schema: Schema[A]): Opts[F[A]] = {
+  private def jsonField[A](schema: Schema[A]): Opts[A] = {
     val jsonParser = parseJson(schema)
     implicit val arg: Argument[A] =
       Argument.from("json")(jsonParser(_).toValidatedNel)
@@ -116,7 +106,7 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
     field(schema.hints)
   }
 
-  private def jsonFieldPlural[A](schema: Schema[A]): Opts[F[List[A]]] = {
+  private def jsonFieldPlural[A](schema: Schema[A]): Opts[List[A]] = {
     val jsonParser = parseJson(schema)
     implicit val arg: Argument[A] =
       Argument.from("json")(jsonParser(_).toValidatedNel)
@@ -138,7 +128,7 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): Opts[F[P]] =
+  ): Opts[P] =
     tag match {
       case PByte       => field[Byte](hints)
       case PShort      => field[Short](hints)
@@ -150,13 +140,13 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       case PInt        => field[Int](hints)
       case PUUID       => field[UUID](hints)
       case PLong       => field[Long](hints)
-      case PUnit       => Opts.unit.map(_.pure[F])
+      case PUnit       => Opts.unit
       case PTimestamp =>
-        implicit val arg =
+        implicit val arg: Argument[Timestamp] =
           timestampArg(FieldName.require(hints), hints.get(TimestampFormat))
         field(hints)
 
-      case PBoolean =>
+      case PBoolean => {
         val fieldName = FieldName.require(hints)
 
         Opts
@@ -165,15 +155,18 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
             help = fieldName.value
           )
           .orFalse
-          .map(_.pure[F])
+      }
 
       case PDocument => jsonField(tag.schema(shapeId).addHints(hints))
-      case PBlob     => field[String](hints).map(_.flatMap(PathOps[F].path(_)))
+      case PBlob     => {
+    implicit val byteArrayArgument = commons.byteArrayArgument
+        field[ByteArray](hints)
+      }
     }
 
   private def primitives[P](
       member: Schema.PrimitiveSchema[P]
-  ): Opts[F[List[P]]] =
+  ): Opts[List[P]] =
     member.tag match {
       case PByte       => fieldPlural[Byte](member.hints)
       case PShort      => fieldPlural[Short](member.hints)
@@ -194,9 +187,8 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
         fieldPlural(member.hints)
 
       case PBlob =>
-        fieldPlural[String](member.hints).map(
-          _.flatMap(_.traverse(PathOps[F].path(_)))
-        )
+        implicit val byteArrayArgument = commons.byteArrayArgument
+        fieldPlural[ByteArray](member.hints)
 
       case PUnit | PBoolean | PDocument => jsonFieldPlural(member)
     }
@@ -206,37 +198,35 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       hints: Hints,
       tag: CollectionTag[C],
       member: Schema[A]
-  ): Opts[F[C[A]]] =
+  ): Opts[C[A]] =
     tag match {
       case ListTag => list(shapeId, hints, member)
       case CollectionTag.IndexedSeqTag =>
-        list(shapeId, hints, member).map(_.map(_.toIndexedSeq))
+        list(shapeId, hints, member).map(_.toIndexedSeq)
       case CollectionTag.SetTag =>
-        list(shapeId, hints, member).map(_.map(_.toSet))
+        list(shapeId, hints, member).map(_.toSet)
       case CollectionTag.VectorTag =>
-        list(shapeId, hints, member).map(_.map(_.toVector))
+        list(shapeId, hints, member).map(_.toVector)
     }
 
   private def list[A](
       shapeId: ShapeId,
       hints: Hints,
       member: Schema[A]
-  ): Opts[F[List[A]]] =
+  ): Opts[List[A]] =
     member match {
       case p: Schema.PrimitiveSchema[a] =>
         primitives(p.copy(hints = p.hints ++ hints))
       case b: BijectionSchema[a, b] =>
-        list(shapeId, hints, b.underlying).map(_.map(_.map(b.to)))
-      case s: Schema.SurjectionSchema[a, b] =>
+        list(shapeId, hints, b.underlying).map(_.map(b.bijection.to))
+      case s: Schema.RefinementSchema[a, b] =>
         list(shapeId, hints, s.underlying).map(
-          _.flatMap(
-            _.traverse(s.refinement(_).leftMap(RefinementFailed(_)).liftTo[F])
+          _.map(value =>s.refinement(value).fold(message =>throw RefinementFailed(message),identity))
           )
-        )
+
 
       case e: EnumerationSchema[e] =>
-        implicit val arg: Argument[e] =
-          enumArg(e.values, FieldName.require(hints))
+        implicit val arg: Argument[e] = enumArg(e.values, FieldName.require(hints))
 
         fieldPlural(hints)
 
@@ -252,7 +242,7 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       hints: Hints,
       key: Schema[K],
       value: Schema[V]
-  ): Opts[F[Map[K, V]]] = jsonField(
+  ): Opts[Map[K, V]] = jsonField(
     Schema.MapSchema(shapeId, hints, key, value)
   )
 
@@ -261,7 +251,7 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): Opts[F[E]] = {
+  ): Opts[E] = {
     implicit val arg: Argument[E] = enumArg(values, FieldName.require(hints))
 
     field(hints)
@@ -272,10 +262,10 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       hints: Hints,
       fields: Vector[SchemaField[A, _]],
       make: IndexedSeq[Any] => A
-  ): Opts[F[A]] = {
+  ): Opts[A] = {
     def structField[X](
         f: smithy4s.schema.Field[Schema, A, X]
-    ): Opts[F[X]] = {
+    ): Opts[X] = {
       val childHints = Hints(
         FieldName(f.label),
         // Top-level gets a free pass: IsNested(false)
@@ -283,31 +273,30 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
         IsNested(hints.get(IsNested).isDefined)
       )
 
-      f.foldK[OptsF[F, *]](
-        new smithy4s.schema.Field.FolderK[Schema, A, OptsF[F, *]] {
+      f.foldK[Opts](
+        new smithy4s.schema.Field.FolderK[Schema, A, Opts] {
           def onRequired[Y](
               label: String,
               instance: Schema[Y],
               get: A => Y
-          ): Opts[F[Y]] =
-            instance.addHints(childHints).compile[OptsF[F, *]](self)
+          ): Opts[Y] =
+            instance.addHints(childHints).compile[Opts](self)
 
           def onOptional[Y](
               label: String,
               instance: Schema[Y],
               get: A => Option[Y]
-          ): Opts[F[Option[Y]]] = instance
+          ): Opts[Option[Y]] = instance
             .addHints(childHints)
-            .compile[OptsF[F, *]](self)
+            .compile[Opts](self)
             .orNone
-            .map(_.sequence)
         }
       )
     }
 
-    fields
-      .traverse(structField(_).map(_.widen[Any]))
-      .map(_.sequence.map(make))
+     fields
+      .traverse(structField(_))
+      .map(make)
   }
 
   def union[A](
@@ -315,13 +304,13 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
       hints: Hints,
       alternatives: Vector[SchemaAlt[A, _]],
       dispatch: Alt.Dispatcher[Schema, A]
-  ): Opts[F[A]] = {
+  ): Opts[A] = {
     def go[X](
         alt: Alt[Schema, A, X]
-    ): Opts[F[A]] = alt.instance
+    ): Opts[A] = alt.instance
       .addHints(hints)
-      .compile[OptsF[F, *]](this)
-      .map(_.map(alt.inject))
+      .compile[Opts](this)
+      .map(alt.inject)
 
     // todo: probably safe, but make sure
     NonEmptyVector.fromVectorUnsafe(alternatives).reduceMapK { alt =>
@@ -329,22 +318,13 @@ class OptsVisitor[F[_]: MonadThrow: PathOps]
     }
   }
 
-  def biject[A, B](
-      schema: Schema[A],
-      to: A => B,
-      from: B => A
-  ): Opts[F[B]] = schema.compile[OptsF[F, *]](this).map(_.map(to))
-
-  def surject[A, B](
-      schema: Schema[A],
-      to: Refinement[A, B],
-      from: B => A
-  ): Opts[F[B]] = schema
-    .compile[OptsF[F, *]](this)
-    .map(_.flatMap(to(_).leftMap(RefinementFailed(_)).liftTo[F]))
-
-  def lazily[A](suspend: Lazy[Schema[A]]): Opts[F[A]] = jsonField(
+  def lazily[A](suspend: Lazy[Schema[A]]): Opts[A] = jsonField(
     Schema.LazySchema(suspend)
   )
 
+  override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]) =
+    schema.compile[Opts](this).map(bijection.to)
+
+  override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]) =
+    schema.compile[Opts](this).map(refinement(_).fold(message =>throw RefinementFailed(message),identity))
 }

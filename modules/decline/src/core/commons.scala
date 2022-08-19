@@ -19,10 +19,9 @@ package smithy4s.decline.core
 import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
-import smithy4s.Schema
-import smithy4s.Document
+import cats.data.Validated.Valid
+import smithy4s.{ByteArray, ConstraintError, Document, Schema}
 import cats.implicits._
-import smithy4s.ConstraintError
 import cats.MonadError
 
 object commons {
@@ -53,7 +52,9 @@ object commons {
 
     Argument.from("json")(parse(_).toValidatedNel)
   }
-
+  val byteArrayArgument: Argument[ByteArray] = Argument.from("base64")(
+    s =>
+     Valid(ByteArray(s.getBytes("UTF-8"))))
 }
 
 final case class RefinementFailed(message: String)

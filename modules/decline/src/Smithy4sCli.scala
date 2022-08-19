@@ -28,7 +28,6 @@ import smithy4s.Endpoint
 import smithy4s.GenLift
 import smithy4s.Monadic
 import smithy4s.Service
-import smithy4s.decline.core.PathOps
 import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi
 import smithy4s.http.HttpEndpoint
@@ -95,14 +94,10 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
   private def endpointSubcommand[I, E, O](
       endpoint: Endpoint[Op, I, E, O, _, _]
   ): Opts[IO[ExitCode]] = {
-    implicit val ioPathOps: PathOps[IO] = PathOps.instance(4096)
 
-    def compileToOpts[A](
-        schema: smithy4s.Schema[A]
-    ): Opts[IO[A]] =
-      schema.compile[OptsVisitor.OptsF[IO, *]](new OptsVisitor[IO])
+    def compileToOpts[A](schema: smithy4s.Schema[A]): Opts[A] = schema.compile[Opts](OptsVisitor)
 
-    val inputOpts = compileToOpts(endpoint.input)
+    val inputOpts:Opts[I] = compileToOpts(endpoint.input)
 
     Opts
       .subcommand(
@@ -112,11 +107,9 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
         (
           inputOpts,
           mainOpts
-        ).mapN { (inputF, entrypoint) =>
+        ).mapN { (input, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
-
-          inputF.flatMap { input =>
             printer.printInput(input) *>
               service
                 .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(
@@ -131,7 +124,6 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
                       .printError(e)
                       .as(ExitCode.Error)
                 }
-          }
         }
       }
   }
