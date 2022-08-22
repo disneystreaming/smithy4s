@@ -259,6 +259,7 @@ object CollisionAvoidance {
     "Stream",
     "LazyList",
     "StringBuilder",
+    "Range",
     "Either",
     "Left",
     "Right",
@@ -266,7 +267,7 @@ object CollisionAvoidance {
     "Option",
     "Some",
     "None",
-    "Nothing"
+    "Nothing",
   )
 
   private val reservedNames = reservedKeywords ++ reservedTypes
