@@ -395,7 +395,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   object Bar {
     val maxLength = 10
     val lengthHint = smithy.api.Length(max = Some(maxLength.toLong))
-    val rangeHint = smithy.api.Range(max = Some(maxLength.toLong))
+    val rangeHint = smithy.api._Range(max = Some(maxLength.toLong))
     implicit val schema: Schema[Bar] = {
       val str = string
         .validated(lengthHint)

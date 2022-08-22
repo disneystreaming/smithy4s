@@ -21,7 +21,7 @@ import cats.Show
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
 import smithy.api.Length
-import smithy.api.Range
+import smithy.api._Range
 import smithy4s.ByteArray
 import smithy4s.Hints
 import smithy4s.http.PayloadError
@@ -98,7 +98,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
               }
               expect(min.forall(_ <= size))
               expect(max.forall(_ >= size))
-            case Range(min, max) =>
+            case _Range(min, max) =>
               val value = BigDecimal(data.toString)
               expect(min.forall(_ <= value))
               expect(max.forall(_ >= value))
@@ -108,7 +108,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
             case Length(min, max) =>
               expect(min.isEmpty || message.contains(min.get.toString))
               expect(max.isEmpty || message.contains(max.get.toString))
-            case Range(min, max) =>
+            case _Range(min, max) =>
               expect(min.isEmpty || message.contains(min.get.toString))
               expect(max.isEmpty || message.contains(max.get.toString))
           }
@@ -125,7 +125,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
       )
       hint <- Gen.oneOf[smithy4s.Hint](
         Length(min.map(_.toLong), max.map(_.toLong)),
-        Range(min.map(BigDecimal(_)), max.map(BigDecimal(_)))
+        _Range(min.map(BigDecimal(_)), max.map(BigDecimal(_)))
       )
       schema <- genSchemaWithConstraints(hint)
     } yield (hint, schema)
@@ -143,20 +143,20 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
 
-    def rangeGen(r: Range) = Gen.oneOf(
+    def rangeGen(r: _Range) = Gen.oneOf(
       Vector(
-        short.validated[Range](r),
-        int.validated[Range](r),
-        long.validated[Range](r),
-        float.validated[Range](r),
-        double.validated[Range](r),
-        bigdecimal.validated[Range](r),
-        bigint.validated[Range](r)
+        short.validated[_Range](r),
+        int.validated[_Range](r),
+        long.validated[_Range](r),
+        float.validated[_Range](r),
+        double.validated[_Range](r),
+        bigdecimal.validated[_Range](r),
+        bigint.validated[_Range](r)
       ).asInstanceOf[Vector[Schema[DynData]]]
     )
     hint match {
       case Hints.Binding.StaticBinding(_, l: Length) => lengthGen(l)
-      case Hints.Binding.StaticBinding(_, r: Range)  => rangeGen(r)
+      case Hints.Binding.StaticBinding(_, r: _Range)  => rangeGen(r)
       case _ => Gen.const(int.asInstanceOf[Schema[Any]])
     }
   }
