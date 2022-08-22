@@ -24,6 +24,7 @@ import munit.Location
 
 class EnumSpec extends FunSuite {
   val model = """
+    $version: "2"
     namespace example
 
     @enum([
@@ -37,6 +38,20 @@ class EnumSpec extends FunSuite {
       { value: "Ice" }
     ])
     string AnonymousElement
+
+    enum Smithy20Enum {
+      @enumValue("Ice")
+      ICE
+
+      FIRE = "Fire"
+    }
+
+    intEnum MyIntEnum {
+      @enumValue(42)
+      ICE
+
+      FIRE = 10
+    }
   """
 
   def assertNames(shapeId: ShapeId, names: List[String])(implicit
@@ -65,5 +80,13 @@ class EnumSpec extends FunSuite {
 
   test("dynamic enum names are derived if not present in the model") {
     assertNames(ShapeId("example", "AnonymousElement"), List("VANILLA", "ICE"))
+  }
+
+  test("Smithy 2.0 enums are supported") {
+    assertNames(ShapeId("example", "Smithy20Enum"), List("ICE", "FIRE"))
+  }
+
+  test("Smithy 2.0 int enums are supported") {
+    assertNames(ShapeId("example", "I"), List("ICE", "FIRE"))
   }
 }
