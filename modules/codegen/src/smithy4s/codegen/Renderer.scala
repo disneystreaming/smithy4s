@@ -150,14 +150,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderDeclPackageContents(decl: Decl): Lines = decl match {
     case s: Service =>
       val name = s.name
+      val nameGen = NameRef(s"${name}Gen")
+      val nameOp = NameRef(s"${name}Operation")
       lines(
-        line"type ${NameDef(name)}[F[_]] = $Monadic_[${name}Gen, F]",
+        line"type ${NameDef(name)}[F[_]] = $Monadic_[$nameGen, F]",
         block(
-          line"object ${NameRef(name)} extends $Service_.Provider[${name}Gen, ${name}Operation]"
+          line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, $nameOp]"
         )(
-          line"def apply[F[_]](implicit F: $name[F]): F.type = F",
-          line"def service: $Service_[${name}Gen, ${name}Operation] = ${name}Gen",
-          line"val id: $ShapeId_ = service.id"
+          line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
+          line"def service: $Service_[$nameGen, $nameOp] = $nameGen",
+          line"val id: $ShapeId_ = ${NameRef("service.id")}"
         )
       )
     case _ => Lines.empty
