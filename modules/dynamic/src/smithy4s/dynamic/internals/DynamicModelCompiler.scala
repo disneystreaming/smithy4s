@@ -210,6 +210,30 @@ private[dynamic] object Compiler {
     override def blobShape(id: ShapeId, shape: BlobShape): Unit =
       update(id, shape.traits, bytes)
 
+    override def enumShape(id: ShapeId, shape: EnumShape): Unit = {
+      // val values = shape.members.foldMap { m =>
+      //   m.toList.zipWithIndex.map { case (i, (k, v)) =>
+      //     EnumValue(
+      //       k,
+      //       i,
+      //       i,
+      //       v,
+      //       Hints.empty
+      //     )
+      //   }
+      // }
+
+      // val fromOrdinal = values(_: Int)
+      // val enumSchema = enumeration(fromOrdinal, values)
+
+      // update(id, shape.traits, enumSchema)
+      ()
+    }
+
+    override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit =
+      // todo
+      ()
+
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
       update(id, shape.traits, boolean)
 
@@ -470,6 +494,18 @@ private[dynamic] object Compiler {
         shape: MapShape
     ): Set[ShapeId] =
       fromMembers(Set(shape.key, shape.value))
+
+    override def enumShape(
+        id: ShapeId,
+        shape: EnumShape
+    ): Set[ShapeId] =
+      fromMembers(shape.members.foldMap(_.values.toSet))
+
+    override def intEnumShape(
+        id: ShapeId,
+        shape: IntEnumShape
+    ): Set[ShapeId] =
+      fromMembers(shape.members.foldMap(_.values.toSet))
   }
 
 }
