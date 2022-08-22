@@ -250,10 +250,23 @@ object CollisionAvoidance {
     "Float",
     "BigInt",
     "BigDecimal",
+    "Array",
+    "Vector",
+    "Seq",
     "Map",
     "List",
+    "Nil",
+    "Stream",
+    "LazyList",
+    "StringBuilder",
+    "Either",
+    "Left",
+    "Right",
     "Set",
-    "None"
+    "Option",
+    "Some",
+    "None",
+    "Nothing",
   )
 
   private val reservedNames = reservedKeywords ++ reservedTypes
