@@ -156,7 +156,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
     )
     hint match {
       case Hints.Binding.StaticBinding(_, l: Length) => lengthGen(l)
-      case Hints.Binding.StaticBinding(_, r: _Range)  => rangeGen(r)
+      case Hints.Binding.StaticBinding(_, r: _Range) => rangeGen(r)
       case _ => Gen.const(int.asInstanceOf[Schema[Any]])
     }
   }
