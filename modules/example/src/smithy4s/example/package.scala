@@ -25,6 +25,12 @@ package object example {
     def service: smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
     val id: smithy4s.ShapeId = service.id
   }
+  type ReservedNameService[F[_]] = smithy4s.Monadic[ReservedNameServiceGen, F]
+  object ReservedNameService extends smithy4s.Service.Provider[ReservedNameServiceGen, ReservedNameServiceOperation] {
+    def apply[F[_]](implicit F: ReservedNameService[F]): F.type = F
+    def service: smithy4s.Service[ReservedNameServiceGen, ReservedNameServiceOperation] = ReservedNameServiceGen
+    val id: smithy4s.ShapeId = service.id
+  }
 
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
@@ -32,6 +38,8 @@ package object example {
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
   type SomeValue = smithy4s.example.SomeValue.Type
+  type Key = smithy4s.example.Key.Type
+  type Value = smithy4s.example.Value.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type TestString = smithy4s.example.TestString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
