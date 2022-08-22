@@ -178,7 +178,7 @@ package object codegen {
   def uncapitalise(s: String) = {
     if (s == s.toUpperCase()) s.toLowerCase()
     else {
-      val count: Int = s.segmentLength(c => c.==('_'),0)
+      val count: Int = s.segmentLength(c => c.==('_'), 0)
       val after = count + 1
       s.take(after).toLowerCase + s.drop(after)
     }
