@@ -118,7 +118,7 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Download compilation cache
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: /tmp/remote-cache
 
