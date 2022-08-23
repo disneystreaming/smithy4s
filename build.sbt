@@ -377,12 +377,14 @@ lazy val decline = (projectMatrix in file("modules/decline"))
     name := "decline",
     isCE3 := true,
     libraryDependencies ++= List(
-     Dependencies.Cats.core.value,
+      Dependencies.Cats.core.value,
       Dependencies.Decline.effect.value,
-      Dependencies.Weaver.cats.value % Test,
-    )).dependsOn(json)
-  .jvmPlatform(allJvmScalaVersions,jvmDimSettings)
-  .jsPlatform(allJsScalaVersions,jsDimSettings)
+      Dependencies.Weaver.cats.value % Test
+    )
+  )
+  .dependsOn(json)
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
 
 /**
  * This module contains the smithy specification of a bunch of types
@@ -705,7 +707,7 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val core =    Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val core = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
     val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
   }
   object Fs2 {
