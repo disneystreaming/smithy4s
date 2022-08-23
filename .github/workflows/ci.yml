@@ -85,6 +85,9 @@ jobs:
           ./scripts/check-dirty.sh
           echo "Built $(cat version)"
 
+      - name: Check for Binary Compatibility
+        run: sbt mimaReportBinaryIssuesIfRelevant
+
       - name: Upload compilation cache
         uses: actions/upload-artifact@v3
         with:
