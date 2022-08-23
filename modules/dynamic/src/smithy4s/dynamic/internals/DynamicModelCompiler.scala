@@ -27,6 +27,7 @@ import cats.syntax.all._
 import smithy4s.schema.EnumValue
 import smithy4s.schema.SchemaField
 import smithy4s.schema.Alt
+import cats.kernel.Semigroup
 
 private[dynamic] object Compiler {
 
@@ -119,6 +120,11 @@ private[dynamic] object Compiler {
       serviceMap: MMap[ShapeId, Eval[DynamicService]]
   ) extends ShapeVisitor.Default[Unit] {
 
+    private val intEnumTrait = Map[IdRef, Document](
+      IdRef("smithy4s#IntEnum") ->
+        Document.Encoder.fromSchema(IntEnum.schema).encode(IntEnum())
+    )
+
     private val closureMap: Map[ShapeId, Set[ShapeId]] = model.shapes.collect {
       case (ValidIdRef(shapeId), shape) =>
         shapeId -> ClosureVisitor(shapeId, shape)
@@ -172,7 +178,7 @@ private[dynamic] object Compiler {
       })
     }
 
-    def update[A](
+    private def update[A](
         shapeId: ShapeId,
         traits: Option[Map[IdRef, Document]],
         schema: Schema[A]
@@ -247,7 +253,7 @@ private[dynamic] object Compiler {
     }
 
     override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
-      val values: List[EnumValue[Int]] = shape.members
+      val values: Map[Int, EnumValue[Int]] = shape.members
         .getOrElse(Map.empty)
         .toList
         .flatMap { case (k, m) =>
@@ -264,7 +270,7 @@ private[dynamic] object Compiler {
           }
         }
         .map { case (name, intValue) =>
-          EnumValue(
+          intValue -> EnumValue(
             stringValue = name,
             intValue = intValue,
             value = intValue,
@@ -272,11 +278,21 @@ private[dynamic] object Compiler {
             hints = Hints.empty
           )
         }
-        .sortBy(_.intValue)
+        .toMap
 
-      val fromOrdinal = values(_: Int)
-      val theEnum = enumeration(fromOrdinal, values)
-      update(id, shape.traits, theEnum)
+      val valueList = values.map(_._2).toList.sortBy(_.intValue)
+
+      val theEnum = enumeration(values.apply, valueList)
+
+      update(
+        id, {
+          implicit val lastDocumentSemigroup: Semigroup[Document] =
+            Semigroup.last
+
+          shape.traits |+| Some(intEnumTrait)
+        },
+        theEnum
+      )
     }
 
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
