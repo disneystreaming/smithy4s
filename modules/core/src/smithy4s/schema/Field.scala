@@ -165,6 +165,13 @@ object Field {
       }
     }
 
+    def addHints(hints: Hints): SchemaField[S, A] = field.mapK[Schema] {
+      new (Schema ~> Schema) {
+        def apply[AA](fa: Schema[AA]): Schema[AA] =
+          fa.addHints(hints)
+      }
+    }
+
     def getDefault: Option[Document] =
       field.instance.hints.get(smithy.api.Default).map(_.value)
 

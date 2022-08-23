@@ -27,7 +27,6 @@ import cats.syntax.all._
 import smithy4s.schema.EnumValue
 import smithy4s.schema.SchemaField
 import smithy4s.schema.Alt
-import cats.kernel.Semigroup
 
 private[dynamic] object Compiler {
 
@@ -120,11 +119,6 @@ private[dynamic] object Compiler {
       serviceMap: MMap[ShapeId, Eval[DynamicService]]
   ) extends ShapeVisitor.Default[Unit] {
 
-    private val intEnumTrait = Map[IdRef, Document](
-      IdRef("smithy4s#IntEnum") ->
-        Document.Encoder.fromSchema(IntEnum.schema).encode(IntEnum())
-    )
-
     private val closureMap: Map[ShapeId, Set[ShapeId]] = model.shapes.collect {
       case (ValidIdRef(shapeId), shape) =>
         shapeId -> ClosureVisitor(shapeId, shape)
@@ -156,24 +150,32 @@ private[dynamic] object Compiler {
       )
     }
 
-    private def allHints(traits: Option[Map[IdRef, Document]]): Seq[Hint] = {
-      traits
-        .getOrElse(Map.empty)
-        .collect { case (ValidIdRef(k), v) =>
-          toHint(k, v)
-        }
-        .toSeq
-    }
+    private def allHints(traits: Option[Map[IdRef, Document]]): Hints =
+      Hints.fromSeq {
+        traits
+          .getOrElse(Map.empty)
+          .collect { case (ValidIdRef(k), v) =>
+            toHint(k, v)
+          }
+          .toSeq
+      }
 
     private def update[A](
         shapeId: ShapeId,
         traits: Option[Map[IdRef, Document]],
         lSchema: Eval[Schema[A]]
+    ): Unit =
+      updateWithHints(shapeId, allHints(traits), lSchema)
+
+    private def updateWithHints[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        lSchema: Eval[Schema[A]]
     ): Unit = {
       schemaMap += (shapeId -> lSchema.map { sch =>
         sch
           .withId(shapeId)
-          .addHints(allHints(traits): _*)
+          .addHints(hints)
           .asInstanceOf[Schema[DynData]]
       })
     }
@@ -183,6 +185,12 @@ private[dynamic] object Compiler {
         traits: Option[Map[IdRef, Document]],
         schema: Schema[A]
     ): Unit = update(shapeId, traits, Eval.now(schema))
+
+    private def updateWithHints[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        lSchema: Schema[A]
+    ): Unit = updateWithHints(shapeId, hints, Eval.now(lSchema))
 
     def default: Unit = ()
 
@@ -284,12 +292,9 @@ private[dynamic] object Compiler {
 
       val theEnum = enumeration(values.apply, valueList)
 
-      update(
+      updateWithHints(
         id, {
-          implicit val lastDocumentSemigroup: Semigroup[Document] =
-            Semigroup.last
-
-          shape.traits |+| Some(intEnumTrait)
+          allHints(shape.traits) ++ Hints(IntEnum())
         },
         theEnum
       )
@@ -414,7 +419,7 @@ private[dynamic] object Compiler {
           inputSchema,
           outputSchema,
           errorable,
-          Hints(allHints(shape.traits): _*)
+          allHints(shape.traits)
         )
       }
     }
@@ -436,7 +441,7 @@ private[dynamic] object Compiler {
           id,
           shape.version.getOrElse(""),
           endpoints,
-          Hints(allHints(shape.traits): _*)
+          allHints(shape.traits)
         )
       }
 
@@ -479,7 +484,7 @@ private[dynamic] object Compiler {
                     )
                   }
                 val memberHints = allHints(mShape.traits)
-                lField.map(_.addHints(memberHints: _*))
+                lField.map(_.addHints(memberHints))
               }
               .toVector
               .sequence
@@ -501,7 +506,7 @@ private[dynamic] object Compiler {
                   val memberHints = allHints(mShape.traits)
                   schema(mShape.target)
                     .map(_.oneOf[DynAlt](label, (data: Any) => (index, data)))
-                    .map(_.addHints(memberHints: _*))
+                    .map(_.addHints(memberHints))
                 }
                 .toVector
                 .sequence
