@@ -32,10 +32,7 @@ object Main extends App {
     ModelLoader
       .load(
         specs = Set.empty,
-        dependencies = List(
-          "com.disneystreaming.smithy4s::smithy4s-dynamic:0.15.1",
-          "com.disneystreaming.smithy4s::smithy4s-codegen:0.15.1"
-        ),
+        dependencies = Nil,
         repositories = Nil,
         transformers = Nil,
         discoverModels = true,
