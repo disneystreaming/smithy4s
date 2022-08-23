@@ -7,6 +7,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
+ThisBuild / mimaBaseVersion := "0.15"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
@@ -177,6 +178,7 @@ lazy val core = projectMatrix
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
     }
   )
+  .enablePlugins(MimaVersionPlugin)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -498,6 +500,7 @@ lazy val json = projectMatrix
     libraryDependencies ++= munitDeps.value,
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
+  .enablePlugins(MimaVersionPlugin)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -536,6 +539,7 @@ lazy val http4s = projectMatrix
       else moduleName.value
     }
   )
+  .enablePlugins(MimaVersionPlugin)
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
 /**
