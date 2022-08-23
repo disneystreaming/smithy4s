@@ -332,7 +332,7 @@ lazy val `codegen-cli` = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % "2.3.0",
+      Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -377,9 +377,8 @@ lazy val decline = (projectMatrix in file("modules/decline"))
     name := "decline",
     isCE3 := true,
     libraryDependencies ++= List(
-      "org.typelevel" %%% "cats-core" % "2.7.0",
-      "co.fs2" %%% "fs2-io" % "3.2.4",
-      "com.monovore" %%% "decline-effect" % "2.2.0",
+     Dependencies.Cats.core.value,
+      Dependencies.Decline.effect.value,
       Dependencies.Weaver.cats.value % Test,
     )).dependsOn(json)
   .jvmPlatform(allJvmScalaVersions,jvmDimSettings)
@@ -705,6 +704,10 @@ lazy val Dependencies = new {
       Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
   }
 
+  object Decline {
+    val core =    Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+  }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % "3.2.12")

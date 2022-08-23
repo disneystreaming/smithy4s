@@ -24,6 +24,8 @@ import smithy4s.{ByteArray, ConstraintError, Document, Schema}
 import cats.implicits._
 import cats.MonadError
 
+import java.util.Base64
+
 object commons {
   def toKebabCase(s: String): String =
     s.replaceAll("([A-Z])", "-$1").toLowerCase.drop(1)
@@ -52,8 +54,10 @@ object commons {
 
     Argument.from("json")(parse(_).toValidatedNel)
   }
-  val byteArrayArgument: Argument[ByteArray] =
-    Argument.from("base64")(s => Valid(ByteArray(s.getBytes("UTF-8"))))
+  val byteArrayArgument: Argument[ByteArray] = {
+    val decoder = Base64.getDecoder
+    Argument.from("base64")(s => Valid(ByteArray(decoder.decode(s))))
+  }
 }
 
 final case class RefinementFailed(message: String)

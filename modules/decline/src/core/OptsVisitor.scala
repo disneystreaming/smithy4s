@@ -16,7 +16,7 @@
 
 package smithy4s.decline.core
 
-import cats.data.NonEmptyVector
+import cats.data.{NonEmptyVector, Validated, NonEmptyList}
 import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
@@ -61,7 +61,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       .get(ExternalDocumentation)
       .toList
       .flatMap(_.value.map { case (description, link) =>
-        s"\n\n$description\n\n[See more]($link)"
+        s"$description link: $link"
       }.toList)).mkString("\n")
   }
 
@@ -340,7 +340,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]) =
     schema
       .compile[Opts](this)
-      .map(
-        refinement(_).fold(message => throw RefinementFailed(message), identity)
+      .mapValidated(a =>
+        Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
 }
