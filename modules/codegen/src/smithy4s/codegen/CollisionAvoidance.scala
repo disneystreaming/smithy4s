@@ -259,7 +259,6 @@ object CollisionAvoidance {
     "Stream",
     "LazyList",
     "StringBuilder",
-    "Range",
     "Either",
     "Left",
     "Right",

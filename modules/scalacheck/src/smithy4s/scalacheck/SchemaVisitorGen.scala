@@ -146,7 +146,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   private def chooseNumAux[T](hints: Hints, minT: T, maxT: T)(implicit
       num: Numeric[T],
       c: Gen.Choose[T]
-  ) = hints.get[smithy.api._Range] match {
+  ) = hints.get[smithy.api.Range] match {
     case None => Gen.chooseNum[T](minT, maxT)
     case Some(range) =>
       val min = range.min.map(bigDecimalToInt).map(num.fromInt).getOrElse(minT)
