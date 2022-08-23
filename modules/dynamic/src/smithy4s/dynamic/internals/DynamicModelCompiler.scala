@@ -211,53 +211,68 @@ private[dynamic] object Compiler {
       update(id, shape.traits, bytes)
 
     override def enumShape(id: ShapeId, shape: EnumShape): Unit = {
-      val values: List[(Document, EnumValue[Document])] =
-        shape.members.foldMap { m =>
-          m.toList
-            .flatMap { case (k, m) =>
-              getTrait[smithy.api.EnumValue](m.traits).toList.map { v =>
-                (k, v)
+      val values: List[EnumValue[Int]] =
+        shape.members
+          .getOrElse(Map.empty)
+          .toList
+          // Introducing arbitrary ordering for reproducible rendering.
+          // Needs to happen before zipWithIndex so that intValue is also predictable.
+          .sortBy(_._1)
+          .flatMap { case (k, m) =>
+            getTrait[smithy.api.EnumValue](m.traits).toList.map {
+              _.value match {
+                case Document.DString(s) => (k, s)
+                case v =>
+                  throw new IllegalArgumentException(
+                    s"enum value $k has a non-string value: $v"
+                  )
               }
             }
-            .zipWithIndex
-            .map { case ((k, v), i) =>
-              v.value ->
-                EnumValue(
-                  k,
-                  i,
-                  v.value,
-                  k,
-                  Hints.empty
-                )
-            }
-        }
+          }
+          .zipWithIndex
+          .map { case ((name, stringValue), i) =>
+            EnumValue(
+              stringValue = stringValue,
+              intValue = i,
+              value = i,
+              name = name,
+              hints = Hints.empty
+            )
+          }
 
-      val fromDoc = values.toMap
-      val theEnum = enumeration(fromDoc, values.map(_._2))
+      val fromInt = values(_: Int)
+      val theEnum = enumeration(fromInt, values)
+
       update(id, shape.traits, theEnum)
     }
 
     override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
-      val values: List[EnumValue[Int]] = shape.members.foldMap { m =>
-        m.toList
-          .flatMap { case (k, m) =>
-            getTrait[smithy.api.EnumValue](m.traits).toList.map { v =>
-              (k, v)
+      val values: List[EnumValue[Int]] = shape.members
+        .getOrElse(Map.empty)
+        .toList
+        .flatMap { case (k, m) =>
+          getTrait[smithy.api.EnumValue](m.traits).toList.map {
+            _.value match {
+              case Document.DNumber(num) =>
+                // toInt is safe because Smithy validates the model at loading time
+                (k, num.toInt)
+              case v =>
+                throw new IllegalArgumentException(
+                  s"intEnum value $k has a non-numeric value: $v"
+                )
             }
           }
-          .collect { case (k, smithy.api.EnumValue(Document.DNumber(v))) =>
-            (k, v.toInt) // safe cast?
-          }
-          .map { case (k, v) =>
-            EnumValue(
-              k, // check
-              v,
-              v,
-              k, // check
-              Hints.empty
-            )
-          }
-      }
+        }
+        .map { case (name, intValue) =>
+          EnumValue(
+            stringValue = name,
+            intValue = intValue,
+            value = intValue,
+            name = name,
+            hints = Hints.empty
+          )
+        }
+        .sortBy(_.intValue)
 
       val fromOrdinal = values(_: Int)
       val theEnum = enumeration(fromOrdinal, values)
@@ -276,25 +291,25 @@ private[dynamic] object Compiler {
       (maybeUuid, maybeEnum) match {
         case (Some(_), _) => update(id, shape.traits, uuid)
         case (None, Some(e)) => {
-          // Using the intValue as a runtime value
           val values = e.value.zipWithIndex.map {
             case (enumDefinition, intValue) =>
               val value = enumDefinition.value.value
-              value -> EnumValue(
-                value,
-                intValue,
-                value,
-                enumDefinition.name
+              EnumValue(
+                stringValue = value,
+                intValue = intValue,
+                // Using the intValue as a runtime value
+                value = intValue,
+                name = enumDefinition.name
                   .map(_.value)
                   .getOrElse(value.toUpperCase()),
-                Hints.empty
+                hints = Hints.empty
               )
-          }.toMap
-          val fromValue = values(_: String)
+          }
+          val fromValue = values(_: Int)
           update(
             id,
             shape.traits,
-            enumeration(fromValue, values.map(_._2).toList)
+            enumeration(fromValue, values)
           )
         }
         case _ => update(id, shape.traits, string)
