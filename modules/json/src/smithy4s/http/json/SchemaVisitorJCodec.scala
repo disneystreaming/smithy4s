@@ -1021,7 +1021,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       total: E => EnumValue[E]
   ): JCodec[E] = new JCodec[E] {
     def fromOrdinal(v: Int): Option[E] =
-      values.find(_.ordinal == v).map(_.value)
+      values.find(_.intValue == v).map(_.value)
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
@@ -1034,7 +1034,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
 
     def encodeValue(x: E, out: JsonWriter): Unit =
-      out.writeVal(total(x).ordinal)
+      out.writeVal(total(x).intValue)
 
     def decodeKey(in: JsonReader): E = {
       val i = in.readKeyAsInt()
@@ -1045,7 +1045,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
 
     def encodeKey(x: E, out: JsonWriter): Unit =
-      out.writeKey(total(x).ordinal)
+      out.writeKey(total(x).intValue)
   }
 
   private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =
@@ -1131,9 +1131,19 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   }
 
   private type Fields[Z] = Vector[Field[Schema, Z, _]]
+  private type LabelledFields[Z] = Vector[(SchemaField[Z, _], String, Any)]
+  private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
+    fields.map { field =>
+      val jLabel = jsonLabel(field)
+      val decode: Document => Option[Any] =
+        Document.Decoder.fromSchema(field.instance).decode(_).toOption
+      val decoded = field.getDefault.flatMap(decode)
+      val default = decoded.orNull
+      (field, jLabel, default)
+    }
 
   private def nonPayloadStruct[Z](
-      fields: Fields[Z],
+      fields: LabelledFields[Z],
       structHints: Hints
   )(
       const: Vector[Any] => Z,
@@ -1142,7 +1152,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     new JCodec[Z] {
 
       private[this] val documentFields =
-        fields.filter { field =>
+        fields.filter { case (field, _, _) =>
           HttpBinding
             .fromHints(field.label, field.hints, structHints)
             .isEmpty
@@ -1150,13 +1160,13 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
       private[this] val handlers =
         new util.HashMap[String, Handler](documentFields.length << 1, 0.5f) {
-          documentFields.foreach(field =>
-            put(jsonLabel(field), fieldHandler(field))
-          )
+          documentFields.foreach { case (field, jLabel, _) =>
+            put(jLabel, fieldHandler(field))
+          }
         }
 
       private[this] val documentEncoders =
-        documentFields.map(field => fieldEncoder(field))
+        documentFields.map(labelledField => fieldEncoder(labelledField._1))
 
       def expecting: String = "object"
 
@@ -1199,15 +1209,20 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
-          fields.foreach(f =>
+          fields.foreach { case (f, jsonLabel, default) =>
             stage2 += {
               val value = buffer.get(f.label)
               if (f.isRequired) {
-                if (value == null) cursor.requiredFieldError(f.label, f.label)
-                value
-              } else Option(value)
+                if (value == null) {
+                  if (default == null)
+                    cursor.requiredFieldError(jsonLabel, jsonLabel)
+                  else default
+                } else value
+              } else {
+                Option(value)
+              }
             }
-          )
+          }
           const(stage2.result())
         }
       }
@@ -1224,7 +1239,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
 
   private def payloadStruct[A, Z](
       payloadField: Field[Schema, Z, _],
-      fields: Fields[Z]
+      fields: LabelledFields[Z]
   )(codec: JCodec[payloadField.T], const: Vector[Any] => Z): JCodec[Z] =
     new JCodec[Z] {
       def expecting: String = "object"
@@ -1257,15 +1272,16 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         { (meta: scala.collection.Map[String, Any]) =>
           meta.foreach(kv => buffer.put(kv._1, kv._2))
           val stage2 = new VectorBuilder[Any]
-          fields.foreach(f =>
+          fields.foreach { case (f, jsonLabel, _) =>
             stage2 += {
               val value = buffer.get(f.label)
               if (f.isRequired) {
-                if (value == null) cursor.requiredFieldError(f.label, f.label)
+                if (value == null)
+                  cursor.requiredFieldError(jsonLabel, jsonLabel)
                 value
               } else Option(value)
             }
-          )
+          }
           const(stage2.result())
         }
       }
@@ -1281,7 +1297,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     }
 
   private def basicStruct[A, S](
-      fields: Fields[S],
+      fields: LabelledFields[S],
       structHints: Hints
   )(make: Vector[Any] => S): JCodec[S] = {
     val encode = {
@@ -1304,10 +1320,11 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): JCodec[S] = {
+    val lFields = labelledFields[S](fields)
     (fields.find(_.hints.get(HttpPayload).isDefined), hints) match {
       case (Some(payloadField), _) =>
         val codec = apply(payloadField.instance)
-        payloadStruct(payloadField, fields)(codec, make)
+        payloadStruct(payloadField, lFields)(codec, make)
       case (None, DiscriminatedUnionMember.hint(d)) =>
         val encode =
           if (
@@ -1336,9 +1353,9 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
               documentEncoders.foreach(encoder => encoder(z, out))
               out.writeObjectEnd()
           }
-        nonPayloadStruct(fields, hints)(make, encode)
+        nonPayloadStruct(lFields, hints)(make, encode)
       case _ =>
-        basicStruct(fields, hints)(make)
+        basicStruct(lFields, hints)(make)
     }
   }
 }

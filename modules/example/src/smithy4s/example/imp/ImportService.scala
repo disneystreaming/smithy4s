@@ -69,7 +69,7 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/test"), Some(200)),
+      smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/test"), 200),
     )
     def wrap(input: Unit) = ImportOperation()
     override val errorable: Option[Errorable[ImportOperationError]] = Some(this)

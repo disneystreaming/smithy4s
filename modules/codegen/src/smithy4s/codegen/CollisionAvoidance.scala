@@ -18,8 +18,6 @@ package smithy4s.codegen
 
 import cats.syntax.all._
 import cats.~>
-import smithy4s.codegen.Hint.Constraint
-import smithy4s.codegen.Hint.Native
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
 import smithy4s.codegen.TypedNode._
@@ -72,18 +70,19 @@ object CollisionAvoidance {
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, originalName, tpe, isUnwrapped, hints) =>
+      case TypeAlias(name, originalName, tpe, isUnwrapped, rec, hints) =>
         TypeAlias(
           protect(name.capitalize),
           originalName,
           modType(tpe),
           isUnwrapped,
+          rec,
           hints.map(modHint)
         )
       case Enumeration(name, originalName, values, hints) =>
         val newValues = values.map {
-          case EnumValue(value, ordinal, name, hints) =>
-            EnumValue(value, ordinal, protect(name), hints.map(modHint))
+          case EnumValue(value, intValue, name, hints) =>
+            EnumValue(value, intValue, protect(name), hints.map(modHint))
         }
         Enumeration(
           protect(name.capitalize),
@@ -143,15 +142,21 @@ object CollisionAvoidance {
   }
 
   private def modRef(ref: Type.Ref): Type.Ref =
-    Type.Ref(ref.namespace, ref.name.capitalize)
+    Type.Ref(ref.namespace, protect(ref.name.capitalize))
 
   private def modNativeHint(hint: Hint.Native): Hint.Native =
-    Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+    Hint.Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
 
   private def modHint(hint: Hint): Hint = hint match {
-    case n: Native           => modNativeHint(n)
-    case Constraint(tr, nat) => Constraint(modRef(tr), modNativeHint(nat))
-    case other               => other
+    case n: Hint.Native => modNativeHint(n)
+    case Hint.Constraint(tr, nat) =>
+      Hint.Constraint(modRef(tr), modNativeHint(nat))
+    case df: Hint.Default => modDefault(df)
+    case other            => other
+  }
+
+  private def modDefault(hint: Hint.Default): Hint.Default = {
+    Hint.Default(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
   }
 
   private def modProduct(p: Product): Product = {
@@ -171,8 +176,8 @@ object CollisionAvoidance {
     new (TypedNode ~> TypedNode) {
 
       def apply[A](fa: TypedNode[A]): TypedNode[A] = fa match {
-        case EnumerationTN(ref, value, ordinal, name) =>
-          EnumerationTN(modRef(ref), value, ordinal, name)
+        case EnumerationTN(ref, value, intValue, name) =>
+          EnumerationTN(modRef(ref), value, intValue, name)
         case StructureTN(ref, fields) =>
           StructureTN(modRef(ref), fields)
         case NewTypeTN(ref, target) =>
@@ -245,17 +250,31 @@ object CollisionAvoidance {
     "Float",
     "BigInt",
     "BigDecimal",
+    "Array",
+    "Vector",
+    "Seq",
     "Map",
     "List",
+    "Nil",
+    "Stream",
+    "LazyList",
+    "StringBuilder",
+    "Range",
+    "Either",
+    "Left",
+    "Right",
     "Set",
-    "None"
+    "Throwable",
+    "Option",
+    "Some",
+    "None",
+    "Nothing"
   )
 
   private val reservedNames = reservedKeywords ++ reservedTypes
 
   class Names(compilationUnit: CompilationUnit) {
 
-    // TODO : implement better avoidance
     val definitions = compilationUnit.declarations.foldMap { d => Set(d.name) }
 
     val Transformation_ = NameRef("smithy4s", "Transformation")

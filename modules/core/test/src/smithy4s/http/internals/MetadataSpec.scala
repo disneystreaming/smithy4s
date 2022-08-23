@@ -21,8 +21,10 @@ import cats.syntax.all._
 import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.Headers
+import smithy4s.example.HeadersWithDefaults
 import smithy4s.example.PathParams
 import smithy4s.example.Queries
+import smithy4s.example.QueriesWithDefaults
 import smithy4s.example.ValidationChecks
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpBinding
@@ -37,6 +39,10 @@ class MetadataSpec() extends FunSuite {
     Queries.schema.addHints(InputOutput.Input.widen)
   implicit val headersSchema: Schema[Headers] =
     Headers.schema.addHints(InputOutput.Input.widen)
+  implicit val queriesDefaultSchema: Schema[QueriesWithDefaults] =
+    QueriesWithDefaults.schema.addHints(InputOutput.Input.widen)
+  implicit val headersDefaultSchema: Schema[HeadersWithDefaults] =
+    HeadersWithDefaults.schema.addHints(InputOutput.Input.widen)
   implicit val pathParamsSchema: Schema[PathParams] =
     PathParams.schema.addHints(InputOutput.Input.widen)
   implicit val validationChecksSchema: Schema[ValidationChecks] =
@@ -57,6 +63,21 @@ class MetadataSpec() extends FunSuite {
     expect.same(encoded, expectedEncoding)
     expect(result == Right(a))
     checkRoundTripTotal(a, expectedEncoding)
+  }
+
+  def checkRoundTripDefault[A](expectedDecoded: A)(implicit
+      s: Schema[A],
+      loc: Location
+  ): Unit = {
+    val result = Metadata
+      .decodePartial[A](Metadata.empty)
+      .left
+      .map(_.getMessage())
+      .flatMap { partial =>
+        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
+      }
+    expect.same(result, Right(expectedDecoded))
+    checkRoundTripTotalDefault(expectedDecoded)
   }
 
   def checkRoundTripError[A](a: A, expectedEncoding: Metadata, message: String)(
@@ -113,6 +134,19 @@ class MetadataSpec() extends FunSuite {
     expect.same(result, Some(Right(a)))
   }
 
+  def checkRoundTripTotalDefault[A](expectedDecoded: A)(implicit
+      s: Schema[A],
+      loc: Location
+  ): Unit = {
+    val result = Metadata
+      .decodeTotal[A](Metadata.empty)
+      .map(
+        _.left
+          .map(_.getMessage())
+      )
+    expect.same(result, Some(Right(expectedDecoded)))
+  }
+
   val epochString = "1970-01-01T00:00:00Z"
 
   val constraintMessage1 =
@@ -129,6 +163,11 @@ class MetadataSpec() extends FunSuite {
     val queries = Queries(str = Some("hello"))
     val expected = Metadata(query = Map("str" -> List("hello")))
     checkRoundTrip(queries, expected)
+  }
+
+  test("String query parameter with default") {
+    val expectedDecoded = QueriesWithDefaults(dflt = "test")
+    checkRoundTripDefault(expectedDecoded)
   }
 
   test("String length constraint violation") {
@@ -233,6 +272,11 @@ class MetadataSpec() extends FunSuite {
     val headers = Headers(str = Some("hello"))
     val expected = Metadata.empty.addHeader("str", "hello")
     checkRoundTrip(headers, expected)
+  }
+
+  test("String header with default") {
+    val expected = HeadersWithDefaults(dflt = "test")
+    checkRoundTripDefault(expected)
   }
 
   test("Integer header") {

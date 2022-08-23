@@ -2,13 +2,7 @@ pull_request_rules:
   - name: Automatically approve/merge Scala Steward PRs on CI success
     conditions:
       - author=scala-steward
-      - status-success="Test CE2 2_12 (jvm)"
-      - status-success="Test CE3 2_12 (jvm)"
-      - status-success="Test CE2 2_13 (jvm)"
-      - status-success="Test CE3 2_13 (jvm)"
-      - status-success="Test CE3 2_13 (js)"
-      - status-success="Test CE3 3_0 (jvm)"
-      - status-success="Test CE3 3_0 (js)"
+      - status-success="build-success-checkpoint"
       - body~=labels:.*semver-spec-patch
     actions:
       review:

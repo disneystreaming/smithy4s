@@ -22,10 +22,10 @@ use smithy4s.api#simpleRestJson
 
 @simpleRestJson
 service HelloWorldService {
-  version: "1.0.0",
+  version: "1.0.0"
   // Indicates that all operations in `HelloWorldService`,
   // here limited to the Hello operation, can return `GenericServerError`.
-  errors: [GenericServerError],
+  errors: [GenericServerError]
   operations: [Hello]
 }
 
@@ -37,14 +37,14 @@ structure GenericServerError {
 
 @http(method: "POST", uri: "/{name}", code: 200)
 operation Hello {
-  input: Person,
+  input: Person
   output: Greeting
 }
 
 structure Person {
   @httpLabel
   @required
-  name: String,
+  name: String
 
   @httpQuery("town")
   town: String
@@ -56,7 +56,7 @@ structure Greeting {
 }
 ```
 
-## Supported taits
+## Supported traits
 
 This protocol and its interpreters, are aware of the following traits provided out of the box:
 

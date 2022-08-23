@@ -115,8 +115,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case p: Product => renderProduct(p)
     case union @ Union(_, originalName, alts, recursive, hints) =>
       renderUnion(union.nameRef, originalName, alts, recursive, hints)
-    case ta @ TypeAlias(_, originalName, tpe, _, hints) =>
-      renderTypeAlias(ta.nameRef, originalName, tpe, hints)
+    case ta @ TypeAlias(_, originalName, tpe, _, recursive, hints) =>
+      renderTypeAlias(ta.nameRef, originalName, tpe, recursive, hints)
     case enumeration @ Enumeration(_, originalName, values, hints) =>
       renderEnum(enumeration.nameRef, originalName, values, hints)
     case _ => Lines.empty
@@ -124,7 +124,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(name, _, _, _, _) =>
+      case TypeAlias(name, _, _, _, _, _) =>
         line"type $name = ${compilationUnit.namespace}.${name}.Type"
     }
 
@@ -151,15 +151,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case s: Service =>
       val name = s.name
       val nameGen = NameRef(s"${name}Gen")
-      val nameOp = NameRef(s"${name}Operation")
       lines(
         line"type ${NameDef(name)}[F[_]] = $Monadic_[$nameGen, F]",
         block(
-          line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, $nameOp]"
+          line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, ${name}Operation]"
         )(
           line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
-          line"def service: $Service_[$nameGen, $nameOp] = $nameGen",
-          line"val id: $ShapeId_ = ${NameRef("service.id")}"
+          line"def service: $Service_[$nameGen, ${name}Operation] = $nameGen",
+          line"val id: $ShapeId_ = service.id"
         )
       )
     case _ => Lines.empty
@@ -289,7 +288,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val input =
       if (op.input == Type.unit) "" else "input"
     val errorName =
-      if (op.errors.isEmpty) line"Nothing" else line"${op.name}Error"
+      if (op.errors.isEmpty) line"Nothing" else line"${NameRef({op.name + "Error"})}"
 
     val errorable = if (op.errors.nonEmpty) {
       line" with $Errorable_[$errorName]"
@@ -305,7 +304,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val renderedErrorUnion = errorUnion.foldMap {
       case union @ Union(_, originalName, alts, recursive, hints) =>
-        renderUnion(union.nameRef, originalName, alts, recursive, hints, error = true)
+        renderUnion(
+          union.nameRef,
+          originalName,
+          alts,
+          recursive,
+          hints,
+          error = true
+        )
     }
 
     lines(
@@ -499,7 +505,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderErrorable(op: Operation): Lines = {
-    val errorName = op.name + "Error"
+    val errorName = NameRef(op.name + "Error")
 
     if (op.errors.isEmpty) Lines.empty
     else
@@ -509,8 +515,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           line"def liftError(throwable: Throwable) : Option[$errorName] = throwable match"
         ) {
-          op.errors.collect { case Type.Ref(_, name) =>
-            line"case e: ${name} => Some($errorName.${name}Case(e))"
+          op.errors.collect { case Type.Ref(pkg, name) =>
+            line"case e: ${NameRef(pkg+"."+name)} => Some($errorName.${name}Case(e))"
           } ++ List(line"case _ => None")
         },
         block(
@@ -631,11 +637,18 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       noDefault: Boolean = false
   ): Line = {
     field match {
-      case Field(name, _, tpe, required, _) =>
+      case Field(name, _, tpe, required, hints) =>
         val line = line"$tpe"
-        line"$name: " + (if (required) line
-                         else Line.optional(line, !noDefault))
+        val tpeAndDefault = if (required) {
+          val maybeDefault = hints
+            .collectFirst { case d @ Hint.Default(_) => d }
+            .map(renderDefault)
+          Line.required(line, maybeDefault)
+        } else {
+          Line.optional(line, !noDefault)
+        }
 
+        line"$name: " + tpeAndDefault
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
@@ -649,11 +662,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): Lines = lines(
     block(
-      line"sealed abstract class ${name.name}(_value: String, _name: String, _ordinal: Int) extends $Enumeration_.Value"
+      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int) extends $Enumeration_.Value"
     )(
       line"override val value: String = _value",
       line"override val name: String = _name",
-      line"override val ordinal: Int = _ordinal",
+      line"override val intValue: Int = _intValue",
       line"override val hints: $Hints_ = $Hints_.empty",
       line"@inline final def widen: $name = this"
     ),
@@ -662,10 +675,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsVal(hints),
       newline,
-      values.map { case e @ EnumValue(value, ordinal, _, _) =>
+      values.map { case e @ EnumValue(value, intValue, _, _) =>
         line"""case object ${NameRef(
           e.name
-        )} extends $name("$value", "${e.name}", $ordinal)"""
+        )} extends $name("$value", "${e.name}", $intValue)"""
       },
       newline,
       line"val values: List[$name] = List".args(
@@ -679,17 +692,22 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       name: NameRef,
       originalName: String,
       tpe: Type,
+      recursive: Boolean,
       hints: List[Hint]
   ): Lines = {
+    val definition =
+      if (recursive) line"$recursive_("
+      else Line.empty
     val trailingCalls =
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+    val closing = if (recursive) ")" else ""
     lines(
       obj(name, line"$Newtype_[$tpe]")(
         renderId(originalName),
         renderHintsVal(hints),
         line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
-          line"implicit val schema : $Schema_[$name] = $bijection_(underlyingSchema, asBijection)"
+          line"implicit val schema : $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         )
       )
     )
@@ -787,6 +805,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderNativeHint(hint: Hint.Native): Line =
+    Line(
+      smithy4s.recursion
+        .cata(renderTypedNode)(hint.typedNode)
+        .run(true)
+        ._2
+    )
+
+  private def renderDefault(hint: Hint.Default): Line =
     Line(
       smithy4s.recursion
         .cata(renderTypedNode)(hint.typedNode)

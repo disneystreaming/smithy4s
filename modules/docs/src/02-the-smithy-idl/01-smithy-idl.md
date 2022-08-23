@@ -65,8 +65,27 @@ set StringSet {
 
 // At this time, only string shapes can be used as keys to map.
 map AgeMap {
-  key: String,
+  key: String
   value: Integer
+}
+```
+
+### Enums
+
+Smithy supports two types of enums, for string and integers :
+
+```kotlin
+enum FooBar {
+  FOO = "foo"
+  BAR = "bar"
+}
+
+intEnum FaceCard {
+    JACK = 1
+    QUEEN = 2
+    KING = 3
+    ACE = 4
+    JOKER = 5
 }
 ```
 
@@ -79,9 +98,9 @@ namespace foo
 
 structure Person {
   @required
-  firstName: String,
+  firstName: String
   @required
-  lastName: String,
+  lastName: String
   dateOfBirth: Timestamp
 }
 ```
@@ -104,7 +123,7 @@ structure Dog {
 }
 
 union Animal {
-  cat: Cat,
+  cat: Cat
   dog: Dog
 }
 ```
@@ -119,8 +138,8 @@ Operations are essentially an optional Input, an optional Output, and an optiona
 namespace foo
 
 operation Greet {
-  input: GreetInput,
-  output: GreetOutput,
+  input: GreetInput
+  output: GreetOutput
   errors: [BadInput]
 }
 
@@ -156,7 +175,7 @@ Services are basically a list of operations, and an optional list of errors.
 namespace foo
 
 service HelloService {
-  operations: [Greet],
+  operations: [Greet]
   errors: [ServerError]
 }
 
@@ -192,9 +211,9 @@ trait HelloServiceGen[P[_, _, _, _, _]]{
 
 P represents an abstract context against which operations are going
 to run. The abstract context has 5 type parameters:
-* input,
-* error,
-* output,
+* input
+* error
+* output
 * streamed input (Nothing, most of the time)
 * streamed output (Nothing, most of the time)
 

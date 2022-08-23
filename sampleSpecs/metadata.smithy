@@ -47,6 +47,11 @@ structure Queries {
   slm: StringMap
 }
 
+structure QueriesWithDefaults {
+  @httpQuery("dflt")
+  dflt: String = "test"
+}
+
 structure Headers {
   @httpHeader("str")
   str: String,
@@ -71,6 +76,11 @@ structure Headers {
   ie: Numbers,
   @httpPrefixHeaders("foo-")
   slm: StringMap
+}
+
+structure HeadersWithDefaults {
+  @httpHeader("dflt")
+  dflt: String = "test"
 }
 
 

@@ -12,7 +12,7 @@ union MyUnion {
   i: Integer
   s: MyStructure
   u: Unit
-
+}
 
 structure MyStructure {
   b: Boolean
@@ -55,7 +55,7 @@ This is the default behaviour, and happens to visually match how Smithy unions a
 
 ```
 union Tagged {
-  first: String,
+  first: String
   second: IntWrapper
 }
 
@@ -87,7 +87,7 @@ use smithy4s.api#untagged
 
 @untagged
 union Untagged {
-  first: String,
+  first: String
   second: IntWrapper
 }
 
@@ -122,7 +122,7 @@ use smithy4s.api#discriminated
 
 @discriminated("tpe")
 union Discriminated {
-  first: StringWrapper,
+  first: StringWrapper
   second: IntWrapper
 }
 

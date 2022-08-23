@@ -61,6 +61,7 @@ package object codegen {
     else
       line
   }
+
   private[codegen] def indent(l: LinesWithValue*): Lines =
     lines(l: _*).transformLines(indent)
 
@@ -174,8 +175,12 @@ package object codegen {
     def asScala: Option[A] = if (opt.isPresent()) Some(opt.get()) else None
   }
 
-  def uncapitalise(s: String) =
+  def uncapitalise(s: String) = {
     if (s == s.toUpperCase()) s.toLowerCase()
-    else s.take(1).toLowerCase() + s.drop(1)
-
+    else {
+      val count: Int = s.segmentLength(c => c.==('_'), 0)
+      val after = count + 1
+      s.take(after).toLowerCase + s.drop(after)
+    }
+  }
 }

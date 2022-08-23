@@ -20,7 +20,6 @@ import cats.Show
 import cats.implicits._
 import cats.data.Chain
 
-
 // LineSegment models segments of a line of code.
 sealed trait LineSegment { self =>
   def toLine: Line = Line(Chain.one(self))

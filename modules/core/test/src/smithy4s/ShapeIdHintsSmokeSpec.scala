@@ -75,7 +75,6 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
 
   test("newtypes contain ShapeId in hints") {
     val shapeIds = example.CityId.schema.compile(TestCompiler)
-    println(s"YEAH $shapeIds")
     expect(
       shapeIds.contains(
         ShapeId(

@@ -16,7 +16,6 @@
 
 package smithy4s.codegen
 
-import cats.Functor
 import cats.data.NonEmptyList
 import cats.syntax.all._
 import smithy4s.codegen.TypedNode.FieldTN.OptionalNoneTN
@@ -29,6 +28,9 @@ import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
 import smithy4s.codegen.UnionMember._
 import smithy4s.codegen.LineSegment.{NameDef, NameRef}
 import cats.kernel.Eq
+import cats.Traverse
+import cats.Applicative
+import cats.Eval
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
@@ -36,7 +38,7 @@ sealed trait Decl {
   def name: String
   def hints: List[Hint]
   def nameDef: NameDef = NameDef(name)
-  def nameRef: NameRef = NameRef(List.empty,name)
+  def nameRef: NameRef = NameRef(List.empty, name)
 }
 
 case class Service(
@@ -82,6 +84,7 @@ case class TypeAlias(
     originalName: String,
     tpe: Type,
     isUnwrapped: Boolean,
+    recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl
 
@@ -93,7 +96,7 @@ case class Enumeration(
 ) extends Decl
 case class EnumValue(
     value: String,
-    ordinal: Int,
+    intValue: Int,
     name: String,
     hints: List[Hint] = Nil
 )
@@ -229,6 +232,7 @@ object Hint {
   case object ErrorMessage extends Hint
   case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
+  case class Default(typedNode: Fix[TypedNode]) extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
   case object IntEnum extends Hint
@@ -273,6 +277,21 @@ object TypedNode {
     }
   }
   object FieldTN {
+    implicit val fieldTNTraverse: Traverse[FieldTN] = new Traverse[FieldTN] {
+      def traverse[G[_]: Applicative, A, B](
+          fa: FieldTN[A]
+      )(f: A => G[B]): G[FieldTN[B]] =
+        fa match {
+          case RequiredTN(value)     => f(value).map(RequiredTN(_))
+          case OptionalSomeTN(value) => f(value).map(OptionalSomeTN(_))
+          case OptionalNoneTN        => Applicative[G].pure(OptionalNoneTN)
+        }
+      def foldLeft[A, B](fa: FieldTN[A], b: B)(f: (B, A) => B): B = ???
+      def foldRight[A, B](fa: FieldTN[A], lb: Eval[B])(
+          f: (A, Eval[B]) => Eval[B]
+      ): Eval[B] = ???
+    }
+
     case class RequiredTN[A](value: A) extends FieldTN[A]
     case class OptionalSomeTN[A](value: A) extends FieldTN[A]
     case object OptionalNoneTN extends FieldTN[Nothing]
@@ -284,33 +303,59 @@ object TypedNode {
     }
   }
   object AltValueTN {
+    implicit val altValueTNTraverse: Traverse[AltValueTN] =
+      new Traverse[AltValueTN] {
+        def traverse[G[_]: Applicative, A, B](
+            fa: AltValueTN[A]
+        )(f: A => G[B]): G[AltValueTN[B]] =
+          fa match {
+            case ProductAltTN(value) => f(value).map(ProductAltTN(_))
+            case TypeAltTN(value)    => f(value).map(TypeAltTN(_))
+          }
+        def foldLeft[A, B](fa: AltValueTN[A], b: B)(f: (B, A) => B): B = ???
+        def foldRight[A, B](fa: AltValueTN[A], lb: Eval[B])(
+            f: (A, Eval[B]) => Eval[B]
+        ): Eval[B] = ???
+      }
+
     case class ProductAltTN[A](value: A) extends AltValueTN[A]
     case class TypeAltTN[A](value: A) extends AltValueTN[A]
   }
 
-  implicit val typedNodeFunctor: Functor[TypedNode] = new Functor[TypedNode] {
-    def map[A, B](fa: TypedNode[A])(f: A => B): TypedNode[B] = fa match {
-      case EnumerationTN(ref, value, ordinal, name) =>
-        EnumerationTN(ref, value, ordinal, name)
-      case StructureTN(ref, fields) =>
-        StructureTN(ref, fields.map(_.map(_.map(f))))
-      case NewTypeTN(ref, target) =>
-        NewTypeTN(ref, f(target))
-      case AltTN(ref, altName, alt) =>
-        AltTN(ref, altName, alt.map(f))
-      case MapTN(values) =>
-        MapTN(values.map(_.leftMap(f).map(f)))
-      case CollectionTN(collectionType, values) =>
-        CollectionTN(collectionType, values.map(f))
-      case PrimitiveTN(prim, value) =>
-        PrimitiveTN(prim, value)
+  implicit val typedNodeTraverse: Traverse[TypedNode] =
+    new Traverse[TypedNode] {
+      def traverse[G[_], A, B](
+          fa: TypedNode[A]
+      )(f: A => G[B])(implicit F: Applicative[G]): G[TypedNode[B]] = fa match {
+        case EnumerationTN(ref, value, intValue, name) =>
+          F.pure(EnumerationTN(ref, value, intValue, name))
+        case StructureTN(ref, fields) =>
+          fields.traverse(_.traverse(_.traverse(f))).map(StructureTN(ref, _))
+        case NewTypeTN(ref, target) =>
+          f(target).map(NewTypeTN(ref, _))
+        case AltTN(ref, altName, alt) =>
+          alt.traverse(f).map(AltTN(ref, altName, _))
+        case MapTN(values) =>
+          values
+            .traverse { case (k, v) =>
+              (f(k), f(v)).tupled
+            }
+            .map(MapTN(_))
+        case CollectionTN(collectionType, values) =>
+          values.traverse(f).map(CollectionTN(collectionType, _))
+        case PrimitiveTN(prim, value) =>
+          F.pure(PrimitiveTN(prim, value))
+      }
+      def foldLeft[A, B](fa: TypedNode[A], b: B)(f: (B, A) => B): B = ???
+      def foldRight[A, B](fa: TypedNode[A], lb: Eval[B])(
+          f: (A, Eval[B]) => Eval[B]
+      ): Eval[B] = ???
     }
-  }
 
   case class EnumerationTN(
       ref: Type.Ref,
       value: String,
-      ordinal: Int,
+      intValue: Int,
       name: String
   ) extends TypedNode[Nothing]
   case class StructureTN[A](

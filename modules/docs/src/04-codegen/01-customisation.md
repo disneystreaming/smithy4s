@@ -13,17 +13,17 @@ For instance :
 
 ```kotlin
 service PackedInputsService {
-  version: "1.0.0",
+  version: "1.0.0"
   operations: [PackedInputOperation]
 }
 
 operation PackedInputOperation {
-  input: PackedInput,
+  input: PackedInput
 }
 
 structure PackedInput {
     @required
-    a: String,
+    a: String
     @required
     b: String
 }
@@ -48,7 +48,7 @@ use smithy4s.meta#packedInputs
 
 @packedInputs
 service PackedInputsService {
-  version: "1.0.0",
+  version: "1.0.0"
   operations: [PackedInputOperation]
 }
 ```
@@ -79,7 +79,7 @@ union OrderType {
 
 structure InStoreOrder {
     @required
-    id: OrderNumber,
+    id: OrderNumber
     locationId: String
 }
 ```
@@ -110,7 +110,7 @@ union OrderType {
 @adtMember(OrderType) // added the adtMember trait here
 structure InStoreOrder {
     @required
-    id: OrderNumber,
+    id: OrderNumber
     locationId: String
 }
 ```
@@ -248,7 +248,7 @@ apply test#emailFormat @refinement(
 )
 ```
 
-Here we are applying the refinement trait to our `emailFormat` trait we defined earlier. We are providing the `targetType` which is our `Email` case class we defined. 
+Here we are applying the refinement trait to our `emailFormat` trait we defined earlier. We are providing the `targetType` which is our `Email` case class we defined.
 
 Smithy4s will now be able to update how it does code generation to reference our custom `Email` type.
 
@@ -278,7 +278,7 @@ By default, smithy4s will wrap all standalone primitive types in a Newtype. A st
 string Email // standalone primitive
 
 structure Test {
-  email: Email,
+  email: Email
   other: String // not a standalone primitive
 }
 ```
@@ -298,7 +298,7 @@ use smithy4s.meta#unwrap
 string Email
 
 structure Test {
-  email: Email,
+  email: Email
   other: String
 }
 ```

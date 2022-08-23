@@ -14,16 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package schema
+package demo
 
-case class EnumValue[E](
-    stringValue: String,
-    intValue: Int,
-    value: E,
-    name: String,
-    hints: Hints
-) {
-  def transformHints(f: Hints => Hints): EnumValue[E] =
-    copy(hints = f(hints))
+object Main extends App {
+  try {
+    println(smithy.api.NonEmptyString("nope").value)
+  } catch {
+    case _: java.lang.ExceptionInInitializerError =>
+      println("failed")
+      sys.exit(1)
+  }
 }
