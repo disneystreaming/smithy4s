@@ -211,28 +211,58 @@ private[dynamic] object Compiler {
       update(id, shape.traits, bytes)
 
     override def enumShape(id: ShapeId, shape: EnumShape): Unit = {
-      // val values = shape.members.foldMap { m =>
-      //   m.toList.zipWithIndex.map { case (i, (k, v)) =>
-      //     EnumValue(
-      //       k,
-      //       i,
-      //       i,
-      //       v,
-      //       Hints.empty
-      //     )
-      //   }
-      // }
+      val values: List[(Document, EnumValue[Document])] =
+        shape.members.foldMap { m =>
+          m.toList
+            .flatMap { case (k, m) =>
+              getTrait[smithy.api.EnumValue](m.traits).toList.map { v =>
+                (k, v)
+              }
+            }
+            .zipWithIndex
+            .map { case ((k, v), i) =>
+              v.value ->
+                EnumValue(
+                  k,
+                  i,
+                  v.value,
+                  k,
+                  Hints.empty
+                )
+            }
+        }
 
-      // val fromOrdinal = values(_: Int)
-      // val enumSchema = enumeration(fromOrdinal, values)
-
-      // update(id, shape.traits, enumSchema)
-      ()
+      val fromDoc = values.toMap
+      val theEnum = enumeration(fromDoc, values.map(_._2))
+      update(id, shape.traits, theEnum)
     }
 
-    override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit =
-      // todo
-      ()
+    override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
+      val values: List[EnumValue[Int]] = shape.members.foldMap { m =>
+        m.toList
+          .flatMap { case (k, m) =>
+            getTrait[smithy.api.EnumValue](m.traits).toList.map { v =>
+              (k, v)
+            }
+          }
+          .collect { case (k, smithy.api.EnumValue(Document.DNumber(v))) =>
+            (k, v.toInt) // safe cast?
+          }
+          .map { case (k, v) =>
+            EnumValue(
+              k, // check
+              v,
+              v,
+              k, // check
+              Hints.empty
+            )
+          }
+      }
+
+      val fromOrdinal = values(_: Int)
+      val theEnum = enumeration(fromOrdinal, values)
+      update(id, shape.traits, theEnum)
+    }
 
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
       update(id, shape.traits, boolean)
@@ -249,18 +279,23 @@ private[dynamic] object Compiler {
           // Using the intValue as a runtime value
           val values = e.value.zipWithIndex.map {
             case (enumDefinition, intValue) =>
-              EnumValue(
-                enumDefinition.value.value,
+              val value = enumDefinition.value.value
+              value -> EnumValue(
+                value,
                 intValue,
-                intValue,
+                value,
                 enumDefinition.name
                   .map(_.value)
-                  .getOrElse(enumDefinition.value.value.toUpperCase()),
+                  .getOrElse(value.toUpperCase()),
                 Hints.empty
               )
-          }
-          val fromOrdinal = values(_: Int)
-          update(id, shape.traits, enumeration(fromOrdinal, values))
+          }.toMap
+          val fromValue = values(_: String)
+          update(
+            id,
+            shape.traits,
+            enumeration(fromValue, values.map(_._2).toList)
+          )
         }
         case _ => update(id, shape.traits, string)
       }

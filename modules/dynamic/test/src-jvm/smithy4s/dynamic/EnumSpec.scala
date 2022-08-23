@@ -21,6 +21,8 @@ import DummyIO._
 import smithy4s.ShapeId
 import smithy4s.schema.Schema.EnumerationSchema
 import munit.Location
+import smithy4s.schema.EnumValue
+import smithy4s.Document
 
 class EnumSpec extends FunSuite {
   val model = """
@@ -54,8 +56,8 @@ class EnumSpec extends FunSuite {
     }
   """
 
-  def assertNames(shapeId: ShapeId, names: List[String])(implicit
-      loc: Location
+  def assertEnum(shapeId: ShapeId, names: List[String], values: List[Any])(
+      implicit loc: Location
   ) = {
     Utils
       .compile(model)
@@ -64,29 +66,65 @@ class EnumSpec extends FunSuite {
           .getSchema(shapeId)
           .getOrElse(fail("Error: shape missing"))
 
-        val values = schema match {
-          case e: EnumerationSchema[_] => e.values
+        val eValues = schema match {
+          case e: EnumerationSchema[_] =>
+            e.values.collect {
+              case EnumValue(
+                    _,
+                    _,
+                    aValue,
+                    name,
+                    _
+                  ) =>
+                val value = aValue match {
+                  case i: Integer          => i
+                  case s: String           => s
+                  case Document.DNumber(x) => x.toInt
+                  case Document.DString(s) => s
+                }
+                name -> value
+            }
           case unexpected => fail("Unexpected schema: " + unexpected)
         }
 
-        assertEquals(values.map(_.name), names)
+        assertEquals(eValues.map(_._1).sorted, names.sorted)
+        assertEquals[List[Any], List[Any]](
+          eValues.map(_._2),
+          values
+        )
       }
       .check()
   }
 
   test("dynamic enums have names if they're in the model") {
-    assertNames(ShapeId("example", "Element"), List("ICE", "FIRE"))
+    assertEnum(
+      ShapeId("example", "Element"),
+      names = List("ICE", "FIRE"),
+      values = List("Ice", "Fire")
+    )
   }
 
   test("dynamic enum names are derived if not present in the model") {
-    assertNames(ShapeId("example", "AnonymousElement"), List("VANILLA", "ICE"))
+    assertEnum(
+      ShapeId("example", "AnonymousElement"),
+      names = List("VANILLA", "ICE"),
+      values = List("Vanilla", "Ice")
+    )
   }
 
   test("Smithy 2.0 enums are supported") {
-    assertNames(ShapeId("example", "Smithy20Enum"), List("ICE", "FIRE"))
+    assertEnum(
+      ShapeId("example", "Smithy20Enum"),
+      names = List("ICE", "FIRE"),
+      values = List("Fire", "Ice")
+    )
   }
 
   test("Smithy 2.0 int enums are supported") {
-    assertNames(ShapeId("example", "I"), List("ICE", "FIRE"))
+    assertEnum(
+      ShapeId("example", "MyIntEnum"),
+      names = List("ICE", "FIRE"),
+      values = List(10, 42)
+    )
   }
 }
