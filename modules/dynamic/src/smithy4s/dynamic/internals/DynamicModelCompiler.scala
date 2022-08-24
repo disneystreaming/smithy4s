@@ -484,7 +484,7 @@ private[dynamic] object Compiler {
                     )
                   }
                 val memberHints = allHints(mShape.traits)
-                lField.map(_.addHints(memberHints))
+                lField.map(_.addHints(memberHints.all.toSeq: _*))
               }
               .toVector
               .sequence
