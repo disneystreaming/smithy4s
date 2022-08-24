@@ -13,12 +13,6 @@ package object example {
     def service: smithy4s.Service[FooServiceGen, FooServiceOperation] = FooServiceGen
     val id: smithy4s.ShapeId = service.id
   }
-  type A[F[_]] = smithy4s.Monadic[AGen, F]
-  object A extends smithy4s.Service.Provider[AGen, AOperation] {
-    def apply[F[_]](implicit F: A[F]): F.type = F
-    def service: smithy4s.Service[AGen, AOperation] = AGen
-    val id: smithy4s.ShapeId = service.id
-  }
   type BrandService[F[_]] = smithy4s.Monadic[BrandServiceGen, F]
   object BrandService extends smithy4s.Service.Provider[BrandServiceGen, BrandServiceOperation] {
     def apply[F[_]](implicit F: BrandService[F]): F.type = F
@@ -38,24 +32,26 @@ package object example {
     val id: smithy4s.ShapeId = service.id
   }
 
-  type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
+  type MySet = smithy4s.example.MySet.Type
+  type SomeValue = smithy4s.example.SomeValue.Type
+  type Key = smithy4s.example.Key.Type
+  type TestString = smithy4s.example.TestString.Type
+  type Age = smithy4s.example.Age.Type
+  type BucketName = smithy4s.example.BucketName.Type
+  type MyMap = smithy4s.example.MyMap.Type
+  type Name = smithy4s.example.Name.Type
+  type ObjectKey = smithy4s.example.ObjectKey.Type
+  type OrderNumber = smithy4s.example.OrderNumber.Type
+  type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
-  type SomeValue = smithy4s.example.SomeValue.Type
-  type Key = smithy4s.example.Key.Type
   type Value = smithy4s.example.Value.Type
   type PersonAge = smithy4s.example.PersonAge.Type
-  type TestString = smithy4s.example.TestString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
-  type Age = smithy4s.example.Age.Type
-  type BucketName = smithy4s.example.BucketName.Type
-  type Name = smithy4s.example.Name.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
-  type ObjectKey = smithy4s.example.ObjectKey.Type
-  type OrderNumber = smithy4s.example.OrderNumber.Type
   type StringList = smithy4s.example.StringList.Type
-  type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
 
 }

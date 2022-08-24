@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class SetInput(key: Key, value: Option[Value] = None)
+case class SetInput(set: Set[Value])
 object SetInput extends ShapeTag.Companion[SetInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "SetInput")
 
@@ -15,8 +15,7 @@ object SetInput extends ShapeTag.Companion[SetInput] {
   )
 
   implicit val schema: Schema[SetInput] = struct(
-    Key.schema.required[SetInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    Value.schema.optional[SetInput]("value", _.value),
+    MySet.underlyingSchema.required[SetInput]("set", _.set).addHints(smithy.api.Required()),
   ){
     SetInput.apply
   }.withId(id).addHints(hints)

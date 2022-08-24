@@ -26,6 +26,26 @@
                 }
             }
         },
+        "/api/map/": {
+            "post": {
+                "operationId": "Map",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MapRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "Map 204 response"
+                    }
+                }
+            }
+        },
         "/api/option/{value}": {
             "post": {
                 "operationId": "Option",
@@ -47,7 +67,7 @@
                 }
             }
         },
-        "/api/set/{key}": {
+        "/api/set/": {
             "post": {
                 "operationId": "Set",
                 "requestBody": {
@@ -57,18 +77,9 @@
                                 "$ref": "#/components/schemas/SetRequestContent"
                             }
                         }
-                    }
+                    },
+                    "required": true
                 },
-                "parameters": [
-                    {
-                        "name": "key",
-                        "in": "path",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "204": {
                         "description": "Set 204 response"
@@ -79,13 +90,38 @@
     },
     "components": {
         "schemas": {
-            "SetRequestContent": {
+            "MapRequestContent": {
                 "type": "object",
                 "properties": {
                     "value": {
-                        "type": "integer",
-                        "format": "int32"
+                        "$ref": "#/components/schemas/myMap"
                     }
+                },
+                "required": [
+                    "value"
+                ]
+            },
+            "SetRequestContent": {
+                "type": "object",
+                "properties": {
+                    "set": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "format": "int32"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "set"
+                ]
+            },
+            "myMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "integer",
+                    "format": "int32"
                 }
             }
         }

@@ -129,10 +129,10 @@ object RefinementProvider {
     }
 
   implicit def numericRangeConstraints[N: Numeric]
-      : Simple[smithy.api._Range, N] = new SimpleImpl[smithy.api._Range, N] {
+      : Simple[smithy.api.Range, N] = new SimpleImpl[smithy.api.Range, N] {
 
     def get(
-        range: smithy.api._Range
+        range: smithy.api.Range
     ): N => Either[String, Unit] = {
       val N = implicitly[Numeric[N]]
 

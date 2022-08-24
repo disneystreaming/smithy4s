@@ -65,10 +65,12 @@ object Renderer {
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
-            case tr @ NameRef(pkg, name)
-                if pkg.nonEmpty && !nameCollisions.contains(name) &&
+            case nameRef @ NameRef(pkg, name)
+                if pkg.nonEmpty && !nameCollisions.contains(
+                  name
+                ) && !nameRef.isStdlib &&
                   !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
-              tr.show
+              nameRef.show
             case Import(value) => value
           }
         }
@@ -78,8 +80,8 @@ object Renderer {
           line.segments.toList.collect {
             case Literal(value) => value
             case NameDef(name)  => name
-            case tr: NameRef =>
-              if (nameCollisions.contains(tr.name)) tr.asValue else tr.name
+            case ref: NameRef =>
+              if (nameCollisions.contains(ref.name)) ref.asValue else ref.name
           }.mkString
         }
 
@@ -137,6 +139,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         typeAliases,
         newline
       )
+
     val parts = compilationUnit.namespace.split('.').filter(_.nonEmpty)
     if (parts.size > 1) {
       lines(
@@ -209,7 +212,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints: List[$Endpoint_[$opTraitNameRef, _, _, _, _, _]] = List"
+        line"val endpoints: $list[$Endpoint_[$opTraitNameRef, _, _, _, _, _]] = $list"
           .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
@@ -288,7 +291,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val input =
       if (op.input == Type.unit) "" else "input"
     val errorName =
-      if (op.errors.isEmpty) line"Nothing" else line"${NameRef({op.name + "Error"})}"
+      if (op.errors.isEmpty) line"Nothing"
+      else line"${NameRef({ op.name + "Error" })}"
 
     val errorable = if (op.errors.nonEmpty) {
       line" with $Errorable_[$errorName]"
@@ -358,7 +362,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           line"implicit val protocol: smithy4s.Protocol[$name] = new smithy4s.Protocol[$name]"
         ) {
-          line"def traits: Set[$ShapeId_] = Set($protocolTraits)"
+          line"def traits: $set[$ShapeId_] = $set($protocolTraits)"
         }
       )
     }
@@ -510,14 +514,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (op.errors.isEmpty) Lines.empty
     else
       lines(
-        line"override val errorable: Option[$Errorable_[$errorName]] = Some(this)",
+        line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",
         line"val error: $unionSchema_[$errorName] = $errorName.schema",
         block(
-          line"def liftError(throwable: Throwable) : Option[$errorName] = throwable match"
+          line"def liftError(throwable: Throwable) : $option[$errorName] = throwable match"
         ) {
           op.errors.collect { case Type.Ref(pkg, name) =>
-            line"case e: ${NameRef(pkg+"."+name)} => Some($errorName.${name}Case(e))"
-          } ++ List(line"case _ => None")
+            line"case e: ${NameRef(pkg + "." + name)} => $some($errorName.${name}Case(e))"
+          } ++ List(line"case _ => $none")
         },
         block(
           line"def unliftError(e: $errorName) : Throwable = e match"
@@ -681,7 +685,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         )} extends $name("$value", "${e.name}", $intValue)"""
       },
       newline,
-      line"val values: List[$name] = List".args(
+      line"val values: $list[$name] = $list".args(
         values.map(_.name)
       ),
       line"implicit val schema: $Schema_[$name] = $enumeration_(values).withId(id).addHints(hints)"
@@ -805,20 +809,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderNativeHint(hint: Hint.Native): Line =
-    Line(
-      smithy4s.recursion
-        .cata(renderTypedNode)(hint.typedNode)
-        .run(true)
-        ._2
-    )
+    smithy4s.recursion
+      .cata(renderTypedNode)(hint.typedNode)
+      .run(true)
+      ._2
 
   private def renderDefault(hint: Hint.Default): Line =
-    Line(
-      smithy4s.recursion
-        .cata(renderTypedNode)(hint.typedNode)
-        .run(true)
-        ._2
-    )
+    smithy4s.recursion
+      .cata(renderTypedNode)(hint.typedNode)
+      .run(true)
+      ._2
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
@@ -861,11 +861,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   type InCollection = Boolean
 
   type Contextual[A] = cats.data.Reader[TopLevel, A]
-  type CString = Contextual[(InCollection, String)]
+  type CString = Contextual[(InCollection, Line)]
 
-  implicit class ContextualOps(val str: String) {
-    def write: CString = (false, str).pure[Contextual]
-    def writeCollection: CString = (true, str).pure[Contextual]
+  implicit class ContextualOps(val line: Line) {
+    def write: CString = (false, line).pure[Contextual]
+    def writeCollection: CString = (true, line).pure[Contextual]
   }
 
   implicit class CStringOps(val str: CString) {
@@ -874,82 +874,83 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, _, _, name) =>
-      (ref.show + "." + name + ".widen").write
+      line"${ref.show + "." + name + ".widen"}".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
-        case (_, FieldTN.RequiredTN(value))     => value.runDefault
-        case (_, FieldTN.OptionalSomeTN(value)) => s"Some(${value.runDefault})"
-        case (_, FieldTN.OptionalNoneTN)        => "None"
+        case (_, FieldTN.RequiredTN(value)) => value.runDefault
+        case (_, FieldTN.OptionalSomeTN(value)) =>
+          line"$some(${value.runDefault})"
+        case (_, FieldTN.OptionalNoneTN) => line"$none"
       }
-      s"${ref.show}(${fieldStrings.mkString(", ")})".write
+      line"${ref.show}(${fieldStrings.intercalate(Line.comma)})".write
     case NewTypeTN(ref, target) =>
       Reader(topLevel => {
         val (wroteCollection, text) = target.run(topLevel)
         if (wroteCollection && !topLevel)
           false -> text
         else
-          false -> s"${ref.show}($text)"
+          false -> line"${ref.show}($text)"
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
-      (s"${ref.show}" + "." + s"${altName.capitalize}Case(${alt.runDefault}).widen").write
+      line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write
 
     case CollectionTN(collectionType, values) =>
       val col = collectionType.tpe
-      s"$col(${values.map(_.runDefault).mkString(", ")})".writeCollection
+      line"$col(${values.map(_.runDefault).intercalate(Line.comma)})".writeCollection
     case MapTN(values) =>
-      s"Map(${values
-        .map { case (k, v) => k.runDefault + " -> " + v.runDefault }
-        .mkString(", ")})".writeCollection
+      line"$map(${values
+        .map { case (k, v) => k.runDefault + line" -> " + v.runDefault }
+        .intercalate(Line.comma)})".writeCollection
     case PrimitiveTN(prim, value) =>
       renderPrimitive(prim)(value).write
   }
 
-  private def renderPrimitive[T](prim: Primitive.Aux[T]): T => String =
+  private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
     prim match {
       case Primitive.BigDecimal =>
-        (bd: BigDecimal) => s"scala.math.BigDecimal($bd)"
-      case Primitive.BigInteger => (bi: BigInt) => s"scala.math.BigInt($bi)"
-      case Primitive.Unit       => _ => "()"
-      case Primitive.Double     => _.toString
-      case Primitive.Float      => _.toString
-      case Primitive.Long       => _.toString
-      case Primitive.Int        => _.toString
-      case Primitive.Short      => _.toString
-      case Primitive.Bool       => _.toString
-      case Primitive.Uuid       => (uuid => s"java.util.UUID.fromString($uuid)")
+        (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
+      case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
+      case Primitive.Unit       => _ => line"()"
+      case Primitive.Double     => t => line"${t.toString}"
+      case Primitive.Float      => t => line"${t.toString}"
+      case Primitive.Long       => t => line"${t.toString}"
+      case Primitive.Int        => t => line"${t.toString}"
+      case Primitive.Short      => t => line"${t.toString}"
+      case Primitive.Bool       => t => line"${t.toString}"
+      case Primitive.Uuid => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => { raw =>
         import scala.reflect.runtime.universe._
-        Literal(Constant(raw)).toString
+        line"${Literal(Constant(raw)).toString()}"
       }
       case Primitive.Document => { (node: Node) =>
-        node.accept(new NodeVisitor[String] {
-          def arrayNode(x: ArrayNode): String = {
+        node.accept(new NodeVisitor[Line] {
+          def arrayNode(x: ArrayNode): Line = {
             val innerValues = x.getElements().asScala.map(_.accept(this))
-            innerValues.mkString("smithy4s.Document.array(", ",", ")")
+            line"smithy4s.Document.array(${innerValues.toList.intercalate(Line.comma)})"
           }
-          def booleanNode(x: BooleanNode): String =
-            s"smithy4s.Document.fromBoolean(${x.getValue})"
-          def nullNode(x: NullNode): String =
-            "smithy4s.Document.nullDoc"
-          def numberNode(x: NumberNode): String =
-            s"smithy4s.Document.fromDouble(${x.getValue.doubleValue()})"
-          def objectNode(x: ObjectNode): String = {
+          def booleanNode(x: BooleanNode): Line =
+            line"smithy4s.Document.fromBoolean(${x.getValue})"
+          def nullNode(x: NullNode): Line =
+            line"smithy4s.Document.nullDoc"
+          def numberNode(x: NumberNode): Line =
+            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()})"
+          def objectNode(x: ObjectNode): Line = {
             val members = x.getMembers.asScala.map { member =>
               val key = s""""${member._1.getValue()}""""
               val value = member._2.accept(this)
-              s"$key -> $value"
+              line"$key -> $value"
             }
-            members.mkString("smithy4s.Document.obj(", ",", ")")
+            line"smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
           }
-          def stringNode(x: StringNode): String =
-            s"""smithy4s.Document.fromString("${x.getValue}")"""
+          def stringNode(x: StringNode): Line =
+            line"""smithy4s.Document.fromString("${x.getValue}")"""
         })
       }
-      case _ => _ => "null"
+      case _ => _ => line"null"
     }
 
 }

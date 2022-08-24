@@ -194,7 +194,7 @@ object CollisionAvoidance {
     }
 
   private def protect(str: String) =
-    if (reservedNames(str)) s"_${str}" else str
+    if (reservedKeywords(str)) s"_$str" else str
 
   private val reservedKeywords: Set[String] = Set(
     "abstract",
@@ -271,7 +271,7 @@ object CollisionAvoidance {
     "Nothing"
   )
 
-  private val reservedNames = reservedKeywords ++ reservedTypes
+  val reservedNames: Set[String] = reservedTypes
 
   class Names(compilationUnit: CompilationUnit) {
 
@@ -314,6 +314,12 @@ object CollisionAvoidance {
     val document_ = NameRef("smithy4s.schema.Schema", "Document")
     val uuid_ = NameRef("smithy4s.schema.Schema", "UUID")
     val Transformed_ = NameDef("Transformed")
+    val list = NameRef("scala", "List")
+    val set = NameRef("scala.collection.immutable", "Set")
+    val map = NameRef("scala.collection.immutable", "Map")
+    val option = NameRef("scala", "Option")
+    val none = NameRef("scala", "None")
+    val some = NameRef("scala", "Some")
 
     def reconcile(str: String): String = {
       val last = str.split('.').last

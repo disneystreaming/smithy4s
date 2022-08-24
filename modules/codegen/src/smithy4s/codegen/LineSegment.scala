@@ -45,6 +45,8 @@ object LineSegment {
     self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
     def asImport: String = s"${(pkg :+ name.split("\\.")(0)).mkString(".")}"
+    def isStdlib: Boolean =
+      pkg.headOption.fold(false)(_.equalsIgnoreCase("scala"))
   }
   object NameRef {
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)

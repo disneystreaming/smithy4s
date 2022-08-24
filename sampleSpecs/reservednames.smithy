@@ -7,18 +7,20 @@ use smithy4s.api#simpleRestJson
 @simpleRestJson
 service ReservedNameService {
     version: "1.0.0",
-    operations: [Set,List,Option]
+    operations: [Set,List,Map,Option]
 }
 
-@http(method: "POST", uri: "/api/set/{key}", code: 204)
+@http(method: "POST", uri: "/api/set/", code: 204)
 operation Set {
     input := {
-        @httpLabel
         @required
-        key: Key,
-
-        value: Value
+       set:mySet
     }
+}
+
+@uniqueItems
+list mySet {
+    member: Value
 }
 
 @http(method: "POST", uri: "/api/list/{value}", code: 204)
@@ -29,6 +31,18 @@ operation List {
         value: Value
     }
 }
+@http(method: "POST", uri: "/api/map/", code: 204)
+operation Map {
+    input := {
+        @required
+        value: myMap
+    }
+}
+
+map myMap {
+    key: Key
+    value: Value
+}
 
 @http(method: "POST", uri: "/api/option/{value}", code: 204)
 operation Option {
@@ -38,6 +52,8 @@ operation Option {
         value: Value
     }
 }
+
+
 
 
 
