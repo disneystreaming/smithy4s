@@ -4,6 +4,7 @@ title: Deriving CLIs
 ---
 
 - The Smithy4s Decline module provides the capability to derive a [Decline](https://ben.kirw.in/decline/) Cli for your service.
+- The Cli will be in the form of a [CommandIOApp](https://ben.kirw.in/decline/effect.html) 
 - Lets revisit our HelloWorld smithy definition from the [Quickstart](modules/docs/src/01-overview/02-quickstart.md)
 
 ```kotlin
@@ -51,6 +52,7 @@ object HelloWorldServiceInstance{
 }
 ```
  - Now Using the ```decline``` module from Smithy4s we can wrap the service instance in an instance of a `Smithy4sCli`.
+    - The `Smithy4sCli` allows the customization of the Opts and stdin/stdout/stderr handling 
  - There is a convenient class ```Smithy4sSimpleStandaloneCli``` that you can extend and simply pass in the service wrapped in an Opts 
    - ``` object Hello extends standalone.Smithy4sSimpleStandaloneCli(Opts(HelloWorldServiceInstance.simple)) ```
  - ```Hello``` is now a runnable `CommandIOApp` and will provide the following interface
