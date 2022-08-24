@@ -4,7 +4,7 @@ title: Deriving CLIs
 ---
 
 - The Smithy4s Decline module provides the capability to derive a [Decline](https://ben.kirw.in/decline/) Cli for your service.
-- Lets revisit our HelloWorld smithy definition from the [Quickstart](../01-overview/02-quickstart.md)
+- Let's revisit our HelloWorld smithy definition from the [Quickstart](../01-overview/02-quickstart.md)
 
 ```kotlin
 namespace smithy4s.hello
