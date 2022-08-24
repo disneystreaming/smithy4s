@@ -47,7 +47,7 @@ object ToLine {
       case Type.Collection(collectionType, member) =>
         val line = render(member)
         val col = collectionType.tpe
-        NameRef("scala.collection.immutable", col).toLine + Literal(
+       col.toLine + Literal(
           "["
         ) + line + Literal("]")
       case Type.Map(key, value) =>
@@ -72,25 +72,29 @@ object ToLine {
       case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn).toLine
     }
   }
-  private def primitiveLine(p: Primitive): NameRef =
+
+  private def primitiveLine(p: Primitive): NameRef = {
+    def scalaP(name:String) = NameRef("scala", name)
+    def javaP(name:String) = NameRef("java.lang", name)
     p match {
-      case Primitive.Unit       => NameRef("Unit")
+      case Primitive.Unit       => scalaP("Unit")
       case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
-      case Primitive.Bool       => NameRef("Boolean")
-      case Primitive.String     => NameRef("String")
+      case Primitive.Bool       => scalaP("Boolean")
+      case Primitive.String     => javaP("String")
       case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
-      case Primitive.Byte       => NameRef("Byte")
-      case Primitive.Int        => NameRef("Int")
-      case Primitive.Short      => NameRef("Short")
-      case Primitive.Long       => NameRef("Long")
-      case Primitive.Float      => NameRef("Float")
-      case Primitive.Double     => NameRef("Double")
-      case Primitive.BigDecimal => NameRef("BigDecimal")
-      case Primitive.BigInteger => NameRef("BigInt")
+      case Primitive.Byte       => scalaP("Byte")
+      case Primitive.Int        => scalaP("Int")
+      case Primitive.Short      => scalaP("Short")
+      case Primitive.Long       => scalaP("Long")
+      case Primitive.Float      => scalaP("Float")
+      case Primitive.Double     => scalaP("Double")
+      case Primitive.BigDecimal => scalaP("BigDecimal")
+      case Primitive.BigInteger => scalaP("BigInt")
       case Primitive.Uuid       => NameRef("java.util", "UUID")
       case Primitive.Document   => NameRef("smithy4s", "Document")
       case Primitive.Nothing    => NameRef("Nothing")
     }
+  }
 }
 
 // Models

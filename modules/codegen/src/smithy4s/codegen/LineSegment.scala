@@ -44,10 +44,15 @@ object LineSegment {
   case class NameRef(pkg: List[String], name: String) extends LineSegment {
     self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
+
     def asImport: String = s"${(pkg :+ name.split("\\.")(0)).mkString(".")}"
-    def isStdlib: Boolean =
-      pkg.headOption.fold(false)(_.equalsIgnoreCase("scala"))
+
+    def isAutoImported: Boolean = {
+      val value = pkg.mkString(".")
+      value.equalsIgnoreCase("scala") || value.equalsIgnoreCase("java.lang")
+    }
   }
+
   object NameRef {
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
     def apply(pkg: String, name: String): NameRef =

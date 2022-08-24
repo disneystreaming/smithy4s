@@ -215,12 +215,12 @@ object Type {
   ) extends Type
 }
 
-sealed abstract class CollectionType(val tpe: String)
+sealed abstract class CollectionType(val tpe: NameRef)
 object CollectionType {
-  case object List extends CollectionType("List")
-  case object Set extends CollectionType("Set")
-  case object Vector extends CollectionType("Vector")
-  case object IndexedSeq extends CollectionType("IndexedSeq")
+  case object List extends CollectionType(NameRef("scala.List"))
+  case object Set extends CollectionType(NameRef("scala.collection.immutable.Set"))
+  case object Vector extends CollectionType(NameRef("scala.Vector"))
+  case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
 
 sealed trait Hint

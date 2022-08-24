@@ -68,7 +68,7 @@ object Renderer {
             case nameRef @ NameRef(pkg, name)
                 if pkg.nonEmpty && !nameCollisions.contains(
                   name
-                ) && !nameRef.isStdlib &&
+                ) && !nameRef.isAutoImported &&
                   !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
               nameRef.show
             case Import(value) => value

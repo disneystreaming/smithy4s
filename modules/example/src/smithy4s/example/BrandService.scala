@@ -13,11 +13,11 @@ import smithy4s.Endpoint
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def addBrands(brands: Option[scala.collection.immutable.List[String]] = None) : F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
+  def addBrands(brands: Option[List[String]] = None) : F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : BrandServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends BrandServiceGen[G] {
-    def addBrands(brands: Option[scala.collection.immutable.List[String]] = None) = transformation[AddBrandsInput, Nothing, Unit, Nothing, Nothing](self.addBrands(brands))
+    def addBrands(brands: Option[List[String]] = None) = transformation[AddBrandsInput, Nothing, Unit, Nothing, Nothing](self.addBrands(brands))
   }
 }
 
@@ -29,7 +29,7 @@ object BrandServiceGen extends Service[BrandServiceGen, BrandServiceOperation] {
 
   val hints : Hints = Hints.empty
 
-  val endpoints: scala.List[Endpoint[BrandServiceOperation, _, _, _, _, _]] = scala.List(
+  val endpoints: List[Endpoint[BrandServiceOperation, _, _, _, _, _]] = List(
     AddBrands,
   )
 
@@ -40,7 +40,7 @@ object BrandServiceGen extends Service[BrandServiceGen, BrandServiceOperation] {
   }
 
   object reified extends BrandServiceGen[BrandServiceOperation] {
-    def addBrands(brands: Option[scala.collection.immutable.List[String]] = None) = AddBrands(AddBrandsInput(brands))
+    def addBrands(brands: Option[List[String]] = None) = AddBrands(AddBrandsInput(brands))
   }
 
   def transform[P[_, _, _, _, _]](transformation: Transformation[BrandServiceOperation, P]): BrandServiceGen[P] = reified.transform(transformation)
