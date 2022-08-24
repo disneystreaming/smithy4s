@@ -326,11 +326,11 @@ private[dynamic] object Compiler {
                 hints = Hints.empty
               )
           }
-          val fromValue = values(_: Int)
+          val fromOrdinal = values(_: Int)
           update(
             id,
             shape.traits,
-            enumeration(fromValue, values)
+            enumeration(fromOrdinal, values)
           )
         }
         case _ => update(id, shape.traits, string)
