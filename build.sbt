@@ -1,4 +1,5 @@
 import org.scalajs.jsenv.nodejs.NodeJSEnv
+
 import java.io.File
 import sys.process._
 
@@ -6,7 +7,8 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-
+ThisBuild / mimaBaseVersion := "0.15"
+ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -49,6 +51,7 @@ lazy val allModules = Seq(
   tests.projectRefs,
   http4s.projectRefs,
   `http4s-swagger`.projectRefs,
+  decline.projectRefs,
   codegenPlugin.projectRefs,
   benchmark.projectRefs,
   protocol.projectRefs,
@@ -166,7 +169,6 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
       val files = (Compile / managedSources).value
@@ -176,6 +178,7 @@ lazy val core = projectMatrix
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
     }
   )
+  .enablePlugins(MimaVersionPlugin)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -214,7 +217,6 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     genDiscoverModels := true,
     Compile / allowedNamespaces := Seq(
       "aws.api",
@@ -252,7 +254,6 @@ lazy val aws = projectMatrix
         Dependencies.Weaver.scalacheck.value % Test
       )
     },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / fork := true
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -317,7 +318,6 @@ lazy val codegen = projectMatrix
       "io.get-coursier" %% "coursier" % "2.0.16",
       Dependencies.Weaver.cats.value % Test
     ),
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
   )
@@ -334,7 +334,7 @@ lazy val `codegen-cli` = projectMatrix
   .settings(
     isCE3 := true,
     libraryDependencies ++= Seq(
-      "com.monovore" %% "decline" % "2.3.0",
+      Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -364,7 +364,14 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       // plugin is published
       // this allows running `scripted` alone
       val _ = List(
+        // for the code being built
         (core.jvm(Scala213) / publishLocal).value,
+        (dynamic.jvm(Scala213) / publishLocal).value,
+        (codegen.jvm(Scala213) / publishLocal).value,
+        // dependency of codegen
+        (openapi.jvm(Scala213) / publishLocal).value,
+
+        // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
         (openapi.jvm(Scala212) / publishLocal).value,
         (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
@@ -373,6 +380,20 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     },
     scriptedBufferLog := false
   )
+
+lazy val decline = (projectMatrix in file("modules/decline"))
+  .settings(
+    name := "decline",
+    isCE3 := true,
+    libraryDependencies ++= List(
+      Dependencies.Cats.core.value,
+      Dependencies.Decline.effect.value,
+      Dependencies.Weaver.cats.value % Test
+    )
+  )
+  .dependsOn(json)
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
 
 /**
  * This module contains the smithy specification of a bunch of types
@@ -486,6 +507,7 @@ lazy val json = projectMatrix
     libraryDependencies ++= munitDeps.value,
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
+  .enablePlugins(MimaVersionPlugin)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -524,6 +546,7 @@ lazy val http4s = projectMatrix
       else moduleName.value
     }
   )
+  .enablePlugins(MimaVersionPlugin)
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
 /**
@@ -695,6 +718,10 @@ lazy val Dependencies = new {
       Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
   }
 
+  object Decline {
+    val core = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+  }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % "3.2.12")
@@ -718,7 +745,7 @@ lazy val Dependencies = new {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.3.14")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.14" else "0.22.14")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.15" else "0.22.14")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
