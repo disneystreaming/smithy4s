@@ -150,33 +150,47 @@ private[dynamic] object Compiler {
       )
     }
 
-    private def allHints(traits: Option[Map[IdRef, Document]]): Seq[Hint] = {
-      traits
-        .getOrElse(Map.empty)
-        .collect { case (ValidIdRef(k), v) =>
-          toHint(k, v)
-        }
-        .toSeq
-    }
+    private def allHints(traits: Option[Map[IdRef, Document]]): Hints =
+      Hints.fromSeq {
+        traits
+          .getOrElse(Map.empty)
+          .collect { case (ValidIdRef(k), v) =>
+            toHint(k, v)
+          }
+          .toSeq
+      }
 
     private def update[A](
         shapeId: ShapeId,
         traits: Option[Map[IdRef, Document]],
         lSchema: Eval[Schema[A]]
+    ): Unit =
+      updateWithHints(shapeId, allHints(traits), lSchema)
+
+    private def updateWithHints[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        lSchema: Eval[Schema[A]]
     ): Unit = {
       schemaMap += (shapeId -> lSchema.map { sch =>
         sch
           .withId(shapeId)
-          .addHints(allHints(traits): _*)
+          .addHints(hints)
           .asInstanceOf[Schema[DynData]]
       })
     }
 
-    def update[A](
+    private def update[A](
         shapeId: ShapeId,
         traits: Option[Map[IdRef, Document]],
         schema: Schema[A]
     ): Unit = update(shapeId, traits, Eval.now(schema))
+
+    private def updateWithHints[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        lSchema: Schema[A]
+    ): Unit = updateWithHints(shapeId, hints, Eval.now(lSchema))
 
     def default: Unit = ()
 
@@ -210,6 +224,82 @@ private[dynamic] object Compiler {
     override def blobShape(id: ShapeId, shape: BlobShape): Unit =
       update(id, shape.traits, bytes)
 
+    override def enumShape(id: ShapeId, shape: EnumShape): Unit = {
+      val values: List[EnumValue[Int]] =
+        shape.members
+          .getOrElse(Map.empty)
+          .toList
+          // Introducing arbitrary ordering for reproducible rendering.
+          // Needs to happen before zipWithIndex so that intValue is also predictable.
+          .sortBy(_._1)
+          .flatMap { case (k, m) =>
+            getTrait[smithy.api.EnumValue](m.traits).toList.map {
+              _.value match {
+                case Document.DString(s) => (k, s)
+                case v =>
+                  throw new IllegalArgumentException(
+                    s"enum value $k has a non-string value: $v"
+                  )
+              }
+            }
+          }
+          .zipWithIndex
+          .map { case ((name, stringValue), i) =>
+            EnumValue(
+              stringValue = stringValue,
+              intValue = i,
+              value = i,
+              name = name,
+              hints = Hints.empty
+            )
+          }
+
+      val fromInt = values(_: Int)
+      val theEnum = enumeration(fromInt, values)
+
+      update(id, shape.traits, theEnum)
+    }
+
+    override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
+      val values: Map[Int, EnumValue[Int]] = shape.members
+        .getOrElse(Map.empty)
+        .toList
+        .flatMap { case (k, m) =>
+          getTrait[smithy.api.EnumValue](m.traits).toList.map {
+            _.value match {
+              case Document.DNumber(num) =>
+                // toInt is safe because Smithy validates the model at loading time
+                (k, num.toInt)
+              case v =>
+                throw new IllegalArgumentException(
+                  s"intEnum value $k has a non-numeric value: $v"
+                )
+            }
+          }
+        }
+        .map { case (name, intValue) =>
+          intValue -> EnumValue(
+            stringValue = name,
+            intValue = intValue,
+            value = intValue,
+            name = name,
+            hints = Hints.empty
+          )
+        }
+        .toMap
+
+      val valueList = values.map(_._2).toList.sortBy(_.intValue)
+
+      val theEnum = enumeration(values.apply, valueList)
+
+      updateWithHints(
+        id, {
+          allHints(shape.traits) ++ Hints(IntEnum())
+        },
+        theEnum
+      )
+    }
+
     override def booleanShape(id: ShapeId, shape: BooleanShape): Unit =
       update(id, shape.traits, boolean)
 
@@ -222,21 +312,26 @@ private[dynamic] object Compiler {
       (maybeUuid, maybeEnum) match {
         case (Some(_), _) => update(id, shape.traits, uuid)
         case (None, Some(e)) => {
-          // Using the intValue as a runtime value
           val values = e.value.zipWithIndex.map {
             case (enumDefinition, intValue) =>
+              val value = enumDefinition.value.value
               EnumValue(
-                enumDefinition.value.value,
-                intValue,
-                intValue,
-                enumDefinition.name
+                stringValue = value,
+                intValue = intValue,
+                // Using the intValue as a runtime value
+                value = intValue,
+                name = enumDefinition.name
                   .map(_.value)
-                  .getOrElse(enumDefinition.value.value.toUpperCase()),
-                Hints.empty
+                  .getOrElse(value.toUpperCase()),
+                hints = Hints.empty
               )
           }
           val fromOrdinal = values(_: Int)
-          update(id, shape.traits, enumeration(fromOrdinal, values))
+          update(
+            id,
+            shape.traits,
+            enumeration(fromOrdinal, values)
+          )
         }
         case _ => update(id, shape.traits, string)
       }
@@ -324,7 +419,7 @@ private[dynamic] object Compiler {
           inputSchema,
           outputSchema,
           errorable,
-          Hints(allHints(shape.traits): _*)
+          allHints(shape.traits)
         )
       }
     }
@@ -346,7 +441,7 @@ private[dynamic] object Compiler {
           id,
           shape.version.getOrElse(""),
           endpoints,
-          Hints(allHints(shape.traits): _*)
+          allHints(shape.traits)
         )
       }
 
@@ -389,7 +484,7 @@ private[dynamic] object Compiler {
                     )
                   }
                 val memberHints = allHints(mShape.traits)
-                lField.map(_.addHints(memberHints: _*))
+                lField.map(_.addHints(memberHints.all.toSeq: _*))
               }
               .toVector
               .sequence
@@ -411,7 +506,7 @@ private[dynamic] object Compiler {
                   val memberHints = allHints(mShape.traits)
                   schema(mShape.target)
                     .map(_.oneOf[DynAlt](label, (data: Any) => (index, data)))
-                    .map(_.addHints(memberHints: _*))
+                    .map(_.addHints(memberHints))
                 }
                 .toVector
                 .sequence
@@ -470,6 +565,18 @@ private[dynamic] object Compiler {
         shape: MapShape
     ): Set[ShapeId] =
       fromMembers(Set(shape.key, shape.value))
+
+    override def enumShape(
+        id: ShapeId,
+        shape: EnumShape
+    ): Set[ShapeId] =
+      fromMembers(shape.members.foldMap(_.values.toSet))
+
+    override def intEnumShape(
+        id: ShapeId,
+        shape: IntEnumShape
+    ): Set[ShapeId] =
+      fromMembers(shape.members.foldMap(_.values.toSet))
   }
 
 }

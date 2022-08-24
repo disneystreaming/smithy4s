@@ -450,6 +450,29 @@ abstract class PizzaSpec
       }
   }
 
+  routerTest("Positive: can find intEnum endpoint by int value value") {
+    (client, uri, log) =>
+      for {
+        goodRes <- client.send[Json](
+          GET(uri / "get-int-enum" / "1"),
+          log
+        )
+        stringValue <- client.send[Json](
+          GET(uri / "get-int-enum" / "FIRST"),
+          log
+        )
+        badValue <- client.send[Json](
+          GET(uri / "get-int-enum" / "3"),
+          log
+        )
+      } yield {
+        expect(goodRes._1 == 200) &&
+        expect(goodRes._3.noSpaces == """{"result":1}""") &&
+        expect(stringValue._1 == 400) &&
+        expect(badValue._1 == 400)
+      }
+  }
+
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(

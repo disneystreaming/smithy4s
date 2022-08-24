@@ -44,6 +44,8 @@ private[internals] trait ShapeVisitor[T] extends ((ShapeId, Shape) => T) {
     case Shape.StructureCase(s)  => structureShape(id, s)
     case Shape.UnionCase(s)      => unionShape(id, s)
     case Shape.TimestampCase(s)  => timestampShape(id, s)
+    case Shape.EnumCase(s)       => enumShape(id, s)
+    case Shape.IntEnumCase(s)    => intEnumShape(id, s)
   }
 
   def blobShape(id: ShapeId, x: BlobShape): T
@@ -67,6 +69,8 @@ private[internals] trait ShapeVisitor[T] extends ((ShapeId, Shape) => T) {
   def structureShape(id: ShapeId, x: StructureShape): T
   def unionShape(id: ShapeId, x: UnionShape): T
   def timestampShape(id: ShapeId, x: TimestampShape): T
+  def enumShape(id: ShapeId, x: EnumShape): T
+  def intEnumShape(id: ShapeId, x: IntEnumShape): T
 }
 
 private[internals] object ShapeVisitor {
@@ -95,6 +99,8 @@ private[internals] object ShapeVisitor {
     def structureShape(id: ShapeId, x: StructureShape): T = default
     def unionShape(id: ShapeId, x: UnionShape): T = default
     def timestampShape(id: ShapeId, x: TimestampShape): T = default
+    def enumShape(id: ShapeId, x: EnumShape): T = default
+    def intEnumShape(id: ShapeId, x: IntEnumShape): T = default
   }
 
 }
