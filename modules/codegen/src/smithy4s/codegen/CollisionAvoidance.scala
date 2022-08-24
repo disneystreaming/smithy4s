@@ -238,41 +238,6 @@ object CollisionAvoidance {
     "yield"
   )
 
-  private val reservedTypes: Set[String] = Set(
-    "String",
-    "Byte",
-    "Bytes",
-    "Int",
-    "Short",
-    "Boolean",
-    "Long",
-    "Double",
-    "Float",
-    "BigInt",
-    "BigDecimal",
-    "Array",
-    "Vector",
-    "Seq",
-    "Map",
-    "List",
-    "Nil",
-    "Stream",
-    "LazyList",
-    "StringBuilder",
-    "Range",
-    "Either",
-    "Left",
-    "Right",
-    "Set",
-    "Throwable",
-    "Option",
-    "Some",
-    "None",
-    "Nothing"
-  )
-
-  val reservedNames: Set[String] = reservedTypes
-
   class Names(compilationUnit: CompilationUnit) {
 
     val definitions = compilationUnit.declarations.foldMap { d => Set(d.name) }
