@@ -364,7 +364,14 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       // plugin is published
       // this allows running `scripted` alone
       val _ = List(
+        // for the code being built
         (core.jvm(Scala213) / publishLocal).value,
+        (dynamic.jvm(Scala213) / publishLocal).value,
+        (codegen.jvm(Scala213) / publishLocal).value,
+        // dependency of codegen
+        (openapi.jvm(Scala213) / publishLocal).value,
+
+        // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
         (openapi.jvm(Scala212) / publishLocal).value,
         (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
