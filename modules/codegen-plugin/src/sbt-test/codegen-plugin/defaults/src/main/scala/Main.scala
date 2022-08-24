@@ -16,6 +16,9 @@
 
 package demo
 
+import smithy4s.codegen.ModelLoader
+import smithy4s.dynamic.DynamicSchemaIndex
+
 object Main extends App {
   try {
     println(smithy.api.NonEmptyString("nope").value)
@@ -24,4 +27,19 @@ object Main extends App {
       println("failed")
       sys.exit(1)
   }
+
+  def buildSchemaIndex() =
+    ModelLoader
+      .load(
+        specs = Set.empty,
+        dependencies = Nil,
+        repositories = Nil,
+        transformers = Nil,
+        discoverModels = true,
+        localJars = Nil
+      )
+      ._2
+
+  val model = buildSchemaIndex()
+  DynamicSchemaIndex.loadModel(model).toTry.get
 }

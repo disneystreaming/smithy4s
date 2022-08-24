@@ -40,7 +40,9 @@ object Hints {
 
   val empty: Hints = new Impl(Map.empty)
 
-  def apply[S](bindings: Hint*): Hints = {
+  def apply[S](bindings: Hint*): Hints = fromSeq(bindings)
+
+  def fromSeq[S](bindings: Seq[Hint]): Hints = {
     new Impl(bindings.map {
       case b @ Binding.StaticBinding(k, _)  => k.id -> b
       case b @ Binding.DynamicBinding(k, _) => k -> b

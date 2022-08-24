@@ -47,7 +47,7 @@ jobs:
       BUILD_KEY: ${{matrix.ceVersion}}_${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -78,6 +78,7 @@ jobs:
           sbt scalafmtCheckAll \
               headerCheck \
               "docs/mdoc"
+          (cd ./modules/website && yarn && yarn swizzle docusaurus-lunr-search SearchBar --danger --wrap && yarn build)
 
       - name: Check for untracked changes
         run: |
@@ -85,8 +86,11 @@ jobs:
           ./scripts/check-dirty.sh
           echo "Built $(cat version)"
 
+      - name: Check for Binary Compatibility
+        run: sbt mimaReportBinaryIssuesIfRelevant
+
       - name: Upload compilation cache
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: compilation-${{env.BUILD_KEY}}.zip
           path: /tmp/remote-cache
@@ -105,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -118,7 +122,7 @@ jobs:
         uses: coursier/cache-action@v6
 
       - name: Download compilation cache
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: /tmp/remote-cache
 
