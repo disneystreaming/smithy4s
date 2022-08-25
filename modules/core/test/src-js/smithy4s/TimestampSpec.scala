@@ -127,4 +127,36 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       expect.same(parsed, None)
     }
   }
+
+  property("Converts to concise date format") {
+    forAll { (i: Date) =>
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val ts = Timestamp(epochSecond, nano)
+      val formatted = ts.conciseDate
+      val year = i.getUTCFullYear().toInt
+      val month = i.getUTCMonth().toInt + 1 // in js month is 0-11
+      val date = i.getUTCDate().toInt
+      val expected = f"$year%04d$month%02d$date%02d"
+      expect.same(formatted, expected)
+    }
+  }
+
+  property("Converts to concise date time format") {
+    forAll { (i: Date) =>
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val ts = Timestamp(epochSecond = epochSecond, nano = nano)
+      val formatted = ts.conciseDateTime
+      val year = i.getUTCFullYear().toInt
+      val month = i.getUTCMonth().toInt + 1 // in js month is 0-11
+      val date = i.getUTCDate().toInt
+      val hours = i.getUTCHours().toInt
+      val minutes = i.getUTCMinutes().toInt
+      val seconds = i.getUTCSeconds().toInt
+      val expected =
+        f"$year%04d$month%02d$date%02dT$hours%02d$minutes%02d$seconds%02dZ"
+      expect.same(formatted, expected)
+    }
+  }
 }
