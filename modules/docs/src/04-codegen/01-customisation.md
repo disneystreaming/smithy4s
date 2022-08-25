@@ -325,3 +325,92 @@ string Email
 By default, smithy4s renders collection types as unwrapped EXCEPT when the collection has been refined. In this case, the collection will be rendered within a newtype by default. If you wish your refined collection be rendered unwrapped, you can accomplish this using the same `@unwrap` trait annotation on it.
 
 :::
+
+## Default rendering
+
+Smithy4s allows you to customize how defaults on the fields of smithy structures are rendered inside of case classes. There are three options:
+
+- `FULL`
+- `OPTION_ONLY`
+- `NONE`
+
+The default is `FULL`.
+
+#### FULL
+
+`FULL` means that default values are rendered for all field types. For example:
+
+```kotlin
+use smithy4s.meta#defaultRender
+
+@defaultRender(mode: "FULL")
+structure FullExample {
+  one: Integer = 1
+  two: String
+  @required
+  three: String
+}
+```
+
+would render to something like:
+
+```scala
+case class FullExample(three: String, one: Int = 1, two: Option[String] = None)
+```
+
+Notice how the fields above are ordered. The reason for this is that fields are ordered as:
+
+1. Required Fields
+2. Fields with defaults
+3. Optional Fields
+
+#### OPTION_ONLY
+
+```kotlin
+use smithy4s.meta#defaultRender
+
+@defaultRender(mode: "OPTION_ONLY")
+structure OptionExample {
+  one: Integer = 1
+  two: String
+  @required
+  three: String
+}
+```
+
+would render to something like:
+
+```scala
+case class FullExample(one: String, three: String, two: Option[String] = None)
+```
+
+Now `one` doesn't have a default rendered and as such it is placed first in the case class.
+
+#### NONE
+
+```kotlin
+use smithy4s.meta#defaultRender
+
+@defaultRender(mode: "NONE")
+structure OptionExample {
+  one: Integer = 1
+  two: String
+  @required
+  three: String
+}
+```
+
+would render to something like:
+
+```scala
+case class FullExample(one: String, two: Option[String], three: String)
+```
+
+Now none of the fields are rendered with defaults. As such, the order of the fields is the same as is defined in the smithy structure.
+
+:::caution
+
+The presence of the `defaultRender` trait does NOT change the way smithy4s codecs behave. As such, defaults will still be used when decoding
+fields inside of clients and servers. This feature is purely for changing the generated code for your convenience.
+
+:::

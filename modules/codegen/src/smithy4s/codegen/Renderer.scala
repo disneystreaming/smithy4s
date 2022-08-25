@@ -644,7 +644,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             .map(renderDefault)
           Line.required(line, maybeDefault)
         } else {
-          Line.optional(line, !noDefault)
+          Line.optional(
+            line,
+            !noDefault && !field.hints.contains(Hint.NoDefault)
+          )
         }
 
         line"$name: " + tpeAndDefault
