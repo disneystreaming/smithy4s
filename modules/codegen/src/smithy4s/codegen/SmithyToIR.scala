@@ -702,13 +702,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       renderMode match {
         case DefaultRenderTrait.DefaultRenderMode.FULL =>
-          // val required =
-          //   result.filter(f => f.required && !hintsContainsDefault(f))
-          // val requiredDefaulted =
-          //   result.filter(f => f.required && hintsContainsDefault(f))
-          // val optional = result.filterNot(_.required)
-
-          // required ++ requiredDefaulted ++ optional
           result.sortBy(hintsContainsDefault).sortBy(!_.required)
         case DefaultRenderTrait.DefaultRenderMode.OPTION_ONLY =>
           result.sortBy(!_.required)
