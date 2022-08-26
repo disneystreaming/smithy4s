@@ -108,20 +108,3 @@ string Import
 /// by default. Adding this trait will cause the collection to become unwrapped.
 @trait(selector: ":is(simpleType, list, map, set)")
 structure unwrap {}
-
-enum DefaultRenderMode {
-    FULL
-    OPTION_ONLY
-    NONE
-}
-
-/// Allows changing how defaults are rendered
-/// for structures. FULL is the default and means that
-/// defaults are rendered in case classes for all
-/// types. OPTION_ONLY means that defaults are rendered only for
-/// optional types. NONE means that no defualts are rendered
-/// regardless of type.
-@trait(selector: "structure")
-structure defaultRender {
-    mode: DefaultRenderMode
-}

@@ -1,8 +1,8 @@
 $version: "2.0"
 
-namespace smithy4s.example
+metadata defaultRenderMode = "FULL"
 
-use smithy4s.meta#defaultRender
+namespace smithy4s.example
 
 list StringList {
   member: String
@@ -14,24 +14,7 @@ structure DefaultTest {
   three: StringList = []
 }
 
-@defaultRender(mode: "NONE")
-structure DefaultNone {
-  one: Integer = 1
-  two: String
-  @required
-  three: String
-}
-
-@defaultRender(mode: "OPTION_ONLY")
-structure DefaultOptionOnly {
-  one: Integer = 1
-  two: String
-  @required
-  three: String
-}
-
-@defaultRender(mode: "FULL")
-structure DefaultFull {
+structure DefaultOrderingTest {
   one: Integer = 1
   two: String
   @required

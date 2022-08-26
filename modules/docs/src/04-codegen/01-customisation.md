@@ -336,14 +336,15 @@ Smithy4s allows you to customize how defaults on the fields of smithy structures
 
 The default is `FULL`.
 
+This value is set using metadata which means that the setting will be applied to all the rendering done by smithy4s.
+
 #### FULL
 
 `FULL` means that default values are rendered for all field types. For example:
 
 ```kotlin
-use smithy4s.meta#defaultRender
+metadata defaultRenderMode = "FULL"
 
-@defaultRender(mode: "FULL")
 structure FullExample {
   one: Integer = 1
   two: String
@@ -367,9 +368,8 @@ Notice how the fields above are ordered. The reason for this is that fields are 
 #### OPTION_ONLY
 
 ```kotlin
-use smithy4s.meta#defaultRender
+metadata defaultRenderMode = "OPTION_ONLY"
 
-@defaultRender(mode: "OPTION_ONLY")
 structure OptionExample {
   one: Integer = 1
   two: String
@@ -389,9 +389,8 @@ Now `one` doesn't have a default rendered and as such it is placed first in the 
 #### NONE
 
 ```kotlin
-use smithy4s.meta#defaultRender
+metadata defaultRenderMode = "NONE"
 
-@defaultRender(mode: "NONE")
 structure OptionExample {
   one: Integer = 1
   two: String
@@ -410,7 +409,7 @@ Now none of the fields are rendered with defaults. As such, the order of the fie
 
 :::caution
 
-The presence of the `defaultRender` trait does NOT change the way smithy4s codecs behave. As such, defaults will still be used when decoding
+The presence of the `defaultRenderMode` metadata does NOT change the way smithy4s codecs behave. As such, defaults will still be used when decoding
 fields inside of clients and servers. This feature is purely for changing the generated code for your convenience.
 
 :::

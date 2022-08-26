@@ -23,7 +23,6 @@ import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.RefinementTrait
-import smithy4s.meta.DefaultRenderTrait
 import smithy4s.recursion._
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -68,6 +67,29 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .iterator()
       .asScala
       .toList
+
+  private sealed trait DefaultRenderMode
+  private object DefaultRenderMode {
+    case object Full extends DefaultRenderMode
+    case object OptionOnly extends DefaultRenderMode
+    case object NoDefaults extends DefaultRenderMode
+
+    def fromString(str: String): Option[DefaultRenderMode] = str match {
+      case "FULL"        => Some(Full)
+      case "OPTION_ONLY" => Some(OptionOnly)
+      case "NONE"        => Some(NoDefaults)
+      case _             => None
+    }
+  }
+
+  private val defaultRenderMode =
+    model
+      .getMetadata()
+      .asScala
+      .get("defaultRenderMode")
+      .flatMap(_.asStringNode().asScala)
+      .flatMap(f => DefaultRenderMode.fromString(f.getValue))
+      .getOrElse(DefaultRenderMode.Full)
 
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
@@ -663,13 +685,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     def tpe: Option[Type] = shape.accept(toType)
 
     def fields = {
-      val renderMode = shape
-        .getTrait(classOf[DefaultRenderTrait])
-        .asScala
-        .map(_.getDefaultRenderMode)
-        .getOrElse(DefaultRenderTrait.DefaultRenderMode.FULL)
       val noDefault =
-        if (renderMode == DefaultRenderTrait.DefaultRenderMode.NONE)
+        if (defaultRenderMode == DefaultRenderMode.NoDefaults)
           List(Hint.NoDefault)
         else List.empty
       val result = shape
@@ -678,7 +695,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(isStreaming)
         .map { member =>
           val default =
-            if (renderMode == DefaultRenderTrait.DefaultRenderMode.FULL)
+            if (defaultRenderMode == DefaultRenderMode.Full)
               maybeDefault(member)
             else List.empty
           (
@@ -700,12 +717,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           case _               => false
         }
 
-      renderMode match {
-        case DefaultRenderTrait.DefaultRenderMode.FULL =>
+      defaultRenderMode match {
+        case DefaultRenderMode.Full =>
           result.sortBy(hintsContainsDefault).sortBy(!_.required)
-        case DefaultRenderTrait.DefaultRenderMode.OPTION_ONLY =>
+        case DefaultRenderMode.OptionOnly =>
           result.sortBy(!_.required)
-        case DefaultRenderTrait.DefaultRenderMode.NONE => result
+        case DefaultRenderMode.NoDefaults => result
       }
     }
 

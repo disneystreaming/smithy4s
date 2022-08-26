@@ -879,9 +879,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       (ref.show + "." + name + ".widen").write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
-        case (_, FieldTN.RequiredTN(value))     => value.runDefault
-        case (_, FieldTN.OptionalSomeTN(value)) => s"Some(${value.runDefault})"
-        case (_, FieldTN.OptionalNoneTN)        => "None"
+        case (name, FieldTN.RequiredTN(value)) => s"$name = ${value.runDefault}"
+        case (name, FieldTN.OptionalSomeTN(value)) =>
+          s"$name = Some(${value.runDefault})"
+        case (name, FieldTN.OptionalNoneTN) => s"$name = None"
       }
       s"${ref.show}(${fieldStrings.mkString(", ")})".write
     case NewTypeTN(ref, target) =>
