@@ -87,23 +87,6 @@ object MimaVersionPlugin extends AutoPlugin {
 
       val isPre = major.toInt == 0
 
-      val isScalaJs = virtualAxes.?.value
-        .getOrElse(List.empty)
-        .contains(
-          VirtualAxis.js
-        )
-
-      val isScalaNative = virtualAxes.?.value
-        .getOrElse(List.empty)
-        .contains(
-          VirtualAxis.native
-        )
-
-      val suffix =
-        if (isScalaJs) "_sjs1"
-        else if (isScalaNative) "_native0.4"
-        else ""
-
       if (sbtPlugin.value) {
         Set.empty
       } else {
@@ -122,11 +105,11 @@ object MimaVersionPlugin extends AutoPlugin {
           version
         }
 
-        val notCurrent = versions.filterNot(current ==)
+        val notCurrent = versions.filterNot(_ == current)
 
         notCurrent
           .map(v =>
-            org % s"${n}${suffix}_${CrossVersion.binaryScalaVersion(scalaVersion.value)}" % v
+            projectID.value.withRevision(v).withExplicitArtifacts(Vector.empty)
           )
           .toSet
       }
