@@ -481,7 +481,8 @@ object Smithy4sPlugin extends AutoPlugin {
       "pushRemoteCache" -> ("pushRemoteCache", any),
       "scalafix" -> ("scalafix --check", jvm2_13),
       "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
-      "scalafmt" -> ("scalafmtCheckAll", jvm2_13)
+      "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", any)
     )
 
     val cmds = all.flatMap { case (triplet, projects) =>

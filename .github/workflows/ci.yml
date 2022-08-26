@@ -87,7 +87,7 @@ jobs:
           echo "Built $(cat version)"
 
       - name: Check for Binary Compatibility
-        run: sbt mimaReportBinaryIssuesIfRelevant
+        run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
 
       - name: Upload compilation cache
         uses: actions/upload-artifact@v3
