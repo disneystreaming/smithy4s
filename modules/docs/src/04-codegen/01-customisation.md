@@ -343,7 +343,7 @@ This value is set using metadata which means that the setting will be applied to
 `FULL` means that default values are rendered for all field types. For example:
 
 ```kotlin
-metadata defaultRenderMode = "FULL"
+metadata smithy4sDefaultRenderMode = "FULL"
 
 structure FullExample {
   one: Integer = 1
@@ -368,7 +368,7 @@ Notice how the fields above are ordered. The reason for this is that fields are 
 #### OPTION_ONLY
 
 ```kotlin
-metadata defaultRenderMode = "OPTION_ONLY"
+metadata smithy4sDefaultRenderMode = "OPTION_ONLY"
 
 structure OptionExample {
   one: Integer = 1
@@ -389,7 +389,7 @@ Now `one` doesn't have a default rendered and as such it is placed first in the 
 #### NONE
 
 ```kotlin
-metadata defaultRenderMode = "NONE"
+metadata smithy4sDefaultRenderMode = "NONE"
 
 structure OptionExample {
   one: Integer = 1
@@ -409,7 +409,7 @@ Now none of the fields are rendered with defaults. As such, the order of the fie
 
 :::caution
 
-The presence of the `defaultRenderMode` metadata does NOT change the way smithy4s codecs behave. As such, defaults will still be used when decoding
+The presence of the `smithy4sDefaultRenderMode` metadata does NOT change the way smithy4s codecs behave. As such, defaults will still be used when decoding
 fields inside of clients and servers. This feature is purely for changing the generated code for your convenience.
 
 :::

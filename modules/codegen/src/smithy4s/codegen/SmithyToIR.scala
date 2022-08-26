@@ -86,7 +86,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     model
       .getMetadata()
       .asScala
-      .get("defaultRenderMode")
+      .get("smithy4sDefaultRenderMode")
       .flatMap(_.asStringNode().asScala)
       .flatMap(f => DefaultRenderMode.fromString(f.getValue))
       .getOrElse(DefaultRenderMode.Full)

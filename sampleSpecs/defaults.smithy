@@ -1,6 +1,6 @@
 $version: "2.0"
 
-metadata defaultRenderMode = "FULL"
+metadata smithy4sDefaultRenderMode = "FULL"
 
 namespace smithy4s.example
 
