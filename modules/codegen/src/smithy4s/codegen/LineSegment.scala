@@ -49,7 +49,7 @@ object LineSegment {
 
     def isAutoImported: Boolean = {
       val value = pkg.mkString(".")
-      value.equalsIgnoreCase("scala") || value.equalsIgnoreCase("java.lang")
+      value.startsWith("scala") || value.equalsIgnoreCase("java.lang")
     }
   }
 

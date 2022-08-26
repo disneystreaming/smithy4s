@@ -165,6 +165,7 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
