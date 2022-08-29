@@ -68,6 +68,29 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .asScala
       .toList
 
+  private sealed trait DefaultRenderMode
+  private object DefaultRenderMode {
+    case object Full extends DefaultRenderMode
+    case object OptionOnly extends DefaultRenderMode
+    case object NoDefaults extends DefaultRenderMode
+
+    def fromString(str: String): Option[DefaultRenderMode] = str match {
+      case "FULL"        => Some(Full)
+      case "OPTION_ONLY" => Some(OptionOnly)
+      case "NONE"        => Some(NoDefaults)
+      case _             => None
+    }
+  }
+
+  private val defaultRenderMode =
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sDefaultRenderMode")
+      .flatMap(_.asStringNode().asScala)
+      .flatMap(f => DefaultRenderMode.fromString(f.getValue))
+      .getOrElse(DefaultRenderMode.Full)
+
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
@@ -661,24 +684,47 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    def fields = shape
-      .members()
-      .asScala
-      .filterNot(isStreaming)
-      .map { member =>
-        (
-          member.getMemberName(),
-          member.tpe,
-          member.hasTrait(classOf[RequiredTrait]) ||
-            member.hasTrait(classOf[DefaultTrait]),
-          hints(member) ++ maybeDefault(member)
-        )
+    def fields = {
+      val noDefault =
+        if (defaultRenderMode == DefaultRenderMode.NoDefaults)
+          List(Hint.NoDefault)
+        else List.empty
+      val result = shape
+        .members()
+        .asScala
+        .filterNot(isStreaming)
+        .map { member =>
+          val default =
+            if (defaultRenderMode == DefaultRenderMode.Full)
+              maybeDefault(member)
+            else List.empty
+          (
+            member.getMemberName(),
+            member.tpe,
+            member.hasTrait(classOf[RequiredTrait]) ||
+              member.hasTrait(classOf[DefaultTrait]),
+            hints(member) ++ default ++ noDefault
+          )
+        }
+        .collect { case (name, Some(tpe), required, hints) =>
+          Field(name, tpe, required, hints)
+        }
+        .toList
+
+      val hintsContainsDefault: Field => Boolean = f =>
+        f.hints.exists {
+          case _: Hint.Default => true
+          case _               => false
+        }
+
+      defaultRenderMode match {
+        case DefaultRenderMode.Full =>
+          result.sortBy(hintsContainsDefault).sortBy(!_.required)
+        case DefaultRenderMode.OptionOnly =>
+          result.sortBy(!_.required)
+        case DefaultRenderMode.NoDefaults => result
       }
-      .collect { case (name, Some(tpe), required, hints) =>
-        Field(name, tpe, required, hints)
-      }
-      .toList
-      .sortBy(!_.required)
+    }
 
     def alts =
       shape

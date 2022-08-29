@@ -423,9 +423,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (hints.isEmpty) {
                 line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
-                val mh = memberHints(hints)
+                val memHints = memberHints(hints)
+                val addMemHints =
+                  if (memHints.nonEmpty) line".addHints($memHints)"
+                  else Line.empty
                   // format: off
-                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName).addHints($mh)"""
+                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
                   // format: on
               }
             }
@@ -655,7 +658,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             .map(renderDefault)
           Line.required(line, maybeDefault)
         } else {
-          Line.optional(line, !noDefault)
+          Line.optional(
+            line,
+            !noDefault && !field.hints.contains(Hint.NoDefault)
+          )
         }
 
         line"$name: " + tpeAndDefault
@@ -883,10 +889,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"${ref.show + "." + name + ".widen"}".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
-        case (_, FieldTN.RequiredTN(value)) => value.runDefault
-        case (_, FieldTN.OptionalSomeTN(value)) =>
-          line"$some(${value.runDefault})"
-        case (_, FieldTN.OptionalNoneTN) => line"$none"
+        case (name, FieldTN.RequiredTN(value)) => line"$name = ${value.runDefault}"
+        case (name, FieldTN.OptionalSomeTN(value)) =>
+          line"$name = $some(${value.runDefault})"
+        case (name, FieldTN.OptionalNoneTN) => line"$name = $none"
       }
       line"${ref.show}(${fieldStrings.intercalate(Line.comma)})".write
     case NewTypeTN(ref, target) =>

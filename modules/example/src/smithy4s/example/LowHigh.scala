@@ -18,7 +18,7 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
   val id: ShapeId = ShapeId("smithy4s.example", "LowHigh")
 
   val hints : Hints = Hints(
-    smithy.api.Enum(List(smithy.api.EnumDefinition(smithy.api.NonEmptyString("Low"), Some(smithy.api.EnumConstantBodyName("LOW")), None, None, None), smithy.api.EnumDefinition(smithy.api.NonEmptyString("High"), Some(smithy.api.EnumConstantBodyName("HIGH")), None, None, None))),
+    smithy.api.Enum(List(smithy.api.EnumDefinition(value = smithy.api.NonEmptyString("Low"), name = Some(smithy.api.EnumConstantBodyName("LOW")), documentation = None, tags = None, deprecated = None), smithy.api.EnumDefinition(value = smithy.api.NonEmptyString("High"), name = Some(smithy.api.EnumConstantBodyName("HIGH")), documentation = None, tags = None, deprecated = None))),
   )
 
   case object LOW extends LowHigh("Low", "LOW", 0)

@@ -134,6 +134,7 @@ lazy val core = projectMatrix
   .in(file("modules/core"))
   .settings(
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
+    isMimaEnabled := true,
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
@@ -180,7 +181,6 @@ lazy val core = projectMatrix
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
     }
   )
-  .enablePlugins(MimaVersionPlugin)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -317,9 +317,9 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.0.16",
-      Dependencies.Weaver.cats.value % Test
+      "io.get-coursier" %% "coursier" % "2.0.16"
     ),
+    libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
   )
@@ -503,13 +503,13 @@ lazy val json = projectMatrix
     scalacheck % "test -> compile"
   )
   .settings(
+    isMimaEnabled := true,
     libraryDependencies ++= Seq(
       Dependencies.Jsoniter.value
     ),
     libraryDependencies ++= munitDeps.value,
     Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
-  .enablePlugins(MimaVersionPlugin)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -529,6 +529,7 @@ lazy val http4s = projectMatrix
   )
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
+    isMimaEnabled := true,
     libraryDependencies ++= {
       val ce3 =
         if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
@@ -548,7 +549,6 @@ lazy val http4s = projectMatrix
       else moduleName.value
     }
   )
-  .enablePlugins(MimaVersionPlugin)
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
 /**
@@ -703,7 +703,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.15.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.16.0"
     )
 
   val Smithy = new {
