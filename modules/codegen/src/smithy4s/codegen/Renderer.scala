@@ -412,9 +412,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (hints.isEmpty) {
                 line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
-                val mh = memberHints(hints)
+                val memHints = memberHints(hints)
+                val addMemHints =
+                  if (memHints.nonEmpty) line".addHints($memHints)"
+                  else Line.empty
                   // format: off
-                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName).addHints($mh)"""
+                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
                   // format: on
               }
             }
@@ -644,7 +647,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             .map(renderDefault)
           Line.required(line, maybeDefault)
         } else {
-          Line.optional(line, !noDefault)
+          Line.optional(
+            line,
+            !noDefault && !field.hints.contains(Hint.NoDefault)
+          )
         }
 
         line"$name: " + tpeAndDefault
@@ -876,9 +882,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       (ref.show + "." + name + ".widen").write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
-        case (_, FieldTN.RequiredTN(value))     => value.runDefault
-        case (_, FieldTN.OptionalSomeTN(value)) => s"Some(${value.runDefault})"
-        case (_, FieldTN.OptionalNoneTN)        => "None"
+        case (name, FieldTN.RequiredTN(value)) => s"$name = ${value.runDefault}"
+        case (name, FieldTN.OptionalSomeTN(value)) =>
+          s"$name = Some(${value.runDefault})"
+        case (name, FieldTN.OptionalNoneTN) => s"$name = None"
       }
       s"${ref.show}(${fieldStrings.mkString(", ")})".write
     case NewTypeTN(ref, target) =>

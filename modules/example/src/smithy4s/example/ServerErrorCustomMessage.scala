@@ -18,7 +18,7 @@ object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMess
   )
 
   implicit val schema: Schema[ServerErrorCustomMessage] = struct(
-    string.optional[ServerErrorCustomMessage]("messageField", _.messageField).addHints(),
+    string.optional[ServerErrorCustomMessage]("messageField", _.messageField),
   ){
     ServerErrorCustomMessage.apply
   }.withId(id).addHints(hints)

@@ -16,25 +16,25 @@
 
 package smithy4s.codegen
 
-import weaver._
+import munit._
 
-object SmithyToIRSpec extends FunSuite {
+final class SmithyToIRSpec extends FunSuite {
 
   test("prettifyName: sdkId takes precedence") {
-    expect.eql(
+    assertEquals(
       SmithyToIR.prettifyName(Some("Example"), "unused"),
       "Example"
     )
   }
   test("prettifyName: shapeName is used as a fallback") {
-    expect.eql(
+    assertEquals(
       SmithyToIR.prettifyName(None, "Example"),
       "Example"
     )
   }
 
   test("prettifyName removes whitespace in sdkId") {
-    expect.eql(
+    assertEquals(
       SmithyToIR.prettifyName(Some("QuickDB \t\nStreams"), "unused"),
       "QuickDBStreams"
     )
@@ -42,7 +42,7 @@ object SmithyToIRSpec extends FunSuite {
 
   // Not a feature, just verifying the name is unaffected
   test("prettifyName ignores whitespace in shape name") {
-    expect.eql(
+    assertEquals(
       SmithyToIR.prettifyName(None, "This Has Spaces"),
       "This Has Spaces"
     )

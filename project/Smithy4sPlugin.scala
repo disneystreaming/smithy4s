@@ -474,6 +474,8 @@ object Smithy4sPlugin extends AutoPlugin {
     // things like scalafix and scalafmt are only enabled on jvm 2.13 projects
     val jvm2_13 = (t: Triplet) => t.scala == "2_13" && t.platform == "jvm"
 
+    val jvm = (t: Triplet) => t.platform == "jvm"
+
     val desiredCommands: Map[String, (String, Triplet => Boolean)] = Map(
       "test" -> ("test", any),
       "compile" -> ("compile", any),
@@ -481,7 +483,8 @@ object Smithy4sPlugin extends AutoPlugin {
       "pushRemoteCache" -> ("pushRemoteCache", any),
       "scalafix" -> ("scalafix --check", jvm2_13),
       "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
-      "scalafmt" -> ("scalafmtCheckAll", jvm2_13)
+      "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
     )
 
     val cmds = all.flatMap { case (triplet, projects) =>

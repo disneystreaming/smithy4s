@@ -74,7 +74,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/set/{key}"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/{key}"), code = 204),
     )
     def wrap(input: SetInput) = _Set(input)
   }
@@ -86,7 +86,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/list/{value}"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/{value}"), code = 204),
     )
     def wrap(input: ListInput) = _List(input)
   }
@@ -98,7 +98,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/option/{value}"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/{value}"), code = 204),
     )
     def wrap(input: OptionInput) = _Option(input)
   }
