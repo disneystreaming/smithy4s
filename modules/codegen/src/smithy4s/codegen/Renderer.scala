@@ -55,8 +55,8 @@ object Renderer {
         .flatMap(_.segments.toList)
         .distinct
         .collect {
-          case NameRef(_, name) => name
-          case NameDef(name)    => name
+          case ref: NameRef  => ref.name
+          case NameDef(name) => name
         }
         .groupBy(identity)
         .filter(_._2.size > 1)
@@ -65,10 +65,11 @@ object Renderer {
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
-            case nameRef @ NameRef(pkg, name)
-                if pkg.nonEmpty && !nameCollisions.contains(
-                  name
-                ) && !nameRef.isAutoImported &&
+            case nameRef @ NameRef(pkg, _)
+                if pkg.nonEmpty && !nameCollisions.exists(
+                  _.split("\\.").toList.contains(nameRef.getNamePrefix)
+                )
+                  && !nameRef.isAutoImported &&
                   !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
               nameRef.show
             case Import(value) => value
@@ -80,8 +81,13 @@ object Renderer {
           line.segments.toList.collect {
             case Literal(value) => value
             case NameDef(name)  => name
-            case ref: NameRef =>
-              if (nameCollisions.contains(ref.name)) ref.asValue else ref.name
+            case nameRef: NameRef =>
+              if (
+                nameCollisions.exists(
+                  _.split("\\.").toList.contains(nameRef.getNamePrefix)
+                )
+              ) nameRef.asValue
+              else nameRef.name
           }.mkString
         }
 
@@ -175,17 +181,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       version: String
   ): Lines = {
 
-    val genName = name + "Gen"
-    val genNameRef = NameRef(genName)
-    val opTraitName = name + "Operation"
-    val opTraitNameRef = NameRef(opTraitName)
+    val genName: NameDef = NameDef(name + "Gen")
+    val genNameRef: NameRef = genName.toNameRef
+    val opTraitName = NameDef(name + "Operation")
+    val opTraitNameRef = opTraitName.toNameRef
 
     lines(
-      block(line"trait ${NameDef(genName)}[F[_, _, _, _, _]]")(
+      block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
-          line"def ${op.methodName}(${op.renderArgs}) : F[${op.renderAlgParams(genName)}]"
+          line"def ${op.methodName}(${op.renderArgs}) : F[${op.renderAlgParams(genNameRef.name)}]"
 
         },
         newline,
@@ -196,7 +202,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           ops.map { op =>
             val opName = op.methodName
             line"def $opName(${op.renderArgs}) = transformation[${op
-              .renderAlgParams(genName)}](self.$opName(${op.renderParams}))"
+              .renderAlgParams(genName.name)}](self.$opName(${op.renderParams}))"
           }
         }
       ),
@@ -273,7 +279,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ops.map(renderOperation(name, _))
       ),
       newline,
-      line"sealed trait ${NameDef(opTraitName)}[Input, Err, Output, StreamedInput, StreamedOutput]",
+      line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]",
       newline
     )
   }
@@ -287,7 +293,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     } else Line.empty
     val opName = op.name
     val opNameRef = NameRef(opName)
-    val traitName = line"${serviceName}Operation"
+    val traitName = NameRef(s"${serviceName}Operation")
     val input =
       if (op.input == Type.unit) "" else "input"
     val errorName =
@@ -541,10 +547,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def caseName(alt: Alt) = alt.member match {
-      case UnionMember.ProductCase(product) => product.name
+    def caseName(alt: Alt): NameRef = alt.member match {
+      case UnionMember.ProductCase(product) => NameRef(product.name)
       case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
-        alt.name.dropWhile(_ == '_').capitalize + "Case"
+        NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
     }
     val caseNames = alts.map(caseName)
     val caseNamesAndIsUnit =
@@ -566,7 +572,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             // format: off
             lines(
-              line"case object ${NameRef(cn)} extends $name",
+              line"case object $cn extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
@@ -574,7 +580,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
             val cn = caseName(a)
             lines(
-              line"case class ${NameDef(cn)}(${uncapitalise(altName)}: ${tpe}) extends $name"
+              line"case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
             val additionalLines = lines(
@@ -596,7 +602,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
                 altHints
               ) =>
             val cn = caseName(a)
-            block(line"object ${NameRef(cn)}")(
+            block(line"object $cn")(
               renderHintsVal(altHints),
             // format: off
             line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",

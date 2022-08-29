@@ -16,9 +16,9 @@
 
 package smithy4s.codegen
 
+import cats.data.Chain
 import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
-import cats.data.Chain
 import smithy4s.codegen.LineSegment._
 
 import java.util.UUID
@@ -47,7 +47,7 @@ object ToLine {
       case Type.Collection(collectionType, member) =>
         val line = render(member)
         val col = collectionType.tpe
-       col.toLine + Literal(
+        col.toLine + Literal(
           "["
         ) + line + Literal("]")
       case Type.Map(key, value) =>
@@ -74,8 +74,8 @@ object ToLine {
   }
 
   private def primitiveLine(p: Primitive): NameRef = {
-    def scalaP(name:String) = NameRef("scala", name)
-    def javaP(name:String) = NameRef("java.lang", name)
+    def scalaP(name: String) = NameRef("scala", name)
+    def javaP(name: String) = NameRef("java.lang", name)
     p match {
       case Primitive.Unit       => scalaP("Unit")
       case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")

@@ -17,8 +17,8 @@
 package smithy4s.codegen
 
 import cats.Show
-import cats.implicits._
 import cats.data.Chain
+import cats.implicits._
 
 // LineSegment models segments of a line of code.
 sealed trait LineSegment { self =>
@@ -36,7 +36,9 @@ object LineSegment {
     implicit val literalShow: Show[Literal] = Show.show[Literal](_.value)
   }
   // Definition of a Scala Type like trait, class.
-  case class NameDef(name: String) extends LineSegment
+  case class NameDef(name: String) extends LineSegment {
+    def toNameRef: NameRef = NameRef(name)
+  }
   object NameDef {
     implicit val nameDefShow: Show[NameDef] = Show.show[NameDef](_.name)
   }
@@ -45,12 +47,17 @@ object LineSegment {
     self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
 
-    def asImport: String = s"${(pkg :+ name.split("\\.")(0)).mkString(".")}"
+    def asImport: String = s"${(pkg :+ getNamePrefix).mkString(".")}"
 
     def isAutoImported: Boolean = {
       val value = pkg.mkString(".")
       value.startsWith("scala") || value.equalsIgnoreCase("java.lang")
     }
+    def getNamePrefix: String = name.split("\\.").head
+    def +(piece: String): NameRef = {
+      self.copy(name = self.name + piece)
+    }
+
   }
 
   object NameRef {
@@ -58,8 +65,8 @@ object LineSegment {
     def apply(pkg: String, name: String): NameRef =
       NameRef(pkg.split("\\.").toList, name)
     def apply(fqn: String): NameRef = {
-      val parts = fqn.split("\\.").toList
-      NameRef(parts.dropRight(1), parts.last)
+      val parts = fqn.split("\\.").toList.toNel.get
+      NameRef(parts.toList.dropRight(1), parts.last)
     }
 
   }

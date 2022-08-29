@@ -3,7 +3,7 @@ $version: "2.0"
 namespace smithy4s.example
 
 
-service A {
+service NameCollision {
 operations: [MyOp]
 }
 
