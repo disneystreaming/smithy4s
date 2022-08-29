@@ -412,9 +412,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (hints.isEmpty) {
                 line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
-                val mh = memberHints(hints)
+                val memHints = memberHints(hints)
+                val addMemHints =
+                  if (memHints.nonEmpty) line".addHints($memHints)"
+                  else Line.empty
                   // format: off
-                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName).addHints($mh)"""
+                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
                   // format: on
               }
             }
