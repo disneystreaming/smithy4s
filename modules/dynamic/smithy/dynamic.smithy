@@ -59,11 +59,25 @@ union Shape {
   union: UnionShape,
   operation: OperationShape,
   service: ServiceShape,
-  resource: ResourceShape
+  resource: ResourceShape,
+  @jsonName("enum")
+  _enum: EnumShape,
+  intEnum: IntEnumShape,
 }
 
 structure StringShape {
-  traits: TraitMap
+  traits: TraitMap,
+  members: MemberMap
+}
+
+structure EnumShape {
+  traits: TraitMap,
+  members: MemberMap
+}
+
+structure IntEnumShape {
+  traits: TraitMap,
+  members: MemberMap
 }
 
 structure BlobShape {

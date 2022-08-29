@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example
 
 use smithy4s.api#simpleRestJson
@@ -6,7 +8,7 @@ use smithy4s.api#simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
   errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, CustomCode]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
@@ -244,11 +246,30 @@ structure GetEnumOutput {
   result: String
 }
 
-@enum([
-  {value: "v1", name: "V1"},
-  {value: "v2", name: "V2"}
-])
-string TheEnum
+enum TheEnum {
+  V1 = "v1"
+  V2 = "v2"
+}
+
+@readonly
+@http(method: "GET", uri: "/get-int-enum/{aa}", code: 200)
+operation GetIntEnum {
+  input := {
+    @required
+    @httpLabel
+    aa: EnumResult
+  }
+  output := {
+    @required
+    result: EnumResult
+  }
+  errors: [ UnknownServerError ]
+}
+
+intEnum EnumResult {
+    FIRST = 1
+    SECOND = 2
+}
 
 @readonly
 @http(method: "GET", uri: "/custom-code/{code}", code: 200)

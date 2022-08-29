@@ -56,7 +56,7 @@ structure Greeting {
 }
 ```
 
-## Supported taits
+## Supported traits
 
 This protocol and its interpreters, are aware of the following traits provided out of the box:
 

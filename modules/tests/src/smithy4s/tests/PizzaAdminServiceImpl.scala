@@ -40,6 +40,9 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
   def getEnum(theEnum: TheEnum): IO[GetEnumOutput] =
     IO.pure(GetEnumOutput(result = Some(theEnum.value)))
 
+  def getIntEnum(theEnum: EnumResult): IO[GetIntEnumOutput] =
+    IO.pure(GetIntEnumOutput(theEnum))
+
   def addMenuItem(
       restaurant: String,
       menuItem: MenuItem

@@ -37,7 +37,9 @@ object codecs {
       Discriminated,
       Untagged,
       InputOutput,
-      DiscriminatedUnionMember
+      DiscriminatedUnionMember,
+      // TODO: add tests for `codecs` understanding int enums. Maybe pizza spec
+      IntEnum
     )
 
   private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
