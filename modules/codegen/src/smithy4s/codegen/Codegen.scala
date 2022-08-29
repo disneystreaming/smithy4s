@@ -59,7 +59,7 @@ object Codegen { self =>
     (scalaFiles ++ openApiFiles).toSet
   }
 
-  private def generate(
+  private[codegen] def generate(
       model: Model,
       allowedNS: Option[Set[String]],
       excludedNS: Option[Set[String]]

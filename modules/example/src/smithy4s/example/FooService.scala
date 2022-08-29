@@ -60,7 +60,7 @@ object FooServiceGen extends Service[FooServiceGen, FooServiceOperation] {
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/foo"), 200),
+      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200),
       smithy.api.Readonly(),
     )
     def wrap(input: Unit) = GetFoo()

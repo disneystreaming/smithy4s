@@ -229,6 +229,7 @@ object Hint {
   case object Trait extends Hint
   case object Error extends Hint
   case object PackedInputs extends Hint
+  case object NoDefault extends Hint
   case object ErrorMessage extends Hint
   case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
