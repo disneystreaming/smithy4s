@@ -87,6 +87,7 @@ jobs:
           echo "Built $(cat version)"
 
       - name: Check for Binary Compatibility
+        if: matrix.scalaPlatform == 'jvm'
         run: sbt mimaReportBinaryIssuesIfRelevant_$BUILD_KEY
 
       - name: Upload compilation cache
