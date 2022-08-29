@@ -31,23 +31,18 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   OptionalResponseCode
 }
 import smithy4s.schema.Primitive
-import smithy4s.schema.Primitive._
-import smithy4s.ByteArray
-import smithy4s.Document
-import smithy4s.Timestamp
 
 class HttpResponseCodeSchemaVisitor
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
   def default[A]: ResponseCodeExtractor[A] = NoResponseCode
-  private val primPf = Primitive.deriving[ResponseCodeExtractor]
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
   ): ResponseCodeExtractor[P] = tag match {
-    case PInt =>
+    case Primitive.PInt =>
       if (hints.has[smithy.api.HttpResponseCode]) {
-        primPf(tag)
+        HttpResponseCodeSchemaVisitor.int
       } else {
         NoResponseCode
       }
@@ -121,21 +116,7 @@ object HttpResponseCodeSchemaVisitor {
       }
     }
 
-  implicit val short: ResponseCodeExtractor[Short] = NoResponseCode
-  implicit val int: ResponseCodeExtractor[Int] = {
+  val int: ResponseCodeExtractor[Int] = {
     RequiredResponseCode(identity)
   }
-  implicit val float: ResponseCodeExtractor[Float] = NoResponseCode
-  implicit val long: ResponseCodeExtractor[Long] = NoResponseCode
-  implicit val double: ResponseCodeExtractor[Double] = NoResponseCode
-  implicit val bigint: ResponseCodeExtractor[BigInt] = NoResponseCode
-  implicit val bigdecimal: ResponseCodeExtractor[BigDecimal] = NoResponseCode
-  implicit val boolean: ResponseCodeExtractor[Boolean] = NoResponseCode
-  implicit val string: ResponseCodeExtractor[String] = NoResponseCode
-  implicit val uuid: ResponseCodeExtractor[java.util.UUID] = NoResponseCode
-  implicit val byte: ResponseCodeExtractor[Byte] = NoResponseCode
-  implicit val blob: ResponseCodeExtractor[ByteArray] = NoResponseCode
-  implicit val document: ResponseCodeExtractor[Document] = NoResponseCode
-  implicit val timestamp: ResponseCodeExtractor[Timestamp] = NoResponseCode
-  implicit val unit: ResponseCodeExtractor[Unit] = NoResponseCode
 }
