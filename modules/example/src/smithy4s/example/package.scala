@@ -25,6 +25,12 @@ package object example {
     def service: smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
     val id: smithy4s.ShapeId = service.id
   }
+  type NameCollision[F[_]] = smithy4s.Monadic[NameCollisionGen, F]
+  object NameCollision extends smithy4s.Service.Provider[NameCollisionGen, NameCollisionOperation] {
+    def apply[F[_]](implicit F: NameCollision[F]): F.type = F
+    def service: smithy4s.Service[NameCollisionGen, NameCollisionOperation] = NameCollisionGen
+    val id: smithy4s.ShapeId = service.id
+  }
   type ReservedNameService[F[_]] = smithy4s.Monadic[ReservedNameServiceGen, F]
   object ReservedNameService extends smithy4s.Service.Provider[ReservedNameServiceGen, ReservedNameServiceOperation] {
     def apply[F[_]](implicit F: ReservedNameService[F]): F.type = F
