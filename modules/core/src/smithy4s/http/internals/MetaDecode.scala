@@ -141,6 +141,19 @@ private[http] sealed abstract class MetaDecode[+A] {
           else if (iter.isEmpty && optional) putField.putNone(fieldName)
           else putField.putRequired(fieldName, f(iter))
       }
+      case (StatusCodeBinding, _) =>
+        (metadata, putField) =>
+          metadata.statusCode match {
+            case None =>
+              if (optional) putField.putNone(fieldName)
+              else
+                sys.error(
+                  "Status code is not available and required field needs it."
+                )
+            case Some(value) =>
+              if (optional) putField.putSome(fieldName, value)
+              else putField.putRequired(fieldName, value)
+          }
       case _ => (metadata: Metadata, buffer) => ()
     }
   }
