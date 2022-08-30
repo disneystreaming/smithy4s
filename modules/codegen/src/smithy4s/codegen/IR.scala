@@ -31,10 +31,12 @@ import cats.kernel.Eq
 import cats.Traverse
 import cats.Applicative
 import cats.Eval
+import software.amazon.smithy.model.shapes.ShapeId
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
 sealed trait Decl {
+  def shapeId: ShapeId
   def name: String
   def hints: List[Hint]
   def nameDef: NameDef = NameDef(name)
@@ -42,16 +44,16 @@ sealed trait Decl {
 }
 
 case class Service(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     ops: List[Operation],
     hints: List[Hint],
     version: String
 ) extends Decl
 
 case class Operation(
+    shapeId: ShapeId,
     name: String,
-    originalNamespace: String,
     params: List[Field],
     input: Type,
     errors: List[Type],
@@ -59,11 +61,13 @@ case class Operation(
     streamedInput: Option[StreamingField],
     streamedOutput: Option[StreamingField],
     hints: List[Hint] = Nil
-)
+) {
+  assert(!name.contains("."))
+}
 
 case class Product(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     fields: List[Field],
     mixins: List[Type],
     recursive: Boolean = false,
@@ -72,16 +76,16 @@ case class Product(
 ) extends Decl
 
 case class Union(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     alts: NonEmptyList[Alt],
     recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl
 
 case class TypeAlias(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     tpe: Type,
     isUnwrapped: Boolean,
     recursive: Boolean = false,
@@ -89,8 +93,8 @@ case class TypeAlias(
 ) extends Decl
 
 case class Enumeration(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     values: List[EnumValue],
     hints: List[Hint] = Nil
 ) extends Decl

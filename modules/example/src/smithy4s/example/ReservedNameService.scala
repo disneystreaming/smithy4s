@@ -13,17 +13,17 @@ import smithy4s.Endpoint
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def set(set: scala.collection.immutable.Set[Value]) : F[SetInput, Nothing, Unit, Nothing, Nothing]
-  def list(value: Value) : F[ListInput, Nothing, Unit, Nothing, Nothing]
-  def map(value: scala.collection.immutable.Map[Key,Value]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
-  def option(value: Value) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
+  def set(set: scala.collection.immutable.Set[StringValue]) : F[SetInput, Nothing, Unit, Nothing, Nothing]
+  def list(value: StringValue) : F[ListInput, Nothing, Unit, Nothing, Nothing]
+  def map(value: scala.collection.immutable.Map[StringKey,StringValue]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
+  def option(value: StringValue) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ReservedNameServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ReservedNameServiceGen[G] {
-    def set(set: scala.collection.immutable.Set[Value]) = transformation[SetInput, Nothing, Unit, Nothing, Nothing](self.set(set))
-    def list(value: Value) = transformation[ListInput, Nothing, Unit, Nothing, Nothing](self.list(value))
-    def map(value: scala.collection.immutable.Map[Key,Value]) = transformation[MapInput, Nothing, Unit, Nothing, Nothing](self.map(value))
-    def option(value: Value) = transformation[OptionInput, Nothing, Unit, Nothing, Nothing](self.option(value))
+    def set(set: scala.collection.immutable.Set[StringValue]) = transformation[SetInput, Nothing, Unit, Nothing, Nothing](self.set(set))
+    def list(value: StringValue) = transformation[ListInput, Nothing, Unit, Nothing, Nothing](self.list(value))
+    def map(value: scala.collection.immutable.Map[StringKey,StringValue]) = transformation[MapInput, Nothing, Unit, Nothing, Nothing](self.map(value))
+    def option(value: StringValue) = transformation[OptionInput, Nothing, Unit, Nothing, Nothing](self.option(value))
   }
 }
 
@@ -54,10 +54,10 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
   }
 
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
-    def set(set: scala.collection.immutable.Set[Value]) = Set(SetInput(set))
-    def list(value: Value) = List(ListInput(value))
-    def map(value: scala.collection.immutable.Map[Key,Value]) = Map(MapInput(value))
-    def option(value: Value) = Option(OptionInput(value))
+    def set(set: scala.collection.immutable.Set[StringValue]) = Set(SetInput(set))
+    def list(value: StringValue) = List(ListInput(value))
+    def map(value: scala.collection.immutable.Map[StringKey,StringValue]) = Map(MapInput(value))
+    def option(value: StringValue) = Option(OptionInput(value))
   }
 
   def transform[P[_, _, _, _, _]](transformation: Transformation[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = reified.transform(transformation)
@@ -80,7 +80,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/set/"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204),
     )
     def wrap(input: SetInput) = Set(input)
   }
@@ -92,7 +92,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/list/{value}"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/{value}"), code = 204),
     )
     def wrap(input: ListInput) = List(input)
   }
@@ -104,7 +104,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/map/"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/map/"), code = 204),
     )
     def wrap(input: MapInput) = Map(input)
   }
@@ -116,7 +116,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("POST"), smithy.api.NonEmptyString("/api/option/{value}"), 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/{value}"), code = 204),
     )
     def wrap(input: OptionInput) = Option(input)
   }

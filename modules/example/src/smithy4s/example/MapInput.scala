@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class MapInput(value: Map[Key,Value])
+case class MapInput(value: Map[StringKey,StringValue])
 object MapInput extends ShapeTag.Companion[MapInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "MapInput")
 

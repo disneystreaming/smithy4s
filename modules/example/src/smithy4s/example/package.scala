@@ -40,8 +40,8 @@ package object example {
 
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type MySet = smithy4s.example.MySet.Type
+  type StringValue = smithy4s.example.StringValue.Type
   type SomeValue = smithy4s.example.SomeValue.Type
-  type Key = smithy4s.example.Key.Type
   type TestString = smithy4s.example.TestString.Type
   type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type
@@ -54,7 +54,7 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
-  type Value = smithy4s.example.Value.Type
+  type StringKey = smithy4s.example.StringKey.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type

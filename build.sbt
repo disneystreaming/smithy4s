@@ -307,7 +307,6 @@ lazy val codegen = projectMatrix
       "smithyVersion" -> Dependencies.Smithy.smithyVersion
     ),
     buildInfoPackage := "smithy4s.codegen",
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,

@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class OptionInput(value: Value)
+case class OptionInput(value: StringValue)
 object OptionInput extends ShapeTag.Companion[OptionInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "OptionInput")
 
@@ -15,7 +15,7 @@ object OptionInput extends ShapeTag.Companion[OptionInput] {
   )
 
   implicit val schema: Schema[OptionInput] = struct(
-    Value.schema.required[OptionInput]("value", _.value).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    StringValue.schema.required[OptionInput]("value", _.value).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
   ){
     OptionInput.apply
   }.withId(id).addHints(hints)

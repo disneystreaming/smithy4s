@@ -112,13 +112,27 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            TypeAlias(name, name, tpe, isUnwrapped, recursive, newHints).some
+            TypeAlias(
+              shape.getId(),
+              name,
+              tpe,
+              isUnwrapped,
+              recursive,
+              newHints
+            ).some
           case Type.Alias(_, name, tpe, isUnwrapped) =>
-            TypeAlias(name, name, tpe, isUnwrapped, recursive, hints).some
+            TypeAlias(
+              shape.getId(),
+              name,
+              tpe,
+              isUnwrapped,
+              recursive,
+              hints
+            ).some
           case Type.PrimitiveType(_) => None
           case other =>
             TypeAlias(
-              shape.name,
+              shape.getId(),
               shape.name,
               other,
               isUnwrapped = false,
@@ -183,7 +197,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val isMixin = shape.hasTrait(classOf[MixinTrait])
         val p =
           Product(
-            shape.name,
+            shape.getId(),
             shape.name,
             shape.fields,
             mixins,
@@ -205,7 +219,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           case _          => false
         }
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.name, shape.name, alts, rec || isTrait, hints)
+          Union(shape.getId(), shape.name, alts, rec || isTrait, hints)
         }
       }
 
@@ -228,7 +242,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 )
               }
               .toList
-            Enumeration(shape.name, shape.name, values, hints(shape)).some
+            Enumeration(shape.getId(), shape.name, values, hints(shape)).some
           case _ => this.getDefault(shape)
         })
 
@@ -241,7 +255,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             EnumValue(value, index, name)
           }
           .toList
-        Enumeration(shape.name, shape.name, values).some
+        Enumeration(shape.getId(), shape.name, values).some
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
@@ -253,7 +267,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
           .toList
         Enumeration(
-          shape.name,
+          shape.getId(),
           shape.name,
           values,
           hints(shape) :+ Hint.IntEnum
@@ -304,8 +318,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               op.getOutputShape().tpe.getOrElse(Type.unit)
 
             Operation(
+              op.getId(),
               op.name,
-              op.namespace,
               params,
               inputType,
               errorTypes,
@@ -327,8 +341,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val prettyName = SmithyToIR.prettifyName(maybeSdkId, shape.name)
 
         Service(
+          shape.getId(),
           prettyName,
-          shape.name,
           operations,
           serviceHints,
           shape.getVersion()

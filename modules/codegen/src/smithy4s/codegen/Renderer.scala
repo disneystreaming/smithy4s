@@ -29,6 +29,7 @@ import scala.jdk.CollectionConverters._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
 import smithy4s.codegen.LineSegment._
+import software.amazon.smithy.model.shapes.ShapeId
 
 object Renderer {
 
@@ -118,21 +119,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   import names._
 
   def renderDecl(decl: Decl): Lines = decl match {
-    case Service(name, originalName, ops, hints, version) =>
-      renderService(name, originalName, ops, hints, version)
+    case Service(shapeId, name, ops, hints, version) =>
+      renderService(shapeId, name, ops, hints, version)
     case p: Product => renderProduct(p)
-    case union @ Union(_, originalName, alts, recursive, hints) =>
-      renderUnion(union.nameRef, originalName, alts, recursive, hints)
-    case ta @ TypeAlias(_, originalName, tpe, _, recursive, hints) =>
-      renderTypeAlias(ta.nameRef, originalName, tpe, recursive, hints)
-    case enumeration @ Enumeration(_, originalName, values, hints) =>
-      renderEnum(enumeration.nameRef, originalName, values, hints)
+    case union @ Union(shapeId, _, alts, recursive, hints) =>
+      renderUnion(shapeId, union.nameRef, alts, recursive, hints)
+    case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
+      renderTypeAlias(shapeId, ta.nameRef, tpe, recursive, hints)
+    case enumeration @ Enumeration(shapeId, _, values, hints) =>
+      renderEnum(shapeId, enumeration.nameRef, values, hints)
     case _ => Lines.empty
   }
 
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(name, _, _, _, _, _) =>
+      case TypeAlias(_, name, _, _, _, _) =>
         line"type $name = ${compilationUnit.namespace}.${name}.Type"
     }
 
@@ -174,8 +175,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderService(
+      shapeId: ShapeId,
       name: String,
-      originalName: String,
       ops: List[Operation],
       hints: List[Hint],
       version: String
@@ -214,7 +215,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"def apply[F[_]](implicit F: $Monadic_[$genNameRef, F]): F.type = F",
         newline,
-        renderId(originalName),
+        renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
@@ -310,13 +311,17 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         t.name.map(n => Alt(n, UnionMember.TypeCase(t)))
       }
       name = opName + "Error"
-    } yield Union(name, name, alts)
+    } yield Union(
+      ShapeId.fromParts(namespace, op.shapeId.getName() + "Error"),
+      name,
+      alts
+    )
 
     val renderedErrorUnion = errorUnion.foldMap {
-      case union @ Union(_, originalName, alts, recursive, hints) =>
+      case union @ Union(shapeId, _, alts, recursive, hints) =>
         renderUnion(
+          shapeId,
           union.nameRef,
-          originalName,
           alts,
           recursive,
           hints,
@@ -332,7 +337,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext =
           line"$Endpoint_[${traitName}, ${op.renderAlgParams(serviceName + "Gen")}]$errorable"
       )(
-        renderId(op.name, op.originalNamespace),
+        renderId(op.shapeId),
         line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",
         line"val output: $Schema_[${op.output}] = ${op.output.schemaRef}.addHints(smithy4s.internals.InputOutput.Output.widen)",
         renderStreamingSchemaVal("streamedInput", op.streamedInput),
@@ -411,7 +416,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"$decl$ext"
       },
       obj(product.nameRef, shapeTag(product.nameRef))(
-        renderId(originalName),
+        renderId(shapeId),
         newline,
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
@@ -543,8 +548,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderUnion(
+      shapeId: ShapeId,
       name: NameRef,
-      originalName: String,
       alts: NonEmptyList[Alt],
       recursive: Boolean,
       hints: List[Hint],
@@ -566,7 +571,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"@inline final def widen: $name = this"
       ),
       obj(name, line"${shapeTag(name)}")(
-        renderId(originalName),
+        renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
@@ -672,8 +677,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     .intercalate(Line.comma)
 
   private def renderEnum(
+      shapeId: ShapeId,
       name: NameRef,
-      originalName: String,
       values: List[EnumValue],
       hints: List[Hint]
   ): Lines = lines(
@@ -687,7 +692,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
-      renderId(originalName),
+      renderId(shapeId),
       newline,
       renderHintsVal(hints),
       newline,
@@ -705,8 +710,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   )
 
   private def renderTypeAlias(
+      shapeId: ShapeId,
       name: NameRef,
-      originalName: String,
       tpe: Type,
       recursive: Boolean,
       hints: List[Hint]
@@ -719,7 +724,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val closing = if (recursive) ")" else ""
     lines(
       obj(name, line"$Newtype_[$tpe]")(
-        renderId(originalName),
+        renderId(shapeId),
         renderHintsVal(hints),
         line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
@@ -838,8 +843,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case _              => None
   }
 
-  def renderId(name: String, ns: String = namespace): Line =
+  def renderId(shapeId: ShapeId): Line = {
+    val ns = shapeId.getNamespace()
+    val name = shapeId.getName()
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
+  }
 
   def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
     lines(line"val hints : $Hints_ = $Hints_.empty")

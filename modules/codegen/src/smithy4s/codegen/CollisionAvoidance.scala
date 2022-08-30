@@ -28,11 +28,11 @@ object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
 
     val declarations = compilationUnit.declarations.map {
-      case Service(name, originalName, ops, hints, version) =>
+      case Service(serviceId, name, ops, hints, version) =>
         val newOps = ops.map {
           case Operation(
+                opId,
                 name,
-                ns,
                 params,
                 input,
                 errors,
@@ -42,8 +42,8 @@ object CollisionAvoidance {
                 hints
               ) =>
             Operation(
+              opId,
               protect(name.capitalize),
-              ns,
               params.map(modField),
               modType(input),
               errors.map(modType),
@@ -54,39 +54,39 @@ object CollisionAvoidance {
             )
         }
         Service(
+          serviceId,
           protect(name.capitalize),
-          originalName,
           newOps,
           hints.map(modHint),
           version
         )
       case p: Product =>
         modProduct(p)
-      case Union(name, originalName, alts, recursive, hints) =>
+      case Union(shapeId, name, alts, recursive, hints) =>
         Union(
+          shapeId,
           protect(name.capitalize),
-          originalName,
           alts.map(modAlt),
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, originalName, tpe, isUnwrapped, rec, hints) =>
+      case TypeAlias(shapeId, name, tpe, isUnwrapped, rec, hints) =>
         TypeAlias(
+          shapeId,
           protect(name.capitalize),
-          originalName,
           modType(tpe),
           isUnwrapped,
           rec,
           hints.map(modHint)
         )
-      case Enumeration(name, originalName, values, hints) =>
+      case Enumeration(shapeId, name, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, intValue, name, hints) =>
             EnumValue(value, intValue, protect(name), hints.map(modHint))
         }
         Enumeration(
+          shapeId,
           protect(name.capitalize),
-          originalName,
           newValues,
           hints.map(modHint)
         )
@@ -162,8 +162,8 @@ object CollisionAvoidance {
   private def modProduct(p: Product): Product = {
     import p._
     Product(
+      p.shapeId,
       protect(name.capitalize),
-      originalName,
       fields.map(modField),
       mixins.map(modType),
       recursive,
