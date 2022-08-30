@@ -13,14 +13,14 @@ service ReservedNameService {
 @http(method: "POST", uri: "/api/set/", code: 204)
 operation Set {
     input := {
-        @required
-       set:mySet
+       @required
+       set:MySet
     }
 }
 
 @uniqueItems
-list mySet {
-    member: Value
+list MySet {
+    member: StringValue
 }
 
 @http(method: "POST", uri: "/api/list/{value}", code: 204)
@@ -28,7 +28,7 @@ operation List {
     input := {
         @httpLabel
         @required
-        value: Value
+        value: StringValue
     }
 }
 @http(method: "POST", uri: "/api/map/", code: 204)
@@ -40,8 +40,8 @@ operation Map {
 }
 
 map myMap {
-    key: Key
-    value: Value
+    key: StringKey
+    value: StringValue
 }
 
 @http(method: "POST", uri: "/api/option/{value}", code: 204)
@@ -49,9 +49,9 @@ operation Option {
     input := {
         @httpLabel
         @required
-        value: Value
+        value: StringValue
     }
 }
 
-string Key
-integer Value
+string StringKey
+integer StringValue

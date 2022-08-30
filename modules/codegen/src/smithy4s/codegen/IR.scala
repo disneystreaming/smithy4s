@@ -218,7 +218,8 @@ object Type {
 sealed abstract class CollectionType(val tpe: NameRef)
 object CollectionType {
   case object List extends CollectionType(NameRef("scala.List"))
-  case object Set extends CollectionType(NameRef("scala.collection.immutable.Set"))
+  case object Set
+      extends CollectionType(NameRef("scala.collection.immutable.Set"))
   case object Vector extends CollectionType(NameRef("scala.Vector"))
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
