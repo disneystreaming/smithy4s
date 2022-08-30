@@ -151,7 +151,8 @@ lazy val core = projectMatrix
     ),
     libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
-      "smithy4s.example"
+      "smithy4s.example",
+      "smithy4s.example.collision",
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",

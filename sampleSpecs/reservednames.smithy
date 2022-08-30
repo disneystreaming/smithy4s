@@ -23,32 +23,34 @@ list MySet {
     member: String
 }
 
-@http(method: "POST", uri: "/api/list/{value}", code: 204)
+@http(method: "POST", uri: "/api/list/", code: 204)
 operation List {
     input := {
-        @httpLabel
         @required
-        value: String
+        list: MyList
     }
 }
+
+list MyList {
+    member: String
+}
+
 @http(method: "POST", uri: "/api/map/", code: 204)
 operation Map {
     input := {
         @required
-        value: myMap
+        value: MyMap
     }
 }
 
-map myMap {
+map MyMap {
     key: String
     value: String
 }
 
-@http(method: "POST", uri: "/api/option/{value}", code: 204)
+@http(method: "POST", uri: "/api/option/", code: 204)
 operation Option {
     input := {
-        @httpLabel
-        @required
         value: String
     }
 }
