@@ -14,16 +14,16 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
 
   def set(set: Set[String]) : F[SetInput, Nothing, Unit, Nothing, Nothing]
-  def list(value: String) : F[ListInput, Nothing, Unit, Nothing, Nothing]
+  def list(list: List[String]) : F[ListInput, Nothing, Unit, Nothing, Nothing]
   def map(value: Map[String,String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
-  def option(value: String) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
+  def option(value: Option[String] = None) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
   def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ReservedNameServiceGen[G] = new Transformed(transformation)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ReservedNameServiceGen[G] {
     def set(set: Set[String]) = transformation[SetInput, Nothing, Unit, Nothing, Nothing](self.set(set))
-    def list(value: String) = transformation[ListInput, Nothing, Unit, Nothing, Nothing](self.list(value))
+    def list(list: List[String]) = transformation[ListInput, Nothing, Unit, Nothing, Nothing](self.list(list))
     def map(value: Map[String,String]) = transformation[MapInput, Nothing, Unit, Nothing, Nothing](self.map(value))
-    def option(value: String) = transformation[OptionInput, Nothing, Unit, Nothing, Nothing](self.option(value))
+    def option(value: Option[String] = None) = transformation[OptionInput, Nothing, Unit, Nothing, Nothing](self.option(value))
   }
 }
 
@@ -55,9 +55,9 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
 
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
     def set(set: Set[String]) = _Set(SetInput(set))
-    def list(value: String) = _List(ListInput(value))
+    def list(list: List[String]) = _List(ListInput(list))
     def map(value: Map[String,String]) = _Map(MapInput(value))
-    def option(value: String) = _Option(OptionInput(value))
+    def option(value: Option[String] = None) = _Option(OptionInput(value))
   }
 
   def transform[P[_, _, _, _, _]](transformation: Transformation[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = reified.transform(transformation)
@@ -67,7 +67,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
   def asTransformation[P[_, _, _, _, _]](impl : ReservedNameServiceGen[P]): Transformation[ReservedNameServiceOperation, P] = new Transformation[ReservedNameServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case _Set(SetInput(set)) => impl.set(set)
-      case _List(ListInput(value)) => impl.list(value)
+      case _List(ListInput(list)) => impl.list(list)
       case _Map(MapInput(value)) => impl.map(value)
       case _Option(OptionInput(value)) => impl.option(value)
     }
@@ -92,7 +92,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/{value}"), code = 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/"), code = 204),
     )
     def wrap(input: ListInput) = _List(input)
   }
@@ -116,7 +116,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/{value}"), code = 204),
+      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/"), code = 204),
     )
     def wrap(input: OptionInput) = _Option(input)
   }

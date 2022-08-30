@@ -10,6 +10,6 @@ package object collision {
 
   type MySet = smithy4s.example.collision.MySet.Type
   type MyMap = smithy4s.example.collision.MyMap.Type
-  type _String = smithy4s.example.collision._String.Type
+  type MyList = smithy4s.example.collision.MyList.Type
 
 }
