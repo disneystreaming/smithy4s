@@ -320,6 +320,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             Operation(
               op.getId(),
               op.name,
+              uncapitalise(op.name),
               params,
               inputType,
               errorTypes,

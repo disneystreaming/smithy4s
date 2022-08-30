@@ -54,6 +54,7 @@ case class Service(
 case class Operation(
     shapeId: ShapeId,
     name: String,
+    methodName: String,
     params: List[Field],
     input: Type,
     errors: List[Type],
@@ -61,9 +62,7 @@ case class Operation(
     streamedInput: Option[StreamingField],
     streamedOutput: Option[StreamingField],
     hints: List[Hint] = Nil
-) {
-  assert(!name.contains("."))
-}
+)
 
 case class Product(
     shapeId: ShapeId,

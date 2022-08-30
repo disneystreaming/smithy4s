@@ -114,7 +114,7 @@ object Renderer {
 
 private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
-  val names = new CollisionAvoidance.Names(compilationUnit)
+  val names = new CollisionAvoidance.Names()
   import compilationUnit.namespace
   import names._
 
@@ -746,8 +746,6 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       else if (op.hints.contains(Hint.PackedInputs)) {
         line"input"
       } else op.params.map(f => Line(f.name)).intercalate(Line.comma)
-
-    def methodName = uncapitalise(op.name)
 
     def renderAlgParams(serviceName: String) = {
       line"${op.input}, ${if (op.errors.isEmpty) line"Nothing"
