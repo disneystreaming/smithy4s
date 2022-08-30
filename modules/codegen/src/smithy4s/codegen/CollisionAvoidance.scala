@@ -154,16 +154,15 @@ object CollisionAvoidance {
   private def modNativeHint(hint: Hint.Native): Hint.Native =
     Hint.Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
 
+  private def modDefaultHint(hint: Hint.Default): Hint.Default =
+    Hint.Default(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+
   private def modHint(hint: Hint): Hint = hint match {
     case n: Hint.Native => modNativeHint(n)
     case Hint.Constraint(tr, nat) =>
       Hint.Constraint(modRef(tr), modNativeHint(nat))
-    case df: Hint.Default => modDefault(df)
+    case df: Hint.Default => modDefaultHint(df)
     case other            => other
-  }
-
-  private def modDefault(hint: Hint.Default): Hint.Default = {
-    Hint.Default(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
   }
 
   private def modProduct(p: Product): Product = {
