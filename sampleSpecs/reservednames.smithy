@@ -1,6 +1,6 @@
 $version: "2.0"
 
-namespace smithy4s.example
+namespace smithy4s.example.collision
 
 use smithy4s.api#simpleRestJson
 
@@ -20,7 +20,7 @@ operation Set {
 
 @uniqueItems
 list MySet {
-    member: StringValue
+    member: String
 }
 
 @http(method: "POST", uri: "/api/list/{value}", code: 204)
@@ -28,7 +28,7 @@ operation List {
     input := {
         @httpLabel
         @required
-        value: StringValue
+        value: String
     }
 }
 @http(method: "POST", uri: "/api/map/", code: 204)
@@ -40,8 +40,8 @@ operation Map {
 }
 
 map myMap {
-    key: StringKey
-    value: StringValue
+    key: String
+    value: String
 }
 
 @http(method: "POST", uri: "/api/option/{value}", code: 204)
@@ -49,9 +49,8 @@ operation Option {
     input := {
         @httpLabel
         @required
-        value: StringValue
+        value: String
     }
 }
 
-string StringKey
-integer StringValue
+string String

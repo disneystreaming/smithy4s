@@ -1,4 +1,4 @@
-package smithy4s.example
+package smithy4s.example.collision
 
 import smithy4s.Schema
 import smithy4s.Hints
@@ -6,9 +6,9 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class SetInput(set: Set[StringValue])
+case class SetInput(set: Set[_String])
 object SetInput extends ShapeTag.Companion[SetInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "SetInput")
+  val id: ShapeId = ShapeId("smithy4s.example.collision", "SetInput")
 
   val hints : Hints = Hints(
     smithy.api.Input(),
