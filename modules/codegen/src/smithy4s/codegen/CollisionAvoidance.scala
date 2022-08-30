@@ -72,9 +72,9 @@ object CollisionAvoidance {
           hints.map(modHint)
         )
       case TypeAlias(shapeId, name, tpe, isUnwrapped, rec, hints) =>
-        val protectedType = protectType(name.capitalize)
+        val protectedName = protectType(name.capitalize)
         // If we had to amend the type
-        val unwrapped = isUnwrapped | (protectedType != name.capitalize)
+        val unwrapped = isUnwrapped | (protectedName != name.capitalize)
         TypeAlias(
           shapeId,
           protectType(name.capitalize),
@@ -105,7 +105,9 @@ object CollisionAvoidance {
     case Type.Ref(namespace, name) =>
       Type.Ref(namespace, protectType(name.capitalize))
     case Alias(namespace, name, tpe, isUnwrapped) =>
-      Alias(namespace, protectType(name.capitalize), modType(tpe), isUnwrapped)
+      val protectedName = protectType(name.capitalize)
+      val unwrapped = isUnwrapped | (protectedName != name.capitalize)
+      Alias(namespace, protectType(name.capitalize), modType(tpe), unwrapped)
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, pFqn, under, refinementHint) =>
       ExternalType(

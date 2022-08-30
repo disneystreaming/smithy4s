@@ -7,11 +7,11 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
 
-object MySet extends Newtype[Set[_String]] {
+object MySet extends Newtype[Set[String]] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "MySet")
   val hints : Hints = Hints(
     smithy.api.UniqueItems(),
   )
-  val underlyingSchema : Schema[Set[_String]] = set(_String.schema).withId(id).addHints(hints)
+  val underlyingSchema : Schema[Set[String]] = set(_String.underlyingSchema).withId(id).addHints(hints)
   implicit val schema : Schema[MySet] = bijection(underlyingSchema, asBijection)
 }

@@ -7,9 +7,9 @@ import smithy4s.schema.Schema.map
 import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
 
-object MyMap extends Newtype[Map[_String,_String]] {
+object MyMap extends Newtype[Map[String,String]] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "myMap")
   val hints : Hints = Hints.empty
-  val underlyingSchema : Schema[Map[_String,_String]] = map(_String.schema, _String.schema).withId(id).addHints(hints)
+  val underlyingSchema : Schema[Map[String,String]] = map(_String.underlyingSchema, _String.underlyingSchema).withId(id).addHints(hints)
   implicit val schema : Schema[MyMap] = bijection(underlyingSchema, asBijection)
 }
