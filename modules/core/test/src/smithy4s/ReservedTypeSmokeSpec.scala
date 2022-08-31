@@ -21,7 +21,9 @@ import smithy4s.example.collision.ReservedNameService
 
 class ReservedTypeSmokeSpec() extends FunSuite {
 
-  test("Names from the Scala stdlib can be used in smithy spec without hurting UX") {
+  test(
+    "Names from the Scala stdlib can be used in smithy spec without hurting UX"
+  ) {
     val service = new ReservedNameService[Option] {
       def list(value: List[String]): Option[Unit] = None
       def map(value: Map[String, String]): Option[Unit] = None
