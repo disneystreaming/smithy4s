@@ -646,7 +646,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             .collectFirst { case d @ Hint.Default(_) => d }
             .filterNot(_ => noDefault)
             .map(renderDefault)
-            
+
           Line.required(line, maybeDefault)
         } else {
           Line.optional(
