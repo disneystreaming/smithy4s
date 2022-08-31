@@ -20,3 +20,10 @@ structure DefaultOrderingTest {
   @required
   three: String
 }
+
+@mixin()
+structure DefaultInMixinTest {
+  one: String = "test"
+}
+
+structure DefaultInMixinUsageTest with [DefaultInMixinTest] {}
