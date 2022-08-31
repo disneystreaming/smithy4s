@@ -642,10 +642,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Field(name, _, tpe, required, hints) =>
         val line = line"$tpe"
         val tpeAndDefault = if (required) {
-          val maybeRenderedDefault = hints
+          val maybeDefault = hints
             .collectFirst { case d @ Hint.Default(_) => d }
+            .filterNot(_ => noDefault)
             .map(renderDefault)
-          val maybeDefault = if (noDefault) None else maybeRenderedDefault
+            
           Line.required(line, maybeDefault)
         } else {
           Line.optional(
