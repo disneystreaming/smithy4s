@@ -246,19 +246,20 @@ object Metadata {
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
     def fromSchema[A](schema: Schema[A]): Encoder[A] = {
-      val statusCodeVisitor = new HttpResponseCodeSchemaVisitor().apply(schema)
+      val toStatusCode: A => Option[Int] = { a =>
+        new HttpResponseCodeSchemaVisitor().apply(schema) match {
+          case HttpResponseCodeSchemaVisitor.NoResponseCode =>
+            None
+          case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
+            Some(ext(a))
+          case HttpResponseCodeSchemaVisitor.OptionalResponseCode(ext) =>
+            ext(a)
+        }
+      }
       SchemaVisitorMetadataWriter(schema) match {
         case StructureMetaEncode(f) => { (a: A) =>
           val struct = f(a)
-          val statusCode = statusCodeVisitor match {
-            case HttpResponseCodeSchemaVisitor.NoResponseCode =>
-              None
-            case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
-              Some(ext(a))
-            case HttpResponseCodeSchemaVisitor.OptionalResponseCode(ext) =>
-              ext(a)
-          }
-          struct.copy(statusCode = statusCode)
+          struct.copy(statusCode = toStatusCode(a))
         }
         case _ => (_: A) => Metadata.empty
       }
