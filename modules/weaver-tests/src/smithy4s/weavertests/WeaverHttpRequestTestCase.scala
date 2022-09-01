@@ -100,7 +100,8 @@ class WeaverHttpRequestTestCase[
                   failure(s"Header $name was not found in the response.")
                 )
             }
-            .reduce(_ && _)
+            .toList
+            .combineAll
         }
         .getOrElse(success)
 
@@ -135,7 +136,7 @@ class WeaverHttpRequestTestCase[
       headerAssert.pure[IO],
       uriAssert.pure[IO],
       methodAssert.pure[IO]
-    ).sequence.map(_.reduce(_ && _))
+    ).combineAll
   }
 
   private[weavertests] def makeServerTest[I, E, O, SE, SO](
@@ -149,7 +150,7 @@ class WeaverHttpRequestTestCase[
         val dummyOutput = DefaultSchemaVisitor(endpoint.output)
         val input = testCase.params
           .map { inputFromDocument.decode(_).liftTo[IO] }
-          .getOrElse(IO.unit.asInstanceOf[IO[I]])
+          .getOrElse(IO.pure(().asInstanceOf[I]))
         (deferred[I], input).tupled
           .flatMap { case (requestDeferred, input) =>
             type R[I_, E_, O_, SE_, SO_] = IO[O_]
@@ -203,7 +204,7 @@ class WeaverHttpRequestTestCase[
         val dummyOutput = DefaultSchemaVisitor(endpoint.output)
         val input = testCase.params
           .map { inputFromDocument.decode(_).liftTo[IO] }
-          .getOrElse(IO.unit.asInstanceOf[IO[I]])
+          .getOrElse(IO.pure(().asInstanceOf[I]))
 
         val fakeImpl: smithy4s.Monadic[Alg, IO] =
           service.transform[R](
