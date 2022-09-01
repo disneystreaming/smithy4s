@@ -16,7 +16,6 @@
 
 package smithy4s.codegen
 
-import cats.syntax.all._
 import cats.~>
 import smithy4s.codegen.Type.Alias
 import smithy4s.codegen.Type.PrimitiveType
@@ -28,11 +27,12 @@ object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
 
     val declarations = compilationUnit.declarations.map {
-      case Service(name, originalName, ops, hints, version) =>
+      case Service(serviceId, name, ops, hints, version) =>
         val newOps = ops.map {
           case Operation(
+                opId,
                 name,
-                ns,
+                methodName,
                 params,
                 input,
                 errors,
@@ -42,8 +42,9 @@ object CollisionAvoidance {
                 hints
               ) =>
             Operation(
-              protect(name.capitalize),
-              ns,
+              opId,
+              protectType(name.capitalize),
+              protectKeyword(methodName),
               params.map(modField),
               modType(input),
               errors.map(modType),
@@ -54,39 +55,42 @@ object CollisionAvoidance {
             )
         }
         Service(
-          protect(name.capitalize),
-          originalName,
+          serviceId,
+          protectType(name.capitalize),
           newOps,
           hints.map(modHint),
           version
         )
       case p: Product =>
         modProduct(p)
-      case Union(name, originalName, alts, recursive, hints) =>
+      case Union(shapeId, name, alts, recursive, hints) =>
         Union(
-          protect(name.capitalize),
-          originalName,
+          shapeId,
+          protectType(name.capitalize),
           alts.map(modAlt),
           recursive,
           hints.map(modHint)
         )
-      case TypeAlias(name, originalName, tpe, isUnwrapped, rec, hints) =>
+      case TypeAlias(shapeId, name, tpe, isUnwrapped, rec, hints) =>
+        val protectedName = protectType(name.capitalize)
+        // If we had to amend the type
+        val unwrapped = isUnwrapped | (protectedName != name.capitalize)
         TypeAlias(
-          protect(name.capitalize),
-          originalName,
+          shapeId,
+          protectType(name.capitalize),
           modType(tpe),
-          isUnwrapped,
+          unwrapped,
           rec,
           hints.map(modHint)
         )
-      case Enumeration(name, originalName, values, hints) =>
+      case Enumeration(shapeId, name, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, intValue, name, hints) =>
-            EnumValue(value, intValue, protect(name), hints.map(modHint))
+            EnumValue(value, intValue, protectKeyword(name), hints.map(modHint))
         }
         Enumeration(
-          protect(name.capitalize),
-          originalName,
+          shapeId,
+          protectKeyword(name.capitalize),
           newValues,
           hints.map(modHint)
         )
@@ -97,14 +101,17 @@ object CollisionAvoidance {
   private def modType(tpe: Type): Type = tpe match {
     case Type.Collection(collectionType, member) =>
       Type.Collection(collectionType, modType(member))
-    case Type.Map(key, value)      => Type.Map(modType(key), modType(value))
-    case Type.Ref(namespace, name) => Type.Ref(namespace, name.capitalize)
+    case Type.Map(key, value) => Type.Map(modType(key), modType(value))
+    case Type.Ref(namespace, name) =>
+      Type.Ref(namespace, protectType(name.capitalize))
     case Alias(namespace, name, tpe, isUnwrapped) =>
-      Alias(namespace, protect(name.capitalize), modType(tpe), isUnwrapped)
+      val protectedName = protectType(name.capitalize)
+      val unwrapped = isUnwrapped | (protectedName != name.capitalize)
+      Alias(namespace, protectType(name.capitalize), modType(tpe), unwrapped)
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, pFqn, under, refinementHint) =>
       ExternalType(
-        protect(name),
+        protectType(name.capitalize),
         fqn,
         pFqn,
         modType(under),
@@ -114,7 +121,7 @@ object CollisionAvoidance {
 
   private def modField(field: Field): Field = {
     Field(
-      protect(uncapitalise(field.name)),
+      protectKeyword(uncapitalise(field.name)),
       field.name,
       modType(field.tpe),
       field.required,
@@ -134,7 +141,7 @@ object CollisionAvoidance {
 
   private def modAlt(alt: Alt): Alt = {
     Alt(
-      protect(uncapitalise(alt.name)),
+      protectKeyword(uncapitalise(alt.name)),
       alt.name,
       alt.member.update(modProduct)(modType),
       alt.hints.map(modHint)
@@ -142,28 +149,27 @@ object CollisionAvoidance {
   }
 
   private def modRef(ref: Type.Ref): Type.Ref =
-    Type.Ref(ref.namespace, protect(ref.name.capitalize))
+    Type.Ref(ref.namespace, protectType(ref.name.capitalize))
 
   private def modNativeHint(hint: Hint.Native): Hint.Native =
     Hint.Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+
+  private def modDefaultHint(hint: Hint.Default): Hint.Default =
+    Hint.Default(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
 
   private def modHint(hint: Hint): Hint = hint match {
     case n: Hint.Native => modNativeHint(n)
     case Hint.Constraint(tr, nat) =>
       Hint.Constraint(modRef(tr), modNativeHint(nat))
-    case df: Hint.Default => modDefault(df)
+    case df: Hint.Default => modDefaultHint(df)
     case other            => other
-  }
-
-  private def modDefault(hint: Hint.Default): Hint.Default = {
-    Hint.Default(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
   }
 
   private def modProduct(p: Product): Product = {
     import p._
     Product(
-      protect(name.capitalize),
-      originalName,
+      p.shapeId,
+      protectKeyword(name.capitalize),
       fields.map(modField),
       mixins.map(modType),
       recursive,
@@ -193,8 +199,12 @@ object CollisionAvoidance {
       }
     }
 
-  private def protect(str: String) =
-    if (reservedNames(str)) s"_${str}" else str
+  private def protectKeyword(str: String): String =
+    if (reservedKeywords(str)) s"_$str" else str
+
+  private val names = new Names()
+  private def protectType(str: String): String =
+    if (names.getReservedNames(str)) "_" + str else protectKeyword(str)
 
   private val reservedKeywords: Set[String] = Set(
     "abstract",
@@ -238,42 +248,16 @@ object CollisionAvoidance {
     "yield"
   )
 
-  private val reservedTypes: Set[String] = Set(
-    "String",
-    "Byte",
-    "Bytes",
-    "Int",
-    "Short",
-    "Boolean",
-    "Long",
-    "Double",
-    "Float",
-    "BigInt",
-    "BigDecimal",
-    "Array",
-    "Vector",
-    "Seq",
-    "Map",
-    "List",
-    "Nil",
-    "Stream",
-    "LazyList",
-    "StringBuilder",
-    "Either",
-    "Left",
-    "Right",
-    "Set",
-    "Option",
-    "Some",
-    "None",
-    "Nothing"
-  )
+  class Names() {
 
-  private val reservedNames = reservedKeywords ++ reservedTypes
+    // Using mutation to avoid repetition.
+    private var reservedNames: Set[String] = Set.empty
+    private def reserved(pkg: String, name: String) = {
+      reservedNames = reservedNames + name
+      NameRef(pkg, name)
+    }
 
-  class Names(compilationUnit: CompilationUnit) {
-
-    val definitions = compilationUnit.declarations.foldMap { d => Set(d.name) }
+    def getReservedNames: Set[String] = reservedNames
 
     val Transformation_ = NameRef("smithy4s", "Transformation")
     val Service_ = NameRef("smithy4s", "Service")
@@ -284,7 +268,7 @@ object CollisionAvoidance {
     val Monadic_ = NameRef("smithy4s", "Monadic")
     val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
-    val EnumValue_ = NameRef("smithy4s", "schema.EnumValue")
+    val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
     val Newtype_ = NameRef("smithy4s", "Newtype")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")
@@ -296,27 +280,31 @@ object CollisionAvoidance {
     val constant_ = NameRef("smithy4s.schema.Schema", "constant")
     val struct_ = NameRef("smithy4s.schema.Schema", "struct")
     val bijection_ = NameRef("smithy4s.schema.Schema", "bijection")
-    val short_ = NameRef("smithy4s.schema.Schema", "Short")
-    val int_ = NameRef("smithy4s.schema.Schema", "Integer")
-    val long_ = NameRef("smithy4s.schema.Schema", "Long")
-    val double_ = NameRef("smithy4s.schema.Schema", "Double")
-    val float_ = NameRef("smithy4s.schema.Schema", "Float")
-    val bigint_ = NameRef("smithy4s.schema.Schema", "BigInteger")
-    val bigdecimal_ = NameRef("smithy4s.schema.Schema", "BigDecimal")
-    val string_ = NameRef("smithy4s.schema.Schema", "String")
-    val boolean_ = NameRef("smithy4s.schema.Schema", "Boolean")
-    val byte_ = NameRef("smithy4s.schema.Schema", "Byte")
-    val bytes_ = NameRef("smithy4s.schema.Schema", "Blob")
-    val unit_ = NameRef("smithy4s.schema.Schema", "Unit")
-    val timestamp_ = NameRef("smithy4s.schema.Schema", "Timestamp")
-    val document_ = NameRef("smithy4s.schema.Schema", "Document")
-    val uuid_ = NameRef("smithy4s.schema.Schema", "UUID")
     val Transformed_ = NameDef("Transformed")
 
-    def reconcile(str: String): String = {
-      val last = str.split('.').last
-      if (definitions.contains(last)) str else last
-    }
+    // We reserve these keywords as they collide with types that the
+    // users are bound to manipulate when using Smithy4s .
+    val short_ = reserved("scala", "Short")
+    val int_ = reserved("scala", "Int")
+    val javaInt_ = reserved("java.lang", "Integer")
+    val long_ = reserved("scala", "Long")
+    val double_ = reserved("scala", "Double")
+    val float_ = reserved("scala", "Float")
+    val bigint_ = reserved("scala.math", "BigInteger")
+    val bigdecimal_ = reserved("scala.math", "BigDecimal")
+    val string_ = reserved("scala.Predef", "String")
+    val boolean_ = reserved("scala", "Boolean")
+    val byte_ = reserved("scala", "Byte")
+    val unit_ = reserved("scala", "Unit")
+    val timestamp_ = reserved("smithy4s", "Timestamp")
+    val document_ = reserved("smithy4s", "Document")
+    val uuid_ = reserved("smithy4s", "UUID")
+    val list = reserved("scala", "List")
+    val set = reserved("scala.collection.immutable", "Set")
+    val map = reserved("scala.collection.immutable", "Map")
+    val option = reserved("scala", "Option")
+    val none = reserved("scala", "None")
+    val some = reserved("scala", "Some")
 
   }
 

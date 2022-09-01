@@ -5,20 +5,19 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/api/list/{value}": {
+        "/api/list/": {
             "post": {
                 "operationId": "List",
-                "parameters": [
-                    {
-                        "name": "value",
-                        "in": "path",
-                        "schema": {
-                            "type": "integer",
-                            "format": "int32"
-                        },
-                        "required": true
-                    }
-                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "204": {
                         "description": "List 204 response"
@@ -46,20 +45,18 @@
                 }
             }
         },
-        "/api/option/{value}": {
+        "/api/option/": {
             "post": {
                 "operationId": "Option",
-                "parameters": [
-                    {
-                        "name": "value",
-                        "in": "path",
-                        "schema": {
-                            "type": "integer",
-                            "format": "int32"
-                        },
-                        "required": true
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OptionRequestContent"
+                            }
+                        }
                     }
-                ],
+                },
                 "responses": {
                     "204": {
                         "description": "Option 204 response"
@@ -90,16 +87,44 @@
     },
     "components": {
         "schemas": {
+            "ListRequestContent": {
+                "type": "object",
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "list"
+                ]
+            },
             "MapRequestContent": {
                 "type": "object",
                 "properties": {
                     "value": {
-                        "$ref": "#/components/schemas/myMap"
+                        "$ref": "#/components/schemas/MyMap"
                     }
                 },
                 "required": [
                     "value"
                 ]
+            },
+            "MyMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
+                }
+            },
+            "OptionRequestContent": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    }
+                }
             },
             "SetRequestContent": {
                 "type": "object",
@@ -107,8 +132,7 @@
                     "set": {
                         "type": "array",
                         "items": {
-                            "type": "integer",
-                            "format": "int32"
+                            "type": "string"
                         },
                         "uniqueItems": true
                     }
@@ -116,13 +140,6 @@
                 "required": [
                     "set"
                 ]
-            },
-            "myMap": {
-                "type": "object",
-                "additionalProperties": {
-                    "type": "integer",
-                    "format": "int32"
-                }
             }
         }
     }

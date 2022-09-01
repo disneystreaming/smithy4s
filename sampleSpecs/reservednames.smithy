@@ -1,45 +1,58 @@
 $version: "2.0"
 
-namespace smithy4s.example
+namespace smithy4s.example.collision
 
 use smithy4s.api#simpleRestJson
 
 @simpleRestJson
 service ReservedNameService {
     version: "1.0.0",
-    operations: [Set,List,Option]
+    operations: [Set,List,Map,Option]
 }
 
-@http(method: "POST", uri: "/api/set/{key}", code: 204)
+@http(method: "POST", uri: "/api/set/", code: 204)
 operation Set {
     input := {
-        @httpLabel
-        @required
-        key: Key,
-
-        value: Value
+       @required
+       set:MySet
     }
 }
 
-@http(method: "POST", uri: "/api/list/{value}", code: 204)
+@uniqueItems
+list MySet {
+    member: String
+}
+
+@http(method: "POST", uri: "/api/list/", code: 204)
 operation List {
     input := {
-        @httpLabel
         @required
-        value: Value
+        list: MyList
     }
 }
 
-@http(method: "POST", uri: "/api/option/{value}", code: 204)
+list MyList {
+    member: String
+}
+
+@http(method: "POST", uri: "/api/map/", code: 204)
+operation Map {
+    input := {
+        @required
+        value: MyMap
+    }
+}
+
+map MyMap {
+    key: String
+    value: String
+}
+
+@http(method: "POST", uri: "/api/option/", code: 204)
 operation Option {
     input := {
-        @httpLabel
-        @required
-        value: Value
+        value: String
     }
 }
 
-
-
-string Key
-integer Value
+string String
