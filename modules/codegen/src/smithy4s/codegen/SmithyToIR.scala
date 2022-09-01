@@ -186,18 +186,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               )
             )
         val mixinMembers = mixin.getAllMembers().asScala
-        mixinMembers.foldLeft(true) { case (state, (memberName, member)) =>
-          fields.find(_.name == memberName) match {
-            case None => state
-            case Some(field) =>
+        mixinMembers.forall { case (memberName, member) =>
+          fields
+            .find(_.name == memberName)
+            .forall { field =>
               val memberOptional = !member.hasTrait(classOf[RequiredTrait])
-              val memberHasNoDefault = !member.hasTrait(classOf[DefaultTrait])
+              val memberHasDefault = member.hasTrait(classOf[DefaultTrait])
 
               // if member has no default and is optional, then the field must be optional
-              if (memberHasNoDefault && memberOptional) {
-                state && !field.required
-              } else state
-          }
+              if (!memberHasDefault && memberOptional) !field.required
+              else field.required
+            }
         }
       }
 
