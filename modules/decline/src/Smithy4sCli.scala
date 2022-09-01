@@ -20,7 +20,7 @@ import cats.effect.ExitCode
 import cats.effect.IO
 import cats.implicits._
 import com.monovore.decline.Opts
-import com.monovore.decline.effect.CommandIOApp
+import com.monovore.decline.Command
 import smithy.api.Documentation
 import smithy.api.ExternalDocumentation
 import smithy.api.Http
@@ -49,15 +49,7 @@ final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
 class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
     mainOpts: Opts[Entrypoint[Alg, IO]],
     service: Service[Alg, Op]
-) extends CommandIOApp(
-      toKebabCase(service.id.name),
-      header = service.hints
-        .get[Documentation]
-        .map(_.value)
-        .getOrElse(s"Command line interface for ${service.id.show}"),
-      helpFlag = true,
-      version = service.version
-    ) {
+) {
 
   private def protocolSpecificHelp(
       endpoint: Endpoint[Op, _, _, _, _, _]
@@ -128,7 +120,17 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       }
   }
 
-  def main: Opts[IO[ExitCode]] = service.endpoints
+  private def opts: Opts[IO[ExitCode]] = service.endpoints
     .foldMapK(endpointSubcommand(_))
 
+  def command: Command[IO[ExitCode]] = {
+    Command(
+      toKebabCase(service.id.name),
+      header = service.hints
+        .get[Documentation]
+        .map(_.value)
+        .getOrElse(s"Command line interface for ${service.id.show}"),
+      helpFlag = true
+    )(opts)
+  }
 }

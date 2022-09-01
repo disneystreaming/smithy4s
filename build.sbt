@@ -388,7 +388,7 @@ lazy val decline = (projectMatrix in file("modules/decline"))
     isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
-      Dependencies.Decline.effect.value,
+      Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -722,7 +722,6 @@ lazy val Dependencies = new {
 
   object Decline {
     val core = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
-    val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
