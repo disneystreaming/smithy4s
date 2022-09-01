@@ -5,9 +5,11 @@ import smithy4s.http4s._
 import cats.effect.IO
 import smithy4s.ShapeTag
 
-object WeaverTestTestsExample
+object WeaverTestTests
     extends WeaverTests(
       ShapeTag[smithy4s.api.SimpleRestJson],
       SimpleRestJsonBuilder(HelloServiceGen).client[IO],
       SimpleRestJsonBuilder.routes(_: HelloService[IO]).make
-    )
+    ) {
+  recordTests(new CompatEffect)
+}

@@ -17,7 +17,6 @@
 package smithy4s.weavertests
 
 import cats.effect.IO
-import cats.effect.kernel.Deferred
 import cats.implicits._
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
@@ -68,9 +67,9 @@ class WeaverHttpRequestTestCase[
       UnsupportedProtocolError,
       HttpRoutes[IO]
     ]
-)(implicit service: Service[Alg, Op])
+)(implicit service: Service[Alg, Op], ce: CompatEffect)
     extends Expectations.Helpers {
-
+  import ce._
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
 
@@ -151,7 +150,7 @@ class WeaverHttpRequestTestCase[
         val input = testCase.params
           .map { inputFromDocument.decode(_).liftTo[IO] }
           .getOrElse(IO.unit.asInstanceOf[IO[I]])
-        (Deferred[IO, I], input).tupled
+        (deferred[I], input).tupled
           .flatMap { case (requestDeferred, input) =>
             type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
@@ -196,6 +195,8 @@ class WeaverHttpRequestTestCase[
       testCase: HttpRequestTestCase,
       inputFromDocument: Document.Decoder[I]
   ): GeneratedTest = {
+    type R[I_, E_, O_, SE_, SO_] = IO[O_]
+
     GeneratedTest(
       name = endpoint.id.toString + "(client|request): " + testCase.id,
       assertions = {
@@ -216,9 +217,8 @@ class WeaverHttpRequestTestCase[
           )
 
         val mockedRoutes = server(fakeImpl).map(_.orNotFound).liftTo[IO]
-        type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
-        (Deferred[IO, Request[IO]], mockedRoutes).tupled
+        (deferred[Request[IO]], mockedRoutes).tupled
           .flatMap { case (requestDeferred, routes) =>
             val theClient: IO[smithy4s.Monadic[Alg, IO]] = client(
               HttpApp[IO] { req =>

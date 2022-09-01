@@ -627,11 +627,13 @@ lazy val weaverTests = projectMatrix
   .in(file("modules/weaver-tests"))
   .dependsOn(core, http4s % "test->compile", testUtils)
   .settings(
-    isCE3 := true,
-    // todo
     scalacOptions -= "-Xfatal-warnings",
+    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
-      Seq(
+      val ce3 =
+        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
+        else Seq.empty
+      ce3 ++ Seq(
         Dependencies.Http4s.circe.value,
         Dependencies.Weaver.cats.value
       )

@@ -17,7 +17,6 @@
 package smithy4s.weavertests
 
 import cats.effect.IO
-import cats.effect.kernel.Deferred
 import cats.implicits._
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
@@ -53,7 +52,7 @@ import concurrent.duration._
   * 4. Assertion are performed on the recorded response
   *
   */
-class WeaverHttpResponseTestCase[
+private class WeaverHttpResponseTestCase[
     Alg[_[_, _, _, _, _]],
     Op[_, _, _, _, _]
 ](
@@ -65,8 +64,9 @@ class WeaverHttpResponseTestCase[
       UnsupportedProtocolError,
       HttpRoutes[IO]
     ]
-)(implicit service: Service[Alg, Op])
+)(implicit service: Service[Alg, Op], ce: CompatEffect)
     extends Expectations.Helpers {
+  import ce._
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
 
@@ -131,7 +131,7 @@ class WeaverHttpResponseTestCase[
           }
           .getOrElse(IO.unit.asInstanceOf[IO[O]])
 
-      Deferred[IO, Response[IO]]
+      deferred[Response[IO]]
         .flatMap { responseDeferred =>
           val mockedImpl: smithy4s.Monadic[Alg, IO] =
             service.transform[R](

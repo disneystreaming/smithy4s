@@ -45,7 +45,8 @@ abstract class WeaverTests[P, Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
 
   private class EndpointTest[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO]
-  ) {
+  )(implicit ce: CompatEffect) {
+
     def generateTests() = {
       requestTests() ++ responseTests()
     }
@@ -99,7 +100,9 @@ abstract class WeaverTests[P, Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       }
   }
 
-  service.service.endpoints
-    .flatMap { e => new EndpointTest(e).generateTests() }
-    .foreach(gt => test(gt.name)(gt.assertions))
+  def recordTests(implicit ce: CompatEffect) = {
+    service.service.endpoints
+      .flatMap { e => new EndpointTest(e).generateTests() }
+      .foreach(gt => test(gt.name)(gt.assertions))
+  }
 }
