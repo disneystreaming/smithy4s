@@ -22,7 +22,7 @@ private[internals] case class DynamicEndpoint(
     id: ShapeId,
     input: Schema[DynData],
     output: Schema[DynData],
-    override val errorable: Option[Errorable[DynData]] = None,
+    override val errorable: Option[Errorable[DynData]],
     hints: Hints
 ) extends Endpoint[DynamicOp, DynData, DynData, DynData, Nothing, Nothing] {
 
