@@ -62,7 +62,7 @@ object HelloWorldServiceInstance{
 ```scala
 object app extends IOApp.Simple{
   override def run(args: List[String]): IO[Unit] = {
-    val helloCommand:Command[IO[Unit]] =Smithy4sSimpleStandaloneCli(Opts(HelloWorldServiceInstance.simple)).command
+    val helloCommand:Command[IO[Unit]] = Smithy4sCli.standalone(Opts(HelloWorldServiceInstance.simple)).command
     command.run(args)
   }
 }

@@ -17,7 +17,6 @@
 package smithy4s.decline
 
 import cats.implicits._
-import cats.instances.all._
 import cats.MonadThrow
 import cats.effect.std.Console
 import com.monovore.decline.Opts
@@ -104,10 +103,9 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
           val FO = printer.printInput(input) *>
-            service
-              .asTransformation[GenLift[F]#λ](entrypoint.interpreter)(
-                endpoint.wrap(input)
-              )
+            service.asTransformation[GenLift[F]#λ](entrypoint.interpreter)(
+              endpoint.wrap(input)
+            )
 
           FO.flatMap(printer.printOutput)
             .onError {
@@ -135,7 +133,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
 }
 
 object Smithy4sCli {
-  def Smithy4sSimpleStandaloneCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
+  def standalone[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
       _
   ]: Console: MonadThrow](
       impl: Opts[smithy4s.Monadic[Alg, F]]
