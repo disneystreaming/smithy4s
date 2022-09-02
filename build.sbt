@@ -7,7 +7,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.15"
+ThisBuild / mimaBaseVersion := "0.16"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
@@ -151,7 +151,8 @@ lazy val core = projectMatrix
     ),
     libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
-      "smithy4s.example"
+      "smithy4s.example",
+      "smithy4s.example.collision",
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
@@ -637,7 +638,8 @@ lazy val example = projectMatrix
       "smithy4s.example.import_test",
       "smithy4s.example.imp",
       "smithy4s.example.error",
-      "smithy4s.example.common"
+      "smithy4s.example.common",
+      "smithy4s.example.collision"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
@@ -703,7 +705,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.16.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.0"
     )
 
   val Smithy = new {

@@ -39,6 +39,7 @@ import weaver._
 import java.util.UUID
 import cats.Show
 import org.http4s.EntityDecoder
+import org.http4s.MalformedMessageBodyFailure
 
 abstract class PizzaSpec
     extends IOSuite
@@ -400,6 +401,36 @@ abstract class PizzaSpec
     "x-loweRcase-hEADeR",
     "X-mIxEd-HeAdEr"
   )
+
+  routerTest("httpResponseCode") { (client, uri, log) =>
+    for {
+      res1 <- client.send[Unit](
+        GET(uri = uri / "custom-code" / "201"),
+        log
+      )
+      // on `0`, the mock returns None, so we should default to endpoint value
+      res2 <- client.send[Unit](
+        GET(uri = uri / "custom-code" / "0"),
+        log
+      )
+      caught <- client
+        .send[Json](
+          GET(uri = uri / "custom-code" / "201"),
+          log
+        )
+        .map(_ => false)
+        .handleError { case _: MalformedMessageBodyFailure =>
+          true
+        }
+    } yield {
+      expect.same(res1._1, 201) &&
+      expect.same(res2._1, 200) &&
+      expect(
+        caught,
+        "MalformedMessageBodyFailure is expected because body should be empty"
+      )
+    }
+  }
 
   // note: these aren't really part of the pizza suite
 
