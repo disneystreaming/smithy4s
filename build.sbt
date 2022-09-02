@@ -388,6 +388,7 @@ lazy val decline = (projectMatrix in file("modules/decline"))
     isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
+      Dependencies.CatsEffect3.value ,
       Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )

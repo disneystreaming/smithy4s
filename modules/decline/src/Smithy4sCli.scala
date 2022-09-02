@@ -19,6 +19,7 @@ package smithy4s.decline
 import cats.implicits._
 import cats.instances.all._
 import cats.MonadThrow
+import cats.effect.std.Console
 import com.monovore.decline.Opts
 import com.monovore.decline.Command
 import smithy.api.Documentation
@@ -130,5 +131,21 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
         .getOrElse(s"Command line interface for ${service.id.show}"),
       helpFlag = true
     )(opts)
+  }
+}
+
+object Smithy4sCli {
+  def Smithy4sSimpleStandaloneCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
+      _
+  ]: Console: MonadThrow](
+      impl: Opts[smithy4s.Monadic[Alg, F]]
+  )(implicit service: Service[Alg, Op]) = {
+    new Smithy4sCli[Alg, Op, F](
+      (
+        impl,
+        PrinterApi.opts.default[F]()
+      ).mapN(Entrypoint.apply[Alg, F]),
+      service
+    )
   }
 }
