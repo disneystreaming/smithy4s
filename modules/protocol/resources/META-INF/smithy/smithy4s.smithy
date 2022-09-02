@@ -67,3 +67,8 @@ string discriminated
 
 @trait(selector: "union :not([trait|smithy4s.api#discriminated])")
 structure untagged {}
+
+
+/// contains the hostname that the service will be reachable through  ,the string must be a valid hostname without the scheme
+@trait(selector: "service")
+string host
