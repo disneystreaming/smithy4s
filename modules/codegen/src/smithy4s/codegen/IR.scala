@@ -31,10 +31,12 @@ import cats.kernel.Eq
 import cats.Traverse
 import cats.Applicative
 import cats.Eval
+import software.amazon.smithy.model.shapes.ShapeId
 
 case class CompilationUnit(namespace: String, declarations: List[Decl])
 
 sealed trait Decl {
+  def shapeId: ShapeId
   def name: String
   def hints: List[Hint]
   def nameDef: NameDef = NameDef(name)
@@ -42,16 +44,17 @@ sealed trait Decl {
 }
 
 case class Service(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     ops: List[Operation],
     hints: List[Hint],
     version: String
 ) extends Decl
 
 case class Operation(
+    shapeId: ShapeId,
     name: String,
-    originalNamespace: String,
+    methodName: String,
     params: List[Field],
     input: Type,
     errors: List[Type],
@@ -62,8 +65,8 @@ case class Operation(
 )
 
 case class Product(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     fields: List[Field],
     mixins: List[Type],
     recursive: Boolean = false,
@@ -72,16 +75,16 @@ case class Product(
 ) extends Decl
 
 case class Union(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     alts: NonEmptyList[Alt],
     recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl
 
 case class TypeAlias(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     tpe: Type,
     isUnwrapped: Boolean,
     recursive: Boolean = false,
@@ -89,8 +92,8 @@ case class TypeAlias(
 ) extends Decl
 
 case class Enumeration(
+    shapeId: ShapeId,
     name: String,
-    originalName: String,
     values: List[EnumValue],
     hints: List[Hint] = Nil
 ) extends Decl
@@ -163,7 +166,14 @@ sealed trait Type {
     case other                    => other
   }
 
-  def isResolved: Boolean = dealiased == this
+  def isResolved: Boolean = {
+    val isUnwrapped = this match {
+      case Type.Alias(_, _, _, unwrapped) => unwrapped
+      case _                              => false
+    }
+    val isDealiased = dealiased == this
+    isUnwrapped || isDealiased
+  }
 }
 
 sealed trait Primitive {
@@ -215,12 +225,13 @@ object Type {
   ) extends Type
 }
 
-sealed abstract class CollectionType(val tpe: String)
+sealed abstract class CollectionType(val tpe: NameRef)
 object CollectionType {
-  case object List extends CollectionType("List")
-  case object Set extends CollectionType("Set")
-  case object Vector extends CollectionType("Vector")
-  case object IndexedSeq extends CollectionType("IndexedSeq")
+  case object List extends CollectionType(NameRef("scala.List"))
+  case object Set
+      extends CollectionType(NameRef("scala.collection.immutable.Set"))
+  case object Vector extends CollectionType(NameRef("scala.Vector"))
+  case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
 
 sealed trait Hint

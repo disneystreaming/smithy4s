@@ -151,7 +151,8 @@ lazy val core = projectMatrix
     ),
     libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
-      "smithy4s.example"
+      "smithy4s.example",
+      "smithy4s.example.collision",
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
@@ -166,6 +167,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
@@ -305,7 +308,6 @@ lazy val codegen = projectMatrix
       "smithyVersion" -> Dependencies.Smithy.smithyVersion
     ),
     buildInfoPackage := "smithy4s.codegen",
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,
@@ -635,7 +637,8 @@ lazy val example = projectMatrix
       "smithy4s.example.import_test",
       "smithy4s.example.imp",
       "smithy4s.example.error",
-      "smithy4s.example.common"
+      "smithy4s.example.common",
+      "smithy4s.example.collision"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
@@ -650,6 +653,7 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "refined.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
@@ -700,7 +704,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.16.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.0"
     )
 
   val Smithy = new {
