@@ -73,6 +73,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       settingKey[List[String]](
         "List of transformer names that should be applied to the model prior to codegen"
       )
+
+    val smithy4sCustomGenerators =
+      settingKey[List[CustomGenerator]](
+        "List of custom code generators to run in addition to the built-in codegen"
+      )
   }
 
   import autoImport._
@@ -97,7 +102,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       _.filter(_.ext != "scala")
     ),
     cleanFiles += (config / smithy4sOutputDir).value,
-    config / smithy4sModelTransformers := List.empty
+    config / smithy4sModelTransformers := List.empty,
+    config / smithy4sCustomGenerators := List.empty
   )
 
   override lazy val projectSettings =
@@ -139,6 +145,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
     val transforms = (conf / smithy4sModelTransformers).value
     val s = streams.value
+    val customGenerators = (conf / smithy4sCustomGenerators).value
 
     val cached =
       Tracked.inputChanged[CacheKey, Seq[File]](
@@ -163,7 +170,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
                   repositories = res,
                   dependencies = List.empty,
                   transformers = transforms,
-                  localJars = localJars
+                  localJars = localJars,
+                  customGenerators = customGenerators
                 )
                 val resPaths = smithy4s.codegen.Codegen
                   .processSpecs(codegenArgs)

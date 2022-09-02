@@ -28,5 +28,6 @@ case class CodegenArgs(
     repositories: List[String],
     dependencies: List[String],
     transformers: List[String],
-    localJars: List[os.Path]
+    localJars: List[os.Path],
+    customGenerators: List[CustomGenerator]
 )

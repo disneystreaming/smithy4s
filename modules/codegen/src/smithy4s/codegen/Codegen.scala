@@ -37,13 +37,14 @@ object Codegen { self =>
     )
 
     val scalaFiles = if (!args.skipScala) {
-      Codegen.generate(model, args.allowedNS, args.excludedNS).map {
-        case (relPath, name, outputString) =>
+      Codegen
+        .generate(model, args.allowedNS, args.excludedNS, args.customGenerators)
+        .map { case (relPath, name, outputString) =>
           val fileName = name + ".scala"
           val scalaFile = (args.output / relPath / fileName)
           os.write.over(scalaFile, outputString, createFolders = true)
           scalaFile
-      }
+        }
     } else List.empty
 
     val openApiFiles = if (!args.skipOpenapi) {
@@ -62,7 +63,8 @@ object Codegen { self =>
   private[codegen] def generate(
       model: Model,
       allowedNS: Option[Set[String]],
-      excludedNS: Option[Set[String]]
+      excludedNS: Option[Set[String]],
+      customGenerators: List[CustomGenerator]
   ): List[(os.RelPath, String, String)] = {
     val namespaces = model
       .shapes()
@@ -95,7 +97,12 @@ object Codegen { self =>
       .map { ns => SmithyToIR(model, ns) }
       .flatMap { cu =>
         val amended = CollisionAvoidance(cu)
-        Renderer(amended)
+        val customResults = customGenerators
+          .flatMap(_.generate(amended, model))
+          .map(_.asRendererResult)
+        customResults ++ Renderer(
+          amended
+        )
       }
       .map { result =>
         val relPath =

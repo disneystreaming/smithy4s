@@ -37,7 +37,8 @@ object CommandParsingSpec extends FunSuite {
               repositories = Nil,
               dependencies = Nil,
               transformers = Nil,
-              localJars = Nil
+              localJars = Nil,
+              customGenerators = Nil
             )
           )
         )
@@ -90,7 +91,8 @@ object CommandParsingSpec extends FunSuite {
               localJars = List(
                 os.pwd / "lib1.jar",
                 os.pwd / "lib2.jar"
-              )
+              ),
+              customGenerators = Nil
             )
           )
         )

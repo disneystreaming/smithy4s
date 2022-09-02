@@ -127,7 +127,8 @@ object CodegenCommand {
             repositories.getOrElse(List.empty),
             dependencies.getOrElse(List.empty),
             transformers.getOrElse(List.empty),
-            localJars.getOrElse(List.empty)
+            localJars.getOrElse(List.empty),
+            customGenerators = List.empty
           )
       }
 
