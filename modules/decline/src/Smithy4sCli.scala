@@ -109,7 +109,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
               )
 
           FO.flatMap(printer.printOutput)
-            .recoverWith {
+            .onError {
               case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
                 printer
                   .printError(e)
