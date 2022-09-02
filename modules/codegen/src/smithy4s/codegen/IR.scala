@@ -166,7 +166,14 @@ sealed trait Type {
     case other                    => other
   }
 
-  def isResolved: Boolean = dealiased == this
+  def isResolved: Boolean = {
+    val isUnwrapped = this match {
+      case Type.Alias(_, _, _, unwrapped) => unwrapped
+      case _                              => false
+    }
+    val isDealiased = dealiased == this
+    isUnwrapped || isDealiased
+  }
 }
 
 sealed trait Primitive {

@@ -31,21 +31,12 @@ package object example {
     def service: smithy4s.Service[NameCollisionGen, NameCollisionOperation] = NameCollisionGen
     val id: smithy4s.ShapeId = service.id
   }
-  type ReservedNameService[F[_]] = smithy4s.Monadic[ReservedNameServiceGen, F]
-  object ReservedNameService extends smithy4s.Service.Provider[ReservedNameServiceGen, ReservedNameServiceOperation] {
-    def apply[F[_]](implicit F: ReservedNameService[F]): F.type = F
-    def service: smithy4s.Service[ReservedNameServiceGen, ReservedNameServiceOperation] = ReservedNameServiceGen
-    val id: smithy4s.ShapeId = service.id
-  }
 
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
-  type MySet = smithy4s.example.MySet.Type
-  type StringValue = smithy4s.example.StringValue.Type
   type SomeValue = smithy4s.example.SomeValue.Type
   type TestString = smithy4s.example.TestString.Type
   type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type
-  type MyMap = smithy4s.example.MyMap.Type
   type Name = smithy4s.example.Name.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
@@ -54,7 +45,6 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
-  type StringKey = smithy4s.example.StringKey.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type

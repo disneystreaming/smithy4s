@@ -8,7 +8,7 @@ use smithy4s.api#simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
   errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
@@ -269,4 +269,23 @@ operation GetIntEnum {
 intEnum EnumResult {
     FIRST = 1
     SECOND = 2
+}
+
+@readonly
+@http(method: "GET", uri: "/custom-code/{code}", code: 200)
+operation CustomCode {
+  input: CustomCodeInput,
+  output: CustomCodeOutput,
+  errors: [ UnknownServerError ]
+}
+
+structure CustomCodeInput {
+  @httpLabel
+  @required
+  code: Integer
+}
+
+structure CustomCodeOutput {
+  @httpResponseCode
+  code: Integer
 }
