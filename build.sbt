@@ -721,7 +721,7 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val core = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val core = Def.setting("com.monovore" %%% "decline" % "2.3.0")
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
