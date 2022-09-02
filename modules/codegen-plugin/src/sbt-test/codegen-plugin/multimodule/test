@@ -1,0 +1,8 @@
+# check if smithy4sCodegen works
+> compile
+$ exists bar/target/scala-2.13/src_managed/main/bar/Bar.scala
+$ exists foo/target/scala-2.13/src_managed/main/foo/Foo.scala
+
+# check if code can run, this can reveal runtime issues
+# such as initialization errors
+> bar/run

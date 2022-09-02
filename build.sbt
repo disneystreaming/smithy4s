@@ -823,7 +823,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val outputDir = (config / genSmithyOutput).?.value
     .getOrElse((config / sourceManaged).value)
     .getAbsolutePath()
-  val openapiOutputDir =
+  val resourceOutputDir =
     (config / genSmithyOpenapiOutput).?.value
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
@@ -855,7 +855,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
               val args =
                 List("--output", outputDir) ++
-                  List("--openapi-output", openapiOutputDir) ++
+                  List("--resource-output", resourceOutputDir) ++
                   (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
                      List("--allowed-ns", allowedNS.get.mkString(","))
