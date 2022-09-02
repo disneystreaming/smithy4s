@@ -16,9 +16,9 @@
 
 package smithy4s.decline
 
-import cats.effect.ExitCode
-import cats.effect.IO
 import cats.implicits._
+import cats.instances.all._
+import cats.MonadThrow
 import com.monovore.decline.Opts
 import com.monovore.decline.Command
 import smithy.api.Documentation
@@ -31,7 +31,6 @@ import smithy4s.Service
 import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi
 import smithy4s.http.HttpEndpoint
-
 import commons._
 
 final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
@@ -46,8 +45,8 @@ final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
   * @param service
   *   The service to build a client call for
   */
-class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-    mainOpts: Opts[Entrypoint[Alg, IO]],
+class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
+    mainOpts: Opts[Entrypoint[Alg, F]],
     service: Service[Alg, Op]
 ) {
 
@@ -85,7 +84,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
 
   private def endpointSubcommand[I, E, O](
       endpoint: Endpoint[Op, I, E, O, _, _]
-  ): Opts[IO[ExitCode]] = {
+  ): Opts[F[Unit]] = {
 
     def compileToOpts[A](schema: smithy4s.Schema[A]): Opts[A] =
       schema.compile[Opts](OptsVisitor)
@@ -103,27 +102,26 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
         ).mapN { (input, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
-          printer.printInput(input) *>
+          val FO = printer.printInput(input) *>
             service
-              .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(
+              .asTransformation[GenLift[F]#λ](entrypoint.interpreter)(
                 endpoint.wrap(input)
               )
-              .flatMap(printer.printOutput)
-              .as(ExitCode.Success)
-              .recoverWith {
-                case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
-                  printer
-                    .printError(e)
-                    .as(ExitCode.Error)
-              }
+
+          FO.flatMap(printer.printOutput)
+            .recoverWith {
+              case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
+                printer
+                  .printError(e)
+            }
         }
       }
   }
 
-  private def opts: Opts[IO[ExitCode]] = service.endpoints
+  private def opts: Opts[F[Unit]] = service.endpoints
     .foldMapK(endpointSubcommand(_))
 
-  def command: Command[IO[ExitCode]] = {
+  def command: Command[F[Unit]] = {
     Command(
       toKebabCase(service.id.name),
       header = service.hints

@@ -16,8 +16,9 @@
 
 package smithy4s.decline.standalone
 
-import cats.effect.IO
 import cats.implicits._
+import cats.MonadThrow
+import cats.effect.std.Console
 import com.monovore.decline.Opts
 import smithy4s.Service
 import smithy4s.decline.Entrypoint
@@ -34,14 +35,16 @@ import smithy4s.decline.util.PrinterApi
   *   parameters if you need program-wide config that doesn't fit into a specific operation's input
   *   (operation inputs are mapped to Opts automatically by all Smithy4sCli implementations).
   */
-class Smithy4sSimpleStandaloneCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-    impl: Opts[smithy4s.Monadic[Alg, IO]]
+class Smithy4sSimpleStandaloneCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
+    _
+]: Console: MonadThrow](
+    impl: Opts[smithy4s.Monadic[Alg, F]]
 )(implicit
     service: Service[Alg, Op]
-) extends Smithy4sCli[Alg, Op](
+) extends Smithy4sCli[Alg, Op, F](
       (
         impl,
-        PrinterApi.opts.default[IO]()
-      ).mapN(Entrypoint.apply[Alg, IO]),
+        PrinterApi.opts.default[F]()
+      ).mapN(Entrypoint.apply[Alg, F]),
       service
     )
