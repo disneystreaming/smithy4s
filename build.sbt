@@ -152,7 +152,7 @@ lazy val core = projectMatrix
     libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
       "smithy4s.example",
-      "smithy4s.example.collision",
+      "smithy4s.example.collision"
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
@@ -704,7 +704,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.1"
     )
 
   val Smithy = new {
