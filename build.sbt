@@ -74,6 +74,7 @@ lazy val docs =
       `codegen-cli`,
       http4s,
       `http4s-swagger`,
+      decline,
       `aws-http4s` % "compile -> compile,test"
     )
     .settings(
@@ -92,7 +93,8 @@ lazy val docs =
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value
+        Dependencies.Http4s.emberServer.value,
+        Dependencies.Decline.effect.value
       ),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
       Compile / smithySpecs := Seq(
@@ -725,6 +727,7 @@ lazy val Dependencies = new {
 
   object Decline {
     val core = Def.setting("com.monovore" %%% "decline" % "2.3.0")
+    val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =

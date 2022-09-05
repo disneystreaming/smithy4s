@@ -42,7 +42,9 @@ structure Greeting {
 
 Lets implement the HelloWorld service , we will use cats.effect.IO for our effect type.
 
-```scala
+```scala mdoc:silent
+import smithy4s.hello._
+import cats.effect.IO
 object HelloWorldServiceInstance{
   val simple = new HelloWorldService[IO]{
     def hello(name: String, town: Option[String]):IO[Greeting] = {
@@ -59,11 +61,19 @@ object HelloWorldServiceInstance{
    - ``` val helloCommand :Command[IO[Unit]] =Smithy4sSimpleStandaloneCli(Opts(HelloWorldServiceInstance.simple)).command```
  - ```helloCommand``` is now a runnable `Command` that can parse command line args and returns an IO[Unit]
  - We can implement a CLI that will run the command and print the result to stdout
-```scala
-object app extends IOApp.Simple{
-  override def run(args: List[String]): IO[Unit] = {
-    val helloCommand:Command[IO[Unit]] = Smithy4sCli.standalone(Opts(HelloWorldServiceInstance.simple)).command
-    command.run(args)
+```scala mdoc:silent
+
+import smithy4s.decline.Smithy4sCli
+import cats.effect._
+import com.monovore.decline._
+import com.monovore.decline.effect.CommandIOApp
+
+object app extends IOApp {
+  override def run(args: List[String]) = {
+    val helloCommand: Command[IO[ExitCode]] = Smithy4sCli
+      .standalone(Opts(HelloWorldServiceInstance.simple))
+      .command.map(_.redeem(_ => ExitCode.Error, _ => ExitCode.Success))
+    CommandIOApp.run(helloCommand, args)
   }
 }
 ```
