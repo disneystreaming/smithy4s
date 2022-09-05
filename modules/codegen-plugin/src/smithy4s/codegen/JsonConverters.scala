@@ -4,7 +4,7 @@ import sjsonnew._
 import BasicJsonProtocol._
 import sbt.FileInfo
 import sbt.HashFileInfo
-import sjsonnew._, LList.:*:
+import sjsonnew._
 
 private[smithy4s] object JsonConverters {
 
@@ -20,7 +20,10 @@ private[smithy4s] object JsonConverters {
     }
   }
 
-  implicit val codegenArgsIso = LList.iso(
+  // format: off
+  type GenTarget = List[os.Path] :*: os.Path :*: os.Path :*: Boolean :*: Boolean :*: Boolean :*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: LNil
+  // format: on
+  implicit val codegenArgsIso = LList.iso[CodegenArgs, GenTarget](
     { ca: CodegenArgs =>
       ("specs", ca.specs) :*:
         ("output", ca.output) :*:
