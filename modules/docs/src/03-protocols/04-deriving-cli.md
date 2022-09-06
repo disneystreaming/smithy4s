@@ -57,8 +57,17 @@ object HelloWorldServiceInstance{
 ```
  - Now Using the ```decline``` module from Smithy4s we can wrap the service instance in an instance of a `Smithy4sCli`.
     - The `Smithy4sCli` allows the customization of the Opts and stdin/stdout/stderr handling 
- - There is a convenient class ```Smithy4sSimpleStandaloneCli``` that you can extend and simply pass in the service wrapped in an Opts and call the command method
-   - ``` val helloCommand :Command[IO[Unit]] =Smithy4sSimpleStandaloneCli(Opts(HelloWorldServiceInstance.simple)).command```
+ - There is a convenient helper method ```Smithy4sCli.standalone``` to make it easier to construct Cli's using  defaults.
+ - To utilize the helper method , wrap the service in an instance of Opts and pass it into ```Smithy4sCli.standalone```
+ - there are 2 methods available on the ```Smithy4sCli``` instance
+    - ```opts``` which will  provide an Opts[F[Unit]] for the service
+    - ```command``` which will provide a Command[F[Unit]] for the service . This uses defaults from the Smithy spec
+      - command name will use be the service name 
+      - if documentation comments are available on the service , they will be used as the command help text
+ ```scala mdoc:silent
+   val serviceWrappedInOpts = Opts(HelloWorldServiceInstance.simple)
+   val helloCommand :Command[IO[Unit]] =Smithy4sCli.standalone(serviceWrappedInOpts).command
+```
  - ```helloCommand``` is now a runnable `Command` that can parse command line args and returns an IO[Unit]
  - We can implement a CLI that will run the command and print the result to stdout
 ```scala mdoc:silent
