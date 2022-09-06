@@ -30,22 +30,23 @@ import weaver._
 
 case class GeneratedTest(name: String, assertions: IO[Expectations])
 
-abstract class WeaverTests[P, Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-    protocolTag: ShapeTag[_],
-    client: (
-        HttpApp[IO],
-        Uri
-    ) => Either[UnsupportedProtocolError, smithy4s.Monadic[Alg, IO]],
-    server: smithy4s.Monadic[Alg, IO] => Either[
-      UnsupportedProtocolError,
-      HttpRoutes[IO]
-    ]
-)(implicit service: Service[Alg, Op])
+abstract class WeaverTests[
+  // format: off
+  P: ShapeTag,
+  Alg[_[_, _, _, _, _]],
+  Op[_, _, _, _, _]
+  ](
+    protocolTag: P,
+    client: (HttpApp[IO], Uri) => Either[UnsupportedProtocolError, smithy4s.Monadic[Alg, IO]],
+    server: smithy4s.Monadic[Alg, IO] => Either[UnsupportedProtocolError, HttpRoutes[IO]]
+  )(implicit service: Service[Alg, Op])
+    // format: on
     extends SimpleIOSuite {
 
   private class EndpointTest[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO]
   )(implicit ce: CompatEffect) {
+    private val protocolId = ShapeTag[P].id
 
     def generateTests() = {
       requestTests() ++ responseTests()
@@ -60,7 +61,7 @@ abstract class WeaverTests[P, Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
           .get(HttpRequestTests)
           .map(_.value)
           .getOrElse(Nil)
-          .filter(_.protocol == protocolTag.id.toString())
+          .filter(_.protocol == protocolId.toString())
 
       val clientTests = appliesTo(testCases)(AppliesTo.CLIENT, _.appliesTo)
         .map(whrtc.makeClientTest(endpoint, _, inputFromDocument))
@@ -80,7 +81,7 @@ abstract class WeaverTests[P, Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
           .get(HttpResponseTests)
           .map(_.value)
           .getOrElse(Nil)
-          .filter(_.protocol == protocolTag.id.toString())
+          .filter(_.protocol == protocolId.toString())
 
       val clientTests = appliesTo(testCases)(AppliesTo.CLIENT, _.appliesTo)
         .map(whrtc.makeClientTest(endpoint, _, inputFromDocument))
