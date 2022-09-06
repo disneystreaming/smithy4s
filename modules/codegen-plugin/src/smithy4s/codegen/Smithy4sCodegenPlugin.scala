@@ -58,17 +58,14 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Disallow-list of namespaces that should not be processed by the generator. When set, namespaces are evicted as the last filtering step"
       )
 
-    @deprecated(
-      "2022-03-01",
-      """use `libraryDependencies += "org.acme" % "artifact" % "version" % Smithy4s`"""
-    )
-    val smithy4sCodegenDependencies =
-      settingKey[List[String]](
-        "List of dependencies containing smithy files to include in codegen task"
+    val Smithy4s =
+      config("smithy4s").describedAs(
+        "Dependencies containing Smithy code, used at codegen-time only."
       )
 
-    val Smithy4s =
-      config("smithy4s").describedAs("Dependencies for Smithy code.")
+    // A shortcut to `"smithy4s,compile"` to use when defining dependencies that need to be consumed
+    // at odegen-time (for their smithy specs) AND at compile-time (for the Scala-code they contain)
+    val Smithy4sCompile = List(Smithy4s, Compile).map(_.name).mkString(",")
 
     val smithy4sModelTransformers =
       settingKey[List[String]](
@@ -90,7 +87,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
-    config / smithy4sCodegenDependencies := List.empty: @annotation.nowarn,
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
@@ -108,9 +104,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       updateReport: UpdateReport
   ): List[os.Path] =
     for {
-      smithy4sConfigReport <- updateReport.configurations
-        .find(_.configuration.name == Smithy4s.name)
-        .toList
+      markerConfig <- List(Smithy4s)
+      smithy4sConfigReport <- updateReport.configuration(markerConfig).toList
       module <- smithy4sConfigReport.modules
       artifactFile <- module.artifacts
     } yield {
