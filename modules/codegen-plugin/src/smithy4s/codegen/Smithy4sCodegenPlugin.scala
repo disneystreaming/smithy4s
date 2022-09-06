@@ -160,10 +160,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           Tracked
             .lastOutput[(Boolean, CodegenArgs), Seq[File]](
               s.cacheStoreFactory.make("output")
-            ) { case ((changed, _), outputs) =>
-              if (changed || outputs.isEmpty) {
+            ) { case ((inputChanged, args), outputs) =>
+              if (inputChanged || outputs.isEmpty) {
                 val resPaths = smithy4s.codegen.Codegen
-                  .processSpecs(codegenArgs)
+                  .processSpecs(args)
                   .toList
                 resPaths.map(path => new File(path.toString))
               } else {
