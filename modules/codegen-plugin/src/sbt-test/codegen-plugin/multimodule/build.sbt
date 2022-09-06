@@ -8,6 +8,9 @@ lazy val foo = (project in file("foo"))
     )
   )
 
+lazy val inBetween = (project in file("inBetween"))
+  .dependsOn(foo)
+
 lazy val bar = (project in file("bar"))
   .enablePlugins(Smithy4sCodegenPlugin)
-  .dependsOn(foo)
+  .dependsOn(inBetween)
