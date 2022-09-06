@@ -39,3 +39,18 @@ union TestMixinAdt {
 
 @adtMember(TestMixinAdt)
 structure TestAdtMemberWithMixin with [CommonFieldsOne] {}
+
+
+@mixin()
+structure MixinOptionalMember {
+  a: String
+}
+
+structure MixinOptionalMemberOverride with [MixinOptionalMember] {
+  @required
+  a: String
+}
+
+structure MixinOptionalMemberDefaultAdded with [MixinOptionalMember] {
+  a: String = "test"
+}

@@ -185,6 +185,35 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         x
       )
 
+      private def doFieldsMatch(
+          mixinId: ShapeId,
+          fields: List[Field]
+      ): Boolean = {
+        val mixin: StructureShape =
+          model
+            .getShape(mixinId)
+            .asScala
+            .flatMap(_.asStructureShape.asScala)
+            .getOrElse(
+              throw new IllegalArgumentException(
+                s"Unable to find mixin with id: $mixinId"
+              )
+            )
+        val mixinMembers = mixin.getAllMembers().asScala
+        mixinMembers.forall { case (memberName, member) =>
+          fields
+            .find(_.name == memberName)
+            .forall { field =>
+              val memberOptional = !member.hasTrait(classOf[RequiredTrait])
+              val memberHasDefault = member.hasTrait(classOf[DefaultTrait])
+
+              // if member has no default and is optional, then the field must be optional
+              if (!memberHasDefault && memberOptional) !field.required
+              else field.required
+            }
+        }
+      }
+
       override def structureShape(shape: StructureShape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         val isTrait = hints.exists {
@@ -193,13 +222,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
         val rec = isRecursive(shape.getId()) || isTrait
 
-        val mixins = shape.getMixins.asScala.flatMap(_.tpe).toList
+        val fields = shape.fields
+        val filteredMixins = shape
+          .getMixins()
+          .asScala
+          .filter(mixinId => doFieldsMatch(mixinId, fields))
+        val mixins = filteredMixins.flatMap(_.tpe).toList
         val isMixin = shape.hasTrait(classOf[MixinTrait])
+
         val p =
           Product(
             shape.getId(),
             shape.name,
-            shape.fields,
+            fields,
             mixins,
             rec,
             hints,
