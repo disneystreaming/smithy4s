@@ -152,7 +152,7 @@ lazy val core = projectMatrix
     libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
       "smithy4s.example",
-      "smithy4s.example.collision",
+      "smithy4s.example.collision"
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
@@ -708,7 +708,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.23.1"
+    val smithyVersion = "1.24.0"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
