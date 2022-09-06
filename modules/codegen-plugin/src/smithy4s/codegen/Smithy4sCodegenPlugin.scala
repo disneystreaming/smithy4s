@@ -157,19 +157,18 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         s.cacheStoreFactory.make("input")
       ) {
         Function.untupled {
-          Tracked
-            .lastOutput[(Boolean, CodegenArgs), Seq[File]](
-              s.cacheStoreFactory.make("output")
-            ) { case ((inputChanged, args), outputs) =>
-              if (inputChanged || outputs.isEmpty) {
-                val resPaths = smithy4s.codegen.Codegen
-                  .processSpecs(args)
-                  .toList
-                resPaths.map(path => new File(path.toString))
-              } else {
-                outputs.getOrElse(Seq.empty)
-              }
+          Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
+            s.cacheStoreFactory.make("output")
+          ) { case ((inputChanged, args), outputs) =>
+            if (inputChanged || outputs.isEmpty) {
+              val resPaths = smithy4s.codegen.Codegen
+                .processSpecs(args)
+                .toList
+              resPaths.map(path => new File(path.toString))
+            } else {
+              outputs.getOrElse(Seq.empty)
             }
+          }
         }
       }
 

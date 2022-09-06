@@ -22,19 +22,17 @@ import sbt.FileInfo
 import sbt.HashFileInfo
 import sjsonnew._
 
+// Json codecs used by SBT's caching constructs
 private[smithy4s] object JsonConverters {
 
-  implicit val pathFormat: JsonFormat[os.Path] = {
-    val hashInfoFormat = implicitly[JsonFormat[HashFileInfo]]
-    new JsonFormat[os.Path] {
-      def read[J](jsOpt: Option[J], unbuilder: Unbuilder[J]): os.Path = {
-        os.Path(hashInfoFormat.read(jsOpt, unbuilder).file)
-      }
-
-      def write[J](obj: os.Path, builder: Builder[J]): Unit =
-        hashInfoFormat.write(FileInfo.hash(obj.toIO), builder)
-    }
-  }
+  // This serialises a path by providing a hash of the content it points to.
+  // Because the hash is part of the Json, this allows SBT to detect when a file
+  // changes and invalidate its relevant caches, leading to a call to Smithy4s' code generator.
+  implicit val pathFormat: JsonFormat[os.Path] =
+    BasicJsonProtocol.projectFormat[os.Path, HashFileInfo](
+      p => FileInfo.hash(p.toIO),
+      hash => os.Path(hash.file)
+    )
 
   // format: off
   type GenTarget = List[os.Path] :*: os.Path :*: os.Path :*: Boolean :*: Boolean :*: Boolean :*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: LNil
