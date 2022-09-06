@@ -59,7 +59,7 @@ object CodegenCommand {
       .options[String](
         long = "skip",
         help =
-          "Indicates that some files typesshould be skipped during generation"
+          "Indicates that some files types should be skipped during generation"
       )
       .mapValidated(_.traverse(FileType.fromString))
       .map(_.toList.toSet)
