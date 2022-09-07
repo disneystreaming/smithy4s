@@ -58,6 +58,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Disallow-list of namespaces that should not be processed by the generator. When set, namespaces are evicted as the last filtering step"
       )
 
+    val smithy4sSmithyLibrary =
+      settingKey[Boolean](
+        "Sets whether this project should be use as a Smithy library by packaging the Smithy specs in the resulting jar"
+      )
+
     val Smithy4s =
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
@@ -87,6 +92,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
+    config / smithy4sSmithyLibrary := true,
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
@@ -136,13 +142,17 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       }
     val transforms = (conf / smithy4sModelTransformers).value
     val s = streams.value
+    val skipResources: Set[FileType] =
+      if ((conf / smithy4sSmithyLibrary).value) Set.empty
+      else Set(FileType.Resource)
+    val skipSet = skipResources
 
     val filePaths = inputFiles.map(_.getAbsolutePath())
     val codegenArgs = CodegenArgs(
       filePaths.map(os.Path(_)).toList,
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
-      skip = Set.empty,
+      skip = skipSet,
       discoverModels = true, // we need protocol here
       allowedNS = allowedNamespaces,
       excludedNS = excludedNamespaces,

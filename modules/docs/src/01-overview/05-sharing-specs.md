@@ -34,11 +34,24 @@ This does mean two things :
 
 1. Users do not have to manually indicate namespaces that were already generated.
 2. When using multi-module builds, Smithy specifications in one module can depend on Smithy specifications in another module it depends on, without the user having to do anything bespoke for it. The resulting Scala code in the downstream module will simply depend on the one in the upstream module, as if it had been handwritten.
+
+### Disabling packaing of smithy files in jars
+
+If for some reaoson you want to disable the packaging of Smithy files in the jars created by your build tool, follow the instructions below
+
+#### SBT
+
+Add the following setting to your project
+
+```scala
+Compile / smithy4sSmithyLibrary := false
+```
+
 ### A word of warning
 
 Smithy4s optimises for "correctness" as opposed to "compatibility." This means the generated Scala code aims at 1) being an accurate reflection of the Smithy models and 2) providing an idiomatic developer experience. This happens at the cost of a lack of guarantees around the binary compatibility of the generated code when the Schema evolves.
 
-When packaging Smithy specs in artifacts that contain Smithy4s-generated code, developers should keep that aspect in mind, and ensure that the version of Smithy4s that produced upstream artifacts is binary-compatible with the version that they use locally.
+When packaging Smithy specs in artifacts that contain Smithy4s-generated code, developers should keep that aspect in mind, and ensure that the version of Smithy4s that produced upstream artifacts is binary-compatible with the version that they use locally. Tools such as MiMa can help
 
 We cannot recommend treating Smithy4s-generated code as publishable library-material. Should you decide to do so, please exercise caution.
 
