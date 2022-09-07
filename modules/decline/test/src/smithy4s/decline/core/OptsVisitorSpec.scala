@@ -25,7 +25,6 @@ import smithy.api.TimestampFormat
 import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Timestamp
-import smithy4s.decline.core.OptsVisitor
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
