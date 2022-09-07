@@ -27,3 +27,8 @@ private[weavertests] class CompatEffect(implicit
 ) {
   def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
 }
+
+object Compat {
+  def host(hostname: String): String = hostname
+  def port(portNumber: Int): Int = portNumber
+}

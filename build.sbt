@@ -637,6 +637,8 @@ lazy val weaverTests = projectMatrix
         else Seq.empty
       ce3 ++ Seq(
         Dependencies.Http4s.circe.value,
+        Dependencies.Http4s.client.value,
+        Dependencies.Http4s.emberServer.value,
         Dependencies.Weaver.cats.value
       )
     },

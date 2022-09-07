@@ -18,7 +18,14 @@ package smithy4s.weavertests
 
 import cats.effect.Deferred
 import cats.effect.IO
+import com.comcast.ip4s.Host
+import com.comcast.ip4s.Port
 
 private[weavertests] class CompatEffect {
   def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
+}
+
+object Compat {
+  def host(hostname: String): Host = Host.fromString(hostname).get
+  def port(portNumber: Int): Port = Port.fromInt(portNumber).get
 }
