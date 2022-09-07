@@ -65,6 +65,8 @@ object HelloWorldServiceInstance{
       - command name will use the service name 
       - if documentation comments are available on the service , they will be used as the command help text
 ```scala mdoc:silent
+   import com.monovore.decline._
+   import smithy4s.decline.Smithy4sCli
    val serviceWrappedInOpts = Opts(HelloWorldServiceInstance.simple)
    val helloCommand: Command[IO[Unit]] = Smithy4sCli.standalone(serviceWrappedInOpts).command
 ```   
