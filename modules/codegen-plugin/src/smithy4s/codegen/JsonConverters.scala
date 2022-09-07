@@ -20,7 +20,6 @@ import sjsonnew._
 import BasicJsonProtocol._
 import sbt.FileInfo
 import sbt.HashFileInfo
-import sjsonnew._
 
 // Json codecs used by SBT's caching constructs
 private[smithy4s] object JsonConverters {
