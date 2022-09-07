@@ -28,14 +28,12 @@ A couple examples :
 
 The Smithy4s build-plugins we provide out of the box automatically package the local specifications (used for code-generations) in the resulting jars so that downstream projects (internal and external) can use them. When doing so, Smithy4s abides by the same structure described above.
 
-Additionally, Smithy4s will also synthesise one smithy file per namespace that it was responsible of generating. This synthetic file contains a piece of metadata
-listing the namespace that was generated, so that downstream calls of Smithy4s can automatically skip the already-generated namespaces.
+Additionally, Smithy4s will also produce a smithy file containing a piece of metadata listing the namespace that was generated, so that downstream calls of Smithy4s can automatically skip the already-generated namespaces.I
 
 This does mean two things :
 
 1. Users do not have to manually indicate namespaces that were already generated.
-2. When using multi-module builds, Smithy specifications in one module can depend on Smithy specifications in another module it depends on, without the user
-having to do anything bespoke for it. The resulting Scala code in the downstream module will simply depend on the one in the upstream module, as if it had been handwritten.
+2. When using multi-module builds, Smithy specifications in one module can depend on Smithy specifications in another module it depends on, without the user having to do anything bespoke for it. The resulting Scala code in the downstream module will simply depend on the one in the upstream module, as if it had been handwritten.
 ### A word of warning
 
 Smithy4s optimises for "correctness" as opposed to "compatibility." This means the generated Scala code aims at 1) being an accurate reflection of the Smithy models and 2) providing an idiomatic developer experience. This happens at the cost of a lack of guarantees around the binary compatibility of the generated code when the Schema evolves.
@@ -82,8 +80,7 @@ Because the upstream usage of Smithy4s will have resulted in the creation of met
 
 ### Manually skipping (or including) namespaces during code-generation.
 
-Sometimes, you may want to tell Smithy4s to skip code-generation of some namespaces altogether, because the corresponding code
-may have been produced by another tool than Smithy4s. In that case, you can gain control over which namespaces Smithy4s crawls through when performing the code generation to avoid regenerating code that already exists. This is achieved via a couple of SBT settings :
+Sometimes, you may want to tell Smithy4s to skip code-generation of some namespaces altogether, because the corresponding code may have been produced by another tool than Smithy4s. In that case, you can gain control over which namespaces Smithy4s crawls through when performing the code generation to avoid regenerating code that already exists. This is achieved via a couple of SBT settings :
 
 * `smithy4sAllowedNamespaces` which is an allow-list
 * `smithy4sExcludedNamespaces` which is a disallow-list

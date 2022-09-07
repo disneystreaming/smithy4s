@@ -32,19 +32,17 @@ private[smithy4s] object SmithyResources {
   ): List[os.Path] = {
 
     val smithyFolder = resourceOutputFolder / "META-INF" / "smithy"
-    val namespaceTrackingSmithyFiles = namespaces.map { ns =>
-      val filePath = smithyFolder / s"smithy4s.$ns.smithy"
-      val content = s"""|$$version: "2.0"
+    val trackingFile = smithyFolder / s"smithy4s.tracking.smithy"
+    val smithy4sVersion = BuildInfo.version
+    val nsString = namespaces.map(ns => s""""$ns"""").mkString(", ")
+    val content = s"""|$$version: "2.0"
                         |
-                        |metadata smithy4sGenerated = ["$ns"]
+                        |metadata smithy4sGenerated = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
                         |""".stripMargin
-      (filePath, content)
-    }
     val localCopyBindings = localSmithyFiles.map { path =>
       (path, smithyFolder / path.last)
     }
-    val allSmithyFiles =
-      namespaceTrackingSmithyFiles.map(_._1) ++ localCopyBindings.map(_._2)
+    val allSmithyFiles = trackingFile :: localCopyBindings.map(_._2)
 
     val metadataFile = smithyFolder / "manifest"
 
@@ -57,9 +55,7 @@ private[smithy4s] object SmithyResources {
       createFolders = true
     )
 
-    namespaceTrackingSmithyFiles.map { case (path, content) =>
-      os.write.over(path, content, createFolders = true)
-    }
+    os.write.over(trackingFile, content, createFolders = true)
 
     localCopyBindings.foreach { case (from, to) =>
       os.copy(
