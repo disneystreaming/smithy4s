@@ -67,6 +67,7 @@ object HelloWorldServiceInstance{
 ```scala mdoc:silent
    val serviceWrappedInOpts = Opts(HelloWorldServiceInstance.simple)
    val helloCommand: Command[IO[Unit]] = Smithy4sCli.standalone(serviceWrappedInOpts).command
+```   
  - ```helloCommand``` is now a runnable `Command` that can parse command line args and returns an IO[Unit]
  - We can implement a CLI that will run the command and print the result to stdout
 ```scala mdoc:silent
