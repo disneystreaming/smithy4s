@@ -19,6 +19,7 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
+import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
@@ -103,11 +104,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   override lazy val projectSettings =
     defaultSettings(Compile)
 
-  private type CacheKey = (
-      FilesInfo[HashFileInfo],
-      List[String]
-  )
-
   private def findCodeGenDependencies(
       updateReport: UpdateReport
   ): List[os.Path] =
@@ -140,47 +136,42 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val transforms = (conf / smithy4sModelTransformers).value
     val s = streams.value
 
+    val filePaths = inputFiles.map(_.getAbsolutePath())
+    val codegenArgs = CodegenArgs(
+      filePaths.map(os.Path(_)).toList,
+      output = os.Path(outputPath),
+      openapiOutput = os.Path(openApiOutputPath),
+      skipScala = false,
+      skipOpenapi = false,
+      discoverModels = true, // we need protocol here
+      allowedNS = allowedNamespaces,
+      excludedNS = excludedNamespaces,
+      repositories = res,
+      dependencies = List.empty,
+      transformers = transforms,
+      localJars = localJars
+    )
+
     val cached =
-      Tracked.inputChanged[CacheKey, Seq[File]](
+      Tracked.inputChanged[CodegenArgs, Seq[File]](
         s.cacheStoreFactory.make("input")
       ) {
         Function.untupled {
-          Tracked
-            .lastOutput[(Boolean, CacheKey), Seq[File]](
-              s.cacheStoreFactory.make("output")
-            ) { case ((changed, _), outputs) =>
-              if (changed || outputs.isEmpty) {
-                val filePaths = inputFiles.map(_.getAbsolutePath())
-                val codegenArgs = CodegenArgs(
-                  filePaths.map(os.Path(_)).toList,
-                  output = os.Path(outputPath),
-                  openapiOutput = os.Path(openApiOutputPath),
-                  skipScala = false,
-                  skipOpenapi = false,
-                  discoverModels = true, // we need protocol here
-                  allowedNS = allowedNamespaces,
-                  excludedNS = excludedNamespaces,
-                  repositories = res,
-                  dependencies = List.empty,
-                  transformers = transforms,
-                  localJars = localJars
-                )
-                val resPaths = smithy4s.codegen.Codegen
-                  .processSpecs(codegenArgs)
-                  .toList
-                resPaths.map(path => new File(path.toString))
-              } else {
-                outputs.getOrElse(Seq.empty)
-              }
+          Tracked.lastOutput[(Boolean, CodegenArgs), Seq[File]](
+            s.cacheStoreFactory.make("output")
+          ) { case ((inputChanged, args), outputs) =>
+            if (inputChanged || outputs.isEmpty) {
+              val resPaths = smithy4s.codegen.Codegen
+                .processSpecs(args)
+                .toList
+              resPaths.map(path => new File(path.toString))
+            } else {
+              outputs.getOrElse(Seq.empty)
             }
+          }
         }
       }
 
-    cached(
-      (
-        FilesInfo(inputFiles.map(FileInfo.hash(_)).toSet),
-        localJars.map(_.toString)
-      )
-    )
+    cached(codegenArgs)
   }
 }
