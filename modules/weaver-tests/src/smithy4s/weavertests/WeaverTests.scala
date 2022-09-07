@@ -17,6 +17,7 @@
 package smithy4s.weavertests
 
 import cats.effect.IO
+import cats.effect.Resource
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.Uri
@@ -27,6 +28,7 @@ import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.UnsupportedProtocolError
 import weaver._
+import org.http4s.client.Client
 
 case class GeneratedTest(name: String, assertions: IO[Expectations])
 
@@ -49,7 +51,35 @@ abstract class WeaverTests[
     private val protocolId = ShapeTag[P].id
 
     def generateTests() = {
-      requestTests() ++ responseTests()
+      requestTests() ++ responseTests() ++ dummyRequestTests()
+    }
+
+    private def dummyRequestTests(): List[GeneratedTest] = {
+      import org.http4s.implicits._
+      val baseUri = uri"http://localhost/"
+      val inputFromDocument = Document.Decoder.fromSchema(endpoint.input)
+      val c: Either[
+        HttpApp[IO] => Resource[IO, smithy4s.Monadic[Alg, IO]],
+        Int => Resource[IO, smithy4s.Monadic[Alg, IO]]
+      ] = Left { (a: HttpApp[IO]) =>
+        Resource.pure(
+          client(a, baseUri).fold(err => sys.error(err.getMessage()), identity)
+        )
+      }
+      val chctc = new ClientHttpComplianceTestCase(c)
+
+      val s: smithy4s.Monadic[Alg, IO] => Resource[IO, (Client[IO], Uri)] = ???
+      val shtct = new ServerHttpComplianceTestCase(s)
+
+      val testCases =
+        endpoint.hints
+          .get(HttpRequestTests)
+          .map(_.value)
+          .getOrElse(Nil)
+          .filter(_.protocol == protocolId.toString())
+
+      appliesTo(testCases)(AppliesTo.CLIENT, _.appliesTo)
+        .map(chctc.clientRequestTest(endpoint, _, inputFromDocument))
     }
 
     private def requestTests(): List[GeneratedTest] = {
