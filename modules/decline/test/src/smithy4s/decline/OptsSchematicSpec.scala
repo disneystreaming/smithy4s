@@ -16,14 +16,12 @@
 
 package smithy4s.decline
 
-import cats.Applicative
 import cats.implicits._
 import cats.kernel.Eq
-import com.monovore.decline.Command
+import com.monovore.decline.{Command,Opts}
 import com.monovore.decline.Help
 import smithy.api.Length
 import smithy.api.TimestampFormat
-import smithy4s.ByteArray
 import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.Timestamp
@@ -34,41 +32,35 @@ import smithy4s.schema.Schema._
 import weaver._
 
 object OptsSchematicSpec extends SimpleIOSuite {
-  type EitherThrow[A] = Either[Throwable, A]
-  private val compiler = new OptsVisitor[EitherThrow]
-
   def sampleStruct[A](name: String, schema: Schema[A]): Schema[A] =
     struct(
       schema.required[A](name, identity)
     )(identity)
 
-  def parseOpts[A](
-                    schema: Schema[A]
-                  )(
-                    input: String*
-                  ): Either[Help, EitherThrow[A]] = Command("test-command", "test-header")(
-    schema.compile[OptsVisitor.OptsF[EitherThrow, *]](compiler)
-  )
-    .parse(input)
+  def parseOpts[A](schema: Schema[A])(input: String*): Either[Help, A] =
+    Command("test-command", "test-header")(schema.compile[Opts](OptsVisitor)).parse(input) match {
+      case Left(value) => println(value); Left(value)
+      case Right(value) => println(value); Right(value)
+    }
 
-  val sampleUnion = sampleStruct(
-    "example", {
-      val lhs = sampleStruct("int", int)
-        .oneOf[Either[Int, String]]("unused2", (_: Int).asLeft)
+        val sampleUnion = sampleStruct(
+          "example", {
+            val lhs = sampleStruct("int", int)
+              .oneOf[Either[Int, String]]("unused2", (_: Int).asLeft)
 
-      val rhs = sampleStruct("str", string)
-        .oneOf[Either[Int, String]]("unused", (_: String).asRight)
+            val rhs = sampleStruct("str", string)
+              .oneOf[Either[Int, String]]("unused", (_: String).asRight)
 
-      union(
-        lhs,
-        rhs,
-      )(_.fold(lhs(_), rhs.apply(_)))
+            union(
+              lhs,
+              rhs,
+            )(_.fold(lhs(_), rhs.apply(_)))
 
-    },
-  )
+          },
+        )
 
-  sealed trait Superpower
-  case object Fire extends Superpower
+        sealed trait Superpower
+      case object Fire extends Superpower
   case object Ice extends Superpower
   case object Water extends Superpower
 
@@ -175,9 +167,9 @@ object OptsSchematicSpec extends SimpleIOSuite {
     implicit val eqThrowable: Eq[Throwable] = Eq.fromUniversalEquals
 
     def parsed[A: Eq](
-                       actual: Either[Help, EitherThrow[A]],
+                       actual: Either[Help, A],
                        expected: A,
-                     ): Expectations = expect.eql(actual, Right(Right(expected)))
+                     ): Expectations = expect.eql(actual, Right(expected))
 
     def failureSubstring(
                           actual: Either[Help, Any],
@@ -188,20 +180,6 @@ object OptsSchematicSpec extends SimpleIOSuite {
       result => assert(result.toString().contains(expected)),
       fail("Expected failure, but got success 😩"),
     )
-
-    def effectFailureSubstring(
-                                actual: Either[Help, EitherThrow[Any]],
-                                expected: String,
-                              )(
-                                implicit loc: SourceLocation
-                              ): Expectations = actual.fold(
-      _ => failure("Expected effect failure, got parsing failure"),
-      _.fold(
-        result => assert(result.getMessage().contains(expected)),
-        fail("Expected failure, but got success 😩"),
-      ),
-    )
-
   }
 
   pureTest("compile unit") {
@@ -237,8 +215,8 @@ object OptsSchematicSpec extends SimpleIOSuite {
       parseOpts(
         bijection[Int, String](
           sampleStruct("elem", int),
-          _.toString + ".asString",
-          _ => sys.error("impossible"),
+          (i:Int) => i.toString + ".asString",
+          (str:String) => sys.error("impossible"),
         )
       )("42"),
       "42.asString",
@@ -486,36 +464,36 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("compile surjection - success") {
     assert.parsed(
       parseOpts(
-        sampleStruct("surjection", string.addHints(Length(min = Some(1))).validated[Length])
+        sampleStruct("surjection", string.validated[Length](Length(min = Some(1))))
       )("a"),
       "a",
     )
   }
 
   pureTest("compile surjection - failure") {
-    assert.effectFailureSubstring(
+  assert.failureSubstring(
       parseOpts(
-        sampleStruct("surjection", string.addHints(Length(min = Some(1))).validated[Length])
+        sampleStruct("surjection", string.validated[Length](Length(min = Some(1))))
       )(""),
-      "Refinement failed",
+      "length required to be >= 1, but was 0",
     )
   }
 
   pureTest("compile surjection in list - success") {
     assert.parsed(
       parseOpts(
-        sampleStruct("surjection", list(string.addHints(Length(min = Some(1))).validated[Length]))
+        sampleStruct("surjection", list(string.validated[Length](Length(min = Some(1)))))
       )("a", "b", "c"),
       List("a", "b", "c"),
     )
   }
 
   pureTest("compile surjection in list - failure in one of the items") {
-    assert.effectFailureSubstring(
+    assert.failureSubstring(
       parseOpts(
-        sampleStruct("surjection", list(string.addHints(Length(min = Some(1))).validated[Length]))
+        sampleStruct("surjection", list(string.validated[Length](Length(min = Some(1)))))
       )("a", "b", ""),
-      "Refinement failed",
+      "length required to be >= 1, but was 0",
     )
   }
 
