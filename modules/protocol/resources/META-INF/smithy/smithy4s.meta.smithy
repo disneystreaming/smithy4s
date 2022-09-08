@@ -84,11 +84,11 @@ structure refinement {
 }
 
 /// e.g. com.test_out.v2.Something
-@pattern("^(?:[a-zA-Z][\\w]*\\.?)*$")
+@pattern("^(?:_root_\\.)?(?:[a-zA-Z][\\w]*\\.?)*$")
 string Classpath
 
 /// e.g. com.test_out.v2.Something._
-@pattern("^(?:[a-zA-Z][\\w]*\\.?)*\\._$")
+@pattern("^(?:_root_\\.)?(?:[a-zA-Z][\\w]*\\.?)*\\._$")
 string Import
 
 /// This trait is used to signal that this type should not be wrapped
