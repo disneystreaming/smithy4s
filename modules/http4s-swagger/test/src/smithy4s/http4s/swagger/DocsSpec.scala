@@ -73,6 +73,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
           )
       }
     }
+
     test(s"GET $path/test-file.json fetches requested file") {
       val filePath = s"/$path/test-file.json"
       val request =
@@ -81,15 +82,17 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
         expect(response.status == Status.Ok)
       }
     }
-  }
 
-  test("GET /test-spec.json fetches service spec") {
-    val filePath = "/foobar.test-spec.json"
-    val request =
-      Request[IO](method = Method.GET, uri = Uri.unsafeFromString(filePath))
-    val app = docs("docs").orNotFound
-    app.run(request).map { response =>
-      expect(response.status == Status.Ok)
+    test(s"GET $path/specs/test-spec.json fetches service spec") {
+      val filePath = "/foobar.test-spec.json"
+      val request =
+        Request[IO](
+          method = Method.GET,
+          uri = Uri.unsafeFromString(s"/$path/specs$filePath")
+        )
+      app.run(request).map { response =>
+        expect(response.status == Status.Ok)
+      }
     }
   }
 
