@@ -79,7 +79,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       uri: Uri = uri"http://localhost:8080"
   ) {
 
-    def baseUri(uri: Uri): ClientBuilder[Alg, Op, F] =
+    def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
       new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
 
     def resource: Resource[F, Monadic[Alg, F]] =

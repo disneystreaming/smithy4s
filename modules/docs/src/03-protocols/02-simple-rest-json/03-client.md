@@ -28,16 +28,17 @@ import smithy4s.hello._
 
 object Clients {
   def helloWorldClient(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    HelloWorldService.simpleRestJson.clientResource(
-      http4sClient,
-      Uri.unsafeFromString("http://localhost")
-    )
+    HelloWorldService.simpleRestJson
+    .client(http4sClient)
+    .uri(Uri.unsafeFromString("http://localhost"))
+    .resource
 
   // alternatively ...
   def helloWorldClient2(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    SimpleRestJsonBuilder(HelloWorldService).clientResource(
-      http4sClient,
-      Uri.unsafeFromString("http://localhost")
-    )
+    SimpleRestJsonBuilder(HelloWorldService)
+    .client(http4sClient)
+      .uri(Uri.unsafeFromString("http://localhost"))
+      .resource
+    
 }
 ```
