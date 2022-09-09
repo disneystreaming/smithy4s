@@ -46,6 +46,7 @@ lazy val root = project
 lazy val allModules = Seq(
   core.projectRefs,
   codegen.projectRefs,
+  millCodegenPlugin.projectRefs,
   json.projectRefs,
   example.projectRefs,
   tests.projectRefs,
@@ -382,6 +383,28 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     },
     scriptedBufferLog := false
   )
+
+/**
+ * Mill plugin to run codegen
+ */
+lazy val millCodegenPlugin = projectMatrix
+  .in(file("modules/mill-codegen-plugin"))
+  .enablePlugins(BuildInfoPlugin)
+  .jvmPlatform(
+    scalaVersions = List(Scala213),
+    simpleJVMLayout
+  )
+  .settings(
+    name := "mill-codegen-plugin",
+    buildInfoKeys := Seq[BuildInfoKey](version),
+    buildInfoPackage := "smithy4s.codegen.mill",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "mill-scalalib" % "0.10.7",
+      "com.lihaoyi" %% "mill-main" % "0.10.7",
+      "com.lihaoyi" %% "mill-main-api" % "0.10.7"
+    )
+  )
+  .dependsOn(codegen)
 
 lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
