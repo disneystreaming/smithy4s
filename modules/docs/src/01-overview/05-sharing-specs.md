@@ -35,9 +35,9 @@ This does mean two things :
 1. Users do not have to manually indicate namespaces that were already generated.
 2. When using multi-module builds, Smithy specifications in one module can depend on Smithy specifications in another module it depends on, without the user having to do anything bespoke for it. The resulting Scala code in the downstream module will simply depend on the one in the upstream module, as if it had been handwritten.
 
-### Disabling packaing of smithy files in jars
+### Disabling packaging of smithy files in jars
 
-If for some reaoson you want to disable the packaging of Smithy files in the jars created by your build tool, follow the instructions below
+If for some reason you want to disable the packaging of Smithy files in the jars created by your build tool, follow the instructions below
 
 #### SBT
 
