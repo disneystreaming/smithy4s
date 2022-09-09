@@ -83,9 +83,9 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
 
     def resource: Resource[F, Monadic[Alg, F]] =
-      either.leftWiden[Throwable].liftTo[Resource[F, *]]
+      use.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    def either: Either[UnsupportedProtocolError, Monadic[Alg, F]] = {
+    def use: Either[UnsupportedProtocolError, Monadic[Alg, F]] = {
       checkProtocol(service, protocolTag)
         .as(
           new SmithyHttp4sReverseRouter[Alg, Op, F](
