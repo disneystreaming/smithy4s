@@ -27,8 +27,9 @@ object RecursiveInputSpec extends FunSuite {
 
   test("simpleRestJson works with recursive input operations") {
     val result =
-      SimpleRestJsonBuilder(smithy4s.example.RecursiveInputService).client(
-        Client.fromHttpApp(HttpApp.notFound[IO])).use
+      SimpleRestJsonBuilder(smithy4s.example.RecursiveInputService)
+        .client(Client.fromHttpApp(HttpApp.notFound[IO]))
+        .use
 
     expect(result.isRight)
   }

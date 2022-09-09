@@ -27,7 +27,9 @@ object Http4sPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {
     HttpApp[IO] => Resource[IO, PizzaAdminService[IO]],
     Int => Resource[IO, PizzaAdminService[IO]]
   ] = Left { httpApp =>
-    SimpleRestJsonBuilder(PizzaAdminService).client(Client.fromHttpApp(httpApp)).resource
+    SimpleRestJsonBuilder(PizzaAdminService)
+      .client(Client.fromHttpApp(httpApp))
+      .resource
   }
 
 }

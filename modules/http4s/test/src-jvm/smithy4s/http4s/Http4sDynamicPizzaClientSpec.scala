@@ -47,7 +47,8 @@ class DynamicHttpProxy(client: Client[IO]) {
     dynamicServiceIO
       .flatMap { dsi =>
         SimpleRestJsonBuilder(dsi.service)
-          .client[IO](client).use
+          .client[IO](client)
+          .use
           .liftTo[IO]
           .map { dynamicClient =>
             JsonIOProtocol
