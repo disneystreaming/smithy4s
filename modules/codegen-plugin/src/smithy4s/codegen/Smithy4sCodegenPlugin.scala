@@ -60,7 +60,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     val smithy4sSmithyLibrary =
       settingKey[Boolean](
-        "Sets whether this project should be use as a Smithy library by packaging the Smithy specs in the resulting jar"
+        "Sets whether this project should be used as a Smithy library by packaging the Smithy specs in the resulting jar"
       )
 
     val Smithy4s =

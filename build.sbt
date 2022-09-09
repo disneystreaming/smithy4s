@@ -27,7 +27,7 @@ Global / licenses := Seq(
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev"
+  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
   else (ThisBuild / version).value
 }
 
@@ -387,6 +387,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
 /**
  * Mill plugin to run codegen
  */
+lazy val millCodegenPluginTests = taskKey[Unit]("Run mill unit test")
 lazy val millCodegenPlugin = projectMatrix
   .in(file("modules/mill-codegen-plugin"))
   .enablePlugins(BuildInfoPlugin)
@@ -402,7 +403,37 @@ lazy val millCodegenPlugin = projectMatrix
       "com.lihaoyi" %% "mill-scalalib" % "0.10.7",
       "com.lihaoyi" %% "mill-main" % "0.10.7",
       "com.lihaoyi" %% "mill-main-api" % "0.10.7"
-    )
+    ),
+    publishLocal := {
+      // make sure that core and codegen are published before the
+      // plugin is published
+      // this allows running `scripted` alone
+      val _ = List(
+        // for the code being built
+        (core.jvm(Scala213) / publishLocal).value,
+        (dynamic.jvm(Scala213) / publishLocal).value,
+        (codegen.jvm(Scala213) / publishLocal).value,
+        // dependency of codegen
+        (openapi.jvm(Scala213) / publishLocal).value,
+
+        // for mill
+        (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
+      )
+      publishLocal.value
+    },
+    millCodegenPluginTests := {
+      import MillTests._
+      import sys.process._
+      val logger = sLog.value
+      val baseDir = file("modules/mill-codegen-plugin/ittests")
+      val testFolders = IO.listFiles(_.isDirectory())(baseDir)
+      testFolders.foreach { path =>
+        logger.info(s"Running tests in ${path.getAbsolutePath()}")
+        millCleanEnv(logger, path)
+        millVerify(logger, path, version.value)
+      }
+    },
+    Test / test := millCodegenPluginTests.value
   )
   .dependsOn(codegen)
 
