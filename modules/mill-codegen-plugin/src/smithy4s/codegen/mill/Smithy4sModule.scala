@@ -28,7 +28,7 @@ trait Smithy4sModule extends ScalaModule {
 
   /** Input directory for .smithy files */
   protected def smithy4sInputDir: Source = T.source {
-    PathRef(os.pwd / "smithy")
+    PathRef(millSourcePath / "smithy")
   }
 
   protected def smithy4sOutputDir: T[PathRef] = T {
