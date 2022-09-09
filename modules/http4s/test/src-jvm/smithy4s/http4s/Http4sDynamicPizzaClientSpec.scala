@@ -19,9 +19,7 @@ package smithy4s.http4s
 import smithy4s.dynamic._
 import smithy4s.ShapeId
 import org.http4s.client.Client
-import org.http4s.implicits._
 import cats.implicits._
-
 import cats.effect.IO
 import cats.effect.Resource
 import org.http4s.HttpApp
@@ -49,7 +47,7 @@ class DynamicHttpProxy(client: Client[IO]) {
     dynamicServiceIO
       .flatMap { dsi =>
         SimpleRestJsonBuilder(dsi.service)
-          .client[IO](client, uri"http://localhost:8080")
+          .client[IO](client).either
           .liftTo[IO]
           .map { dynamicClient =>
             JsonIOProtocol
