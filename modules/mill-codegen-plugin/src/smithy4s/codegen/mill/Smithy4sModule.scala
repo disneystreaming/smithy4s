@@ -46,7 +46,10 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sCodegenDependencies: T[List[String]] = List.empty[String]
 
-  def smithy4sLocalJars: T[List[os.Path]] = List.empty[os.Path]
+  def smithy4sLocalJars: T[List[os.Path]] = T {
+    T.traverse(moduleDeps)(_.jar)
+      .map(_.toList.map(_.path))
+  }
 
   def smithy4sModelTransformers: T[List[String]] = List.empty[String]
 
