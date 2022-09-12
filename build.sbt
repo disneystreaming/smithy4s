@@ -433,7 +433,7 @@ lazy val millCodegenPlugin = projectMatrix
         millVerify(logger, path, version.value)
       }
     },
-    Test / test := millCodegenPluginTests.value
+    Test / test := millCodegenPluginTests.dependsOn(publishLocal).value
   )
   .dependsOn(codegen)
 
