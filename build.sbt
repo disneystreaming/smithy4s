@@ -421,6 +421,7 @@ lazy val millCodegenPlugin = projectMatrix
       )
       publishLocal.value
     },
+    Test / test := (Test / test).dependsOn(publishLocal).value,
     libraryDependencies ++= munitDeps.value
   )
   .dependsOn(codegen)
