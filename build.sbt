@@ -402,7 +402,8 @@ lazy val millCodegenPlugin = projectMatrix
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "mill-scalalib" % millVersion,
       "com.lihaoyi" %% "mill-main" % millVersion,
-      "com.lihaoyi" %% "mill-main-api" % millVersion
+      "com.lihaoyi" %% "mill-main-api" % millVersion,
+      "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
     ),
     publishLocal := {
       // make sure that core and codegen are published before the
@@ -433,7 +434,8 @@ lazy val millCodegenPlugin = projectMatrix
         millVerify(logger, path, version.value)
       }
     },
-    Test / test := millCodegenPluginTests.dependsOn(publishLocal).value
+    Test / test := millCodegenPluginTests.dependsOn(publishLocal).value,
+    libraryDependencies ++= munitDeps.value
   )
   .dependsOn(codegen)
 
