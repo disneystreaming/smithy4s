@@ -387,7 +387,6 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
 /**
  * Mill plugin to run codegen
  */
-lazy val millCodegenPluginTests = taskKey[Unit]("Run mill unit test")
 lazy val millCodegenPlugin = projectMatrix
   .in(file("modules/mill-codegen-plugin"))
   .enablePlugins(BuildInfoPlugin)
@@ -422,19 +421,6 @@ lazy val millCodegenPlugin = projectMatrix
       )
       publishLocal.value
     },
-    millCodegenPluginTests := {
-      import MillTests._
-      import sys.process._
-      val logger = sLog.value
-      val baseDir = file("modules/mill-codegen-plugin/ittests")
-      val testFolders = IO.listFiles(_.isDirectory())(baseDir)
-      testFolders.foreach { path =>
-        logger.info(s"Running tests in ${path.getAbsolutePath()}")
-        millCleanEnv(logger, path)
-        millVerify(logger, path, version.value)
-      }
-    },
-    Test / test := millCodegenPluginTests.dependsOn(publishLocal).value,
     libraryDependencies ++= munitDeps.value
   )
   .dependsOn(codegen)
