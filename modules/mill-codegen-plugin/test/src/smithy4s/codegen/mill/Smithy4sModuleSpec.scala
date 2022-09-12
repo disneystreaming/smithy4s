@@ -9,19 +9,18 @@ import sourcecode.FullName
 class Smithy4sModuleSpec extends munit.FunSuite {
   object testKit extends MillTestKit
 
+  val coreDep =
+    ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
+
   object foo extends testKit.BaseModule with Smithy4sModule {
     override def scalaVersion = "2.13.8"
-    override def ivyDeps = Agg(
-      ivy"com.disneystreaming.smithy4s::smithy4s-core:0.15.3"
-    )
+    override def ivyDeps = Agg(coreDep)
   }
 
   object bar extends testKit.BaseModule with Smithy4sModule {
     override def moduleDeps = Seq(foo)
     override def scalaVersion = "2.13.8"
-    override def ivyDeps = Agg(
-      ivy"com.disneystreaming.smithy4s::smithy4s-core:0.15.3"
-    )
+    override def ivyDeps = Agg(coreDep)
   }
 
   test("codegen runs") {
