@@ -400,9 +400,9 @@ lazy val millCodegenPlugin = projectMatrix
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "smithy4s.codegen.mill",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "mill-scalalib" % "0.10.7",
-      "com.lihaoyi" %% "mill-main" % "0.10.7",
-      "com.lihaoyi" %% "mill-main-api" % "0.10.7"
+      "com.lihaoyi" %% "mill-scalalib" % millVersion,
+      "com.lihaoyi" %% "mill-main" % millVersion,
+      "com.lihaoyi" %% "mill-main-api" % millVersion
     ),
     publishLocal := {
       // make sure that core and codegen are published before the

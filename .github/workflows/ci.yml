@@ -61,6 +61,14 @@ jobs:
         with:
           java-version: temurin@17
 
+      - name: Get mill version
+        run: echo "MILL_VERSION=$(cat .mill-version)" >> $GITHUB_ENV
+
+      - name: Setup Mill
+        uses: jodersky/setup-mill@master
+        with:
+          mill-version: ${{ env.MILL_VERSION }}
+
       - name: Run tests
         run: |
           sbt test_$BUILD_KEY \
