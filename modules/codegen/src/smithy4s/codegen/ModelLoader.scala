@@ -57,6 +57,8 @@ object ModelLoader {
       val upstreamModel = Model
         .assembler()
         .discoverModels(upstreamClassLoader)
+        // disabling cache to support snapshot-driven experimentation
+        .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
         .assemble()
         .unwrap()
 

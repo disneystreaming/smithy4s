@@ -733,7 +733,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.2"
     )
 
   val Smithy = new {
@@ -759,7 +759,7 @@ lazy val Dependencies = new {
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.12")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.2.14")
   }
 
   val Circe = new {
