@@ -63,7 +63,7 @@ lazy val allModules = Seq(
   `codegen-cli`.projectRefs,
   dynamic.projectRefs,
   testUtils.projectRefs,
-  weaverTests.projectRefs
+  complianceTests.projectRefs
 ).flatten
 
 lazy val docs =
@@ -625,11 +625,10 @@ lazy val tests = projectMatrix
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
-lazy val weaverTests = projectMatrix
-  .in(file("modules/weaver-tests"))
+lazy val complianceTests = projectMatrix
+  .in(file("modules/compliance-tests"))
   .dependsOn(core, http4s % "test->compile", testUtils)
   .settings(
-    scalacOptions -= "-Xfatal-warnings",
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       val ce3 =
@@ -639,7 +638,7 @@ lazy val weaverTests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Http4s.emberServer.value,
-        Dependencies.Weaver.cats.value
+        Dependencies.Weaver.cats.value % Test
       )
     },
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),

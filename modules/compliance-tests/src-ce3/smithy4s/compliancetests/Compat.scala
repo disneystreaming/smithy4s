@@ -14,21 +14,18 @@
  *  limitations under the License.
  */
 
-package smithy4s.weavertests
+package smithy4s.compliancetests
 
+import cats.effect.Deferred
 import cats.effect.IO
-import cats.effect.concurrent.Deferred
-import cats.effect.ContextShift
-import cats.effect.Timer
+import com.comcast.ip4s.Host
+import com.comcast.ip4s.Port
 
-private[weavertests] class CompatEffect(implicit
-    val cs: ContextShift[IO],
-    val timer: Timer[IO]
-) {
+private[compliancetests] class CompatEffect {
   def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
 }
 
 object Compat {
-  def host(hostname: String): String = hostname
-  def port(portNumber: Int): Int = portNumber
+  def host(hostname: String): Host = Host.fromString(hostname).get
+  def port(portNumber: Int): Port = Port.fromInt(portNumber).get
 }
