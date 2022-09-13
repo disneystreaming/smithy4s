@@ -5,35 +5,24 @@ import mill.scalalib._
 import mill._
 import munit.Location
 import sourcecode.FullName
+import java.nio.file.Paths
 
 class Smithy4sModuleSpec extends munit.FunSuite {
-  object testKit extends MillTestKit
+  private val resourcePath =
+    os.Path(Paths.get(this.getClass().getResource("/").toURI()))
 
-  val coreDep =
+  private object testKit extends MillTestKit
+
+  private val coreDep =
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
-  object foo extends testKit.BaseModule with Smithy4sModule {
-    override def scalaVersion = "2.13.8"
-    override def ivyDeps = Agg(coreDep)
-  }
-
-  object bar extends testKit.BaseModule with Smithy4sModule {
-    override def moduleDeps = Seq(foo)
-    override def scalaVersion = "2.13.8"
-    override def ivyDeps = Agg(coreDep)
-  }
-
-  test("codegen runs") {
+  test("basic codegen runs") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(coreDep)
+      override def millSourcePath = resourcePath / "basic"
+    }
     val ev = testKit.staticTestEvaluator(foo)(FullName("codegen-runs"))
-    os.write.over(
-      foo.millSourcePath / "smithy" / "foo.smithy",
-      s"""|$$version: "2"
-          |
-          |namespace basic
-          |
-          |string MyNewString""".stripMargin,
-      createFolders = true
-    )
 
     compileWorks(foo, ev)
     checkFileExist(
@@ -43,48 +32,22 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   }
 
   test("multi-module codegen works") {
+
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(coreDep)
+      override def millSourcePath = resourcePath / "multi-module" / "foo"
+    }
+
+    object bar extends testKit.BaseModule with Smithy4sModule {
+      override def moduleDeps = Seq(foo)
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(coreDep)
+      override def millSourcePath = resourcePath / "multi-module" / "bar"
+    }
+
     val fooEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-foo"))
     val barEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-bar"))
-    os.write.over(
-      foo.millSourcePath / "smithy" / "foo.smithy",
-      s"""|$$version: "2.0"
-          |
-          |namespace foo
-          |
-          |structure Foo {
-          |  a: Integer
-          |}""".stripMargin,
-      createFolders = true
-    )
-
-    os.write.over(
-      bar.millSourcePath / "smithy" / "bar.smithy",
-      s"""|$$version: "2.0"
-          |
-          |namespace bar
-          |
-          |use foo#Foo
-          |
-          |// Checking that Foo can be found by virtue of the bar project depending on the foo project
-          |structure Bar {
-          |  foo: Foo
-          |}""".stripMargin,
-      createFolders = true
-    )
-
-    os.write.over(
-      bar.millSourcePath / "src" / "Test.scala",
-      s"""|package bar
-          |
-          |import foo._
-          |
-          |object BarTest {
-          |
-          |  def main(args: Array[String]): Unit = println(Bar(Some(Foo(Some(1)))))
-          |
-          |}""".stripMargin,
-      createFolders = true
-    )
 
     compileWorks(foo, fooEv)
     checkFileExist(
@@ -108,7 +71,11 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       testEvaluator: testKit.TestEvaluator
   )(implicit loc: Location) = {
     val result = testEvaluator(sm.compile).map(_._1)
-    assertEquals(result.isRight, true)
+    assertEquals(
+      result.isRight,
+      true,
+      s"Failed with the following error: ${result.swap.getOrElse("error unavailable")}"
+    )
   }
 
   private def checkFileExist(path: os.Path, shouldExist: Boolean) = {
