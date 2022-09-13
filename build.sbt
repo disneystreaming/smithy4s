@@ -154,7 +154,7 @@ lazy val core = projectMatrix
     libraryDependencies ++= munitDeps.value,
     Test / allowedNamespaces := Seq(
       "smithy4s.example",
-      "smithy4s.example.collision",
+      "smithy4s.example.collision"
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
@@ -668,7 +668,8 @@ lazy val example = projectMatrix
       genSmithyResources(Compile).taskValue
     ),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
-    genSmithyOpenapiOutput := (Compile / resourceDirectory).value
+    genSmithyOpenapiOutput := (Compile / resourceDirectory).value,
+    smithy4sSkip := List("resource")
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sPlugin.doNotPublishArtifact)
@@ -811,6 +812,7 @@ lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
   SettingKey[Seq[String]]("genSmithyDependencies")
 lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
+lazy val smithy4sSkip = SettingKey[Seq[String]]("smithy4sSkip")
 
 (ThisBuild / smithySpecs) := Seq.empty
 
@@ -826,7 +828,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val outputDir = (config / genSmithyOutput).?.value
     .getOrElse((config / sourceManaged).value)
     .getAbsolutePath()
-  val openapiOutputDir =
+  val resourceOutputDir =
     (config / genSmithyOpenapiOutput).?.value
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
@@ -835,6 +837,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
     (config / genSmithyDependencies).?.value.getOrElse(List.empty)
   val discoverModels =
     (config / genDiscoverModels).?.value.getOrElse(false)
+  val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
 
   val codegenCp =
     (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
@@ -858,11 +861,13 @@ def genSmithyImpl(config: Configuration) = Def.task {
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
               val args =
                 List("--output", outputDir) ++
-                  List("--openapi-output", openapiOutputDir) ++
+                  List("--resource-output", resourceOutputDir) ++
                   (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
                      List("--allowed-ns", allowedNS.get.mkString(","))
-                   else Nil) ++ inputs
+                   else Nil) ++
+                  inputs ++
+                  skip.flatMap(s => List("--skip", s))
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())

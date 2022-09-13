@@ -23,6 +23,7 @@ import com.monovore.decline.Opts
 import smithy4s.codegen.CodegenArgs
 
 import Options._
+import smithy4s.codegen.FileType
 
 object CodegenCommand {
 
@@ -40,11 +41,11 @@ object CodegenCommand {
       )
       .orNone
 
-  val openApiOutputOpt =
+  val resourceOutputOpt =
     Opts
       .option[os.Path](
-        long = "openapi-output",
-        help = "Path where openapi should be generated. Defaults to pwd"
+        long = "resource-output",
+        help = "Path where non-scala files should be generated. Defaults to pwd"
       )
       .mapValidated(path =>
         if (os.exists(path) && !os.isDir(path))
@@ -53,21 +54,17 @@ object CodegenCommand {
       )
       .orNone
 
-  val skipOpenapiOpt =
+  val skipOpts =
     Opts
-      .flag(
-        long = "skip-openapi",
-        help = "Indicates that openapi specs generation should be skipped"
+      .options[String](
+        long = "skip",
+        help =
+          "Indicates that some files types should be skipped during generation"
       )
-      .orFalse
-
-  val skipScalaOpt =
-    Opts
-      .flag(
-        long = "skip-scala",
-        help = "Indicates that scala code generation should be skipped"
-      )
-      .orFalse
+      .mapValidated(_.traverse(FileType.fromString))
+      .map(_.toList.toSet)
+      .orNone
+      .map(_.getOrElse(Set.empty))
 
   val discoverModelsOpt =
     Opts
@@ -99,9 +96,8 @@ object CodegenCommand {
   val options =
     (
       outputOpt,
-      openApiOutputOpt,
-      skipScalaOpt,
-      skipOpenapiOpt,
+      resourceOutputOpt,
+      skipOpts,
       discoverModelsOpt,
       allowedNSOpt,
       excludedNSOpt,
@@ -113,14 +109,13 @@ object CodegenCommand {
     )
       .mapN {
         // format: off
-        case (output, openApiOutput, skipScala, skipOpenapi, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
+        case (output, openApiOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
         // format: on
           CodegenArgs(
             specsArgs,
             output.getOrElse(os.pwd),
             openApiOutput.getOrElse(os.pwd),
-            skipScala,
-            skipOpenapi,
+            skip,
             discoverModels,
             allowedNS,
             excludedNS,
