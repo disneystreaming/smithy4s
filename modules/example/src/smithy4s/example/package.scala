@@ -45,6 +45,7 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
+  type ByteArrayInputStream = smithy4s.example.ByteArrayInputStream.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
