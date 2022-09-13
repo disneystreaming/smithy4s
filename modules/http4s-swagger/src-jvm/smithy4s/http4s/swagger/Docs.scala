@@ -39,9 +39,11 @@ private[smithy4s] abstract class Docs[F[_]](
       req: Option[Request[F]]
   ): OptionT[F, Response[F]]
 
+  private val specsPath = "specs"
+
   private def toSwaggerUrl(id: HasId): (String, SwaggerInit.SwaggerUrl) = {
     val jsonSpec = id.id.namespace + '.' + id.id.name + ".json"
-    jsonSpec -> SwaggerInit.SwaggerUrl(s"/$jsonSpec", id.id.name)
+    jsonSpec -> SwaggerInit.SwaggerUrl(s"./$specsPath/$jsonSpec", id.id.name)
   }
   private val validSpecs = ids.map(toSwaggerUrl).map(_._1).toList
   private val specsUrls = ids.map(toSwaggerUrl).map(_._2)
@@ -61,16 +63,17 @@ private[smithy4s] abstract class Docs[F[_]](
     case r @ GET -> DocPath() if r.uri.query.isEmpty =>
       Found(Location(Uri.unsafeFromString(s"/$path/index.html")))
 
+    case request @ GET -> `actualPath` / `specsPath` / jsonSpec
+        if validSpecs.contains(jsonSpec) =>
+      staticResource(jsonSpec, Some(request))
+        .getOrElseF(InternalServerError())
+
     case GET -> `actualPath` / "swagger-initializer.js" =>
       SwaggerInit.asResponse[F](specsUrls)
 
     case request @ GET -> `actualPath` / filePath =>
       val resource = s"$swaggerUiPath/$filePath"
       staticResource(resource, Some(request)).getOrElseF(NotFound())
-
-    case request @ GET -> Root / jsonSpec if validSpecs.contains(jsonSpec) =>
-      staticResource(jsonSpec, Some(request))
-        .getOrElseF(InternalServerError())
   }
 
 }
