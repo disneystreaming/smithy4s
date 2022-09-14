@@ -398,6 +398,8 @@ lazy val millCodegenPlugin = projectMatrix
   )
   .settings(
     name := "mill-codegen-plugin",
+    crossVersion := CrossVersion
+      .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "smithy4s.codegen.mill",
     libraryDependencies ++= Seq(
@@ -434,7 +436,7 @@ lazy val decline = (projectMatrix in file("modules/decline"))
     isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
-      Dependencies.CatsEffect3.value ,
+      Dependencies.CatsEffect3.value,
       Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )

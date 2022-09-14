@@ -508,4 +508,9 @@ object Smithy4sPlugin extends AutoPlugin {
       .settings(jsDimSettings)
   }
 
+  def millPlatform(millVersion: String): String = millVersion match {
+    case mv if mv.startsWith("0.10") => "0.10"
+    case _                           => sys.error("Unsupported mill platform.")
+  }
+
 }
