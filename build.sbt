@@ -708,7 +708,7 @@ lazy val example = projectMatrix
       genSmithyResources(Compile).taskValue
     ),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
-    genSmithyOpenapiOutput := (Compile / resourceDirectory).value,
+    genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource")
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
@@ -856,7 +856,7 @@ lazy val Dependencies = new {
 
 lazy val smithySpecs = SettingKey[Seq[File]]("smithySpecs")
 lazy val genSmithyOutput = SettingKey[File]("genSmithyOutput")
-lazy val genSmithyOpenapiOutput = SettingKey[File]("genSmithyOpenapiOutput")
+lazy val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
   SettingKey[Seq[String]]("genSmithyDependencies")
@@ -878,7 +878,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
     .getOrElse((config / sourceManaged).value)
     .getAbsolutePath()
   val resourceOutputDir =
-    (config / genSmithyOpenapiOutput).?.value
+    (config / genSmithyResourcesOutput).?.value
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
