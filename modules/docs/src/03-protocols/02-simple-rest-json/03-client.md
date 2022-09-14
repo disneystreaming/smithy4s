@@ -4,7 +4,7 @@ title: SimpleRestJson client
 ---
 
 The `smithy4s-http4s` module provides functions that transform low-level http4s clients into high-level stubs, provided the corresponding service definitions (in smithy) are annotated with the `simpleRestJson` protocol.
-
+- Uri is optional as it will default to http://localhost:8080
 In `build.sbt`
 
 ```scala
