@@ -19,11 +19,11 @@ package http4s
 
 import cats.effect._
 import cats.syntax.all._
-import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http.CodecAPI
+import org.http4s.implicits._
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -55,57 +55,26 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   class ServiceBuilder[
       Alg[_[_, _, _, _, _]],
       Op[_, _, _, _, _]
-  ] private[http4s] (val service: smithy4s.Service[Alg, Op]) {
+  ] private[http4s] (val service: smithy4s.Service[Alg, Op]) { self =>
 
+    def client[F[_]: EffectCompat](client: Client[F]) =
+      new ClientBuilder[Alg, Op, F](client, service)
+    @deprecated(
+      "Use the ClientBuilder instead,  client(client).uri(baseuri).use"
+    )
     def client[F[_]: EffectCompat](
         http4sClient: Client[F],
         baseUri: Uri
     ): Either[UnsupportedProtocolError, Monadic[Alg, F]] =
-      checkProtocol(service, protocolTag)
-        .as(
-          new SmithyHttp4sReverseRouter[Alg, Op, F](
-            baseUri,
-            service,
-            Left(http4sClient),
-            EntityCompiler
-              .fromCodecAPI[F](codecs)
-          )
-        )
-        .map(service.transform[GenLift[F]#λ](_))
+      client(http4sClient).uri(baseUri).use
 
-    def client[F[_]: EffectCompat](
-        http4sApp: HttpApp[F],
-        baseUri: Uri
-    ): Either[UnsupportedProtocolError, Monadic[Alg, F]] =
-      checkProtocol(service, protocolTag)
-        .as(
-          new SmithyHttp4sReverseRouter[Alg, Op, F](
-            baseUri,
-            service,
-            Right(http4sApp),
-            EntityCompiler
-              .fromCodecAPI[F](codecs)
-          )
-        )
-        .map(service.transform[GenLift[F]#λ](_))
-
+    @deprecated(
+      "Use the ClientBuilder instead , client(client).uri(baseuri).resource"
+    )
     def clientResource[F[_]: EffectCompat](
         http4sClient: Client[F],
         baseUri: Uri
-    ): Resource[F, Monadic[Alg, F]] =
-      this
-        .client[F](http4sClient, baseUri)
-        .leftWiden[Throwable]
-        .liftTo[Resource[F, *]]
-
-    def clientResource[F[_]: EffectCompat](
-        http4sApp: HttpApp[F],
-        baseUri: Uri
-    ): Resource[F, Monadic[Alg, F]] =
-      this
-        .client[F](http4sApp, baseUri)
-        .leftWiden[Throwable]
-        .liftTo[Resource[F, *]]
+    ): Resource[F, Monadic[Alg, F]] = client(http4sClient).uri(baseUri).resource
 
     def routes[F[_]: EffectCompat](
         impl: Monadic[Alg, F]
@@ -116,6 +85,35 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
         PartialFunction.empty
       )
 
+  }
+
+  class ClientBuilder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
+      _
+  ]: EffectCompat] private[http4s] (
+      client: Client[F],
+      service: smithy4s.Service[Alg, Op],
+      uri: Uri = uri"http://localhost:8080"
+  ) {
+
+    def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
+      new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
+
+    def resource: Resource[F, Monadic[Alg, F]] =
+      use.leftWiden[Throwable].liftTo[Resource[F, *]]
+
+    def use: Either[UnsupportedProtocolError, Monadic[Alg, F]] = {
+      checkProtocol(service, protocolTag)
+        .as(
+          new SmithyHttp4sReverseRouter[Alg, Op, F](
+            uri,
+            service,
+            client,
+            EntityCompiler
+              .fromCodecAPI[F](codecs)
+          )
+        )
+        .map(service.transform[GenLift[F]#λ](_))
+    }
   }
 
   class RouterBuilder[
