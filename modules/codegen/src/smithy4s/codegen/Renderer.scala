@@ -54,12 +54,12 @@ object Renderer {
 
       val nameCollisions: Set[String] = renderResult.list
         .flatMap(_.segments.toList)
-        .distinctBy {
+        .groupBy {
           // we need to compare NameRefs as they would be imported in order to avoid unnecessarily qualifying types in the same package
           //
           case ref:NameRef => ref.asImport
           case other => other
-        }
+        }.map(_._2.head)
         .collect {
           // Here we collect the NameRefs using the start of the Name so Age.schema and Age would be considered a collision if they refer to different types
           case ref: NameRef  => ref.getNamePrefix

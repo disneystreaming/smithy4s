@@ -654,7 +654,6 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "RefinedAndUnwrapped.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
     ),
