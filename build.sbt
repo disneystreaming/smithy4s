@@ -399,10 +399,10 @@ lazy val millCodegenPlugin = projectMatrix
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "smithy4s.codegen.mill",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "mill-scalalib" % millVersion,
-      "com.lihaoyi" %% "mill-main" % millVersion,
-      "com.lihaoyi" %% "mill-main-api" % millVersion,
-      "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
+      Dependencies.Mill.main,
+      Dependencies.Mill.mainApi,
+      Dependencies.Mill.scalalib,
+      Dependencies.Mill.mainTestkit
     ),
     publishLocal := {
       // make sure that core and codegen are published before the
@@ -773,6 +773,15 @@ lazy val Dependencies = new {
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % "3.2.12")
+  }
+
+  object Mill {
+    val millVersion = "0.10.7"
+
+    val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
+    val main = "com.lihaoyi" %% "mill-main" % millVersion
+    val mainApi = "com.lihaoyi" %% "mill-main-api" % millVersion
+    val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
 
   val Circe = new {

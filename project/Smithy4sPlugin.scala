@@ -31,8 +31,6 @@ object Smithy4sPlugin extends AutoPlugin {
   val Scala213 = "2.13.8"
   val Scala3 = "3.2.0"
 
-  val millVersion = IO.readLines(file(".") / ".mill-version").head.trim()
-
   implicit class ProjectMatrixOps(val pm: ProjectMatrix) extends AnyVal {
     def http4sJvmPlatform(
         scalaVersions: Seq[String],
