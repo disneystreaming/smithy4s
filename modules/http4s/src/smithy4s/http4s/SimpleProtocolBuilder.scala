@@ -55,7 +55,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   class ServiceBuilder[
       Alg[_[_, _, _, _, _]],
       Op[_, _, _, _, _]
-  ]private[http4s](service: smithy4s.Service[Alg, Op]) {
+  ] private[http4s] (service: smithy4s.Service[Alg, Op]) {
 
     def client[F[_]: EffectCompat](
         http4sClient: Client[F],
