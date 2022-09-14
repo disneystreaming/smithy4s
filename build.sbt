@@ -7,7 +7,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.15"
+ThisBuild / mimaBaseVersion := "0.16"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
@@ -75,6 +75,7 @@ lazy val docs =
       `codegen-cli`,
       http4s,
       `http4s-swagger`,
+      decline,
       `aws-http4s` % "compile -> compile,test"
     )
     .settings(
@@ -93,7 +94,8 @@ lazy val docs =
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value
+        Dependencies.Http4s.emberServer.value,
+        Dependencies.Decline.effect.value
       ),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
       Compile / smithySpecs := Seq(
@@ -432,7 +434,8 @@ lazy val decline = (projectMatrix in file("modules/decline"))
     isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
-      Dependencies.Decline.effect.value,
+      Dependencies.CatsEffect3.value ,
+      Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -767,7 +770,7 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val core = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val core = Def.setting("com.monovore" %%% "decline" % "2.3.0")
     val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
   }
   object Fs2 {

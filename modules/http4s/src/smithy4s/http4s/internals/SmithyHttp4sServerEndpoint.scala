@@ -163,8 +163,13 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   private def successResponse(output: O): F[Response[F]] = {
     val outputMetadata = outputMetadataEncoder.encode(output)
     val outputHeaders = toHeaders(outputMetadata.headers)
-    val successCode = status(httpEndpoint.code)
-    putHeaders(Response[F](successCode), outputHeaders)
+
+    putHeaders(
+      Response[F](
+        status(outputMetadata.statusCode.getOrElse(httpEndpoint.code))
+      ),
+      outputHeaders
+    )
       .withEntity(output)
       .pure[F]
   }
