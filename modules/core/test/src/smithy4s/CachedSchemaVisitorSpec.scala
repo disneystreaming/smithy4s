@@ -2,13 +2,15 @@ package smithy4s
 
 import munit.FunSuite
 import smithy4s.schema._
+import smithy4s.schema.Schema._
 
 import java.util.concurrent.atomic.AtomicInteger
 
 class CachedSchemaVisitorSpec() extends FunSuite {
 
+  // Counter is effectively counting Misses - meaning the SchemaVisitor was actually evaluated again
   class TestSchemaVisitor(counter: AtomicInteger)
-      extends CachedSchemaVisitor[Option] {
+      extends CachedSchemaVisitor[Option] { self =>
 
     def primitive[P](
         shapeId: ShapeId,
@@ -25,6 +27,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         tag: CollectionTag[C],
         member: Schema[A]
     ): Option[C[A]] = {
+      self(member)
       counter.incrementAndGet()
       None
     }
@@ -35,6 +38,8 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         key: Schema[K],
         value: Schema[V]
     ): Option[Map[K, V]] = {
+      self(key)
+      self(value)
       counter.incrementAndGet()
       None
     }
@@ -55,6 +60,9 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         fields: Vector[SchemaField[S, _]],
         make: IndexedSeq[Any] => S
     ): Option[S] = {
+      fields.foreach { field =>
+        self(field.instance)
+      }
       counter.incrementAndGet()
       None
     }
@@ -65,6 +73,9 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         alternatives: Vector[SchemaAlt[U, _]],
         dispatch: Alt.Dispatcher[Schema, U]
     ): Option[U] = {
+      alternatives.foreach { alt =>
+        self(alt.instance)
+      }
       counter.incrementAndGet()
       None
     }
@@ -73,6 +84,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         schema: Schema[A],
         bijection: Bijection[A, B]
     ): Option[B] = {
+      self(schema)
       counter.incrementAndGet()
       None
     }
@@ -81,13 +93,14 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         schema: Schema[A],
         refinement: Refinement[A, B]
     ): Option[B] = {
+      self(schema)
       counter.incrementAndGet()
       None
     }
 
     def lazily[A](suspend: Lazy[Schema[A]]): Option[A] = {
       counter.incrementAndGet()
-      None
+      self(suspend.value)
     }
   }
 
@@ -123,5 +136,25 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     val _ = visitor(lazySchema)
     assertEquals(result, None)
     assertEquals(counter.get(), 2)
+  }
+
+  test(
+    "should hit cache on second visit when accessing nested schemas "
+  ) {
+    case class Foo(i: Int, s: String, b: Boolean)
+    val counter = new AtomicInteger(0)
+    val visitor = new TestSchemaVisitor(counter)
+    val schema: Schema[Foo] = struct(
+      int.required[Foo]("i", _.i),
+      string.required[Foo]("s", _.s),
+      boolean.required[Foo]("b", _.b)
+    ) {
+      Foo.apply
+    }
+    val lazySchema = Schema.recursive(schema)
+    val result = visitor(schema)
+    val _ = visitor(lazySchema)
+    assertEquals(result, None)
+    assertEquals(counter.get(), 5)
   }
 }
