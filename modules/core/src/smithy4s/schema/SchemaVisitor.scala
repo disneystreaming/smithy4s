@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import Schema._
+import scala.collection.mutable.{Map => MMap}
 
 // format: off
 trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
@@ -45,6 +46,13 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
 
 }
 
+abstract class CachedSchemaVisitor[F[_]] extends SchemaVisitor[F] {
+  self =>
+  private val cache: MMap[ShapeId, Any] = MMap.empty
+
+  override def apply[A](schema: Schema[A]): F[A] = cache.getOrElseUpdate(schema.shapeId, super.apply(schema)).asInstanceOf[F[A]]
+}
+
 object SchemaVisitor {
 
   abstract class Default[F[_]] extends SchemaVisitor[F]{
@@ -59,5 +67,6 @@ object SchemaVisitor {
     override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
     override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
   }
+
 
 }
