@@ -109,12 +109,12 @@ object CodegenCommand {
     )
       .mapN {
         // format: off
-        case (output, openApiOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
+        case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
         // format: on
           CodegenArgs(
             specsArgs,
             output.getOrElse(os.pwd),
-            openApiOutput.getOrElse(os.pwd),
+            resourseOutput.getOrElse(os.pwd),
             skip,
             discoverModels,
             allowedNS,
