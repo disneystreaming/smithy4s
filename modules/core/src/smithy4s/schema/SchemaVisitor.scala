@@ -48,9 +48,9 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
 
 abstract class CachedSchemaVisitor[F[_]] extends SchemaVisitor[F] {
   self =>
-  private val cache: MMap[ShapeId, Any] = MMap.empty
+  private val cache: MMap[Any, Any] = MMap.empty
 
-  override def apply[A](schema: Schema[A]): F[A] = cache.getOrElseUpdate(schema.shapeId, super.apply(schema)).asInstanceOf[F[A]]
+  override def apply[A](schema: Schema[A]): F[A] = cache.getOrElseUpdate(schema, super.apply(schema)).asInstanceOf[F[A]]
 }
 
 object SchemaVisitor {
