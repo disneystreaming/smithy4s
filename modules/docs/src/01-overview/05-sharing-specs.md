@@ -18,6 +18,7 @@ In order to package Smithy files in jars so that they can be easily consumed by 
 2. A `manifest` file should be stored under that same directory
 3. The `manifest` file should reference all the smithy files that can be found in that `META-INF/smithy` directory.
 4. If you are using SBT to do this, consider setting `autoScalaLibrary := false`. See [here](https://www.scala-sbt.org/1.x/docs/Configuring-Scala.html#Configuring+the+scala-library+dependency) for more information.
+5. If you are using Mill to do this, consider using a `JavaModule` instead of a `ScalaModule`.
 
 A couple examples :
 
@@ -47,6 +48,15 @@ Add the following setting to your project
 Compile / smithy4sSmithyLibrary := false
 ```
 
+#### Mill
+
+Override the following method in your module
+
+```scala
+override def smithy4sSmithyLibrary = T(false)
+```
+
+
 ### A word of warning
 
 Smithy4s optimises for "correctness" as opposed to "compatibility." This means the generated Scala code aims at 1) being an accurate reflection of the Smithy models and 2) providing an idiomatic developer experience. This happens at the cost of a lack of guarantees around the binary compatibility of the generated code when the Schema evolves.
@@ -56,11 +66,13 @@ When packaging Smithy specs in artifacts that contain Smithy4s-generated code, d
 We cannot recommend treating Smithy4s-generated code as publishable library-material. Should you decide to do so, please exercise caution.
 
 # Depending on shared specifications
+## Artifacts containing only specifications
+
+For instance, AWS publishes a number of [api-gateway specific traits](https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy) to [Maven central](https://search.maven.org/artifact/software.amazon.smithy/smithy-aws-apigateway-traits) (the shapes are defined there in a smithy-compliant Json file).
+
 ## SBT
-### Artifacts containing only specifications
 
 Using the SBT plugin, the `Smithy4s` config object can be used to tag dependencies that Smithy4s should feed to the code generator.
-For instance, AWS publishes a number of [api-gateway specific traits](https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy) to [Maven central](https://search.maven.org/artifact/software.amazon.smithy/smithy-aws-apigateway-traits) (the shapes are defined there in a smithy-compliant Json file).
 
 You can declare your intent to depend on these smithy definitions as such :
 
@@ -68,15 +80,26 @@ You can declare your intent to depend on these smithy definitions as such :
 libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1" % Smithy4s
 ```
 
+## Mill
+
+Mill uses a separate task to define dependencies that the code-generator should have awareness o :
+
+```scala
+def smithy4sIvyDeps = Agg(ivy"software.amazon.smithy::smithy-aws-iam-traits:1.14.1")
+```
+## Consequence
+
 This will have the effect of loading the contents of the smithy files (or smithy-compliant Json files) from the artifact into the aggregated model that Smithy4s uses as an input to the code generator. It means that the traits and shapes defined in these files will be available to use in your models, but it also means that Smithy4s will try to generate code for these shapes.
 
 This artifact will not be included as a dependency to your project at compile-time (nor runtime), it will only be consumed for the
 Smithy specs (and validators) it may contain.
 
-### Artifacts containing both Smithy files and Smithy4s generated code
+## Artifacts containing both Smithy files and Smithy4s generated code
 
 When using Smithy4s, you may want to depend on artifacts that may have been built using Smithy4s, containing both Smithy specifications
-and generated Scala code (or rather, JVM bytecode resulting from the compilation of generated Scala code). In this case, you have to tell SBT that a dependency should be used both by Smithy4s at codegen-time, and by the Scala compiler at compile time. This is achieved by doing the following
+and generated Scala code (or rather, JVM bytecode resulting from the compilation of generated Scala code). In this case, you have to tell your build tool that a dependency should be used both by Smithy4s at codegen-time, and by the Scala compiler at compile time. This is achieved by doing the following
+
+### SBT
 
 ```scala
 libraryDependencies += "organisation" % "artifact" % "version" % Smithy4sCompile
@@ -88,12 +111,24 @@ Which is merely a shortcut for:
 libraryDependencies += "organisation" % "artifact" % "version" % "smithy4s,compile"
 ```
 
+### Mill
+
+```scala
+
+def compileAndCodegenDeps = T(Agg(ivy"organisation:artifact:version"))
+def ivyDeps = T(super.ivyDeps() ++ compileAndCodegenDeps())
+def smithy4sIvyDeps = T(super.smithy4sIvyDeps() ++ compileAndCodegenDeps())
+
+```
+
+### Consequence
+
 Because the upstream usage of Smithy4s will have resulted in the creation of metadata tracking the namespaces that were already generated, the "local" Smithy4s code-generation will automatically skip the generation of code that should not be generated again.
 
 
 ### Manually skipping (or including) namespaces during code-generation.
 
-Sometimes, you may want to tell Smithy4s to skip code-generation of some namespaces altogether, because the corresponding code may have been produced by another tool than Smithy4s. In that case, you can gain control over which namespaces Smithy4s crawls through when performing the code generation to avoid regenerating code that already exists. This is achieved via a couple of SBT settings :
+Sometimes, you may want to tell Smithy4s to skip code-generation of some namespaces altogether, because the corresponding code may have been produced by another tool than Smithy4s. In that case, you can gain control over which namespaces Smithy4s crawls through when performing the code generation to avoid regenerating code that already exists. This is achieved via a couple of build-settings (the names are shared between SBT and Mill).
 
 * `smithy4sAllowedNamespaces` which is an allow-list
 * `smithy4sExcludedNamespaces` which is a disallow-list
