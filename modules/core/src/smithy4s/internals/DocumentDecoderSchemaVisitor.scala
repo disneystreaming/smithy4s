@@ -95,7 +95,8 @@ object DocumentDecoder {
 
 }
 
-object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
+object DocumentDecoderSchemaVisitor
+    extends SchemaVisitor.Cached[DocumentDecoder] {
 
   override def primitive[P](
       shapeId: ShapeId,

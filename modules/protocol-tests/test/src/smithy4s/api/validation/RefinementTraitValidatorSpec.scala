@@ -36,11 +36,11 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
                          |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trait()
-                         |@refinement(targetType: "test.two", providerInstance: "test.two.prov")
+                         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
                          |structure trtTwo {}
                          |
                          |@trtOne
@@ -80,11 +80,11 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
                          |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trait()
-                         |@refinement(targetType: "test.two", providerInstance: "test.two.prov")
+                         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
                          |structure trtTwo {}
                          |
                          |@trtOne
@@ -112,11 +112,11 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
                          |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trait()
-                         |@refinement(targetType: "test.two", providerInstance: "test.two.prov")
+                         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
                          |structure trtTwo {}
                          |
                          |@trtOne
@@ -147,7 +147,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
                          |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trtOne
@@ -186,7 +186,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
                          |use smithy4s.meta#refinement
                          |
                          |@trait()
-                         |@refinement(targetType: "test.one", providerInstance: "test.one.prov")
+                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
                          |structure trtOne {}
                          |
                          |@trtOne
@@ -218,6 +218,78 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
         )
         .build()
     )
+    expect.same(result, expected)
+  }
+
+  test(
+    "check that provider import format is valid"
+  ) {
+    val modelString = """|$version: "2.0"
+                         |
+                         |namespace test
+                         |
+                         |use smithy4s.meta#refinement
+                         |
+                         |@trait()
+                         |@refinement(targetType: "_root_.test.one", providerImport: "_root_.test._")
+                         |structure trtOne {}
+                         |
+                         |@trtOne
+                         |string TestIt
+                         |""".stripMargin
+
+    val result = Model
+      .assembler()
+      .discoverModels()
+      .addUnparsedModel("test.smithy", modelString)
+      .assemble()
+      .getValidationEvents()
+      .asScala
+      .toList
+
+    expect.same(result, List.empty)
+  }
+
+  test(
+    "check that provider import format is valid - should fail"
+  ) {
+    val modelString = """|$version: "2.0"
+                         |
+                         |namespace test
+                         |
+                         |use smithy4s.meta#refinement
+                         |
+                         |@trait()
+                         |@refinement(targetType: "test.one", providerImport: "(&$^#%@$!")
+                         |structure trtOne {}
+                         |
+                         |@trtOne
+                         |string TestIt
+                         |""".stripMargin
+
+    val result = Model
+      .assembler()
+      .discoverModels()
+      .addUnparsedModel("test.smithy", modelString)
+      .assemble()
+      .getValidationEvents()
+      .asScala
+      .toList
+
+    println(result)
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("TraitValue")
+        .shapeId(ShapeId.fromParts("test", "trtOne"))
+        .severity(Severity.ERROR)
+        .message(
+          "Error validating trait `smithy4s.meta#refinement`.providerImport: String value provided for `smithy4s.meta#Import` must match regular expression: ^(?:_root_\\.)?(?:[a-zA-Z][\\w]*\\.?)*\\._$"
+        )
+        .build()
+    )
+
     expect.same(result, expected)
   }
 
