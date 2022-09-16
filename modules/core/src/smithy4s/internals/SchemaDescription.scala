@@ -27,7 +27,7 @@ import smithy4s.schema.{
   CollectionTag
 }
 
-object SchemaDescription extends SchemaVisitor[SchemaDescription] {
+object SchemaDescription extends SchemaVisitor.Cached[SchemaDescription] {
   // format: off
 
   def of[A](value: String): SchemaDescription[A] = value

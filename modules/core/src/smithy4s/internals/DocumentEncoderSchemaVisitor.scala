@@ -75,7 +75,8 @@ object DocumentEncoder {
 
 }
 
-object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
+object DocumentEncoderSchemaVisitor
+    extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
   override def primitive[P](
       shapeId: ShapeId,

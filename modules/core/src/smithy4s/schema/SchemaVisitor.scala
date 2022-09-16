@@ -46,19 +46,11 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
 
 }
 
-abstract class CachedSchemaVisitor[F[_]] extends SchemaVisitor[F] {
-  self =>
-  private val cache: MMap[Any, Any] = MMap.empty
 
-  override def apply[A](schema: Schema[A]): F[A] = {
-
-    cache.getOrElseUpdate(schema, super.apply(schema)).asInstanceOf[F[A]]
-  }
-}
 
 object SchemaVisitor {
 
-  abstract class Default[F[_]] extends SchemaVisitor[F]{
+  trait Default[F[_]] extends SchemaVisitor[F]{
     def default[A]: F[A]
     override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P] = default
     override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]] = default
@@ -69,6 +61,14 @@ object SchemaVisitor {
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default
     override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
     override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
+  }
+
+  abstract class Cached[F[_]] extends SchemaVisitor[F] {
+    private val cache: MMap[Any, Any] = MMap.empty
+
+    override def apply[A](schema: Schema[A]): F[A] = {
+      cache.getOrElseUpdate(schema, super.apply(schema)).asInstanceOf[F[A]]
+    }
   }
 
 

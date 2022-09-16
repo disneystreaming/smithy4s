@@ -10,7 +10,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
 
   // Counter is effectively counting Misses - meaning the SchemaVisitor was actually evaluated again
   class TestSchemaVisitor(counter: AtomicInteger)
-      extends CachedSchemaVisitor[Option] { self =>
+      extends SchemaVisitor.Cached[Option] { self =>
 
     def primitive[P](
         shapeId: ShapeId,

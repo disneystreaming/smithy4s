@@ -21,7 +21,8 @@ package internals
 import smithy4s.schema._
 
 private[smithy4s] object ErrorCodeSchemaVisitor
-    extends SchemaVisitor.Default[HttpCode] {
+    extends SchemaVisitor.Cached[HttpCode]
+    with SchemaVisitor.Default[HttpCode] {
   def default[A]: A => Option[Int] = _ => None
 
   override def union[U](
