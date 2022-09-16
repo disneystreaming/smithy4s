@@ -139,7 +139,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
   }
 
   test(
-    "should hit cache on second visit when accessing nested schemas "
+    "test struct with multiple schemas "
   ) {
     case class Foo(i: Int, s: String, b: Boolean)
     val counter = new AtomicInteger(0)
