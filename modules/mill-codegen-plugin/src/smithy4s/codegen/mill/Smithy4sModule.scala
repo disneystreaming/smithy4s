@@ -44,11 +44,11 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
 
-  def smithy4sCodegenDependencies: T[List[String]] = List.empty[String]
+  def smithy4sIvyDeps: T[Agg[Dep]] = T { Agg.empty[Dep] }
 
-  def smithy4sLocalJars: T[List[os.Path]] = T {
+  def smithy4sLocalJars: T[List[PathRef]] = T {
     T.traverse(moduleDeps)(_.jar)
-      .map(_.toList.map(_.path))
+      .map(_.toList.map(_.path).map(PathRef(_)))
   }
 
   def smithy4sModelTransformers: T[List[String]] = List.empty[String]
@@ -60,6 +60,16 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sVersion: T[String] = BuildInfo.version
   def smithy4sSmithyLibrary: T[Boolean] = true
+
+  def smithy4sTransitiveIvyDeps: T[Agg[Dep]] = T {
+    smithy4sIvyDeps() ++ T
+      .traverse(moduleDeps)(_.transitiveIvyDeps)()
+      .flatten
+  }
+
+  def smithy4sResolvedIvyDeps: T[Agg[PathRef]] = T {
+    resolveDeps(T.task { smithy4sTransitiveIvyDeps() })()
+  }
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
@@ -80,6 +90,10 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
+    val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
+    val localJars = smithy4sLocalJars().map(_.path)
+    val allLocalJars = localJars ++ resolvedDeps
+
     val args = CodegenArgs(
       specs = specFiles.toList,
       output = scalaOutput,
@@ -89,9 +103,9 @@ trait Smithy4sModule extends ScalaModule {
       allowedNS = smithy4sAllowedNamespaces(),
       excludedNS = smithy4sExcludedNamespaces(),
       repositories = smithy4sRepositories(),
-      dependencies = smithy4sCodegenDependencies(),
+      dependencies = List.empty,
       transformers = smithy4sModelTransformers(),
-      localJars = smithy4sLocalJars()
+      localJars = allLocalJars
     )
     Smithy4s.processSpecs(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))

@@ -31,6 +31,26 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     )
   }
 
+  test("codegen with dependencies") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(coreDep)
+      override def millSourcePath = resourcePath / "basic"
+      override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
+      override def smithy4sIvyDeps = Agg(
+        ivy"software.amazon.smithy:smithy-aws-iam-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+      )
+    }
+    val ev =
+      testKit.staticTestEvaluator(foo)(FullName("codegen-with-dependencies"))
+
+    compileWorks(foo, ev)
+    checkFileExist(
+      ev.outPath / "smithy4sOutputDir.dest" / "scala" / "aws" / "iam" / "ActionPermissionDescription.scala",
+      shouldExist = true
+    )
+  }
+
   test("multi-module codegen works") {
 
     object foo extends testKit.BaseModule with Smithy4sModule {
