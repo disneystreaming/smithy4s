@@ -31,6 +31,7 @@ trait Hints {
   def all: Iterable[Hints.Binding]
   def toMap: Map[ShapeId, Hints.Binding]
   def get[A](implicit key: ShapeTag[A]): Option[A]
+  final def has[A](implicit key: ShapeTag[A]): Boolean = this.get[A].isDefined
   final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getTag)
   final def get[T](nt: Newtype[T]): Option[nt.Type] = get(nt.tag)
   def ++(other: Hints): Hints

@@ -20,6 +20,7 @@ package http
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.http.internals.SchemaVisitorMetadataReader
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
 import scala.collection.mutable.{Map => MMap}
 
 /**
@@ -38,7 +39,8 @@ import scala.collection.mutable.{Map => MMap}
 case class Metadata(
     path: Map[String, String] = Map.empty,
     query: Map[String, Seq[String]] = Map.empty,
-    headers: Map[CaseInsensitive, Seq[String]] = Map.empty
+    headers: Map[CaseInsensitive, Seq[String]] = Map.empty,
+    statusCode: Option[Int] = None
 ) { self =>
 
   def headersFlattened: Vector[(CaseInsensitive, String)] =
@@ -106,7 +108,8 @@ case class Metadata(
     Metadata(
       this.path ++ other.path,
       mergeMaps(this.query, other.query),
-      mergeMaps(this.headers, other.headers)
+      mergeMaps(this.headers, other.headers),
+      this.statusCode.orElse(other.statusCode)
     )
   }
 
@@ -152,7 +155,7 @@ object Metadata {
   /**
     * If possible, attempts to decode the whole data from http metadata.
     * This will only return a non-empty value when all fields of the datatype
-    * are bound to http metadata (ie path parameters, headers, query)
+    * are bound to http metadata (ie path parameters, headers, query, status code)
     *
     * @return None when the value cannot be decoded just from metadata
     */
@@ -243,9 +246,21 @@ object Metadata {
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
     def fromSchema[A](schema: Schema[A]): Encoder[A] = {
+      val statusCodeVisitor = new HttpResponseCodeSchemaVisitor().apply(schema)
       SchemaVisitorMetadataWriter(schema) match {
-        case StructureMetaEncode(f) => (a: A) => f(a)
-        case _                      => (_: A) => Metadata.empty
+        case StructureMetaEncode(f) => { (a: A) =>
+          val struct = f(a)
+          val statusCode = statusCodeVisitor match {
+            case HttpResponseCodeSchemaVisitor.NoResponseCode =>
+              None
+            case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
+              Some(ext(a))
+            case HttpResponseCodeSchemaVisitor.OptionalResponseCode(ext) =>
+              ext(a)
+          }
+          struct.copy(statusCode = statusCode)
+        }
+        case _ => (_: A) => Metadata.empty
       }
     }
 
