@@ -7,7 +7,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.16"
+ThisBuild / mimaBaseVersion := "0.16.1"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
