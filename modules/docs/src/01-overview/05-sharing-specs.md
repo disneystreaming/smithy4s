@@ -82,7 +82,7 @@ libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.1
 
 ## Mill
 
-Mill uses a separate task to define dependencies that the code-generator should have awareness o :
+Mill uses a separate task to define dependencies that the code-generator should have awareness of :
 
 ```scala
 def smithy4sIvyDeps = Agg(ivy"software.amazon.smithy::smithy-aws-iam-traits:1.14.1")
