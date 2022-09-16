@@ -16,11 +16,11 @@
 
 package smithy4s.decline
 
-import cats.effect.ExitCode
-import cats.effect.IO
 import cats.implicits._
+import cats.MonadThrow
+import cats.effect.std.Console
 import com.monovore.decline.Opts
-import com.monovore.decline.effect.CommandIOApp
+import com.monovore.decline.Command
 import smithy.api.Documentation
 import smithy.api.ExternalDocumentation
 import smithy.api.Http
@@ -31,7 +31,6 @@ import smithy4s.Service
 import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi
 import smithy4s.http.HttpEndpoint
-
 import commons._
 
 final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
@@ -46,18 +45,10 @@ final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
   * @param service
   *   The service to build a client call for
   */
-class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-    mainOpts: Opts[Entrypoint[Alg, IO]],
+class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
+    mainOpts: Opts[Entrypoint[Alg, F]],
     service: Service[Alg, Op]
-) extends CommandIOApp(
-      toKebabCase(service.id.name),
-      header = service.hints
-        .get[Documentation]
-        .map(_.value)
-        .getOrElse(s"Command line interface for ${service.id.show}"),
-      helpFlag = true,
-      version = service.version
-    ) {
+) {
 
   private def protocolSpecificHelp(
       endpoint: Endpoint[Op, _, _, _, _, _]
@@ -93,7 +84,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
 
   private def endpointSubcommand[I, E, O](
       endpoint: Endpoint[Op, I, E, O, _, _]
-  ): Opts[IO[ExitCode]] = {
+  ): Opts[F[Unit]] = {
 
     def compileToOpts[A](schema: smithy4s.Schema[A]): Opts[A] =
       schema.compile[Opts](OptsVisitor)
@@ -111,24 +102,49 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
         ).mapN { (input, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
-          printer.printInput(input) *>
-            service
-              .asTransformation[GenLift[IO]#λ](entrypoint.interpreter)(
-                endpoint.wrap(input)
-              )
-              .flatMap(printer.printOutput)
-              .as(ExitCode.Success)
-              .recoverWith {
-                case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
-                  printer
-                    .printError(e)
-                    .as(ExitCode.Error)
-              }
+          val FO = printer.printInput(input) *>
+            service.asTransformation[GenLift[F]#λ](entrypoint.interpreter)(
+              endpoint.wrap(input)
+            )
+
+          FO.flatMap(printer.printOutput)
+            .onError {
+              case e if endpoint.errorable.flatMap(_.liftError(e)).nonEmpty =>
+                printer
+                  .printError(e)
+            }
         }
       }
   }
 
-  def main: Opts[IO[ExitCode]] = service.endpoints
+  def opts: Opts[F[Unit]] = service.endpoints
     .foldMapK(endpointSubcommand(_))
 
+  def command: Command[F[Unit]] = {
+    Command(
+      toKebabCase(service.id.name),
+      header = service.hints
+        .get[Documentation]
+        .map(_.value)
+        .getOrElse(s"Command line interface for ${service.id.show}"),
+      helpFlag = true
+    )(opts)
+  }
+
+}
+
+object Smithy4sCli {
+  def standalone[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
+      _
+  ]: Console: MonadThrow](
+      impl: Opts[smithy4s.Monadic[Alg, F]]
+  )(implicit service: Service[Alg, Op]) = {
+    new Smithy4sCli[Alg, Op, F](
+      (
+        impl,
+        PrinterApi.opts.default[F]()
+      ).mapN(Entrypoint.apply[Alg, F]),
+      service
+    )
+  }
 }

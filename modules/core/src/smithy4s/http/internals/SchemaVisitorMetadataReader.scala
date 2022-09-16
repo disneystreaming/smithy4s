@@ -37,7 +37,7 @@ private[http] object SchemaVisitorMetadataReader
     extends SchemaVisitorMetadataReader
 
 private[http] class SchemaVisitorMetadataReader()
-    extends SchemaVisitor[MetaDecode]
+    extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
   override def primitive[P](

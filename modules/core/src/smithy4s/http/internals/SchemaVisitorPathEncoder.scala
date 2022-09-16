@@ -25,7 +25,9 @@ import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
 import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 import smithy.api.Http
 
-object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
+object SchemaVisitorPathEncoder
+    extends SchemaVisitor.Cached[MaybePathEncode]
+    with SchemaVisitor.Default[MaybePathEncode] {
   self =>
 
   def default[A]: MaybePathEncode[A] = None

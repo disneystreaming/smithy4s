@@ -139,6 +139,17 @@ abstract class PizzaClientSpec extends IOSuite {
     }
   }
 
+  clientTest("code decoded in structure") { (client, backend, log) =>
+    val code = 201
+    for {
+      response <- Created()
+      _ <- backend.prepResponse(s"customCode$code", response)
+      res <- client.customCode(code)
+    } yield {
+      expect(res.code == Some(201))
+    }
+  }
+
   clientTest("Round trip") { (client, backend, log) =>
     for {
       res <- client.roundTrip(
@@ -290,6 +301,8 @@ abstract class PizzaClientSpec extends IOSuite {
               )
             )
             .flatMap(json => Ok(json, headers = headers))
+        case request @ (GET -> Root / "custom-code" / IntVar(code)) =>
+          storeAndReturn(s"customCode$code", request)
 
       }
       .orNotFound

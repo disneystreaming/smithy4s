@@ -45,7 +45,8 @@ import smithy4s.schema.Alt
  * annotated in the smithy specs.
  *
  */
-object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
+object SchemaVisitorMetadataWriter extends SchemaVisitor.Cached[MetaEncode] {
+  self =>
 
   override def primitive[P](
       shapeId: ShapeId,

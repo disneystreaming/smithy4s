@@ -229,10 +229,9 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       case b: BijectionSchema[a, b] =>
         list(shapeId, hints, b.underlying).map(_.map(b.bijection.to))
       case s: Schema.RefinementSchema[a, b] =>
-        list(shapeId, hints, s.underlying).map(
-          _.map(value =>
-            s.refinement(value)
-              .fold(message => throw RefinementFailed(message), identity)
+        list(shapeId, hints, s.underlying).mapValidated(
+          _.traverse(value =>
+            Validated.fromEither(s.refinement(value).leftMap(NonEmptyList.one))
           )
         )
 
