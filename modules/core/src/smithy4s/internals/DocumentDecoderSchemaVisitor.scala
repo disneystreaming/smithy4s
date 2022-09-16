@@ -276,7 +276,7 @@ object DocumentDecoderSchemaVisitor extends SchemaVisitor[DocumentDecoder] {
       total: E => EnumValue[E]
   ): DocumentDecoder[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
-    if (hints.get[IntEnum].isDefined) {
+    if (hints.has[IntEnum]) {
       val fromOrdinal =
         values.map(e => BigDecimal(e.intValue) -> e.value).toMap
       from(

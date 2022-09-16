@@ -974,7 +974,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): JCodec[E] = if (hints.get[IntEnum].isDefined) {
+  ): JCodec[E] = if (hints.has[IntEnum]) {
     handleIntEnum(shapeId, hints, values, total)
   } else {
     handleEnum(shapeId, hints, values, total)
