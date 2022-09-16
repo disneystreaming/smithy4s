@@ -20,6 +20,7 @@ import sjsonnew._
 import BasicJsonProtocol._
 import sbt.FileInfo
 import sbt.HashFileInfo
+import sjsonnew._
 
 // Json codecs used by SBT's caching constructs
 private[smithy4s] object JsonConverters {
@@ -33,16 +34,25 @@ private[smithy4s] object JsonConverters {
       hash => os.Path(hash.file)
     )
 
+  implicit val fileTypeFormat: JsonFormat[FileType] =
+    BasicJsonProtocol.projectFormat[FileType, String](
+      ft => ft.name,
+      str =>
+        FileType.fromString(str) match {
+          case Invalid(e) => throw new IllegalArgumentException(e.head)
+          case Valid(a)   => a
+        }
+    )
+
   // format: off
-  type GenTarget = List[os.Path] :*: os.Path :*: os.Path :*: Boolean :*: Boolean :*: Boolean :*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: LNil
+  type GenTarget = List[os.Path] :*: os.Path :*: os.Path :*: Set[FileType] :*: Boolean:*: Option[Set[String]] :*: Option[Set[String]] :*: List[String] :*: List[String] :*: List[String] :*: List[os.Path] :*: LNil
   // format: on
   implicit val codegenArgsIso = LList.iso[CodegenArgs, GenTarget](
     { ca: CodegenArgs =>
       ("specs", ca.specs) :*:
         ("output", ca.output) :*:
-        ("openapiOutput", ca.openapiOutput) :*:
-        ("skipScala", ca.skipScala) :*:
-        ("skipOpenapi", ca.skipOpenapi) :*:
+        ("resourceOutput", ca.resourceOutput) :*:
+        ("skip", ca.skip) :*:
         ("discoverModels", ca.discoverModels) :*:
         ("allowedNS", ca.allowedNS) :*:
         ("excludedNS", ca.excludedNS) :*:
@@ -55,9 +65,8 @@ private[smithy4s] object JsonConverters {
     {
       case (_, specs) :*:
           (_, output) :*:
-          (_, openapiOutput) :*:
-          (_, skipScala) :*:
-          (_, skipOpenapi) :*:
+          (_, resourceOutput) :*:
+          (_, skip) :*:
           (_, discoverModels) :*:
           (_, allowedNS) :*:
           (_, excludedNS) :*:
@@ -68,9 +77,8 @@ private[smithy4s] object JsonConverters {
         CodegenArgs(
           specs,
           output,
-          openapiOutput,
-          skipScala,
-          skipOpenapi,
+          resourceOutput,
+          skip,
           discoverModels,
           allowedNS,
           excludedNS,

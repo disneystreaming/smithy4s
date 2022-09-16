@@ -17,6 +17,7 @@
 package smithy4s.codegen.cli
 import smithy4s.codegen.CodegenArgs
 import weaver._
+import smithy4s.codegen.FileType
 
 object CommandParsingSpec extends FunSuite {
 
@@ -28,9 +29,8 @@ object CommandParsingSpec extends FunSuite {
             CodegenArgs(
               specs = Nil,
               output = os.pwd,
-              openapiOutput = os.pwd,
-              skipScala = false,
-              skipOpenapi = false,
+              resourceOutput = os.pwd,
+              skip = Set.empty,
               discoverModels = false,
               allowedNS = None,
               excludedNS = None,
@@ -51,10 +51,12 @@ object CommandParsingSpec extends FunSuite {
         "sampleSpecs/example.smithy",
         "--output",
         "target",
-        "--openapi-output",
+        "--resource-output",
         "target/openapi",
-        "--skip-scala",
-        "--skip-openapi",
+        "--skip",
+        "scala",
+        "--skip",
+        "openapi",
         "--allowed-ns",
         "name1,name2",
         "--repositories",
@@ -78,9 +80,8 @@ object CommandParsingSpec extends FunSuite {
                 os.pwd / "sampleSpecs" / "example.smithy"
               ),
               output = os.pwd / "target",
-              openapiOutput = os.pwd / "target" / "openapi",
-              skipScala = true,
-              skipOpenapi = true,
+              resourceOutput = os.pwd / "target" / "openapi",
+              skip = Set(FileType.Openapi, FileType.Scala),
               discoverModels = false,
               allowedNS = Some(Set("name1", "name2")),
               excludedNS = None,

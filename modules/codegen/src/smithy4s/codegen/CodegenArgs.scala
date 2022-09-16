@@ -16,12 +16,14 @@
 
 package smithy4s.codegen
 
+import cats.syntax.all._
+import cats.data.ValidatedNel
+
 case class CodegenArgs(
     specs: List[os.Path],
     output: os.Path,
-    openapiOutput: os.Path,
-    skipScala: Boolean,
-    skipOpenapi: Boolean,
+    resourceOutput: os.Path,
+    skip: Set[FileType],
     discoverModels: Boolean,
     allowedNS: Option[Set[String]],
     excludedNS: Option[Set[String]],
@@ -29,4 +31,25 @@ case class CodegenArgs(
     dependencies: List[String],
     transformers: List[String],
     localJars: List[os.Path]
-)
+) {
+  def skipScala: Boolean = skip(FileType.Scala)
+  def skipOpenapi: Boolean = skip(FileType.Openapi)
+  def skipResources: Boolean = skip(FileType.Resource)
+}
+
+sealed abstract class FileType(val name: String)
+    extends scala.Product
+    with Serializable
+
+object FileType {
+
+  def fromString(s: String): ValidatedNel[String, FileType] = values
+    .find(_.name == s)
+    .toValidNel(s"Expected one of ${values.map(_.name).mkString(", ")}")
+
+  case object Scala extends FileType("scala")
+  case object Openapi extends FileType("openapi")
+  case object Resource extends FileType("resource")
+
+  val values = List(Scala, Openapi, Resource)
+}

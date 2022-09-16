@@ -66,7 +66,7 @@ object SchemaVisitorPathEncoder
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePathEncode[E] = {
-    if (hints.get[IntEnum].isDefined) {
+    if (hints.has[IntEnum]) {
       PathEncode.from(e => total(e).intValue.toString)
     } else {
       PathEncode.from(e => total(e).stringValue)

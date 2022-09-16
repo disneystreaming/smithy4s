@@ -1,6 +1,6 @@
 lazy val commonSettings = Def.settings(
   scalaVersion := "2.13.6",
-  smithy4sInputDir in Compile := (baseDirectory in ThisBuild).value / "smithy_input",
+  Compile / smithy4sInputDir := (baseDirectory in ThisBuild).value / "smithy_input",
   Compile / smithy4sAllowedNamespaces := List(
     "aws.iam",
     "smithy4s.example"
@@ -13,7 +13,7 @@ lazy val p1 = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(commonSettings)
   .settings(
-    smithy4sOutputDir in Compile := baseDirectory.value / "smithy_output",
+    Compile / smithy4sOutputDir := baseDirectory.value / "smithy_output",
     Compile / smithy4sAllowedNamespaces := List(
       "aws.iam",
       "smithy4s.example"
@@ -23,7 +23,7 @@ lazy val p2 = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(commonSettings)
   .settings(
-    smithy4sOutputDir in Compile := baseDirectory.value / "smithy_output",
+    Compile / smithy4sOutputDir := baseDirectory.value / "smithy_output",
     Compile / smithy4sAllowedNamespaces := List(
       "aws.iam",
       "smithy4s.example"
