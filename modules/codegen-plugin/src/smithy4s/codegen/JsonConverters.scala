@@ -21,6 +21,8 @@ import BasicJsonProtocol._
 import sbt.FileInfo
 import sbt.HashFileInfo
 import sjsonnew._
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
 
 // Json codecs used by SBT's caching constructs
 private[smithy4s] object JsonConverters {
