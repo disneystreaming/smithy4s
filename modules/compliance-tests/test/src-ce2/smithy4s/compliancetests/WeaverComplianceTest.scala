@@ -17,7 +17,7 @@
 package smithy4s.compliancetests
 
 import cats.effect.IO
-import cats.effect.Resource
+import org.http4s.client.Client
 import org.http4s.HttpApp
 import smithy4s.example._
 import smithy4s.http4s._
@@ -30,11 +30,10 @@ object WeaverComplianceTest extends SimpleIOSuite {
       import org.http4s.implicits._
       val baseUri = uri"http://localhost/"
       Left { (a: HttpApp[IO]) =>
-        Resource.pure[IO, smithy4s.Monadic[HelloServiceGen, IO]](
-          SimpleRestJsonBuilder(HelloServiceGen)
-            .client[IO](a, baseUri)
-            .fold(err => sys.error(err.getMessage()), identity)
-        )
+        SimpleRestJsonBuilder(HelloServiceGen)
+          .client(Client.fromHttpApp(a))
+          .uri(baseUri)
+          .resource
       }
     }
   )
