@@ -5,6 +5,7 @@ namespace smithy4s.guides.hello
 use smithy4s.api#simpleRestJson
 
 @simpleRestJson
+@cors(origin: "http://mysite.com", additionalAllowedHeaders: ["Authorization"], additionalExposedHeaders: ["X-Smithy4s"])
 service HelloWorldService {
   version: "1.0.0",
   operations: [SayWorld]

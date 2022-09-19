@@ -17,31 +17,59 @@
 package smithy4s.guides
 
 import smithy4s.guides.hello._
-import cats.effect._
-import cats.implicits._
-import org.http4s.implicits._
-import org.http4s.ember.server._
-import org.http4s._
-import com.comcast.ip4s._
+import cats.effect.*
+import cats.implicits.*
+import org.http4s.implicits.*
+import org.http4s.ember.server.*
+import org.http4s.*
+import com.comcast.ip4s.*
 import smithy4s.http4s.SimpleRestJsonBuilder
 import org.http4s.server.Middleware
+import org.http4s.headers.Origin
+import org.typelevel.ci.CIString.apply
+import org.typelevel.ci.CIString
+import scala.concurrent.duration.Duration
 
 object HelloWorldImpl extends HelloWorldService[IO] {
   def sayWorld(): IO[World] = World().pure[IO]
 }
 
 object Routes {
-  import org.http4s.server.middleware._
+  import org.http4s.server.middleware.*
 
-  val customMiddleware = CORS.policy.withAllowOriginAll
-    .withAllowCredentials(false)
-    .apply(_: HttpRoutes[IO])
+  println()
+
+  val noMiddleware = (routes: HttpRoutes[IO]) => routes
+
+  val corsMiddleWare = HelloWorldServiceGen.hints
+    .get[smithy.api.Cors]
+    .map { corsConfig =>
+      val configuredOrigin = Origin.parse(corsConfig.origin.value)
+      val configuredExposedHeaders =
+        corsConfig.additionalExposedHeaders.toList.flatten
+          .map(_.value)
+          .toSet
+          .map(CIString(_))
+      val configuredAge =
+        Duration(corsConfig.maxAge, scala.concurrent.duration.SECONDS)
+      CORS.policy
+        .withAllowOriginHeader {
+          case Origin.Null => false
+          case o =>
+            configuredOrigin.toOption.exists { co => co == o }
+        }
+        .withExposeHeadersIn(configuredExposedHeaders)
+        .withAllowCredentials(false)
+        .withMaxAge(configuredAge)
+        .apply(_: HttpRoutes[IO])
+    }
+    .getOrElse(noMiddleware)
 
   private val helloRoutes: Resource[IO, HttpRoutes[IO]] =
     SimpleRestJsonBuilder.routes(HelloWorldImpl).resource
 
   val all: Resource[IO, HttpRoutes[IO]] =
-    helloRoutes.map(r => customMiddleware(r))
+    helloRoutes.map(r => corsMiddleWare(r))
 }
 
 object Main extends IOApp.Simple {
