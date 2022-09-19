@@ -77,3 +77,20 @@ The `SimpleRestJson` protocol supports 3 different union encodings :
 * discriminated
 
 See the section about [unions](../../04-codegen/02-unions.md) for a detailed description.
+
+## Supported traits
+
+Here is the list of traits supported by `SimpleRestJson`
+
+```scala mdoc:passthrough
+println(
+smithy4s.api.SimpleRestJson.hints
+  .get[smithy.api.ProtocolDefinition]
+  .getOrElse(sys.error("Unable to grab protocol defition information."))
+  .traits.toList.flatten.map(_.value)
+  .map(id => s"- `$id`")
+  .foreach(println)
+)
+```
+
+Currently, `@cors` is not supported. This is because the `@cors` annotation is too restrictive. You can still use it in your model and configure your API using the information found in the generated code. See the [`Cors.scala`](https://github.com/disneystreaming/smithy4s/tree/main/modules/guides/src/smithy4s/guides/Cors.scala) file in the `guides` module for an example.
