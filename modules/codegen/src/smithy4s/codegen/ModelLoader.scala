@@ -28,6 +28,8 @@ import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 
+import scala.jdk.CollectionConverters._
+
 object ModelLoader {
 
   def load(
@@ -67,6 +69,18 @@ object ModelLoader {
       // collision of shapes. It does mean that what the dependencies user defines have
       // priority other what smithy4s might bring .
       modelBuilder.addShapes(upstreamModel)
+
+      // Appending all metadata that is not Smithy4s-specific, as well as relevant
+      // Smithy4s-related metadata, into the resulting model.
+      upstreamModel.getMetadata().asScala.foreach {
+        case (k @ "smithy4sGenerated", v) =>
+          modelBuilder.putMetadataProperty(k, v)
+        case (k, _) if k.startsWith("smithy4s") =>
+        // do nothing, we do not want upstream decisions on smithy4s rendering to impact
+        // this codegen run
+        case (k, v) =>
+          modelBuilder.putMetadataProperty(k, v)
+      }
     }
 
     val validatorClassLoader = maybeDeps match {

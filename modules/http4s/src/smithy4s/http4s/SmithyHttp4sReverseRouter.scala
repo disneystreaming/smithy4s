@@ -25,7 +25,7 @@ import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
 class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     baseUri: Uri,
     service: smithy4s.Service[Alg, Op],
-    clientOrApp: Either[Client[F], HttpApp[F]],
+    client: Client[F],
     entityCompiler: EntityCompiler[F]
 )(implicit effect: EffectCompat[F])
     extends Interpreter[Op, F] {
@@ -49,7 +49,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
       ): SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] =
         SmithyHttp4sClientEndpoint(
           baseUri,
-          clientOrApp,
+          client,
           endpoint,
           entityCompiler
         ).getOrElse(

@@ -35,7 +35,7 @@ object TestUtils {
       .unwrap()
 
     val results = Codegen.generate(model, None, None)
-    val scalaResults = results.map { case (_, _, contents) => contents }
+    val scalaResults = results.map(_._2.content)
     Assertions.assertEquals(scalaResults, List(expectedScalaCode))
   }
 
