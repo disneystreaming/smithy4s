@@ -21,7 +21,6 @@ package internals
 import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
-import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
@@ -43,14 +42,14 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
 
   def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       baseUri: Uri,
-      clientOrApp: Either[Client[F], HttpApp[F]],
+      client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       entityCompiler: EntityCompiler[F]
   ): Option[SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]] =
     HttpEndpoint.cast(endpoint).map { httpEndpoint =>
       new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
         baseUri,
-        clientOrApp,
+        client,
         endpoint,
         httpEndpoint,
         entityCompiler
@@ -61,25 +60,20 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
 
 // format: off
 private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
-  baseUri: Uri,
-  clientOrApp: Either[Client[F], HttpApp[F]],
-  endpoint: Endpoint[Op, I, E, O, SI, SO],
-  httpEndpoint: HttpEndpoint[I],
-  entityCompiler: EntityCompiler[F]
+                                                                                                  baseUri: Uri,
+                                                                                                  client: Client[F],
+                                                                                                  endpoint: Endpoint[Op, I, E, O, SI, SO],
+                                                                                                  httpEndpoint: HttpEndpoint[I],
+                                                                                                  entityCompiler: EntityCompiler[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
   def send(input: I): F[O] = {
-    clientOrApp match {
-      case Left(client) =>
-        client
-          .run(inputToRequest(input))
-          .use { response =>
-            outputFromResponse(response)
-          }
-      case Right(httpApp) =>
-        httpApp.run(inputToRequest(input)).flatMap(outputFromResponse)
-    }
+    client
+      .run(inputToRequest(input))
+      .use { response =>
+        outputFromResponse(response)
+      }
   }
 
   private val method: org.http4s.Method = toHttp4sMethod(httpEndpoint.method)
@@ -183,7 +177,8 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
       entityDecoder: EntityDecoder[F, BodyPartial[T]]
   ): F[Either[MetadataError, T]] = {
     val headers = getHeaders(response)
-    val metadata = Metadata(headers = headers)
+    val metadata =
+      Metadata(headers = headers, statusCode = Some(response.status.code))
     metadataDecoder.total match {
       case Some(totalDecoder) =>
         totalDecoder.decode(metadata).pure[F]

@@ -3,9 +3,13 @@ sidebar_label: Quick Start
 title: Quick Start
 ---
 
-Below is a quick example of smithy4s in action. This page does not give very much explanation or detail. For more information on various aspects of smithy4s, read through the other sections of this documentation site.
+Below is a quick example of smithy4s in action. This page does not provide much explanation or detail. For more information on various aspects of smithy4s, read through the other sections of this documentation site.
 
-## project/plugins.sbt
+## For sbt
+
+This section will get you started with a simple `sbt` module that enables smithy4s code generation. For a similar setup for mill, see [Mill](#for-mill) below.
+
+### project/plugins.sbt
 
 Add the `smithy4s-sbt-codegen` plugin to your build.
 
@@ -13,7 +17,7 @@ Add the `smithy4s-sbt-codegen` plugin to your build.
 addSbtPlugin("com.disneystreaming.smithy4s" % "smithy4s-sbt-codegen" % "@VERSION@")
 ```
 
-## build.sbt
+### build.sbt
 
 Enable the plugin in your project, add the smithy and http4s dependencies.
 
@@ -34,9 +38,37 @@ val example = project
   )
 ```
 
-## modules/example/src/main/smithy/ExampleService.smithy
+## For Mill
 
-Define your API in smithy files.
+This section will get you started with a `mill` module with code generation enabled on it.
+
+In your `build.sc`:
+
+```scala
+import $ivy.`com.disneystreaming.smithy4s::smithy4s-mill-codegen-plugin::@VERSION@`
+import smithy4s.codegen.mill._
+
+import mill._, mill.scalalib._
+object example extends ScalaModule with Smithy4sModule {
+  def scalaVersion = "2.13.8"
+  override def ivyDeps = Agg(
+    ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}",
+    ivy"com.disneystreaming.smithy4s::smithy4s-http4s-swagger:${smithy4sVersion()}",
+    ivy"org.http4s::http4s-ember-server:@HTTP4S_VERSION@"
+  )
+}
+```
+
+## Smithy content
+
+Now is the time to add some Smithy shapes to see what code generation can do for you. Following the setup above, the location for the Smithy content will change depending on what build tool you used.
+
+Now let's define an API in Smithy. Create the following file:
+
+- for `sbt`, you'll write in `modules/example/src/main/smithy/ExampleService.smithy`.
+- for `mill`, you'll write in `example/smithy/ExampleService.smithy`
+
+And add the content below:
 
 ```kotlin
 namespace smithy4s.hello
@@ -72,7 +104,12 @@ structure Greeting {
 
 The Scala code corresponding to this smithy file will be generated the next time you compile your project.
 
-## modules/example/src/main/scala/Main.scala
+## Using the generated code
+
+Now, let's use the generated code by the service. You need to create a scala file at the following location:
+
+- for sbt `modules/example/src/main/scala/Main.scala`
+- for mill `example/src/Main.scala`
 
 Implement your service by extending the generated Service trait. Wire up routes into server.
 
@@ -123,9 +160,8 @@ object Main extends IOApp.Simple {
 
 ## Run Service
 
-```bash
-sbt "example/run"
-```
+- for sbt: `sbt "example/run"`
+- for mill: `mill example.run`
 
 ## Navigate to localhost:9000/docs
 
@@ -146,10 +182,10 @@ object ClientImpl extends IOApp.Simple {
 
   val helloWorldClient: Resource[IO, HelloWorldService[IO]] = for {
     client <- EmberClientBuilder.default[IO].build
-    helloClient <- SimpleRestJsonBuilder(HelloWorldService).clientResource(
-      client,
-      Uri.unsafeFromString("http://localhost:9000")
-    )
+    helloClient <- SimpleRestJsonBuilder(HelloWorldService)
+    .client(client)
+    .uri(Uri.unsafeFromString("http://localhost:9000"))
+    .resource
   } yield helloClient
 
   val run = helloWorldClient.use(c =>

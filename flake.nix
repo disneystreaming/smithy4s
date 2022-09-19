@@ -9,7 +9,7 @@
         shellPackages = [
           "jre"
           "sbt"
-          "nodejs"
+          "nodejs-16_x"
           "yarn"
         ];
       in

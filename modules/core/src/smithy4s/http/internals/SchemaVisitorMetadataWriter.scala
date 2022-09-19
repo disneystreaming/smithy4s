@@ -45,7 +45,8 @@ import smithy4s.schema.Alt
  * annotated in the smithy specs.
  *
  */
-object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
+object SchemaVisitorMetadataWriter extends SchemaVisitor.Cached[MetaEncode] {
+  self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -127,7 +128,7 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor[MetaEncode] { self =>
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaEncode[E] = {
-    if (hints.get[IntEnum].isDefined) {
+    if (hints.has[IntEnum]) {
       StringValueMetaEncode(e => total(e).intValue.toString())
     } else {
       StringValueMetaEncode(e => total(e).stringValue)

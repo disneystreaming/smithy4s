@@ -7,7 +7,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.15"
+ThisBuild / mimaBaseVersion := "0.16.1"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 import Smithy4sPlugin._
 
@@ -27,7 +27,7 @@ Global / licenses := Seq(
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev"
+  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
   else (ThisBuild / version).value
 }
 
@@ -46,6 +46,7 @@ lazy val root = project
 lazy val allModules = Seq(
   core.projectRefs,
   codegen.projectRefs,
+  millCodegenPlugin.projectRefs,
   json.projectRefs,
   example.projectRefs,
   tests.projectRefs,
@@ -75,6 +76,7 @@ lazy val docs =
       `codegen-cli`,
       http4s,
       `http4s-swagger`,
+      decline,
       `aws-http4s` % "compile -> compile,test"
     )
     .settings(
@@ -93,7 +95,8 @@ lazy val docs =
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value
+        Dependencies.Http4s.emberServer.value,
+        Dependencies.Decline.effect.value
       ),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
       Compile / smithySpecs := Seq(
@@ -386,13 +389,58 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     scriptedBufferLog := false
   )
 
+/**
+ * Mill plugin to run codegen
+ */
+lazy val millCodegenPlugin = projectMatrix
+  .in(file("modules/mill-codegen-plugin"))
+  .enablePlugins(BuildInfoPlugin)
+  .jvmPlatform(
+    scalaVersions = List(Scala213),
+    simpleJVMLayout
+  )
+  .settings(
+    name := "mill-codegen-plugin",
+    crossVersion := CrossVersion
+      .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
+    buildInfoKeys := Seq[BuildInfoKey](version),
+    buildInfoPackage := "smithy4s.codegen.mill",
+    libraryDependencies ++= Seq(
+      Dependencies.Mill.main,
+      Dependencies.Mill.mainApi,
+      Dependencies.Mill.scalalib,
+      Dependencies.Mill.mainTestkit
+    ),
+    publishLocal := {
+      // make sure that core and codegen are published before the
+      // plugin is published
+      // this allows running `scripted` alone
+      val _ = List(
+        // for the code being built
+        (core.jvm(Scala213) / publishLocal).value,
+        (dynamic.jvm(Scala213) / publishLocal).value,
+        (codegen.jvm(Scala213) / publishLocal).value,
+        // dependency of codegen
+        (openapi.jvm(Scala213) / publishLocal).value,
+
+        // for mill
+        (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
+      )
+      publishLocal.value
+    },
+    Test / test := (Test / test).dependsOn(publishLocal).value,
+    libraryDependencies ++= munitDeps.value
+  )
+  .dependsOn(codegen)
+
 lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
     name := "decline",
     isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
-      Dependencies.Decline.effect.value,
+      Dependencies.CatsEffect3.value,
+      Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
@@ -693,7 +741,8 @@ lazy val example = projectMatrix
       genSmithyResources(Compile).taskValue
     ),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
-    genSmithyOpenapiOutput := (Compile / resourceDirectory).value
+    genSmithyResourcesOutput := (Compile / resourceDirectory).value,
+    smithy4sSkip := List("resource")
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sPlugin.doNotPublishArtifact)
@@ -753,12 +802,21 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val core = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val core = Def.setting("com.monovore" %%% "decline" % "2.3.0")
     val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % "3.2.14")
+  }
+
+  object Mill {
+    val millVersion = "0.10.7"
+
+    val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
+    val main = "com.lihaoyi" %% "mill-main" % millVersion
+    val mainApi = "com.lihaoyi" %% "mill-main-api" % millVersion
+    val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
 
   val Circe = new {
@@ -833,11 +891,12 @@ lazy val Dependencies = new {
 
 lazy val smithySpecs = SettingKey[Seq[File]]("smithySpecs")
 lazy val genSmithyOutput = SettingKey[File]("genSmithyOutput")
-lazy val genSmithyOpenapiOutput = SettingKey[File]("genSmithyOpenapiOutput")
+lazy val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
   SettingKey[Seq[String]]("genSmithyDependencies")
 lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
+lazy val smithy4sSkip = SettingKey[Seq[String]]("smithy4sSkip")
 
 (ThisBuild / smithySpecs) := Seq.empty
 
@@ -853,13 +912,14 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val outputDir = (config / genSmithyOutput).?.value
     .getOrElse((config / sourceManaged).value)
     .getAbsolutePath()
-  val openapiOutputDir =
-    (config / genSmithyOpenapiOutput).?.value
+  val resourceOutputDir =
+    (config / genSmithyResourcesOutput).?.value
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
   val discoverModels =
     (config / genDiscoverModels).?.value.getOrElse(false)
+  val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
 
   val codegenCp =
     (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
@@ -883,11 +943,13 @@ def genSmithyImpl(config: Configuration) = Def.task {
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
               val args =
                 List("--output", outputDir) ++
-                  List("--openapi-output", openapiOutputDir) ++
+                  List("--resource-output", resourceOutputDir) ++
                   (if (discoverModels) List("--discover-models") else Nil) ++
                   (if (allowedNS.isDefined)
                      List("--allowed-ns", allowedNS.get.mkString(","))
-                   else Nil) ++ inputs
+                   else Nil) ++
+                  inputs ++
+                  skip.flatMap(s => List("--skip", s))
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())
