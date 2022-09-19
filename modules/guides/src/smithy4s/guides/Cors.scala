@@ -45,6 +45,11 @@ object Routes {
     .get[smithy.api.Cors]
     .map { corsConfig =>
       val configuredOrigin = Origin.parse(corsConfig.origin.value)
+      configuredOrigin.swap.foreach { err =>
+        println(
+          s"Could not configure cors origin: ${err.getMessage()}"
+        )
+      }
       val configuredExposedHeaders =
         corsConfig.additionalExposedHeaders.toList.flatten
           .map(_.value)
