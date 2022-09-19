@@ -141,7 +141,6 @@ lazy val core = projectMatrix
     isMimaEnabled := true,
     allowedNamespaces := Seq(
       "smithy.api",
-      "smithy.test",
       "smithy.waiters",
       "smithy4s.api"
     ),
@@ -677,6 +676,9 @@ lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
   .dependsOn(core, http4s % "test->compile", testUtils)
   .settings(
+    Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
+    genDiscoverModels := true,
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       val ce3 =
