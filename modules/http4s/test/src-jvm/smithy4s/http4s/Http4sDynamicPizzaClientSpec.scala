@@ -81,4 +81,6 @@ object Http4sDynamicPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {
     )
   }
 
+  def server(app: HttpApp[IO]): Resource[IO, Int] =
+    Resource.eval(IO.raiseError(new Exception("this shouldn't be used")))
 }
