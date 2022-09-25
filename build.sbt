@@ -650,8 +650,7 @@ lazy val tests = projectMatrix
       ce3 ++ Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
-        Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value,
+        Dependencies.Http4s.client.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Weaver.cats.value
       )
@@ -807,7 +806,7 @@ lazy val Dependencies = new {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.3.14")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.15" else "0.22.14")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.16" else "0.22.14")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
@@ -825,7 +824,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.15" else "0.6.15")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.8.0" else "0.6.15")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
