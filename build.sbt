@@ -9,6 +9,9 @@ ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.16.1"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 import Smithy4sPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -218,7 +221,7 @@ lazy val `aws-kernel` = projectMatrix
   .in(file("modules/aws-kernel"))
   .dependsOn(core)
   .settings(
-    isCE3 := false,
+    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -243,6 +246,7 @@ lazy val `aws-kernel` = projectMatrix
       )
     )
   )
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * cats-effect specific abstractions of AWS protocol interpreters and constructs
@@ -264,6 +268,7 @@ lazy val aws = projectMatrix
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * http4s-specific implementation of aws protocols. This module exposes generic methods
@@ -294,6 +299,7 @@ lazy val `aws-http4s` = projectMatrix
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * This module contains the logic used at build time for reading smithy
@@ -776,7 +782,7 @@ lazy val Dependencies = new {
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.14")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.3.0")
   }
 
   object Mill {

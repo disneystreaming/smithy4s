@@ -36,10 +36,11 @@ object Main extends IOApp.Simple {
   //   .flatMap(IO.println(_))
   }
 
-  val resource: Resource[IO, (AwsClient[DynamoDBGen, IO])] =
-    for {
-      httpClient <- EmberClientBuilder.default[IO].build
-      dynamodb <- DynamoDB.awsClient(httpClient, AwsRegion.US_EAST_1)
-    } yield dynamodb
+  val resource: Resource[IO, (AwsClient[DynamoDBGen, IO])] = ???
+  // todo: move this to examples or something?
+  // for {
+  //   httpClient <- EmberClientBuilder.default[IO].build
+  //   dynamodb <- DynamoDB.awsClient(httpClient, AwsRegion.US_EAST_1)
+  // } yield dynamodb
 
 }

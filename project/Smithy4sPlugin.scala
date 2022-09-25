@@ -356,7 +356,7 @@ object Smithy4sPlugin extends AutoPlugin {
   }
 
   lazy val jvmDimSettings = simpleJVMLayout
-  lazy val nativeDimSettings = simpleNativeLayout
+  lazy val nativeDimSettings = simpleNativeLayout ++ Seq(Test / fork := false)
 
   lazy val simpleJSLayout = simpleLayout(JSPlatform)
   lazy val simpleJVMLayout = simpleLayout(JVMPlatform)
