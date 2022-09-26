@@ -19,9 +19,7 @@ package smithy4s.http4s
 import smithy4s.dynamic._
 import smithy4s.ShapeId
 import org.http4s.client.Client
-import org.http4s.implicits._
 import cats.implicits._
-
 import cats.effect.IO
 import cats.effect.Resource
 import org.http4s.HttpApp
@@ -49,7 +47,8 @@ class DynamicHttpProxy(client: Client[IO]) {
     dynamicServiceIO
       .flatMap { dsi =>
         SimpleRestJsonBuilder(dsi.service)
-          .client[IO](client, uri"http://localhost:8080")
+          .client[IO](client)
+          .use
           .liftTo[IO]
           .map { dynamicClient =>
             JsonIOProtocol
@@ -82,4 +81,6 @@ object Http4sDynamicPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {
     )
   }
 
+  def server(app: HttpApp[IO]): Resource[IO, Int] =
+    Resource.eval(IO.raiseError(new Exception("this shouldn't be used")))
 }

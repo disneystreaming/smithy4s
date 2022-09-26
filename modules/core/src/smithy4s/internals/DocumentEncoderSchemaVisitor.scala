@@ -75,7 +75,8 @@ object DocumentEncoder {
 
 }
 
-object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
+object DocumentEncoderSchemaVisitor
+    extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
   override def primitive[P](
       shapeId: ShapeId,
@@ -163,7 +164,7 @@ object DocumentEncoderSchemaVisitor extends SchemaVisitor[DocumentEncoder] {
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): DocumentEncoder[E] = if (hints.get[IntEnum].isDefined) {
+  ): DocumentEncoder[E] = if (hints.has[IntEnum]) {
     from(a => Document.fromInt(total(a).intValue))
   } else {
     from(a => DString(total(a).stringValue))

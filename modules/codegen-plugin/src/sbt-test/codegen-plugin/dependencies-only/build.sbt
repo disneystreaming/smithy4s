@@ -6,6 +6,6 @@ lazy val p1 = project
       "aws.iam"
     ),
     libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value,
-    libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % smithy4s.codegen.BuildInfo.smithyVersion % Smithy4s,
-    smithy4sOutputDir in Compile := baseDirectory.value / "smithy_output"
+    libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % smithy4s.codegen.BuildInfo.smithyVersion % Smithy4sCompile,
+    Compile / smithy4sOutputDir := baseDirectory.value / "smithy_output"
   )

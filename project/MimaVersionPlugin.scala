@@ -17,7 +17,7 @@ object MimaVersionPlugin extends AutoPlugin {
       ProjectMatrixPlugin &&
       plugins.JvmPlugin
 
-  override def trigger = noTrigger
+  override def trigger = allRequirements
 
   object autoImport {
     val ReleaseTag = """^v((?:\d+\.){2}\d+(?:-.*)?)$""".r
@@ -25,6 +25,8 @@ object MimaVersionPlugin extends AutoPlugin {
     lazy val mimaReportBinaryIssuesIfRelevant = taskKey[Unit](
       "A wrapper around the mima task which ensures publishArtifact is set to true"
     )
+    lazy val isMimaEnabled =
+      settingKey[Boolean]("setting to enable mima checks")
   }
   import autoImport._
 
@@ -74,6 +76,7 @@ object MimaVersionPlugin extends AutoPlugin {
     )
 
   override def projectSettings: Seq[Setting[_]] = Seq(
+    isMimaEnabled := false,
     mimaReportBinaryIssuesIfRelevant := filterTaskWhereRelevant(
       mimaReportBinaryIssues
     ).value,
@@ -82,18 +85,17 @@ object MimaVersionPlugin extends AutoPlugin {
       val org = organization.value
       val n = moduleName.value
 
+      val FullTag = """^(\d+)\.(\d+)\.(\d+).*""" r
       val TagBase = """^(\d+)\.(\d+).*""" r
-      val TagBase(major, minor) = mimaBaseVersion.value
+
+      val (major, minor, maybePatch) = mimaBaseVersion.value match {
+        case FullTag(major, minor, patch) => (major, minor, Some(patch))
+        case TagBase(major, minor)        => (major, minor, None)
+      }
 
       val isPre = major.toInt == 0
 
-      val isJvm = virtualAxes.?.value
-        .getOrElse(List.empty)
-        .contains(
-          VirtualAxis.jvm
-        )
-
-      if (sbtPlugin.value || !isJvm) {
+      if (sbtPlugin.value || !isMimaEnabled.value) {
         Set.empty
       } else {
         val tags = scala.util
@@ -111,11 +113,26 @@ object MimaVersionPlugin extends AutoPlugin {
           version
         }
 
-        val notCurrent = versions.filterNot(current ==)
+        def lessThanPatch(patch: String): String => Boolean = { tagVersion =>
+          val FullTag(_, _, tagPatch) = tagVersion
+          tagPatch.toInt < patch.toInt
+        }
+
+        val notCurrent = versions
+          .filterNot(_ == current)
+          .filterNot {
+            val patchPredicate =
+              maybePatch
+                // if mimaBaseVersion has a patch version, exclude this version if the patch is smaller
+                .map(lessThanPatch(_))
+                // else keep the version
+                .getOrElse { (_: String) => false }
+            v => patchPredicate(v)
+          }
 
         notCurrent
           .map(v =>
-            org % s"${n}_${CrossVersion.binaryScalaVersion(scalaVersion.value)}" % v
+            projectID.value.withRevision(v).withExplicitArtifacts(Vector.empty)
           )
           .toSet
       }

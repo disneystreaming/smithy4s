@@ -1,5 +1,7 @@
 $version: "2.0"
 
+metadata smithy4sDefaultRenderMode = "FULL"
+
 namespace smithy4s.example
 
 list StringList {
@@ -11,3 +13,17 @@ structure DefaultTest {
   two: String = "test"
   three: StringList = []
 }
+
+structure DefaultOrderingTest {
+  one: Integer = 1
+  two: String
+  @required
+  three: String
+}
+
+@mixin()
+structure DefaultInMixinTest {
+  one: String = "test"
+}
+
+structure DefaultInMixinUsageTest with [DefaultInMixinTest] {}

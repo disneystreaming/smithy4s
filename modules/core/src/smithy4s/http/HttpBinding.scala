@@ -23,6 +23,7 @@ import smithy4s.http.HttpBinding.HeaderPrefixBinding
 import smithy4s.http.HttpBinding.PathBinding
 import smithy4s.http.HttpBinding.QueryBinding
 import smithy4s.http.HttpBinding.QueryParamsBinding
+import smithy4s.http.HttpBinding.StatusCodeBinding
 import smithy4s.internals.InputOutput
 import smithy4s.schema.Schema._
 
@@ -34,8 +35,9 @@ sealed abstract class HttpBinding(val tpe: HttpBinding.Type)
     case HeaderBinding(httpName)     => s"Header $httpName"
     case HeaderPrefixBinding(prefix) => s"Headers prefixed by $prefix"
     case QueryBinding(httpName)      => s"Query parameter $httpName"
-    case QueryParamsBinding          => s"Query parameters"
+    case QueryParamsBinding          => "Query parameters"
     case PathBinding(httpName)       => s"Path parameter $httpName"
+    case StatusCodeBinding           => "Status code"
   }
 
 }
@@ -49,6 +51,7 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
     case object HeaderType extends Type
     case object QueryType extends Type
     case object PathType extends Type
+    case object StatusCodeType extends Type
   }
 
   case class HeaderBinding(httpName: CaseInsensitive)
@@ -60,6 +63,9 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
     val schema: Schema[QueryParamsBinding.type] = constant(QueryParamsBinding)
   }
   case class PathBinding(httpName: String) extends HttpBinding(Type.PathType)
+  case object StatusCodeBinding extends HttpBinding(Type.StatusCodeType) {
+    val schema: Schema[StatusCodeBinding.type] = constant(StatusCodeBinding)
+  }
 
   object HeaderBinding {
     val schema: Schema[HeaderBinding] =
@@ -93,6 +99,8 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
       QueryParamsBinding.schema.oneOf[HttpBinding]("queryParams")
     val headerPrefix =
       HeaderPrefixBinding.schema.oneOf[HttpBinding]("headerPrefix")
+    val status =
+      StatusCodeBinding.schema.oneOf[HttpBinding]("statusCode")
 
     union(header, query, path) {
       case h: HeaderBinding       => header(h)
@@ -100,6 +108,7 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
       case p: PathBinding         => path(p)
       case QueryParamsBinding     => queryParams(QueryParamsBinding)
       case h: HeaderPrefixBinding => headerPrefix(h)
+      case StatusCodeBinding      => status(StatusCodeBinding)
     }
   }
 
@@ -143,7 +152,7 @@ object HttpBinding extends ShapeTag.Companion[HttpBinding] {
     } orElse fieldHints.get(HttpPrefixHeaders).map {
       case HttpPrefixHeaders(prefix) =>
         HeaderPrefixBinding(prefix)
-    }
+    } orElse fieldHints.get[HttpResponseCode].map { _ => StatusCodeBinding }
   }
 
 }

@@ -39,7 +39,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 
 private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
-    extends SchemaVisitor[JCodec] { self =>
+    extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
   object PrimitiveJCodecs {
@@ -974,7 +974,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): JCodec[E] = if (hints.get[IntEnum].isDefined) {
+  ): JCodec[E] = if (hints.has[IntEnum]) {
     handleIntEnum(shapeId, hints, values, total)
   } else {
     handleEnum(shapeId, hints, values, total)

@@ -11,6 +11,7 @@ import java.io.PrintStream
 import sbt.internal.ProjectMatrix
 import sbtprojectmatrix.ProjectMatrixPlugin.autoImport.virtualAxes
 import org.scalajs.sbtplugin.ScalaJSPlugin
+import scala.scalanative.sbtplugin.ScalaNativePlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.scalaJSLinkerConfig
 import org.scalajs.linker.interface.ModuleKind
 import org.scalajs.jsenv.nodejs.NodeJSEnv
@@ -29,7 +30,7 @@ object Smithy4sPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.16"
   val Scala213 = "2.13.8"
-  val Scala3 = "3.1.1"
+  val Scala3 = "3.2.0"
 
   implicit class ProjectMatrixOps(val pm: ProjectMatrix) extends AnyVal {
     def http4sJvmPlatform(
@@ -63,6 +64,11 @@ object Smithy4sPlugin extends AutoPlugin {
           scalaVersions = scalaVersions.filterNot(_.startsWith("2.12")),
           axisValues = Seq(VirtualAxis.js, CatsEffect3Axis),
           configureScalaJSProject(_)
+        )
+        .customRow(
+          scalaVersions = scalaVersions.filter(_.startsWith("3")),
+          axisValues = Seq(VirtualAxis.native, CatsEffect3Axis),
+          _.enablePlugins(ScalaNativePlugin).settings(simpleNativeLayout)
         )
     }
   }
@@ -108,7 +114,7 @@ object Smithy4sPlugin extends AutoPlugin {
         Seq(
           compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
           compilerPlugin(
-            "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
+            "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
           )
         )
       else Seq.empty
@@ -350,7 +356,7 @@ object Smithy4sPlugin extends AutoPlugin {
   }
 
   lazy val jvmDimSettings = simpleJVMLayout
-  lazy val nativeDimSettings = simpleNativeLayout
+  lazy val nativeDimSettings = simpleNativeLayout ++ Seq(Test / fork := false)
 
   lazy val simpleJSLayout = simpleLayout(JSPlatform)
   lazy val simpleJVMLayout = simpleLayout(JVMPlatform)
@@ -474,6 +480,8 @@ object Smithy4sPlugin extends AutoPlugin {
     // things like scalafix and scalafmt are only enabled on jvm 2.13 projects
     val jvm2_13 = (t: Triplet) => t.scala == "2_13" && t.platform == "jvm"
 
+    val jvm = (t: Triplet) => t.platform == "jvm"
+
     val desiredCommands: Map[String, (String, Triplet => Boolean)] = Map(
       "test" -> ("test", any),
       "compile" -> ("compile", any),
@@ -481,7 +489,8 @@ object Smithy4sPlugin extends AutoPlugin {
       "pushRemoteCache" -> ("pushRemoteCache", any),
       "scalafix" -> ("scalafix --check", jvm2_13),
       "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
-      "scalafmt" -> ("scalafmtCheckAll", jvm2_13)
+      "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
     )
 
     val cmds = all.flatMap { case (triplet, projects) =>
@@ -503,6 +512,11 @@ object Smithy4sPlugin extends AutoPlugin {
     proj
       .enablePlugins(ScalaJSPlugin)
       .settings(jsDimSettings)
+  }
+
+  def millPlatform(millVersion: String): String = millVersion match {
+    case mv if mv.startsWith("0.10") => "0.10"
+    case _                           => sys.error("Unsupported mill platform.")
   }
 
 }

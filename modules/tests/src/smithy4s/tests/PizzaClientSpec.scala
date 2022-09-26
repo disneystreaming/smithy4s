@@ -25,7 +25,6 @@ import org.http4s.HttpApp
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
-import org.http4s.ember.server.EmberServerBuilder
 import org.typelevel.ci.CIString
 import smithy4s.Timestamp
 import smithy4s.example._
@@ -139,6 +138,17 @@ abstract class PizzaClientSpec extends IOSuite {
     }
   }
 
+  clientTest("code decoded in structure") { (client, backend, log) =>
+    val code = 201
+    for {
+      response <- Created()
+      _ <- backend.prepResponse(s"customCode$code", response)
+      res <- client.customCode(code)
+    } yield {
+      expect(res.code == Some(201))
+    }
+  }
+
   clientTest("Round trip") { (client, backend, log) =>
     for {
       res <- client.roundTrip(
@@ -210,7 +220,7 @@ abstract class PizzaClientSpec extends IOSuite {
         case Left(fromHttpApp) => fromHttpApp(app)
         case Right(fromPort) =>
           for {
-            port <- retryResource(emberServer(app))
+            port <- retryResource(server(app))
             client <- fromPort(port)
           } yield client
       }
@@ -290,6 +300,8 @@ abstract class PizzaClientSpec extends IOSuite {
               )
             )
             .flatMap(json => Ok(json, headers = headers))
+        case request @ (GET -> Root / "custom-code" / IntVar(code)) =>
+          storeAndReturn(s"customCode$code", request)
 
       }
       .orNotFound
@@ -299,15 +311,7 @@ abstract class PizzaClientSpec extends IOSuite {
 
   val randomPort = randomInt.map(_ + 50000)
 
-  def emberServer(app: HttpApp[IO]): Resource[IO, Int] = randomPort.flatTap {
-    port =>
-      EmberServerBuilder
-        .default[IO]
-        .withHost(Compat.host("localhost"))
-        .withPort(Compat.port(port))
-        .withHttpApp(app)
-        .build
-  }
+  def server(app: HttpApp[IO]): Resource[IO, Int]
 
   def retryResource[A](
       resource: Resource[IO, A],

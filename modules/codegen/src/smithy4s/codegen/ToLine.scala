@@ -16,10 +16,12 @@
 
 package smithy4s.codegen
 
+import cats.data.Chain
 import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
-import cats.data.Chain
 import smithy4s.codegen.LineSegment._
+
+import java.util.UUID
 
 trait ToLine[A] {
   def render(a: A): Line
@@ -30,17 +32,30 @@ object ToLine {
   implicit def lineSegmentToLine[A <: LineSegment]: ToLine[A] = l => Line(l)
   implicit val identity: ToLine[Line] = r => r
   implicit val intToLine: ToLine[Int] = i => Line(i.toString)
+  implicit val bigIntToLine: ToLine[BigInt] = i => Line(i.toString)
+  implicit val bigDecimalLine: ToLine[BigDecimal] = i => Line(i.toString)
+  implicit val booleanToLine: ToLine[Boolean] = b =>
+    Line(if (b) "true" else "false")
+  implicit val doubleToLine: ToLine[Double] = d => Line(d.toString)
+  implicit val floatToLine: ToLine[Float] = f => Line(f.toString)
+  implicit val longToLine: ToLine[Long] = l => Line(l.toString)
+  implicit val uuidToLine: ToLine[UUID] = i => Line(i.toString)
+
   implicit val stringToLine: ToLine[String] = s => Line(s)
   implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
     override def render(a: Type): Line = a match {
       case Type.Collection(collectionType, member) =>
         val line = render(member)
         val col = collectionType.tpe
-        NameRef(col).toLine + Literal("[") + line + Literal("]")
+        col.toLine + Literal(
+          "["
+        ) + line + Literal("]")
       case Type.Map(key, value) =>
         val keyLine = render(key)
         val valueLine = render(value)
-        NameRef("Map").toLine + Literal("[") + keyLine + Literal(
+        NameRef("scala.collection.immutable", "Map").toLine + Literal(
+          "["
+        ) + keyLine + Literal(
           ","
         ) + valueLine + Literal("]")
       case Type.Alias(
@@ -57,25 +72,29 @@ object ToLine {
       case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn).toLine
     }
   }
-  private def primitiveLine(p: Primitive): NameRef =
+
+  private def primitiveLine(p: Primitive): NameRef = {
+    def scalaP(name: String) = NameRef("scala", name)
+    def javaP(name: String) = NameRef("java.lang", name)
     p match {
-      case Primitive.Unit       => NameRef("Unit")
+      case Primitive.Unit       => scalaP("Unit")
       case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
-      case Primitive.Bool       => NameRef("Boolean")
-      case Primitive.String     => NameRef("String")
+      case Primitive.Bool       => scalaP("Boolean")
+      case Primitive.String     => javaP("String")
       case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")
-      case Primitive.Byte       => NameRef("Byte")
-      case Primitive.Int        => NameRef("Int")
-      case Primitive.Short      => NameRef("Short")
-      case Primitive.Long       => NameRef("Long")
-      case Primitive.Float      => NameRef("Float")
-      case Primitive.Double     => NameRef("Double")
-      case Primitive.BigDecimal => NameRef("BigDecimal")
-      case Primitive.BigInteger => NameRef("BigInt")
+      case Primitive.Byte       => scalaP("Byte")
+      case Primitive.Int        => scalaP("Int")
+      case Primitive.Short      => scalaP("Short")
+      case Primitive.Long       => scalaP("Long")
+      case Primitive.Float      => scalaP("Float")
+      case Primitive.Double     => scalaP("Double")
+      case Primitive.BigDecimal => scalaP("BigDecimal")
+      case Primitive.BigInteger => scalaP("BigInt")
       case Primitive.Uuid       => NameRef("java.util", "UUID")
       case Primitive.Document   => NameRef("smithy4s", "Document")
       case Primitive.Nothing    => NameRef("Nothing")
     }
+  }
 }
 
 // Models
@@ -118,9 +137,9 @@ object Line {
 
   def optional(line: Line, default: Boolean = false): Line = {
     val option =
-      NameRef("Option").toLine + Literal("[") + line + Literal("]")
+      NameRef("scala.Option").toLine + Literal("[") + line + Literal("]")
     if (default)
-      option + Literal(" = ") + NameRef("None")
+      option + Literal(" = ") + NameRef("scala.None")
     else
       option
   }

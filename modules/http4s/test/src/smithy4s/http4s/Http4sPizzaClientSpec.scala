@@ -19,7 +19,7 @@ package smithy4s.http4s
 import cats.effect.IO
 import cats.effect.Resource
 import org.http4s.HttpApp
-import org.http4s.Uri
+import org.http4s.client.Client
 import smithy4s.example.PizzaAdminService
 
 object Http4sPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {
@@ -27,8 +27,12 @@ object Http4sPizzaClientSpec extends smithy4s.tests.PizzaClientSpec {
     HttpApp[IO] => Resource[IO, PizzaAdminService[IO]],
     Int => Resource[IO, PizzaAdminService[IO]]
   ] = Left { httpApp =>
-    val uri = Uri.unsafeFromString("http://localhost:8080")
-    SimpleRestJsonBuilder(PizzaAdminService).clientResource(httpApp, uri)
+    SimpleRestJsonBuilder(PizzaAdminService)
+      .client(Client.fromHttpApp(httpApp))
+      .resource
   }
+
+  def server(app: HttpApp[IO]): Resource[IO, Int] =
+    Resource.eval(IO.raiseError(new Exception("this shouldn't be used")))
 
 }

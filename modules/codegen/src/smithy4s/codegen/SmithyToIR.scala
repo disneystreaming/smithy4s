@@ -68,6 +68,29 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .asScala
       .toList
 
+  private sealed trait DefaultRenderMode
+  private object DefaultRenderMode {
+    case object Full extends DefaultRenderMode
+    case object OptionOnly extends DefaultRenderMode
+    case object NoDefaults extends DefaultRenderMode
+
+    def fromString(str: String): Option[DefaultRenderMode] = str match {
+      case "FULL"        => Some(Full)
+      case "OPTION_ONLY" => Some(OptionOnly)
+      case "NONE"        => Some(NoDefaults)
+      case _             => None
+    }
+  }
+
+  private val defaultRenderMode =
+    model
+      .getMetadata()
+      .asScala
+      .get("smithy4sDefaultRenderMode")
+      .flatMap(_.asStringNode().asScala)
+      .flatMap(f => DefaultRenderMode.fromString(f.getValue))
+      .getOrElse(DefaultRenderMode.Full)
+
   def allDecls = allShapes
     .filter(_.getId().getNamespace() == namespace)
     .flatMap(_.accept(toIRVisitor(renderAdtMemberStructures = false)))
@@ -89,13 +112,27 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         shape.tpe.flatMap {
           case Type.Alias(_, name, tpe: Type.ExternalType, isUnwrapped) =>
             val newHints = hints.filterNot(_ == tpe.refinementHint)
-            TypeAlias(name, name, tpe, isUnwrapped, recursive, newHints).some
+            TypeAlias(
+              shape.getId(),
+              name,
+              tpe,
+              isUnwrapped,
+              recursive,
+              newHints
+            ).some
           case Type.Alias(_, name, tpe, isUnwrapped) =>
-            TypeAlias(name, name, tpe, isUnwrapped, recursive, hints).some
+            TypeAlias(
+              shape.getId(),
+              name,
+              tpe,
+              isUnwrapped,
+              recursive,
+              hints
+            ).some
           case Type.PrimitiveType(_) => None
           case other =>
             TypeAlias(
-              shape.name,
+              shape.getId(),
               shape.name,
               other,
               isUnwrapped = false,
@@ -148,6 +185,35 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         x
       )
 
+      private def doFieldsMatch(
+          mixinId: ShapeId,
+          fields: List[Field]
+      ): Boolean = {
+        val mixin: StructureShape =
+          model
+            .getShape(mixinId)
+            .asScala
+            .flatMap(_.asStructureShape.asScala)
+            .getOrElse(
+              throw new IllegalArgumentException(
+                s"Unable to find mixin with id: $mixinId"
+              )
+            )
+        val mixinMembers = mixin.getAllMembers().asScala
+        mixinMembers.forall { case (memberName, member) =>
+          fields
+            .find(_.name == memberName)
+            .forall { field =>
+              val memberOptional = !member.hasTrait(classOf[RequiredTrait])
+              val memberHasDefault = member.hasTrait(classOf[DefaultTrait])
+
+              // if member has no default and is optional, then the field must be optional
+              if (!memberHasDefault && memberOptional) !field.required
+              else field.required
+            }
+        }
+      }
+
       override def structureShape(shape: StructureShape): Option[Decl] = {
         val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
         val isTrait = hints.exists {
@@ -156,13 +222,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
         val rec = isRecursive(shape.getId()) || isTrait
 
-        val mixins = shape.getMixins.asScala.flatMap(_.tpe).toList
+        val fields = shape.fields
+        val filteredMixins = shape
+          .getMixins()
+          .asScala
+          .filter(mixinId => doFieldsMatch(mixinId, fields))
+        val mixins = filteredMixins.flatMap(_.tpe).toList
         val isMixin = shape.hasTrait(classOf[MixinTrait])
+
         val p =
           Product(
+            shape.getId(),
             shape.name,
-            shape.name,
-            shape.fields,
+            fields,
             mixins,
             rec,
             hints,
@@ -182,7 +254,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           case _          => false
         }
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.name, shape.name, alts, rec || isTrait, hints)
+          Union(shape.getId(), shape.name, alts, rec || isTrait, hints)
         }
       }
 
@@ -205,7 +277,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 )
               }
               .toList
-            Enumeration(shape.name, shape.name, values, hints(shape)).some
+            Enumeration(shape.getId(), shape.name, values, hints(shape)).some
           case _ => this.getDefault(shape)
         })
 
@@ -218,7 +290,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             EnumValue(value, index, name)
           }
           .toList
-        Enumeration(shape.name, shape.name, values).some
+        Enumeration(shape.getId(), shape.name, values).some
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
@@ -230,7 +302,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
           .toList
         Enumeration(
-          shape.name,
+          shape.getId(),
           shape.name,
           values,
           hints(shape) :+ Hint.IntEnum
@@ -281,8 +353,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               op.getOutputShape().tpe.getOrElse(Type.unit)
 
             Operation(
+              op.getId(),
               op.name,
-              op.namespace,
+              uncapitalise(op.name),
               params,
               inputType,
               errorTypes,
@@ -304,8 +377,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val prettyName = SmithyToIR.prettifyName(maybeSdkId, shape.name)
 
         Service(
+          shape.getId(),
           prettyName,
-          shape.name,
           operations,
           serviceHints,
           shape.getVersion()
@@ -350,6 +423,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def timestampShape(x: TimestampShape): Shape = x.toBuilder().addTraits(traits).build()
       //format: on
     }
+
+  private val reservedNames = new CollisionAvoidance.Names().getReservedNames
+  private def isReservedName(str: String): Boolean = reservedNames(str)
 
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
@@ -417,7 +493,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           getExternalOrBase(shape, Type.PrimitiveType(primitive))
         if (
           shape.getId() != ShapeId.from(primitiveId) &&
-          !isUnboxedPrimitive(shape.getId())
+          !isUnboxedPrimitive(shape.getId()) &&
+          !isReservedName(shape.getId().getName())
         ) {
           Type
             .Alias(
@@ -661,24 +738,47 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     def tpe: Option[Type] = shape.accept(toType)
 
-    def fields = shape
-      .members()
-      .asScala
-      .filterNot(isStreaming)
-      .map { member =>
-        (
-          member.getMemberName(),
-          member.tpe,
-          member.hasTrait(classOf[RequiredTrait]) ||
-            member.hasTrait(classOf[DefaultTrait]),
-          hints(member) ++ maybeDefault(member)
-        )
+    def fields = {
+      val noDefault =
+        if (defaultRenderMode == DefaultRenderMode.NoDefaults)
+          List(Hint.NoDefault)
+        else List.empty
+      val result = shape
+        .members()
+        .asScala
+        .filterNot(isStreaming)
+        .map { member =>
+          val default =
+            if (defaultRenderMode == DefaultRenderMode.Full)
+              maybeDefault(member)
+            else List.empty
+          (
+            member.getMemberName(),
+            member.tpe,
+            member.hasTrait(classOf[RequiredTrait]) ||
+              member.hasTrait(classOf[DefaultTrait]),
+            hints(member) ++ default ++ noDefault
+          )
+        }
+        .collect { case (name, Some(tpe), required, hints) =>
+          Field(name, tpe, required, hints)
+        }
+        .toList
+
+      val hintsContainsDefault: Field => Boolean = f =>
+        f.hints.exists {
+          case _: Hint.Default => true
+          case _               => false
+        }
+
+      defaultRenderMode match {
+        case DefaultRenderMode.Full =>
+          result.sortBy(hintsContainsDefault).sortBy(!_.required)
+        case DefaultRenderMode.OptionOnly =>
+          result.sortBy(!_.required)
+        case DefaultRenderMode.NoDefaults => result
       }
-      .collect { case (name, Some(tpe), required, hints) =>
-        Field(name, tpe, required, hints)
-      }
-      .toList
-      .sortBy(!_.required)
+    }
 
     def alts =
       shape

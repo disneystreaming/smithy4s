@@ -25,7 +25,9 @@ import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
 import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 import smithy.api.Http
 
-object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
+object SchemaVisitorPathEncoder
+    extends SchemaVisitor.Cached[MaybePathEncode]
+    with SchemaVisitor.Default[MaybePathEncode] {
   self =>
 
   def default[A]: MaybePathEncode[A] = None
@@ -64,7 +66,7 @@ object SchemaVisitorPathEncoder extends SchemaVisitor.Default[MaybePathEncode] {
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePathEncode[E] = {
-    if (hints.get[IntEnum].isDefined) {
+    if (hints.has[IntEnum]) {
       PathEncode.from(e => total(e).intValue.toString)
     } else {
       PathEncode.from(e => total(e).stringValue)

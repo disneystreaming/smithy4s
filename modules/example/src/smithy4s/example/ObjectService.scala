@@ -73,7 +73,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("PUT"), smithy.api.NonEmptyString("/{bucketName}/{key}"), 200),
+      smithy.api.Http(method = smithy.api.NonEmptyString("PUT"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200),
       smithy.api.Idempotent(),
     )
     def wrap(input: PutObjectInput) = PutObject(input)
@@ -127,7 +127,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints : Hints = Hints(
-      smithy.api.Http(smithy.api.NonEmptyString("GET"), smithy.api.NonEmptyString("/{bucketName}/{key}"), 200),
+      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/{bucketName}/{key}"), code = 200),
       smithy.api.Readonly(),
     )
     def wrap(input: GetObjectInput) = GetObject(input)

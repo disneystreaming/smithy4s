@@ -1,0 +1,146 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ReservedNameService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/list/": {
+            "post": {
+                "operationId": "List",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ListRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "List 204 response"
+                    }
+                }
+            }
+        },
+        "/api/map/": {
+            "post": {
+                "operationId": "Map",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MapRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "Map 204 response"
+                    }
+                }
+            }
+        },
+        "/api/option/": {
+            "post": {
+                "operationId": "Option",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OptionRequestContent"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Option 204 response"
+                    }
+                }
+            }
+        },
+        "/api/set/": {
+            "post": {
+                "operationId": "Set",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetRequestContent"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "Set 204 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ListRequestContent": {
+                "type": "object",
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "list"
+                ]
+            },
+            "MapRequestContent": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "$ref": "#/components/schemas/MyMap"
+                    }
+                },
+                "required": [
+                    "value"
+                ]
+            },
+            "MyMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
+                }
+            },
+            "OptionRequestContent": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SetRequestContent": {
+                "type": "object",
+                "properties": {
+                    "set": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "set"
+                ]
+            }
+        }
+    }
+}

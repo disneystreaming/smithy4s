@@ -12,7 +12,7 @@ import smithy4s.schema.Schema.document
 object ArbitraryData extends Newtype[Document] {
   val id: ShapeId = ShapeId("smithy4s.example", "arbitraryData")
   val hints : Hints = Hints(
-    smithy.api.Trait(None, None, None, None),
+    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
   val underlyingSchema : Schema[Document] = document.withId(id).addHints(hints)
   implicit val schema : Schema[ArbitraryData] = recursive(bijection(underlyingSchema, asBijection))

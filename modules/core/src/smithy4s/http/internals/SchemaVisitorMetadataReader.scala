@@ -37,7 +37,7 @@ private[http] object SchemaVisitorMetadataReader
     extends SchemaVisitorMetadataReader
 
 private[http] class SchemaVisitorMetadataReader()
-    extends SchemaVisitor[MetaDecode]
+    extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
   override def primitive[P](
@@ -91,6 +91,8 @@ private[http] class SchemaVisitorMetadataReader()
             MetaDecode.from(formatString)(str =>
               Timestamp.parse(str, smithy.api.TimestampFormat.HTTP_DATE)
             )
+          case (Some(HttpBinding.Type.StatusCodeType), _) =>
+            MetaDecode.EmptyMetaDecode
           case (None, None) =>
             EmptyMetaDecode
         }
@@ -142,7 +144,7 @@ private[http] class SchemaVisitorMetadataReader()
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaDecode[E] = {
-    if (hints.get[IntEnum].isDefined) {
+    if (hints.has[IntEnum]) {
       MetaDecode
         .from(
           s"Enum[${values.map(_.stringValue).mkString(",")}]"
