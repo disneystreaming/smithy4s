@@ -16,6 +16,7 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = map (pkgName: pkgs.${pkgName}) shellPackages;
+          nativeBuildInputs = [ pkgs.openssl ];
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
             Available packages:
