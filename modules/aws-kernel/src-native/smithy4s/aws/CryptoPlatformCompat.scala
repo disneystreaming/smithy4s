@@ -43,7 +43,12 @@ trait CryptoPlatformCompat {
       crypto.EVP_DigestFinal(ctx, digest, outLength)
 
       val out = Array.fill[Byte]((!outLength).toInt)(0)
-      for (i <- 0 until (!outLength).toInt) out(i) = digest(i.toLong).toByte
+      var i = 0
+      while (i < (!outLength).toInt) {
+        out(i) = digest(i.toLong).toByte
+        i += 1
+      }
+
       out.map("%02x".format(_)).mkString
     }
 
@@ -74,7 +79,12 @@ trait CryptoPlatformCompat {
       )
 
       val out = Array.fill[Byte]((!outLength).toInt)(0)
-      for (i <- 0 until (!outLength).toInt) out(i) = digest(i.toLong).toByte
+      var i = 0
+
+      while (i < (!outLength).toInt) {
+        out(i) = digest(i.toLong).toByte
+        i += 1
+      }
       out
     }
 
