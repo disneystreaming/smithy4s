@@ -97,8 +97,8 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
         s.append('Z').toString
       case _ =>
         append4Digits(year, s)
-        append2Digits(month, s)
-        append2Digits(day, s)
+        append2Digits(month, s.append('-'))
+        append2Digits(day, s.append('-'))
         appendTime(secsOfDay, s.append('T'))
         appendNano(nano, s)
         s.append('Z').toString
