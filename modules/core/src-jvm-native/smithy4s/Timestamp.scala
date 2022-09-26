@@ -73,7 +73,7 @@ case class Timestamp private (epochSecond: Long, nano: Int)
         append2Digits(day, s.append(' '))
         s.append(' ').append(Timestamp.months(month - 1))
         append4Digits(year, s.append(' '))
-        appendTime(secsOfDay, s.append(' '))
+        appendTime(secsOfDay, s.append(' '), addSeparator = true)
         appendNano(nano, s)
         s.append(" GMT").toString
       case 2 =>
@@ -85,13 +85,13 @@ case class Timestamp private (epochSecond: Long, nano: Int)
         append4Digits(year, s)
         append2Digits(month, s)
         append2Digits(day, s)
-        appendTime(secsOfDay, s.append('T'), addColon = false)
+        appendTime(secsOfDay, s.append('T'), addSeparator = false)
         s.append('Z').toString
       case _ =>
         append4Digits(year, s)
         append2Digits(month, s.append('-'))
         append2Digits(day, s.append('-'))
-        appendTime(secsOfDay, s.append('T'))
+        appendTime(secsOfDay, s.append('T'), addSeparator = true)
         appendNano(nano, s)
         s.append('Z').toString
     }
@@ -107,15 +107,22 @@ case class Timestamp private (epochSecond: Long, nano: Int)
   private[this] def appendTime(
       secsOfDay: Int,
       s: java.lang.StringBuilder,
-      addColon: Boolean = true /* todo */
+      addSeparator: Boolean
   ): Unit = {
     val y1 =
       secsOfDay * 1193047L // Based on James Anhalt's algorithm: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
     val y2 = (y1 & 0xffffffffL) * 60
     val y3 = (y2 & 0xffffffffL) * 60
-    append2Digits((y1 >> 32).toInt, s)
-    append2Digits((y2 >> 32).toInt, if (addColon) s.append(':') else s)
-    append2Digits((y3 >> 32).toInt, if (addColon) s.append(':') else s)
+
+    if (addSeparator) {
+      append2Digits((y1 >> 32).toInt, s)
+      append2Digits((y2 >> 32).toInt, s.append(':'))
+      append2Digits((y3 >> 32).toInt, s.append(':'))
+    } else {
+      append2Digits((y1 >> 32).toInt, s)
+      append2Digits((y2 >> 32).toInt, s)
+      append2Digits((y3 >> 32).toInt, s)
+    }
   }
 
   private[this] def appendNano(nano: Int, s: java.lang.StringBuilder): Unit =

@@ -81,7 +81,7 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
         append2Digits(day, s.append(' '))
         s.append(' ').append(months(month - 1))
         append4Digits(year, s.append(' '))
-        appendTime(secsOfDay, s.append(' '))
+        appendTime(secsOfDay, s.append(' '), addSeparator = true)
         appendNano(nano, s)
         s.append(" GMT").toString
       case 2 =>
@@ -93,13 +93,13 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
         append4Digits(year, s)
         append2Digits(month, s.append('-'))
         append2Digits(day, s.append('-'))
-        appendTime(secsOfDay, s.append('T'), addColon = false)
+        appendTime(secsOfDay, s.append('T'), addSeparator = false)
         s.append('Z').toString
       case _ =>
         append4Digits(year, s)
         append2Digits(month, s.append('-'))
         append2Digits(day, s.append('-'))
-        appendTime(secsOfDay, s.append('T'))
+        appendTime(secsOfDay, s.append('T'), addSeparator = true)
         appendNano(nano, s)
         s.append('Z').toString
     }
@@ -115,15 +115,22 @@ case class Timestamp private (epochSecond: Long, nano: Int) {
   private[this] def appendTime(
       secsOfDay: Int,
       s: java.lang.StringBuilder,
-      addColon: Boolean = true /* todo */
+      addSeparator: Boolean
   ): Unit = {
     val minutesOfDay = secsOfDay / 60
     val hour = minutesOfDay / 60
     val minute = minutesOfDay - hour * 60
     val second = secsOfDay - minutesOfDay * 60
-    append2Digits(hour, s)
-    append2Digits(minute, if (addColon) s.append(':') else s)
-    append2Digits(second, if (addColon) s.append(':') else s)
+
+    if (addSeparator) {
+      append2Digits(hour, s)
+      append2Digits(minute, s.append(':'))
+      append2Digits(second, s.append(':'))
+    } else {
+      append2Digits(hour, s)
+      append2Digits(minute, s)
+      append2Digits(second, s)
+    }
   }
 
   private[this] def appendNano(nano: Int, s: java.lang.StringBuilder): Unit =
