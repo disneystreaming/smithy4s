@@ -78,14 +78,14 @@ case class Timestamp private (epochSecond: Long, nano: Int)
         s.append(" GMT").toString
       case 2 =>
         append4Digits(year, s)
-        append2Digits(month, s.append('-'))
-        append2Digits(day, s.append('-'))
+        append2Digits(month, s)
+        append2Digits(day, s)
         s.toString
       case 3 =>
         append4Digits(year, s)
-        append2Digits(month, s.append('-'))
-        append2Digits(day, s.append('-'))
-        appendTime(secsOfDay, s.append('T'))
+        append2Digits(month, s)
+        append2Digits(day, s)
+        appendTime(secsOfDay, s.append('T'), addColon = false)
         s.append('Z').toString
       case _ =>
         append4Digits(year, s)
@@ -106,15 +106,16 @@ case class Timestamp private (epochSecond: Long, nano: Int)
 
   private[this] def appendTime(
       secsOfDay: Int,
-      s: java.lang.StringBuilder
+      s: java.lang.StringBuilder,
+      addColon: Boolean = true /* todo */
   ): Unit = {
     val y1 =
       secsOfDay * 1193047L // Based on James Anhalt's algorithm: https://jk-jeon.github.io/posts/2022/02/jeaiii-algorithm/
     val y2 = (y1 & 0xffffffffL) * 60
     val y3 = (y2 & 0xffffffffL) * 60
     append2Digits((y1 >> 32).toInt, s)
-    append2Digits((y2 >> 32).toInt, s.append(':'))
-    append2Digits((y3 >> 32).toInt, s.append(':'))
+    append2Digits((y2 >> 32).toInt, if (addColon) s.append(':') else s)
+    append2Digits((y3 >> 32).toInt, if (addColon) s.append(':') else s)
   }
 
   private[this] def appendNano(nano: Int, s: java.lang.StringBuilder): Unit =
