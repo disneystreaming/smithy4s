@@ -37,19 +37,64 @@ import java.nio.charset.StandardCharsets
 import concurrent.duration._
 import org.http4s.Response
 import smithy4s.ShapeTag
+import org.http4s.ember.server.EmberServerBuilder
 
-class ClientHttpComplianceTestCase[
+class Http4sClientHttpComplianceTestCase[
     P,
     Alg[_[_, _, _, _, _]],
     Op[_, _, _, _, _]
 ](
     protocol: P,
-    getClient: Either[
+    makeClient: Either[
       // make an in-memory client
       HttpApp[IO] => Resource[IO, smithy4s.Monadic[Alg, IO]],
       // start a server, return a client that calls it
-      Resource[IO, smithy4s.Monadic[Alg, IO]]
+      Int => Resource[IO, smithy4s.Monadic[Alg, IO]]
     ]
+)(implicit
+    service: Service[Alg, Op],
+    ce: CompatEffect,
+    protocolTag: ShapeTag[P]
+) extends ClientHttpComplianceTestCase(protocol) {
+  import ce._
+
+  private val randomInt =
+    Resource.eval(IO(scala.util.Random.nextInt(9999)))
+
+  private val randomPort = randomInt.map(_ + 50000)
+
+  private def retryResource[A](
+      resource: Resource[IO, A],
+      max: Int = 10
+  ): Resource[IO, A] =
+    if (max <= 0) resource
+    else resource.orElse(retryResource(resource, max - 1))
+
+  def getClient(app: HttpApp[IO]): Resource[IO, smithy4s.Monadic[Alg, IO]] = {
+    makeClient.fold(
+      f => f(app),
+      makeClientFromPort =>
+        retryResource {
+          randomPort
+            .flatTap { port =>
+              EmberServerBuilder
+                .default[IO]
+                .withHost(Compat.host("localhost"))
+                .withPort(Compat.port(port))
+                .withHttpApp(app)
+                .build
+            }
+        }.flatMap(makeClientFromPort)
+    )
+  }
+}
+
+abstract class ClientHttpComplianceTestCase[
+    P,
+    Alg[_[_, _, _, _, _]],
+    Op[_, _, _, _, _]
+](
+    protocol: P
 )(implicit
     service: Service[Alg, Op],
     ce: CompatEffect,
@@ -58,6 +103,8 @@ class ClientHttpComplianceTestCase[
   import ce._
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
+
+  def getClient(app: HttpApp[IO]): Resource[IO, smithy4s.Monadic[Alg, IO]]
 
   private def matchRequest(
       request: Request[IO],
@@ -150,14 +197,7 @@ class ClientHttpComplianceTestCase[
             }
             .orNotFound
 
-          val clientRes = getClient match {
-            case Left(fromApp)   => fromApp(app)
-            case Right(mkServer) =>
-              // todo: should we have this retry here or let the caller take care of it?
-              retryResource(mkServer)
-          }
-
-          clientRes.use { client =>
+          getClient(app).use { client =>
             // avoid blocking the test forever...
             val recordedRequest = requestDeferred.get.timeout(1.second)
 
@@ -189,11 +229,4 @@ class ClientHttpComplianceTestCase[
         .map(tc => clientRequestTest(endpoint, tc))
     }
   }
-
-  private def retryResource[A](
-      resource: Resource[IO, A],
-      max: Int = 10
-  ): Resource[IO, A] =
-    if (max <= 0) resource
-    else resource.orElse(retryResource(resource, max - 1))
 }

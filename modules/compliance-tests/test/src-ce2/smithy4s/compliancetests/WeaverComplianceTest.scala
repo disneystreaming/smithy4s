@@ -17,8 +17,9 @@
 package smithy4s.compliancetests
 
 import cats.effect.IO
+import cats.effect.Resource
+import org.http4s._
 import org.http4s.client.Client
-import org.http4s.HttpApp
 import smithy4s.example._
 import smithy4s.http4s._
 import weaver._
@@ -26,18 +27,23 @@ import weaver._
 object WeaverComplianceTest extends SimpleIOSuite {
   implicit val compatEffect: CompatEffect = new CompatEffect
 
-  val testGenerator = new ClientHttpComplianceTestCase(
-    smithy4s.api.SimpleRestJson(), {
-      import org.http4s.implicits._
-      val baseUri = uri"http://localhost/"
-      Left { (a: HttpApp[IO]) =>
-        SimpleRestJsonBuilder(HelloServiceGen)
-          .client(Client.fromHttpApp(a))
-          .uri(baseUri)
-          .resource
-      }
-    }
-  )
+  val testGenerator = new ClientHttpComplianceTestCase[
+    smithy4s.api.SimpleRestJson,
+    HelloServiceGen,
+    HelloServiceOperation
+  ](
+    smithy4s.api.SimpleRestJson()
+  ) {
+    import org.http4s.implicits._
+    private val baseUri = uri"http://localhost/"
+
+    def getClient(app: HttpApp[IO]): Resource[IO, HelloService[IO]] =
+      SimpleRestJsonBuilder(HelloServiceGen)
+        .client(Client.fromHttpApp(app))
+        .uri(baseUri)
+        .resource
+  }
+
   val tests: List[ComplianceTest[IO]] = testGenerator.allClientTests()
 
   tests.foreach(tc =>
