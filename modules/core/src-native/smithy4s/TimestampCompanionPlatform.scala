@@ -16,9 +16,6 @@
 
 package smithy4s
 
-import java.time.Instant
-import java.time.OffsetDateTime
-
 private[smithy4s] trait TimestampCompanionPlatform {
 
   def nowUTC(): Timestamp = {

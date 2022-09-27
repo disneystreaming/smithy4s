@@ -11,6 +11,7 @@ import java.io.PrintStream
 import sbt.internal.ProjectMatrix
 import sbtprojectmatrix.ProjectMatrixPlugin.autoImport.virtualAxes
 import org.scalajs.sbtplugin.ScalaJSPlugin
+import scala.scalanative.sbtplugin.ScalaNativePlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.scalaJSLinkerConfig
 import org.scalajs.linker.interface.ModuleKind
 import org.scalajs.jsenv.nodejs.NodeJSEnv
@@ -64,6 +65,11 @@ object Smithy4sPlugin extends AutoPlugin {
           axisValues = Seq(VirtualAxis.js, CatsEffect3Axis),
           configureScalaJSProject(_)
         )
+        .customRow(
+          scalaVersions = scalaVersions.filter(_.startsWith("3")),
+          axisValues = Seq(VirtualAxis.native, CatsEffect3Axis),
+          _.enablePlugins(ScalaNativePlugin).settings(simpleNativeLayout)
+        )
     }
   }
 
@@ -108,7 +114,7 @@ object Smithy4sPlugin extends AutoPlugin {
         Seq(
           compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
           compilerPlugin(
-            "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
+            "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
           )
         )
       else Seq.empty
@@ -350,7 +356,7 @@ object Smithy4sPlugin extends AutoPlugin {
   }
 
   lazy val jvmDimSettings = simpleJVMLayout
-  lazy val nativeDimSettings = simpleNativeLayout
+  lazy val nativeDimSettings = simpleNativeLayout ++ Seq(Test / fork := false)
 
   lazy val simpleJSLayout = simpleLayout(JSPlatform)
   lazy val simpleJVMLayout = simpleLayout(JVMPlatform)

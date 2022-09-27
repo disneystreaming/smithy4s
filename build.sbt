@@ -10,6 +10,9 @@ ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.16.1"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 import Smithy4sPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -219,7 +222,7 @@ lazy val `aws-kernel` = projectMatrix
   .in(file("modules/aws-kernel"))
   .dependsOn(core)
   .settings(
-    isCE3 := false,
+    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -244,6 +247,7 @@ lazy val `aws-kernel` = projectMatrix
       )
     )
   )
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * cats-effect specific abstractions of AWS protocol interpreters and constructs
@@ -265,6 +269,7 @@ lazy val aws = projectMatrix
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * http4s-specific implementation of aws protocols. This module exposes generic methods
@@ -287,14 +292,19 @@ lazy val `aws-http4s` = projectMatrix
       )
     },
     Test / allowedNamespaces := Seq(),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
+  )
+  .jvmPlatform(
+    latest2ScalaVersions,
+    jvmDimSettings ++ Seq(
+      Test / smithySpecs ++= Seq(
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
+      )
     )
   )
-  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * This module contains the logic used at build time for reading smithy
@@ -651,8 +661,7 @@ lazy val tests = projectMatrix
       ce3 ++ Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
-        Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value,
+        Dependencies.Http4s.client.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Weaver.cats.value
       )
@@ -796,7 +805,7 @@ lazy val Dependencies = new {
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.14")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.3.0")
   }
 
   object Mill {
@@ -826,7 +835,7 @@ lazy val Dependencies = new {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.3.14")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.15" else "0.22.14")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.16" else "0.22.14")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
@@ -844,7 +853,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.15" else "0.6.15")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.8.0" else "0.6.15")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
