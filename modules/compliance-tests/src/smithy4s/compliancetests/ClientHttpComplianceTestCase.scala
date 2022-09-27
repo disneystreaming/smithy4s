@@ -19,7 +19,6 @@ package smithy4s.compliancetests
 import cats.effect.IO
 import cats.effect.Resource
 import cats.implicits._
-import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.Request
@@ -46,8 +45,10 @@ class ClientHttpComplianceTestCase[
 ](
     protocol: P,
     getClient: Either[
+      // make an in-memory client
       HttpApp[IO] => Resource[IO, smithy4s.Monadic[Alg, IO]],
-      Int => Resource[IO, smithy4s.Monadic[Alg, IO]]
+      // start a server, return a client that calls it
+      Resource[IO, smithy4s.Monadic[Alg, IO]]
     ]
 )(implicit
     service: Service[Alg, Op],
@@ -150,12 +151,10 @@ class ClientHttpComplianceTestCase[
             .orNotFound
 
           val clientRes = getClient match {
-            case Left(fromApp) => fromApp(app)
-            case Right(fromPort) =>
-              for {
-                port <- retryResource(emberServer(app))
-                client <- fromPort(port)
-              } yield client
+            case Left(fromApp)   => fromApp(app)
+            case Right(mkServer) =>
+              // todo: should we have this retry here or let the caller take care of it?
+              retryResource(mkServer)
           }
 
           clientRes.use { client =>
@@ -190,21 +189,6 @@ class ClientHttpComplianceTestCase[
         .map(tc => clientRequestTest(endpoint, tc))
     }
   }
-
-  private val randomInt =
-    Resource.eval(IO(scala.util.Random.nextInt(9999)))
-
-  private val randomPort = randomInt.map(_ + 50000)
-
-  private def emberServer(app: HttpApp[IO]): Resource[IO, Int] =
-    randomPort.flatTap { port =>
-      EmberServerBuilder
-        .default[IO]
-        .withHost(Compat.host("localhost"))
-        .withPort(Compat.port(port))
-        .withHttpApp(app)
-        .build
-    }
 
   private def retryResource[A](
       resource: Resource[IO, A],

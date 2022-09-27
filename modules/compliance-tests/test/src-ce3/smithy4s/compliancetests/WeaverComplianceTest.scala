@@ -25,6 +25,7 @@ import weaver._
 
 object WeaverComplianceTest extends SimpleIOSuite {
   implicit val compatEffect: CompatEffect = new CompatEffect
+
   val testGenerator = new ClientHttpComplianceTestCase(
     smithy4s.api.SimpleRestJson(), {
       import org.http4s.implicits._
