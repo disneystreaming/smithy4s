@@ -56,7 +56,9 @@ class Http4sClientHttpComplianceTestCase[
     ce: CompatEffect,
     protocolTag: ShapeTag[P]
 ) extends ClientHttpComplianceTestCase(protocol) {
+
   import ce._
+  locally(deferred) // to disable unused warning on ce3
 
   private val randomInt =
     Resource.eval(IO(scala.util.Random.nextInt(9999)))
