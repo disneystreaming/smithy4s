@@ -59,6 +59,7 @@ object ModelLoader {
       val upstreamModel = Model
         .assembler()
         .discoverModels(upstreamClassLoader)
+        .addClasspathModels(currentClassLoader, false)
         // disabling cache to support snapshot-driven experimentation
         .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
         .assemble()
@@ -165,14 +166,14 @@ object ModelLoader {
 
     def addClasspathModels(
         classLoader: ClassLoader,
-        flag: Boolean
+        discoverModels: Boolean
     ): ModelAssembler = {
       val smithy4sResources = List(
         "META-INF/smithy/smithy4s.smithy",
         "META-INF/smithy/smithy4s.meta.smithy"
       ).map(classLoader.getResource)
 
-      if (flag) assembler.discoverModels(classLoader)
+      if (discoverModels) assembler.discoverModels(classLoader)
       else addImports(smithy4sResources)
     }
   }

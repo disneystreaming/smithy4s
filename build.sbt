@@ -47,28 +47,28 @@ lazy val root = project
   )
 
 lazy val allModules = Seq(
-  core.projectRefs,
-  codegen.projectRefs,
-  millCodegenPlugin.projectRefs,
-  json.projectRefs,
-  example.projectRefs,
-  tests.projectRefs,
-  http4s.projectRefs,
-  `http4s-swagger`.projectRefs,
-  decline.projectRefs,
-  codegenPlugin.projectRefs,
-  benchmark.projectRefs,
-  protocol.projectRefs,
-  protocolTests.projectRefs,
-  openapi.projectRefs,
-  `aws-kernel`.projectRefs,
-  aws.projectRefs,
-  `aws-http4s`.projectRefs,
-  `codegen-cli`.projectRefs,
-  dynamic.projectRefs,
-  testUtils.projectRefs,
-  complianceTests.projectRefs
-).flatten
+  core,
+  codegen,
+  millCodegenPlugin,
+  json,
+  example,
+  tests,
+  http4s,
+  `http4s-swagger`,
+  decline,
+  codegenPlugin,
+  benchmark,
+  protocol,
+  protocolTests,
+  openapi,
+  `aws-kernel`,
+  aws,
+  `aws-http4s`,
+  `codegen-cli`,
+  dynamic,
+  testUtils,
+  complianceTests
+).flatMap(_.projectRefs)
 
 lazy val docs =
   projectMatrix
@@ -95,6 +95,7 @@ lazy val docs =
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
+      mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
@@ -456,6 +457,7 @@ lazy val decline = (projectMatrix in file("modules/decline"))
   .dependsOn(json)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * This module contains the smithy specification of a bunch of types
@@ -812,8 +814,11 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val core = Def.setting("com.monovore" %%% "decline" % "2.3.0")
-    val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val declineVersion = "2.3.1"
+
+    val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
+    val effect =
+      Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
