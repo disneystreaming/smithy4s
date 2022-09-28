@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example
 
 use smithy.test#httpRequestTests
@@ -6,7 +8,7 @@ use smithy4s.api#simpleRestJson
 
 @simpleRestJson
 service HelloService {
-    operations: [SayHello, Listen]
+    operations: [SayHello, Listen, TestPath]
 }
 
 @http(method: "POST", uri: "/")
@@ -73,3 +75,22 @@ structure SayHelloOutput {
     }
 ])
 operation Listen { }
+
+@http(method: "GET", uri: "/test-path/{path}")
+@readonly
+@httpRequestTests([
+    {
+        id: "TestPath",
+        protocol: simpleRestJson,
+        method: "GET",
+        uri: "/test-path/sameValue"
+        params: { path: "sameValue" }
+    }
+])
+operation TestPath {
+    input := {
+        @httpLabel
+        @required
+        path: String
+    }
+}
