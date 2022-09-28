@@ -94,6 +94,7 @@ lazy val docs =
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
+      mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
