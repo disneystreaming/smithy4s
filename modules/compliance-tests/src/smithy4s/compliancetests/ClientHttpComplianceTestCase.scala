@@ -37,59 +37,6 @@ import java.nio.charset.StandardCharsets
 import concurrent.duration._
 import org.http4s.Response
 import smithy4s.ShapeTag
-import org.http4s.ember.server.EmberServerBuilder
-
-class Http4sClientHttpComplianceTestCase[
-    P,
-    Alg[_[_, _, _, _, _]],
-    Op[_, _, _, _, _]
-](
-    protocol: P,
-    makeClient: Either[
-      // make an in-memory client
-      HttpApp[IO] => Resource[IO, smithy4s.Monadic[Alg, IO]],
-      // start a server, return a client that calls it
-      Int => Resource[IO, smithy4s.Monadic[Alg, IO]]
-    ]
-)(implicit
-    service: Service[Alg, Op],
-    ce: CompatEffect,
-    protocolTag: ShapeTag[P]
-) extends ClientHttpComplianceTestCase(protocol) {
-
-  import ce._
-  locally(deferred) // to disable unused warning on ce3
-
-  private val randomInt =
-    Resource.eval(IO(scala.util.Random.nextInt(9999)))
-
-  private val randomPort = randomInt.map(_ + 50000)
-
-  private def retryResource[A](
-      resource: Resource[IO, A],
-      max: Int = 10
-  ): Resource[IO, A] =
-    if (max <= 0) resource
-    else resource.orElse(retryResource(resource, max - 1))
-
-  def getClient(app: HttpApp[IO]): Resource[IO, smithy4s.Monadic[Alg, IO]] = {
-    makeClient.fold(
-      f => f(app),
-      makeClientFromPort =>
-        retryResource {
-          randomPort
-            .flatTap { port =>
-              EmberServerBuilder
-                .default[IO]
-                .withHost(Compat.host("localhost"))
-                .withPort(Compat.port(port))
-                .withHttpApp(app)
-                .build
-            }
-        }.flatMap(makeClientFromPort)
-    )
-  }
-}
 
 abstract class ClientHttpComplianceTestCase[
     P,
