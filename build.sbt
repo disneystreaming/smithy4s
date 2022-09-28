@@ -687,6 +687,7 @@ lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
   .dependsOn(core, http4s % "test->compile", testUtils)
   .settings(
+    name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
     genDiscoverModels := true,
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
