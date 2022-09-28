@@ -28,4 +28,9 @@ private[compliancetests] class CompatEffect {
 object Compat {
   def host(hostname: String): Host = Host.fromString(hostname).get
   def port(portNumber: Int): Port = Port.fromInt(portNumber).get
+
+}
+
+object CompatEffect {
+  implicit val ce: CompatEffect = new CompatEffect
 }

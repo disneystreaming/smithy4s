@@ -32,3 +32,10 @@ object Compat {
   def host(hostname: String): String = hostname
   def port(portNumber: Int): Int = portNumber
 }
+
+object CompatEffect {
+  implicit def ce(implicit
+      cs: ContextShift[IO],
+      timer: Timer[IO]
+  ): CompatEffect = new CompatEffect
+}
