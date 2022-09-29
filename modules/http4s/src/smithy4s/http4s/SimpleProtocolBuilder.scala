@@ -91,7 +91,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       _
   ]: EffectCompat] private[http4s] (
       client: Client[F],
-      service: smithy4s.Service[Alg, Op],
+      val  service: smithy4s.Service[Alg, Op],
       uri: Uri = uri"http://localhost:8080"
   ) {
 
