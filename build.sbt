@@ -67,7 +67,8 @@ lazy val allModules = Seq(
   `aws-http4s`,
   `codegen-cli`,
   dynamic,
-  testUtils
+  testUtils,
+  guides
 ).flatMap(_.projectRefs)
 
 lazy val docs =
