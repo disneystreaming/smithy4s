@@ -18,14 +18,14 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   val hints : Hints = Hints.empty
 
   case class OnlineCase(online: OrderNumber) extends OrderType
-  case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
+  case class InStoreOrder(id: OrderNumber = smithy4s.example.OrderNumber(0), locationId: Option[String] = None) extends OrderType
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
     val hints : Hints = Hints.empty
 
     val schema: Schema[InStoreOrder] = struct(
-      OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Required()),
+      OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0)), smithy.api.Required()),
       string.optional[InStoreOrder]("locationId", _.locationId),
     ){
       InStoreOrder.apply
