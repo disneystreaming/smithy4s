@@ -94,3 +94,38 @@ operation TestPath {
         path: String
     }
 }
+
+// The following shapes are used
+@simpleRestJson
+service HelloWorldService {
+  version: "1.0.0",
+  operations: [Hello]
+}
+@httpRequestTests([
+    {
+        id: "helloSuccess"
+        protocol: simpleRestJson
+        method: "POST"
+        uri: "/World"
+        params: { name: "World" }
+    },
+    {
+        id: "helloFails"
+        protocol: simpleRestJson
+        method: "POST"
+        uri: "/fail"
+        params: { name: "World" }
+    }
+])
+@http(method: "POST", uri: "/{name}", code: 200)
+operation Hello {
+  input := {
+    @httpLabel
+    @required
+    name: String
+  },
+  output := {
+    @required
+    message: String
+  }
+}

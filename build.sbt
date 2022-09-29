@@ -80,7 +80,8 @@ lazy val docs =
       http4s,
       `http4s-swagger`,
       decline,
-      `aws-http4s` % "compile -> compile,test"
+      `aws-http4s` % "compile -> compile,test",
+      complianceTests % "compile -> compile,test"
     )
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
