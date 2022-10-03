@@ -18,6 +18,7 @@ package smithy4s.dynamic
 
 import smithy4s.http.PayloadError
 import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model.transform.ModelTransformer
 
 private[dynamic] trait DynamicSchemaIndexPlatform {
   self: DynamicSchemaIndex.type =>
@@ -28,7 +29,9 @@ private[dynamic] trait DynamicSchemaIndexPlatform {
   def loadModel(
       model: software.amazon.smithy.model.Model
   ): Either[PayloadError, DynamicSchemaIndex] = {
-    val node = ModelSerializer.builder().build.serialize(model)
+    val flattenedModel =
+      ModelTransformer.create().flattenAndRemoveMixins(model);
+    val node = ModelSerializer.builder().build.serialize(flattenedModel)
     val document = NodeToDocument(node)
     smithy4s.Document
       .decode[smithy4s.dynamic.model.Model](document)

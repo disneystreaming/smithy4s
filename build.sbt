@@ -68,7 +68,8 @@ lazy val allModules = Seq(
   `codegen-cli`,
   dynamic,
   testUtils,
-  guides
+  guides,
+  complianceTests
 ).flatMap(_.projectRefs)
 
 lazy val docs =
@@ -81,7 +82,8 @@ lazy val docs =
       http4s,
       `http4s-swagger`,
       decline,
-      `aws-http4s` % "compile -> compile,test"
+      `aws-http4s` % "compile -> compile,test",
+      complianceTests % "compile -> compile,test"
     )
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
@@ -329,6 +331,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
       Dependencies.Smithy.awsTraits,
+      Dependencies.Smithy.testTraits,
       Dependencies.Smithy.waiters,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
@@ -683,6 +686,34 @@ lazy val tests = projectMatrix
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
+lazy val complianceTests = projectMatrix
+  .in(file("modules/compliance-tests"))
+  .dependsOn(core, http4s % "test->compile", testUtils)
+  .settings(
+    name := "compliance-tests",
+    Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
+    genDiscoverModels := true,
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
+    libraryDependencies ++= {
+      val ce3 =
+        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
+        else Seq.empty
+      ce3 ++ Seq(
+        Dependencies.Http4s.circe.value,
+        Dependencies.Http4s.client.value,
+        Dependencies.Weaver.cats.value % Test
+      )
+    },
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Test / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
+    ),
+    Test / genDiscoverModels := true,
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
+  )
+  .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
 /**
  * Example application using the custom REST-JSON protocol provided by
  * smithy4s.
@@ -788,8 +819,10 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.24.0"
+    val smithyVersion = "1.25.1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
+    val testTraits =
+      "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
       "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
@@ -921,8 +954,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
-  val smithyDeps =
-    (config / genSmithyDependencies).?.value.getOrElse(List.empty)
   val discoverModels =
     (config / genDiscoverModels).?.value.getOrElse(false)
   val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
