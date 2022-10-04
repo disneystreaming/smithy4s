@@ -16,19 +16,20 @@
 
 package smithy4s
 
-import scala.util.Try
-
 private[smithy4s] trait ScalaCompat {
-  implicit final class SmithyStringOps(val s: String) {
-    def toIntOption: Option[Int] = Try(s.toInt).toOption
-    def toDoubleOption: Option[Double] = Try(s.toDouble).toOption
-    def toLongOption: Option[Long] = Try(s.toLong).toOption
-    def toFloatOption: Option[Float] = Try(s.toFloat).toOption
-    def toShortOption: Option[Short] = Try(s.toShort).toOption
-    def toBooleanOption: Option[Boolean] = Try(s.toBoolean).toOption
+  private[smithy4s] implicit final class SmithyStringOps(val s: String) {
+    def toIntOption: Option[Int] = opt(s.toInt)
+    def toDoubleOption: Option[Double] = opt(s.toDouble)
+    def toLongOption: Option[Long] = opt(s.toLong)
+    def toFloatOption: Option[Float] = opt(s.toFloat)
+    def toShortOption: Option[Short] = opt(s.toShort)
+    def toBooleanOption: Option[Boolean] = opt(s.toBoolean)
+    def toByteOption: Option[Byte] = opt(s.toByte)
+    private def opt[A](a: => A): Option[A] = try { Some(a) }
+    catch { case scala.util.control.NonFatal(_) => None }
   }
 
-  implicit final class MapOps[K, V](val map: Map[K, V]) {
+  private[smithy4s] implicit final class MapOps[K, V](val map: Map[K, V]) {
     def mapToValues[W](f: V => W): Map[K, W] = map.mapValues(f)
   }
 

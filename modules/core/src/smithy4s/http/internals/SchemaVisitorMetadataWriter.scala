@@ -30,7 +30,6 @@ import smithy4s.schema.{
   SchemaVisitor
 }
 
-import java.util.Base64
 import smithy4s.schema.Alt
 
 /**
@@ -53,36 +52,9 @@ object SchemaVisitorMetadataWriter extends SchemaVisitor.Cached[MetaEncode] {
       hints: Hints,
       tag: Primitive[P]
   ): MetaEncode[P] = {
-    tag match {
-      case Primitive.PBlob =>
-        StringValueMetaEncode[ByteArray](ba =>
-          Base64.getEncoder.encodeToString(ba.array)
-        )
-      case Primitive.PTimestamp =>
-        (
-          hints.get(HttpBinding).map(_.tpe),
-          hints.get(smithy.api.TimestampFormat)
-        ) match {
-          case (_, Some(timestampFormat)) =>
-            StringValueMetaEncode((timestamp: Timestamp) =>
-              timestamp.format(timestampFormat)
-            )
-          case (Some(HttpBinding.Type.QueryType), None) |
-              (Some(HttpBinding.Type.PathType), None) =>
-            // See https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html?highlight=httpquery#httpquery-trait
-            StringValueMetaEncode((timestamp: Timestamp) =>
-              timestamp.format(smithy.api.TimestampFormat.DATE_TIME)
-            )
-          case (Some(HttpBinding.Type.HeaderType), None) =>
-            // See https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html?highlight=httpquery#httpheader-trait
-            StringValueMetaEncode((timestamp: Timestamp) =>
-              timestamp.format(smithy.api.TimestampFormat.HTTP_DATE)
-            )
-          case _ => MetaEncode.empty
-        }
-      case Primitive.PDocument => MetaEncode.empty[P]
-      case Primitive.PUnit     => MetaEncode.empty[P]
-      case _                   => fromToString[P]
+    Primitive.stringWriter(tag, hints) match {
+      case None        => MetaEncode.empty[P]
+      case Some(write) => StringValueMetaEncode(write)
     }
   }
 
