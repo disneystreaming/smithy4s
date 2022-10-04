@@ -100,6 +100,13 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "bar" / "Bar.scala",
       shouldExist = true
     )
+
+    os.write(
+      foo.millSourcePath / "scala" / "foo" / "a.scala",
+      """package foo
+        |object a""".stripMargin
+    )
+    compileWorks(bar, barEv)
   }
 
   private def compileWorks(

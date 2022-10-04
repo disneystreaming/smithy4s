@@ -17,6 +17,4 @@
 // this file will be copied to the foo module as part of the test
 package foo
 
-object a {
-  val x = "hello"
-}
+object a
