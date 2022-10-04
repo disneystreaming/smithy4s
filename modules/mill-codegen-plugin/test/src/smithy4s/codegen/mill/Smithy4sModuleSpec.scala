@@ -101,12 +101,13 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       shouldExist = true
     )
 
-    os.write(
-      foo.millSourcePath / "scala" / "foo" / "a.scala",
+    os.write.over(
+      foo.millSourcePath / "src" / "scala" / "foo" / "a.scala",
       """package foo
         |object a""".stripMargin,
       createFolders = true
     )
+
     compileWorks(bar, barEv)
   }
 
