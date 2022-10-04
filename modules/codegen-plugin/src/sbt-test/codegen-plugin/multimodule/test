@@ -6,3 +6,7 @@ $ exists foo/target/scala-2.13/src_managed/main/foo/Foo.scala
 
 # check if code can run, this can reveal runtime issues# such as initialization errors
 > bar/run
+
+# check if upstream changes result in successful rebuilds downstream
+$ copy-file a.scala foo/src/main/scala/a.scala
+> bar/run
