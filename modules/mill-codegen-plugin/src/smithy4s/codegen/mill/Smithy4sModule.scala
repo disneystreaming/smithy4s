@@ -74,7 +74,7 @@ trait Smithy4sModule extends ScalaModule {
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
     val specFiles = if (os.exists(smithy4sInputDir().path)) {
-      os.walk(smithy4sInputDir().path, skip = _.ext != "smithy")
+      os.list(smithy4sInputDir().path)
     } else Seq.empty
 
     val scalaOutput = smithy4sOutputDir().path
