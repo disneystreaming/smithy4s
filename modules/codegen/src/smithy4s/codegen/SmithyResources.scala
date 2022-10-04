@@ -58,6 +58,11 @@ private[smithy4s] object SmithyResources {
     os.write.over(trackingFile, content, createFolders = true)
 
     localCopyBindings.foreach { case (from, to) =>
+      // Files will be overwritten by the copy below
+      // so we only need to remove directories
+      if (os.isDir(to) && os.exists(to))
+        os.remove.all(to)
+
       os.copy(
         from,
         to,
