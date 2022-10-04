@@ -26,30 +26,20 @@ import smithy4s.schema.{
   SchemaVisitor,
   CollectionTag
 }
+import smithy4s.schema.Primitive.PTimestamp
 
 object SchemaDescription extends SchemaVisitor.Cached[SchemaDescription] {
   // format: off
 
   def of[A](value: String): SchemaDescription[A] = value
+
   override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): SchemaDescription[P] = {
-    val value = tag match {
-      case Primitive.PShort      => "Short"
-      case Primitive.PInt        => "Int"
-      case Primitive.PFloat      => "Float"
-      case Primitive.PLong       => "Long"
-      case Primitive.PDouble     => "Double"
-      case Primitive.PBigInt     => "BigInt"
-      case Primitive.PBigDecimal => "BigDecimal"
-      case Primitive.PBoolean    => "Boolean"
-      case Primitive.PString     => "String"
-      case Primitive.PUUID       => "UUID"
-      case Primitive.PByte       => "Byte"
-      case Primitive.PBlob       => "Bytes"
-      case Primitive.PDocument   => "Document"
-      case Primitive.PTimestamp  => "Timestamp"
-      case Primitive.PUnit       => "Unit"
+    tag match {
+      case PTimestamp =>
+        val format = Primitive.timestampFormat(hints)
+        Timestamp.showFormat(format)
+      case other => Primitive.describe(other)
     }
-    SchemaDescription.of(value)
   }
   override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): SchemaDescription[C[A]] =
     SchemaDescription.of(tag.name)
