@@ -100,7 +100,7 @@ object Primitive extends smithy4s.ScalaCompat {
     case Primitive.PUnit       => "Unit"
   }
 
-  def stringParser[A](
+  private[smithy4s] def stringParser[A](
       primitive: Primitive[A],
       hints: Hints
   ): Option[String => Option[A]] = {
@@ -129,7 +129,7 @@ object Primitive extends smithy4s.ScalaCompat {
     }
   }
 
-  def stringWriter[A](
+  private[smithy4s] def stringWriter[A](
       primitive: Primitive[A],
       hints: Hints
   ): Option[A => String] = {
