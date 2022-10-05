@@ -90,7 +90,8 @@ trait Smithy4sModule extends ScalaModule {
 
     val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
 
-    val allLocalJars = smithy4sLocalJars().map(_.path) ++ resolvedDeps
+    val localJars = smithy4sLocalJars().map(_.path)
+    val allLocalJars = localJars ++ resolvedDeps
 
     val args = CodegenArgs(
       specs = specFiles.toList,
