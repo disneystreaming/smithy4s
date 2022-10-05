@@ -90,10 +90,18 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Foo.scala",
       shouldExist = true
     )
+    checkFileExist(
+      fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foodir" / "FooDir.scala",
+      shouldExist = true
+    )
 
     compileWorks(bar, barEv)
     checkFileExist(
       barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Foo.scala",
+      shouldExist = false
+    )
+    checkFileExist(
+      barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foodir" / "FooDir.scala",
       shouldExist = false
     )
     checkFileExist(

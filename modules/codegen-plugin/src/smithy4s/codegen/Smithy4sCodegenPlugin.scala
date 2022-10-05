@@ -121,7 +121,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
-      Option((conf / smithy4sInputDir).value.listFiles()).getOrElse(Array.empty)
+      Option((conf / smithy4sInputDir).value)
+        .filter(_.exists())
+        .toList
     val outputPath = (conf / smithy4sOutputDir).value
     val resourceOutputPath = (conf / smithy4sResourceDir).value
     val allowedNamespaces =
