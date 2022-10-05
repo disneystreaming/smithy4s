@@ -108,6 +108,23 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "bar" / "Bar.scala",
       shouldExist = true
     )
+
+    val aScalaPath = foo.millSourcePath / "src" / "a.scala"
+
+    os.write(
+      aScalaPath,
+      """package foo
+      |object a""".stripMargin,
+      createFolders = true
+    )
+
+    try compileWorks(bar, barEv)
+    finally {
+      val _ =
+        // cleaning up, because the target path doesn't get cleared automatically on test re-runs
+        // (it's part of this test module's target path)
+        os.remove.all(aScalaPath)
+    }
   }
 
   private def compileWorks(

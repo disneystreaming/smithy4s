@@ -66,7 +66,7 @@ private[smithy4s] object SmithyResources {
         case p                => List(p)
       }
       .foreach { path =>
-        os.copy(
+        os.copy.over(
           from = path,
           to = smithyFolder / path.last,
           replaceExisting = true,
