@@ -144,11 +144,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
     val localDependencyJars = Def.taskIf {
       if ((conf / smithy4sAggregateLocalDependencies).value) {
-        (conf / internalDependencyAsJars)
-          .map(
-            _.map(_.data).map(os.Path(_)).toList
-          )
-          .value
+        (conf / internalDependencyAsJars).value
+          .map(_.data)
+          .map(os.Path(_))
+          .toList
       } else List.empty[os.Path]
     }.value
 
