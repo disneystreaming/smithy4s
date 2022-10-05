@@ -127,11 +127,42 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
   }
 
+  test(
+    "multi-module codegen doesn't trigger upstream compilation when opted out"
+  ) {
+
+    object foo extends testKit.BaseModule with ScalaModule {
+      override def scalaVersion = "2.13.8"
+      override def millSourcePath =
+        resourcePath / "multi-module-no-compile" / "foo"
+    }
+
+    object bar extends testKit.BaseModule with Smithy4sModule {
+      override def moduleDeps = Seq(foo)
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(coreDep)
+      override def millSourcePath =
+        resourcePath / "multi-module-no-compile" / "bar"
+
+      override def smithy4sAggregateLocalDependencies = false
+    }
+
+    val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
+
+    taskWorks(bar.smithy4sCodegen, barEv)
+  }
+
   private def compileWorks(
       sm: ScalaModule,
       testEvaluator: testKit.TestEvaluator
+  )(implicit loc: Location) =
+    taskWorks(sm.compile, testEvaluator)
+
+  private def taskWorks[A](
+      task: T[A],
+      testEvaluator: testKit.TestEvaluator
   )(implicit loc: Location) = {
-    val result = testEvaluator(sm.compile).map(_._1)
+    val result = testEvaluator(task).map(_._1)
     assertEquals(
       result.isRight,
       true,

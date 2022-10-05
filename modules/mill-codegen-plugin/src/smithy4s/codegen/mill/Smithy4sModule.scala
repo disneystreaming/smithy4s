@@ -60,6 +60,8 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sVersion: T[String] = BuildInfo.version
   def smithy4sSmithyLibrary: T[Boolean] = true
+  // todo: this should be a T
+  def smithy4sAggregateLocalDependencies: Boolean = true
 
   def smithy4sTransitiveIvyDeps: T[Agg[Dep]] = T {
     smithy4sIvyDeps() ++ T
@@ -69,6 +71,13 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sResolvedIvyDeps: T[Agg[PathRef]] = T {
     resolveDeps(T.task { smithy4sTransitiveIvyDeps() })()
+  }
+
+  private val localJars: T[List[os.Path]] = {
+    if (smithy4sAggregateLocalDependencies)
+      smithy4sLocalJars.map(_.map(_.path))
+    else
+      List.empty[os.Path]
   }
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
@@ -89,8 +98,8 @@ trait Smithy4sModule extends ScalaModule {
     val skipSet = skipResources ++ skipOpenApi
 
     val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
-    val localJars = smithy4sLocalJars().map(_.path)
-    val allLocalJars = localJars ++ resolvedDeps
+
+    val allLocalJars = localJars() ++ resolvedDeps
 
     val args = CodegenArgs(
       specs = specFiles.toList,
