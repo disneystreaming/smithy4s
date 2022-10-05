@@ -17,6 +17,9 @@
 package smithy4s
 package schema
 
+import smithy4s.http.HttpBinding
+import smithy.api.TimestampFormat
+
 sealed trait Primitive[T] {
   final def schema(shapeId: ShapeId): Schema[T] =
     Schema.PrimitiveSchema(shapeId, Hints.empty, this)
@@ -24,7 +27,7 @@ sealed trait Primitive[T] {
     this.schema(ShapeId(namespace, name))
 }
 
-object Primitive {
+object Primitive extends smithy4s.ScalaCompat {
 
   case object PShort extends Primitive[Short]
   case object PInt extends Primitive[Int]
@@ -79,4 +82,101 @@ object Primitive {
     }
   }
 
+  def describe(p: Primitive[_]): String = p match {
+    case Primitive.PShort      => "Short"
+    case Primitive.PInt        => "Int"
+    case Primitive.PFloat      => "Float"
+    case Primitive.PLong       => "Long"
+    case Primitive.PDouble     => "Double"
+    case Primitive.PBigInt     => "BigInt"
+    case Primitive.PBigDecimal => "BigDecimal"
+    case Primitive.PBoolean    => "Boolean"
+    case Primitive.PString     => "String"
+    case Primitive.PUUID       => "UUID"
+    case Primitive.PByte       => "Byte"
+    case Primitive.PBlob       => "Bytes"
+    case Primitive.PDocument   => "Document"
+    case Primitive.PTimestamp  => "Timestamp"
+    case Primitive.PUnit       => "Unit"
+  }
+
+  private[smithy4s] def stringParser[A](
+      primitive: Primitive[A],
+      hints: Hints
+  ): Option[String => Option[A]] = {
+    primitive match {
+      case Primitive.PShort      => Some(_.toShortOption)
+      case Primitive.PInt        => Some(_.toIntOption)
+      case Primitive.PFloat      => Some(_.toFloatOption)
+      case Primitive.PLong       => Some(_.toLongOption)
+      case Primitive.PDouble     => Some(_.toDoubleOption)
+      case Primitive.PBigInt     => Some(unsafeStringParser(BigInt(_)))
+      case Primitive.PBigDecimal => Some(unsafeStringParser(BigDecimal(_)))
+      case Primitive.PBoolean    => Some(_.toBooleanOption)
+      case Primitive.PByte       => Some(_.toByteOption)
+      case Primitive.PString     => Some(s => Some(s))
+      case Primitive.PBlob =>
+        Some(
+          unsafeStringParser(s =>
+            ByteArray(java.util.Base64.getDecoder().decode(s))
+          )
+        )
+      case Primitive.PUUID =>
+        Some(unsafeStringParser(java.util.UUID.fromString))
+      case Primitive.PTimestamp => Some(timestampParser(hints))
+      case Primitive.PUnit      => None
+      case Primitive.PDocument  => None
+    }
+  }
+
+  private[smithy4s] def stringWriter[A](
+      primitive: Primitive[A],
+      hints: Hints
+  ): Option[A => String] = {
+    primitive match {
+      case Primitive.PShort      => Some(_.toString)
+      case Primitive.PInt        => Some(_.toString)
+      case Primitive.PFloat      => Some(_.toString)
+      case Primitive.PLong       => Some(_.toString)
+      case Primitive.PDouble     => Some(_.toString)
+      case Primitive.PBigInt     => Some(_.toString)
+      case Primitive.PBigDecimal => Some(_.toString)
+      case Primitive.PBoolean    => Some(_.toString)
+      case Primitive.PByte       => Some(_.toString)
+      case Primitive.PUUID       => Some(_.toString)
+      case Primitive.PString     => Some(identity[String])
+      case Primitive.PTimestamp  => Some(timestampWriter(hints))
+      case Primitive.PBlob =>
+        Some(bytes => java.util.Base64.getEncoder().encodeToString(bytes.array))
+      case Primitive.PUnit     => None
+      case Primitive.PDocument => None
+    }
+  }
+
+  private[smithy4s] def timestampFormat(hints: Hints): TimestampFormat = {
+    import HttpBinding.Type._
+    val tsFormat = hints.get(TimestampFormat)
+    val httpBinding = hints.get(HttpBinding).map(_.tpe)
+    val bindingFormat = httpBinding.flatMap {
+      case HeaderType     => Some(TimestampFormat.HTTP_DATE)
+      case PathType       => Some(TimestampFormat.DATE_TIME)
+      case QueryType      => Some(TimestampFormat.DATE_TIME)
+      case StatusCodeType => None
+    }
+    tsFormat.orElse(bindingFormat).getOrElse(TimestampFormat.DATE_TIME)
+  }
+
+  private def timestampParser(hints: Hints): String => Option[Timestamp] = {
+    val finalFormat = timestampFormat(hints)
+    Timestamp.parse(_, finalFormat)
+  }
+
+  private def timestampWriter(hints: Hints): Timestamp => String = {
+    val finalFormat = timestampFormat(hints)
+    _.format(finalFormat)
+  }
+
+  private def unsafeStringParser[A](f: String => A): String => Option[A] = s =>
+    try { Some(f(s)) }
+    catch { case scala.util.control.NonFatal(_) => None }
 }

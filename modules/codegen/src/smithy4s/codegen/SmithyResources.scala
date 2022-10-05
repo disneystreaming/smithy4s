@@ -16,6 +16,8 @@
 
 package smithy4s.codegen
 
+import os.RelPath
+
 /**
   * This construct aims at adding metadata information to the classpath to let Smithy4s
   * know about code that may have been generated in upstream modules.
@@ -39,34 +41,42 @@ private[smithy4s] object SmithyResources {
                         |
                         |metadata smithy4sGenerated = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
                         |""".stripMargin
-    val localCopyBindings = localSmithyFiles.map { path =>
-      (path, smithyFolder / path.last)
-    }
-    val allSmithyFiles = trackingFile :: localCopyBindings.map(_._2)
 
     val metadataFile = smithyFolder / "manifest"
 
     val metadataFileContent =
-      allSmithyFiles.map(_.last).mkString(System.lineSeparator())
+      (trackingFile :: localSmithyFiles)
+        .flatMap {
+          case f if os.isDir(f) =>
+            os.walk(f).filter(os.isFile(_)).map(_.relativeTo(f))
+          case f => RelPath(f.last) :: Nil
+        }
 
     os.write.over(
       metadataFile,
-      metadataFileContent,
+      metadataFileContent.mkString(System.lineSeparator()),
       createFolders = true
     )
 
     os.write.over(trackingFile, content, createFolders = true)
 
-    localCopyBindings.foreach { case (from, to) =>
-      os.copy.over(
-        from,
-        to,
-        replaceExisting = true,
-        createFolders = true
-      )
-    }
+    localSmithyFiles
+      .flatMap {
+        case p if os.isDir(p) => os.list(p)
+        case p                => List(p)
+      }
+      .foreach { path =>
+        os.copy.over(
+          from = path,
+          to = smithyFolder / path.last,
+          replaceExisting = true,
+          createFolders = true
+        )
+      }
 
-    val allProducedFiles = metadataFile :: allSmithyFiles
+    val allProducedFiles =
+      metadataFile :: metadataFileContent.map(_.resolveFrom(smithyFolder))
+
     allProducedFiles
   }
 
