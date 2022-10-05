@@ -129,6 +129,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       val (_, file) = artifactFile
       os.Path(file)
     }
+
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
       Option((conf / smithy4sInputDir).value)
