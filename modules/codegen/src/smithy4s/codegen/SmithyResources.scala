@@ -48,7 +48,7 @@ private[smithy4s] object SmithyResources {
       (trackingFile :: localSmithyFiles)
         .flatMap {
           case f if os.isDir(f) =>
-            os.walk(f).map(_.relativeTo(f / os.up))
+            os.walk(f).filter(os.isFile(_)).map(_.relativeTo(f))
           case f => RelPath(f.last) :: Nil
         }
 
@@ -61,6 +61,10 @@ private[smithy4s] object SmithyResources {
     os.write.over(trackingFile, content, createFolders = true)
 
     localSmithyFiles
+      .flatMap {
+        case p if os.isDir(p) => os.list(p)
+        case p                => List(p)
+      }
       .foreach { path =>
         os.copy(
           from = path,
