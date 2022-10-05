@@ -63,7 +63,7 @@ due to the behavior documented above, dependencies will need to be compiled befo
 
 Consider the following build (sbt syntax):
 
-```
+```scala
 val a = project
 val b = project.enablePlugin(Smithy4sCodegenPlugin).dependsOn(a)
 ```
