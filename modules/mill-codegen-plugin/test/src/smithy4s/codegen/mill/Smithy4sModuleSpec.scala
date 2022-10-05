@@ -83,7 +83,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     val fooEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-foo"))
-    val barEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-bar"))
+    val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
 
     compileWorks(foo, fooEv)
     checkFileExist(
