@@ -118,7 +118,6 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       createFolders = true
     )
 
-    // for some reason this works on mill
     try compileWorks(bar, barEv)
     finally {
       val _ =
