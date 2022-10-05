@@ -578,6 +578,30 @@ lazy val json = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
+ * Module that contains fs2-data-based XML encoders/decoders for the generated
+ * types.
+ */
+lazy val xml = projectMatrix
+  .in(file("modules/xml"))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isCE3 := true,
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2Data.xml.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
  * Module that contains http4s-specific client/server bindings for the
  * custom protocols provided by smithy4s.
  */
@@ -825,6 +849,11 @@ lazy val Dependencies = new {
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % "3.3.0")
+  }
+
+  object Fs2Data {
+    val xml: Def.Initialize[ModuleID] =
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.5.0")
   }
 
   object Mill {
