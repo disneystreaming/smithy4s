@@ -144,7 +144,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       override def millSourcePath =
         resourcePath / "multi-module-no-compile" / "bar"
 
-      override def smithy4sAggregateLocalDependencies = false
+      override def smithy4sLocalJars = List.empty[PathRef]
     }
 
     val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
