@@ -63,6 +63,16 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Sets whether this project should be used as a Smithy library by packaging the Smithy specs in the resulting jar"
       )
 
+    val smithy4sAggregateLocalDependencies =
+      settingKey[Boolean](
+        List(
+          "Sets whether this project should use its local dependencies as sources of Smithy specs.",
+          "Namespaces that were used for code generation in the upstream dependencies will be excluded from code generation in this project.",
+          "If this is enabled, your project's dependencies will need to be compiled before the sources can be generated.",
+          "You can disable if your Smithy models don't depend on those from other projects."
+        ).mkString(" ")
+      )
+
     val Smithy4s =
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
@@ -93,6 +103,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    config / smithy4sAggregateLocalDependencies := true,
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
@@ -118,7 +129,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       val (_, file) = artifactFile
       os.Path(file)
     }
-
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
       Option((conf / smithy4sInputDir).value)
@@ -131,13 +141,19 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
     val updateReport = (conf / update).value
-    val internalDependencyJars =
-      (conf / internalDependencyAsJars).value.seq
-        .map(_.data)
-        .map(os.Path(_))
-        .toList
+
+    val localDependencyJars = Def.taskIf {
+      if ((conf / smithy4sAggregateLocalDependencies).value) {
+        (conf / internalDependencyAsJars)
+          .map(
+            _.map(_.data).map(os.Path(_)).toList
+          )
+          .value
+      } else List.empty[os.Path]
+    }.value
+
     val externalDependencyJars = findCodeGenDependencies(updateReport)
-    val localJars = internalDependencyJars ++ externalDependencyJars
+    val localJars = localDependencyJars ++ externalDependencyJars
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
