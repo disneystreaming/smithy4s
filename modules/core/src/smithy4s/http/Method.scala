@@ -18,25 +18,21 @@ package smithy4s.http
 
 sealed trait HttpMethod {
   def showUppercase = this match {
-    case HttpMethod.PUT     => "PUT"
-    case HttpMethod.POST    => "POST"
-    case HttpMethod.DELETE  => "DELETE"
-    case HttpMethod.GET     => "GET"
-    case HttpMethod.PATCH   => "PATCH"
-    case HttpMethod.HEAD    => "HEAD"
-    case HttpMethod.OPTIONS => "OPTIONS"
-    case HttpMethod.TRACE   => "TRACE"
+    case HttpMethod.PUT          => "PUT"
+    case HttpMethod.POST         => "POST"
+    case HttpMethod.DELETE       => "DELETE"
+    case HttpMethod.GET          => "GET"
+    case HttpMethod.PATCH        => "PATCH"
+    case HttpMethod.OTHER(value) => value.toUpperCase
   }
 
   def showCapitalised = this match {
-    case HttpMethod.PUT     => "Put"
-    case HttpMethod.POST    => "Post"
-    case HttpMethod.DELETE  => "Delete"
-    case HttpMethod.GET     => "Get"
-    case HttpMethod.PATCH   => "Patch"
-    case HttpMethod.HEAD    => "Head"
-    case HttpMethod.OPTIONS => "Options"
-    case HttpMethod.TRACE   => "Trace"
+    case HttpMethod.PUT          => "Put"
+    case HttpMethod.POST         => "Post"
+    case HttpMethod.DELETE       => "Delete"
+    case HttpMethod.GET          => "Get"
+    case HttpMethod.PATCH        => "Patch"
+    case HttpMethod.OTHER(value) => value.capitalize
   }
 }
 
@@ -46,13 +42,25 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
-  case object HEAD extends HttpMethod
-  case object OPTIONS extends HttpMethod
-  case object TRACE extends HttpMethod
+  case class OTHER(value: String) extends HttpMethod
 
   val values = List(PUT, POST, DELETE, GET, PATCH)
 
-  def fromString(s: String): Option[HttpMethod] = values.find { m =>
-    CaseInsensitive(s) == CaseInsensitive(m.showCapitalised)
+  @deprecated(
+    "Use fromStringOrDefault. This method will be removed in a future release.",
+    "0.16.3"
+  )
+  def fromString(s: String): Option[HttpMethod] = fromStringOption(s)
+
+  def fromStringOrDefault(s: String): HttpMethod =
+    fromStringOption(s).getOrElse(OTHER(s.toUpperCase))
+
+  private def fromStringOption(s: String): Option[HttpMethod] = {
+    val nameCI = CaseInsensitive(s)
+
+    values
+      .find { m =>
+        nameCI == CaseInsensitive(m.showCapitalised)
+      }
   }
 }

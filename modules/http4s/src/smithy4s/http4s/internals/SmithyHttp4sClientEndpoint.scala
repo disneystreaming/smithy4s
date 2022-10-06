@@ -68,14 +68,23 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
   ] =
     HttpEndpoint
       .castEither(endpoint)
-      .map { httpEndpoint =>
-        new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
-          baseUri,
-          client,
-          endpoint,
-          httpEndpoint,
-          entityCompiler
-        )
+      .flatMap { httpEndpoint =>
+        toHttp4sMethod(httpEndpoint.method)
+          .leftMap { e =>
+            HttpEndpoint.HttpEndpointError(
+              "Couldn't parse HTTP method: " + e
+            )
+          }
+          .map { method =>
+            new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
+              baseUri,
+              method,
+              client,
+              endpoint,
+              httpEndpoint,
+              entityCompiler
+            )
+          }
       }
 
 }
@@ -83,6 +92,7 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
 // format: off
 private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
                                                                                                   baseUri: Uri,
+                                                                                                  method: org.http4s.Method,
                                                                                                   client: Client[F],
                                                                                                   endpoint: Endpoint[Op, I, E, O, SI, SO],
                                                                                                   httpEndpoint: HttpEndpoint[I],
@@ -97,8 +107,6 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
         outputFromResponse(response)
       }
   }
-
-  private val method: org.http4s.Method = toHttp4sMethod(httpEndpoint.method)
 
   private val inputSchema: Schema[I] = endpoint.input
   private val outputSchema: Schema[O] = endpoint.output

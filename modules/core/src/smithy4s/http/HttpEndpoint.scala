@@ -57,11 +57,7 @@ object HttpEndpoint {
       http <- endpoint.hints
         .get(Http)
         .toRight(HttpEndpointError("Operation doesn't have a @http trait"))
-      httpMethod <- HttpMethod
-        .fromString(http.method.value)
-        .toRight(
-          HttpEndpointError(s"Couldn't parse HTTP method: ${http.method.value}")
-        )
+      httpMethod = HttpMethod.fromStringOrDefault(http.method.value)
       httpPath <- internals
         .pathSegments(http.uri.value)
         .toRight(

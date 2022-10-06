@@ -76,14 +76,23 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
     HttpEndpoint.HttpEndpointError,
     SmithyHttp4sServerEndpoint[F]
   ] =
-    HttpEndpoint.castEither(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
-        impl,
-        endpoint,
-        httpEndpoint,
-        codecs,
-        errorTransformation
-      )
+    HttpEndpoint.castEither(endpoint).flatMap { httpEndpoint =>
+      toHttp4sMethod(httpEndpoint.method)
+        .leftMap { e =>
+          HttpEndpoint.HttpEndpointError(
+            "Couldn't parse HTTP method: " + e
+          )
+        }
+        .map { method =>
+          new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
+            impl,
+            endpoint,
+            method,
+            httpEndpoint,
+            codecs,
+            errorTransformation
+          )
+        }
     }
 
 }
@@ -92,6 +101,7 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
 private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
     impl: Interpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
+    val method: Method,
     httpEndpoint: HttpEndpoint[I],
     codecs: EntityCompiler[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]]
@@ -99,8 +109,6 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
 // format: on
 
   type ==>[A, B] = Kleisli[F, A, B]
-
-  val method: Method = toHttp4sMethod(httpEndpoint.method)
 
   def matches(path: Array[String]): Option[PathParams] = {
     httpEndpoint.matches(path)
