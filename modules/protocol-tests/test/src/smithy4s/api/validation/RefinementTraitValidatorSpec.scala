@@ -31,22 +31,23 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "validation events are returned when multiple refinements are applied to one shape"
   ) {
-    val modelString = """|namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
-                         |structure trtOne {}
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
-                         |structure trtTwo {}
-                         |
-                         |@trtOne
-                         |@trtTwo
-                         |integer TestIt
-                         |""".stripMargin
+    val modelString =
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trait()
+         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
+         |structure trtTwo {}
+         |
+         |@trtOne
+         |@trtTwo
+         |integer TestIt
+         |""".stripMargin
 
     val model = Model
       .assembler()
@@ -75,21 +76,22 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "no validation events are returned when one refinement is applied to a shape"
   ) {
-    val modelString = """|namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
-                         |structure trtOne {}
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
-                         |structure trtTwo {}
-                         |
-                         |@trtOne
-                         |integer TestIt
-                         |""".stripMargin
+    val modelString =
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trait()
+         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
+         |structure trtTwo {}
+         |
+         |@trtOne
+         |integer TestIt
+         |""".stripMargin
 
     val model = Model
       .assembler()
@@ -107,24 +109,25 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "no validation events are returned when all shapes have only one refinement"
   ) {
-    val modelString = """|namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
-                         |structure trtOne {}
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
-                         |structure trtTwo {}
-                         |
-                         |@trtOne
-                         |integer TestIt
-                         |
-                         |@trtTwo
-                         |integer TestItAgain
-                         |""".stripMargin
+    val modelString =
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trait()
+         |@refinement(targetType: "test.two", providerImport: "test.two.prov")
+         |structure trtTwo {}
+         |
+         |@trtOne
+         |integer TestIt
+         |
+         |@trtTwo
+         |integer TestItAgain
+         |""".stripMargin
 
     val model = Model
       .assembler()
@@ -142,17 +145,18 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "validation events are returned when using refinement trait on disallowed shape"
   ) {
-    val modelString = """|namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
-                         |structure trtOne {}
-                         |
-                         |@trtOne
-                         |structure TestIt {}
-                         |""".stripMargin
+    val modelString =
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trtOne
+         |structure TestIt {}
+         |""".stripMargin
 
     val model = Model
       .assembler()
@@ -181,21 +185,22 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "validation events are returned when using refinement trait on disallowed shape - enum"
   ) {
-    val modelString = """|namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
-                         |structure trtOne {}
-                         |
-                         |@trtOne
-                         |@enum([
-                         |  { value: "A" },
-                         |  { value: "B" }
-                         |])
-                         |string TestIt
-                         |""".stripMargin
+    val modelString =
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trtOne
+         |@enum([
+         |  { value: "A" },
+         |  { value: "B" }
+         |])
+         |string TestIt
+         |""".stripMargin
 
     val model = Model
       .assembler()
@@ -224,19 +229,20 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "check that provider import format is valid"
   ) {
-    val modelString = """|$version: "2.0"
-                         |
-                         |namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "_root_.test.one", providerImport: "_root_.test._")
-                         |structure trtOne {}
-                         |
-                         |@trtOne
-                         |string TestIt
-                         |""".stripMargin
+    val modelString =
+      """|$version: "2.0"
+         |
+         |namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "_root_.test.one", providerImport: "_root_.test._")
+         |structure trtOne {}
+         |
+         |@trtOne
+         |string TestIt
+         |""".stripMargin
 
     val result = Model
       .assembler()
@@ -253,19 +259,20 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "check that provider import format is valid - should fail"
   ) {
-    val modelString = """|$version: "2.0"
-                         |
-                         |namespace test
-                         |
-                         |use smithy4s.meta#refinement
-                         |
-                         |@trait()
-                         |@refinement(targetType: "test.one", providerImport: "(&$^#%@$!")
-                         |structure trtOne {}
-                         |
-                         |@trtOne
-                         |string TestIt
-                         |""".stripMargin
+    val modelString =
+      """|$version: "2.0"
+         |
+         |namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "(&$^#%@$!")
+         |structure trtOne {}
+         |
+         |@trtOne
+         |string TestIt
+         |""".stripMargin
 
     val result = Model
       .assembler()
