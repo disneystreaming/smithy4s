@@ -68,7 +68,7 @@ val a = project
 val b = project.enablePlugin(Smithy4sCodegenPlugin).dependsOn(a)
 ```
 
-Whenever you want to generate the Scala code in project `b`, your build tool will trigger compilation of `a`. This happens so that the Smithy files in the `a` project get packaged into a `.jar` file - just like they normally are when you package the `a` project otherwise (for `publishLocal`, `stage` etc.).
+Whenever you want to generate the Scala code in project `b`, your build tool will trigger compilation of `a`. This happens so that the Smithy files in the `a` project get packaged into a JAR file - just like they normally are when you package the `a` project otherwise (for `publishLocal`, `stage` etc.).
 
 You can opt out of this behavior:
 
@@ -76,7 +76,7 @@ You can opt out of this behavior:
 
 ```scala
 val b = project.settings(
-  Compile / smithy4sAggregateLocalDependencies := false
+  Compile / smithy4sLocalJars := Nil
 )//...
 ```
 
@@ -89,7 +89,9 @@ object b extends Smithy4sModule {
 }
 ```
 
-This will not only remove the need for compilation (for the purposes of codegen), but also remove any visibility of the Smithy files in the **local** dependencies of your project (**local** meaning they're defined in the same build)
+This will not only remove the need for compilation (for the purposes of codegen), but also remove any visibility of the Smithy files in the **local** dependencies of your project (**local** meaning they're defined in the same build).
+
+You can use the same setting, `smithy4sLocalJars`, to add additional JARs containing Smithy specs - just keep in mind that remote dependencies (`libraryDependencies`) are added automatically!
 
 
 ### A word of warning

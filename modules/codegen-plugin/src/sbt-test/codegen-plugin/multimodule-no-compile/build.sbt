@@ -4,5 +4,5 @@ lazy val foo = (project in file("foo"))
 
 lazy val bar = (project in file("bar"))
   .enablePlugins(Smithy4sCodegenPlugin)
-  .settings(Compile / smithy4sAggregateLocalDependencies := false)
+  .settings(Compile / smithy4sLocalJars := Nil)
   .dependsOn(foo)
