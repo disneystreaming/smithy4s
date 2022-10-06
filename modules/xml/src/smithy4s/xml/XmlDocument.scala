@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.xml
 
 import fs2.data.xml.dom.DocumentBuilder
@@ -11,10 +27,35 @@ import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import smithy4s.xml.internals.XmlCursor
 import smithy.api.XmlName
 
+/**
+  * A XmlDocument is an atomic piece of xml data that contains only one
+  * top-level element.
+  *
+  * @param root
+  */
 final case class XmlDocument(root: XmlDocument.XmlElem)
 
 object XmlDocument {
 
+  /**
+    * The XmlContent is the the very simple ADT that Smithy4s works against when dealing with XML.
+    * It can be either a piece of text, or an XML element. Smithy4s expects XML references to be resolved
+    * before this content is created.
+    *
+    * It is worth noting that comments and other miscellaneous elements are erased before instances of this
+    * ADT are produced
+    */
+  // format: off
+  sealed trait XmlContent
+  case class XmlText(text: String)                                                       extends XmlContent
+  case class XmlElem(name: String, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
+  case class XmlAttr(name: String, value: List[XmlText])
+  // format: on
+
+  /**
+    * A Decoder aims at decoding documents. As such, it is not meant to be a compositional construct, because
+    * documents cannot be nested under other documents. This aims at decoding top-level XML payloads.
+    */
   trait Decoder[A] {
     def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A]
   }
@@ -42,13 +83,10 @@ object XmlDocument {
     }
   }
 
-  // format: off
-  sealed trait XmlContent
-  case class XmlText(text: String)                                                       extends XmlContent
-  case class XmlElem(name: String, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
-  case class XmlAttr(name: String, value: List[XmlText])
-  // format: on
-
+  /**
+    * This instance implements the DocumentBuilder interface provided by fs2-data, which
+    * can be used to parse a stream of XML events into a stream of our XmlDocument.
+    */
   implicit val documentBuilder: DocumentBuilder[XmlDocument] =
     new DocumentBuilder[XmlDocument] {
 

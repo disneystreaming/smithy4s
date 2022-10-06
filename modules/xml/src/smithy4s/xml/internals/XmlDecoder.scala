@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.xml
 package internals
 
@@ -9,7 +25,17 @@ import smithy4s.xml.internals.XmlCursor.AttrNode
 import smithy4s.ConstraintError
 import cats.data.NonEmptyList
 
-trait XmlDecoder[A] { self =>
+/**
+  * This constructs allow for decoding XML data. It is not limited to top-level
+  * documents, and works against XmlCursor. Smithy4s does not have vocation to be
+  * a general-purpose XML library, so we keep this as a private implementation detail
+  * that should never be used directly.
+  *
+  * It exposes simple combinators that allow to indicate that the decoding should happen
+  * further down the cursor, or enable the prevention of failure when decoding an absence
+  * of node (which is the case for optional data).
+  */
+private[smithy4s] trait XmlDecoder[A] { self =>
   def decode(cursor: XmlCursor): Either[XmlDecodeError, A]
   final def map[B](f: A => B): XmlDecoder[B] = new XmlDecoder[B] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
@@ -43,7 +69,7 @@ trait XmlDecoder[A] { self =>
   }
 }
 
-object XmlDecoder {
+private[smithy4s] object XmlDecoder {
 
   def alwaysFailing[A](message: String): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = Left(
@@ -51,6 +77,10 @@ object XmlDecoder {
     )
   }
 
+  /**
+    * This is the method that is used to define primitive decoders, as all primitives
+    * are decoded from text content, whether it's in elements or in attributes.
+    */
   def fromStringParser[A](expectedType: String)(
       f: String => Option[A]
   ): XmlDecoder[A] =

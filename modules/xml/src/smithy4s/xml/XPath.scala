@@ -1,8 +1,29 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.xml
 import smithy4s.xml.XPath.Segment.Index
 import smithy4s.xml.XPath.Segment.Tag
 import smithy4s.xml.XPath.Segment.Attr
 
+/**
+  * Represents a path in the XML payload. Segments can be either tags, indexes (when dealing with collections), or attributes.
+  *
+  * This allows, in particular, to identify which part of the payload is faulty, during decoding.
+  */
 case class XPath(reversedSegments: List[XPath.Segment]) {
   def render: String = reversedSegments.reverse.map(_.render).mkString(".")
 
