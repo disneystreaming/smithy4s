@@ -89,6 +89,7 @@ trait Smithy4sModule extends ScalaModule {
     val skipSet = skipResources ++ skipOpenApi
 
     val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
+
     val localJars = smithy4sLocalJars().map(_.path)
     val allLocalJars = localJars ++ resolvedDeps
 
