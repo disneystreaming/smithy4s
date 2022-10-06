@@ -64,7 +64,11 @@ object HttpEndpoint {
         )
       httpPath <- internals
         .pathSegments(http.uri.value)
-        .toRight(HttpEndpointError("Unable to parse HTTP path template"))
+        .toRight(
+          HttpEndpointError(
+            s"Unable to parse HTTP path template: ${http.uri.value}"
+          )
+        )
       encoder <- SchemaVisitorPathEncoder(
         endpoint.input
           .addHints(http)
