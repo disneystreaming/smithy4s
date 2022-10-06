@@ -403,24 +403,22 @@ object XmlDecodingSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val foos =
-          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
+          map(string, int)
             .required[Foo]("foos", _.foos)
-            .addHints(XmlName("entries"))
+            .addHints(XmlFlattened())
         struct(foos)(Foo.apply)
       }
     }
 
     val xml = """|<Foo>
-                 |   <entries>
-                 |        <entry>
-                 |            <k>a</k>
-                 |            <v>1</v>
-                 |        </entry>
-                 |        <entry>
-                 |            <k>b</k>
-                 |            <v>2</v>
-                 |        </entry>
-                 |   </entries>
+                 |   <foos>
+                 |      <key>a</key>
+                 |      <value>1</value>
+                 |   </foos>
+                 |   <foos>
+                 |      <key>b</key>
+                 |      <value>2</value>
+                 |   </foos>
                  |</Foo>""".stripMargin
     checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
   }

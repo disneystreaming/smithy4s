@@ -70,9 +70,10 @@ abstract class XmlDecoderSchemaVisitor
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(hints)
+      Schema.struct(kField, vField)((_, _))
     }
-    compile(Schema.vector(kvSchema.addHints(XmlName("entry")))).map(_.toMap)
+    compile(Schema.vector(kvSchema.addHints(XmlName("entry"))).addHints(hints))
+      .map(_.toMap)
   }
 
   def enumeration[E](
