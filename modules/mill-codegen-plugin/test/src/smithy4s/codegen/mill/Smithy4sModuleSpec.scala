@@ -45,6 +45,18 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       ev.outPath / "smithy4sOutputDir.dest" / "scala" / "basic" / "MyNewString.scala",
       shouldExist = true
     )
+
+    withFile(
+      foo.millSourcePath / "smithy" / "added.smithy",
+      """namespace basic
+        |
+        |structure Added {}""".stripMargin
+    )(compileWorks(foo, ev))
+
+    checkFileExist(
+      ev.outPath / "smithy4sOutputDir.dest" / "scala" / "basic" / "Added.scala",
+      shouldExist = true
+    )
   }
 
   test("codegen with dependencies") {
@@ -109,22 +121,20 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       shouldExist = true
     )
 
-    val aScalaPath = foo.millSourcePath / "src" / "a.scala"
-
-    os.write(
-      aScalaPath,
+    withFile(
+      foo.millSourcePath / "src" / "a.scala",
       """package foo
-        |object a""".stripMargin,
-      createFolders = true
-    )
+        |object a""".stripMargin
+    )(compileWorks(bar, barEv))
+  }
 
-    try compileWorks(bar, barEv)
-    finally {
-      val _ =
-        // cleaning up, because the target path doesn't get cleared automatically on test re-runs
-        // (it's part of this test module's target path)
-        os.remove.all(aScalaPath)
-    }
+  private def withFile[A](path: os.Path, content: String)(f: => A): A = {
+    os.write(path, content, createFolders = true)
+    try f
+    finally
+    // we need to clean up, because we copy files to the target path
+    // (which doesn't get cleared automatically on test re-runs)
+    os.remove.all(path)
   }
 
   test(
