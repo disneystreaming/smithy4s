@@ -76,12 +76,12 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
       dataFromDocument.left.foreach(_.printStackTrace())
       (e1 && e2).label(
         s"""|schema: $schemaStr
-           |data: $data
-           |jsonFromDocument: $jsonFromDocument
-           |jsonDirect: $jsonDirect
-           |documentFromJson: $documentFromJson
-           |dataFromDocument: $dataFromDocument
-           |""".stripMargin
+            |data: $data
+            |jsonFromDocument: $jsonFromDocument
+            |jsonDirect: $jsonDirect
+            |documentFromJson: $documentFromJson
+            |dataFromDocument: $dataFromDocument
+            |""".stripMargin
       )
     }
 

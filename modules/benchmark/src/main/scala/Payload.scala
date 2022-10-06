@@ -24,12 +24,12 @@ object Payload {
 
   val loremIpsumString =
     """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus sed
-        |elementum lacus. Vestibulum id facilisis neque. Sed sagittis libero nec
-        |metus hendrerit, at iaculis leo placerat. Duis non fermentum justo, eget
-        |lobortis odio. Vivamus facilisis diam non nunc suscipit, nec rhoncus ex
-        |bibendum. Orci varius natoque penatibus et magnis dis parturient montes,
-        |ridiculus mus. Sed pretium diam nec massa dignissim tempus. Quisque quis
-        |commodo tortor""".stripMargin.trim()
+      |elementum lacus. Vestibulum id facilisis neque. Sed sagittis libero nec
+      |metus hendrerit, at iaculis leo placerat. Duis non fermentum justo, eget
+      |lobortis odio. Vivamus facilisis diam non nunc suscipit, nec rhoncus ex
+      |bibendum. Orci varius natoque penatibus et magnis dis parturient montes,
+      |ridiculus mus. Sed pretium diam nec massa dignissim tempus. Quisque quis
+      |commodo tortor""".stripMargin.trim()
 
   val loremIpsum = ByteArray(loremIpsumString.getBytes())
 
@@ -77,14 +77,14 @@ object Payload {
             lastModified = Some(timestamp),
             checkSum = Some(
               """DCeldzpc4Dkgmg1zbNXkKS+Aaqgz5HHOx3P9osVNk2M2HNwe1fy/Gie8lAsLpPm8
-            |NIF9A1z94w2u7N5LQA20tkoENmj9AJKcMQPeeIYO52xnskdbgCBTTLt2V4HFEh2A
-            |+Y1TmU7l9qTTuaOHUsGk5RXqY1YMrpl8HZNg""".stripMargin
+                |NIF9A1z94w2u7N5LQA20tkoENmj9AJKcMQPeeIYO52xnskdbgCBTTLt2V4HFEh2A
+                |+Y1TmU7l9qTTuaOHUsGk5RXqY1YMrpl8HZNg""".stripMargin
             ),
             pendingDeletion = Some(true),
             etag = Some(
               """EWMRO34ILrHqRXeZpdw0JGcMAJVI1b5VCU5bkdcy02I+e1mKJcL2XJzAdHTdb9kG
-            |4lZ2UcjyHTYGyXbjm2ZWWv3G/PkGSqKI4owMDS8HqEL0HzZ1FXCALbUm/LqhmAlZ
-            |nSV1H2aAzwIlhF3zNmXa+AmSihrJjpirBiGU""".stripMargin
+                |4lZ2UcjyHTYGyXbjm2ZWWv3G/PkGSqKI4owMDS8HqEL0HzZ1FXCALbUm/LqhmAlZ
+                |nSV1H2aAzwIlhF3zNmXa+AmSihrJjpirBiGU""".stripMargin
             )
           ),
           Metadata(
@@ -112,7 +112,7 @@ object Payload {
             pendingDeletion = Some(true),
             etag = Some(
               """EWMRO34ILrHqRXeZpdw0JGcMAJVI1b5VCU5bkdcy02I+e1mKJcL2XJzAdHTdb9kG
-            |4lZ2UcjyHTYGyXbjm2ZWWv3GLqhmAlZnSV1H2aAzwIlhF3zNmXa+AmSihrJjpirBiGU""".stripMargin
+                |4lZ2UcjyHTYGyXbjm2ZWWv3GLqhmAlZnSV1H2aAzwIlhF3zNmXa+AmSihrJjpirBiGU""".stripMargin
             )
           )
         )
