@@ -114,7 +114,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     os.write(
       aScalaPath,
       """package foo
-      |object a""".stripMargin,
+        |object a""".stripMargin,
       createFolders = true
     )
 
