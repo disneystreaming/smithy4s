@@ -30,9 +30,9 @@ object XPath {
     }
   }
   object Segment {
-    case class Index(index: Int) extends Segment
-    case class Tag(tag: String) extends Segment
-    case class Attr(attr: String) extends Segment
+    final case class Index(index: Int) extends Segment
+    final case class Tag(tag: String) extends Segment
+    final case class Attr(attr: String) extends Segment
   }
 
 }

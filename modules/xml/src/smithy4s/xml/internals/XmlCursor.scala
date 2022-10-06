@@ -1,7 +1,6 @@
 package smithy4s.xml
 package internals
 
-import fs2.data.xml.QName
 import XmlDocument.XmlElem
 import cats.data.NonEmptyList
 
@@ -9,8 +8,8 @@ sealed trait XmlCursor {
   def history: XPath
   def down(tag: String): XmlCursor
   def attr(name: String): XmlCursor
-  def error(message: String): Either[XmlReadError, Nothing] = Left(
-    XmlReadError(history, message)
+  def error(message: String): Either[XmlDecodeError, Nothing] = Left(
+    XmlDecodeError(history, message)
   )
 }
 
@@ -22,8 +21,8 @@ object XmlCursor {
       extends XmlCursor {
     def down(tag: String): XmlCursor = {
       val newHistory = history.appendTag(tag)
-      val allNodes = node.children.collect {
-        case e @ XmlElem(QName(_, `tag`), _, _) => e
+      val allNodes = node.children.collect { case e @ XmlElem(`tag`, _, _) =>
+        e
       }
       if (allNodes.size == 1) SingleNode(newHistory, allNodes.head)
       else
@@ -35,7 +34,7 @@ object XmlCursor {
     def attr(name: String): XmlCursor = {
       val newHistory = history.appendAttr(name)
       val allValues = node.attributes.collect {
-        case XmlDocument.XmlAttr(QName(_, `name`), values) =>
+        case XmlDocument.XmlAttr(`name`, values) =>
           values.map(_.text)
       }.flatten
       NonEmptyList.fromList(allValues) match {

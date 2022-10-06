@@ -6,16 +6,47 @@ import fs2.data.xml.XmlEvent
 import fs2.data.xml.XmlEvent.XmlCharRef
 import fs2.data.xml.XmlEvent.XmlEntityRef
 import fs2.data.xml.XmlEvent.XmlString
+import smithy4s.schema.Schema
+import smithy4s.xml.internals.XmlSchemaVisitor
+import smithy4s.xml.internals.XmlCursor
+import smithy.api.XmlName
 
-case class XmlDocument(root: XmlDocument.XmlElem)
+final case class XmlDocument(root: XmlDocument.XmlElem)
 
 object XmlDocument {
+
+  trait Decoder[A] {
+    def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A]
+  }
+
+  object Decoder {
+    def fromSchema[A](schema: Schema[A]): Decoder[A] = {
+      val expectedRootName =
+        schema.hints.get(XmlName).map(_.value).getOrElse(schema.shapeId.name)
+      val decoder = XmlSchemaVisitor(schema)
+      new Decoder[A] {
+        def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A] = {
+          val rootName = xmlDocument.root.name
+          if (rootName != expectedRootName) {
+            Left(
+              XmlDecodeError(
+                XPath.root,
+                s"Expected $expectedRootName elem, got ${rootName}"
+              )
+            )
+          } else {
+            decoder.read(XmlCursor.fromDocument(xmlDocument))
+          }
+        }
+      }
+    }
+  }
 
   // format: off
   sealed trait XmlContent
   case class XmlText(text: String)                                                       extends XmlContent
-  case class XmlElem(name: QName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
-  case class XmlAttr(name: QName, value: List[XmlText])
+  case class XmlElem(name: String, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
+  case class XmlAttr(name: String, value: List[XmlText])
   // format: on
 
   implicit val documentBuilder: DocumentBuilder[XmlDocument] =
@@ -45,9 +76,9 @@ object XmlDocument {
           val values = attr.value.collect { case XmlString(text, _) =>
             XmlText(text)
           }
-          XmlAttr(attr.name, values)
+          XmlAttr(attr.name.local, values)
         }
-        Some(XmlDocument.XmlElem(name, xmlAttrs, filtered))
+        Some(XmlDocument.XmlElem(name.local, xmlAttrs, filtered))
       }
 
       def makePI(target: String, content: String): Misc = None

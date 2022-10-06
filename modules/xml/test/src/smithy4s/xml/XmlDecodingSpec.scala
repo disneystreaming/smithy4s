@@ -14,6 +14,7 @@ import smithy.api.XmlName
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy4s.ByteArray
+import smithy4s.Hints
 
 object XmlDecodingSpec extends SimpleIOSuite {
 
@@ -104,9 +105,9 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
 
     val xml = """|<Foo>
-                  |  <x>x</x>
-                  |  <y>y</y>
-                  |</Foo>""".stripMargin
+                 |  <x>x</x>
+                 |  <y>y</y>
+                 |</Foo>""".stripMargin
 
     testDecode(xml, Foo("x", Some("y")))
   }
@@ -122,8 +123,8 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
 
     val xml = """|<Foo>
-                  |  <x>x</x>
-                  |</Foo>""".stripMargin
+                 |  <x>x</x>
+                 |</Foo>""".stripMargin
 
     testDecode(xml, Foo("x", None))
   }
@@ -139,9 +140,9 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
 
     val xml = """|<Foo>
-                  |  <xx>x</xx>
-                  |  <yy>y</yy>
-                  |</Foo>""".stripMargin
+                 |  <xx>x</xx>
+                 |  <yy>y</yy>
+                 |</Foo>""".stripMargin
 
     testDecode(xml, Foo("x", Some("y")))
   }
@@ -206,12 +207,12 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
 
     val xml = """|<Foo>
-                |   <foos>
-                |      <member>1</member>
-                |      <member>2</member>
-                |      <member>3</member>
-                |   </foos>
-                |</Foo>""".stripMargin
+                 |   <foos>
+                 |      <member>1</member>
+                 |      <member>2</member>
+                 |      <member>3</member>
+                 |   </foos>
+                 |</Foo>""".stripMargin
     testDecode(xml, Foo(List(1, 2, 3)))
   }
 
@@ -226,12 +227,12 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
 
     val xml = """|<Foo>
-                |   <foos>
-                |      <x>1</x>
-                |      <x>2</x>
-                |      <x>3</x>
-                |   </foos>
-                |</Foo>""".stripMargin
+                 |   <foos>
+                 |      <x>1</x>
+                 |      <x>2</x>
+                 |      <x>3</x>
+                 |   </foos>
+                 |</Foo>""".stripMargin
     testDecode(xml, Foo(List(1, 2, 3)))
   }
 
@@ -292,6 +293,135 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |</Foo>
                  |""".stripMargin
     testDecode(xml, Foo(Some(Foo(Some(Foo(None))))))
+  }
+
+  test("union") {
+    type Foo = Either[Int, String]
+    implicit val schema: Schema[Foo] = {
+      val left = int.oneOf[Foo]("left", Left(_))
+      val right = string.oneOf[Foo]("right", Right(_))
+      union(left, right) {
+        case Left(int)     => left(int)
+        case Right(string) => right(string)
+      }
+    }
+    val xmlLeft = """<left>1</left>"""
+    val xmlRight = """<right>"hello"</right>""".stripMargin
+    testDecode[Foo](xmlLeft, Left(1)) <+>
+      testDecode[Foo](xmlRight, Right("hello"))
+  }
+
+  test("union: custom names") {
+    type Foo = Either[Int, String]
+    implicit val schema: Schema[Foo] = {
+      val left = int.oneOf[Foo]("left", Left(_)).addHints(XmlName("foo"))
+      val right = string.oneOf[Foo]("right", Right(_)).addHints(XmlName("bar"))
+      union(left, right) {
+        case Left(int)     => left(int)
+        case Right(string) => right(string)
+      }
+    }
+    val xmlLeft = """<foo>1</foo>"""
+    val xmlRight = """<bar>"hello"</bar>""".stripMargin
+    testDecode[Foo](xmlLeft, Left(1)) <+>
+      testDecode[Foo](xmlRight, Right("hello"))
+  }
+
+  test("enumeration") {
+    sealed abstract class FooBar(val stringValue: String, val intValue: Int)
+        extends smithy4s.Enumeration.Value {
+      val name = stringValue
+      val value = stringValue
+      val hints = Hints.empty
+    }
+    object FooBar {
+      case object Foo extends FooBar("foo", 0)
+      case object Bar extends FooBar("bar", 1)
+      implicit val schema: Schema[FooBar] = enumeration[FooBar](List(Foo, Bar))
+    }
+    val xmlFoo = "<x>foo</x>"
+    val xmlBar = "<x>bar</x>"
+    testDecode[FooBar](xmlFoo, FooBar.Foo) <+>
+      testDecode[FooBar](xmlBar, FooBar.Bar)
+  }
+
+  test("map") {
+    case class Foo(foos: Map[String, Int])
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val foos = map(string, int)
+          .required[Foo]("foos", _.foos)
+          .addHints(XmlName("entries"))
+        struct(foos)(Foo.apply)
+      }
+    }
+
+    val xml = """|<Foo>
+                 |   <entries>
+                 |        <entry>
+                 |            <key>a</key>
+                 |            <value>1</value>
+                 |        </entry>
+                 |        <entry>
+                 |            <key>b</key>
+                 |            <value>2</value>
+                 |        </entry>
+                 |   </entries>
+                 |</Foo>""".stripMargin
+    testDecode(xml, Foo(Map("a" -> 1, "b" -> 2)))
+  }
+
+  test("map: custom names") {
+    case class Foo(foos: Map[String, Int])
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val foos =
+          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
+            .required[Foo]("foos", _.foos)
+        struct(foos)(Foo.apply)
+      }
+    }
+
+    val xml = """|<Foo>
+                 |   <foos>
+                 |        <entry>
+                 |            <k>a</k>
+                 |            <v>1</v>
+                 |        </entry>
+                 |        <entry>
+                 |            <k>b</k>
+                 |            <v>2</v>
+                 |        </entry>
+                 |   </foos>
+                 |</Foo>""".stripMargin
+    testDecode(xml, Foo(Map("a" -> 1, "b" -> 2)))
+  }
+
+  test("map: flattened") {
+    case class Foo(foos: Map[String, Int])
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val foos =
+          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
+            .required[Foo]("foos", _.foos)
+            .addHints(XmlName("entries"))
+        struct(foos)(Foo.apply)
+      }
+    }
+
+    val xml = """|<Foo>
+                 |   <entries>
+                 |        <entry>
+                 |            <k>a</k>
+                 |            <v>1</v>
+                 |        </entry>
+                 |        <entry>
+                 |            <k>b</k>
+                 |            <v>2</v>
+                 |        </entry>
+                 |   </entries>
+                 |</Foo>""".stripMargin
+    testDecode(xml, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
   def testDecode[A: Schema](xml: String, expected: A)(implicit

@@ -853,7 +853,7 @@ lazy val Dependencies = new {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.5.0")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.5.1")
   }
 
   object Mill {

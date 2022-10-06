@@ -9,10 +9,13 @@ import smithy.api.XmlName
 import smithy.api.XmlAttribute
 import cats.syntax.all._
 import smithy4s.internals.SchemaDescription
+import smithy4s.xml.internals.XmlCursor.SingleNode
 
 object XmlSchemaVisitor extends XmlSchemaVisitor
 
-abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
+abstract class XmlSchemaVisitor
+    extends SchemaVisitor[XmlDecoder]
+    with smithy4s.ScalaCompat { compile =>
   def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -35,7 +38,7 @@ abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
     val isFlattened = hints.has(XmlFlattened)
     val memberReader = compile(member)
     new XmlDecoder[C[A]] {
-      def read(cursor: XmlCursor): Either[XmlReadError, C[A]] = {
+      def read(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         val realCursor = if (isFlattened) cursor else cursor.down(xmlName)
         realCursor match {
           case XmlCursor.MultipleNodes(history, nodes) =>
@@ -52,7 +55,7 @@ abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
               .map(value => tag.fromIterator(Iterator.single(value)))
           case XmlCursor.NoNode(_) => Right(tag.empty)
           case other =>
-            Left(XmlReadError(other.history, s"Expected one or multiple nodes"))
+            Left(XmlDecodeError(other.history, s"Expected one or multiple nodes"))
         }
       }
     }
@@ -63,14 +66,33 @@ abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
       hints: Hints,
       key: Schema[K],
       value: Schema[V]
-  ): XmlDecoder[Map[K, V]] = ???
+  ): XmlDecoder[Map[K, V]] = {
+    type KV = (K, V)
+    val kvSchema: Schema[(K, V)] = {
+      val kField = key.required[KV]("key", _._1)
+      val vField = value.required[KV]("value", _._2)
+      Schema.struct(kField, vField)((_, _)).addHints(hints)
+    }
+    compile(Schema.vector(kvSchema.addHints(XmlName("entry")))).map(_.toMap)
+  }
 
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): XmlDecoder[E] = ???
+  ): XmlDecoder[E] = {
+    val isIntEnum = hints.has(IntEnum)
+    if (isIntEnum) {
+      val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
+      val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
+      XmlDecoder.fromStringParser(desc)(_.toIntOption.flatMap(valueMap.get))
+    } else {
+      val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
+      val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
+      XmlDecoder.fromStringParser(desc)(valueMap.get)
+    }
+  }
 
   def struct[S](
       shapeId: ShapeId,
@@ -104,7 +126,7 @@ abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
     }
     val readers = fields.map(fieldReader(_))
     new XmlDecoder[S] {
-      def read(cursor: XmlCursor): Either[XmlReadError, S] =
+      def read(cursor: XmlCursor): Either[XmlDecodeError, S] =
         readers.traverse(_.read(cursor)).map(make)
     }
   }
@@ -114,7 +136,28 @@ abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
-  ): XmlDecoder[U] = ???
+  ): XmlDecoder[U] = {
+    def altDecoder[A](alt: SchemaAlt[U, A]): (String, XmlDecoder[U]) = {
+      val xmlName =
+        alt.instance.hints.get(XmlName).map(_.value).getOrElse(alt.label)
+      val decoder = compile(alt.instance).map(alt.inject)
+      (xmlName, decoder)
+    }
+    val altMap = alternatives.map(altDecoder(_)).toMap[String, XmlDecoder[U]]
+    new XmlDecoder[U] {
+      def read(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
+        case s @ SingleNode(history, node) =>
+          val xmlName = node.name
+          altMap.get(node.name) match {
+            case Some(value) => value.read(s)
+            case None =>
+              Left(XmlDecodeError(history, s"Not a valid alternative: $xmlName"))
+          }
+        case other =>
+          Left(XmlDecodeError(other.history, "Expected a single node"))
+      }
+    }
+  }
 
   def biject[A, B](
       schema: Schema[A],
@@ -130,7 +173,7 @@ abstract class XmlSchemaVisitor extends SchemaVisitor[XmlDecoder] { compile =>
 
   def lazily[A](suspend: Lazy[Schema[A]]): XmlDecoder[A] = new XmlDecoder[A] {
     lazy val underlying: XmlDecoder[A] = suspend.map(compile(_)).value
-    def read(cursor: XmlCursor): Either[XmlReadError, A] = {
+    def read(cursor: XmlCursor): Either[XmlDecodeError, A] = {
       underlying.read(cursor)
     }
   }
