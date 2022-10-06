@@ -2,12 +2,12 @@ package smithy4s.xml
 package internals
 
 import smithy4s.xml.XmlDocument
-import smithy4s.xml.internals.XmlCursor.SingleNode
+import smithy4s.xml.internals.XmlCursor.Nodes
 import smithy4s.xml.internals.XmlCursor.NoNode
 import smithy4s.xml.internals.XmlCursor.FailedNode
 import smithy4s.xml.internals.XmlCursor.AttrNode
 import smithy4s.ConstraintError
-
+import cats.data.NonEmptyList
 
 trait XmlDecoder[A] { self =>
   def read(cursor: XmlCursor): Either[XmlDecodeError, A]
@@ -56,7 +56,7 @@ object XmlDecoder {
   ): XmlDecoder[A] =
     new XmlDecoder[A] {
       def read(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
-        case SingleNode(history, node) =>
+        case Nodes(history, NonEmptyList(node, Nil)) =>
           node.children match {
             case XmlDocument.XmlText(value) :: Nil =>
               f(value).toRight(

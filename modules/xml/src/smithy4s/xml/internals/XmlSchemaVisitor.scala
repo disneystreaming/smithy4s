@@ -9,7 +9,7 @@ import smithy.api.XmlName
 import smithy.api.XmlAttribute
 import cats.syntax.all._
 import smithy4s.internals.SchemaDescription
-import smithy4s.xml.internals.XmlCursor.SingleNode
+import cats.data.NonEmptyList
 
 object XmlSchemaVisitor extends XmlSchemaVisitor
 
@@ -41,21 +41,20 @@ abstract class XmlSchemaVisitor
       def read(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         val realCursor = if (isFlattened) cursor else cursor.down(xmlName)
         realCursor match {
-          case XmlCursor.MultipleNodes(history, nodes) =>
+          case XmlCursor.Nodes(history, nodes) =>
             nodes.zipWithIndex
               .traverse { case (elem, index) =>
                 memberReader.read(
-                  XmlCursor.SingleNode(history.appendIndex(index), elem)
+                  XmlCursor
+                    .Nodes(history.appendIndex(index), NonEmptyList.one(elem))
                 )
               }
               .map(list => tag.fromIterator(list.iterator))
-          case XmlCursor.SingleNode(history, elem) =>
-            memberReader
-              .read(XmlCursor.SingleNode(history.appendIndex(0), elem))
-              .map(value => tag.fromIterator(Iterator.single(value)))
           case XmlCursor.NoNode(_) => Right(tag.empty)
           case other =>
-            Left(XmlDecodeError(other.history, s"Expected one or multiple nodes"))
+            Left(
+              XmlDecodeError(other.history, s"Expected one or multiple nodes")
+            )
         }
       }
     }
@@ -146,12 +145,14 @@ abstract class XmlSchemaVisitor
     val altMap = alternatives.map(altDecoder(_)).toMap[String, XmlDecoder[U]]
     new XmlDecoder[U] {
       def read(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
-        case s @ SingleNode(history, node) =>
+        case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
           val xmlName = node.name
           altMap.get(node.name) match {
             case Some(value) => value.read(s)
             case None =>
-              Left(XmlDecodeError(history, s"Not a valid alternative: $xmlName"))
+              Left(
+                XmlDecodeError(history, s"Not a valid alternative: $xmlName")
+              )
           }
         case other =>
           Left(XmlDecodeError(other.history, "Expected a single node"))
