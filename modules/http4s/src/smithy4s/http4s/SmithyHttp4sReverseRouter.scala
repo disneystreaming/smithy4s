@@ -47,15 +47,20 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
       ): SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] =
-        SmithyHttp4sClientEndpoint(
-          baseUri,
-          client,
-          endpoint,
-          entityCompiler
-        ).getOrElse(
-          sys.error(
-            s"Operation ${endpoint.name} is not bound to http semantics"
+        SmithyHttp4sClientEndpoint
+          .make(
+            baseUri,
+            client,
+            endpoint,
+            entityCompiler
           )
-        )
+          .left
+          .map { e =>
+            throw new Exception(
+              s"Operation ${endpoint.name} is not bound to http semantics",
+              e
+            )
+          }
+          .merge
     }.precompute(service.endpoints.map(smithy4s.Kind5.existential(_)))
 }

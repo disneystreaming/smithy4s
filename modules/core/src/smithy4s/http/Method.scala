@@ -18,19 +18,25 @@ package smithy4s.http
 
 sealed trait HttpMethod {
   def showUppercase = this match {
-    case HttpMethod.PUT    => "PUT"
-    case HttpMethod.POST   => "POST"
-    case HttpMethod.DELETE => "DELETE"
-    case HttpMethod.GET    => "GET"
-    case HttpMethod.PATCH  => "PATCH"
+    case HttpMethod.PUT     => "PUT"
+    case HttpMethod.POST    => "POST"
+    case HttpMethod.DELETE  => "DELETE"
+    case HttpMethod.GET     => "GET"
+    case HttpMethod.PATCH   => "PATCH"
+    case HttpMethod.HEAD    => "HEAD"
+    case HttpMethod.OPTIONS => "OPTIONS"
+    case HttpMethod.TRACE   => "TRACE"
   }
 
   def showCapitalised = this match {
-    case HttpMethod.PUT    => "Put"
-    case HttpMethod.POST   => "Post"
-    case HttpMethod.DELETE => "Delete"
-    case HttpMethod.GET    => "Get"
-    case HttpMethod.PATCH  => "Patch"
+    case HttpMethod.PUT     => "Put"
+    case HttpMethod.POST    => "Post"
+    case HttpMethod.DELETE  => "Delete"
+    case HttpMethod.GET     => "Get"
+    case HttpMethod.PATCH   => "Patch"
+    case HttpMethod.HEAD    => "Head"
+    case HttpMethod.OPTIONS => "Options"
+    case HttpMethod.TRACE   => "Trace"
   }
 }
 
@@ -40,6 +46,9 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
+  case object HEAD extends HttpMethod
+  case object OPTIONS extends HttpMethod
+  case object TRACE extends HttpMethod
 
   val values = List(PUT, POST, DELETE, GET, PATCH)
 

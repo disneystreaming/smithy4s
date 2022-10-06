@@ -38,18 +38,36 @@ object HttpEndpoint {
 
   def unapply[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = cast(endpoint)
+  ): Option[HttpEndpoint[I]] = castEither(endpoint).toOption
 
-  def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
+  @deprecated(
+    "Use `castEither` which returns more information about the error",
+    "0.16.3"
+  )
+  private[smithy4s] def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = {
+  ): Option[HttpEndpoint[I]] = castEither(endpoint).toOption
+
+  def castEither[Op[_, _, _, _, _], I, E, O, SI, SO](
+      endpoint: Endpoint[Op, I, E, O, SI, SO]
+  ): Either[HttpEndpointError, HttpEndpoint[I]] = {
     for {
-      http <- endpoint.hints.get(Http)
-      httpMethod <- HttpMethod.fromString(http.method.value)
-      httpPath <- internals.pathSegments(http.uri.value)
+      http <- endpoint.hints
+        .get(Http)
+        .toRight(HttpEndpointError("Operation doesn't have a @http trait"))
+      httpMethod <- HttpMethod
+        .fromString(http.method.value)
+        .toRight(
+          HttpEndpointError(s"Couldn't parse HTTP method: ${http.method.value}")
+        )
+      httpPath <- internals
+        .pathSegments(http.uri.value)
+        .toRight(HttpEndpointError("Unable to parse HTTP path template"))
       encoder <- SchemaVisitorPathEncoder(
         endpoint.input
           .addHints(http)
+      ).toRight(
+        HttpEndpointError("Unable to encode operation input in HTTP path")
       )
 
     } yield {
@@ -61,5 +79,7 @@ object HttpEndpoint {
       }
     }
   }
+
+  case class HttpEndpointError(message: String) extends Exception(message)
 
 }

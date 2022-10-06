@@ -54,11 +54,14 @@ object AwsHttp4sBackend {
     for {
       endpoint <- Uri.fromString(request.uri).liftTo[F]
       method = request.httpMethod match {
-        case HttpMethod.POST   => POST
-        case HttpMethod.GET    => GET
-        case HttpMethod.PATCH  => PATCH
-        case HttpMethod.PUT    => PUT
-        case HttpMethod.DELETE => DELETE
+        case HttpMethod.POST    => POST
+        case HttpMethod.GET     => GET
+        case HttpMethod.PATCH   => PATCH
+        case HttpMethod.PUT     => PUT
+        case HttpMethod.DELETE  => DELETE
+        case HttpMethod.HEAD    => HEAD
+        case HttpMethod.OPTIONS => OPTIONS
+        case HttpMethod.TRACE   => TRACE
       }
       req = request.body
         .foldLeft(

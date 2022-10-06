@@ -37,11 +37,14 @@ package object http4s extends Compat.Package {
 
   private[smithy4s] def toHttp4sMethod(method: SmithyMethod): Http4sMethod =
     method match {
-      case smithy4s.http.HttpMethod.PUT    => Http4sMethod.PUT
-      case smithy4s.http.HttpMethod.POST   => Http4sMethod.POST
-      case smithy4s.http.HttpMethod.DELETE => Http4sMethod.DELETE
-      case smithy4s.http.HttpMethod.GET    => Http4sMethod.GET
-      case smithy4s.http.HttpMethod.PATCH  => Http4sMethod.PATCH
+      case smithy4s.http.HttpMethod.PUT     => Http4sMethod.PUT
+      case smithy4s.http.HttpMethod.POST    => Http4sMethod.POST
+      case smithy4s.http.HttpMethod.DELETE  => Http4sMethod.DELETE
+      case smithy4s.http.HttpMethod.GET     => Http4sMethod.GET
+      case smithy4s.http.HttpMethod.PATCH   => Http4sMethod.PATCH
+      case smithy4s.http.HttpMethod.HEAD    => Http4sMethod.HEAD
+      case smithy4s.http.HttpMethod.OPTIONS => Http4sMethod.OPTIONS
+      case smithy4s.http.HttpMethod.TRACE   => Http4sMethod.TRACE
     }
 
   private[smithy4s] def toHeaders(mp: Map[CaseInsensitive, Seq[String]]) =

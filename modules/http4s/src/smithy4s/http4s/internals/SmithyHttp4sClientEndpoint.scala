@@ -40,21 +40,43 @@ private[smithy4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E
 
 private[smithy4s] object SmithyHttp4sClientEndpoint {
 
-  def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  @deprecated("Use `make`", "0.16.3")
+  private[smithy4s] def apply[
+      F[_]: EffectCompat,
+      Op[_, _, _, _, _],
+      I,
+      E,
+      O,
+      SI,
+      SO
+  ](
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       entityCompiler: EntityCompiler[F]
   ): Option[SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]] =
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
-        baseUri,
-        client,
-        endpoint,
-        httpEndpoint,
-        entityCompiler
-      )
-    }
+    make(baseUri, client, endpoint, entityCompiler).toOption
+
+  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+      baseUri: Uri,
+      client: Client[F],
+      endpoint: Endpoint[Op, I, E, O, SI, SO],
+      entityCompiler: EntityCompiler[F]
+  ): Either[
+    HttpEndpoint.HttpEndpointError,
+    SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
+  ] =
+    HttpEndpoint
+      .castEither(endpoint)
+      .map { httpEndpoint =>
+        new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
+          baseUri,
+          client,
+          endpoint,
+          httpEndpoint,
+          entityCompiler
+        )
+      }
 
 }
 

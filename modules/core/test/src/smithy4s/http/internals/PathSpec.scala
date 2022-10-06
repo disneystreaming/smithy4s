@@ -60,9 +60,10 @@ class PathSpec() extends munit.FunSuite {
 
   test("Write PathParams for DummyPath") {
     val result = HttpEndpoint
-      .cast(
+      .castEither(
         DummyPath
       )
+      .toTry
       .get
       .path(
         PathParams(
