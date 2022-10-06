@@ -7,6 +7,8 @@ import scala.sys.process._
 import com.github.sbt.git.GitPlugin
 import com.github.sbt.git.SbtGit.git
 import scala.util.Try
+import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
 
 // Adapted from https://github.com/djspiewak/sbt-spiewak
 object MimaVersionPlugin extends AutoPlugin {
@@ -136,6 +138,11 @@ object MimaVersionPlugin extends AutoPlugin {
           )
           .toSet
       }
-    }
+    },
+    mimaBinaryIssueFilters +=
+      // this is private[smithy4s]
+      ProblemFilters.exclude[IncompatibleResultTypeProblem](
+        "smithy4s.http4s.package.toHttp4sMethod"
+      )
   )
 }
