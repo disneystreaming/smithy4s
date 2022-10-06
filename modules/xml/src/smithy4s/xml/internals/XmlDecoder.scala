@@ -10,15 +10,15 @@ import smithy4s.ConstraintError
 import cats.data.NonEmptyList
 
 trait XmlDecoder[A] { self =>
-  def read(cursor: XmlCursor): Either[XmlDecodeError, A]
+  def decode(cursor: XmlCursor): Either[XmlDecodeError, A]
   final def map[B](f: A => B): XmlDecoder[B] = new XmlDecoder[B] {
-    def read(cursor: XmlCursor): Either[XmlDecodeError, B] =
-      self.read(cursor).map(f)
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
+      self.decode(cursor).map(f)
   }
   final def emap[B](f: A => Either[ConstraintError, B]): XmlDecoder[B] =
     new XmlDecoder[B] {
-      def read(cursor: XmlCursor): Either[XmlDecodeError, B] =
-        self.read(cursor).flatMap {
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
+        self.decode(cursor).flatMap {
           f(_) match {
             case Left(e)      => Left(XmlDecodeError(cursor.history, e.message))
             case Right(value) => Right(value)
@@ -26,18 +26,18 @@ trait XmlDecoder[A] { self =>
         }
     }
   final def down(tag: String): XmlDecoder[A] = new XmlDecoder[A] {
-    def read(cursor: XmlCursor): Either[XmlDecodeError, A] =
-      self.read(cursor.down(tag))
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
+      self.decode(cursor.down(tag))
   }
   final def attribute(attr: String): XmlDecoder[A] = new XmlDecoder[A] {
-    def read(cursor: XmlCursor): Either[XmlDecodeError, A] =
-      self.read(cursor.attr(attr))
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
+      self.decode(cursor.attr(attr))
   }
   final def optional: XmlDecoder[Option[A]] = new XmlDecoder[Option[A]] {
-    def read(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] = {
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] = {
       cursor match {
         case NoNode(_) => Right(None)
-        case other     => self.read(other).map(Some(_))
+        case other     => self.decode(other).map(Some(_))
       }
     }
   }
@@ -46,7 +46,7 @@ trait XmlDecoder[A] { self =>
 object XmlDecoder {
 
   def alwaysFailing[A](message: String): XmlDecoder[A] = new XmlDecoder[A] {
-    def read(cursor: XmlCursor): Either[XmlDecodeError, A] = Left(
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = Left(
       XmlDecodeError(cursor.history, message)
     )
   }
@@ -55,7 +55,7 @@ object XmlDecoder {
       f: String => Option[A]
   ): XmlDecoder[A] =
     new XmlDecoder[A] {
-      def read(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
         case Nodes(history, NonEmptyList(node, Nil)) =>
           node.children match {
             case XmlDocument.XmlText(value) :: Nil =>

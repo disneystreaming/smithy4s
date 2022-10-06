@@ -11,9 +11,9 @@ import cats.syntax.all._
 import smithy4s.internals.SchemaDescription
 import cats.data.NonEmptyList
 
-object XmlSchemaVisitor extends XmlSchemaVisitor
+object XmlDecoderSchemaVisitor extends XmlDecoderSchemaVisitor
 
-abstract class XmlSchemaVisitor
+abstract class XmlDecoderSchemaVisitor
     extends SchemaVisitor[XmlDecoder]
     with smithy4s.ScalaCompat { compile =>
   def primitive[P](
@@ -38,13 +38,13 @@ abstract class XmlSchemaVisitor
     val isFlattened = hints.has(XmlFlattened)
     val memberReader = compile(member)
     new XmlDecoder[C[A]] {
-      def read(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         val realCursor = if (isFlattened) cursor else cursor.down(xmlName)
         realCursor match {
           case XmlCursor.Nodes(history, nodes) =>
             nodes.zipWithIndex
               .traverse { case (elem, index) =>
-                memberReader.read(
+                memberReader.decode(
                   XmlCursor
                     .Nodes(history.appendIndex(index), NonEmptyList.one(elem))
                 )
@@ -125,8 +125,8 @@ abstract class XmlSchemaVisitor
     }
     val readers = fields.map(fieldReader(_))
     new XmlDecoder[S] {
-      def read(cursor: XmlCursor): Either[XmlDecodeError, S] =
-        readers.traverse(_.read(cursor)).map(make)
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, S] =
+        readers.traverse(_.decode(cursor)).map(make)
     }
   }
 
@@ -144,11 +144,11 @@ abstract class XmlSchemaVisitor
     }
     val altMap = alternatives.map(altDecoder(_)).toMap[String, XmlDecoder[U]]
     new XmlDecoder[U] {
-      def read(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
         case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
           val xmlName = node.name
           altMap.get(node.name) match {
-            case Some(value) => value.read(s)
+            case Some(value) => value.decode(s)
             case None =>
               Left(
                 XmlDecodeError(history, s"Not a valid alternative: $xmlName")
@@ -174,8 +174,8 @@ abstract class XmlSchemaVisitor
 
   def lazily[A](suspend: Lazy[Schema[A]]): XmlDecoder[A] = new XmlDecoder[A] {
     lazy val underlying: XmlDecoder[A] = suspend.map(compile(_)).value
-    def read(cursor: XmlCursor): Either[XmlDecodeError, A] = {
-      underlying.read(cursor)
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = {
+      underlying.decode(cursor)
     }
   }
 

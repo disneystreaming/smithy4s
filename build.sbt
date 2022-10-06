@@ -51,6 +51,7 @@ lazy val allModules = Seq(
   codegen,
   millCodegenPlugin,
   json,
+  xml,
   example,
   tests,
   http4s,
@@ -587,9 +588,11 @@ lazy val xml = projectMatrix
     core % "test->test;compile->compile",
     scalacheck % "test -> compile"
   )
+  // TODO remove when we start implementing associated AWS protocols
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
   .settings(
     isCE3 := true,
-    isMimaEnabled := true,
+    isMimaEnabled := false,
     libraryDependencies ++= Seq(
       Dependencies.Fs2Data.xml.value,
       Dependencies.Weaver.cats.value % Test

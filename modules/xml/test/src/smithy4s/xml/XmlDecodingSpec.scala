@@ -1,6 +1,6 @@
 package smithy4s.xml
 
-import smithy4s.xml.internals.XmlSchemaVisitor
+import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import smithy4s.xml.internals.XmlCursor
 import weaver._
 import fs2._
@@ -15,62 +15,63 @@ import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy4s.ByteArray
 import smithy4s.Hints
+import smithy4s.ShapeId
 
 object XmlDecodingSpec extends SimpleIOSuite {
 
   test("int") {
     implicit val schema: Schema[Int] = int
     val xml = "<x>1</x>"
-    testDecode(xml, 1)
+    checkContent(xml, 1)
   }
 
   test("string") {
     implicit val schema: Schema[String] = string
     val xml = "<x>foo</x>"
-    testDecode(xml, "foo")
+    checkContent(xml, "foo")
   }
 
   test("boolean") {
     implicit val schema: Schema[Boolean] = boolean
     val xml = "<x>true</x>"
-    testDecode(xml, true)
+    checkContent(xml, true)
   }
 
   test("long") {
     implicit val schema: Schema[Long] = long
     val xml = "<x>1</x>"
-    testDecode(xml, 1L)
+    checkContent(xml, 1L)
   }
 
   test("short") {
     implicit val schema: Schema[Short] = short
     val xml = "<x>1</x>"
-    testDecode(xml, 1.toShort)
+    checkContent(xml, 1.toShort)
   }
 
   test("byte") {
     implicit val schema: Schema[Byte] = byte
     val xml = "<x>99</x>"
-    testDecode(xml, 'c'.toByte)
+    checkContent(xml, 'c'.toByte)
   }
 
   test("double") {
     implicit val schema: Schema[Double] = double
     val xml = "<x>1.1</x>"
-    testDecode(xml, 1.1)
+    checkContent(xml, 1.1)
   }
 
   test("float") {
     implicit val schema: Schema[Float] = float
     val xml = "<x>1.1</x>"
-    testDecode(xml, 1.1f)
+    checkContent(xml, 1.1f)
   }
 
   test("bigint") {
     implicit val schema: Schema[BigInt] = bigint
     val xml =
       "<x>1000000000000000000000000000000000000000000000000000000000000000</x>"
-    testDecode(
+    checkContent(
       xml,
       BigInt("1000000000000000000000000000000000000000000000000000000000000000")
     )
@@ -80,7 +81,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
     implicit val schema: Schema[BigDecimal] = bigdecimal
     val xml =
       "<x>1000000000000000000000000000000000000000000000000000000000000000.1</x>"
-    testDecode(
+    checkContent(
       xml,
       BigDecimal(
         "1000000000000000000000000000000000000000000000000000000000000000.1"
@@ -91,7 +92,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
   test("bytes") {
     implicit val schema: Schema[ByteArray] = bytes
     val xml = "<x>Zm9vYmFy</x>"
-    testDecode(xml, ByteArray("foobar".getBytes()))
+    checkContent(xml, ByteArray("foobar".getBytes()))
   }
 
   test("struct") {
@@ -109,7 +110,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |  <y>y</y>
                  |</Foo>""".stripMargin
 
-    testDecode(xml, Foo("x", Some("y")))
+    checkContent(xml, Foo("x", Some("y")))
   }
 
   test("struct: empty optional") {
@@ -126,7 +127,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |  <x>x</x>
                  |</Foo>""".stripMargin
 
-    testDecode(xml, Foo("x", None))
+    checkContent(xml, Foo("x", None))
   }
 
   test("struct: custom names") {
@@ -144,7 +145,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |  <yy>y</yy>
                  |</Foo>""".stripMargin
 
-    testDecode(xml, Foo("x", Some("y")))
+    checkContent(xml, Foo("x", Some("y")))
   }
 
   test("struct: attributes") {
@@ -159,7 +160,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
 
     val xml = """<Foo x="x" y="y"/>""".stripMargin
 
-    testDecode(xml, Foo("x", Some("y")))
+    checkContent(xml, Foo("x", Some("y")))
   }
 
   test("struct: attributes with custom names") {
@@ -176,7 +177,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
 
     val xml = """<Foo xx="x" yy="y"/>""".stripMargin
 
-    testDecode(xml, Foo("x", Some("y")))
+    checkContent(xml, Foo("x", Some("y")))
   }
 
   test("struct: empty optional attributes") {
@@ -193,7 +194,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
 
     val xml = """<Foo x="x"/>""".stripMargin
 
-    testDecode(xml, Foo("x", None))
+    checkContent(xml, Foo("x", None))
   }
 
   test("list") {
@@ -213,7 +214,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |      <member>3</member>
                  |   </foos>
                  |</Foo>""".stripMargin
-    testDecode(xml, Foo(List(1, 2, 3)))
+    checkContent(xml, Foo(List(1, 2, 3)))
   }
 
   test("list: custom names") {
@@ -233,7 +234,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |      <x>3</x>
                  |   </foos>
                  |</Foo>""".stripMargin
-    testDecode(xml, Foo(List(1, 2, 3)))
+    checkContent(xml, Foo(List(1, 2, 3)))
   }
 
   test("list: flattened") {
@@ -253,7 +254,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |   <foos>3</foos>
                  |</Foo>
                  |""".stripMargin
-    testDecode(xml, Foo(List(1, 2, 3)))
+    checkContent(xml, Foo(List(1, 2, 3)))
   }
 
   test("list: flattened custom names") {
@@ -273,7 +274,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |   <x>3</x>
                  |</Foo>
                  |""".stripMargin
-    testDecode(xml, Foo(List(1, 2, 3)))
+    checkContent(xml, Foo(List(1, 2, 3)))
   }
 
   test("recursion") {
@@ -292,7 +293,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |   </foo>
                  |</Foo>
                  |""".stripMargin
-    testDecode(xml, Foo(Some(Foo(Some(Foo(None))))))
+    checkContent(xml, Foo(Some(Foo(Some(Foo(None))))))
   }
 
   test("union") {
@@ -307,8 +308,8 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
     val xmlLeft = """<left>1</left>"""
     val xmlRight = """<right>"hello"</right>""".stripMargin
-    testDecode[Foo](xmlLeft, Left(1)) <+>
-      testDecode[Foo](xmlRight, Right("hello"))
+    checkContent[Foo](xmlLeft, Left(1)) <+>
+      checkContent[Foo](xmlRight, Right("hello"))
   }
 
   test("union: custom names") {
@@ -323,8 +324,8 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
     val xmlLeft = """<foo>1</foo>"""
     val xmlRight = """<bar>"hello"</bar>""".stripMargin
-    testDecode[Foo](xmlLeft, Left(1)) <+>
-      testDecode[Foo](xmlRight, Right("hello"))
+    checkContent[Foo](xmlLeft, Left(1)) <+>
+      checkContent[Foo](xmlRight, Right("hello"))
   }
 
   test("enumeration") {
@@ -341,8 +342,8 @@ object XmlDecodingSpec extends SimpleIOSuite {
     }
     val xmlFoo = "<x>foo</x>"
     val xmlBar = "<x>bar</x>"
-    testDecode[FooBar](xmlFoo, FooBar.Foo) <+>
-      testDecode[FooBar](xmlBar, FooBar.Bar)
+    checkContent[FooBar](xmlFoo, FooBar.Foo) <+>
+      checkContent[FooBar](xmlBar, FooBar.Bar)
   }
 
   test("map") {
@@ -368,7 +369,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |        </entry>
                  |   </entries>
                  |</Foo>""".stripMargin
-    testDecode(xml, Foo(Map("a" -> 1, "b" -> 2)))
+    checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
   test("map: custom names") {
@@ -394,7 +395,7 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |        </entry>
                  |   </foos>
                  |</Foo>""".stripMargin
-    testDecode(xml, Foo(Map("a" -> 1, "b" -> 2)))
+    checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
   test("map: flattened") {
@@ -421,17 +422,91 @@ object XmlDecodingSpec extends SimpleIOSuite {
                  |        </entry>
                  |   </entries>
                  |</Foo>""".stripMargin
-    testDecode(xml, Foo(Map("a" -> 1, "b" -> 2)))
+    checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
-  def testDecode[A: Schema](xml: String, expected: A)(implicit
+  test("Document decoding") {
+    case class Foo(x: Int)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = int.required[Foo]("x", _.x)
+        struct(x)(Foo.apply)
+      }.withId(ShapeId("foo", "Foo"))
+    }
+
+    val xml = """|<Foo>
+                 |   <x>1</x>
+                 |</Foo>""".stripMargin
+    checkDocument(xml, Foo(1))
+  }
+
+  test("Document decoding: custom name") {
+    case class Foo(x: Int)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = int.required[Foo]("x", _.x)
+        struct(x)(Foo.apply).addHints(XmlName("F"))
+      }
+    }
+
+    val xml = """|<F>
+                 |   <x>1</x>
+                 |</F>""".stripMargin
+    checkDocument(xml, Foo(1))
+  }
+
+  test("Document decoding: failure") {
+    case class Foo(x: Int)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = int.required[Foo]("x", _.x)
+        struct(x)(Foo.apply)
+      }.withId(ShapeId("foo", "Foo"))
+    }
+
+    val xml = """|<Bar>
+                 |   <x>1</x>
+                 |</Bar>""".stripMargin
+    decodeDocument[Foo](xml).attempt.map { result =>
+      expect.same(
+        result,
+        Left(
+          XmlDecodeError(XPath.root, "Expected Foo XML root element, got Bar")
+        )
+      )
+    }
+  }
+
+  def checkContent[A: Schema](xml: String, expected: A)(implicit
       loc: SourceLocation
   ): IO[Expectations] = {
-    decode[A](xml).map(result => expect.same(result, expected))
+    decodeContent[A](xml).map(result => expect.same(result, expected))
   }
 
-  private def decode[A: Schema](xmlString: String): IO[A] = {
-    val decoder = implicitly[Schema[A]].compile(XmlSchemaVisitor)
+  def checkDocument[A: Schema](xml: String, expected: A)(implicit
+      loc: SourceLocation
+  ): IO[Expectations] = {
+    decodeDocument[A](xml).map(result => expect.same(result, expected))
+  }
+
+  // Decode document differs from decode content in that the top-level
+  // tag is checked against the ShapeId
+  private def decodeDocument[A: Schema](xmlString: String): IO[A] = {
+    val decoder = XmlDocument.Decoder.fromSchema(implicitly[Schema[A]])
+    parseDocument(xmlString)
+      .map(decoder.decode(_).leftWiden[Throwable])
+      .flatMap(_.liftTo[IO])
+  }
+
+  private def decodeContent[A: Schema](xmlString: String): IO[A] = {
+    val decoder = implicitly[Schema[A]].compile(XmlDecoderSchemaVisitor)
+    parseDocument(xmlString)
+      .map(XmlCursor.fromDocument)
+      .map(decoder.decode(_).leftWiden[Throwable])
+      .flatMap(_.liftTo[IO])
+  }
+
+  private def parseDocument(xmlString: String): IO[XmlDocument] = {
     Stream
       .emit(xmlString)
       .through(events[IO, String]())
@@ -440,9 +515,6 @@ object XmlDecodingSpec extends SimpleIOSuite {
       .compile
       .last
       .flatMap(_.liftTo[IO](new Throwable("BOOM")))
-      .map(XmlCursor.fromDocument)
-      .map(decoder.read(_).leftWiden[Throwable])
-      .flatMap(_.liftTo[IO])
   }
 
 }

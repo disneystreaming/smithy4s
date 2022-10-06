@@ -7,7 +7,7 @@ import fs2.data.xml.XmlEvent.XmlCharRef
 import fs2.data.xml.XmlEvent.XmlEntityRef
 import fs2.data.xml.XmlEvent.XmlString
 import smithy4s.schema.Schema
-import smithy4s.xml.internals.XmlSchemaVisitor
+import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import smithy4s.xml.internals.XmlCursor
 import smithy.api.XmlName
 
@@ -23,7 +23,7 @@ object XmlDocument {
     def fromSchema[A](schema: Schema[A]): Decoder[A] = {
       val expectedRootName =
         schema.hints.get(XmlName).map(_.value).getOrElse(schema.shapeId.name)
-      val decoder = XmlSchemaVisitor(schema)
+      val decoder = XmlDecoderSchemaVisitor(schema)
       new Decoder[A] {
         def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A] = {
           val rootName = xmlDocument.root.name
@@ -31,11 +31,11 @@ object XmlDocument {
             Left(
               XmlDecodeError(
                 XPath.root,
-                s"Expected $expectedRootName elem, got ${rootName}"
+                s"Expected $expectedRootName XML root element, got ${rootName}"
               )
             )
           } else {
-            decoder.read(XmlCursor.fromDocument(xmlDocument))
+            decoder.decode(XmlCursor.fromDocument(xmlDocument))
           }
         }
       }
