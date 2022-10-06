@@ -44,7 +44,9 @@ object HttpEndpoint {
     "Use `castEither` which returns more information about the error",
     "0.16.3"
   )
-  private[smithy4s] def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
+  // We can't make it private[smithy4s] because it breaks bincompat on Scala 2.12
+  // due to removing a static forwarder.
+  def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
   ): Option[HttpEndpoint[I]] = castEither(endpoint).toOption
 
