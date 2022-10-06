@@ -38,9 +38,9 @@ private[smithy4s] object SmithyResources {
     val smithy4sVersion = BuildInfo.version
     val nsString = namespaces.map(ns => s""""$ns"""").mkString(", ")
     val content = s"""|$$version: "2.0"
-                        |
-                        |metadata smithy4sGenerated = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
-                        |""".stripMargin
+                      |
+                      |metadata smithy4sGenerated = [{smithy4sVersion: "$smithy4sVersion", namespaces: [$nsString]}]
+                      |""".stripMargin
 
     val metadataFile = smithyFolder / "manifest"
 

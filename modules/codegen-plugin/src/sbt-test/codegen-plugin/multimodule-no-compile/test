@@ -1,0 +1,2 @@
+# check if smithy4sCodegen succeeds if another module doesn't compile
+> bar/smithy4sCodegen
