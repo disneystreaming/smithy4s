@@ -23,6 +23,7 @@ import sbt.HashFileInfo
 import sjsonnew._
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
+import sbt.io.Hash
 
 // Json codecs used by SBT's caching constructs
 private[smithy4s] object JsonConverters {
@@ -32,7 +33,21 @@ private[smithy4s] object JsonConverters {
   // changes and invalidate its relevant caches, leading to a call to Smithy4s' code generator.
   implicit val pathFormat: JsonFormat[os.Path] =
     BasicJsonProtocol.projectFormat[os.Path, HashFileInfo](
-      p => FileInfo.hash(p.toIO),
+      p => {
+        if (os.isFile(p)) FileInfo.hash(p.toIO)
+        else
+          // If the path is a directory, we get the hashes of all files
+          // then hash the concatenation of the hash's bytes.
+          FileInfo.hash(
+            p.toIO,
+            Hash(
+              os.walk(p)
+                .map(_.toIO)
+                .map(Hash(_))
+                .foldLeft(Array.emptyByteArray)(_ ++ _)
+            )
+          )
+      },
       hash => os.Path(hash.file)
     )
 
