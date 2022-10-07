@@ -138,11 +138,6 @@ object MimaVersionPlugin extends AutoPlugin {
           )
           .toSet
       }
-    },
-    mimaBinaryIssueFilters +=
-      // this is private[smithy4s]
-      ProblemFilters.exclude[IncompatibleResultTypeProblem](
-        "smithy4s.http4s.package.toHttp4sMethod"
-      )
+    }
   )
 }

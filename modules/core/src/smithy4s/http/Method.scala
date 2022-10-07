@@ -16,7 +16,7 @@
 
 package smithy4s.http
 
-sealed trait HttpMethod {
+sealed trait HttpMethod extends Product with Serializable {
   def showUppercase = this match {
     case HttpMethod.PUT          => "PUT"
     case HttpMethod.POST         => "POST"
@@ -44,13 +44,8 @@ object HttpMethod {
   case object PATCH extends HttpMethod
   case class OTHER(value: String) extends HttpMethod
 
-  val values = List(PUT, POST, DELETE, GET, PATCH)
-
-  @deprecated(
-    "Use fromStringOrDefault. This method will be removed in a future release.",
-    "0.16.3"
-  )
-  def fromString(s: String): Option[HttpMethod] = fromStringOption(s)
+  val values: List[HttpMethod] =
+    List(PUT, POST, DELETE, GET, PATCH)
 
   def fromStringOrDefault(s: String): HttpMethod =
     fromStringOption(s).getOrElse(OTHER(s.toUpperCase))

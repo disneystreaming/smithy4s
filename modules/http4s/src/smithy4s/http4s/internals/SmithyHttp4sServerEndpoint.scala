@@ -37,7 +37,7 @@ import smithy4s.schema.Alt
   * A construct that encapsulates a smithy4s endpoint, and exposes
   * http4s specific semantics.
   */
-private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
+private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
   def matches(path: Array[String]): Option[PathParams]
   def run(pathParams: PathParams, request: Request[F]): F[Response[F]]
@@ -48,7 +48,7 @@ private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
     matches(path).map(this -> _)
 }
 
-private[smithy4s] object SmithyHttp4sServerEndpoint {
+private[http4s] object SmithyHttp4sServerEndpoint {
 
   def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: Interpreter[Op, F],
@@ -59,7 +59,7 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
     HttpEndpoint.HttpEndpointError,
     SmithyHttp4sServerEndpoint[F]
   ] =
-    HttpEndpoint.castEither(endpoint).flatMap { httpEndpoint =>
+    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
       toHttp4sMethod(httpEndpoint.method)
         .leftMap { e =>
           HttpEndpoint.HttpEndpointError(
@@ -81,7 +81,7 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
     impl: Interpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     val method: Method,

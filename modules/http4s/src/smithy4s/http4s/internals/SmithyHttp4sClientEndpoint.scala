@@ -33,12 +33,12 @@ import smithy4s.schema.SchemaAlt
   * client into a high-level, domain specific function.
   */
 // format: off
-private[smithy4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
+private[http4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
   def send(input: I): F[O]
 }
 // format: on
 
-private[smithy4s] object SmithyHttp4sClientEndpoint {
+private[http4s] object SmithyHttp4sClientEndpoint {
 
   def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       baseUri: Uri,
@@ -50,7 +50,7 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
     SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
   ] =
     HttpEndpoint
-      .castEither(endpoint)
+      .cast(endpoint)
       .flatMap { httpEndpoint =>
         toHttp4sMethod(httpEndpoint.method)
           .leftMap { e =>
@@ -73,7 +73,7 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
                                                                                                   baseUri: Uri,
                                                                                                   method: org.http4s.Method,
                                                                                                   client: Client[F],

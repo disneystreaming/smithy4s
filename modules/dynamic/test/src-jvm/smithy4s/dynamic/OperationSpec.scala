@@ -94,7 +94,7 @@ class OperationSpec() extends munit.FunSuite {
         val compiled = DynamicSchemaIndex.load(model)
 
         val endpoints = compiled.allServices.head.service.endpoints
-        val httpEndpoints = endpoints.map(HttpEndpoint.castEither(_))
+        val httpEndpoints = endpoints.map(HttpEndpoint.cast(_))
 
         expect(
           httpEndpoints.forall(_.isRight)
