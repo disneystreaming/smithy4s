@@ -18,6 +18,7 @@ package smithy4s.xml
 package internals
 
 import XmlDocument.XmlElem
+import XmlDocument.XmlQName
 import cats.data.NonEmptyList
 
 /**
@@ -30,8 +31,8 @@ import cats.data.NonEmptyList
 
 private[smithy4s] sealed trait XmlCursor {
   def history: XPath
-  def down(tag: String): XmlCursor
-  def attr(name: String): XmlCursor
+  def down(tag: XmlQName): XmlCursor
+  def attr(name: XmlQName): XmlCursor
 }
 
 private[smithy4s] object XmlCursor {
@@ -43,7 +44,7 @@ private[smithy4s] object XmlCursor {
       nodes: NonEmptyList[XmlDocument.XmlElem]
   ) extends XmlCursor {
     def isSingle: Boolean = nodes.tail.isEmpty
-    def down(tag: String): XmlCursor = if (isSingle) {
+    def down(tag: XmlQName): XmlCursor = if (isSingle) {
       val newHistory = history.appendTag(tag)
       val node = nodes.head
       val allNodes = node.children.collect { case e @ XmlElem(`tag`, _, _) =>
@@ -55,7 +56,7 @@ private[smithy4s] object XmlCursor {
       }
     } else FailedNode(history.appendTag(tag))
 
-    def attr(name: String): XmlCursor = if (isSingle) {
+    def attr(name: XmlQName): XmlCursor = if (isSingle) {
       val node = nodes.head
       val newHistory = history.appendAttr(name)
       val allValues = node.attributes.collect {
@@ -70,15 +71,15 @@ private[smithy4s] object XmlCursor {
   }
   case class AttrNode(history: XPath, values: NonEmptyList[String])
       extends XmlCursor {
-    def down(tag: String): XmlCursor = FailedNode(history.appendTag(tag))
-    def attr(name: String): XmlCursor = FailedNode(history.appendAttr(name))
+    def down(tag: XmlQName): XmlCursor = FailedNode(history.appendTag(tag))
+    def attr(name: XmlQName): XmlCursor = FailedNode(history.appendAttr(name))
   }
   case class NoNode(history: XPath) extends XmlCursor {
-    def down(tag: String): XmlCursor = FailedNode(history.appendTag(tag))
-    def attr(name: String): XmlCursor = FailedNode(history.appendAttr(name))
+    def down(tag: XmlQName): XmlCursor = FailedNode(history.appendTag(tag))
+    def attr(name: XmlQName): XmlCursor = FailedNode(history.appendAttr(name))
   }
   case class FailedNode(history: XPath) extends XmlCursor {
-    def down(tag: String): XmlCursor = this
-    def attr(name: String): XmlCursor = this
+    def down(tag: XmlQName): XmlCursor = this
+    def attr(name: XmlQName): XmlCursor = this
   }
 }

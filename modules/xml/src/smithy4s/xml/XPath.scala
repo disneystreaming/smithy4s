@@ -18,6 +18,7 @@ package smithy4s.xml
 import smithy4s.xml.XPath.Segment.Index
 import smithy4s.xml.XPath.Segment.Tag
 import smithy4s.xml.XPath.Segment.Attr
+import smithy4s.xml.XmlDocument.XmlQName
 
 /**
   * Represents a path in the XML payload. Segments can be either tags, indexes (when dealing with collections), or attributes.
@@ -30,10 +31,10 @@ case class XPath(reversedSegments: List[XPath.Segment]) {
   def appendIndex(index: Int): XPath = XPath(
     XPath.Segment.Index(index) :: reversedSegments
   )
-  def appendTag(tag: String): XPath = XPath(
+  def appendTag(tag: XmlQName): XPath = XPath(
     XPath.Segment.Tag(tag) :: reversedSegments
   )
-  def appendAttr(name: String): XPath = XPath(
+  def appendAttr(name: XmlQName): XPath = XPath(
     XPath.Segment.Attr(name) :: reversedSegments
   )
 }
@@ -41,19 +42,19 @@ case class XPath(reversedSegments: List[XPath.Segment]) {
 object XPath {
   val root = XPath(List.empty)
 
-  def attr(name: String): XPath = XPath(List(XPath.Segment.Attr(name)))
+  def attr(name: XmlQName): XPath = XPath(List(XPath.Segment.Attr(name)))
 
   sealed trait Segment {
     def render: String = this match {
       case Index(index) => s"[index:$index]"
-      case Tag(tag)     => tag
-      case Attr(attr)   => s"attr:$attr"
+      case Tag(tag)     => tag.render
+      case Attr(attr)   => s"attr:${attr.render}"
     }
   }
   object Segment {
     final case class Index(index: Int) extends Segment
-    final case class Tag(tag: String) extends Segment
-    final case class Attr(attr: String) extends Segment
+    final case class Tag(tag: XmlQName) extends Segment
+    final case class Attr(attr: XmlQName) extends Segment
   }
 
 }

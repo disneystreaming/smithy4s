@@ -26,6 +26,7 @@ import smithy4s.schema.Schema
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import smithy4s.xml.internals.XmlCursor
 import smithy.api.XmlName
+import smithy4s.ShapeId
 
 /**
   * A XmlDocument is an atomic piece of xml data that contains only one
@@ -48,9 +49,32 @@ object XmlDocument {
   // format: off
   sealed trait XmlContent
   case class XmlText(text: String)                                                       extends XmlContent
-  case class XmlElem(name: String, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
-  case class XmlAttr(name: String, value: List[XmlText])
+  case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
+  case class XmlAttr(name: XmlQName, value: List[XmlText])
+  case class XmlQName(prefix: Option[String], name: String) {
+    override def toString : String = render
+    def render: String = prefix match {
+      case None => name
+      case Some(p) => p + ":" + name
+    }
+  }
   // format: on
+
+  object XmlQName {
+    def parse(string: String): XmlQName = {
+      string.lastIndexOf(':') match {
+        case -1 => XmlQName(None, string)
+        case index =>
+          val prefix = string.slice(0, index)
+          val name = string.slice(index + 1, string.length())
+          XmlQName(Some(prefix), name)
+      }
+    }
+
+    def fromShapeId(shapeId: ShapeId): XmlQName = {
+      XmlQName(None, shapeId.name)
+    }
+  }
 
   /**
     * A Decoder aims at decoding documents. As such, it is not meant to be a compositional construct, because
@@ -62,8 +86,12 @@ object XmlDocument {
 
   object Decoder {
     def fromSchema[A](schema: Schema[A]): Decoder[A] = {
-      val expectedRootName =
-        schema.hints.get(XmlName).map(_.value).getOrElse(schema.shapeId.name)
+      val expectedRootName: XmlQName =
+        schema.hints
+          .get(XmlName)
+          .map(_.value)
+          .map(XmlQName.parse)
+          .getOrElse(XmlQName.fromShapeId(schema.shapeId))
       val decoder = XmlDecoderSchemaVisitor(schema)
       new Decoder[A] {
         def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A] = {
@@ -72,7 +100,7 @@ object XmlDocument {
             Left(
               XmlDecodeError(
                 XPath.root,
-                s"Expected $expectedRootName XML root element, got ${rootName}"
+                s"Expected ${expectedRootName} XML root element, got ${rootName}"
               )
             )
           } else {
@@ -114,9 +142,9 @@ object XmlDocument {
           val values = attr.value.collect { case XmlString(text, _) =>
             XmlText(text)
           }
-          XmlAttr(attr.name.local, values)
+          XmlAttr(XmlQName(attr.name.prefix, attr.name.local), values)
         }
-        Some(XmlDocument.XmlElem(name.local, xmlAttrs, filtered))
+        Some(XmlDocument.XmlElem(qname(name), xmlAttrs, filtered))
       }
 
       def makePI(target: String, content: String): Misc = None
@@ -130,6 +158,9 @@ object XmlDocument {
           root: Elem,
           postlog: List[Misc]
       ): XmlDocument = XmlDocument(root.get)
+
+      private def qname(name: QName): XmlQName =
+        XmlQName(name.prefix, name.local)
 
     }
 

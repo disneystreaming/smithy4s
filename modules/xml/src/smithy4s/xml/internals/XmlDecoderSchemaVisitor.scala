@@ -26,6 +26,7 @@ import smithy.api.XmlAttribute
 import cats.syntax.all._
 import smithy4s.internals.SchemaDescription
 import cats.data.NonEmptyList
+import XmlDocument.XmlQName
 
 private[smithy4s] object XmlDecoderSchemaVisitor extends XmlDecoderSchemaVisitor
 
@@ -50,7 +51,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       tag: CollectionTag[C],
       member: Schema[A]
   ): XmlDecoder[C[A]] = {
-    val xmlName = member.hints.get(XmlName).map(_.value).getOrElse("member")
+    val xmlName = getXmlName(member.hints, "member")
     val isFlattened = hints.has(XmlFlattened)
     val memberReader = compile(member)
     new XmlDecoder[C[A]] {
@@ -118,8 +119,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   ): XmlDecoder[S] = {
     def fieldReader[A](field: SchemaField[S, A]): XmlDecoder[A] = {
       val isAttribute = field.instance.hints.has(XmlAttribute)
-      val xmlName =
-        field.instance.hints.get(XmlName).map(_.value).getOrElse(field.label)
+      val xmlName = getXmlName(field.hints, field.label)
       field
         .foldK(new Field.FolderK[Schema, S, XmlDecoder] {
           def onRequired[AA](
@@ -153,13 +153,12 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): XmlDecoder[U] = {
-    def altDecoder[A](alt: SchemaAlt[U, A]): (String, XmlDecoder[U]) = {
-      val xmlName =
-        alt.instance.hints.get(XmlName).map(_.value).getOrElse(alt.label)
+    def altDecoder[A](alt: SchemaAlt[U, A]): (XmlQName, XmlDecoder[U]) = {
+      val xmlName = getXmlName(alt.hints, alt.label)
       val decoder = compile(alt.instance).map(alt.inject)
       (xmlName, decoder)
     }
-    val altMap = alternatives.map(altDecoder(_)).toMap[String, XmlDecoder[U]]
+    val altMap = alternatives.map(altDecoder(_)).toMap[XmlQName, XmlDecoder[U]]
     new XmlDecoder[U] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
         case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
@@ -195,5 +194,12 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       underlying.decode(cursor)
     }
   }
+
+  private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
+    hints
+      .get(XmlName)
+      .map(_.value)
+      .map(XmlQName.parse)
+      .getOrElse(XmlQName(None, default))
 
 }

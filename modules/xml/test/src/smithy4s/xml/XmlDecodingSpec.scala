@@ -151,14 +151,14 @@ object XmlDecodingSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val x = string.required[Foo]("x", _.x).addHints(XmlName("xx"))
-        val y = string.optional[Foo]("y", _.y).addHints(XmlName("yy"))
+        val y = string.optional[Foo]("y", _.y).addHints(XmlName("y:y"))
         struct(x, y)(Foo.apply)
       }
     }
 
     val xml = """|<Foo>
                  |  <xx>x</xx>
-                 |  <yy>y</yy>
+                 |  <y:y>y</y:y>
                  |</Foo>""".stripMargin
 
     checkContent(xml, Foo("x", Some("y")))

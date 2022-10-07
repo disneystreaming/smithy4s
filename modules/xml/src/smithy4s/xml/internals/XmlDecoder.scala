@@ -18,6 +18,7 @@ package smithy4s.xml
 package internals
 
 import smithy4s.xml.XmlDocument
+import smithy4s.xml.XmlDocument.XmlQName
 import smithy4s.xml.internals.XmlCursor.Nodes
 import smithy4s.xml.internals.XmlCursor.NoNode
 import smithy4s.xml.internals.XmlCursor.FailedNode
@@ -51,11 +52,11 @@ private[smithy4s] trait XmlDecoder[A] { self =>
           }
         }
     }
-  final def down(tag: String): XmlDecoder[A] = new XmlDecoder[A] {
+  final def down(tag: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
       self.decode(cursor.down(tag))
   }
-  final def attribute(attr: String): XmlDecoder[A] = new XmlDecoder[A] {
+  final def attribute(attr: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
       self.decode(cursor.attr(attr))
   }
