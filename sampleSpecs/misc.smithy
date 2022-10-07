@@ -108,3 +108,7 @@ structure RangeCheck {
   @range(min: 1)
   qty: Integer
 }
+
+// face with sunglasses emoji
+@pattern("^\\uD83D\\uDE0E$")
+string UnicodeRegexString
