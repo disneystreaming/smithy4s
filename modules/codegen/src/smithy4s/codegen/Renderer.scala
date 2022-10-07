@@ -949,7 +949,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Uuid => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => { raw =>
         import scala.reflect.runtime.universe._
-        line"${Literal(Constant(raw)).toString()}"
+        line"${Literal(Constant(raw)).toString().replace("\\\\u", "\\u")}"
       }
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
