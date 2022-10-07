@@ -1,5 +1,4 @@
 package smithy4s
-import smithy4s.Document
 import smithy4s.example._
 
 class PatternSpec extends munit.FunSuite {
