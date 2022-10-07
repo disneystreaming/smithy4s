@@ -50,23 +50,6 @@ private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
 
 private[smithy4s] object SmithyHttp4sServerEndpoint {
 
-  @deprecated("Use `make`", "0.16.3")
-  private[smithy4s] def apply[
-      F[_]: EffectCompat,
-      Op[_, _, _, _, _],
-      I,
-      E,
-      O,
-      SI,
-      SO
-  ](
-      impl: Interpreter[Op, F],
-      endpoint: Endpoint[Op, I, E, O, SI, SO],
-      codecs: EntityCompiler[F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]]
-  ): Option[SmithyHttp4sServerEndpoint[F]] =
-    make(impl, endpoint, codecs, errorTransformation).toOption
-
   def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: Interpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
