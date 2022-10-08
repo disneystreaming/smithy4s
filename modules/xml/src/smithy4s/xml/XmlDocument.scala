@@ -24,9 +24,14 @@ import fs2.data.xml.XmlEvent.XmlEntityRef
 import fs2.data.xml.XmlEvent.XmlString
 import smithy4s.schema.Schema
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
+import smithy4s.xml.internals.XmlEncoderSchemaVisitor
 import smithy4s.xml.internals.XmlCursor
 import smithy.api.XmlName
 import smithy4s.ShapeId
+import fs2.data.xml.dom.DocumentEventifier
+import fs2.Pure
+import fs2.Stream
+import cats.syntax.all._
 
 /**
   * A XmlDocument is an atomic piece of xml data that contains only one
@@ -47,11 +52,11 @@ object XmlDocument {
     * ADT are produced
     */
   // format: off
-  sealed trait XmlContent
-  case class XmlText(text: String)                                                       extends XmlContent
-  case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
-  case class XmlAttr(name: XmlQName, value: List[XmlText])
-  case class XmlQName(prefix: Option[String], name: String) {
+  sealed trait XmlContent extends Product with Serializable
+  final case class XmlText(text: String)                                                       extends XmlContent
+  final case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
+  final case class XmlAttr(name: XmlQName, value: List[XmlText]) extends XmlContent
+  final case class XmlQName(prefix: Option[String], name: String) {
     override def toString : String = render
     def render: String = prefix match {
       case None => name
@@ -76,6 +81,14 @@ object XmlDocument {
     }
   }
 
+  private def getRootName[A](schema: Schema[A]): XmlQName = {
+    schema.hints
+      .get(XmlName)
+      .map(_.value)
+      .map(XmlQName.parse)
+      .getOrElse(XmlQName.fromShapeId(schema.shapeId))
+  }
+
   /**
     * A Decoder aims at decoding documents. As such, it is not meant to be a compositional construct, because
     * documents cannot be nested under other documents. This aims at decoding top-level XML payloads.
@@ -86,12 +99,7 @@ object XmlDocument {
 
   object Decoder {
     def fromSchema[A](schema: Schema[A]): Decoder[A] = {
-      val expectedRootName: XmlQName =
-        schema.hints
-          .get(XmlName)
-          .map(_.value)
-          .map(XmlQName.parse)
-          .getOrElse(XmlQName.fromShapeId(schema.shapeId))
+      val expectedRootName: XmlQName = getRootName(schema)
       val decoder = XmlDecoderSchemaVisitor(schema)
       new Decoder[A] {
         def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A] = {
@@ -105,6 +113,41 @@ object XmlDocument {
             )
           } else {
             decoder.decode(XmlCursor.fromDocument(xmlDocument))
+          }
+        }
+      }
+    }
+  }
+
+  trait Encoder[A] {
+    def encode(value: A): XmlDocument
+  }
+  object Encoder {
+    def fromSchema[A](schema: Schema[A]): Encoder[A] = {
+      val rootName: XmlQName = getRootName(schema)
+      val xmlEncoder = XmlEncoderSchemaVisitor(schema)
+      if (xmlEncoder.encodesUnion) {
+        // The union encoder should always return a single XML element
+        new Encoder[A] {
+          def encode(value: A): XmlDocument = {
+            xmlEncoder
+              .encode(value)
+              .collectFirst { case elem @ XmlElem(_, _, _) =>
+                elem
+              }
+              .map(XmlDocument(_))
+              .getOrElse(XmlDocument(XmlElem(rootName, Nil, Nil)))
+          }
+        }
+      } else {
+        new Encoder[A] {
+          def encode(value: A): XmlDocument = {
+            val (attributes, children) =
+              xmlEncoder.encode(value).partitionEither {
+                case attr @ XmlAttr(_, _) => Left(attr)
+                case other                => Right(other)
+              }
+            XmlDocument(XmlElem(rootName, attributes, children))
           }
         }
       }
@@ -163,5 +206,36 @@ object XmlDocument {
         XmlQName(name.prefix, name.local)
 
     }
+
+  implicit val documentEventifier = new DocumentEventifier[XmlDocument] {
+    def eventify(node: XmlDocument): Stream[Pure, XmlEvent] = {
+      Stream(XmlEvent.StartDocument) ++
+        eventifyContent(node.root) ++
+        Stream(XmlEvent.EndDocument)
+    }
+    def eventifyContent(xmlContent: XmlContent): Stream[Pure, XmlEvent] =
+      xmlContent match {
+        case XmlText(text) =>
+          Stream(XmlEvent.XmlString(text, isCDATA = false))
+        case XmlElem(name, attributes, children) =>
+          val qName = toQName(name)
+          val attr: List[Attr] = attributes.map(toAttr)
+          if (children.isEmpty) {
+            Stream(XmlEvent.StartTag(qName, attr, isEmpty = true))
+          } else {
+            Stream(XmlEvent.StartTag(qName, attr, isEmpty = false)) ++
+              children.foldMap(eventifyContent) ++
+              Stream(XmlEvent.EndTag(qName))
+          }
+        case XmlAttr(_, _) => Stream.empty
+      }
+
+    private def toAttr(attr: XmlAttr): Attr = Attr(
+      toQName(attr.name),
+      attr.value.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
+    )
+
+    private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
+  }
 
 }

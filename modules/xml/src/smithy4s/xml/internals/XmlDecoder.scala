@@ -25,6 +25,7 @@ import smithy4s.xml.internals.XmlCursor.FailedNode
 import smithy4s.xml.internals.XmlCursor.AttrNode
 import smithy4s.ConstraintError
 import cats.data.NonEmptyList
+import cats.syntax.all._
 
 /**
   * This constructs allow for decoding XML data. It is not limited to top-level
@@ -39,11 +40,21 @@ import cats.data.NonEmptyList
 private[smithy4s] trait XmlDecoder[A] { self =>
   def decode(cursor: XmlCursor): Either[XmlDecodeError, A]
   final def map[B](f: A => B): XmlDecoder[B] = new XmlDecoder[B] {
+    override def down(name: XmlQName): XmlDecoder[B] = self.down(name).map(f)
+    override def attribute(name: XmlQName): XmlDecoder[B] =
+      self.attribute(name).map(f)
+    override def optional: XmlDecoder[Option[B]] =
+      self.optional.map[Option[B]](_.map(f))
     def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
       self.decode(cursor).map(f)
   }
   final def emap[B](f: A => Either[ConstraintError, B]): XmlDecoder[B] =
     new XmlDecoder[B] {
+      override def down(name: XmlQName): XmlDecoder[B] = self.down(name).emap(f)
+      override def attribute(name: XmlQName): XmlDecoder[B] =
+        self.attribute(name).emap(f)
+      override def optional: XmlDecoder[Option[B]] =
+        self.optional.emap[Option[B]](_.traverse(f))
       def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
         self.decode(cursor).flatMap {
           f(_) match {
@@ -52,15 +63,15 @@ private[smithy4s] trait XmlDecoder[A] { self =>
           }
         }
     }
-  final def down(tag: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
+  def down(tag: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
       self.decode(cursor.down(tag))
   }
-  final def attribute(attr: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
+  def attribute(attr: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
       self.decode(cursor.attr(attr))
   }
-  final def optional: XmlDecoder[Option[A]] = new XmlDecoder[Option[A]] {
+  def optional: XmlDecoder[Option[A]] = new XmlDecoder[Option[A]] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] = {
       cursor match {
         case NoNode(_) => Right(None)
