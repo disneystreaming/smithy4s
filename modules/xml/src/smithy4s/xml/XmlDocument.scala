@@ -16,22 +16,23 @@
 
 package smithy4s.xml
 
-import fs2.data.xml.dom.DocumentBuilder
-import fs2.data.xml.{Attr, QName}
+import cats.syntax.all._
+import fs2.Pure
+import fs2.Stream
+import fs2.data.xml.Attr
+import fs2.data.xml.QName
 import fs2.data.xml.XmlEvent
 import fs2.data.xml.XmlEvent.XmlCharRef
 import fs2.data.xml.XmlEvent.XmlEntityRef
 import fs2.data.xml.XmlEvent.XmlString
-import smithy4s.schema.Schema
-import smithy4s.xml.internals.XmlDecoderSchemaVisitor
-import smithy4s.xml.internals.XmlEncoderSchemaVisitor
-import smithy4s.xml.internals.XmlCursor
+import fs2.data.xml.dom.DocumentBuilder
+import fs2.data.xml.dom.DocumentEventifier
 import smithy.api.XmlName
 import smithy4s.ShapeId
-import fs2.data.xml.dom.DocumentEventifier
-import fs2.Pure
-import fs2.Stream
-import cats.syntax.all._
+import smithy4s.schema.Schema
+import smithy4s.xml.internals.XmlCursor
+import smithy4s.xml.internals.XmlDecoderSchemaVisitor
+import smithy4s.xml.internals.XmlEncoderSchemaVisitor
 
 /**
   * A XmlDocument is an atomic piece of xml data that contains only one

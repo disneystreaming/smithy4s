@@ -17,14 +17,15 @@
 package smithy4s.xml
 package internals
 
-import smithy4s.schema._
-import smithy4s.{Schema => _, _}
-import smithy.api.XmlName
-import XmlDocument._
-import smithy.api.XmlAttribute
 import cats.MonoidK
 import cats.syntax.all._
+import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
+import smithy.api.XmlName
+import smithy4s.schema._
+import smithy4s.{Schema => _, _}
+
+import XmlDocument._
 
 private[smithy4s] object XmlEncoderSchemaVisitor extends XmlEncoderSchemaVisitor
 

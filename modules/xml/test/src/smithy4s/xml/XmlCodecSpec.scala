@@ -16,22 +16,23 @@
 
 package smithy4s.xml
 
-import smithy4s.xml.internals.XmlDecoderSchemaVisitor
-import smithy4s.xml.internals.XmlCursor
-import weaver._
+import cats.effect.IO
+import cats.syntax.all._
 import fs2._
 import fs2.data.xml._
 import fs2.data.xml.dom._
-import smithy4s.schema.Schema
-import cats.effect.IO
-import cats.syntax.all._
-import smithy4s.schema.Schema._
-import smithy.api.XmlName
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
+import smithy.api.XmlName
 import smithy4s.ByteArray
 import smithy4s.Hints
 import smithy4s.ShapeId
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema._
+import smithy4s.xml.internals.XmlCursor
+import smithy4s.xml.internals.XmlDecoderSchemaVisitor
+import weaver._
+
 import scala.reflect.ClassTag
 
 object XmlCodecSpec extends SimpleIOSuite {
@@ -522,13 +523,10 @@ object XmlCodecSpec extends SimpleIOSuite {
             .mkString("")
       }
 
-      val encodingChecks =
-        try {
-          val encoded = encodeDocument(expected)
-          IO(expect.same(encoded, document))
-        } catch {
-          case _: Throwable => IO(failure("oops"))
-        }
+      val encodingChecks = {
+        val encoded = encodeDocument(expected)
+        IO(expect.same(encoded, document))
+      }
 
       (decodingChecks |+| encodingChecks)
     }

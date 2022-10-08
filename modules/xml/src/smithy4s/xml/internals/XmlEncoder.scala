@@ -17,25 +17,23 @@
 package smithy4s.xml
 package internals
 
-import cats.syntax.all._
-
-import smithy4s.xml.XmlDocument.XmlContent
-import smithy4s.xml.XmlDocument.XmlQName
-import smithy4s.xml.XmlDocument.XmlElem
-import smithy4s.xml.XmlDocument.XmlText
-import smithy4s.xml.XmlDocument.XmlAttr
 import cats.MonoidK
+import cats.syntax.all._
 import smithy4s.capability.EncoderK
+import smithy4s.xml.XmlDocument.XmlAttr
+import smithy4s.xml.XmlDocument.XmlContent
+import smithy4s.xml.XmlDocument.XmlElem
+import smithy4s.xml.XmlDocument.XmlQName
+import smithy4s.xml.XmlDocument.XmlText
 
 /**
-  * This constructs allow for decoding XML data. It is not limited to top-level
-  * documents, and works against XmlCursor. Smithy4s does not have vocation to be
-  * a general-purpose XML library, so we keep this as a private implementation detail
-  * that should never be used directly.
+  * This constructs allow for encoding XML data. It is not limited to top-level
+  * documents, and works by returning a list of XmlContent, that can be nested under
+  * other elements.
   *
-  * It exposes simple combinators that allow to indicate that the decoding should happen
-  * further down the cursor, or enable the prevention of failure when decoding an absence
-  * of node (which is the case for optional data).
+  * It exposes simple combinators that allow to indicate that the encoding should happen
+  * further down under an element, or that the decoding should return nothing when dealing
+  * with the absence of data (which maybe be the case for optional data)
   */
 private[smithy4s] trait XmlEncoder[-A] { self =>
   def encode(value: A): List[XmlContent]

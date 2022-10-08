@@ -17,15 +17,15 @@
 package smithy4s.xml
 package internals
 
-import smithy4s.xml.XmlDocument
-import smithy4s.xml.XmlDocument.XmlQName
-import smithy4s.xml.internals.XmlCursor.Nodes
-import smithy4s.xml.internals.XmlCursor.NoNode
-import smithy4s.xml.internals.XmlCursor.FailedNode
-import smithy4s.xml.internals.XmlCursor.AttrNode
-import smithy4s.ConstraintError
 import cats.data.NonEmptyList
 import cats.syntax.all._
+import smithy4s.ConstraintError
+import smithy4s.xml.XmlDocument
+import smithy4s.xml.XmlDocument.XmlQName
+import smithy4s.xml.internals.XmlCursor.AttrNode
+import smithy4s.xml.internals.XmlCursor.FailedNode
+import smithy4s.xml.internals.XmlCursor.NoNode
+import smithy4s.xml.internals.XmlCursor.Nodes
 
 /**
   * This constructs allow for decoding XML data. It is not limited to top-level

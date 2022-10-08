@@ -17,9 +17,10 @@
 package smithy4s.xml
 package internals
 
+import cats.data.NonEmptyList
+
 import XmlDocument.XmlElem
 import XmlDocument.XmlQName
-import cats.data.NonEmptyList
 
 /**
   * This construct is an internal implementation-detail used for decoding XML payloads.
