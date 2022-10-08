@@ -40,9 +40,7 @@ object XmlCodecSpec extends SimpleIOSuite {
   implicit class SchemaOps[A](schema: Schema[A]) {
     def named(name: String) = schema.withId(ShapeId("default", name))
     def x = named("x")
-    def n(implicit ct: ClassTag[A]) = named(
-      ct.runtimeClass.getSimpleName.split('$')(0)
-    )
+    def n = named("Foo")
   }
 
   test("int") {
@@ -89,8 +87,14 @@ object XmlCodecSpec extends SimpleIOSuite {
 
   test("float") {
     implicit val schema: Schema[Float] = float.x
-    val xml = "<x>1.1</x>"
-    checkContent(xml, 1.1f)
+    if (!Platform.isJS) {
+      val xml = "<x>1.1</x>"
+      checkContent(xml, 1.1f)
+    } else {
+      // 1.1f prints 1.100000023841858 in JS
+      val xml = "<x>1</x>"
+      checkContent(xml, 1.0f)
+    }
   }
 
   test("bigint") {

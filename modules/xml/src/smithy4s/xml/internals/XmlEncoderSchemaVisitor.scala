@@ -26,6 +26,7 @@ import smithy4s.schema._
 import smithy4s.{Schema => _, _}
 
 import XmlDocument._
+import cats.kernel.Monoid
 
 private[smithy4s] object XmlEncoderSchemaVisitor extends XmlEncoderSchemaVisitor
 
@@ -78,7 +79,7 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
         })
       encoder.contramap(field.get)
     }
-    implicit val monoid = MonoidK[XmlEncoder].algebra[S]
+    implicit val monoid: Monoid[XmlEncoder[S]] = MonoidK[XmlEncoder].algebra[S]
     fields.map(fieldEncoder(_)).combineAll
   }
 

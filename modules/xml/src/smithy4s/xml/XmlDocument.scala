@@ -208,35 +208,36 @@ object XmlDocument {
 
     }
 
-  implicit val documentEventifier = new DocumentEventifier[XmlDocument] {
-    def eventify(node: XmlDocument): Stream[Pure, XmlEvent] = {
-      Stream(XmlEvent.StartDocument) ++
-        eventifyContent(node.root) ++
-        Stream(XmlEvent.EndDocument)
-    }
-    def eventifyContent(xmlContent: XmlContent): Stream[Pure, XmlEvent] =
-      xmlContent match {
-        case XmlText(text) =>
-          Stream(XmlEvent.XmlString(text, isCDATA = false))
-        case XmlElem(name, attributes, children) =>
-          val qName = toQName(name)
-          val attr: List[Attr] = attributes.map(toAttr)
-          if (children.isEmpty) {
-            Stream(XmlEvent.StartTag(qName, attr, isEmpty = true))
-          } else {
-            Stream(XmlEvent.StartTag(qName, attr, isEmpty = false)) ++
-              children.foldMap(eventifyContent) ++
-              Stream(XmlEvent.EndTag(qName))
-          }
-        case XmlAttr(_, _) => Stream.empty
+  implicit val documentEventifier: DocumentEventifier[XmlDocument] =
+    new DocumentEventifier[XmlDocument] {
+      def eventify(node: XmlDocument): Stream[Pure, XmlEvent] = {
+        Stream(XmlEvent.StartDocument) ++
+          eventifyContent(node.root) ++
+          Stream(XmlEvent.EndDocument)
       }
+      def eventifyContent(xmlContent: XmlContent): Stream[Pure, XmlEvent] =
+        xmlContent match {
+          case XmlText(text) =>
+            Stream(XmlEvent.XmlString(text, isCDATA = false))
+          case XmlElem(name, attributes, children) =>
+            val qName = toQName(name)
+            val attr: List[Attr] = attributes.map(toAttr)
+            if (children.isEmpty) {
+              Stream(XmlEvent.StartTag(qName, attr, isEmpty = true))
+            } else {
+              Stream(XmlEvent.StartTag(qName, attr, isEmpty = false)) ++
+                children.foldMap(eventifyContent) ++
+                Stream(XmlEvent.EndTag(qName))
+            }
+          case XmlAttr(_, _) => Stream.empty
+        }
 
-    private def toAttr(attr: XmlAttr): Attr = Attr(
-      toQName(attr.name),
-      attr.value.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
-    )
+      private def toAttr(attr: XmlAttr): Attr = Attr(
+        toQName(attr.name),
+        attr.value.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
+      )
 
-    private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
-  }
+      private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
+    }
 
 }
