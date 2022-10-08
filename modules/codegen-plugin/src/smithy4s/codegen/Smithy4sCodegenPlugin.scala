@@ -63,6 +63,16 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Sets whether this project should be used as a Smithy library by packaging the Smithy specs in the resulting jar"
       )
 
+    val smithy4sLocalJars =
+      taskKey[Seq[File]](
+        List(
+          "List of jars for local dependencies that should be used as sources of Smithy specs.",
+          "Namespaces that were used for code generation in the upstream dependencies will be excluded from code generation in this project.",
+          "By default, this includes the jars produced by packaging your project's build dependencies, so they'll need to be compiled for the codegen task to run.",
+          "You can clear this (set to an empty list) if your Smithy specs don't have dependencies on other module."
+        ).mkString(" ")
+      )
+
     val Smithy4s =
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
@@ -93,13 +103,16 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
+    config / smithy4sLocalJars := (config / internalDependencyAsJars).value
+      .map(_.data),
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
     config / resourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext != "scala")
     ),
-    cleanFiles += (config / smithy4sOutputDir).value,
+    config / cleanFiles += (config / smithy4sOutputDir).value,
+    config / cleanFiles += (config / smithy4sResourceDir).value,
     config / smithy4sModelTransformers := List.empty
   )
 
@@ -131,19 +144,18 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
     val updateReport = (conf / update).value
-    val internalDependencyJars =
-      (conf / internalDependencyAsJars).value.seq
-        .map(_.data)
-        .map(os.Path(_))
-        .toList
+
+    val localDependencyJars =
+      (conf / smithy4sLocalJars).value.map(os.Path(_)).toList
+
     val externalDependencyJars = findCodeGenDependencies(updateReport)
-    val localJars = internalDependencyJars ++ externalDependencyJars
+    val localJars = localDependencyJars ++ externalDependencyJars
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
       }
     val transforms = (conf / smithy4sModelTransformers).value
-    val s = streams.value
+    val s = (conf / streams).value
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)

@@ -64,10 +64,10 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
       result.left.foreach(_.printStackTrace())
       val prop = Prop(result == Right(data))
       prop.label(s"""|data: $data
-                    |schema: $schemaStr
-                    |json: $json
-                    |roundTip: $result
-                    |""".stripMargin)
+                     |schema: $schemaStr
+                     |json: $json
+                     |roundTip: $result
+                     |""".stripMargin)
     }
 
   }
