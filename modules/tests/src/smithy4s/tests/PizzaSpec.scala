@@ -68,8 +68,8 @@ abstract class PizzaSpec
   )
 
   val positiveEmptyLabel = """|Happy path:
-                         |- no payload
-                         |""".stripMargin.trim()
+                              |- no payload
+                              |""".stripMargin.trim()
 
   routerTest(positiveEmptyLabel) { (client, uri, log) =>
     for {

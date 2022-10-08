@@ -949,7 +949,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Uuid => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => { raw =>
         import scala.reflect.runtime.universe._
-        line"${Literal(Constant(raw)).toString()}"
+        val str = Literal(Constant(raw))
+          .toString()
+          // Replace sequences like "\\uD83D" (how Smithy specs refer to unicode characters)
+          // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
+          // See https://github.com/disneystreaming/smithy4s/pull/499
+          .replace("\\\\u", "\\u")
+
+        line"$str"
       }
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {

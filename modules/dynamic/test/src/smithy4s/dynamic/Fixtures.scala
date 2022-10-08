@@ -23,29 +23,29 @@ object Fixtures {
 
   val pizzaModelString =
     """|namespace foo
-      |
-      |service Service {
-      |  operations: [Operation]
-      |}
-      |
-      |@readonly
-      |@http(method: "GET", uri: "/{name}")
-      |operation Operation {
-      |  input: Input,
-      |  output: Output
-      |}
-      |
-      |structure Input {
-      |  @httpLabel
-      |  @required
-      |  name: String
-      |}
-      |
-      |structure Output {
-      |  greeting: String,
-      |  someFloat: Float
-      |}
-      |""".stripMargin.trim
+       |
+       |service Service {
+       |  operations: [Operation]
+       |}
+       |
+       |@readonly
+       |@http(method: "GET", uri: "/{name}")
+       |operation Operation {
+       |  input: Input,
+       |  output: Output
+       |}
+       |
+       |structure Input {
+       |  @httpLabel
+       |  @required
+       |  name: String
+       |}
+       |
+       |structure Output {
+       |  greeting: String,
+       |  someFloat: Float
+       |}
+       |""".stripMargin.trim
 
   val pizzaModel: Model = {
     Model(
