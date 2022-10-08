@@ -111,7 +111,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / resourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext != "scala")
     ),
-    cleanFiles += (config / smithy4sOutputDir).value,
+    config / cleanFiles += (config / smithy4sOutputDir).value,
+    config / cleanFiles += (config / smithy4sResourceDir).value,
     config / smithy4sModelTransformers := List.empty
   )
 
@@ -154,7 +155,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         m.root
       }
     val transforms = (conf / smithy4sModelTransformers).value
-    val s = streams.value
+    val s = (conf / streams).value
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)
