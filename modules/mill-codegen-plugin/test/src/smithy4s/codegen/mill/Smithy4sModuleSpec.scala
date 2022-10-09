@@ -32,6 +32,9 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   private val coreDep =
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
+  private val awsDep =
+    ivy"com.disneystreaming.smithy4s::smithy4s-aws:${smithy4s.codegen.BuildInfo.version}"
+
   test("basic codegen runs") {
     object foo extends testKit.BaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.8"
@@ -126,6 +129,26 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       """package foo
         |object a""".stripMargin
     )(compileWorks(bar, barEv))
+  }
+
+  test("multi-module codegen works with AWS specs upstream") {
+
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(awsDep)
+      override def millSourcePath = resourcePath / "multi-module-aws" / "foo"
+    }
+
+    object bar extends testKit.BaseModule with Smithy4sModule {
+      override def moduleDeps = Seq(foo)
+      override def scalaVersion = "2.13.8"
+      override def millSourcePath = resourcePath / "multi-module-aws" / "bar"
+    }
+
+    val barEv =
+      testKit.staticTestEvaluator(bar)(FullName("multi-module-aws-bar"))
+
+    compileWorks(bar, barEv)
   }
 
   private def withFile[A](path: os.Path, content: String)(f: => A): A = {
