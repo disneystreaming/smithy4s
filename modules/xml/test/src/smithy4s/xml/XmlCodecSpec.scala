@@ -33,8 +33,6 @@ import smithy4s.xml.internals.XmlCursor
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import weaver._
 
-import scala.reflect.ClassTag
-
 object XmlCodecSpec extends SimpleIOSuite {
 
   implicit class SchemaOps[A](schema: Schema[A]) {
