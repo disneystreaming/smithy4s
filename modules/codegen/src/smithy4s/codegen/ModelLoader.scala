@@ -170,7 +170,11 @@ object ModelLoader {
     ): ModelAssembler = {
       val smithy4sResources = List(
         "META-INF/smithy/smithy4s.smithy",
-        "META-INF/smithy/smithy4s.meta.smithy"
+        "META-INF/smithy/smithy4s.meta.smithy",
+        "META-INF/smithy/aws.protocols.smithy",
+        "META-INF/smithy/aws.auth.smithy",
+        "META-INF/smithy/aws.api.smithy",
+        "META-INF/smithy/aws.customizations.smithy"
       ).map(classLoader.getResource)
 
       if (discoverModels) assembler.discoverModels(classLoader)
