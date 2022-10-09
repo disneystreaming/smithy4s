@@ -385,6 +385,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       val _ = List(
         // for the code being built
         (core.jvm(Scala213) / publishLocal).value,
+        (json.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (aws.jvm(Scala213) / publishLocal).value,
@@ -431,6 +432,7 @@ lazy val millCodegenPlugin = projectMatrix
       val _ = List(
         // for the code being built
         (core.jvm(Scala213) / publishLocal).value,
+        (json.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (aws.jvm(Scala213) / publishLocal).value,
