@@ -519,10 +519,9 @@ object XmlCodecSpec extends SimpleIOSuite {
         def show(xmlDocument: XmlDocument): String =
           XmlDocument.documentEventifier
             .eventify(xmlDocument)
+            .through(render())
             .compile
-            .toVector
-            .map(_.show)
-            .mkString("")
+            .string
       }
 
       val encodingChecks = {
