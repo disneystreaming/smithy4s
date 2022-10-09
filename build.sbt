@@ -386,6 +386,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         // for the code being built
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
+        (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (aws.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
         // dependency of codegen
@@ -431,6 +432,7 @@ lazy val millCodegenPlugin = projectMatrix
         // for the code being built
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
+        (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (aws.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
         // dependency of codegen
