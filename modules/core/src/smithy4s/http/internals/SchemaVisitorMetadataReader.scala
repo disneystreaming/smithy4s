@@ -30,7 +30,6 @@ import smithy4s.http.internals.MetaDecode.{
 import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
-import java.{util => ju}
 import scala.collection.mutable.{Map => MMap}
 
 private[http] object SchemaVisitorMetadataReader
@@ -45,62 +44,18 @@ private[http] class SchemaVisitorMetadataReader()
       hints: Hints,
       tag: Primitive[P]
   ): MetaDecode[P] = {
-    val desc = tag.schema(shapeId).compile(SchemaDescription)
-    def withDesc[A](f: String => Option[A]) =
-      MetaDecode.from[A](desc)(f)
-    def withDescUnsafe[A](f: String => A) =
-      MetaDecode.fromUnsafe[A](desc)(f)
+    val desc = SchemaDescription.primitive(shapeId, hints, tag)
     tag match {
-      case Primitive.PShort      => withDesc(_.toShortOption)
-      case Primitive.PInt        => withDesc(_.toIntOption)
-      case Primitive.PFloat      => withDesc(_.toFloatOption)
-      case Primitive.PLong       => withDesc(_.toLongOption)
-      case Primitive.PDouble     => withDesc(_.toDoubleOption)
-      case Primitive.PBoolean    => withDesc(_.toBooleanOption)
-      case Primitive.PBigInt     => withDescUnsafe(BigInt(_))
-      case Primitive.PBigDecimal => withDescUnsafe(BigDecimal(_))
-      case Primitive.PString     => withDescUnsafe(identity)
-      case Primitive.PUUID       => withDescUnsafe(ju.UUID.fromString)
-      case Primitive.PBlob =>
-        withDescUnsafe(string =>
-          ByteArray(ju.Base64.getDecoder().decode(string))
-        )
-      case Primitive.PDocument => EmptyMetaDecode
-      case Primitive.PByte     => EmptyMetaDecode
-      case Primitive.PTimestamp =>
-        (
-          hints.get(HttpBinding).map(_.tpe),
-          hints.get(smithy.api.TimestampFormat)
-        ) match {
-          case (_, Some(format)) =>
-            MetaDecode.from(Timestamp.showFormat(format))(str =>
-              Timestamp.parse(str, format)
-            )
-          case (Some(HttpBinding.Type.QueryType), None) |
-              (Some(HttpBinding.Type.PathType), None) =>
-            val formatString =
-              Timestamp.showFormat(smithy.api.TimestampFormat.DATE_TIME)
-            // See https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html?highlight=httpquery#httpquery-trait
-            MetaDecode.from(formatString)(str =>
-              Timestamp.parse(str, smithy.api.TimestampFormat.DATE_TIME)
-            )
-          case (Some(HttpBinding.Type.HeaderType), None) =>
-            val formatString =
-              Timestamp.showFormat(smithy.api.TimestampFormat.HTTP_DATE)
-            // See https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html?highlight=httpquery#httpheader-trait
-            MetaDecode.from(formatString)(str =>
-              Timestamp.parse(str, smithy.api.TimestampFormat.HTTP_DATE)
-            )
-          case (Some(HttpBinding.Type.StatusCodeType), _) =>
-            MetaDecode.EmptyMetaDecode
-          case (None, None) =>
-            EmptyMetaDecode
-        }
       case Primitive.PUnit =>
         MetaDecode.StructureMetaDecode(
           _ => Right(MMap.empty[String, Any]),
           Some(_ => Right(()))
         )
+      case other =>
+        Primitive.stringParser(other, hints) match {
+          case Some(parse) => MetaDecode.from(desc)(parse)
+          case None        => MetaDecode.EmptyMetaDecode
+        }
     }
   }
 

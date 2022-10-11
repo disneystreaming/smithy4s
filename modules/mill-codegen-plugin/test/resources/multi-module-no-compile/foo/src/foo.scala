@@ -14,15 +14,8 @@
  *  limitations under the License.
  */
 
-package bar
+package foo
 
-import foo._
-
-object BarTest {
-
-  def main(args: Array[String]): Unit = {
-    println(Bar(Some(Foo(Some(1)))))
-    println(foodir.FooDir(Some(2)))
-  }
-
+object foo {
+  val shouldNotCompile: Int = "a"
 }

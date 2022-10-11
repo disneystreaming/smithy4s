@@ -73,9 +73,7 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
-    val specFiles = if (os.exists(smithy4sInputDir().path)) {
-      os.walk(smithy4sInputDir().path, skip = _.ext != "smithy")
-    } else Seq.empty
+    val specFiles = List(smithy4sInputDir().path).filter(os.exists(_))
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
@@ -91,6 +89,7 @@ trait Smithy4sModule extends ScalaModule {
     val skipSet = skipResources ++ skipOpenApi
 
     val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
+
     val localJars = smithy4sLocalJars().map(_.path)
     val allLocalJars = localJars ++ resolvedDeps
 
