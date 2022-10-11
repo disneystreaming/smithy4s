@@ -7,7 +7,12 @@ import smithy4s.Refinement
 
 import smithy4s.{Hints, ShapeId}
 
-private[schema] class HashVisitor() extends SchemaVisitor[Lambda[A => Unit]] {
+private[schema] object HashVisitor {
+  type Imperative[A] = Unit
+}
+
+private[schema] class HashVisitor()
+    extends SchemaVisitor[HashVisitor.Imperative] {
   private var result: Int = 1
   private val prime: Int = 31
   private val visitedLazy: java.util.HashSet[ShapeId] =
