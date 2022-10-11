@@ -67,7 +67,13 @@ object SchemaVisitor {
     private val cache: MMap[Any, Any] = MMap.empty
 
     override def apply[A](schema: Schema[A]): F[A] = {
-      cache.getOrElseUpdate(schema, super.apply(schema)).asInstanceOf[F[A]]
+      // We're using a cache key that's the combination of the shape id, and
+      // an educated hashcode that leaves aside anything unlikely to be the same
+      // (typically, lambdas, which are only comparable using referential equality)
+      //
+      // There may be some extremely unlikely edge-cases.
+      val key = (schema.shapeId, schema.schemaHash)
+      cache.getOrElseUpdate(key, super.apply(schema)).asInstanceOf[F[A]]
     }
   }
 

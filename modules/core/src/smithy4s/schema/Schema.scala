@@ -47,7 +47,6 @@ sealed trait Schema[A]{
 
   final def withId(namespace: String, name: String) : Schema[A] = withId(ShapeId(namespace, name))
 
-
   final def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: CollectionSchema[c, a] => CollectionSchema(s.shapeId, f(s.hints), s.tag, s.member).asInstanceOf[Schema[A]]
@@ -78,6 +77,13 @@ sealed trait Schema[A]{
   }
 
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
+
+  private[schema] final def schemaHash : Int = {
+    val hashVisitor = new HashVisitor()
+    hashVisitor(this)
+    hashVisitor.getResult
+  }
+
 }
 
 object Schema {
