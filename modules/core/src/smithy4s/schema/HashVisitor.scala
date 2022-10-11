@@ -75,8 +75,10 @@ private[schema] class HashVisitor()
     result = result * prime + 5
     result = result * prime + shapeId.hashCode()
     result = result * prime + hints.hashCode()
+    result = result * prime + make.hashCode()
     def processField(field: SchemaField[S, _]): Unit = {
       result = result * prime + field.label.hashCode()
+      result = result * prime + field.get.hashCode()
       this(field.instance)
     }
     fields.foreach(processField(_))
@@ -91,20 +93,24 @@ private[schema] class HashVisitor()
     result = result * prime + 6
     result = result * prime + shapeId.hashCode()
     result = result * prime + hints.hashCode()
-    def processAlt(field: SchemaAlt[U, _]): Unit = {
-      result = result * prime + field.label.hashCode()
-      this(field.instance)
+    result = result * prime + dispatch.hashCode()
+    def processAlt(alt: SchemaAlt[U, _]): Unit = {
+      result = result * prime + alt.label.hashCode()
+      result = result * prime + alt.inject.hashCode()
+      this(alt.instance)
     }
     alternatives.foreach(processAlt(_))
   }
 
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Unit = {
     result = result * prime + 7
+    result = result * prime + bijection.hashCode()
     this(schema)
   }
 
   def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): Unit = {
     result = result * prime + 8
+    result = result * prime + refinement.hashCode()
     this(schema)
   }
 

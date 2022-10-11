@@ -68,8 +68,8 @@ object SchemaVisitor {
 
     override def apply[A](schema: Schema[A]): F[A] = {
       // We're using a cache key that's the combination of the shape id, and
-      // an educated hashcode that leaves aside anything unlikely to be the same
-      // (typically, lambdas, which are only comparable using referential equality)
+      // an educated hashcode that leaves aside `Lazy`, which is unstable
+      // when transforming hints.
       //
       // There may be some extremely unlikely edge-cases.
       val key = (schema.shapeId, schema.schemaHash)
