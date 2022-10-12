@@ -88,7 +88,7 @@ abstract class ServerHttpComplianceTestCase[
 
     val body =
       testCase.body
-        .map(b => fs2.Stream.emit(b).through(fs2.text.utf8.encode[IO]))
+        .map(b => fs2.Stream.emit(b).through(ce.utf8Encode))
         .getOrElse(fs2.Stream.empty)
 
     Request[IO](
