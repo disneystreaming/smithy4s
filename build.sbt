@@ -9,6 +9,9 @@ ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.16.1"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 import Smithy4sPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
@@ -44,27 +47,28 @@ lazy val root = project
   )
 
 lazy val allModules = Seq(
-  core.projectRefs,
-  codegen.projectRefs,
-  millCodegenPlugin.projectRefs,
-  json.projectRefs,
-  example.projectRefs,
-  tests.projectRefs,
-  http4s.projectRefs,
-  `http4s-swagger`.projectRefs,
-  decline.projectRefs,
-  codegenPlugin.projectRefs,
-  benchmark.projectRefs,
-  protocol.projectRefs,
-  protocolTests.projectRefs,
-  openapi.projectRefs,
-  `aws-kernel`.projectRefs,
-  aws.projectRefs,
-  `aws-http4s`.projectRefs,
-  `codegen-cli`.projectRefs,
-  dynamic.projectRefs,
-  testUtils.projectRefs
-).flatten
+  core,
+  codegen,
+  millCodegenPlugin,
+  json,
+  example,
+  tests,
+  http4s,
+  `http4s-swagger`,
+  decline,
+  codegenPlugin,
+  benchmark,
+  protocol,
+  protocolTests,
+  openapi,
+  `aws-kernel`,
+  aws,
+  `aws-http4s`,
+  `codegen-cli`,
+  dynamic,
+  testUtils,
+  complianceTests
+).flatMap(_.projectRefs)
 
 lazy val docs =
   projectMatrix
@@ -76,7 +80,8 @@ lazy val docs =
       http4s,
       `http4s-swagger`,
       decline,
-      `aws-http4s` % "compile -> compile,test"
+      `aws-http4s` % "compile -> compile,test",
+      complianceTests % "compile -> compile,test"
     )
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
@@ -91,6 +96,7 @@ lazy val docs =
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
+      mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
@@ -218,7 +224,7 @@ lazy val `aws-kernel` = projectMatrix
   .in(file("modules/aws-kernel"))
   .dependsOn(core)
   .settings(
-    isCE3 := false,
+    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -243,6 +249,7 @@ lazy val `aws-kernel` = projectMatrix
       )
     )
   )
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * cats-effect specific abstractions of AWS protocol interpreters and constructs
@@ -264,6 +271,7 @@ lazy val aws = projectMatrix
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * http4s-specific implementation of aws protocols. This module exposes generic methods
@@ -286,14 +294,19 @@ lazy val `aws-http4s` = projectMatrix
       )
     },
     Test / allowedNamespaces := Seq(),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
+  )
+  .jvmPlatform(
+    latest2ScalaVersions,
+    jvmDimSettings ++ Seq(
+      Test / smithySpecs ++= Seq(
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
+      )
     )
   )
-  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * This module contains the logic used at build time for reading smithy
@@ -316,6 +329,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
       Dependencies.Smithy.awsTraits,
+      Dependencies.Smithy.testTraits,
       Dependencies.Smithy.waiters,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
@@ -444,6 +458,7 @@ lazy val decline = (projectMatrix in file("modules/decline"))
   .dependsOn(json)
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
  * This module contains the smithy specification of a bunch of types
@@ -650,8 +665,7 @@ lazy val tests = projectMatrix
       ce3 ++ Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
-        Dependencies.Http4s.emberClient.value,
-        Dependencies.Http4s.emberServer.value,
+        Dependencies.Http4s.client.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Weaver.cats.value
       )
@@ -667,6 +681,34 @@ lazy val tests = projectMatrix
       else moduleName.value
     },
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
+  )
+  .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val complianceTests = projectMatrix
+  .in(file("modules/compliance-tests"))
+  .dependsOn(core, http4s % "test->compile", testUtils)
+  .settings(
+    name := "compliance-tests",
+    Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
+    genDiscoverModels := true,
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
+    libraryDependencies ++= {
+      val ce3 =
+        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
+        else Seq.empty
+      ce3 ++ Seq(
+        Dependencies.Http4s.circe.value,
+        Dependencies.Http4s.client.value,
+        Dependencies.Weaver.cats.value % Test
+      )
+    },
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Test / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
+    ),
+    Test / genDiscoverModels := true,
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -757,8 +799,10 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.24.0"
+    val smithyVersion = "1.25.1"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
+    val testTraits =
+      "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
       "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
@@ -772,12 +816,15 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val core = Def.setting("com.monovore" %%% "decline" % "2.3.0")
-    val effect = Def.setting("com.monovore" %%% "decline-effect" % "2.3.0")
+    val declineVersion = "2.3.1"
+
+    val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
+    val effect =
+      Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.2.14")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.3.0")
   }
 
   object Mill {
@@ -807,7 +854,7 @@ lazy val Dependencies = new {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.3.14")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.15" else "0.22.14")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.16" else "0.22.14")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
@@ -825,7 +872,7 @@ lazy val Dependencies = new {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.7.15" else "0.6.15")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.8.0" else "0.6.15")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
@@ -887,8 +934,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
-  val smithyDeps =
-    (config / genSmithyDependencies).?.value.getOrElse(List.empty)
   val discoverModels =
     (config / genDiscoverModels).?.value.getOrElse(false)
   val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)

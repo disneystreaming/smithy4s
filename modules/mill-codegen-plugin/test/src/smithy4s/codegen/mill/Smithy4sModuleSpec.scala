@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.codegen.mill
 
 import mill.testkit.MillTestKit
@@ -27,6 +43,18 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     compileWorks(foo, ev)
     checkFileExist(
       ev.outPath / "smithy4sOutputDir.dest" / "scala" / "basic" / "MyNewString.scala",
+      shouldExist = true
+    )
+
+    withFile(
+      foo.millSourcePath / "smithy" / "added.smithy",
+      """namespace basic
+        |
+        |structure Added {}""".stripMargin
+    )(compileWorks(foo, ev))
+
+    checkFileExist(
+      ev.outPath / "smithy4sOutputDir.dest" / "scala" / "basic" / "Added.scala",
       shouldExist = true
     )
   }
@@ -67,11 +95,15 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     val fooEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-foo"))
-    val barEv = testKit.staticTestEvaluator(foo)(FullName("multi-module-bar"))
+    val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
 
     compileWorks(foo, fooEv)
     checkFileExist(
       fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Foo.scala",
+      shouldExist = true
+    )
+    checkFileExist(
+      fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foodir" / "FooDir.scala",
       shouldExist = true
     )
 
@@ -81,16 +113,66 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       shouldExist = false
     )
     checkFileExist(
+      barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foodir" / "FooDir.scala",
+      shouldExist = false
+    )
+    checkFileExist(
       barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "bar" / "Bar.scala",
       shouldExist = true
     )
+
+    withFile(
+      foo.millSourcePath / "src" / "a.scala",
+      """package foo
+        |object a""".stripMargin
+    )(compileWorks(bar, barEv))
+  }
+
+  private def withFile[A](path: os.Path, content: String)(f: => A): A = {
+    os.write(path, content, createFolders = true)
+    try f
+    finally
+    // we need to clean up, because we copy files to the target path
+    // (which doesn't get cleared automatically on test re-runs)
+    os.remove.all(path)
+  }
+
+  test(
+    "multi-module codegen doesn't trigger upstream compilation when opted out"
+  ) {
+
+    object foo extends testKit.BaseModule with ScalaModule {
+      override def scalaVersion = "2.13.8"
+      override def millSourcePath =
+        resourcePath / "multi-module-no-compile" / "foo"
+    }
+
+    object bar extends testKit.BaseModule with Smithy4sModule {
+      override def moduleDeps = Seq(foo)
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(coreDep)
+      override def millSourcePath =
+        resourcePath / "multi-module-no-compile" / "bar"
+
+      override def smithy4sLocalJars = List.empty[PathRef]
+    }
+
+    val barEv = testKit.staticTestEvaluator(bar)(FullName("multi-module-bar"))
+
+    taskWorks(bar.smithy4sCodegen, barEv)
   }
 
   private def compileWorks(
       sm: ScalaModule,
       testEvaluator: testKit.TestEvaluator
+  )(implicit loc: Location) =
+    taskWorks(sm.compile, testEvaluator)
+
+  private def taskWorks[A](
+      task: T[A],
+      testEvaluator: testKit.TestEvaluator
   )(implicit loc: Location) = {
-    val result = testEvaluator(sm.compile).map(_._1)
+    val result = testEvaluator(task).map(_._1)
     assertEquals(
       result.isRight,
       true,

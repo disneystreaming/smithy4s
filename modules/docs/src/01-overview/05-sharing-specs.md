@@ -12,7 +12,7 @@ If you work in a context that is not primordially Scala-centric, you may want to
 code-generator tools. When that is the case, it is not-advised to use Smithy4s in order to package specifications, as the consuming applications/tools might not
 have awareness of Scala. The best practice would likely be to have jars that would contain only Smithy files and potentially pure-java custom validators.
 
-In order to package Smithy files in jars so that they can be easily consumed by tools, here are the core details :
+In order to package Smithy files in jars so that they can be easily consumed by tools, here are the core details:
 
 1. All smithy files should be stored under `src/main/resources/META-INF/smithy/` (or in another resource directory, under `META-INF/smithy`)
 2. A `manifest` file should be stored under that same directory
@@ -20,7 +20,7 @@ In order to package Smithy files in jars so that they can be easily consumed by 
 4. If you are using SBT to do this, consider setting `autoScalaLibrary := false`. See [here](https://www.scala-sbt.org/1.x/docs/Configuring-Scala.html#Configuring+the+scala-library+dependency) for more information.
 5. If you are using Mill to do this, consider using a `JavaModule` instead of a `ScalaModule`.
 
-A couple examples :
+A couple examples:
 
 * [smithy-aws-apigateway-traits](https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy)
 * [smithy4s-protocols](https://github.com/disneystreaming/smithy4s/tree/main/modules/protocol/resources/META-INF/smithy)
@@ -29,16 +29,16 @@ A couple examples :
 
 The Smithy4s build-plugins we provide out of the box automatically package the local specifications (used for code-generations) in the resulting jars so that downstream projects (internal and external) can use them. When doing so, Smithy4s abides by the same structure described above.
 
-Additionally, Smithy4s will also produce a smithy file containing a piece of metadata listing the namespaces that for which code was generated. This way, downstream Smithy4s calls can automatically skip the already-generated namespaces.
+Additionally, Smithy4s will also produce a smithy file containing a piece of metadata listing the namespaces for which code was generated. This way, downstream Smithy4s calls can automatically skip the already-generated namespaces.
 
-This does mean two things :
+This does mean two things:
 
 1. Users do not have to manually indicate namespaces that were already generated.
 2. When using multi-module builds, Smithy specifications in one module can depend on Smithy specifications in another module it depends on, without the user having to do anything bespoke for it. The resulting Scala code in the downstream module will simply depend on the one in the upstream module, as if it had been handwritten.
 
 ### Disabling packaging of smithy files in jars
 
-If for some reason you want to disable the packaging of Smithy files in the jars created by your build tool, follow the instructions below
+If for some reason you want to disable the packaging of Smithy files in the jars created by your build tool, follow the instructions below.
 
 #### SBT
 
@@ -55,6 +55,43 @@ Override the following method in your module
 ```scala
 override def smithy4sSmithyLibrary = T(false)
 ```
+
+### Disabling the dependency on smithy files in sibling projects
+
+If your project has a multi-module build and some of the modules have the plugin enabled,
+due to the behavior documented above, dependencies will need to be compiled before code can be generated.
+
+Consider the following build (sbt syntax):
+
+```scala
+val a = project
+val b = project.enablePlugin(Smithy4sCodegenPlugin).dependsOn(a)
+```
+
+Whenever you want to generate the Scala code in project `b`, your build tool will trigger compilation of `a`. This happens so that the Smithy files in the `a` project get packaged into a JAR file - just like they normally are when you package the `a` project otherwise (for `publishLocal`, `stage` etc.).
+
+You can opt out of this behavior:
+
+#### SBT
+
+```scala
+val b = project.settings(
+  Compile / smithy4sLocalJars := Nil
+)//...
+```
+
+#### Mill
+
+```scala
+object b extends Smithy4sModule {
+  //...
+  override def smithy4sLocalJars = List.empty[PathRef]
+}
+```
+
+This will not only remove the need for compilation (for the purposes of codegen), but also remove any visibility of the Smithy files in the **local** dependencies of your project (**local** meaning they're defined in the same build).
+
+You can use the same setting, `smithy4sLocalJars`, to add additional JARs containing Smithy specs - just keep in mind that remote dependencies (`libraryDependencies`) are added automatically!
 
 
 ### A word of warning
@@ -74,7 +111,7 @@ For instance, AWS publishes a number of [api-gateway specific traits](https://gi
 
 Using the SBT plugin, the `Smithy4s` config object can be used to tag dependencies that Smithy4s should feed to the code generator.
 
-You can declare your intent to depend on these smithy definitions as such :
+You can declare your intent to depend on these smithy definitions as such:
 
 ```scala
 libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1" % Smithy4s
@@ -82,7 +119,7 @@ libraryDependencies += "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.1
 
 ## Mill
 
-Mill uses a separate task to define dependencies that the code-generator should have awareness of :
+Mill uses a separate task to define dependencies that the code-generator should have awareness of:
 
 ```scala
 def smithy4sIvyDeps = Agg(ivy"software.amazon.smithy::smithy-aws-iam-traits:1.14.1")
@@ -133,7 +170,7 @@ Sometimes, you may want to tell Smithy4s to skip code-generation of some namespa
 * `smithy4sAllowedNamespaces` which is an allow-list
 * `smithy4sExcludedNamespaces` which is a disallow-list
 
-By default, Smithy4s tries to generate everything but shapes that are in the following namespaces :
+By default, Smithy4s tries to generate everything but shapes that are in the following namespaces:
 
 * `smithy4s.api`
 * `smithy4s.meta`

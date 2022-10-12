@@ -7,14 +7,14 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class GetObjectOutput(size: ObjectSize, data: Option[String] = None)
+case class GetObjectOutput(size: ObjectSize = smithy4s.example.ObjectSize(0), data: Option[String] = None)
 object GetObjectOutput extends ShapeTag.Companion[GetObjectOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetObjectOutput")
 
   val hints : Hints = Hints.empty
 
   implicit val schema: Schema[GetObjectOutput] = struct(
-    ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.HttpHeader("X-Size"), smithy.api.Required()),
+    ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0)), smithy.api.Required(), smithy.api.HttpHeader("X-Size")),
     string.optional[GetObjectOutput]("data", _.data).addHints(smithy.api.HttpPayload()),
   ){
     GetObjectOutput.apply

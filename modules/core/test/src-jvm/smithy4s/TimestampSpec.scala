@@ -121,13 +121,9 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
   }
 
   property("Parse EPOCH_SECONDS format with invalid input") {
-    val EpochFormat = """^(\d+)(\.(\d+))?""".r
-    forAll { (str: String) =>
+    forAll(Gen.alphaStr) { (str: String) =>
       val parsed = Timestamp.parse(str, TimestampFormat.EPOCH_SECONDS)
-      parsed match {
-        case Some(_) => expect(EpochFormat.pattern.matcher(str).matches)
-        case None    => expect(!EpochFormat.pattern.matcher(str).matches)
-      }
+      expect(parsed.isEmpty)
     }
   }
 
@@ -136,6 +132,32 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
       val str = s"$i.${i % 1000}.${i % 1000}"
       val parsed = Timestamp.parse(str, TimestampFormat.EPOCH_SECONDS)
       expect.same(parsed, None)
+    }
+  }
+
+  private val conciseDateFormatter = DateTimeFormatter
+    .ofPattern("yyyyMMdd", Locale.ENGLISH)
+    .withZone(ZoneOffset.UTC)
+
+  private val conciseDateTimeFormatter = DateTimeFormatter
+    .ofPattern("yyyyMMdd'T'HHmmssX", Locale.ENGLISH)
+    .withZone(ZoneOffset.UTC)
+
+  property("Converts to concise date format") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp(i.getEpochSecond, i.getNano)
+      val formatted = ts.conciseDate
+      val expected = conciseDateFormatter.format(i)
+      expect.same(formatted, expected)
+    }
+  }
+
+  property("Converts to concise date time format") {
+    forAll { (i: Instant) =>
+      val ts = Timestamp(i.getEpochSecond, i.getNano)
+      val formatted = ts.conciseDateTime
+      val expected = conciseDateTimeFormatter.format(i)
+      expect.same(formatted, expected)
     }
   }
 }

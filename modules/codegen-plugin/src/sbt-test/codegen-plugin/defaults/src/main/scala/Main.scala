@@ -21,6 +21,7 @@ import smithy4s.dynamic.DynamicSchemaIndex
 
 object Main extends App {
   try {
+    println(smithy4s.example.Foo.IntCase(42))
     println(smithy.api.NonEmptyString("nope").value)
   } catch {
     case _: java.lang.ExceptionInInitializerError =>
