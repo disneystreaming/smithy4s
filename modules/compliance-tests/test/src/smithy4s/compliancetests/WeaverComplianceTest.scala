@@ -25,7 +25,7 @@ import smithy4s.http4s._
 import weaver._
 
 object WeaverComplianceTest extends SimpleIOSuite {
-  val testGenerator = new ClientHttpComplianceTestCase[
+  val clientTestGenerator = new ClientHttpComplianceTestCase[
     smithy4s.api.SimpleRestJson,
     HelloServiceGen,
     HelloServiceOperation
@@ -42,7 +42,21 @@ object WeaverComplianceTest extends SimpleIOSuite {
         .resource
   }
 
-  val tests: List[ComplianceTest[IO]] = testGenerator.allClientTests()
+  val serverTestGenerator = new ServerHttpComplianceTestCase[
+    smithy4s.api.SimpleRestJson,
+    HelloServiceGen,
+    HelloServiceOperation
+  ](
+    smithy4s.api.SimpleRestJson()
+  ) {
+    def getServer(
+        impl: smithy4s.Monadic[HelloServiceGen, IO]
+    ): Resource[IO, HttpRoutes[IO]] =
+      SimpleRestJsonBuilder(HelloServiceGen).routes(impl).resource
+  }
+
+  val tests: List[ComplianceTest[IO]] =
+    clientTestGenerator.allClientTests() ++ serverTestGenerator.allServerTests()
 
   tests.foreach(tc =>
     test(tc.name) {
