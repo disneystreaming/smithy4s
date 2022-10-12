@@ -25,13 +25,14 @@ class SchemaHashSpec() extends FunSuite {
   def checkSchema[A](schema: Schema[A])(implicit loc: Location): Unit = {
     def transform() =
       schema.transformHintsTransitively(_ ++ Hints(smithy.api.Deprecated()))
-    val transformed1 = transform().schemaHash
-    val transformed2 = transform().schemaHash
-    assertNotEquals(transformed1, 1)
-    assertEquals(transformed1, transformed2)
+    // val transformed1 = transform().schemaHash
+    // val transformed2 = transform().schemaHash
+    // assertNotEquals(transformed1, 1)
+    // assertEquals(transformed1, transformed2)
+    assert(SchemaEqualityVisitor.areEqual(transform(), transform()))
   }
 
-  val header = "schema hash equal through hints transformation: "
+  val header = "hashCode/equals is stable through hints transformation"
 
   test(header + "primitive") {
     checkSchema(int)
@@ -76,7 +77,7 @@ class SchemaHashSpec() extends FunSuite {
     checkSchema(schema)
   }
 
-  test(header + "lazy") {
+  test((header + "lazy")) {
     case class Foo(foo: Option[Foo])
     object Foo {
       val schema: Schema[Foo] = recursive {

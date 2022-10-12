@@ -23,18 +23,22 @@ import smithy4s.Refinement
 
 import smithy4s.{Hints, ShapeId}
 
-private[schema] object HashVisitor {
+private[schema] object SchemaHashVisitor {
   type Imperative[A] = Unit
 }
 
-private[schema] class HashVisitor()
-    extends SchemaVisitor[HashVisitor.Imperative] {
+/**
+ * A visitor computing an educated hash of a schema that handles Lazy
+ * in a way that is stable
+ */
+private[schema] class SchemaHashVisitor()
+    extends SchemaVisitor[SchemaHashVisitor.Imperative] {
   private var result: Int = 1
   private val prime: Int = 31
   private val visitedLazy: java.util.HashSet[ShapeId] =
     new java.util.HashSet[ShapeId]()
 
-  def getResult: Int = result
+  def getResult(): Int = result
 
   def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): Unit = {
     result = result * prime + 1

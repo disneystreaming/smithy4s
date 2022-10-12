@@ -72,8 +72,21 @@ object SchemaVisitor {
       // when transforming hints.
       //
       // There may be some extremely unlikely edge-cases.
-      val key = (schema.shapeId, schema.schemaHash)
+      val key = new Cached.Wrapper(schema)
       cache.getOrElseUpdate(key, super.apply(schema)).asInstanceOf[F[A]]
+    }
+  }
+
+  object Cached {
+    private[schema] class Wrapper(val schema: Schema[_]) {
+      override def hashCode = {
+        val visitor = new SchemaHashVisitor()
+        schema.compile(visitor)
+        visitor.getResult()
+      }
+      override def equals(other: Any) : Boolean = {
+        other.isInstanceOf[Wrapper] && SchemaEqualityVisitor.areEqual(schema, other.asInstanceOf[Wrapper].schema)
+      }
     }
   }
 

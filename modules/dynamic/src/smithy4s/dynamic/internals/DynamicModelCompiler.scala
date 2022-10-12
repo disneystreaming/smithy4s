@@ -27,7 +27,6 @@ import cats.syntax.all._
 import smithy4s.schema.EnumValue
 import smithy4s.schema.SchemaField
 import smithy4s.schema.Alt
-import DynamicLambdas._
 
 private[dynamic] object Compiler {
 
@@ -449,6 +448,19 @@ private[dynamic] object Compiler {
       serviceMap += id -> service
     }
 
+    // Creates a dynamic structure array, unpacking options
+    // when needed
+    private final def dynStruct(fields: IndexedSeq[Any]): DynStruct = {
+      val array = Array.ofDim[Any](fields.size)
+      var i = 0
+      fields.foreach {
+        case None        => i += 1 // leaving value to null
+        case Some(value) => (array(i) = value); i += 1
+        case other       => (array(i) = other); i += 1
+      }
+      array
+    }
+
     override def structureShape(id: ShapeId, shape: StructureShape): Unit =
       update(
         id,
@@ -464,12 +476,10 @@ private[dynamic] object Compiler {
                       .getOrElse(Map.empty)
                       .contains(IdRef("smithy.api#required"))
                   ) {
-                    lMemberSchema.map(
-                      _.required[DynStruct](label, Accessor(index))
-                    )
+                    lMemberSchema.map(_.required[DynStruct](label, _(index)))
                   } else {
                     lMemberSchema.map(
-                      _.optional[DynStruct](label, OptionalAccessor(index))
+                      _.optional[DynStruct](label, arr => Option(arr(index)))
                         .asInstanceOf[SchemaField[DynStruct, DynData]]
                     )
                   }
@@ -480,8 +490,8 @@ private[dynamic] object Compiler {
               .sequence
           }
           if (isRecursive(id)) {
-            Eval.later(recursive(struct(lFields.value)(Constructor)))
-          } else lFields.map(fields => struct(fields)(Constructor))
+            Eval.later(recursive(struct(lFields.value)(dynStruct)))
+          } else lFields.map(fields => struct(fields)(dynStruct))
         }
       )
 
@@ -495,7 +505,7 @@ private[dynamic] object Compiler {
                 .map { case ((label, mShape), index) =>
                   val memberHints = allHints(mShape.traits)
                   schema(mShape.target)
-                    .map(_.oneOf[DynAlt](label, Injector(index)))
+                    .map(_.oneOf[DynAlt](label, (data: Any) => (index, data)))
                     .map(_.addHints(memberHints))
                 }
                 .toVector
@@ -503,11 +513,15 @@ private[dynamic] object Compiler {
             if (isRecursive(id)) {
               Eval.later(recursive {
                 val alts = lAlts.value
-                union(alts)(Dispatcher(alts))
+                union(alts) { case (index, data) =>
+                  alts(index).apply(data)
+                }
               })
             } else
               lAlts.map { alts =>
-                union(alts)(Dispatcher(alts))
+                union(alts) { case (index, data) =>
+                  alts(index).apply(data)
+                }
               }
           }
         )

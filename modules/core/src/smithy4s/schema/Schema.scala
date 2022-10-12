@@ -78,12 +78,6 @@ sealed trait Schema[A]{
 
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
-  private[schema] final def schemaHash : Int = {
-    val hashVisitor = new HashVisitor()
-    hashVisitor(this)
-    hashVisitor.getResult
-  }
-
 }
 
 object Schema {
