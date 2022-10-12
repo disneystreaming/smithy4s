@@ -20,19 +20,23 @@ import munit._
 import smithy4s.Hints
 import Schema._
 
-class SchemaHashSpec() extends FunSuite {
+class SchemaStabilitySpec() extends FunSuite {
 
   def checkSchema[A](schema: Schema[A])(implicit loc: Location): Unit = {
     def transform() =
       schema.transformHintsTransitively(_ ++ Hints(smithy.api.Deprecated()))
-    // val transformed1 = transform().schemaHash
-    // val transformed2 = transform().schemaHash
-    // assertNotEquals(transformed1, 1)
-    // assertEquals(transformed1, transformed2)
+
+    assertEquals(schemaHash(transform()), schemaHash(transform()))
     assert(SchemaEqualityVisitor.areEqual(transform(), transform()))
   }
 
-  val header = "hashCode/equals is stable through hints transformation"
+  def schemaHash[AA](schema: Schema[AA]): Int = {
+    val visitor = new SchemaHashVisitor()
+    schema.compile(visitor)
+    visitor.getResult()
+  }
+
+  val header = "hashCode/equals is stable through hints transformation "
 
   test(header + "primitive") {
     checkSchema(int)

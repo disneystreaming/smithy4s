@@ -108,7 +108,7 @@ private[schema] class SchemaEqualityVisitor
       (c, other) => {
         other.label == field.label &&
         oEq(c, other.instance) &&
-        field.get == other.get
+        (!field.get.isInstanceOf[Product] || field.get == other.get)
       }
     }
     val fieldsEq: (Set[ShapeId], Vector[SchemaField[_, _]]) => Boolean = {

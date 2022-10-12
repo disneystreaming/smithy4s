@@ -95,10 +95,16 @@ private[schema] class SchemaHashVisitor()
     result = result * prime + 5
     result = result * prime + shapeId.hashCode()
     result = result * prime + hints.hashCode()
-    result = result * prime + make.hashCode()
+    // Differentiating between "Static" schemas and "Dynamic" schemas
+    if (make.isInstanceOf[Product]) {
+      result = result * prime + make.hashCode()
+    }
     def processField(field: SchemaField[S, _]): Unit = {
       result = result * prime + field.label.hashCode()
-      result = result * prime + field.get.hashCode()
+      // Differentiating between "Static" schemas and "Dynamic" schemas
+      if (field.get.isInstanceOf[Product]) {
+        result = result * prime + field.get.hashCode()
+      }
       this(field.instance)
     }
     fields.foreach(processField(_))

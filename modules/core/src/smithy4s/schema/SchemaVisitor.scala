@@ -67,11 +67,11 @@ object SchemaVisitor {
     private val cache: MMap[Any, Any] = MMap.empty
 
     override def apply[A](schema: Schema[A]): F[A] = {
-      // We're using a cache key that's the combination of the shape id, and
-      // an educated hashcode that leaves aside `Lazy`, which is unstable
-      // when transforming hints.
+      // We're using a wrapper that has a much higher likelyhood of
+      // having stable hashCode/equals method when the underlying schema is
+      // subjected to hints transformations.
       //
-      // There may be some extremely unlikely edge-cases.
+      // There may be some unlikely edge-cases.
       val key = new Cached.Wrapper(schema)
       cache.getOrElseUpdate(key, super.apply(schema)).asInstanceOf[F[A]]
     }
