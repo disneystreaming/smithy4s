@@ -16,27 +16,26 @@
 
 package smithy4s.compliancetests
 
+import java.nio.charset.StandardCharsets
+
 import cats.effect.IO
 import cats.effect.Resource
 import cats.implicits._
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.Request
+import org.http4s.Response
 import org.http4s.Uri
 import org.typelevel.ci.CIString
 import smithy.test._
 import smithy4s.Document
+import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.http.PayloadError
 import smithy4s.Endpoint
 import smithy4s.Service
-
-import ComplianceTest.ComplianceResult
-
-import java.nio.charset.StandardCharsets
-
-import concurrent.duration._
-import org.http4s.Response
 import smithy4s.ShapeTag
+
+import scala.concurrent.duration._
 
 abstract class ClientHttpComplianceTestCase[
     P,
@@ -131,9 +130,9 @@ abstract class ClientHttpComplianceTestCase[
     ComplianceTest[IO](
       name = endpoint.id.toString + "(client|request): " + testCase.id,
       run = {
-        val input = testCase.params
-          .map { inputFromDocument.decode(_).liftTo[IO] }
-          .getOrElse(IO.pure(().asInstanceOf[I]))
+        val input = inputFromDocument
+          .decode(testCase.params.getOrElse(Document.obj()))
+          .liftTo[IO]
 
         deferred[Request[IO]].flatMap { requestDeferred =>
           val app = HttpRoutes
