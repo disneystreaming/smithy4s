@@ -35,7 +35,7 @@ private[schema] class SchemaHashVisitor()
     extends SchemaVisitor[SchemaHashVisitor.Imperative] {
   private var result: Int = 1
   private val prime: Int = 31
-  private val visitedLazy: java.util.HashSet[ShapeId] =
+  private val visitedLazies: java.util.HashSet[ShapeId] =
     new java.util.HashSet[ShapeId]()
 
   def getResult(): Int = result
@@ -113,7 +113,6 @@ private[schema] class SchemaHashVisitor()
     result = result * prime + 6
     result = result * prime + shapeId.hashCode()
     result = result * prime + hints.hashCode()
-    result = result * prime + dispatch.hashCode()
     def processAlt(alt: SchemaAlt[U, _]): Unit = {
       result = result * prime + alt.label.hashCode()
       result = result * prime + alt.inject.hashCode()
@@ -137,8 +136,8 @@ private[schema] class SchemaHashVisitor()
   def lazily[A](suspend: Lazy[Schema[A]]): Unit = {
     result = result * prime + 9
     val shapeId = suspend.value.shapeId
-    if (!visitedLazy.contains(suspend.value.shapeId)) {
-      visitedLazy.add(shapeId)
+    if (!visitedLazies.contains(suspend.value.shapeId)) {
+      visitedLazies.add(shapeId)
       this(suspend.value)
     }
   }

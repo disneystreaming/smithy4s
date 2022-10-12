@@ -45,9 +45,6 @@ private[schema] class SchemaEqualityVisitor
     else false
   }
 
-  // private val visitedLazy: java.util.HashSet[ShapeId] =
-  //   new java.util.HashSet[ShapeId]()
-
   def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -164,8 +161,8 @@ private[schema] class SchemaEqualityVisitor
     checking {
       // Not comparing dispatchers because they are created dynamically in a
       // way that is unstable wrt hashCode/equality.
-      case (c, Schema.UnionSchema(`shapeId`, `hints`, alternatives, _)) =>
-        altsEq(c, alternatives)
+      case (c, Schema.UnionSchema(`shapeId`, `hints`, otherAlts, _)) =>
+        altsEq(c, otherAlts)
     }
   }
 
