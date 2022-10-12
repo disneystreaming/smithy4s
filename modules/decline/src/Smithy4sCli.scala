@@ -38,9 +38,9 @@ final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
     printerApi: PrinterApi[F]
 )
 
-/** Main entrypoint to Smithy4s CLIs. For convenience, see other modules like smithy4s-decline-ember. //
+/** Main entrypoint to Smithy4s CLIs.
   * @param mainOpts
-  *   Opts providing an interpreter to execut commands, and printer to use when displaying the
+  *   Opts providing an interpreter to execute commands, and printer to use when displaying the
   *   input/output/errors. See [[smithy4s.decline.util.PrinterApi]] for default options
   * @param service
   *   The service to build a client call for
