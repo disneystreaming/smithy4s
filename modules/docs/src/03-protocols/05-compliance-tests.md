@@ -74,9 +74,9 @@ We have a very simple specification: one operation with basic input and output s
 
 The service in the specification is annotated with the `simpleRestJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
 
-_Note: the following code and the `compliance-tests` module do not depend on a specific test frameworks. If you want to hook it into your test framework, it is easy to do so but it's outside the scope of this document. Refer to [this example](https://github.com/disneystreaming/smithy4s/blob/932e169b48c0df9e53601004037ef1dc888ecab0/modules/compliance-tests/test/src/smithy4s/compliancetests/WeaverComplianceTest.scala) to see how we did it for `Weaver` in this project._
+_Note: the following code and the `compliance-tests` module do not depend on a specific test framework. If you want to hook it into your test framework, it is easy to do so but it's outside the scope of this document. Refer to [this example](https://github.com/disneystreaming/smithy4s/blob/main/modules/compliance-tests/test/src/smithy4s/compliancetests/WeaverComplianceTest.scala) to see how we did it for `Weaver` in this project._
 
-First, some imports and an implicit `CompatEffect` that is required because we support both cats-effect 2 and 3.
+First, some imports:
 
 ```scala mdoc:silent
 import cats.effect._
@@ -87,10 +87,10 @@ import smithy4s.example._
 import smithy4s.http4s._
 ```
 
-Then, you can create and instance of `ClientHttpComplianceTestCase` while selecting the protocol to use and the service to test:
+Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `ServerHttpComplianceTestCase` while selecting the protocol to use and the service to test:
 
 ```scala mdoc:silent
-val testGenerator = new ClientHttpComplianceTestCase[
+val clientTestGenerator = new ClientHttpComplianceTestCase[
     smithy4s.api.SimpleRestJson,
     HelloWorldServiceGen,
     HelloWorldServiceOperation
@@ -106,7 +106,20 @@ val testGenerator = new ClientHttpComplianceTestCase[
         .resource
   }
 
-val tests: List[ComplianceTest[IO]] = testGenerator.allClientTests()
+val serverTestGenerator = new ServerHttpComplianceTestCase[
+    smithy4s.api.SimpleRestJson,
+    HelloWorldServiceGen,
+    HelloWorldServiceOperation
+  ](
+    smithy4s.api.SimpleRestJson()
+  ) {
+    def getServer(
+        impl: smithy4s.Monadic[HelloWorldServiceGen, IO]
+    ): Resource[IO, HttpRoutes[IO]] =
+      SimpleRestJsonBuilder(HelloWorldServiceGen).routes(impl).resource
+  }
+
+val tests: List[ComplianceTest[IO]] = clientTestGenerator.allClientTests() ++ serverTestGenerator.allServerTests()
 ```
 
 Now, you can iterate over the test cases and do what you want. This is where you would hook in the test framework of your choice, but in the following example, we're just going to print the result:
