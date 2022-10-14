@@ -18,8 +18,9 @@ package smithy4s
 
 import smithy4s.Document._
 import smithy4s.http.PayloadError
-import smithy4s.internals.DocumentDecoderSchemaVisitor
-import smithy4s.internals.DocumentEncoderSchemaVisitor
+import smithy4s.schema.CachedSchemaCompiler
+import internals.DocumentDecoderSchemaVisitor
+import internals.DocumentEncoderSchemaVisitor
 
 /**
   * A json-like free-form structure serving as a model for
@@ -88,25 +89,22 @@ object Document {
     def encode(a: A): Document
   }
 
-  object Encoder {
+  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
 
-    def fromSchema[A](schema: Schema[A]): Encoder[A] = {
-      val makeEncoder = schema.compile(DocumentEncoderSchemaVisitor)
+    protected type Aux[A] = internals.DocumentEncoder[A]
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache
+    ): Encoder[A] = {
+      val makeEncoder =
+        schema.compile(new DocumentEncoderSchemaVisitor(cache))
       new Encoder[A] {
         def encode(a: A): Document = {
           makeEncoder.apply(a)
         }
       }
     }
-
-    implicit def deriveEncoderFromStaticSchema[A](implicit
-        schema: Schema[A]
-    ): Encoder[A] = encoderCache(schema)
-
-    private val encoderCache =
-      new PolyFunction[Schema, Encoder] {
-        def apply[A](fa: Schema[A]): Encoder[A] = fromSchema(fa)
-      }.unsafeMemoise
 
   }
 
@@ -118,10 +116,16 @@ object Document {
     }
   }
 
-  object Decoder {
+  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
 
-    def fromSchema[A](schema: Schema[A]): Decoder[A] = {
-      val decodeFunction = schema.compile(DocumentDecoderSchemaVisitor)
+    protected type Aux[A] = internals.DocumentDecoder[A]
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache
+    ): Decoder[A] = {
+      val decodeFunction =
+        schema.compile(new DocumentDecoderSchemaVisitor(cache))
       new Decoder[A] {
         def decode(a: Document): Either[PayloadError, A] =
           try { Right(decodeFunction(Nil, a)) }
@@ -130,15 +134,6 @@ object Document {
           }
       }
     }
-
-    implicit def derivedDecoderFromStaticSchema[A](implicit
-        schema: Schema[A]
-    ): Decoder[A] = decoderCache(schema)
-
-    private val decoderCache =
-      new PolyFunction[Schema, Decoder] {
-        def apply[A](fa: Schema[A]): Decoder[A] = fromSchema(fa)
-      }.unsafeMemoise
 
   }
 

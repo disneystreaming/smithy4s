@@ -21,6 +21,8 @@ import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
+import smithy4s.schema.CompilationCache
+import smithy4s.schema.CachedSchemaCompiler
 import scala.collection.mutable.{Map => MMap}
 
 /**
@@ -172,7 +174,6 @@ object Metadata {
     def decode(metadata: Metadata): Either[MetadataError, MetadataPartial[A]]
 
     def total: Option[TotalDecoder[A]]
-
   }
 
   object PartialDecoder {
@@ -180,8 +181,20 @@ object Metadata {
     def apply[A](implicit instance: PartialDecoder[A]): PartialDecoder[A] =
       instance
 
-    def fromSchema[A](schema: Schema[A]): PartialDecoder[A] = {
-      val metaDecode = SchemaVisitorMetadataReader(schema)
+    def fromSchema[A](schema: Schema[A]): PartialDecoder[A] =
+      fromSchemaAux(schema, None)
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: CompilationCache[internals.MetaDecode]
+    ): PartialDecoder[A] =
+      fromSchemaAux(schema, None)
+
+    private def fromSchemaAux[A](
+        schema: Schema[A],
+        maybeCache: Option[CompilationCache[internals.MetaDecode]]
+    ): PartialDecoder[A] = {
+      val metaDecode = new SchemaVisitorMetadataReader(maybeCache)(schema)
       val (partial, maybeTotal) =
         metaDecode match {
           case internals.MetaDecode.StructureMetaDecode(partial, maybeTotal) =>
@@ -227,8 +240,14 @@ object Metadata {
     def apply[A](implicit instance: TotalDecoder[A]): TotalDecoder[A] =
       instance
 
-    def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] = {
-      val metaDecode = SchemaVisitorMetadataReader(schema)
+    def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] =
+      fromSchemaAux(schema, None)
+
+    private def fromSchemaAux[A](
+        schema: Schema[A],
+        maybeCache: Option[CompilationCache[internals.MetaDecode]]
+    ): Option[TotalDecoder[A]] = {
+      val metaDecode = new SchemaVisitorMetadataReader(maybeCache)(schema)
       metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(_, maybeTotal) =>
           maybeTotal.map { total => (metadata: Metadata) => total(metadata) }
@@ -241,13 +260,18 @@ object Metadata {
     def encode(a: A): Metadata
   }
 
-  object Encoder {
+  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+
+    type Aux[A] = internals.MetaEncode[A]
 
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
-    def fromSchema[A](schema: Schema[A]): Encoder[A] = {
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache
+    ): Encoder[A] = {
       val toStatusCode: A => Option[Int] = { a =>
-        new HttpResponseCodeSchemaVisitor().apply(schema) match {
+        schema.compile(new HttpResponseCodeSchemaVisitor()) match {
           case HttpResponseCodeSchemaVisitor.NoResponseCode =>
             None
           case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
@@ -256,7 +280,7 @@ object Metadata {
             ext(a)
         }
       }
-      SchemaVisitorMetadataWriter(schema) match {
+      schema.compile(new SchemaVisitorMetadataWriter(cache)) match {
         case StructureMetaEncode(f) => { (a: A) =>
           val struct = f(a)
           struct.copy(statusCode = toStatusCode(a))

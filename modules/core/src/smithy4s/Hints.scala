@@ -67,6 +67,11 @@ object Hints {
     }
     override def toString(): String =
       s"Hints(${all.mkString(", ")})"
+
+    override def hashCode(): Int = toMap.hashCode()
+    override def equals(obj: Any): Boolean = {
+      obj.isInstanceOf[Impl] && obj.asInstanceOf[Impl].toMap == this.toMap
+    }
   }
 
   sealed trait Binding extends Product with Serializable {

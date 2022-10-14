@@ -18,10 +18,13 @@ package smithy4s
 package http4s
 
 import smithy4s.internals.InputOutput
+import smithy4s.schema.CompilationCache
+import smithy4s.http.json.JCodec
 
 object SimpleRestJsonBuilder
     extends SimpleProtocolBuilder[smithy4s.api.SimpleRestJson](
       smithy4s.http.json.codecs(
-        smithy4s.api.SimpleRestJson.protocol.hintMask ++ HintMask(InputOutput)
+        smithy4s.api.SimpleRestJson.protocol.hintMask ++ HintMask(InputOutput),
+        CompilationCache.make[JCodec]
       )
     )

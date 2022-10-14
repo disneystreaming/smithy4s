@@ -60,11 +60,11 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
 
 // format: off
 private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
-                                                                                                  baseUri: Uri,
-                                                                                                  client: Client[F],
-                                                                                                  endpoint: Endpoint[Op, I, E, O, SI, SO],
-                                                                                                  httpEndpoint: HttpEndpoint[I],
-                                                                                                  entityCompiler: EntityCompiler[F]
+  baseUri: Uri,
+  client: Client[F],
+  endpoint: Endpoint[Op, I, E, O, SI, SO],
+  httpEndpoint: HttpEndpoint[I],
+  entityCompiler: EntityCompiler[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 

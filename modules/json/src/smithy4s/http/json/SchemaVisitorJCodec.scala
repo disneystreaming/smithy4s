@@ -38,8 +38,10 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 
-private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
-    extends SchemaVisitor.Cached[JCodec] { self =>
+private[smithy4s] class SchemaVisitorJCodec(
+    maxArity: Int,
+    val cache: CompilationCache[JCodec]
+) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
   object PrimitiveJCodecs {

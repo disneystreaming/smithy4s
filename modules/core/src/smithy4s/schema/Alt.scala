@@ -73,9 +73,9 @@ object Alt {
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
 
-    private[smithy4s] class Impl[F[_], U](
+    private[smithy4s] case class Impl[F[_], U](
         alts: Vector[Alt[F, U, _]],
-        val underlying: U => Alt.WithValue[F, U, _]
+        underlying: U => Alt.WithValue[F, U, _]
     ) extends Dispatcher[F, U] {
       def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
           encoderK: EncoderK[G, Result]

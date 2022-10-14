@@ -24,9 +24,12 @@ import smithy4s.api.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.InputOutput
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.CompilationCache
 
-final case class codecs(hintMask: HintMask = codecs.defaultHintMask)
-    extends JsonCodecAPI(codecs.schemaVisitorJCodec, Some(hintMask))
+final case class codecs(
+    hintMask: HintMask = codecs.defaultHintMask,
+    cache: CompilationCache[JCodec]
+) extends JsonCodecAPI(codecs.schemaVisitorJCodec(cache), Some(hintMask))
 
 object codecs {
 
@@ -42,7 +45,9 @@ object codecs {
       IntEnum
     )
 
-  private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
-    new SchemaVisitorJCodec(maxArity = 1024)
+  private[smithy4s] def schemaVisitorJCodec(
+      cache: CompilationCache[JCodec]
+  ): SchemaVisitor[JCodec] =
+    new SchemaVisitorJCodec(maxArity = 1024, cache)
 
 }

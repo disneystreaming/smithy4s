@@ -14,30 +14,13 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package http
+package smithy4s.aws.json
 
-import smithy4s.schema._
+import smithy4s.http.json.JCodec
+import smithy4s.schema.CompilationCache
 
-/**
-  * Typeclass construct allowing to retrieve the status code associated to a value.
-  */
-trait HttpStatusCode[A] {
-
-  def code(a: A, default: Int): Int
-
-}
-
-object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
-
-  type Aux[A] = internals.HttpCode[A]
-
-  def fromSchema[A](schema: Schema[A], cache: Cache): HttpStatusCode[A] = {
-    val visitor = new internals.ErrorCodeSchemaVisitor(cache)
-    val go = schema.compile(visitor)
-    new HttpStatusCode[A] {
-      def code(a: A, default: Int): Int = go(a).getOrElse(default)
-    }
-  }
-
-}
+private[aws] class AwsJsonCodecAPI()
+    extends smithy4s.http.json.JsonCodecAPI(
+      new AwsSchemaVisitorJCodec(CompilationCache.make[JCodec]),
+      None
+    ) {}

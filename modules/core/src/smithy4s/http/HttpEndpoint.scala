@@ -48,8 +48,7 @@ object HttpEndpoint {
       httpMethod <- HttpMethod.fromString(http.method.value)
       httpPath <- internals.pathSegments(http.uri.value)
       encoder <- SchemaVisitorPathEncoder(
-        endpoint.input
-          .addHints(http)
+        endpoint.input.addHints(http)
       )
 
     } yield {

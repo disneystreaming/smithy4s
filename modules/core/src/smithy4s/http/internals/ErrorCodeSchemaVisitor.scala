@@ -20,8 +20,9 @@ package internals
 
 import smithy4s.schema._
 
-private[smithy4s] object ErrorCodeSchemaVisitor
-    extends SchemaVisitor.Cached[HttpCode]
+private[smithy4s] class ErrorCodeSchemaVisitor(
+    val cache: CompilationCache[HttpCode]
+) extends SchemaVisitor.Cached[HttpCode]
     with SchemaVisitor.Default[HttpCode] {
   def default[A]: A => Option[Int] = _ => None
 
