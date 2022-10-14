@@ -2,9 +2,9 @@ $version: "2"
 
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 
-@simpleRestJson
+@restJson
 service PizzaAdminService {
   version: "1.0.0",
   errors: [GenericServerError, GenericClientError],

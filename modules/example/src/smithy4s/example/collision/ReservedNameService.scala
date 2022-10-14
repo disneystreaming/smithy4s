@@ -34,7 +34,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
 
   val hints : Hints = Hints(
-    smithy4s.api.SimpleRestJson(),
+    alloy.RestJson(),
   )
 
   val endpoints: List[Endpoint[ReservedNameServiceOperation, _, _, _, _, _]] = List(

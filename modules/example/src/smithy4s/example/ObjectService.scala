@@ -35,7 +35,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
 
   val hints : Hints = Hints(
-    smithy4s.api.SimpleRestJson(),
+    alloy.RestJson(),
   )
 
   val endpoints: List[Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(

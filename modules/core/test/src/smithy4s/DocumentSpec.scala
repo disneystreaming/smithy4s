@@ -18,7 +18,7 @@ package smithy4s
 
 import smithy.api.JsonName
 import smithy.api.Default
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 import smithy4s.example.IntList
 import munit._
 

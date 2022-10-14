@@ -1,10 +1,10 @@
 namespace smithy4s.example.imp
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 use smithy4s.example.import_test#ImportOperation
 use smithy4s.example.error#NotFoundError
 
-@simpleRestJson
+@restJson
 service ImportService {
   version: "1.0.0",
   operations: [ImportOperation],

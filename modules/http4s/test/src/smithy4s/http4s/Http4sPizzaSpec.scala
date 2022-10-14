@@ -28,7 +28,7 @@ object Http4sPizzaSpec extends smithy4s.tests.PizzaSpec {
       pizzaService: PizzaAdminService[IO],
       errorTransformation: PartialFunction[Throwable, Throwable]
   ): Resource[IO, Res] = {
-    SimpleRestJsonBuilder
+    RestJsonBuilder
       .routes(pizzaService)
       .mapErrors(errorTransformation)
       .resource

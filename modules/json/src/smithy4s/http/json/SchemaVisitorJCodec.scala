@@ -26,8 +26,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy4s.api.Discriminated
-import smithy4s.api.Untagged
+import alloy.Discriminated
+import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.schema.Primitive._

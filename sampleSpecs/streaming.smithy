@@ -1,7 +1,7 @@
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
-use smithy4s.api#UUID
+use alloy#restJson
+use alloy#UUID
 
 service StreamedObjects {
   version: "1.0.0",

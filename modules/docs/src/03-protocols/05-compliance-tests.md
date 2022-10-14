@@ -30,10 +30,10 @@ $version: "2"
 
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 use smithy.test#httpRequestTests
 
-@simpleRestJson
+@restJson
 service HelloWorldService {
   version: "1.0.0",
   operations: [Hello]
@@ -41,14 +41,14 @@ service HelloWorldService {
 @httpRequestTests([
     {
         id: "hello-success"
-        protocol: simpleRestJson
+        protocol: restJson
         method: "POST"
         uri: "/World"
         params: { name: "World" }
     },
     {
         id: "hello-fails"
-        protocol: simpleRestJson
+        protocol: restJson
         method: "POST"
         uri: "/fail"
         params: { name: "World" }
@@ -72,7 +72,7 @@ We have a very simple specification: one operation with basic input and output s
 
 ## Testing the protocol
 
-The service in the specification is annotated with the `simpleRestJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
+The service in the specification is annotated with the `alloy#restJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
 
 _Note: the following code and the `compliance-tests` module do not depend on a specific test frameworks. If you want to hook it into your test framework, it is easy to do so but it's outside the scope of this document. Refer to [this example](https://github.com/disneystreaming/smithy4s/blob/932e169b48c0df9e53601004037ef1dc888ecab0/modules/compliance-tests/test/src/smithy4s/compliancetests/WeaverComplianceTest.scala) to see how we did it for `Weaver` in this project._
 
@@ -91,16 +91,16 @@ Then, you can create and instance of `ClientHttpComplianceTestCase` while select
 
 ```scala mdoc:silent
 val testGenerator = new ClientHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.RestJson,
     HelloWorldServiceGen,
     HelloWorldServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.RestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
     def getClient(app: HttpApp[IO]): Resource[IO, HelloWorldService[IO]] =
-      SimpleRestJsonBuilder(HelloWorldServiceGen)
+      RestJsonBuilder(HelloWorldServiceGen)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource

@@ -46,7 +46,7 @@ class DynamicHttpProxy(client: Client[IO]) {
   val dynamicPizza: IO[smithy4s.Monadic[PizzaAdminServiceGen, IO]] =
     dynamicServiceIO
       .flatMap { dsi =>
-        SimpleRestJsonBuilder(dsi.service)
+        RestJsonBuilder(dsi.service)
           .client[IO](client)
           .use
           .liftTo[IO]

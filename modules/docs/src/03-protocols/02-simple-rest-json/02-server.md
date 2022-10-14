@@ -1,9 +1,9 @@
 ---
 sidebar_label: Server
-title: SimpleRestJson server
+title: restJson server
 ---
 
-The `smithy4s-http4s` module provides functions that transform instances of the generated interfaces into http4s routes, provided the corresponding service definitions (in smithy) are  annotated with the `simpleRestJson` protocol.
+The `smithy4s-http4s` module provides functions that transform instances of the generated interfaces into http4s routes, provided the corresponding service definitions (in smithy) are  annotated with the `alloy#restJson` protocol.
 
 In `build.sbt`
 
@@ -37,7 +37,7 @@ object HelloWorldImpl extends HelloWorldService[IO] {
 In `Routes.scala`
 
 ```scala mdoc:silent
-import smithy4s.http4s.SimpleRestJsonBuilder
+import smithy4s.http4s.RestJsonBuilder
 import org.http4s._
 import cats.effect.IO
 import cats.effect.Resource
@@ -45,7 +45,7 @@ import cats.effect.Resource
 object Routes {
   // This can be easily mounted onto a server.
   val myRoutes : Resource[IO, HttpRoutes[IO]] =
-    SimpleRestJsonBuilder.routes(HelloWorldImpl).resource
+    RestJsonBuilder.routes(HelloWorldImpl).resource
 }
 ```
 

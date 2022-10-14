@@ -60,7 +60,6 @@ lazy val allModules = Seq(
   benchmark,
   protocol,
   protocolTests,
-  openapi,
   `aws-kernel`,
   aws,
   `aws-http4s`,
@@ -147,7 +146,7 @@ lazy val core = projectMatrix
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
-      "smithy4s.api"
+      "alloy"
     ),
     genDiscoverModels := true,
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
@@ -315,7 +314,7 @@ lazy val `aws-http4s` = projectMatrix
 lazy val codegen = projectMatrix
   .in(file("modules/codegen"))
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(openapi)
+  .dependsOn(protocol)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](
@@ -331,6 +330,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.awsTraits,
       Dependencies.Smithy.testTraits,
       Dependencies.Smithy.waiters,
+      Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -387,12 +387,9 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
-        // dependency of codegen
-        (openapi.jvm(Scala213) / publishLocal).value,
 
         // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
-        (openapi.jvm(Scala212) / publishLocal).value,
         (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
       )
       publishLocal.value
@@ -431,8 +428,6 @@ lazy val millCodegenPlugin = projectMatrix
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
-        // dependency of codegen
-        (openapi.jvm(Scala213) / publishLocal).value,
 
         // for mill
         (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
@@ -536,24 +531,6 @@ lazy val dynamic = projectMatrix
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
-
-/**
- * Module that contains the logic for generating "openapi views" of the
- * services that abide by some custom protocols provided by this library.
- */
-lazy val openapi = projectMatrix
-  .in(file("modules/openapi"))
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
-  .dependsOn(protocol)
-  .settings(
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value,
-      Dependencies.Smithy.openapi,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
-      Dependencies.Weaver.cats.value % Test
-    )
-  )
 
 /**
  * Module that contains jsoniter-based encoders/decoders for the generated
@@ -806,8 +783,13 @@ lazy val Dependencies = new {
     val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
     val awsTraits =
       "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
-    val openapi = "software.amazon.smithy" % "smithy-openapi" % smithyVersion
     val waiters = "software.amazon.smithy" % "smithy-waiters" % smithyVersion
+  }
+
+  val Alloy = new {
+    val version = "0.0.0-11-abda2f"
+    val core = "com.disneystreaming.alloy" % "alloy-core" % version
+    val openapi = "com.disneystreaming.alloy" %% "alloy-openapi" % version
   }
 
   val Cats = new {

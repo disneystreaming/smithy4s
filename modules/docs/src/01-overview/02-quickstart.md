@@ -73,9 +73,9 @@ And add the content below:
 ```kotlin
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 
-@simpleRestJson
+@restJson
 service HelloWorldService {
   version: "1.0.0",
   operations: [Hello]
@@ -121,7 +121,7 @@ import org.http4s.implicits._
 import org.http4s.ember.server._
 import org.http4s._
 import com.comcast.ip4s._
-import smithy4s.http4s.SimpleRestJsonBuilder
+import smithy4s.http4s.RestJsonBuilder
 
 object HelloWorldImpl extends HelloWorldService[IO] {
   def hello(name: String, town: Option[String]) : IO[Greeting] = IO.pure {
@@ -134,7 +134,7 @@ object HelloWorldImpl extends HelloWorldService[IO] {
 
 object Routes {
   private val example: Resource[IO, HttpRoutes[IO]] =
-    SimpleRestJsonBuilder.routes(HelloWorldImpl).resource
+    RestJsonBuilder.routes(HelloWorldImpl).resource
 
   private val docs: HttpRoutes[IO] =
     smithy4s.http4s.swagger.docs[IO](HelloWorldService)
@@ -182,7 +182,7 @@ object ClientImpl extends IOApp.Simple {
 
   val helloWorldClient: Resource[IO, HelloWorldService[IO]] = for {
     client <- EmberClientBuilder.default[IO].build
-    helloClient <- SimpleRestJsonBuilder(HelloWorldService)
+    helloClient <- RestJsonBuilder(HelloWorldService)
     .client(client)
     .uri(Uri.unsafeFromString("http://localhost:9000"))
     .resource

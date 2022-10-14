@@ -1,6 +1,6 @@
 namespace smithy4s.example
 
-use smithy4s.api#untagged
+use alloy#untagged
 
 service EmptyService {
   version: "1.0"

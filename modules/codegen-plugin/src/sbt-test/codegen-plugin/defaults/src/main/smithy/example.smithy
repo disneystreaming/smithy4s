@@ -1,8 +1,8 @@
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 
-@simpleRestJson
+@restJson
 service ObjectService {
   version: "1.0.0",
   operations: [PutObject, GetObject]

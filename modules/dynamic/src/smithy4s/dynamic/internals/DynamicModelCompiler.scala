@@ -307,7 +307,7 @@ private[dynamic] object Compiler {
       update(id, shape.traits, document)
 
     override def stringShape(id: ShapeId, shape: StringShape): Unit = {
-      val maybeUuid = getTrait[smithy4s.api.UuidFormat](shape.traits)
+      val maybeUuid = getTrait[alloy.UuidFormat](shape.traits)
       val maybeEnum = getTrait[smithy.api.Enum](shape.traits)
       (maybeUuid, maybeEnum) match {
         case (Some(_), _) => update(id, shape.traits, uuid)

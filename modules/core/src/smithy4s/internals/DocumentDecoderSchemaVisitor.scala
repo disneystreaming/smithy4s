@@ -26,7 +26,7 @@ import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 import smithy4s.capability.Covariant
 import smithy4s.Document._
 import smithy4s.http.PayloadError

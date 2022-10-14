@@ -1,9 +1,9 @@
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 use aws.iam#actionPermissionDescription
 
-@simpleRestJson
+@restJson
 service ObjectService {
   version: "1.0.0",
   operations: [PutObject, GetObject]

@@ -1,9 +1,9 @@
 ---
 sidebar_label: Client
-title: SimpleRestJson client
+title: RestJson client
 ---
 
-The `smithy4s-http4s` module provides functions that transform low-level http4s clients into high-level stubs, provided the corresponding service definitions (in smithy) are annotated with the `simpleRestJson` protocol.
+The `smithy4s-http4s` module provides functions that transform low-level http4s clients into high-level stubs, provided the corresponding service definitions (in smithy) are annotated with the `alloy#restJson` protocol.
 - Uri is optional as it will default to http://localhost:8080
 In `build.sbt`
 
@@ -28,14 +28,14 @@ import smithy4s.hello._
 
 object Clients {
   def helloWorldClient(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    HelloWorldService.simpleRestJson
+    HelloWorldService.restJson
     .client(http4sClient)
     .uri(Uri.unsafeFromString("http://localhost"))
     .resource
 
   // alternatively ...
   def helloWorldClient2(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    SimpleRestJsonBuilder(HelloWorldService)
+    RestJsonBuilder(HelloWorldService)
     .client(http4sClient)
       .uri(Uri.unsafeFromString("http://localhost"))
       .resource

@@ -4,9 +4,9 @@ namespace smithy4s.example
 
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 
-@simpleRestJson
+@restJson
 service HelloService {
     operations: [SayHello, Listen, TestPath]
 }
@@ -15,7 +15,7 @@ service HelloService {
 @httpRequestTests([
     {
         id: "say_hello",
-        protocol: simpleRestJson,
+        protocol: restJson,
         params: {
             "greeting": "Hi",
             "name": "Teddy",
@@ -36,7 +36,7 @@ service HelloService {
 @httpResponseTests([
     {
         id: "say_hello"
-        protocol: simpleRestJson
+        protocol: restJson
         params: { result: "Hello!" }
         body: "{\"result\":\"Hello!\"}"
         code: 200
@@ -69,7 +69,7 @@ structure SayHelloOutput {
 @httpRequestTests([
     {
         id: "listen",
-        protocol: simpleRestJson,
+        protocol: restJson,
         method: "GET",
         uri: "/listen"
     }
@@ -81,7 +81,7 @@ operation Listen { }
 @httpRequestTests([
     {
         id: "TestPath",
-        protocol: simpleRestJson,
+        protocol: restJson,
         method: "GET",
         uri: "/test-path/sameValue"
         params: { path: "sameValue" }
@@ -96,7 +96,7 @@ operation TestPath {
 }
 
 // The following shapes are used
-@simpleRestJson
+@restJson
 service HelloWorldService {
   version: "1.0.0",
   operations: [Hello]
@@ -104,14 +104,14 @@ service HelloWorldService {
 @httpRequestTests([
     {
         id: "helloSuccess"
-        protocol: simpleRestJson
+        protocol: restJson
         method: "POST"
         uri: "/World"
         params: { name: "World" }
     },
     {
         id: "helloFails"
-        protocol: simpleRestJson
+        protocol: restJson
         method: "POST"
         uri: "/fail"
         params: { name: "World" }

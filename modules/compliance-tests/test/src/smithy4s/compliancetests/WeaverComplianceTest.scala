@@ -26,17 +26,17 @@ import weaver._
 
 object WeaverComplianceTest extends SimpleIOSuite {
   val testGenerator = new ClientHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.RestJson,
     HelloServiceGen,
     HelloServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.RestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
 
     def getClient(app: HttpApp[IO]): Resource[IO, HelloService[IO]] =
-      SimpleRestJsonBuilder(HelloServiceGen)
+      RestJsonBuilder(HelloServiceGen)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource

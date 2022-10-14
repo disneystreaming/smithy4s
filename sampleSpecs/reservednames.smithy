@@ -2,9 +2,9 @@ $version: "2.0"
 
 namespace smithy4s.example.collision
 
-use smithy4s.api#simpleRestJson
+use alloy#restJson
 
-@simpleRestJson
+@restJson
 service ReservedNameService {
     version: "1.0.0",
     operations: [Set,List,Map,Option]
