@@ -19,7 +19,7 @@ package smithy4s.codegen.mill
 import coursier.maven.MavenRepository
 import mill._
 import mill.api.PathRef
-import mill.define.{Source, Sources}
+import mill.define.Source
 import mill.scalalib._
 import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
 import smithy4s.codegen.mill.BuildInfo
@@ -115,7 +115,10 @@ trait Smithy4sModule extends ScalaModule {
     scalaOutput +: super.generatedSources()
   }
 
-  override def resources: Sources = T.sources {
-    super.resources() :+ smithy4sResourceOutputDir()
+  def generatedResources: T[PathRef] = T {
+    smithy4sCodegen()
+    smithy4sResourceOutputDir()
   }
+
+  override def localClasspath = super.localClasspath() :+ generatedResources()
 }
