@@ -30,6 +30,8 @@ trait HttpStatusCode[A] {
 
 object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
 
+  def apply[A](implicit instance: HttpStatusCode[A]): HttpStatusCode[A] =
+    instance
   type Aux[A] = internals.HttpCode[A]
 
   def fromSchema[A](schema: Schema[A], cache: Cache): HttpStatusCode[A] = {
@@ -39,5 +41,10 @@ object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
       def code(a: A, default: Int): Int = go(a).getOrElse(default)
     }
   }
+
+  @deprecated("kept for bincompat in 0.16.x")
+  def derivedHttpStatusCodeFromStaticSchema[A](implicit
+      schema: Schema[A]
+  ): HttpStatusCode[A] = fromSchema(schema)
 
 }
