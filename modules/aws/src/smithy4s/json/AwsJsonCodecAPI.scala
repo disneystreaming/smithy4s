@@ -16,11 +16,8 @@
 
 package smithy4s.aws.json
 
-import smithy4s.http.json.JCodec
-import smithy4s.schema.CompilationCache
-
 private[aws] class AwsJsonCodecAPI()
     extends smithy4s.http.json.JsonCodecAPI(
-      new AwsSchemaVisitorJCodec(CompilationCache.make[JCodec]),
+      new AwsSchemaVisitorJCodec(_),
       None
     ) {}
