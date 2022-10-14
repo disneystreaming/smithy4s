@@ -176,25 +176,17 @@ object Metadata {
     def total: Option[TotalDecoder[A]]
   }
 
-  object PartialDecoder {
+  object PartialDecoder extends CachedSchemaCompiler.Impl[PartialDecoder] {
+    type Aux[A] = internals.MetaDecode[A]
 
     def apply[A](implicit instance: PartialDecoder[A]): PartialDecoder[A] =
       instance
 
-    def fromSchema[A](schema: Schema[A]): PartialDecoder[A] =
-      fromSchemaAux(schema, None)
-
     def fromSchema[A](
         schema: Schema[A],
         cache: CompilationCache[internals.MetaDecode]
-    ): PartialDecoder[A] =
-      fromSchemaAux(schema, None)
-
-    private def fromSchemaAux[A](
-        schema: Schema[A],
-        maybeCache: Option[CompilationCache[internals.MetaDecode]]
     ): PartialDecoder[A] = {
-      val metaDecode = new SchemaVisitorMetadataReader(maybeCache)(schema)
+      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
       val (partial, maybeTotal) =
         metaDecode match {
           case internals.MetaDecode.StructureMetaDecode(partial, maybeTotal) =>
@@ -217,15 +209,6 @@ object Metadata {
           )
       }
     }
-
-    implicit def derivedDecoderFromStaticSchema[A](implicit
-        schema: Schema[A]
-    ): PartialDecoder[A] = decoderCache(schema)
-
-    private val decoderCache =
-      new PolyFunction[Schema, PartialDecoder] {
-        def apply[A](fa: Schema[A]): PartialDecoder[A] = fromSchema(fa)
-      }.unsafeMemoise
   }
 
   /**
@@ -241,13 +224,13 @@ object Metadata {
       instance
 
     def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] =
-      fromSchemaAux(schema, None)
+      fromSchema(schema, CompilationCache.nop)
 
-    private def fromSchemaAux[A](
+    def fromSchema[A](
         schema: Schema[A],
-        maybeCache: Option[CompilationCache[internals.MetaDecode]]
+        cache: CompilationCache[internals.MetaDecode]
     ): Option[TotalDecoder[A]] = {
-      val metaDecode = new SchemaVisitorMetadataReader(maybeCache)(schema)
+      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
       metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(_, maybeTotal) =>
           maybeTotal.map { total => (metadata: Metadata) => total(metadata) }

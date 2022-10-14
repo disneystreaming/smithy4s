@@ -24,22 +24,33 @@ import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
 import java.nio.ByteBuffer
 
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.CompilationCache
 
 abstract class JsonCodecAPI(
-    schemaVisitorJCodec: SchemaVisitor[JCodec],
-    hintMask: Option[HintMask] = None,
+    makeVisitor: CompilationCache[JCodec] => SchemaVisitor[JCodec],
+    hintMask: Option[HintMask],
     readerConfig: ReaderConfig = JsonCodecAPI.defaultReaderConfig,
     writerConfig: WriterConfig = WriterConfig
 ) extends CodecAPI {
 
+  def this(
+      schemaVisitorJCodec: SchemaVisitor[JCodec],
+      hintMask: Option[HintMask],
+      readerConfig: ReaderConfig,
+      writerConfig: WriterConfig
+  ) = this(_ => schemaVisitorJCodec, hintMask, readerConfig, writerConfig)
+
+  type Cache = CompilationCache[JCodec]
   type Codec[A] = JCodec[A]
 
-  def compileCodec[A](schema0: Schema[A]): JCodec[A] = {
+  def createCache(): Cache = CompilationCache.make[JCodec]
+
+  def compileCodec[A](schema0: Schema[A], cache: Cache): JCodec[A] = {
     val schema =
       hintMask
         .map(mask => schema0.transformHintsLocally(mask.apply))
         .getOrElse(schema0)
-    schema.compile(schemaVisitorJCodec)
+    schema.compile(makeVisitor(cache))
   }
 
   def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =

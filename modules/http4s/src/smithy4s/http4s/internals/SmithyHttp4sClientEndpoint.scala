@@ -44,7 +44,7 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      entityCompiler: EntityCompiler[F]
+      compilerContext: CompilerContext[F]
   ): Option[SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]] =
     HttpEndpoint.cast(endpoint).map { httpEndpoint =>
       new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
@@ -52,7 +52,7 @@ private[smithy4s] object SmithyHttp4sClientEndpoint {
         client,
         endpoint,
         httpEndpoint,
-        entityCompiler
+        compilerContext
       )
     }
 
@@ -64,7 +64,7 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
   client: Client[F],
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   httpEndpoint: HttpEndpoint[I],
-  entityCompiler: EntityCompiler[F]
+  compilerContext: CompilerContext[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
@@ -76,21 +76,21 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
       }
   }
 
+  import compilerContext._
   private val method: org.http4s.Method = toHttp4sMethod(httpEndpoint.method)
-
   private val inputSchema: Schema[I] = endpoint.input
   private val outputSchema: Schema[O] = endpoint.output
 
   private val inputMetadataEncoder =
     Metadata.Encoder.fromSchema(inputSchema)
   private val inputHasBody =
-    Metadata.TotalDecoder.fromSchema(inputSchema).isEmpty
+    Metadata.TotalDecoder.fromSchema(inputSchema, metadataDecoderCache).isEmpty
   private implicit val inputEntityEncoder: EntityEncoder[F, I] =
-    entityCompiler.compileEntityEncoder(inputSchema)
+    entityCompiler.compileEntityEncoder(inputSchema, entityCache)
   private val outputMetadataDecoder =
-    Metadata.PartialDecoder.fromSchema(outputSchema)
+    Metadata.PartialDecoder.fromSchema(outputSchema, metadataDecoderCache)
   private implicit val outputCodec: EntityDecoder[F, BodyPartial[O]] =
-    entityCompiler.compilePartialEntityDecoder(outputSchema)
+    entityCompiler.compilePartialEntityDecoder(outputSchema, entityCache)
 
   def inputToRequest(input: I): Request[F] = {
     val metadata = inputMetadataEncoder.encode(input)
@@ -147,7 +147,7 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
             val errorMetadataDecoder =
               Metadata.PartialDecoder.fromSchema(schema)
             implicit val errorCodec =
-              entityCompiler.compilePartialEntityDecoder(schema)
+              entityCompiler.compilePartialEntityDecoder(schema, entityCache)
 
             (response: Response[F]) => {
               decodeResponse[A](response, errorMetadataDecoder)

@@ -27,9 +27,8 @@ import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
 
 final case class codecs(
-    hintMask: HintMask = codecs.defaultHintMask,
-    cache: CompilationCache[JCodec] = CompilationCache.nop[JCodec]
-) extends JsonCodecAPI(codecs.schemaVisitorJCodec(cache), Some(hintMask))
+    hintMask: HintMask = codecs.defaultHintMask
+) extends JsonCodecAPI(codecs.schemaVisitorJCodec(_), Some(hintMask))
 
 object codecs {
 
