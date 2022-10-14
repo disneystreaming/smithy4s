@@ -49,4 +49,7 @@ object codecs {
   ): SchemaVisitor[JCodec] =
     new SchemaVisitorJCodec(maxArity = 1024, cache)
 
+  private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
+    new SchemaVisitorJCodec(maxArity = 1024, CompilationCache.nop[JCodec])
+
 }

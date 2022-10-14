@@ -107,7 +107,7 @@ object Document {
     }
 
     @deprecated("kept for bincompat in 0.16.x")
-    protected[this] def deriveEncoderFromStaticSchema[A](
+    def deriveEncoderFromStaticSchema[A](
         schema: Schema[A]
     ): Encoder[A] =
       fromSchema(schema)
@@ -142,7 +142,7 @@ object Document {
     }
 
     @deprecated("kept for bincompat in 0.16.x")
-    protected[this] def derivedDecoderFromStaticSchema[A](
+    def derivedDecoderFromStaticSchema[A](
         schema: Schema[A]
     ): Decoder[A] =
       fromSchema(schema)
