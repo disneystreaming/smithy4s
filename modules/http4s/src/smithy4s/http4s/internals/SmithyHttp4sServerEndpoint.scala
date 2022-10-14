@@ -192,8 +192,13 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
       val errorValue = altAndValue.value
       val errorCode =
         http.HttpStatusCode.fromSchema(errorSchema).code(errorValue, 500)
+      // TODO : apply proper memoization of error instances/
+      // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
+      // This is because the "compile entity encoder" method can trigger a transformation of hints, which
+      // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
+      val ephemeralEntityCache = entityCompiler.createCache()
       implicit val errorCodec =
-        entityCompiler.compileEntityEncoder(errorSchema, entityCache)
+        entityCompiler.compileEntityEncoder(errorSchema, ephemeralEntityCache)
       val metadataEncoder = Metadata.Encoder.fromSchema(errorSchema)
       val metadata = metadataEncoder.encode(errorValue)
       val headers = errorHeaders(altAndValue.alt.label, metadata)
