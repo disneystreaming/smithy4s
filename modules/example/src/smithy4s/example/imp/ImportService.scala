@@ -35,7 +35,7 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
 
   val hints : Hints = Hints(
-    alloy.RestJson(),
+    alloy.SimpleRestJson(),
   )
 
   val endpoints: List[Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(

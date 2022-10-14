@@ -1,6 +1,6 @@
 namespace smithy4s.example
 
-use alloy#restJson
+use alloy#simpleRestJson
 use alloy#UUID
 
 service StreamedObjects {

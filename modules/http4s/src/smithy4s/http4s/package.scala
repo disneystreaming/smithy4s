@@ -30,8 +30,8 @@ package object http4s extends Compat.Package {
       private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
   ) {
 
-    def restJson: RestJsonBuilder.ServiceBuilder[Alg, Op] =
-      RestJsonBuilder(serviceProvider.service)
+    def simpleRestJson: SimpleRestJsonBuilder.ServiceBuilder[Alg, Op] =
+      SimpleRestJsonBuilder(serviceProvider.service)
 
   }
 

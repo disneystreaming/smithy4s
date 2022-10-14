@@ -1,13 +1,13 @@
 namespace smithy4s.example
 
-use alloy#restJson
+use alloy#simpleRestJson
 use alloy#UUID
 use alloy#uuidFormat
 use smithy4s.meta#indexedSeq
 use smithy4s.meta#vector
 use smithy4s.meta#errorMessage
 
-@restJson
+@simpleRestJson
 service ObjectService {
   version: "1.0.0",
   errors: [ServerError],

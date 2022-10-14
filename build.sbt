@@ -504,6 +504,10 @@ lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
+    genDiscoverModels := true,
+    allowedNamespaces := Seq(
+      "smithy4s.dynamic.model"
+    ),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
       Dependencies.Cats.core.value
@@ -579,6 +583,7 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
+        Dependencies.Alloy.core % Test,
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test
       )
@@ -634,6 +639,10 @@ lazy val tests = projectMatrix
   .dependsOn(core)
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
+    genDiscoverModels := true,
+    allowedNamespaces := Seq(
+      "smithy4s.example"
+    ),
     libraryDependencies ++= {
       val ce3 =
         if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
@@ -787,7 +796,7 @@ lazy val Dependencies = new {
   }
 
   val Alloy = new {
-    val version = "0.0.0-11-abda2f"
+    val version = "0.0.0-13-dbd1d0"
     val core = "com.disneystreaming.alloy" % "alloy-core" % version
     val openapi = "com.disneystreaming.alloy" %% "alloy-openapi" % version
   }

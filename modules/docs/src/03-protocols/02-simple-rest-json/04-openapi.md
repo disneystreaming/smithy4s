@@ -3,14 +3,14 @@ sidebar_label: Openapi
 title: Openapi
 ---
 
-At build-time, when encountering a service annotated with the `alloy#restJson` protocol, Smithy4s will automatically generate an openapi "view" for this service.
+At build-time, when encountering a service annotated with the `alloy#simpleRestJson` protocol, Smithy4s will automatically generate an openapi "view" for this service.
 
 ```kotlin
 namespace smithy4s.example
 
-use alloy#restJson
+use alloy#simpleRestJson
 
-@restJson
+@simpleRestJson
 service HelloWorldService {
   version: "1.0.0"
   operations: [Hello]
@@ -88,7 +88,7 @@ import smithy4s.hello._
 
 // ...
 val docRoutes = docs[IO](HelloWorldService)
-val app = RestJsonBuilder
+val app = SimpleRestJsonBuilder
   .routes(HelloWorldImpl)
   .make
   .map(serviceRoutes => docRoutes <+> serviceRoutes)

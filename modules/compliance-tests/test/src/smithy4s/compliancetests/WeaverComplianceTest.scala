@@ -26,24 +26,24 @@ import weaver._
 
 object WeaverComplianceTest extends SimpleIOSuite {
   val clientTestGenerator = new ClientHttpComplianceTestCase[
-    alloy.RestJson,
+    alloy.SimpleRestJson,
     HelloServiceGen,
     HelloServiceOperation
   ](
-    alloy.RestJson()
+    alloy.SimpleRestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
 
     def getClient(app: HttpApp[IO]): Resource[IO, HelloService[IO]] =
-      RestJsonBuilder(HelloServiceGen)
+      SimpleRestJsonBuilder(HelloServiceGen)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
   }
 
   val serverTestGenerator = new ServerHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.SimpleRestJson,
     HelloServiceGen,
     HelloServiceOperation
   ](
@@ -52,7 +52,7 @@ object WeaverComplianceTest extends SimpleIOSuite {
     def getServer(
         impl: smithy4s.Monadic[HelloServiceGen, IO]
     ): Resource[IO, HttpRoutes[IO]] =
-      SimpleRestJsonBuilder(HelloServiceGen).routes(impl).resource
+      SimpleSimpleRestJsonBuilder(HelloServiceGen).routes(impl).resource
   }
 
   val tests: List[ComplianceTest[IO]] =

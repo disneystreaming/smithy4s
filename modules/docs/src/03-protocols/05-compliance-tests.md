@@ -30,10 +30,10 @@ $version: "2"
 
 namespace smithy4s.hello
 
-use alloy#restJson
+use alloy#simpleRestJson
 use smithy.test#httpRequestTests
 
-@restJson
+@simpleRestJson
 service HelloWorldService {
   version: "1.0.0",
   operations: [Hello]
@@ -41,14 +41,14 @@ service HelloWorldService {
 @httpRequestTests([
     {
         id: "hello-success"
-        protocol: restJson
+        protocol: simpleRestJson
         method: "POST"
         uri: "/World"
         params: { name: "World" }
     },
     {
         id: "hello-fails"
-        protocol: restJson
+        protocol: simpleRestJson
         method: "POST"
         uri: "/fail"
         params: { name: "World" }
@@ -72,7 +72,7 @@ We have a very simple specification: one operation with basic input and output s
 
 ## Testing the protocol
 
-The service in the specification is annotated with the `alloy#restJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
+The service in the specification is annotated with the `alloy#simpleRestJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
 
 _Note: the following code and the `compliance-tests` module do not depend on a specific test framework. If you want to hook it into your test framework, it is easy to do so but it's outside the scope of this document. Refer to [this example](https://github.com/disneystreaming/smithy4s/blob/main/modules/compliance-tests/test/src/smithy4s/compliancetests/WeaverComplianceTest.scala) to see how we did it for `Weaver` in this project._
 
@@ -91,32 +91,32 @@ Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `Serv
 
 ```scala mdoc:silent
 val clientTestGenerator = new ClientHttpComplianceTestCase[
-    alloy.RestJson,
+    alloy.SimpleRestJson,
     HelloWorldServiceGen,
     HelloWorldServiceOperation
   ](
-    alloy.RestJson()
+    alloy.SimpleRestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
     def getClient(app: HttpApp[IO]): Resource[IO, HelloWorldService[IO]] =
-      RestJsonBuilder(HelloWorldServiceGen)
+      SimpleRestJsonBuilder(HelloWorldServiceGen)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
   }
 
 val serverTestGenerator = new ServerHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.SimpleRestJson,
     HelloWorldServiceGen,
     HelloWorldServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     def getServer(
         impl: smithy4s.Monadic[HelloWorldServiceGen, IO]
     ): Resource[IO, HttpRoutes[IO]] =
-      SimpleRestJsonBuilder(HelloWorldServiceGen).routes(impl).resource
+      SimpleSimpleRestJsonBuilder(HelloWorldServiceGen).routes(impl).resource
   }
 
 val tests: List[ComplianceTest[IO]] = clientTestGenerator.allClientTests() ++ serverTestGenerator.allServerTests()

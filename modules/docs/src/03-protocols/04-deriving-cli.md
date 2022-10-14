@@ -11,9 +11,9 @@ title: Deriving CLIs
 ```kotlin
 namespace smithy4s.hello
 
-use alloy#restJson
+use alloy#simpleRestJson
 
-@restJson
+@simpleRestJson
 service HelloWorldService {
   version: "1.0.0",
   operations: [Hello]

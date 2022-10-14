@@ -43,7 +43,7 @@ class Http4sBenchmark {
 
   val inputJson = s3ObjectCodec.apply(Payload.input)
 
-  val genericRouter = smithy4s.http4s.RestJsonBuilder
+  val genericRouter = smithy4s.http4s.SimpleRestJsonBuilder
     .routes(
       BenchmarkServiceHttp4sImpl(Ref.unsafe(Set.empty))
     )

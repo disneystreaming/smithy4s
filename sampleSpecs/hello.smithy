@@ -1,8 +1,8 @@
 namespace smithy4s.hello
 
-use alloy#restJson
+use alloy#simpleRestJson
 
-@restJson
+@simpleRestJson
 service HelloWorldService {
   version: "1.0.0",
   // Indicates that all operations in `HelloWorldService`,

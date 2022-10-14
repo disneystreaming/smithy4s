@@ -25,9 +25,9 @@ import cats.effect.IO
 // This is a non-regression test for https://github.com/disneystreaming/smithy4s/issues/181
 object RecursiveInputSpec extends FunSuite {
 
-  test("restJson works with recursive input operations") {
+  test("simpleRestJson works with recursive input operations") {
     val result =
-      RestJsonBuilder(smithy4s.example.RecursiveInputService)
+      SimpleRestJsonBuilder(smithy4s.example.RecursiveInputService)
         .client(Client.fromHttpApp(HttpApp.notFound[IO]))
         .use
 

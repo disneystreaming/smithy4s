@@ -1,8 +1,8 @@
 namespace smithy4s.example
 
-use alloy#restJson
+use alloy#simpleRestJson
 
-@restJson
+@simpleRestJson
 service RecursiveInputService {
   version: "0.0.1",
   operations: [RecursiveInputOperation],

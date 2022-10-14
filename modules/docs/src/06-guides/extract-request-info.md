@@ -30,9 +30,9 @@ For this example, we are going to be working with the following smithy specifica
 ```kotlin
 namespace smithy4s.hello
 
-use alloy#restJson
+use alloy#simpleRestJson
 
-@restJson
+@simpleRestJson
 service HelloWorldService {
   version: "1.0.0"
   // Indicates that all operations in `HelloWorldService`,
@@ -146,7 +146,7 @@ object Routes {
       case Some(value) => IO.pure(value)
       case None => IO.raiseError(new IllegalAccessException("Tried to access the value outside of the lifecycle of an http request"))
     }
-    smithy4s.http4s.RestJsonBuilder
+    smithy4s.http4s.SimpleRestJsonBuilder
       .routes(new HelloWorldServiceImpl(getRequestInfo))
       .resource
       .map { routes =>

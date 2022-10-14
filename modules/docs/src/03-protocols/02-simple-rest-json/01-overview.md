@@ -1,6 +1,6 @@
 ---
-sidebar_label: RestJson
-title: The RestJson protocol
+sidebar_label: SimpleRestJson
+title: The SimpleRestJson protocol
 ---
 
 Smithy4s provides a custom Json-in/Json-out protocol that smithy services can be annotated with.
@@ -18,9 +18,9 @@ In this protocol, the values in shapes are bound to http metadata or body accord
 ```kotlin
 namespace smithy4s.example
 
-use alloy#restJson
+use alloy#simpleRestJson
 
-@restJson
+@simpleRestJson
 service HelloWorldService {
   version: "1.0.0"
   // Indicates that all operations in `HelloWorldService`,
@@ -70,7 +70,7 @@ This protocol and its interpreters, are aware of the following traits provided o
 
 ## Decoding and encoding unions
 
-The `RestJson` protocol supports 3 different union encodings :
+The `SimpleRestJson` protocol supports 3 different union encodings :
 
 * tagged (default)
 * untagged

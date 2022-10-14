@@ -19,7 +19,7 @@ package smithy4s.example
 import cats.effect._
 import cats.implicits._
 import org.http4s.implicits._
-import smithy4s.http4s.RestJsonBuilder
+import smithy4s.http4s.SimpleRestJsonBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import com.comcast.ip4s.Host
 import com.comcast.ip4s.Port
@@ -31,7 +31,7 @@ object Launcher extends IOApp {
     val serverRes = for {
       impl <- Resource.eval(ObjectServiceImpl.makeIO)
       docs = smithy4s.http4s.swagger.docs[IO](ObjectService)
-      service <- RestJsonBuilder.routes(impl).resource
+      service <- SimpleRestJsonBuilder.routes(impl).resource
       app = (docs <+> service).orNotFound
       server <- EmberServerBuilder.default[IO].withHost(host).withPort(port).withHttpApp(app).build
     } yield ()

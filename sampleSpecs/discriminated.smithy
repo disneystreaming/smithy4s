@@ -1,9 +1,9 @@
 namespace smithy4s.example
 
-use alloy#restJson
+use alloy#simpleRestJson
 use alloy#discriminated
 
-@restJson
+@simpleRestJson
 service DiscriminatedService {
   version: "1.0.0",
   operations: [TestDiscriminated]
