@@ -56,7 +56,7 @@ object XmlDocument {
   sealed trait XmlContent extends Product with Serializable
   final case class XmlText(text: String)                                                       extends XmlContent
   final case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
-  final case class XmlAttr(name: XmlQName, value: List[XmlText]) extends XmlContent
+  final case class XmlAttr(name: XmlQName, values: List[XmlText]) extends XmlContent
   final case class XmlQName(prefix: Option[String], name: String) {
     override def toString : String = render
     def render: String = prefix match {
@@ -234,7 +234,7 @@ object XmlDocument {
 
       private def toAttr(attr: XmlAttr): Attr = Attr(
         toQName(attr.name),
-        attr.value.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
+        attr.values.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
       )
 
       private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)

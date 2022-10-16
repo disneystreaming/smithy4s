@@ -512,7 +512,7 @@ object XmlCodecSpec extends SimpleIOSuite {
   ): IO[Expectations] = {
     parseDocument(xmlString).flatMap { document =>
       val decodingChecks = decodeContent[A](document)
-        .map(result => expect.same(result, expected))
+        .map(result => expect.same(result, expected).traced(here))
 
       import cats.Show
       implicit val showXmlDocument: Show[XmlDocument] = new Show[XmlDocument] {
@@ -526,7 +526,7 @@ object XmlCodecSpec extends SimpleIOSuite {
 
       val encodingChecks = {
         val encoded = encodeDocument(expected)
-        IO(expect.same(encoded, document))
+        IO(expect.same(encoded, document).traced(here))
       }
 
       (decodingChecks |+| encodingChecks)

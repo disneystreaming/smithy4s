@@ -18,7 +18,6 @@ package smithy4s.xml
 package internals
 
 import cats.data.NonEmptyList
-import cats.syntax.all._
 import smithy4s.ConstraintError
 import smithy4s.xml.XmlDocument
 import smithy4s.xml.XmlDocument.XmlQName
@@ -40,21 +39,11 @@ import smithy4s.xml.internals.XmlCursor.Nodes
 private[smithy4s] trait XmlDecoder[A] { self =>
   def decode(cursor: XmlCursor): Either[XmlDecodeError, A]
   final def map[B](f: A => B): XmlDecoder[B] = new XmlDecoder[B] {
-    override def down(name: XmlQName): XmlDecoder[B] = self.down(name).map(f)
-    override def attribute(name: XmlQName): XmlDecoder[B] =
-      self.attribute(name).map(f)
-    override def optional: XmlDecoder[Option[B]] =
-      self.optional.map[Option[B]](_.map(f))
     def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
       self.decode(cursor).map(f)
   }
   final def emap[B](f: A => Either[ConstraintError, B]): XmlDecoder[B] =
     new XmlDecoder[B] {
-      override def down(name: XmlQName): XmlDecoder[B] = self.down(name).emap(f)
-      override def attribute(name: XmlQName): XmlDecoder[B] =
-        self.attribute(name).emap(f)
-      override def optional: XmlDecoder[Option[B]] =
-        self.optional.emap[Option[B]](_.traverse(f))
       def decode(cursor: XmlCursor): Either[XmlDecodeError, B] =
         self.decode(cursor).flatMap {
           f(_) match {
