@@ -37,7 +37,7 @@ abstract class JsonCodecAPI(
   def compileCodec[A](schema0: Schema[A]): JCodec[A] = {
     val schema =
       hintMask
-        .map(mask => schema0.transformHintsLocally(mask.apply))
+        .map(mask => schema0.transformHintsTransitively(mask.apply))
         .getOrElse(schema0)
     schema.compile(schemaVisitorJCodec)
   }
