@@ -89,7 +89,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   def run(pathParams: PathParams, request: Request[F]): F[Response[F]] = {
     val run: F[O] = for {
       metadata <- getMetadata(pathParams, request)
-      input <- extractInput.run((metadata, request))
+      input <- extractInput(metadata, request)
       output <- (impl(endpoint.wrap(input)): F[O])
     } yield output
 
@@ -121,29 +121,22 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
       errorTransformation(other).flatMap(F.raiseError)
   }
 
-
-
-  // format: off
-  private val extractInput: (Metadata, Request[F]) ==> I = {
+  private def extractInput(metadata: Metadata, request: Request[F]): F[I] = {
     inputMetadataDecoder.total match {
       case Some(totalDecoder) =>
-        Kleisli { case (metadata, request) =>
-          request.body.compile.drain *>
+        request.body.compile.drain *>
           totalDecoder.decode(metadata).liftTo[F]
-        }
       case None =>
         // NB : only compiling the input codec if the data cannot be
         // totally extracted from the metadata.
-        implicit val inputCodec = entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
-        Kleisli { case (metadata, request) =>
-          for {
-            metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
-            bodyPartial <- request.as[BodyPartial[I]]
-          } yield metadataPartial.combine(bodyPartial)
-        }
+        implicit val inputCodec =
+          entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
+        for {
+          metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
+          bodyPartial <- request.as[BodyPartial[I]]
+        } yield metadataPartial.combine(bodyPartial)
     }
   }
-  // format: on
 
   private def putHeaders(m: Message[F], headers: Headers) =
     m.putHeaders(headers.headers)
