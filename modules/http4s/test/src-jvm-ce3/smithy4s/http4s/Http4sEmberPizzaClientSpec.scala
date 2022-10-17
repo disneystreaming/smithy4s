@@ -77,15 +77,15 @@ object Http4sEmberPizzaClientSpec extends IOSuite {
 
   private val dummyImpl = new PizzaAdminService[IO]() {
     // format: off
-    override def addMenuItem(restaurant: String, menuItem: MenuItem): IO[AddMenuItemResult] = ???
-    override def getMenu(restaurant: String): IO[GetMenuResult] = ???
-    override def version(): IO[VersionOutput] = ???
-    override def health(query: Option[String]): IO[HealthResponse] = ???
-    override def headerEndpoint(uppercaseHeader: Option[String], capitalizedHeader: Option[String], lowercaseHeader: Option[String], mixedHeader: Option[String]): IO[HeaderEndpointData] = ???
-    override def roundTrip(label: String, header: Option[String], query: Option[String], body: Option[String]): IO[RoundTripData] = ???
-    override def getEnum(aa: TheEnum): IO[GetEnumOutput] = ???
-    override def getIntEnum(aa: EnumResult): IO[GetIntEnumOutput] = ???
-    override def customCode(code: Int): IO[CustomCodeOutput] = ???
+    override def addMenuItem(restaurant: String, menuItem: MenuItem): IO[AddMenuItemResult] = IO.stub
+    override def getMenu(restaurant: String): IO[GetMenuResult] = IO.stub
+    override def version(): IO[VersionOutput] = IO.stub
+    override def health(query: Option[String]): IO[HealthResponse] = IO.pure(HealthResponse("good"))
+    override def headerEndpoint(uppercaseHeader: Option[String], capitalizedHeader: Option[String], lowercaseHeader: Option[String], mixedHeader: Option[String]): IO[HeaderEndpointData] = IO.stub
+    override def roundTrip(label: String, header: Option[String], query: Option[String], body: Option[String]): IO[RoundTripData] = IO.stub
+    override def getEnum(aa: TheEnum): IO[GetEnumOutput] = IO.stub
+    override def getIntEnum(aa: EnumResult): IO[GetIntEnumOutput] = IO.stub
+    override def customCode(code: Int): IO[CustomCodeOutput] = IO.stub
     override def book(name: String, town: Option[String]): IO[BookOutput] = IO.pure(BookOutput("name"))
     // format: on
   }
