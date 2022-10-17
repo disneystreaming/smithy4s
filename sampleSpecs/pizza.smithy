@@ -8,7 +8,7 @@ use alloy#simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
   errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
@@ -288,4 +288,20 @@ structure CustomCodeInput {
 structure CustomCodeOutput {
   @httpResponseCode
   code: Integer
+}
+
+@http(method: "POST", uri: "/book/{name}", code: 200)
+operation Book {
+  input := {
+    @httpLabel
+    @required
+    name: String,
+
+    @httpQuery("town")
+    town: String
+  },
+  output := {
+    @required
+    message: String
+  }
 }

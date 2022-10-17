@@ -28,7 +28,6 @@ import org.http4s.dsl.io._
 import org.typelevel.ci.CIString
 import smithy4s.Timestamp
 import smithy4s.example._
-import cats.Show
 import weaver._
 
 abstract class PizzaClientSpec extends IOSuite {
@@ -174,8 +173,7 @@ abstract class PizzaClientSpec extends IOSuite {
       expected: E
   )(implicit
       loc: SourceLocation,
-      ct: scala.reflect.ClassTag[E],
-      show: Show[E] = Show.fromToString[E]
+      ct: scala.reflect.ClassTag[E]
   ) = {
     clientTest(name) { (client, backend, log) =>
       for {
@@ -302,6 +300,9 @@ abstract class PizzaClientSpec extends IOSuite {
         case request @ (GET -> Root / "custom-code" / IntVar(code)) =>
           storeAndReturn(s"customCode$code", request)
 
+        case POST -> Root / "book" / _ =>
+          val body = Json.obj("message" -> Json.fromString("test"))
+          Ok(body)
       }
       .orNotFound
   }
