@@ -74,4 +74,23 @@ trait PolyFunction[F[_], G[_]] { self =>
         map(input).asInstanceOf[G[A]]
       }
     }
+
+  private[smithy4s] final def unsafeCacheBy[K](
+      allPossibleInputs: Vector[Existential[F]],
+      getKey: Existential[F] => K
+  ): PolyFunction[F, G] =
+    new PolyFunction[F, G] {
+      private val map: Map[K, Any] = {
+        val builder = Map.newBuilder[K, Any]
+        allPossibleInputs.foreach(input =>
+          builder += getKey(input) -> self
+            .apply(input.asInstanceOf[F[Any]])
+            .asInstanceOf[Any]
+        )
+        builder.result()
+      }
+      def apply[A](input: F[A]): G[A] = {
+        map(getKey(Existential.wrap(input))).asInstanceOf[G[A]]
+      }
+    }
 }
