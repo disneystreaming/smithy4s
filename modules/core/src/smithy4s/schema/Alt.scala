@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
+import scala.annotation.nowarn
 
 /**
   * Represents a member of coproduct type (sealed trait)
@@ -36,7 +37,14 @@ final case class Alt[F[_], U, A](
 }
 object Alt {
 
-  final case class WithValue[F[_], U, A](alt: Alt[F, U, A], value: A) {
+  @nowarn
+  final case class WithValue[F[_], U, A](
+      @deprecated(
+        "Should not be accessed directly, use Dispatcher instead when compiling union schemas",
+        since = "0.16.5"
+      ) alt: Alt[F, U, A],
+      value: A
+  ) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
       WithValue(alt.mapK(fk), value)
   }
@@ -73,6 +81,7 @@ object Alt {
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
 
+    @nowarn("msg=Should not be accessed")
     private[smithy4s] class Impl[F[_], U](
         alts: Vector[Alt[F, U, _]],
         val underlying: U => Alt.WithValue[F, U, _]
@@ -82,7 +91,10 @@ object Alt {
       ): G[U] = {
         val precompiledAlts =
           precompile.toPolyFunction
-            .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
+            .unsafeCacheBy(
+              alts.map(smithy4s.Existential.wrap(_)),
+              (alt: Alt[F, U, _]) => alt.label
+            )
 
         encoderK.absorb[U] { u =>
           underlying(u) match {
