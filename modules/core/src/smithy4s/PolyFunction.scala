@@ -75,8 +75,6 @@ trait PolyFunction[F[_], G[_]] { self =>
       }
     }
 
-  type ConstK[H[_], C] = C
-
   private[smithy4s] final def unsafeCacheBy[K](
       allPossibleInputs: Vector[Existential[F]],
       getKey: Existential[F] => K
