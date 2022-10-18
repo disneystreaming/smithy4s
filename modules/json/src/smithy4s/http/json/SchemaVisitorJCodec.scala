@@ -28,7 +28,6 @@ import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy4s.api.Discriminated
 import smithy4s.api.Untagged
-import smithy4s.capability.EncoderK
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
@@ -759,11 +758,6 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   }
 
   private type Writer[A] = A => JsonWriter => Unit
-  private implicit val encoderK: EncoderK[Writer, JsonWriter => Unit] =
-    new EncoderK[Writer, JsonWriter => Unit] {
-      def apply[A](fa: Writer[A], a: A): JsonWriter => Unit = fa(a)
-      def absorb[A](f: A => JsonWriter => Unit): Writer[A] = f
-    }
 
   private def taggedUnion[U](
       alternatives: Vector[Alt[Schema, U, _]]
