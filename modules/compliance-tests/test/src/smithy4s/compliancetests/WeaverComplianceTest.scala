@@ -40,6 +40,7 @@ object WeaverComplianceTest extends SimpleIOSuite {
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
+    def codecs = SimpleRestJsonBuilder.codecs
   }
 
   val serverTestGenerator = new ServerHttpComplianceTestCase[

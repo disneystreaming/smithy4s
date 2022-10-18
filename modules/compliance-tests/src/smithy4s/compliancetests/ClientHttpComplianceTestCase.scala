@@ -22,20 +22,26 @@ import cats.effect.IO
 import cats.effect.Resource
 import cats.implicits._
 import org.http4s.HttpApp
+import org.http4s.headers.`Content-Type`
 import org.http4s.HttpRoutes
 import org.http4s.Request
 import org.http4s.Response
+import org.http4s.Status
 import org.http4s.Uri
 import org.typelevel.ci.CIString
 import smithy.test._
-import smithy4s.Document
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
-import smithy4s.http.PayloadError
+import smithy4s.http.CodecAPI
+import smithy4s.Document
 import smithy4s.Endpoint
+import smithy4s.http.PayloadError
 import smithy4s.Service
 import smithy4s.ShapeTag
+import smithy4s.tests.DefaultSchemaVisitor
 
 import scala.concurrent.duration._
+import smithy4s.http.HttpMediaType
+import org.http4s.MediaType
 
 abstract class ClientHttpComplianceTestCase[
     P,
@@ -53,6 +59,7 @@ abstract class ClientHttpComplianceTestCase[
   private val baseUri = uri"http://localhost/"
 
   def getClient(app: HttpApp[IO]): Resource[IO, smithy4s.Monadic[Alg, IO]]
+  def codecs: CodecAPI
 
   private def matchRequest(
       request: Request[IO],
@@ -165,16 +172,84 @@ abstract class ClientHttpComplianceTestCase[
     )
   }
 
+  private[compliancetests] def clientResponseTest[I, E, O, SE, SO](
+      endpoint: Endpoint[Op, I, E, O, SE, SO],
+      testCase: HttpResponseTestCase
+  ): ComplianceTest[IO] = {
+    type R[I_, E_, O_, SE_, SO_] = IO[O_]
+
+    val dummyInput = DefaultSchemaVisitor(endpoint.input)
+
+    val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
+    ComplianceTest[IO](
+      name = endpoint.id.toString + "(client|response): " + testCase.id,
+      run = {
+        def aMediatype[A](
+            s: smithy4s.Schema[A],
+            cd: CodecAPI
+        ): HttpMediaType = {
+          cd.mediaType(cd.compileCodec(s))
+        }
+        val mediaType = aMediatype(endpoint.output, codecs)
+        val output = outputDecoder
+          .decode(testCase.params.getOrElse(Document.obj()))
+          .liftTo[IO]
+        val status = Status.fromInt(testCase.code).liftTo[IO]
+
+        (status, output).tupled.flatMap { case (status, output) =>
+          val app = HttpRoutes
+            .of[IO] { case req =>
+              val body: fs2.Stream[IO, Byte] =
+                testCase.body
+                  .map { body =>
+                    fs2.Stream
+                      .emit(body)
+                      .through(utf8Encode)
+                  }
+                  .getOrElse(fs2.Stream.empty)
+              req.body.compile.drain.as(
+                Response[IO](status)
+                  .withBodyStream(body)
+                  .putHeaders(
+                    `Content-Type`(MediaType.unsafeParse(mediaType.value))
+                  )
+              )
+            }
+            .orNotFound
+
+          getClient(app).use { client =>
+            service
+              .asTransformation[R](client)
+              .apply(endpoint.wrap(dummyInput))
+              .map { o =>
+                assert.eql(o, output)
+              }
+          }
+        }
+      }
+    )
+  }
+
   def allClientTests(
   ): List[ComplianceTest[IO]] = {
     service.endpoints.flatMap { case endpoint =>
-      endpoint.hints
+      val requestTests = endpoint.hints
         .get(HttpRequestTests)
         .map(_.value)
         .getOrElse(Nil)
         .filter(_.protocol == protocolTag.id.toString())
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientRequestTest(endpoint, tc))
+
+      val opResponseTests = endpoint.hints
+        .get(HttpResponseTests)
+        .map(_.value)
+        .getOrElse(Nil)
+        .filter(_.protocol == protocolTag.id.toString())
+        .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
+        .map(tc => clientResponseTest(endpoint, tc))
+
+      requestTests ++ opResponseTests
     }
   }
 }
