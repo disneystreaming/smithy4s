@@ -21,14 +21,12 @@ package internals
 import cats.data.Kleisli
 import cats.syntax.all._
 import org.http4s.EntityEncoder
-import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.Message
 import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
-import org.typelevel.ci.CIString
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.schema.Alt
@@ -163,51 +161,57 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   private def successResponse(output: O): F[Response[F]] = {
     val outputMetadata = outputMetadataEncoder.encode(output)
     val outputHeaders = toHeaders(outputMetadata.headers)
+    val statusCode = outputMetadata.statusCode.getOrElse(httpEndpoint.code)
+    val httpStatus = status(statusCode)
 
-    putHeaders(
-      Response[F](
-        status(outputMetadata.statusCode.getOrElse(httpEndpoint.code))
-      ),
-      outputHeaders
-    )
+    putHeaders(Response[F](httpStatus), outputHeaders)
       .withEntity(output)
       .pure[F]
   }
 
-  private def errorResponse(throwable: Throwable): F[Response[F]] = {
-
+  def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
     def errorHeaders(errorLabel: String, metadata: Metadata): Headers =
-      toHeaders(metadata.headers)
-        .put(
-          Header.Raw(CIString(errorTypeHeader), errorLabel)
-        )
-
-    def processAlternative[ErrorUnion, ErrorType](
-        altAndValue: Alt.SchemaAndValue[ErrorUnion, ErrorType]
-    ): Response[F] = {
-      val errorSchema = altAndValue.alt.instance
-      val errorValue = altAndValue.value
-      val errorCode =
-        http.HttpStatusCode.fromSchema(errorSchema).code(errorValue, 500)
-      implicit val errorCodec = codecs.compileEntityEncoder(errorSchema)
-      val metadataEncoder = Metadata.Encoder.fromSchema(errorSchema)
-      val metadata = metadataEncoder.encode(errorValue)
-      val headers = errorHeaders(altAndValue.alt.label, metadata)
-      val status =
-        Status.fromInt(errorCode).getOrElse(Status.InternalServerError)
-      Response(status, headers = headers).withEntity(errorValue)
-    }
-
-    throwable
-      .pure[F]
-      .flatMap {
-        case e: HttpContractError =>
-          Response[F](Status.BadRequest).withEntity(e).pure[F]
-        case endpoint.Error((errorable, e)) =>
-          processAlternative(errorable.error.dispatch(e)).pure[F]
-        case e: Throwable =>
-          F.raiseError(e)
+      toHeaders(metadata.headers).put(errorTypeHeader -> errorLabel)
+    val errorUnionSchema = errorable.error
+    val dispatcher =
+      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.dispatch)
+    type ErrorEncoder[Err] = Err => Response[F]
+    val precompiler = new Alt.Precompiler[Schema, ErrorEncoder] {
+      def apply[Err](
+          label: String,
+          errorSchema: Schema[Err]
+      ): ErrorEncoder[Err] = {
+        implicit val errorCodec = codecs.compileEntityEncoder(errorSchema)
+        val metadataEncoder = Metadata.Encoder.fromSchema(errorSchema)
+        errorValue => {
+          val errorCode =
+            http.HttpStatusCode.fromSchema(errorSchema).code(errorValue, 500)
+          val metadata = metadataEncoder.encode(errorValue)
+          val headers = errorHeaders(label, metadata)
+          val status =
+            Status.fromInt(errorCode).getOrElse(Status.InternalServerError)
+          Response(status, headers = headers).withEntity(errorValue)
+        }
       }
+    }
+    dispatcher.compile(precompiler)
+  }
+
+  val errorResponse: Throwable => F[Response[F]] = {
+    endpoint.errorable match {
+      case Some(errorable) =>
+        val processError: E => Response[F] = compileErrorable(errorable)
+        (_: Throwable) match {
+          case e: HttpContractError =>
+            Response[F](Status.BadRequest).withEntity(e).pure[F]
+          case endpoint.Error((_, e)) =>
+            F.pure(processError(e))
+          case e: Throwable =>
+            F.raiseError(e)
+        }
+      case None =>
+        F.raiseError(_)
+    }
   }
 
 }
