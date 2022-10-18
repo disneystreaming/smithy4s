@@ -91,9 +91,10 @@ object Alt {
       ): G[U] = {
         val precompiledAlts =
           precompile.toPolyFunction
-            .unsafeCacheBy(
+            .unsafeCacheBy[String](
               alts.map(smithy4s.Existential.wrap(_)),
-              (alt: Alt[F, U, _]) => alt.label
+              (alt: Existential[Alt[F, U, *]]) =>
+                alt.asInstanceOf[Alt[F, U, _]].label
             )
 
         encoderK.absorb[U] { u =>

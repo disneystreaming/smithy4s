@@ -90,7 +90,7 @@ trait PolyFunction[F[_], G[_]] { self =>
         builder.result()
       }
       def apply[A](input: F[A]): G[A] = {
-        map(getKey(input)).asInstanceOf[G[A]]
+        map(getKey(Existential.wrap(input))).asInstanceOf[G[A]]
       }
     }
 }
