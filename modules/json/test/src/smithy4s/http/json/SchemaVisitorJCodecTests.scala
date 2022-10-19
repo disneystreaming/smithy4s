@@ -72,7 +72,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       .readFromString[A](str, readerConfig)
   }
 
-  import JCodec.deriveJCodecFromSchema
+  import JCodec.derivedImplicitInstance
 
   case class IntList(head: Int, tail: Option[IntList] = None)
   object IntList {

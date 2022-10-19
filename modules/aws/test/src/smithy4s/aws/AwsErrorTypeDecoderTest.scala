@@ -32,7 +32,8 @@ object AwsJsonErrorTypeDecoderTest extends FunSuite {
       "aws.protocoltests.restjson#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"
     )
 
-  val fromJsonResponse = AwsErrorTypeDecoder.fromResponse[Xor](json.awsJson)
+  val fromJsonResponse =
+    AwsErrorTypeDecoder.fromResponse[Xor](new json.AwsJsonCodecAPI())
 
   test("Finds discriminator from header") {
     discriminators.foldMap { disc =>

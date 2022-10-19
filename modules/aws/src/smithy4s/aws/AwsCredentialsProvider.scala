@@ -62,8 +62,9 @@ object AwsCredentialsProvider {
   val AWS_EC2_METADATA_URI =
     "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
-  val instanceMetadataCodec =
-    json.awsJson.compileCodec(AwsInstanceMetadata.schema)
+  val codecAPI = new json.AwsJsonCodecAPI()
+
+  val instanceMetadataCodec = codecAPI.compileCodec(AwsInstanceMetadata.schema)
 
   def fromEC2[F[_]: MonadThrow](
       httpClient: SimpleHttpClient[F]
@@ -76,7 +77,7 @@ object AwsCredentialsProvider {
       metadataRes <- httpClient.run(
         HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI + roleName)
       )
-      maybeCreds = json.awsJson.decodeFromByteArray(
+      maybeCreds = codecAPI.decodeFromByteArray(
         instanceMetadataCodec,
         metadataRes.body
       )
@@ -90,7 +91,7 @@ object AwsCredentialsProvider {
       response <- httpClient.run(
         HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI)
       )
-      maybeCreds = json.awsJson.decodeFromByteArray(
+      maybeCreds = codecAPI.decodeFromByteArray(
         instanceMetadataCodec,
         response.body
       )

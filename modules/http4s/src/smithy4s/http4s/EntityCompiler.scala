@@ -29,21 +29,41 @@ import smithy4s.http.Metadata
 
 trait EntityCompiler[F[_]] {
 
+  type Cache
+
+  def createCache(): Cache
+
   /**
     * Turns a Schema into an http4s EntityEncoder
     *
     * @param schema the value's schema
+    * @param cache a cache that can be used to avoid recompiling encoders
     * @return the entity encoder associated to the A value.
     */
-  def compileEntityEncoder[A](schema: Schema[A]): EntityEncoder[F, A]
+  def compileEntityEncoder[A](
+      schema: Schema[A],
+      cache: Cache
+  ): EntityEncoder[F, A]
+
+  @deprecated("use compileEntityEncoder(schema, cache) instead")
+  final def compileEntityEncoder[A](schema: Schema[A]): EntityEncoder[F, A] =
+    compileEntityEncoder(schema, createCache())
 
   /**
     * Turns a Schema into an http4s EntityDecoder
     *
     * @param schema the value's schema
+    * @param cache a cache that can be used to avoid recompiling encoders
     * @return the entity decoder associated to the A value.
     */
-  def compileEntityDecoder[A](schema: Schema[A]): EntityDecoder[F, A]
+  def compileEntityDecoder[A](
+      schema: Schema[A],
+      cache: Cache
+  ): EntityDecoder[F, A]
+
+  @deprecated("use compileEntityDecoder(schema, cache) instead")
+  final def compileEntityDecoder[A](schema: Schema[A]): EntityDecoder[F, A] =
+    compileEntityDecoder(schema, createCache())
 
   /**
     * Turns a Schema into an http4s EntityDecoder that only partially
@@ -54,8 +74,15 @@ trait EntityCompiler[F[_]] {
     * @return the entity encoder associated to the A value.
     */
   def compilePartialEntityDecoder[A](
-      schema: Schema[A]
+      schema: Schema[A],
+      cache: Cache
   ): EntityDecoder[F, BodyPartial[A]]
+
+  @deprecated("use compilePartialEntityDecoder(schema, cache) instead")
+  final def compilePartialEntityDecoder[A](
+      schema: Schema[A]
+  ): EntityDecoder[F, BodyPartial[A]] =
+    compilePartialEntityDecoder(schema, createCache())
 
 }
 
@@ -65,8 +92,14 @@ object EntityCompiler {
       codecAPI: CodecAPI
   )(implicit F: EffectCompat[F]): EntityCompiler[F] =
     new EntityCompiler[F] {
-      def compileEntityEncoder[A](schema: Schema[A]): EntityEncoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
+      type Cache = codecAPI.Cache
+      def createCache(): Cache = codecAPI.createCache()
+
+      def compileEntityEncoder[A](
+          schema: Schema[A],
+          cache: Cache
+      ): EntityEncoder[F, A] = {
+        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
         val expectBody = Metadata.PartialDecoder
           .fromSchema(schema)
@@ -85,9 +118,10 @@ object EntityCompiler {
       }
 
       def compileEntityDecoder[A](
-          schema: Schema[A]
+          schema: Schema[A],
+          cache: Cache
       ): EntityDecoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
+        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
         EntityDecoder
           .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
@@ -100,9 +134,10 @@ object EntityCompiler {
       }
 
       def compilePartialEntityDecoder[A](
-          schema: Schema[A]
+          schema: Schema[A],
+          cache: Cache
       ): EntityDecoder[F, BodyPartial[A]] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema)
+        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
         EntityDecoder
           .decodeBy(mediaType)(EntityDecoder.collectBinary[F])

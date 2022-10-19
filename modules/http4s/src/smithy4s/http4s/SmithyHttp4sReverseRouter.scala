@@ -31,6 +31,8 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     extends Interpreter[Op, F] {
 // format: on
 
+  private val compilerContext = internals.CompilerContext.make(entityCompiler)
+
   def apply[I, E, O, SI, SO](
       op: Op[I, E, O, SI, SO]
   ): F[O] = {
@@ -51,7 +53,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
           baseUri,
           client,
           endpoint,
-          entityCompiler
+          compilerContext
         ).getOrElse(
           sys.error(
             s"Operation ${endpoint.name} is not bound to http semantics"
