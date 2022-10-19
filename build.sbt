@@ -1,3 +1,4 @@
+import sbt.internal.IvyConsole
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 import java.io.File
@@ -67,6 +68,7 @@ lazy val allModules = Seq(
   `codegen-cli`,
   dynamic,
   testUtils,
+  guides,
   complianceTests
 ).flatMap(_.projectRefs)
 
@@ -759,6 +761,24 @@ lazy val example = projectMatrix
     smithy4sSkip := List("resource")
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
+
+lazy val guides = projectMatrix
+  .in(file("modules/guides"))
+  .dependsOn(http4s)
+  .settings(
+    Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
+    smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
+    ),
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    isCE3 := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.emberServer.value,
+      Dependencies.Weaver.cats.value % Test
+    )
+  )
+  .jvmPlatform(Seq(Scala3), jvmDimSettings)
   .settings(Smithy4sPlugin.doNotPublishArtifact)
 
 /**
