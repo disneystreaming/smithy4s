@@ -170,7 +170,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, ${name}Operation]"
         )(
-          line"type Default[F[+_]] = $nameGen.Default[smithy4s.StubLift[F]#Stub]",
+          line"type $Default_[F[+_]] = $nameGen.Default[smithy4s.StubLift[F]#Stub]",
           line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
           line"def service: $Service_[$nameGen, ${name}Operation] = $nameGen",
           line"val id: $ShapeId_ = service.id"
@@ -259,7 +259,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         },
         newline,
         block(
-          line"class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing])"
+          line"class $Default_[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing])"
         ) {
           ops.map { op =>
             line"def ${op.methodName}(${op.renderArgs}): P[${op.renderAlgParams(genNameRef.name)}] = default"
