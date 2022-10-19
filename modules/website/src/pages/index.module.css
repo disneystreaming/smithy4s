@@ -21,3 +21,26 @@
   align-items: center;
   justify-content: center;
 }
+
+.headerTitle {
+  font-size: 80pt;
+}
+.headerSubtitle {
+  font-size: 40pt;
+}
+@media screen and (max-width: 1000pt) {
+  .headerTitle {
+     font-size: 60pt;
+  }
+  .headerSubtitle {
+    font-size: 20pt;
+  }
+}
+@media screen and (max-width: 600pt) {
+  .headerTitle {
+     font-size: 30pt;
+  }
+  .headerSubtitle {
+    font-size: 16pt;
+  }
+}
