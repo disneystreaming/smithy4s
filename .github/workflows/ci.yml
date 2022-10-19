@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       publishSnapshot:
-        description: 'Publish Snapshot'
+        description: "Publish Snapshot"
         required: true
-        default: 'false'
+        default: "false"
   push:
     branches: ["main"]
     tags: ["v*"]
@@ -15,9 +15,6 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  JABBA_INDEX: 'https://github.com/typelevel/jdk-index/raw/main/index.json'
 
 jobs:
   build:
@@ -57,9 +54,9 @@ jobs:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v13
+        uses: coursier/setup-action@v1
         with:
-          java-version: temurin@17
+          jvm: temurin:1.17
 
       - name: Run tests
         run: |
@@ -115,9 +112,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v13
+        uses: coursier/setup-action@v1
         with:
-          java-version: temurin@17
+          jvm: temurin:1.17
 
       - name: Cache
         uses: coursier/cache-action@v6
