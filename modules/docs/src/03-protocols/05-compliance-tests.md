@@ -104,6 +104,7 @@ val clientTestGenerator = new ClientHttpComplianceTestCase[
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
+    def codecs = SimpleRestJsonBuilder.codecs
   }
 
 val serverTestGenerator = new ServerHttpComplianceTestCase[
@@ -117,6 +118,7 @@ val serverTestGenerator = new ServerHttpComplianceTestCase[
         impl: smithy4s.Monadic[HelloWorldServiceGen, IO]
     ): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(HelloWorldServiceGen).routes(impl).resource
+    def codecs = SimpleRestJsonBuilder.codecs
   }
 
 val tests: List[ComplianceTest[IO]] = clientTestGenerator.allClientTests() ++ serverTestGenerator.allServerTests()
