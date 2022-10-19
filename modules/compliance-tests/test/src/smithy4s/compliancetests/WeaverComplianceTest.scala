@@ -54,6 +54,8 @@ object WeaverComplianceTest extends SimpleIOSuite {
         impl: smithy4s.Monadic[HelloServiceGen, IO]
     ): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(HelloServiceGen).routes(impl).resource
+
+    def codecs = SimpleRestJsonBuilder.codecs
   }
 
   val tests: List[ComplianceTest[IO]] =
