@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       publishSnapshot:
-        description: 'Publish Snapshot'
+        description: "Publish Snapshot"
         required: true
-        default: 'false'
+        default: "false"
   push:
     branches: ["main"]
     tags: ["v*"]
