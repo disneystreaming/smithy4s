@@ -29,6 +29,10 @@ package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
     type λ[I, E, O, SI, SO] = F[O]
   }
 
+  type StubLift[F[+_]] = {
+    type Stub[-I, +E, +O, -SI, +SO] = F[O]
+  }
+
   def checkProtocol[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       service: Service[Alg, Op],
       protocolTag: ShapeTag[_]
