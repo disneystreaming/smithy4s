@@ -19,15 +19,16 @@ package smithy4s.tests
 import cats.data.Chain
 import cats.effect._
 import cats.effect.std.UUIDGen
+import cats.Show
 import cats.syntax.all._
 import io.circe.Json
-import org.http4s.HttpApp
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
+import org.http4s.HttpApp
 import org.typelevel.ci.CIString
-import smithy4s.Timestamp
 import smithy4s.example._
+import smithy4s.Timestamp
 import weaver._
 
 abstract class PizzaClientSpec extends IOSuite {
@@ -173,7 +174,8 @@ abstract class PizzaClientSpec extends IOSuite {
       expected: E
   )(implicit
       loc: SourceLocation,
-      ct: scala.reflect.ClassTag[E]
+      ct: scala.reflect.ClassTag[E],
+      show: Show[E] = Show.fromToString[E]
   ) = {
     clientTest(name) { (client, backend, log) =>
       for {
