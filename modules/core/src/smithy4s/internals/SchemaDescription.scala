@@ -28,7 +28,7 @@ import smithy4s.schema.{
 }
 import smithy4s.schema.Primitive.PTimestamp
 
-object SchemaDescription extends SchemaVisitor.Cached[SchemaDescription] {
+object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   // format: off
 
   def of[A](value: String): SchemaDescription[A] = value

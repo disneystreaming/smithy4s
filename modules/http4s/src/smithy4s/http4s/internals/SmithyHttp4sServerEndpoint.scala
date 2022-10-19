@@ -51,7 +51,7 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
   def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: Interpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      codecs: EntityCompiler[F],
+      compilerContext: CompilerContext[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
   ): Option[SmithyHttp4sServerEndpoint[F]] =
     HttpEndpoint.cast(endpoint).map { httpEndpoint =>
@@ -59,7 +59,7 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
         impl,
         endpoint,
         httpEndpoint,
-        codecs,
+        compilerContext,
         errorTransformation
       )
     }
@@ -71,10 +71,11 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
     impl: Interpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     httpEndpoint: HttpEndpoint[I],
-    codecs: EntityCompiler[F],
-    errorTransformation: PartialFunction[Throwable, F[Throwable]]
+    compilerContext: CompilerContext[F],
+    errorTransformation: PartialFunction[Throwable, F[Throwable]],
 )(implicit F: EffectCompat[F]) extends SmithyHttp4sServerEndpoint[F] {
 // format: on
+  import compilerContext._
 
   type ==>[A, B] = Kleisli[F, A, B]
 
@@ -101,14 +102,16 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   private val outputSchema: Schema[O] = endpoint.output
 
   private val inputMetadataDecoder =
-    Metadata.PartialDecoder.fromSchema(inputSchema)
+    Metadata.PartialDecoder.fromSchema(inputSchema, metadataDecoderCache)
   private implicit val outputEntityEncoder: EntityEncoder[F, O] =
-    codecs.compileEntityEncoder(outputSchema)
+    entityCompiler.compileEntityEncoder(outputSchema, entityCache)
+
+  private val outputMetadataCache = Metadata.Encoder.createCache()
   private val outputMetadataEncoder =
-    Metadata.Encoder.fromSchema(outputSchema)
+    Metadata.Encoder.fromSchema(outputSchema, outputMetadataCache)
   private implicit val httpContractErrorCodec
       : EntityEncoder[F, HttpContractError] =
-    codecs.compileEntityEncoder(HttpContractError.schema)
+    entityCompiler.compileEntityEncoder(HttpContractError.schema, entityCache)
 
   private val transformError: PartialFunction[Throwable, F[O]] = {
     case e @ endpoint.Error(_, _) => F.raiseError(e)
@@ -127,7 +130,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
       case None =>
         // NB : only compiling the input codec if the data cannot be
         // totally extracted from the metadata.
-        implicit val inputCodec = codecs.compilePartialEntityDecoder(inputSchema)
+        implicit val inputCodec = entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
         Kleisli { case (metadata, request) =>
           for {
             metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
@@ -181,7 +184,8 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
           label: String,
           errorSchema: Schema[Err]
       ): ErrorEncoder[Err] = {
-        implicit val errorCodec = codecs.compileEntityEncoder(errorSchema)
+        implicit val errorCodec =
+          entityCompiler.compileEntityEncoder(errorSchema, entityCache)
         val metadataEncoder = Metadata.Encoder.fromSchema(errorSchema)
         errorValue => {
           val errorCode =

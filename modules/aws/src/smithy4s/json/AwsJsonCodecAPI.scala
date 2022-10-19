@@ -14,17 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package http4s
+package smithy4s.aws.json
 
-import smithy4s.internals.InputOutput
-
-object SimpleRestJsonBuilder
-    extends SimpleProtocolBuilder[smithy4s.api.SimpleRestJson](
-      smithy4s.http.json.codecs(
-        smithy4s.api.SimpleRestJson.protocol.hintMask ++ HintMask(
-          InputOutput,
-          IntEnum
-        )
-      )
-    )
+private[aws] class AwsJsonCodecAPI()
+    extends smithy4s.http.json.JsonCodecAPI(
+      new AwsSchemaVisitorJCodec(_),
+      None
+    ) {}

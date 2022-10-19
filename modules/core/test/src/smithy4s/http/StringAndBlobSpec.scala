@@ -29,9 +29,12 @@ class StringAndBlobSpec() extends munit.FunSuite {
   object Dummy
   def dummy: CodecAPI = new CodecAPI {
     type Codec[A] = Dummy.type
+    type Cache = Dummy.type
+    def createCache(): Dummy.type = Dummy
     def mediaType[A](codec: Codec[A]): HttpMediaType = HttpMediaType("foo/bar")
     def compileCodec[A](
-        schema: Schema[A]
+        schema: Schema[A],
+        cache: Cache
     ): Codec[A] = Dummy
     def decodeFromByteArrayPartial[A](
         codec: Codec[A],
