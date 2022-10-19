@@ -815,7 +815,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.2"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.5"
     )
 
   val Smithy = new {
@@ -858,7 +858,7 @@ lazy val Dependencies = new {
 
   val Circe = new {
     val generic: Def.Initialize[ModuleID] =
-      Def.setting("io.circe" %%% "circe-generic" % "0.14.2")
+      Def.setting("io.circe" %%% "circe-generic" % "0.14.3")
   }
 
   /*
@@ -963,7 +963,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .map(_.data)
 
   val mc = "smithy4s.codegen.cli.Main"
-  val s = streams.value
+  val s = (config / streams).value
 
   def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))
 

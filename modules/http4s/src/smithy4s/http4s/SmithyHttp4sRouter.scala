@@ -28,8 +28,10 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service[Alg, Op],
     impl: Interpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
-    codecs: EntityCompiler[F]
+    entityCompiler: EntityCompiler[F]
 )(implicit effect: EffectCompat[F]) {
+
+  private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
   val routes: HttpRoutes[F] = Kleisli { request =>
     for {
@@ -47,7 +49,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
         SmithyHttp4sServerEndpoint(
           impl,
           ep,
-          codecs,
+          compilerContext,
           errorTransformation
         )
       }

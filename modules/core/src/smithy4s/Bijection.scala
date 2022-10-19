@@ -52,7 +52,7 @@ object Bijection {
   def apply[A, B](to: A => B, from: B => A): Bijection[A, B] =
     new Impl[A, B](to, from)
 
-  private class Impl[A, B](toFunction: A => B, fromFunction: B => A)
+  private case class Impl[A, B](toFunction: A => B, fromFunction: B => A)
       extends Bijection[A, B] {
     def to(a: A): B = toFunction(a)
     def from(b: B): A = fromFunction(b)

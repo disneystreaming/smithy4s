@@ -229,31 +229,40 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "check that provider import format is valid"
   ) {
-    val modelString =
-      """|$version: "2.0"
-         |
-         |namespace test
-         |
-         |use smithy4s.meta#refinement
-         |
-         |@trait()
-         |@refinement(targetType: "_root_.test.one", providerImport: "_root_.test._")
-         |structure trtOne {}
-         |
-         |@trtOne
-         |string TestIt
-         |""".stripMargin
 
-    val result = Model
-      .assembler()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .getValidationEvents()
-      .asScala
-      .toList
+    def mkModelString(targetType: String, providerImport: String) =
+      s"""|$$version: "2.0"
+          |
+          |namespace test
+          |
+          |use smithy4s.meta#refinement
+          |
+          |@trait()
+          |@refinement(targetType: "$targetType", providerImport: "$providerImport")
+          |structure trtOne {}
+          |
+          |@trtOne
+          |string TestItOne
+          |""".stripMargin
 
-    expect.same(result, List.empty)
+    def runTest(targetType: String, providerImport: String) = {
+      val modelString = mkModelString(targetType, providerImport)
+      val result = Model
+        .assembler()
+        .discoverModels()
+        .addUnparsedModel("test.smithy", modelString)
+        .assemble()
+        .getValidationEvents()
+        .asScala
+        .toList
+
+      expect.same(result, List.empty)
+    }
+
+    runTest("_root_.test.one", "_root_.test._") &&
+    runTest("test.one", "test._") &&
+    runTest("_root_.test.one", "_root_.test.given") &&
+    runTest("test.one", "test.given")
   }
 
   test(
@@ -292,7 +301,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
         .shapeId(ShapeId.fromParts("test", "trtOne"))
         .severity(Severity.ERROR)
         .message(
-          "Error validating trait `smithy4s.meta#refinement`.providerImport: String value provided for `smithy4s.meta#Import` must match regular expression: ^(?:_root_\\.)?(?:[a-zA-Z][\\w]*\\.?)*\\._$"
+          "Error validating trait `smithy4s.meta#refinement`.providerImport: String value provided for `smithy4s.meta#Import` must match regular expression: ^(?:_root_\\.)?(?:[a-zA-Z][\\w]*\\.?)*\\.(?:_|given)$"
         )
         .build()
     )

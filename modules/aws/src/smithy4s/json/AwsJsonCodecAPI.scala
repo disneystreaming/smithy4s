@@ -14,21 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s
-import smithy4s.example._
+package smithy4s.aws.json
 
-class PatternSpec extends munit.FunSuite {
-
-  test(
-    "Unicode in regex is escaped correctly and can be matched against on all platforms"
-  ) {
-    val s = "😎"
-
-    val result = Document.Decoder
-      .fromSchema(UnicodeRegexString.schema)
-      .decode(Document.fromString(s))
-
-    assertEquals(result, Right(UnicodeRegexString(s)))
-  }
-
-}
+private[aws] class AwsJsonCodecAPI()
+    extends smithy4s.http.json.JsonCodecAPI(
+      new AwsSchemaVisitorJCodec(_),
+      None
+    ) {}
