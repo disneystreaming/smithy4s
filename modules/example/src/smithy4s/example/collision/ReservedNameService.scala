@@ -60,6 +60,13 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     def option(value: Option[String] = None) = _Option(OptionInput(value))
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def set(set: Set[String]): P[SetInput, Nothing, Unit, Nothing, Nothing] = default
+    def list(list: List[String]): P[ListInput, Nothing, Unit, Nothing, Nothing] = default
+    def map(value: Map[String,String]): P[MapInput, Nothing, Unit, Nothing, Nothing] = default
+    def option(value: Option[String] = None): P[OptionInput, Nothing, Unit, Nothing, Nothing] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], transformation: Transformation[P, P1]): ReservedNameServiceGen[P1] = alg.transform(transformation)

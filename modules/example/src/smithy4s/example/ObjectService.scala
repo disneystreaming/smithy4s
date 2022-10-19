@@ -55,6 +55,11 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     def getObject(key: ObjectKey, bucketName: BucketName) = GetObject(GetObjectInput(key, bucketName))
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): P[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] = default
+    def getObject(key: ObjectKey, bucketName: BucketName): P[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[ObjectServiceOperation, P]): ObjectServiceGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)

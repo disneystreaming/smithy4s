@@ -48,6 +48,11 @@ object StreamedObjectsGen extends Service[StreamedObjectsGen, StreamedObjectsOpe
     def getStreamedObject(key: String) = GetStreamedObject(GetStreamedObjectInput(key))
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def putStreamedObject(key: String): P[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = default
+    def getStreamedObject(key: String): P[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[StreamedObjectsOperation, P]): StreamedObjectsGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: StreamedObjectsGen[P], transformation: Transformation[P, P1]): StreamedObjectsGen[P1] = alg.transform(transformation)

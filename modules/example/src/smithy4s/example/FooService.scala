@@ -43,6 +43,10 @@ object FooServiceGen extends Service[FooServiceGen, FooServiceOperation] {
     def getFoo() = GetFoo()
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def getFoo(): P[Unit, Nothing, GetFooOutput, Nothing, Nothing] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[FooServiceOperation, P]): FooServiceGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], transformation: Transformation[P, P1]): FooServiceGen[P1] = alg.transform(transformation)

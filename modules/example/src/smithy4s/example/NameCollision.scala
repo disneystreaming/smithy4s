@@ -48,6 +48,10 @@ object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation
     def myOp() = MyOp()
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def myOp(): P[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[NameCollisionOperation, P]): NameCollisionGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: NameCollisionGen[P], transformation: Transformation[P, P1]): NameCollisionGen[P1] = alg.transform(transformation)

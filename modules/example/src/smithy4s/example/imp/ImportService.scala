@@ -52,6 +52,10 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
     def importOperation() = ImportOperation()
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def importOperation(): P[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[ImportServiceOperation, P]): ImportServiceGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], transformation: Transformation[P, P1]): ImportServiceGen[P1] = alg.transform(transformation)

@@ -43,6 +43,10 @@ object BrandServiceGen extends Service[BrandServiceGen, BrandServiceOperation] {
     def addBrands(brands: Option[List[String]] = None) = AddBrands(AddBrandsInput(brands))
   }
 
+  class Default[P[-_, +_, +_, -_, +_]](default: => P[Any, Nothing, Nothing, Any, Nothing]) {
+    def addBrands(brands: Option[List[String]] = None): P[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = default
+  }
+
   def transform[P[_, _, _, _, _]](transformation: Transformation[BrandServiceOperation, P]): BrandServiceGen[P] = reified.transform(transformation)
 
   def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: BrandServiceGen[P], transformation: Transformation[P, P1]): BrandServiceGen[P1] = alg.transform(transformation)
