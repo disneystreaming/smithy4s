@@ -159,6 +159,7 @@ abstract class ServerHttpComplianceTestCase[
       endpoint: Endpoint[Op, I, E, O, SE, SO],
       testCase: HttpResponseTestCase
   ): ComplianceTest[IO] = {
+    // heavily inspired from SmithyHttp4sClientEndpoint
     def makeRequest(
         input: I,
         httpTrait: smithy.api.Http,
