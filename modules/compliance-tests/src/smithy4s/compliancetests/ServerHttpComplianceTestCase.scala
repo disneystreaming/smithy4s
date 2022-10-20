@@ -23,20 +23,17 @@ import cats.effect.Resource
 import cats.implicits._
 import org.http4s._
 import org.http4s.headers.`Content-Type`
-import org.typelevel.ci.CIString
 import smithy.test._
 import smithy4s.Document
 import smithy4s.Endpoint
 import smithy4s.http.CodecAPI
-import smithy4s.http.internals.PathEncode
-import smithy4s.http.internals.SchemaVisitorPathEncoder
-import smithy4s.http.Metadata
-import smithy4s.http4s.EntityCompiler
 import smithy4s.Service
 import smithy4s.ShapeTag
-import smithy4s.tests.DefaultSchemaVisitor
 
 import scala.concurrent.duration._
+import smithy4s.Transformation
+import smithy4s.ShapeId
+import smithy4s.Hints
 
 abstract class ServerHttpComplianceTestCase[
     P,
@@ -45,7 +42,7 @@ abstract class ServerHttpComplianceTestCase[
 ](
     protocol: P
 )(implicit
-    service: Service[Alg, Op],
+    originalService: Service[Alg, Op],
     ce: CompatEffect,
     protocolTag: ShapeTag[P]
 ) {
@@ -55,8 +52,6 @@ abstract class ServerHttpComplianceTestCase[
 
   def getServer(impl: smithy4s.Monadic[Alg, IO]): Resource[IO, HttpRoutes[IO]]
   def codecs: CodecAPI
-  private val ec = EntityCompiler.fromCodecAPI[IO](codecs)
-  private val ecCache = ec.createCache()
 
   private def makeRequest(
       baseUri: Uri,
@@ -121,12 +116,12 @@ abstract class ServerHttpComplianceTestCase[
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: smithy4s.Monadic[Alg, IO] =
-            service.transform[R](
+            originalService.transform[R](
               new smithy4s.Interpreter[Op, IO] {
                 def apply[I_, E_, O_, SE_, SO_](
                     op: Op[I_, E_, O_, SE_, SO_]
                 ): IO[O_] = {
-                  val (in, endpointInternal) = service.endpoint(op)
+                  val (in, endpointInternal) = originalService.endpoint(op)
 
                   if (endpointInternal.id == endpoint.id)
                     inputDeferred.complete(in.asInstanceOf[I]) *>
@@ -159,71 +154,37 @@ abstract class ServerHttpComplianceTestCase[
       endpoint: Endpoint[Op, I, E, O, SE, SO],
       testCase: HttpResponseTestCase
   ): ComplianceTest[IO] = {
-    // heavily inspired from SmithyHttp4sClientEndpoint
-    def makeRequest(
-        input: I,
-        httpTrait: smithy.api.Http,
-        pathEncode: PathEncode[I]
-    ): Request[IO] = {
-      val method = Method
-        .fromString(httpTrait.method.value)
-        .getOrElse(sys.error("Invalid method"))
-      val metadata = Metadata.Encoder.fromSchema(endpoint.input).encode(input)
-      val inputHasBody =
-        Metadata.TotalDecoder.fromSchema(endpoint.input).isEmpty
-      val path = pathEncode.encode(input)
-      val uri = baseUri
-        .copy(path = baseUri.path.addSegments(path.map(Uri.Path.Segment(_))))
-        .withMultiValueQueryParams(metadata.query)
-      val headers = Headers(metadata.headers.flatMap { case (k, v) =>
-        v.map(Header.Raw(CIString(k.toString), _))
-      }.toList)
-      val baseRequest = Request[IO](method, uri, headers = headers)
-      implicit val encoder: EntityEncoder[IO, I] = ec
-        .compileEntityEncoder(endpoint.input, ecCache)
-      if (inputHasBody) {
-        baseRequest.withEntity(input)
-      } else baseRequest
-    }
+
     type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
     ComplianceTest[IO](
       name = endpoint.id.toString + "(server|response): " + testCase.id,
       run = {
-        val input = DefaultSchemaVisitor(endpoint.input)
         val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
         val output = outputDecoder
           .decode(testCase.params.getOrElse(Document.obj()))
           .liftTo[IO]
 
-        val requestUtils = endpoint.hints
-          .get[smithy.api.Http]
-          .toRight(new Exception("@http trait required to build request"))
-          .flatMap(http =>
-            SchemaVisitorPathEncoder(endpoint.input.addHints(http))
-              .toRight(new Exception("PathEncode required to build request"))
-              .tupleLeft(http)
-          )
-          .liftTo[IO]
+        val prepared = prepareService(endpoint)
 
-        (output, requestUtils).tupled.flatMap {
-          case (output, (httpTrait, pathEncode)) =>
+        output.tupleRight(prepared).flatMap {
+          case (output, (ammendedService, syntheticRequest)) =>
             val fakeImpl: smithy4s.Monadic[Alg, IO] =
-              service.transform[R](
-                new smithy4s.Interpreter[Op, IO] {
+              ammendedService.transform[R] {
+                new smithy4s.Interpreter[NoInputOp, IO] {
                   def apply[I_, E_, O_, SE_, SO_](
-                      op: Op[I_, E_, O_, SE_, SO_]
+                      op: NoInputOp[I_, E_, O_, SE_, SO_]
                   ): IO[O_] = {
                     // todo error structures
                     IO.pure(output.asInstanceOf[O_])
                   }
                 }
-              )
+              }
 
             getServer(fakeImpl)
               .use { server =>
                 server.orNotFound
-                  .run(makeRequest(input, httpTrait, pathEncode))
+                  .run(syntheticRequest)
                   .flatMap { resp =>
                     resp.body
                       .through(utf8Decode)
@@ -245,8 +206,62 @@ abstract class ServerHttpComplianceTestCase[
     )
   }
 
+  private case class NoInputOp[I_, E_, O_, SE_, SO_]()
+  private def prepareService[I, E, O, SE, SO](
+      endpoint: Endpoint[Op, I, E, O, SE, SO]
+  ): (Service[Alg, NoInputOp], Request[IO]) = {
+    val amendedEndpoint =
+        // format: off
+        new Endpoint[NoInputOp, Unit, Nothing, O, Nothing, Nothing] {
+          def hints: smithy4s.Hints = {
+            val newHttp = smithy.api.Http(
+              method = smithy.api.NonEmptyString("GET"),
+              uri = smithy.api.NonEmptyString("/")
+            )
+            val code = endpoint.hints.get[smithy.api.Http].map(_.code).getOrElse(newHttp.code)
+            Hints(newHttp.copy(code = code))
+          }
+          def id: smithy4s.ShapeId = ShapeId("custom", "endpoint")
+          def input: smithy4s.Schema[Unit] = smithy4s.Schema.unit
+          def output: smithy4s.Schema[O] = endpoint.output
+          def streamedInput: smithy4s.StreamingSchema[Nothing] =
+            smithy4s.StreamingSchema.NoStream
+          def streamedOutput: smithy4s.StreamingSchema[Nothing] =
+            smithy4s.StreamingSchema.NoStream
+          def wrap(input: Unit): NoInputOp[Unit, Nothing, O, Nothing, Nothing] =
+            NoInputOp()
+        }
+        // format: on
+    val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
+    val amendedService =
+      // format: off
+      new Service[Alg, NoInputOp]() {
+        override def transform[F[_, _, _, _, _], G[_, _, _, _, _]](
+            alg: Alg[F],
+            transformation: Transformation[F, G]
+        ): Alg[G] = originalService.transform(alg, transformation)
+        override def id: ShapeId = ShapeId("custom", "service")
+        override def endpoints: List[Endpoint[NoInputOp, _, _, _, _, _]] = List(amendedEndpoint)
+        override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[NoInputOp, I_, E_, O_, SI_, SO_]) = ???
+        override def version: String = originalService.version
+        override def hints: Hints = originalService.hints
+
+        override def transform[P2[_, _, _, _, _]](transformation: Transformation[NoInputOp, P2]): Alg[P2] = {
+          val newT = new Transformation[Op, P2] {
+            def apply[I_, E_, O_, SE_, SO_](fa: Op[I_, E_, O_, SE_, SO_]): P2[I_, E_, O_, SE_, SO_] =
+              transformation.apply(NoInputOp[I_, E_, O_, SE_, SO_]())
+          }
+          originalService.transform(newT)
+        }
+        override def asTransformation[P2[_, _, _, _, _]](impl: Alg[P2]): Transformation[NoInputOp, P2] =
+          ???
+      }
+      // format: on
+    (amendedService, request)
+  }
+
   def allServerTests(): List[ComplianceTest[IO]] = {
-    service.endpoints.flatMap { case endpoint =>
+    originalService.endpoints.flatMap { case endpoint =>
       val requestsTests = endpoint.hints
         .get(HttpRequestTests)
         .map(_.value)
