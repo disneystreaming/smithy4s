@@ -53,6 +53,8 @@ object WeaverComplianceTest extends SimpleIOSuite {
     def getServer(
         impl: smithy4s.Monadic[HelloServiceGen, IO]
     ): Resource[IO, HttpRoutes[IO]] =
+      // the service to use build the Http4s router is already selected
+      // via an implicit `serviceProvider` here
       SimpleRestJsonBuilder(HelloServiceGen).routes(impl).resource
 
     def codecs = SimpleRestJsonBuilder.codecs
