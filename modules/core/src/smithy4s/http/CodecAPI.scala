@@ -31,6 +31,9 @@ import internals.StringAndBlobCodecSchemaVisitor
 trait CodecAPI {
 
   type Codec[A]
+  type Cache
+
+  def createCache(): Cache
 
   def mediaType[A](codec: Codec[A]): HttpMediaType
 
@@ -40,7 +43,18 @@ trait CodecAPI {
     * @param schema the value's schema
     * @return the codec associated to the A value.
     */
-  def compileCodec[A](schema: Schema[A]): Codec[A]
+  final def compileCodec[A](schema: Schema[A]): Codec[A] =
+    compileCodec(schema, createCache())
+
+  /**
+    * Turns a Schema into this API's preferred representation.
+    *
+    * @param schema the value's schema
+    * @param cache a Cache that can be used to optimise the compilation of Schemas
+    *   into Codecs.
+    * @return the codec associated to the A value.
+    */
+  def compileCodec[A](schema: Schema[A], cache: Cache): Codec[A]
 
   /**
     * Decodes partial data from a byte array
@@ -167,8 +181,12 @@ object CodecAPI {
   ): CodecAPI =
     new DelegatingCodecAPI {
 
+      type Cache = underlying.Cache
+      def createCache(): Cache = underlying.createCache()
+
       def compileCodec[A](
-          schema: Schema[A]
+          schema: Schema[A],
+          cache: Cache
       ): this.Codec[A] = {
         val stringAndBlobResult =
           schema.compile(new internals.StringAndBlobCodecSchemaVisitor())
@@ -176,7 +194,7 @@ object CodecAPI {
           case StringAndBlobCodecSchemaVisitor.BodyCodecResult(bodyCodec) =>
             bodyCodec
           case _ =>
-            val underlyingCodec = underlying.compileCodec(schema)
+            val underlyingCodec = underlying.compileCodec(schema, cache)
             new this.Codec[A] {
               def mediaType: HttpMediaType =
                 underlying.mediaType(underlyingCodec)

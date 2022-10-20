@@ -34,4 +34,5 @@ object EncoderK {
       def apply[A](fa: A => B, a: A): B = fa(a)
       def absorb[A](f: A => B): A => B = f
     }
+
 }

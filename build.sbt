@@ -1,3 +1,4 @@
+import sbt.internal.IvyConsole
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 import java.io.File
@@ -67,6 +68,7 @@ lazy val allModules = Seq(
   `codegen-cli`,
   dynamic,
   testUtils,
+  guides,
   complianceTests
 ).flatMap(_.projectRefs)
 
@@ -761,6 +763,24 @@ lazy val example = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sPlugin.doNotPublishArtifact)
 
+lazy val guides = projectMatrix
+  .in(file("modules/guides"))
+  .dependsOn(http4s)
+  .settings(
+    Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
+    smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
+    ),
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    isCE3 := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.emberServer.value,
+      Dependencies.Weaver.cats.value % Test
+    )
+  )
+  .jvmPlatform(Seq(Scala3), jvmDimSettings)
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
+
 /**
  * Pretty primitive benchmarks to test that we're not doing anything drastically
  * slow.
@@ -795,7 +815,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.4"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.5"
     )
 
   val Smithy = new {
@@ -838,7 +858,7 @@ lazy val Dependencies = new {
 
   val Circe = new {
     val generic: Def.Initialize[ModuleID] =
-      Def.setting("io.circe" %%% "circe-generic" % "0.14.2")
+      Def.setting("io.circe" %%% "circe-generic" % "0.14.3")
   }
 
   /*
@@ -943,7 +963,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .map(_.data)
 
   val mc = "smithy4s.codegen.cli.Main"
-  val s = streams.value
+  val s = (config / streams).value
 
   def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))
 

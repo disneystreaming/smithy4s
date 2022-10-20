@@ -32,7 +32,7 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
 }
 import smithy4s.schema.Primitive
 
-class HttpResponseCodeSchemaVisitor
+class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
   def default[A]: ResponseCodeExtractor[A] = NoResponseCode
   override def primitive[P](
