@@ -4,7 +4,11 @@ on:
     inputs:
       publishSnapshot:
         description: 'Publish Snapshot'
-        required: true
+        required: false
+        default: 'false'
+      publishMicrosite:
+        description: 'Publish Microsite'
+        required: false
         default: 'false'
   push:
     branches: ["main"]
@@ -139,6 +143,24 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+  microsite:
+    name: Publish Docs Microsite
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publishMicrosite == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v13
+        with:
+          java-version: temurin@17
+
+      - name: Cache
+        uses: coursier/cache-action@v6
 
       - name: Compile Documentation Markdown Files
         run: sbt "docs/mdoc"
