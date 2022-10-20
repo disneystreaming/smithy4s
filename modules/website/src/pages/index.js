@@ -11,13 +11,11 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
-        <div style={{display: 'flex', justifyContent: 'center', paddingTop: 20, paddingBottom: 40}}>
-          <img style={{alignSelf: 'center', maxHeight: "16vw"}} src="img/logo.svg"></img>
-          <div style={{alignSelf: 'center', paddingLeft: 20, paddingTop: 10}}>
-            <h1 className={styles.headerTitle} style={{textAlign: "start", paddingBottom: 0, marginBottom: 0}}>{siteConfig.title}</h1>
-            <p className={styles.headerSubtitle} style={{textAlign: "start", paddingTop: 0, marginTop: 0, paddingLeft: "0.3vw"}}>{siteConfig.tagline}</p>
-          </div>
+        <div style={{display: 'flex', justifyContent: 'center', paddingTop: 20, paddingBottom: 10}}>
+          <img className={styles.logoBackground} src="img/logo.svg" />
+          <h1 className={styles.headerTitle} style={{textAlign: "start", paddingBottom: 0, marginBottom: 0, paddingLeft: 20}}>{siteConfig.title}</h1>
         </div>
+        <p className={styles.headerSubtitle} style={{textAlign: "center", paddingTop: 0, marginTop: 0}}>{siteConfig.tagline}</p>
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"

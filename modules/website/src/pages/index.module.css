@@ -24,16 +24,33 @@
 
 .headerTitle {
   font-size: 80pt;
+  color: white;
 }
 .headerSubtitle {
   font-size: 40pt;
+  color: white;
 }
+.logoBackground {
+  height: 120px;
+  width: 120px;
+  align-self: center;
+  padding: 20px 20px 16px 16px;
+  border-radius: 20px;
+  background-color: white;
+}
+
 @media screen and (max-width: 1000pt) {
   .headerTitle {
      font-size: 60pt;
   }
   .headerSubtitle {
     font-size: 20pt;
+  }
+  .logoBackground {
+    height: 90px;
+    width: 90px;
+    padding: 14px 14px 12px 12px;
+    border-radius: 14px;
   }
 }
 @media screen and (max-width: 600pt) {
@@ -42,5 +59,11 @@
   }
   .headerSubtitle {
     font-size: 16pt;
+  }
+  .logoBackground {
+    height: 60px;
+    width: 60px;
+    padding: 8px 8px 6px 6px;
+    border-radius: 8px;
   }
 }
