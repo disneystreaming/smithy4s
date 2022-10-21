@@ -16,7 +16,7 @@
 
 package smithy4s
 package schema
-import scala.collection.mutable.{Map => MMap}
+import smithy4s.internals.maps.MMap
 
 trait CompilationCache[F[_]] {
   def getOrElseUpdate[A](schema: Schema[A], fetch: Schema[A] => F[A]): F[A]
