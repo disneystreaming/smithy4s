@@ -90,7 +90,7 @@ lazy val docs =
       mdocVariables := Map(
         "VERSION" -> {
           sys.env
-            .get("SMITHY_VERSION")
+            .get("SMITHY4S_VERSION")
             .getOrElse {
               if (isSnapshot.value)
                 previousStableVersion.value.getOrElse(

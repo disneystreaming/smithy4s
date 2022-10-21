@@ -162,7 +162,7 @@ jobs:
       - name: Resolve latest smithy4s-core version
         # export the version only when we trigger publish manually
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "SMITHY_VERSION=$(cs resolve com.disneystreaming.smithy4s:smithy4s-core_2.13:latest.stable | head -1 | awk -F':' '{print $3}')"  >> $GITHUB_ENV
+        run: echo "SMITHY4S_VERSION=$(cs resolve com.disneystreaming.smithy4s:smithy4s-core_2.13:latest.stable | head -1 | awk -F':' '{print $3}')"  >> $GITHUB_ENV
 
       - name: Compile Documentation Markdown Files
         run: sbt "docs/mdoc"
