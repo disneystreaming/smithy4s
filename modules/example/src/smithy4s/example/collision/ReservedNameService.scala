@@ -18,7 +18,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def map(value: Map[String,String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
   def option(value: Option[String] = None) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ReservedNameServiceGen[G] = new Transformed(transformation)
+  def transform : Transformation.PartiallyApplied[ReservedNameServiceGen, F] = new Transformation.PartiallyApplied[ReservedNameServiceGen, F](this)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ReservedNameServiceGen[G] {
     def set(set: Set[String]) = transformation[SetInput, Nothing, Unit, Nothing, Nothing](self.set(set))
     def list(list: List[String]) = transformation[ListInput, Nothing, Unit, Nothing, Nothing](self.list(list))

@@ -74,6 +74,38 @@ trait Transformation[F[_, _, _, _, _], G[_, _, _, _, _]] { self =>
 
 object Transformation {
 
+  class PartiallyApplied[Alg[_[_, _, _, _, _]], F[_, _, _, _, _]](
+      private val alg: Alg[F]
+  ) extends AnyVal {
+    def apply[T, G[_, _, _, _, _]](liftable: T)(implicit
+        transformable: Transformable[Alg],
+        asTransformation: AsTransformation[T, F, G]
+    ): Alg[G] = transformable.transform(alg, asTransformation.lift(liftable))
+
+  }
+
+  trait AsTransformation[T, F[_, _, _, _, _], G[_, _, _, _, _]] {
+    def lift(liftable: T): Transformation[F, G]
+  }
+
+  object AsTransformation {
+    // format: off
+    implicit def transformationAsTransformation[F[_, _, _, _, _], G[_,_,_,_,_]] :AsTransformation[Transformation[F, G], F, G] =
+      new AsTransformation[Transformation[F, G], F, G] { def lift(liftable: Transformation[F, G]): Transformation[F, G] = liftable }
+    // format: on
+
+    implicit def polyFunctionAsTransformation[F[_], G[_]]
+        : AsTransformation[PolyFunction[F, G], GenLift[F]#λ, GenLift[G]#λ] =
+      new AsTransformation[PolyFunction[F, G], GenLift[F]#λ, GenLift[G]#λ] {
+        def lift(
+            liftable: PolyFunction[F, G]
+        ): Transformation[GenLift[F]#λ, GenLift[G]#λ] =
+          new Transformation[GenLift[F]#λ, GenLift[G]#λ] {
+            def apply[I, E, O, SI, SO](fa: F[O]): G[O] = liftable(fa)
+          }
+      }
+  }
+
   def identity[F[_, _, _, _, _]]: Transformation[F, F] =
     new Transformation[F, F] {
       def apply[I, E, O, SI, SO](fa: F[I, E, O, SI, SO]): F[I, E, O, SI, SO] =

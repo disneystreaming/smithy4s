@@ -15,7 +15,7 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 
   def getFoo() : F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : FooServiceGen[G] = new Transformed(transformation)
+  def transform : Transformation.PartiallyApplied[FooServiceGen, F] = new Transformation.PartiallyApplied[FooServiceGen, F](this)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends FooServiceGen[G] {
     def getFoo() = transformation[Unit, Nothing, GetFooOutput, Nothing, Nothing](self.getFoo())
   }

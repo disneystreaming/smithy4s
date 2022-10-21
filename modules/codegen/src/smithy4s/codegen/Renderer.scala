@@ -200,16 +200,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
         },
         newline,
-        line"def transform[G[_, _, _, _, _]](transformation : $Transformation_[F, G]) : $genNameRef[G] = new Transformed(transformation)",
-        block(
-          line"class $Transformed_[G[_, _, _, _, _]](transformation : $Transformation_[F, G]) extends $genNameRef[G]"
-        ) {
-          ops.map { op =>
-            val opName = op.methodName
-            line"def $opName(${op.renderArgs}) = transformation[${op
-              .renderAlgParams(genName.name)}](self.$opName(${op.renderParams}))"
-          }
-        }
+        line"def transform : $Transformation_.PartiallyApplied[$genName, F] = new $Transformation_.PartiallyApplied[$genName, F](this)"
       ),
       newline,
       obj(
@@ -257,9 +248,18 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def transform[P[_, _, _, _, _]](transformation: $Transformation_[$opTraitNameRef, P]): $genNameRef[P] = reified.transform(transformation)",
+        line"def transform[P[_, _, _, _, _]](transformation: $Transformation_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, transformation)",
         newline,
-        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], transformation: $Transformation_[P, P1]): $genNameRef[P1] = alg.transform(transformation)",
+        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], transformation: $Transformation_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, transformation)",
+        block(
+          line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], transformation : $Transformation_[P, P1]) extends $genNameRef[P1]"
+        ) {
+          ops.map { op =>
+            val opName = op.methodName
+            line"def $opName(${op.renderArgs}) = transformation[${op
+              .renderAlgParams(genName.name)}](alg.$opName(${op.renderParams}))"
+          }
+        },
         newline,
         block(
           line"def asTransformation[P[_, _, _, _, _]](impl : $genNameRef[P]): $Transformation_[$opTraitNameRef, P] = new $Transformation_[$opTraitNameRef, P]"

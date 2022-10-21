@@ -15,7 +15,7 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
 
   def addBrands(brands: Option[List[String]] = None) : F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : BrandServiceGen[G] = new Transformed(transformation)
+  def transform : Transformation.PartiallyApplied[BrandServiceGen, F] = new Transformation.PartiallyApplied[BrandServiceGen, F](this)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends BrandServiceGen[G] {
     def addBrands(brands: Option[List[String]] = None) = transformation[AddBrandsInput, Nothing, Unit, Nothing, Nothing](self.addBrands(brands))
   }

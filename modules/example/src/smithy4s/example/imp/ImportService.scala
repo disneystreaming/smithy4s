@@ -22,7 +22,7 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
 
   def importOperation() : F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ImportServiceGen[G] = new Transformed(transformation)
+  def transform : Transformation.PartiallyApplied[ImportServiceGen, F] = new Transformation.PartiallyApplied[ImportServiceGen, F](this)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ImportServiceGen[G] {
     def importOperation() = transformation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing](self.importOperation())
   }

@@ -16,7 +16,7 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
   def putStreamedObject(key: String) : F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
   def getStreamedObject(key: String) : F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : StreamedObjectsGen[G] = new Transformed(transformation)
+  def transform : Transformation.PartiallyApplied[StreamedObjectsGen, F] = new Transformation.PartiallyApplied[StreamedObjectsGen, F](this)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends StreamedObjectsGen[G] {
     def putStreamedObject(key: String) = transformation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](self.putStreamedObject(key))
     def getStreamedObject(key: String) = transformation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](self.getStreamedObject(key))

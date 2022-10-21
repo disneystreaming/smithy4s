@@ -20,7 +20,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
 
   def myOp() : F[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : NameCollisionGen[G] = new Transformed(transformation)
+  def transform : Transformation.PartiallyApplied[NameCollisionGen, F] = new Transformation.PartiallyApplied[NameCollisionGen, F](this)
   class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends NameCollisionGen[G] {
     def myOp() = transformation[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing](self.myOp())
   }
