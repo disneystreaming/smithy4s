@@ -88,13 +88,19 @@ lazy val docs =
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
-        "VERSION" -> (if (isSnapshot.value)
-                        previousStableVersion.value.getOrElse(
-                          throw new Exception(
-                            "No previous version found from dynver"
-                          )
-                        )
-                      else version.value),
+        "VERSION" -> {
+          sys.env
+            .get("SMITHY4S_VERSION")
+            .getOrElse {
+              if (isSnapshot.value)
+                previousStableVersion.value.getOrElse(
+                  throw new Exception(
+                    "No previous version found from dynver"
+                  )
+                )
+              else version.value
+            }
+        },
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
