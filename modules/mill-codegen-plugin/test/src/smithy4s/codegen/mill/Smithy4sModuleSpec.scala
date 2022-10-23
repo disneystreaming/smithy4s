@@ -34,7 +34,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("basic codegen runs") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.8"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "basic"
     }
@@ -61,7 +61,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("codegen with dependencies") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.8"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "basic"
       override def smithy4sAllowedNamespaces = T(Some(Set("aws.iam")))
@@ -82,14 +82,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   test("multi-module codegen works") {
 
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.8"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "multi-module" / "foo"
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
       override def moduleDeps = Seq(foo)
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.8"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "multi-module" / "bar"
     }
@@ -142,14 +142,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   ) {
 
     object foo extends testKit.BaseModule with ScalaModule {
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.8"
       override def millSourcePath =
         resourcePath / "multi-module-no-compile" / "foo"
     }
 
     object bar extends testKit.BaseModule with Smithy4sModule {
       override def moduleDeps = Seq(foo)
-      override def scalaVersion = "2.13.10"
+      override def scalaVersion = "2.13.8"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath =
         resourcePath / "multi-module-no-compile" / "bar"
