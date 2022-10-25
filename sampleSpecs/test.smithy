@@ -37,8 +37,9 @@ service HelloService {
     {
         id: "say_hello"
         protocol: simpleRestJson
-        params: { result: "Hello!" }
+        params: { payload: { result: "Hello!" }, header1: "V1" }
         body: "{\"result\":\"Hello!\"}"
+        headers: { "X-H1": "V1"}
         code: 200
     }
 ])
@@ -59,6 +60,15 @@ structure SayHelloInput {
 }
 
 structure SayHelloOutput {
+    @required
+    @httpPayload
+    payload: SayHelloPayload
+
+    @required
+    @httpHeader("X-H1")
+    header1: String
+}
+structure SayHelloPayload {
     @required
     result: String
 }
