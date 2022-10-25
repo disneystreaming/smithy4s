@@ -309,7 +309,7 @@ abstract class ServerHttpComplianceTestCase[
           def wrap(input: Unit): NoInputOp[Unit, E, O, Nothing, Nothing] =
             NoInputOp()
 
-            override def errorable: Option[Errorable[E]] = endpoint.errorable
+          override def errorable: Option[Errorable[E]] = endpoint.errorable
         }
         // format: on
     val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
