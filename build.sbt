@@ -88,13 +88,19 @@ lazy val docs =
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
-        "VERSION" -> (if (isSnapshot.value)
-                        previousStableVersion.value.getOrElse(
-                          throw new Exception(
-                            "No previous version found from dynver"
-                          )
-                        )
-                      else version.value),
+        "VERSION" -> {
+          sys.env
+            .get("SMITHY4S_VERSION")
+            .getOrElse {
+              if (isSnapshot.value)
+                previousStableVersion.value.getOrElse(
+                  throw new Exception(
+                    "No previous version found from dynver"
+                  )
+                )
+              else version.value
+            }
+        },
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
@@ -819,7 +825,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.25.1"
+    val smithyVersion = "1.25.2"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val testTraits =
       "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
@@ -919,7 +925,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.14.0"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.14.3"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }
