@@ -85,6 +85,7 @@ import org.http4s.client.Client
 import smithy4s.compliancetests._
 import smithy4s.example._
 import smithy4s.http4s._
+import smithy4s.Service
 ```
 
 Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `ServerHttpComplianceTestCase` while selecting the protocol to use and the service to test:
@@ -114,10 +115,10 @@ val serverTestGenerator = new ServerHttpComplianceTestCase[
   ](
     smithy4s.api.SimpleRestJson()
   ) {
-    def getServer(
-        impl: smithy4s.Monadic[HelloWorldServiceGen, IO]
-    ): Resource[IO, HttpRoutes[IO]] =
-      SimpleRestJsonBuilder(HelloWorldServiceGen).routes(impl).resource
+    def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+      impl: smithy4s.Monadic[Alg2, IO]
+  )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]] =
+      SimpleRestJsonBuilder(s).routes(impl).resource
     def codecs = SimpleRestJsonBuilder.codecs
   }
 
