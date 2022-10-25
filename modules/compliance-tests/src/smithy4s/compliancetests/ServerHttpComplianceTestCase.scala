@@ -35,6 +35,13 @@ import smithy4s.Transformation
 import smithy4s.ShapeId
 import smithy4s.Hints
 import org.typelevel.ci.CIString
+import smithy4s.Errorable
+import smithy4s.Schema
+
+final case class ErrorResponseTest[A, E](
+    schema: Schema[A],
+    errorable: Errorable[E]
+)
 
 abstract class ServerHttpComplianceTestCase[
     P,
@@ -155,7 +162,8 @@ abstract class ServerHttpComplianceTestCase[
 
   private[compliancetests] def serverResponseTest[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO],
-      testCase: HttpResponseTestCase
+      testCase: HttpResponseTestCase,
+      errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
 
     type R[I_, E_, O_, SE_, SO_] = IO[O_]
@@ -163,83 +171,102 @@ abstract class ServerHttpComplianceTestCase[
     ComplianceTest[IO](
       name = endpoint.id.toString + "(server|response): " + testCase.id,
       run = {
-        val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
-        val output = outputDecoder
-          .decode(testCase.params.getOrElse(Document.obj()))
-          .liftTo[IO]
+        val (ammendedService, syntheticRequest) = prepareService(endpoint)
 
-        val prepared = prepareService(endpoint)
+        val buildResult
+            : Either[Document => IO[Throwable], Document => IO[O]] = {
+          errorSchema
+            .toLeft {
+              val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
+              (doc: Document) =>
+                outputDecoder
+                  .decode(doc)
+                  .liftTo[IO]
+            }
+            .left
+            .map { errorInfo =>
+              val errorDecoder = Document.Decoder.fromSchema(errorInfo.schema)
+              (doc: Document) =>
+                errorDecoder
+                  .decode(doc)
+                  .liftTo[IO]
+                  .map(errCase =>
+                    errorInfo.errorable.unliftError(errCase.asInstanceOf[E])
+                  )
+            }
+        }
 
-        output.tupleRight(prepared).flatMap {
-          case (output, (ammendedService, syntheticRequest)) =>
-            val fakeImpl: smithy4s.Monadic[NoOpService, IO] =
-              // even if I use the ammended service here, it's unused
-              // to build the routes :/
-              ammendedService.transform[R] {
-                new smithy4s.Interpreter[NoInputOp, IO] {
-                  def apply[I_, E_, O_, SE_, SO_](
-                      op: NoInputOp[I_, E_, O_, SE_, SO_]
-                  ): IO[O_] = {
-                    // todo error structures
-                    IO.pure(output.asInstanceOf[O_])
-                  }
+        val fakeImpl: smithy4s.Monadic[NoOpService, IO] =
+          ammendedService.transform[R] {
+            new smithy4s.Interpreter[NoInputOp, IO] {
+              def apply[I_, E_, O_, SE_, SO_](
+                  op: NoInputOp[I_, E_, O_, SE_, SO_]
+              ): IO[O_] = {
+                val doc = testCase.params.getOrElse(Document.obj())
+                buildResult match {
+                  case Left(onError) =>
+                    onError(doc).flatMap { err =>
+                      IO.raiseError[O_](err)
+                    }
+                  case Right(onOutput) =>
+                    onOutput(doc).map(_.asInstanceOf[O_])
                 }
               }
+            }
+          }
 
-            getServer(fakeImpl)(ammendedService)
-              .use {
-                server =>
-                  server.orNotFound
-                    .run(syntheticRequest)
-                    .flatMap { resp =>
-                      resp.body
-                        .through(utf8Decode)
-                        .compile
-                        .foldMonoid
-                        .tupleRight(resp.status)
-                        .tupleRight(resp.headers)
-                    }
-                    .map { case ((actualBody, status), headers) =>
-                      val bodyAssert = testCase.body
-                        .map(body => assert.eql(body, actualBody))
-                      val headersAssert =
-                        testCase.headers.toList.flatMap(_.toList).map {
-                          case (key, expectedValue) =>
-                            headers
-                              .get(CIString(key))
-                              .map { v =>
-                                assert.eql[String](expectedValue, v.head.value)
-                              }
-                              .getOrElse(
-                                assert.fail(s"'$key' header is missing")
-                              )
-                        }
-                      val forbiddenHeadersAssert =
-                        testCase.forbidHeaders.toList
-                          .flatMap {
-                            _.collect {
-                              case key if headers.get(CIString(key)).nonEmpty =>
-                                assert.fail(s"'$key' header is forbidden")
-                            }
-                          }
-                      val requiredHeadersAssert =
-                        testCase.requireHeaders.toList
-                          .flatMap {
-                            _.collect {
-                              case key if headers.get(CIString(key)).isEmpty =>
-                                assert.fail(s"'$key' header is required")
-                            }
-                          }
-                      val assertions =
-                        bodyAssert.toList ++
-                          forbiddenHeadersAssert ++
-                          requiredHeadersAssert ++
-                          headersAssert :+
-                          assert.eql(status.code, testCase.code)
-                      assertions.combineAll
-                    }
+        getServer(fakeImpl)(ammendedService)
+          .use { server =>
+            server.orNotFound
+              .run(syntheticRequest)
+              .flatMap { resp =>
+                resp.body
+                  .through(utf8Decode)
+                  .compile
+                  .foldMonoid
+                  .tupleRight(resp.status)
+                  .tupleRight(resp.headers)
               }
-        }
+              .map { case ((actualBody, status), headers) =>
+                val bodyAssert = testCase.body
+                  .map(body => assert.eql(body, actualBody))
+                val headersAssert =
+                  testCase.headers.toList.flatMap(_.toList).map {
+                    case (key, expectedValue) =>
+                      headers
+                        .get(CIString(key))
+                        .map { v =>
+                          assert.eql[String](expectedValue, v.head.value)
+                        }
+                        .getOrElse(
+                          assert.fail(s"'$key' header is missing")
+                        )
+                  }
+                val forbiddenHeadersAssert =
+                  testCase.forbidHeaders.toList
+                    .flatMap {
+                      _.collect {
+                        case key if headers.get(CIString(key)).nonEmpty =>
+                          assert.fail(s"'$key' header is forbidden")
+                      }
+                    }
+                val requiredHeadersAssert =
+                  testCase.requireHeaders.toList
+                    .flatMap {
+                      _.collect {
+                        case key if headers.get(CIString(key)).isEmpty =>
+                          assert.fail(s"'$key' header is required")
+                      }
+                    }
+                val assertions =
+                  bodyAssert.toList ++
+                    forbiddenHeadersAssert ++
+                    requiredHeadersAssert ++
+                    headersAssert :+
+                    assert.eql(status.code, testCase.code)
+                assertions.combineAll
+              }
+          }
       }
     )
   }
@@ -263,7 +290,7 @@ abstract class ServerHttpComplianceTestCase[
   ): (Service[NoOpService, NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off
-        new Endpoint[NoInputOp, Unit, Nothing, O, Nothing, Nothing] {
+        new Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
           def hints: smithy4s.Hints = {
             val newHttp = smithy.api.Http(
               method = smithy.api.NonEmptyString("GET"),
@@ -279,8 +306,10 @@ abstract class ServerHttpComplianceTestCase[
             smithy4s.StreamingSchema.NoStream
           def streamedOutput: smithy4s.StreamingSchema[Nothing] =
             smithy4s.StreamingSchema.NoStream
-          def wrap(input: Unit): NoInputOp[Unit, Nothing, O, Nothing, Nothing] =
+          def wrap(input: Unit): NoInputOp[Unit, E, O, Nothing, Nothing] =
             NoInputOp()
+
+            override def errorable: Option[Errorable[E]] = endpoint.errorable
         }
         // format: on
     val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
@@ -330,7 +359,27 @@ abstract class ServerHttpComplianceTestCase[
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
         .map(tc => serverResponseTest(endpoint, tc))
 
-      requestsTests ++ opResponseTests
+      val errorResponseTests = endpoint.errorable.toList
+        .flatMap { errorrable =>
+          errorrable.error.alternatives.flatMap { errorAlt =>
+            errorAlt.instance.hints
+              .get(HttpResponseTests)
+              .toList
+              .flatMap(_.value)
+              .filter(_.protocol == protocolTag.id.toString())
+              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
+              .map(tc =>
+                serverResponseTest(
+                  endpoint,
+                  tc,
+                  errorSchema =
+                    Some(ErrorResponseTest(errorAlt.instance, errorrable))
+                )
+              )
+          }
+        }
+
+      requestsTests ++ opResponseTests ++ errorResponseTests
     }
   }
 }

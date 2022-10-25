@@ -46,6 +46,7 @@ service HelloService {
 operation SayHello {
     input: SayHelloInput,
     output: SayHelloOutput
+    errors: [SimpleError]
 }
 
 @input
@@ -138,4 +139,20 @@ operation Hello {
     @required
     message: String
   }
+}
+
+@httpResponseTests([
+    {
+        id: "simple_error"
+        protocol: simpleRestJson
+        params: { expected: -1 }
+        code: 400
+        body: "{\"expected\":-1}"
+        bodyMediaType: "application/json"
+    }
+])
+@error("client")
+structure SimpleError {
+    @required
+    expected: Integer
 }
