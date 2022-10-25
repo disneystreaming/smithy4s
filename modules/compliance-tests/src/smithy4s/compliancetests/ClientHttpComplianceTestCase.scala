@@ -42,6 +42,7 @@ import smithy4s.tests.DefaultSchemaVisitor
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
+import org.http4s.Header
 
 abstract class ClientHttpComplianceTestCase[
     P,
@@ -207,9 +208,15 @@ abstract class ClientHttpComplianceTestCase[
                       .through(utf8Encode)
                   }
                   .getOrElse(fs2.Stream.empty)
+              val headers: Seq[Header.ToRaw] =
+                testCase.headers.toList.flatMap(_.toList).map {
+                  case (key, value) =>
+                    Header.Raw(CIString(key), value)
+                }
               req.body.compile.drain.as(
                 Response[IO](status)
                   .withBodyStream(body)
+                  .putHeaders(headers: _*)
                   .putHeaders(
                     `Content-Type`(MediaType.unsafeParse(mediaType.value))
                   )
