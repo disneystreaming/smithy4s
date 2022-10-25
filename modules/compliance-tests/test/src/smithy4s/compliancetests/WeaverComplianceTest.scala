@@ -23,6 +23,7 @@ import org.http4s.client.Client
 import smithy4s.example._
 import smithy4s.http4s._
 import weaver._
+import smithy4s.Service
 
 object WeaverComplianceTest extends SimpleIOSuite {
   val clientTestGenerator = new ClientHttpComplianceTestCase[
@@ -50,10 +51,12 @@ object WeaverComplianceTest extends SimpleIOSuite {
   ](
     smithy4s.api.SimpleRestJson()
   ) {
-    def getServer(
-        impl: smithy4s.Monadic[HelloServiceGen, IO]
-    ): Resource[IO, HttpRoutes[IO]] =
-      SimpleRestJsonBuilder(HelloServiceGen).routes(impl).resource
+    def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+        impl: smithy4s.Monadic[Alg2, IO]
+    )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]] =
+      // the service to use build the Http4s router is already selected
+      // via an implicit `serviceProvider` here
+      SimpleRestJsonBuilder(s).routes(impl).resource
 
     def codecs = SimpleRestJsonBuilder.codecs
   }
