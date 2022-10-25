@@ -209,10 +209,13 @@ abstract class ClientHttpComplianceTestCase[
                   }
                   .getOrElse(fs2.Stream.empty)
               val headers: Seq[Header.ToRaw] =
-                testCase.headers.toList.flatMap(_.toList).map {
-                  case (key, value) =>
+                testCase.headers.toList
+                  .flatMap(_.toList)
+                  .map { case (key, value) =>
                     Header.Raw(CIString(key), value)
-                }
+                  }
+                  .map(Header.ToRaw.rawToRaw)
+                  .toSeq
               req.body.compile.drain.as(
                 Response[IO](status)
                   .withBodyStream(body)
