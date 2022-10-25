@@ -50,7 +50,9 @@ abstract class ServerHttpComplianceTestCase[
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
 
-  def getServer(impl: smithy4s.Monadic[Alg, IO]): Resource[IO, HttpRoutes[IO]]
+  def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+      impl: smithy4s.Monadic[Alg2, IO]
+  )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]]
   def codecs: CodecAPI
 
   private def makeRequest(
@@ -131,7 +133,7 @@ abstract class ServerHttpComplianceTestCase[
               }
             )
 
-          getServer(fakeImpl)
+          getServer(fakeImpl)(originalService)
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
@@ -169,7 +171,7 @@ abstract class ServerHttpComplianceTestCase[
 
         output.tupleRight(prepared).flatMap {
           case (output, (ammendedService, syntheticRequest)) =>
-            val fakeImpl: smithy4s.Monadic[Alg, IO] =
+            val fakeImpl: smithy4s.Monadic[NoOpService, IO] =
               // even if I use the ammended service here, it's unused
               // to build the routes :/
               ammendedService.transform[R] {
@@ -183,7 +185,7 @@ abstract class ServerHttpComplianceTestCase[
                 }
               }
 
-            getServer(fakeImpl)
+            getServer(fakeImpl)(ammendedService)
               .use { server =>
                 server.orNotFound
                   .run(syntheticRequest)
@@ -209,9 +211,22 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private case class NoInputOp[I_, E_, O_, SE_, SO_]()
+  private trait NoOpService[F[_, _, _, _, _]] {
+    self =>
+
+    def void(): F[Unit, Nothing, Unit, Nothing, Nothing]
+    def transform[G[_, _, _, _, _]](
+        transformation: Transformation[F, G]
+    ): NoOpService[G] = new Transformed(transformation)
+    class Transformed[G[_, _, _, _, _]](transformation: Transformation[F, G])
+        extends NoOpService[G] {
+      def void() =
+        transformation[Unit, Nothing, Unit, Nothing, Nothing](self.void())
+    }
+  }
   private def prepareService[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO]
-  ): (Service[Alg, NoInputOp], Request[IO]) = {
+  ): (Service[NoOpService, NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off
         new Endpoint[NoInputOp, Unit, Nothing, O, Nothing, Nothing] {
@@ -237,26 +252,27 @@ abstract class ServerHttpComplianceTestCase[
     val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
     val amendedService =
       // format: off
-      new Service[Alg, NoInputOp]() {
-        override def transform[F[_, _, _, _, _], G[_, _, _, _, _]](
-            alg: Alg[F],
-            transformation: Transformation[F, G]
-        ): Alg[G] = originalService.transform(alg, transformation)
+      new Service[NoOpService, NoInputOp]() {
+        object reified extends NoOpService[NoInputOp] {
+          def void() = NoInputOp()
+        }
         override def id: ShapeId = ShapeId("custom", "service")
         override def endpoints: List[Endpoint[NoInputOp, _, _, _, _, _]] = List(amendedEndpoint)
         override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[NoInputOp, I_, E_, O_, SI_, SO_]) = ???
         override def version: String = originalService.version
         override def hints: Hints = originalService.hints
 
-        override def transform[P2[_, _, _, _, _]](transformation: Transformation[NoInputOp, P2]): Alg[P2] = {
-          val newT = new Transformation[Op, P2] {
-            def apply[I_, E_, O_, SE_, SO_](fa: Op[I_, E_, O_, SE_, SO_]): P2[I_, E_, O_, SE_, SO_] =
-              transformation.apply(NoInputOp[I_, E_, O_, SE_, SO_]())
+        override def transform[P2[_, _, _, _, _]](transformation: Transformation[NoInputOp, P2]): NoOpService[P2] = reified.transform(transformation)
+
+        override def transform[F[_, _, _, _, _], G[_, _, _, _, _]](
+            alg: NoOpService[F],
+            transformation: Transformation[F, G]
+        ): NoOpService[G] = alg.transform(transformation)
+        override def asTransformation[P2[_, _, _, _, _]](impl: NoOpService[P2]): Transformation[NoInputOp, P2] = new Transformation[NoInputOp, P2]() {
+          def apply[I_, E_, O_, SI_, SO_](op : NoInputOp[I_, E_, O_, SI_, SO_]) : P2[I_, E_, O_, SI_, SO_] ={
+            impl.void().asInstanceOf[P2[I_, E_, O_, SI_, SO_]]
           }
-          originalService.transform(newT)
         }
-        override def asTransformation[P2[_, _, _, _, _]](impl: Alg[P2]): Transformation[NoInputOp, P2] =
-          ???
       }
       // format: on
     (amendedService, request)
