@@ -31,6 +31,7 @@ import smithy4s.schema.{
 }
 
 import smithy4s.schema.Alt
+import smithy4s.schema.CompilationCache
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -44,7 +45,9 @@ import smithy4s.schema.Alt
  * annotated in the smithy specs.
  *
  */
-object SchemaVisitorMetadataWriter extends SchemaVisitor.Cached[MetaEncode] {
+class SchemaVisitorMetadataWriter(
+    val cache: CompilationCache[MetaEncode]
+) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
 
   override def primitive[P](

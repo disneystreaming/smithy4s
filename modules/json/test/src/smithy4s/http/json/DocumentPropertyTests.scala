@@ -26,8 +26,6 @@ import munit._
 import org.scalacheck.Prop
 import Prop._
 
-import codecs.schemaVisitorJCodec
-
 class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
@@ -41,7 +39,7 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
     Show.fromToString
 
   implicit val documentCodec: JCodec[Document] =
-    Schema.document.compile(schemaVisitorJCodec)
+    JCodec.fromSchema(Schema.document)
 
   property(
     "Going through json directly or via the adt give the same results"
@@ -51,8 +49,7 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
     // asserting roundtrip there.
     forAll(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
-      implicit val codec: JCodec[Any] =
-        schema.compile(schemaVisitorJCodec)
+      implicit val codec: JCodec[Any] = JCodec.fromSchema(schema)
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
       val schemaStr =

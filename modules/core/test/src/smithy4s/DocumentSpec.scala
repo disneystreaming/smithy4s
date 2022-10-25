@@ -224,4 +224,64 @@ class DocumentSpec() extends FunSuite {
     expect(roundTripped == Right(defTest))
   }
 
+  test("defaults should not be applied when field is provided") {
+    val defTest = DefTest(12, "test2")
+
+    val document = Document.encode(defTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "int" -> fromInt(12),
+        "str" -> fromString("test2")
+      )
+
+    val roundTripped = Document.decode[DefTest](document)
+
+    expect(document == expectedDocument)
+    expect(roundTripped == Right(defTest))
+  }
+
+  test("encoding maps keyed with newtypes should not change the encoding") {
+    case class Key(string: String)
+    val keySchema = bijection(string, Key(_), (_: Key).string)
+    implicit val mapSchema: Schema[Map[Key, Int]] = map(keySchema, int)
+
+    val mapTest = Map(Key("hello") -> 1, Key("world") -> 2)
+
+    val document = Document.encode(mapTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "hello" -> fromInt(1),
+        "world" -> fromInt(2)
+      )
+
+    val roundTripped = Document.decode[Map[Key, Int]](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(mapTest))
+  }
+
+  test(
+    "encoding maps keyed with validated types should not change the encoding"
+  ) {
+    val keySchema = int.validated(smithy.api.Range(None, Some(BigDecimal(3))))
+    implicit val mapSchema: Schema[Map[Int, Int]] = map(keySchema, int)
+
+    val mapTest = Map(1 -> 1, 2 -> 2)
+
+    val document = Document.encode(mapTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "1" -> fromInt(1),
+        "2" -> fromInt(2)
+      )
+
+    val roundTripped = Document.decode[Map[Int, Int]](document)
+
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(mapTest))
+  }
+
 }

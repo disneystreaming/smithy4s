@@ -34,6 +34,8 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     extends Transformation[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
 
+  val codecAPI = new json.AwsJsonCodecAPI()
+
   def apply[I, E, O, SI, SO](
       op: Op[I, E, O, SI, SO]
   ): AwsCall[F, I, E, O, SI, SO] = {
@@ -56,7 +58,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
       ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] =
-        new AwsUnaryEndpoint(awsEnv, signer, endpoint, json.awsJson)
+        new AwsUnaryEndpoint(awsEnv, signer, endpoint, codecAPI)
     }.precompute(service.endpoints.map(smithy4s.Kind5.existential(_)))
 
 }

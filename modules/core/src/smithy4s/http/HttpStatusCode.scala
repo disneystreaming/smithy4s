@@ -17,6 +17,8 @@
 package smithy4s
 package http
 
+import smithy4s.schema._
+
 /**
   * Typeclass construct allowing to retrieve the status code associated to a value.
   */
@@ -26,25 +28,23 @@ trait HttpStatusCode[A] {
 
 }
 
-object HttpStatusCode {
+object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
 
   def apply[A](implicit instance: HttpStatusCode[A]): HttpStatusCode[A] =
     instance
+  type Aux[A] = internals.HttpCode[A]
 
-  def fromSchema[A](schema: Schema[A]): HttpStatusCode[A] = {
-    val go = schema.compile(internals.ErrorCodeSchemaVisitor)
+  def fromSchema[A](schema: Schema[A], cache: Cache): HttpStatusCode[A] = {
+    val visitor = new internals.ErrorCodeSchemaVisitor(cache)
+    val go = schema.compile(visitor)
     new HttpStatusCode[A] {
       def code(a: A, default: Int): Int = go(a).getOrElse(default)
     }
   }
 
-  implicit def derivedHttpStatusCodeFromStaticSchema[A](implicit
+  @deprecated("kept for bincompat in 0.16.x")
+  def derivedHttpStatusCodeFromStaticSchema[A](implicit
       schema: Schema[A]
-  ): HttpStatusCode[A] = statusCodeCache(schema)
-
-  private val statusCodeCache =
-    new PolyFunction[Schema, HttpStatusCode] {
-      def apply[A](fa: Schema[A]): HttpStatusCode[A] = fromSchema(fa)
-    }.unsafeMemoise
+  ): HttpStatusCode[A] = fromSchema(schema)
 
 }

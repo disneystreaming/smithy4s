@@ -43,7 +43,7 @@ private[internals] trait SchemaDescriptionDetailedImpl[A]
 }
 
 private[internals] object SchemaDescriptionDetailedImpl
-    extends SchemaVisitor.Cached[SchemaDescriptionDetailedImpl] { self =>
+    extends SchemaVisitor[SchemaDescriptionDetailedImpl] { self =>
 
   def of[A](shapeId: ShapeId, value: String): SchemaDescriptionDetailedImpl[A] =
     s => (s + shapeId, value)
