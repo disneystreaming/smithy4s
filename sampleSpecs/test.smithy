@@ -46,7 +46,7 @@ service HelloService {
 operation SayHello {
     input: SayHelloInput,
     output: SayHelloOutput
-    errors: [SimpleError]
+    errors: [SimpleError, ComplexError]
 }
 
 @input
@@ -149,10 +149,48 @@ operation Hello {
         code: 400
         body: "{\"expected\":-1}"
         bodyMediaType: "application/json"
+        requireHeaders: ["X-Error-Type"]
     }
 ])
 @error("client")
 structure SimpleError {
     @required
     expected: Integer
+}
+@httpResponseTests([
+    {
+        id: "complex_error"
+        protocol: simpleRestJson
+        params: { value: -1, message: "some error message", details: { date: 123, location: "NYC"} }
+        code: 504
+        body: "{\"value\":-1,\"message\":\"some error message\",\"details\":{\"date\":123.0,\"location\":\"NYC\"}}"
+        bodyMediaType: "application/json"
+        requireHeaders: ["X-Error-Type"]
+    },
+    {
+        id: "complex_error_no_details"
+        protocol: simpleRestJson
+        params: { value: -1, message: "some error message" }
+        code: 504
+        body: "{\"value\":-1,\"message\":\"some error message\"}"
+        bodyMediaType: "application/json"
+        requireHeaders: ["X-Error-Type"]
+    }
+])
+@error("server")
+@httpError(504)
+structure ComplexError {
+    @required
+    value: Integer
+    @required
+    message: String
+    details: ErrorDetails
+}
+
+structure ErrorDetails {
+    @required
+    @timestampFormat("epoch-seconds")
+    date: Timestamp
+    @required
+    location: String
 }
