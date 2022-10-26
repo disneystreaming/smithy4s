@@ -36,12 +36,6 @@ import smithy4s.ShapeId
 import smithy4s.Hints
 import org.typelevel.ci.CIString
 import smithy4s.Errorable
-import smithy4s.Schema
-
-final case class ErrorResponseTest[A, E](
-    schema: Schema[A],
-    errorable: Errorable[E]
-)
 
 abstract class ServerHttpComplianceTestCase[
     P,

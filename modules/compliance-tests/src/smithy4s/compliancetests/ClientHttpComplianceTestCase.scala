@@ -175,29 +175,50 @@ abstract class ClientHttpComplianceTestCase[
 
   private[compliancetests] def clientResponseTest[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO],
-      testCase: HttpResponseTestCase
+      testCase: HttpResponseTestCase,
+      errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
+    def aMediatype[A](
+        s: smithy4s.Schema[A],
+        cd: CodecAPI
+    ): HttpMediaType = {
+      cd.mediaType(cd.compileCodec(s))
+    }
+
     type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
     val dummyInput = DefaultSchemaVisitor(endpoint.input)
 
-    val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
     ComplianceTest[IO](
       name = endpoint.id.toString + "(client|response): " + testCase.id,
       run = {
-        def aMediatype[A](
-            s: smithy4s.Schema[A],
-            cd: CodecAPI
-        ): HttpMediaType = {
-          cd.mediaType(cd.compileCodec(s))
+
+        val buildResult
+            : Either[Document => IO[Throwable], Document => IO[O]] = {
+          errorSchema
+            .toLeft {
+              val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
+              (doc: Document) =>
+                outputDecoder
+                  .decode(doc)
+                  .liftTo[IO]
+            }
+            .left
+            .map { errorInfo =>
+              val errorDecoder = Document.Decoder.fromSchema(errorInfo.schema)
+              (doc: Document) =>
+                errorDecoder
+                  .decode(doc)
+                  .liftTo[IO]
+                  .map(errCase =>
+                    errorInfo.errorable.unliftError(errCase.asInstanceOf[E])
+                  )
+            }
         }
         val mediaType = aMediatype(endpoint.output, codecs)
-        val output = outputDecoder
-          .decode(testCase.params.getOrElse(Document.obj()))
-          .liftTo[IO]
         val status = Status.fromInt(testCase.code).liftTo[IO]
 
-        (status, output).tupled.flatMap { case (status, output) =>
+        status.flatMap { status =>
           val app = HttpRoutes
             .of[IO] { case req =>
               val body: fs2.Stream[IO, Byte] =
@@ -228,12 +249,26 @@ abstract class ClientHttpComplianceTestCase[
             .orNotFound
 
           getClient(app).use { client =>
-            service
-              .asTransformation[R](client)
-              .apply(endpoint.wrap(dummyInput))
-              .map { o =>
-                assert.eql(o, output)
-              }
+            val doc = testCase.params.getOrElse(Document.obj())
+            buildResult match {
+              case Left(onError) =>
+                onError(doc).flatMap { expectedErr =>
+                  service
+                    .asTransformation[R](client)
+                    .apply(endpoint.wrap(dummyInput))
+                    .map { _ => assert.success }
+                    .recover { case ex: Throwable =>
+                      assert.eql(expectedErr, ex)
+                    }
+                }
+              case Right(onOutput) =>
+                onOutput(doc).flatMap { expectedOutput =>
+                  service
+                    .asTransformation[R](client)
+                    .apply(endpoint.wrap(dummyInput))
+                    .map { output => assert.eql(expectedOutput, output) }
+                }
+            }
           }
         }
       }
@@ -258,8 +293,27 @@ abstract class ClientHttpComplianceTestCase[
         .filter(_.protocol == protocolTag.id.toString())
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientResponseTest(endpoint, tc))
+      val errorResponseTests = endpoint.errorable.toList
+        .flatMap { errorrable =>
+          errorrable.error.alternatives.flatMap { errorAlt =>
+            errorAlt.instance.hints
+              .get(HttpResponseTests)
+              .toList
+              .flatMap(_.value)
+              .filter(_.protocol == protocolTag.id.toString())
+              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
+              .map(tc =>
+                clientResponseTest(
+                  endpoint,
+                  tc,
+                  errorSchema =
+                    Some(ErrorResponseTest(errorAlt.instance, errorrable))
+                )
+              )
+          }
+        }
 
-      requestTests ++ opResponseTests
+      requestTests ++ opResponseTests ++ errorResponseTests
     }
   }
 }
