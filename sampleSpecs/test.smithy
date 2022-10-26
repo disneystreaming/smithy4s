@@ -163,7 +163,7 @@ structure SimpleError {
         protocol: simpleRestJson
         params: { value: -1, message: "some error message", details: { date: 123, location: "NYC"} }
         code: 504
-        body: "{\"value\":-1,\"message\":\"some error message\",\"details\":{\"date\":123.0,\"location\":\"NYC\"}}"
+        body: "{\"value\":-1,\"message\":\"some error message\",\"details\":{\"date\":123,\"location\":\"NYC\"}}"
         bodyMediaType: "application/json"
         requireHeaders: ["X-Error-Type"]
     },
