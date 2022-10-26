@@ -46,7 +46,7 @@ trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends FunctorK5[Alg] w
   def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Op, P]): Alg[P]
   def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Op, P]
 
-  final val opToEndpoint : PolyFunction5[Op, Endpoint[Op, *, *, *, *,*]] = new PolyFunction5[Op, Endpoint[Op, *, *, *, *,*]]{
+  final val opToEndpoint : PolyFunction5[Op, Endpoint[Op, *, *, *, *, *]] = new PolyFunction5[Op, Endpoint[Op, *, *, *, *, *]]{
     def apply[I, E, O, SI, SO](op: Op[I,E,O,SI,SO]): Endpoint[Op,I,E,O,SI,SO] = endpoint(op)._2
   }
 

@@ -266,7 +266,7 @@ object CollisionAvoidance {
     val NoInput_ = NameRef("smithy4s", "NoInput")
     val ShapeId_ = NameRef("smithy4s", "ShapeId")
     val Schema_ = NameRef("smithy4s", "Schema")
-    val FunctorAlgebra = NameRef("smithy4s.kinds", "FunctorAlgebra")
+    val FunctorAlgebra_ = NameRef("smithy4s.kinds", "FunctorAlgebra")
     val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")

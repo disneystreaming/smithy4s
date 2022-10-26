@@ -166,7 +166,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val name = s.name
       val nameGen = NameRef(s"${name}Gen")
       lines(
-        line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra[$nameGen, F]",
+        line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra_[$nameGen, F]",
         block(
           line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, ${name}Operation]"
         )(
@@ -208,7 +208,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_[$genNameRef, $opTraitNameRef]"
       )(
         newline,
-        line"def apply[F[_]](implicit F: $FunctorAlgebra[$genNameRef, F]): F.type = F",
+        line"def apply[F[_]](implicit F: $FunctorAlgebra_[$genNameRef, F]): F.type = F",
         newline,
         renderId(shapeId),
         newline,
