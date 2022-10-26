@@ -17,20 +17,17 @@
 package smithy4s
 package kinds
 
-object Kind1 {
+object Kind1{
   type Existential[F[_]] = F[_]
   @inline def existential[F[_], A0](fa: F[A0]): F[_] = fa.asInstanceOf[F[_]]
 }
 
-object Kind2 {
+object Kind2{
   type Existential[F[_, _]] = F[_, _]
-  @inline def existential[F[_, _], A0, A1](fa: F[A0, A1]): F[_, _] =
-    fa.asInstanceOf[F[_, _]]
+  @inline def existential[F[_, _], A0, A1](fa: F[A0, A1]): F[_, _] = fa.asInstanceOf[F[_, _]]
 }
 
-object Kind5 {
+object Kind5{
   type Existential[F[_, _, _, _, _]] = F[_, _, _, _, _]
-  @inline def existential[F[_, _, _, _, _], A0, A1, A2, A3, A4](
-      fa: F[A0, A1, A2, A3, A4]
-  ): F[_, _, _, _, _] = fa.asInstanceOf[F[_, _, _, _, _]]
+  @inline def existential[F[_, _, _, _, _], A0, A1, A2, A3, A4](fa: F[A0, A1, A2, A3, A4]): F[_, _, _, _, _] = fa.asInstanceOf[F[_, _, _, _, _]]
 }

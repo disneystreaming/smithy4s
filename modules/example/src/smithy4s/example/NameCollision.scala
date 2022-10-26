@@ -3,16 +3,16 @@ package smithy4s.example
 import smithy4s.Errorable
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
+import smithy4s.kinds.PolyFunction5
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
-import smithy4s.PolyFunction5
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.capability.Transformation
-import smithy4s.Monadic
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -26,7 +26,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
 
 object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation] {
 
-  def apply[F[_]](implicit F: Monadic[NameCollisionGen, F]): F.type = F
+  def apply[F[_]](implicit F: FunctorAlgebra[NameCollisionGen, F]): F.type = F
 
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
 

@@ -4,17 +4,17 @@ import smithy4s.Errorable
 import smithy4s.example.import_test.OpOutput
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
+import smithy4s.kinds.PolyFunction5
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.example.error.NotFoundError
-import smithy4s.PolyFunction5
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.capability.Transformation
-import smithy4s.Monadic
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -28,7 +28,7 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
 
 object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation] {
 
-  def apply[F[_]](implicit F: Monadic[ImportServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: FunctorAlgebra[ImportServiceGen, F]): F.type = F
 
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
 

@@ -1,31 +1,31 @@
 package smithy4s
 
 package object example {
-  type StreamedObjects[F[_]] = smithy4s.Monadic[StreamedObjectsGen, F]
+  type StreamedObjects[F[_]] = smithy4s.kinds.FunctorAlgebra[StreamedObjectsGen, F]
   object StreamedObjects extends smithy4s.Service.Provider[StreamedObjectsGen, StreamedObjectsOperation] {
     def apply[F[_]](implicit F: StreamedObjects[F]): F.type = F
     def service: smithy4s.Service[StreamedObjectsGen, StreamedObjectsOperation] = StreamedObjectsGen
     val id: smithy4s.ShapeId = service.id
   }
-  type FooService[F[_]] = smithy4s.Monadic[FooServiceGen, F]
+  type FooService[F[_]] = smithy4s.kinds.FunctorAlgebra[FooServiceGen, F]
   object FooService extends smithy4s.Service.Provider[FooServiceGen, FooServiceOperation] {
     def apply[F[_]](implicit F: FooService[F]): F.type = F
     def service: smithy4s.Service[FooServiceGen, FooServiceOperation] = FooServiceGen
     val id: smithy4s.ShapeId = service.id
   }
-  type BrandService[F[_]] = smithy4s.Monadic[BrandServiceGen, F]
+  type BrandService[F[_]] = smithy4s.kinds.FunctorAlgebra[BrandServiceGen, F]
   object BrandService extends smithy4s.Service.Provider[BrandServiceGen, BrandServiceOperation] {
     def apply[F[_]](implicit F: BrandService[F]): F.type = F
     def service: smithy4s.Service[BrandServiceGen, BrandServiceOperation] = BrandServiceGen
     val id: smithy4s.ShapeId = service.id
   }
-  type ObjectService[F[_]] = smithy4s.Monadic[ObjectServiceGen, F]
+  type ObjectService[F[_]] = smithy4s.kinds.FunctorAlgebra[ObjectServiceGen, F]
   object ObjectService extends smithy4s.Service.Provider[ObjectServiceGen, ObjectServiceOperation] {
     def apply[F[_]](implicit F: ObjectService[F]): F.type = F
     def service: smithy4s.Service[ObjectServiceGen, ObjectServiceOperation] = ObjectServiceGen
     val id: smithy4s.ShapeId = service.id
   }
-  type NameCollision[F[_]] = smithy4s.Monadic[NameCollisionGen, F]
+  type NameCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[NameCollisionGen, F]
   object NameCollision extends smithy4s.Service.Provider[NameCollisionGen, NameCollisionOperation] {
     def apply[F[_]](implicit F: NameCollision[F]): F.type = F
     def service: smithy4s.Service[NameCollisionGen, NameCollisionOperation] = NameCollisionGen
