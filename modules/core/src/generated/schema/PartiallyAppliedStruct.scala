@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+/////// THIS FILE WAS GENERATED AT BUILD TIME, AND CHECKED-IN FOR DISCOVERABILITY ///////
+
 package smithy4s
 package schema
 

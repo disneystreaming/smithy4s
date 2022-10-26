@@ -124,7 +124,11 @@ object Boilerplate {
       val rawContents = range.map { n =>
         content(new TemplateVals(n)).split('\n').filterNot(_.isEmpty)
       }
-      val headerLines = copyright.split('\n').toSeq ++ Seq("")
+      val headerLines = copyright.split('\n').toSeq ++ Seq(
+        "",
+        "/////// THIS FILE WAS GENERATED AT BUILD TIME, AND CHECKED-IN FOR DISCOVERABILITY ///////",
+        ""
+      )
 
       val instances = expandInstances(rawContents)
       val footerLines = rawContents.head.reverse
