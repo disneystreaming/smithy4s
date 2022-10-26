@@ -15,15 +15,23 @@
  */
 
 package smithy4s
+package kinds
 
-trait ExistentialsPlatformCompat {
-
-  type Existential[F[_]] = F[_]
-
+object Kind1 {
+  type Existential[+F[_]] <: (Any { type T })
+  inline def existential[F[_], A0](fa: F[A0]): Existential[F] =
+    fa.asInstanceOf[Existential[F]]
 }
 
-object Existential {
+object Kind2 {
+  type Existential[+F[_, _]] <: (Any { type T })
+  inline def existential[F[_, _], A0, A1](fa: F[A0, A1]): Existential[F] =
+    fa.asInstanceOf[Existential[F]]
+}
 
-  @inline final def wrap[F[_], A](fa: F[A]): F[_] = fa
-
+object Kind5 {
+  type Existential[+F[_, _, _, _, _]] <: (Any { type T })
+  inline def existential[F[_, _, _, _, _], A0, A1, A2, A3, A4](
+      fa: F[A0, A1, A2, A3, A4]
+  ): Existential[F] = fa.asInstanceOf[Existential[F]]
 }

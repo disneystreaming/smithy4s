@@ -34,6 +34,7 @@ import smithy4s.http.PayloadError
 import smithy4s.Endpoint
 import smithy4s.Service
 import smithy4s.ShapeTag
+import smithy4s.kinds._
 
 import scala.concurrent.duration._
 
@@ -52,7 +53,7 @@ abstract class ClientHttpComplianceTestCase[
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
 
-  def getClient(app: HttpApp[IO]): Resource[IO, smithy4s.Monadic[Alg, IO]]
+  def getClient(app: HttpApp[IO]): Resource[IO, FunctorAlgebra[Alg, IO]]
 
   private def matchRequest(
       request: Request[IO],
@@ -152,7 +153,7 @@ abstract class ClientHttpComplianceTestCase[
             input
               .flatMap { in =>
                 service
-                  .asTransformation[R](client)
+                  .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
               }
               // deal with the empty response generated in the mock

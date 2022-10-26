@@ -19,7 +19,7 @@ package internals
 
 import cats.MonadThrow
 import smithy4s.Endpoint
-import smithy4s.Transformation
+import smithy4s.kinds._
 
 // format: off
 /**
@@ -31,7 +31,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     awsEnv: AwsEnvironment[F],
     contentType: String
 )(implicit F: MonadThrow[F])
-    extends Transformation[Op, AwsCall[F, *, *, *, *, *]] {
+    extends PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
 
   val codecAPI = new json.AwsJsonCodecAPI()
@@ -51,7 +51,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
   )
 
   private val awsEndpoints =
-    new Transformation[
+    new PolyFunction5[
       Endpoint[Op, *, *, *, *, *],
       AwsUnaryEndpoint[F, Op, *, *, *, *, *]
     ] {
@@ -59,6 +59,9 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
           endpoint: Endpoint[Op, I, E, O, SI, SO]
       ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] =
         new AwsUnaryEndpoint(awsEnv, signer, endpoint, codecAPI)
-    }.precompute(service.endpoints.map(smithy4s.Kind5.existential(_)))
+    }.unsafeCacheBy(
+      service.endpoints.map(Kind5.existential(_)),
+      identity
+    )
 
 }

@@ -2,11 +2,12 @@ package smithy4s.example
 
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
-import smithy4s.Transformation
-import smithy4s.Monadic
 import smithy4s.Service
+import smithy4s.PolyFunction5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.capability.Transformation
+import smithy4s.Monadic
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -15,10 +16,7 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 
   def getFoo() : F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[FooServiceGen, F] = new Transformation.PartiallyApplied[FooServiceGen, F](this)
-  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends FooServiceGen[G] {
-    def getFoo() = transformation[Unit, Nothing, GetFooOutput, Nothing, Nothing](self.getFoo())
-  }
+  def transform : Transformation.PartiallyApplied[FooServiceGen[F]] = new Transformation.PartiallyApplied[FooServiceGen[F]](this)
 }
 
 object FooServiceGen extends Service[FooServiceGen, FooServiceOperation] {
@@ -43,11 +41,14 @@ object FooServiceGen extends Service[FooServiceGen, FooServiceOperation] {
     def getFoo() = GetFoo()
   }
 
-  def transform[P[_, _, _, _, _]](transformation: Transformation[FooServiceOperation, P]): FooServiceGen[P] = reified.transform(transformation)
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]): FooServiceGen[P1] = new Transformed(alg, f)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], transformation: Transformation[P, P1]): FooServiceGen[P1] = alg.transform(transformation)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new Transformed(reified, f)
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: FooServiceGen[P], f : PolyFunction5[P, P1]) extends FooServiceGen[P1] {
+    def getFoo() = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](alg.getFoo())
+  }
 
-  def asTransformation[P[_, _, _, _, _]](impl : FooServiceGen[P]): Transformation[FooServiceOperation, P] = new Transformation[FooServiceOperation, P] {
+  def toPolyFunction[P[_, _, _, _, _]](impl : FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = new PolyFunction5[FooServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case GetFoo() => impl.getFoo()
     }

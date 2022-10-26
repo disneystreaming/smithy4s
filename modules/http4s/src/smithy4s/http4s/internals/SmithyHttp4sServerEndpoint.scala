@@ -30,6 +30,7 @@ import org.http4s.Status
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.schema.Alt
+import smithy4s.kinds._
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -49,7 +50,7 @@ private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
 private[smithy4s] object SmithyHttp4sServerEndpoint {
 
   def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
-      impl: Interpreter[Op, F],
+      impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
@@ -68,7 +69,7 @@ private[smithy4s] object SmithyHttp4sServerEndpoint {
 
 // format: off
 private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
-    impl: Interpreter[Op, F],
+    impl: FunctorInterpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],

@@ -14,20 +14,16 @@
  *  limitations under the License.
  */
 
-package object smithy4s extends TypeAliases with ExistentialsPlatformCompat {
+package object smithy4s {
 
-  type ~>[F[_], G[_]] = PolyFunction[F, G]
   type Hint = Hints.Binding
   type Schema[A] = schema.Schema[A]
   val Schema: schema.Schema.type = schema.Schema
-  type Wrapped[F[_], G[_], A] = F[G[A]]
+
+  type PolyFunction[F[_], G[_]] = kinds.PolyFunction[F, G]
+  type ~>[F[_], G[_]] = kinds.PolyFunction[F, G]
 
   val errorTypeHeader = "X-Error-Type"
-
-  // Allows to "inject" F[_] types in places that require F[_,_,_,_,_]
-  type GenLift[F[_]] = {
-    type λ[I, E, O, SI, SO] = F[O]
-  }
 
   def checkProtocol[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       service: Service[Alg, Op],

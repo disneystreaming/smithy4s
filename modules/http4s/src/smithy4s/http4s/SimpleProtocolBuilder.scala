@@ -24,6 +24,7 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http.CodecAPI
 import org.http4s.implicits._
+import smithy4s.kinds._
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -39,7 +40,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ): ServiceBuilder[Alg, Op] = new ServiceBuilder(serviceProvider.service)
 
   def routes[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
-      impl: Monadic[Alg, F]
+      impl: FunctorAlgebra[Alg, F]
   )(implicit
       serviceProvider: smithy4s.Service.Provider[Alg, Op],
       F: EffectCompat[F]
@@ -47,7 +48,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     val service = serviceProvider.service
     new RouterBuilder[Alg, Op, F](
       service,
-      service.asTransformation[GenLift[F]#λ](impl),
+      service.toPolyFunction[Kind1[F]#toKind5](impl),
       PartialFunction.empty
     )
   }
@@ -65,7 +66,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def client[F[_]: EffectCompat](
         http4sClient: Client[F],
         baseUri: Uri
-    ): Either[UnsupportedProtocolError, Monadic[Alg, F]] =
+    ): Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] =
       client(http4sClient).uri(baseUri).use
 
     @deprecated(
@@ -74,14 +75,15 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def clientResource[F[_]: EffectCompat](
         http4sClient: Client[F],
         baseUri: Uri
-    ): Resource[F, Monadic[Alg, F]] = client(http4sClient).uri(baseUri).resource
+    ): Resource[F, FunctorAlgebra[Alg, F]] =
+      client(http4sClient).uri(baseUri).resource
 
     def routes[F[_]: EffectCompat](
-        impl: Monadic[Alg, F]
+        impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, Op, F] =
       new RouterBuilder[Alg, Op, F](
         service,
-        service.asTransformation[GenLift[F]#λ](impl),
+        service.toPolyFunction[Kind1[F]#toKind5](impl),
         PartialFunction.empty
       )
 
@@ -98,10 +100,10 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
       new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
 
-    def resource: Resource[F, Monadic[Alg, F]] =
+    def resource: Resource[F, FunctorAlgebra[Alg, F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    def use: Either[UnsupportedProtocolError, Monadic[Alg, F]] = {
+    def use: Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] = {
       checkProtocol(service, protocolTag)
         .as(
           new SmithyHttp4sReverseRouter[Alg, Op, F](
@@ -112,7 +114,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
               .fromCodecAPI[F](codecs)
           )
         )
-        .map(service.transform[GenLift[F]#λ](_))
+        .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
     }
   }
 
@@ -122,7 +124,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       F[_]
   ] private[http4s] (
       service: smithy4s.Service[Alg, Op],
-      impl: Interpreter[Op, F],
+      impl: FunctorInterpreter[Op, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
   )(implicit F: EffectCompat[F]) {
 

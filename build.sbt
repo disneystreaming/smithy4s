@@ -153,9 +153,27 @@ lazy val core = projectMatrix
     ),
     genDiscoverModels := true,
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
-      .taskValue,
+    Compile / sourceGenerators += {
+      sourceDirectory
+        .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
+        .taskValue,
+    },
+    Compile / sourceGenerators += {
+      sourceDirectory
+        .zip(scalaVersion)
+        .map { case (sd, sv) =>
+          val base = sd.getParentFile()
+          sv match {
+            case Scala3 =>
+              Boilerplate
+                .gen(base / "src-3", Boilerplate.BoilerplateModule.Core3)
+            case _ =>
+              Boilerplate
+                .gen(base / "src-2", Boilerplate.BoilerplateModule.Core2)
+          }
+        }
+        .taskValue
+    },
     libraryDependencies ++= Seq(
       Dependencies.collectionsCompat.value,
       Dependencies.Cats.core.value % Test

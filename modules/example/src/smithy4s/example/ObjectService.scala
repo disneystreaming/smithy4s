@@ -3,15 +3,16 @@ package smithy4s.example
 import smithy4s.Errorable
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
-import smithy4s.Transformation
-import smithy4s.Monadic
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
+import smithy4s.PolyFunction5
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.capability.Transformation
+import smithy4s.Monadic
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -21,11 +22,7 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
   def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) : F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
   def getObject(key: ObjectKey, bucketName: BucketName) : F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[ObjectServiceGen, F] = new Transformation.PartiallyApplied[ObjectServiceGen, F](this)
-  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ObjectServiceGen[G] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = transformation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing](self.putObject(key, bucketName, data, foo, someValue))
-    def getObject(key: ObjectKey, bucketName: BucketName) = transformation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing](self.getObject(key, bucketName))
-  }
+  def transform : Transformation.PartiallyApplied[ObjectServiceGen[F]] = new Transformation.PartiallyApplied[ObjectServiceGen[F]](this)
 }
 
 object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation] {
@@ -55,11 +52,15 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     def getObject(key: ObjectKey, bucketName: BucketName) = GetObject(GetObjectInput(key, bucketName))
   }
 
-  def transform[P[_, _, _, _, _]](transformation: Transformation[ObjectServiceOperation, P]): ObjectServiceGen[P] = reified.transform(transformation)
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], f: PolyFunction5[P, P1]): ObjectServiceGen[P1] = new Transformed(alg, f)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], transformation: Transformation[P, P1]): ObjectServiceGen[P1] = alg.transform(transformation)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ObjectServiceOperation, P]): ObjectServiceGen[P] = new Transformed(reified, f)
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ObjectServiceGen[P], f : PolyFunction5[P, P1]) extends ObjectServiceGen[P1] {
+    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = f[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing](alg.putObject(key, bucketName, data, foo, someValue))
+    def getObject(key: ObjectKey, bucketName: BucketName) = f[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing](alg.getObject(key, bucketName))
+  }
 
-  def asTransformation[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): Transformation[ObjectServiceOperation, P] = new Transformation[ObjectServiceOperation, P] {
+  def toPolyFunction[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = new PolyFunction5[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case PutObject(PutObjectInput(key, bucketName, data, foo, someValue)) => impl.putObject(key, bucketName, data, foo, someValue)
       case GetObject(GetObjectInput(key, bucketName)) => impl.getObject(key, bucketName)

@@ -28,6 +28,7 @@ import smithy4s.Document
 import smithy4s.Endpoint
 import smithy4s.Service
 import smithy4s.ShapeTag
+import smithy4s.kinds._
 
 import scala.concurrent.duration._
 
@@ -46,7 +47,7 @@ abstract class ServerHttpComplianceTestCase[
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
 
-  def getServer(impl: smithy4s.Monadic[Alg, IO]): Resource[IO, HttpRoutes[IO]]
+  def getServer(impl: FunctorAlgebra[Alg, IO]): Resource[IO, HttpRoutes[IO]]
 
   private def makeRequest(
       baseUri: Uri,
@@ -110,9 +111,9 @@ abstract class ServerHttpComplianceTestCase[
       name = endpoint.id.toString + "(server|request): " + testCase.id,
       run = {
         deferred[I].flatMap { inputDeferred =>
-          val fakeImpl: smithy4s.Monadic[Alg, IO] =
-            service.transform[R](
-              new smithy4s.Interpreter[Op, IO] {
+          val fakeImpl: FunctorAlgebra[Alg, IO] =
+            service.fromPolyFunction[R](
+              new FunctorInterpreter[Op, IO] {
                 def apply[I_, E_, O_, SE_, SO_](
                     op: Op[I_, E_, O_, SE_, SO_]
                 ): IO[O_] = {

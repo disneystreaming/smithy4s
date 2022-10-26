@@ -18,6 +18,8 @@ package smithy4s
 package dynamic
 package internals
 
+import smithy4s.kinds.PolyFunction5
+
 private[internals] case class DynamicService(
     id: ShapeId,
     version: String,
@@ -30,10 +32,10 @@ private[internals] case class DynamicService(
   type Op[I, E, O, SI, SO] = DynamicOp[I, E, O, SI, SO]
   override val service: Service[Alg, Op] = this
 
-  def transform[F[_, _, _, _, _], G[_, _, _, _, _]](
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
       alg: DynamicAlg[F],
-      transformation: Transformation[F, G]
-  ): DynamicAlg[G] = alg.andThen(transformation)
+      polyFunction: PolyFunction5[F, G]
+  ): DynamicAlg[G] = alg.andThen(polyFunction)
 
   private lazy val endpointMap
       : Map[ShapeId, Endpoint[DynamicOp, _, _, _, _, _]] =
@@ -49,11 +51,13 @@ private[internals] case class DynamicService(
     (input, endpoint)
   }
 
-  def transform[P[_, _, _, _, _]](
-      transformation: Transformation[DynamicOp, P]
+  def fromPolyFunction[P[_, _, _, _, _]](
+      transformation: PolyFunction5[DynamicOp, P]
   ): DynamicAlg[P] = transformation
 
-  def asTransformation[P[_, _, _, _, _]](
+  def toPolyFunction[P[_, _, _, _, _]](
       impl: DynamicAlg[P]
-  ): Transformation[DynamicOp, P] = impl
+  ): PolyFunction5[DynamicOp, P] = impl
+
+  val reified: Alg[Op] = PolyFunction5.identity[Op]
 }

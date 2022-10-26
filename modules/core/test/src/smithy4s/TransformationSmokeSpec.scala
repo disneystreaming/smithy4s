@@ -22,7 +22,7 @@ import munit._
 import scala.util.Try
 class TransformationSmokeSpec() extends FunSuite {
 
-  test("Default stubs do compile") {
+  test("transform method can be called with poly functions") {
     object stub extends Weather[Option] {
       def getCurrentTime(): Option[GetCurrentTimeOutput] = None
     }

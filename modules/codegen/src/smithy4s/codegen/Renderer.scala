@@ -166,7 +166,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val name = s.name
       val nameGen = NameRef(s"${name}Gen")
       lines(
-        line"type ${NameDef(name)}[F[_]] = $Monadic_[$nameGen, F]",
+        line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra[$nameGen, F]",
         block(
           line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, ${name}Operation]"
         )(
@@ -200,7 +200,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
         },
         newline,
-        line"def transform : $Transformation_.PartiallyApplied[$genName, F] = new $Transformation_.PartiallyApplied[$genName, F](this)"
+        line"def transform : $Transformation.PartiallyApplied[$genName[F]] = new $Transformation.PartiallyApplied[$genName[F]](this)"
       ),
       newline,
       obj(
@@ -208,7 +208,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_[$genNameRef, $opTraitNameRef]"
       )(
         newline,
-        line"def apply[F[_]](implicit F: $Monadic_[$genNameRef, F]): F.type = F",
+        line"def apply[F[_]](implicit F: $FunctorAlgebra[$genNameRef, F]): F.type = F",
         newline,
         renderId(shapeId),
         newline,
@@ -248,21 +248,21 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def transform[P[_, _, _, _, _]](transformation: $Transformation_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, transformation)",
+        line"def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, f)",
         newline,
-        line"def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], transformation: $Transformation_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, transformation)",
+        line"def fromPolyFunction[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
         block(
-          line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], transformation : $Transformation_[P, P1]) extends $genNameRef[P1]"
+          line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], f : $PolyFunction5_[P, P1]) extends $genNameRef[P1]"
         ) {
           ops.map { op =>
             val opName = op.methodName
-            line"def $opName(${op.renderArgs}) = transformation[${op
+            line"def $opName(${op.renderArgs}) = f[${op
               .renderAlgParams(genName.name)}](alg.$opName(${op.renderParams}))"
           }
         },
         newline,
         block(
-          line"def asTransformation[P[_, _, _, _, _]](impl : $genNameRef[P]): $Transformation_[$opTraitNameRef, P] = new $Transformation_[$opTraitNameRef, P]"
+          line"def toPolyFunction[P[_, _, _, _, _]](impl : $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
         ) {
           if (ops.isEmpty) {
             line"""def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")""".toLines

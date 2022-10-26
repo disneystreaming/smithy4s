@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
+import kinds._
 import scala.annotation.nowarn
 
 /**
@@ -92,8 +93,8 @@ object Alt {
         val precompiledAlts =
           precompile.toPolyFunction
             .unsafeCacheBy[String](
-              alts.map(smithy4s.Existential.wrap(_)),
-              (alt: Existential[Alt[F, U, *]]) =>
+              alts.map(Kind1.existential(_)),
+              (alt: Kind1.Existential[Alt[F, U, *]]) =>
                 alt.asInstanceOf[Alt[F, U, _]].label
             )
 

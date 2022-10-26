@@ -27,6 +27,7 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
+import smithy4s.kinds._
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -163,7 +164,7 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
                 .map(alt.inject)
             }
           }
-        }.unsafeCache(allAlternatives.map(Existential.wrap(_)))
+        }.unsafeCacheBy(allAlternatives.map(Kind1.existential(_)), identity(_))
 
         (response: Response[F]) => {
           val discriminator = getErrorDiscriminator(response)

@@ -16,6 +16,8 @@
 
 package smithy4s
 
+import kinds._
+
 //format: off
 /**
   * Generic representation of a service, as a list of "endpoints" (mapping to smithy operations).
@@ -32,28 +34,22 @@ package smithy4s
   *   around makes it drastically easier to implement logic generically, without involving
   *   metaprogramming.
   */
-trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Transformable[Alg] with Service.Provider[Alg, Op] {
+trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends FunctorK5[Alg] with Service.Provider[Alg, Op] {
   implicit val serviceInstance: Service[Alg, Op] = this
   val service = this
 
   def endpoints: List[Endpoint[Op, _, _, _, _, _]]
   def endpoint[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): (I, Endpoint[Op, I, E, O, SI, SO])
-  val opToEndpoint : Transformation[Op, Endpoint[Op, *, *, *, *,*]] = new Transformation[Op, Endpoint[Op, *, *, *, *,*]]{
+  def version: String
+  def hints: Hints
+  def reified: Alg[Op]
+  def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Op, P]): Alg[P]
+  def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Op, P]
+
+  final val opToEndpoint : PolyFunction5[Op, Endpoint[Op, *, *, *, *,*]] = new PolyFunction5[Op, Endpoint[Op, *, *, *, *,*]]{
     def apply[I, E, O, SI, SO](op: Op[I,E,O,SI,SO]): Endpoint[Op,I,E,O,SI,SO] = endpoint(op)._2
   }
 
-  def version: String
-
-  def hints: Hints
-
-  def transform[P[_, _, _, _, _]](transformation: Transformation[Op, P]): Alg[P]
-
-  def asTransformation[P[_, _, _, _, _]](impl: Alg[P]): Transformation[Op, P]
-
-  // Apply a transformation that is aware of the endpoint
-  def transformWithEndpoint[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: Alg[P], transformation: Transformation.ZippedWithEndpoint[P, Op, P1]) : Alg[P1] = {
-    this.transform(asTransformation(alg).zip(opToEndpoint).andThen(transformation))
-  }
 }
 
 object Service {

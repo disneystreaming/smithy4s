@@ -281,12 +281,7 @@ object Metadata {
     @deprecated("kept for bincompat in 0.16.x")
     def deriveEncoderFromStaticSchema[A](implicit
         schema: Schema[A]
-    ): Encoder[A] = encoderCache(schema)
-
-    private val encoderCache =
-      new PolyFunction[smithy4s.Schema, Encoder] {
-        def apply[A](fa: smithy4s.Schema[A]): Encoder[A] = fromSchema(fa)
-      }.unsafeMemoise
+    ): Encoder[A] = fromSchema(schema)
 
   }
 

@@ -4,16 +4,17 @@ import smithy4s.Errorable
 import smithy4s.example.import_test.OpOutput
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
-import smithy4s.Transformation
-import smithy4s.Monadic
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.example.error.NotFoundError
+import smithy4s.PolyFunction5
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.capability.Transformation
+import smithy4s.Monadic
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -22,10 +23,7 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
 
   def importOperation() : F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[ImportServiceGen, F] = new Transformation.PartiallyApplied[ImportServiceGen, F](this)
-  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ImportServiceGen[G] {
-    def importOperation() = transformation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing](self.importOperation())
-  }
+  def transform : Transformation.PartiallyApplied[ImportServiceGen[F]] = new Transformation.PartiallyApplied[ImportServiceGen[F]](this)
 }
 
 object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation] {
@@ -52,11 +50,14 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
     def importOperation() = ImportOperation()
   }
 
-  def transform[P[_, _, _, _, _]](transformation: Transformation[ImportServiceOperation, P]): ImportServiceGen[P] = reified.transform(transformation)
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]): ImportServiceGen[P1] = new Transformed(alg, f)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], transformation: Transformation[P, P1]): ImportServiceGen[P1] = alg.transform(transformation)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ImportServiceOperation, P]): ImportServiceGen[P] = new Transformed(reified, f)
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ImportServiceGen[P], f : PolyFunction5[P, P1]) extends ImportServiceGen[P1] {
+    def importOperation() = f[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation())
+  }
 
-  def asTransformation[P[_, _, _, _, _]](impl : ImportServiceGen[P]): Transformation[ImportServiceOperation, P] = new Transformation[ImportServiceOperation, P] {
+  def toPolyFunction[P[_, _, _, _, _]](impl : ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = new PolyFunction5[ImportServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ImportServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case ImportOperation() => impl.importOperation()
     }

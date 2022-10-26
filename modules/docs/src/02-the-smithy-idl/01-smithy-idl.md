@@ -190,7 +190,7 @@ Smithy4s translates them in the following fashion:
 ```scala
 package object foo {
 
-  type HelloService[F[_]] = HelloServiceGen[???]
+  type HelloService[F[_]] = HelloServiceGen[_??]
 
 }
 ```
