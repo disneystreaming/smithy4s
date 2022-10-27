@@ -16,24 +16,10 @@
 
 package smithy4s.compliancetests
 
-import cats.effect.Deferred
-import cats.effect.IO
-import com.comcast.ip4s.Host
-import com.comcast.ip4s.Port
+import smithy4s.Schema
+import smithy4s.Errorable
 
-private[compliancetests] class CompatEffect {
-  def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
-
-  val utf8Encode: fs2.Pipe[IO, String, Byte] = fs2.text.utf8.encode[IO]
-  val utf8Decode: fs2.Pipe[IO, Byte, String] = fs2.text.utf8.decode[IO]
-}
-
-object Compat {
-  def host(hostname: String): Host = Host.fromString(hostname).get
-  def port(portNumber: Int): Port = Port.fromInt(portNumber).get
-
-}
-
-object CompatEffect {
-  implicit val ce: CompatEffect = new CompatEffect
-}
+final case class ErrorResponseTest[A, E](
+    schema: Schema[A],
+    errorable: Errorable[E]
+)

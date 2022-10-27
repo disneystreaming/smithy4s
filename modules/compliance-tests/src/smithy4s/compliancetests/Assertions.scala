@@ -16,7 +16,11 @@
 
 package smithy4s.compliancetests
 
+import cats.implicits._
 import ComplianceTest._
+import org.http4s.Headers
+import org.typelevel.ci.CIString
+import smithy.test.{HttpResponseTestCase, HttpRequestTestCase}
 
 case class ComplianceTest[F[_]](name: String, run: F[ComplianceResult])
 
@@ -33,6 +37,62 @@ object assert {
       success
     } else {
       fail(s"Actual value: $actual was not equal to $expected.")
+    }
+  }
+
+  private def headersExistenceCheck(
+      headers: Headers,
+      expected: Either[Option[List[String]], Option[List[String]]]
+  ) = {
+    expected match {
+      case Left(forbidHeaders) =>
+        forbidHeaders.toList.flatten.collect {
+          case key if headers.get(CIString(key)).isDefined =>
+            assert.fail(s"Header $key is forbidden in the request.")
+        }.combineAll
+      case Right(requireHeaders) =>
+        requireHeaders.toList.flatten.collect {
+          case key if headers.get(CIString(key)).isEmpty =>
+            assert.fail(s"Header $key is required request.")
+        }.combineAll
+    }
+  }
+  private def headersCheck(
+      headers: Headers,
+      expected: Option[Map[String, String]]
+  ) = {
+    expected.toList
+      .flatMap(_.toList)
+      .map { case (key, expectedValue) =>
+        headers
+          .get(CIString(key))
+          .map { v =>
+            assert.eql[String](expectedValue, v.head.value)
+          }
+          .getOrElse(
+            assert.fail(s"'$key' header is missing")
+          )
+      }
+      .combineAll
+  }
+
+  object testCase {
+    def checkHeaders(
+        tc: HttpRequestTestCase,
+        headers: Headers
+    ): ComplianceResult = {
+      assert.headersExistenceCheck(headers, Left(tc.forbidHeaders)) *>
+        assert.headersExistenceCheck(headers, Right(tc.requireHeaders)) *>
+        assert.headersCheck(headers, tc.headers)
+    }
+
+    def checkHeaders(
+        tc: HttpResponseTestCase,
+        headers: Headers
+    ): ComplianceResult = {
+      assert.headersExistenceCheck(headers, Left(tc.forbidHeaders)) *>
+        assert.headersExistenceCheck(headers, Right(tc.requireHeaders)) *>
+        assert.headersCheck(headers, tc.headers)
     }
   }
 }
