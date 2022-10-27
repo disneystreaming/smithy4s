@@ -34,7 +34,6 @@ import scala.concurrent.duration._
 import smithy4s.Transformation
 import smithy4s.ShapeId
 import smithy4s.Hints
-import org.typelevel.ci.CIString
 import smithy4s.Errorable
 
 abstract class ServerHttpComplianceTestCase[
@@ -224,39 +223,9 @@ abstract class ServerHttpComplianceTestCase[
               .map { case ((actualBody, status), headers) =>
                 val bodyAssert = testCase.body
                   .map(body => assert.eql(body, actualBody))
-                val headersAssert =
-                  testCase.headers.toList.flatMap(_.toList).map {
-                    case (key, expectedValue) =>
-                      headers
-                        .get(CIString(key))
-                        .map { v =>
-                          assert.eql[String](expectedValue, v.head.value)
-                        }
-                        .getOrElse(
-                          assert.fail(s"'$key' header is missing")
-                        )
-                  }
-                val forbiddenHeadersAssert =
-                  testCase.forbidHeaders.toList
-                    .flatMap {
-                      _.collect {
-                        case key if headers.get(CIString(key)).nonEmpty =>
-                          assert.fail(s"'$key' header is forbidden")
-                      }
-                    }
-                val requiredHeadersAssert =
-                  testCase.requireHeaders.toList
-                    .flatMap {
-                      _.collect {
-                        case key if headers.get(CIString(key)).isEmpty =>
-                          assert.fail(s"'$key' header is required")
-                      }
-                    }
                 val assertions =
-                  bodyAssert.toList ++
-                    forbiddenHeadersAssert ++
-                    requiredHeadersAssert ++
-                    headersAssert :+
+                  bodyAssert.toList :+
+                    assert.testCase.checkHeaders(testCase, headers) :+
                     assert.eql(status.code, testCase.code)
                 assertions.combineAll
               }

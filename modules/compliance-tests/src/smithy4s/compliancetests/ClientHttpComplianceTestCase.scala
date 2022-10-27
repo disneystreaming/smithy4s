@@ -74,26 +74,6 @@ abstract class ClientHttpComplianceTestCase[
       }
       .getOrElse(assert.success.pure[IO])
 
-    val headerAssert =
-      testCase.headers
-        .map { expectedHeaders =>
-          expectedHeaders
-            .map { case (name, value) =>
-              val actual = request.headers.get(CIString(name))
-              actual
-                .map { values =>
-                  val actualValue = values.map(_.value).fold
-                  assert.eql(value, actualValue)
-                }
-                .getOrElse(
-                  assert.fail(s"Header $name was not found in the response.")
-                )
-            }
-            .toList
-            .combineAll
-        }
-        .getOrElse(assert.success)
-
     val expectedUri = baseUri
       .withPath(
         Uri.Path.unsafeFromString(testCase.uri)
@@ -119,13 +99,14 @@ abstract class ClientHttpComplianceTestCase[
       testCase.method.toLowerCase(),
       request.method.name.toLowerCase()
     )
-
-    List(
-      bodyAssert,
-      headerAssert.pure[IO],
-      uriAssert.pure[IO],
-      methodAssert.pure[IO]
-    ).combineAll
+    val ioAsserts = bodyAssert +:
+      List(
+        assert.testCase.checkHeaders(testCase, request.headers),
+        uriAssert,
+        methodAssert
+      )
+        .map(_.pure[IO])
+    ioAsserts.combineAll
   }
 
   private[compliancetests] def clientRequestTest[I, E, O, SE, SO](
