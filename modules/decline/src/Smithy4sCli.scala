@@ -25,16 +25,16 @@ import smithy.api.Documentation
 import smithy.api.ExternalDocumentation
 import smithy.api.Http
 import smithy4s.Endpoint
-import smithy4s.GenLift
 import smithy4s.Monadic
 import smithy4s.Service
 import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi
 import smithy4s.http.HttpEndpoint
+import smithy4s.kinds._
 import commons._
 
 final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
-    interpreter: Monadic[Alg, F],
+    interpreter: FunctorAlgebra[Alg, F],
     printerApi: PrinterApi[F]
 )
 
@@ -103,7 +103,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
           val FO = printer.printInput(input) *>
-            service.asTransformation[GenLift[F]#λ](entrypoint.interpreter)(
+            service.toPolyFunction[Kind1[F]#toKind5](entrypoint.interpreter)(
               endpoint.wrap(input)
             )
 
@@ -137,7 +137,7 @@ object Smithy4sCli {
   def standalone[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
       _
   ]: Console: MonadThrow](
-      impl: Opts[smithy4s.Monadic[Alg, F]]
+      impl: Opts[FunctorAlgebra[Alg, F]]
   )(implicit service: Service[Alg, Op]) = {
     new Smithy4sCli[Alg, Op, F](
       (

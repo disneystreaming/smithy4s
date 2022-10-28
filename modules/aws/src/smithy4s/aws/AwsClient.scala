@@ -19,9 +19,9 @@ package smithy4s.aws
 import cats.MonadThrow
 import cats.effect.Resource
 import cats.syntax.all._
-import smithy4s.Transformation
 
 import internals.AwsJsonRPCInterpreter
+import smithy4s.kinds.PolyFunction5
 
 object AwsClient {
 
@@ -58,7 +58,7 @@ object AwsClient {
 
     def build[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
-    ): Transformation[Op, AwsCall[F, *, *, *, *, *]] =
+    ): PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] =
       awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
           new AwsJsonRPCInterpreter[Alg, Op, F](
@@ -79,7 +79,7 @@ object AwsClient {
 
     def interpret[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
-    ): AwsClient[Alg, F] = service.transform(build(awsEnv))
+    ): AwsClient[Alg, F] = service.fromPolyFunction(build(awsEnv))
   }
   private def initError(msg: String): Throwable = InitialisationError(msg)
   case class InitialisationError(msg: String) extends Throwable(msg)

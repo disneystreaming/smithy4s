@@ -52,7 +52,7 @@ object WeaverComplianceTest extends SimpleIOSuite {
     smithy4s.api.SimpleRestJson()
   ) {
     def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
-        impl: smithy4s.Monadic[Alg2, IO]
+        impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]
     )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(s).routes(impl).resource
 

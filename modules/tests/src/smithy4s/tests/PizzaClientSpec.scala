@@ -197,7 +197,7 @@ abstract class PizzaClientSpec extends IOSuite {
 
   def clientTest(name: TestName)(
       f: (
-          smithy4s.Monadic[PizzaAdminServiceGen, IO],
+          PizzaAdminService[IO],
           Backend,
           Log[IO]
       ) => IO[Expectations]
@@ -206,13 +206,12 @@ abstract class PizzaClientSpec extends IOSuite {
 
   // If right, TCP will be exercised.
   def makeClient: Either[
-    HttpApp[IO] => Resource[IO, smithy4s.Monadic[PizzaAdminServiceGen, IO]],
-    Int => Resource[IO, smithy4s.Monadic[PizzaAdminServiceGen, IO]]
+    HttpApp[IO] => Resource[IO, PizzaAdminService[IO]],
+    Int => Resource[IO, PizzaAdminService[IO]]
   ]
 
-  type Res = (smithy4s.Monadic[PizzaAdminServiceGen, IO], Backend)
-  def sharedResource
-      : Resource[IO, (smithy4s.Monadic[PizzaAdminServiceGen, IO], Backend)] =
+  type Res = (PizzaAdminService[IO], Backend)
+  def sharedResource: Resource[IO, (PizzaAdminService[IO], Backend)] =
     for {
       ref <- Resource.eval(Compat.ref(State.empty))
       app = router(ref)

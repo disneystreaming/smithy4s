@@ -29,9 +29,9 @@ import smithy4s.Endpoint
 import smithy4s.http.CodecAPI
 import smithy4s.Service
 import smithy4s.ShapeTag
+import smithy4s.kinds._
 
 import scala.concurrent.duration._
-import smithy4s.Transformation
 import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Errorable
@@ -52,7 +52,7 @@ abstract class ServerHttpComplianceTestCase[
   private val baseUri = uri"http://localhost/"
 
   def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
-      impl: smithy4s.Monadic[Alg2, IO]
+      impl: FunctorAlgebra[Alg2, IO]
   )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]]
   def codecs: CodecAPI
 
@@ -118,9 +118,9 @@ abstract class ServerHttpComplianceTestCase[
       name = endpoint.id.toString + "(server|request): " + testCase.id,
       run = {
         deferred[I].flatMap { inputDeferred =>
-          val fakeImpl: smithy4s.Monadic[Alg, IO] =
-            originalService.transform[R](
-              new smithy4s.Interpreter[Op, IO] {
+          val fakeImpl: FunctorAlgebra[Alg, IO] =
+            originalService.fromPolyFunction[R](
+              new FunctorInterpreter[Op, IO] {
                 def apply[I_, E_, O_, SE_, SO_](
                     op: Op[I_, E_, O_, SE_, SO_]
                 ): IO[O_] = {
@@ -159,8 +159,6 @@ abstract class ServerHttpComplianceTestCase[
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
 
-    type R[I_, E_, O_, SE_, SO_] = IO[O_]
-
     ComplianceTest[IO](
       name = endpoint.id.toString + "(server|response): " + testCase.id,
       run = {
@@ -189,21 +187,19 @@ abstract class ServerHttpComplianceTestCase[
             }
         }
 
-        val fakeImpl: smithy4s.Monadic[NoOpService, IO] =
-          ammendedService.transform[R] {
-            new smithy4s.Interpreter[NoInputOp, IO] {
-              def apply[I_, E_, O_, SE_, SO_](
-                  op: NoInputOp[I_, E_, O_, SE_, SO_]
-              ): IO[O_] = {
-                val doc = testCase.params.getOrElse(Document.obj())
-                buildResult match {
-                  case Left(onError) =>
-                    onError(doc).flatMap { err =>
-                      IO.raiseError[O_](err)
-                    }
-                  case Right(onOutput) =>
-                    onOutput(doc).map(_.asInstanceOf[O_])
-                }
+        val fakeImpl: FunctorInterpreter[NoInputOp, IO] =
+          new FunctorInterpreter[NoInputOp, IO] {
+            def apply[I_, E_, O_, SE_, SO_](
+                op: NoInputOp[I_, E_, O_, SE_, SO_]
+            ): IO[O_] = {
+              val doc = testCase.params.getOrElse(Document.obj())
+              buildResult match {
+                case Left(onError) =>
+                  onError(doc).flatMap { err =>
+                    IO.raiseError[O_](err)
+                  }
+                case Right(onOutput) =>
+                  onOutput(doc).map(_.asInstanceOf[O_])
               }
             }
           }
@@ -235,22 +231,9 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private case class NoInputOp[I_, E_, O_, SE_, SO_]()
-  private trait NoOpService[F[_, _, _, _, _]] {
-    self =>
-
-    def void(): F[Unit, Nothing, Unit, Nothing, Nothing]
-    def transform[G[_, _, _, _, _]](
-        transformation: Transformation[F, G]
-    ): NoOpService[G] = new Transformed(transformation)
-    class Transformed[G[_, _, _, _, _]](transformation: Transformation[F, G])
-        extends NoOpService[G] {
-      def void() =
-        transformation[Unit, Nothing, Unit, Nothing, Nothing](self.void())
-    }
-  }
   private def prepareService[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO]
-  ): (Service[NoOpService, NoInputOp], Request[IO]) = {
+  ): (Service.Reflective[NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off
         new Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
@@ -278,27 +261,12 @@ abstract class ServerHttpComplianceTestCase[
     val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
     val amendedService =
       // format: off
-      new Service[NoOpService, NoInputOp]() {
-        object reified extends NoOpService[NoInputOp] {
-          def void() = NoInputOp()
-        }
+      new Service.Reflective[NoInputOp] {
         override def id: ShapeId = ShapeId("custom", "service")
         override def endpoints: List[Endpoint[NoInputOp, _, _, _, _, _]] = List(amendedEndpoint)
         override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[NoInputOp, I_, E_, O_, SI_, SO_]) = ???
         override def version: String = originalService.version
         override def hints: Hints = originalService.hints
-
-        override def transform[P2[_, _, _, _, _]](transformation: Transformation[NoInputOp, P2]): NoOpService[P2] = reified.transform(transformation)
-
-        override def transform[F[_, _, _, _, _], G[_, _, _, _, _]](
-            alg: NoOpService[F],
-            transformation: Transformation[F, G]
-        ): NoOpService[G] = alg.transform(transformation)
-        override def asTransformation[P2[_, _, _, _, _]](impl: NoOpService[P2]): Transformation[NoInputOp, P2] = new Transformation[NoInputOp, P2]() {
-          def apply[I_, E_, O_, SI_, SO_](op : NoInputOp[I_, E_, O_, SI_, SO_]) : P2[I_, E_, O_, SI_, SO_] ={
-            impl.void().asInstanceOf[P2[I_, E_, O_, SI_, SO_]]
-          }
-        }
       }
       // format: on
     (amendedService, request)

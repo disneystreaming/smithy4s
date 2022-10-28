@@ -3,8 +3,7 @@ package smithy4s.example
 import smithy4s.Errorable
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
-import smithy4s.Transformation
-import smithy4s.Monadic
+import smithy4s.kinds.PolyFunction5
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
@@ -12,6 +11,8 @@ import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.kinds.FunctorAlgebra
+import smithy4s.capability.Transformation
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -20,15 +21,12 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
 
   def myOp() : F[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : NameCollisionGen[G] = new Transformed(transformation)
-  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends NameCollisionGen[G] {
-    def myOp() = transformation[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing](self.myOp())
-  }
+  def transform : Transformation.PartiallyApplied[NameCollisionGen[F]] = new Transformation.PartiallyApplied[NameCollisionGen[F]](this)
 }
 
 object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation] {
 
-  def apply[F[_]](implicit F: Monadic[NameCollisionGen, F]): F.type = F
+  def apply[F[_]](implicit F: FunctorAlgebra[NameCollisionGen, F]): F.type = F
 
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
 
@@ -48,11 +46,14 @@ object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation
     def myOp() = MyOp()
   }
 
-  def transform[P[_, _, _, _, _]](transformation: Transformation[NameCollisionOperation, P]): NameCollisionGen[P] = reified.transform(transformation)
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]): NameCollisionGen[P1] = new Transformed(alg, f)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: NameCollisionGen[P], transformation: Transformation[P, P1]): NameCollisionGen[P1] = alg.transform(transformation)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[NameCollisionOperation, P]): NameCollisionGen[P] = new Transformed(reified, f)
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: NameCollisionGen[P], f : PolyFunction5[P, P1]) extends NameCollisionGen[P1] {
+    def myOp() = f[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing](alg.myOp())
+  }
 
-  def asTransformation[P[_, _, _, _, _]](impl : NameCollisionGen[P]): Transformation[NameCollisionOperation, P] = new Transformation[NameCollisionOperation, P] {
+  def toPolyFunction[P[_, _, _, _, _]](impl : NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = new PolyFunction5[NameCollisionOperation, P] {
     def apply[I, E, O, SI, SO](op : NameCollisionOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case MyOp() => impl.myOp()
     }

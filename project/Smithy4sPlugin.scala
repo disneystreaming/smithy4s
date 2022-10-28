@@ -160,7 +160,12 @@ object Smithy4sPlugin extends AutoPlugin {
     val base =
       if (scalaVersion.startsWith("3."))
         filterScala3Options(commonCompilerOptions)
-      else commonCompilerOptions
+      else
+        commonCompilerOptions
+    // ++ Seq(
+    //   "-Xsource:3",
+    //   "-P:kind-projector:underscore-placeholders"
+    // )
 
     base ++ targetScalacOptions(scalaVersion) ++ {
       if (priorTo2_13(scalaVersion)) compilerOptions2_12_Only
