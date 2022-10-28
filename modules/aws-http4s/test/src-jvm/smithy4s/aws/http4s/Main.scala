@@ -29,7 +29,7 @@ object Main extends IOApp.Simple {
       .listTables(limit = Some(ListTablesInputLimit(10)))
       .run
       .flatMap(IO.println(_))
-  // FIXME: Lambda uses @simpleRestJson1 which is currently unsupported: https://github.com/disneystreaming/smithy4s/issues/53
+  // FIXME: Lambda uses @restJson1 which is currently unsupported: https://github.com/disneystreaming/smithy4s/issues/53
   // *> lambda
   //   .listFunctions()
   //   .run
