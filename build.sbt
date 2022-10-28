@@ -822,7 +822,7 @@ lazy val Dependencies = new {
   }
 
   val Alloy = new {
-    val version = "0.0.0-21-8c72d7"
+    val version = "0.1.0"
     val core = "com.disneystreaming.alloy" % "alloy-core" % version
     val openapi = "com.disneystreaming.alloy" %% "alloy-openapi" % version
   }
