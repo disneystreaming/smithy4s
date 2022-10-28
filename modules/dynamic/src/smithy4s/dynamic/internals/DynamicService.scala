@@ -25,17 +25,12 @@ private[internals] case class DynamicService(
     version: String,
     endpoints: List[DynamicEndpoint],
     hints: Hints
-) extends Service[DynamicAlg, DynamicOp]
+) extends Service.Reflective[DynamicOp]
     with DynamicSchemaIndex.ServiceWrapper {
 
-  type Alg[P[_, _, _, _, _]] = DynamicAlg[P]
+  type Alg[P[_, _, _, _, _]] = PolyFunction5.From[DynamicOp]#Algebra[P]
   type Op[I, E, O, SI, SO] = DynamicOp[I, E, O, SI, SO]
   override val service: Service[Alg, Op] = this
-
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
-      alg: DynamicAlg[F],
-      polyFunction: PolyFunction5[F, G]
-  ): DynamicAlg[G] = alg.andThen(polyFunction)
 
   private lazy val endpointMap
       : Map[ShapeId, Endpoint[DynamicOp, _, _, _, _, _]] =
@@ -51,13 +46,4 @@ private[internals] case class DynamicService(
     (input, endpoint)
   }
 
-  def fromPolyFunction[P[_, _, _, _, _]](
-      transformation: PolyFunction5[DynamicOp, P]
-  ): DynamicAlg[P] = transformation
-
-  def toPolyFunction[P[_, _, _, _, _]](
-      impl: DynamicAlg[P]
-  ): PolyFunction5[DynamicOp, P] = impl
-
-  val reified: Alg[Op] = PolyFunction5.identity[Op]
 }

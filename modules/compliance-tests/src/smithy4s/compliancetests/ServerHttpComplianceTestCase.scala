@@ -159,8 +159,6 @@ abstract class ServerHttpComplianceTestCase[
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
 
-    type R[I_, E_, O_, SE_, SO_] = IO[O_]
-
     ComplianceTest[IO](
       name = endpoint.id.toString + "(server|response): " + testCase.id,
       run = {
@@ -189,21 +187,19 @@ abstract class ServerHttpComplianceTestCase[
             }
         }
 
-        val fakeImpl: FunctorAlgebra[NoOpService, IO] =
-          ammendedService.fromPolyFunction[R] {
-            new smithy4s.kinds.FunctorInterpreter[NoInputOp, IO] {
-              def apply[I_, E_, O_, SE_, SO_](
-                  op: NoInputOp[I_, E_, O_, SE_, SO_]
-              ): IO[O_] = {
-                val doc = testCase.params.getOrElse(Document.obj())
-                buildResult match {
-                  case Left(onError) =>
-                    onError(doc).flatMap { err =>
-                      IO.raiseError[O_](err)
-                    }
-                  case Right(onOutput) =>
-                    onOutput(doc).map(_.asInstanceOf[O_])
-                }
+        val fakeImpl: FunctorInterpreter[NoInputOp, IO] =
+          new FunctorInterpreter[NoInputOp, IO] {
+            def apply[I_, E_, O_, SE_, SO_](
+                op: NoInputOp[I_, E_, O_, SE_, SO_]
+            ): IO[O_] = {
+              val doc = testCase.params.getOrElse(Document.obj())
+              buildResult match {
+                case Left(onError) =>
+                  onError(doc).flatMap { err =>
+                    IO.raiseError[O_](err)
+                  }
+                case Right(onOutput) =>
+                  onOutput(doc).map(_.asInstanceOf[O_])
               }
             }
           }
@@ -235,22 +231,9 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private case class NoInputOp[I_, E_, O_, SE_, SO_]()
-  private trait NoOpService[F[_, _, _, _, _]] {
-    self =>
-
-    def void(): F[Unit, Nothing, Unit, Nothing, Nothing]
-    def transform[G[_, _, _, _, _]](
-        transformation: PolyFunction5[F, G]
-    ): NoOpService[G] = new Transformed(transformation)
-    class Transformed[G[_, _, _, _, _]](transformation: PolyFunction5[F, G])
-        extends NoOpService[G] {
-      def void() =
-        transformation[Unit, Nothing, Unit, Nothing, Nothing](self.void())
-    }
-  }
   private def prepareService[I, E, O, SE, SO](
       endpoint: Endpoint[Op, I, E, O, SE, SO]
-  ): (Service[NoOpService, NoInputOp], Request[IO]) = {
+  ): (Service.Reflective[NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off
         new Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
@@ -278,27 +261,12 @@ abstract class ServerHttpComplianceTestCase[
     val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
     val amendedService =
       // format: off
-      new Service[NoOpService, NoInputOp]() {
-        object reified extends NoOpService[NoInputOp] {
-          def void() = NoInputOp()
-        }
+      new Service.Reflective[NoInputOp] {
         override def id: ShapeId = ShapeId("custom", "service")
         override def endpoints: List[Endpoint[NoInputOp, _, _, _, _, _]] = List(amendedEndpoint)
         override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[NoInputOp, I_, E_, O_, SI_, SO_]) = ???
         override def version: String = originalService.version
         override def hints: Hints = originalService.hints
-
-        override def fromPolyFunction[P2[_, _, _, _, _]](transformation: PolyFunction5[NoInputOp, P2]): NoOpService[P2] = reified.transform(transformation)
-
-        override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
-            alg: NoOpService[F],
-            transformation: PolyFunction5[F, G]
-        ): NoOpService[G] = alg.transform(transformation)
-        override def toPolyFunction[P2[_, _, _, _, _]](impl: NoOpService[P2]): PolyFunction5[NoInputOp, P2] = new PolyFunction5[NoInputOp, P2]() {
-          def apply[I_, E_, O_, SI_, SO_](op : NoInputOp[I_, E_, O_, SI_, SO_]) : P2[I_, E_, O_, SI_, SO_] ={
-            impl.void().asInstanceOf[P2[I_, E_, O_, SI_, SO_]]
-          }
-        }
       }
       // format: on
     (amendedService, request)

@@ -22,7 +22,4 @@ package object internals {
   private[internals] type DynStruct = Array[DynData]
   private[internals] type DynAlt = (Int, DynData)
 
-  private[internals] type DynamicAlg[F[_, _, _, _, _]] =
-    smithy4s.kinds.PolyFunction5[DynamicOp, F]
-
 }

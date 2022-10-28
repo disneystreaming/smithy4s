@@ -239,6 +239,10 @@ object Boilerplate {
       -   }
       -}
       -object PolyFunction$suffix{
+      -  type From[F[${`_.._`}]] = {
+      -    type Algebra[G[${`_.._`}]] = PolyFunction$suffix[F, G]
+      -  }
+      -
       -  def identity[F[${`_.._`}]] : PolyFunction$suffix[F, F] = new PolyFunction$suffix[F, F]{
       -    def apply[${`A..N`}](input: F[${`A..N`}]): F[${`A..N`}] = input
       -  }

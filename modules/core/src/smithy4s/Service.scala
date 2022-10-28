@@ -24,7 +24,7 @@ import kinds._
   *
   * This abstraction lets us retrieve all information necessary to the generic implementation of
   * protocols, as well as transform implementations of finally-encoded interfaces into interpreters
-  * (natural transformations) that operate on initially-encoded GADTs.
+  * (polymorphic functions) that operate on initially-encoded GADTs.
   *
   * @tparam Alg : a finally-encoded interface (commonly called algebra) that works
   *   against an abstract "effect" that takes 5 type parameters:
@@ -55,5 +55,15 @@ trait Service[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends FunctorK5[Alg] w
 object Service {
   trait Provider[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends HasId {
     def service: Service[Alg, Op]
+  }
+
+  /**
+    * A Service the algebra of which is a PolyFunction
+    */
+  trait Reflective[Op[_, _, _, _, _]] extends Service[PolyFunction5.From[Op]#Algebra, Op] {
+    final def reified: PolyFunction5[Op, Op] = PolyFunction5.identity
+    final def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Op, P]): PolyFunction5[Op, P] = function
+    final def toPolyFunction[P[_, _, _, _, _]](algebra: PolyFunction5[Op, P]): PolyFunction5[Op, P] = algebra
+    final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]) : PolyFunction5[Op, G] = algebra.andThen(function)
   }
 }
