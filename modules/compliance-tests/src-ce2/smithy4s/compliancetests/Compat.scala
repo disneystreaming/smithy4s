@@ -28,6 +28,7 @@ private[compliancetests] class CompatEffect(implicit
   def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
 
   val utf8Encode: fs2.Pipe[IO, String, Byte] = fs2.text.utf8Encode[IO]
+  val utf8Decode: fs2.Pipe[IO, Byte, String] = fs2.text.utf8Decode[IO]
 }
 
 object Compat {
