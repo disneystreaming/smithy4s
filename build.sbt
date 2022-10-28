@@ -712,7 +712,7 @@ lazy val tests = projectMatrix
 
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
-  .dependsOn(core, http4s % "test->compile", testUtils)
+  .dependsOn(core, http4s % "compile->compile; test->compile", testUtils)
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
@@ -943,7 +943,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.14.3"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.0"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }

@@ -140,6 +140,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
         fe: PartialFunction[Throwable, F[Throwable]]
     ): RouterBuilder[Alg, Op, F] =
       new RouterBuilder(service, impl, fe)
+
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
       checkProtocol(service, protocolTag).as {
         new SmithyHttp4sRouter[Alg, Op, F](

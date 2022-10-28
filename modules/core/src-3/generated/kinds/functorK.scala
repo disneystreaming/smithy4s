@@ -19,35 +19,59 @@
 package smithy4s
 package kinds
 
-trait FunctorK[Alg[_[_]]]{
+trait FunctorK[Alg[_[_]]] {
   def mapK[F[_], G[_]](alg: Alg[F], function: PolyFunction[F, G]): Alg[G]
 }
 object FunctorK {
-  inline def apply[Alg[_[_]]](implicit ev: FunctorK[Alg]) : FunctorK[Alg] = ev
+  inline def apply[Alg[_[_]]](implicit ev: FunctorK[Alg]): FunctorK[Alg] = ev
 
-  implicit def polyfunctionFunctorK[F[_]]: FunctorK[[G[_]] =>> PolyFunction[F, G]] = new FunctorK[[G[_]] =>> PolyFunction[F, G]] {
-    def mapK[G[_], H[_]](fa: PolyFunction[F, G], fk: PolyFunction[G, H]): PolyFunction[F, H] = fa.andThen(fk)
-  }
+  implicit def polyfunctionFunctorK[F[_]]
+      : FunctorK[[G[_]] =>> PolyFunction[F, G]] =
+    new FunctorK[[G[_]] =>> PolyFunction[F, G]] {
+      def mapK[G[_], H[_]](
+          fa: PolyFunction[F, G],
+          fk: PolyFunction[G, H]
+      ): PolyFunction[F, H] = fa.andThen(fk)
+    }
 }
 
-trait FunctorK2[Alg[_[_, _]]]{
-  def mapK2[F[_, _], G[_, _]](alg: Alg[F], function: PolyFunction2[F, G]): Alg[G]
+trait FunctorK2[Alg[_[_, _]]] {
+  def mapK2[F[_, _], G[_, _]](
+      alg: Alg[F],
+      function: PolyFunction2[F, G]
+  ): Alg[G]
 }
 object FunctorK2 {
-  inline def apply[Alg[_[_, _]]](implicit ev: FunctorK2[Alg]) : FunctorK2[Alg] = ev
+  inline def apply[Alg[_[_, _]]](implicit ev: FunctorK2[Alg]): FunctorK2[Alg] =
+    ev
 
-  implicit def polyfunctionFunctorK2[F[_, _]]: FunctorK2[[G[_, _]] =>> PolyFunction2[F, G]] = new FunctorK2[[G[_, _]] =>> PolyFunction2[F, G]] {
-    def mapK2[G[_, _], H[_, _]](fa: PolyFunction2[F, G], fk: PolyFunction2[G, H]): PolyFunction2[F, H] = fa.andThen(fk)
-  }
+  implicit def polyfunctionFunctorK2[F[_, _]]
+      : FunctorK2[[G[_, _]] =>> PolyFunction2[F, G]] =
+    new FunctorK2[[G[_, _]] =>> PolyFunction2[F, G]] {
+      def mapK2[G[_, _], H[_, _]](
+          fa: PolyFunction2[F, G],
+          fk: PolyFunction2[G, H]
+      ): PolyFunction2[F, H] = fa.andThen(fk)
+    }
 }
 
-trait FunctorK5[Alg[_[_, _, _, _, _]]]{
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G]
+trait FunctorK5[Alg[_[_, _, _, _, _]]] {
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
+      alg: Alg[F],
+      function: PolyFunction5[F, G]
+  ): Alg[G]
 }
 object FunctorK5 {
-  inline def apply[Alg[_[_, _, _, _, _]]](implicit ev: FunctorK5[Alg]) : FunctorK5[Alg] = ev
+  inline def apply[Alg[_[_, _, _, _, _]]](implicit
+      ev: FunctorK5[Alg]
+  ): FunctorK5[Alg] = ev
 
-  implicit def polyfunctionFunctorK5[F[_, _, _, _, _]]: FunctorK5[[G[_, _, _, _, _]] =>> PolyFunction5[F, G]] = new FunctorK5[[G[_, _, _, _, _]] =>> PolyFunction5[F, G]] {
-    def mapK5[G[_, _, _, _, _], H[_, _, _, _, _]](fa: PolyFunction5[F, G], fk: PolyFunction5[G, H]): PolyFunction5[F, H] = fa.andThen(fk)
-  }
+  implicit def polyfunctionFunctorK5[F[_, _, _, _, _]]
+      : FunctorK5[[G[_, _, _, _, _]] =>> PolyFunction5[F, G]] =
+    new FunctorK5[[G[_, _, _, _, _]] =>> PolyFunction5[F, G]] {
+      def mapK5[G[_, _, _, _, _], H[_, _, _, _, _]](
+          fa: PolyFunction5[F, G],
+          fk: PolyFunction5[G, H]
+      ): PolyFunction5[F, H] = fa.andThen(fk)
+    }
 }
