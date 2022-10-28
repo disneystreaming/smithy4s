@@ -49,7 +49,7 @@ object WeaverComplianceTest extends SimpleIOSuite {
     HelloServiceGen,
     HelloServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
         impl: smithy4s.Monadic[Alg2, IO]

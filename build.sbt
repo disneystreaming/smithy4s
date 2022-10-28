@@ -724,6 +724,7 @@ lazy val example = projectMatrix
       "smithy4s.example.common",
       "smithy4s.example.collision"
     ),
+    genDiscoverModels := true, // to discover alloy
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",

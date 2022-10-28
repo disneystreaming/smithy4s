@@ -117,7 +117,7 @@ object Codegen { self =>
         namespaces
           .filterNot(_.startsWith("aws."))
           .filterNot(_.startsWith("smithy."))
-          .filterNot(reserved)
+          .filterNot(ns => reserved.exists(ns.startsWith))
           .filterNot(excluded)
           .filterNot(alreadyGenerated)
     }
