@@ -761,6 +761,7 @@ lazy val guides = projectMatrix
   .dependsOn(http4s)
   .settings(
     Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
+    genDiscoverModels := true,
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
     ),
