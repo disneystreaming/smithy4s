@@ -33,7 +33,7 @@ import smithy4s.example.{
   Three,
   UntaggedUnion
 }
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 
 import scala.collection.immutable.ListMap
 import scala.util.Try

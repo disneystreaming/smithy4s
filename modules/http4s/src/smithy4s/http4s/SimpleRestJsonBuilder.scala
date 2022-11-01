@@ -20,9 +20,9 @@ package http4s
 import smithy4s.internals.InputOutput
 
 object SimpleRestJsonBuilder
-    extends SimpleProtocolBuilder[smithy4s.api.SimpleRestJson](
+    extends SimpleProtocolBuilder[alloy.SimpleRestJson](
       smithy4s.http.json.codecs(
-        smithy4s.api.SimpleRestJson.protocol.hintMask ++ HintMask(
+        alloy.SimpleRestJson.protocol.hintMask ++ HintMask(
           InputOutput,
           IntEnum
         )

@@ -4,7 +4,7 @@ namespace smithy4s.example
 
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {

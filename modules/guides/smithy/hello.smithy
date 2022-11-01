@@ -2,7 +2,7 @@ $version: "2"
 
 namespace smithy4s.guides.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 @cors(origin: "http://mysite.com", additionalAllowedHeaders: ["Authorization"], additionalExposedHeaders: ["X-Smithy4s"])

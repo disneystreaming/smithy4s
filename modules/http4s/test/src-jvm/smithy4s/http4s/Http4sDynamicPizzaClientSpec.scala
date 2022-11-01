@@ -63,11 +63,8 @@ class DynamicHttpProxy(client: Client[IO]) {
     IO(
       SModel
         .assembler()
-        .addImport(s"./sampleSpecs/$fileName")
-        .addImport(
-          "./modules/protocol/resources/META-INF/smithy/smithy4s.smithy"
-        )
         .discoverModels()
+        .addImport(s"./sampleSpecs/$fileName")
         .assemble()
         .unwrap()
     )

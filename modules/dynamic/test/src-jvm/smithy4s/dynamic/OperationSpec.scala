@@ -30,15 +30,12 @@ class OperationSpec() extends munit.FunSuite {
   // This is not ideal, but it does the job.
   val cwd = System.getProperty("user.dir");
   val pizzaSpec = Paths.get(cwd + "/sampleSpecs/pizza.smithy").toAbsolutePath()
-  val smithy4sPrelude = Paths
-    .get(cwd + "/modules/protocol/resources/META-INF/smithy/smithy4s.smithy")
-    .toAbsolutePath()
 
   test("Decode operation") {
     IO(
       SModel
         .assembler()
-        .addImport(smithy4sPrelude)
+        .discoverModels()
         .addImport(pizzaSpec)
         .assemble()
         .unwrap()
@@ -82,8 +79,8 @@ class OperationSpec() extends munit.FunSuite {
     IO(
       SModel
         .assembler()
-        .addImport(smithy4sPrelude)
         .addImport(pizzaSpec)
+        .discoverModels()
         .assemble()
         .unwrap()
     ).map(ModelSerializer.builder().build.serialize(_))

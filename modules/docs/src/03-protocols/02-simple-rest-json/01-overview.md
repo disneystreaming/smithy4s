@@ -18,7 +18,7 @@ In this protocol, the values in shapes are bound to http metadata or body accord
 ```kotlin
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloWorldService {
@@ -83,7 +83,7 @@ See the section about [unions](../../04-codegen/02-unions.md) for a detailed des
 Here is the list of traits supported by `SimpleRestJson`
 
 ```scala mdoc:passthrough
-smithy4s.api.SimpleRestJson.hints
+alloy.SimpleRestJson.hints
   .get[smithy.api.ProtocolDefinition]
   .getOrElse(sys.error("Unable to grab protocol defition information."))
   .traits.toList.flatten.map(_.value)

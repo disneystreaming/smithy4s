@@ -1,7 +1,7 @@
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
-use smithy4s.api#discriminated
+use alloy#simpleRestJson
+use alloy#discriminated
 
 @simpleRestJson
 service DiscriminatedService {

@@ -2,7 +2,7 @@ $version: "2.0"
 
 namespace foo
 
-use smithy4s.api#uuidFormat
+use alloy#uuidFormat
 
 structure Foo {
   a: Integer
