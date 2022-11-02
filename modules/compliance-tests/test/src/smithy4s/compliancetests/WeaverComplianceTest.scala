@@ -27,11 +27,11 @@ import smithy4s.Service
 
 object WeaverComplianceTest extends SimpleIOSuite {
   val clientTestGenerator = new ClientHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.SimpleRestJson,
     HelloServiceGen,
     HelloServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
@@ -45,11 +45,11 @@ object WeaverComplianceTest extends SimpleIOSuite {
   }
 
   val serverTestGenerator = new ServerHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.SimpleRestJson,
     HelloServiceGen,
     HelloServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
         impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]

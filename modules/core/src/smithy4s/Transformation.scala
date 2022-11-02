@@ -44,17 +44,17 @@ object Transformation {
     * A transformation that turns a monofunctor algebra into a bifunctor algebra by lifting the known errors in the
     * returned types of the operations of the algebra.
     */
-  trait ErrorLift[F[_], G[_, _]] {
-    def apply[E, A](fa: => F[A], projectError: Throwable => Option[E]): G[E, A]
+  trait SurfaceError[F[_], G[_, _]] {
+    def apply[E, A](fa: F[A], projectError: Throwable => Option[E]): G[E, A]
   }
 
-  implicit def service_errorLift_transformation[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_], G[_, _]](implicit service: Service[Alg, Op]): Transformation[ErrorLift[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]] =
-     new Transformation[ErrorLift[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]]{
+  implicit def service_surfaceError_transformation[Alg[_[_, _, _, _, _]], F[_], G[_, _]](implicit service: Service[Alg]): Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]] =
+     new Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]]{
 
-       def apply(func: ErrorLift[F, G], algF: FunctorAlgebra[Alg, F]) : BiFunctorAlgebra[Alg, G] = {
+       def apply(func: SurfaceError[F, G], algF: FunctorAlgebra[Alg, F]) : BiFunctorAlgebra[Alg, G] = {
         val polyFunction = service.toPolyFunction(algF)
-        val interpreter = new PolyFunction5[Op, Kind2[G]#toKind5]{
-          def apply[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): G[E,O] = {
+        val interpreter = new PolyFunction5[service.Operation, Kind2[G]#toKind5]{
+          def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[E,O] = {
             val endpoint = service.opToEndpoint(op)
             val catcher : Throwable => Option[E] = endpoint.errorable match {
               case None => PartialFunction.empty[Throwable, Option[E]]
@@ -71,17 +71,17 @@ object Transformation {
     * A transformation that turns a bifunctor algebra into a monofunctor algebra by lifting absorbing known errors in a
     * generic error channel that handles throwables.
     */
-  trait ErrorAbsorber[F[_, _], G[_]] {
-    def apply[E, A](fa: => F[E, A], injectError: E => Throwable): G[A]
+  trait AbsorbError[F[_, _], G[_]] {
+    def apply[E, A](fa: F[E, A], injectError: E => Throwable): G[A]
   }
 
-  implicit def service_errorArbsorber_transformation[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_, _], G[_]](implicit service: Service[Alg, Op]): Transformation[ErrorAbsorber[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]] =
-     new Transformation[ErrorAbsorber[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{
+  implicit def service_absorbError_transformation[Alg[_[_, _, _, _, _]], F[_, _], G[_]](implicit service: Service[Alg]): Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]] =
+     new Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{
 
-       def apply(func: ErrorAbsorber[F, G], algF: BiFunctorAlgebra[Alg, F]) : FunctorAlgebra[Alg, G] = {
+       def apply(func: AbsorbError[F, G], algF: BiFunctorAlgebra[Alg, F]) : FunctorAlgebra[Alg, G] = {
         val polyFunction = service.toPolyFunction(algF)
-        val interpreter = new PolyFunction5[Op, Kind1[G]#toKind5]{
-          def apply[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): G[O] = {
+        val interpreter = new PolyFunction5[service.Operation, Kind1[G]#toKind5]{
+          def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[O] = {
             val endpoint = service.opToEndpoint(op)
             val thrower: E => Throwable = endpoint.errorable match {
               case None =>

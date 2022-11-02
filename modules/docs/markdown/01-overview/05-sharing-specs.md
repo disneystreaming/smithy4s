@@ -174,6 +174,7 @@ By default, Smithy4s tries to generate everything but shapes that are in the fol
 
 * `smithy4s.api`
 * `smithy4s.meta`
+* `alloy`
 * namespaces that start with `aws`
 * namespaces that start with `smithy`
 

@@ -30,7 +30,7 @@ $version: "2"
 
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 use smithy.test#httpRequestTests
 
 @simpleRestJson
@@ -72,7 +72,7 @@ We have a very simple specification: one operation with basic input and output s
 
 ## Testing the protocol
 
-The service in the specification is annotated with the `simpleRestJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
+The service in the specification is annotated with the `alloy#simpleRestJson` protocol definition. We'll use the `compliance-tests` module to make sure this protocol can handle such an operation.
 
 _Note: the following code and the `compliance-tests` module do not depend on a specific test framework. If you want to hook it into your test framework, it is easy to do so but it's outside the scope of this document. Refer to [this example](https://github.com/disneystreaming/smithy4s/blob/main/modules/compliance-tests/test/src/smithy4s/compliancetests/WeaverComplianceTest.scala) to see how we did it for `Weaver` in this project._
 
@@ -92,11 +92,11 @@ Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `Serv
 
 ```scala mdoc:silent
 val clientTestGenerator = new ClientHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.SimpleRestJson,
     HelloWorldServiceGen,
     HelloWorldServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
@@ -109,11 +109,11 @@ val clientTestGenerator = new ClientHttpComplianceTestCase[
   }
 
 val serverTestGenerator = new ServerHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+    alloy.SimpleRestJson,
     HelloWorldServiceGen,
     HelloWorldServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
       impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]

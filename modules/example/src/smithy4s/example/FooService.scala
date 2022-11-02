@@ -3,11 +3,12 @@ package smithy4s.example
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -19,9 +20,11 @@ trait FooServiceGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[FooServiceGen[F]] = new Transformation.PartiallyApplied[FooServiceGen[F]](this)
 }
 
-object FooServiceGen extends Service[FooServiceGen, FooServiceOperation] {
+object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[FooServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[FooServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
 

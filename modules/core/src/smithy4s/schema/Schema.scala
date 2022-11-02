@@ -127,7 +127,7 @@ object Schema {
   val unit: Schema[Unit] = Primitive.PUnit.schema(prelude, "Unit")
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
-  val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("smithy4s.api", "UUID")
+  val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
 
   private val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
 

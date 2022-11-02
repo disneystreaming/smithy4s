@@ -169,7 +169,6 @@ object ModelLoader {
         discoverModels: Boolean
     ): ModelAssembler = {
       val smithy4sResources = List(
-        "META-INF/smithy/smithy4s.smithy",
         "META-INF/smithy/smithy4s.meta.smithy"
       ).map(classLoader.getResource)
 

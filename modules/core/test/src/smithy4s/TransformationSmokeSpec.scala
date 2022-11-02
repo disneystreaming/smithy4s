@@ -39,7 +39,7 @@ class TransformationSmokeSpec() extends FunSuite {
     expect(transformed.getCurrentTime().isFailure)
   }
 
-  test("errors can be lifted") {
+  test("errors can be surfaced") {
     object kvStoreTry extends KVStore[Try] {
       def delete(key: String): Try[Unit] = Success(())
       def put(key: String, value: String): Try[Unit] = Success(())
@@ -47,42 +47,66 @@ class TransformationSmokeSpec() extends FunSuite {
         Failure(KeyNotFoundError(s"Key $key wasn't found"))
     }
 
-    val toEither = new Transformation.ErrorLift[Try, Either] {
-      def apply[E, A](
-          value: Try[A],
-          catcher: Throwable => Option[E]
-      ): Either[E, A] = value match {
-        case Success(value) => Right(value)
-        case Failure(error) =>
-          catcher(error) match {
-            case None    => throw error
-            case Some(e) => Left(e)
-          }
+    val toEither: Transformation.SurfaceError[Try, Either] =
+      new Transformation.SurfaceError[Try, Either] {
+        def apply[E, A](
+            value: Try[A],
+            catcher: Throwable => Option[E]
+        ): Either[E, A] = value match {
+          case Success(value) => Right(value)
+          case Failure(error) =>
+            catcher(error) match {
+              case None    => throw error
+              case Some(e) => Left(e)
+            }
+        }
       }
-    }
 
     val kvStoreEither: KVStore.WithError[Either] =
       kvStoreTry.transform(toEither)
 
     expect.same(
-      kvStoreEither.get("foo"): Either[KVStoreGen.GetError, Value],
+      kvStoreEither.get("foo"): Either[KVStore.GetError, Value],
       Left(
-        KVStoreGen.GetError.KeyNotFoundErrorCase(
+        KVStore.GetError.KeyNotFoundErrorCase(
           KeyNotFoundError(s"Key foo wasn't found")
         )
       )
     )
+  }
 
-    // case object Empty extends Throwable
+  test("errors can be absorbed") {
+    object kvStoreEither extends KVStore.WithError[Either] {
+      def delete(key: String): Either[KVStore.DeleteError, Unit] = Right(())
+      def put(key: String, value: String): Either[Nothing, Unit] = Right(())
+      def get(key: String): Either[KVStore.GetError, Value] =
+        Left(
+          KVStore.GetError.KeyNotFoundErrorCase(
+            KeyNotFoundError(s"Key $key wasn't found")
+          )
+        )
+    }
 
-    // // Not ascribing the type to verify type inference in the following statement.
-    // val transformed = stub.transform(new PolyFunction[Option, Try] {
-    //   def apply[A](fa: Option[A]): Try[A] = fa match {
-    //     case Some(value) => scala.util.Success(value)
-    //     case None        => scala.util.Failure(Empty)
-    //   }
-    // })
-    // expect(transformed.getCurrentTime().isFailure)
+    val toTry: Transformation.AbsorbError[Either, Try] =
+      new Transformation.AbsorbError[Either, Try] {
+        def apply[E, A](
+            value: Either[E, A],
+            thrower: E => Throwable
+        ): Try[A] = value match {
+          case Left(error)  => Failure(thrower(error))
+          case Right(value) => Success(value)
+        }
+      }
+
+    val kvStoreTry: KVStore[Try] = kvStoreEither.transform(toTry)
+
+    expect.same(
+      kvStoreTry.get("foo"): Try[Value],
+      Failure(
+        KeyNotFoundError(s"Key foo wasn't found")
+      )
+    )
+
   }
 
 }

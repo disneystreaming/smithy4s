@@ -1,6 +1,6 @@
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloWorldService {

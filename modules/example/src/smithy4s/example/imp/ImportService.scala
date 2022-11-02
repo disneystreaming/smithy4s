@@ -5,7 +5,10 @@ import smithy4s.example.import_test.OpOutput
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.example.error.NotFoundError
@@ -13,8 +16,6 @@ import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -26,14 +27,16 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[ImportServiceGen[F]] = new Transformation.PartiallyApplied[ImportServiceGen[F]](this)
 }
 
-object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation] {
+object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ImportServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[ImportServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
 
   val hints : Hints = Hints(
-    smithy4s.api.SimpleRestJson(),
+    alloy.SimpleRestJson(),
   )
 
   val endpoints: List[Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(

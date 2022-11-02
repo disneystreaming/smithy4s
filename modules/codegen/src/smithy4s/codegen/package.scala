@@ -17,7 +17,7 @@
 package smithy4s
 
 import cats.syntax.all._
-import smithy4s.api.UuidFormatTrait
+import alloy.UuidFormatTrait
 import smithy4s.codegen.LineSyntax.LineInterpolator
 import smithy4s.codegen.WithValue.ToLineWithValue
 import smithy4s.codegen.WithValue.ToLinesWithValue
@@ -37,7 +37,7 @@ import scala.jdk.CollectionConverters._
 
 package object codegen {
 
-  val uuidShapeId = ShapeId.from("smithy4s.api#UUID")
+  val uuidShapeId = ShapeId.from("alloy#UUID")
 
   private[codegen] type LinesWithValue = ToLinesWithValue[_]
   private[codegen] type LineWithValue = ToLineWithValue[_]

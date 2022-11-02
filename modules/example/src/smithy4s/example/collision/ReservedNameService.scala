@@ -3,11 +3,12 @@ package smithy4s.example.collision
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -22,14 +23,16 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
 }
 
-object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNameServiceOperation] {
+object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ReservedNameServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[ReservedNameServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
 
   val hints : Hints = Hints(
-    smithy4s.api.SimpleRestJson(),
+    alloy.SimpleRestJson(),
   )
 
   val endpoints: List[Endpoint[ReservedNameServiceOperation, _, _, _, _, _]] = List(
