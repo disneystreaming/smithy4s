@@ -27,43 +27,8 @@ This diagram, adapted from the [IOLocal docs](https://github.com/typelevel/cats-
 
 For this example, we are going to be working with the following smithy specification (taken from [smithy4s repo](https://github.com/disneystreaming/smithy4s/blob/main/sampleSpecs/hello.smithy)):
 
-```kotlin
-namespace smithy4s.hello
-
-use smithy4s.api#simpleRestJson
-
-@simpleRestJson
-service HelloWorldService {
-  version: "1.0.0"
-  // Indicates that all operations in `HelloWorldService`,
-  // here limited to Hello, can return `GenericServerError`.
-  errors: [GenericServerError],
-  operations: [Hello]
-}
-
-@error("server")
-@httpError(500)
-structure GenericServerError {
-  message: String
-}
-
-@http(method: "POST", uri: "/{name}", code: 200)
-operation Hello {
-  input: Person
-  output: Greeting
-}
-
-
-structure Person {
-  @httpLabel
-  @required
-  name: String
-}
-
-structure Greeting {
-  @required
-  message: String
-}
+```scala mdoc:passthrough
+docs.InlineSmithyFile.fromSample("hello.smithy")
 ```
 
 See our [getting started documentation](../01-overview/01-intro.md) for instructions on how to use this specification to generate scala code.
@@ -100,6 +65,7 @@ Note that it is getting the `RequestInfo` from the `IO[RequestInfo] that is bein
 will be created using the same `IOLocal` instance is passed to our middleware implementation.
 That way, the middleware can set the `RequestInfo` value that we are reading here.
 
+[[generalisation.md]]
 ### Middleware
 
 Below is the middleware implementation. It extracts the `Content-Type` and `User-Agent` headers and passes them along in the `IOLocal`

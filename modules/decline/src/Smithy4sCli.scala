@@ -25,7 +25,7 @@ import smithy.api.Documentation
 import smithy.api.ExternalDocumentation
 import smithy.api.Http
 import smithy4s.Endpoint
-import smithy4s.Monadic
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
 import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi

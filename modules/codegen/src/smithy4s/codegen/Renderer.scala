@@ -172,7 +172,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         )(
           line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
           line"def service: $Service_[$nameGen, ${name}Operation] = $nameGen",
-          line"val id: $ShapeId_ = service.id"
+          line"val id: $ShapeId_ = service.id",
+          line"type WithError[F[_, _]] = $BiFunctorAlgebra_[$nameGen, F]"
         )
       )
     case _ => Lines.empty

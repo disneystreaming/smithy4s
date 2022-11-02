@@ -24,7 +24,7 @@ case object JVMPlatform extends Platform
 case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
     extends VirtualAxis.WeakAxis
 
-object Smithy4sPlugin extends AutoPlugin {
+object Smithy4sBuildPlugin extends AutoPlugin {
   val CatsEffect3Axis = CatsEffectAxis("_CE3", "ce3")
   val CatsEffect2Axis = CatsEffectAxis("_CE2", "ce2")
 
