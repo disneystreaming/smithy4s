@@ -26,7 +26,7 @@ import smithy4s.kinds._
  * An interpreter for unary operations in the AWS_JSON_1.0/AWS_JSON_1.1 protocol
  */
 private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F[_]](
-    service: smithy4s.Service[Alg, Op],
+    service: smithy4s.Service.Aux[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
     contentType: String
