@@ -25,16 +25,13 @@ object DummyService {
   def apply[F[_]]: PartiallyApplied[F] = new PartiallyApplied[F]
 
   class PartiallyApplied[F[_]] {
-    def create[Alg[_[_, _, _, _, _]]](implicit
-        service: Service[Alg],
+    def create[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](implicit
+        service: Service[Alg, Op],
         F: Applicative[F]
     ): FunctorAlgebra[Alg, F] = {
-      type Op[I, E, O, SI, SO] = service.Operation[I, E, O, SI, SO]
       service.fromPolyFunction[Kind1[F]#toKind5] {
         service.opToEndpoint.andThen[Kind1[F]#toKind5](
-          new PolyFunction5[Endpoint[Op, *, *, *, *, *], Kind1[
-            F
-          ]#toKind5] {
+          new PolyFunction5[Endpoint[Op, *, *, *, *, *], Kind1[F]#toKind5] {
             def apply[I, E, O, SI, SO](
                 ep: Endpoint[Op, I, E, O, SI, SO]
             ): F[O] =

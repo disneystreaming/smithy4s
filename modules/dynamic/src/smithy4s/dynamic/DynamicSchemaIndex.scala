@@ -53,8 +53,9 @@ object DynamicSchemaIndex extends DynamicSchemaIndexPlatform {
     */
   trait ServiceWrapper {
     type Alg[P[_, _, _, _, _]]
+    type Op[I, E, O, SI, SO]
 
-    def service: Service[Alg]
+    def service: Service[Alg, Op]
   }
 
 }

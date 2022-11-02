@@ -25,13 +25,13 @@ package object smithy4s {
 
   val errorTypeHeader = "X-Error-Type"
 
-  def checkProtocol[Alg[_[_, _, _, _, _]]](
-      service: Service[Alg],
+  def checkProtocol[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      service: Service[Alg, Op],
       protocolTag: ShapeTag[_]
   ): Either[UnsupportedProtocolError, Unit] =
     service.hints
       .get(protocolTag)
-      .toRight(UnsupportedProtocolError(service.id, protocolTag.id))
+      .toRight(UnsupportedProtocolError(service, protocolTag.id))
       .map(_ => ())
 
 }

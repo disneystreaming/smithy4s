@@ -83,8 +83,8 @@ class FieldsSpec() extends munit.FunSuite {
 
     }
 
-    def toFieldNames[Alg[_[_, _, _, _, _]]](
-        svc: Service[Alg]
+    def toFieldNames[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+        svc: Service[Alg, Op]
     ): List[String] =
       svc.endpoints.flatMap { endpoint =>
         endpoint.input.compile(GetFieldNames)() ++

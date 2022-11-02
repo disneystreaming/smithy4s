@@ -31,21 +31,19 @@ import smithy4s.kinds._
   */
 class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
 
-  def dummy[Alg[_[_, _, _, _, _]]](
-      service: Service.Provider[Alg]
+  def dummy[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+      service: Service.Provider[Alg, Op]
   ): Document => F[Document] = {
-    implicit val S: Service[Alg] = service.service
-    toJsonF[Alg, S.Operation](DummyService[F].create[Alg])
+    implicit val S: Service[Alg, Op] = service.service
+    toJsonF[Alg, Op](DummyService[F].create[Alg, Op])
   }
 
-  def redactingProxy[Alg[_[_, _, _, _, _]]](
+  def redactingProxy[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       jsonF: Document => F[Document],
-      service: Service.Provider[Alg]
+      service: Service.Provider[Alg, Op]
   ): Document => F[Document] = {
-    implicit val S: Service[Alg] = service.service
-    toJsonF[Alg, S.Operation](
-      fromJsonF[Alg, S.Operation](jsonF)
-    ) andThen (_.map(redact))
+    implicit val S: Service[Alg, Op] = service.service
+    toJsonF[Alg, Op](fromJsonF[Alg, Op](jsonF)) andThen (_.map(redact))
   }
 
   def redact(document: Document): Document = document match {
@@ -57,8 +55,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
 
   def fromJsonF[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       jsonF: Document => F[Document]
-  )(implicit S: Service[Alg]): FunctorAlgebra[Alg, F] = {
-    type Op[I, E, O, SI, SO] = S.Operation[I, E, O, SI, SO]
+  )(implicit S: Service[Alg, Op]): FunctorAlgebra[Alg, F] = {
     val kleisliCache =
       fromLowLevel(jsonF).unsafeCacheBy(
         S.endpoints.map(Kind5.existential(_)),
@@ -75,7 +72,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
 
   def toJsonF[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
       alg: FunctorAlgebra[Alg, F]
-  )(implicit S: Service[Alg]): Document => F[Document] = {
+  )(implicit S: Service[Alg, Op]): Document => F[Document] = {
     val transformation = S.toPolyFunction[Kind1[F]#toKind5](alg)
     val jsonEndpoints =
       S.endpoints.map(ep => ep.name -> toLowLevel(transformation, ep)).toMap

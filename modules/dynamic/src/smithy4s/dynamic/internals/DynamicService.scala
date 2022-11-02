@@ -29,7 +29,8 @@ private[internals] case class DynamicService(
     with DynamicSchemaIndex.ServiceWrapper {
 
   type Alg[P[_, _, _, _, _]] = PolyFunction5.From[DynamicOp]#Algebra[P]
-  override val service: Service[Alg] = this
+  type Op[I, E, O, SI, SO] = DynamicOp[I, E, O, SI, SO]
+  override val service: Service[Alg, Op] = this
 
   private lazy val endpointMap
       : Map[ShapeId, Endpoint[DynamicOp, _, _, _, _, _]] =
