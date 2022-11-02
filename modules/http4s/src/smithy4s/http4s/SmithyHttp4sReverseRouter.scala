@@ -25,7 +25,7 @@ import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
 // format: off
 class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     baseUri: Uri,
-    service: smithy4s.Service[Alg, Op],
+    service: smithy4s.Service.Aux[Alg, Op],
     client: Client[F],
     entityCompiler: EntityCompiler[F]
 )(implicit effect: EffectCompat[F])

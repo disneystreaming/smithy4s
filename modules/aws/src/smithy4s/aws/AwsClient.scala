@@ -25,15 +25,15 @@ import smithy4s.kinds.PolyFunction5
 
 object AwsClient {
 
-  def apply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
-      service: smithy4s.Service[Alg, Op],
+  def apply[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
+      service: smithy4s.Service[Alg],
       awsEnv: AwsEnvironment[F]
   ): Resource[F, AwsClient[Alg, F]] =
-    prepare(service).map(_.interpret(awsEnv)).liftTo[Resource[F, *]]
+    prepare(service).map(_.build(awsEnv)).liftTo[Resource[F, *]]
 
-  def prepare[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      service: smithy4s.Service[Alg, Op]
-  ): Either[Throwable, AWSInterpreterBuilder[Alg, Op]] =
+  def prepare[Alg[_[_, _, _, _, _]]](
+      service: smithy4s.Service[Alg]
+  ): Either[Throwable, AWSInterpreterBuilder[Alg]] =
     for {
       awsService <- service.hints
         .get(_root_.aws.api.Service)
@@ -50,18 +50,18 @@ object AwsClient {
       )
     } yield new AWSInterpreterBuilder(awsProtocol, service, endpointPrefix)
 
-  final class AWSInterpreterBuilder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+  final class AWSInterpreterBuilder[Alg[_[_, _, _, _, _]]](
       awsProtocol: AwsProtocol,
-      service: smithy4s.Service[Alg, Op],
+      service: smithy4s.Service[Alg],
       endpointPrefix: String
   ) {
 
-    def build[F[_]: MonadThrow](
+    private def interpreter[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
-    ): PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] =
+    ): PolyFunction5[service.Operation, AwsCall[F, *, *, *, *, *]] =
       awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
-          new AwsJsonRPCInterpreter[Alg, Op, F](
+          new AwsJsonRPCInterpreter[Alg, service.Operation, F](
             service,
             endpointPrefix,
             awsEnv,
@@ -69,7 +69,7 @@ object AwsClient {
           )
 
         case AwsProtocol.AWS_JSON_1_1(_) =>
-          new AwsJsonRPCInterpreter[Alg, Op, F](
+          new AwsJsonRPCInterpreter[Alg, service.Operation, F](
             service,
             endpointPrefix,
             awsEnv,
@@ -77,9 +77,9 @@ object AwsClient {
           )
       }
 
-    def interpret[F[_]: MonadThrow](
+    def build[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
-    ): AwsClient[Alg, F] = service.fromPolyFunction(build(awsEnv))
+    ): AwsClient[Alg, F] = service.fromPolyFunction(interpreter(awsEnv))
   }
   private def initError(msg: String): Throwable = InitialisationError(msg)
   case class InitialisationError(msg: String) extends Throwable(msg)
