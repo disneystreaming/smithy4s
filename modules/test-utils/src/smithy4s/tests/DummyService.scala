@@ -32,9 +32,7 @@ object DummyService {
       type Op[I, E, O, SI, SO] = service.Operation[I, E, O, SI, SO]
       service.fromPolyFunction[Kind1[F]#toKind5] {
         service.opToEndpoint.andThen[Kind1[F]#toKind5](
-          new PolyFunction5[Endpoint[Op, *, *, *, *, *], Kind1[
-            F
-          ]#toKind5] {
+          new PolyFunction5[service.Endpoint, Kind1[F]#toKind5] {
             def apply[I, E, O, SI, SO](
                 ep: Endpoint[Op, I, E, O, SI, SO]
             ): F[O] =

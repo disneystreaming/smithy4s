@@ -31,16 +31,15 @@ private[internals] case class DynamicService(
   type Alg[P[_, _, _, _, _]] = PolyFunction5.From[DynamicOp]#Algebra[P]
   override val service: Service[Alg] = this
 
-  private lazy val endpointMap
-      : Map[ShapeId, Endpoint[DynamicOp, _, _, _, _, _]] =
+  private lazy val endpointMap: Map[ShapeId, Endpoint[_, _, _, _, _]] =
     endpoints.map(ep => ep.id -> ep).toMap
 
   def endpoint[I, E, O, SI, SO](
       op: DynamicOp[I, E, O, SI, SO]
-  ): (I, Endpoint[DynamicOp, I, E, O, SI, SO]) = {
+  ): (I, Endpoint[I, E, O, SI, SO]) = {
     val endpoint = endpointMap
       .getOrElse(op.id, sys.error("Unknown endpoint: " + op.id))
-      .asInstanceOf[Endpoint[DynamicOp, I, E, O, SI, SO]]
+      .asInstanceOf[Endpoint[I, E, O, SI, SO]]
     val input = op.data
     (input, endpoint)
   }

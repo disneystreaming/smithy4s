@@ -108,10 +108,9 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private[compliancetests] def serverRequestTest[I, E, O, SE, SO](
-      endpoint: Endpoint[originalService.Operation, I, E, O, SE, SO],
+      endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpRequestTestCase
   ): ComplianceTest[IO] = {
-    type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
     val inputFromDocument = Document.Decoder.fromSchema(endpoint.input)
     ComplianceTest[IO](
@@ -119,8 +118,8 @@ abstract class ServerHttpComplianceTestCase[
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, IO] =
-            originalService.fromPolyFunction[R](
-              new FunctorInterpreter[originalService.Operation, IO] {
+            originalService.fromPolyFunction(
+              new originalService.FunctorInterpreter[IO] {
                 def apply[I_, E_, O_, SE_, SO_](
                     op: originalService.Operation[I_, E_, O_, SE_, SO_]
                 ): IO[O_] = {
@@ -154,7 +153,7 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private[compliancetests] def serverResponseTest[I, E, O, SE, SO](
-      endpoint: Endpoint[originalService.Operation, I, E, O, SE, SO],
+      endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpResponseTestCase,
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
@@ -232,7 +231,7 @@ abstract class ServerHttpComplianceTestCase[
 
   private case class NoInputOp[I_, E_, O_, SE_, SO_]()
   private def prepareService[I, E, O, SE, SO](
-      endpoint: Endpoint[originalService.Operation, I, E, O, SE, SO]
+      endpoint: originalService.Endpoint[I, E, O, SE, SO]
   ): (Service.Reflective[NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off

@@ -58,7 +58,7 @@ object AwsClient {
 
     private def interpreter[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
-    ): PolyFunction5[service.Operation, AwsCall[F, *, *, *, *, *]] =
+    ): service.Interpreter[AwsCall[F, *, *, *, *, *]] =
       awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
           new AwsJsonRPCInterpreter[Alg, service.Operation, F](

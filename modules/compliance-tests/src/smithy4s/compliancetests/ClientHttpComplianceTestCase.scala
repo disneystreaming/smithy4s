@@ -111,7 +111,7 @@ abstract class ClientHttpComplianceTestCase[
   }
 
   private[compliancetests] def clientRequestTest[I, E, O, SE, SO](
-      endpoint: Endpoint[service.Operation, I, E, O, SE, SO],
+      endpoint: service.Endpoint[I, E, O, SE, SO],
       testCase: HttpRequestTestCase
   ): ComplianceTest[IO] = {
     type R[I_, E_, O_, SE_, SO_] = IO[O_]
@@ -156,7 +156,7 @@ abstract class ClientHttpComplianceTestCase[
   }
 
   private[compliancetests] def clientResponseTest[I, E, O, SE, SO](
-      endpoint: Endpoint[service.Operation, I, E, O, SE, SO],
+      endpoint: service.Endpoint[I, E, O, SE, SO],
       testCase: HttpResponseTestCase,
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
