@@ -57,7 +57,7 @@ abstract class ClientHttpComplianceTestCase[
   import ce._
   import org.http4s.implicits._
   private val baseUri = uri"http://localhost/"
-  private val service = serviceProvider.service
+  private[compliancetests] val service = serviceProvider.service
 
   def getClient(app: HttpApp[IO]): Resource[IO, FunctorAlgebra[Alg, IO]]
   def codecs: CodecAPI

@@ -47,7 +47,7 @@ abstract class ServerHttpComplianceTestCase[
 ) {
   import ce._
   import org.http4s.implicits._
-  private val originalService = serviceProvider.service
+  private[compliancetests] val originalService = serviceProvider.service
   private val baseUri = uri"http://localhost/"
 
   def getServer[Alg2[_[_, _, _, _, _]]](
