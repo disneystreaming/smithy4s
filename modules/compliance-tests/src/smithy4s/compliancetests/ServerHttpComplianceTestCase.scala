@@ -117,7 +117,7 @@ abstract class ServerHttpComplianceTestCase[
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, IO] =
-            originalService.fromPolyFunction(
+            originalService.fromPolyFunction[Kind1[IO]#toKind5](
               new originalService.FunctorInterpreter[IO] {
                 def apply[I_, E_, O_, SE_, SO_](
                     op: originalService.Operation[I_, E_, O_, SE_, SO_]
