@@ -11,7 +11,7 @@ on:
         required: false
         default: 'false'
   push:
-    branches: ["main", "series/*"]
+    branches: ["main"]
     tags: ["v*"]
   pull_request:
     branches: ["*"]
