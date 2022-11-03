@@ -89,7 +89,7 @@ object Routes {
     .getOrElse(noMiddleware)
 
   private val helloRoutes: Resource[IO, HttpRoutes[IO]] =
-    SimpleRestJsonBuilder.build.routes(HelloWorldImpl).resource
+    SimpleRestJsonBuilder.routes(HelloWorldImpl).resource
 
   val all: Resource[IO, HttpRoutes[IO]] =
     helloRoutes.map(r => corsMiddleWare(r))

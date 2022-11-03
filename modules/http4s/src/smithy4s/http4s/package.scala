@@ -31,7 +31,7 @@ package object http4s extends Compat.Package {
   ) {
 
     def simpleRestJson: SimpleRestJsonBuilder#ServiceBuilder[Alg, Op] =
-      SimpleRestJsonBuilder.build(serviceProvider.service)
+      SimpleRestJsonBuilder(serviceProvider.service)
 
   }
 

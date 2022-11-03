@@ -17,14 +17,15 @@
 package smithy4s
 package http4s
 
-import cats.effect._
-import cats.syntax.all._
+import cats.effect.*
+import cats.syntax.all.*
 import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http.CodecAPI
-import org.http4s.implicits._
-import smithy4s.kinds._
+import org.http4s.implicits.*
+import smithy4s.http.json.JsonCodecAPI
+import smithy4s.kinds.*
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -94,11 +95,20 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ]: EffectCompat] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg, Op],
-      uri: Uri = uri"http://localhost:8080"
+      uri: Uri = uri"http://localhost:8080",
+      codecApi: CodecAPI = codecs
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
       new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
+
+    def withJsonCodec(codecAPI: JsonCodecAPI): ClientBuilder[Alg, Op, F] =
+      new ClientBuilder[Alg, Op, F](
+        this.client,
+        this.service,
+        this.uri,
+        codecAPI
+      )
 
     def resource: Resource[F, FunctorAlgebra[Alg, F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
@@ -111,7 +121,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             client,
             EntityCompiler
-              .fromCodecAPI[F](codecs)
+              .fromCodecAPI[F](codecApi)
           )
         )
         .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
