@@ -21,7 +21,6 @@ import cats.effect.Resource
 import cats.syntax.all._
 
 import internals.AwsJsonRPCInterpreter
-import smithy4s.kinds.PolyFunction5
 
 object AwsClient {
 
