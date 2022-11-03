@@ -17,15 +17,15 @@
 package smithy4s
 package http4s
 
-import cats.effect.*
-import cats.syntax.all.*
+import cats.effect._
+import cats.syntax.all._
 import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http.CodecAPI
-import org.http4s.implicits.*
+import org.http4s.implicits._
 import smithy4s.http.json.JsonCodecAPI
-import smithy4s.kinds.*
+import smithy4s.kinds._
 
 /**
   * Abstract construct helping the construction of routers and clients
