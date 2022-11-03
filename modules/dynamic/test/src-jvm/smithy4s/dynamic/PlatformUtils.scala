@@ -17,6 +17,7 @@
 package smithy4s.dynamic
 
 import software.amazon.smithy.model.{Model => SModel}
+import software.amazon.smithy.model.loader.ModelAssembler
 import cats.syntax.all._
 import DummyIO._
 
