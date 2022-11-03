@@ -31,7 +31,7 @@ object Launcher extends IOApp {
     val serverRes = for {
       impl <- Resource.eval(ObjectServiceImpl.makeIO)
       docs = smithy4s.http4s.swagger.docs[IO](ObjectService)
-      service <- SimpleRestJsonBuilder.routes(impl).resource
+      service <- SimpleRestJsonBuilder.build.routes(impl).resource
       app = (docs <+> service).orNotFound
       server <- EmberServerBuilder.default[IO].withHost(host).withPort(port).withHttpApp(app).build
     } yield ()
