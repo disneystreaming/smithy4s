@@ -154,7 +154,7 @@ jobs:
       - name: Setup Java and Scala
         uses: olafurpg/setup-scala@v13
         with:
-          java-version: temurin@17
+          java-version: temurin:1.17
 
       - name: Cache
         uses: coursier/cache-action@v6
