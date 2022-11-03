@@ -33,7 +33,6 @@ import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.http.CodecAPI
 import smithy4s.Document
-import smithy4s.Endpoint
 import smithy4s.http.PayloadError
 import smithy4s.Service
 import smithy4s.ShapeTag

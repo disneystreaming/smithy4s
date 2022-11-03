@@ -25,7 +25,6 @@ import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
 import smithy4s.Document
-import smithy4s.Endpoint
 import smithy4s.http.CodecAPI
 import smithy4s.Service
 import smithy4s.ShapeTag
@@ -235,7 +234,7 @@ abstract class ServerHttpComplianceTestCase[
   ): (Service.Reflective[NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off
-        new Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
+        new smithy4s.Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
           def hints: smithy4s.Hints = {
             val newHttp = smithy.api.Http(
               method = smithy.api.NonEmptyString("GET"),
@@ -262,8 +261,8 @@ abstract class ServerHttpComplianceTestCase[
       // format: off
       new Service.Reflective[NoInputOp] {
         override def id: ShapeId = ShapeId("custom", "service")
-        override def endpoints: List[Endpoint[NoInputOp, _, _, _, _, _]] = List(amendedEndpoint)
-        override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[NoInputOp, I_, E_, O_, SI_, SO_]) = ???
+        override def endpoints: List[Endpoint[_, _, _, _, _]] = List(amendedEndpoint)
+        override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[I_, E_, O_, SI_, SO_]) = ???
         override def version: String = originalService.version
         override def hints: Hints = originalService.hints
       }
