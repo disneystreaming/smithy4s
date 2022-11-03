@@ -531,9 +531,6 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     genDiscoverModels := true,
-    allowedNamespaces := Seq(
-      "smithy4s.dynamic.model"
-    ),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
       Dependencies.Cats.core.value

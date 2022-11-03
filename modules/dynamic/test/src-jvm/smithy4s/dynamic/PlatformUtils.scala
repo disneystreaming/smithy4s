@@ -45,6 +45,7 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
         .assembler()
         .addImport(s"./sampleSpecs/$fileName")
         .discoverModels(this.getClass().getClassLoader())
+        .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
         .assemble()
         .unwrap()
     )
