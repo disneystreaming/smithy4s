@@ -41,21 +41,30 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
     .map(alt => alt.instance.shapeId.name -> alt)
     .toMap[String, SchemaAlt[E, _]]
 
-  private val byStatusCode = {
-    alts
-      .groupBy { alt =>
-        alt.hints
-          .get(HttpError)
-          .map(_.value)
-          .orElse(alt.hints.get(Error).map {
-            case Error.CLIENT => 400
-            case Error.SERVER => 500
-          })
+  private val byStatusCode: Int => Option[SchemaAlt[E, _]] = { inputStatus =>
+    val errorForStatus: Option[SchemaAlt[E, _]] = {
+      val results =
+        alts.filter(_.hints.get(HttpError).exists(_.value == inputStatus))
+      if (results.length == 1) results.headOption else None
+    }
+    lazy val fallbackError: Option[SchemaAlt[E, _]] = {
+      val matchingAlts = alts.filter { alt =>
+        alt.hints.get(Error) match {
+          case Some(e) if alt.hints.get(HttpError).isEmpty =>
+            // If Error trait is present (must be 'client' or 'server') and
+            // the status code is in the client/server error range, then use that alt
+            val isClientError =
+              e.value.toLowerCase == "client" && inputStatus >= 400 && inputStatus < 500
+            val isServerError =
+              e.value.toLowerCase == "server" && inputStatus >= 500 && inputStatus < 600
+            isClientError || isServerError
+          case _ => false
+        }
       }
-      .collect {
-        case (Some(key), values) if values.size == 1 => key -> values.head
-      }
-  }.toMap[Int, SchemaAlt[E, _]]
+      if (matchingAlts.size == 1) matchingAlts.headOption else None
+    }
+    errorForStatus.orElse(fallbackError)
+  }
 
   def getPreciseAlternative(
       discriminator: ErrorDiscriminator
@@ -63,7 +72,7 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
     discriminator match {
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)
-      case StatusCode(int) => byStatusCode.get(int)
+      case StatusCode(int) => byStatusCode(int)
     }
   }
 }
