@@ -17,6 +17,7 @@
 package smithy4s.dynamic
 
 import software.amazon.smithy.model.{Model => SModel}
+import software.amazon.smithy.model.loader.ModelAssembler
 import cats.syntax.all._
 import DummyIO._
 
@@ -45,6 +46,7 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
         .assembler()
         .addImport(s"./sampleSpecs/$fileName")
         .discoverModels()
+        .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
         .assemble()
         .unwrap()
     )
