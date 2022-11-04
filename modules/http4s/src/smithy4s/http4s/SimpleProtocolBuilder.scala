@@ -112,7 +112,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             client,
             EntityCompiler
-              .fromCodecAPI[F](codecApi)
+              .fromCodecAPI[F](codecs)
           )
         )
         .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
