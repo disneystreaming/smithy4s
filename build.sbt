@@ -9,7 +9,6 @@ ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.17.0"
-ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -149,7 +148,6 @@ val munitDeps = Def.setting {
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .settings(
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     isMimaEnabled := true,
     allowedNamespaces := Seq(
       "smithy.api",
@@ -262,7 +260,6 @@ lazy val `aws-kernel` = projectMatrix
       "aws.protocols"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Test / fork := true,
     Test / envVars ++= Map("TEST_VAR" -> "hello")
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -291,8 +288,7 @@ lazy val aws = projectMatrix
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
-    },
-    Test / fork := true
+    }
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
@@ -516,8 +512,7 @@ lazy val protocolTests = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
-    ),
-    Test / fork := true
+    )
   )
   .settings(Smithy4sPlugin.doNotPublishArtifact)
 
@@ -531,9 +526,6 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     genDiscoverModels := true,
-    allowedNamespaces := Seq(
-      "smithy4s.dynamic.model"
-    ),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
       Dependencies.Cats.core.value
@@ -553,9 +545,6 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
-      Test / fork := true,
-      // Forwarding cwd to tests
-      Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
       libraryDependencies += Dependencies.Smithy.model
     )
   )
@@ -577,8 +566,7 @@ lazy val json = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Jsoniter.value
     ),
-    libraryDependencies ++= munitDeps.value,
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+    libraryDependencies ++= munitDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
