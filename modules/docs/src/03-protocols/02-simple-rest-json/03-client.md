@@ -107,7 +107,7 @@ And here are some scenarios using this example model. For all of these, assume t
 | 503         | ServiceUnavailableError |
 | 500         | CatchAllServerError     |
 
-However, if I added another error to the operation that looked like:
+However, adding another error to the operation that looks like:
 
 ```kotlin
 @error("client")
@@ -116,7 +116,7 @@ structure AnotherError {
 }
 ```
 
-then I would get the following:
+Would result in the following:
 
 | Status Code | Error Selected           |
 |-------------|--------------------------|
@@ -127,7 +127,7 @@ then I would get the following:
 
 Notice that the 400 status code cannot be properly mapped. This is because there is no exact match AND there are two errors that are labeled with `@error("client")` which also do not have an associated `httpError` trait containing a status code.
 
-If I add another error type to the operation that looks like:
+Adding another error type to the operation that looks like:
 
 ```kotlin
 @httpError(404)
@@ -137,7 +137,7 @@ structure AnotherNotFoundError {
 }
 ```
 
-Then I will get the following:
+Will result in the following:
 
 | Status Code | Error Selected           |
 |-------------|--------------------------|
