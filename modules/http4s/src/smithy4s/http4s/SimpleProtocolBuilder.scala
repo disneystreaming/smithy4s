@@ -24,7 +24,6 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http.CodecAPI
 import org.http4s.implicits._
-import smithy4s.http.json.JsonCodecAPI
 import smithy4s.kinds._
 
 /**
@@ -95,20 +94,12 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ]: EffectCompat] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg, Op],
-      uri: Uri = uri"http://localhost:8080",
-      codecApi: CodecAPI = codecs
+      uri: Uri = uri"http://localhost:8080"
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
       new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
 
-    def withJsonCodec(codecAPI: JsonCodecAPI): ClientBuilder[Alg, Op, F] =
-      new ClientBuilder[Alg, Op, F](
-        this.client,
-        this.service,
-        this.uri,
-        codecAPI
-      )
 
     def resource: Resource[F, FunctorAlgebra[Alg, F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
