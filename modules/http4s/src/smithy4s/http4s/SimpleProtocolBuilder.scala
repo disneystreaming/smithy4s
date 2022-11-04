@@ -100,7 +100,6 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
       new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
 
-
     def resource: Resource[F, FunctorAlgebra[Alg, F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
 
