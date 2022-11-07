@@ -15,6 +15,7 @@ import smithy4s.codegen.BuildInfo._
 
 libraryDependencies ++= Seq(
   // Needed to access the smithy.test traits in your smithy models
+  "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
   "com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
 )
 ```
@@ -25,7 +26,7 @@ If you use `mill`:
 import smithy4s.codegen.BuildInfo._
 
 def smithy4sIvyDeps = Agg(
-  ivy"software.amazon.smithy:smithy-aws-traits:$smithyVersion"
+  ivy"software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion"
 )
 
 def ivyDeps = Agg(
