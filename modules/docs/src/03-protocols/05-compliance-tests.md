@@ -10,13 +10,27 @@ Basically, you annotate operations and/or structures (that depends on the type o
 Smithy4s publishes a module that you can use to write compliance test if you're implementing a protocol. Add the following to your dependencies if you use `sbt`:
 
 ```scala
-"com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
+
+import smithy4s.codegen.BuildInfo._
+
+libraryDependencies ++= Seq(
+  // Needed to access the smithy.test traits in your smithy models
+  "com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
+)
 ```
 
 If you use `mill`:
 
 ```scala
-ivy"com.disneystreaming.smithy4s::smithy4s-compliance-tests:${smithy4sVersion()}",
+import smithy4s.codegen.BuildInfo._
+
+def smithy4sIvyDeps = Agg(
+  ivy"software.amazon.smithy:smithy-aws-traits:$smithyVersion"
+)
+
+def ivyDeps = Agg(
+  ivy"com.disneystreaming.smithy4s::smithy4s-compliance-tests:${smithy4sVersion()}"
+)
 ```
 
 The rest of this document will demonstrate how to write a Smithy specification that specify HTTP compliance tests, and then how to use the module mentioned above to run the tests.

@@ -62,6 +62,7 @@ object ModelLoader {
         .addClasspathModels(currentClassLoader, false)
         // disabling cache to support snapshot-driven experimentation
         .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
+        .disableValidation()
         .assemble()
         .unwrap()
 

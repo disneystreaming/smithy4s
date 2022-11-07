@@ -155,6 +155,7 @@ lazy val core = projectMatrix
       "alloy"
     ),
     genDiscoverModels := true,
+    genSmithyDependencies := Seq(Dependencies.Smithy.waiters),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / sourceGenerators += {
       sourceDirectory
@@ -252,7 +253,7 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    genDiscoverModels := true,
+    genSmithyDependencies := Seq(Dependencies.Smithy.awsTraits),
     Compile / allowedNamespaces := Seq(
       "aws.api",
       "aws.auth",
@@ -307,14 +308,17 @@ lazy val `aws-http4s` = projectMatrix
   .dependsOn(aws)
   .settings(
     isCE3 := true,
-    Test / genDiscoverModels := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.client.value,
         Dependencies.Http4s.emberClient.value % Test
       )
     },
-    Test / allowedNamespaces := Seq(),
+    Test / genSmithyDependencies := Seq(
+      Dependencies.Smithy.waiters,
+      Dependencies.Smithy.awsTraits
+    ),
+    Test / allowedNamespaces := Seq("com.amazonaws.dynamodb"),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .jvmPlatform(
@@ -342,16 +346,17 @@ lazy val codegen = projectMatrix
     buildInfoKeys := Seq[BuildInfoKey](
       version,
       scalaBinaryVersion,
-      "smithyVersion" -> Dependencies.Smithy.smithyVersion
+      "smithyOrg" -> Dependencies.Smithy.org,
+      "smithyVersion" -> Dependencies.Smithy.version,
+      "alloyOrg" -> Dependencies.Alloy.org,
+      "alloyVersion" -> Dependencies.Alloy.version
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
-      Dependencies.Smithy.awsTraits,
-      Dependencies.Smithy.testTraits,
-      Dependencies.Smithy.waiters,
+      Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
@@ -424,7 +429,6 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
  */
 lazy val millCodegenPlugin = projectMatrix
   .in(file("modules/mill-codegen-plugin"))
-  .enablePlugins(BuildInfoPlugin)
   .jvmPlatform(
     scalaVersions = List(Scala213),
     simpleJVMLayout
@@ -433,8 +437,6 @@ lazy val millCodegenPlugin = projectMatrix
     name := "mill-codegen-plugin",
     crossVersion := CrossVersion
       .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
-    buildInfoKeys := Seq[BuildInfoKey](version),
-    buildInfoPackage := "smithy4s.codegen.mill",
     libraryDependencies ++= Seq(
       Dependencies.Mill.main,
       Dependencies.Mill.mainApi,
@@ -690,8 +692,8 @@ lazy val complianceTests = projectMatrix
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
-    genDiscoverModels := true,
-    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    Compile / genSmithyDependencies := Seq(Dependencies.Smithy.testTraits),
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       val ce3 =
@@ -819,20 +821,20 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.26.0"
-    val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
-    val testTraits =
-      "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
-    val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
-    val awsTraits =
-      "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
-    val waiters = "software.amazon.smithy" % "smithy-waiters" % smithyVersion
+    val org = "software.amazon.smithy"
+    val version = "1.26.0"
+    val model = org % "smithy-model" % version
+    val testTraits = org % "smithy-protocol-test-traits" % version
+    val build = org % "smithy-build" % version
+    val awsTraits = org % "smithy-aws-traits" % version
+    val waiters = org % "smithy-waiters" % version
   }
 
   val Alloy = new {
+    val org = "com.disneystreaming.alloy"
     val version = "0.1.0"
-    val core = "com.disneystreaming.alloy" % "alloy-core" % version
-    val openapi = "com.disneystreaming.alloy" %% "alloy-openapi" % version
+    val core = org % "alloy-core" % version
+    val openapi = org %% "alloy-openapi" % version
   }
 
   val Cats = new {
@@ -936,7 +938,7 @@ lazy val genSmithyOutput = SettingKey[File]("genSmithyOutput")
 lazy val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
-  SettingKey[Seq[String]]("genSmithyDependencies")
+  SettingKey[Seq[ModuleID]]("genSmithyDependencies")
 lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
 lazy val smithy4sSkip = SettingKey[Seq[String]]("smithy4sSkip")
 
@@ -962,6 +964,11 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val discoverModels =
     (config / genDiscoverModels).?.value.getOrElse(false)
   val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
+  val smithy4sDependencies =
+    (config / genSmithyDependencies).?.value.getOrElse(Seq.empty).map {
+      moduleId =>
+        s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
+    }
 
   val codegenCp =
     (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
@@ -983,15 +990,27 @@ def genSmithyImpl(config: Configuration) = Def.task {
           ) { case ((changed, files), outputs) =>
             if (changed || outputs.isEmpty) {
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
-              val args =
-                List("--output", outputDir) ++
-                  List("--resource-output", resourceOutputDir) ++
-                  (if (discoverModels) List("--discover-models") else Nil) ++
-                  (if (allowedNS.isDefined)
-                     List("--allowed-ns", allowedNS.get.mkString(","))
-                   else Nil) ++
-                  inputs ++
-                  skip.flatMap(s => List("--skip", s))
+              val outputOpt = List("--output", outputDir)
+              val resourceOutputOpt =
+                List("--resource-output", resourceOutputDir)
+              val discoverModelsOpt =
+                (if (discoverModels) List("--discover-models") else Nil)
+              val allowedNsOpt =
+                if (allowedNS.isDefined)
+                  List("--allowed-ns", allowedNS.get.mkString(","))
+                else Nil
+              val skipOpt = skip.flatMap(s => List("--skip", s))
+              val dependenciesOpt =
+                if (smithy4sDependencies.nonEmpty)
+                  List("--dependencies", smithy4sDependencies.mkString(","))
+                else Nil
+              val args = outputOpt ++
+                resourceOutputOpt ++
+                discoverModelsOpt ++
+                allowedNsOpt ++
+                inputs ++
+                skipOpt ++
+                dependenciesOpt
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())

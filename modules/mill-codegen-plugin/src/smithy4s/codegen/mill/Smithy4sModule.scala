@@ -22,7 +22,7 @@ import mill.api.PathRef
 import mill.define.Source
 import mill.scalalib._
 import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
-import smithy4s.codegen.mill.BuildInfo
+import smithy4s.codegen.BuildInfo
 
 trait Smithy4sModule extends ScalaModule {
 
@@ -44,7 +44,15 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
 
+  def smithy4sDefaultIvyDeps: T[Agg[Dep]] = Agg(
+    ivy"${BuildInfo.alloyOrg}:alloy-core:${BuildInfo.alloyVersion}"
+  )
+
   def smithy4sIvyDeps: T[Agg[Dep]] = T { Agg.empty[Dep] }
+
+  def smithy4sAllDeps: T[Agg[Dep]] = T {
+    smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
+  }
 
   def smithy4sLocalJars: T[List[PathRef]] = T {
     T.traverse(moduleDeps)(_.jar)
@@ -62,7 +70,7 @@ trait Smithy4sModule extends ScalaModule {
   def smithy4sSmithyLibrary: T[Boolean] = true
 
   def smithy4sTransitiveIvyDeps: T[Agg[Dep]] = T {
-    smithy4sIvyDeps() ++ T
+    smithy4sAllDeps() ++ T
       .traverse(moduleDeps)(_.transitiveIvyDeps)()
       .flatten
   }

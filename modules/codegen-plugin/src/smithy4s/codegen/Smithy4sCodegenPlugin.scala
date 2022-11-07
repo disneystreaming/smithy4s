@@ -117,7 +117,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   )
 
   override lazy val projectSettings =
-    defaultSettings(Compile)
+    defaultSettings(Compile) ++ Seq(
+      libraryDependencies ++= Seq(
+        BuildInfo.alloyOrg % "alloy-core" % BuildInfo.alloyVersion % Smithy4s
+      )
+    )
 
   private def findCodeGenDependencies(
       updateReport: UpdateReport
