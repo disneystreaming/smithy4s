@@ -37,8 +37,6 @@ case class CodegenArgs(
   def skipResources: Boolean = skip(FileType.Resource)
 }
 
-// CodegenArgs(List(),/var/folders/ss/1cdxdk1j36xb7sgmdqsthzy00000gq/T/8548428762518918579/workspace/multi-module-aws-bar/smithy4sOutputDir.dest/scala,/var/folders/ss/1cdxdk1j36xb7sgmdqsthzy00000gq/T/8548428762518918579/workspace/multi-module-aws-bar/smithy4sResourceOutputDir.dest/resources,Set(),false,None,None,List(https://repo1.maven.org/maven2),List(),List(),List(/var/folders/ss/1cdxdk1j36xb7sgmdqsthzy00000gq/T/8548428762518918579/workspace/multi-module-aws-bar/jar.dest/out.jar, /Users/olivier.melois/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/disneystreaming/alloy/alloy-core/0.1.0/alloy-core-0.1.0.jar, /Users/olivier.melois/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/software/amazon/smithy/smithy-model/1.26.0/smithy-model-1.26.0.jar, /Users/olivier.melois/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/software/amazon/smithy/smithy-utils/1.26.0/smithy-utils-1.26.0.jar))
-
 sealed abstract class FileType(val name: String)
     extends scala.Product
     with Serializable
