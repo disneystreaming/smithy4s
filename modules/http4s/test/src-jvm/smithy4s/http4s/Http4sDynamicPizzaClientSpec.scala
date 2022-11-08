@@ -25,6 +25,7 @@ import cats.effect.Resource
 import org.http4s.HttpApp
 import smithy4s.example._
 import software.amazon.smithy.model.{Model => SModel}
+import software.amazon.smithy.model.loader.ModelAssembler
 
 class DynamicHttpProxy(client: Client[IO]) {
 
@@ -64,6 +65,7 @@ class DynamicHttpProxy(client: Client[IO]) {
       SModel
         .assembler()
         .discoverModels()
+        .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
         .addImport(s"./sampleSpecs/$fileName")
         .assemble()
         .unwrap()
