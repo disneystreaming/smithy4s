@@ -2,8 +2,9 @@ package smithy4s
 package schema
 
 import Schema._
+import munit._
 
-final class AltSpec extends munit.FunSuite {
+final class AltSpec extends FunSuite {
 
   test("dispatcher projector") {
     type Foo = Either[Int, String]
@@ -16,13 +17,13 @@ final class AltSpec extends munit.FunSuite {
 
     val dispatcher = Alt.Dispatcher(schema.alternatives, schema.dispatch)
 
-    val projectedLeft = dispatcher.projector(schema.alternatives.head)
+    val projectedLeft = dispatcher.projector[Int](left)
 
-    val projectedRight = dispatcher.projector(schema.alternatives.last)
+    val projectedRight = dispatcher.projector[String](right)
 
-    assertEquals(projectedLeft(Left(100)), Some(100))
+    assertEquals(projectedLeft(Left(100)), Option(100))
     assertEquals(projectedLeft(Right("100")), None)
-    assertEquals(projectedRight(Right("100")), Some("100"))
+    assertEquals(projectedRight(Right("100")), Option("100"))
     assertEquals(projectedRight(Left(100)), None)
   }
 
