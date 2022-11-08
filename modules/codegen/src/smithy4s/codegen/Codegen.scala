@@ -27,7 +27,7 @@ object Codegen { self =>
       args: CodegenArgs
   ): Set[os.Path] = {
 
-    val (classloader, model) = ModelLoader.load(
+    val (classloader, model): (ClassLoader, Model) = ModelLoader.load(
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
@@ -83,8 +83,8 @@ object Codegen { self =>
 
     val reserved =
       Set(
-        "smithy4s.api",
         "alloy",
+        "smithy4s.api",
         "smithy4s.meta"
       )
 

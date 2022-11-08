@@ -41,8 +41,8 @@ val myModule = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
     scalaVersion := "@SCALA_VERSION@",
-    smithy4sInputDir in Compile  := (baseDirectory in ThisBuild).value / "smithy_input",
-    smithy4sOutputDir in Compile := (baseDirectory in ThisBuild).value / "smithy_output",
+    smithy4sInputDir in Compile  := (ThisBuild / baseDirectory).value / "smithy_input",
+    smithy4sOutputDir in Compile := (ThisBuild / baseDirectory).value / "smithy_output",
     libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
 ```

@@ -32,6 +32,8 @@ class Smithy4sModuleSpec extends munit.FunSuite {
   private val coreDep =
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4s.codegen.BuildInfo.version}"
 
+  ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
+
   test("basic codegen runs") {
     object foo extends testKit.BaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.8"
@@ -128,6 +130,49 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     )(compileWorks(bar, barEv))
   }
 
+  test("multi-module codegen works with AWS specs upstream") {
+
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "2.13.8"
+      override def ivyDeps = Agg(
+        ivy"com.disneystreaming.smithy4s::smithy4s-aws-kernel:${smithy4s.codegen.BuildInfo.version}"
+      )
+      override def smithy4sIvyDeps: T[Agg[Dep]] = Agg(
+        ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+      )
+      override def millSourcePath = resourcePath / "multi-module-aws" / "foo"
+    }
+
+    object bar extends testKit.BaseModule with Smithy4sModule {
+      override def moduleDeps = Seq(foo)
+      override def scalaVersion = "2.13.8"
+      override def millSourcePath = resourcePath / "multi-module-aws" / "bar"
+    }
+
+    val fooEv =
+      testKit.staticTestEvaluator(foo)(FullName("multi-module-aws-foo"))
+
+    val barEv =
+      testKit.staticTestEvaluator(bar)(FullName("multi-module-aws-bar"))
+
+    compileWorks(foo, fooEv)
+    checkFileExist(
+      fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Lambda.scala",
+      shouldExist = true
+    )
+    // Checking no aws package is generated
+    checkFileExist(
+      fooEv.outPath / "smithy4sOutputDir.dest" / "scala" / "aws",
+      shouldExist = false
+    )
+
+    compileWorks(bar, barEv)
+    checkFileExist(
+      barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Lambda.scala",
+      shouldExist = false
+    )
+  }
+
   private def withFile[A](path: os.Path, content: String)(f: => A): A = {
     os.write(path, content, createFolders = true)
     try f
@@ -180,12 +225,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     )
   }
 
-  private def checkFileExist(path: os.Path, shouldExist: Boolean) = {
+  private def checkFileExist(path: os.Path, shouldExist: Boolean)(implicit
+      loc: Location
+  ) = {
     if (!os.exists(path) && shouldExist) {
-      sys.error(s"${path} file not found")
+      fail(s"${path} file not found")
     }
     if (os.exists(path) && !shouldExist) {
-      sys.error(s"${path} file should not exist")
+      fail(s"${path} file should not exist")
     }
   }
 }
