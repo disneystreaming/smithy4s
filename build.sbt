@@ -154,8 +154,9 @@ lazy val core = projectMatrix
       "smithy.waiters",
       "alloy"
     ),
-    genDiscoverModels := true,
-    genSmithyDependencies := Seq(Dependencies.Smithy.waiters),
+    genSmithyDependencies ++= Seq(
+      Dependencies.Smithy.waiters
+    ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / sourceGenerators += {
       sourceDirectory
@@ -253,7 +254,7 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    genSmithyDependencies := Seq(Dependencies.Smithy.awsTraits),
+    genSmithyDependencies ++= Seq(Dependencies.Smithy.awsTraits),
     Compile / allowedNamespaces := Seq(
       "aws.api",
       "aws.auth",
@@ -314,7 +315,7 @@ lazy val `aws-http4s` = projectMatrix
         Dependencies.Http4s.emberClient.value % Test
       )
     },
-    Test / genSmithyDependencies := Seq(
+    Test / genSmithyDependencies ++= Seq(
       Dependencies.Smithy.waiters,
       Dependencies.Smithy.awsTraits
     ),
@@ -411,6 +412,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       // this allows running `scripted` alone
       val _ = List(
         // for the code being built
+        (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
@@ -449,6 +451,7 @@ lazy val millCodegenPlugin = projectMatrix
       // this allows running `scripted` alone
       val _ = List(
         // for the code being built
+        (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
@@ -527,7 +530,6 @@ lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
-    genDiscoverModels := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
       Dependencies.Cats.core.value
@@ -655,7 +657,6 @@ lazy val tests = projectMatrix
   .dependsOn(core)
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
-    genDiscoverModels := true,
     allowedNamespaces := Seq(
       "smithy4s.example"
     ),
@@ -692,7 +693,7 @@ lazy val complianceTests = projectMatrix
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
-    Compile / genSmithyDependencies := Seq(Dependencies.Smithy.testTraits),
+    Compile / genSmithyDependencies ++= Seq(Dependencies.Smithy.testTraits),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
@@ -709,7 +710,6 @@ lazy val complianceTests = projectMatrix
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
     ),
-    Test / genDiscoverModels := true,
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -732,7 +732,6 @@ lazy val example = projectMatrix
       "smithy4s.example.common",
       "smithy4s.example.collision"
     ),
-    genDiscoverModels := true, // to discover alloy
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
@@ -769,7 +768,6 @@ lazy val guides = projectMatrix
   .dependsOn(http4s)
   .settings(
     Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
-    genDiscoverModels := true,
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
     ),
@@ -939,7 +937,9 @@ lazy val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
   SettingKey[Seq[ModuleID]]("genSmithyDependencies")
-lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
+
+(ThisBuild / genSmithyDependencies) := Seq(Dependencies.Alloy.core)
+
 lazy val smithy4sSkip = SettingKey[Seq[String]]("smithy4sSkip")
 
 (ThisBuild / smithySpecs) := Seq.empty
@@ -961,8 +961,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
-  val discoverModels =
-    (config / genDiscoverModels).?.value.getOrElse(false)
   val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
   val smithy4sDependencies =
     (config / genSmithyDependencies).?.value.getOrElse(Seq.empty).map {
@@ -993,8 +991,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
               val outputOpt = List("--output", outputDir)
               val resourceOutputOpt =
                 List("--resource-output", resourceOutputDir)
-              val discoverModelsOpt =
-                (if (discoverModels) List("--discover-models") else Nil)
               val allowedNsOpt =
                 if (allowedNS.isDefined)
                   List("--allowed-ns", allowedNS.get.mkString(","))
@@ -1006,7 +1002,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
                 else Nil
               val args = outputOpt ++
                 resourceOutputOpt ++
-                discoverModelsOpt ++
                 allowedNsOpt ++
                 inputs ++
                 skipOpt ++

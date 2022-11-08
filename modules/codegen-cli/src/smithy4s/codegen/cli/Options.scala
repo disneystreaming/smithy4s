@@ -24,7 +24,6 @@ import com.monovore.decline.Opts
 import java.nio.file
 
 object Options {
-
   implicit val osPathArg: Argument[os.Path] = new Argument[os.Path] {
     def defaultMetavar: String = "path"
     def read(string: String): ValidatedNel[String, os.Path] =

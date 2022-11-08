@@ -124,10 +124,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     )
 
   private def findCodeGenDependencies(
-      updateReport: UpdateReport
+      updateReports: Seq[UpdateReport]
   ): List[os.Path] =
     for {
       markerConfig <- List(Smithy4s)
+      updateReport <- updateReports.toList
       smithy4sConfigReport <- updateReport.configuration(markerConfig).toList
       module <- smithy4sConfigReport.modules
       artifactFile <- module.artifacts
@@ -147,7 +148,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
-    val updateReport = (conf / update).value
+    val updateReport = {
+      (conf / update).value +: (conf / transitiveUpdate).value
+    }
 
     val localDependencyJars =
       (conf / smithy4sLocalJars).value.map(os.Path(_)).toList
