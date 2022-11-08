@@ -32,7 +32,6 @@ package object http4s extends Compat.Package {
 
     def simpleRestJson: SimpleRestJsonBuilder#ServiceBuilder[Alg, Op] =
       SimpleRestJsonBuilder(serviceProvider.service)
-
   }
 
   private[smithy4s] def toHttp4sMethod(method: SmithyMethod): Http4sMethod =
