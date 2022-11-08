@@ -34,7 +34,7 @@ import software.amazon.smithy.model.loader.ModelManifestException
 object ModelLoader {
 
   def load(
-      localSpecs: Set[File],
+      specs: Set[File],
       dependencies: List[String],
       repositories: List[String],
       transformers: List[String],
@@ -83,7 +83,7 @@ object ModelLoader {
       Model
         .assembler(validatorClassLoader)
         .addModel(sanitisingModelBuilder.build())
-        .addImports(localSpecs)
+        .addImports(specs)
         .assemble()
         .unwrap
 
