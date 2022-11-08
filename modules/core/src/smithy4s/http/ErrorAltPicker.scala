@@ -61,6 +61,7 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
           case _ => false
         }
       }
+      print(s"HEYO: ${matchingAlts.size} " + matchingAlts)
       if (matchingAlts.size == 1) matchingAlts.headOption else None
     }
     errorForStatus.orElse(fallbackError)

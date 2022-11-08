@@ -87,7 +87,7 @@ structure PriceError {
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
 operation GetMenu {
   input: GetMenuRequest,
-  errors: [NotFoundError, FallbackError],
+  errors: [NotFoundError, FallbackError, FallbackError2],
   output: GetMenuResult
 }
 
@@ -112,6 +112,12 @@ structure NotFoundError {
 
 @error("client")
 structure FallbackError {
+  @required
+  error: String
+}
+
+@error("client")
+structure FallbackError2 {
   @required
   error: String
 }
