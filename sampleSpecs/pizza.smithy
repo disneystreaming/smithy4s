@@ -87,6 +87,11 @@ structure PriceError {
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
 operation GetMenu {
   input: GetMenuRequest,
+  // FallbackError2 is added to test the scenario where there is a status
+  // code returned to a client (with no X-Error-Type header) that does NOT
+  // map directly any `httpError` status codes in the smithy spec AND there
+  // are two errors that are annotated with `@error("client")`. This means
+  // there is no way to disambiguate between them automatically.
   errors: [NotFoundError, FallbackError, FallbackError2],
   output: GetMenuResult
 }
@@ -116,6 +121,7 @@ structure FallbackError {
   error: String
 }
 
+// added to test error handling scenarios in `operation GetMenu`
 @error("client")
 structure FallbackError2 {
   @required
