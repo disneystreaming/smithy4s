@@ -106,8 +106,13 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     "msg=value smithy4sInputDir in object autoImport is deprecated: Deprecated in 0.17, use `smithy4sInputDirs` instead."
   )
   def defaultSettings(config: Configuration) = Seq(
-    config / smithy4sInputDirs := (config / unmanagedSourceDirectories).value
-      .map(_.getParentFile() / "smithy") :+ (config / smithy4sInputDir).value,
+    config / smithy4sInputDir := (config / sourceDirectory).value / "smithy",
+    config / smithy4sInputDirs := {
+      val unmanaged = (config / unmanagedSourceDirectories).value
+        .map(_.getParentFile() / "smithy")
+      val default = (config / smithy4sInputDir).value
+      (unmanaged :+ default).distinct
+    },
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
