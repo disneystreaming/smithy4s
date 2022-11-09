@@ -1,4 +1,4 @@
-# check if smithy4sCodegen works in multimodule contexts
+# check if smithy4sCodegen works with libraries that were built with Smithy4s
 > foo/publishLocal
 > bar/compile
 $ exists bar/target/scala-2.13/src_managed/main/bar/Bar.scala

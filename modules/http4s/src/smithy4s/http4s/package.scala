@@ -26,12 +26,13 @@ import smithy4s.http.{HttpMethod => SmithyMethod}
 
 package object http4s extends Compat.Package {
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
+  implicit final class ServiceOps[Alg[_[_, _, _, _, _]]](
+      private[this] val serviceProvider: smithy4s.Service.Provider[Alg]
   ) {
 
-    def simpleRestJson: SimpleRestJsonBuilder#ServiceBuilder[Alg, Op] =
-      SimpleRestJsonBuilder(serviceProvider.service)
+    def simpleRestJson: SimpleRestJsonBuilder.ServiceBuilder[Alg] =
+      SimpleRestJsonBuilder(serviceProvider)
+
   }
 
   private[smithy4s] def toHttp4sMethod(method: SmithyMethod): Http4sMethod =

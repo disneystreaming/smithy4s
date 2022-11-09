@@ -2,9 +2,9 @@ package smithy4s.example
 
 package object collision {
   type ReservedNameService[F[_]] = smithy4s.kinds.FunctorAlgebra[ReservedNameServiceGen, F]
-  object ReservedNameService extends smithy4s.Service.Provider[ReservedNameServiceGen, ReservedNameServiceOperation] {
+  object ReservedNameService extends smithy4s.Service.Provider[ReservedNameServiceGen] {
     def apply[F[_]](implicit F: ReservedNameService[F]): F.type = F
-    def service: smithy4s.Service[ReservedNameServiceGen, ReservedNameServiceOperation] = ReservedNameServiceGen
+    def service: smithy4s.Service[ReservedNameServiceGen] = ReservedNameServiceGen
     val id: smithy4s.ShapeId = service.id
   }
 

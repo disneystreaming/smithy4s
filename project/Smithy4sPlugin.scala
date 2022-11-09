@@ -105,7 +105,9 @@ object Smithy4sPlugin extends AutoPlugin {
     // https://scalacenter.github.io/scalafix/docs/users/installation.html
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Test / fork := virtualAxes.?.value.forall(_.contains(VirtualAxis.jvm)),
+    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}"
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(
