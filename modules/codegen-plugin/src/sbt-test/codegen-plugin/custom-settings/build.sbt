@@ -1,6 +1,8 @@
 lazy val commonSettings = Def.settings(
   scalaVersion := "2.13.6",
-  Compile / smithy4sInputDir := (ThisBuild / baseDirectory).value / "smithy_input",
+  Compile / smithy4sInputDirs := Seq(
+    (ThisBuild / baseDirectory).value / "smithy_input"
+  ),
   Compile / smithy4sAllowedNamespaces := List(
     "aws.iam",
     "smithy4s.example"
