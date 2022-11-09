@@ -30,7 +30,11 @@ object FunctorK {
   }
 }
 
+<<<<<<< HEAD
 trait FunctorK2[Alg[_[_, _]]]{
+=======
+trait FunctorK2[Alg[_[_, _]]] {
+>>>>>>> origin/series/0.17
   def mapK2[F[_, _], G[_, _]](alg: Alg[F], function: PolyFunction2[F, G]): Alg[G]
 }
 object FunctorK2 {
@@ -41,7 +45,11 @@ object FunctorK2 {
   }
 }
 
+<<<<<<< HEAD
 trait FunctorK5[Alg[_[_, _, _, _, _]]]{
+=======
+trait FunctorK5[Alg[_[_, _, _, _, _]]] {
+>>>>>>> origin/series/0.17
   def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G]
 }
 object FunctorK5 {

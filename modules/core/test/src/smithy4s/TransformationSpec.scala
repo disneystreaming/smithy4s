@@ -20,7 +20,7 @@ import smithy4s.example._
 
 import munit._
 import scala.util.{Failure, Success, Try}
-class TransformationSmokeSpec() extends FunSuite {
+class TransformationSpec() extends FunSuite {
 
   test("transform method can be called with poly functions") {
     object stub extends Weather[Option] {

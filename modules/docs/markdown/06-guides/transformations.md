@@ -39,18 +39,23 @@ println(greetServiceOption.greet("John"))
 
 ## Error-related transformations
 
-Using transformations, it is possible to surface errors into the context a service operates, or, in the contrary, to absorb errors to make them disappear from the context. The generated interfaces contain the accurate information associated to each method, and the companion
-objects contain the necessary constructs to transform typed-errors into throwables and to recover type-errors from throwables.
+Using transformations, it is possible to surface errors into the context a service operates, or, in the contrary, to absorb errors to make them disappear from the context. The generated interfaces contain the accurate information associated to each method, and the companion objects contain the necessary constructs to transform typed-errors into throwables and to recover type-errors from throwables.
 
 ```scala mdoc:passthrough
-docs.InlineSmithyFile("kvstore.smithy")
+docs.InlineSmithyFile.fromSample("kvstore.smithy")
 ```
 
 ### Surfacing errors
 
-```scala mdoc
+The `smithy4s.Transformation.SurfaceError` interface codifies the transformation of service implementations from contexts that represent errors as a generic `Throwable`, from contexts that have the awareness of the errors specified in the specifications. It is useful when you want to exhaustively handle the errors that are specified (as opposed to letting them propagate).
 
+To make the ascription of such contexts easier, Smithy4s generates `WithError[F[_, _]]` type aliases in the companion objects of services. This can
+be used conjointly with types that have "two" parameters, one for the error, one for the result. For instance `type BIO[E, A] = EitherT[IO, E, A]`.
+
+
+```scala mdoc
 import smithy4s.example._
+import smithy4s.example.KVStore
 import smithy4s.Transformation
 import scala.util.{Failure, Success, Try}
 
@@ -60,7 +65,8 @@ object kvStoreTry extends KVStore[Try] {
   def get(key: String): Failure[Value] = Failure(KeyNotFoundError(s"Key $key wasn't found"))
 }
 
-// SurfaceError allows to go from mono-functor to bi-functor.
+// SurfaceError allows to go from mono-functor to bi-functor, for instance, from
+// IO[A] to EitherT[IO, E, A]
 val toEither: Transformation.SurfaceError[Try, Either] =
   new Transformation.SurfaceError[Try, Either] {
     def apply[E, A](
@@ -78,4 +84,43 @@ val toEither: Transformation.SurfaceError[Try, Either] =
 
 val kvStoreEither: KVStore.WithError[Either] = kvStoreTry.transform(toEither)
 val result: Either[KVStore.GetError, Value] = kvStoreEither.get("foo")
+```
+
+### Absorbing errors
+
+The `smithy4s.Transformation.AbsorbErrors` interface is the opposite as the `SurfaceError` : it codifies the absorption of errors known by the service into generic error channels.
+
+It is useful to implement services in a way that leverages the type-checker to ensure that the returned errors have been specified in Smithy,
+before passing the implementation to a generic router that is only able to work against monofunctor.
+
+```scala mdoc:reset
+import smithy4s.example._
+import smithy4s.example.KVStore
+import smithy4s.Transformation
+import scala.util.{Failure, Success, Try}
+
+object kvStoreEither extends KVStore.WithError[Either] {
+  def delete(key: String): Either[KVStore.DeleteError, Unit] = Right(())
+  def put(key: String, value: String): Either[Nothing, Unit] = Right(())
+  def get(key: String): Either[KVStore.GetError, Value] =
+    Left(
+      KVStore.GetError.KeyNotFoundErrorCase(
+        KeyNotFoundError(s"Key $key wasn't found")
+      )
+    )
+}
+
+val toTry: Transformation.AbsorbError[Either, Try] =
+  new Transformation.AbsorbError[Either, Try] {
+    def apply[E, A](
+        value: Either[E, A],
+        thrower: E => Throwable
+    ): Try[A] = value match {
+      case Left(error)  => Failure(thrower(error))
+      case Right(value) => Success(value)
+    }
+  }
+
+val kvStoreTry: KVStore[Try] = kvStoreEither.transform(toTry)
+val result: Try[Value] = kvStoreTry.get("foo")
 ```

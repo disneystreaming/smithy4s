@@ -10,13 +10,28 @@ Basically, you annotate operations and/or structures (that depends on the type o
 Smithy4s publishes a module that you can use to write compliance test if you're implementing a protocol. Add the following to your dependencies if you use `sbt`:
 
 ```scala
-"com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
+
+import smithy4s.codegen.BuildInfo._
+
+libraryDependencies ++= Seq(
+  // Needed to access the smithy.test traits in your smithy models
+  "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
+  "com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
+)
 ```
 
 If you use `mill`:
 
 ```scala
-ivy"com.disneystreaming.smithy4s::smithy4s-compliance-tests:${smithy4sVersion()}",
+import smithy4s.codegen.BuildInfo._
+
+def smithy4sIvyDeps = Agg(
+  ivy"software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion"
+)
+
+def ivyDeps = Agg(
+  ivy"com.disneystreaming.smithy4s::smithy4s-compliance-tests:${smithy4sVersion()}"
+)
 ```
 
 The rest of this document will demonstrate how to write a Smithy specification that specify HTTP compliance tests, and then how to use the module mentioned above to run the tests.
@@ -25,47 +40,8 @@ _Note: currently, only `httprequesttests-trait` are supported. other traits supp
 
 ## Example specification
 
-```kotlin
-$version: "2"
-
-namespace smithy4s.hello
-
-use alloy#simpleRestJson
-use smithy.test#httpRequestTests
-
-@simpleRestJson
-service HelloWorldService {
-  version: "1.0.0",
-  operations: [Hello]
-}
-@httpRequestTests([
-    {
-        id: "hello-success"
-        protocol: simpleRestJson
-        method: "POST"
-        uri: "/World"
-        params: { name: "World" }
-    },
-    {
-        id: "hello-fails"
-        protocol: simpleRestJson
-        method: "POST"
-        uri: "/fail"
-        params: { name: "World" }
-    }
-])
-@http(method: "POST", uri: "/{name}", code: 200)
-operation Hello {
-  input := {
-    @httpLabel
-    @required
-    name: String
-  },
-  output := {
-    @required
-    message: String
-  }
-}
+```scala mdoc:passthrough
+docs.InlineSmithyFile.fromSample("test.smithy")
 ```
 
 We have a very simple specification: one operation with basic input and output shapes. We've added a `httpRequestTests` to define a compliance test for protocol implementors.
@@ -83,7 +59,7 @@ import cats.effect._
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.compliancetests._
-import smithy4s.example._
+import smithy4s.example.test._
 import smithy4s.http4s._
 import smithy4s.Service
 ```
@@ -93,15 +69,15 @@ Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `Serv
 ```scala mdoc:silent
 val clientTestGenerator = new ClientHttpComplianceTestCase[
     alloy.SimpleRestJson,
-    HelloWorldServiceGen,
-    HelloWorldServiceOperation
+    HelloServiceGen,
   ](
-    alloy.SimpleRestJson()
+    alloy.SimpleRestJson(),
+    HelloService
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
-    def getClient(app: HttpApp[IO]): Resource[IO, HelloWorldService[IO]] =
-      SimpleRestJsonBuilder(HelloWorldServiceGen)
+    def getClient(app: HttpApp[IO]): Resource[IO, HelloService[IO]] =
+      SimpleRestJsonBuilder(HelloService)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
@@ -110,14 +86,14 @@ val clientTestGenerator = new ClientHttpComplianceTestCase[
 
 val serverTestGenerator = new ServerHttpComplianceTestCase[
     alloy.SimpleRestJson,
-    HelloWorldServiceGen,
-    HelloWorldServiceOperation
+    HelloServiceGen,
   ](
-    alloy.SimpleRestJson()
+    alloy.SimpleRestJson(),
+    HelloService
   ) {
-    def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+    def getServer[Alg2[_[_, _, _, _, _]]](
       impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]
-  )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]] =
+  )(implicit s: Service[Alg2]): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(s).routes(impl).resource
     def codecs = SimpleRestJsonBuilder.codecs
   }

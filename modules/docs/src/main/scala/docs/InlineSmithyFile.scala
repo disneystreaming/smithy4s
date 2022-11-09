@@ -2,7 +2,7 @@ package docs
 
 object InlineSmithyFile {
 
-  val x = foo.GreetInput("foo")
+  // import smithy4s.hello.HelloWorldService
 
   def apply(fileName: String) = {
     val workspace = os.pwd

@@ -35,19 +35,23 @@ import kinds._
   *   metaprogramming.
   */
 trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with Service.Provider[Alg] {
-  type Operation[E, I, O, SI, SO]
+  type Operation[I, E, O, SI, SO]
+  type Endpoint[I, E, O, SI, SO] = smithy4s.Endpoint[Operation, I, E, O, SI, SO]
+  type Interpreter[F[_, _, _, _, _]] = PolyFunction5[Operation, F]
+  type FunctorInterpreter[F[_]] = PolyFunction5[Operation, kinds.Kind1[F]#toKind5]
+  type BiFunctorInterpreter[F[_, _]] = PolyFunction5[Operation, kinds.Kind2[F]#toKind5]
 
   val service: Service[Alg] = this
-  def endpoints: List[Endpoint[Operation, _, _, _, _, _]]
-  def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[Operation, I, E, O, SI, SO])
+  def endpoints: List[Endpoint[_, _, _, _, _]]
+  def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO])
   def version: String
   def hints: Hints
   def reified: Alg[Operation]
   def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Operation, P]): Alg[P]
   def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P]
 
-  final val opToEndpoint : PolyFunction5[Operation, Endpoint[Operation, *, *, *, *, *]] = new PolyFunction5[Operation, Endpoint[Operation, *, *, *, *, *]]{
-    def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[Operation,I,E,O,SI,SO] = endpoint(op)._2
+  final val opToEndpoint : PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
+    def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] = endpoint(op)._2
   }
 
 }

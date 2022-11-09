@@ -5,12 +5,11 @@ import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
 import smithy4s.kinds.FunctorAlgebra
+import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.ShapeId
-import smithy4s.Endpoint
 
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -30,7 +29,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
 
   val hints : Hints = Hints.empty
 
-  val endpoints: List[Endpoint[BrandServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[BrandServiceGen.Endpoint[_, _, _, _, _]] = List(
     AddBrands,
   )
 
@@ -57,7 +56,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
     }
   }
   case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
-  object AddBrands extends Endpoint[BrandServiceOperation, AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
+  object AddBrands extends BrandServiceGen.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddBrands")
     val input: Schema[AddBrandsInput] = AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)

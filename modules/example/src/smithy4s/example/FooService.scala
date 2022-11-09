@@ -5,12 +5,11 @@ import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
 import smithy4s.kinds.FunctorAlgebra
+import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.ShapeId
-import smithy4s.Endpoint
 
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -30,7 +29,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   val hints : Hints = Hints.empty
 
-  val endpoints: List[Endpoint[FooServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[FooServiceGen.Endpoint[_, _, _, _, _]] = List(
     GetFoo,
   )
 
@@ -57,7 +56,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     }
   }
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing]
-  object GetFoo extends Endpoint[FooServiceOperation, Unit, Nothing, GetFooOutput, Nothing, Nothing] {
+  object GetFoo extends FooServiceGen.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)

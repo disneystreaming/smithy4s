@@ -21,7 +21,6 @@ import cats.effect.Resource
 import cats.syntax.all._
 
 import internals.AwsJsonRPCInterpreter
-import smithy4s.kinds.PolyFunction5
 
 object AwsClient {
 
@@ -58,7 +57,7 @@ object AwsClient {
 
     private def interpreter[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
-    ): PolyFunction5[service.Operation, AwsCall[F, *, *, *, *, *]] =
+    ): service.Interpreter[AwsCall[F, *, *, *, *, *]] =
       awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
           new AwsJsonRPCInterpreter[Alg, service.Operation, F](

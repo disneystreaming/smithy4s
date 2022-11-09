@@ -73,6 +73,8 @@ object Alt {
     def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
         encoderK: EncoderK[G, Result]
     ): G[U]
+
+    def projector[A](alt: Alt[F, U, A]): U => Option[A]
   }
 
   object Dispatcher {
@@ -104,6 +106,13 @@ object Alt {
               encoderK(precompiledAlts(awv.alt), awv.value)
           }
         }
+      }
+
+      def projector[A](alt: Alt[F, U, A]): U => Option[A] = { u =>
+        val under = underlying(u)
+        if (under.alt.label == alt.label)
+          Some(under.value.asInstanceOf[A])
+        else None
       }
     }
   }

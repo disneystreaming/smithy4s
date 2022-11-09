@@ -27,7 +27,7 @@ package object http {
       path: String
   ): Option[
     (
-        Endpoint[service.Operation, _, _, _, _, _],
+        service.Endpoint[_, _, _, _, _],
         http.HttpEndpoint[_],
         Map[String, String]
     )
@@ -47,7 +47,7 @@ package object http {
       pathSegments: Vector[String]
   ): Option[
     (
-        Endpoint[service.Operation, _, _, _, _, _],
+        service.Endpoint[_, _, _, _, _],
         http.HttpEndpoint[_],
         Map[String, String]
     )
