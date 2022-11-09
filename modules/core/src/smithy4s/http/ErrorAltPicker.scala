@@ -50,11 +50,12 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
       .flatMap { alt =>
         alt.hints.get(HttpError).map { he => he.value -> alt }
       }
-      .groupMap(_._1)(_._2)
+      .groupBy(_._1)
       .collect {
         // Discard alternative where another alternative has the same http status code
-        case (status, allAlts) if allAlts.size == 1 => status -> allAlts.head
+        case (status, allAlts) if allAlts.size == 1 => status -> allAlts.head._2
       }
+      .toMap
     val errorForStatus: Int => Option[SchemaAlt[E, _]] = perStatusCode.get
 
     lazy val fallbackError: Int => Option[SchemaAlt[E, _]] = {
