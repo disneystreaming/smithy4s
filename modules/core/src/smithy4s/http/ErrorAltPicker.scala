@@ -41,29 +41,51 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
     .map(alt => alt.instance.shapeId.name -> alt)
     .toMap[String, SchemaAlt[E, _]]
 
-  private val byStatusCode: Int => Option[SchemaAlt[E, _]] = { inputStatus =>
-    val errorForStatus: Option[SchemaAlt[E, _]] = {
-      val results =
-        alts.filter(_.hints.get(HttpError).exists(_.value == inputStatus))
-      if (results.length == 1) results.headOption else None
-    }
-    lazy val fallbackError: Option[SchemaAlt[E, _]] = {
-      val matchingAlts = alts.filter { alt =>
-        alt.hints.get(Error) match {
-          case Some(e) if alt.hints.get(HttpError).isEmpty =>
-            // If Error trait is present (must be 'client' or 'server') and
-            // the status code is in the client/server error range, then use that alt
-            val isClientError =
-              e.value.toLowerCase == "client" && inputStatus >= 400 && inputStatus < 500
-            val isServerError =
-              e.value.toLowerCase == "server" && inputStatus >= 500 && inputStatus < 600
-            isClientError || isServerError
-          case _ => false
-        }
+  // build a map: status code to alternative
+  // exclude all status code that are used on multiple alternative
+  // in essence, it gives a `Map[Int, SchemaAlt[E, _]]` that's used
+  // for the lookup
+  private val byStatusCode: Int => Option[SchemaAlt[E, _]] = {
+    val perStatusCode: Map[Int, SchemaAlt[E, _]] = alts
+      .flatMap { alt =>
+        alt.hints.get(HttpError).map { he => he.value -> alt }
       }
-      if (matchingAlts.size == 1) matchingAlts.headOption else None
+      .groupMap(_._1)(_._2)
+      .collect {
+        // Discard alternative where another alternative has the same http status code
+        case (status, allAlts) if allAlts.size == 1 => status -> allAlts.head
+      }
+    val errorForStatus: Int => Option[SchemaAlt[E, _]] = perStatusCode.get
+
+    lazy val fallbackError: Int => Option[SchemaAlt[E, _]] = {
+      // grab the alt that's annotated with the expected `Error` hint
+      // only if there is only one
+      def forErrorType(expected: Error): Option[SchemaAlt[E, _]] = {
+        val matchingAlts = alts
+          .flatMap { alt =>
+            alt.hints
+              .get(HttpError)
+              .fold(
+                alt.hints.get(Error).collect {
+                  case e if e == expected => alt
+                }
+              )(_ => None)
+
+          }
+        if (matchingAlts.size == 1) matchingAlts.headOption else None
+      }
+      val clientAlt: Option[SchemaAlt[E, _]] = forErrorType(Error.CLIENT)
+      val serverAlt: Option[SchemaAlt[E, _]] = forErrorType(Error.SERVER)
+
+      { intStatus =>
+        if (intStatus >= 400 && intStatus < 500) clientAlt
+        else if (intStatus >= 500 && intStatus < 600) serverAlt
+        else None
+      }
     }
-    errorForStatus.orElse(fallbackError)
+
+    inputStatus =>
+      errorForStatus(inputStatus).orElse(fallbackError(inputStatus))
   }
 
   def getPreciseAlternative(
