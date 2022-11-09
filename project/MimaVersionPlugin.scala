@@ -84,8 +84,7 @@ object MimaVersionPlugin extends AutoPlugin {
     mimaBinaryIssueFilters ++= Seq(
       // Focusing on backward compat as opposed to forward, for now.
       ProblemFilters.exclude[ReversedMissingMethodProblem]("smithy4s.*"),
-      ProblemFilters.exclude[Problem]("*.internals*"),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem]("*fromSchema")
+      ProblemFilters.exclude[Problem]("*.internals*")
     ),
     mimaReportBinaryIssuesIfRelevant := filterTaskWhereRelevant(
       mimaReportBinaryIssues
