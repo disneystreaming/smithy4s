@@ -21,7 +21,6 @@ import java.util.Base64
 import java.util.UUID
 
 import smithy.api.JsonName
-import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
