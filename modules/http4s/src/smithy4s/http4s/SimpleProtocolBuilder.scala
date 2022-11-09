@@ -107,7 +107,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sReverseRouter[Alg, service.Op, F](
+          new SmithyHttp4sReverseRouter[Alg, service.Operation, F](
             uri,
             service,
             client,
@@ -146,9 +146,9 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sRouter[Alg, service.Op, F](
+          new SmithyHttp4sRouter[Alg, service.Operation, F](
             service,
-            impl,
+            service.toPolyFunction[Kind1[F]#toKind5](impl),
             errorTransformation,
             entityCompiler
           ).routes
