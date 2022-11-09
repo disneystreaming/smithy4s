@@ -166,7 +166,7 @@ object Field {
     }
 
     def getDefault: Option[Document] =
-      field.instance.hints.get(smithy.api.Default).map(_.value)
+      field.instance.getDefault
 
   }
 

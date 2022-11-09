@@ -304,7 +304,7 @@ class DocumentDecoderSchemaVisitor(
     def jsonLabel[A](field: Field[Schema, S, A]): String =
       field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
     def getDefault[A](field: Field[Schema, S, A]): Option[Document] =
-      field.instance.hints.get(Default).map(_.value)
+      field.instance.getDefault
 
     def fieldDecoder[A](
         field: Field[Schema, S, A]
