@@ -303,8 +303,6 @@ class DocumentDecoderSchemaVisitor(
   ): DocumentDecoder[S] = {
     def jsonLabel[A](field: Field[Schema, S, A]): String =
       field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
-    def getDefault[A](field: Field[Schema, S, A]): Option[Document] =
-      field.instance.getDefault
 
     def fieldDecoder[A](
         field: Field[Schema, S, A]
@@ -315,7 +313,7 @@ class DocumentDecoderSchemaVisitor(
     ) => Unit = {
       val jLabel = jsonLabel(field)
 
-      val maybeDefault = getDefault(field)
+      val maybeDefault = field.instance.getDefault
 
       if (field.isOptional) {
         (
