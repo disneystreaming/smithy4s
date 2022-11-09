@@ -610,9 +610,7 @@ lazy val http4s = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
-    },
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
-    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}"
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
