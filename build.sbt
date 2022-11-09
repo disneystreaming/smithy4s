@@ -204,7 +204,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     Compile / packageSrc / mappings ++= {

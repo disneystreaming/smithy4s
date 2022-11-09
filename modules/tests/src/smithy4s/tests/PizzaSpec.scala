@@ -437,7 +437,7 @@ abstract class PizzaSpec
   pureTest("Happy path: httpMatch") {
     val matchResult = smithy4s.http
       .httpMatch(
-        PizzaAdminService,
+        PizzaAdminService.service,
         smithy4s.http.HttpMethod.POST,
         Vector("restaurant", "foo", "menu", "item")
       )
@@ -453,7 +453,7 @@ abstract class PizzaSpec
 
   pureTest("Negative: http no match (bad path)") {
     val matchResult = smithy4s.http.httpMatch(
-      PizzaAdminService,
+      PizzaAdminService.service,
       smithy4s.http.HttpMethod.POST,
       Vector("restaurants", "foo", "menu", "item")
     )
@@ -462,7 +462,7 @@ abstract class PizzaSpec
 
   pureTest("Negative: http no match (bad method)") {
     val matchResult = smithy4s.http.httpMatch(
-      PizzaAdminService,
+      PizzaAdminService.service,
       smithy4s.http.HttpMethod.PATCH,
       Vector("restaurant", "foo", "menu", "item")
     )

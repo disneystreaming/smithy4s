@@ -24,7 +24,6 @@ import com.monovore.decline.Command
 import smithy.api.Documentation
 import smithy.api.ExternalDocumentation
 import smithy.api.Http
-import smithy4s.Endpoint
 import smithy4s.Service
 import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi
@@ -44,13 +43,13 @@ final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
   * @param service
   *   The service to build a client call for
   */
-class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
+class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
     mainOpts: Opts[Entrypoint[Alg, F]],
-    service: Service[Alg, Op]
+    service: Service[Alg]
 ) {
 
   private def protocolSpecificHelp(
-      endpoint: Endpoint[Op, _, _, _, _, _]
+      endpoint: service.Endpoint[_, _, _, _, _]
   ): List[String] =
     HttpEndpoint
       .cast(endpoint)
@@ -69,7 +68,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
       .toList
 
   private def makeHelpBlocks(
-      endpoint: Endpoint[Op, _, _, _, _, _]
+      endpoint: service.Endpoint[_, _, _, _, _]
   ): List[String] =
     protocolSpecificHelp(endpoint) ++
       endpoint.hints.get[Documentation].map(_.value) ++
@@ -82,7 +81,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
         )
 
   private def endpointSubcommand[I, E, O](
-      endpoint: Endpoint[Op, I, E, O, _, _]
+      endpoint: service.Endpoint[I, E, O, _, _]
   ): Opts[F[Unit]] = {
 
     def compileToOpts[A](schema: smithy4s.Schema[A]): Opts[A] =
@@ -133,12 +132,10 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]: MonadThrow](
 }
 
 object Smithy4sCli {
-  def standalone[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
-      _
-  ]: Console: MonadThrow](
+  def standalone[Alg[_[_, _, _, _, _]], F[_]: Console: MonadThrow](
       impl: Opts[FunctorAlgebra[Alg, F]]
-  )(implicit service: Service[Alg, Op]) = {
-    new Smithy4sCli[Alg, Op, F](
+  )(implicit service: Service[Alg]) = {
+    new Smithy4sCli[Alg, F](
       (
         impl,
         PrinterApi.opts.default[F]()

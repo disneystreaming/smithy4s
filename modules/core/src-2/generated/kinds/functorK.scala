@@ -19,7 +19,7 @@
 package smithy4s
 package kinds
 
-trait FunctorK[Alg[_[_]]]{
+trait FunctorK[Alg[_[_]]] {
   def mapK[F[_], G[_]](alg: Alg[F], function: PolyFunction[F, G]): Alg[G]
 }
 object FunctorK {
@@ -30,7 +30,7 @@ object FunctorK {
   }
 }
 
-trait FunctorK2[Alg[_[_, _]]]{
+trait FunctorK2[Alg[_[_, _]]] {
   def mapK2[F[_, _], G[_, _]](alg: Alg[F], function: PolyFunction2[F, G]): Alg[G]
 }
 object FunctorK2 {
@@ -41,7 +41,7 @@ object FunctorK2 {
   }
 }
 
-trait FunctorK5[Alg[_[_, _, _, _, _]]]{
+trait FunctorK5[Alg[_[_, _, _, _, _]]] {
   def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G]
 }
 object FunctorK5 {
