@@ -61,6 +61,24 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def client[F[_]: EffectCompat](client: Client[F]) =
       new ClientBuilder[Alg, Op, F](client, service)
 
+    @deprecated(
+      "Use the ClientBuilder instead,  client(client).uri(baseuri).use"
+    )
+    def client[F[_]: EffectCompat](
+        http4sClient: Client[F],
+        baseUri: Uri
+    ): Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] =
+      client(http4sClient).uri(baseUri).use
+
+    @deprecated(
+      "Use the ClientBuilder instead , client(client).uri(baseuri).resource"
+    )
+    def clientResource[F[_]: EffectCompat](
+        http4sClient: Client[F],
+        baseUri: Uri
+    ): Resource[F, FunctorAlgebra[Alg, F]] =
+      client(http4sClient).uri(baseUri).resource
+
     def routes[F[_]: EffectCompat](
         impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, Op, F] =
