@@ -25,7 +25,6 @@ import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
 import smithy4s.Document
-import smithy4s.Endpoint
 import smithy4s.http.CodecAPI
 import smithy4s.Service
 import smithy4s.ShapeTag
@@ -38,22 +37,22 @@ import smithy4s.Errorable
 
 abstract class ServerHttpComplianceTestCase[
     P,
-    Alg[_[_, _, _, _, _]],
-    Op[_, _, _, _, _]
+    Alg[_[_, _, _, _, _]]
 ](
-    protocol: P
+    protocol: P,
+    serviceProvider: Service.Provider[Alg]
 )(implicit
-    originalService: Service[Alg, Op],
     ce: CompatEffect,
     protocolTag: ShapeTag[P]
 ) {
   import ce._
   import org.http4s.implicits._
+  private[compliancetests] val originalService = serviceProvider.service
   private val baseUri = uri"http://localhost/"
 
-  def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+  def getServer[Alg2[_[_, _, _, _, _]]](
       impl: FunctorAlgebra[Alg2, IO]
-  )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]]
+  )(implicit s: Service[Alg2]): Resource[IO, HttpRoutes[IO]]
   def codecs: CodecAPI
 
   private def makeRequest(
@@ -108,10 +107,9 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private[compliancetests] def serverRequestTest[I, E, O, SE, SO](
-      endpoint: Endpoint[Op, I, E, O, SE, SO],
+      endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpRequestTestCase
   ): ComplianceTest[IO] = {
-    type R[I_, E_, O_, SE_, SO_] = IO[O_]
 
     val inputFromDocument = Document.Decoder.fromSchema(endpoint.input)
     ComplianceTest[IO](
@@ -119,10 +117,10 @@ abstract class ServerHttpComplianceTestCase[
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, IO] =
-            originalService.fromPolyFunction[R](
-              new FunctorInterpreter[Op, IO] {
+            originalService.fromPolyFunction[Kind1[IO]#toKind5](
+              new originalService.FunctorInterpreter[IO] {
                 def apply[I_, E_, O_, SE_, SO_](
-                    op: Op[I_, E_, O_, SE_, SO_]
+                    op: originalService.Operation[I_, E_, O_, SE_, SO_]
                 ): IO[O_] = {
                   val (in, endpointInternal) = originalService.endpoint(op)
 
@@ -154,7 +152,7 @@ abstract class ServerHttpComplianceTestCase[
   }
 
   private[compliancetests] def serverResponseTest[I, E, O, SE, SO](
-      endpoint: Endpoint[Op, I, E, O, SE, SO],
+      endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpResponseTestCase,
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[IO] = {
@@ -232,11 +230,11 @@ abstract class ServerHttpComplianceTestCase[
 
   private case class NoInputOp[I_, E_, O_, SE_, SO_]()
   private def prepareService[I, E, O, SE, SO](
-      endpoint: Endpoint[Op, I, E, O, SE, SO]
+      endpoint: originalService.Endpoint[I, E, O, SE, SO]
   ): (Service.Reflective[NoInputOp], Request[IO]) = {
     val amendedEndpoint =
         // format: off
-        new Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
+        new smithy4s.Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
           def hints: smithy4s.Hints = {
             val newHttp = smithy.api.Http(
               method = smithy.api.NonEmptyString("GET"),
@@ -263,8 +261,8 @@ abstract class ServerHttpComplianceTestCase[
       // format: off
       new Service.Reflective[NoInputOp] {
         override def id: ShapeId = ShapeId("custom", "service")
-        override def endpoints: List[Endpoint[NoInputOp, _, _, _, _, _]] = List(amendedEndpoint)
-        override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[NoInputOp, I_, E_, O_, SI_, SO_]) = ???
+        override def endpoints: List[Endpoint[_, _, _, _, _]] = List(amendedEndpoint)
+        override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[I_, E_, O_, SI_, SO_]) = ???
         override def version: String = originalService.version
         override def hints: Hints = originalService.hints
       }
