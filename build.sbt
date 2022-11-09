@@ -546,12 +546,7 @@ lazy val dynamic = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),
-    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Test / allowedNamespaces := Seq("smithy4s.example"),
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
-    ),
-    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue)
   )
   .jvmPlatform(
     allJvmScalaVersions,
