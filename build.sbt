@@ -9,7 +9,6 @@ ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / mimaBaseVersion := "0.17.0"
-ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
