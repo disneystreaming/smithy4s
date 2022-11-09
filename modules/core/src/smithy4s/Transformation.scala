@@ -65,7 +65,7 @@ object Transformation {
      new Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]]{
 
        def apply(func: SurfaceError[F, G], algF: FunctorAlgebra[Alg, F]) : BiFunctorAlgebra[Alg, G] = {
-        val polyFunction = service.toPolyFunction(algF)
+        val polyFunction = service.toPolyFunction[Kind1[F]#toKind5](algF)
         val interpreter = new PolyFunction5[service.Operation, Kind2[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[E,O] = {
             val endpoint = service.opToEndpoint(op)
@@ -76,7 +76,7 @@ object Transformation {
             func.apply(polyFunction(op), catcher)
           }
         }
-        service.fromPolyFunction(interpreter)
+        service.fromPolyFunction[Kind2[G]#toKind5](interpreter)
       }
     }
 
@@ -84,7 +84,7 @@ object Transformation {
      new Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{
 
        def apply(func: AbsorbError[F, G], algF: BiFunctorAlgebra[Alg, F]) : FunctorAlgebra[Alg, G] = {
-        val polyFunction = service.toPolyFunction(algF)
+        val polyFunction = service.toPolyFunction[Kind2[F]#toKind5](algF)
         val interpreter = new PolyFunction5[service.Operation, Kind1[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[O] = {
             val endpoint = service.opToEndpoint(op)
@@ -97,7 +97,7 @@ object Transformation {
             func.apply(polyFunction(op), thrower)
           }
         }
-        service.fromPolyFunction(interpreter)
+        service.fromPolyFunction[Kind1[G]#toKind5](interpreter)
       }
     }
 
