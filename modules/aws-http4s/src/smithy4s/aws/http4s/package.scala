@@ -23,8 +23,8 @@ import org.http4s.client.Client
 
 package object http4s {
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
+  implicit final class ServiceOps[Alg[_[_, _, _, _, _]]](
+      private[this] val serviceProvider: smithy4s.Service.Provider[Alg]
   ) {
 
     def awsClient[F[_]: Temporal](

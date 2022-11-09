@@ -109,9 +109,9 @@ Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `Serv
 val clientTestGenerator = new ClientHttpComplianceTestCase[
     alloy.SimpleRestJson,
     HelloWorldServiceGen,
-    HelloWorldServiceOperation
   ](
-    alloy.SimpleRestJson()
+    alloy.SimpleRestJson(),
+    HelloWorldService
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
@@ -126,13 +126,13 @@ val clientTestGenerator = new ClientHttpComplianceTestCase[
 val serverTestGenerator = new ServerHttpComplianceTestCase[
     alloy.SimpleRestJson,
     HelloWorldServiceGen,
-    HelloWorldServiceOperation
   ](
-    alloy.SimpleRestJson()
+    alloy.SimpleRestJson(),
+    HelloWorldService
   ) {
-    def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+    def getServer[Alg2[_[_, _, _, _, _]]](
       impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]
-  )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]] =
+  )(implicit s: Service[Alg2]): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(s).routes(impl).resource
     def codecs = SimpleRestJsonBuilder.codecs
   }
