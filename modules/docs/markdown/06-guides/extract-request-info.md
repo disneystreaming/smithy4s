@@ -61,7 +61,7 @@ final class HelloWorldServiceImpl(requestInfo: IO[RequestInfo]) extends HelloWor
 ```
 
 This is a basic implementation that, in addition to returning a `Greeting`, prints the `RequestInfo` out to the console.
-Note that it is getting the `RequestInfo` from the `IO[RequestInfo] that is being passed in as a constructor parameter. This `IO`
+Note that it is getting the `RequestInfo` from the `IO[RequestInfo]` that is being passed in as a constructor parameter. This `IO`
 will be created using the same `IOLocal` instance is passed to our middleware implementation.
 That way, the middleware can set the `RequestInfo` value that we are reading here.
 
