@@ -17,15 +17,15 @@
 package smithy4s.compliancetests
 
 import cats.effect.Deferred
-import cats.effect.IO
 import com.comcast.ip4s.Host
 import com.comcast.ip4s.Port
+import cats.effect.Async
 
-private[compliancetests] class CompatEffect {
-  def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
+private[compliancetests] class CompatEffect[F[_]](implicit val F: Async[F]) {
+  def deferred[A]: F[Deferred[F, A]] = Deferred[F, A]
 
-  val utf8Encode: fs2.Pipe[IO, String, Byte] = fs2.text.utf8.encode[IO]
-  val utf8Decode: fs2.Pipe[IO, Byte, String] = fs2.text.utf8.decode[IO]
+  val utf8Encode: fs2.Pipe[F, String, Byte] = fs2.text.utf8.encode[F]
+  val utf8Decode: fs2.Pipe[F, Byte, String] = fs2.text.utf8.decode[F]
 }
 
 object Compat {
@@ -35,5 +35,5 @@ object Compat {
 }
 
 object CompatEffect {
-  implicit val ce: CompatEffect = new CompatEffect
+  implicit def ce[F[_]: Async]: CompatEffect[F] = new CompatEffect[F]
 }

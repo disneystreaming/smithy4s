@@ -15,11 +15,12 @@
  */
 
 package smithy4s.compliancetests
+package internals
 
 import smithy4s.Schema
 import smithy4s.Errorable
 
-final case class ErrorResponseTest[A, E](
+private[compliancetests] final case class ErrorResponseTest[A, E](
     schema: Schema[A],
     errorable: Errorable[E]
 )

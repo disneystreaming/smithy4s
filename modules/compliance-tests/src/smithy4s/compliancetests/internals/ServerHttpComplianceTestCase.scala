@@ -15,19 +15,17 @@
  */
 
 package smithy4s.compliancetests
+package internals
 
 import java.nio.charset.StandardCharsets
 
 import cats.effect.IO
-import cats.effect.Resource
 import cats.implicits._
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
 import smithy4s.Document
-import smithy4s.http.CodecAPI
 import smithy4s.Service
-import smithy4s.ShapeTag
 import smithy4s.kinds._
 
 import scala.concurrent.duration._
@@ -35,25 +33,19 @@ import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Errorable
 
-abstract class ServerHttpComplianceTestCase[
-    P,
+private[compliancetests] class ServerHttpComplianceTestCase[
     Alg[_[_, _, _, _, _]]
 ](
-    protocol: P,
+    router: Router[IO],
     serviceProvider: Service.Provider[Alg]
 )(implicit
-    ce: CompatEffect,
-    protocolTag: ShapeTag[P]
+    ce: CompatEffect[IO]
 ) {
   import ce._
   import org.http4s.implicits._
+  import router._
   private[compliancetests] val originalService = serviceProvider.service
   private val baseUri = uri"http://localhost/"
-
-  def getServer[Alg2[_[_, _, _, _, _]]](
-      impl: FunctorAlgebra[Alg2, IO]
-  )(implicit s: Service[Alg2]): Resource[IO, HttpRoutes[IO]]
-  def codecs: CodecAPI
 
   private def makeRequest(
       baseUri: Uri,
@@ -132,7 +124,7 @@ abstract class ServerHttpComplianceTestCase[
               }
             )
 
-          getServer(fakeImpl)(originalService)
+          routes(fakeImpl)(originalService)
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
@@ -202,7 +194,7 @@ abstract class ServerHttpComplianceTestCase[
             }
           }
 
-        getServer(fakeImpl)(ammendedService)
+        routes(fakeImpl)(ammendedService)
           .use { server =>
             server.orNotFound
               .run(syntheticRequest)

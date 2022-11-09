@@ -20,15 +20,15 @@ import cats.effect.IO
 import cats.effect.concurrent.Deferred
 import cats.effect.ContextShift
 import cats.effect.Timer
+import cats.effect.Concurrent
 
-private[compliancetests] class CompatEffect(implicit
-    val cs: ContextShift[IO],
-    val timer: Timer[IO]
+private[compliancetests] class CompatEffect[F[_]](implicit
+    val F: Concurrent[F]
 ) {
-  def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
+  def deferred[A]: F[Deferred[F, A]] = Deferred[F, A]
 
-  val utf8Encode: fs2.Pipe[IO, String, Byte] = fs2.text.utf8Encode[IO]
-  val utf8Decode: fs2.Pipe[IO, Byte, String] = fs2.text.utf8Decode[IO]
+  val utf8Encode: fs2.Pipe[F, String, Byte] = fs2.text.utf8Encode[F]
+  val utf8Decode: fs2.Pipe[F, Byte, String] = fs2.text.utf8Decode[F]
 }
 
 object Compat {
@@ -40,5 +40,5 @@ object CompatEffect {
   implicit def ce(implicit
       cs: ContextShift[IO],
       timer: Timer[IO]
-  ): CompatEffect = new CompatEffect
+  ): CompatEffect[IO] = new CompatEffect[IO]
 }

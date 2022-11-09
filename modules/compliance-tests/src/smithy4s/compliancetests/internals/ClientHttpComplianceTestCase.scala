@@ -15,13 +15,12 @@
  */
 
 package smithy4s.compliancetests
+package internals
 
 import java.nio.charset.StandardCharsets
 
 import cats.effect.IO
-import cats.effect.Resource
 import cats.implicits._
-import org.http4s.HttpApp
 import org.http4s.headers.`Content-Type`
 import org.http4s.HttpRoutes
 import org.http4s.Request
@@ -35,8 +34,6 @@ import smithy4s.http.CodecAPI
 import smithy4s.Document
 import smithy4s.http.PayloadError
 import smithy4s.Service
-import smithy4s.ShapeTag
-import smithy4s.kinds._
 import smithy4s.tests.DefaultSchemaVisitor
 
 import scala.concurrent.duration._
@@ -44,23 +41,18 @@ import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
 import org.http4s.Header
 
-abstract class ClientHttpComplianceTestCase[
-    P,
+private[compliancetests] class ClientHttpComplianceTestCase[
     Alg[_[_, _, _, _, _]]
 ](
-    protocol: P,
+    reverseRouter: ReverseRouter[IO],
     serviceProvider: Service.Provider[Alg]
-)(implicit
-    ce: CompatEffect,
-    protocolTag: ShapeTag[P]
-) {
+)(implicit ce: CompatEffect[IO]) {
   import ce._
   import org.http4s.implicits._
+  import reverseRouter._
   private val baseUri = uri"http://localhost/"
-  private[compliancetests] val service = serviceProvider.service
-
-  def getClient(app: HttpApp[IO]): Resource[IO, FunctorAlgebra[Alg, IO]]
-  def codecs: CodecAPI
+  private[compliancetests] implicit val service: Service[Alg] =
+    serviceProvider.service
 
   private def matchRequest(
       request: Request[IO],
@@ -134,7 +126,7 @@ abstract class ClientHttpComplianceTestCase[
             }
             .orNotFound
 
-          getClient(app).use { client =>
+          reverseRoutes[Alg](app).use { client =>
             // avoid blocking the test forever...
             val recordedRequest = requestDeferred.get.timeout(1.second)
 
@@ -229,7 +221,7 @@ abstract class ClientHttpComplianceTestCase[
             }
             .orNotFound
 
-          getClient(app).use { client =>
+          reverseRoutes[Alg](app).use { client =>
             val doc = testCase.params.getOrElse(Document.obj())
             buildResult match {
               case Left(onError) =>
@@ -256,8 +248,7 @@ abstract class ClientHttpComplianceTestCase[
     )
   }
 
-  def allClientTests(
-  ): List[ComplianceTest[IO]] = {
+  def allClientTests(): List[ComplianceTest[IO]] = {
     service.endpoints.flatMap { case endpoint =>
       val requestTests = endpoint.hints
         .get(HttpRequestTests)
