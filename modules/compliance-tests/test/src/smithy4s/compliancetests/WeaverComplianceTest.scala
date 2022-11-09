@@ -23,14 +23,15 @@ import org.http4s.client.Client
 import smithy4s.example._
 import smithy4s.http4s._
 import weaver._
+import smithy4s.Service
 
 object WeaverComplianceTest extends SimpleIOSuite {
-  val testGenerator = new ClientHttpComplianceTestCase[
-    smithy4s.api.SimpleRestJson,
+  val clientTestGenerator = new ClientHttpComplianceTestCase[
+    alloy.SimpleRestJson,
     HelloServiceGen,
     HelloServiceOperation
   ](
-    smithy4s.api.SimpleRestJson()
+    alloy.SimpleRestJson()
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
@@ -40,9 +41,26 @@ object WeaverComplianceTest extends SimpleIOSuite {
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
+    def codecs = SimpleRestJsonBuilder.codecs
   }
 
-  val tests: List[ComplianceTest[IO]] = testGenerator.allClientTests()
+  val serverTestGenerator = new ServerHttpComplianceTestCase[
+    alloy.SimpleRestJson,
+    HelloServiceGen,
+    HelloServiceOperation
+  ](
+    alloy.SimpleRestJson()
+  ) {
+    def getServer[Alg2[_[_, _, _, _, _]], Op2[_, _, _, _, _]](
+        impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]
+    )(implicit s: Service[Alg2, Op2]): Resource[IO, HttpRoutes[IO]] =
+      SimpleRestJsonBuilder(s).routes(impl).resource
+
+    def codecs = SimpleRestJsonBuilder.codecs
+  }
+
+  val tests: List[ComplianceTest[IO]] =
+    clientTestGenerator.allClientTests() ++ serverTestGenerator.allServerTests()
 
   tests.foreach(tc =>
     test(tc.name) {

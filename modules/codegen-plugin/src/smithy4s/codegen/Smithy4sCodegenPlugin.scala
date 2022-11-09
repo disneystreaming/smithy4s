@@ -111,18 +111,24 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / resourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext != "scala")
     ),
-    cleanFiles += (config / smithy4sOutputDir).value,
+    config / cleanFiles += (config / smithy4sOutputDir).value,
+    config / cleanFiles += (config / smithy4sResourceDir).value,
     config / smithy4sModelTransformers := List.empty
   )
 
   override lazy val projectSettings =
-    defaultSettings(Compile)
+    defaultSettings(Compile) ++ Seq(
+      libraryDependencies ++= Seq(
+        BuildInfo.alloyOrg % "alloy-core" % BuildInfo.alloyVersion % Smithy4s
+      )
+    )
 
   private def findCodeGenDependencies(
-      updateReport: UpdateReport
+      updateReports: Seq[UpdateReport]
   ): List[os.Path] =
     for {
       markerConfig <- List(Smithy4s)
+      updateReport <- updateReports.toList
       smithy4sConfigReport <- updateReport.configuration(markerConfig).toList
       module <- smithy4sConfigReport.modules
       artifactFile <- module.artifacts
@@ -142,7 +148,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
-    val updateReport = (conf / update).value
+    val updateReport = {
+      (conf / update).value +: (conf / transitiveUpdate).value
+    }
 
     val localDependencyJars =
       (conf / smithy4sLocalJars).value.map(os.Path(_)).toList
@@ -154,7 +162,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         m.root
       }
     val transforms = (conf / smithy4sModelTransformers).value
-    val s = streams.value
+    val s = (conf / streams).value
     val skipResources: Set[FileType] =
       if ((conf / smithy4sSmithyLibrary).value) Set.empty
       else Set(FileType.Resource)

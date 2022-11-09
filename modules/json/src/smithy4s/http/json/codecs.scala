@@ -19,14 +19,16 @@ package http.json
 
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy4s.api.Discriminated
-import smithy4s.api.Untagged
+import alloy.Discriminated
+import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.InputOutput
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.CompilationCache
 
-final case class codecs(hintMask: HintMask = codecs.defaultHintMask)
-    extends JsonCodecAPI(codecs.schemaVisitorJCodec, Some(hintMask))
+final case class codecs(
+    hintMask: HintMask = codecs.defaultHintMask
+) extends JsonCodecAPI(codecs.schemaVisitorJCodec(_), Some(hintMask))
 
 object codecs {
 
@@ -42,7 +44,12 @@ object codecs {
       IntEnum
     )
 
+  private[smithy4s] def schemaVisitorJCodec(
+      cache: CompilationCache[JCodec]
+  ): SchemaVisitor[JCodec] =
+    new SchemaVisitorJCodec(maxArity = 1024, cache)
+
   private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
-    new SchemaVisitorJCodec(maxArity = 1024)
+    new SchemaVisitorJCodec(maxArity = 1024, CompilationCache.nop[JCodec])
 
 }

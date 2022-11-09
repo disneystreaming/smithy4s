@@ -46,7 +46,7 @@ Smithy4s does not rely on the classic automated derivation mechanisms to determi
 
 By default, the specification of the Smithy language hints that the `tagged-union` encoding should be used. This is arguably the best encoding for unions, as it works with members of any type (not just structures), and does not require backtracking during parsing, which makes it more efficient.
 
-However, Smithy4s provides support for two additional encodings: `discriminated` and `untagged`, which users can opt-in via the `smithy4s.api#discriminated` and `smithy4s.api#untagged` trait, respectively. These are mostly offered as a way to retrofit existing APIs in Smithy.
+However, Smithy4s provides support for two additional encodings: `discriminated` and `untagged`, which users can opt-in via the `alloy#discriminated` and `alloy#untagged` trait, respectively. These are mostly offered as a way to retrofit existing APIs in Smithy.
 
 
 #### Tagged union
@@ -83,7 +83,7 @@ are encoded as such :
 Untagged unions are supported via an annotation: `@untagged`. Despite the smaller payload size this encoding produces, it is arguably the worst way of encoding unions, as it may require backtracking multiple times on the parsing side. Use this carefully, preferably only when you need to retrofit an existing API into Smithy
 
 ```kotlin
-use smithy4s.api#untagged
+use alloy#untagged
 
 @untagged
 union Untagged {
@@ -118,7 +118,7 @@ In this encoding, the discriminator is inlined as a JSON field within JSON objec
 Despite the JSON payload exhibiting less nesting than in the `tagged union` encoding, this encoding often leads to bigger payloads, and requires backtracking once during parsing.
 
 ```kotlin
-use smithy4s.api#discriminated
+use alloy#discriminated
 
 @discriminated("tpe")
 union Discriminated {

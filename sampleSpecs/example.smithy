@@ -1,8 +1,8 @@
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
-use smithy4s.api#UUID
-use smithy4s.api#uuidFormat
+use alloy#simpleRestJson
+use alloy#UUID
+use alloy#uuidFormat
 use smithy4s.meta#indexedSeq
 use smithy4s.meta#vector
 use smithy4s.meta#errorMessage

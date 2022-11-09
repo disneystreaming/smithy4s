@@ -2,11 +2,12 @@ package smithy4s.example.collision
 
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
-import smithy4s.Transformation
-import smithy4s.Monadic
+import smithy4s.kinds.PolyFunction5
 import smithy4s.Service
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.kinds.FunctorAlgebra
+import smithy4s.capability.Transformation
 import smithy4s.ShapeId
 import smithy4s.Endpoint
 
@@ -18,23 +19,17 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def map(value: Map[String,String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
   def option(value: Option[String] = None) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ReservedNameServiceGen[G] = new Transformed(transformation)
-  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ReservedNameServiceGen[G] {
-    def set(set: Set[String]) = transformation[SetInput, Nothing, Unit, Nothing, Nothing](self.set(set))
-    def list(list: List[String]) = transformation[ListInput, Nothing, Unit, Nothing, Nothing](self.list(list))
-    def map(value: Map[String,String]) = transformation[MapInput, Nothing, Unit, Nothing, Nothing](self.map(value))
-    def option(value: Option[String] = None) = transformation[OptionInput, Nothing, Unit, Nothing, Nothing](self.option(value))
-  }
+  def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
 }
 
 object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
-  def apply[F[_]](implicit F: Monadic[ReservedNameServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: FunctorAlgebra[ReservedNameServiceGen, F]): F.type = F
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
 
   val hints : Hints = Hints(
-    smithy4s.api.SimpleRestJson(),
+    alloy.SimpleRestJson(),
   )
 
   val endpoints: List[Endpoint[ReservedNameServiceOperation, _, _, _, _, _]] = List(
@@ -60,11 +55,17 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     def option(value: Option[String] = None) = _Option(OptionInput(value))
   }
 
-  def transform[P[_, _, _, _, _]](transformation: Transformation[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = reified.transform(transformation)
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]): ReservedNameServiceGen[P1] = new Transformed(alg, f)
 
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], transformation: Transformation[P, P1]): ReservedNameServiceGen[P1] = alg.transform(transformation)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new Transformed(reified, f)
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f : PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
+    def set(set: Set[String]) = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
+    def list(list: List[String]) = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
+    def map(value: Map[String,String]) = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
+    def option(value: Option[String] = None) = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
+  }
 
-  def asTransformation[P[_, _, _, _, _]](impl : ReservedNameServiceGen[P]): Transformation[ReservedNameServiceOperation, P] = new Transformation[ReservedNameServiceOperation, P] {
+  def toPolyFunction[P[_, _, _, _, _]](impl : ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
       case _Set(SetInput(set)) => impl.set(set)
       case _List(ListInput(list)) => impl.list(list)

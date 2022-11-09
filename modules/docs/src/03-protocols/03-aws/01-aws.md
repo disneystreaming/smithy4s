@@ -15,7 +15,12 @@ We (the Smithy4s maintainers) **do not** intend to publish pre-generated artifac
 In `build.sbt`
 
 ```scala
+import smithy4s.codegen.BuildInfo._
+
 libraryDependencies ++= Seq(
+  // contains traits used by specs of AWS services"
+  "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion % Smithy4s,
+  "software.amazon.smithy" % "smithy-waiters" % smithyVersion % Smithy4s,
   // version sourced from the plugin
   "com.disneystreaming.smithy4s"  %% "smithy4s-aws-http4s" % smithy4sVersion.value
 )

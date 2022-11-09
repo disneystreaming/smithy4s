@@ -18,7 +18,7 @@ package smithy4s
 
 import cats.kernel.Eq
 import smithy.api._
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 
 class HintMaskSpec() extends munit.FunSuite {
 

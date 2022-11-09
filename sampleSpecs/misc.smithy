@@ -1,6 +1,6 @@
 namespace smithy4s.example
 
-use smithy4s.api#untagged
+use alloy#untagged
 
 service EmptyService {
   version: "1.0"
@@ -108,3 +108,7 @@ structure RangeCheck {
   @range(min: 1)
   qty: Integer
 }
+
+// face with sunglasses emoji
+@pattern("^\\uD83D\\uDE0E$")
+string UnicodeRegexString

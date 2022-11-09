@@ -8,7 +8,9 @@ import com.github.sbt.git.GitPlugin
 import com.github.sbt.git.SbtGit.git
 import scala.util.Try
 import com.typesafe.tools.mima.core.ProblemFilters
+import com.typesafe.tools.mima.core.Problem
 import com.typesafe.tools.mima.core.IncompatibleResultTypeProblem
+import com.typesafe.tools.mima.core.ReversedMissingMethodProblem
 
 // Adapted from https://github.com/djspiewak/sbt-spiewak
 object MimaVersionPlugin extends AutoPlugin {
@@ -79,6 +81,12 @@ object MimaVersionPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Setting[_]] = Seq(
     isMimaEnabled := false,
+    mimaBinaryIssueFilters ++= Seq(
+      // Focusing on backward compat as opposed to forward, for now.
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("smithy4s.*"),
+      ProblemFilters.exclude[Problem]("*.internals*"),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem]("*fromSchema")
+    ),
     mimaReportBinaryIssuesIfRelevant := filterTaskWhereRelevant(
       mimaReportBinaryIssues
     ).value,

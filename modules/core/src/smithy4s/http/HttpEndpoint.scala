@@ -56,8 +56,7 @@ object HttpEndpoint {
           )
         )
       encoder <- SchemaVisitorPathEncoder(
-        endpoint.input
-          .addHints(http)
+        endpoint.input.addHints(http)
       ).toRight(
         HttpEndpointError("Unable to encode operation input in HTTP path")
       )

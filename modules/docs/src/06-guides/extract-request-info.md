@@ -30,7 +30,7 @@ For this example, we are going to be working with the following smithy specifica
 ```kotlin
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloWorldService {

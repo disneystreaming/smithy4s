@@ -19,10 +19,10 @@ package smithy4s.codegen.mill
 import coursier.maven.MavenRepository
 import mill._
 import mill.api.PathRef
-import mill.define.{Source, Sources}
+import mill.define.Source
 import mill.scalalib._
 import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
-import smithy4s.codegen.mill.BuildInfo
+import smithy4s.codegen.BuildInfo
 
 trait Smithy4sModule extends ScalaModule {
 
@@ -44,7 +44,15 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
 
+  def smithy4sDefaultIvyDeps: T[Agg[Dep]] = Agg(
+    ivy"${BuildInfo.alloyOrg}:alloy-core:${BuildInfo.alloyVersion}"
+  )
+
   def smithy4sIvyDeps: T[Agg[Dep]] = T { Agg.empty[Dep] }
+
+  def smithy4sAllDeps: T[Agg[Dep]] = T {
+    smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
+  }
 
   def smithy4sLocalJars: T[List[PathRef]] = T {
     T.traverse(moduleDeps)(_.jar)
@@ -62,8 +70,12 @@ trait Smithy4sModule extends ScalaModule {
   def smithy4sSmithyLibrary: T[Boolean] = true
 
   def smithy4sTransitiveIvyDeps: T[Agg[Dep]] = T {
-    smithy4sIvyDeps() ++ T
-      .traverse(moduleDeps)(_.transitiveIvyDeps)()
+    smithy4sAllDeps() ++ T
+      .traverse(moduleDeps) {
+        case m if m.isInstanceOf[Smithy4sModule] =>
+          m.asInstanceOf[Smithy4sModule].smithy4sTransitiveIvyDeps
+        case _ => T.task(mill.api.Result.create(Agg.empty))
+      }()
       .flatten
   }
 
@@ -98,7 +110,7 @@ trait Smithy4sModule extends ScalaModule {
       output = scalaOutput,
       resourceOutput = resourcesOutput,
       skip = skipSet,
-      discoverModels = true,
+      discoverModels = false,
       allowedNS = smithy4sAllowedNamespaces(),
       excludedNS = smithy4sExcludedNamespaces(),
       repositories = smithy4sRepositories(),
@@ -106,6 +118,7 @@ trait Smithy4sModule extends ScalaModule {
       transformers = smithy4sModelTransformers(),
       localJars = allLocalJars
     )
+
     Smithy4s.processSpecs(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))
   }
@@ -115,7 +128,10 @@ trait Smithy4sModule extends ScalaModule {
     scalaOutput +: super.generatedSources()
   }
 
-  override def resources: Sources = T.sources {
-    super.resources() :+ smithy4sResourceOutputDir()
+  def generatedResources: T[PathRef] = T {
+    smithy4sCodegen()
+    smithy4sResourceOutputDir()
   }
+
+  override def localClasspath = super.localClasspath() :+ generatedResources()
 }

@@ -25,9 +25,15 @@ import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.Schema
 
-trait DocumentKeyEncoder[A] {
+trait DocumentKeyEncoder[A] { self =>
   def apply(a: A): String
+
+  def contramap[B](f: B => A): DocumentKeyEncoder[B] =
+    new DocumentKeyEncoder[B] {
+      def apply(b: B): String = self(f(b))
+    }
 }
 
 object DocumentKeyEncoder {
@@ -89,5 +95,17 @@ object DocumentKeyEncoder {
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyEncoder[E] = Some { a => total(a).stringValue }
+
+      override def biject[A, B](
+          schema: Schema[A],
+          bijection: Bijection[A, B]
+      ): OptDocumentKeyEncoder[B] =
+        apply(schema).map(_.contramap(bijection.from))
+
+      override def refine[A, B](
+          schema: Schema[A],
+          refinement: Refinement[A, B]
+      ): OptDocumentKeyEncoder[B] =
+        apply(schema).map(_.contramap(refinement.from))
     }
 }

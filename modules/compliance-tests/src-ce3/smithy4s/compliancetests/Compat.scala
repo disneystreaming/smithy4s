@@ -23,6 +23,9 @@ import com.comcast.ip4s.Port
 
 private[compliancetests] class CompatEffect {
   def deferred[A]: IO[Deferred[IO, A]] = Deferred[IO, A]
+
+  val utf8Encode: fs2.Pipe[IO, String, Byte] = fs2.text.utf8.encode[IO]
+  val utf8Decode: fs2.Pipe[IO, Byte, String] = fs2.text.utf8.decode[IO]
 }
 
 object Compat {

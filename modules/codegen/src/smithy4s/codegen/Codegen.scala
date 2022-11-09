@@ -16,7 +16,7 @@
 
 package smithy4s.codegen
 
-import smithy4s.openapi.OpenApiConversionResult
+import alloy.openapi._
 import software.amazon.smithy.model.Model
 
 import scala.jdk.CollectionConverters._
@@ -27,7 +27,7 @@ object Codegen { self =>
       args: CodegenArgs
   ): Set[os.Path] = {
 
-    val (classloader, model) = ModelLoader.load(
+    val (classloader, model): (ClassLoader, Model) = ModelLoader.load(
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
@@ -57,7 +57,7 @@ object Codegen { self =>
     } else (List.empty, List.empty)
 
     val openApiFiles = if (!args.skipOpenapi) {
-      smithy4s.openapi.convert(model, args.allowedNS, classloader).map {
+      alloy.openapi.convert(model, args.allowedNS, classloader).map {
         case OpenApiConversionResult(_, serviceId, outputString) =>
           val name = serviceId.getNamespace() + "." + serviceId.getName()
           val openapiFile = (args.resourceOutput / (name + ".json"))
@@ -83,6 +83,7 @@ object Codegen { self =>
 
     val reserved =
       Set(
+        "alloy",
         "smithy4s.api",
         "smithy4s.meta"
       )
@@ -116,7 +117,7 @@ object Codegen { self =>
         namespaces
           .filterNot(_.startsWith("aws."))
           .filterNot(_.startsWith("smithy."))
-          .filterNot(reserved)
+          .filterNot(ns => reserved.exists(ns.startsWith))
           .filterNot(excluded)
           .filterNot(alreadyGenerated)
     }

@@ -28,7 +28,7 @@ object Smithy4sPlugin extends AutoPlugin {
   val CatsEffect3Axis = CatsEffectAxis("_CE3", "ce3")
   val CatsEffect2Axis = CatsEffectAxis("_CE2", "ce2")
 
-  val Scala212 = "2.12.16"
+  val Scala212 = "2.12.17"
   val Scala213 = "2.13.8"
   val Scala3 = "3.2.0"
 
@@ -105,7 +105,9 @@ object Smithy4sPlugin extends AutoPlugin {
     // https://scalacenter.github.io/scalafix/docs/users/installation.html
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
+    Test / fork := virtualAxes.?.value.forall(_.contains(VirtualAxis.jvm)),
+    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}"
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(
@@ -160,7 +162,12 @@ object Smithy4sPlugin extends AutoPlugin {
     val base =
       if (scalaVersion.startsWith("3."))
         filterScala3Options(commonCompilerOptions)
-      else commonCompilerOptions
+      else
+        commonCompilerOptions
+    // ++ Seq(
+    //   "-Xsource:3",
+    //   "-P:kind-projector:underscore-placeholders"
+    // )
 
     base ++ targetScalacOptions(scalaVersion) ++ {
       if (priorTo2_13(scalaVersion)) compilerOptions2_12_Only
@@ -253,19 +260,19 @@ object Smithy4sPlugin extends AutoPlugin {
     headerLicense := Some(
       HeaderLicense.Custom(
         """| Copyright 2021-2022 Disney Streaming
-     |
-     | Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
-     | you may not use this file except in compliance with the License.
-     | You may obtain a copy of the License at
-     |
-     |    https://disneystreaming.github.io/TOST-1.0.txt
-     |
-     | Unless required by applicable law or agreed to in writing, software
-     | distributed under the License is distributed on an "AS IS" BASIS,
-     | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     | See the License for the specific language governing permissions and
-     | limitations under the License.
-     |""".stripMargin
+           |
+           | Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+           | you may not use this file except in compliance with the License.
+           | You may obtain a copy of the License at
+           |
+           |    https://disneystreaming.github.io/TOST-1.0.txt
+           |
+           | Unless required by applicable law or agreed to in writing, software
+           | distributed under the License is distributed on an "AS IS" BASIS,
+           | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           | See the License for the specific language governing permissions and
+           | limitations under the License.
+           |""".stripMargin
       )
     )
   )

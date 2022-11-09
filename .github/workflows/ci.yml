@@ -4,20 +4,21 @@ on:
     inputs:
       publishSnapshot:
         description: 'Publish Snapshot'
-        required: true
+        required: false
+        default: 'false'
+      publishMicrosite:
+        description: 'Publish Microsite'
+        required: false
         default: 'false'
   push:
     branches: ["main"]
     tags: ["v*"]
   pull_request:
-    branches: ["*"]
+    branches: ["**"]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  JABBA_INDEX: 'https://github.com/typelevel/jdk-index/raw/main/index.json'
 
 jobs:
   build:
@@ -57,9 +58,9 @@ jobs:
           extraKey: ${{ env.BUILD_KEY }}
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v13
+        uses: coursier/setup-action@v1
         with:
-          java-version: temurin@17
+          jvm: temurin:1.17
 
       - name: Run tests
         run: |
@@ -115,9 +116,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v13
+        uses: coursier/setup-action@v1
         with:
-          java-version: temurin@17
+          jvm: temurin:1.17
 
       - name: Cache
         uses: coursier/cache-action@v6
@@ -139,6 +140,29 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+  microsite:
+    name: Publish Docs Microsite
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publishMicrosite == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v13
+        with:
+          java-version: temurin@17
+
+      - name: Cache
+        uses: coursier/cache-action@v6
+
+      - name: Resolve latest smithy4s-core version
+        # export the version only when we trigger publish manually
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "SMITHY4S_VERSION=$(cs resolve com.disneystreaming.smithy4s:smithy4s-core_2.13:latest.stable | head -1 | awk -F':' '{print $3}')"  >> $GITHUB_ENV
 
       - name: Compile Documentation Markdown Files
         run: sbt "docs/mdoc"

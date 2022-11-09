@@ -18,6 +18,8 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
+import kinds._
+import scala.annotation.nowarn
 
 /**
   * Represents a member of coproduct type (sealed trait)
@@ -36,7 +38,14 @@ final case class Alt[F[_], U, A](
 }
 object Alt {
 
-  final case class WithValue[F[_], U, A](alt: Alt[F, U, A], value: A) {
+  @nowarn
+  final case class WithValue[F[_], U, A](
+      @deprecated(
+        "Should not be accessed directly, use Dispatcher instead when compiling union schemas",
+        since = "0.16.5"
+      ) alt: Alt[F, U, A],
+      value: A
+  ) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
       WithValue(alt.mapK(fk), value)
   }
@@ -73,16 +82,21 @@ object Alt {
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
 
-    private[smithy4s] class Impl[F[_], U](
+    @nowarn("msg=Should not be accessed")
+    private[smithy4s] case class Impl[F[_], U](
         alts: Vector[Alt[F, U, _]],
-        val underlying: U => Alt.WithValue[F, U, _]
+        underlying: U => Alt.WithValue[F, U, _]
     ) extends Dispatcher[F, U] {
       def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
           encoderK: EncoderK[G, Result]
       ): G[U] = {
         val precompiledAlts =
           precompile.toPolyFunction
-            .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
+            .unsafeCacheBy[String](
+              alts.map(Kind1.existential(_)),
+              (alt: Kind1.Existential[Alt[F, U, *]]) =>
+                alt.asInstanceOf[Alt[F, U, _]].label
+            )
 
         encoderK.absorb[U] { u =>
           underlying(u) match {

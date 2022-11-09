@@ -25,10 +25,11 @@ import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.loader.ModelAssembler
 
 import java.io.File
-import java.net.URL
 import java.net.URLClassLoader
 
 import scala.jdk.CollectionConverters._
+import software.amazon.smithy.model.loader.ModelDiscovery
+import software.amazon.smithy.model.loader.ModelManifestException
 
 object ModelLoader {
 
@@ -40,67 +41,51 @@ object ModelLoader {
       discoverModels: Boolean,
       localJars: List[os.Path]
   ): (ClassLoader, Model) = {
-    val allDeps = dependencies
-    val maybeDeps = resolveDependencies(allDeps, localJars, repositories)
     val currentClassLoader = this.getClass().getClassLoader()
+    val deps = resolveDependencies(dependencies, localJars, repositories)
 
-    // Loads a model using whatever's on the current classpath (in particular, anything that
-    // might be provided by smithy4s itself out of the box)
-    val modelBuilder = Model
-      .assembler()
-      .addClasspathModels(currentClassLoader, discoverModels)
-      .assemble()
-      .unwrap()
-      .toBuilder()
-
-    maybeDeps.foreach { deps =>
-      // Loading the model just from upstream dependencies, in isolation
-      val upstreamClassLoader = new URLClassLoader(deps)
-      val upstreamModel = Model
-        .assembler()
-        .discoverModels(upstreamClassLoader)
-        .addClasspathModels(currentClassLoader, false)
-        // disabling cache to support snapshot-driven experimentation
-        .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
-        .assemble()
-        .unwrap()
-
-      // Appending all shapes to the current model, so that the ones from dependencies
-      // override the ones that smithy4s might have brought. This circumvents
-      // collision of shapes. It does mean that what the dependencies user defines have
-      // priority other what smithy4s might bring .
-      modelBuilder.addShapes(upstreamModel)
-
-      // Appending all metadata that is not Smithy4s-specific, as well as relevant
-      // Smithy4s-related metadata, into the resulting model.
-      upstreamModel.getMetadata().asScala.foreach {
-        case (k @ "smithy4sGenerated", v) =>
-          modelBuilder.putMetadataProperty(k, v)
-        case (k, _) if k.startsWith("smithy4s") =>
-        // do nothing, we do not want upstream decisions on smithy4s rendering to impact
-        // this codegen run
-        case (k, v) =>
-          modelBuilder.putMetadataProperty(k, v)
+    val modelsInJars = deps.flatMap { files =>
+      val manifestUrl =
+        ModelDiscovery.createSmithyJarManifestUrl(files.getAbsolutePath())
+      try { ModelDiscovery.findModels(manifestUrl).asScala }
+      catch {
+        case _: ModelManifestException => Seq.empty
       }
     }
 
-    val validatorClassLoader = maybeDeps match {
-      case Some(deps) => new URLClassLoader(deps, currentClassLoader)
-      case None       => currentClassLoader
-    }
-
-    val modelAssembler =
-      Model
-        .assembler(validatorClassLoader)
-        .addModel(modelBuilder.build())
-
-    specs.map(_.toPath()).foreach {
-      modelAssembler.addImport
-    }
-
-    val model = modelAssembler
+    // Loading the upstream model
+    val upstreamModel = Model
+      .assembler()
+      // disabling cache to support snapshot-driven experimentation
+      .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
+      .addClasspathModels(currentClassLoader, discoverModels)
+      .addImports(modelsInJars)
       .assemble()
       .unwrap()
+
+    val sanitisingModelBuilder = upstreamModel.toBuilder()
+
+    // Appending all metadata that is not Smithy4s-specific, as well as relevant
+    // Smithy4s-related metadata, into the resulting model.
+    upstreamModel.getMetadata().asScala.foreach {
+      case (k @ "smithy4sGenerated", _) => ()
+      case (k, _) if k.startsWith("smithy4s") =>
+        sanitisingModelBuilder.removeMetadataProperty(k)
+      case _ => ()
+    }
+
+    val validatorClassLoader = locally {
+      val jarUrls = deps.map(_.toURI().toURL()).toArray
+      new URLClassLoader(jarUrls, currentClassLoader)
+    }
+
+    val preTransformationModel =
+      Model
+        .assembler(validatorClassLoader)
+        .addModel(sanitisingModelBuilder.build())
+        .addImports(specs)
+        .assemble()
+        .unwrap
 
     val serviceFactory =
       ProjectionTransformer.createServiceFactory(validatorClassLoader)
@@ -110,7 +95,7 @@ object ModelLoader {
       if (result.isPresent()) Some(result.get) else None
     }
 
-    val transformedModel = trans.foldLeft(model)((m, t) =>
+    val transformedModel = trans.foldLeft(preTransformationModel)((m, t) =>
       t.transform(TransformContext.builder().model(m).build())
     )
 
@@ -121,7 +106,7 @@ object ModelLoader {
       dependencies: List[String],
       localJars: List[os.Path],
       repositories: List[String]
-  ): Option[Array[URL]] = {
+  ): Seq[File] = {
     val maybeRepos = RepositoryParser.repositories(repositories).either
     val maybeDeps = DependencyParser
       .dependencies(
@@ -150,16 +135,16 @@ object ModelLoader {
       } else {
         Seq.empty
       }
-    val allDeps = resolvedDeps ++ localJars.map(_.toIO)
-    if (allDeps.nonEmpty) {
-      Some(allDeps.map(_.toURI().toURL()).toArray)
-    } else {
-      None
-    }
+    resolvedDeps ++ localJars.map(_.toIO)
   }
 
   implicit class ModelAssemblerOps(assembler: ModelAssembler) {
-    def addImports(urls: List[java.net.URL]): ModelAssembler = {
+    def addImports(files: Set[java.io.File]): ModelAssembler = {
+      files.map(_.toPath()).foreach(assembler.addImport)
+      assembler
+    }
+
+    def addImports(urls: Seq[java.net.URL]): ModelAssembler = {
       urls.foreach(assembler.addImport)
       assembler
     }
@@ -169,12 +154,12 @@ object ModelLoader {
         discoverModels: Boolean
     ): ModelAssembler = {
       val smithy4sResources = List(
-        "META-INF/smithy/smithy4s.smithy",
         "META-INF/smithy/smithy4s.meta.smithy"
       ).map(classLoader.getResource)
 
-      if (discoverModels) assembler.discoverModels(classLoader)
-      else addImports(smithy4sResources)
+      if (discoverModels) {
+        assembler.discoverModels(classLoader)
+      } else addImports(smithy4sResources)
     }
   }
 

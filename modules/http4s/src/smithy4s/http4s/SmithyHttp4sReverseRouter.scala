@@ -17,6 +17,7 @@
 package smithy4s
 package http4s
 
+import smithy4s.kinds._
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
@@ -28,8 +29,10 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     client: Client[F],
     entityCompiler: EntityCompiler[F]
 )(implicit effect: EffectCompat[F])
-    extends Interpreter[Op, F] {
+    extends FunctorInterpreter[Op, F] {
 // format: on
+
+  private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
   def apply[I, E, O, SI, SO](
       op: Op[I, E, O, SI, SO]
@@ -40,7 +43,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
   }
 
   private val clientEndpoints =
-    new Transformation[
+    new PolyFunction5[
       Endpoint[Op, *, *, *, *, *],
       SmithyHttp4sClientEndpoint[F, Op, *, *, *, *, *]
     ] {
@@ -52,7 +55,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
             baseUri,
             client,
             endpoint,
-            entityCompiler
+            compilerContext
           )
           .left
           .map { e =>
@@ -62,5 +65,8 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
             )
           }
           .merge
-    }.precompute(service.endpoints.map(smithy4s.Kind5.existential(_)))
+    }.unsafeCacheBy(
+      service.endpoints.map(smithy4s.kinds.Kind5.existential(_)),
+      identity
+    )
 }

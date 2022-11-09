@@ -31,12 +31,9 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
-
-private[http] object SchemaVisitorMetadataReader
-    extends SchemaVisitorMetadataReader
-
-private[http] class SchemaVisitorMetadataReader()
-    extends SchemaVisitor.Cached[MetaDecode]
+private[http] class SchemaVisitorMetadataReader(
+    val cache: CompilationCache[MetaDecode]
+) extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
   override def primitive[P](

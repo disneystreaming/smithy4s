@@ -1,7 +1,7 @@
 package smithy4s.example
 
 package object collision {
-  type ReservedNameService[F[_]] = smithy4s.Monadic[ReservedNameServiceGen, F]
+  type ReservedNameService[F[_]] = smithy4s.kinds.FunctorAlgebra[ReservedNameServiceGen, F]
   object ReservedNameService extends smithy4s.Service.Provider[ReservedNameServiceGen, ReservedNameServiceOperation] {
     def apply[F[_]](implicit F: ReservedNameService[F]): F.type = F
     def service: smithy4s.Service[ReservedNameServiceGen, ReservedNameServiceOperation] = ReservedNameServiceGen

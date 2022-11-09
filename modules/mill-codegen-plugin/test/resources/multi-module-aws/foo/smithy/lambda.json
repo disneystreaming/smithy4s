@@ -1,0 +1,11 @@
+{
+  "smithy": "1.0",
+  "shapes": {
+    "foo#Lambda": {
+      "type": "service",
+      "traits": {
+        "aws.protocols#restJson1": {}
+      }
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import sbt.internal.IvyConsole
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 import java.io.File
@@ -7,7 +8,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.16.2"
+ThisBuild / mimaBaseVersion := "0.17.0"
 ThisBuild / testFrameworks += new TestFramework("weaver.framework.CatsEffect")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
@@ -60,13 +61,13 @@ lazy val allModules = Seq(
   benchmark,
   protocol,
   protocolTests,
-  openapi,
   `aws-kernel`,
   aws,
   `aws-http4s`,
   `codegen-cli`,
   dynamic,
   testUtils,
+  guides,
   complianceTests
 ).flatMap(_.projectRefs)
 
@@ -86,13 +87,19 @@ lazy val docs =
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
       mdocVariables := Map(
-        "VERSION" -> (if (isSnapshot.value)
-                        previousStableVersion.value.getOrElse(
-                          throw new Exception(
-                            "No previous version found from dynver"
-                          )
-                        )
-                      else version.value),
+        "VERSION" -> {
+          sys.env
+            .get("SMITHY4S_VERSION")
+            .getOrElse {
+              if (isSnapshot.value)
+                previousStableVersion.value.getOrElse(
+                  throw new Exception(
+                    "No previous version found from dynver"
+                  )
+                )
+              else version.value
+            }
+        },
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
       ),
@@ -142,18 +149,37 @@ val munitDeps = Def.setting {
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .settings(
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm),
     isMimaEnabled := true,
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
-      "smithy4s.api"
+      "alloy"
     ),
-    genDiscoverModels := true,
+    genSmithyDependencies ++= Seq(
+      Dependencies.Smithy.waiters
+    ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Compile / sourceGenerators += sourceDirectory
-      .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
-      .taskValue,
+    Compile / sourceGenerators += {
+      sourceDirectory
+        .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
+        .taskValue,
+    },
+    Compile / sourceGenerators += {
+      sourceDirectory
+        .zip(scalaVersion)
+        .map { case (sd, sv) =>
+          val base = sd.getParentFile()
+          sv match {
+            case Scala3 =>
+              Boilerplate
+                .gen(base / "src-3", Boilerplate.BoilerplateModule.Core3)
+            case _ =>
+              Boilerplate
+                .gen(base / "src-2", Boilerplate.BoilerplateModule.Core2)
+          }
+        }
+        .taskValue
+    },
     libraryDependencies ++= Seq(
       Dependencies.collectionsCompat.value,
       Dependencies.Cats.core.value % Test
@@ -206,8 +232,7 @@ lazy val scalacheck = projectMatrix
       Dependencies.collectionsCompat.value,
       Dependencies.Scalacheck.scalacheck.value
     ),
-    libraryDependencies ++= munitDeps.value,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    libraryDependencies ++= munitDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -229,7 +254,7 @@ lazy val `aws-kernel` = projectMatrix
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
     ),
-    genDiscoverModels := true,
+    genSmithyDependencies ++= Seq(Dependencies.Smithy.awsTraits),
     Compile / allowedNamespaces := Seq(
       "aws.api",
       "aws.auth",
@@ -237,7 +262,6 @@ lazy val `aws-kernel` = projectMatrix
       "aws.protocols"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Test / fork := true,
     Test / envVars ++= Map("TEST_VAR" -> "hello")
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -266,8 +290,7 @@ lazy val aws = projectMatrix
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
-    },
-    Test / fork := true
+    }
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
@@ -286,14 +309,17 @@ lazy val `aws-http4s` = projectMatrix
   .dependsOn(aws)
   .settings(
     isCE3 := true,
-    Test / genDiscoverModels := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.client.value,
         Dependencies.Http4s.emberClient.value % Test
       )
     },
-    Test / allowedNamespaces := Seq(),
+    Test / genSmithyDependencies ++= Seq(
+      Dependencies.Smithy.waiters,
+      Dependencies.Smithy.awsTraits
+    ),
+    Test / allowedNamespaces := Seq("com.amazonaws.dynamodb"),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .jvmPlatform(
@@ -315,22 +341,24 @@ lazy val `aws-http4s` = projectMatrix
 lazy val codegen = projectMatrix
   .in(file("modules/codegen"))
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(openapi)
+  .dependsOn(protocol)
   .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](
       version,
       scalaBinaryVersion,
-      "smithyVersion" -> Dependencies.Smithy.smithyVersion
+      "smithyOrg" -> Dependencies.Smithy.org,
+      "smithyVersion" -> Dependencies.Smithy.version,
+      "alloyOrg" -> Dependencies.Alloy.org,
+      "alloyVersion" -> Dependencies.Alloy.version
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
       Dependencies.Cats.core.value,
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
-      Dependencies.Smithy.awsTraits,
-      Dependencies.Smithy.testTraits,
-      Dependencies.Smithy.waiters,
+      Dependencies.Alloy.core,
+      Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -384,15 +412,13 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       // this allows running `scripted` alone
       val _ = List(
         // for the code being built
+        (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
-        // dependency of codegen
-        (openapi.jvm(Scala213) / publishLocal).value,
 
         // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
-        (openapi.jvm(Scala212) / publishLocal).value,
         (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
       )
       publishLocal.value
@@ -405,7 +431,6 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
  */
 lazy val millCodegenPlugin = projectMatrix
   .in(file("modules/mill-codegen-plugin"))
-  .enablePlugins(BuildInfoPlugin)
   .jvmPlatform(
     scalaVersions = List(Scala213),
     simpleJVMLayout
@@ -414,8 +439,6 @@ lazy val millCodegenPlugin = projectMatrix
     name := "mill-codegen-plugin",
     crossVersion := CrossVersion
       .binaryWith(s"mill${millPlatform(Dependencies.Mill.millVersion)}_", ""),
-    buildInfoKeys := Seq[BuildInfoKey](version),
-    buildInfoPackage := "smithy4s.codegen.mill",
     libraryDependencies ++= Seq(
       Dependencies.Mill.main,
       Dependencies.Mill.mainApi,
@@ -428,11 +451,10 @@ lazy val millCodegenPlugin = projectMatrix
       // this allows running `scripted` alone
       val _ = List(
         // for the code being built
+        (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
-        // dependency of codegen
-        (openapi.jvm(Scala213) / publishLocal).value,
 
         // for mill
         (protocol.jvm(autoScalaLibrary = false) / publishLocal).value
@@ -495,8 +517,7 @@ lazy val protocolTests = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
-    ),
-    Test / fork := true
+    )
   )
   .settings(Smithy4sPlugin.doNotPublishArtifact)
 
@@ -528,32 +549,11 @@ lazy val dynamic = projectMatrix
   .jvmPlatform(
     allJvmScalaVersions,
     jvmDimSettings ++ Seq(
-      Test / fork := true,
-      // Forwarding cwd to tests
-      Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
       libraryDependencies += Dependencies.Smithy.model
     )
   )
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
-
-/**
- * Module that contains the logic for generating "openapi views" of the
- * services that abide by some custom protocols provided by this library.
- */
-lazy val openapi = projectMatrix
-  .in(file("modules/openapi"))
-  .jvmPlatform(buildtimejvmScala2Versions, jvmDimSettings)
-  .dependsOn(protocol)
-  .settings(
-    isCE3 := true,
-    libraryDependencies ++= Seq(
-      Dependencies.Cats.core.value,
-      Dependencies.Smithy.openapi,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
-      Dependencies.Weaver.cats.value % Test
-    )
-  )
 
 /**
  * Module that contains jsoniter-based encoders/decoders for the generated
@@ -570,8 +570,7 @@ lazy val json = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Jsoniter.value
     ),
-    libraryDependencies ++= munitDeps.value,
-    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+    libraryDependencies ++= munitDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -602,6 +601,7 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
+        Dependencies.Alloy.core % Test,
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test
       )
@@ -657,6 +657,9 @@ lazy val tests = projectMatrix
   .dependsOn(core)
   .settings(
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
+    allowedNamespaces := Seq(
+      "smithy4s.example"
+    ),
     libraryDependencies ++= {
       val ce3 =
         if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
@@ -686,12 +689,12 @@ lazy val tests = projectMatrix
 
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
-  .dependsOn(core, http4s % "test->compile", testUtils)
+  .dependsOn(core, http4s % "compile->compile; test->compile", testUtils)
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
-    genDiscoverModels := true,
-    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    Compile / genSmithyDependencies ++= Seq(Dependencies.Smithy.testTraits),
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       val ce3 =
@@ -703,11 +706,9 @@ lazy val complianceTests = projectMatrix
         Dependencies.Weaver.cats.value % Test
       )
     },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
     ),
-    Test / genDiscoverModels := true,
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -761,6 +762,24 @@ lazy val example = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sPlugin.doNotPublishArtifact)
 
+lazy val guides = projectMatrix
+  .in(file("modules/guides"))
+  .dependsOn(http4s)
+  .settings(
+    Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
+    smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
+    ),
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    isCE3 := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.emberServer.value,
+      Dependencies.Weaver.cats.value % Test
+    )
+  )
+  .jvmPlatform(Seq(Scala3), jvmDimSettings)
+  .settings(Smithy4sPlugin.doNotPublishArtifact)
+
 /**
  * Pretty primitive benchmarks to test that we're not doing anything drastically
  * slow.
@@ -795,19 +814,24 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.2"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.6"
     )
 
   val Smithy = new {
-    val smithyVersion = "1.25.1"
-    val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
-    val testTraits =
-      "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
-    val build = "software.amazon.smithy" % "smithy-build" % smithyVersion
-    val awsTraits =
-      "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion
-    val openapi = "software.amazon.smithy" % "smithy-openapi" % smithyVersion
-    val waiters = "software.amazon.smithy" % "smithy-waiters" % smithyVersion
+    val org = "software.amazon.smithy"
+    val version = "1.26.0"
+    val model = org % "smithy-model" % version
+    val testTraits = org % "smithy-protocol-test-traits" % version
+    val build = org % "smithy-build" % version
+    val awsTraits = org % "smithy-aws-traits" % version
+    val waiters = org % "smithy-waiters" % version
+  }
+
+  val Alloy = new {
+    val org = "com.disneystreaming.alloy"
+    val version = "0.1.0"
+    val core = org % "alloy-core" % version
+    val openapi = org %% "alloy-openapi" % version
   }
 
   val Cats = new {
@@ -838,7 +862,7 @@ lazy val Dependencies = new {
 
   val Circe = new {
     val generic: Def.Initialize[ModuleID] =
-      Def.setting("io.circe" %%% "circe-generic" % "0.14.2")
+      Def.setting("io.circe" %%% "circe-generic" % "0.14.3")
   }
 
   /*
@@ -899,7 +923,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.14.0"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.0"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }
@@ -911,8 +935,10 @@ lazy val genSmithyOutput = SettingKey[File]("genSmithyOutput")
 lazy val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
 lazy val allowedNamespaces = SettingKey[Seq[String]]("allowedNamespaces")
 lazy val genSmithyDependencies =
-  SettingKey[Seq[String]]("genSmithyDependencies")
-lazy val genDiscoverModels = SettingKey[Boolean]("genDiscoverModels")
+  SettingKey[Seq[ModuleID]]("genSmithyDependencies")
+
+(ThisBuild / genSmithyDependencies) := Seq(Dependencies.Alloy.core)
+
 lazy val smithy4sSkip = SettingKey[Seq[String]]("smithy4sSkip")
 
 (ThisBuild / smithySpecs) := Seq.empty
@@ -934,16 +960,19 @@ def genSmithyImpl(config: Configuration) = Def.task {
       .getOrElse((config / resourceManaged).value)
       .getAbsolutePath()
   val allowedNS = (config / allowedNamespaces).?.value.filterNot(_.isEmpty)
-  val discoverModels =
-    (config / genDiscoverModels).?.value.getOrElse(false)
   val skip = (config / smithy4sSkip).?.value.getOrElse(Seq.empty)
+  val smithy4sDependencies =
+    (config / genSmithyDependencies).?.value.getOrElse(Seq.empty).map {
+      moduleId =>
+        s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
+    }
 
   val codegenCp =
     (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
       .map(_.data)
 
   val mc = "smithy4s.codegen.cli.Main"
-  val s = streams.value
+  val s = (config / streams).value
 
   def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))
 
@@ -958,15 +987,24 @@ def genSmithyImpl(config: Configuration) = Def.task {
           ) { case ((changed, files), outputs) =>
             if (changed || outputs.isEmpty) {
               val inputs = inputFiles.map(_.getAbsolutePath()).toList
-              val args =
-                List("--output", outputDir) ++
-                  List("--resource-output", resourceOutputDir) ++
-                  (if (discoverModels) List("--discover-models") else Nil) ++
-                  (if (allowedNS.isDefined)
-                     List("--allowed-ns", allowedNS.get.mkString(","))
-                   else Nil) ++
-                  inputs ++
-                  skip.flatMap(s => List("--skip", s))
+              val outputOpt = List("--output", outputDir)
+              val resourceOutputOpt =
+                List("--resource-output", resourceOutputDir)
+              val allowedNsOpt =
+                if (allowedNS.isDefined)
+                  List("--allowed-ns", allowedNS.get.mkString(","))
+                else Nil
+              val skipOpt = skip.flatMap(s => List("--skip", s))
+              val dependenciesOpt =
+                if (smithy4sDependencies.nonEmpty)
+                  List("--dependencies", smithy4sDependencies.mkString(","))
+                else Nil
+              val args = outputOpt ++
+                resourceOutputOpt ++
+                allowedNsOpt ++
+                inputs ++
+                skipOpt ++
+                dependenciesOpt
 
               val cp = codegenCp
                 .map(_.getAbsolutePath())

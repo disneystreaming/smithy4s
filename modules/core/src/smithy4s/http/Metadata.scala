@@ -21,6 +21,8 @@ import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
+import smithy4s.schema.CompilationCache
+import smithy4s.schema.CachedSchemaCompiler
 import scala.collection.mutable.{Map => MMap}
 
 /**
@@ -172,16 +174,19 @@ object Metadata {
     def decode(metadata: Metadata): Either[MetadataError, MetadataPartial[A]]
 
     def total: Option[TotalDecoder[A]]
-
   }
 
-  object PartialDecoder {
+  object PartialDecoder extends CachedSchemaCompiler.Impl[PartialDecoder] {
+    type Aux[A] = internals.MetaDecode[A]
 
     def apply[A](implicit instance: PartialDecoder[A]): PartialDecoder[A] =
       instance
 
-    def fromSchema[A](schema: Schema[A]): PartialDecoder[A] = {
-      val metaDecode = SchemaVisitorMetadataReader(schema)
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: CompilationCache[internals.MetaDecode]
+    ): PartialDecoder[A] = {
+      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
       val (partial, maybeTotal) =
         metaDecode match {
           case internals.MetaDecode.StructureMetaDecode(partial, maybeTotal) =>
@@ -205,14 +210,11 @@ object Metadata {
       }
     }
 
-    implicit def derivedDecoderFromStaticSchema[A](implicit
+    @deprecated("kept for bincompat in 0.16.x")
+    def derivedDecoderFromStaticSchema[A](
         schema: Schema[A]
-    ): PartialDecoder[A] = decoderCache(schema)
-
-    private val decoderCache =
-      new PolyFunction[Schema, PartialDecoder] {
-        def apply[A](fa: Schema[A]): PartialDecoder[A] = fromSchema(fa)
-      }.unsafeMemoise
+    ): PartialDecoder[A] =
+      fromSchema(schema)
   }
 
   /**
@@ -227,8 +229,14 @@ object Metadata {
     def apply[A](implicit instance: TotalDecoder[A]): TotalDecoder[A] =
       instance
 
-    def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] = {
-      val metaDecode = SchemaVisitorMetadataReader(schema)
+    def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] =
+      fromSchema(schema, CompilationCache.nop)
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: CompilationCache[internals.MetaDecode]
+    ): Option[TotalDecoder[A]] = {
+      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
       metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(_, maybeTotal) =>
           maybeTotal.map { total => (metadata: Metadata) => total(metadata) }
@@ -241,13 +249,18 @@ object Metadata {
     def encode(a: A): Metadata
   }
 
-  object Encoder {
+  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+
+    type Aux[A] = internals.MetaEncode[A]
 
     def apply[A](implicit instance: Encoder[A]): Encoder[A] = instance
 
-    def fromSchema[A](schema: Schema[A]): Encoder[A] = {
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache
+    ): Encoder[A] = {
       val toStatusCode: A => Option[Int] = { a =>
-        new HttpResponseCodeSchemaVisitor().apply(schema) match {
+        schema.compile(new HttpResponseCodeSchemaVisitor()) match {
           case HttpResponseCodeSchemaVisitor.NoResponseCode =>
             None
           case HttpResponseCodeSchemaVisitor.RequiredResponseCode(ext) =>
@@ -256,7 +269,7 @@ object Metadata {
             ext(a)
         }
       }
-      SchemaVisitorMetadataWriter(schema) match {
+      schema.compile(new SchemaVisitorMetadataWriter(cache)) match {
         case StructureMetaEncode(f) => { (a: A) =>
           val struct = f(a)
           struct.copy(statusCode = toStatusCode(a))
@@ -265,14 +278,10 @@ object Metadata {
       }
     }
 
-    implicit def deriveEncoderFromStaticSchema[A](implicit
+    @deprecated("kept for bincompat in 0.16.x")
+    def deriveEncoderFromStaticSchema[A](implicit
         schema: Schema[A]
-    ): Encoder[A] = encoderCache(schema)
-
-    private val encoderCache =
-      new PolyFunction[smithy4s.Schema, Encoder] {
-        def apply[A](fa: smithy4s.Schema[A]): Encoder[A] = fromSchema(fa)
-      }.unsafeMemoise
+    ): Encoder[A] = fromSchema(schema)
 
   }
 
