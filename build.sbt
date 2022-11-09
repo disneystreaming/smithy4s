@@ -400,7 +400,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     sbtPlugin := true,
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
-        Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
+        Seq("-Xmx1G", "-Dplugin.version=" + version.value)
     },
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
