@@ -22,6 +22,31 @@ trait Transformation[Func, Input, Output] {
 
 object Transformation {
 
+  /**
+    * A transformation that turns a monofunctor algebra into a bifunctor algebra by lifting the known errors in the
+    * returned types of the operations of the algebra.
+    */
+  trait SurfaceError[F[_], G[_, _]] {
+    def apply[E, A](fa: F[A], projectError: Throwable => Option[E]): G[E, A]
+  }
+
+  /**
+    * A transformation that turns a bifunctor algebra into a monofunctor algebra by lifting absorbing known errors in a
+    * generic error channel that handles throwables.
+    */
+  trait AbsorbError[F[_, _], G[_]] {
+    def apply[E, A](fa: F[E, A], injectError: E => Throwable): G[A]
+  }
+
+  /**
+    * Partially applied transformation, can be used to create methods/extensions that allow for a reasonable UX.
+    */
+  class PartiallyApplied[Input](input: Input) {
+    def apply[Func, Output](func: Func)(implicit
+        transform: Transformation[Func, Input, Output]
+    ) = transform(func, input)
+  }
+
   // format: off
   implicit def functorK5_poly1_transformation[Alg[_[_, _, _, _, _]]: FunctorK5, F[_], G[_]]: Transformation[PolyFunction[F, G], FunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]] =
     new Transformation[PolyFunction[F, G], FunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{
@@ -34,19 +59,7 @@ object Transformation {
     }
 
 
-  class PartiallyApplied[Input](input: Input) {
-    def apply[Func, Output](func: Func)(implicit
-        transform: Transformation[Func, Input, Output]
-    ) = transform(func, input)
-  }
 
-  /**
-    * A transformation that turns a monofunctor algebra into a bifunctor algebra by lifting the known errors in the
-    * returned types of the operations of the algebra.
-    */
-  trait SurfaceError[F[_], G[_, _]] {
-    def apply[E, A](fa: F[A], projectError: Throwable => Option[E]): G[E, A]
-  }
 
   implicit def service_surfaceError_transformation[Alg[_[_, _, _, _, _]], F[_], G[_, _]](implicit service: Service[Alg]): Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]] =
      new Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]]{
@@ -66,14 +79,6 @@ object Transformation {
         service.fromPolyFunction(interpreter)
       }
     }
-
-  /**
-    * A transformation that turns a bifunctor algebra into a monofunctor algebra by lifting absorbing known errors in a
-    * generic error channel that handles throwables.
-    */
-  trait AbsorbError[F[_, _], G[_]] {
-    def apply[E, A](fa: F[E, A], injectError: E => Throwable): G[A]
-  }
 
   implicit def service_absorbError_transformation[Alg[_[_, _, _, _, _]], F[_, _], G[_]](implicit service: Service[Alg]): Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]] =
      new Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{

@@ -2,8 +2,6 @@ package docs
 
 object InlineSmithyFile {
 
-  // import smithy4s.hello.HelloWorldService
-
   def apply(fileName: String) = {
     val workspace = os.pwd
     val smithyFile =
