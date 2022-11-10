@@ -925,7 +925,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.2"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.5"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }
