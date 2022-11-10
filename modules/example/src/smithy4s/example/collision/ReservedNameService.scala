@@ -3,13 +3,12 @@ package smithy4s.example.collision
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.Hints
 import smithy4s.StreamingSchema
 import smithy4s.kinds.FunctorAlgebra
 import smithy4s.capability.Transformation
-import smithy4s.ShapeId
-import smithy4s.Endpoint
 
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -22,7 +21,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
 }
 
-object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNameServiceOperation] {
+object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ReservedNameServiceGen, F]): F.type = F
 
@@ -32,7 +31,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     alloy.SimpleRestJson(),
   )
 
-  val endpoints: List[Endpoint[ReservedNameServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[ReservedNameServiceGen.Endpoint[_, _, _, _, _]] = List(
     _Set,
     _List,
     _Map,
@@ -74,7 +73,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     }
   }
   case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing]
-  object _Set extends Endpoint[ReservedNameServiceOperation, SetInput, Nothing, Unit, Nothing, Nothing] {
+  object _Set extends ReservedNameServiceGen.Endpoint[SetInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Set")
     val input: Schema[SetInput] = SetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -86,7 +85,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     def wrap(input: SetInput) = _Set(input)
   }
   case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing]
-  object _List extends Endpoint[ReservedNameServiceOperation, ListInput, Nothing, Unit, Nothing, Nothing] {
+  object _List extends ReservedNameServiceGen.Endpoint[ListInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "List")
     val input: Schema[ListInput] = ListInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -98,7 +97,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     def wrap(input: ListInput) = _List(input)
   }
   case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing]
-  object _Map extends Endpoint[ReservedNameServiceOperation, MapInput, Nothing, Unit, Nothing, Nothing] {
+  object _Map extends ReservedNameServiceGen.Endpoint[MapInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Map")
     val input: Schema[MapInput] = MapInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -110,7 +109,7 @@ object ReservedNameServiceGen extends Service[ReservedNameServiceGen, ReservedNa
     def wrap(input: MapInput) = _Map(input)
   }
   case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing]
-  object _Option extends Endpoint[ReservedNameServiceOperation, OptionInput, Nothing, Unit, Nothing, Nothing] {
+  object _Option extends ReservedNameServiceGen.Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Option")
     val input: Schema[OptionInput] = OptionInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)

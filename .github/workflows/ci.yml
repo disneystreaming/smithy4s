@@ -14,7 +14,7 @@ on:
     branches: ["main"]
     tags: ["v*"]
   pull_request:
-    branches: ["*"]
+    branches: ["**"]
 
 concurrency:
   group: ci-${{ github.ref }}

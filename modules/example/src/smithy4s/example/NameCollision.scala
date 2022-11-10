@@ -4,6 +4,7 @@ import smithy4s.Errorable
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
@@ -13,8 +14,6 @@ import smithy4s.Hints
 import smithy4s.StreamingSchema
 import smithy4s.kinds.FunctorAlgebra
 import smithy4s.capability.Transformation
-import smithy4s.ShapeId
-import smithy4s.Endpoint
 
 trait NameCollisionGen[F[_, _, _, _, _]] {
   self =>
@@ -24,7 +23,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[NameCollisionGen[F]] = new Transformation.PartiallyApplied[NameCollisionGen[F]](this)
 }
 
-object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation] {
+object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[NameCollisionGen, F]): F.type = F
 
@@ -32,7 +31,7 @@ object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation
 
   val hints : Hints = Hints.empty
 
-  val endpoints: List[Endpoint[NameCollisionOperation, _, _, _, _, _]] = List(
+  val endpoints: List[NameCollisionGen.Endpoint[_, _, _, _, _]] = List(
     MyOp,
   )
 
@@ -59,7 +58,7 @@ object NameCollisionGen extends Service[NameCollisionGen, NameCollisionOperation
     }
   }
   case class MyOp() extends NameCollisionOperation[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]
-  object MyOp extends Endpoint[NameCollisionOperation, Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
+  object MyOp extends NameCollisionGen.Endpoint[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
     val id: ShapeId = ShapeId("smithy4s.example", "MyOp")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
