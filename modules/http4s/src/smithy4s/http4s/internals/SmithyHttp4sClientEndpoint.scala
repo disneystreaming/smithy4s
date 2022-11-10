@@ -183,18 +183,18 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
       metadataDecoder: Metadata.PartialDecoder[T]
   )(implicit
       entityDecoder: EntityDecoder[F, BodyPartial[T]]
-  ): F[Either[MetadataError, T]] = {
+  ): F[Either[HttpContractError, T]] = {
     val headers = getHeaders(response)
     val metadata =
       Metadata(headers = headers, statusCode = Some(response.status.code))
     metadataDecoder.total match {
       case Some(totalDecoder) =>
-        totalDecoder.decode(metadata).pure[F]
+        totalDecoder.decode(metadata).pure[F].widen
       case None =>
         for {
           metadataPartial <- metadataDecoder.decode(metadata).pure[F]
           bodyPartial <- response.as[BodyPartial[T]]
-        } yield metadataPartial.map(_.combine(bodyPartial))
+        } yield metadataPartial.flatMap(_.combineCatch(bodyPartial))
     }
   }
 }
