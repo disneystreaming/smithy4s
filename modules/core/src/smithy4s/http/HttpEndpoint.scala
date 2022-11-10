@@ -38,17 +38,27 @@ object HttpEndpoint {
 
   def unapply[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = cast(endpoint)
+  ): Option[HttpEndpoint[I]] = cast(endpoint).toOption
 
   def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = {
+  ): Either[HttpEndpointError, HttpEndpoint[I]] = {
     for {
-      http <- endpoint.hints.get(Http)
-      httpMethod <- HttpMethod.fromString(http.method.value)
-      httpPath <- internals.pathSegments(http.uri.value)
+      http <- endpoint.hints
+        .get(Http)
+        .toRight(HttpEndpointError("Operation doesn't have a @http trait"))
+      httpMethod = HttpMethod.fromStringOrDefault(http.method.value)
+      httpPath <- internals
+        .pathSegments(http.uri.value)
+        .toRight(
+          HttpEndpointError(
+            s"Unable to parse HTTP path template: ${http.uri.value}"
+          )
+        )
       encoder <- SchemaVisitorPathEncoder(
         endpoint.input.addHints(http)
+      ).toRight(
+        HttpEndpointError("Unable to encode operation input in HTTP path")
       )
 
     } yield {
@@ -60,5 +70,7 @@ object HttpEndpoint {
       }
     }
   }
+
+  case class HttpEndpointError(message: String) extends Exception(message)
 
 }

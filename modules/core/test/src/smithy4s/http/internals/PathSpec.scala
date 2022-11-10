@@ -63,6 +63,7 @@ class PathSpec() extends munit.FunSuite {
       .cast(
         DummyPath
       )
+      .toTry
       .get
       .path(
         PathParams(

@@ -4,16 +4,17 @@ import smithy4s.Errorable
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -27,6 +28,8 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ObjectServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[ObjectServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
 

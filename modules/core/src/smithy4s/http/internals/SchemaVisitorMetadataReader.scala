@@ -137,9 +137,7 @@ private[http] class SchemaVisitorMetadataReader(
       val schema = field.instance
       val label = field.label
       val fieldHints = field.hints
-      val maybeDefault = field.getDefault.flatMap(d =>
-        Document.Decoder.fromSchema(field.instance).decode(d).toOption
-      )
+      val maybeDefault = schema.getDefaultValue
       HttpBinding.fromHints(label, fieldHints, hints).map { binding =>
         val decoder: MetaDecode[_] =
           self(schema.addHints(Hints(binding)))

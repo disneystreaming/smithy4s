@@ -167,13 +167,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val nameGen = NameRef(s"${name}Gen")
       lines(
         line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra_[$nameGen, F]",
-        block(
-          line"object ${NameRef(name)} extends $Service_.Provider[$nameGen]"
-        )(
-          line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
-          line"def service: $Service_[$nameGen] = $nameGen",
-          line"val id: $ShapeId_ = service.id"
-        )
+        line"val ${NameRef(name)} = $nameGen"
       )
     case _ => Lines.empty
   }
@@ -209,6 +203,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         newline,
         line"def apply[F[_]](implicit F: $FunctorAlgebra_[$genNameRef, F]): F.type = F",
+        newline,
+        line"type WithError[F[_, _]] = $BiFunctorAlgebra_[$genNameRef, F]",
         newline,
         renderId(shapeId),
         newline,

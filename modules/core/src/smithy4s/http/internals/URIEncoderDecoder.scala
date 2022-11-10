@@ -20,6 +20,7 @@ package internals
 
 import scala.annotation.tailrec
 
+// note: this should be private[http] but it's used in the aws-kernel module too
 private[smithy4s] object URIEncoderDecoder {
 
   val digits: String = "0123456789ABCDEF"

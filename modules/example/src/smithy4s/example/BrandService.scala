@@ -3,12 +3,13 @@ package smithy4s.example
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
 
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -21,6 +22,8 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
 object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[BrandServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[BrandServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
 

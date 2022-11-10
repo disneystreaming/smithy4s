@@ -58,23 +58,6 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
     def client[F[_]: EffectCompat](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
-    @deprecated(
-      "Use the ClientBuilder instead,  client(client).uri(baseuri).use"
-    )
-    def client[F[_]: EffectCompat](
-        http4sClient: Client[F],
-        baseUri: Uri
-    ): Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] =
-      client(http4sClient).uri(baseUri).use
-
-    @deprecated(
-      "Use the ClientBuilder instead , client(client).uri(baseuri).resource"
-    )
-    def clientResource[F[_]: EffectCompat](
-        http4sClient: Client[F],
-        baseUri: Uri
-    ): Resource[F, FunctorAlgebra[Alg, F]] =
-      client(http4sClient).uri(baseUri).resource
 
     def routes[F[_]: EffectCompat](
         impl: FunctorAlgebra[Alg, F]
@@ -142,6 +125,13 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       new RouterBuilder(service, impl, fe)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
+          new SmithyHttp4sRouter[Alg, service.Operation, F](
+            service,
+            service.toPolyFunction[Kind1[F]#toKind5](impl),
+            errorTransformation,
+            entityCompiler
+          ).routes
+        }
       checkProtocol(service, protocolTag).as {
         new SmithyHttp4sRouter[Alg, service.Operation, F](
           service,
@@ -150,6 +140,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
           entityCompiler
         ).routes
       }
+>>>>>>>>> Temporary merge branch 2
 
     def resource: Resource[F, HttpRoutes[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
