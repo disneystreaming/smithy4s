@@ -125,6 +125,10 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       new RouterBuilder(service, impl, fe)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
+      checkProtocol(service, protocolTag)
+        // Making sure the router is evaluated lazily, so that all the compilation inside it
+        // doesn't happen in case of a missing protocol
+        .map { _ =>
           new SmithyHttp4sRouter[Alg, service.Operation, F](
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
@@ -132,15 +136,6 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             entityCompiler
           ).routes
         }
-      checkProtocol(service, protocolTag).as {
-        new SmithyHttp4sRouter[Alg, service.Operation, F](
-          service,
-          service.toPolyFunction[Kind1[F]#toKind5](impl),
-          errorTransformation,
-          entityCompiler
-        ).routes
-      }
->>>>>>>>> Temporary merge branch 2
 
     def resource: Resource[F, HttpRoutes[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
