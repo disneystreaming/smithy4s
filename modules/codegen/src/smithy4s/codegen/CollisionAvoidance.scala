@@ -259,7 +259,7 @@ object CollisionAvoidance {
 
     def getReservedNames: Set[String] = reservedNames
 
-    val Transformation = NameRef("smithy4s.capability", "Transformation")
+    val Transformation = NameRef("smithy4s", "Transformation")
     val PolyFunction5_ = NameRef("smithy4s.kinds", "PolyFunction5")
     val Service_ = NameRef("smithy4s", "Service")
     val Endpoint_ = NameRef("smithy4s", "Endpoint")
@@ -267,6 +267,7 @@ object CollisionAvoidance {
     val ShapeId_ = NameRef("smithy4s", "ShapeId")
     val Schema_ = NameRef("smithy4s", "Schema")
     val FunctorAlgebra_ = NameRef("smithy4s.kinds", "FunctorAlgebra")
+    val BiFunctorAlgebra_ = NameRef("smithy4s.kinds", "BiFunctorAlgebra")
     val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
