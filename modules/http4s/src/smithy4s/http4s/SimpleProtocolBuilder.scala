@@ -35,96 +35,79 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     protocolTag: ShapeTag[P]
 ) {
 
-  def apply[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      serviceProvider: smithy4s.Service.Provider[Alg, Op]
-  ): ServiceBuilder[Alg, Op] = new ServiceBuilder(serviceProvider.service)
+  def apply[Alg[_[_, _, _, _, _]]](
+      serviceProvider: smithy4s.Service.Provider[Alg]
+  ): ServiceBuilder[Alg] = new ServiceBuilder(serviceProvider.service)
 
-  def routes[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
+  def routes[Alg[_[_, _, _, _, _]], F[_]](
       impl: FunctorAlgebra[Alg, F]
   )(implicit
-      serviceProvider: smithy4s.Service.Provider[Alg, Op],
+      service: smithy4s.Service[Alg],
       F: EffectCompat[F]
-  ): RouterBuilder[Alg, Op, F] = {
-    val service = serviceProvider.service
-    new RouterBuilder[Alg, Op, F](
+  ): RouterBuilder[Alg, F] = {
+    new RouterBuilder[Alg, F](
       service,
-      service.toPolyFunction[Kind1[F]#toKind5](impl),
+      impl,
       PartialFunction.empty
     )
   }
 
   class ServiceBuilder[
-      Alg[_[_, _, _, _, _]],
-      Op[_, _, _, _, _]
-  ] private[http4s] (val service: smithy4s.Service[Alg, Op]) { self =>
+      Alg[_[_, _, _, _, _]]
+  ] private[http4s] (val service: smithy4s.Service[Alg]) { self =>
 
     def client[F[_]: EffectCompat](client: Client[F]) =
-      new ClientBuilder[Alg, Op, F](client, service)
-    @deprecated(
-      "Use the ClientBuilder instead,  client(client).uri(baseuri).use"
-    )
-    def client[F[_]: EffectCompat](
-        http4sClient: Client[F],
-        baseUri: Uri
-    ): Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] =
-      client(http4sClient).uri(baseUri).use
-
-    @deprecated(
-      "Use the ClientBuilder instead , client(client).uri(baseuri).resource"
-    )
-    def clientResource[F[_]: EffectCompat](
-        http4sClient: Client[F],
-        baseUri: Uri
-    ): Resource[F, FunctorAlgebra[Alg, F]] =
-      client(http4sClient).uri(baseUri).resource
+      new ClientBuilder[Alg, F](client, service)
 
     def routes[F[_]: EffectCompat](
         impl: FunctorAlgebra[Alg, F]
-    ): RouterBuilder[Alg, Op, F] =
-      new RouterBuilder[Alg, Op, F](
+    ): RouterBuilder[Alg, F] =
+      new RouterBuilder[Alg, F](
         service,
-        service.toPolyFunction[Kind1[F]#toKind5](impl),
+        impl,
         PartialFunction.empty
       )
 
   }
 
-  class ClientBuilder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[
-      _
-  ]: EffectCompat] private[http4s] (
+  class ClientBuilder[
+      Alg[_[_, _, _, _, _]],
+      F[_]: EffectCompat
+  ] private[http4s] (
       client: Client[F],
-      val service: smithy4s.Service[Alg, Op],
+      val service: smithy4s.Service[Alg],
       uri: Uri = uri"http://localhost:8080"
   ) {
 
-    def uri(uri: Uri): ClientBuilder[Alg, Op, F] =
-      new ClientBuilder[Alg, Op, F](this.client, this.service, uri)
+    def uri(uri: Uri): ClientBuilder[Alg, F] =
+      new ClientBuilder[Alg, F](this.client, this.service, uri)
 
     def resource: Resource[F, FunctorAlgebra[Alg, F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
 
     def use: Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] = {
       checkProtocol(service, protocolTag)
-        .as(
-          new SmithyHttp4sReverseRouter[Alg, Op, F](
+        // Making sure the router is evaluated lazily, so that all the compilation inside it
+        // doesn't happen in case of a missing protocol
+        .map { _ =>
+          new SmithyHttp4sReverseRouter[Alg, service.Operation, F](
             uri,
             service,
             client,
             EntityCompiler
               .fromCodecAPI[F](codecs)
           )
-        )
+        }
         .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
     }
   }
 
   class RouterBuilder[
       Alg[_[_, _, _, _, _]],
-      Op[_, _, _, _, _],
       F[_]
   ] private[http4s] (
-      service: smithy4s.Service[Alg, Op],
-      impl: FunctorInterpreter[Op, F],
+      service: smithy4s.Service[Alg],
+      impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
   )(implicit F: EffectCompat[F]) {
 
@@ -133,23 +116,26 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
-    ): RouterBuilder[Alg, Op, F] =
+    ): RouterBuilder[Alg, F] =
       new RouterBuilder(service, impl, fe andThen (e => F.pure(e)))
 
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
-    ): RouterBuilder[Alg, Op, F] =
+    ): RouterBuilder[Alg, F] =
       new RouterBuilder(service, impl, fe)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
-      checkProtocol(service, protocolTag).as {
-        new SmithyHttp4sRouter[Alg, Op, F](
-          service,
-          impl,
-          errorTransformation,
-          entityCompiler
-        ).routes
-      }
+      checkProtocol(service, protocolTag)
+        // Making sure the router is evaluated lazily, so that all the compilation inside it
+        // doesn't happen in case of a missing protocol
+        .map { _ =>
+          new SmithyHttp4sRouter[Alg, service.Operation, F](
+            service,
+            service.toPolyFunction[Kind1[F]#toKind5](impl),
+            errorTransformation,
+            entityCompiler
+          ).routes
+        }
 
     def resource: Resource[F, HttpRoutes[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]

@@ -106,12 +106,6 @@ object Document {
       }
     }
 
-    @deprecated("kept for bincompat in 0.16.x")
-    def deriveEncoderFromStaticSchema[A](
-        schema: Schema[A]
-    ): Encoder[A] =
-      fromSchema(schema)
-
   }
 
   trait Decoder[A] { self =>
@@ -140,12 +134,6 @@ object Document {
           }
       }
     }
-
-    @deprecated("kept for bincompat in 0.16.x")
-    def derivedDecoderFromStaticSchema[A](
-        schema: Schema[A]
-    ): Decoder[A] =
-      fromSchema(schema)
 
   }
 

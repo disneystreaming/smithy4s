@@ -5,7 +5,11 @@ import smithy4s.example.import_test.OpOutput
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
+import smithy4s.ShapeId
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.example.error.NotFoundError
@@ -13,10 +17,6 @@ import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
-import smithy4s.ShapeId
-import smithy4s.Endpoint
 
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -26,9 +26,11 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[ImportServiceGen[F]] = new Transformation.PartiallyApplied[ImportServiceGen[F]](this)
 }
 
-object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation] {
+object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ImportServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[ImportServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
 
@@ -36,7 +38,7 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
     alloy.SimpleRestJson(),
   )
 
-  val endpoints: List[Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[ImportServiceGen.Endpoint[_, _, _, _, _]] = List(
     ImportOperation,
   )
 
@@ -63,7 +65,7 @@ object ImportServiceGen extends Service[ImportServiceGen, ImportServiceOperation
     }
   }
   case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]
-  object ImportOperation extends Endpoint[ImportServiceOperation, Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
+  object ImportOperation extends ImportServiceGen.Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)

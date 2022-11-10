@@ -26,7 +26,7 @@ import smithy4s.kinds._
 
 // format: off
 class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
-    service: smithy4s.Service[Alg, Op],
+    service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     entityCompiler: EntityCompiler[F]
@@ -47,14 +47,14 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
   private val http4sEndpoints: List[SmithyHttp4sServerEndpoint[F]] =
     service.endpoints
       .map { ep =>
-        SmithyHttp4sServerEndpoint(
+        SmithyHttp4sServerEndpoint.make(
           impl,
           ep,
           compilerContext,
           errorTransformation
         )
       }
-      .collect { case Some(http4sEndpoint) =>
+      .collect { case Right(http4sEndpoint) =>
         http4sEndpoint
       }
 

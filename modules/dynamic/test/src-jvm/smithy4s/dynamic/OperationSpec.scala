@@ -94,7 +94,7 @@ class OperationSpec() extends munit.FunSuite {
         val httpEndpoints = endpoints.map(HttpEndpoint.cast(_))
 
         expect(
-          httpEndpoints.forall(_.isDefined)
+          httpEndpoints.forall(_.isRight)
         )
       }
   }

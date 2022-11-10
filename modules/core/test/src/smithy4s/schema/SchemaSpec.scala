@@ -15,28 +15,26 @@
  */
 
 package smithy4s
-
-import smithy4s.example._
+package schema
 
 import munit._
-import scala.util.Try
-class TransformationSmokeSpec() extends FunSuite {
+import Schema._
+import smithy.api.Default
 
-  test("transform method can be called with poly functions") {
-    object stub extends Weather[Option] {
-      def getCurrentTime(): Option[GetCurrentTimeOutput] = None
-    }
+final class SchemaSpec extends FunSuite {
 
-    case object Empty extends Throwable
+  test("getDefault - some") {
+    val sch = string.addHints(Default(Document.fromString("test")))
 
-    // Not ascribing the type to get a
-    val transformed = stub.transform(new PolyFunction[Option, Try] {
-      def apply[A](fa: Option[A]): Try[A] = fa match {
-        case Some(value) => scala.util.Success(value)
-        case None        => scala.util.Failure(Empty)
-      }
-    })
-    expect(transformed.getCurrentTime().isFailure)
+    assertEquals(sch.getDefault, Some(Document.fromString("test")))
+    assertEquals(sch.getDefaultValue, Some("test"))
+  }
+
+  test("getDefault - none") {
+    val sch = string
+
+    assertEquals(sch.getDefault, None)
+    assertEquals(sch.getDefaultValue, None)
   }
 
 }

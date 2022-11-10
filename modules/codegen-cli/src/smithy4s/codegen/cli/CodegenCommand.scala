@@ -111,6 +111,10 @@ object CodegenCommand {
         // format: off
         case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
         // format: on
+          val dependenciesWithDefaults = {
+            import Defaults._
+            defaultDependencies ++ dependencies.getOrElse(List.empty)
+          }
           CodegenArgs(
             specsArgs,
             output.getOrElse(os.pwd),
@@ -120,7 +124,7 @@ object CodegenCommand {
             allowedNS,
             excludedNS,
             repositories.getOrElse(List.empty),
-            dependencies.getOrElse(List.empty),
+            dependenciesWithDefaults,
             transformers.getOrElse(List.empty),
             localJars.getOrElse(List.empty)
           )

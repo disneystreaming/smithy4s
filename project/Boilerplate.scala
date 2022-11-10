@@ -214,7 +214,7 @@ object Boilerplate {
       |package smithy4s
       |package kinds
       |
-      |import smithy4s.capability._
+      |import smithy4s.Transformation
       |
       -trait PolyFunction$suffix[F[${`_.._`}], G[${`_.._`}]]{ self =>
       -   def apply[${`A..N`}](fa: F[${`A..N`}]): G[${`A..N`}]
@@ -283,7 +283,7 @@ object Boilerplate {
       |package smithy4s
       |package kinds
       |
-      -trait FunctorK$suffix[Alg[_[${`_.._`}]]]{
+      -trait FunctorK$suffix[Alg[_[${`_.._`}]]] {
       -  def mapK$suffix[F[${`_.._`}], G[${`_.._`}]](alg: Alg[F], function: PolyFunction$suffix[F, G]): Alg[G]
       -}
       -object FunctorK$suffix {
@@ -311,7 +311,7 @@ object Boilerplate {
       |package smithy4s
       |package kinds
       |
-      -object Kind$arity{
+      -object Kind$arity {
       -  type Existential[+F[${`_.._`}]] <: (Any { type T })
       -  inline def existential[F[${`_.._`}], ${`A..N`}](fa: F[${`A..N`}]): Existential[F] = fa.asInstanceOf[Existential[F]]
       -}
@@ -333,7 +333,7 @@ object Boilerplate {
       |package smithy4s
       |package kinds
       |
-      -object Kind$arity{
+      -object Kind$arity {
       -  type Existential[F[${`_.._`}]] = F[${`_.._`}]
       -  @inline def existential[F[${`_.._`}], ${`A..N`}](fa: F[${`A..N`}]): F[${`_.._`}] = fa.asInstanceOf[F[${`_.._`}]]
       -}

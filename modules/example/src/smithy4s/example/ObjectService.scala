@@ -4,17 +4,17 @@ import smithy4s.Errorable
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
+import smithy4s.ShapeId
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
-import smithy4s.ShapeId
-import smithy4s.Endpoint
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -25,9 +25,11 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
   def transform : Transformation.PartiallyApplied[ObjectServiceGen[F]] = new Transformation.PartiallyApplied[ObjectServiceGen[F]](this)
 }
 
-object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation] {
+object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ObjectServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[ObjectServiceGen, F]
 
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
 
@@ -35,7 +37,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     alloy.SimpleRestJson(),
   )
 
-  val endpoints: List[Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: List[ObjectServiceGen.Endpoint[_, _, _, _, _]] = List(
     PutObject,
     GetObject,
   )
@@ -67,7 +69,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     }
   }
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
-  object PutObject extends Endpoint[ObjectServiceOperation, PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
+  object PutObject extends ObjectServiceGen.Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
     val input: Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -121,7 +123,7 @@ object ObjectServiceGen extends Service[ObjectServiceGen, ObjectServiceOperation
     }
   }
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
-  object GetObject extends Endpoint[ObjectServiceOperation, GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
+  object GetObject extends ObjectServiceGen.Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObject")
     val input: Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)

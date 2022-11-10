@@ -167,13 +167,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val nameGen = NameRef(s"${name}Gen")
       lines(
         line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra_[$nameGen, F]",
-        block(
-          line"object ${NameRef(name)} extends $Service_.Provider[$nameGen, ${name}Operation]"
-        )(
-          line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
-          line"def service: $Service_[$nameGen, ${name}Operation] = $nameGen",
-          line"val id: $ShapeId_ = service.id"
-        )
+        line"val ${NameRef(name)} = $nameGen"
       )
     case _ => Lines.empty
   }
@@ -205,16 +199,18 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       obj(
         genNameRef,
-        ext = line"$Service_[$genNameRef, $opTraitNameRef]"
+        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
       )(
         newline,
         line"def apply[F[_]](implicit F: $FunctorAlgebra_[$genNameRef, F]): F.type = F",
+        newline,
+        line"type WithError[F[_, _]] = $BiFunctorAlgebra_[$genNameRef, F]",
         newline,
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints: $list[$Endpoint_[$opTraitNameRef, _, _, _, _, _]] = $list"
+        line"val endpoints: $list[$genNameRef.Endpoint[_, _, _, _, _]] = $list"
           .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
@@ -296,6 +292,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val params = if (op.input != Type.unit) {
       line"input: ${op.input}"
     } else Line.empty
+    val genServiceName = serviceName + "Gen"
     val opName = op.name
     val opNameRef = NameRef(opName)
     val traitName = NameRef(s"${serviceName}Operation")
@@ -335,11 +332,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       line"case class ${NameDef(opName)}($params) extends $traitName[${op
-        .renderAlgParams(serviceName + "Gen")}]",
+        .renderAlgParams(genServiceName)}]",
       obj(
         opNameRef,
         ext =
-          line"$Endpoint_[${traitName}, ${op.renderAlgParams(serviceName + "Gen")}]$errorable"
+          line"$genServiceName.Endpoint[${op.renderAlgParams(genServiceName)}]$errorable"
       )(
         renderId(op.shapeId),
         line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",
@@ -931,7 +928,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         .map { case (k, v) => k.runDefault + line" -> " + v.runDefault }
         .intercalate(Line.comma)})".writeCollection
     case PrimitiveTN(prim, value) =>
-      renderPrimitive(prim)(value).write
+      renderPrimitive[prim.T](prim)(value).write
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
