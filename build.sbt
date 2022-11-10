@@ -546,7 +546,14 @@ lazy val dynamic = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),
-    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue)
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
+    Compile / packageSrc / mappings ++= {
+      val base = (Compile / sourceManaged).value
+      val files = (Compile / managedSources).value
+      files
+        .map(f => (f, f.relativeTo(base)))
+        .collect { case (f, Some(relF)) => f -> relF.getPath() }
+    }
   )
   .jvmPlatform(
     allJvmScalaVersions,
