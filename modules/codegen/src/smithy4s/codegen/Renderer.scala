@@ -932,7 +932,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         .map { case (k, v) => k.runDefault + line" -> " + v.runDefault }
         .intercalate(Line.comma)})".writeCollection
     case PrimitiveTN(prim, value) =>
-      renderPrimitive(prim)(value).write
+      renderPrimitive[prim.T](prim)(value).write
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =
