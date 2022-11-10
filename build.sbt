@@ -211,7 +211,8 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     Compile / packageSrc / mappings ++= {
@@ -238,8 +239,7 @@ lazy val scalacheck = projectMatrix
       Dependencies.collectionsCompat.value,
       Dependencies.Scalacheck.scalacheck.value
     ),
-    libraryDependencies ++= munitDeps.value,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    libraryDependencies ++= munitDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -408,7 +408,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     sbtPlugin := true,
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
-        Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
+        Seq("-Xmx1G", "-Dplugin.version=" + version.value)
     },
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
@@ -708,7 +708,6 @@ lazy val complianceTests = projectMatrix
         Dependencies.Weaver.cats.value % Test
       )
     },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
     ),
@@ -817,7 +816,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.6"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.9"
     )
 
   val Smithy = new {
@@ -926,7 +925,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.0"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.2"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }

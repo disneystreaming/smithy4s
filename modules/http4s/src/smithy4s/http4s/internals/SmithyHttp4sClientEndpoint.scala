@@ -34,35 +34,48 @@ import smithy4s.kinds._
   * client into a high-level, domain specific function.
   */
 // format: off
-private[smithy4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
+private[http4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
   def send(input: I): F[O]
 }
 // format: on
 
-private[smithy4s] object SmithyHttp4sClientEndpoint {
+private[http4s] object SmithyHttp4sClientEndpoint {
 
-  def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F]
-  ): Option[SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]] =
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
-        baseUri,
-        client,
-        endpoint,
-        httpEndpoint,
-        compilerContext
-      )
+  ): Either[
+    HttpEndpoint.HttpEndpointError,
+    SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
+  ] =
+    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
+      toHttp4sMethod(httpEndpoint.method)
+        .leftMap { e =>
+          HttpEndpoint.HttpEndpointError(
+            "Couldn't parse HTTP method: " + e
+          )
+        }
+        .map { method =>
+          new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
+            baseUri,
+            client,
+            method,
+            endpoint,
+            httpEndpoint,
+            compilerContext
+          )
+        }
     }
 
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   baseUri: Uri,
   client: Client[F],
+  method: org.http4s.Method,
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   httpEndpoint: HttpEndpoint[I],
   compilerContext: CompilerContext[F]
@@ -78,7 +91,6 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
   }
 
   import compilerContext._
-  private val method: org.http4s.Method = toHttp4sMethod(httpEndpoint.method)
   private val inputSchema: Schema[I] = endpoint.input
   private val outputSchema: Schema[O] = endpoint.output
 

@@ -53,6 +53,7 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
   ): List[String] =
     HttpEndpoint
       .cast(endpoint)
+      .toOption
       .map { httpEndpoint =>
         val path = endpoint.hints
           .get(Http)
