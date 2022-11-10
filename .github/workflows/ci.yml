@@ -152,9 +152,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v13
+        uses: coursier/setup-action@v1
         with:
-          java-version: temurin:1.17
+          jvm: temurin:1.17
 
       - name: Cache
         uses: coursier/cache-action@v6
