@@ -104,7 +104,9 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
     def use: Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] = {
       checkProtocol(service, protocolTag)
-        .as(
+        // Making sure the router is evaluated lazily, so that all the compilation inside it
+        // doesn't happen in case of a missing protocol
+        .map { _ =>
           new SmithyHttp4sReverseRouter[Alg, service.Operation, F](
             uri,
             service,
@@ -112,7 +114,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             EntityCompiler
               .fromCodecAPI[F](codecs)
           )
-        )
+        }
         .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
     }
   }
