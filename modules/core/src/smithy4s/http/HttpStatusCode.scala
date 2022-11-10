@@ -42,9 +42,4 @@ object HttpStatusCode extends CachedSchemaCompiler.Impl[HttpStatusCode] {
     }
   }
 
-  @deprecated("kept for bincompat in 0.16.x")
-  def derivedHttpStatusCodeFromStaticSchema[A](implicit
-      schema: Schema[A]
-  ): HttpStatusCode[A] = fromSchema(schema)
-
 }

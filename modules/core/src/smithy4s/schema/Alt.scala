@@ -19,7 +19,6 @@ package schema
 
 import smithy4s.capability.EncoderK
 import kinds._
-import scala.annotation.nowarn
 
 /**
   * Represents a member of coproduct type (sealed trait)
@@ -38,12 +37,8 @@ final case class Alt[F[_], U, A](
 }
 object Alt {
 
-  @nowarn
   final case class WithValue[F[_], U, A](
-      @deprecated(
-        "Should not be accessed directly, use Dispatcher instead when compiling union schemas",
-        since = "0.16.5"
-      ) alt: Alt[F, U, A],
+      private[Alt] val alt: Alt[F, U, A],
       value: A
   ) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
@@ -68,7 +63,6 @@ object Alt {
     * function into an encoder that works on the union.
     */
   trait Dispatcher[F[_], U] {
-    def underlying: U => Alt.WithValue[F, U, _]
 
     def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
         encoderK: EncoderK[G, Result]
@@ -84,7 +78,6 @@ object Alt {
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
 
-    @nowarn("msg=Should not be accessed")
     private[smithy4s] case class Impl[F[_], U](
         alts: Vector[Alt[F, U, _]],
         underlying: U => Alt.WithValue[F, U, _]

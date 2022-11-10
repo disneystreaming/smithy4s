@@ -210,11 +210,6 @@ object Metadata {
       }
     }
 
-    @deprecated("kept for bincompat in 0.16.x")
-    def derivedDecoderFromStaticSchema[A](
-        schema: Schema[A]
-    ): PartialDecoder[A] =
-      fromSchema(schema)
   }
 
   /**
@@ -277,11 +272,6 @@ object Metadata {
         case _ => (_: A) => Metadata.empty
       }
     }
-
-    @deprecated("kept for bincompat in 0.16.x")
-    def deriveEncoderFromStaticSchema[A](implicit
-        schema: Schema[A]
-    ): Encoder[A] = fromSchema(schema)
 
   }
 
