@@ -33,12 +33,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val smithy4sVersion =
       settingKey[String]("Smithy4sVersion")
 
-    @deprecated("Deprecated in 0.17, use `smithy4sInputDirs` instead.")
-    val smithy4sInputDir =
-      settingKey[File](
-        "Input directory for smithy specs (.smithy or .json files)"
-      )
-
     val smithy4sInputDirs = settingKey[Seq[File]](
       "Input directories for smithy specs (.smithy or .json files)"
     )
@@ -102,17 +96,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   override def projectConfigurations: Seq[Configuration] = Seq(Smithy4s)
 
   // Use this with any configuration to enable the codegen in it.
-  @annotation.nowarn(
-    "msg=value smithy4sInputDir in object autoImport is deprecated: Deprecated in 0.17, use `smithy4sInputDirs` instead."
-  )
   def defaultSettings(config: Configuration) = Seq(
-    config / smithy4sInputDir := (config / sourceDirectory).value / "smithy",
-    config / smithy4sInputDirs := {
-      val unmanaged = (config / unmanagedSourceDirectories).value
-        .map(_.getParentFile() / "smithy")
-      val default = (config / smithy4sInputDir).value
-      (unmanaged :+ default).distinct
-    },
+    config / smithy4sInputDirs := (config / unmanagedSourceDirectories).value
+      .map(_.getParentFile() / "smithy"),
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,

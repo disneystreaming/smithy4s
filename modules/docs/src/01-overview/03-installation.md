@@ -66,7 +66,7 @@ object example extends ScalaModule with Smithy4sModule {
 }
 ```
 
-By default, the `mill` plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically when you before you `compile` the module. The paths are configurable via the `smithy4sInputDir` and `smithy4sOutputDir` tasks.
+By default, the `mill` plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically when you before you `compile` the module. The paths are configurable via the `smithy4sInputDirs` and `smithy4sOutputDir` tasks.
 
 For example, here we'll read Smithy files from `smithy_input` and write to `smithy_output`.
 
@@ -81,8 +81,8 @@ object example extends ScalaModule with Smithy4sModule {
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}"
   )
 
-  override def smithy4sInputDir = T.source {
-    PathRef(T.ctx().workspace / "smithy_input")
+  override def smithy4sInputDirs = T.sources {
+    Seq(PathRef(T.ctx().workspace / "smithy_input"))
   }
   override def smithy4sOutputDir = T {
     PathRef(T.ctx().workspace / "smithy_output")
