@@ -1144,8 +1144,8 @@ private[smithy4s] class SchemaVisitorJCodec(
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
       val jLabel = jsonLabel(field)
-      val decoded = field.instance.getDefaultValue
-      val default = decoded.getOrElse(null)
+      val decoded: Option[Any] = field.instance.getDefaultValue
+      val default = decoded.orNull
       (field, jLabel, default)
     }
 
