@@ -11,7 +11,7 @@ import kinds._
   *  // assuming Foo is a code-generated interface
   *  val fooOption : Foo[Option] = ???
   *  val toList = new smithy4s.PolyFunction[Option, List]{def apply[A](fa: Option[A]): List[A] = fa.toList}
-  *  fooOption = foo.transform(toList)
+  *  val fooList : Foo[List] = foo.transform(toList)
   *}}}
   *
   * It is possible to plug arbitrary transformations to mechanism, such as `cats.arrow.FunctionK`
@@ -31,7 +31,7 @@ object Transformation {
   }
 
   /**
-    * A transformation that turns a bifunctor algebra into a monofunctor algebra by lifting absorbing known errors in a
+    * A transformation that turns a bifunctor algebra into a monofunctor algebra by absorbing known errors in a
     * generic error channel that handles throwables.
     */
   trait AbsorbError[F[_, _], G[_]] {

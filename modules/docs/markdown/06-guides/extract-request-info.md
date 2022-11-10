@@ -65,7 +65,6 @@ Note that it is getting the `RequestInfo` from the `IO[RequestInfo]` that is bei
 will be created using the same `IOLocal` instance is passed to our middleware implementation.
 That way, the middleware can set the `RequestInfo` value that we are reading here.
 
-[[generalisation.md]]
 ### Middleware
 
 Below is the middleware implementation. It extracts the `Content-Type` and `User-Agent` headers and passes them along in the `IOLocal`

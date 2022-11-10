@@ -91,7 +91,7 @@ val result: Either[KVStore.GetError, Value] = kvStoreEither.get("foo")
 The `smithy4s.Transformation.AbsorbErrors` interface is the opposite as the `SurfaceError` : it codifies the absorption of errors known by the service into generic error channels.
 
 It is useful to implement services in a way that leverages the type-checker to ensure that the returned errors have been specified in Smithy,
-before passing the implementation to a generic router that is only able to work against monofunctor.
+before passing the implementation to a generic router that is only able to work against a monofunctor.
 
 ```scala mdoc:reset
 import smithy4s.example._
