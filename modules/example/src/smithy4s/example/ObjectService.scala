@@ -31,6 +31,9 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   def apply[F[_]](implicit F: FunctorAlgebra[ObjectServiceGen, F]): F.type = F
 
   type WithError[F[_, _]] = BiFunctorAlgebra[ObjectServiceGen, F]
+  object WithError {
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
 

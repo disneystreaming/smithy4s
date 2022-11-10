@@ -30,6 +30,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   def apply[F[_]](implicit F: FunctorAlgebra[NameCollisionGen, F]): F.type = F
 
   type WithError[F[_, _]] = BiFunctorAlgebra[NameCollisionGen, F]
+  object WithError {
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
 

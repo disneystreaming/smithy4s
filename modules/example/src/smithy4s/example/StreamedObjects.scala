@@ -26,6 +26,9 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def apply[F[_]](implicit F: FunctorAlgebra[StreamedObjectsGen, F]): F.type = F
 
   type WithError[F[_, _]] = BiFunctorAlgebra[StreamedObjectsGen, F]
+  object WithError {
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedObjects")
 
