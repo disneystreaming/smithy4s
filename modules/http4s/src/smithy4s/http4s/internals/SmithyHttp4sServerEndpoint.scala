@@ -36,7 +36,7 @@ import smithy4s.kinds._
   * A construct that encapsulates a smithy4s endpoint, and exposes
   * http4s specific semantics.
   */
-private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
+private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
   def matches(path: Array[String]): Option[PathParams]
   def run(pathParams: PathParams, request: Request[F]): F[Response[F]]
@@ -47,30 +47,43 @@ private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
     matches(path).map(this -> _)
 }
 
-private[smithy4s] object SmithyHttp4sServerEndpoint {
+private[http4s] object SmithyHttp4sServerEndpoint {
 
-  def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
-  ): Option[SmithyHttp4sServerEndpoint[F]] =
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
-        impl,
-        endpoint,
-        httpEndpoint,
-        compilerContext,
-        errorTransformation
-      )
+  ): Either[
+    HttpEndpoint.HttpEndpointError,
+    SmithyHttp4sServerEndpoint[F]
+  ] =
+    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
+      toHttp4sMethod(httpEndpoint.method)
+        .leftMap { e =>
+          HttpEndpoint.HttpEndpointError(
+            "Couldn't parse HTTP method: " + e
+          )
+        }
+        .map { method =>
+          new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
+            impl,
+            endpoint,
+            method,
+            httpEndpoint,
+            compilerContext,
+            errorTransformation
+          )
+        }
     }
 
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
     impl: FunctorInterpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
+    val method: Method,
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
@@ -79,8 +92,6 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   import compilerContext._
 
   type ==>[A, B] = Kleisli[F, A, B]
-
-  val method: Method = toHttp4sMethod(httpEndpoint.method)
 
   def matches(path: Array[String]): Option[PathParams] = {
     httpEndpoint.matches(path)

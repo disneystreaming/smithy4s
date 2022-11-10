@@ -28,7 +28,7 @@ import StringAndBlobCodecSchemaVisitor._
 import smithy.api.HttpPayload
 import java.nio.ByteBuffer
 
-private[smithy4s] object StringAndBlobCodecSchemaVisitor {
+private[http] object StringAndBlobCodecSchemaVisitor {
 
   trait SimpleCodec[A] { self =>
     def mediaType: HttpMediaType
@@ -89,7 +89,7 @@ private[smithy4s] object StringAndBlobCodecSchemaVisitor {
 
 }
 
-private[smithy4s] class StringAndBlobCodecSchemaVisitor
+private[http] class StringAndBlobCodecSchemaVisitor
     extends SchemaVisitor.Default[CodecResult] {
 
   override def default[A]: CodecResult[A] = noop

@@ -58,6 +58,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
     def client[F[_]: EffectCompat](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
+
     @deprecated(
       "Use the ClientBuilder instead,  client(client).uri(baseuri).use"
     )
