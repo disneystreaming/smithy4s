@@ -38,6 +38,13 @@ final class BodyPartial[A] private[smithy4s] (
   final def map[B](f: A => B): BodyPartial[B] = new BodyPartial(
     complete andThen f
   )
+
+  private[smithy4s] def completeCatch(
+      m: MMap[String, Any]
+  ): Either[PayloadError, A] = try Right(complete(m))
+  catch {
+    case p: PayloadError => Left(p)
+  }
 }
 object BodyPartial {
   def apply[A](complete: MMap[String, Any] => A): BodyPartial[A] =
