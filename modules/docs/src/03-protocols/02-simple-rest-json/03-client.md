@@ -6,6 +6,7 @@ title: SimpleRestJson client
 The `smithy4s-http4s` module provides functions that transform low-level http4s clients into high-level stubs, provided the corresponding service definitions (in smithy) are annotated with the `alloy#simpleRestJson` protocol.
 - Uri is optional as it will default to http://localhost:8080
 In `build.sbt`
+- the max arity of json array decoder is 1024 by default, but can be changed by calling withMaxArity on the RestJsonBuilder object
 
 ```scala
 libraryDependencies ++= Seq(
@@ -33,9 +34,10 @@ object Clients {
     .uri(Uri.unsafeFromString("http://localhost"))
     .resource
 
-  // alternatively ...
+  // alternatively ... with setting the max arity to 2048
   def helloWorldClient2(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    SimpleRestJsonBuilder(HelloWorldService)
+    SimpleRestJsonBuilder
+    .withMaxArity(2048)(HelloWorldService)
     .client(http4sClient)
       .uri(Uri.unsafeFromString("http://localhost"))
       .resource
