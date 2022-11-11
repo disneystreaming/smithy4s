@@ -19,7 +19,7 @@ package smithy4s.codegen.mill
 import coursier.maven.MavenRepository
 import mill._
 import mill.api.PathRef
-import mill.define.Source
+import mill.define.Sources
 import mill.scalalib._
 import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
 import smithy4s.codegen.BuildInfo
@@ -27,8 +27,8 @@ import smithy4s.codegen.BuildInfo
 trait Smithy4sModule extends ScalaModule {
 
   /** Input directory for .smithy files */
-  protected def smithy4sInputDir: Source = T.source {
-    PathRef(millSourcePath / "smithy")
+  protected def smithy4sInputDirs: Sources = T.sources {
+    Seq(PathRef(millSourcePath / "smithy"))
   }
 
   protected def smithy4sOutputDir: T[PathRef] = T {
@@ -85,7 +85,7 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
-    val specFiles = List(smithy4sInputDir().path).filter(os.exists(_))
+    val specFiles = smithy4sInputDirs().map(_.path).filter(os.exists(_))
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
