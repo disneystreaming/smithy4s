@@ -3,7 +3,7 @@ addSbtPlugin("ch.epfl.scala"        % "sbt-scalafix"                  % "0.10.4"
 addSbtPlugin("org.scala-js"         % "sbt-scalajs"                   % "1.11.0")
 addSbtPlugin("com.github.sbt"       % "sbt-pgp"                       % "2.1.2")
 addSbtPlugin("com.dwijnand"         % "sbt-dynver"                    % "4.1.1")
-addSbtPlugin("org.xerial.sbt"       % "sbt-sonatype"                  % "3.9.13")
+addSbtPlugin("org.xerial.sbt"       % "sbt-sonatype"                  % "3.9.14")
 addSbtPlugin("org.scalameta"        % "sbt-scalafmt"                  % "2.4.4")
 // addSbtPlugin("org.scoverage"        % "sbt-scoverage"                 % "1.9.0")
 addSbtPlugin("org.scalameta"        % "sbt-mdoc"                      % "2.3.5")
@@ -11,7 +11,7 @@ addSbtPlugin("com.eed3si9n"         % "sbt-buildinfo"                 % "0.11.0"
 addSbtPlugin("com.eed3si9n"         % "sbt-projectmatrix"             % "0.9.0")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"                       % "0.4.3")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.8.0")
-addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.7")
+addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.8")
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.0.0")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.1")
 

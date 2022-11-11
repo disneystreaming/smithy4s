@@ -135,7 +135,8 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
           for {
             metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
             bodyPartial <- request.as[BodyPartial[I]]
-          } yield metadataPartial.combine(bodyPartial)
+            decoded <- metadataPartial.combineCatch(bodyPartial).liftTo[F]
+          } yield decoded
         }
     }
   }
