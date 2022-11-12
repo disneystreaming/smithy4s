@@ -7,7 +7,8 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 
-case class DeprecatedStructure(name: Option[String] = None, nameV2: Option[String] = None, strings: Option[List[String]] = None)
+@deprecated(message = "A compelling reason", since = "0.0.1")
+case class DeprecatedStructure(@deprecated name: Option[String] = None, nameV2: Option[String] = None, strings: Option[List[String]] = None)
 object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedStructure")
 

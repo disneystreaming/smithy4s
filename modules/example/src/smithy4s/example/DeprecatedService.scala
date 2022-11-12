@@ -11,9 +11,11 @@ import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.Hints
 import smithy4s.StreamingSchema
 
+@deprecated
 trait DeprecatedServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  @deprecated
   def deprecatedOperation() : F[Unit, Nothing, Unit, Nothing, Nothing]
 
   def transform : Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = new Transformation.PartiallyApplied[DeprecatedServiceGen[F]](this)

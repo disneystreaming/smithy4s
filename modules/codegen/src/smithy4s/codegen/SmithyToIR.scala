@@ -273,7 +273,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                     value.getName().asScala,
                     value.getValue,
                     index
-                  )
+                  ),
+                  hints = Nil
                 )
               }
               .toList
@@ -287,10 +288,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .asScala
           .zipWithIndex
           .map { case ((name, value), index) =>
-            EnumValue(value, index, name)
+            val member = shape.getMember(name).get()
+
+            // random note: any other traits that are allowed on enum values? cuz they don't generate hints.
+            // known: @deprecated, @documentation
+            EnumValue(value, index, name, hints(member))
           }
           .toList
-        Enumeration(shape.getId(), shape.name, values).some
+
+        Enumeration(
+          shape.getId(),
+          shape.name,
+          values,
+          hints = hints(shape)
+        ).some
       }
 
       override def intEnumShape(shape: IntEnumShape): Option[Decl] = {
@@ -298,7 +309,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getEnumValues()
           .asScala
           .map { case (name, value) =>
-            EnumValue(name, value, name)
+            val member = shape.getMember(name).get()
+
+            EnumValue(name, value, name, hints(member))
           }
           .toList
         Enumeration(
@@ -707,6 +720,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.Protocol(refs.toList)
     case _: PackedInputsTrait =>
       Hint.PackedInputs
+    case d: DeprecatedTrait =>
+      Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
     case _: ErrorMessageTrait =>
       Hint.ErrorMessage
     case _: VectorTrait =>
@@ -722,7 +737,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def traitsToHints(traits: List[Trait]): List[Hint] = {
     val nonMetaTraits =
-      traits.filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
+      traits
+        .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
+        // not sure about this
+        .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }

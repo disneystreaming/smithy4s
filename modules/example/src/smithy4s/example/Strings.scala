@@ -8,6 +8,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
 
+@deprecated
 object Strings extends Newtype[List[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "Strings")
   val hints : Hints = Hints(

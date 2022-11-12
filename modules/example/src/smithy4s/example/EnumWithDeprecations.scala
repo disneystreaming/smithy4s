@@ -7,6 +7,7 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.enumeration
 
+@deprecated
 sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intValue: Int) extends Enumeration.Value {
   override val value: String = _value
   override val name: String = _name
@@ -17,8 +18,12 @@ sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intVa
 object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {
   val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
 
-  val hints : Hints = Hints.empty
+  val hints : Hints = Hints(
+    smithy.api.Documentation("some docs here"),
+    smithy.api.Deprecated(message = None, since = None),
+  )
 
+  @deprecated
   case object OLD extends EnumWithDeprecations("OLD", "OLD", 0)
   case object NEW extends EnumWithDeprecations("NEW", "NEW", 1)
 

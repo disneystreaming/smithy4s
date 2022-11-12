@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.constant
 import smithy4s.Hints
 
+@deprecated(message = "A compelling reason", since = "0.0.1")
 sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
   @inline final def widen: DeprecatedUnion = this
 }
@@ -19,8 +20,10 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 
+  @deprecated
   case class SCase(s: String) extends DeprecatedUnion
   case class S_V2Case(s_V2: String) extends DeprecatedUnion
+  @deprecated
   case class DeprecatedUnionProductCase() extends DeprecatedUnion
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
@@ -33,11 +36,14 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
+  @deprecated
   case class UnionProductCaseDeprecatedAtCallSite() extends DeprecatedUnion
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
-    val hints : Hints = Hints.empty
+    val hints : Hints = Hints(
+      smithy.api.Deprecated(message = None, since = None),
+    )
 
     implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
 

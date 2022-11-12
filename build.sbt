@@ -726,7 +726,7 @@ lazy val complianceTests = projectMatrix
  * Example application using the custom REST-JSON protocol provided by
  * smithy4s.
  *
- * All Scala code in this module is generated!
+ * (almost) all Scala code in this module is generated! The ones that aren't should have a note stating so.
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
@@ -769,7 +769,9 @@ lazy val example = projectMatrix
     ),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
-    smithy4sSkip := List("resource")
+    smithy4sSkip := List("resource"),
+    // Ignore deprecation warnings here - it's all generated code, anyway.
+    scalacOptions += "-Wconf:cat=deprecation:silent"
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)

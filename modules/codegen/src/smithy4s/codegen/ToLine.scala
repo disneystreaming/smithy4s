@@ -124,6 +124,9 @@ case class Line(segments: Chain[LineSegment]) {
       Lines.empty
     }
   }
+
+  def appendUnlessEmpty(other: Line): Line =
+    if (nonEmpty) this + other else this
 }
 
 object Line {
@@ -150,6 +153,7 @@ object Line {
 
   val empty: Line = Line(Chain.empty)
   val comma: Line = Line(", ")
+  val space: Line = Line(" ")
   val dot: Line = Line(".")
   implicit val monoid: Monoid[Line] = Monoid.instance(empty, _ + _)
 

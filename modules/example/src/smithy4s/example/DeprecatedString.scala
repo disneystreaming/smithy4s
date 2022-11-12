@@ -7,6 +7,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
 
+@deprecated
 object DeprecatedString extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedString")
   val hints : Hints = Hints(
