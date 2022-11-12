@@ -24,13 +24,13 @@ case object JVMPlatform extends Platform
 case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
     extends VirtualAxis.WeakAxis
 
-object Smithy4sPlugin extends AutoPlugin {
+object Smithy4sBuildPlugin extends AutoPlugin {
   val CatsEffect3Axis = CatsEffectAxis("_CE3", "ce3")
   val CatsEffect2Axis = CatsEffectAxis("_CE2", "ce2")
 
   val Scala212 = "2.12.17"
-  val Scala213 = "2.13.8"
-  val Scala3 = "3.2.0"
+  val Scala213 = "2.13.10"
+  val Scala3 = "3.2.1"
 
   implicit class ProjectMatrixOps(val pm: ProjectMatrix) extends AnyVal {
     def http4sJvmPlatform(
@@ -177,7 +177,7 @@ object Smithy4sPlugin extends AutoPlugin {
 
   def targetScalacOptions(scalaVersion: String) =
     if (scalaVersion.startsWith("2.12")) Seq("-target:jvm-1.8", "-release", "8")
-    else if (scalaVersion.startsWith("2.13")) Seq("-target:8", "-release", "8")
+    else if (scalaVersion.startsWith("2.13")) Seq("-release", "8")
     else if (scalaVersion.startsWith("3.")) Seq("-release", "8")
     else Seq.empty // when we get Scala 4...
 

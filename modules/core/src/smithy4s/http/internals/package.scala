@@ -52,7 +52,7 @@ package object internals {
       }
   }
 
-  private[smithy4s] def pathSegments(
+  private[http] def pathSegments(
       str: String
   ): Option[Vector[PathSegment]] = {
     str

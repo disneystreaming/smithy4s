@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace smithy4s.example
+namespace smithy4s.example.test
 
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests

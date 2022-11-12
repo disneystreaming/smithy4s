@@ -126,8 +126,4 @@ object JCodec extends CachedSchemaCompiler.Impl[JCodec] {
       cache: Cache
   ): JCodec[A] = schema.compile(codecs.schemaVisitorJCodec(cache))
 
-  @deprecated("kept for bincompat in 0.16.x")
-  def deriveJCodecFromSchema[A](schema: Schema[A]): JCodec[A] =
-    fromSchema(schema)
-
 }

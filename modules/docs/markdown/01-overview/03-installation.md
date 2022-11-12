@@ -31,7 +31,7 @@ val myModule = project
 
 This will enable the plugin on `myModule`. We also need to add `smithy4s-core ` here since it is needed for compiling the generated code.
 
-By default, the plugin will look in the `$MY_MODULE/src/main/smithy` directory and will write scala code in `$MY_MODULE/target/scala-<version>/src_managed/` when invoking `compile`. The paths are configurable via the `smithy4sInputDir` and `smithy4sOutputDir` settings keys.
+By default, the plugin will look in the `$MY_MODULE/src/main/smithy` directory and will write scala code in `$MY_MODULE/target/scala-<version>/src_managed/` when invoking `compile`. The paths are configurable via the `smithy4sInputDirs` and `smithy4sOutputDir` settings keys.
 
 For example, in order for the plugin to source `.smithy` specs from `./smithy_input` (inside the folder where our `build.sbt` is) and output the generated files into `./smithy_output`.
 
@@ -41,8 +41,8 @@ val myModule = project
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
     scalaVersion := "@SCALA_VERSION@",
-    smithy4sInputDir in Compile  := (ThisBuild / baseDirectory).value / "smithy_input",
-    smithy4sOutputDir in Compile := (ThisBuild / baseDirectory).value / "smithy_output",
+    Compile / smithy4sInputDirs := Seq((ThisBuild / baseDirectory).value / "smithy_input"),
+    Compile / smithy4sOutputDir := (ThisBuild / baseDirectory).value / "smithy_output",
     libraryDependencies += "com.disneystreaming.smithy4s" %% "smithy4s-core" % smithy4sVersion.value
   )
 ```
@@ -66,7 +66,7 @@ object example extends ScalaModule with Smithy4sModule {
 }
 ```
 
-By default, the `mill` plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically when you before you `compile` the module. The paths are configurable via the `smithy4sInputDir` and `smithy4sOutputDir` tasks.
+By default, the `mill` plugin will look for Smithy files under the `$MY_MODULE/smithy` directory. The generated code ends up in `out/$MY_MODULE/smithy4sOutputDir.dest/scala/`, again, by default. Code generation happens automatically when you before you `compile` the module. The paths are configurable via the `smithy4sInputDirs` and `smithy4sOutputDir` tasks.
 
 For example, here we'll read Smithy files from `smithy_input` and write to `smithy_output`.
 
@@ -81,8 +81,8 @@ object example extends ScalaModule with Smithy4sModule {
     ivy"com.disneystreaming.smithy4s::smithy4s-core:${smithy4sVersion()}"
   )
 
-  override def smithy4sInputDir = T.source {
-    PathRef(T.ctx().workspace / "smithy_input")
+  override def smithy4sInputDirs = T.sources {
+    Seq(PathRef(T.ctx().workspace / "smithy_input"))
   }
   override def smithy4sOutputDir = T {
     PathRef(T.ctx().workspace / "smithy_output")
