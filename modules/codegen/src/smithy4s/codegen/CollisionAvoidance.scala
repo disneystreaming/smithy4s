@@ -283,6 +283,10 @@ object CollisionAvoidance {
     val struct_ = NameRef("smithy4s.schema.Schema", "struct")
     val bijection_ = NameRef("smithy4s.schema.Schema", "bijection")
     val Transformed_ = NameDef("Transformed")
+    val WithError_ = NameDef("WithError")
+    val Constant_ = NameDef("Constant")
+    val Default_ = NameDef("Default")
+    val const5_ = NameRef("smithy4s.kinds.toPolyFunction5", "const5")
 
     // We reserve these keywords as they collide with types that the
     // users are bound to manipulate when using Smithy4s .

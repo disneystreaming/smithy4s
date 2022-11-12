@@ -204,7 +204,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"def apply[F[_]](implicit F: $FunctorAlgebra_[$genNameRef, F]): F.type = F",
         newline,
-        line"type WithError[F[_, _]] = $BiFunctorAlgebra_[$genNameRef, F]",
+        line"type $WithError_[F[_, _]] = $BiFunctorAlgebra_[$genNameRef, F]",
+        block(line"object $WithError_")(
+          line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
+        ),
         newline,
         renderId(shapeId),
         newline,
@@ -256,6 +259,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .renderAlgParams(genName.name)}](alg.$opName(${op.renderParams}))"
           }
         },
+        newline,
+        line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends $Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
+        line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         newline,
         block(
           line"def toPolyFunction[P[_, _, _, _, _]](impl : $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"

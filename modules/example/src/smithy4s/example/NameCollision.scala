@@ -13,6 +13,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 import smithy4s.schema.Schema.UnionSchema
+import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
 
@@ -29,6 +30,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   def apply[F[_]](implicit F: FunctorAlgebra[NameCollisionGen, F]): F.type = F
 
   type WithError[F[_, _]] = BiFunctorAlgebra[NameCollisionGen, F]
+  object WithError {
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
 
@@ -54,6 +58,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: NameCollisionGen[P], f : PolyFunction5[P, P1]) extends NameCollisionGen[P1] {
     def myOp() = f[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing](alg.myOp())
   }
+
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[NameCollisionOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl : NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = new PolyFunction5[NameCollisionOperation, P] {
     def apply[I, E, O, SI, SO](op : NameCollisionOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
