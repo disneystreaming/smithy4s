@@ -25,9 +25,10 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
+import scodec.bits.ByteVector
+import smithy4s.kinds._
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
-import smithy4s.kinds._
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -115,7 +116,7 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
     val baseRequest = Request[F](method, uri, headers = headers)
     if (inputHasBody) {
       baseRequest.withEntity(input)
-    } else baseRequest
+    } else baseRequest.withEntity(ByteVector.empty)
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
