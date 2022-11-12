@@ -269,7 +269,13 @@ lazy val `aws-kernel` = projectMatrix
       "aws.protocols"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Test / envVars ++= Map("TEST_VAR" -> "hello")
+    Test / envVars ++= Map("TEST_VAR" -> "hello"),
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
+      "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
+    )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(
