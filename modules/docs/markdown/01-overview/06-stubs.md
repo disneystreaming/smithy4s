@@ -5,7 +5,7 @@ title: Stubbed implementations
 
 For various reasons, such as testing/mocking, you may want to instantiate a stub implementation of generated service interfaces. Smithy4s makes it easy, by generating a `Default` class in the companion object of each service.
 
-This class has a constructor parameter that require a value. This value is what is returned when invoking any of the methods
+This class has a constructor parameter that requires a value. This value is what is returned when invoking any of the methods
 
 ```scala mdoc:silent
 import smithy4s.hello._
