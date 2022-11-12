@@ -725,6 +725,8 @@ lazy val complianceTests = projectMatrix
 /**
  * Example application using the custom REST-JSON protocol provided by
  * smithy4s.
+ *
+ * All Scala code in this module is generated!
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
@@ -742,6 +744,7 @@ lazy val example = projectMatrix
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "deprecations.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",

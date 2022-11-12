@@ -11,6 +11,8 @@ package object example {
   val ObjectService = ObjectServiceGen
   type NameCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[NameCollisionGen, F]
   val NameCollision = NameCollisionGen
+  type DeprecatedService[F[_]] = smithy4s.kinds.FunctorAlgebra[DeprecatedServiceGen, F]
+  val DeprecatedService = DeprecatedServiceGen
 
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type SomeValue = smithy4s.example.SomeValue.Type
@@ -25,7 +27,9 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
+  type Strings = smithy4s.example.Strings.Type
   type PersonAge = smithy4s.example.PersonAge.Type
+  type DeprecatedString = smithy4s.example.DeprecatedString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type StringList = smithy4s.example.StringList.Type
