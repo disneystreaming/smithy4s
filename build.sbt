@@ -1,3 +1,5 @@
+import _root_.java.util.stream.Collectors
+import java.nio.file.Files
 import sbt.internal.IvyConsole
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
@@ -12,7 +14,7 @@ ThisBuild / mimaBaseVersion := "0.17.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-import Smithy4sPlugin._
+import Smithy4sBuildPlugin._
 
 val latest2ScalaVersions = List(Scala213, Scala3)
 val allJvmScalaVersions = List(Scala212, Scala213, Scala3)
@@ -39,7 +41,7 @@ lazy val root = project
   .aggregate(allModules: _*)
   // .disablePlugins(Smithy4sPlugin)
   .enablePlugins(ScalafixPlugin)
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
   .settings(
     pushRemoteCache := {},
     pullRemoteCache := {},
@@ -81,10 +83,10 @@ lazy val docs =
       `http4s-swagger`,
       decline,
       `aws-http4s` % "compile -> compile,test",
-      complianceTests % "compile -> compile,test"
+      complianceTests
     )
     .settings(
-      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "src",
+      mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
       mdocVariables := Map(
         "VERSION" -> {
           sys.env
@@ -109,12 +111,16 @@ lazy val docs =
         Dependencies.Http4s.emberServer.value,
         Dependencies.Decline.effect.value
       ),
+      Compile / genSmithyDependencies ++= Seq(Dependencies.Smithy.testTraits),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
       Compile / smithySpecs := Seq(
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
+        (Compile / sourceDirectory).value / "smithy",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
       )
     )
-    .settings(Smithy4sPlugin.doNotPublishArtifact)
+    .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 val munitDeps = Def.setting {
   if (virtualAxes.value.contains(VirtualAxis.native)) {
@@ -204,7 +210,9 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     Compile / packageSrc / mappings ++= {
@@ -231,8 +239,7 @@ lazy val scalacheck = projectMatrix
       Dependencies.collectionsCompat.value,
       Dependencies.Scalacheck.scalacheck.value
     ),
-    libraryDependencies ++= munitDeps.value,
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect")
+    libraryDependencies ++= munitDeps.value
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -401,7 +408,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
     sbtPlugin := true,
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
-        Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
+        Seq("-Xmx1G", "-Dplugin.version=" + version.value)
     },
     Compile / unmanagedSources / excludeFilter := { f =>
       Glob("**/sbt-test/**").matches(f.toPath)
@@ -519,7 +526,7 @@ lazy val protocolTests = projectMatrix
       Dependencies.Weaver.scalacheck.value % Test
     )
   )
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 /**
  * This modules contains utilities to dynamically instantiate
@@ -540,11 +547,13 @@ lazy val dynamic = projectMatrix
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Test / allowedNamespaces := Seq("smithy4s.example"),
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
-    ),
-    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
+    Compile / packageSrc / mappings ++= {
+      val base = (Compile / sourceManaged).value
+      val files = (Compile / managedSources).value
+      files
+        .map(f => (f, f.relativeTo(base)))
+        .collect { case (f, Some(relF)) => f -> relF.getPath() }
+    }
   )
   .jvmPlatform(
     allJvmScalaVersions,
@@ -640,7 +649,7 @@ lazy val `http4s-swagger` = projectMatrix
 lazy val testUtils = projectMatrix
   .in(file("modules/test-utils"))
   .dependsOn(core)
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
   .settings(
     libraryDependencies += Dependencies.Cats.core.value
   )
@@ -692,7 +701,7 @@ lazy val complianceTests = projectMatrix
   .dependsOn(core, http4s % "compile->compile; test->compile", testUtils)
   .settings(
     name := "compliance-tests",
-    Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example"),
+    Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
     Compile / genSmithyDependencies ++= Seq(Dependencies.Smithy.testTraits),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
@@ -706,7 +715,6 @@ lazy val complianceTests = projectMatrix
         Dependencies.Weaver.cats.value % Test
       )
     },
-    testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
     ),
@@ -761,7 +769,7 @@ lazy val example = projectMatrix
     smithy4sSkip := List("resource")
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 lazy val guides = projectMatrix
   .in(file("modules/guides"))
@@ -779,7 +787,7 @@ lazy val guides = projectMatrix
     )
   )
   .jvmPlatform(Seq(Scala3), jvmDimSettings)
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 /**
  * Pretty primitive benchmarks to test that we're not doing anything drastically
@@ -802,7 +810,7 @@ lazy val benchmark = projectMatrix
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
-  .settings(Smithy4sPlugin.doNotPublishArtifact)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 val isCE3 = settingKey[Boolean]("Is the current build using CE3?")
 
@@ -815,7 +823,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.6"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.9"
     )
 
   val Smithy = new {
@@ -924,7 +932,7 @@ lazy val Dependencies = new {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.0"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.2"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }
@@ -969,7 +977,9 @@ def genSmithyImpl(config: Configuration) = Def.task {
     }
 
   val codegenCp =
-    (`codegen-cli`.jvm(Smithy4sPlugin.Scala213) / Compile / fullClasspath).value
+    (`codegen-cli`.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / fullClasspath).value
       .map(_.data)
 
   val mc = "smithy4s.codegen.cli.Main"
@@ -977,13 +987,56 @@ def genSmithyImpl(config: Configuration) = Def.task {
 
   def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))
 
+  import sjsonnew._
+  import BasicJsonProtocol._
+  import sbt.FileInfo
+  import sbt.HashFileInfo
+  import sbt.io.Hash
+  import scala.jdk.CollectionConverters._
+
+  // Json codecs used by SBT's caching constructs
+  // This serialises a path by providing a hash of the content it points to.
+  // Because the hash is part of the Json, this allows SBT to detect when a file
+  // changes and invalidate its relevant caches, leading to a call to Smithy4s' code generator.
+  implicit val pathFormat: JsonFormat[File] =
+    BasicJsonProtocol.projectFormat[File, HashFileInfo](
+      p => {
+        if (p.isFile()) FileInfo.hash(p)
+        else
+          // If the path is a directory, we get the hashes of all files
+          // then hash the concatenation of the hash's bytes.
+          FileInfo.hash(
+            p,
+            Hash(
+              Files
+                .walk(p.toPath(), 2)
+                .collect(Collectors.toList())
+                .asScala
+                .map(_.toFile())
+                .map(Hash(_))
+                .foldLeft(Array.emptyByteArray)(_ ++ _)
+            )
+          )
+      },
+      hash => hash.file
+    )
+
+  case class CodegenInput(files: Seq[File])
+  object CodegenInput {
+    implicit val seqFormat: JsonFormat[CodegenInput] =
+      BasicJsonProtocol.projectFormat[CodegenInput, Seq[File]](
+        input => input.files,
+        files => CodegenInput(files)
+      )(BasicJsonProtocol.seqFormat(pathFormat))
+  }
+
   val cached =
-    Tracked.inputChanged[FilesInfo[HashFileInfo], Seq[File]](
+    Tracked.inputChanged[CodegenInput, Seq[File]](
       s.cacheStoreFactory.make("input")
     ) {
       untupled {
         Tracked
-          .lastOutput[(Boolean, FilesInfo[HashFileInfo]), Seq[File]](
+          .lastOutput[(Boolean, CodegenInput), Seq[File]](
             s.cacheStoreFactory.make("output")
           ) { case ((changed, files), outputs) =>
             if (changed || outputs.isEmpty) {
@@ -1020,8 +1073,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
     }
 
   val trackedFiles = inputFiles ++ codegenCp.allPaths.get()
-  cached(FilesInfo(trackedFiles.map(FileInfo.hash(_)).toSet))
-    .partition(_.ext == "scala")
+  cached(CodegenInput(trackedFiles)).partition(_.ext == "scala")
 }
 
 addCommandAlias(

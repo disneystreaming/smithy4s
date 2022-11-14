@@ -33,10 +33,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val smithy4sVersion =
       settingKey[String]("Smithy4sVersion")
 
-    val smithy4sInputDir =
-      settingKey[File](
-        "Input directory for smithy specs (.smithy or .json files)"
-      )
+    val smithy4sInputDirs = settingKey[Seq[File]](
+      "Input directories for smithy specs (.smithy or .json files)"
+    )
 
     val smithy4sOutputDir =
       settingKey[File](
@@ -98,7 +97,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   // Use this with any configuration to enable the codegen in it.
   def defaultSettings(config: Configuration) = Seq(
-    config / smithy4sInputDir := (config / sourceDirectory).value / "smithy",
+    config / smithy4sInputDirs := (config / unmanagedSourceDirectories).value
+      .map(_.getParentFile() / "smithy"),
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
@@ -139,7 +139,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
-      Option((conf / smithy4sInputDir).value)
+      Option((conf / smithy4sInputDirs).value).toSeq.flatten
         .filter(_.exists())
         .toList
     val outputPath = (conf / smithy4sOutputDir).value

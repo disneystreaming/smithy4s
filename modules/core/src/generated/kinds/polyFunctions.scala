@@ -19,7 +19,7 @@
 package smithy4s
 package kinds
 
-import smithy4s.capability._
+import smithy4s.Transformation
 
 trait PolyFunction[F[_], G[_]]{ self =>
    def apply[A0](fa: F[A0]): G[A0]

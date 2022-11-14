@@ -40,47 +40,8 @@ _Note: currently, only `httprequesttests-trait` are supported. other traits supp
 
 ## Example specification
 
-```kotlin
-$version: "2"
-
-namespace smithy4s.hello
-
-use alloy#simpleRestJson
-use smithy.test#httpRequestTests
-
-@simpleRestJson
-service HelloWorldService {
-  version: "1.0.0",
-  operations: [Hello]
-}
-@httpRequestTests([
-    {
-        id: "hello-success"
-        protocol: simpleRestJson
-        method: "POST"
-        uri: "/World"
-        params: { name: "World" }
-    },
-    {
-        id: "hello-fails"
-        protocol: simpleRestJson
-        method: "POST"
-        uri: "/fail"
-        params: { name: "World" }
-    }
-])
-@http(method: "POST", uri: "/{name}", code: 200)
-operation Hello {
-  input := {
-    @httpLabel
-    @required
-    name: String
-  },
-  output := {
-    @required
-    message: String
-  }
-}
+```scala mdoc:passthrough
+docs.InlineSmithyFile.fromSample("test.smithy")
 ```
 
 We have a very simple specification: one operation with basic input and output shapes. We've added a `httpRequestTests` to define a compliance test for protocol implementors.
@@ -98,7 +59,7 @@ import cats.effect._
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.compliancetests._
-import smithy4s.example._
+import smithy4s.example.test._
 import smithy4s.http4s._
 import smithy4s.Service
 ```
@@ -108,15 +69,15 @@ Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `Serv
 ```scala mdoc:silent
 val clientTestGenerator = new ClientHttpComplianceTestCase[
     alloy.SimpleRestJson,
-    HelloWorldServiceGen,
+    HelloServiceGen,
   ](
     alloy.SimpleRestJson(),
-    HelloWorldService
+    HelloService
   ) {
     import org.http4s.implicits._
     private val baseUri = uri"http://localhost/"
-    def getClient(app: HttpApp[IO]): Resource[IO, HelloWorldService[IO]] =
-      SimpleRestJsonBuilder(HelloWorldServiceGen)
+    def getClient(app: HttpApp[IO]): Resource[IO, HelloService[IO]] =
+      SimpleRestJsonBuilder(HelloService)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
@@ -125,10 +86,10 @@ val clientTestGenerator = new ClientHttpComplianceTestCase[
 
 val serverTestGenerator = new ServerHttpComplianceTestCase[
     alloy.SimpleRestJson,
-    HelloWorldServiceGen,
+    HelloServiceGen,
   ](
     alloy.SimpleRestJson(),
-    HelloWorldService
+    HelloService
   ) {
     def getServer[Alg2[_[_, _, _, _, _]]](
       impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]

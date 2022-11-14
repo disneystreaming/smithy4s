@@ -45,10 +45,6 @@ trait EntityCompiler[F[_]] {
       cache: Cache
   ): EntityEncoder[F, A]
 
-  @deprecated("use compileEntityEncoder(schema, cache) instead")
-  final def compileEntityEncoder[A](schema: Schema[A]): EntityEncoder[F, A] =
-    compileEntityEncoder(schema, createCache())
-
   /**
     * Turns a Schema into an http4s EntityDecoder
     *
@@ -60,10 +56,6 @@ trait EntityCompiler[F[_]] {
       schema: Schema[A],
       cache: Cache
   ): EntityDecoder[F, A]
-
-  @deprecated("use compileEntityDecoder(schema, cache) instead")
-  final def compileEntityDecoder[A](schema: Schema[A]): EntityDecoder[F, A] =
-    compileEntityDecoder(schema, createCache())
 
   /**
     * Turns a Schema into an http4s EntityDecoder that only partially
@@ -77,12 +69,6 @@ trait EntityCompiler[F[_]] {
       schema: Schema[A],
       cache: Cache
   ): EntityDecoder[F, BodyPartial[A]]
-
-  @deprecated("use compilePartialEntityDecoder(schema, cache) instead")
-  final def compilePartialEntityDecoder[A](
-      schema: Schema[A]
-  ): EntityDecoder[F, BodyPartial[A]] =
-    compilePartialEntityDecoder(schema, createCache())
 
 }
 

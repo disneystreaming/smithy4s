@@ -45,7 +45,7 @@ object KVStoreOp {
 }
 ```
 
-These two encodings contain a similar amount of information. It is nearly-trivial to go from a `KVstore[Context]` instance to a `KVStoreOp ~> Context` natural transformation, and vice versa:
+These two encodings contain a similar amount of information. It is nearly-trivial to go from a `KVstore[Context]` instance to a `KVStoreOp ~> Context` polymorphic function (natural-transformation), and vice versa:
 
 ```scala
 trait ~>[F[_], G[_]]{
@@ -108,10 +108,10 @@ NB: at the time of writing this, Smithy4s does not have any streaming-aware inte
 
 ### Transformation
 
-Because of the complex kinds we're dealing with, we codify a natural-transformation, called `Smithy4s.Transformation` that allows us to work at this level :
+Because of the complex kinds we're dealing with, we codify a polymorphic function (natural-transformation), called `smithy4s.kinds.PolyFunction5` that allows us to work at this level :
 
 ```scala
-trait Transformation[F[_, _, _, _, _], G[_, _, _, _, _]] {
+trait PolyFunction5[F[_, _, _, _, _], G[_, _, _, _, _]] {
   def apply[I, E, O, SI, SO](fa: F[I, E, O, SI, SO]): G[I, E, O, SI, SO]
 }
 ```
@@ -126,8 +126,8 @@ So we codify the duality to allow for switching from one to the other via an abs
 
 ```scala
 trait Service[Final[_[_, _, _, _, _]], Initial[_, _, _, _, _]] {
-  def asTransformation[F[_, _, _, _, _,]](alg: Final[F]) : Transformation[Initial, F]
-  def transform[F[_, _, _, _, _]](transformation: Transformation[Initial, F]) : Final[F]
+  def toPolyFunction[F[_, _, _, _, _,]](alg: Final[F]) : PolyFunction5[Initial, F]
+  def fromPolyFunction[F[_, _, _, _, _]](polyFunction: PolyFunction5[Initial, F]) : Final[F]
 
   // ...
 }

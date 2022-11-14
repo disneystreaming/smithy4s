@@ -214,7 +214,7 @@ object Boilerplate {
       |package smithy4s
       |package kinds
       |
-      |import smithy4s.capability._
+      |import smithy4s.Transformation
       |
       -trait PolyFunction$suffix[F[${`_.._`}], G[${`_.._`}]]{ self =>
       -   def apply[${`A..N`}](fa: F[${`A..N`}]): G[${`A..N`}]
