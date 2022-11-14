@@ -838,7 +838,7 @@ lazy val Dependencies = new {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
   }
 
   object Decline {
