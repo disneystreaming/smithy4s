@@ -29,13 +29,6 @@ import cats.effect.Resource
 import smithy4s.hello._
 
 object Clients {
-  def helloWorldClient(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    HelloWorldService.simpleRestJson
-      .client(http4sClient)
-      .uri(Uri.unsafeFromString("http://localhost"))
-      .resource
-
-  // alternatively ...
   def helloWorldClient2(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
     SimpleRestJsonBuilder
       .withMaxArity(2048) // prepare maximum array/object size accepted during json decoding
