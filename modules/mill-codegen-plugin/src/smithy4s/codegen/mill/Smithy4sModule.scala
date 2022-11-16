@@ -83,6 +83,10 @@ trait Smithy4sModule extends ScalaModule {
     resolveDeps(T.task { smithy4sTransitiveIvyDeps() })()
   }
 
+  def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
+    smithy4sInternalDependenciesAsJars() ++ smithy4sResolvedIvyDeps()
+  }
+
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
     val specFiles = smithy4sInputDirs().map(_.path).filter(os.exists(_))
@@ -100,10 +104,8 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
-    val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
-
-    val localJars = smithy4sAllDependenciesAsJars().map(_.path)
-    val allLocalJars = localJars ++ resolvedDeps
+    val allLocalJars =
+      smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
 
     val args = CodegenArgs(
       specs = specFiles.toList,
