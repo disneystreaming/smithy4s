@@ -48,7 +48,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     new RouterBuilder[Alg, F](
       service,
       impl,
-      PartialFunction.empty
+      PartialFunction.empty,
+      EndpointSpecificMiddleware.noop[Alg, F]
     )
   }
 
@@ -65,7 +66,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       new RouterBuilder[Alg, F](
         service,
         impl,
-        PartialFunction.empty
+        PartialFunction.empty,
+        EndpointSpecificMiddleware.noop[Alg, F]
       )
 
   }
@@ -108,8 +110,11 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ] private[http4s] (
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]]
-  )(implicit F: EffectCompat[F]) {
+      errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      middleware: EndpointSpecificMiddleware[Alg, F]
+  )(implicit
+      F: EffectCompat[F]
+  ) {
 
     val entityCompiler =
       EntityCompiler.fromCodecAPI(codecs)
@@ -117,12 +122,17 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder(service, impl, fe andThen (e => F.pure(e)))
+      new RouterBuilder(service, impl, fe andThen (e => F.pure(e)), middleware)
 
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder(service, impl, fe)
+      new RouterBuilder(service, impl, fe, middleware)
+
+    def middleware(
+        mid: EndpointSpecificMiddleware[Alg, F]
+    ): RouterBuilder[Alg, F] =
+      new RouterBuilder[Alg, F](service, impl, errorTransformation, mid)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
       checkProtocol(service, protocolTag)
@@ -133,7 +143,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
             errorTransformation,
-            entityCompiler
+            entityCompiler,
+            middleware
           ).routes
         }
 

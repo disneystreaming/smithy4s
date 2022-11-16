@@ -777,9 +777,13 @@ lazy val guides = projectMatrix
   .in(file("modules/guides"))
   .dependsOn(http4s)
   .settings(
-    Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
+    Compile / allowedNamespaces := Seq(
+      "smithy4s.guides.hello",
+      "smithy4s.guides.auth"
+    ),
     smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy",
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy"
     ),
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := true,

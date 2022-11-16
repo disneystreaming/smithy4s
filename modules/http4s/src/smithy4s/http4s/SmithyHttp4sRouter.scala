@@ -23,14 +23,29 @@ import cats.implicits._
 import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 import smithy4s.kinds._
+import org.typelevel.vault.Key
+import cats.Id
+import cats.Applicative
+import cats.effect.kernel.Unique
 
 // format: off
 class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
-    entityCompiler: EntityCompiler[F]
+    entityCompiler: EntityCompiler[F],
+    middleware: EndpointSpecificMiddleware[Alg, F]
 )(implicit effect: EffectCompat[F]) {
+
+  private val pathParamsKey = {
+    implicit val cheatUnique: Unique[Id] = new Unique[Id] {
+      def applicative: Applicative[Id] = Applicative[Id]
+
+      def unique: Id[Unique.Token] = new Unique.Token()
+
+    }
+    Key.newKey[Id, smithy4s.http.PathParams]
+  }
 
   private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
@@ -39,7 +54,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
       endpoints <- perMethodEndpoint.get(request.method).toOptionT[F]
       path = request.uri.path.segments.map(_.decoded()).toArray
       (endpoint, pathParams) <- endpoints.collectFirstSome(_.matchTap(path)).toOptionT[F]
-      response <- OptionT.liftF(endpoint.run(pathParams, request))
+      response <- OptionT.liftF(endpoint.httpApp(request.withAttribute(pathParamsKey, pathParams)))
     } yield response
   }
   // format: on
@@ -51,7 +66,9 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
           impl,
           ep,
           compilerContext,
-          errorTransformation
+          errorTransformation,
+          middleware.prepare(service) _,
+          pathParamsKey
         )
       }
       .collect { case Right(http4sEndpoint) =>
