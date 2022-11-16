@@ -3,6 +3,12 @@
 > bar/compile
 $ exists bar/target/scala-2.13/src_managed/main/bar/Bar.scala
 $ absent bar/target/scala-2.13/src_managed/main/foo/Foo.scala
+> bar/publishLocal
+> baz/compile
+$ exists baz/target/scala-2.13/src_managed/main/baz/Baz.scala
+$ absent baz/target/scala-2.13/src_managed/main/foo/Foo.scala
+$ absent baz/target/scala-2.13/src_managed/main/bar/Bar.scala
 
 # check if code can run, this can reveal runtime issues# such as initialization errors
 > bar/run
+> baz/run

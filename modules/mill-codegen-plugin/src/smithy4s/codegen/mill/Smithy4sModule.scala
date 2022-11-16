@@ -54,7 +54,7 @@ trait Smithy4sModule extends ScalaModule {
     smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
   }
 
-  def smithy4sLocalJars: T[List[PathRef]] = T {
+  def smithy4sInternalDependenciesAsJars: T[List[PathRef]] = T {
     T.traverse(moduleDeps)(_.jar)
       .map(_.toList.map(_.path).map(PathRef(_)))
   }
@@ -102,7 +102,7 @@ trait Smithy4sModule extends ScalaModule {
 
     val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
 
-    val localJars = smithy4sLocalJars().map(_.path)
+    val localJars = smithy4sAllDependenciesAsJars().map(_.path)
     val allLocalJars = localJars ++ resolvedDeps
 
     val args = CodegenArgs(

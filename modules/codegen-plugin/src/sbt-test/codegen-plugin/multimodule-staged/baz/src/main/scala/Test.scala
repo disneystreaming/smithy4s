@@ -14,14 +14,15 @@
  *  limitations under the License.
  */
 
-package bar
+package baz
 
 import foo._
+import bar._
 
 object BarTest {
 
   def main(args: Array[String]): Unit = {
-    println(Bar(Some(Foo(Some(1)))))
+    println(Baz(Some(Foo(Some(1)))))
   }
 
 }

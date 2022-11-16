@@ -76,7 +76,7 @@ You can opt out of this behavior:
 
 ```scala
 val b = project.settings(
-  Compile / smithy4sLocalJars := Nil
+  Compile / smithy4sInternalDependenciesAsJars := Nil
 )//...
 ```
 
@@ -85,13 +85,13 @@ val b = project.settings(
 ```scala
 object b extends Smithy4sModule {
   //...
-  override def smithy4sLocalJars = List.empty[PathRef]
+  override def smithy4sInternalDependenciesAsJars = List.empty[PathRef]
 }
 ```
 
 This will not only remove the need for compilation (for the purposes of codegen), but also remove any visibility of the Smithy files in the **local** dependencies of your project (**local** meaning they're defined in the same build).
 
-You can use the same setting, `smithy4sLocalJars`, to add additional JARs containing Smithy specs - just keep in mind that remote dependencies (`libraryDependencies`) are added automatically!
+You can use the same setting, `smithy4sInternalDependenciesAsJars`, to add additional JARs containing Smithy specs - just keep in mind that remote dependencies (`libraryDependencies`) are added automatically!
 
 
 ### A word of warning
@@ -151,16 +151,60 @@ libraryDependencies += "organisation" % "artifact" % "version" % "smithy4s,compi
 ### Mill
 
 ```scala
-
 def compileAndCodegenDeps = T(Agg(ivy"organisation:artifact:version"))
 def ivyDeps = T(super.ivyDeps() ++ compileAndCodegenDeps())
 def smithy4sIvyDeps = T(super.smithy4sIvyDeps() ++ compileAndCodegenDeps())
-
 ```
 
 ### Consequence
 
 Because the upstream usage of Smithy4s will have resulted in the creation of metadata tracking the namespaces that were already generated, the "local" Smithy4s code-generation will automatically skip the generation of code that should not be generated again.
+
+## Artifacts containing Smithy4s generated code : dependency tracking
+
+When packaging a project/module via SBT or Mill, Smithy4s adds a line to the Jar manifest of the project, informing downstream projects of library dependencies that may have been used during the code-generation of this project/module.
+
+This information is used automatically by downstream usage of Smithy4s, which automatically pulls additional jars that would be specified
+in this bit of metadata.
+
+So, for instance, if you have
+
+```scala
+lazy val upstream = (project in file("foo"))
+  .enablePlugins(Smithy4sCodegenPlugin)
+  .settings(
+    organization := "foobar",
+    version := "0.0.1",
+    libraryDependencies ++= Seq(
+      "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1" % Smithy4s
+    )
+  )
+```
+
+and publish this project to an artifact repository, the Jar manifest will contain the following line :
+
+```
+smithy4sDependencies: software.amazon.smithy:smithy-aws-iam-traits:1.14.1
+```
+
+Using this artifact in a downstream project, for instance with :
+
+```scala
+lazy val downstream = (project in file("foo"))
+  .enablePlugins(Smithy4sCodegenPlugin)
+  .settings(
+    libraryDependencies ++= Seq(
+      // compile/runtime dependency that contains Smithy4s-generated code but doesn't contain smithy files
+      "foobar" % "upstream" % "0.0.1"
+    )
+  )
+```
+
+will result in the `"software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1"` dependency being automatically fetched
+and used for the smithy-level classpath of the smithy files contained by `downstream`. This effectively means that smithy files
+in `downstream` can use the Smithy shapes present in the `smithy-aws-iam-traits` artifact.
+
+
 
 
 ### Manually skipping (or including) namespaces during code-generation.

@@ -1,3 +1,5 @@
+import smithy4s.codegen.BuildInfo.smithyVersion
+
 ThisBuild / scalaVersion := "2.13.10"
 ThisBuild / version := "0.0.1-SNAPSHOT"
 ThisBuild / organization := "foobar"
@@ -15,5 +17,13 @@ lazy val bar = (project in file("bar"))
   .settings(
     libraryDependencies ++= Seq(
       "foobar" %% "foo" % version.value % Smithy4sCompile
+    )
+  )
+
+lazy val baz = (project in file("baz"))
+  .enablePlugins(Smithy4sCodegenPlugin)
+  .settings(
+    libraryDependencies ++= Seq(
+      "foobar" %% "bar" % version.value
     )
   )
