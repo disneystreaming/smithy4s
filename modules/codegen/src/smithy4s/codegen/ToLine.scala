@@ -125,8 +125,8 @@ case class Line(segments: Chain[LineSegment]) {
     }
   }
 
-  def appendUnlessEmpty(other: Line): Line =
-    if (nonEmpty) this + other else this
+  def appendIf(condition: this.type => Boolean)(other: Line): Line =
+    if (condition(this)) this + other else this
 }
 
 object Line {

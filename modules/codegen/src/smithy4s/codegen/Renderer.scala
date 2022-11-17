@@ -715,7 +715,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         }
 
-        deprecationAnnotation(hints).appendUnlessEmpty(Line.space) +
+        deprecationAnnotation(hints).appendIf(_.nonEmpty)(Line.space) +
           line"$name: " + tpeAndDefault
     }
   }
@@ -731,12 +731,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = lines(
     deprecationAnnotation(hints),
     block(
-      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int) extends $Enumeration_.Value"
+      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
     )(
       line"override val value: String = _value",
       line"override val name: String = _name",
       line"override val intValue: Int = _intValue",
-      line"override val hints: $Hints_ = $Hints_.empty",
+      line"override val hints: $Hints_ = _hints",
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
@@ -749,7 +749,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           deprecationAnnotation(hints),
           line"""case object ${NameRef(
             e.name
-          )} extends $name("$value", "${e.name}", $intValue)"""
+          )} extends $name("$value", "${e.name}", $intValue, $Hints_(${memberHints(
+            e.hints
+          )}))"""
         )
       },
       newline,

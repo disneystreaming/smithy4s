@@ -739,8 +739,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
-        // not sure about this
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
+
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }

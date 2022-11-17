@@ -8,6 +8,7 @@ import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
 
@@ -26,6 +27,9 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def apply[F[_]](implicit F: FunctorAlgebra[DeprecatedServiceGen, F]): F.type = F
 
   type WithError[F[_, _]] = BiFunctorAlgebra[DeprecatedServiceGen, F]
+  object WithError {
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
 
@@ -53,6 +57,9 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DeprecatedServiceGen[P], f : PolyFunction5[P, P1]) extends DeprecatedServiceGen[P1] {
     def deprecatedOperation() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.deprecatedOperation())
   }
+
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[DeprecatedServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl : DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = new PolyFunction5[DeprecatedServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : DeprecatedServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
