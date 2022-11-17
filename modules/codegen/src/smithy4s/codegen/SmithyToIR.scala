@@ -739,6 +739,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
+        // traits from the synthetic namespace, e.g. smithy.synthetic.enum
+        // don't have shapes in the model - so we can't generate hints for them.
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
