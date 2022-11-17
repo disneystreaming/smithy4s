@@ -635,6 +635,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               newline,
               line"""val alt = schema.oneOf[$name]("$realName")"""
             )
+            // In case of union members that are inline structs (as opposed to structs being referenced and wrapped by a new class),
+            // we want to put a deprecation note (if it exists on the alt) on the struct - there's nowhere else to put it.
             renderProduct(
               // putting alt hints first should result in higher priority of these.
               // might need deduplication (although the Hints type will take care of it, just in case)
