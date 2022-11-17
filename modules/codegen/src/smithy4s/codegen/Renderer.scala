@@ -129,7 +129,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case union @ Union(shapeId, _, alts, recursive, hints) =>
       renderUnion(shapeId, union.nameRef, alts, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
-      renderTypeAlias(shapeId, ta.nameRef, tpe, recursive, hints)
+      renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, values, hints) =>
       renderEnum(shapeId, enumeration.nameRef, values, hints)
   }
@@ -762,8 +762,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   )
 
-  // also known as newtypes
-  private def renderTypeAlias(
+  private def renderNewtype(
       shapeId: ShapeId,
       name: NameRef,
       tpe: Type,
