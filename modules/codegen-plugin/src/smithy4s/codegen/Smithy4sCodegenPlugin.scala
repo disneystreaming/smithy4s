@@ -20,6 +20,7 @@ import sbt.Keys._
 import java.util.jar.JarFile
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
+import smithy4s.codegen.SMITHY4S_DEPENDENCIES
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
@@ -124,8 +125,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   override lazy val buildSettings = Seq(
     smithy4sVersion := BuildInfo.version
   )
-
-  private val SMITHY4S_DEPENDENCIES = "smithy4sDependencies"
 
   override def projectConfigurations: Seq[Configuration] = Seq(Smithy4s)
 
@@ -259,7 +258,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   private def extract(jarFile: java.io.File): Seq[ModuleID] = {
     val jar = new JarFile(jarFile)
     Option(
-      jar.getManifest().getMainAttributes().getValue("smithy4sDependencies")
+      jar.getManifest().getMainAttributes().getValue(SMITHY4S_DEPENDENCIES)
     ).toList.flatMap { listString =>
       listString
         .split(",")

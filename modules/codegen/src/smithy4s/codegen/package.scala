@@ -37,6 +37,8 @@ import scala.jdk.CollectionConverters._
 
 package object codegen {
 
+  val SMITHY4S_DEPENDENCIES = "smithy4sDependencies"
+
   val uuidShapeId = ShapeId.from("alloy#UUID")
 
   private[codegen] type LinesWithValue = ToLinesWithValue[_]
