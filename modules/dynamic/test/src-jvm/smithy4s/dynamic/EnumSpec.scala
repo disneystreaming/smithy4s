@@ -57,6 +57,12 @@ class EnumSpec extends FunSuite {
 
       FIRE = 10
     }
+
+    @deprecated
+    enum EnumWithTraits {
+      @deprecated ICE,
+      FIRE
+    }
   """
 
   val compiled = Utils.compile(model)
@@ -137,14 +143,18 @@ class EnumSpec extends FunSuite {
           intValue = 0,
           value = 0,
           name = "FIRE",
-          hints = Hints.empty
+          hints = Hints(
+            enumValueHint("Fire")
+          )
         ),
         EnumValue(
           stringValue = "Ice",
           intValue = 1,
           value = 1,
           name = "ICE",
-          hints = Hints.empty
+          hints = Hints(
+            enumValueHint("Ice")
+          )
         )
       )
     )
@@ -159,14 +169,18 @@ class EnumSpec extends FunSuite {
           intValue = 10,
           value = 10,
           name = "FIRE",
-          hints = Hints.empty
+          hints = Hints(
+            enumValueHintInt(10)
+          )
         ),
         EnumValue(
           stringValue = "ICE",
           intValue = 42,
           value = 42,
           name = "ICE",
-          hints = Hints.empty
+          hints = Hints(
+            enumValueHintInt(42)
+          )
         )
       )
     )
@@ -214,5 +228,36 @@ class EnumSpec extends FunSuite {
 
       assertEquals(actual, Document.DNumber(ICE))
     }
+  }
+
+  private def enumValueHint(value: String) =
+    ShapeId("smithy.api", "enumValue") -> Document.fromString(value)
+
+  private def enumValueHintInt(value: Int) =
+    ShapeId("smithy.api", "enumValue") -> Document.fromInt(value)
+
+  test("Smithy 2.0 enum members get their hints compiled") {
+    assertEnum(
+      ShapeId("example", "EnumWithTraits"),
+      expectedValues = List(
+        EnumValue(
+          stringValue = "FIRE",
+          intValue = 0,
+          value = 0,
+          name = "FIRE",
+          hints = Hints(enumValueHint("FIRE"))
+        ),
+        EnumValue(
+          stringValue = "ICE",
+          intValue = 1,
+          value = 1,
+          name = "ICE",
+          hints = Hints(
+            enumValueHint("ICE"),
+            ShapeId("smithy.api", "deprecated") -> Document.obj()
+          )
+        )
+      )
+    )
   }
 }
