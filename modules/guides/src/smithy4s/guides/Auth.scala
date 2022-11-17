@@ -31,6 +31,7 @@ import smithy4s.kinds.{FunctorAlgebra, PolyFunction5, Kind1}
 import smithy4s.Hints
 import org.http4s.headers.Authorization
 import cats.data.OptionT
+import smithy4s.http4s.EndpointSpecificMiddleware
 
 final case class APIKey(value: String)
 
@@ -96,18 +97,16 @@ object AuthMiddleware {
 
   def smithy4sMiddleware(
       authChecker: AuthChecker
-  ): smithy4s.http4s.EndpointSpecificMiddleware[HelloWorldAuthServiceGen, IO] =
-    new smithy4s.http4s.EndpointSpecificMiddleware[
-      HelloWorldAuthServiceGen,
-      IO
-    ] {
-      def prepare(service: smithy4s.Service[HelloWorldAuthServiceGen])(
-          endpoint: smithy4s.Endpoint[service.Operation, _, _, _, _, _]
+  ): EndpointSpecificMiddleware.Simple[HelloWorldAuthServiceGen, IO] =
+    new EndpointSpecificMiddleware.Simple[HelloWorldAuthServiceGen, IO] {
+      def prepareUsingHints(
+          serviceHints: Hints,
+          endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {
-        service.hints.get[smithy.api.HttpBearerAuth] match {
+        serviceHints.get[smithy.api.HttpBearerAuth] match {
           case Some(_) =>
             val mid = middleware(authChecker)
-            endpoint.hints.get[smithy.api.Auth] match {
+            endpointHints.get[smithy.api.Auth] match {
               case Some(auths) if auths.value.isEmpty => identity
               case _                                  => mid
             }
