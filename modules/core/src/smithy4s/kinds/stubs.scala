@@ -14,23 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package http4s
+package smithy4s.kinds
 
-import smithy4s.internals.InputOutput
+object stubs {
+  type Kind1[F[+_]] = {
+    type toKind5[-I, +E, +O, +SI, +SO] = F[O]
+  }
 
-object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024)
-
-class SimpleRestJsonBuilder(maxArity: Int)
-    extends SimpleProtocolBuilder[alloy.SimpleRestJson](
-      smithy4s.http.json.codecs(
-        alloy.SimpleRestJson.protocol.hintMask ++ HintMask(
-          InputOutput,
-          IntEnum
-        ),
-        maxArity
-      )
-    ) {
-  def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
-    new SimpleRestJsonBuilder(maxArity)
+  type Kind2[F[+_, +_]] = {
+    type toKind5[-I, +E, +O, +SI, +SO] = F[E, O]
+  }
 }

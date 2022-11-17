@@ -27,8 +27,9 @@ import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
 
 final case class codecs(
-    hintMask: HintMask = codecs.defaultHintMask
-) extends JsonCodecAPI(codecs.schemaVisitorJCodec(_), Some(hintMask))
+    hintMask: HintMask = codecs.defaultHintMask,
+    maxArity: Int = codecs.defaultMaxArity
+) extends JsonCodecAPI(codecs.schemaVisitorJCodec(_, maxArity), Some(hintMask))
 
 object codecs {
 
@@ -43,13 +44,18 @@ object codecs {
       // TODO: add tests for `codecs` understanding int enums. Maybe pizza spec
       IntEnum
     )
+  val defaultMaxArity: Int = 1024
 
   private[smithy4s] def schemaVisitorJCodec(
-      cache: CompilationCache[JCodec]
+      cache: CompilationCache[JCodec],
+      maxArity: Int = defaultMaxArity
   ): SchemaVisitor[JCodec] =
-    new SchemaVisitorJCodec(maxArity = 1024, cache)
+    new SchemaVisitorJCodec(maxArity, cache)
 
   private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
-    new SchemaVisitorJCodec(maxArity = 1024, CompilationCache.nop[JCodec])
+    new SchemaVisitorJCodec(
+      maxArity = defaultMaxArity,
+      CompilationCache.nop[JCodec]
+    )
 
 }

@@ -15,22 +15,16 @@
  */
 
 package smithy4s
-package http4s
 
-import smithy4s.internals.InputOutput
+import munit._
+class DefaultServiceSmokeSpec() extends FunSuite {
 
-object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024)
+  test("Default stubs do compile") {
+    object stub extends smithy4s.example.Weather.Default[Option](None)
+    val expected: Option[smithy4s.example.GetCurrentTimeOutput] = None
+    // calling _.time to verify type inference
+    val result = stub.getCurrentTime().map(_.time)
+    expect.same(result, expected)
+  }
 
-class SimpleRestJsonBuilder(maxArity: Int)
-    extends SimpleProtocolBuilder[alloy.SimpleRestJson](
-      smithy4s.http.json.codecs(
-        alloy.SimpleRestJson.protocol.hintMask ++ HintMask(
-          InputOutput,
-          IntEnum
-        ),
-        maxArity
-      )
-    ) {
-  def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
-    new SimpleRestJsonBuilder(maxArity)
 }
