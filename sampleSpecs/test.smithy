@@ -106,7 +106,7 @@ operation TestPath {
     }
 }
 
-// The following shapes are used
+// The following shapes are used by the documentation
 @simpleRestJson
 service HelloWorldService {
   version: "1.0.0",
