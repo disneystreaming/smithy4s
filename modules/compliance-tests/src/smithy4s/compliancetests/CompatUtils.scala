@@ -20,7 +20,11 @@ import cats.Monoid
 import cats.MonadError
 import cats.Monad
 
-abstract class CompatUtils[F[_]: MonadError[*[_], Throwable]] {
+private object CompatUtils {
+  type ME[F[_]] = MonadError[F, Throwable]
+}
+
+abstract class CompatUtils[F[_]: CompatUtils.ME] {
   def raiseError[A](err: Throwable): F[A] =
     MonadError[F, Throwable].raiseError(err)
 
