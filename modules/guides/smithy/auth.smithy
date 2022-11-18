@@ -5,7 +5,7 @@ namespace smithy4s.guides.auth
 use alloy#simpleRestJson
 
 @simpleRestJson
-@httpBearerAuth // add this here
+@httpBearerAuth
 service HelloWorldAuthService {
   version: "1.0.0",
   operations: [SayWorld, HealthCheck]
