@@ -842,7 +842,7 @@ lazy val Dependencies = new {
   }
 
   object Decline {
-    val declineVersion = "2.3.1"
+    val declineVersion = "2.4.0"
 
     val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
     val effect =
