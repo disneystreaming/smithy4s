@@ -1,7 +1,6 @@
 package smithy4s.compliancetests
 
 import smithy4s.Service
-import cats.effect.IO
 
 /**
   * A construct allowing for running http protocol compliance tests against the implementation of a given protocol.
@@ -13,28 +12,28 @@ import cats.effect.IO
   */
 object HttpProtocolCompliance {
 
-  def clientTests[Alg[_[_, _, _, _, _]]](
-      reverseRouter: ReverseRouter[IO],
+  def clientTests[F[_], Alg[_[_, _, _, _, _]]](
+      reverseRouter: ReverseRouter[F],
       serviceProvider: Service.Provider[Alg]
-  )(implicit ce: CompatEffect[IO]): List[ComplianceTest[IO]] =
-    new internals.ClientHttpComplianceTestCase[Alg](
+  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+    new internals.ClientHttpComplianceTestCase[F, Alg](
       reverseRouter,
       serviceProvider
     ).allClientTests()
 
-  def serverTests[Alg[_[_, _, _, _, _]]](
-      router: Router[IO],
+  def serverTests[F[_], Alg[_[_, _, _, _, _]]](
+      router: Router[F],
       serviceProvider: Service.Provider[Alg]
-  )(implicit ce: CompatEffect[IO]): List[ComplianceTest[IO]] =
-    new internals.ServerHttpComplianceTestCase[Alg](
+  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+    new internals.ServerHttpComplianceTestCase[F, Alg](
       router,
       serviceProvider
     ).allServerTests()
 
-  def clientAndServerTests[Alg[_[_, _, _, _, _]]](
-      router: Router[IO] with ReverseRouter[IO],
+  def clientAndServerTests[F[_], Alg[_[_, _, _, _, _]]](
+      router: Router[F] with ReverseRouter[F],
       serviceProvider: Service.Provider[Alg]
-  )(implicit ce: CompatEffect[IO]): List[ComplianceTest[IO]] =
+  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
     clientTests(router, serviceProvider) ++ serverTests(router, serviceProvider)
 
 }
