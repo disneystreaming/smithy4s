@@ -78,11 +78,18 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
-      uri: Uri = uri"http://localhost:8080"
+      uri: Uri = uri"http://localhost:8080",
+      middleware: EndpointSpecificMiddleware[F] =
+        EndpointSpecificMiddleware.noop[F]
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] =
-      new ClientBuilder[Alg, F](this.client, this.service, uri)
+      new ClientBuilder[Alg, F](this.client, this.service, uri, this.middleware)
+
+    def middleware(
+        mid: EndpointSpecificMiddleware[F]
+    ): ClientBuilder[Alg, F] =
+      new ClientBuilder[Alg, F](this.client, this.service, this.uri, mid)
 
     def resource: Resource[F, FunctorAlgebra[Alg, F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
@@ -97,7 +104,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             client,
             EntityCompiler
-              .fromCodecAPI[F](codecs)
+              .fromCodecAPI[F](codecs),
+            middleware
           )
         }
         .map(service.fromPolyFunction[Kind1[F]#toKind5](_))

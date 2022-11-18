@@ -789,6 +789,7 @@ lazy val guides = projectMatrix
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberServer.value,
+      Dependencies.Http4s.emberClient.value,
       Dependencies.Weaver.cats.value % Test
     )
   )

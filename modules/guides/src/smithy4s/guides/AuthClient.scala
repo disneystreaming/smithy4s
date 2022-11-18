@@ -1,0 +1,64 @@
+package smithy4s.guides
+
+import smithy4s.guides.auth._
+import smithy4s.http4s._
+import cats.effect._
+import cats.implicits._
+import org.http4s.implicits._
+import org.http4s._
+import com.comcast.ip4s._
+import org.http4s.client._
+import org.http4s.ember.client.EmberClientBuilder
+import smithy4s.Hints
+import org.http4s.headers.Authorization
+
+object AuthClient {
+  def apply(http4sClient: Client[IO]): Resource[IO, HelloWorldAuthService[IO]] =
+    SimpleRestJsonBuilder(HelloWorldAuthService)
+      .client(http4sClient)
+      .uri(Uri.unsafeFromString("http://localhost:9000"))
+      .middleware(Middleware("my-token"))
+      .resource
+}
+
+object Middleware {
+
+  private def middleware(bearerToken: String): HttpApp[IO] => HttpApp[IO] = {
+    inputApp =>
+      HttpApp[IO] { request =>
+        val newRequest = request.withHeaders(
+          Authorization(Credentials.Token(AuthScheme.Bearer, bearerToken))
+        )
+
+        inputApp(newRequest)
+      }
+  }
+
+  def apply(bearerToken: String): EndpointSpecificMiddleware[IO] =
+    new EndpointSpecificMiddleware.Simple[IO] {
+      def prepareUsingHints(
+          serviceHints: Hints,
+          endpointHints: Hints
+      ): HttpApp[IO] => HttpApp[IO] = {
+        serviceHints.get[smithy.api.HttpBearerAuth] match {
+          case Some(_) =>
+            val mid = middleware(bearerToken)
+            endpointHints.get[smithy.api.Auth] match {
+              case Some(auths) if auths.value.isEmpty => identity
+              case _                                  => mid
+            }
+          case None => identity
+        }
+      }
+    }
+
+}
+
+object AuthClientExampleMain extends IOApp.Simple {
+  val run = (for {
+    client <- EmberClientBuilder.default[IO].build
+    authClient <- AuthClient(client)
+    health <- Resource.eval(authClient.healthCheck().flatMap(IO.println))
+    hello <- Resource.eval(authClient.sayWorld().flatMap(IO.println))
+  } yield ()).use_
+}

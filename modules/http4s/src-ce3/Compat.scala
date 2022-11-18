@@ -18,7 +18,7 @@ package smithy4s.http4s
 
 private[smithy4s] object Compat {
   trait Package {
-    private[smithy4s] type EffectCompat[F[_]] = cats.effect.Concurrent[F]
-    private[smithy4s] val EffectCompat = cats.effect.Concurrent
+    private[smithy4s] type EffectCompat[F[_]] = cats.effect.Async[F]
+    private[smithy4s] val EffectCompat = cats.effect.Async
   }
 }
