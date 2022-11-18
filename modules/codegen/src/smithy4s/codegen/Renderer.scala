@@ -745,13 +745,12 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderHintsVal(hints),
       newline,
       values.map { case e @ EnumValue(value, intValue, _, hints) =>
+        val valueName = NameRef(e.name)
+        val valueHints = line"$Hints_(${memberHints(e.hints)})"
+
         lines(
           deprecationAnnotation(hints),
-          line"""case object ${NameRef(
-            e.name
-          )} extends $name("$value", "${e.name}", $intValue, $Hints_(${memberHints(
-            e.hints
-          )}))"""
+          line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
         )
       },
       newline,
