@@ -97,8 +97,8 @@ object AuthMiddleware {
 
   def smithy4sMiddleware(
       authChecker: AuthChecker
-  ): EndpointSpecificMiddleware.Simple[HelloWorldAuthServiceGen, IO] =
-    new EndpointSpecificMiddleware.Simple[HelloWorldAuthServiceGen, IO] {
+  ): EndpointSpecificMiddleware.Simple[IO] =
+    new EndpointSpecificMiddleware.Simple[IO] {
       def prepareUsingHints(
           serviceHints: Hints,
           endpointHints: Hints
