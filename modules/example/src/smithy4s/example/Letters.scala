@@ -19,9 +19,9 @@ object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
 
   val hints : Hints = Hints.empty
 
-  case object A extends Letters("a", "A", 0, Hints(smithy.api.EnumValue(smithy4s.Document.fromString("a"))))
-  case object B extends Letters("b", "B", 1, Hints(smithy.api.EnumValue(smithy4s.Document.fromString("b"))))
-  case object C extends Letters("c", "C", 2, Hints(smithy.api.EnumValue(smithy4s.Document.fromString("c"))))
+  case object A extends Letters("a", "A", 0, Hints())
+  case object B extends Letters("b", "B", 1, Hints())
+  case object C extends Letters("c", "C", 2, Hints())
 
   val values: List[Letters] = List(
     A,

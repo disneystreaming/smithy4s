@@ -151,15 +151,16 @@ private[dynamic] object Compiler {
       )
     }
 
-    private def allHints(traits: Option[Map[IdRef, Document]]): Hints =
+    private def allHints(traits: Option[Map[IdRef, Document]]): Hints = {
+      val ignoredHints = List(IdRef("smithy.api#enumValue"))
+
       Hints.fromSeq {
-        traits
-          .getOrElse(Map.empty)
-          .collect { case (ValidIdRef(k), v) =>
+        (traits.getOrElse(Map.empty) -- ignoredHints).collect {
+          case (ValidIdRef(k), v) =>
             toHint(k, v)
-          }
-          .toSeq
+        }.toSeq
       }
+    }
 
     private def update[A](
         shapeId: ShapeId,

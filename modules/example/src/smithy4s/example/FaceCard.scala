@@ -23,11 +23,11 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
     IntEnum(),
   )
 
-  case object JACK extends FaceCard("JACK", "JACK", 1, Hints(smithy.api.EnumValue(smithy4s.Document.fromDouble(1.0))))
-  case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints(smithy.api.EnumValue(smithy4s.Document.fromDouble(2.0))))
-  case object KING extends FaceCard("KING", "KING", 3, Hints(smithy.api.EnumValue(smithy4s.Document.fromDouble(3.0))))
-  case object ACE extends FaceCard("ACE", "ACE", 4, Hints(smithy.api.EnumValue(smithy4s.Document.fromDouble(4.0))))
-  case object JOKER extends FaceCard("JOKER", "JOKER", 5, Hints(smithy.api.EnumValue(smithy4s.Document.fromDouble(5.0))))
+  case object JACK extends FaceCard("JACK", "JACK", 1, Hints())
+  case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints())
+  case object KING extends FaceCard("KING", "KING", 3, Hints())
+  case object ACE extends FaceCard("ACE", "ACE", 4, Hints())
+  case object JOKER extends FaceCard("JOKER", "JOKER", 5, Hints())
 
   val values: List[FaceCard] = List(
     JACK,

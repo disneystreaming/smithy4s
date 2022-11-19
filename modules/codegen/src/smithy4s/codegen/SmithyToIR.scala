@@ -290,8 +290,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .map { case ((name, value), index) =>
             val member = shape.getMember(name).get()
 
-            // random note: any other traits that are allowed on enum values? cuz they don't generate hints.
-            // known: @deprecated, @documentation
             EnumValue(value, index, name, hints(member))
           }
           .toList
@@ -742,6 +740,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         // traits from the synthetic namespace, e.g. smithy.synthetic.enum
         // don't have shapes in the model - so we can't generate hints for them.
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
+        // enumValue can be derived from enum schemas anyway, so we're removing it from hints
+        .filterNot(_.toShapeId().toString() == "smithy.api#enumValue")
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t

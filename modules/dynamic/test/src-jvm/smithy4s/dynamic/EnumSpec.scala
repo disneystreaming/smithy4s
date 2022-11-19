@@ -143,18 +143,14 @@ class EnumSpec extends FunSuite {
           intValue = 0,
           value = 0,
           name = "FIRE",
-          hints = Hints(
-            enumValueHint("Fire")
-          )
+          hints = Hints.empty
         ),
         EnumValue(
           stringValue = "Ice",
           intValue = 1,
           value = 1,
           name = "ICE",
-          hints = Hints(
-            enumValueHint("Ice")
-          )
+          hints = Hints.empty
         )
       )
     )
@@ -169,18 +165,14 @@ class EnumSpec extends FunSuite {
           intValue = 10,
           value = 10,
           name = "FIRE",
-          hints = Hints(
-            enumValueHintInt(10)
-          )
+          hints = Hints.empty
         ),
         EnumValue(
           stringValue = "ICE",
           intValue = 42,
           value = 42,
           name = "ICE",
-          hints = Hints(
-            enumValueHintInt(42)
-          )
+          hints = Hints.empty
         )
       )
     )
@@ -230,12 +222,6 @@ class EnumSpec extends FunSuite {
     }
   }
 
-  private def enumValueHint(value: String) =
-    ShapeId("smithy.api", "enumValue") -> Document.fromString(value)
-
-  private def enumValueHintInt(value: Int) =
-    ShapeId("smithy.api", "enumValue") -> Document.fromInt(value)
-
   test("Smithy 2.0 enum members get their hints compiled") {
     assertEnum(
       ShapeId("example", "EnumWithTraits"),
@@ -245,7 +231,7 @@ class EnumSpec extends FunSuite {
           intValue = 0,
           value = 0,
           name = "FIRE",
-          hints = Hints(enumValueHint("FIRE"))
+          hints = Hints.empty
         ),
         EnumValue(
           stringValue = "ICE",
@@ -253,7 +239,6 @@ class EnumSpec extends FunSuite {
           value = 1,
           name = "ICE",
           hints = Hints(
-            enumValueHint("ICE"),
             ShapeId("smithy.api", "deprecated") -> Document.obj()
           )
         )
