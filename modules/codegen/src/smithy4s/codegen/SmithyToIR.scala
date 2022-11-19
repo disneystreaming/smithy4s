@@ -741,7 +741,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         // don't have shapes in the model - so we can't generate hints for them.
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
-        .filterNot(_.toShapeId().toString() == "smithy.api#enumValue")
+        .filterNot(_.toShapeId() == EnumValueTrait.ID)
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
