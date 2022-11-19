@@ -167,13 +167,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val nameGen = NameRef(s"${name}Gen")
       lines(
         line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra_[$nameGen, F]",
-        block(
-          line"object ${NameRef(name)} extends $Service_.Provider[$nameGen]"
-        )(
-          line"def apply[F[_]](implicit F: ${NameRef(name)}[F]): F.type = F",
-          line"def service: $Service_[$nameGen] = $nameGen",
-          line"val id: $ShapeId_ = service.id"
-        )
+        line"val ${NameRef(name)} = $nameGen"
       )
     case _ => Lines.empty
   }
@@ -209,6 +203,11 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         newline,
         line"def apply[F[_]](implicit F: $FunctorAlgebra_[$genNameRef, F]): F.type = F",
+        newline,
+        line"type $WithError_[F[_, _]] = $BiFunctorAlgebra_[$genNameRef, F]",
+        block(line"object $WithError_")(
+          line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
+        ),
         newline,
         renderId(shapeId),
         newline,
@@ -260,6 +259,9 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
               .renderAlgParams(genName.name)}](alg.$opName(${op.renderParams}))"
           }
         },
+        newline,
+        line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends $Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
+        line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         newline,
         block(
           line"def toPolyFunction[P[_, _, _, _, _]](impl : $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
@@ -932,7 +934,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         .map { case (k, v) => k.runDefault + line" -> " + v.runDefault }
         .intercalate(Line.comma)})".writeCollection
     case PrimitiveTN(prim, value) =>
-      renderPrimitive(prim)(value).write
+      renderPrimitive[prim.T](prim)(value).write
   }
 
   private def renderPrimitive[T](prim: Primitive.Aux[T]): T => Line =

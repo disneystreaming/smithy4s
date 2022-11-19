@@ -36,7 +36,7 @@ import smithy4s.kinds._
   * A construct that encapsulates a smithy4s endpoint, and exposes
   * http4s specific semantics.
   */
-private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
+private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
   def matches(path: Array[String]): Option[PathParams]
   def run(pathParams: PathParams, request: Request[F]): F[Response[F]]
@@ -47,30 +47,43 @@ private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
     matches(path).map(this -> _)
 }
 
-private[smithy4s] object SmithyHttp4sServerEndpoint {
+private[http4s] object SmithyHttp4sServerEndpoint {
 
-  def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]]
-  ): Option[SmithyHttp4sServerEndpoint[F]] =
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
-        impl,
-        endpoint,
-        httpEndpoint,
-        compilerContext,
-        errorTransformation
-      )
+  ): Either[
+    HttpEndpoint.HttpEndpointError,
+    SmithyHttp4sServerEndpoint[F]
+  ] =
+    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
+      toHttp4sMethod(httpEndpoint.method)
+        .leftMap { e =>
+          HttpEndpoint.HttpEndpointError(
+            "Couldn't parse HTTP method: " + e
+          )
+        }
+        .map { method =>
+          new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
+            impl,
+            endpoint,
+            method,
+            httpEndpoint,
+            compilerContext,
+            errorTransformation
+          )
+        }
     }
 
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
     impl: FunctorInterpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
+    val method: Method,
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
@@ -80,8 +93,6 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
 
   type ==>[A, B] = Kleisli[F, A, B]
 
-  val method: Method = toHttp4sMethod(httpEndpoint.method)
-
   def matches(path: Array[String]): Option[PathParams] = {
     httpEndpoint.matches(path)
   }
@@ -89,7 +100,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
   def run(pathParams: PathParams, request: Request[F]): F[Response[F]] = {
     val run: F[O] = for {
       metadata <- getMetadata(pathParams, request)
-      input <- extractInput.run((metadata, request))
+      input <- extractInput(metadata, request)
       output <- (impl(endpoint.wrap(input)): F[O])
     } yield output
 
@@ -121,26 +132,24 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
       errorTransformation(other).flatMap(F.raiseError)
   }
 
-
-
-  // format: off
-  private val extractInput: (Metadata, Request[F]) ==> I = {
+  private val extractInput: (Metadata, Request[F]) => F[I] = {
     inputMetadataDecoder.total match {
       case Some(totalDecoder) =>
-        Kleisli(totalDecoder.decode(_: Metadata).liftTo[F]).local(_._1)
+        (metadata, request) =>
+          request.body.compile.drain *>
+            totalDecoder.decode(metadata).liftTo[F]
       case None =>
         // NB : only compiling the input codec if the data cannot be
         // totally extracted from the metadata.
-        implicit val inputCodec = entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
-        Kleisli { case (metadata, request) =>
+        implicit val inputCodec =
+          entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
+        (metadata, request) =>
           for {
             metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
             bodyPartial <- request.as[BodyPartial[I]]
           } yield metadataPartial.combine(bodyPartial)
-        }
     }
   }
-  // format: on
 
   private def putHeaders(m: Message[F], headers: Headers) =
     m.putHeaders(headers.headers)

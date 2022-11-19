@@ -3,12 +3,14 @@ package smithy4s.example.collision
 import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
+import smithy4s.Transformation
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
+import smithy4s.kinds.BiFunctorAlgebra
+import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
-import smithy4s.kinds.FunctorAlgebra
-import smithy4s.capability.Transformation
 
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -24,6 +26,11 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
   def apply[F[_]](implicit F: FunctorAlgebra[ReservedNameServiceGen, F]): F.type = F
+
+  type WithError[F[_, _]] = BiFunctorAlgebra[ReservedNameServiceGen, F]
+  object WithError {
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
 
@@ -63,6 +70,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     def map(value: Map[String,String]) = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
     def option(value: Option[String] = None) = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
   }
+
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[ReservedNameServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl : ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
     def apply[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {

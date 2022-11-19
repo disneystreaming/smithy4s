@@ -22,7 +22,7 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
-import smithy4s.example._
+import smithy4s.example.test._
 import smithy4s.http4s._
 import weaver._
 

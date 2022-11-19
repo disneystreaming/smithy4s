@@ -23,25 +23,32 @@ import org.http4s.{Method => Http4sMethod}
 import org.typelevel.ci.CIString
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.{HttpMethod => SmithyMethod}
+import org.http4s.ParseFailure
+import cats.implicits._
 
 package object http4s extends Compat.Package {
 
   implicit final class ServiceOps[Alg[_[_, _, _, _, _]]](
       private[this] val serviceProvider: smithy4s.Service.Provider[Alg]
   ) {
-
+    @deprecated(
+      "this extension method is deprecated ,Use smithy4s.http4s.SimpleRestJsonBuilder"
+    )
     def simpleRestJson: SimpleRestJsonBuilder.ServiceBuilder[Alg] =
       SimpleRestJsonBuilder(serviceProvider)
 
   }
 
-  private[smithy4s] def toHttp4sMethod(method: SmithyMethod): Http4sMethod =
+  private[smithy4s] def toHttp4sMethod(
+      method: SmithyMethod
+  ): Either[ParseFailure, Http4sMethod] =
     method match {
-      case smithy4s.http.HttpMethod.PUT    => Http4sMethod.PUT
-      case smithy4s.http.HttpMethod.POST   => Http4sMethod.POST
-      case smithy4s.http.HttpMethod.DELETE => Http4sMethod.DELETE
-      case smithy4s.http.HttpMethod.GET    => Http4sMethod.GET
-      case smithy4s.http.HttpMethod.PATCH  => Http4sMethod.PATCH
+      case smithy4s.http.HttpMethod.PUT      => Http4sMethod.PUT.asRight
+      case smithy4s.http.HttpMethod.POST     => Http4sMethod.POST.asRight
+      case smithy4s.http.HttpMethod.DELETE   => Http4sMethod.DELETE.asRight
+      case smithy4s.http.HttpMethod.GET      => Http4sMethod.GET.asRight
+      case smithy4s.http.HttpMethod.PATCH    => Http4sMethod.PATCH.asRight
+      case smithy4s.http.HttpMethod.OTHER(v) => Http4sMethod.fromString(v)
     }
 
   private[smithy4s] def toHeaders(mp: Map[CaseInsensitive, Seq[String]]) =

@@ -38,4 +38,11 @@ object toPolyFunction5 {
       def apply[I, E, O, SI, SO](fa: F[E, O]): G[E, O] = f(fa)
     }
 
+  def const5[F[_, _, _, _, _], G[-_, +_, +_, +_, +_]](
+      value: G[Any, Nothing, Nothing, Nothing, Nothing]
+  ): PolyFunction5[F, G] = new PolyFunction5[F, G] {
+    def apply[I, E, O, SI, SO](f: F[I, E, O, SI, SO]): G[I, E, O, SI, SO] =
+      value
+  }
+
 }
