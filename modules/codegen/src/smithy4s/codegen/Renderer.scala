@@ -129,16 +129,35 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     case union @ Union(shapeId, _, alts, recursive, hints) =>
       renderUnion(shapeId, union.nameRef, alts, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
-      renderTypeAlias(shapeId, ta.nameRef, tpe, recursive, hints)
+      renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, values, hints) =>
       renderEnum(shapeId, enumeration.nameRef, values, hints)
-    case _ => Lines.empty
+  }
+
+  private def deprecationAnnotation(hints: List[Hint]): Line = {
+    hints
+      .collectFirst { case h: Hint.Deprecated => h }
+      .foldMap { dep =>
+        val messagePart = dep.message
+          .map(msg => line"message = ${renderStringLiteral(msg)}")
+        val versionPart =
+          dep.since.map(v => line"since = ${renderStringLiteral(v)}")
+
+        val args = List(messagePart, versionPart).flatten.intercalate(comma)
+
+        val argListOrEmpty = if (args.nonEmpty) line"($args)" else line""
+
+        line"@deprecated$argListOrEmpty"
+      }
   }
 
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
-      case TypeAlias(_, name, _, _, _, _) =>
-        line"type $name = ${compilationUnit.namespace}.${name}.Type"
+      case TypeAlias(_, name, _, _, _, hints) =>
+        lines(
+          deprecationAnnotation(hints),
+          line"type $name = ${compilationUnit.namespace}.${name}.Type"
+        )
     }
 
     val blk =
@@ -166,6 +185,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       val name = s.name
       val nameGen = NameRef(s"${name}Gen")
       lines(
+        deprecationAnnotation(s.hints),
         line"type ${NameDef(name)}[F[_]] = $FunctorAlgebra_[$nameGen, F]",
         line"val ${NameRef(name)} = $nameGen"
       )
@@ -186,12 +206,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opTraitNameRef = opTraitName.toNameRef
 
     lines(
+      deprecationAnnotation(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
-          line"def ${op.methodName}(${op.renderArgs}) : F[${op.renderAlgParams(genNameRef.name)}]"
-
+          lines(
+            deprecationAnnotation(op.hints),
+            line"def ${op.methodName}(${op.renderArgs}) : F[${op
+              .renderAlgParams(genNameRef.name)}]"
+          )
         },
         newline,
         line"def transform : $Transformation.PartiallyApplied[$genName[F]] = new $Transformation.PartiallyApplied[$genName[F]](this)"
@@ -504,18 +528,24 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       additionalLines: Lines = Lines.empty
   ): Lines = {
     import product._
-    if (isMixin)
-      renderProductMixin(
-        product,
-        adtParent,
-        additionalLines
-      )
-    else
-      renderProductNonMixin(
-        product,
-        adtParent,
-        additionalLines
-      )
+    val base =
+      if (isMixin)
+        renderProductMixin(
+          product,
+          adtParent,
+          additionalLines
+        )
+      else
+        renderProductNonMixin(
+          product,
+          adtParent,
+          additionalLines
+        )
+
+    lines(
+      deprecationAnnotation(product.hints),
+      base
+    )
   }
 
   private def renderGetMessage(field: Field) = field match {
@@ -572,6 +602,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
     lines(
+      deprecationAnnotation(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends scala.Product with scala.Serializable"
       )(
@@ -587,23 +618,29 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             // format: off
             lines(
+              deprecationAnnotation(altHints),
               line"case object $cn extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
             // format: on
-          case a @ Alt(altName, _, UnionMember.TypeCase(tpe), _) =>
+          case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
             val cn = caseName(a)
             lines(
+              deprecationAnnotation(altHints),
               line"case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
             )
-          case Alt(_, realName, UnionMember.ProductCase(struct), _) =>
+          case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
             val additionalLines = lines(
               newline,
               line"""val alt = schema.oneOf[$name]("$realName")"""
             )
+            // In case of union members that are inline structs (as opposed to structs being referenced and wrapped by a new class),
+            // we want to put a deprecation note (if it exists on the alt) on the struct - there's nowhere else to put it.
             renderProduct(
-              struct,
+              // putting alt hints first should result in higher priority of these.
+              // might need deduplication (although the Hints type will take care of it, just in case)
+              struct.copy(hints = altHints ++ struct.hints),
               adtParent = Some(name),
               additionalLines
             )
@@ -678,7 +715,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         }
 
-        line"$name: " + tpeAndDefault
+        deprecationAnnotation(hints).appendIf(_.nonEmpty)(Line.space) +
+          line"$name: " + tpeAndDefault
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
@@ -691,13 +729,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): Lines = lines(
+    deprecationAnnotation(hints),
     block(
-      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int) extends $Enumeration_.Value"
+      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
     )(
       line"override val value: String = _value",
       line"override val name: String = _name",
       line"override val intValue: Int = _intValue",
-      line"override val hints: $Hints_ = $Hints_.empty",
+      line"override val hints: $Hints_ = _hints",
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
@@ -705,10 +744,14 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsVal(hints),
       newline,
-      values.map { case e @ EnumValue(value, intValue, _, _) =>
-        line"""case object ${NameRef(
-          e.name
-        )} extends $name("$value", "${e.name}", $intValue)"""
+      values.map { case e @ EnumValue(value, intValue, _, hints) =>
+        val valueName = NameRef(e.name)
+        val valueHints = line"$Hints_(${memberHints(e.hints)})"
+
+        lines(
+          deprecationAnnotation(hints),
+          line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
+        )
       },
       newline,
       line"val values: $list[$name] = $list".args(
@@ -718,7 +761,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   )
 
-  private def renderTypeAlias(
+  private def renderNewtype(
       shapeId: ShapeId,
       name: NameRef,
       tpe: Type,
@@ -732,6 +775,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
     val closing = if (recursive) ")" else ""
     lines(
+      deprecationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
@@ -949,18 +993,8 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid => uuid => line"java.util.UUID.fromString($uuid)"
-      case Primitive.String => { raw =>
-        import scala.reflect.runtime.universe._
-        val str = Literal(Constant(raw))
-          .toString()
-          // Replace sequences like "\\uD83D" (how Smithy specs refer to unicode characters)
-          // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
-          // See https://github.com/disneystreaming/smithy4s/pull/499
-          .replace("\\\\u", "\\u")
-
-        line"$str"
-      }
+      case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.String => renderStringLiteral
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {
@@ -988,4 +1022,15 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case _ => _ => line"null"
     }
 
+  private def renderStringLiteral(raw: String): Line = {
+    import scala.reflect.runtime.universe._
+    val str = Literal(Constant(raw))
+      .toString()
+      // Replace sequences like "\\uD83D" (how Smithy specs refer to unicode characters)
+      // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
+      // See https://github.com/disneystreaming/smithy4s/pull/499
+      .replace("\\\\u", "\\u")
+
+    line"$str"
+  }
 }

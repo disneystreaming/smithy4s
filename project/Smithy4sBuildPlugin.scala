@@ -107,7 +107,15 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     semanticdbVersion := scalafixSemanticdb.revision,
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / fork := virtualAxes.?.value.forall(_.contains(VirtualAxis.jvm)),
-    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}"
+    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
+    // Ignores warnings in code using the deprecated Enum trait.
+    scalacOptions ++= Seq(
+      "-Wconf:msg=object Enum in package api is deprecated:silent",
+      "-Wconf:msg=type Enum in package api is deprecated:silent",
+      // for Scala 3
+      "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
+      "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
+    )
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(
