@@ -303,7 +303,14 @@ lazy val aws = projectMatrix
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
-    }
+    },
+    Test / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
+    ),
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
+    Test / genSmithyDependencies ++= Seq(
+      Dependencies.Smithy.awsTraits
+    )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(latest2ScalaVersions, jsDimSettings)
@@ -998,8 +1005,6 @@ def genSmithyImpl(config: Configuration) = Def.task {
   val mc = "smithy4s.codegen.cli.Main"
   val s = (config / streams).value
 
-  def untupled[A, B, C](f: ((A, B)) => C): (A, B) => C = (a, b) => f((a, b))
-
   import sjsonnew._
   import BasicJsonProtocol._
   import sbt.FileInfo
@@ -1047,7 +1052,7 @@ def genSmithyImpl(config: Configuration) = Def.task {
     Tracked.inputChanged[CodegenInput, Seq[File]](
       s.cacheStoreFactory.make("input")
     ) {
-      untupled {
+      Function.untupled {
         Tracked
           .lastOutput[(Boolean, CodegenInput), Seq[File]](
             s.cacheStoreFactory.make("output")
