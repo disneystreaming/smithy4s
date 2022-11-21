@@ -18,18 +18,19 @@ package smithy4s.compliancetests
 
 import cats.effect._
 import cats.effect.concurrent.Deferred
-import cats.effect.implicits._
-import cats.Monad
 import scala.concurrent.duration.FiniteDuration
 
 private[compliancetests] class CompatEffect[F[_]](implicit
     val _Concurrent: Concurrent[F],
-    val _Time: Timer[F],
-    val _Monad: Monad[F]
+    val _Timer: Timer[F]
 ) extends CompatUtils[F] {
+  // CE2 Deferred is in a cats.effect.concurrent.Deferred
   def deferred[A]: F[Deferred[F, A]] = Deferred[F, A]
-  def timeout[A](f: F[A], delay: FiniteDuration): F[A] = f.timeout(delay)
+  // CE2 timeout is on Concurrent
+  def timeout[A](f: F[A], delay: FiniteDuration): F[A] =
+    Concurrent.timeout[F, A](f, delay)
 
+  // utf8 encode/decode under fs2.text
   val utf8Encode: fs2.Pipe[F, String, Byte] = fs2.text.utf8Encode[F]
   val utf8Decode: fs2.Pipe[F, Byte, String] = fs2.text.utf8Decode[F]
 }

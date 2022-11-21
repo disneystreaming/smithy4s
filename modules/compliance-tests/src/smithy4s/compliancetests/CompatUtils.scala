@@ -17,22 +17,12 @@
 package smithy4s.compliancetests
 
 import cats.Monoid
-import cats.MonadError
-import cats.Monad
+import cats.MonadThrow
+import cats.Applicative
 
-private object CompatUtils {
-  type ME[F[_]] = MonadError[F, Throwable]
-}
-
-abstract class CompatUtils[F[_]: CompatUtils.ME] {
+abstract class CompatUtils[F[_]: MonadThrow] {
   def raiseError[A](err: Throwable): F[A] =
-    MonadError[F, Throwable].raiseError(err)
+    MonadThrow[F].raiseError(err)
 
-  implicit def monoid[A: Monoid]: Monoid[F[A]] = new Monoid[F[A]] {
-    override def combine(x: F[A], y: F[A]): F[A] =
-      Monad[F].flatMap(x)(xa =>
-        Monad[F].map(y)(ya => Monoid[A].combine(xa, ya))
-      )
-    override def empty: F[A] = Monad[F].pure(Monoid[A].empty)
-  }
+  implicit def monoid[A: Monoid]: Monoid[F[A]] = Applicative.monoid[F, A]
 }
