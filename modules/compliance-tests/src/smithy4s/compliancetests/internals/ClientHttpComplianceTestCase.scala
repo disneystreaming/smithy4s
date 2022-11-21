@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets
 
 import cats.implicits._
 import org.http4s.headers.`Content-Type`
-import org.http4s.HttpRoutes
+import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
@@ -116,15 +116,13 @@ private[compliancetests] class ClientHttpComplianceTestCase[
           .liftTo[F]
 
         deferred[Request[F]].flatMap { requestDeferred =>
-          val app = HttpRoutes
-            .of[F] { case req =>
-              req.body.compile.toVector
-                .map(fs2.Stream.emits(_))
-                .map(req.withBodyStream(_))
-                .flatMap(requestDeferred.complete(_))
-                .as(Response[F]())
-            }
-            .orNotFound
+          val app = HttpApp[F] { req =>
+            req.body.compile.toVector
+              .map(fs2.Stream.emits(_))
+              .map(req.withBodyStream(_))
+              .flatMap(requestDeferred.complete(_))
+              .as(Response[F]())
+          }
 
           reverseRoutes[Alg](app).use { client =>
             // avoid blocking the test forever...
@@ -192,34 +190,32 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         val status = Status.fromInt(testCase.code).liftTo[F]
 
         status.flatMap { status =>
-          val app = HttpRoutes
-            .of[F] { case req =>
-              val body: fs2.Stream[F, Byte] =
-                testCase.body
-                  .map { body =>
-                    fs2.Stream
-                      .emit(body)
-                      .through(utf8Encode)
-                  }
-                  .getOrElse(fs2.Stream.empty)
-              val headers: Seq[Header.ToRaw] =
-                testCase.headers.toList
-                  .flatMap(_.toList)
-                  .map { case (key, value) =>
-                    Header.Raw(CIString(key), value)
-                  }
-                  .map(Header.ToRaw.rawToRaw)
-                  .toSeq
-              req.body.compile.drain.as(
-                Response[F](status)
-                  .withBodyStream(body)
-                  .putHeaders(headers: _*)
-                  .putHeaders(
-                    `Content-Type`(MediaType.unsafeParse(mediaType.value))
-                  )
-              )
-            }
-            .orNotFound
+          val app = HttpApp[F] { req =>
+            val body: fs2.Stream[F, Byte] =
+              testCase.body
+                .map { body =>
+                  fs2.Stream
+                    .emit(body)
+                    .through(utf8Encode)
+                }
+                .getOrElse(fs2.Stream.empty)
+            val headers: Seq[Header.ToRaw] =
+              testCase.headers.toList
+                .flatMap(_.toList)
+                .map { case (key, value) =>
+                  Header.Raw(CIString(key), value)
+                }
+                .map(Header.ToRaw.rawToRaw)
+                .toSeq
+            req.body.compile.drain.as(
+              Response[F](status)
+                .withBodyStream(body)
+                .putHeaders(headers: _*)
+                .putHeaders(
+                  `Content-Type`(MediaType.unsafeParse(mediaType.value))
+                )
+            )
+          }
 
           reverseRoutes[Alg](app).use { client =>
             val doc = testCase.params.getOrElse(Document.obj())
