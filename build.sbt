@@ -621,7 +621,14 @@ lazy val http4s = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
-    }
+    },
+    Test / allowedNamespaces := Seq(
+      "smithy4s.hello"
+    ),
+    Test / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
+    ),
+    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 

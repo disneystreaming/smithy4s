@@ -87,17 +87,16 @@ object AuthMiddleware {
         }
         .getOrElse(IO.pure(false))
 
-      isAuthorized.flatMap {
-        case true => inputApp(request)
-        case false =>
-          IO.raiseError(new NotAuthorizedError("Not authorized!"))
-      }
+      isAuthorized.ifM(
+        ifTrue = inputApp(request),
+        ifFalse = IO.raiseError(new NotAuthorizedError("Not authorized!"))
+      )
     }
   }
 
   def smithy4sMiddleware(
       authChecker: AuthChecker
-  ): EndpointSpecificMiddleware.Simple[IO] =
+  ): EndpointSpecificMiddleware[IO] =
     new EndpointSpecificMiddleware.Simple[IO] {
       def prepareUsingHints(
           serviceHints: Hints,
