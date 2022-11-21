@@ -5,6 +5,8 @@ title: SimpleRestJson client
 
 The `smithy4s-http4s` module provides functions that transform low-level http4s clients into high-level stubs, provided the corresponding service definitions (in smithy) are annotated with the `alloy#simpleRestJson` protocol.
 - Uri is optional as it will default to http://localhost:8080
+- the max arity of json array decoder is 1024 by default, but can be changed by calling withMaxArity on the RestJsonBuilder object
+
 In `build.sbt`
 
 ```scala
@@ -27,19 +29,14 @@ import cats.effect.Resource
 import smithy4s.hello._
 
 object Clients {
-  def helloWorldClient(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    HelloWorldService.simpleRestJson
-    .client(http4sClient)
-    .uri(Uri.unsafeFromString("http://localhost"))
-    .resource
-
-  // alternatively ...
   def helloWorldClient2(http4sClient: Client[IO]) : Resource[IO, HelloWorldService[IO]] =
-    SimpleRestJsonBuilder(HelloWorldService)
-    .client(http4sClient)
+    SimpleRestJsonBuilder
+      .withMaxArity(2048) // prepare maximum array/object size accepted during json decoding
+      .apply(HelloWorldService)
+      .client(http4sClient)
       .uri(Uri.unsafeFromString("http://localhost"))
       .resource
-    
+
 }
 ```
 
@@ -101,7 +98,7 @@ structure CatchAllServerError {
 And here are some scenarios using this example model. For all of these, assume that NO `X-Error-Type` header is provided.
 
 | Status Code | Error Selected          |
-|-------------|-------------------------|
+| ----------- | ----------------------- |
 | 404         | NotFoundError           |
 | 400         | CatchAllClientError     |
 | 503         | ServiceUnavailableError |
@@ -119,7 +116,7 @@ structure AnotherError {
 Would result in the following:
 
 | Status Code | Error Selected           |
-|-------------|--------------------------|
+| ----------- | ------------------------ |
 | 404         | NotFoundError            |
 | 400         | **UnknownErrorResponse** |
 | 503         | ServiceUnavailableError  |
@@ -140,7 +137,7 @@ structure AnotherNotFoundError {
 Will result in the following:
 
 | Status Code | Error Selected           |
-|-------------|--------------------------|
+| ----------- | ------------------------ |
 | 404         | **UnknownErrorResponse** |
 | 400         | UnknownErrorResponse     |
 | 503         | ServiceUnavailableError  |

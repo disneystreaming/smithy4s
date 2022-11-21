@@ -151,15 +151,16 @@ private[dynamic] object Compiler {
       )
     }
 
-    private def allHints(traits: Option[Map[IdRef, Document]]): Hints =
+    private def allHints(traits: Option[Map[IdRef, Document]]): Hints = {
+      val ignoredHints = List(IdRef("smithy.api#enumValue"))
+
       Hints.fromSeq {
-        traits
-          .getOrElse(Map.empty)
-          .collect { case (ValidIdRef(k), v) =>
+        (traits.getOrElse(Map.empty) -- ignoredHints).collect {
+          case (ValidIdRef(k), v) =>
             toHint(k, v)
-          }
-          .toSeq
+        }.toSeq
       }
+    }
 
     private def update[A](
         shapeId: ShapeId,
@@ -236,7 +237,7 @@ private[dynamic] object Compiler {
           .flatMap { case (k, m) =>
             getTrait[smithy.api.EnumValue](m.traits).toList.map {
               _.value match {
-                case Document.DString(s) => (k, s)
+                case Document.DString(s) => (k, s, m.traits)
                 case v =>
                   throw new IllegalArgumentException(
                     s"enum value $k has a non-string value: $v"
@@ -245,13 +246,13 @@ private[dynamic] object Compiler {
             }
           }
           .zipWithIndex
-          .map { case ((name, stringValue), i) =>
+          .map { case ((name, stringValue, traits), i) =>
             EnumValue(
               stringValue = stringValue,
               intValue = i,
               value = i,
               name = name,
-              hints = Hints.empty
+              hints = allHints(traits)
             )
           }
 
@@ -269,7 +270,7 @@ private[dynamic] object Compiler {
             _.value match {
               case Document.DNumber(num) =>
                 // toInt is safe because Smithy validates the model at loading time
-                (k, num.toInt)
+                (k, num.toInt, m.traits)
               case v =>
                 throw new IllegalArgumentException(
                   s"intEnum value $k has a non-numeric value: $v"
@@ -277,13 +278,13 @@ private[dynamic] object Compiler {
             }
           }
         }
-        .map { case (name, intValue) =>
+        .map { case (name, intValue, traits) =>
           intValue -> EnumValue(
             stringValue = name,
             intValue = intValue,
             value = intValue,
             name = name,
-            hints = Hints.empty
+            hints = allHints(traits)
           )
         }
         .toMap

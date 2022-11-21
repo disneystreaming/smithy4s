@@ -269,7 +269,13 @@ lazy val `aws-kernel` = projectMatrix
       "aws.protocols"
     ),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Test / envVars ++= Map("TEST_VAR" -> "hello")
+    Test / envVars ++= Map("TEST_VAR" -> "hello"),
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
+      "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
+    )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(
@@ -727,6 +733,8 @@ lazy val complianceTests = projectMatrix
 /**
  * Example application using the custom REST-JSON protocol provided by
  * smithy4s.
+ *
+ * (almost) all Scala code in this module is generated! The ones that aren't should have a note stating so.
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
@@ -744,6 +752,7 @@ lazy val example = projectMatrix
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "deprecations.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "operation.smithy",
@@ -768,7 +777,9 @@ lazy val example = projectMatrix
     ),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
-    smithy4sSkip := List("resource")
+    smithy4sSkip := List("resource"),
+    // Ignore deprecation warnings here - it's all generated code, anyway.
+    scalacOptions += "-Wconf:cat=deprecation:silent"
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)

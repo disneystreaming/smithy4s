@@ -143,7 +143,15 @@ object Smithy4sBuildPlugin extends AutoPlugin {
           .put(new java.util.jar.Attributes.Name("smithy4sDependencies"), deps)
       }
       Package.JarManifest(manifest)
-    }
+    },
+    // Ignores warnings in code using the deprecated Enum trait.
+    scalacOptions ++= Seq(
+      "-Wconf:msg=object Enum in package api is deprecated:silent",
+      "-Wconf:msg=type Enum in package api is deprecated:silent",
+      // for Scala 3
+      "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
+      "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
+    )
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(

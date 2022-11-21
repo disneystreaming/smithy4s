@@ -95,13 +95,13 @@ case class Enumeration(
     shapeId: ShapeId,
     name: String,
     values: List[EnumValue],
-    hints: List[Hint] = Nil
+    hints: List[Hint]
 ) extends Decl
 case class EnumValue(
     value: String,
     intValue: Int,
     name: String,
-    hints: List[Hint] = Nil
+    hints: List[Hint]
 )
 
 case class Field(
@@ -245,6 +245,8 @@ object Hint {
   case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   case class Default(typedNode: Fix[TypedNode]) extends Hint
+  case class Deprecated(message: Option[String], since: Option[String])
+      extends Hint
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
   case object IntEnum extends Hint

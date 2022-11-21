@@ -57,6 +57,12 @@ class EnumSpec extends FunSuite {
 
       FIRE = 10
     }
+
+    @deprecated
+    enum EnumWithTraits {
+      @deprecated ICE,
+      FIRE
+    }
   """
 
   val compiled = Utils.compile(model)
@@ -214,5 +220,29 @@ class EnumSpec extends FunSuite {
 
       assertEquals(actual, Document.DNumber(ICE))
     }
+  }
+
+  test("Smithy 2.0 enum members get their hints compiled") {
+    assertEnum(
+      ShapeId("example", "EnumWithTraits"),
+      expectedValues = List(
+        EnumValue(
+          stringValue = "FIRE",
+          intValue = 0,
+          value = 0,
+          name = "FIRE",
+          hints = Hints.empty
+        ),
+        EnumValue(
+          stringValue = "ICE",
+          intValue = 1,
+          value = 1,
+          name = "ICE",
+          hints = Hints(
+            ShapeId("smithy.api", "deprecated") -> Document.obj()
+          )
+        )
+      )
+    )
   }
 }
