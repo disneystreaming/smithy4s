@@ -14,7 +14,7 @@ In this guide, we will show how you can implement a smithy4s middleware that is 
 `EndpointSpecificMiddleware` is the interface that we have provided for implementing middleware. For some use cases, you will need to use the full interface. However, for this guide and for many uses cases, you will be able to rely on the simpler interface called `EndpointSpecificMiddlewareSpec.Simple`. This interface requires a single method which looks as follows:
 
 ```scala
-def prepareUsingHints(
+def prepareWithHints(
         serviceHints: Hints,
         endpointHints: Hints
     ): HttpApp[F] => HttpApp[F]
@@ -181,7 +181,7 @@ object AuthMiddleware {
   ): EndpointSpecificMiddleware[IO] =
     new EndpointSpecificMiddleware.Simple[IO] {
       private val mid: HttpApp[IO] => HttpApp[IO] = middleware(authChecker) // 2
-      def prepareUsingHints(
+      def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {
@@ -250,7 +250,7 @@ object Middleware {
   def apply(bearerToken: String): EndpointSpecificMiddleware[IO] = // 3
     new EndpointSpecificMiddleware.Simple[IO] {
       private val mid = middleware(bearerToken)
-      def prepareUsingHints(
+      def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {

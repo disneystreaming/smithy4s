@@ -133,7 +133,7 @@ object EndpointSpecificMiddlewareSpec extends SimpleIOSuite {
 
   private final class TestMiddleware(shouldFail: Boolean)
       extends EndpointSpecificMiddleware.Simple[IO] {
-    def prepareUsingHints(
+    def prepareWithHints(
         serviceHints: Hints,
         endpointHints: Hints
     ): HttpApp[IO] => HttpApp[IO] = { inputApp =>

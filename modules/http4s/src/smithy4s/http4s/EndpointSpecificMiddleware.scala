@@ -30,7 +30,7 @@ trait EndpointSpecificMiddleware[F[_]] {
 object EndpointSpecificMiddleware {
 
   trait Simple[F[_]] extends EndpointSpecificMiddleware[F] {
-    def prepareUsingHints(
+    def prepareWithHints(
         serviceHints: Hints,
         endpointHints: Hints
     ): HttpApp[F] => HttpApp[F]
@@ -38,7 +38,7 @@ object EndpointSpecificMiddleware {
     final def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
         endpoint: Endpoint[service.Operation, _, _, _, _, _]
     ): HttpApp[F] => HttpApp[F] =
-      prepareUsingHints(service.hints, endpoint.hints)
+      prepareWithHints(service.hints, endpoint.hints)
   }
 
   private[http4s] type EndpointMiddleware[F[_], Op[_, _, _, _, _]] =

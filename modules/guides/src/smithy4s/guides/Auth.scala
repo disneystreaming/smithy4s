@@ -94,7 +94,7 @@ object AuthMiddleware {
   ): EndpointSpecificMiddleware[IO] =
     new EndpointSpecificMiddleware.Simple[IO] {
       private val mid: HttpApp[IO] => HttpApp[IO] = middleware(authChecker)
-      def prepareUsingHints(
+      def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {

@@ -53,7 +53,7 @@ object Middleware {
   def apply(bearerToken: String): EndpointSpecificMiddleware[IO] =
     new EndpointSpecificMiddleware.Simple[IO] {
       private val mid = middleware(bearerToken)
-      def prepareUsingHints(
+      def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {
