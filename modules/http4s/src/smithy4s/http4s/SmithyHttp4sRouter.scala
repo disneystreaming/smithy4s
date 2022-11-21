@@ -24,9 +24,7 @@ import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 import smithy4s.kinds._
 import org.typelevel.vault.Key
-import cats.Id
-import cats.Applicative
-import cats.effect.kernel.Unique
+import cats.effect.SyncIO
 
 // format: off
 class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
@@ -37,15 +35,8 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     middleware: EndpointSpecificMiddleware[F]
 )(implicit effect: EffectCompat[F]) {
 
-  private val pathParamsKey = {
-    implicit val cheatUnique: Unique[Id] = new Unique[Id] {
-      def applicative: Applicative[Id] = Applicative[Id]
-
-      def unique: Id[Unique.Token] = new Unique.Token()
-
-    }
-    Key.newKey[Id, smithy4s.http.PathParams]
-  }
+  private val pathParamsKey =
+    Key.newKey[SyncIO, smithy4s.http.PathParams].unsafeRunSync()
 
   private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
