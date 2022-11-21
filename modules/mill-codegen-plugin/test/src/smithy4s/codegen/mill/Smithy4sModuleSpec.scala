@@ -209,7 +209,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     taskWorks(bar.smithy4sCodegen, barEv)
   }
 
-  test("multi-module staged codegen works".only) {
+  test("multi-module staged codegen works") {
 
     trait Base
         extends testKit.BaseModule
