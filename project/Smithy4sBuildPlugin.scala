@@ -32,6 +32,19 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   val Scala213 = "2.13.10"
   val Scala3 = "3.2.1"
 
+  object autoImport {
+    // format: off
+    val smithySpecs              = SettingKey[Seq[File]]("smithySpecs")
+    val genSmithyOutput          = SettingKey[File]("genSmithyOutput")
+    val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
+    val allowedNamespaces        = SettingKey[Seq[String]]("allowedNamespaces")
+    val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
+    val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
+    val isCE3 = settingKey[Boolean]("Is the current build using CE3?")
+    // format: on
+  }
+  import autoImport._
+
   implicit class ProjectMatrixOps(val pm: ProjectMatrix) extends AnyVal {
     def http4sJvmPlatform(
         scalaVersions: Seq[String],
@@ -76,6 +89,11 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger = allRequirements
 
+  override def buildSettings: Seq[Setting[_]] = Seq(
+    smithySpecs := Seq.empty,
+    smithy4sDependencies := Seq(Dependencies.Alloy.core)
+  )
+
   override val globalSettings = Seq(
     excludeLintKeys ++= Set(
       logManager,
@@ -107,7 +125,25 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     semanticdbVersion := scalafixSemanticdb.revision,
     testFrameworks += new TestFramework("weaver.framework.CatsEffect"),
     Test / fork := virtualAxes.?.value.forall(_.contains(VirtualAxis.jvm)),
-    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}"
+    Test / javaOptions += s"-Duser.dir=${sys.props("user.dir")}",
+    Compile / packageBin / packageOptions += {
+      // This piece of logic aims at tracking the dependencies that Smithy4s used to generate
+      // code at build time, in the manifest of the jar. This helps automatically pulling
+      // the corresponding jars and prevents the users from having to search
+      import java.util.jar.Manifest
+      val manifest = new Manifest
+      val scalaBin = scalaBinaryVersion.?.value
+      val maybeDeps = smithy4sDependencies.?.value.map {
+        _.flatMap(moduleIdEncode(_, scalaBin))
+          .mkString(",")
+      }
+      maybeDeps.foreach { deps =>
+        manifest
+          .getMainAttributes()
+          .put(new java.util.jar.Attributes.Name("smithy4sDependencies"), deps)
+      }
+      Package.JarManifest(manifest)
+    }
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(
@@ -524,6 +560,21 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   def millPlatform(millVersion: String): String = millVersion match {
     case mv if mv.startsWith("0.10") => "0.10"
     case _                           => sys.error("Unsupported mill platform.")
+  }
+
+  private def moduleIdEncode(
+      moduleId: ModuleID,
+      scalaBinaryVersion: Option[String]
+  ): List[String] = {
+    (moduleId.crossVersion, scalaBinaryVersion) match {
+      case (Disabled, _) =>
+        List(s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}")
+      case (_: Binary, Some(sbv)) =>
+        List(
+          s"${moduleId.organization}:${moduleId.name}_${sbv}:${moduleId.revision}"
+        )
+      case (_, _) => Nil
+    }
   }
 
 }

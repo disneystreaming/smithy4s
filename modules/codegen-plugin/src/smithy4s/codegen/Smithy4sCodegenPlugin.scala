@@ -20,7 +20,6 @@ import sbt.Keys._
 import java.util.jar.JarFile
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
-import smithy4s.codegen.SMITHY4S_DEPENDENCIES
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {
