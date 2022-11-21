@@ -24,16 +24,11 @@ import org.http4s.ember.server._
 import org.http4s._
 import com.comcast.ip4s._
 import smithy4s.http4s.SimpleRestJsonBuilder
-import org.http4s.server.Middleware
-import org.typelevel.ci.CIString
-import scala.concurrent.duration.Duration
-import smithy4s.kinds.{FunctorAlgebra, PolyFunction5, Kind1}
 import smithy4s.Hints
 import org.http4s.headers.Authorization
-import cats.data.OptionT
 import smithy4s.http4s.EndpointSpecificMiddleware
 
-final case class APIKey(value: String)
+final case class ApiToken(value: String)
 
 object HelloWorldAuthImpl extends HelloWorldAuthService[IO] {
   def sayWorld(): IO[World] = World().pure[IO]
@@ -41,11 +36,11 @@ object HelloWorldAuthImpl extends HelloWorldAuthService[IO] {
 }
 
 trait AuthChecker {
-  def isAuthorized(token: APIKey): IO[Boolean]
+  def isAuthorized(token: ApiToken): IO[Boolean]
 }
 
 object AuthChecker extends AuthChecker {
-  def isAuthorized(token: APIKey): IO[Boolean] = {
+  def isAuthorized(token: ApiToken): IO[Boolean] = {
     IO.pure(
       token.value.nonEmpty
     ) // put your logic here, currently just makes sure the token is not empty
@@ -58,7 +53,7 @@ object AuthExampleRoutes {
   private val helloRoutes: Resource[IO, HttpRoutes[IO]] =
     SimpleRestJsonBuilder
       .routes(HelloWorldAuthImpl)
-      .middleware(AuthMiddleware.smithy4sMiddleware(AuthChecker))
+      .middleware(AuthMiddleware(AuthChecker))
       .resource
 
   val all: Resource[IO, HttpRoutes[IO]] =
@@ -79,7 +74,7 @@ object AuthMiddleware {
               ) =>
             value
         }
-        .map { APIKey.apply }
+        .map { ApiToken.apply }
 
       val isAuthorized = maybeKey
         .map { key =>
@@ -94,17 +89,17 @@ object AuthMiddleware {
     }
   }
 
-  def smithy4sMiddleware(
+  def apply(
       authChecker: AuthChecker
   ): EndpointSpecificMiddleware[IO] =
     new EndpointSpecificMiddleware.Simple[IO] {
+      private val mid: HttpApp[IO] => HttpApp[IO] = middleware(authChecker)
       def prepareUsingHints(
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {
         serviceHints.get[smithy.api.HttpBearerAuth] match {
           case Some(_) =>
-            val mid = middleware(authChecker)
             endpointHints.get[smithy.api.Auth] match {
               case Some(auths) if auths.value.isEmpty => identity
               case _                                  => mid

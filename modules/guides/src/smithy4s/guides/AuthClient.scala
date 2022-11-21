@@ -52,13 +52,13 @@ object Middleware {
 
   def apply(bearerToken: String): EndpointSpecificMiddleware[IO] =
     new EndpointSpecificMiddleware.Simple[IO] {
+      private val mid = middleware(bearerToken)
       def prepareUsingHints(
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {
         serviceHints.get[smithy.api.HttpBearerAuth] match {
           case Some(_) =>
-            val mid = middleware(bearerToken)
             endpointHints.get[smithy.api.Auth] match {
               case Some(auths) if auths.value.isEmpty => identity
               case _                                  => mid

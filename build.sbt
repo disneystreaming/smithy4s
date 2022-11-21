@@ -116,6 +116,7 @@ lazy val docs =
       Compile / smithySpecs := Seq(
         (Compile / sourceDirectory).value / "smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy",
+        (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
       )
