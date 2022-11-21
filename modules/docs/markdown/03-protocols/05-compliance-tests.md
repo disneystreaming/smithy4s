@@ -14,8 +14,6 @@ Smithy4s publishes a module that you can use to write compliance test if you're 
 import smithy4s.codegen.BuildInfo._
 
 libraryDependencies ++= Seq(
-  // Needed to access the smithy.test traits in your smithy models
-  "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
   "com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
 )
 ```
