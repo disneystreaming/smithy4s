@@ -125,6 +125,21 @@ object CodegenCommand {
             localJars.getOrElse(List.empty)
           )
       }
+      .mapValidated { cmd =>
+        if (
+          cmd.specs.isEmpty && cmd.dependencies.isEmpty && cmd.localJars.isEmpty
+        ) {
+          Validated.invalidNel(
+            List(
+              "No input for the Smithy model. Consider pointing to a folder or a Smithy file.",
+              "You can also use `--dependencies` to import from maven coordinates",
+              "or use `--localJars` to point to a JAR on your file system."
+            ).mkString(" ")
+          )
+        } else {
+          Validated.valid(cmd)
+        }
+      }
 
   val command = Command(
     "generate",

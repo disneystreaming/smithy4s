@@ -21,13 +21,13 @@ import smithy4s.codegen.FileType
 
 object CommandParsingSpec extends FunSuite {
 
-  test("parsing empty `generate` call") {
+  test("parsing simplest `generate` call") {
     assert(
-      Main.commands.parse(List("generate")) ==
+      Main.commands.parse(List("generate", "sampleSpecs/pizza.smithy")) ==
         Right(
           Smithy4sCommand.Generate(
             CodegenArgs(
-              specs = Nil,
+              specs = List(os.pwd / "sampleSpecs" / "pizza.smithy"),
               output = os.pwd,
               resourceOutput = os.pwd,
               skip = Set.empty,
@@ -43,6 +43,35 @@ object CommandParsingSpec extends FunSuite {
         )
     )
   }
+
+  test("parsing empty `generate` call fails") {
+    val res = Main.commands.parse(List("generate"))
+    assert(res.isLeft)
+    assert(
+      res.swap
+        .map(
+          _.errors.head.contains("No input for the Smithy model.")
+        )
+        .getOrElse(false)
+    )
+  }
+
+  val inputTestCases = 
+    // format: off
+    List(
+      "dependencies" -> List("--dependencies", "com.acme:software:1.0.0"), // localJars
+      "localJars" -> List("--localJars", "lib1.jar"), // localJars
+      "specs" -> List("sampleSpecs/pizza.smithy") // specs
+    )
+    // format: on
+  inputTestCases.foreach { case (name, args) =>
+    test(s"parsing `generate` with at least $name") {
+      assert(
+        Main.commands.parse(List("generate") ++ args).isRight
+      )
+    }
+  }
+
   test("parsing `generate` call with all parameters") {
     val result = Main.commands.parse(
       List(
