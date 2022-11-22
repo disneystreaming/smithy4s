@@ -27,8 +27,9 @@ import org.http4s._
 import fs2.Collector
 import org.http4s.client.Client
 import cats.Eq
+import cats.effect.Resource
 
-object EndpointSpecificMiddlewareSpec extends SimpleIOSuite {
+object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
 
   private implicit val greetingEq: Eq[Greeting] = Eq.fromUniversalEquals
   private implicit val throwableEq: Eq[Throwable] = Eq.fromUniversalEquals
@@ -88,7 +89,9 @@ object EndpointSpecificMiddlewareSpec extends SimpleIOSuite {
     val service =
       SimpleRestJsonBuilder
         .routes(HelloImpl)
-        .middleware(new TestMiddleware(shouldFail = shouldFailInMiddleware))
+        .middleware(
+          new TestServerMiddleware(shouldFail = shouldFailInMiddleware)
+        )
         .make
         .toOption
         .get
@@ -116,7 +119,9 @@ object EndpointSpecificMiddlewareSpec extends SimpleIOSuite {
       val http4sClient = Client.fromHttpApp(serviceNoMiddleware)
       SimpleRestJsonBuilder(HelloWorldService)
         .client(http4sClient)
-        .middleware(new TestMiddleware(shouldFail = shouldFailInMiddleware))
+        .middleware(
+          new TestClientMiddleware(shouldFail = shouldFailInMiddleware)
+        )
         .use
         .toOption
         .get
@@ -131,8 +136,8 @@ object EndpointSpecificMiddlewareSpec extends SimpleIOSuite {
     )
   }
 
-  private final class TestMiddleware(shouldFail: Boolean)
-      extends EndpointSpecificMiddleware.Simple[IO] {
+  private final class TestServerMiddleware(shouldFail: Boolean)
+      extends ServerEndpointMiddleware.Simple[IO] {
     def prepareWithHints(
         serviceHints: Hints,
         endpointHints: Hints
@@ -152,6 +157,34 @@ object EndpointSpecificMiddlewareSpec extends SimpleIOSuite {
           }
         } else {
           IO.raiseError(new Exception("didn't find tags in hints"))
+        }
+      }
+    }
+  }
+
+  private final class TestClientMiddleware(shouldFail: Boolean)
+      extends ClientEndpointMiddleware.Simple[IO] {
+    def prepareWithHints(
+        serviceHints: Hints,
+        endpointHints: Hints
+    ): Client[IO] => Client[IO] = { inputClient =>
+      Client[IO] { request =>
+        val hasTag: (Hints, String) => Boolean = (hints, tagName) =>
+          hints.get[smithy.api.Tags].exists(_.value.contains(tagName))
+        // check for tags in hints to test that proper hints are sent into the prepare method
+        if (
+          hasTag(serviceHints, "testServiceTag") &&
+          hasTag(endpointHints, "testOperationTag")
+        ) {
+          if (shouldFail) {
+            Resource.eval(IO.raiseError(new GenericServerError(Some("failed"))))
+          } else {
+            inputClient.run(request)
+          }
+        } else {
+          Resource.eval(
+            IO.raiseError(new Exception("didn't find tags in hints"))
+          )
         }
       }
     }

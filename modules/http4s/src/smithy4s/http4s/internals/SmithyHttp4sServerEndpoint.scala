@@ -57,7 +57,7 @@ private[http4s] object SmithyHttp4sServerEndpoint {
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
-      middleware: EndpointSpecificMiddleware.EndpointMiddleware[F, Op],
+      middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
       pathParamsKey: Key[PathParams]
   ): Either[
     HttpEndpoint.HttpEndpointError,
@@ -95,7 +95,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
-    middleware: EndpointSpecificMiddleware.EndpointMiddleware[F, Op],
+    middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
     pathParamsKey: Key[PathParams]
 )(implicit F: EffectCompat[F]) extends SmithyHttp4sServerEndpoint[F] {
 // format: on

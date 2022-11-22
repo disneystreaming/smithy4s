@@ -49,7 +49,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       service,
       impl,
       PartialFunction.empty,
-      EndpointSpecificMiddleware.noop[F]
+      ServerEndpointMiddleware.noop[F]
     )
   }
 
@@ -67,7 +67,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
         service,
         impl,
         PartialFunction.empty,
-        EndpointSpecificMiddleware.noop[F]
+        ServerEndpointMiddleware.noop[F]
       )
 
   }
@@ -79,15 +79,14 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       client: Client[F],
       val service: smithy4s.Service[Alg],
       uri: Uri = uri"http://localhost:8080",
-      middleware: EndpointSpecificMiddleware[F] =
-        EndpointSpecificMiddleware.noop[F]
+      middleware: ClientEndpointMiddleware[F] = ClientEndpointMiddleware.noop[F]
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] =
       new ClientBuilder[Alg, F](this.client, this.service, uri, this.middleware)
 
     def middleware(
-        mid: EndpointSpecificMiddleware[F]
+        mid: ClientEndpointMiddleware[F]
     ): ClientBuilder[Alg, F] =
       new ClientBuilder[Alg, F](this.client, this.service, this.uri, mid)
 
@@ -119,7 +118,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
-      middleware: EndpointSpecificMiddleware[F]
+      middleware: ServerEndpointMiddleware[F]
   )(implicit
       F: EffectCompat[F]
   ) {
@@ -138,7 +137,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       new RouterBuilder(service, impl, fe, middleware)
 
     def middleware(
-        mid: EndpointSpecificMiddleware[F]
+        mid: ServerEndpointMiddleware[F]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder[Alg, F](service, impl, errorTransformation, mid)
 

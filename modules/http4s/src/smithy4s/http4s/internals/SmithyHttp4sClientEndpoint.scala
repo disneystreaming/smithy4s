@@ -29,7 +29,6 @@ import scodec.bits.ByteVector
 import smithy4s.kinds._
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
-import org.http4s.HttpApp
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -48,7 +47,7 @@ private[http4s] object SmithyHttp4sClientEndpoint {
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
-      middleware: HttpApp[F] => HttpApp[F]
+      middleware: Client[F] => Client[F]
   ): Either[
     HttpEndpoint.HttpEndpointError,
     SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
@@ -83,12 +82,11 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   httpEndpoint: HttpEndpoint[I],
   compilerContext: CompilerContext[F],
-  middleware: HttpApp[F] => HttpApp[F]
+  middleware: Client[F] => Client[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
-  private val transformedClient: Client[F] =
-    Client.fromHttpApp[F](middleware(client.toHttpApp))
+  private val transformedClient: Client[F] = middleware(client)
 
   def send(input: I): F[O] = {
     transformedClient

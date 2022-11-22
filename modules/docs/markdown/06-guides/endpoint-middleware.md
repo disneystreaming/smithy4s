@@ -9,9 +9,9 @@ As of version `0.17.x` of smithy4s, we have changed this by providing a new mech
 
 In this guide, we will show how you can implement a smithy4s middleware that is aware of the authentication traits in your specification and is able to implement authenticate on an endpoint-by-endpoint basis. This is useful if you have different or no authentication on one or more endpoints.
 
-## EndpointSpecificMiddleware
+## ServerEndpointMiddleware / ClientEndpointMiddleware
 
-`EndpointSpecificMiddleware` is the interface that we have provided for implementing middleware. For some use cases, you will need to use the full interface. However, for this guide and for many uses cases, you will be able to rely on the simpler interface called `EndpointSpecificMiddlewareSpec.Simple`. This interface requires a single method which looks as follows:
+`ServerEndpointMiddleware` is the interface that we have provided for implementing service middleware. For some use cases, you will need to use the full interface. However, for this guide and for many use cases, you will be able to rely on the simpler interface called `ServerEndpointMiddleware.Simple`. This interface requires a single method which looks as follows:
 
 ```scala
 def prepareWithHints(
@@ -21,6 +21,15 @@ def prepareWithHints(
 ```
 
 This means that given the hints for the service and a specific endpoint, our implementation will provide a transformation of an `HttpApp`. If you are not familiar with `Hints`, they are the smithy4s construct that represents Smithy Traits. They are called hints to avoid naming conflicts and confusion with Scala `trait`s.
+
+The `ClientEndpointMiddleware` interface is essentially the same as the one for `ServerEndpointMiddleware` with the exception that we are returning a transformation on `Client[F]` instead of `HttpApp[F]`. This looks like:
+
+```scala
+def prepareWithHints(
+        serviceHints: Hints,
+        endpointHints: Hints
+    ): Client[F] => Client[F]
+```
 
 ## Smithy Spec
 
@@ -104,7 +113,7 @@ import org.http4s._
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s._
 import org.http4s.headers.Authorization
-import smithy4s.http4s.EndpointSpecificMiddleware
+import smithy4s.http4s.ServerEndpointMiddleware
 ```
 
 #### AuthChecker
@@ -170,16 +179,16 @@ Let's break down what we did above step by step. The step numbers below correspo
 6. If the token was found to be valid, we pass the request into the `inputApp` from step 2 in order to get a response.
 7. If the header was found to be invalid, we return the `NotAuthorizedError` that we defined in our smithy file above.
 
-#### EndpointSpecificMiddleware.Simple
+#### ServerEndpointMiddleware.Simple
 
-Next, let's create our middleware by implementing the `EndpointSpecificMiddleware.Simple` interface we discussed above.
+Next, let's create our middleware by implementing the `ServerEndpointMiddleware.Simple` interface we discussed above.
 
 ```scala mdoc:silent
 object AuthMiddleware {
   def apply(
       authChecker: AuthChecker // 1
-  ): EndpointSpecificMiddleware[IO] =
-    new EndpointSpecificMiddleware.Simple[IO] {
+  ): ServerEndpointMiddleware[IO] =
+    new ServerEndpointMiddleware.Simple[IO] {
       private val mid: HttpApp[IO] => HttpApp[IO] = middleware(authChecker) // 2
       def prepareWithHints(
           serviceHints: Hints,
@@ -229,31 +238,36 @@ To see the **full code** example of what we walk through below, go [here](https:
 
 It is possible that you have a client where you want to apply a similar type of middleware that alters some part of a request depending on the endpoint being targeted. In this part of the guide, we will show how you can do this for a client using the same smithy specification we defined above. We will make it so our authentication token is only sent if we are targeting an endpoint which requires it.
 
-#### EndpointSpecificMiddleware.Simple
+#### ClientEndpointMiddleware.Simple
 
 The interface that we define for this middleware is going to look very similar to the one we defined above. This makes sense because this middleware is effectively the dual of the middleware above.
+
+```scala mdoc:invisible
+import org.http4s.client._
+import smithy4s.http4s.ClientEndpointMiddleware
+```
 
 ```scala mdoc:silent
 object Middleware {
 
-  private def middleware(bearerToken: String): HttpApp[IO] => HttpApp[IO] = { // 1
-    inputApp =>
-      HttpApp[IO] { request =>
+  private def middleware(bearerToken: String): Client[IO] => Client[IO] = { // 1
+    inputClient =>
+      Client[IO] { request =>
         val newRequest = request.withHeaders( // 2
           Authorization(Credentials.Token(AuthScheme.Bearer, bearerToken))
         )
 
-        inputApp(newRequest)
+        inputClient.run(newRequest)
       }
   }
 
-  def apply(bearerToken: String): EndpointSpecificMiddleware[IO] = // 3
-    new EndpointSpecificMiddleware.Simple[IO] {
+  def apply(bearerToken: String): ClientEndpointMiddleware[IO] = // 3
+    new ClientEndpointMiddleware.Simple[IO] {
       private val mid = middleware(bearerToken)
       def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
-      ): HttpApp[IO] => HttpApp[IO] = {
+      ): Client[IO] => Client[IO] = {
         serviceHints.get[smithy.api.HttpBearerAuth] match {
           case Some(_) =>
             endpointHints.get[smithy.api.Auth] match {
@@ -268,15 +282,11 @@ object Middleware {
 }
 ```
 
-1. Here we are creating an inner middleware function, just like we did above. The only difference is that this time we are adding a value to the request instead of extracting one from it.
-2. Add the `Authorization` header to the request and pass it to the `inputApp` that we are transforming in this middleware.
-3. This function is actually the *exact same* as the function for the middleware we implemented above. The only difference is that this apply method accepts a `bearerToken` as a parameter. This is the token that we will add into the `Authorization` header when applicable.
+1. Here we are creating an inner middleware function, just like we did above. The only differences are that this time we are adding a value to the request instead of extracting one from it and we are operating on `Client` instead of `HttpApp`.
+2. Add the `Authorization` header to the request and pass it to the `inputClient` that we are transforming in this middleware.
+3. This function is actually the *exact same* as the function for the middleware we implemented above. The only differences are that this apply method accepts a `bearerToken` as a parameter and returns a function on `Client` instead of `HttpApp`. The provided `bearerToken` is what we will add into the `Authorization` header when applicable.
 
 #### SimpleRestJsonBuilder
-
-```scala mdoc:invisible
-import org.http4s.client._
-```
 
 As above, we now just need to wire our middleware into our actual implementation. Here we are constructing a client and specifying the middleware we just defined.
 

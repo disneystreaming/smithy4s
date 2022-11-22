@@ -28,7 +28,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     client: Client[F],
     entityCompiler: EntityCompiler[F],
-    middleware: EndpointSpecificMiddleware[F]
+    middleware: ClientEndpointMiddleware[F]
 )(implicit effect: EffectCompat[F])
     extends FunctorInterpreter[Op, F] {
 // format: on

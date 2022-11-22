@@ -32,7 +32,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     entityCompiler: EntityCompiler[F],
-    middleware: EndpointSpecificMiddleware[F]
+    middleware: ServerEndpointMiddleware[F]
 )(implicit effect: EffectCompat[F]) {
 
   private val pathParamsKey =

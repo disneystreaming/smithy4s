@@ -26,7 +26,7 @@ import com.comcast.ip4s._
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.Hints
 import org.http4s.headers.Authorization
-import smithy4s.http4s.EndpointSpecificMiddleware
+import smithy4s.http4s.ServerEndpointMiddleware
 
 final case class ApiToken(value: String)
 
@@ -91,8 +91,8 @@ object AuthMiddleware {
 
   def apply(
       authChecker: AuthChecker
-  ): EndpointSpecificMiddleware[IO] =
-    new EndpointSpecificMiddleware.Simple[IO] {
+  ): ServerEndpointMiddleware[IO] =
+    new ServerEndpointMiddleware.Simple[IO] {
       private val mid: HttpApp[IO] => HttpApp[IO] = middleware(authChecker)
       def prepareWithHints(
           serviceHints: Hints,

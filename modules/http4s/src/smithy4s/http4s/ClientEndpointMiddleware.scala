@@ -17,38 +17,35 @@
 package smithy4s
 package http4s
 
-import org.http4s.HttpApp
+import org.http4s.client.Client
 
 // format: off
-trait EndpointSpecificMiddleware[F[_]] {
+trait ClientEndpointMiddleware[F[_]] {
   def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
       endpoint: Endpoint[service.Operation, _, _, _, _, _]
-  ): HttpApp[F] => HttpApp[F]
+  ): Client[F] => Client[F]
 }
 // format: on
 
-object EndpointSpecificMiddleware {
+object ClientEndpointMiddleware {
 
-  trait Simple[F[_]] extends EndpointSpecificMiddleware[F] {
+  trait Simple[F[_]] extends ClientEndpointMiddleware[F] {
     def prepareWithHints(
         serviceHints: Hints,
         endpointHints: Hints
-    ): HttpApp[F] => HttpApp[F]
+    ): Client[F] => Client[F]
 
     final def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
         endpoint: Endpoint[service.Operation, _, _, _, _, _]
-    ): HttpApp[F] => HttpApp[F] =
+    ): Client[F] => Client[F] =
       prepareWithHints(service.hints, endpoint.hints)
   }
 
-  private[http4s] type EndpointMiddleware[F[_], Op[_, _, _, _, _]] =
-    Endpoint[Op, _, _, _, _, _] => HttpApp[F] => HttpApp[F]
-
-  def noop[F[_]]: EndpointSpecificMiddleware[F] =
-    new EndpointSpecificMiddleware[F] {
+  def noop[F[_]]: ClientEndpointMiddleware[F] =
+    new ClientEndpointMiddleware[F] {
       override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
           endpoint: Endpoint[service.Operation, _, _, _, _, _]
-      ): HttpApp[F] => HttpApp[F] = identity
+      ): Client[F] => Client[F] = identity
     }
 
 }

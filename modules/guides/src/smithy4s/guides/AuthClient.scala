@@ -39,24 +39,24 @@ object AuthClient {
 
 object Middleware {
 
-  private def middleware(bearerToken: String): HttpApp[IO] => HttpApp[IO] = {
-    inputApp =>
-      HttpApp[IO] { request =>
+  private def middleware(bearerToken: String): Client[IO] => Client[IO] = {
+    inputClient =>
+      Client[IO] { request =>
         val newRequest = request.withHeaders(
           Authorization(Credentials.Token(AuthScheme.Bearer, bearerToken))
         )
 
-        inputApp(newRequest)
+        inputClient.run(newRequest)
       }
   }
 
-  def apply(bearerToken: String): EndpointSpecificMiddleware[IO] =
-    new EndpointSpecificMiddleware.Simple[IO] {
+  def apply(bearerToken: String): ClientEndpointMiddleware[IO] =
+    new ClientEndpointMiddleware.Simple[IO] {
       private val mid = middleware(bearerToken)
       def prepareWithHints(
           serviceHints: Hints,
           endpointHints: Hints
-      ): HttpApp[IO] => HttpApp[IO] = {
+      ): Client[IO] => Client[IO] = {
         serviceHints.get[smithy.api.HttpBearerAuth] match {
           case Some(_) =>
             endpointHints.get[smithy.api.Auth] match {
