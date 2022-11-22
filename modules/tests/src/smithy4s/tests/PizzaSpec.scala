@@ -432,6 +432,44 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("path param failing refinement results in a BadRequest") {
+    (client, uri, log) =>
+      client
+        .send[Unit](
+          POST(uri = uri / "echo" / "too-short").withEntity(Json.obj()),
+          log
+        )
+        .map(_._1)
+        .map(assert.eql(_, 400))
+  }
+
+  routerTest("query param failing refinement results in a BadRequest") {
+    (client, uri, log) =>
+      client
+        .send[Unit](
+          POST(
+            (uri / "echo" / "long-enough")
+              .withQueryParam("queryParam", "too-short")
+          ).withEntity(Json.obj()),
+          log
+        )
+        .map(_._1)
+        .map(assert.eql(_, 400))
+  }
+
+  routerTest("body failing refinement results in a BadRequest") {
+    (client, uri, log) =>
+      client
+        .send[Unit](
+          POST(
+            uri / "echo" / "long-enough"
+          ).withEntity(Json.obj("data" -> Json.fromString("too-short"))),
+          log
+        )
+        .map(_._1)
+        .map(assert.eql(_, 400))
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {
