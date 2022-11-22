@@ -850,7 +850,7 @@ lazy val Dependencies = new {
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.3.0")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.4.0")
   }
 
   object Mill {
