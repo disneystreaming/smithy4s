@@ -24,6 +24,9 @@ import sourcecode.FullName
 import java.nio.file.Paths
 import mill.scalalib.publish.PomSettings
 import mill.scalalib.publish.VersionControl
+import coursier.Repository
+import coursier.ivy.IvyRepository
+import mill.define.Task
 
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =
@@ -211,12 +214,21 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("multi-module staged codegen works") {
 
+    val localIvyRepo = os.temp.dir() / ".ivy2" / "local"
+
     trait Base
         extends testKit.BaseModule
         with SbtModule
         with Smithy4sModule
         with PublishModule {
       override def scalaVersion = "2.13.10"
+      override def repositoriesTask: Task[Seq[Repository]] = T.task {
+        val ivy2Local = IvyRepository.fromPattern(
+          (localIvyRepo.toNIO.toUri.toString + "/") +: coursier.ivy.Pattern.default,
+          dropInfoAttributes = true
+        )
+        super.repositoriesTask() ++ Seq(ivy2Local)
+      }
       def pomSettings: T[PomSettings] = PomSettings(
         "foo",
         "foobar",
@@ -230,12 +242,14 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     object foo extends Base {
+      override def artifactName: T[String] = "foo"
       override def scalaVersion = "2.13.10"
       override def ivyDeps = Agg(coreDep)
       override def millSourcePath = resourcePath / "multimodule-staged" / "foo"
     }
 
     object bar extends Base {
+      override def artifactName: T[String] = "bar"
       override def scalaVersion = "2.13.10"
       // Bar refers to foo explicitly in its ivy deps, and upon publishing,
       // this information is stored in the manifest of bar's jar, for downstream
@@ -247,6 +261,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     object baz extends Base {
+      override def artifactName: T[String] = "baz"
       override def scalaVersion = "2.13.10"
       // baz depend on bar, and an assumption is made that baz may depend on the same smithy models
       // that bar depended on for its own codegen. Therefore, these are retrieved from bar's manifest,
@@ -263,7 +278,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     val bazEv =
       testKit.staticTestEvaluator(baz)(FullName("multi-module-staged-bar"))
 
-    taskWorks(foo.publishLocal(), fooEv)
+    taskWorks(foo.publishLocal(localIvyRepo.toString()), fooEv)
     taskWorks(bar.compile, barEv)
 
     checkFileExist(
@@ -275,7 +290,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       shouldExist = false
     )
 
-    taskWorks(bar.publishLocal(), barEv)
+    taskWorks(bar.publishLocal(localIvyRepo.toString()), barEv)
     taskWorks(baz.compile, bazEv)
 
     checkFileExist(

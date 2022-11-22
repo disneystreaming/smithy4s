@@ -73,7 +73,9 @@ trait Smithy4sModule extends ScalaModule {
         case Full(_)        => Nil
       }
     }
-    m.add(SMITHY4S_DEPENDENCIES -> deps.mkString(","))
+    if (deps.nonEmpty) {
+      m.add(SMITHY4S_DEPENDENCIES -> deps.mkString(","))
+    } else m
   }
 
   def smithy4sInternalDependenciesAsJars: T[List[PathRef]] = T {
