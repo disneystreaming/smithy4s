@@ -1,7 +1,22 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.compliancetests
 
 import smithy4s.Service
-import cats.effect.IO
 
 /**
   * A construct allowing for running http protocol compliance tests against the implementation of a given protocol.
@@ -13,28 +28,28 @@ import cats.effect.IO
   */
 object HttpProtocolCompliance {
 
-  def clientTests[Alg[_[_, _, _, _, _]]](
-      reverseRouter: ReverseRouter[IO],
+  def clientTests[F[_], Alg[_[_, _, _, _, _]]](
+      reverseRouter: ReverseRouter[F],
       serviceProvider: Service.Provider[Alg]
-  )(implicit ce: CompatEffect[IO]): List[ComplianceTest[IO]] =
-    new internals.ClientHttpComplianceTestCase[Alg](
+  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+    new internals.ClientHttpComplianceTestCase[F, Alg](
       reverseRouter,
       serviceProvider
     ).allClientTests()
 
-  def serverTests[Alg[_[_, _, _, _, _]]](
-      router: Router[IO],
+  def serverTests[F[_], Alg[_[_, _, _, _, _]]](
+      router: Router[F],
       serviceProvider: Service.Provider[Alg]
-  )(implicit ce: CompatEffect[IO]): List[ComplianceTest[IO]] =
-    new internals.ServerHttpComplianceTestCase[Alg](
+  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+    new internals.ServerHttpComplianceTestCase[F, Alg](
       router,
       serviceProvider
     ).allServerTests()
 
-  def clientAndServerTests[Alg[_[_, _, _, _, _]]](
-      router: Router[IO] with ReverseRouter[IO],
+  def clientAndServerTests[F[_], Alg[_[_, _, _, _, _]]](
+      router: Router[F] with ReverseRouter[F],
       serviceProvider: Service.Provider[Alg]
-  )(implicit ce: CompatEffect[IO]): List[ComplianceTest[IO]] =
+  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
     clientTests(router, serviceProvider) ++ serverTests(router, serviceProvider)
 
 }

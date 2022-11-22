@@ -16,14 +16,22 @@
 
 package smithy4s.compliancetests
 
+import cats.effect.Async
 import cats.effect.Deferred
 import com.comcast.ip4s.Host
 import com.comcast.ip4s.Port
-import cats.effect.Async
+import scala.concurrent.duration.FiniteDuration
 
-private[compliancetests] class CompatEffect[F[_]](implicit val F: Async[F]) {
+private[compliancetests] class CompatEffect[F[_]](implicit
+    val _Async: Async[F]
+) extends CompatUtils[F] {
+  // CE3 Deferred is in a cats.effect.Deferred
   def deferred[A]: F[Deferred[F, A]] = Deferred[F, A]
+  // CE3 timeout is on Async
+  def timeout[A](f: F[A], delay: FiniteDuration): F[A] =
+    _Async.timeout(f, delay)
 
+  // utf8 encode/decode under fs2.text.utf8
   val utf8Encode: fs2.Pipe[F, String, Byte] = fs2.text.utf8.encode[F]
   val utf8Decode: fs2.Pipe[F, Byte, String] = fs2.text.utf8.decode[F]
 }
