@@ -7,14 +7,13 @@ use smithy4s.api#simpleRestJson
 @simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
-  errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Echo]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
 operation AddMenuItem {
   input: AddMenuItemRequest,
-  errors: [PriceError],
+  errors: [PriceError, GenericServerError, GenericClientError],
   output: AddMenuItemResult
 }
 
@@ -87,7 +86,7 @@ structure PriceError {
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
 operation GetMenu {
   input: GetMenuRequest,
-  errors: [NotFoundError, FallbackError],
+  errors: [NotFoundError, FallbackError, GenericClientError],
   output: GetMenuResult
 }
 
@@ -288,4 +287,30 @@ structure CustomCodeInput {
 structure CustomCodeOutput {
   @httpResponseCode
   code: Integer
+}
+
+
+@http(method: "POST", uri: "/echo/{pathParam}")
+operation Echo {
+  input := {
+    @required
+    @httpLabel
+    @length(min: 10)
+    pathParam: String,
+
+    @httpQuery("queryParam")
+    @length(min: 10)
+    queryParam: String,
+
+    @httpPayload
+    @required
+    body: EchoBody
+  }
+  // this operation must NOT have any errors
+  errors: []
+}
+
+structure EchoBody {
+  @length(min: 10)
+  data: String
 }
