@@ -69,7 +69,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           "List of jars for external dependencies that should be added to the classpath used by Smithy4s during code-generation",
           "The smithy files and smithy validators contained by these jars are included in the Smithy4s code-generation process",
           "Namespaces that were used for code generation in these dependencies will be excluded from code generation in this project.",
-          "By default, this includes the jars resulting from the resolution of library dependencies annotated with the `Smithy4s` configuration"
+          "By default, this includes the jars resulting from the resolution of library dependencies annotated with the `Smithy4s` configuration",
+          "as well as the `standard` library dependencies"
         ).mkString(" ")
       )
 
@@ -109,10 +110,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Dependencies containing Smithy code, used at codegen-time only."
       )
 
-    // A shortcut to `"smithy4s,compile"` to use when defining dependencies that need to be consumed
-    // at odegen-time (for their smithy specs) AND at compile-time (for the Scala-code they contain)
-    val Smithy4sCompile = List(Smithy4s, Compile).map(_.name).mkString(",")
-
     val smithy4sModelTransformers =
       settingKey[List[String]](
         "List of transformer names that should be applied to the model prior to codegen"
@@ -138,7 +135,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     config / smithy4sExternalDependenciesAsJars := {
       val updateReport =
         (config / update).value +: (config / transitiveUpdate).value
-      findCodeGenDependencies(updateReport)
+      val externalDependencyFiles =
+        (config / externalDependencyClasspath).value.map(_.data)
+      findCodeGenDependencies(updateReport) ++ externalDependencyFiles
     },
     config / smithy4sInternalDependenciesAsJars := {
       (config / internalDependencyAsJars).value.map(_.data)

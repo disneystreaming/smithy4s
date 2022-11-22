@@ -103,7 +103,7 @@ trait Smithy4sModule extends ScalaModule {
       .flatten
   }
 
-  def smithy4sResolvedIvyDeps: T[Agg[PathRef]] =
+  private def smithy4sResolvedIvyDeps: T[Agg[PathRef]] =
     resolveDeps(smithy4sTransitiveIvyDeps)
 
   def smithy4sExternalCodegenIvyDeps: T[Agg[Dep]] = T {
@@ -121,11 +121,14 @@ trait Smithy4sModule extends ScalaModule {
     }
   }
 
-  def smithy4sResolvedExternalCodegenIvyDeps: T[Agg[PathRef]] =
+  private def smithy4sResolvedExternalCodegenIvyDeps: T[Agg[PathRef]] =
     resolveDeps(smithy4sExternalCodegenIvyDeps)
 
   def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
-    smithy4sInternalDependenciesAsJars() ++ smithy4sResolvedIvyDeps() ++ smithy4sResolvedExternalCodegenIvyDeps()
+    resolvedIvyDeps() ++
+      smithy4sInternalDependenciesAsJars() ++
+      smithy4sResolvedIvyDeps() ++
+      smithy4sResolvedExternalCodegenIvyDeps()
   }
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {

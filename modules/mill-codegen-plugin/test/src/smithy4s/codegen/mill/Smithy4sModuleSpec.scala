@@ -227,7 +227,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
           (localIvyRepo.toNIO.toUri.toString + "/") +: coursier.ivy.Pattern.default,
           dropInfoAttributes = true
         )
-        super.repositoriesTask() ++ Seq(ivy2Local)
+        Seq(ivy2Local) ++ super.repositoriesTask()
       }
       def pomSettings: T[PomSettings] = PomSettings(
         "foo",
@@ -242,41 +242,37 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     }
 
     object foo extends Base {
-      override def artifactName: T[String] = "foo"
+      override def artifactName: T[String] = "foo-mill"
       override def scalaVersion = "2.13.10"
       override def ivyDeps = Agg(coreDep)
+      override def smithy4sAllowedNamespaces: T[Option[Set[String]]] =
+        Some(Set("aws.api", "foo"))
       override def millSourcePath = resourcePath / "multimodule-staged" / "foo"
+      // foo refers to smithy-aws-traits explicitly as a code-gen only dep, and upon publishing,
+      // this information is stored in the manifest of bar's jar, for downstream consumption
+      override def smithy4sIvyDeps = Agg(
+        ivy"software.amazon.smithy:smithy-aws-traits:${smithy4s.codegen.BuildInfo.smithyVersion}"
+      )
     }
 
     object bar extends Base {
-      override def artifactName: T[String] = "bar"
+      override def artifactName: T[String] = "bar-mill"
       override def scalaVersion = "2.13.10"
-      // Bar refers to foo explicitly in its ivy deps, and upon publishing,
-      // this information is stored in the manifest of bar's jar, for downstream
-      // consumption
-      override def smithy4sIvyDeps =
-        Agg(ivy"${pomSettings().organization}::foo:${publishVersion()}")
-      override def ivyDeps = T(smithy4sIvyDeps())
-      override def millSourcePath = resourcePath / "multimodule-staged" / "bar"
-    }
-
-    object baz extends Base {
-      override def artifactName: T[String] = "baz"
-      override def scalaVersion = "2.13.10"
-      // baz depend on bar, and an assumption is made that baz may depend on the same smithy models
-      // that bar depended on for its own codegen. Therefore, these are retrieved from bar's manifest,
+      // bar depend on foo as a library, and an assumption is made that bar may depend on the same smithy models
+      // that foo depended on for its own codegen. Therefore, these are retrieved from foo's manifest,
       // resolved and added to the list of jars to seek smithy models from during code generation
-      override def ivyDeps =
-        Agg(ivy"${pomSettings().organization}::bar:${publishVersion()}")
-      override def millSourcePath = resourcePath / "multimodule-staged" / "baz"
+      override def ivyDeps = T {
+        super.ivyDeps() ++ Agg(
+          ivy"${pomSettings().organization}::foo-mill:${publishVersion()}"
+        )
+      }
+      override def millSourcePath = resourcePath / "multimodule-staged" / "bar"
     }
 
     val fooEv =
       testKit.staticTestEvaluator(foo)(FullName("multi-module-staged-foo"))
     val barEv =
       testKit.staticTestEvaluator(bar)(FullName("multi-module-staged-bar"))
-    val bazEv =
-      testKit.staticTestEvaluator(baz)(FullName("multi-module-staged-bar"))
 
     taskWorks(foo.publishLocal(localIvyRepo.toString()), fooEv)
     taskWorks(bar.compile, barEv)
@@ -289,25 +285,6 @@ class Smithy4sModuleSpec extends munit.FunSuite {
       barEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Foo.scala",
       shouldExist = false
     )
-
-    taskWorks(bar.publishLocal(localIvyRepo.toString()), barEv)
-    taskWorks(baz.compile, bazEv)
-
-    checkFileExist(
-      bazEv.outPath / "smithy4sOutputDir.dest" / "scala" / "baz" / "Baz.scala",
-      shouldExist = true
-    )
-    checkFileExist(
-      bazEv.outPath / "smithy4sOutputDir.dest" / "scala" / "foo" / "Baz.scala",
-      shouldExist = false
-    )
-    checkFileExist(
-      bazEv.outPath / "smithy4sOutputDir.dest" / "scala" / "bar" / "Bar.scala",
-      shouldExist = false
-    )
-
-    taskWorks(bar.run(), barEv)
-    taskWorks(baz.run(), bazEv)
 
   }
 

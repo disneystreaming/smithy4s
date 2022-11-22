@@ -134,26 +134,20 @@ Smithy specs (and validators) it may contain.
 ## Artifacts containing both Smithy files and Smithy4s generated code
 
 When using Smithy4s, you may want to depend on artifacts that may have been built using Smithy4s, containing both Smithy specifications
-and generated Scala code (or rather, JVM bytecode resulting from the compilation of generated Scala code). In this case, you have to tell your build tool that a dependency should be used both by Smithy4s at codegen-time, and by the Scala compiler at compile time. This is achieved by doing the following
+and generated Scala code (or rather, JVM bytecode resulting from the compilation of generated Scala code). In this case, you don't have to
+do anything particular, the simple fact of declaring a library dependency will result in the smithy files contained by that dependency to be
+used during the "compilation" of your smithy specs during the code-generation process.
 
 ### SBT
 
 ```scala
-libraryDependencies += "organisation" % "artifact" % "version" % Smithy4sCompile
-```
-
-Which is merely a shortcut for:
-
-```scala
-libraryDependencies += "organisation" % "artifact" % "version" % "smithy4s,compile"
+libraryDependencies += "organisation" % "artifact" % "version"
 ```
 
 ### Mill
 
 ```scala
-def compileAndCodegenDeps = T(Agg(ivy"organisation:artifact:version"))
-def ivyDeps = T(super.ivyDeps() ++ compileAndCodegenDeps())
-def smithy4sIvyDeps = T(super.smithy4sIvyDeps() ++ compileAndCodegenDeps())
+def ivyDeps = T(Agg(ivy"organisation:artifact:version"))
 ```
 
 ### Consequence
@@ -162,9 +156,10 @@ Because the upstream usage of Smithy4s will have resulted in the creation of met
 
 ## Artifacts containing Smithy4s generated code : dependency tracking
 
-When packaging a project/module via SBT or Mill, Smithy4s adds a line to the Jar manifest of the project, informing downstream projects of library dependencies that may have been used during the code-generation of this project/module.
+When packaging a project/module via SBT or Mill, Smithy4s adds a line to the Jar manifest of the project, informing downstream projects of library dependencies that may have been used during the code-generation of this project/module (ie, the dependencies annotated with `% Smithy4s` in SBT, and the ones provided by
+`smithy4sIvyDeps` in mill).
 
-This information is used automatically by downstream usage of Smithy4s, which automatically pulls additional jars that would be specified
+This information is used automatically by downstream projects using Smithy4s, which automatically pulls additional jars that would be specified
 in this bit of metadata.
 
 So, for instance, if you have
@@ -195,7 +190,7 @@ lazy val downstream = (project in file("foo"))
   .settings(
     libraryDependencies ++= Seq(
       // compile/runtime dependency that contains Smithy4s-generated code but doesn't contain smithy files
-      "foobar" % "upstream" % "0.0.1"
+      "foobar" %% "upstream" % "0.0.1"
     )
   )
 ```
