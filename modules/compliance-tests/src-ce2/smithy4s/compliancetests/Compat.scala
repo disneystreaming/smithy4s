@@ -41,8 +41,8 @@ object Compat {
 }
 
 object CompatEffect {
-  implicit def ce(implicit
-      cs: ContextShift[IO],
-      timer: Timer[IO]
-  ): CompatEffect[IO] = new CompatEffect[IO]
+  implicit def ce[F[_]](implicit
+      cs: Concurrent[F],
+      timer: Timer[F]
+  ): CompatEffect[F] = new CompatEffect[F]
 }
