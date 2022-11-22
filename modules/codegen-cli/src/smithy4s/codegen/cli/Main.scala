@@ -42,7 +42,19 @@ object Main {
         .parse(args.toList)
         .map {
           case Smithy4sCommand.Generate(args) =>
-            Codegen.processSpecs(args).foreach(out.println)
+            val res = Codegen.processSpecs(args)
+            if (res.isEmpty) {
+              // Printing to stderr because we print generated files path to stdout
+              Console.err.println(
+                List(
+                  "Nothing was generated. Make sure your targetting Smithy files or folders",
+                  "that include Smithy definitions. Otherwise, you can also use",
+                  "--dependencies to pull external JARs or use --local-jars to use",
+                  "JARs located on your file system."
+                ).mkString(" ")
+              )
+            }
+            res.foreach(out.println)
 
           case Smithy4sCommand.DumpModel(args) =>
             out.println(DumpModel.run(args))
