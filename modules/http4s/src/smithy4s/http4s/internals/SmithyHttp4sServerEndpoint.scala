@@ -206,7 +206,8 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
     endpoint.errorable match {
       case Some(errorable) =>
         val processError: E => Response[F] = compileErrorable(errorable)
-        (_: Throwable) match {
+
+        {
           case e: HttpContractError =>
             Response[F](Status.BadRequest).withEntity(e).pure[F]
           case endpoint.Error((_, e)) =>
@@ -214,8 +215,13 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
           case e: Throwable =>
             F.raiseError(e)
         }
-      case None =>
-        F.raiseError(_)
+
+      case None => {
+        case e: HttpContractError =>
+          Response[F](Status.BadRequest).withEntity(e).pure[F]
+        case e: Throwable =>
+          F.raiseError(e)
+      }
     }
   }
 

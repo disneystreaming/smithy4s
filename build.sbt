@@ -681,7 +681,8 @@ lazy val tests = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "noerrors.smithy"
     ),
     moduleName := {
       if (virtualAxes.value.contains(CatsEffect2Axis))
