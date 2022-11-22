@@ -66,7 +66,7 @@ object CommandParsingSpec extends FunSuite {
         "dep1,dep2",
         "--transformers",
         "t1,t2",
-        "--localJars",
+        "--local-jars",
         "lib1.jar,lib2.jar"
       )
     )
@@ -127,7 +127,7 @@ object CommandParsingSpec extends FunSuite {
         "dep1,dep2",
         "--transformers",
         "t1,t2",
-        "--localJars",
+        "--local-jars",
         "lib1.jar,lib2.jar"
       )
     )
