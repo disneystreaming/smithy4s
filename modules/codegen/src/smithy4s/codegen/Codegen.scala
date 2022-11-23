@@ -46,6 +46,8 @@ object Codegen { self =>
         scalaFile
       }
       val generatedNamespaces = codegenResult.map(_._2.namespace).distinct
+      // when args.specs and generatedNamespaces are empty
+      // we produce two files that are essentially empty
       val skipResource =
         args.skipResources || (args.specs.isEmpty && generatedNamespaces.isEmpty)
       val resources = if (!skipResource) {
