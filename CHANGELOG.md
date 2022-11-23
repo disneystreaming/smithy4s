@@ -63,3 +63,12 @@ The abstractions that the generated code implements and that the runtime interpr
 * The `compliancetest` module has changed drastically in UX. For those not aware, this module allows to run tests written in Smithy against your own implementation of protocols. This will be useful for third-party libraries that implement `simpleRestJson` (or any other http/rest like protocol), to virtually get tests for free. We don't think this module had any users so far, but we'll slowly be porting some of our tests away from the `smithy4s` repository and into the `alloy` repository.
 
 ## User facing improvements
+
+### Endpoint Specific Middleware
+
+Adds the ability to have smithy4s-level middleware that is made aware of the `Server` and `Endpoint` for use in creating middleware implementations. This unlocks creating middleware that is aware of the Smithy traits (`Hints` in smithy4s) and shapes in your specification. This means the middleware can apply transformations based on traits applied in a smithy specification and it can return error responses defined in the smithy specification. An example of this is authentication. You are now able to create middleware that will check authentication on only the endpoints that require it AND you can return a smithy-defined error response when the authentication is not valid. See the [endpoint specific middleware guide](https://disneystreaming.github.io/smithy4s/docs/guides/endpoint-middleware) for more.
+
+
+### Error Response Handling Improvements
+
+Streamlines and improves how error responses are mapped to their corresponding smithy4s-generated types. It now works such that IF no `X-Error-Type` header is found AND the status code doesn't map precisely to an error annotated with @httpCode AND exactly one error happens to have @error("client") without @httpCode, that error will be selected (provided the status code is in the 4xx range). Same for @error("server") and 5xx range. See the [error handling documentation](https://disneystreaming.github.io/smithy4s/docs/protocols/simple-rest-json/client#error-handling) for more.
