@@ -46,7 +46,8 @@ private[http4s] object SmithyHttp4sClientEndpoint {
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      compilerContext: CompilerContext[F]
+      compilerContext: CompilerContext[F],
+      middleware: Client[F] => Client[F]
   ): Either[
     HttpEndpoint.HttpEndpointError,
     SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
@@ -65,7 +66,8 @@ private[http4s] object SmithyHttp4sClientEndpoint {
             method,
             endpoint,
             httpEndpoint,
-            compilerContext
+            compilerContext,
+            middleware
           )
         }
     }
@@ -79,12 +81,15 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   method: org.http4s.Method,
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   httpEndpoint: HttpEndpoint[I],
-  compilerContext: CompilerContext[F]
+  compilerContext: CompilerContext[F],
+  middleware: Client[F] => Client[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
+  private val transformedClient: Client[F] = middleware(client)
+
   def send(input: I): F[O] = {
-    client
+    transformedClient
       .run(inputToRequest(input))
       .use { response =>
         outputFromResponse(response)

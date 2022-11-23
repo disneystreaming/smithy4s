@@ -116,6 +116,7 @@ lazy val docs =
       Compile / smithySpecs := Seq(
         (Compile / sourceDirectory).value / "smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy",
+        (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
       )
@@ -627,7 +628,14 @@ lazy val http4s = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
-    }
+    },
+    Test / allowedNamespaces := Seq(
+      "smithy4s.hello"
+    ),
+    Test / smithySpecs := Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
+    ),
+    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -788,14 +796,19 @@ lazy val guides = projectMatrix
   .in(file("modules/guides"))
   .dependsOn(http4s)
   .settings(
-    Compile / allowedNamespaces := Seq("smithy4s.guides.hello"),
+    Compile / allowedNamespaces := Seq(
+      "smithy4s.guides.hello",
+      "smithy4s.guides.auth"
+    ),
     smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy"
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy",
+      (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy"
     ),
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberServer.value,
+      Dependencies.Http4s.emberClient.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
