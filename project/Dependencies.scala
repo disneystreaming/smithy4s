@@ -16,7 +16,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val version = "1.26.0"
+    val version = "1.26.3"
     val model = org % "smithy-model" % version
     val testTraits = org % "smithy-protocol-test-traits" % version
     val build = org % "smithy-build" % version
@@ -37,7 +37,7 @@ object Dependencies {
   }
 
   object Decline {
-    val declineVersion = "2.3.1"
+    val declineVersion = "2.4.0"
 
     val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
     val effect =
@@ -45,7 +45,7 @@ object Dependencies {
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.3.0")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.4.0")
   }
 
   object Mill {
@@ -72,7 +72,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.3.14")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.1")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.16" else "0.22.14")
