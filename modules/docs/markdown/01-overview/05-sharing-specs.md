@@ -176,7 +176,8 @@ lazy val upstream = (project in file("foo"))
   )
 ```
 
-and publish this project to an artifact repository, the Jar manifest will contain the following line :
+and publish this project to an artifact repository, the Jar manifest will contain a line with the relevant
+dependencies (comma separated if there are more than one) :
 
 ```
 smithy4sDependencies: software.amazon.smithy:smithy-aws-iam-traits:1.14.1

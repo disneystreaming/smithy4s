@@ -298,7 +298,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
       skip = skipSet,
-      discoverModels = false, // we need protocol here
+      discoverModels = false,
       allowedNS = allowedNamespaces,
       excludedNS = excludedNamespaces,
       repositories = res,
