@@ -76,7 +76,7 @@ private[smithy4s] object JsonConverters {
         ("repositories", ca.repositories) :*:
         ("dependencies", ca.dependencies) :*:
         ("transformers", ca.transformers) :*:
-        ("local-jars", ca.localJars) :*:
+        ("localJars", ca.localJars) :*:
         LNil
     },
     {
