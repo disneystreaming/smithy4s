@@ -97,8 +97,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   // Use this with any configuration to enable the codegen in it.
   def defaultSettings(config: Configuration) = Seq(
-    config / smithy4sInputDirs := (config / unmanagedSourceDirectories).value
-      .map(_.getParentFile() / "smithy"),
+    config / smithy4sInputDirs := Seq(
+      (config / sourceDirectory).value / "smithy"
+    ),
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
