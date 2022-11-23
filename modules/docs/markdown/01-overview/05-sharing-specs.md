@@ -76,7 +76,7 @@ You can opt out of this behavior:
 
 ```scala
 val b = project.settings(
-  Compile / smithy4sLocalJars := Nil
+  Compile / smithy4sInternalDependenciesAsJars := Nil
 )//...
 ```
 
@@ -85,13 +85,13 @@ val b = project.settings(
 ```scala
 object b extends Smithy4sModule {
   //...
-  override def smithy4sLocalJars = List.empty[PathRef]
+  override def smithy4sInternalDependenciesAsJars = List.empty[PathRef]
 }
 ```
 
 This will not only remove the need for compilation (for the purposes of codegen), but also remove any visibility of the Smithy files in the **local** dependencies of your project (**local** meaning they're defined in the same build).
 
-You can use the same setting, `smithy4sLocalJars`, to add additional JARs containing Smithy specs - just keep in mind that remote dependencies (`libraryDependencies`) are added automatically!
+You can use the same setting, `smithy4sInternalDependenciesAsJars`, to add additional JARs containing Smithy specs - just keep in mind that remote dependencies (`libraryDependencies`) are added automatically!
 
 
 ### A word of warning
@@ -134,33 +134,73 @@ Smithy specs (and validators) it may contain.
 ## Artifacts containing both Smithy files and Smithy4s generated code
 
 When using Smithy4s, you may want to depend on artifacts that may have been built using Smithy4s, containing both Smithy specifications
-and generated Scala code (or rather, JVM bytecode resulting from the compilation of generated Scala code). In this case, you have to tell your build tool that a dependency should be used both by Smithy4s at codegen-time, and by the Scala compiler at compile time. This is achieved by doing the following
+and generated Scala code (or rather, JVM bytecode resulting from the compilation of generated Scala code). In this case, you don't have to
+do anything particular, the simple fact of declaring a library dependency will result in the smithy files contained by that dependency to be
+used during the "compilation" of your smithy specs during the code-generation process.
 
 ### SBT
 
 ```scala
-libraryDependencies += "organisation" % "artifact" % "version" % Smithy4sCompile
-```
-
-Which is merely a shortcut for:
-
-```scala
-libraryDependencies += "organisation" % "artifact" % "version" % "smithy4s,compile"
+libraryDependencies += "organisation" % "artifact" % "version"
 ```
 
 ### Mill
 
 ```scala
-
-def compileAndCodegenDeps = T(Agg(ivy"organisation:artifact:version"))
-def ivyDeps = T(super.ivyDeps() ++ compileAndCodegenDeps())
-def smithy4sIvyDeps = T(super.smithy4sIvyDeps() ++ compileAndCodegenDeps())
-
+def ivyDeps = T(Agg(ivy"organisation:artifact:version"))
 ```
 
 ### Consequence
 
 Because the upstream usage of Smithy4s will have resulted in the creation of metadata tracking the namespaces that were already generated, the "local" Smithy4s code-generation will automatically skip the generation of code that should not be generated again.
+
+## Artifacts containing Smithy4s generated code : dependency tracking
+
+When packaging a project/module via SBT or Mill, Smithy4s adds a line to the Jar manifest of the project, informing downstream projects of library dependencies that may have been used during the code-generation of this project/module (ie, the dependencies annotated with `% Smithy4s` in SBT, and the ones provided by
+`smithy4sIvyDeps` in mill).
+
+This information is used automatically by downstream projects using Smithy4s, which automatically pulls additional jars that would be specified
+in this bit of metadata.
+
+So, for instance, if you have
+
+```scala
+lazy val upstream = (project in file("foo"))
+  .enablePlugins(Smithy4sCodegenPlugin)
+  .settings(
+    organization := "foobar",
+    version := "0.0.1",
+    libraryDependencies ++= Seq(
+      "software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1" % Smithy4s
+    )
+  )
+```
+
+and publish this project to an artifact repository, the Jar manifest will contain a line with the relevant
+dependencies (comma separated if there are more than one) :
+
+```
+smithy4sDependencies: software.amazon.smithy:smithy-aws-iam-traits:1.14.1
+```
+
+Using this artifact in a downstream project, for instance with :
+
+```scala
+lazy val downstream = (project in file("foo"))
+  .enablePlugins(Smithy4sCodegenPlugin)
+  .settings(
+    libraryDependencies ++= Seq(
+      // compile/runtime dependency that contains Smithy4s-generated code but doesn't contain smithy files
+      "foobar" %% "upstream" % "0.0.1"
+    )
+  )
+```
+
+will result in the `"software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1"` dependency being automatically fetched
+and used for the smithy-level classpath of the smithy files contained by `downstream`. This effectively means that smithy files
+in `downstream` can use the Smithy shapes present in the `smithy-aws-iam-traits` artifact.
+
+
 
 
 ### Manually skipping (or including) namespaces during code-generation.

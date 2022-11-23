@@ -6,7 +6,6 @@ lazy val foo = (project in file("foo"))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
     libraryDependencies ++= Seq(
-      "software.amazon.smithy" % "smithy-aws-traits" % smithyVersion % Smithy4s,
       "com.disneystreaming.smithy4s" %% "smithy4s-aws-kernel" % smithy4sVersion.value
     )
   )

@@ -23,6 +23,12 @@ import mill.define.Sources
 import mill.scalalib._
 import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
 import smithy4s.codegen.BuildInfo
+import smithy4s.codegen.SMITHY4S_DEPENDENCIES
+import mill.modules.Jvm
+import mill.scalalib.CrossVersion.Binary
+import mill.scalalib.CrossVersion.Constant
+import mill.scalalib.CrossVersion.Full
+import java.util.jar.JarFile
 
 trait Smithy4sModule extends ScalaModule {
 
@@ -54,7 +60,25 @@ trait Smithy4sModule extends ScalaModule {
     smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
   }
 
-  def smithy4sLocalJars: T[List[PathRef]] = T {
+  override def manifest: T[Jvm.JarManifest] = T {
+    val m = super.manifest()
+    val deps = smithy4sIvyDeps().iterator.toList.flatMap { d =>
+      val mod = d.dep.module
+      val org = mod.organization.value
+      val name = mod.name.value
+      val version = d.dep.version
+      d.cross match {
+        case Binary(_)      => List(s"$org::$name:$version")
+        case Constant(_, _) => List(s"$org:$name:$version")
+        case Full(_)        => Nil
+      }
+    }
+    if (deps.nonEmpty) {
+      m.add(SMITHY4S_DEPENDENCIES -> deps.mkString(","))
+    } else m
+  }
+
+  def smithy4sInternalDependenciesAsJars: T[List[PathRef]] = T {
     T.traverse(moduleDeps)(_.jar)
       .map(_.toList.map(_.path).map(PathRef(_)))
   }
@@ -79,8 +103,32 @@ trait Smithy4sModule extends ScalaModule {
       .flatten
   }
 
-  def smithy4sResolvedIvyDeps: T[Agg[PathRef]] = T {
-    resolveDeps(T.task { smithy4sTransitiveIvyDeps() })()
+  private def smithy4sResolvedIvyDeps: T[Agg[PathRef]] =
+    resolveDeps(smithy4sTransitiveIvyDeps)
+
+  def smithy4sExternalCodegenIvyDeps: T[Agg[Dep]] = T {
+    resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
+      val jarFile = new JarFile(pathRef.path.toIO)
+      val deps = Option(
+        jarFile
+          .getManifest()
+          .getMainAttributes()
+          .getValue(SMITHY4S_DEPENDENCIES)
+      ).toList.flatMap { listString =>
+        listString.split(",").toList.map(dep => ivy"$dep")
+      }
+      Agg.from(deps)
+    }
+  }
+
+  private def smithy4sResolvedExternalCodegenIvyDeps: T[Agg[PathRef]] =
+    resolveDeps(smithy4sExternalCodegenIvyDeps)
+
+  def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
+    resolvedIvyDeps() ++
+      smithy4sInternalDependenciesAsJars() ++
+      smithy4sResolvedIvyDeps() ++
+      smithy4sResolvedExternalCodegenIvyDeps()
   }
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
@@ -100,10 +148,8 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
-    val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
-
-    val localJars = smithy4sLocalJars().map(_.path)
-    val allLocalJars = localJars ++ resolvedDeps
+    val allLocalJars =
+      smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
 
     val args = CodegenArgs(
       specs = specFiles.toList,
