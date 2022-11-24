@@ -21,14 +21,18 @@ import mill._
 import mill.api.PathRef
 import mill.define.Sources
 import mill.scalalib._
-import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
-import smithy4s.codegen.BuildInfo
-import smithy4s.codegen.SMITHY4S_DEPENDENCIES
+import smithy4s.codegen.{
+  CodegenArgs,
+  Codegen => Smithy4s,
+  FileType,
+  BuildInfo,
+  JarUtils,
+  SMITHY4S_DEPENDENCIES
+}
 import mill.modules.Jvm
 import mill.scalalib.CrossVersion.Binary
 import mill.scalalib.CrossVersion.Constant
 import mill.scalalib.CrossVersion.Full
-import java.util.jar.JarFile
 
 trait Smithy4sModule extends ScalaModule {
 
@@ -108,15 +112,9 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sExternalCodegenIvyDeps: T[Agg[Dep]] = T {
     resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
-      val jarFile = new JarFile(pathRef.path.toIO)
-      val deps = Option(
-        jarFile
-          .getManifest()
-          .getMainAttributes()
-          .getValue(SMITHY4S_DEPENDENCIES)
-      ).toList.flatMap { listString =>
-        listString.split(",").toList.map(dep => ivy"$dep")
-      }
+      val deps = JarUtils
+        .extractSmithy4sDependencies(pathRef.path.toIO)
+        .map(dep => ivy"$dep")
       Agg.from(deps)
     }
   }

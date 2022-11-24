@@ -17,7 +17,6 @@
 package smithy4s.codegen
 
 import sbt.Keys._
-import java.util.jar.JarFile
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
 import JsonConverters._
@@ -255,18 +254,12 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   private lazy val simple = raw"([^:]*):([^:]*):([^:]*)".r
   private lazy val cross = raw"([^:]*)::([^:]*):([^:]*)".r
   private def extract(jarFile: java.io.File): Seq[ModuleID] = {
-    val jar = new JarFile(jarFile)
-    Option(
-      jar.getManifest().getMainAttributes().getValue(SMITHY4S_DEPENDENCIES)
-    ).toList.flatMap { listString =>
-      listString
-        .split(",")
-        .collect {
-          case cross(org, art, version)  => org %% art % version
-          case simple(org, art, version) => org % art % version
-        }
-        .toList
-    }
+    JarUtils
+      .extractSmithy4sDependencies(jarFile)
+      .collect {
+        case cross(org, art, version)  => org %% art % version
+        case simple(org, art, version) => org % art % version
+      }
   }
 
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
