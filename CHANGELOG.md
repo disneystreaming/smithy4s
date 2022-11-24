@@ -72,7 +72,7 @@ The abstractions that the generated code implements and that the runtime interpr
 * `kind`-specific types were created to facilitate the "lift" of constructs to the right kinds. For instance, one inspecting the internals of this library might see things like `Kind1[IO]#toKind5` where in was previously `GenLift[IO]#λ`. We're hoping to convey meaning better, although this code is definitely still not trivial (and never will).
 * `smithy4s.Transformation` is now a typeclass-like construct, which expresses the fact that a construct can be applied on another like a function. This construct is used by the `transform` method that is generated on service interfaces, which allows to apply custom behaviour generically on all method invocations in these interfaces.
 * The `Service` interface takes a single `Alg` type parameter, the `Op` parameter has moved to type-member position, facilitating implicit search in some contexts (as well as the writing of some logic).
-* A bunch of path-dependant type-aliases were created in the `Service` interface.
+* A bunch of path-dependent type aliases were created in the `Service` interface.
 * The `compliancetest` module has changed drastically in UX. For those not aware, this module allows to run tests written in Smithy against your own implementation of protocols. This will be useful for third-party libraries that implement `simpleRestJson` (or any other http/rest like protocol), to virtually get tests for free. We don't think this module had any users so far, but we'll slowly be porting some of our tests away from the `smithy4s` repository and into the `alloy` repository.
 
 ## User facing improvements
