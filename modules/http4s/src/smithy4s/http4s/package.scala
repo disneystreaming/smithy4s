@@ -32,7 +32,8 @@ package object http4s extends Compat.Package {
       private[this] val serviceProvider: smithy4s.Service.Provider[Alg]
   ) {
     @deprecated(
-      "this extension method is deprecated ,Use smithy4s.http4s.SimpleRestJsonBuilder"
+      "this extension method is deprecated. Use smithy4s.http4s.SimpleRestJsonBuilder",
+      since = "0.17.0"
     )
     def simpleRestJson: SimpleRestJsonBuilder.ServiceBuilder[Alg] =
       SimpleRestJsonBuilder(serviceProvider)
