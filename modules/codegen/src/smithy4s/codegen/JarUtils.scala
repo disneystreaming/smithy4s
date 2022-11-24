@@ -26,4 +26,11 @@ object JarUtils {
       Option(m.getMainAttributes().getValue(key))
     )
   }
+
+  def extractSmithy4sDependencies(path: File): List[String] = {
+    extractJarManifestAttribute(path, SMITHY4S_DEPENDENCIES).toList.flatMap {
+      str =>
+        str.split(',').toList
+    }
+  }
 }

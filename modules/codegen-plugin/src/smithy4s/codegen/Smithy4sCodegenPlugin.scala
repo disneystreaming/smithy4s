@@ -255,16 +255,10 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
   private lazy val cross = raw"([^:]*)::([^:]*):([^:]*)".r
   private def extract(jarFile: java.io.File): Seq[ModuleID] = {
     JarUtils
-      .extractJarManifestAttribute(jarFile, SMITHY4S_DEPENDENCIES)
-      .toList
-      .flatMap { listString =>
-        listString
-          .split(",")
-          .collect {
-            case cross(org, art, version)  => org %% art % version
-            case simple(org, art, version) => org % art % version
-          }
-          .toList
+      .extractSmithy4sDependencies(jarFile)
+      .collect {
+        case cross(org, art, version)  => org %% art % version
+        case simple(org, art, version) => org % art % version
       }
   }
 

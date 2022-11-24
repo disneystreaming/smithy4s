@@ -113,11 +113,8 @@ trait Smithy4sModule extends ScalaModule {
   def smithy4sExternalCodegenIvyDeps: T[Agg[Dep]] = T {
     resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
       val deps = JarUtils
-        .extractJarManifestAttribute(pathRef.path.toIO, SMITHY4S_DEPENDENCIES)
-        .toList
-        .flatMap { listString =>
-          listString.split(",").toList.map(dep => ivy"$dep")
-        }
+        .extractSmithy4sDependencies(pathRef.path.toIO)
+        .map(dep => ivy"$dep")
       Agg.from(deps)
     }
   }
