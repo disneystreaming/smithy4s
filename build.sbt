@@ -681,7 +681,7 @@ lazy val tests = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
     ),
     moduleName := {
       if (virtualAxes.value.contains(CatsEffect2Axis))
@@ -821,7 +821,7 @@ lazy val Dependencies = new {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.9"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.18.0"
     )
 
   val Smithy = new {
