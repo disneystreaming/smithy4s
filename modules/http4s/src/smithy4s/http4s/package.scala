@@ -28,18 +28,6 @@ import cats.implicits._
 
 package object http4s extends Compat.Package {
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg]
-  ) {
-    @deprecated(
-      "this extension method is deprecated. Use smithy4s.http4s.SimpleRestJsonBuilder",
-      since = "0.17.0"
-    )
-    def simpleRestJson: SimpleRestJsonBuilder.ServiceBuilder[Alg] =
-      SimpleRestJsonBuilder(serviceProvider)
-
-  }
-
   private[smithy4s] def toHttp4sMethod(
       method: SmithyMethod
   ): Either[ParseFailure, Http4sMethod] =
