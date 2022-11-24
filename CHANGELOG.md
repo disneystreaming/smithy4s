@@ -2,7 +2,7 @@
 
 This 0.17.0 release of Smithy4s brings a number of improvements on the abstractions implemented by the generated code, in particular in terms of flexibility and user experience.
 
-This release also aims at brining inter-operability with other tools that Disney Streaming is putting forward to reinforce the Smithy ecosystem, such as [smithy-translate](https://github.com/disneystreaming/smithy-translate/).
+This release also aims at bringing inter-operability with other tools and projects that Disney Streaming is putting forward to reinforce the Smithy ecosystem, such as [smithy-translate](https://github.com/disneystreaming/smithy-translate/) and [alloy](https://github.com/disneystreaming/alloy).
 
 In order to achieve these improvements, we've had to break a number of things at different levels. This release is therefore neither source nor binary compatible with the previous ones, and also forces the user to update their Smithy specifications.
 
@@ -24,22 +24,32 @@ This change implies, for instance, that any use of `smithy4s.api#simpleRestJson`
 
 See https://github.com/disneystreaming/smithy4s/pull/587
 
-The `smithy4sInputDir` setting/task in SBT/mill has been replaced by `smithy4sInputDirs`, allowing the user to set several directories where the plugins should look for smithy files
+The `smithy4sInputDir` setting/task in SBT/mill has been replaced by `smithy4sInputDirs`, allowing the user to set several directories where the plugins should look for smithy files.
 
 #### Change in smithy-library dependency resolution
 
 See https://github.com/disneystreaming/smithy4s/pull/607
 
-We've changed the smithy-sharing mechanism to do two things :
+We've changed the smithy-sharing mechanism to do two things:
 
-1. By default, any dependency declared "normally" in SBT or mill, by means or `libraryDepedencies ++=` or `def ivyDeps`, will be inspected for Smithy files after being resolved. This means that, for instance, if your application has a runtime dependency on a library that was built with Smithy4s and contains Smithy files, your local specs can use the code defined in these Smithy files to create or annotate new shapes. You no longer need to declare those using `% Smithy4s` or `def smithy4sIvyDeps` : these are now reserved for libraries containing Smithy files that you **do not want your application's runtime to depend on**.
+1. By default, any dependency declared "normally" in SBT or mill, by means or `libraryDepedencies ++=` or `def ivyDeps`, will be inspected for Smithy files after being resolved. This means that, for instance, if your application has a runtime dependency on a library that was built with Smithy4s and contains Smithy files, your local specs can use the code defined in these Smithy files to create or annotate new shapes. You no longer need to declare those using `% Smithy4s` or `def smithy4sIvyDeps`: these are now reserved for libraries containing Smithy files that you **do not want your application's runtime to depend on**.
 2. Libraries built by Smithy4s automatically track the dependencies that they used during their own code-generation, by storing some metadata in their Jar's manifests. By default, the Smithy4s plugins will also pull those dependencies (which will have been declared upstream using `% Smithy4s` in SBT or `def smithy4sIvyDeps` in mill), for your project's code generation. This facilitates the transitivity of specification-holding artifacts. This mechanism is used, for instance, to communicate to users projects the fact that Smithy4s depends on shapes that are defined in the [alloy](https://github.com/disneystreaming/alloy) library, and that these shapes should be made available to user projects, without impacting the user's application runtime, and without requiring any setup from the user.
 
 ### Normal-usage breaking changes in the generated code
 
 See https://github.com/disneystreaming/smithy4s/pull/599
 
-Depending on your setup, it may be a breaking change, but `@deprecated` Smithy-traits now translate to the `@deprectated` Scala annotation in the generated code.
+Depending on your setup, it may be a breaking change, but `@deprecated` Smithy-traits now translate to the `@deprectated` Scala annotation in the generated code. For instance, if you used `@enum` heavily, you'll probably deprecation warnings in your console when compiling. Depending on your `scalacOptions`, it is possible that these warnings turn into errors. If you want to silence these particular errors while upgrading, you can do the following:
+
+```sbt
+scalacOptions ++= Seq(
+  "-Wconf:msg=object Enum in package api is deprecated:silent",
+  "-Wconf:msg=type Enum in package api is deprecated:silent",
+  // for Scala 3
+  "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
+  "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
+)
+```
 
 ### Normal-usage source breaking changes
 
@@ -47,7 +57,7 @@ See https://github.com/disneystreaming/smithy4s/pull/569
 
 If you use Smithy4s in the ways that were previously advertised in the documentation, you may have to perform some small adjustments.
 
-In particular, the `simpleRestJson` extension method that was added to implementations of service-interfaces generated by Smithy4s is now deprecated, in favour of the `SimpleRestJsonBuilder` construct (which now works for any `service` smithy shape that will have been annotated with `alloy#simpleRestJson`).
+In particular, the `simpleRestJson` extension method that was added to implementations of service-interfaces generated by Smithy4s is now deprecated, in favour of the `SimpleRestJsonBuilder` construct (which now works for any `service` Smithy shape that will have been annotated with `alloy#simpleRestJson`).
 
 ### Advanced usage breaking changes
 
