@@ -125,9 +125,10 @@ What we want users to manipulate is the final-encoded version of a service: a go
 So we codify the duality to allow for switching from one to the other via an abstraction called `Smithy4s.Service`, which is the entry point to all interpreters.
 
 ```scala
-trait Service[Final[_[_, _, _, _, _]], Initial[_, _, _, _, _]] {
-  def toPolyFunction[F[_, _, _, _, _,]](alg: Final[F]) : PolyFunction5[Initial, F]
-  def fromPolyFunction[F[_, _, _, _, _]](polyFunction: PolyFunction5[Initial, F]) : Final[F]
+trait Service[Final[_[_, _, _, _, _]]] {
+  type Operation[_, _, _, _, _]
+  def toPolyFunction[F[_, _, _, _, _,]](alg: Final[F]) : PolyFunction5[Operation, F]
+  def fromPolyFunction[F[_, _, _, _, _]](polyFunction: PolyFunction5[Operation, F]) : Final[F]
 
   // ...
 }
