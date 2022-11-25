@@ -4,10 +4,8 @@ import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
-import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
-import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
@@ -24,10 +22,10 @@ trait DeprecatedServiceGen[F[_, _, _, _, _]] {
 
 object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] {
 
-  def apply[F[_]](implicit F: FunctorAlgebra[DeprecatedServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: Impl[F]): F.type = F
 
-  type WithError[F[_, _]] = BiFunctorAlgebra[DeprecatedServiceGen, F]
-  object WithError {
+  object ErrorAware {
+    def apply[F[_, _]](implicit F: ErrorAware[F]): F.type = F
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 

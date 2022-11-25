@@ -226,10 +226,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
       )(
         newline,
-        line"def apply[F[_]](implicit F: $FunctorAlgebra_[$genNameRef, F]): F.type = F",
+        line"def apply[F[_]](implicit F: $Impl_[F]): F.type = F",
         newline,
-        line"type $WithError_[F[_, _]] = $BiFunctorAlgebra_[$genNameRef, F]",
-        block(line"object $WithError_")(
+        block(line"object $ErrorAware_")(
+          line"def apply[F[_, _]](implicit F: $ErrorAware_[F]): F.type = F",
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
