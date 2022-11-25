@@ -5,10 +5,8 @@ import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
-import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
-import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -28,10 +26,10 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 
 object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {
 
-  def apply[F[_]](implicit F: FunctorAlgebra[ObjectServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: Impl[F]): F.type = F
 
-  type WithError[F[_, _]] = BiFunctorAlgebra[ObjectServiceGen, F]
-  object WithError {
+  object ErrorAware {
+    def apply[F[_, _]](implicit F: ErrorAware[F]): F.type = F
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 

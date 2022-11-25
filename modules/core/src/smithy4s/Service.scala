@@ -40,6 +40,8 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with Service.Provide
   type Interpreter[F[_, _, _, _, _]] = PolyFunction5[Operation, F]
   type FunctorInterpreter[F[_]] = PolyFunction5[Operation, kinds.Kind1[F]#toKind5]
   type BiFunctorInterpreter[F[_, _]] = PolyFunction5[Operation, kinds.Kind2[F]#toKind5]
+  type Impl[F[_]] = Alg[kinds.Kind1[F]#toKind5]
+  type ErrorAware[F[_, _]] = Alg[kinds.Kind2[F]#toKind5]
 
   val service: Service[Alg] = this
   def endpoints: List[Endpoint[_, _, _, _, _]]
