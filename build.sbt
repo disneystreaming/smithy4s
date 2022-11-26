@@ -681,7 +681,7 @@ lazy val tests = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
     ),
     moduleName := {
       if (virtualAxes.value.contains(CatsEffect2Axis))
@@ -825,7 +825,7 @@ lazy val Dependencies = new {
     )
 
   val Smithy = new {
-    val smithyVersion = "1.26.3"
+    val smithyVersion = "1.26.4"
     val model = "software.amazon.smithy" % "smithy-model" % smithyVersion
     val testTraits =
       "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
