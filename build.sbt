@@ -553,7 +553,7 @@ lazy val dynamic = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
     ),
-    genSmithy(Compile),
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     Compile / packageSrc / mappings ++= {
       val base = (Compile / sourceManaged).value
       val files = (Compile / managedSources).value
@@ -708,7 +708,7 @@ lazy val tests = projectMatrix
         moduleName.value + "-ce2"
       else moduleName.value
     },
-    genSmithy(Compile)
+    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -719,7 +719,7 @@ lazy val complianceTests = projectMatrix
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
     Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
-    genSmithy(Compile),
+    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       val ce3 =
