@@ -219,6 +219,7 @@ object Type {
   case class ExternalType(
       name: String,
       fullyQualifiedName: String,
+      typeParameters: List[Type],
       providerImport: Option[String],
       underlyingTpe: Type,
       refinementHint: Hint.Native
