@@ -40,15 +40,17 @@ private[dynamic] trait PlatformUtils { self: Utils.type =>
         .unwrap()
     )
 
-  private def parseSampleSpec(fileName: String): IO[SModel] =
+  private def parseSampleSpec(fileName: String): IO[SModel] = {
+
     IO(
       SModel
         .assembler()
         .addImport(s"./sampleSpecs/$fileName")
-        .discoverModels(this.getClass().getClassLoader())
+        // .discoverModels(this.getClass().getClassLoader())
         .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
         .assemble()
         .unwrap()
     )
+  }
 
 }

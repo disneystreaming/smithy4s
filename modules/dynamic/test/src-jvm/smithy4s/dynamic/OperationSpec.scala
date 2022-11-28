@@ -35,7 +35,7 @@ class OperationSpec() extends munit.FunSuite {
     IO(
       SModel
         .assembler()
-        .discoverModels()
+        // .discoverModels()
         .addImport(pizzaSpec)
         .assemble()
         .unwrap()
@@ -80,7 +80,7 @@ class OperationSpec() extends munit.FunSuite {
       SModel
         .assembler()
         .addImport(pizzaSpec)
-        .discoverModels()
+        // .discoverModels()
         .assemble()
         .unwrap()
     ).map(ModelSerializer.builder().build.serialize(_))
