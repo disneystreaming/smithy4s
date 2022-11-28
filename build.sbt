@@ -837,8 +837,8 @@ lazy val benchmark = projectMatrix
 
 def genSmithy(config: Configuration) = Def.settings(
   Seq(
-    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    Compile / resourceGenerators := Seq(genSmithyResources(Compile).taskValue)
+    config / sourceGenerators := Seq(genSmithyScala(config).taskValue),
+    config / resourceGenerators := Seq(genSmithyResources(config).taskValue)
   )
 )
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
