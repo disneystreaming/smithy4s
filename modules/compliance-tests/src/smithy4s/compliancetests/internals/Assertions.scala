@@ -15,6 +15,7 @@
  */
 
 package smithy4s.compliancetests
+package internals
 
 import cats.implicits._
 import ComplianceTest._
@@ -22,13 +23,7 @@ import org.http4s.Headers
 import org.typelevel.ci.CIString
 import smithy.test.{HttpResponseTestCase, HttpRequestTestCase}
 
-case class ComplianceTest[F[_]](name: String, run: F[ComplianceResult])
-
-object ComplianceTest {
-  type ComplianceResult = Either[String, Unit]
-}
-
-object assert {
+private[internals] object assert {
   def success: ComplianceResult = Right(())
   def fail(msg: String): ComplianceResult = Left(msg)
 

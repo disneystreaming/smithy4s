@@ -49,7 +49,7 @@ docs.InlineSmithyFile.fromSample("kvstore.smithy")
 
 The `smithy4s.Transformation.SurfaceError` interface codifies the transformation of service implementations from contexts that represent errors as a generic `Throwable`, from contexts that have the awareness of the errors specified in the specifications. It is useful when you want to exhaustively handle the errors that are specified (as opposed to letting them propagate).
 
-To make the ascription of such contexts easier, Smithy4s generates `WithError[F[_, _]]` type aliases in the companion objects of services. This can
+To make the ascription of such contexts easier, Smithy4s generates `ErrorAware[F[_, _]]` type aliases in the companion objects of services. This can
 be used conjointly with types that have "two" parameters, one for the error, one for the result. For instance `type BIO[E, A] = EitherT[IO, E, A]`.
 
 
@@ -82,7 +82,7 @@ val toEither: Transformation.SurfaceError[Try, Either] =
     }
   }
 
-val kvStoreEither: KVStore.WithError[Either] = kvStoreTry.transform(toEither)
+val kvStoreEither: KVStore.ErrorAware[Either] = kvStoreTry.transform(toEither)
 val result: Either[KVStore.GetError, Value] = kvStoreEither.get("foo")
 ```
 
@@ -99,7 +99,7 @@ import smithy4s.example.KVStore
 import smithy4s.Transformation
 import scala.util.{Failure, Success, Try}
 
-object kvStoreEither extends KVStore.WithError[Either] {
+object kvStoreEither extends KVStore.ErrorAware[Either] {
   def delete(key: String): Either[KVStore.DeleteError, Unit] = Right(())
   def put(key: String, value: String): Either[Nothing, Unit] = Right(())
   def get(key: String): Either[KVStore.GetError, Value] =

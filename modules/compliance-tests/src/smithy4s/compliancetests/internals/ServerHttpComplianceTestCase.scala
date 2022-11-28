@@ -15,19 +15,16 @@
  */
 
 package smithy4s.compliancetests
+package internals
 
 import java.nio.charset.StandardCharsets
 
-import cats.effect.IO
-import cats.effect.Resource
 import cats.implicits._
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
 import smithy4s.Document
-import smithy4s.http.CodecAPI
 import smithy4s.Service
-import smithy4s.ShapeTag
 import smithy4s.kinds._
 
 import scala.concurrent.duration._
@@ -35,30 +32,25 @@ import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Errorable
 
-abstract class ServerHttpComplianceTestCase[
-    P,
+private[compliancetests] class ServerHttpComplianceTestCase[
+    F[_],
     Alg[_[_, _, _, _, _]]
 ](
-    protocol: P,
+    router: Router[F],
     serviceProvider: Service.Provider[Alg]
 )(implicit
-    ce: CompatEffect,
-    protocolTag: ShapeTag[P]
+    ce: CompatEffect[F]
 ) {
   import ce._
   import org.http4s.implicits._
+  import router._
   private[compliancetests] val originalService = serviceProvider.service
   private val baseUri = uri"http://localhost/"
-
-  def getServer[Alg2[_[_, _, _, _, _]]](
-      impl: FunctorAlgebra[Alg2, IO]
-  )(implicit s: Service[Alg2]): Resource[IO, HttpRoutes[IO]]
-  def codecs: CodecAPI
 
   private def makeRequest(
       baseUri: Uri,
       testCase: HttpRequestTestCase
-  ): Request[IO] = {
+  ): Request[F] = {
     val expectedHeaders =
       List(
         testCase.headers.map(h =>
@@ -98,7 +90,7 @@ abstract class ServerHttpComplianceTestCase[
         .map(b => fs2.Stream.emit(b).through(ce.utf8Encode))
         .getOrElse(fs2.Stream.empty)
 
-    Request[IO](
+    Request[F](
       method = expectedMethod,
       uri = expectedUri,
       headers = expectedHeaders,
@@ -109,38 +101,38 @@ abstract class ServerHttpComplianceTestCase[
   private[compliancetests] def serverRequestTest[I, E, O, SE, SO](
       endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpRequestTestCase
-  ): ComplianceTest[IO] = {
+  ): ComplianceTest[F] = {
 
     val inputFromDocument = Document.Decoder.fromSchema(endpoint.input)
-    ComplianceTest[IO](
+    ComplianceTest[F](
       name = endpoint.id.toString + "(server|request): " + testCase.id,
       run = {
         deferred[I].flatMap { inputDeferred =>
-          val fakeImpl: FunctorAlgebra[Alg, IO] =
-            originalService.fromPolyFunction[Kind1[IO]#toKind5](
-              new originalService.FunctorInterpreter[IO] {
+          val fakeImpl: FunctorAlgebra[Alg, F] =
+            originalService.fromPolyFunction[Kind1[F]#toKind5](
+              new originalService.FunctorInterpreter[F] {
                 def apply[I_, E_, O_, SE_, SO_](
                     op: originalService.Operation[I_, E_, O_, SE_, SO_]
-                ): IO[O_] = {
+                ): F[O_] = {
                   val (in, endpointInternal) = originalService.endpoint(op)
 
                   if (endpointInternal.id == endpoint.id)
                     inputDeferred.complete(in.asInstanceOf[I]) *>
-                      IO.raiseError(new NotImplementedError)
-                  else IO.raiseError(new Throwable("Wrong endpoint called"))
+                      raiseError(new NotImplementedError)
+                  else raiseError(new Throwable("Wrong endpoint called"))
                 }
               }
             )
 
-          getServer(fakeImpl)(originalService)
+          routes(fakeImpl)(originalService)
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
                 .attemptNarrow[NotImplementedError] *>
-                inputDeferred.get.timeout(1.second).flatMap { foundInput =>
+                ce.timeout(inputDeferred.get, 1.second).flatMap { foundInput =>
                   inputFromDocument
                     .decode(testCase.params.getOrElse(Document.obj()))
-                    .liftTo[IO]
+                    .liftTo[F]
                     .map { decodedInput =>
                       assert.eql(foundInput, decodedInput)
                     }
@@ -155,22 +147,21 @@ abstract class ServerHttpComplianceTestCase[
       endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpResponseTestCase,
       errorSchema: Option[ErrorResponseTest[_, E]] = None
-  ): ComplianceTest[IO] = {
+  ): ComplianceTest[F] = {
 
-    ComplianceTest[IO](
+    ComplianceTest[F](
       name = endpoint.id.toString + "(server|response): " + testCase.id,
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)
 
-        val buildResult
-            : Either[Document => IO[Throwable], Document => IO[O]] = {
+        val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
             .toLeft {
               val outputDecoder = Document.Decoder.fromSchema(endpoint.output)
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)
-                  .liftTo[IO]
+                  .liftTo[F]
             }
             .left
             .map { errorInfo =>
@@ -178,23 +169,23 @@ abstract class ServerHttpComplianceTestCase[
               (doc: Document) =>
                 errorDecoder
                   .decode(doc)
-                  .liftTo[IO]
+                  .liftTo[F]
                   .map(errCase =>
                     errorInfo.errorable.unliftError(errCase.asInstanceOf[E])
                   )
             }
         }
 
-        val fakeImpl: FunctorInterpreter[NoInputOp, IO] =
-          new FunctorInterpreter[NoInputOp, IO] {
+        val fakeImpl: FunctorInterpreter[NoInputOp, F] =
+          new FunctorInterpreter[NoInputOp, F] {
             def apply[I_, E_, O_, SE_, SO_](
                 op: NoInputOp[I_, E_, O_, SE_, SO_]
-            ): IO[O_] = {
+            ): F[O_] = {
               val doc = testCase.params.getOrElse(Document.obj())
               buildResult match {
                 case Left(onError) =>
                   onError(doc).flatMap { err =>
-                    IO.raiseError[O_](err)
+                    raiseError[O_](err)
                   }
                 case Right(onOutput) =>
                   onOutput(doc).map(_.asInstanceOf[O_])
@@ -202,7 +193,7 @@ abstract class ServerHttpComplianceTestCase[
             }
           }
 
-        getServer(fakeImpl)(ammendedService)
+        routes(fakeImpl)(ammendedService)
           .use { server =>
             server.orNotFound
               .run(syntheticRequest)
@@ -231,7 +222,7 @@ abstract class ServerHttpComplianceTestCase[
   private case class NoInputOp[I_, E_, O_, SE_, SO_]()
   private def prepareService[I, E, O, SE, SO](
       endpoint: originalService.Endpoint[I, E, O, SE, SO]
-  ): (Service.Reflective[NoInputOp], Request[IO]) = {
+  ): (Service.Reflective[NoInputOp], Request[F]) = {
     val amendedEndpoint =
         // format: off
         new smithy4s.Endpoint[NoInputOp, Unit, E, O, Nothing, Nothing] {
@@ -256,7 +247,7 @@ abstract class ServerHttpComplianceTestCase[
           override def errorable: Option[Errorable[E]] = endpoint.errorable
         }
         // format: on
-    val request = Request[IO](Method.GET, Uri.unsafeFromString("/"))
+    val request = Request[F](Method.GET, Uri.unsafeFromString("/"))
     val amendedService =
       // format: off
       new Service.Reflective[NoInputOp] {
@@ -270,7 +261,7 @@ abstract class ServerHttpComplianceTestCase[
     (amendedService, request)
   }
 
-  def allServerTests(): List[ComplianceTest[IO]] = {
+  def allServerTests(): List[ComplianceTest[F]] = {
     originalService.endpoints.flatMap { case endpoint =>
       val requestsTests = endpoint.hints
         .get(HttpRequestTests)

@@ -90,10 +90,10 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     ): ClientBuilder[Alg, F] =
       new ClientBuilder[Alg, F](this.client, this.service, this.uri, mid)
 
-    def resource: Resource[F, FunctorAlgebra[Alg, F]] =
+    def resource: Resource[F, service.Impl[F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    def use: Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] = {
+    def use: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag)
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol

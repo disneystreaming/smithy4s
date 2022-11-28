@@ -46,7 +46,11 @@ object Codegen { self =>
         scalaFile
       }
       val generatedNamespaces = codegenResult.map(_._2.namespace).distinct
-      val resources = if (!args.skipResources) {
+      // when args.specs and generatedNamespaces are empty
+      // we produce two files that are essentially empty
+      val skipResource =
+        args.skipResources || (args.specs.isEmpty && generatedNamespaces.isEmpty)
+      val resources = if (!skipResource) {
         SmithyResources.produce(
           args.resourceOutput,
           args.specs,

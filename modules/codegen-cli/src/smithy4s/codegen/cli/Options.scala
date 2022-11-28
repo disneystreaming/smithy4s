@@ -91,7 +91,7 @@ object Options {
   val localJarsOpt: Opts[Option[List[os.Path]]] =
     Opts
       .option[List[os.Path]](
-        "localJars",
+        "local-jars",
         "Comma-delimited list of local JAR files containing smithy files"
       )
       .orNone
