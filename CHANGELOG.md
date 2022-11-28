@@ -115,7 +115,7 @@ In particular, the `smithy4s.Transformation` companion object contains in partic
 
 See https://github.com/disneystreaming/smithy4s/pull/584/files#diff-064c6fb10e5927021c4fdb928e68fd8594443b767c54bec7d3b4a424e087401bR26
 
-The generated code now contains bi-functor-specialised `WithError`type-aliases. Those, combined with the transformations described above, should make it easier to interop with Bi-functor constructs such as EitherT or ZIO.
+The generated code now contains bi-functor-specialised `ErrorAware`type-aliases. Those, combined with the transformations described above, should make it easier to interop with Bi-functor constructs such as EitherT or ZIO.
 
 ### Endpoint Specific Middleware
 
