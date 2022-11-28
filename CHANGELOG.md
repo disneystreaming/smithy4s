@@ -13,7 +13,7 @@ In order to achieve these improvements, we've had to break a number of things at
 
 See https://github.com/disneystreaming/smithy4s/pull/561
 
-The smithy shapes that were previously residing under `smithy4s.api` namespace have moved to the `alloy` namespace. Alloy is a standalone library containing smithy shapes and validators, defined [here](https://github.com/disneystreaming/alloy).
+The Smithy shapes that were previously residing under `smithy4s.api` namespace have moved to the `alloy` namespace. Alloy is a standalone library containing Smithy shapes and validators, defined [here](https://github.com/disneystreaming/alloy).
 
 The reason for us to bring this change is to have a language specific location to define shapes that are relevant to the protocols/runtime-behaviours we're putting forward, that could be used by tooling working with other languages than Scala. It was important for us to lose the `4s` suffix, which is short for `for Scala`.
 
@@ -27,7 +27,7 @@ Note that this change, in use cases that follow our documentation, should have n
 
 See https://github.com/disneystreaming/smithy4s/pull/587
 
-The `smithy4sInputDir` setting/task in SBT/mill has been replaced by `smithy4sInputDirs`, allowing the user to set several directories where the plugins should look for smithy files.
+The `smithy4sInputDir` setting/task in SBT/mill has been replaced by `smithy4sInputDirs`, allowing the user to set several directories where the plugins should look for Smithy files.
 
 #### Change in smithy-library dependency resolution
 
@@ -121,14 +121,14 @@ The generated code now contains bi-functor-specialised `ErrorAware`type-aliases.
 
 See https://github.com/disneystreaming/smithy4s/pull/614
 
-Adds the ability to have smithy4s-level middleware that is made aware of the `Server` and `Endpoint` for use in creating middleware implementations. This unlocks creating middleware that is aware of the Smithy traits (`Hints` in smithy4s) and shapes in your specification. This means the middleware can apply transformations based on traits applied in a smithy specification and it can return error responses defined in the smithy specification. An example of this is authentication. You are now able to create middleware that will check authentication on only the endpoints that require it AND you can return a smithy-defined error response when the authentication is not valid. See the [endpoint specific middleware guide](https://disneystreaming.github.io/smithy4s/docs/guides/endpoint-middleware) for more.
+Adds the ability to have smithy4s-level middleware that is made aware of the `Server` and `Endpoint` for use in creating middleware implementations. This unlocks creating middleware that is aware of the Smithy traits (`Hints` in smithy4s) and shapes in your specification. This means the middleware can apply transformations based on traits applied in a Smithy specification and it can return error responses defined in the Smithy specification. An example of this is authentication. You are now able to create middleware that will check authentication on only the endpoints that require it AND you can return a smithy-defined error response when the authentication is not valid. See the [endpoint specific middleware guide](https://disneystreaming.github.io/smithy4s/docs/guides/endpoint-middleware) for more.
 
 
 ### Error Response Handling Improvements
 
 See https://github.com/disneystreaming/smithy4s/pull/570
 
-Streamlines and improves how error responses are mapped to their corresponding smithy4s-generated types. It now works such that IF no `X-Error-Type` header is found AND the status code doesn't map precisely to an error annotated with @httpCode AND exactly one error happens to have @error("client") without @httpCode, that error will be selected (provided the status code is in the 4xx range). Same for @error("server") and 5xx range. See the [error handling documentation](https://disneystreaming.github.io/smithy4s/docs/protocols/simple-rest-json/client#error-handling) for more.
+Streamlines and improves how error responses are mapped to their corresponding smithy4s-generated types. It now works such that IF no `X-Error-Type` header is found AND the status code doesn't map precisely to an error annotated with `@httpCode` AND exactly one error happens to have `@error("client")` without `@httpCode`, that error will be selected (provided the status code is in the 4xx range). Same for `@error("server")` and 5xx range. See the [error handling documentation](https://disneystreaming.github.io/smithy4s/docs/protocols/simple-rest-json/client#error-handling) for more.
 
 ### Support for more HTTP methods
 
