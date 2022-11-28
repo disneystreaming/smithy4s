@@ -109,13 +109,13 @@ See https://github.com/disneystreaming/smithy4s/pull/584
 
 `smithy4s.Transformation`  has been revised to facilitate the integration with various shapes of transformations. It allows, in particular, to transform a service implementation by applying generic (but polymorphic) behaviour in all of its methods. For instance, this can be used to apply a timeout on all of the methods of a service, or retrying behaviour, etc ...
 
-In particular, the `smithy4s.Transformation` companion object contains in particular `AbsorbError` and `SurfaceError` interfaces that developers can leverage to get their services to go from mono-functor (where all errors are treated as Throwable) to bi-functor (where errors are surfaced on a per-endpoint basis, forcing the developers to handle them one way or another), and vice-versa.
+In particular, the `smithy4s.Transformation` companion object contains in particular `AbsorbError` and `SurfaceError` interfaces that developers can leverage to get their services to go from mono-functor (where all errors are treated as `Throwable`) to bi-functor (where errors are surfaced on a per-endpoint basis, forcing the developers to handle them one way or another), and vice-versa.
 
 ### Bi-functor-specialised type aliases
 
 See https://github.com/disneystreaming/smithy4s/pull/584/files#diff-064c6fb10e5927021c4fdb928e68fd8594443b767c54bec7d3b4a424e087401bR26
 
-The generated code now contains bi-functor-specialised `ErrorAware`type-aliases. Those, combined with the transformations described above, should make it easier to interop with Bi-functor constructs such as EitherT or ZIO.
+The generated code now contains bi-functor-specialised `ErrorAware`type-aliases. Those, combined with the transformations described above, should make it easier to interop with Bi-functor constructs such as `EitherT` or `ZIO`.
 
 ### Endpoint Specific Middleware
 
