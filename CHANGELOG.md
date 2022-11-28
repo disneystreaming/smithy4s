@@ -138,5 +138,5 @@ Previously, smithy4s's `HttpEndpoint` was limited to supporting just a small sub
 
 See https://github.com/disneystreaming/smithy4s/pull/569
 
-In order to mitigate known security problems, the our json parsing logic has hard-limits over the number of elements it will parse from arrays
+In order to mitigate known security problems, our json parsing logic has hard-limits over the number of elements it will parse from arrays
 or maps, resulting in an error when receiving payloads with larger collections. Previously, this limit was hardcoded to 1024 elements per collection. This is now configurable, 1024 being the default.
