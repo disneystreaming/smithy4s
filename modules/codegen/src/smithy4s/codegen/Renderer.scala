@@ -73,7 +73,7 @@ object Renderer {
       val allImports: List[String] = renderResult.list
         .flatMap { line =>
           line.segments.toList.collect {
-            case nameRef @ NameRef(pkg, _)
+            case nameRef @ NameRef(pkg, _, _)
                 if pkg.nonEmpty && !nameCollisions.contains(
                   nameRef.getNamePrefix
                 )
@@ -846,8 +846,7 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             underlyingTpe,
             hint
           ) =>
-        val fqnLine = ToLine.externalTypeToLine(e)
-        line"${underlyingTpe.schemaRef}.refined[$fqnLine](${renderNativeHint(hint)})${maybeProviderImport
+        line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
     }
