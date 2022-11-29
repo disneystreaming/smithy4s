@@ -68,7 +68,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           "List of explicitly defined libraries for external dependencies that should be added to the classpath used by Smithy4s during code-generation",
           "The smithy files and smithy validators contained by these jars are included in the Smithy4s code-generation process",
           "Namespaces that were used for code generation in these dependencies will be excluded from code generation in this project.",
-          "By default, this includes the library dependencies of annotated with the `Smithy4s` configuration of the current project and its upstreams"
+          "By default, this includes the library dependencies annotated with the `Smithy4s` configuration of the current project and its upstreams"
         ).mkString(" ")
       )
 
