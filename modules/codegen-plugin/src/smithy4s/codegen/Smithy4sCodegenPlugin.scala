@@ -95,7 +95,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val smithy4sAllExternalDependencies =
       taskKey[Seq[ModuleID]](
         List(
-          "Exhaustive list external dependencies that should be added to the classpath used by Smithy4s during code-generation",
+          "Exhaustive list of external dependencies that should be added to the classpath used by Smithy4s during code-generation",
           "The smithy files and smithy validators contained by these jars are included in the Smithy4s code-generation process",
           "Namespaces that were used for code generation in these dependencies will be excluded from code generation in this project."
         ).mkString(" ")
