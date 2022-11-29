@@ -475,9 +475,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       private def getExternalOrBase(shape: Shape, base: Type): Type = {
         getExternalTypeInfo(shape)
           .map { case (trt, refined) =>
+            val baseTypeParams = base match {
+              case c: Type.Collection => List(c.member)
+              case m: Type.Map        => List(m.key, m.value)
+              case other              => List(other)
+            }
             Type.ExternalType(
               shape.name,
               refined.getTargetType(),
+              if (refined.isParameterised) baseTypeParams else List.empty,
               refined.getProviderImport().asScala,
               base,
               unfoldTrait(trt)

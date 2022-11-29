@@ -67,10 +67,24 @@ object ToLine {
         NameRef(ns, name).toLine
       case Type.Alias(_, _, aliased, _) =>
         render(aliased)
-      case Type.Ref(namespace, name)          => NameRef(namespace, name).toLine
-      case Type.PrimitiveType(prim)           => primitiveLine(prim).toLine
-      case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn).toLine
+      case Type.Ref(namespace, name) => NameRef(namespace, name).toLine
+      case Type.PrimitiveType(prim)  => primitiveLine(prim).toLine
+      case e: Type.ExternalType      => externalTypeToLine(e)
     }
+  }
+
+  private[codegen] def externalTypeToLine(ext: Type.ExternalType): Line = {
+    val paramLines =
+      ext.typeParameters.map(typeToLine.render).foldLeft(Line.empty) {
+        case (acc, i) =>
+          if (acc.nonEmpty) acc + Literal(",") + Line.space + i else i
+      }
+    val nameLine = NameRef(ext.fullyQualifiedName).toLine
+    val result =
+      if (paramLines.nonEmpty)
+        nameLine + Literal("[") + paramLines + Literal("]")
+      else nameLine
+    result
   }
 
   private def primitiveLine(p: Primitive): NameRef = {

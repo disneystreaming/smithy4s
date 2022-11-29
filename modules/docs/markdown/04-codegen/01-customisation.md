@@ -270,6 +270,50 @@ Whether the provider is in the companion object or not, it must be `implicit`.
 
 :::
 
+#### Parameterised Types
+
+As of smithy4s version 0.17, you can now create refinements on types that take a generic type parameter. This can be accomplished by setting `parameterised` to `true` as seen below.
+
+```kotlin
+@trait(selector: "list")
+@refinement(
+  targetType: "smithy4s.example.refined.NonEmptyList",
+  parameterised: true
+)
+structure nonEmptyListFormat {}
+```
+
+Following this, we now need to create our refinement provider as we did with the example above. In this case, we will use an implicit function so we can reference the generic type parameter `A`. This allows us to use the same implementation of `NonEmptyList` across lists containing any type.
+
+```scala mdoc:silent
+import smithy4s._
+
+final case class NonEmptyList[A] private (values: List[A])
+
+object NonEmptyList {
+
+  def apply[A](values: List[A]): Either[String, NonEmptyList[A]] =
+    if (values.size > 0) Right(new NonEmptyList(values))
+    else Left("List must not be empty.")
+
+  implicit def provider[A] = Refinement.drivenBy[smithy4s.example.NonEmptyListFormat](
+    NonEmptyList.apply[A],
+    (b: NonEmptyList[A]) => b.values
+  )
+}
+```
+
+Now we can apply our `nonEmptyListFormat` trait as follows:
+
+```kotlin
+@nonEmptyListFormat
+list NonEmptyStrings {
+  member: String
+}
+```
+
+In the generated Scala code, this will render as a `NonEmptyList[String]` instead of a `List[String]`. Similarly, we can apply the `nonEmptyListFormat` trait to any `list` shape and it will render as a `NonEmptyList`. This works for all shapes that can be specified as list members including primitives, structures, collections, and even other refined types.
+
 ## Unwrapping
 
 By default, smithy4s will wrap all standalone primitive types in a Newtype. A standalone primitive type is one that is defined like the following:

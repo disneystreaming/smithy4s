@@ -109,10 +109,11 @@ object CollisionAvoidance {
       val unwrapped = isUnwrapped | (protectedName != name.capitalize)
       Alias(namespace, protectType(name.capitalize), modType(tpe), unwrapped)
     case PrimitiveType(prim) => PrimitiveType(prim)
-    case ExternalType(name, fqn, pFqn, under, refinementHint) =>
+    case ExternalType(name, fqn, typeParams, pFqn, under, refinementHint) =>
       ExternalType(
         protectType(name.capitalize),
         fqn,
+        typeParams,
         pFqn,
         modType(under),
         modNativeHint(refinementHint)

@@ -838,14 +838,16 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
       case Type.Ref(ns, name) => NameRef(ns, s"$name.schema").toLine
-      case Type.ExternalType(
+      case e @ Type.ExternalType(
             _,
-            fqn,
+            _,
+            _,
             maybeProviderImport,
             underlyingTpe,
             hint
           ) =>
-        line"${underlyingTpe.schemaRef}.refined[$fqn](${renderNativeHint(hint)})${maybeProviderImport
+        val fqnLine = ToLine.externalTypeToLine(e)
+        line"${underlyingTpe.schemaRef}.refined[$fqnLine](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
     }
