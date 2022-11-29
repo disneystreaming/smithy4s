@@ -15,6 +15,7 @@
  */
 
 package smithy4s.codegen
+package internals
 
 import coursier._
 import coursier.parse.DependencyParser
@@ -31,7 +32,7 @@ import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.loader.ModelDiscovery
 import software.amazon.smithy.model.loader.ModelManifestException
 
-object ModelLoader {
+private[codegen] object ModelLoader {
 
   def load(
       specs: Set[File],
@@ -111,7 +112,7 @@ object ModelLoader {
     val maybeDeps = DependencyParser
       .dependencies(
         dependencies,
-        defaultScalaVersion = BuildInfo.scalaBinaryVersion
+        defaultScalaVersion = smithy4s.codegen.BuildInfo.scalaBinaryVersion
       )
       .either
     val repos = maybeRepos match {

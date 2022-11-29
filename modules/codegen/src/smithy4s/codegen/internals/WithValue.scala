@@ -14,20 +14,18 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
-import cats.syntax.all._
-import smithy4s.codegen.LineSegment.Literal
+// Binding value and instance to recover from existentials
 
-class PartialBlock(l: Line) {
-  def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    A.render(inner)
-      .transformLines(lines =>
-        (l + Literal(" {")) :: indent(lines) ::: List(Line("}"))
-      )
-  }
+private[internals] case class WithValue[TC[_], A](value: A, typeclass: TC[A])
 
-  def apply(inner: LinesWithValue*): Lines =
-    apply(inner.toList.foldMap(_.render))
+private[internals] object WithValue {
+  implicit def to[TC[_], A](value: A)(implicit
+      instance: TC[A]
+  ): WithValue[TC, A] =
+    WithValue(value, instance)
 
+  type ToLinesWithValue[A] = WithValue[ToLines, A]
+  type ToLineWithValue[A] = WithValue[ToLine, A]
 }

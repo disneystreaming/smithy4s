@@ -15,12 +15,13 @@
  */
 
 package smithy4s.codegen
+package internals
 
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
-import smithy4s.codegen.Primitive.Nothing
-import smithy4s.codegen.TypedNode._
+import smithy4s.codegen.internals.Primitive.Nothing
+import smithy4s.codegen.internals.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
 import Line._
@@ -28,10 +29,10 @@ import Line._
 import scala.jdk.CollectionConverters._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
-import smithy4s.codegen.LineSegment._
+import smithy4s.codegen.internals.LineSegment._
 import software.amazon.smithy.model.shapes.ShapeId
 
-object Renderer {
+private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
 
@@ -116,7 +117,7 @@ object Renderer {
 
 }
 
-private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
+private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   val names = new CollisionAvoidance.Names()
   import compilationUnit.namespace
@@ -877,13 +878,13 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderNativeHint(hint: Hint.Native): Line =
-    smithy4s.recursion
+    recursion
       .cata(renderTypedNode)(hint.typedNode)
       .run(true)
       ._2
 
   private def renderDefault(hint: Hint.Default): Line =
-    smithy4s.recursion
+    recursion
       .cata(renderTypedNode)(hint.typedNode)
       .run(true)
       ._2

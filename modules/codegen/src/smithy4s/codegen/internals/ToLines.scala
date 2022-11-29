@@ -14,21 +14,21 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.data.NonEmptyList
 import cats.kernel.Monoid
 import cats.syntax.all._
-import smithy4s.codegen.LineSegment.{Literal, NameRef}
+import LineSegment.{Literal, NameRef}
 
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
   */
-trait ToLines[A] {
+private[internals] trait ToLines[A] {
   def render(a: A): Lines
 }
 
-object ToLines {
+private[internals] object ToLines {
 
   def render[A](a: A)(implicit A: ToLines[A]): Lines = A.render(a)
   implicit val identity: ToLines[Lines] = r => r
@@ -58,7 +58,7 @@ object ToLines {
 
 // Models
 
-case class Lines(list: List[Line]) {
+private[internals] case class Lines(list: List[Line]) {
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =
       list.lastOption.flatMap(_.segments.lastOption).collect {
@@ -98,7 +98,7 @@ case class Lines(list: List[Line]) {
     Lines(list ::: im.map(s => NameRef(s).toLine).toList)
 
 }
-object Lines {
+private[internals] object Lines {
   def apply(line: Line): Lines = Lines(List(line))
   def apply(str: String): Lines = Lines(List(Line(str)))
   val empty = Lines(List.empty[Line])

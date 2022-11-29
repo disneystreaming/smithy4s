@@ -14,20 +14,20 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.data.Chain
 import cats.implicits.toFoldableOps
 import cats.kernel.Monoid
-import smithy4s.codegen.LineSegment._
+import LineSegment._
 
 import java.util.UUID
 
-trait ToLine[A] {
+private[internals] trait ToLine[A] {
   def render(a: A): Line
 }
 
-object ToLine {
+private[internals] object ToLine {
   def apply[A](implicit A: ToLine[A]): ToLine[A] = A
   implicit def lineSegmentToLine[A <: LineSegment]: ToLine[A] = l => Line(l)
   implicit val identity: ToLine[Line] = r => r
@@ -99,7 +99,7 @@ object ToLine {
 
 // Models
 
-case class Line(segments: Chain[LineSegment]) {
+private[internals] case class Line(segments: Chain[LineSegment]) {
   self =>
   def +(other: Line): Line = Line(self.segments ++ other.segments)
 
@@ -129,7 +129,7 @@ case class Line(segments: Chain[LineSegment]) {
     if (condition(this)) this + other else this
 }
 
-object Line {
+private[internals] object Line {
 
   def required(line: Line, default: Option[Line]): Line = {
     default match {

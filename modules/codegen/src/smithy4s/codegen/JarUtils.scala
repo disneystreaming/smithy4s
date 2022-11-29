@@ -19,7 +19,7 @@ package smithy4s.codegen
 import java.util.jar.JarFile
 import java.io.File
 
-object JarUtils {
+private[codegen] object JarUtils {
   def extractJarManifestAttribute(path: File, key: String): Option[String] = {
     val jarFile = new JarFile(path)
     Option(jarFile.getManifest()).flatMap(m =>

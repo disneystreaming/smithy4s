@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.data.NonEmptyList
 import cats.implicits._
@@ -23,7 +23,6 @@ import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.RefinementTrait
-import smithy4s.recursion._
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
@@ -36,9 +35,9 @@ import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.selector.PathFinder
 import scala.annotation.nowarn
 import smithy4s.meta.ErrorMessageTrait
-import smithy4s.codegen.Type.Alias
+import Type.Alias
 
-object SmithyToIR {
+private[codegen] object SmithyToIR {
 
   def apply(model: Model, namespace: String): CompilationUnit = {
     PostProcessor(
@@ -698,7 +697,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         case Alias(_, _, tpe, true) => NodeAndType(tr.toNode(), tpe)
         case _                      => NodeAndType(tr.toNode(), targetTpe)
       }
-      val maybeTree = anaM(unfoldNodeAndTypeIfNotExternal)(nodeAndType)
+      val maybeTree =
+        recursion.anaM(unfoldNodeAndTypeIfNotExternal)(nodeAndType)
       maybeTree.map(Hint.Default(_)).toList
     } else {
       List.empty
@@ -917,7 +917,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private def unfoldTrait(tr: Trait): Hint.Native = {
     val nodeAndType = NodeAndType(tr.toNode(), tr.toShapeId().tpe.get)
-    Hint.Native(ana(unfoldNodeAndType)(nodeAndType))
+    Hint.Native(recursion.ana(unfoldNodeAndType)(nodeAndType))
   }
 
   private def unfoldNodeAndType(layer: NodeAndType): TypedNode[NodeAndType] =

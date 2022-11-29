@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import software.amazon.smithy.model.shapes.Shape
 import software.amazon.smithy.model.traits.Trait
@@ -22,7 +22,7 @@ import software.amazon.smithy.model.traits.Trait
 import java.lang.{Class => jClass}
 import scala.reflect.ClassTag
 
-class TraitExtractor[T <: Trait](implicit T: ClassTag[T]) {
+private[internals] class TraitExtractor[T <: Trait](implicit T: ClassTag[T]) {
   def apply(s: Shape): Option[T] =
     s.getTrait[T](T.runtimeClass.asInstanceOf[jClass[T]]).asScala
 

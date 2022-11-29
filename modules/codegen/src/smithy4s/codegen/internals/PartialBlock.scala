@@ -14,29 +14,20 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
-import munit.{Location, Assertions}
-import software.amazon.smithy.model.Model
+import cats.syntax.all._
+import smithy4s.codegen.internals.LineSegment.Literal
 
-object TestUtils {
-
-  def runTest(
-      smithySpec: String,
-      expectedScalaCode: String
-  )(implicit
-      loc: Location
-  ): Unit = {
-    val model = Model
-      .assembler()
-      .discoverModels()
-      .addUnparsedModel("foo.smithy", smithySpec)
-      .assemble()
-      .unwrap()
-
-    val results = Codegen.generate(model, None, None)
-    val scalaResults = results.map(_._2.content)
-    Assertions.assertEquals(scalaResults, List(expectedScalaCode))
+private[internals] class PartialBlock(l: Line) {
+  def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
+    A.render(inner)
+      .transformLines(lines =>
+        (l + Literal(" {")) :: indent(lines) ::: List(Line("}"))
+      )
   }
+
+  def apply(inner: LinesWithValue*): Lines =
+    apply(inner.toList.foldMap(_.render))
 
 }

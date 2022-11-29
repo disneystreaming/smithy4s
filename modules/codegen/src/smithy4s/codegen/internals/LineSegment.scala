@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.Show
 import cats.data.Chain
 import cats.implicits._
 
 // LineSegment models segments of a line of code.
-sealed trait LineSegment { self =>
+private[codegen] sealed trait LineSegment { self =>
   def toLine: Line = Line(Chain.one(self))
 }
-object LineSegment {
+private[codegen] object LineSegment {
   // Models an Import statement, will be elided from the actual scala code
   case class Import(value: String) extends LineSegment
   object Import {

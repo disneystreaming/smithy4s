@@ -14,28 +14,30 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.data.NonEmptyList
 import cats.syntax.all._
-import smithy4s.codegen.TypedNode.FieldTN.OptionalNoneTN
-import smithy4s.codegen.TypedNode.FieldTN.OptionalSomeTN
-import smithy4s.codegen.TypedNode.FieldTN.RequiredTN
-import smithy4s.recursion._
+import TypedNode.FieldTN.OptionalNoneTN
+import TypedNode.FieldTN.OptionalSomeTN
+import TypedNode.FieldTN.RequiredTN
 import software.amazon.smithy.model.node.Node
-import smithy4s.codegen.TypedNode.AltValueTN.ProductAltTN
-import smithy4s.codegen.TypedNode.AltValueTN.TypeAltTN
-import smithy4s.codegen.UnionMember._
-import smithy4s.codegen.LineSegment.{NameDef, NameRef}
+import TypedNode.AltValueTN.ProductAltTN
+import TypedNode.AltValueTN.TypeAltTN
+import UnionMember._
+import LineSegment.{NameDef, NameRef}
 import cats.kernel.Eq
 import cats.Traverse
 import cats.Applicative
 import cats.Eval
 import software.amazon.smithy.model.shapes.ShapeId
 
-case class CompilationUnit(namespace: String, declarations: List[Decl])
+private[internals] case class CompilationUnit(
+    namespace: String,
+    declarations: List[Decl]
+)
 
-sealed trait Decl {
+private[internals] sealed trait Decl {
   def shapeId: ShapeId
   def name: String
   def hints: List[Hint]
@@ -43,7 +45,7 @@ sealed trait Decl {
   def nameRef: NameRef = NameRef(List.empty, name)
 }
 
-case class Service(
+private[internals] case class Service(
     shapeId: ShapeId,
     name: String,
     ops: List[Operation],
@@ -51,7 +53,7 @@ case class Service(
     version: String
 ) extends Decl
 
-case class Operation(
+private[internals] case class Operation(
     shapeId: ShapeId,
     name: String,
     methodName: String,
@@ -64,7 +66,7 @@ case class Operation(
     hints: List[Hint] = Nil
 )
 
-case class Product(
+private[internals] case class Product(
     shapeId: ShapeId,
     name: String,
     fields: List[Field],
@@ -74,7 +76,7 @@ case class Product(
     isMixin: Boolean = false
 ) extends Decl
 
-case class Union(
+private[internals] case class Union(
     shapeId: ShapeId,
     name: String,
     alts: NonEmptyList[Alt],
@@ -82,7 +84,7 @@ case class Union(
     hints: List[Hint] = Nil
 ) extends Decl
 
-case class TypeAlias(
+private[internals] case class TypeAlias(
     shapeId: ShapeId,
     name: String,
     tpe: Type,
@@ -91,20 +93,20 @@ case class TypeAlias(
     hints: List[Hint] = Nil
 ) extends Decl
 
-case class Enumeration(
+private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
     values: List[EnumValue],
     hints: List[Hint]
 ) extends Decl
-case class EnumValue(
+private[internals] case class EnumValue(
     value: String,
     intValue: Int,
     name: String,
     hints: List[Hint]
 )
 
-case class Field(
+private[internals] case class Field(
     name: String,
     realName: String,
     tpe: Type,
@@ -112,13 +114,13 @@ case class Field(
     hints: List[Hint]
 )
 
-case class StreamingField(
+private[internals] case class StreamingField(
     name: String,
     tpe: Type,
     hints: List[Hint]
 )
 
-object Field {
+private[internals] object Field {
 
   def apply(
       name: String,
@@ -130,27 +132,27 @@ object Field {
 
 }
 
-sealed trait UnionMember {
+private[internals] sealed trait UnionMember {
   def update(f: Product => Product)(g: Type => Type): UnionMember = this match {
     case TypeCase(tpe)        => TypeCase(g(tpe))
     case ProductCase(product) => ProductCase(f(product))
     case UnitCase             => UnitCase
   }
 }
-object UnionMember {
+private[internals] object UnionMember {
   case class ProductCase(product: Product) extends UnionMember
   case object UnitCase extends UnionMember
   case class TypeCase(tpe: Type) extends UnionMember
 }
 
-case class Alt(
+private[internals] case class Alt(
     name: String,
     realName: String,
     member: UnionMember,
     hints: List[Hint]
 )
 
-object Alt {
+private[internals] object Alt {
 
   def apply(
       name: String,
@@ -160,7 +162,7 @@ object Alt {
 
 }
 
-sealed trait Type {
+private[internals] sealed trait Type {
   def dealiased: Type = this match {
     case Type.Alias(_, _, tpe, _) => tpe.dealiased
     case other                    => other
@@ -176,10 +178,10 @@ sealed trait Type {
   }
 }
 
-sealed trait Primitive {
+private[internals] sealed trait Primitive {
   type T
 }
-object Primitive {
+private[internals] object Primitive {
   type Aux[TT] = Primitive { type T = TT }
 
   case object Unit extends Primitive { type T = Unit }
@@ -200,7 +202,7 @@ object Primitive {
   case object Nothing extends Primitive { type T = Nothing }
 }
 
-object Type {
+private[internals] object Type {
   val unit = PrimitiveType(Primitive.Unit)
 
   case class Collection(collectionType: CollectionType, member: Type)
@@ -225,8 +227,8 @@ object Type {
   ) extends Type
 }
 
-sealed abstract class CollectionType(val tpe: NameRef)
-object CollectionType {
+private[internals] sealed abstract class CollectionType(val tpe: NameRef)
+private[internals] object CollectionType {
   case object List extends CollectionType(NameRef("scala.List"))
   case object Set
       extends CollectionType(NameRef("scala.collection.immutable.Set"))
@@ -234,9 +236,9 @@ object CollectionType {
   case object IndexedSeq extends CollectionType(NameRef("scala.IndexedSeq"))
 }
 
-sealed trait Hint
+private[internals] sealed trait Hint
 
-object Hint {
+private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
   case object PackedInputs extends Hint
@@ -261,16 +263,16 @@ object Hint {
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }
 
-sealed trait Segment extends scala.Product with Serializable
-object Segment {
+private[internals] sealed trait Segment extends scala.Product with Serializable
+private[internals] object Segment {
   case class Label(value: String) extends Segment
   case class GreedyLabel(value: String) extends Segment
   case class Static(value: String) extends Segment
 }
 
-sealed trait NodeF[+A]
+private[internals] sealed trait NodeF[+A]
 
-object NodeF {
+private[internals] object NodeF {
 
   case class ArrayF[A](tpe: Type, values: List[A]) extends NodeF[A]
   case class ObjectF[A](tpe: Type, values: Vector[(String, A)]) extends NodeF[A]
@@ -281,8 +283,8 @@ object NodeF {
 
 }
 
-sealed trait TypedNode[+A]
-object TypedNode {
+private[internals] sealed trait TypedNode[+A]
+private[internals] object TypedNode {
   sealed trait FieldTN[+A] {
     def map[B](f: A => B): FieldTN[B] = this match {
       case RequiredTN(value)     => RequiredTN(f(value))

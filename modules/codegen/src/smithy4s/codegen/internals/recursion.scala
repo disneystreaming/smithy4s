@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.codegen
+package internals
 
 import cats.Functor
 import cats.syntax.all._
@@ -22,9 +23,7 @@ import cats.~>
 import cats.Traverse
 import cats.Monad
 
-package recursion {
-  case class Fix[F[_]](unfix: F[Fix[F]])
-}
+private[internals] case class Fix[F[_]](unfix: F[Fix[F]])
 
 /**
   * This package contains recursion-scheme implementations.
@@ -36,7 +35,7 @@ package recursion {
   * * Matryoshka https://index.scala-lang.org/precog/matryoshka
   *
   */
-package object recursion {
+private[internals] object recursion {
 
   def hylo[F[_]: Functor, A, B](unfold: A => F[A], fold: F[B] => B)(a: A): B =
     fold(unfold(a).map(hylo(unfold, fold)))

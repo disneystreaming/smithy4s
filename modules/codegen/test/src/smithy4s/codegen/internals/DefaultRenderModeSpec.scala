@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 final class DefaultRenderModeSpec extends munit.FunSuite {
 
