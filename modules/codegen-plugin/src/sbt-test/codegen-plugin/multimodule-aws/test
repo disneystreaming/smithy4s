@@ -1,4 +1,5 @@
 # check if smithy4sCodegen works with libraries that were built with Smithy4s
+> show bar/smithy4sAllExternalDependencies
 > compile
 $ exists foo/target/scala-2.13/src_managed/main/foo/Lambda.scala
 $ absent bar/target/scala-2.13/src_managed/main/foo/Lambda.scala

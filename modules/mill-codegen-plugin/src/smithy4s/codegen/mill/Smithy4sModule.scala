@@ -107,10 +107,7 @@ trait Smithy4sModule extends ScalaModule {
       .flatten
   }
 
-  private def smithy4sResolvedIvyDeps: T[Agg[PathRef]] =
-    resolveDeps(smithy4sTransitiveIvyDeps)
-
-  def smithy4sExternalCodegenIvyDeps: T[Agg[Dep]] = T {
+  def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]] = T {
     resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
       val deps = JarUtils
         .extractSmithy4sDependencies(pathRef.path.toIO)
@@ -119,14 +116,19 @@ trait Smithy4sModule extends ScalaModule {
     }
   }
 
-  private def smithy4sResolvedExternalCodegenIvyDeps: T[Agg[PathRef]] =
-    resolveDeps(smithy4sExternalCodegenIvyDeps)
+  def smithy4sAllExternalDependencies: T[Agg[Dep]] = T {
+    transitiveIvyDeps() ++
+      smithy4sTransitiveIvyDeps() ++
+      smithy4sExternallyTrackedIvyDeps()
+  }
+
+  def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = T {
+    resolveDeps(smithy4sAllExternalDependencies)()
+  }
 
   def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
-    resolvedIvyDeps() ++
-      smithy4sInternalDependenciesAsJars() ++
-      smithy4sResolvedIvyDeps() ++
-      smithy4sResolvedExternalCodegenIvyDeps()
+    smithy4sInternalDependenciesAsJars() ++
+      smithy4sResolvedAllExternalDependencies()
   }
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
