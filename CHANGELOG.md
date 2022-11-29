@@ -38,6 +38,20 @@ We've changed the smithy-sharing mechanism to do two things:
 1. By default, any dependency declared "normally" in SBT or mill, by means or `libraryDepedencies ++=` or `def ivyDeps`, will be inspected for Smithy files after being resolved. This means that, for instance, if your application has a runtime dependency on a library that was built with Smithy4s and contains Smithy files, your local specs can use the code defined in these Smithy files to create or annotate new shapes. You no longer need to declare those using `% Smithy4s` or `def smithy4sIvyDeps`: these are now reserved for libraries containing Smithy files that you **do not want your application's runtime to depend on**.
 2. Libraries built by Smithy4s automatically track the dependencies that they used during their own code-generation, by storing some metadata in their Jar's manifests. By default, the Smithy4s plugins will also pull those dependencies (which will have been declared upstream using `% Smithy4s` in SBT or `def smithy4sIvyDeps` in mill), for your project's code generation. This facilitates the transitivity of specification-holding artifacts. This mechanism is used, for instance, to communicate to users projects the fact that Smithy4s depends on shapes that are defined in the [alloy](https://github.com/disneystreaming/alloy) library, and that these shapes should be made available to user projects, without impacting the user's application runtime, and without requiring any setup from the user.
 
+One side-effect of this change is that if you produce JARs containing artifacts produced by Smithy4s code generation, you'll have a `smithy4s.tracking.smithy` file in your JARs. This could be a problematic file if you're using `sbt-assembly` because if you depend on multiple JARs that contain this file, you'll need to write a custom `assemblyMergeStrategy`, like so:
+
+```sbt
+assemblyMergeStrategy := {
+  case "META-INF/smithy/smithy4s.tracking.smithy" =>
+    MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy).value
+    oldStrategy(x)
+}
+```
+
+This is perfectly fine to discard this file from your assembly jar.
+
 ### Normal-usage breaking changes in the generated code
 
 See https://github.com/disneystreaming/smithy4s/pull/599
