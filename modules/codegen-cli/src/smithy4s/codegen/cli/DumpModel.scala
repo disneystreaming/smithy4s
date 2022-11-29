@@ -16,7 +16,7 @@
 
 package smithy4s.codegen.cli
 
-import smithy4s.codegen.ModelLoader
+import smithy4s.codegen.internals.ModelLoader
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ModelSerializer
 
