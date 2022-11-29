@@ -16,8 +16,8 @@
 
 package smithy4s.codegen
 
-import java.util.jar.JarFile
 import java.io.File
+import java.util.jar.JarFile
 
 private[codegen] object JarUtils {
   def extractJarManifestAttribute(path: File, key: String): Option[String] = {

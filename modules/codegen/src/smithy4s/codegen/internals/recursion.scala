@@ -18,10 +18,10 @@ package smithy4s.codegen
 package internals
 
 import cats.Functor
+import cats.Monad
+import cats.Traverse
 import cats.syntax.all._
 import cats.~>
-import cats.Traverse
-import cats.Monad
 
 private[internals] case class Fix[F[_]](unfix: F[Fix[F]])
 

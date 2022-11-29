@@ -16,9 +16,10 @@
 
 package smithy4s.codegen.internals
 
-import software.amazon.smithy.model.node.Node
-import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.node.Node
+
+import scala.jdk.CollectionConverters._
 
 private[internals] final case class CodegenRecord(
     namespaces: List[String]

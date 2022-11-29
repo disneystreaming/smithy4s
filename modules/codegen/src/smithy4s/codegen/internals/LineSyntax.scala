@@ -17,6 +17,7 @@
 package smithy4s.codegen.internals
 
 import cats.implicits._
+
 import WithValue.ToLineWithValue
 
 private[codegen] object LineSyntax {

@@ -24,13 +24,12 @@ import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.loader.ModelAssembler
+import software.amazon.smithy.model.loader.ModelDiscovery
+import software.amazon.smithy.model.loader.ModelManifestException
 
 import java.io.File
 import java.net.URLClassLoader
-
 import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.loader.ModelDiscovery
-import software.amazon.smithy.model.loader.ModelManifestException
 
 private[codegen] object ModelLoader {
 

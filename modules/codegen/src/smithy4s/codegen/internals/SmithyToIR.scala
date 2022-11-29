@@ -19,22 +19,23 @@ package smithy4s.codegen.internals
 import cats.data.NonEmptyList
 import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.ErrorMessageTrait
 import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
-import smithy4s.meta.VectorTrait
 import smithy4s.meta.RefinementTrait
+import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
-import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits.DefaultTrait
+import software.amazon.smithy.model.traits.RequiredTrait
 import software.amazon.smithy.model.traits._
 
-import scala.jdk.CollectionConverters._
-import software.amazon.smithy.model.selector.PathFinder
 import scala.annotation.nowarn
-import smithy4s.meta.ErrorMessageTrait
+import scala.jdk.CollectionConverters._
+
 import Type.Alias
 
 private[codegen] object SmithyToIR {

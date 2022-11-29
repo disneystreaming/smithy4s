@@ -16,7 +16,8 @@
 
 package smithy4s.codegen.internals
 
-import munit.{Location, Assertions}
+import munit.Assertions
+import munit.Location
 import software.amazon.smithy.model.Model
 
 object TestUtils {

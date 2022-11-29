@@ -17,6 +17,7 @@
 package smithy4s.codegen.internals
 
 import cats.~>
+
 import Type.Alias
 import Type.PrimitiveType
 import TypedNode._

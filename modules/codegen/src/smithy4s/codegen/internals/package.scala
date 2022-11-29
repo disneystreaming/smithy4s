@@ -16,10 +16,10 @@
 
 package smithy4s.codegen
 
-import cats.syntax.all._
 import alloy.UuidFormatTrait
-import smithy4s.codegen.internals.LineSyntax.LineInterpolator
+import cats.syntax.all._
 import smithy4s.codegen.internals.LineSegment.NameRef
+import smithy4s.codegen.internals.LineSyntax.LineInterpolator
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.shapes.ShapeId
 import software.amazon.smithy.model.traits.EnumTrait

@@ -16,21 +16,22 @@
 
 package smithy4s.codegen.internals
 
+import cats.Applicative
+import cats.Eval
+import cats.Traverse
 import cats.data.NonEmptyList
+import cats.kernel.Eq
 import cats.syntax.all._
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.shapes.ShapeId
+
 import TypedNode.FieldTN.OptionalNoneTN
 import TypedNode.FieldTN.OptionalSomeTN
 import TypedNode.FieldTN.RequiredTN
-import software.amazon.smithy.model.node.Node
 import TypedNode.AltValueTN.ProductAltTN
 import TypedNode.AltValueTN.TypeAltTN
 import UnionMember._
 import LineSegment.{NameDef, NameRef}
-import cats.kernel.Eq
-import cats.Traverse
-import cats.Applicative
-import cats.Eval
-import software.amazon.smithy.model.shapes.ShapeId
 
 private[internals] case class CompilationUnit(
     namespace: String,

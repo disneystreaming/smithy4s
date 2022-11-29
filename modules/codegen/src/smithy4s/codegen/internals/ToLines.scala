@@ -19,6 +19,7 @@ package smithy4s.codegen.internals
 import cats.data.NonEmptyList
 import cats.kernel.Monoid
 import cats.syntax.all._
+
 import LineSegment.{Literal, NameRef}
 
 /**
