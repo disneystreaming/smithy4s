@@ -21,6 +21,8 @@ import alloy.openapi._
 import software.amazon.smithy.model.Model
 
 import scala.jdk.CollectionConverters._
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.shapes.ModelSerializer
 
 private[codegen] object CodegenImpl { self =>
 
@@ -138,6 +140,19 @@ private[codegen] object CodegenImpl { self =>
           os.RelPath(result.namespace.split('.').toIndexedSeq, ups = 0)
         (relPath, result)
       }
+  }
+
+  def dumpModel(args: DumpModelArgs): String = {
+    val (_, model) = ModelLoader.load(
+      args.specs.map(_.toIO).toSet,
+      args.dependencies,
+      args.repositories,
+      args.transformers,
+      discoverModels = false,
+      args.localJars
+    )
+
+    Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))
   }
 
 }

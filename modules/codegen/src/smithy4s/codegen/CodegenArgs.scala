@@ -19,7 +19,7 @@ package smithy4s.codegen
 import cats.data.ValidatedNel
 import cats.syntax.all._
 
-case class CodegenArgs(
+final case class CodegenArgs(
     specs: List[os.Path],
     output: os.Path,
     resourceOutput: os.Path,

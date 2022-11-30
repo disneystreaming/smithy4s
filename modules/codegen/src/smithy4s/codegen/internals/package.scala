@@ -91,7 +91,7 @@ package object internals {
       case head :: tl        => (head + ",") :: commas(tl)
     }
 
-  object S {
+  private[internals] object S {
     object Blob extends ShapeExtractor(_.asBlobShape())
     object Boolean extends ShapeExtractor(_.asBooleanShape())
     object String extends ShapeExtractor(_.asStringShape())
@@ -118,7 +118,7 @@ package object internals {
     object Member extends ShapeExtractor(_.asMemberShape())
   }
 
-  object T {
+  private[internals] object T {
     object http extends TraitExtractor[HttpTrait]
     object error extends TraitExtractor[ErrorTrait]
     object httpError extends TraitExtractor[HttpErrorTrait]
@@ -129,7 +129,7 @@ package object internals {
     object uuidFormat extends TraitExtractor[UuidFormatTrait]
   }
 
-  object N {
+  private[internals] object N {
     object ObjectNode
         extends NodeExtractor(node =>
           node
@@ -137,46 +137,46 @@ package object internals {
             .asScala
             .map(_.getMembers().asScala.map(_.leftMap(_.getValue())))
         )
-    object MapNode
+    private[internals] object MapNode
         extends NodeExtractor(node =>
           node
             .asObjectNode()
             .asScala
             .map(_.getMembers().asScala.toList)
         )
-    object ArrayNode
+    private[internals] object ArrayNode
         extends NodeExtractor(node =>
           node.asArrayNode().asScala.map(_.asScala.toList)
         )
-    object NumberNode
+    private[internals] object NumberNode
         extends NodeExtractor(node =>
           node.asNumberNode().asScala.map(_.getValue())
         )
-    object NullNode {
+    private[internals] object NullNode {
       def unapply(node: Node): Boolean = node.isNullNode()
     }
-    object StringNode
+    private[internals] object StringNode
         extends NodeExtractor(node =>
           node.asStringNode().asScala.map(_.getValue())
         )
-    object BooleanNode
+    private[internals] object BooleanNode
         extends NodeExtractor(node =>
           node.asBooleanNode().asScala.map(_.getValue())
         )
   }
 
-  implicit class IterOps[A](i: Iterable[A]) {
+  private[internals] implicit class IterOps[A](i: Iterable[A]) {
     def filteredForeach(pf: PartialFunction[A, Unit]) = i.foreach { a =>
       if (pf.isDefinedAt(a)) pf(a)
       else ()
     }
   }
 
-  implicit class OptionalOps[A](opt: ju.Optional[A]) {
+  private[internals] implicit class OptionalOps[A](opt: ju.Optional[A]) {
     def asScala: Option[A] = if (opt.isPresent()) Some(opt.get()) else None
   }
 
-  def uncapitalise(s: String) = {
+  private[internals] def uncapitalise(s: String) = {
     if (s == s.toUpperCase()) s.toLowerCase()
     else {
       val count: Int = s.segmentLength(c => c.==('_'), 0)

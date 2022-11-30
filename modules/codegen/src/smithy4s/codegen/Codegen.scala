@@ -22,4 +22,8 @@ object Codegen {
       args: CodegenArgs
   ): Set[os.Path] = internals.CodegenImpl.processSpecs(args)
 
+  def dumpModel(
+      args: DumpModelArgs
+  ): String = internals.CodegenImpl.dumpModel(args)
+
 }
