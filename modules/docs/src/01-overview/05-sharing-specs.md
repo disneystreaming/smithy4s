@@ -162,6 +162,19 @@ def smithy4sIvyDeps = T(super.smithy4sIvyDeps() ++ compileAndCodegenDeps())
 
 Because the upstream usage of Smithy4s will have resulted in the creation of metadata tracking the namespaces that were already generated, the "local" Smithy4s code-generation will automatically skip the generation of code that should not be generated again.
 
+One side-effect of this is that if you produce JARs containing artifacts produced by Smithy4s code generation, they'll contain a `smithy4s.tracking.smithy`. This could be a problematic file if you're using `sbt-assembly` because if you depend on multiple JARs that contain this file, you'll need to write a custom `assemblyMergeStrategy`, like so:
+
+```sbt
+assemblyMergeStrategy := {
+  case "META-INF/smithy/smithy4s.tracking.smithy" =>
+    MergeStrategy.discard
+  case x =>
+    val oldStrategy = assemblyMergeStrategy.value
+    oldStrategy(x)
+}
+```
+
+This is perfectly fine to discard this file from your assembly jar.
 
 ### Manually skipping (or including) namespaces during code-generation.
 
