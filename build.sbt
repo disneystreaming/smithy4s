@@ -714,7 +714,7 @@ lazy val tests = projectMatrix
 
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
-  .dependsOn(core, http4s % "compile->compile; test->compile", testUtils)
+  .dependsOn(core, http4s % "compile->compile; test->compile")
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),

@@ -33,7 +33,6 @@ import smithy4s.http.CodecAPI
 import smithy4s.Document
 import smithy4s.http.PayloadError
 import smithy4s.Service
-import smithy4s.tests.DefaultSchemaVisitor
 
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
