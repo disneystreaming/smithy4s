@@ -140,3 +140,10 @@ See https://github.com/disneystreaming/smithy4s/pull/569
 
 In order to mitigate known security problems, our json parsing logic has hard-limits over the number of elements it will parse from arrays
 or maps, resulting in an error when receiving payloads with larger collections. Previously, this limit was hardcoded to 1024 elements per collection. This is now configurable, 1024 being the default.
+
+### Polymorphic refinements
+
+See https://github.com/disneystreaming/smithy4s/pull/649
+
+Refinements applied on list/map shapes can now produce parameterised types. This allows, for instance, to have generic
+refinements on `list` shapes that produce `cats.data.NonEmptyList` containing the same types of elements.
