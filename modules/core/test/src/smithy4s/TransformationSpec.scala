@@ -62,7 +62,7 @@ class TransformationSpec() extends FunSuite {
         }
       }
 
-    val kvStoreEither: KVStore.WithError[Either] =
+    val kvStoreEither: KVStore.ErrorAware[Either] =
       kvStoreTry.transform(toEither)
 
     expect.same(
@@ -76,7 +76,7 @@ class TransformationSpec() extends FunSuite {
   }
 
   test("errors can be absorbed") {
-    object kvStoreEither extends KVStore.WithError[Either] {
+    object kvStoreEither extends KVStore.ErrorAware[Either] {
       def delete(key: String): Either[KVStore.DeleteError, Unit] = Right(())
       def put(key: String, value: String): Either[Nothing, Unit] = Right(())
       def get(key: String): Either[KVStore.GetError, Value] =

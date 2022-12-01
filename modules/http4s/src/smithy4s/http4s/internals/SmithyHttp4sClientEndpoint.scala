@@ -46,7 +46,8 @@ private[http4s] object SmithyHttp4sClientEndpoint {
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      compilerContext: CompilerContext[F]
+      compilerContext: CompilerContext[F],
+      middleware: Client[F] => Client[F]
   ): Either[
     HttpEndpoint.HttpEndpointError,
     SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
@@ -65,7 +66,8 @@ private[http4s] object SmithyHttp4sClientEndpoint {
             method,
             endpoint,
             httpEndpoint,
-            compilerContext
+            compilerContext,
+            middleware
           )
         }
     }
@@ -79,12 +81,15 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   method: org.http4s.Method,
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   httpEndpoint: HttpEndpoint[I],
-  compilerContext: CompilerContext[F]
+  compilerContext: CompilerContext[F],
+  middleware: Client[F] => Client[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
+  private val transformedClient: Client[F] = middleware(client)
+
   def send(input: I): F[O] = {
-    client
+    transformedClient
       .run(inputToRequest(input))
       .use { response =>
         outputFromResponse(response)
@@ -197,18 +202,18 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
       metadataDecoder: Metadata.PartialDecoder[T]
   )(implicit
       entityDecoder: EntityDecoder[F, BodyPartial[T]]
-  ): F[Either[MetadataError, T]] = {
+  ): F[Either[HttpContractError, T]] = {
     val headers = getHeaders(response)
     val metadata =
       Metadata(headers = headers, statusCode = Some(response.status.code))
     metadataDecoder.total match {
       case Some(totalDecoder) =>
-        totalDecoder.decode(metadata).pure[F]
+        totalDecoder.decode(metadata).pure[F].widen
       case None =>
         for {
           metadataPartial <- metadataDecoder.decode(metadata).pure[F]
           bodyPartial <- response.as[BodyPartial[T]]
-        } yield metadataPartial.map(_.combine(bodyPartial))
+        } yield metadataPartial.flatMap(_.combineCatch(bodyPartial))
     }
   }
 }

@@ -48,7 +48,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     new RouterBuilder[Alg, F](
       service,
       impl,
-      PartialFunction.empty
+      PartialFunction.empty,
+      ServerEndpointMiddleware.noop[F]
     )
   }
 
@@ -65,7 +66,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       new RouterBuilder[Alg, F](
         service,
         impl,
-        PartialFunction.empty
+        PartialFunction.empty,
+        ServerEndpointMiddleware.noop[F]
       )
 
   }
@@ -76,16 +78,22 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
-      uri: Uri = uri"http://localhost:8080"
+      uri: Uri = uri"http://localhost:8080",
+      middleware: ClientEndpointMiddleware[F] = ClientEndpointMiddleware.noop[F]
   ) {
 
     def uri(uri: Uri): ClientBuilder[Alg, F] =
-      new ClientBuilder[Alg, F](this.client, this.service, uri)
+      new ClientBuilder[Alg, F](this.client, this.service, uri, this.middleware)
 
-    def resource: Resource[F, FunctorAlgebra[Alg, F]] =
+    def middleware(
+        mid: ClientEndpointMiddleware[F]
+    ): ClientBuilder[Alg, F] =
+      new ClientBuilder[Alg, F](this.client, this.service, this.uri, mid)
+
+    def resource: Resource[F, service.Impl[F]] =
       use.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    def use: Either[UnsupportedProtocolError, FunctorAlgebra[Alg, F]] = {
+    def use: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag)
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
@@ -95,7 +103,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             client,
             EntityCompiler
-              .fromCodecAPI[F](codecs)
+              .fromCodecAPI[F](codecs),
+            middleware
           )
         }
         .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
@@ -108,8 +117,11 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
   ] private[http4s] (
       service: smithy4s.Service[Alg],
       impl: FunctorAlgebra[Alg, F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]]
-  )(implicit F: EffectCompat[F]) {
+      errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      middleware: ServerEndpointMiddleware[F]
+  )(implicit
+      F: EffectCompat[F]
+  ) {
 
     val entityCompiler =
       EntityCompiler.fromCodecAPI(codecs)
@@ -117,12 +129,17 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder(service, impl, fe andThen (e => F.pure(e)))
+      new RouterBuilder(service, impl, fe andThen (e => F.pure(e)), middleware)
 
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
     ): RouterBuilder[Alg, F] =
-      new RouterBuilder(service, impl, fe)
+      new RouterBuilder(service, impl, fe, middleware)
+
+    def middleware(
+        mid: ServerEndpointMiddleware[F]
+    ): RouterBuilder[Alg, F] =
+      new RouterBuilder[Alg, F](service, impl, errorTransformation, mid)
 
     def make: Either[UnsupportedProtocolError, HttpRoutes[F]] =
       checkProtocol(service, protocolTag)
@@ -133,7 +150,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
             errorTransformation,
-            entityCompiler
+            entityCompiler,
+            middleware
           ).routes
         }
 

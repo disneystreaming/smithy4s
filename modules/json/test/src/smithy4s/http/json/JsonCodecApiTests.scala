@@ -41,4 +41,24 @@ class JsonCodecApiTests extends FunSuite {
 
     assertEquals(encodedString, """{"a":"test"}""")
   }
+
+  test(
+    "struct codec with a required field should return a Left when the field is missing"
+  ) {
+    val schemaWithRequiredField =
+      Schema
+        .struct[String]
+        .apply(
+          Schema.string
+            .required[String]("a", identity)
+        )(identity)
+
+    val capi = codecs(HintMask.empty)
+
+    val codec = capi.compileCodec(schemaWithRequiredField)
+
+    val decoded = capi.decodeFromByteArray(codec, """{}""".getBytes())
+
+    assert(decoded.isLeft)
+  }
 }

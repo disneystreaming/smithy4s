@@ -4,10 +4,8 @@ import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
-import smithy4s.kinds.FunctorAlgebra
 import smithy4s.ShapeId
 import smithy4s.Service
-import smithy4s.kinds.BiFunctorAlgebra
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
@@ -17,7 +15,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
 
   def set(set: Set[String]) : F[SetInput, Nothing, Unit, Nothing, Nothing]
   def list(list: List[String]) : F[ListInput, Nothing, Unit, Nothing, Nothing]
-  def map(value: Map[String,String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
+  def map(value: Map[String, String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
   def option(value: Option[String] = None) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
   def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
@@ -25,10 +23,10 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
 
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
-  def apply[F[_]](implicit F: FunctorAlgebra[ReservedNameServiceGen, F]): F.type = F
+  def apply[F[_]](implicit F: Impl[F]): F.type = F
 
-  type WithError[F[_, _]] = BiFunctorAlgebra[ReservedNameServiceGen, F]
-  object WithError {
+  object ErrorAware {
+    def apply[F[_, _]](implicit F: ErrorAware[F]): F.type = F
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
@@ -57,7 +55,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
     def set(set: Set[String]) = _Set(SetInput(set))
     def list(list: List[String]) = _List(ListInput(list))
-    def map(value: Map[String,String]) = _Map(MapInput(value))
+    def map(value: Map[String, String]) = _Map(MapInput(value))
     def option(value: Option[String] = None) = _Option(OptionInput(value))
   }
 
@@ -67,7 +65,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f : PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
     def set(set: Set[String]) = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
     def list(list: List[String]) = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
-    def map(value: Map[String,String]) = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
+    def map(value: Map[String, String]) = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
     def option(value: Option[String] = None) = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
   }
 

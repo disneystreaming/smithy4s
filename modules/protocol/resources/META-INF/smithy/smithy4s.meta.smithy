@@ -80,7 +80,8 @@ structure errorMessage {}
 structure refinement {
     @required
     targetType: Classpath,
-    providerImport: Import
+    providerImport: Import,
+    parameterised: Boolean = false
 }
 
 /// e.g. com.test_out.v2.Something

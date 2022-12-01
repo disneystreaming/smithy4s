@@ -31,6 +31,8 @@ import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.schema.Alt
 import smithy4s.kinds._
+import org.http4s.HttpApp
+import org.typelevel.vault.Key
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -39,7 +41,7 @@ import smithy4s.kinds._
 private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
   def matches(path: Array[String]): Option[PathParams]
-  def run(pathParams: PathParams, request: Request[F]): F[Response[F]]
+  def httpApp: HttpApp[F]
 
   def matchTap(
       path: Array[String]
@@ -49,15 +51,19 @@ private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
 
 private[http4s] object SmithyHttp4sServerEndpoint {
 
+  // format: off
   def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]]
+      errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
+      pathParamsKey: Key[PathParams]
   ): Either[
     HttpEndpoint.HttpEndpointError,
     SmithyHttp4sServerEndpoint[F]
   ] =
+  // format: on
     HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
       toHttp4sMethod(httpEndpoint.method)
         .leftMap { e =>
@@ -72,7 +78,9 @@ private[http4s] object SmithyHttp4sServerEndpoint {
             method,
             httpEndpoint,
             compilerContext,
-            errorTransformation
+            errorTransformation,
+            middleware,
+            pathParamsKey
           )
         }
     }
@@ -87,6 +95,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
+    middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
+    pathParamsKey: Key[PathParams]
 )(implicit F: EffectCompat[F]) extends SmithyHttp4sServerEndpoint[F] {
 // format: on
   import compilerContext._
@@ -97,18 +107,22 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint.matches(path)
   }
 
-  def run(pathParams: PathParams, request: Request[F]): F[Response[F]] = {
-    val run: F[O] = for {
-      metadata <- getMetadata(pathParams, request)
-      input <- extractInput(metadata, request)
-      output <- (impl(endpoint.wrap(input)): F[O])
-    } yield output
+  private val applyMiddleware = middleware(endpoint)
 
-    run.recoverWith(transformError).attempt.flatMap {
-      case Left(error)   => errorResponse(error)
-      case Right(output) => successResponse(output)
-    }
-  }
+  override val httpApp: HttpApp[F] =
+    applyMiddleware(HttpApp[F] { req =>
+      val pathParams = req.attributes.lookup(pathParamsKey).getOrElse(Map.empty)
+
+      val run: F[O] = for {
+        metadata <- getMetadata(pathParams, req)
+        input <- extractInput(metadata, req)
+        output <- (impl(endpoint.wrap(input)): F[O])
+      } yield output
+
+      run
+        .recoverWith(transformError)
+        .flatMap(successResponse)
+    }).handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
 
   private val inputSchema: Schema[I] = endpoint.input
   private val outputSchema: Schema[O] = endpoint.output
@@ -147,7 +161,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
           for {
             metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
             bodyPartial <- request.as[BodyPartial[I]]
-          } yield metadataPartial.combine(bodyPartial)
+            decoded <- metadataPartial.combineCatch(bodyPartial).liftTo[F]
+          } yield decoded
     }
   }
 
@@ -215,7 +230,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     endpoint.errorable match {
       case Some(errorable) =>
         val processError: E => Response[F] = compileErrorable(errorable)
-        (_: Throwable) match {
+
+        {
           case e: HttpContractError =>
             Response[F](Status.BadRequest).withEntity(e).pure[F]
           case endpoint.Error((_, e)) =>
@@ -223,8 +239,13 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
           case e: Throwable =>
             F.raiseError(e)
         }
-      case None =>
-        F.raiseError(_)
+
+      case None => {
+        case e: HttpContractError =>
+          Response[F](Status.BadRequest).withEntity(e).pure[F]
+        case e: Throwable =>
+          F.raiseError(e)
+      }
     }
   }
 

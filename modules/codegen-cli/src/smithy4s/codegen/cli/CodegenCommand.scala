@@ -21,9 +21,9 @@ import cats.syntax.all._
 import com.monovore.decline.Command
 import com.monovore.decline.Opts
 import smithy4s.codegen.CodegenArgs
+import smithy4s.codegen.FileType
 
 import Options._
-import smithy4s.codegen.FileType
 
 object CodegenCommand {
 

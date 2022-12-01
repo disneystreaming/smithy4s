@@ -115,7 +115,8 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
           metadataPartial <- metadataDecoder.decode(metadata).liftTo[F]
           bodyPartial <-
             codecAPI.decodeFromByteArrayPartial(codec, response.body).liftTo[F]
-        } yield metadataPartial.combine(bodyPartial)
+          decoded <- metadataPartial.combineCatch(bodyPartial).liftTo[F]
+        } yield decoded
     }
   }
 

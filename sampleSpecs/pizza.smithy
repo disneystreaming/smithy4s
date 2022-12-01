@@ -7,14 +7,13 @@ use alloy#simpleRestJson
 @simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
-  errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book, Echo]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
 operation AddMenuItem {
   input: AddMenuItemRequest,
-  errors: [PriceError],
+  errors: [PriceError, GenericServerError, GenericClientError],
   output: AddMenuItemResult
 }
 
@@ -87,12 +86,7 @@ structure PriceError {
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
 operation GetMenu {
   input: GetMenuRequest,
-  // FallbackError2 is added to test the scenario where there is a status
-  // code returned to a client (with no X-Error-Type header) that does NOT
-  // map directly any `httpError` status codes in the smithy spec AND there
-  // are two errors that are annotated with `@error("client")`. This means
-  // there is no way to disambiguate between them automatically.
-  errors: [NotFoundError, FallbackError, FallbackError2],
+  errors: [NotFoundError, FallbackError, FallbackError2, GenericClientError],
   output: GetMenuResult
 }
 
@@ -316,4 +310,29 @@ operation Book {
     @required
     message: String
   }
+}
+
+@http(method: "POST", uri: "/echo/{pathParam}")
+operation Echo {
+  input := {
+    @required
+    @httpLabel
+    @length(min: 10)
+    pathParam: String,
+
+    @httpQuery("queryParam")
+    @length(min: 10)
+    queryParam: String,
+
+    @httpPayload
+    @required
+    body: EchoBody
+  }
+  // this operation must NOT have any errors
+  errors: []
+}
+
+structure EchoBody {
+  @length(min: 10)
+  data: String
 }

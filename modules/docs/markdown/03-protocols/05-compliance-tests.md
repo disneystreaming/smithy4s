@@ -14,8 +14,6 @@ Smithy4s publishes a module that you can use to write compliance test if you're 
 import smithy4s.codegen.BuildInfo._
 
 libraryDependencies ++= Seq(
-  // Needed to access the smithy.test traits in your smithy models
-  "software.amazon.smithy" % "smithy-protocol-test-traits" % smithyVersion
   "com.disneystreaming.smithy4s" %% "smithy4s-compliance-tests" % smithy4sVersion.value
 )
 ```
@@ -61,44 +59,39 @@ import org.http4s.client.Client
 import smithy4s.compliancetests._
 import smithy4s.example.test._
 import smithy4s.http4s._
+import smithy4s.kinds._
 import smithy4s.Service
 ```
 
 Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `ServerHttpComplianceTestCase` while selecting the protocol to use and the service to test:
 
 ```scala mdoc:silent
-val clientTestGenerator = new ClientHttpComplianceTestCase[
-    alloy.SimpleRestJson,
-    HelloServiceGen,
-  ](
-    alloy.SimpleRestJson(),
-    HelloService
-  ) {
-    import org.http4s.implicits._
-    private val baseUri = uri"http://localhost/"
-    def getClient(app: HttpApp[IO]): Resource[IO, HelloService[IO]] =
-      SimpleRestJsonBuilder(HelloService)
+object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
+    type Protocol = alloy.SimpleRestJson
+    val protocolTag = alloy.SimpleRestJson
+
+    def codecs = SimpleRestJsonBuilder.codecs
+
+    def routes[Alg[_[_, _, _, _, _]]](
+        impl: FunctorAlgebra[Alg, IO]
+    )(implicit service: Service[Alg]): Resource[IO, HttpRoutes[IO]] =
+      SimpleRestJsonBuilder(service).routes(impl).resource
+
+    def reverseRoutes[Alg[_[_, _, _, _, _]]](app: HttpApp[IO])(implicit
+        service: Service[Alg]
+    ): Resource[IO, FunctorAlgebra[Alg, IO]] = {
+      import org.http4s.implicits._
+      val baseUri = uri"http://localhost/"
+
+      SimpleRestJsonBuilder(service)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
         .resource
-    def codecs = SimpleRestJsonBuilder.codecs
+    }
   }
 
-val serverTestGenerator = new ServerHttpComplianceTestCase[
-    alloy.SimpleRestJson,
-    HelloServiceGen,
-  ](
-    alloy.SimpleRestJson(),
-    HelloService
-  ) {
-    def getServer[Alg2[_[_, _, _, _, _]]](
-      impl: smithy4s.kinds.FunctorAlgebra[Alg2, IO]
-  )(implicit s: Service[Alg2]): Resource[IO, HttpRoutes[IO]] =
-      SimpleRestJsonBuilder(s).routes(impl).resource
-    def codecs = SimpleRestJsonBuilder.codecs
-  }
-
-val tests: List[ComplianceTest[IO]] = clientTestGenerator.allClientTests() ++ serverTestGenerator.allServerTests()
+val tests: List[ComplianceTest[IO]] = HttpProtocolCompliance
+    .clientAndServerTests(SimpleRestJsonIntegration, HelloWorldService)
 ```
 
 Now, you can iterate over the test cases and do what you want. This is where you would hook in the test framework of your choice, but in the following example, we're just going to print the result:

@@ -17,14 +17,15 @@
 package smithy4s
 package http.json
 
-import smithy.api.JsonName
-import smithy.api.TimestampFormat
 import alloy.Discriminated
 import alloy.Untagged
+import smithy.api.Default
+import smithy.api.JsonName
+import smithy.api.TimestampFormat
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.internals.InputOutput
-import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
+import smithy4s.schema.SchemaVisitor
 
 final case class codecs(
     hintMask: HintMask = codecs.defaultHintMask,
@@ -41,8 +42,8 @@ object codecs {
       Untagged,
       InputOutput,
       DiscriminatedUnionMember,
-      // TODO: add tests for `codecs` understanding int enums. Maybe pizza spec
-      IntEnum
+      IntEnum,
+      Default
     )
   val defaultMaxArity: Int = 1024
 
