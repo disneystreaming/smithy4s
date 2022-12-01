@@ -45,10 +45,10 @@ import smithy4s.Document.DNull
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 
   override def primitive[P](
-                             shapeId: ShapeId,
-                             hints: Hints,
-                             tag: Primitive[P]
-                           ): Id[P] = tag match {
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: Primitive[P]
+  ): Id[P] = tag match {
     case PFloat      => 0: Float
     case PBigDecimal => 0: BigDecimal
     case PBigInt     => 0: BigInt
@@ -67,62 +67,62 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   }
 
   override def collection[C[_], A](
-                                    shapeId: ShapeId,
-                                    hints: Hints,
-                                    tag: CollectionTag[C],
-                                    member: Schema[A]
-                                  ): Id[C[A]] = tag.empty
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: CollectionTag[C],
+      member: Schema[A]
+  ): Id[C[A]] = tag.empty
 
   override def map[K, V](
-                          shapeId: ShapeId,
-                          hints: Hints,
-                          key: Schema[K],
-                          value: Schema[V]
-                        ): Id[Map[K, V]] = Map.empty
+      shapeId: ShapeId,
+      hints: Hints,
+      key: Schema[K],
+      value: Schema[V]
+  ): Id[Map[K, V]] = Map.empty
 
   override def enumeration[E](
-                               shapeId: ShapeId,
-                               hints: Hints,
-                               values: List[EnumValue[E]],
-                               total: E => EnumValue[E]
-                             ): Id[E] = values.head.value
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): Id[E] = values.head.value
 
   override def struct[S](
-                          shapeId: ShapeId,
-                          hints: Hints,
-                          fields: Vector[SchemaField[S, _]],
-                          make: IndexedSeq[Any] => S
-                        ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
+      shapeId: ShapeId,
+      hints: Hints,
+      fields: Vector[SchemaField[S, _]],
+      make: IndexedSeq[Any] => S
+  ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
     def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =
       apply(instance)
 
     def onOptional[A](
-                       label: String,
-                       instance: Schema[A],
-                       get: S => Option[A]
-                     ): Any =
+        label: String,
+        instance: Schema[A],
+        get: S => Option[A]
+    ): Any =
       None
   })))
 
   override def union[U](
-                         shapeId: ShapeId,
-                         hints: Hints,
-                         alternatives: Vector[SchemaAlt[U, _]],
-                         dispatch: Alt.Dispatcher[Schema, U]
-                       ): Id[U] = {
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[Schema, U]
+  ): Id[U] = {
     def processAlt[A](alt: Alt[Schema, U, A]) = alt.inject(apply(alt.instance))
     processAlt(alternatives.head)
   }
 
   override def biject[A, B](
-                             schema: Schema[A],
-                             bijection: Bijection[A, B]
-                           ): Id[B] = bijection(apply(schema))
+      schema: Schema[A],
+      bijection: Bijection[A, B]
+  ): Id[B] = bijection(apply(schema))
 
   override def refine[A, B](
-                             schema: Schema[A],
-                             refinement: Refinement[A, B]
-                           ): Id[B] = refinement.unsafe(apply(schema))
+      schema: Schema[A],
+      refinement: Refinement[A, B]
+  ): Id[B] = refinement.unsafe(apply(schema))
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
