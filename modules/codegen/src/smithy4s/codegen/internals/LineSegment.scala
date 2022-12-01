@@ -43,7 +43,8 @@ private[codegen] object LineSegment {
     implicit val nameDefShow: Show[NameDef] = Show.show[NameDef](_.name)
   }
   // A Reference to a Scala type or value s.
-  case class NameRef(pkg: List[String], name: String) extends LineSegment {
+  case class NameRef(pkg: List[String], name: String, typeParams: List[NameRef])
+      extends LineSegment {
     self =>
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
 
@@ -58,17 +59,30 @@ private[codegen] object LineSegment {
       self.copy(name = self.name + piece)
     }
 
+    override def toLine: Line = {
+      Line(Chain.one(self))
+      val paramLines =
+        typeParams.map(_.toLine).foldLeft(Line.empty) { case (acc, i) =>
+          if (acc.nonEmpty) acc + Literal(",") + Line.space + i else i
+        }
+      val selfLine = super.toLine
+      if (paramLines.nonEmpty)
+        selfLine + Literal("[") + paramLines + Literal("]")
+      else selfLine
+    }
+
   }
 
   object NameRef {
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
     def apply(pkg: String, name: String): NameRef =
-      NameRef(pkg.split("\\.").toList, name)
+      NameRef(pkg.split("\\.").toList, name, List.empty)
     def apply(fqn: String): NameRef = {
       val parts = fqn.split("\\.").toList.toNel.get
-      NameRef(parts.toList.dropRight(1), parts.last)
+      NameRef(parts.toList.dropRight(1), parts.last, List.empty)
     }
-
+    def apply(fqn: String, typeParams: List[NameRef]): NameRef =
+      apply(fqn).copy(typeParams = typeParams)
   }
 
   implicit val lineSegmentShow: Show[LineSegment] = Show.show {

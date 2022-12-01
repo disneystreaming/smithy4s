@@ -44,33 +44,32 @@ private[internals] object ToLine {
 
   implicit val stringToLine: ToLine[String] = s => Line(s)
   implicit val typeToLine: ToLine[Type] = new ToLine[Type] {
-    override def render(a: Type): Line = a match {
+    override def render(a: Type): Line = typeToNameRef(a).toLine
+
+    private def typeToNameRef(tpe: Type): NameRef = tpe match {
       case Type.Collection(collectionType, member) =>
-        val line = render(member)
+        val inner = typeToNameRef(member)
         val col = collectionType.tpe
-        col.toLine + Literal(
-          "["
-        ) + line + Literal("]")
+        col.copy(typeParams = List(inner))
       case Type.Map(key, value) =>
-        val keyLine = render(key)
-        val valueLine = render(value)
-        NameRef("scala.collection.immutable", "Map").toLine + Literal(
-          "["
-        ) + keyLine + Literal(
-          ","
-        ) + valueLine + Literal("]")
+        val keyTpe = typeToNameRef(key)
+        val valueTpe = typeToNameRef(value)
+        NameRef("scala.collection.immutable", "Map").copy(typeParams =
+          List(keyTpe, valueTpe)
+        )
       case Type.Alias(
             ns,
             name,
             Type.PrimitiveType(_) | _: Type.ExternalType,
             false
           ) =>
-        NameRef(ns, name).toLine
+        NameRef(ns, name)
       case Type.Alias(_, _, aliased, _) =>
-        render(aliased)
-      case Type.Ref(namespace, name)          => NameRef(namespace, name).toLine
-      case Type.PrimitiveType(prim)           => primitiveLine(prim).toLine
-      case Type.ExternalType(_, fqn, _, _, _) => NameRef(fqn).toLine
+        typeToNameRef(aliased)
+      case Type.Ref(namespace, name) => NameRef(namespace, name)
+      case Type.PrimitiveType(prim)  => primitiveLine(prim)
+      case e: Type.ExternalType =>
+        NameRef(e.fullyQualifiedName, e.typeParameters.map(typeToNameRef))
     }
   }
 

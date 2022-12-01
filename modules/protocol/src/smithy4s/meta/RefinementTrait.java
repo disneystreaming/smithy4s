@@ -33,11 +33,13 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 
 	private final String targetType;
 	private final Optional<String> providerImport;
+	private final boolean parameterised;
 
 	private RefinementTrait(RefinementTrait.Builder builder) {
 		super(ID, builder.getSourceLocation());
 		this.targetType = builder.targetType;
 		this.providerImport = builder.providerImport;
+		this.parameterised = builder.parameterised;
 
 		if (targetType == null) {
 			throw new SourceException("A targetType must be provided.", getSourceLocation());
@@ -52,6 +54,10 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 		return this.providerImport;
 	}
 
+	public boolean isParameterised() {
+		return this.parameterised;
+	}
+
 	@Override
 	protected Node createNode() {
 		ObjectNode.Builder builder = Node.objectNodeBuilder();
@@ -59,6 +65,9 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 		Optional<String> maybeImport = getProviderImport();
 		if (maybeImport.isPresent()) {
 			builder.withMember("providerImport", maybeImport.get());
+		}
+		if (parameterised) {
+			builder.withMember("parameterised", parameterised);
 		}
 		return builder.build();
 	}
@@ -79,6 +88,7 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 
 		private String targetType;
 		private Optional<String> providerImport;
+		private boolean parameterised;
 
 		public RefinementTrait.Builder providerImport(String providerImport) {
 			this.providerImport = Optional.ofNullable(providerImport);
@@ -92,6 +102,11 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 
 		public RefinementTrait.Builder targetType(String targetType) {
 			this.targetType = targetType;
+			return this;
+		}
+
+		public RefinementTrait.Builder parameterised(boolean parameterised) {
+			this.parameterised = parameterised;
 			return this;
 		}
 
@@ -115,7 +130,10 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 					.orElse(null);
 			Optional<String> providerImport = objectNode.getMember("providerImport")
 					.map(node -> node.expectStringNode().getValue());
-			return builder().sourceLocation(value).targetType(targetType).providerImport(providerImport).build();
+			Boolean parameterised = objectNode.getMember("parameterised")
+					.map(node -> node.expectBooleanNode().getValue()).orElse(false);
+			return builder().sourceLocation(value).targetType(targetType).parameterised(parameterised)
+					.providerImport(providerImport).build();
 		}
 	}
 }

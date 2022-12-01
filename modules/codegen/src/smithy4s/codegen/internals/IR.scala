@@ -43,7 +43,7 @@ private[internals] sealed trait Decl {
   def name: String
   def hints: List[Hint]
   def nameDef: NameDef = NameDef(name)
-  def nameRef: NameRef = NameRef(List.empty, name)
+  def nameRef: NameRef = NameRef(List.empty, name, List.empty)
 }
 
 private[internals] case class Service(
@@ -222,6 +222,7 @@ private[internals] object Type {
   case class ExternalType(
       name: String,
       fullyQualifiedName: String,
+      typeParameters: List[Type],
       providerImport: Option[String],
       underlyingTpe: Type,
       refinementHint: Hint.Native

@@ -164,7 +164,7 @@ lazy val core = projectMatrix
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters
     ),
-    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
+    genSmithy(Compile),
     Compile / sourceGenerators += {
       sourceDirectory
         .map(Boilerplate.gen(_, Boilerplate.BoilerplateModule.Core))
@@ -269,7 +269,7 @@ lazy val `aws-kernel` = projectMatrix
       "aws.customizations",
       "aws.protocols"
     ),
-    Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
+    genSmithy(Compile),
     Test / envVars ++= Map("TEST_VAR" -> "hello"),
     scalacOptions ++= Seq(
       "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
@@ -701,7 +701,7 @@ lazy val tests = projectMatrix
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "pizza.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
     ),
     moduleName := {
       if (virtualAxes.value.contains(CatsEffect2Axis))
@@ -779,10 +779,7 @@ lazy val example = projectMatrix
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
     libraryDependencies += Dependencies.Http4s.emberServer.value,
-    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
-    (Compile / resourceGenerators) := Seq(
-      genSmithyResources(Compile).taskValue
-    ),
+    genSmithy(Compile),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource"),
@@ -804,7 +801,7 @@ lazy val guides = projectMatrix
       (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "hello.smithy",
       (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy"
     ),
-    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue),
+    genSmithy(Compile),
     isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberServer.value,
@@ -833,11 +830,17 @@ lazy val benchmark = projectMatrix
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "benchmark.smithy"
     ),
-    (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
+    genSmithy(Compile)
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
+def genSmithy(config: Configuration) = Def.settings(
+  Seq(
+    config / sourceGenerators := Seq(genSmithyScala(config).taskValue),
+    config / resourceGenerators := Seq(genSmithyResources(config).taskValue)
+  )
+)
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
 def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
 
