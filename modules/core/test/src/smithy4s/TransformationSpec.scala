@@ -17,7 +17,7 @@
 package smithy4s
 
 import smithy4s.example._
-
+import smithy4s.kinds.PolyFunction
 import munit._
 import scala.util.{Failure, Success, Try}
 class TransformationSpec() extends FunSuite {
