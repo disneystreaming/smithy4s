@@ -15,6 +15,7 @@ docs.InlineSmithyFile("greet.smithy")
 
 ```scala mdoc
 import smithy4s._
+import smithy4s.kinds.PolyFunction
 import foo._
 
 type Result[A] = Either[String, A]
