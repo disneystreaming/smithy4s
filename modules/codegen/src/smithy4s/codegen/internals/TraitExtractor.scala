@@ -14,20 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
-import cats.syntax.all._
-import smithy4s.codegen.LineSegment.Literal
+import software.amazon.smithy.model.shapes.Shape
+import software.amazon.smithy.model.traits.Trait
 
-class PartialBlock(l: Line) {
-  def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    A.render(inner)
-      .transformLines(lines =>
-        (l + Literal(" {")) :: indent(lines) ::: List(Line("}"))
-      )
-  }
+import java.lang.{Class => jClass}
+import scala.reflect.ClassTag
 
-  def apply(inner: LinesWithValue*): Lines =
-    apply(inner.toList.foldMap(_.render))
+private[internals] class TraitExtractor[T <: Trait](implicit T: ClassTag[T]) {
+  def apply(s: Shape): Option[T] =
+    s.getTrait[T](T.runtimeClass.asInstanceOf[jClass[T]]).asScala
 
+  def unapply(s: Shape): Option[T] = apply(s)
 }

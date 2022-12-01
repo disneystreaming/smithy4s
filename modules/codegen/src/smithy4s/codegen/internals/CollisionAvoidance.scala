@@ -14,16 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.~>
-import smithy4s.codegen.Type.Alias
-import smithy4s.codegen.Type.PrimitiveType
-import smithy4s.codegen.TypedNode._
-import smithy4s.codegen.Type.ExternalType
+
+import Type.Alias
+import Type.PrimitiveType
+import TypedNode._
+import Type.ExternalType
 import LineSegment._
 
-object CollisionAvoidance {
+private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
 
     val declarations = compilationUnit.declarations.map {
@@ -153,10 +154,10 @@ object CollisionAvoidance {
     Type.Ref(ref.namespace, protectType(ref.name.capitalize))
 
   private def modNativeHint(hint: Hint.Native): Hint.Native =
-    Hint.Native(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+    Hint.Native(recursion.preprocess(modTypedNode)(hint.typedNode))
 
   private def modDefaultHint(hint: Hint.Default): Hint.Default =
-    Hint.Default(smithy4s.recursion.preprocess(modTypedNode)(hint.typedNode))
+    Hint.Default(recursion.preprocess(modTypedNode)(hint.typedNode))
 
   private def modHint(hint: Hint): Hint = hint match {
     case n: Hint.Native => modNativeHint(n)

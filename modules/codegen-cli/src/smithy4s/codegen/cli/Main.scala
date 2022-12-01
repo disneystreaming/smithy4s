@@ -57,7 +57,7 @@ object Main {
             res.foreach(out.println)
 
           case Smithy4sCommand.DumpModel(args) =>
-            out.println(DumpModel.run(args))
+            out.println(Codegen.dumpModel(args))
         }
         .leftMap { help =>
           System.err.println(help.show)

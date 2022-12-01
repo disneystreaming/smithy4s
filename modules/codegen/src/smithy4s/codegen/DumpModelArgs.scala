@@ -16,31 +16,10 @@
 
 package smithy4s.codegen
 
-object EnumUtil {
-  private def toCamelCase(value: String): String = {
-    val (_, output) = value.foldLeft((false, "")) {
-      case ((wasLastSkipped, str), c) =>
-        if (c.isLetterOrDigit) {
-          val newC =
-            if (wasLastSkipped) c.toString.capitalize else c.toString
-          (false, str + newC)
-        } else {
-          (true, str)
-        }
-    }
-    output
-  }
-
-  def enumValueClassName(
-      name: Option[String],
-      value: String,
-      intValue: Int
-  ) = {
-    name.getOrElse {
-      val camel = toCamelCase(value).capitalize
-      if (camel.nonEmpty) camel else "Value" + intValue
-    }
-
-  }
-
-}
+final case class DumpModelArgs(
+    specs: List[os.Path],
+    repositories: List[String],
+    dependencies: List[String],
+    transformers: List[String],
+    localJars: List[os.Path]
+)

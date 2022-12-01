@@ -14,17 +14,18 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
-import software.amazon.smithy.model.node.Node
-import scala.jdk.CollectionConverters._
 import software.amazon.smithy.model.Model
+import software.amazon.smithy.model.node.Node
 
-private[smithy4s] final case class CodegenRecord(
+import scala.jdk.CollectionConverters._
+
+private[internals] final case class CodegenRecord(
     namespaces: List[String]
 )
 
-private[smithy4s] object CodegenRecord {
+private[internals] object CodegenRecord {
 
   val METADATA_KEY = "smithy4sGenerated"
 

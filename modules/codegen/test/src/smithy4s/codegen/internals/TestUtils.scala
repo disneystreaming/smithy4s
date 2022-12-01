@@ -14,23 +14,30 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen.cli
+package smithy4s.codegen.internals
 
-import smithy4s.codegen.ModelLoader
-import software.amazon.smithy.model.node.Node
-import software.amazon.smithy.model.shapes.ModelSerializer
+import munit.Assertions
+import munit.Location
+import software.amazon.smithy.model.Model
 
-object DumpModel {
-  def run(args: Smithy4sCommand.DumpModelArgs): String = {
-    val (_, model) = ModelLoader.load(
-      args.specs.map(_.toIO).toSet,
-      args.dependencies,
-      args.repositories,
-      args.transformers,
-      discoverModels = false,
-      args.localJars
-    )
+object TestUtils {
 
-    Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))
+  def runTest(
+      smithySpec: String,
+      expectedScalaCode: String
+  )(implicit
+      loc: Location
+  ): Unit = {
+    val model = Model
+      .assembler()
+      .discoverModels()
+      .addUnparsedModel("foo.smithy", smithySpec)
+      .assemble()
+      .unwrap()
+
+    val results = CodegenImpl.generate(model, None, None)
+    val scalaResults = results.map(_._2.content)
+    Assertions.assertEquals(scalaResults, List(expectedScalaCode))
   }
+
 }

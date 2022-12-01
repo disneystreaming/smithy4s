@@ -14,12 +14,13 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
 import cats.implicits._
-import smithy4s.codegen.WithValue.ToLineWithValue
 
-object LineSyntax {
+import WithValue.ToLineWithValue
+
+private[codegen] object LineSyntax {
   implicit class LineInterpolator(val sc: StringContext) extends AnyVal {
     def line(renderables: ToLineWithValue[_]*): Line = {
       renderAndCombine(renderables.toList)

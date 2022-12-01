@@ -14,11 +14,12 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
-trait PostProcessor extends (CompilationUnit => CompilationUnit) {}
+private[internals] trait PostProcessor
+    extends (CompilationUnit => CompilationUnit) {}
 
-object PostProcessor extends PostProcessor {
+private[internals] object PostProcessor extends PostProcessor {
 
   val all: List[PostProcessor] = List(PackedInputsShift)
 
@@ -28,7 +29,7 @@ object PostProcessor extends PostProcessor {
 
 }
 
-object PackedInputsShift extends PostProcessor {
+private[internals] object PackedInputsShift extends PostProcessor {
   def apply(unit: CompilationUnit): CompilationUnit = {
     val newDecls = unit.declarations.map {
       case s: Service => transformService(s)

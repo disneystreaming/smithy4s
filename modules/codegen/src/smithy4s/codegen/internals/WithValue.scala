@@ -14,29 +14,18 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen
+package smithy4s.codegen.internals
 
-import munit.{Location, Assertions}
-import software.amazon.smithy.model.Model
+// Binding value and instance to recover from existentials
 
-object TestUtils {
+private[internals] case class WithValue[TC[_], A](value: A, typeclass: TC[A])
 
-  def runTest(
-      smithySpec: String,
-      expectedScalaCode: String
-  )(implicit
-      loc: Location
-  ): Unit = {
-    val model = Model
-      .assembler()
-      .discoverModels()
-      .addUnparsedModel("foo.smithy", smithySpec)
-      .assemble()
-      .unwrap()
+private[internals] object WithValue {
+  implicit def to[TC[_], A](value: A)(implicit
+      instance: TC[A]
+  ): WithValue[TC, A] =
+    WithValue(value, instance)
 
-    val results = Codegen.generate(model, None, None)
-    val scalaResults = results.map(_._2.content)
-    Assertions.assertEquals(scalaResults, List(expectedScalaCode))
-  }
-
+  type ToLinesWithValue[A] = WithValue[ToLines, A]
+  type ToLineWithValue[A] = WithValue[ToLine, A]
 }
