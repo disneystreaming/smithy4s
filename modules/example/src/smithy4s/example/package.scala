@@ -16,11 +16,14 @@ package object example {
   val DeprecatedService = DeprecatedServiceGen
 
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
+  type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type SomeValue = smithy4s.example.SomeValue.Type
   type TestString = smithy4s.example.TestString.Type
+  type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
   type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type
   type Name = smithy4s.example.Name.Type
+  type NonEmptyStrings = smithy4s.example.NonEmptyStrings.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
@@ -34,6 +37,7 @@ package object example {
   @deprecated
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
+  type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type StringList = smithy4s.example.StringList.Type
 
