@@ -16,8 +16,10 @@
 
 package smithy4s.codegen.cli
 import smithy4s.codegen.CodegenArgs
-import weaver._
+import smithy4s.codegen.DumpModelArgs
 import smithy4s.codegen.FileType
+import weaver._
+
 import Defaults.defaultDependencies
 
 object CommandParsingSpec extends FunSuite {
@@ -104,7 +106,7 @@ object CommandParsingSpec extends FunSuite {
       Main.commands.parse(List("dump-model")) ==
         Right(
           Smithy4sCommand.DumpModel(
-            Smithy4sCommand.DumpModelArgs(
+            DumpModelArgs(
               specs = Nil,
               repositories = Nil,
               dependencies = Nil,
@@ -135,7 +137,7 @@ object CommandParsingSpec extends FunSuite {
       result ==
         Right(
           Smithy4sCommand.DumpModel(
-            Smithy4sCommand.DumpModelArgs(
+            DumpModelArgs(
               specs = List(
                 os.pwd / "sampleSpecs" / "pizza.smithy",
                 os.pwd / "sampleSpecs" / "example.smithy"

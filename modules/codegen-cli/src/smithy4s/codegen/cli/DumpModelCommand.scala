@@ -17,8 +17,8 @@
 package smithy4s.codegen.cli
 
 import cats.implicits._
-import smithy4s.codegen.DumpModelArgs
 import com.monovore.decline.Command
+import smithy4s.codegen.DumpModelArgs
 
 import Options._
 
