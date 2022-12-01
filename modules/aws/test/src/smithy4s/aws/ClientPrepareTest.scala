@@ -11,7 +11,7 @@ object ClientPrepareTest extends FunSuite {
       case Left(p) =>
         assert.same(
           p,
-          AwsClient.InitialisationError.UnsupportedProtocol(
+          AwsClientInitialisationError.UnsupportedProtocol(
             MyThing.id,
             List(
               aws.protocols.AwsJson1_0.getTag,

@@ -309,7 +309,7 @@ lazy val aws = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
     ),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
-    Test / genSmithyDependencies ++= Seq(
+    Test / smithy4sDependencies ++= Seq(
       Dependencies.Smithy.awsTraits
     )
   )

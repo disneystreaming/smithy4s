@@ -21,8 +21,6 @@ import cats.effect.Resource
 import cats.syntax.all._
 
 import internals.AwsJsonRPCInterpreter
-import smithy4s.ShapeTag
-import smithy4s.ShapeId
 
 object AwsClient {
 
@@ -37,16 +35,16 @@ object AwsClient {
 
   def prepare[Alg[_[_, _, _, _, _]]](
       service: smithy4s.Service[Alg]
-  ): Either[InitialisationError, AWSInterpreterBuilder[Alg]] =
+  ): Either[AwsClientInitialisationError, AWSInterpreterBuilder[Alg]] =
     for {
       awsService <- service.hints
         .get(_root_.aws.api.Service)
-        .toRight(InitialisationError.NotAws(service.id))
+        .toRight(AwsClientInitialisationError.NotAws(service.id))
       endpointPrefix <- awsService.endpointPrefix.toRight(
-        InitialisationError.NoEndpointPrefix(awsService)
+        AwsClientInitialisationError.NoEndpointPrefix(awsService)
       )
       awsProtocol <- AwsProtocol(service.hints).toRight(
-        InitialisationError.UnsupportedProtocol(
+        AwsClientInitialisationError.UnsupportedProtocol(
           serviceId = service.id,
           knownProtocols = AwsProtocol.supportedProtocols
         )
@@ -83,26 +81,6 @@ object AwsClient {
     def build[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
     ): AwsClient[Alg, F] = service.fromPolyFunction(interpreter(awsEnv))
-  }
-
-  sealed trait InitialisationError extends Exception
-  object InitialisationError {
-    case class NotAws(serviceId: ShapeId)
-        extends Exception(s"${serviceId.show} is not an AWS service")
-        with InitialisationError
-
-    case class NoEndpointPrefix(awsService: _root_.aws.api.Service)
-        extends Exception(s"No endpoint prefix for $awsService")
-        with InitialisationError
-
-    case class UnsupportedProtocol(
-        serviceId: ShapeId,
-        knownProtocols: List[ShapeTag[_]]
-    ) extends Exception(
-          s"AWS protocol used by ${serviceId.show} is not yet supported"
-        )
-        with InitialisationError
-
   }
 
 }
