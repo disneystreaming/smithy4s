@@ -20,7 +20,6 @@ package object smithy4s {
   type Schema[A] = schema.Schema[A]
   val Schema: schema.Schema.type = schema.Schema
 
-  type PolyFunction[F[_], G[_]] = kinds.PolyFunction[F, G]
   type ~>[F[_], G[_]] = kinds.PolyFunction[F, G]
 
   val errorTypeHeader = "X-Error-Type"

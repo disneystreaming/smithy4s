@@ -17,6 +17,8 @@
 package smithy4s
 package schema
 
+import smithy4s.kinds.PolyFunction
+
 /**
   * Represents a member of product type (case class)
   */
