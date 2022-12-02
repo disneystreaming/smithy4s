@@ -32,15 +32,15 @@ import smithy4s.kinds._
 class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
 
   def dummy[Alg[_[_, _, _, _, _]]](
-      service: Service.Provider[Alg]
+      service: Service[Alg]
   ): Document => F[Document] = {
-    implicit val S: Service[Alg] = service.service
+    implicit val S: Service[Alg] = service
     toJsonF[Alg, S.Operation](DummyService[F].create[Alg])
   }
 
   def redactingProxy[Alg[_[_, _, _, _, _]]](
       jsonF: Document => F[Document],
-      service: Service.Provider[Alg]
+      service: Service[Alg]
   ): Document => F[Document] = {
     implicit val S: Service[Alg] = service.service
     toJsonF[Alg, S.Operation](

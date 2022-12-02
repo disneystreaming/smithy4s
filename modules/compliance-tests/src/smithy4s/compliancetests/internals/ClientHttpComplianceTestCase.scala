@@ -44,14 +44,13 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     Alg[_[_, _, _, _, _]]
 ](
     reverseRouter: ReverseRouter[F],
-    serviceProvider: Service.Provider[Alg]
+    serviceInstance: Service[Alg]
 )(implicit ce: CompatEffect[F]) {
   import ce._
   import org.http4s.implicits._
   import reverseRouter._
   private val baseUri = uri"http://localhost/"
-  private[compliancetests] implicit val service: Service[Alg] =
-    serviceProvider.service
+  private[compliancetests] implicit val service: Service[Alg] = serviceInstance
 
   private def matchRequest(
       request: Request[F],

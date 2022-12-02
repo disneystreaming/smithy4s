@@ -30,26 +30,26 @@ object HttpProtocolCompliance {
 
   def clientTests[F[_], Alg[_[_, _, _, _, _]]](
       reverseRouter: ReverseRouter[F],
-      serviceProvider: Service.Provider[Alg]
+      service: Service[Alg]
   )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
     new internals.ClientHttpComplianceTestCase[F, Alg](
       reverseRouter,
-      serviceProvider
+      service
     ).allClientTests()
 
   def serverTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F],
-      serviceProvider: Service.Provider[Alg]
+      service: Service[Alg]
   )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
     new internals.ServerHttpComplianceTestCase[F, Alg](
       router,
-      serviceProvider
+      service
     ).allServerTests()
 
   def clientAndServerTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F] with ReverseRouter[F],
-      serviceProvider: Service.Provider[Alg]
+      service: Service[Alg]
   )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
-    clientTests(router, serviceProvider) ++ serverTests(router, serviceProvider)
+    clientTests(router, service) ++ serverTests(router, service)
 
 }

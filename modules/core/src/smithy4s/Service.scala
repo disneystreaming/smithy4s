@@ -34,7 +34,7 @@ import kinds._
   *   around makes it drastically easier to implement logic generically, without involving
   *   metaprogramming.
   */
-trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with Service.Provider[Alg] {
+trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   type Operation[I, E, O, SI, SO]
   type Endpoint[I, E, O, SI, SO] = smithy4s.Endpoint[Operation, I, E, O, SI, SO]
   type Interpreter[F[_, _, _, _, _]] = PolyFunction5[Operation, F]
@@ -63,10 +63,6 @@ object Service {
   def apply[Alg[_[_, _, _, _, _]]](implicit ev: Service[Alg]): ev.type = ev
 
   type Aux[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] = Service[Alg]{ type Operation[I, E, O, SI, SO] = Op[I, E, O, SI, SO] }
-
-  trait Provider[Alg[_[_, _, _, _, _]]] extends HasId {
-    def service: Service[Alg]
-  }
 
   trait Mixin[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] extends Service[Alg]{
     implicit val serviceInstance: Service[Alg] = this

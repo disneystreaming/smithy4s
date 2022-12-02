@@ -37,14 +37,14 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     Alg[_[_, _, _, _, _]]
 ](
     router: Router[F],
-    serviceProvider: Service.Provider[Alg]
+    serviceInstance: Service[Alg]
 )(implicit
     ce: CompatEffect[F]
 ) {
   import ce._
   import org.http4s.implicits._
   import router._
-  private[compliancetests] val originalService = serviceProvider.service
+  private[compliancetests] val originalService: Service[Alg] = serviceInstance
   private val baseUri = uri"http://localhost/"
 
   private def makeRequest(
