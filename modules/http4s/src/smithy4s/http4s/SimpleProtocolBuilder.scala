@@ -36,8 +36,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 ) {
 
   def apply[Alg[_[_, _, _, _, _]]](
-      serviceProvider: smithy4s.Service.Provider[Alg]
-  ): ServiceBuilder[Alg] = new ServiceBuilder(serviceProvider.service)
+      service: smithy4s.Service[Alg]
+  ): ServiceBuilder[Alg] = new ServiceBuilder(service)
 
   def routes[Alg[_[_, _, _, _, _]], F[_]](
       impl: FunctorAlgebra[Alg, F]
