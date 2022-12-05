@@ -202,6 +202,19 @@ in `downstream` can use the Smithy shapes present in the `smithy-aws-iam-traits`
 
 
 
+One side-effect of this is that if you produce JARs containing artifacts produced by Smithy4s code generation, they'll contain a `smithy4s.tracking.smithy`. This could be a problematic file if you're using `sbt-assembly` because if you depend on multiple JARs that contain this file, you'll need to write a custom `assemblyMergeStrategy`, like so:
+
+```sbt
+assemblyMergeStrategy := {
+  case "META-INF/smithy/smithy4s.tracking.smithy" =>
+    MergeStrategy.discard
+  case x =>
+    val oldStrategy = assemblyMergeStrategy.value
+    oldStrategy(x)
+}
+```
+
+This is perfectly fine to discard this file from your assembly jar.
 
 ### Manually skipping (or including) namespaces during code-generation.
 
