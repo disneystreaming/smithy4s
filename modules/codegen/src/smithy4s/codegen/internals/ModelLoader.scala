@@ -18,6 +18,7 @@ package smithy4s.codegen
 package internals
 
 import coursier._
+import coursier.cache.FileCache
 import coursier.parse.DependencyParser
 import coursier.parse.RepositoryParser
 import software.amazon.smithy.build.ProjectionTransformer
@@ -130,7 +131,9 @@ private[codegen] object ModelLoader {
     }
     val resolvedDeps: Seq[java.io.File] =
       if (deps.nonEmpty) {
-        val fetch = Fetch().addRepositories(repos: _*).addDependencies(deps: _*)
+        val fetch = Fetch(FileCache())
+          .addRepositories(repos: _*)
+          .addDependencies(deps: _*)
         fetch.run()
       } else {
         Seq.empty
