@@ -1019,7 +1019,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
           }
           def stringNode(x: StringNode): Line =
-            line"""smithy4s.Document.fromString("${x.getValue}")"""
+            line"""smithy4s.Document.fromString(${renderStringLiteral(x.getValue)})"""
         })
       }
       case _ => _ => line"null"
