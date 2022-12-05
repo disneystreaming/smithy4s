@@ -11,12 +11,12 @@ object Dependencies {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.17.9"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.18.0"
     )
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val version = "1.26.3"
+    val version = "1.26.4"
     val model = org % "smithy-model" % version
     val testTraits = org % "smithy-protocol-test-traits" % version
     val build = org % "smithy-build" % version
