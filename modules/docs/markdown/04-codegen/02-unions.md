@@ -38,7 +38,7 @@ However, having a union member point to the `Unit` shape in Smithy leads to the 
 
 Under certain conditions, Smithy4s offers a mechanism to "flatten" structure members directly as a member of the sealed trait.
 
-Head over to the page explaining code-gen [customisation](01-customisation.md) for a detailed explanation.
+Head over to the page explaining code-gen [customisation](01-customisation/02-adts.md) for a detailed explanation.
 
 ### Regarding JSON encoding
 
