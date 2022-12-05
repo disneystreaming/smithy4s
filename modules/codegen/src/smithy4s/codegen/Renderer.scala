@@ -978,8 +978,10 @@ private[codegen] class Renderer(compilationUnit: CompilationUnit) { self =>
             }
             line"smithy4s.Document.obj(${members.toList.intercalate(Line.comma)})"
           }
-          def stringNode(x: StringNode): Line =
-            line"""smithy4s.Document.fromString("${x.getValue}")"""
+          def stringNode(x: StringNode): Line = {
+            val escapedString = x.getValue.replace("\"", "\\\"")
+            line"""smithy4s.Document.fromString("$escapedString")"""
+          }
         })
       }
       case _ => _ => line"null"
