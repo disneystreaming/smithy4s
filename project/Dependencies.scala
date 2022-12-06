@@ -36,6 +36,12 @@ object Dependencies {
       Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
   }
 
+  object Circe {
+    val circeVersion = "0.14.1"
+    val parser = "io.circe" %% "circe-parser" % circeVersion
+    val generic = "io.circe" %% "circe-generic" % circeVersion
+  }
+
   object Decline {
     val declineVersion = "2.4.0"
 
@@ -57,10 +63,6 @@ object Dependencies {
     val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
 
-  val Circe = new {
-    val generic: Def.Initialize[ModuleID] =
-      Def.setting("io.circe" %%% "circe-generic" % "0.14.3")
-  }
 
   /*
    * we override the version to use the fix included in
