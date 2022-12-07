@@ -32,7 +32,7 @@ Global / licenses := Seq(
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
+  if (!sys.env.contains("CI")) "dev-SNAPSHOT1"
   else (ThisBuild / version).value
 }
 
@@ -735,7 +735,8 @@ lazy val complianceTests = projectMatrix
       ce3 ++ Seq(
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
-        Dependencies.Weaver.cats.value % Test
+        Dependencies.Weaver.cats.value % Test,
+        "com.lihaoyi" %% "pprint" % "0.8.1"
       )
     },
     Test / smithySpecs := Seq(
