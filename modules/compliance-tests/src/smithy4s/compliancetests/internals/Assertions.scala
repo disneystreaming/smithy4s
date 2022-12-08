@@ -49,13 +49,13 @@ private[internals] object assert {
     }
   }
 
-  def bodyEql[A](
-      expected: A,
-      actual: A,
+  def bodyEql(
+      expected: String,
+      actual: String,
       bodyMediaType: Option[String]
   ): ComplianceResult = {
     if (isJson(bodyMediaType)) {
-      jsonEql(expected.toString, actual.toString)
+      jsonEql(expected, actual)
     } else {
       eql(expected, actual)
     }
