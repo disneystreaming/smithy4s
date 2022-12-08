@@ -835,7 +835,7 @@ lazy val benchmark = projectMatrix
   )
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Circe.generic
+      Dependencies.Circe.generic.value
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "benchmark.smithy"

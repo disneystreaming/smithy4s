@@ -42,12 +42,6 @@ object Dependencies {
     val generic =  Def.setting("io.circe" %%% "circe-generic" % circeVersion)
   }
 
-  object Circe {
-    val circeVersion = "0.14.1"
-    val parser = "io.circe" %% "circe-parser" % circeVersion
-    val generic = "io.circe" %% "circe-generic" % circeVersion
-  }
-
   object Decline {
     val declineVersion = "2.4.0"
 
