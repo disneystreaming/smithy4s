@@ -56,10 +56,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       request: Request[F],
       testCase: HttpRequestTestCase
   ): F[ComplianceResult] = {
+
     val bodyAssert = testCase.body
       .map { expectedBody =>
         request.bodyText.compile.string.map { responseBody =>
-          assert.eql(expectedBody, responseBody)
+          assert.bodyEql(responseBody, expectedBody, testCase.bodyMediaType)
+
         }
       }
       .getOrElse(assert.success.pure[F])
@@ -234,7 +236,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   val res: F[O] = service
                     .toPolyFunction[R](client)
                     .apply(endpoint.wrap(dummyInput))
-                  res.map { output => assert.eql(expectedOutput, output) }
+                  res.map { output =>
+                    assert.eql(
+                      expectedOutput,
+                      output
+                    )
+                  }
                 }
             }
           }
