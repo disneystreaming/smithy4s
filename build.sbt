@@ -733,6 +733,7 @@ lazy val complianceTests = projectMatrix
         if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
         else Seq.empty
       ce3 ++ Seq(
+       Dependencies.Circe.parser,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
@@ -834,7 +835,7 @@ lazy val benchmark = projectMatrix
   )
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.Circe.generic.value
+      Dependencies.Circe.generic
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "benchmark.smithy"

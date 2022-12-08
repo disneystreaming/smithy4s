@@ -19,13 +19,27 @@ package internals
 
 import cats.implicits._
 import ComplianceTest._
+import io.circe.parser._
 import org.http4s.Headers
 import org.typelevel.ci.CIString
-import smithy.test.{HttpResponseTestCase, HttpRequestTestCase}
+import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 
 private[internals] object assert {
   def success: ComplianceResult = Right(())
   def fail(msg: String): ComplianceResult = Left(msg)
+
+  private def isJson(bodyMediaType: Option[String]) =
+    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
+
+  private def jsonEql(a: String, b: String): ComplianceResult = {
+    (parse(a), parse(b)) match {
+      case (Right(a), Right(b)) if a == b => success
+      case (Left(a), Left(b))   => fail(s"Both JSONs are invalid: $a, $b")
+      case (Left(a), _)         => fail(s"First JSON is invalid: $a")
+      case (_, Left(b))         => fail(s"Second JSON is invalid: $b")
+      case (Right(a), Right(b)) => fail(s"JSONs are not equal: $a, $b")
+    }
+  }
 
   def eql[A](expected: A, actual: A): ComplianceResult = {
     if (expected == actual) {
@@ -34,6 +48,18 @@ private[internals] object assert {
       fail(
         s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
       )
+    }
+  }
+
+  def bodyEql[A](
+      expected: A,
+      actual: A,
+      bodyMediaType: Option[String]
+  ): ComplianceResult = {
+    if (isJson(bodyMediaType)) {
+      jsonEql(expected.toString, actual.toString)
+    } else {
+      eql(expected, actual)
     }
   }
 
