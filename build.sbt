@@ -737,7 +737,7 @@ lazy val complianceTests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
-        "com.lihaoyi" %% "pprint" % "0.8.1"
+        Dependencies.Pprint.core.value
       )
     },
     Test / smithySpecs := Seq(

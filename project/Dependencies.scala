@@ -63,6 +63,11 @@ object Dependencies {
     val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
 
+  object Pprint{
+    val pprintVersion = "0.8.1"
+    val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
+  }
+
 
   /*
    * we override the version to use the fix included in
