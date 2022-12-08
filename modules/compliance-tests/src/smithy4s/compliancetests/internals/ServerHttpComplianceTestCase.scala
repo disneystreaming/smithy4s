@@ -207,7 +207,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
               }
               .map { case ((actualBody, status), headers) =>
                 val bodyAssert = testCase.body
-                  .map(body => assert.eql(body, actualBody))
+                  .map(body =>
+                    assert.bodyEql(body, actualBody, testCase.bodyMediaType)
+                  )
                 val assertions =
                   bodyAssert.toList :+
                     assert.testCase.checkHeaders(testCase, headers) :+
