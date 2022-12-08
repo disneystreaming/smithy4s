@@ -237,10 +237,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     .toPolyFunction[R](client)
                     .apply(endpoint.wrap(dummyInput))
                   res.map { output =>
-                    assert.bodyEql(
+                    assert.eql(
                       expectedOutput,
-                      output,
-                      testCase.bodyMediaType
+                      output
                     )
                   }
                 }

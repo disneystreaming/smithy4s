@@ -6,7 +6,7 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0"
     )
 
   val Jsoniter =
@@ -33,7 +33,13 @@ object Dependencies {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.8.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
+  }
+
+  object Circe {
+    val circeVersion = "0.14.3"
+    val parser =  Def.setting("io.circe" %%% "circe-parser" % circeVersion)
+    val generic =  Def.setting("io.circe" %%% "circe-generic" % circeVersion)
   }
 
   object Circe {
@@ -62,6 +68,7 @@ object Dependencies {
     val mainApi = "com.lihaoyi" %% "mill-main-api" % millVersion
     val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
+
 
   object Pprint{
     val pprintVersion = "0.8.1"

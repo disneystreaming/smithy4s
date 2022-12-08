@@ -63,6 +63,18 @@ private[internals] object assert {
     }
   }
 
+  def bodyEql(
+      expected: String,
+      actual: String,
+      bodyMediaType: Option[String]
+  ): ComplianceResult = {
+    if (isJson(bodyMediaType)) {
+      jsonEql(expected, actual)
+    } else {
+      eql(expected, actual)
+    }
+  }
+
   private def headersExistenceCheck(
       headers: Headers,
       expected: Either[Option[List[String]], Option[List[String]]]

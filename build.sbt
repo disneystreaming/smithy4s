@@ -552,7 +552,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.1",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
       Dependencies.Cats.core.value
     ),
     libraryDependencies ++= munitDeps.value,
@@ -733,7 +733,7 @@ lazy val complianceTests = projectMatrix
         if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
         else Seq.empty
       ce3 ++ Seq(
-       Dependencies.Circe.parser,
+       Dependencies.Circe.parser.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
