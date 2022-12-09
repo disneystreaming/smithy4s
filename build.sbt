@@ -32,7 +32,7 @@ Global / licenses := Seq(
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 ThisBuild / version := {
-  if (!sys.env.contains("CI")) "dev-SNAPSHOT1"
+  if (!sys.env.contains("CI")) "dev-SNAPSHOT"
   else (ThisBuild / version).value
 }
 
