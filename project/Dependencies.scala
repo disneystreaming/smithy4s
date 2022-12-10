@@ -64,6 +64,12 @@ object Dependencies {
   }
 
 
+  object Pprint{
+    val pprintVersion = "0.8.1"
+    val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
+  }
+
+
   /*
    * we override the version to use the fix included in
    * https://github.com/typelevel/cats-effect/pull/2945

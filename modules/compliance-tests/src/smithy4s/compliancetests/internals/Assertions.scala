@@ -45,7 +45,21 @@ private[internals] object assert {
     if (expected == actual) {
       success
     } else {
-      fail(s"Actual value: $actual was not equal to $expected.")
+      fail(
+        s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+      )
+    }
+  }
+
+  def bodyEql[A](
+      expected: A,
+      actual: A,
+      bodyMediaType: Option[String]
+  ): ComplianceResult = {
+    if (isJson(bodyMediaType)) {
+      jsonEql(expected.toString, actual.toString)
+    } else {
+      eql(expected, actual)
     }
   }
 
