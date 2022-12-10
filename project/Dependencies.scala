@@ -11,7 +11,7 @@ object Dependencies {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.19.0"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.19.1"
     )
 
   val Smithy = new {
@@ -38,8 +38,8 @@ object Dependencies {
 
   object Circe {
     val circeVersion = "0.14.3"
-    val parser =  Def.setting("io.circe" %%% "circe-parser" % circeVersion)
-    val generic =  Def.setting("io.circe" %%% "circe-generic" % circeVersion)
+    val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
+    val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
   }
 
   object Decline {
@@ -63,12 +63,10 @@ object Dependencies {
     val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
 
-
-  object Pprint{
+  object Pprint {
     val pprintVersion = "0.8.1"
     val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
   }
-
 
   /*
    * we override the version to use the fix included in
