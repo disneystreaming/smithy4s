@@ -38,8 +38,8 @@ object Dependencies {
 
   object Circe {
     val circeVersion = "0.14.3"
-    val parser =  Def.setting("io.circe" %%% "circe-parser" % circeVersion)
-    val generic =  Def.setting("io.circe" %%% "circe-generic" % circeVersion)
+    val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
+    val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
   }
 
   object Decline {
@@ -63,12 +63,10 @@ object Dependencies {
     val mainTestkit = "com.lihaoyi" %% "mill-main-testkit" % millVersion % Test
   }
 
-
-  object Pprint{
+  object Pprint {
     val pprintVersion = "0.8.1"
     val core = Def.setting("com.lihaoyi" %%% "pprint" % pprintVersion)
   }
-
 
   /*
    * we override the version to use the fix included in
@@ -80,7 +78,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.1")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.2")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.16" else "0.22.14")
