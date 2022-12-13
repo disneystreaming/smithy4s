@@ -157,20 +157,24 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           _.configurations.exists(_.contains(Smithy4s.name))
         )
         .map(_.withConfigurations(None))
+        .distinct
     },
     config / smithy4sExternallyTrackedDependencies := {
       (config / externalDependencyClasspath).value
         .map(_.data)
         .flatMap(extract)
+        .distinct
     },
     config / smithy4sNormalExternalDependencies := {
       (config / externalDependencyClasspath).value
         .flatMap(_.metadata.get(moduleID.key))
+        .distinct
     },
     config / smithy4sAllExternalDependencies := {
-      (config / smithy4sNormalExternalDependencies).value ++
+      val all = (config / smithy4sNormalExternalDependencies).value ++
         (config / smithy4sExplicitCodegenOnlyDependencies).value ++
         (config / smithy4sExternallyTrackedDependencies).value
+      all.distinct
     },
     config / smithy4sAllDependenciesAsJars := {
       (config / smithy4sInternalDependenciesAsJars).value ++
