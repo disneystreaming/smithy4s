@@ -31,13 +31,22 @@ private[internals] object assert {
   private def isJson(bodyMediaType: Option[String]) =
     bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
 
-  private def jsonEql(a: String, b: String): ComplianceResult = {
-    (parse(a), parse(b)) match {
-      case (Right(a), Right(b)) if a == b => success
-      case (Left(a), Left(b))   => fail(s"Both JSONs are invalid: $a, $b")
-      case (Left(a), _)         => fail(s"First JSON is invalid: $a")
-      case (_, Left(b))         => fail(s"Second JSON is invalid: $b")
-      case (Right(a), Right(b)) => fail(s"JSONs are not equal: $a, $b")
+  private def jsonEql(expected: String, actual: String): ComplianceResult = {
+    (expected.isEmpty, actual.isEmpty) match {
+      case (true, true)  => success
+      case (true, false) => fail(s"Expected empty body, but got $actual")
+      case (false, true) => fail(s"Expected $expected, but got empty body")
+      case (false, false) =>
+        (parse(expected), parse(actual)) match {
+          case (Right(a), Right(b)) if a == b => success
+          case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
+          case (Left(a), _) =>
+            fail(s"Expected JSON is invalid: $expected \n Error $a ")
+          case (_, Left(b)) =>
+            fail(s"Actual JSON is invalid: $actual \n Error $b")
+          case (Right(a), Right(b)) =>
+            fail(s"JSONs are not equal: expected json: $a \n actual json:  $b")
+        }
     }
   }
 
@@ -48,18 +57,6 @@ private[internals] object assert {
       fail(
         s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
       )
-    }
-  }
-
-  def bodyEql[A](
-      expected: A,
-      actual: A,
-      bodyMediaType: Option[String]
-  ): ComplianceResult = {
-    if (isJson(bodyMediaType)) {
-      jsonEql(expected.toString, actual.toString)
-    } else {
-      eql(expected, actual)
     }
   }
 

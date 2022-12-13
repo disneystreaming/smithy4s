@@ -82,6 +82,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   plusIsSpace = true
                 )
               )
+            case Array(k) => (k, "")
           }
         }.toMap
       )
