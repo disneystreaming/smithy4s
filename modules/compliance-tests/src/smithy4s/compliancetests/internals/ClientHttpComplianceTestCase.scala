@@ -84,7 +84,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               )
             case Array(k) => (k, "")
           }
-        }.toMap
+        }.groupBy(_._1).view.mapValues(_.flatMap(_._2)).toMap
       )
 
     val uriAssert = assert.eql(expectedUri, request.uri)
