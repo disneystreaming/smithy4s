@@ -241,10 +241,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         val depRes = (update / dependencyResolution).value
         val updc = (update / updateConfiguration).value
         val uwconfig = (update / unresolvedWarningConfiguration).value
+        val smInfo = (update / scalaModuleInfo).value
         val modDescr = depRes.moduleDescriptor(
           syntheticModule,
           ids.toVector,
-          None
+          smInfo
         )
 
         depRes
