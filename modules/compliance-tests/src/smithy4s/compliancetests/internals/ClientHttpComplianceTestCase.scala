@@ -66,25 +66,34 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       }
       .getOrElse(assert.success.pure[F])
 
+    def splitQuery(queryString: String): (String, String) = {
+      queryString.split("=", 2) match {
+        case Array(k, v) =>
+          (
+            k,
+            Uri.decode(
+              toDecode = v,
+              charset = StandardCharsets.UTF_8,
+              plusIsSpace = true
+            )
+          )
+        case Array(k) => (k, "")
+      }
+    }
     val expectedUri = baseUri
       .withPath(
         Uri.Path.unsafeFromString(testCase.uri)
       )
-      .withQueryParams(
-        testCase.queryParams.combineAll.map {
-          _.split("=", 2) match {
-            case Array(k, v) =>
-              (
-                k,
-                Uri.decode(
-                  toDecode = v,
-                  charset = StandardCharsets.UTF_8,
-                  plusIsSpace = true
-                )
-              )
-            case Array(k) => (k, "")
+      .withMultiValueQueryParams(
+        testCase.queryParams.combineAll
+          .map(splitQuery)
+          .foldRight[Map[String, List[String]]](Map.empty) {
+            case ((k, v), acc) =>
+              acc.get(k) match {
+                case Some(value) => acc + (k -> (v :: value))
+                case None        => acc + (k -> List(v))
+              }
           }
-        }.groupBy(_._1).view.mapValues(_.flatMap(_._2)).toMap
       )
 
     val uriAssert = assert.eql(expectedUri, request.uri)
