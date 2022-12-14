@@ -1,12 +1,12 @@
 package smithy4s.example
 
-import smithy4s.schema.Schema.int
 import smithy4s.Hints
-import smithy4s.ShapeId
-import smithy4s.schema.Schema.bijection
 import smithy4s.Newtype
-import smithy4s.example.refined.Age.provider._
 import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.example.refined.Age.provider._
+import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.int
 
 object Age extends Newtype[smithy4s.example.refined.Age] {
   val id: ShapeId = ShapeId("smithy4s.example", "Age")

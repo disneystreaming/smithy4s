@@ -1,17 +1,17 @@
 package smithy4s.example
 
-import smithy4s.Schema
-import smithy4s.schema.Schema.int
 import smithy4s.Hints
-import smithy4s.schema.Schema.struct
-import smithy4s.schema.Schema.double
-import smithy4s.schema.Schema.bigint
-import smithy4s.schema.Schema.bigdecimal
-import smithy4s.schema.Schema.long
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.float
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.bigdecimal
+import smithy4s.schema.Schema.bigint
+import smithy4s.schema.Schema.double
+import smithy4s.schema.Schema.float
+import smithy4s.schema.Schema.int
+import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.short
+import smithy4s.schema.Schema.struct
 
 case class Numeric(i: Option[Int] = None, f: Option[Float] = None, d: Option[Double] = None, s: Option[Short] = None, l: Option[Long] = None, bi: Option[BigInt] = None, bd: Option[BigDecimal] = None)
 object Numeric extends ShapeTag.Companion[Numeric] {

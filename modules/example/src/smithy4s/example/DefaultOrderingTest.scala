@@ -1,12 +1,12 @@
 package smithy4s.example
 
-import smithy4s.Schema
-import smithy4s.schema.Schema.int
 import smithy4s.Hints
-import smithy4s.schema.Schema.string
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.int
+import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.struct
 
 case class DefaultOrderingTest(three: String, one: Int = 1, two: Option[String] = None)
 object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {

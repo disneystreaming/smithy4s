@@ -1,10 +1,10 @@
 package smithy4s.example
 
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
-import smithy4s.Hints
 
 case class ArbitraryDataTest()
 object ArbitraryDataTest extends ShapeTag.Companion[ArbitraryDataTest] {

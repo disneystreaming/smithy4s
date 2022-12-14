@@ -1,15 +1,15 @@
 package smithy4s.example
 
-import smithy4s.Schema
-import smithy4s.schema.Schema.unit
-import smithy4s.kinds.PolyFunction5
-import smithy4s.Transformation
-import smithy4s.Service
-import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.Hints
-import smithy4s.StreamingSchema
-import smithy4s.ShapeId
 import smithy4s.Endpoint
+import smithy4s.Hints
+import smithy4s.Schema
+import smithy4s.Service
+import smithy4s.ShapeId
+import smithy4s.StreamingSchema
+import smithy4s.Transformation
+import smithy4s.kinds.PolyFunction5
+import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.Schema.unit
 
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>

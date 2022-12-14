@@ -98,7 +98,7 @@ private[internals] object Renderer {
         }
 
       val allLines: List[String] = List(p, "") ++
-        allImports.toSet.map("import " + _) ++
+        allImports.distinct.sorted.map("import " + _) ++
         List("") ++ code
 
       val content = allLines.mkString(System.lineSeparator())
