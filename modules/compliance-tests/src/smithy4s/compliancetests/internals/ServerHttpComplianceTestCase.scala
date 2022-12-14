@@ -17,8 +17,6 @@
 package smithy4s.compliancetests
 package internals
 
-import java.nio.charset.StandardCharsets
-
 import cats.implicits._
 import org.http4s._
 import org.http4s.headers.`Content-Type`
@@ -69,20 +67,8 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       .withPath(
         Uri.Path.unsafeFromString(testCase.uri).addEndsWithSlash
       )
-      .withQueryParams(
-        testCase.queryParams.combineAll.map {
-          _.split("=", 2) match {
-            case Array(k, v) =>
-              (
-                k,
-                Uri.decode(
-                  toDecode = v,
-                  charset = StandardCharsets.UTF_8,
-                  plusIsSpace = true
-                )
-              )
-          }
-        }.toMap
+      .withMultiValueQueryParams(
+        parseQueryParams(testCase.queryParams)
       )
 
     val body =
