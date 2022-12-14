@@ -1,12 +1,12 @@
 package smithy4s.example
 
-import smithy4s.Schema
 import smithy4s.Hints
-import smithy4s.schema.Schema.string
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
 sealed trait OrderType extends scala.Product with scala.Serializable {
@@ -25,7 +25,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val hints : Hints = Hints.empty
 
     val schema: Schema[InStoreOrder] = struct(
-      OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0)), smithy.api.Required()),
+      OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required()),
       string.optional[InStoreOrder]("locationId", _.locationId),
     ){
       InStoreOrder.apply

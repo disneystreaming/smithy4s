@@ -24,6 +24,16 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.{ListMap}
 
 package object internals {
+
+  // Due to AWS's usage of integer as the canonical representation of a Timestamp in smithy , we need to provide the decoder with instructions to use a Long instead.
+  // therefore the timestamp type is switched to type epochSeconds: Long
+  // This is just a workaround thats limited to testing scenarios
+  def mapAllTimestampsToEpoch[A](schema: Schema[A]): Schema[A] = {
+    schema.transformHintsTransitively(h =>
+      h.++(Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen))
+    )
+  }
+  
   def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
@@ -52,5 +62,4 @@ package object internals {
           }
       }
   }
-
 }

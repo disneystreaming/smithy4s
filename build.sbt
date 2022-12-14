@@ -733,7 +733,7 @@ lazy val complianceTests = projectMatrix
         if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
         else Seq.empty
       ce3 ++ Seq(
-       Dependencies.Circe.parser.value,
+        Dependencies.Circe.parser.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
@@ -789,7 +789,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,

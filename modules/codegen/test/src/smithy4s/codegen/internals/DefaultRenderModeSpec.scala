@@ -36,12 +36,12 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
     val scalaCode =
       """|package foo
          |
-         |import smithy4s.Schema
          |import smithy4s.Hints
-         |import smithy4s.schema.Schema.string
+         |import smithy4s.Schema
          |import smithy4s.ShapeId
-         |import smithy4s.schema.Schema.struct
          |import smithy4s.ShapeTag
+         |import smithy4s.schema.Schema.string
+         |import smithy4s.schema.Schema.struct
          |
          |case class Test(one: Option[String], two: String, three: String)
          |object Test extends ShapeTag.Companion[Test] {
@@ -79,12 +79,12 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
     val scalaCode =
       """|package foo
          |
-         |import smithy4s.Schema
          |import smithy4s.Hints
-         |import smithy4s.schema.Schema.string
+         |import smithy4s.Schema
          |import smithy4s.ShapeId
-         |import smithy4s.schema.Schema.struct
          |import smithy4s.ShapeTag
+         |import smithy4s.schema.Schema.string
+         |import smithy4s.schema.Schema.struct
          |
          |case class Test(two: String, three: String, one: Option[String] = None)
          |object Test extends ShapeTag.Companion[Test] {
@@ -122,12 +122,12 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
     val scalaCode =
       """|package foo
          |
-         |import smithy4s.Schema
          |import smithy4s.Hints
-         |import smithy4s.schema.Schema.string
+         |import smithy4s.Schema
          |import smithy4s.ShapeId
-         |import smithy4s.schema.Schema.struct
          |import smithy4s.ShapeTag
+         |import smithy4s.schema.Schema.string
+         |import smithy4s.schema.Schema.struct
          |
          |case class Test(three: String, two: String = "test", one: Option[String] = None)
          |object Test extends ShapeTag.Companion[Test] {

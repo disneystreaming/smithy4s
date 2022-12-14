@@ -1,14 +1,15 @@
 package smithy4s.example.collision
 
-import smithy4s.Schema
-import smithy4s.schema.Schema.unit
-import smithy4s.kinds.PolyFunction5
-import smithy4s.Transformation
-import smithy4s.ShapeId
-import smithy4s.Service
-import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.Endpoint
 import smithy4s.Hints
+import smithy4s.Schema
+import smithy4s.Service
+import smithy4s.ShapeId
 import smithy4s.StreamingSchema
+import smithy4s.Transformation
+import smithy4s.kinds.PolyFunction5
+import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.Schema.unit
 
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -45,12 +46,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
 
   val version: String = "1.0.0"
 
-  def endpoint[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) = op match {
-    case _Set(input) => (input, _Set)
-    case _List(input) => (input, _List)
-    case _Map(input) => (input, _Map)
-    case _Option(input) => (input, _Option)
-  }
+  def endpoint[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) = op.endpoint
 
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
     def set(set: Set[String]) = _Set(SetInput(set))
@@ -73,14 +69,12 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl : ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
-    def apply[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
-      case _Set(SetInput(set)) => impl.set(set)
-      case _List(ListInput(list)) => impl.list(list)
-      case _Map(MapInput(value)) => impl.map(value)
-      case _Option(OptionInput(value)) => impl.option(value)
-    }
+    def apply[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing]
+  case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[SetInput, Nothing, Unit, Nothing, Nothing] = impl.set(input.set)
+    def endpoint: (SetInput, Endpoint[SetInput, Nothing, Unit, Nothing, Nothing]) = (input, _Set)
+  }
   object _Set extends ReservedNameServiceGen.Endpoint[SetInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Set")
     val input: Schema[SetInput] = SetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -92,7 +86,10 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     )
     def wrap(input: SetInput) = _Set(input)
   }
-  case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing]
+  case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[ListInput, Nothing, Unit, Nothing, Nothing] = impl.list(input.list)
+    def endpoint: (ListInput, Endpoint[ListInput, Nothing, Unit, Nothing, Nothing]) = (input, _List)
+  }
   object _List extends ReservedNameServiceGen.Endpoint[ListInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "List")
     val input: Schema[ListInput] = ListInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -104,7 +101,10 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     )
     def wrap(input: ListInput) = _List(input)
   }
-  case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing]
+  case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[MapInput, Nothing, Unit, Nothing, Nothing] = impl.map(input.value)
+    def endpoint: (MapInput, Endpoint[MapInput, Nothing, Unit, Nothing, Nothing]) = (input, _Map)
+  }
   object _Map extends ReservedNameServiceGen.Endpoint[MapInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Map")
     val input: Schema[MapInput] = MapInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -116,7 +116,10 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     )
     def wrap(input: MapInput) = _Map(input)
   }
-  case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing]
+  case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[OptionInput, Nothing, Unit, Nothing, Nothing] = impl.option(input.value)
+    def endpoint: (OptionInput, Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing]) = (input, _Option)
+  }
   object _Option extends ReservedNameServiceGen.Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Option")
     val input: Schema[OptionInput] = OptionInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -130,4 +133,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
 }
 
-sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput]
+sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[ReservedNameServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
