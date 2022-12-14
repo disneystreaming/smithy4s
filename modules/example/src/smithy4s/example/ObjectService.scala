@@ -5,7 +5,6 @@ import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
-import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
@@ -14,6 +13,8 @@ import smithy4s.schema.Schema.UnionSchema
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.ShapeId
+import smithy4s.Endpoint
 
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -46,10 +47,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
 
   val version: String = "1.0.0"
 
-  def endpoint[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) = op match {
-    case PutObject(input) => (input, PutObject)
-    case GetObject(input) => (input, GetObject)
-  }
+  def endpoint[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) = op.endpoint
 
   object reified extends ObjectServiceGen[ObjectServiceOperation] {
     def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
@@ -68,12 +66,12 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl : ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = new PolyFunction5[ObjectServiceOperation, P] {
-    def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
-      case PutObject(PutObjectInput(key, bucketName, data, foo, someValue)) => impl.putObject(key, bucketName, data, foo, someValue)
-      case GetObject(GetObjectInput(key, bucketName)) => impl.getObject(key, bucketName)
-    }
+    def apply[I, E, O, SI, SO](op : ObjectServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
+  case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] = impl.putObject(input.key, input.bucketName, input.data, input.foo, input.someValue)
+    def endpoint: (PutObjectInput, Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
+  }
   object PutObject extends ObjectServiceGen.Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
     val input: Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -127,7 +125,10 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
       case c : NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
     }
   }
-  case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
+  case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
+    def endpoint: (GetObjectInput, Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
+  }
   object GetObject extends ObjectServiceGen.Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObject")
     val input: Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -173,4 +174,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   }
 }
 
-sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput]
+sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[ObjectServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}

@@ -4,11 +4,12 @@ import smithy4s.Schema
 import smithy4s.schema.Schema.unit
 import smithy4s.kinds.PolyFunction5
 import smithy4s.Transformation
-import smithy4s.ShapeId
 import smithy4s.Service
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.Hints
 import smithy4s.StreamingSchema
+import smithy4s.ShapeId
+import smithy4s.Endpoint
 
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -37,9 +38,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
 
   val version: String = "1"
 
-  def endpoint[I, E, O, SI, SO](op : BrandServiceOperation[I, E, O, SI, SO]) = op match {
-    case AddBrands(input) => (input, AddBrands)
-  }
+  def endpoint[I, E, O, SI, SO](op : BrandServiceOperation[I, E, O, SI, SO]) = op.endpoint
 
   object reified extends BrandServiceGen[BrandServiceOperation] {
     def addBrands(brands: Option[List[String]] = None) = AddBrands(AddBrandsInput(brands))
@@ -56,11 +55,12 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl : BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = new PolyFunction5[BrandServiceOperation, P] {
-    def apply[I, E, O, SI, SO](op : BrandServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
-      case AddBrands(AddBrandsInput(brands)) => impl.addBrands(brands)
-    }
+    def apply[I, E, O, SI, SO](op : BrandServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
+  case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands(input.brands)
+    def endpoint: (AddBrandsInput, Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
+  }
   object AddBrands extends BrandServiceGen.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddBrands")
     val input: Schema[AddBrandsInput] = AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
@@ -74,4 +74,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   }
 }
 
-sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput]
+sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[BrandServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
