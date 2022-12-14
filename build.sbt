@@ -740,6 +740,11 @@ lazy val complianceTests = projectMatrix
         Dependencies.Pprint.core.value
       )
     },
+    moduleName := {
+      if (virtualAxes.value.contains(CatsEffect2Axis))
+        moduleName.value + "-ce2"
+      else moduleName.value
+    },
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
     ),
