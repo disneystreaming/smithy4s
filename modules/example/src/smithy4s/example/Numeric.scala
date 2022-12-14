@@ -13,20 +13,20 @@ import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.short
 import smithy4s.schema.Schema.struct
 
-case class Numeric(i: Option[Int] = None, f: Option[Float] = None, d: Option[Double] = None, s: Option[Short] = None, l: Option[Long] = None, bi: Option[BigInt] = None, bd: Option[BigDecimal] = None)
+case class Numeric(i: Int = 1, f: Float = 1.0f, d: Double = 1.0d, s: Short = 1, l: Long = 1L, bi: BigInt = scala.math.BigInt(1), bd: BigDecimal = scala.math.BigDecimal(1.0))
 object Numeric extends ShapeTag.Companion[Numeric] {
   val id: ShapeId = ShapeId("smithy4s.example", "Numeric")
 
   val hints : Hints = Hints.empty
 
   implicit val schema: Schema[Numeric] = struct(
-    int.optional[Numeric]("i", _.i),
-    float.optional[Numeric]("f", _.f),
-    double.optional[Numeric]("d", _.d),
-    short.optional[Numeric]("s", _.s),
-    long.optional[Numeric]("l", _.l),
-    bigint.optional[Numeric]("bi", _.bi),
-    bigdecimal.optional[Numeric]("bd", _.bd),
+    int.required[Numeric]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    float.required[Numeric]("f", _.f).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    double.required[Numeric]("d", _.d).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    short.required[Numeric]("s", _.s).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    long.required[Numeric]("l", _.l).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    bigint.required[Numeric]("bi", _.bi).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    bigdecimal.required[Numeric]("bd", _.bd).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
   ){
     Numeric.apply
   }.withId(id).addHints(hints)
