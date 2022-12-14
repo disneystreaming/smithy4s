@@ -1,10 +1,10 @@
 package smithy4s.example.collision
 
-import smithy4s.Schema
 import smithy4s.Hints
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.struct
 
 case class MapInput(value: Map[String, String])
 object MapInput extends ShapeTag.Companion[MapInput] {

@@ -1,14 +1,14 @@
 package smithy4s.example
 
-import smithy4s.Schema
-import smithy4s.schema.Schema.int
 import smithy4s.Hints
-import smithy4s.schema.Schema.string
+import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.bigint
 import smithy4s.schema.Schema.bigdecimal
+import smithy4s.schema.Schema.bigint
+import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.int
+import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
 sealed trait Foo extends scala.Product with scala.Serializable {

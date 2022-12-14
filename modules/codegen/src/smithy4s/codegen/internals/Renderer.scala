@@ -72,19 +72,18 @@ private[internals] object Renderer {
         .filter(_._2.size > 1)
         .keySet
 
-      val allImports: List[String] = renderResult.list
-        .flatMap { line =>
-          line.segments.toList.collect {
-            case nameRef @ NameRef(pkg, _, _)
-                if pkg.nonEmpty && !nameCollisions.contains(
-                  nameRef.getNamePrefix
-                )
-                  && !nameRef.isAutoImported &&
-                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
-              nameRef.show
-            case Import(value) => value
-          }
+      val allImports: List[String] = renderResult.list.flatMap { line =>
+        line.segments.toList.collect {
+          case nameRef @ NameRef(pkg, _, _)
+              if pkg.nonEmpty && !nameCollisions.contains(
+                nameRef.getNamePrefix
+              )
+                && !nameRef.isAutoImported &&
+                !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
+            nameRef.show
+          case Import(value) => value
         }
+      }
 
       val code: List[String] = renderResult.list
         .map { line =>
@@ -99,7 +98,7 @@ private[internals] object Renderer {
         }
 
       val allLines: List[String] = List(p, "") ++
-        allImports.toSet.map("import " + _) ++
+        allImports.distinct.sorted.map("import " + _) ++
         List("") ++ code
 
       val content = allLines.mkString(System.lineSeparator())
@@ -244,21 +243,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"""val version: String = "$version"""",
         newline,
-        if (ops.isEmpty) {
-          line"""def endpoint[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) = sys.error("impossible")"""
-
-        } else {
-          block(
-            line"def endpoint[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) = op match"
-          ) {
-            ops.map {
-              case op if op.input != Type.unit =>
-                line"case ${op.name}(input) => (input, ${op.name})"
-              case op =>
-                line"case ${op.name}() => ((), ${op.name})"
-            }
-          }
-        },
+        line"def endpoint[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) = op.endpoint",
         newline,
         block(
           line"object ${NameRef("reified")} extends $genNameRef[$opTraitNameRef]"
@@ -291,28 +276,22 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         block(
           line"def toPolyFunction[P[_, _, _, _, _]](impl : $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
-        ) {
+        )(
           if (ops.isEmpty) {
-            line"""def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")""".toLines
+            line"""def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")"""
           } else {
-            block(
-              line"def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match "
-            ) {
-              ops.map {
-                case op if op.input == Type.unit =>
-                  line"case ${op.name}() => impl.${op.methodName}(${op.renderParams})"
-                case op if op.hints.contains(Hint.PackedInputs) =>
-                  line"case ${op.name}(input) => impl.${op.methodName}(${op.renderParams})"
-                case op =>
-                  line"case ${op.name}(${op.input}(${op.renderParams})) => impl.${op.methodName}(${op.renderParams})"
-              }
-            }
+            line"def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) "
           }
-        },
+        ),
         ops.map(renderOperation(name, _))
       ),
       newline,
-      line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]",
+      block(
+        line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
+      )(
+        line"def run[F[_, _, _, _, _]](impl: $genName[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]",
+        line"def endpoint: (Input, $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput])"
+      ),
       newline
     )
   }
@@ -324,6 +303,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val params = if (op.input != Type.unit) {
       line"input: ${op.input}"
     } else Line.empty
+    val inputRef = if (op.input != Type.unit) {
+      line"input"
+    } else line"()"
     val genServiceName = serviceName + "Gen"
     val opName = op.name
     val opNameRef = NameRef(opName)
@@ -363,8 +345,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
 
     lines(
-      line"case class ${NameDef(opName)}($params) extends $traitName[${op
-        .renderAlgParams(genServiceName)}]",
+      block(
+        line"case class ${NameDef(opName)}($params) extends $traitName[${op.renderAlgParams(genServiceName)}]"
+      )(
+        line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
+          .renderAlgParams(genServiceName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
+        line"def endpoint: (${op.input}, $Endpoint_[${op
+          .renderAlgParams(genServiceName)}]) = ($inputRef, $opNameRef)"
+      ),
       obj(
         opNameRef,
         ext =
@@ -802,6 +790,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"input"
       } else op.params.map(f => Line(f.name)).intercalate(Line.comma)
 
+    def renderAccessedParams: Line =
+      if (op.input == Type.unit) Line.empty
+      else if (op.hints.contains(Hint.PackedInputs)) {
+        line"input"
+      } else op.params.map(f => line"input.${f.name}").intercalate(Line.comma)
+
     def renderAlgParams(serviceName: String) = {
       line"${op.input}, ${if (op.errors.isEmpty) line"Nothing"
       else NameRef(s"$serviceName.${op.name}Error")}, ${op.output}, ${op.streamedInput
@@ -990,9 +984,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
       case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
       case Primitive.Unit       => _ => line"()"
-      case Primitive.Double     => t => line"${t.toString}"
-      case Primitive.Float      => t => line"${t.toString}"
-      case Primitive.Long       => t => line"${t.toString}"
+      case Primitive.Double     => t => line"${t.toString}d"
+      case Primitive.Float      => t => line"${t.toString}f"
+      case Primitive.Long       => t => line"${t.toString}L"
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
@@ -1009,7 +1003,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           def nullNode(x: NullNode): Line =
             line"smithy4s.Document.nullDoc"
           def numberNode(x: NumberNode): Line =
-            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()})"
+            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
           def objectNode(x: ObjectNode): Line = {
             val members = x.getMembers.asScala.map { member =>
               val key = s""""${member._1.getValue()}""""
