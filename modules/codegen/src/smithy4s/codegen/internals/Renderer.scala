@@ -72,19 +72,18 @@ private[internals] object Renderer {
         .filter(_._2.size > 1)
         .keySet
 
-      val allImports: List[String] = renderResult.list
-        .flatMap { line =>
-          line.segments.toList.collect {
-            case nameRef @ NameRef(pkg, _, _)
-                if pkg.nonEmpty && !nameCollisions.contains(
-                  nameRef.getNamePrefix
-                )
-                  && !nameRef.isAutoImported &&
-                  !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
-              nameRef.show
-            case Import(value) => value
-          }
+      val allImports: List[String] = renderResult.list.flatMap { line =>
+        line.segments.toList.collect {
+          case nameRef @ NameRef(pkg, _, _)
+              if pkg.nonEmpty && !nameCollisions.contains(
+                nameRef.getNamePrefix
+              )
+                && !nameRef.isAutoImported &&
+                !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
+            nameRef.show
+          case Import(value) => value
         }
+      }
 
       val code: List[String] = renderResult.list
         .map { line =>
@@ -990,9 +989,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         (bd: BigDecimal) => line"scala.math.BigDecimal($bd)"
       case Primitive.BigInteger => (bi: BigInt) => line"scala.math.BigInt($bi)"
       case Primitive.Unit       => _ => line"()"
-      case Primitive.Double     => t => line"${t.toString}"
-      case Primitive.Float      => t => line"${t.toString}"
-      case Primitive.Long       => t => line"${t.toString}"
+      case Primitive.Double     => t => line"${t.toString}d"
+      case Primitive.Float      => t => line"${t.toString}f"
+      case Primitive.Long       => t => line"${t.toString}L"
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
