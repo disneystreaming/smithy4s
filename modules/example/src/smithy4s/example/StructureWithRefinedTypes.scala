@@ -13,8 +13,8 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
   val hints : Hints = Hints.empty
 
   implicit val schema: Schema[StructureWithRefinedTypes] = struct(
-    Age.schema.required[StructureWithRefinedTypes]("age", _.age).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0))),
-    PersonAge.schema.required[StructureWithRefinedTypes]("personAge", _.personAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0))),
+    Age.schema.required[StructureWithRefinedTypes]("age", _.age).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
+    PersonAge.schema.required[StructureWithRefinedTypes]("personAge", _.personAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
     smithy4s.example.FancyList.schema.optional[StructureWithRefinedTypes]("fancyList", _.fancyList),
     UnwrappedFancyList.underlyingSchema.optional[StructureWithRefinedTypes]("unwrappedFancyList", _.unwrappedFancyList),
     smithy4s.example.Name.schema.optional[StructureWithRefinedTypes]("name", _.name),

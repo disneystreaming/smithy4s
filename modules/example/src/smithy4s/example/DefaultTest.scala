@@ -15,7 +15,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val hints : Hints = Hints.empty
 
   implicit val schema: Schema[DefaultTest] = struct(
-    int.required[DefaultTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0))),
+    int.required[DefaultTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
     string.required[DefaultTest]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
     StringList.underlyingSchema.required[DefaultTest]("three", _.three).addHints(smithy.api.Default(smithy4s.Document.array())),
   ){

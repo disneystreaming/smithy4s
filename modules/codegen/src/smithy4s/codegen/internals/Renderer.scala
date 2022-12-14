@@ -1003,7 +1003,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           def nullNode(x: NullNode): Line =
             line"smithy4s.Document.nullDoc"
           def numberNode(x: NumberNode): Line =
-            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()})"
+            line"smithy4s.Document.fromDouble(${x.getValue.doubleValue()}d)"
           def objectNode(x: ObjectNode): Line = {
             val members = x.getMembers.asScala.map { member =>
               val key = s""""${member._1.getValue()}""""
