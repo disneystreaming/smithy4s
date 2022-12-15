@@ -17,11 +17,12 @@
 package smithy4s
 package compliancetests
 
-import org.http4s.Uri
+import org.http4s.{Header, Headers, Uri}
 import cats.implicits._
 
 import java.nio.charset.StandardCharsets
-import scala.collection.immutable.{ListMap}
+import scala.annotation.tailrec
+import scala.collection.immutable.ListMap
 
 package object internals {
 
@@ -62,4 +63,33 @@ package object internals {
           }
       }
   }
+
+  def extractHeaders(
+      maybeHeaders: Option[Map[String, String]]
+  ): Option[Headers] =
+    maybeHeaders.map(h =>
+      Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
+    )
+
+  // regex for comma not between quotes
+  private val commaNotBetweenQuotes = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"
+
+  private def parseSingleHeader(
+      kv: (String, String)
+  ): List[(String, String)] = {
+    val key = kv._1
+    val values = kv._2.split(commaNotBetweenQuotes).toList
+    @tailrec
+    def loop(
+        rest: List[String],
+        acc: List[(String, String)]
+    ): List[(String, String)] = {
+      rest match {
+        case ::(head, next) => loop(next, (key, head) :: acc)
+        case Nil            => acc
+      }
+    }
+    loop(values, List.empty)
+  }
+
 }

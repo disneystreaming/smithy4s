@@ -51,9 +51,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   ): Request[F] = {
     val expectedHeaders =
       List(
-        testCase.headers.map(h =>
-          Headers(h.toList.map(a => a: Header.ToRaw): _*)
-        ),
+        extractHeaders(testCase.headers),
         testCase.bodyMediaType.map(mt =>
           Headers(`Content-Type`(MediaType.unsafeParse(mt)))
         )

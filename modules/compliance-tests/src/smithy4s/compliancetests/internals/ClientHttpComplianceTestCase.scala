@@ -24,7 +24,6 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.Uri
-import org.typelevel.ci.CIString
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.http.CodecAPI
@@ -35,7 +34,7 @@ import smithy4s.Service
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
-import org.http4s.Header
+import org.http4s.Headers
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -186,21 +185,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     .through(utf8Encode)
                 }
                 .getOrElse(fs2.Stream.empty)
-            val headers: Seq[Header.ToRaw] =
-              testCase.headers.toList
-                .flatMap(_.toList)
-                .map { case (key, value) =>
-                  Header.Raw(CIString(key), value)
-                }
-                .map(Header.ToRaw.rawToRaw)
-                .toSeq
+
+            //  val headers = extractHeaders(testCase.headers).toList.flatten
+
+            val headers = List(
+              extractHeaders(testCase.headers),
+              Some(
+                Headers(`Content-Type`(MediaType.unsafeParse(mediaType.value)))
+              )
+            ).foldMap(_.combineAll)
+
             req.body.compile.drain.as(
               Response[F](status)
                 .withBodyStream(body)
-                .putHeaders(headers: _*)
-                .putHeaders(
-                  `Content-Type`(MediaType.unsafeParse(mediaType.value))
-                )
+                .withHeaders(headers)
             )
           }
 
