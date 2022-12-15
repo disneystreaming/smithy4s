@@ -21,7 +21,6 @@ import org.http4s.{Header, Headers, Uri}
 import cats.implicits._
 
 import java.nio.charset.StandardCharsets
-import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 
 package object internals {
@@ -77,19 +76,9 @@ package object internals {
   private def parseSingleHeader(
       kv: (String, String)
   ): List[(String, String)] = {
-    val key = kv._1
-    val values = kv._2.split(commaNotBetweenQuotes).toList
-    @tailrec
-    def loop(
-        rest: List[String],
-        acc: List[(String, String)]
-    ): List[(String, String)] = {
-      rest match {
-        case ::(head, next) => loop(next, (key, head) :: acc)
-        case Nil            => acc
-      }
+    kv match {
+      case (k, v) => v.split(commaNotBetweenQuotes).toList.map((k, _))
     }
-    loop(values, List.empty)
-  }
 
+  }
 }
