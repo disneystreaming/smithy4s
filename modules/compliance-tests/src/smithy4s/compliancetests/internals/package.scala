@@ -33,7 +33,7 @@ package object internals {
       h.++(Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen))
     )
   }
-  
+
   def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
