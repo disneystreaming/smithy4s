@@ -96,11 +96,11 @@ structure NotAuthorizedError {
 
 There is nothing authentication specific about this error, this is a standard smithy http error that will have a 401 status code when returned.
 
-If you want to see the full smithy model we defined above, you can do so [here](https://github.com/disneystreaming/smithy4s/blob/main/modules/guides/smithy/auth.smithy).
+If you want to see the full smithy model we defined above, you can do so [here](https://github.com/disneystreaming/smithy4s/blob/series/0.17/modules/guides/smithy/auth.smithy).
 
 ## Server-side Middleware
 
-To see the **full code** example of what we walk through below, go [here](https://github.com/disneystreaming/smithy4s/tree/main/modules/guides/src/smithy4s/guides/Auth.scala).
+To see the **full code** example of what we walk through below, go [here](https://github.com/disneystreaming/smithy4s/blob/series/0.17/modules/guides/src/smithy4s/guides/Auth.scala).
 
 We will create a server-side middleware that implements the authentication as defined in the smithy spec above. Let's start by creating a few classes that we will use in our middleware.
 
@@ -234,7 +234,7 @@ And that's it. Now we have a middleware that will apply an authentication check 
 
 ## Client-side Middleware
 
-To see the **full code** example of what we walk through below, go [here](https://github.com/disneystreaming/smithy4s/tree/main/modules/guides/src/smithy4s/guides/AuthClient.scala).
+To see the **full code** example of what we walk through below, go [here](https://github.com/disneystreaming/smithy4s/blob/series/0.17/modules/guides/src/smithy4s/guides/AuthClient.scala).
 
 It is possible that you have a client where you want to apply a similar type of middleware that alters some part of a request depending on the endpoint being targeted. In this part of the guide, we will show how you can do this for a client using the same smithy specification we defined above. We will make it so our authentication token is only sent if we are targeting an endpoint which requires it.
 
@@ -301,6 +301,6 @@ def apply(http4sClient: Client[IO]): Resource[IO, HelloWorldAuthService[IO]] =
 
 ## Conclusion
 
-Once again, if you want to see the **full code** examples of the above, you can find them [here](https://github.com/disneystreaming/smithy4s/tree/main/modules/guides/src/smithy4s/guides/).
+Once again, if you want to see the **full code** examples of the above, you can find them [here](https://github.com/disneystreaming/smithy4s/tree/series/0.17/modules/guides/src/smithy4s/guides).
 
 Hopefully this guide gives you a good idea of how you can create a middleware that takes your smithy specification into account. This guide shows a very simple use case of what is possible with a middleware like this. If you have a more advanced use case, you can use this guide as a reference and as always you can reach out to us for insight or help.
