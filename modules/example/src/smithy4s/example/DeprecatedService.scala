@@ -18,7 +18,7 @@ trait DeprecatedServiceGen[F[_, _, _, _, _]] {
   @deprecated
   def deprecatedOperation() : F[Unit, Nothing, Unit, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = new Transformation.PartiallyApplied[DeprecatedServiceGen[F]](this)
+  def transform : Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](this)
 }
 
 object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] {

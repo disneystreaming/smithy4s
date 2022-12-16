@@ -19,7 +19,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def map(value: Map[String, String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
   def option(value: Option[String] = None) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
+  def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](this)
 }
 
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {

@@ -219,7 +219,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         },
         newline,
-        line"def transform : $Transformation.PartiallyApplied[$genName[F]] = new $Transformation.PartiallyApplied[$genName[F]](this)"
+        line"def transform : $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
       obj(
