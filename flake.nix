@@ -20,7 +20,7 @@
           welcomeMessage = ''
             Welcome to the smithy4s Nix shell! 👋
             Available packages:
-            ${builtins.concatStringsSep "\n" (map (n: "- ${n}") shellPackages)}
+            ${builtins.concatStringsSep "\n" (map (n : "- ${n}") shellPackages)}
           '';
 
           shellHook = ''
