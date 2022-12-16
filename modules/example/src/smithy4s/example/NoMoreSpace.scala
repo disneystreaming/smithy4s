@@ -13,7 +13,7 @@ case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwab
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(507),
   )

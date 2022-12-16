@@ -12,7 +12,7 @@ case class DeprecatedStructure(@deprecated name: Option[String] = None, nameV2: 
 object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedStructure")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 

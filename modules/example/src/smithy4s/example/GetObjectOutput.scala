@@ -11,7 +11,7 @@ case class GetObjectOutput(size: ObjectSize = smithy4s.example.ObjectSize(0), da
 object GetObjectOutput extends ShapeTag.Companion[GetObjectOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetObjectOutput")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[GetObjectOutput] = struct(
     ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required(), smithy.api.HttpHeader("X-Size")),

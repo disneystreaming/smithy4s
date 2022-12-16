@@ -14,9 +14,9 @@ import smithy4s.schema.Schema.unit
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def getFoo() : F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
+  def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[FooServiceGen[F]] = new Transformation.PartiallyApplied[FooServiceGen[F]](this)
+  def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = new Transformation.PartiallyApplied[FooServiceGen[F]](this)
 }
 
 object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
@@ -30,7 +30,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   val endpoints: List[FooServiceGen.Endpoint[_, _, _, _, _]] = List(
     GetFoo,
@@ -38,7 +38,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   val version: String = "1.0.0"
 
-  def endpoint[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def endpoint[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]) = op.endpoint
 
   object reified extends FooServiceGen[FooServiceOperation] {
     def getFoo() = GetFoo()
@@ -47,15 +47,15 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]): FooServiceGen[P1] = new Transformed(alg, f)
 
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new Transformed(reified, f)
-  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: FooServiceGen[P], f : PolyFunction5[P, P1]) extends FooServiceGen[P1] {
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]) extends FooServiceGen[P1] {
     def getFoo() = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](alg.getFoo())
   }
 
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[FooServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
-  def toPolyFunction[P[_, _, _, _, _]](impl : FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = new PolyFunction5[FooServiceOperation, P] {
-    def apply[I, E, O, SI, SO](op : FooServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) 
+  def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = new PolyFunction5[FooServiceOperation, P] {
+    def apply[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Unit, Nothing, GetFooOutput, Nothing, Nothing] = impl.getFoo()
@@ -65,9 +65,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints : Hints = Hints(
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200),
       smithy.api.Readonly(),
     )

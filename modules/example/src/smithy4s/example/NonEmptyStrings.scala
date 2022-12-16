@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.string
 
 object NonEmptyStrings extends Newtype[NonEmptyList[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "NonEmptyStrings")
-  val hints : Hints = Hints.empty
-  val underlyingSchema : Schema[NonEmptyList[String]] = list(string).refined[NonEmptyList[String]](smithy4s.example.NonEmptyListFormat()).withId(id).addHints(hints)
-  implicit val schema : Schema[NonEmptyStrings] = bijection(underlyingSchema, asBijection)
+  val hints: Hints = Hints.empty
+  val underlyingSchema: Schema[NonEmptyList[String]] = list(string).refined[NonEmptyList[String]](smithy4s.example.NonEmptyListFormat()).withId(id).addHints(hints)
+  implicit val schema: Schema[NonEmptyStrings] = bijection(underlyingSchema, asBijection)
 }

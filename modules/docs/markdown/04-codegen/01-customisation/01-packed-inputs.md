@@ -30,7 +30,7 @@ leads to something conceptually equivalent to :
 ```scala
 trait PackedInputServiceGen[F[_]] {
 
-  def packedInputOperation(a: String, b: String) : F[Unit]
+  def packedInputOperation(a: String, b: String): F[Unit]
 
 }
 ```
@@ -54,7 +54,7 @@ will produce the following Scala code
 ```scala
 trait PackedInputServiceGen[F[_]] {
 
-  def packedInputOperation(input: PackedInput) : F[Unit]
+  def packedInputOperation(input: PackedInput): F[Unit]
 
 }
 ```

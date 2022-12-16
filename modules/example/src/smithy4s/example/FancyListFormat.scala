@@ -10,7 +10,7 @@ case class FancyListFormat()
 object FancyListFormat extends ShapeTag.Companion[FancyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "fancyListFormat")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Trait(selector = Some("list:test(> member > string)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 

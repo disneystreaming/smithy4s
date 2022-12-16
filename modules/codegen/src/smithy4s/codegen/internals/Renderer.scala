@@ -214,12 +214,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ops.map { op =>
           lines(
             deprecationAnnotation(op.hints),
-            line"def ${op.methodName}(${op.renderArgs}) : F[${op
+            line"def ${op.methodName}(${op.renderArgs}): F[${op
               .renderAlgParams(genNameRef.name)}]"
           )
         },
         newline,
-        line"def transform : $Transformation.PartiallyApplied[$genName[F]] = new $Transformation.PartiallyApplied[$genName[F]](this)"
+        line"def transform: $Transformation.PartiallyApplied[$genName[F]] = new $Transformation.PartiallyApplied[$genName[F]](this)"
       ),
       newline,
       obj(
@@ -243,7 +243,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"""val version: String = "$version"""",
         newline,
-        line"def endpoint[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) = op.endpoint",
+        line"def endpoint[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.endpoint",
         newline,
         block(
           line"object ${NameRef("reified")} extends $genNameRef[$opTraitNameRef]"
@@ -262,7 +262,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"def fromPolyFunction[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
         block(
-          line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], f : $PolyFunction5_[P, P1]) extends $genNameRef[P1]"
+          line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]) extends $genNameRef[P1]"
         ) {
           ops.map { op =>
             val opName = op.methodName
@@ -275,12 +275,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         newline,
         block(
-          line"def toPolyFunction[P[_, _, _, _, _]](impl : $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
+          line"def toPolyFunction[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
         )(
           if (ops.isEmpty) {
-            line"""def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = sys.error("impossible")"""
+            line"""def apply[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = sys.error("impossible")"""
           } else {
-            line"def apply[I, E, O, SI, SO](op : $opTraitNameRef[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) "
+            line"def apply[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
           }
         ),
         ops.map(renderOperation(name, _))
@@ -379,9 +379,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       val mh =
         if (hints.isEmpty) Line.empty
         else line".addHints(${memberHints(hints)})"
-      line"""val $valName : $StreamingSchema_[${tpe}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
+      line"""val $valName: $StreamingSchema_[${tpe}] = $StreamingSchema_("$name", ${tpe.schemaRef}$mh)"""
     case None =>
-      line"""val $valName : $StreamingSchema_[Nothing] = $StreamingSchema_.nothing"""
+      line"""val $valName: $StreamingSchema_[Nothing] = $StreamingSchema_.nothing"""
   }
 
   private def renderProtocol(name: NameRef, hints: List[Hint]): Lines = {
@@ -558,14 +558,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",
         line"val error: $unionSchema_[$errorName] = $errorName.schema",
         block(
-          line"def liftError(throwable: Throwable) : $option[$errorName] = throwable match"
+          line"def liftError(throwable: Throwable): $option[$errorName] = throwable match"
         ) {
           op.errors.collect { case Type.Ref(pkg, name) =>
             line"case e: ${NameRef(pkg + "." + name)} => $some($errorName.${name}Case(e))"
           } ++ List(line"case _ => $none")
         },
         block(
-          line"def unliftError(e: $errorName) : Throwable = e match"
+          line"def unliftError(e: $errorName): Throwable = e match"
         ) {
           op.errors.collect { case Type.Ref(_, name) =>
             line"case $errorName.${name}Case(e) => e"
@@ -672,7 +672,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 case (caseName, true) =>
                   line"case $caseName => ${caseName}AltWithValue"
                 case (caseName, false) =>
-                  line"case c : $caseName => $caseName.alt(c)"
+                  line"case c: $caseName => $caseName.alt(c)"
               }
             }
             .appendToLast(
@@ -769,9 +769,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
-        line"val underlyingSchema : $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
+        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
-          line"implicit val schema : $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
+          line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         )
       )
     )
@@ -898,9 +898,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
-    lines(line"val hints : $Hints_ = $Hints_.empty")
+    lines(line"val hints: $Hints_ = $Hints_.empty")
   } else {
-    line"val hints : $Hints_ = $Hints_".args {
+    line"val hints: $Hints_ = $Hints_".args {
       hints.flatMap(renderHint(_).toList)
     }
   }

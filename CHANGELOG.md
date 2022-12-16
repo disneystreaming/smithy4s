@@ -100,7 +100,7 @@ It is now possible to quickly stub a service with a default value (`IO.stub` bei
 ```scala
 import smithy4s.hello._
 import cats.effect._
-val stubbedHelloWorld : HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub)
+val stubbedHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub)
 ```
 
 ### Transformations, including bi-functors

@@ -16,7 +16,7 @@ sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
 object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 
@@ -28,7 +28,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
 
-    val hints : Hints = Hints(
+    val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     )
 
@@ -41,7 +41,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
-    val hints : Hints = Hints(
+    val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     )
 
@@ -51,14 +51,14 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   }
 
   object SCase {
-    val hints : Hints = Hints(
+    val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     )
     val schema: Schema[SCase] = bijection(string.addHints(hints), SCase(_), _.s)
     val alt = schema.oneOf[DeprecatedUnion]("s")
   }
   object S_V2Case {
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
     val schema: Schema[S_V2Case] = bijection(string.addHints(hints), S_V2Case(_), _.s_V2)
     val alt = schema.oneOf[DeprecatedUnion]("s_V2")
   }
@@ -69,9 +69,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     DeprecatedUnionProductCase.alt,
     UnionProductCaseDeprecatedAtCallSite.alt,
   ){
-    case c : SCase => SCase.alt(c)
-    case c : S_V2Case => S_V2Case.alt(c)
-    case c : DeprecatedUnionProductCase => DeprecatedUnionProductCase.alt(c)
-    case c : UnionProductCaseDeprecatedAtCallSite => UnionProductCaseDeprecatedAtCallSite.alt(c)
+    case c: SCase => SCase.alt(c)
+    case c: S_V2Case => S_V2Case.alt(c)
+    case c: DeprecatedUnionProductCase => DeprecatedUnionProductCase.alt(c)
+    case c: UnionProductCaseDeprecatedAtCallSite => UnionProductCaseDeprecatedAtCallSite.alt(c)
   }.withId(id).addHints(hints)
 }

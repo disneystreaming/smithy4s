@@ -154,7 +154,7 @@ def ivyDeps = T(Agg(ivy"organisation:artifact:version"))
 
 Because the upstream usage of Smithy4s will have resulted in the creation of metadata tracking the namespaces that were already generated, the "local" Smithy4s code-generation will automatically skip the generation of code that should not be generated again.
 
-## Artifacts containing Smithy4s generated code : dependency tracking
+## Artifacts containing Smithy4s generated code: dependency tracking
 
 When packaging a project/module via SBT or Mill, Smithy4s adds a line to the Jar manifest of the project, informing downstream projects of library dependencies that may have been used during the code-generation of this project/module (ie, the dependencies annotated with `% Smithy4s` in SBT, and the ones provided by
 `smithy4sIvyDeps` in mill).

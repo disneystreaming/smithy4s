@@ -1048,7 +1048,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case (node, Primitive.Document) =>
       TypedNode.PrimitiveTN(Primitive.Document, node)
     case other =>
-      throw new NotImplementedError(s"Unsupported case : $other")
+      throw new NotImplementedError(s"Unsupported case: $other")
   }
 
 }

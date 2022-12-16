@@ -153,7 +153,7 @@ union Bar {
 ```
 
 This hints at the default serialisation that AWS has intended to use on unions expressed in smithy, namely **tagged unions**.
-Indeed, the AWS json-centric protocols specifies that shapes like these should be serialised in objects with a single key/value entry, where the key receives the value of the tag. For instance, `{ "a" : 1 }` or `{ "b" : "two" }`.
+Indeed, the AWS json-centric protocols specifies that shapes like these should be serialised in objects with a single key/value entry, where the key receives the value of the tag. For instance, `{ "a": 1 }` or `{ "b": "two" }`.
 There are some very relevant technical reasons for it, but this way of encoding unions/co-products in JSON is arguably the best.
 It may also be familiar to [Circe](https://circe.github.io/circe/) users as it's the default encoding of co-products in circe-generic.
 
@@ -172,12 +172,12 @@ object Bar extends smithy4s.ShapeTag.Companion[Bar] {
   case class BCase(b: String) extends Bar
 
   object ACase {
-    val hints : smithy4s.Hints = smithy4s.Hints.empty
+    val hints: smithy4s.Hints = smithy4s.Hints.empty
     val schema: smithy4s.Schema[ACase] = bijection(int.addHints(hints), ACase(_), _.a)
     val alt = schema.oneOf[Bar]("a")
   }
   object BCase {
-    val hints : smithy4s.Hints = smithy4s.Hints.empty
+    val hints: smithy4s.Hints = smithy4s.Hints.empty
     val schema: smithy4s.Schema[BCase] = bijection(string.addHints(hints), BCase(_), _.b)
     val alt = schema.oneOf[Bar]("b")
   }
@@ -186,8 +186,8 @@ object Bar extends smithy4s.ShapeTag.Companion[Bar] {
     ACase.alt,
     BCase.alt,
   ){
-    case c : ACase => ACase.alt(c)
-    case c : BCase => BCase.alt(c)
+    case c: ACase => ACase.alt(c)
+    case c: BCase => BCase.alt(c)
   }.withId(id)
 }
 ```
@@ -217,16 +217,16 @@ namespace example
 integer MyInt
 ```
 
-Smithy4s translates this to a Scala **newtype** : a zero-overhead wrapper for the underling type (in this case, `Int`):
+Smithy4s translates this to a Scala **newtype**: a zero-overhead wrapper for the underling type (in this case, `Int`):
 
 ```scala
 package example
 
 object MyInt extends Newtype[Int] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("foobar", "MyInt")
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
-  val underlyingSchema : smithy4s.Schema[Int] = int.withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[MyInt] = bijection(underlyingSchema, MyInt(_), (_ : MyInt).value)
+  val hints: smithy4s.Hints = smithy4s.Hints.empty
+  val underlyingSchema: smithy4s.Schema[Int] = int.withId(id).addHints(hints)
+  implicit val schema: smithy4s.Schema[MyInt] = bijection(underlyingSchema, MyInt(_), (_: MyInt).value)
 }
 ```
 
@@ -270,9 +270,9 @@ package example
 
 object IntList extends Newtype[List[Int]] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("example", "IntList")
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
-  val underlyingSchema : smithy4s.Schema[List[Int]] = list(int).withId(id).addHints(hints)
-  implicit val schema : smithy4s.Schema[IntList] = bijection(underlyingSchema, IntList(_), (_ : IntList).value)
+  val hints: smithy4s.Hints = smithy4s.Hints.empty
+  val underlyingSchema: smithy4s.Schema[List[Int]] = list(int).withId(id).addHints(hints)
+  implicit val schema: smithy4s.Schema[IntList] = bijection(underlyingSchema, IntList(_), (_: IntList).value)
 }
 ```
 
@@ -295,14 +295,14 @@ structure A {}
 would lead to the following code being rendered in the companion object of `A` :
 
 ```scala
-val hints : Hints = Hints(
+val hints: Hints = Hints(
   example.Info(List("foo", "bar", "baz")),
 )
 ```
 
 This allows to query Hints for `Info` using the following syntax: `hints.get(example.Info)`
 
-Regarding the `underlyingSchema` value in the companion object of `IntList`, you can see that it is constructed using a `list` function. Conceptually, it encodes this : "if I'm able to encode or decode an `A` in a specific format, then I should be able to encode or decode a `List[A]`".
+Regarding the `underlyingSchema` value in the companion object of `IntList`, you can see that it is constructed using a `list` function. Conceptually, it encodes this: "if I'm able to encode or decode an `A` in a specific format, then I should be able to encode or decode a `List[A]`".
 
 ### Enumerations
 

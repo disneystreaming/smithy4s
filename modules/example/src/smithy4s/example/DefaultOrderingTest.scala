@@ -12,7 +12,7 @@ case class DefaultOrderingTest(three: String, one: Int = 1, two: Option[String] 
 object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultOrderingTest")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[DefaultOrderingTest] = struct(
     string.required[DefaultOrderingTest]("three", _.three).addHints(smithy.api.Required()),

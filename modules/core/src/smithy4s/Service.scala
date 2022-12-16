@@ -26,10 +26,10 @@ import kinds._
   * protocols, as well as transform implementations of finally-encoded interfaces into interpreters
   * (polymorphic functions) that operate on initially-encoded GADTs.
   *
-  * @tparam Alg : a finally-encoded interface (commonly called algebra) that works
+  * @tparam Alg: a finally-encoded interface (commonly called algebra) that works
   *   against an abstract "effect" that takes 5 type parameters:
   *   Input, Error, Output, StreamedInput, StreamedOutput
-  * @tparam Op : an initially encoded version of the finally-encoded interface. Typically,
+  * @tparam Op: an initially encoded version of the finally-encoded interface. Typically,
   *   a GADT that acts as a reification of the operations. Passing the reified versions
   *   around makes it drastically easier to implement logic generically, without involving
   *   metaprogramming.
@@ -52,7 +52,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Operation, P]): Alg[P]
   def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P]
 
-  final val opToEndpoint : PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
+  final val opToEndpoint: PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
     def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] = endpoint(op)._2
   }
 
@@ -77,6 +77,6 @@ object Service {
     final def reified: PolyFunction5[Op, Op] = PolyFunction5.identity
     final def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Op, P]): PolyFunction5[Op, P] = function
     final def toPolyFunction[P[_, _, _, _, _]](algebra: PolyFunction5[Op, P]): PolyFunction5[Op, P] = algebra
-    final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]) : PolyFunction5[Op, G] = algebra.andThen(function)
+    final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]): PolyFunction5[Op, G] = algebra.andThen(function)
   }
 }

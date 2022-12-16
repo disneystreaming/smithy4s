@@ -46,7 +46,7 @@ case class EmailFormat()
 object EmailFormat extends smithy4s.ShapeTag.Companion[EmailFormat] {
   val id: smithy4s.ShapeId = smithy4s.ShapeId("smithy4s.example", "emailFormat")
 
-  val hints : smithy4s.Hints = smithy4s.Hints.empty
+  val hints: smithy4s.Hints = smithy4s.Hints.empty
 
     implicit val schema: smithy4s.Schema[EmailFormat] = constant(EmailFormat()).withId(id).addHints(hints)
 
@@ -139,7 +139,7 @@ case class NonEmptyListFormat()
 object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nonEmptyListFormat")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Trait(selector = Some("list"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 

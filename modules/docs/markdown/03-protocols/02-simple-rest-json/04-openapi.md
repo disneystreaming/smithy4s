@@ -38,15 +38,15 @@ import smithy4s.hello._
 
 object Docs {
   //simplest
-  val myDocRoutes : HttpRoutes[IO] =
+  val myDocRoutes: HttpRoutes[IO] =
     smithy4s.http4s.swagger.docs[IO](HelloWorldService)
 
   // documentation served at /custom-docs
-  val customPath : HttpRoutes[IO] =
+  val customPath: HttpRoutes[IO] =
     smithy4s.http4s.swagger.docs.withPath("custom-docs")(HelloWorldService)
 
   // documentation served at /docs with multiple service specification defined.
-  val multipleServices : HttpRoutes[IO] =
+  val multipleServices: HttpRoutes[IO] =
     smithy4s.http4s.swagger.docs[IO](HelloWorldService, HelloWorldService)
 
   // documentation served at /custom-docs with swagger assets from `/swagger-ui-path`
@@ -66,7 +66,7 @@ import cats.effect.IO
 
 object HelloWorldImpl extends HelloWorldService[IO] {
 
-  def hello(name: String, town: Option[String]) : IO[Greeting] = IO.pure {
+  def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {
     town match {
       case None => Greeting(s"Hello $name !")
       case Some(t) => Greeting(s"Hello $name from $t !")
