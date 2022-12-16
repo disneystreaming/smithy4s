@@ -13,7 +13,7 @@ case class ServerErrorCustomMessage(messageField: Option[String] = None) extends
 object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMessage] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerErrorCustomMessage")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
 

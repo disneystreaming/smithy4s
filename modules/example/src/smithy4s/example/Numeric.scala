@@ -17,7 +17,7 @@ case class Numeric(i: Int = 1, f: Float = 1.0f, d: Double = 1.0d, s: Short = 1, 
 object Numeric extends ShapeTag.Companion[Numeric] {
   val id: ShapeId = ShapeId("smithy4s.example", "Numeric")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Numeric] = struct(
     int.required[Numeric]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),

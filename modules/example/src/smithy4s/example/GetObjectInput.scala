@@ -10,7 +10,7 @@ case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetObjectInput")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[GetObjectInput] = struct(
     ObjectKey.schema.required[GetObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),

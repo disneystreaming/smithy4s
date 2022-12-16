@@ -11,7 +11,7 @@ case class MixinOptionalMemberOverride(a: String)
 object MixinOptionalMemberOverride extends ShapeTag.Companion[MixinOptionalMemberOverride] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinOptionalMemberOverride")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[MixinOptionalMemberOverride] = struct(
     string.required[MixinOptionalMemberOverride]("a", _.a).addHints(smithy.api.Required()),

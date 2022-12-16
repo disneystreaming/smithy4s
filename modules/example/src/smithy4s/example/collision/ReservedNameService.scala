@@ -14,12 +14,12 @@ import smithy4s.schema.Schema.unit
 trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def set(set: Set[String]) : F[SetInput, Nothing, Unit, Nothing, Nothing]
-  def list(list: List[String]) : F[ListInput, Nothing, Unit, Nothing, Nothing]
-  def map(value: Map[String, String]) : F[MapInput, Nothing, Unit, Nothing, Nothing]
-  def option(value: Option[String] = None) : F[OptionInput, Nothing, Unit, Nothing, Nothing]
+  def set(set: Set[String]): F[SetInput, Nothing, Unit, Nothing, Nothing]
+  def list(list: List[String]): F[ListInput, Nothing, Unit, Nothing, Nothing]
+  def map(value: Map[String, String]): F[MapInput, Nothing, Unit, Nothing, Nothing]
+  def option(value: Option[String] = None): F[OptionInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform : Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
+  def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = new Transformation.PartiallyApplied[ReservedNameServiceGen[F]](this)
 }
 
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
@@ -33,7 +33,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     alloy.SimpleRestJson(),
   )
 
@@ -46,7 +46,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
 
   val version: String = "1.0.0"
 
-  def endpoint[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def endpoint[I, E, O, SI, SO](op: ReservedNameServiceOperation[I, E, O, SI, SO]) = op.endpoint
 
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
     def set(set: Set[String]) = _Set(SetInput(set))
@@ -58,7 +58,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]): ReservedNameServiceGen[P1] = new Transformed(alg, f)
 
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new Transformed(reified, f)
-  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f : PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
     def set(set: Set[String]) = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
     def list(list: List[String]) = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
     def map(value: Map[String, String]) = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
@@ -68,8 +68,8 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[ReservedNameServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
-  def toPolyFunction[P[_, _, _, _, _]](impl : ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
-    def apply[I, E, O, SI, SO](op : ReservedNameServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op.run(impl) 
+  def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
+    def apply[I, E, O, SI, SO](op: ReservedNameServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
   case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[SetInput, Nothing, Unit, Nothing, Nothing] = impl.set(input.set)
@@ -79,9 +79,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Set")
     val input: Schema[SetInput] = SetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints : Hints = Hints(
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204),
     )
     def wrap(input: SetInput) = _Set(input)
@@ -94,9 +94,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     val id: ShapeId = ShapeId("smithy4s.example.collision", "List")
     val input: Schema[ListInput] = ListInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints : Hints = Hints(
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/"), code = 204),
     )
     def wrap(input: ListInput) = _List(input)
@@ -109,9 +109,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Map")
     val input: Schema[MapInput] = MapInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints : Hints = Hints(
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/map/"), code = 204),
     )
     def wrap(input: MapInput) = _Map(input)
@@ -124,9 +124,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Option")
     val input: Schema[OptionInput] = OptionInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints : Hints = Hints(
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/"), code = 204),
     )
     def wrap(input: OptionInput) = _Option(input)

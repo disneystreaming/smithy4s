@@ -13,7 +13,7 @@ case class ServerError(message: Option[String] = None) extends Throwable {
 object ServerError extends ShapeTag.Companion[ServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerError")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
 

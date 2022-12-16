@@ -15,14 +15,14 @@ sealed trait OrderType extends scala.Product with scala.Serializable {
 object OrderType extends ShapeTag.Companion[OrderType] {
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   case class OnlineCase(online: OrderNumber) extends OrderType
   case class InStoreOrder(id: OrderNumber = smithy4s.example.OrderNumber(0), locationId: Option[String] = None) extends OrderType
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
 
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required()),
@@ -38,7 +38,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   private val PreviewCaseAltWithValue = PreviewCaseAlt(PreviewCase)
 
   object OnlineCase {
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
     val schema: Schema[OnlineCase] = bijection(OrderNumber.schema.addHints(hints), OnlineCase(_), _.online)
     val alt = schema.oneOf[OrderType]("online")
   }
@@ -48,8 +48,8 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     InStoreOrder.alt,
     PreviewCaseAlt,
   ){
-    case c : OnlineCase => OnlineCase.alt(c)
-    case c : InStoreOrder => InStoreOrder.alt(c)
+    case c: OnlineCase => OnlineCase.alt(c)
+    case c: InStoreOrder => InStoreOrder.alt(c)
     case PreviewCase => PreviewCaseAltWithValue
   }.withId(id).addHints(hints)
 }

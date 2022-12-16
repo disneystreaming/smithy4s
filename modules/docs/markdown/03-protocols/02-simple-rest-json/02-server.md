@@ -24,7 +24,7 @@ import cats.effect.IO
 
 object HelloWorldImpl extends HelloWorldService[IO] {
 
-  def hello(name: String, town: Option[String]) : IO[Greeting] = IO.pure {
+  def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {
     town match {
       case None => Greeting(s"Hello $name !")
       case Some(t) => Greeting(s"Hello $name from $t !")
@@ -44,7 +44,7 @@ import cats.effect.Resource
 
 object Routes {
   // This can be easily mounted onto a server.
-  val myRoutes : Resource[IO, HttpRoutes[IO]] =
+  val myRoutes: Resource[IO, HttpRoutes[IO]] =
     SimpleRestJsonBuilder.routes(HelloWorldImpl).resource
 }
 ```
@@ -59,7 +59,7 @@ In particular, the smithy4s interpreters raise specific errors when they fail to
 
 ```scala
 myRoutes.mapErrors{
-  case e : PayloadError => MyClientError(...)
+  case e: PayloadError => MyClientError(...)
 }.resource
 ```
 

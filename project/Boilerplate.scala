@@ -177,7 +177,7 @@ object Boilerplate {
         .mkString(", ")
 
       val smartCtsr =
-        s"""def apply[${`A..N`}]($schemaParams)(const : (${`A..N`}) => S) : Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
+        s"""def apply[${`A..N`}]($schemaParams)(const: (${`A..N`}) => S): Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
 
       block"""
       |package smithy4s
@@ -187,12 +187,12 @@ object Boilerplate {
       |
       |  def genericArity(
       |      fields: SchemaField[S, _]*)(
-      |      const: IndexedSeq[Any] => S) : Schema[S] =
+      |      const: IndexedSeq[Any] => S): Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
       |
       |  def apply(
       |     fields: Vector[SchemaField[S, _]])(
-      |     const: IndexedSeq[Any] => S) : Schema[S] =
+      |     const: IndexedSeq[Any] => S): Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields, const)
       |
       -  $smartCtsr
@@ -243,13 +243,13 @@ object Boilerplate {
       -    type Algebra[G[${`_.._`}]] = PolyFunction$suffix[F, G]
       -  }
       -
-      -  def identity[F[${`_.._`}]] : PolyFunction$suffix[F, F] = new PolyFunction$suffix[F, F]{
+      -  def identity[F[${`_.._`}]]: PolyFunction$suffix[F, F] = new PolyFunction$suffix[F, F]{
       -    def apply[${`A..N`}](input: F[${`A..N`}]): F[${`A..N`}] = input
       -  }
       -
       -  implicit def polyfunction${suffix}_transformation[Alg[_[${`_.._`}]]: FunctorK$suffix, F[${`_.._`}], G[${`_.._`}]]: Transformation[PolyFunction$suffix[F, G], Alg[F], Alg[G]] =
       -    new Transformation[PolyFunction$suffix[F, G], Alg[F], Alg[G]]{
-      -      def apply(func: PolyFunction$suffix[F, G], algF: Alg[F]) : Alg[G] = FunctorK$suffix[Alg].mapK$suffix(algF, func)
+      -      def apply(func: PolyFunction$suffix[F, G], algF: Alg[F]): Alg[G] = FunctorK$suffix[Alg].mapK$suffix(algF, func)
       -    }
       -}
       -
@@ -287,7 +287,7 @@ object Boilerplate {
       -  def mapK$suffix[F[${`_.._`}], G[${`_.._`}]](alg: Alg[F], function: PolyFunction$suffix[F, G]): Alg[G]
       -}
       -object FunctorK$suffix {
-      -  $inline def apply[Alg[_[${`_.._`}]]](implicit ev: FunctorK$suffix[Alg]) : FunctorK$suffix[Alg] = ev
+      -  $inline def apply[Alg[_[${`_.._`}]]](implicit ev: FunctorK$suffix[Alg]): FunctorK$suffix[Alg] = ev
       -
       -  implicit def polyfunctionFunctorK$suffix[F[${`_.._`}]]: $functorKSig = new $functorKSig {
       -    def mapK$suffix[G[${`_.._`}], H[${`_.._`}]](fa: PolyFunction$suffix[F, G], fk: PolyFunction$suffix[G, H]): PolyFunction$suffix[F, H] = fa.andThen(fk)

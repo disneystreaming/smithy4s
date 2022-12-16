@@ -10,7 +10,7 @@ case class SetInput(set: Set[String])
 object SetInput extends ShapeTag.Companion[SetInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "SetInput")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Input(),
   )
 
