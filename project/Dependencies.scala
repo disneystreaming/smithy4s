@@ -43,7 +43,7 @@ object Dependencies {
   }
 
   object Decline {
-    val declineVersion = "2.4.0"
+    val declineVersion = "2.4.1"
 
     val core = Def.setting("com.monovore" %%% "decline" % declineVersion)
     val effect =
