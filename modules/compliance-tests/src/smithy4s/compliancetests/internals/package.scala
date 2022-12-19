@@ -54,8 +54,8 @@ package object internals {
   ): ListMap[String, List[String]] = {
     queryParams.combineAll
       .map(splitQuery)
-      .foldRight[ListMap[String, List[String]]](ListMap.empty) {
-        case ((k, v), acc) =>
+      .foldLeft[ListMap[String, List[String]]](ListMap.empty) {
+        case (acc,(k, v)) =>
           acc.get(k) match {
             case Some(value) => acc + (k -> (v :: value))
             case None        => acc + (k -> List(v))
@@ -70,7 +70,7 @@ package object internals {
       Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
     )
 
-  // regex for comma not between quotes
+  // regex for comma not between quotes as quotes can be used to escape commas in headers
   private val commaNotBetweenQuotes = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"
 
   private def parseSingleHeader(
