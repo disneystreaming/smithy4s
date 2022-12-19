@@ -356,6 +356,24 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("render default tests") { (client, uri, log) =>
+    for {
+      res <- client.send[Json](GET(uri / "get-defaults"), log)
+    } yield {
+      val (code, _, body) = res
+      val expectedBody = Json.obj(
+        "someString" -> Json.fromString("value"),
+        "someInt" -> Json.fromInt(1),
+        "someDouble" -> Json.fromDoubleOrNull(1.0d),
+        "someList" -> Json.arr(),
+        "someMap" -> Json.obj(),
+        "someBoolean" -> Json.fromBoolean(true)
+      )
+      expect.all(code == 200) &&
+      expect.same(body, expectedBody)
+    }
+  }
+
   private def headerTest(name: String)(requestHeaderNames: String*) =
     routerTest(name) { (client, uri, log) =>
       for {

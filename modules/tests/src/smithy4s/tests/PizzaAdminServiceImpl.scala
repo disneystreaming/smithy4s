@@ -117,4 +117,6 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
       body: EchoBody,
       queryParam: Option[String]
   ): IO[Unit] = IO.unit
+
+  def renderDefaults(): IO[GetDefault] = GetDefault().pure[IO]
 }
