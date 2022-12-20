@@ -23,8 +23,8 @@ import scala.util.{Failure, Success, Try}
 class TransformationSpec() extends FunSuite {
 
   test("transform method can be called with poly functions") {
-    object stub extends Weather[Option] {
-      def getCurrentTime(): Option[GetCurrentTimeOutput] = None
+    object stub extends Weather.Default[Option](None) {
+      override def getCurrentTime(): Option[GetCurrentTimeOutput] = None
     }
 
     case object Empty extends Throwable

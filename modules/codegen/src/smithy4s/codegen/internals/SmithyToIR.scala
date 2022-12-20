@@ -329,10 +329,22 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             .map(_.tpe)
             .collect { case Some(tpe) => tpe }
 
-        val operations = shape
-          .getAllOperations()
-          .asScala
-          .toList
+        // Aggregates both the operations of the current entity and the ones
+        // in the sub-entities.
+        def recursiveOperations(
+            entity: EntityShape
+        ): List[ShapeId] = {
+          entity
+            .getAllOperations()
+            .asScala
+            .toList ++ entity.getResources().asScala.flatMap { shapeId =>
+            recursiveOperations(
+              model.expectShape(shapeId, classOf[EntityShape])
+            )
+          }
+        }
+
+        val operations = recursiveOperations(shape)
           .map(model.getShape(_).asScala)
           .collect { case Some(S.Operation(op)) =>
             val inputType =
