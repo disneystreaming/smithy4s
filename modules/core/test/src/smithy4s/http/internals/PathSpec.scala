@@ -46,7 +46,7 @@ class PathSpec() extends munit.FunSuite {
   }
 
   test("Parse path pattern into path segments") {
-    val result = pathSegments("/{head}/foo/{tail+}")
+    val result = pathSegments("/{head}/foo/{tail+}?hello=world")
     expect(
       result == Option(
         Vector(

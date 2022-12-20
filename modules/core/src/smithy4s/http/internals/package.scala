@@ -63,12 +63,17 @@ package object internals {
   }
 
   private def fromToString(str: String): Option[PathSegment] = {
-    if (str.isEmpty()) None
-    else if (str.startsWith("{") && str.endsWith("+}"))
-      Some(PathSegment.greedy(str.substring(1, str.length() - 2)))
-    else if (str.startsWith("{") && str.endsWith("}"))
-      Some(PathSegment.label(str.substring(1, str.length() - 1)))
-    else Some(PathSegment.static(str))
+    Option(str).map { str =>
+      {
+        // handle query params in path
+        val sanitized = str.split('?').head
+        if (sanitized.startsWith("{") && sanitized.endsWith("+}"))
+          PathSegment.greedy(sanitized.substring(1, sanitized.length() - 2))
+        else if (sanitized.startsWith("{") && sanitized.endsWith("}"))
+          PathSegment.label(sanitized.substring(1, sanitized.length() - 1))
+        else PathSegment.static(sanitized)
+      }
+    }
   }
 
 }
