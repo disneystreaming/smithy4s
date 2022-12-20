@@ -25,7 +25,7 @@ This diagram, adapted from the [IOLocal docs](https://github.com/typelevel/cats-
 
 ### Smithy Spec
 
-For this example, we are going to be working with the following smithy specification (taken from [smithy4s repo](https://github.com/disneystreaming/smithy4s/blob/main/sampleSpecs/hello.smithy)):
+For this example, we are going to be working with the following smithy specification (taken from [smithy4s repo](@GITHUB_BRANCH_URL@sampleSpecs/hello.smithy)):
 
 ```scala mdoc:passthrough
 docs.InlineSmithyFile.fromSample("hello.smithy")

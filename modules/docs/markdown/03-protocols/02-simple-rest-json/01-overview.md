@@ -95,4 +95,4 @@ alloy.SimpleRestJson.hints
   .foreach(println)
 ```
 
-Currently, `@cors` is not supported. This is because the `@cors` annotation is too restrictive. You can still use it in your model and configure your API using the information found in the generated code. See the [`Cors.scala`](https://github.com/disneystreaming/smithy4s/tree/main/modules/guides/src/smithy4s/guides/Cors.scala) file in the `guides` module for an example.
+Currently, `@cors` is not supported. This is because the `@cors` annotation is too restrictive. You can still use it in your model and configure your API using the information found in the generated code. See the [`Cors.scala`](@GITHUB_BRANCH_URL@modules/guides/src/smithy4s/guides/Cors.scala) file in the `guides` module for an example.

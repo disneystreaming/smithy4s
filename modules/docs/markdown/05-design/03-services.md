@@ -290,5 +290,5 @@ trait Service[Final[_[_, _, _, _, _]], Initial[_, _, _, _, _]] {
 
 Here are links to the complete interfaces discussed in this chapter.
 
-* [Service](https://github.com/disneystreaming/smithy4s/blob/main/modules/core/src/smithy4s/Service.scala)
-* [Endpoint](https://github.com/disneystreaming/smithy4s/blob/main/modules/core/src/smithy4s/Endpoint.scala)
+* [Service](@GITHUB_BRANCH_URL@modules/core/src/smithy4s/Service.scala)
+* [Endpoint](@GITHUB_BRANCH_URL@modules/core/src/smithy4s/Endpoint.scala)

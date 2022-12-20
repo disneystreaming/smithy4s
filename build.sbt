@@ -102,7 +102,14 @@ lazy val docs =
             }
         },
         "SCALA_VERSION" -> scalaVersion.value,
-        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value
+        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value,
+        "GITHUB_BRANCH_URL" -> (for {
+          serverUrl <- sys.env.get("GITHUB_SERVER_URL")
+          repo <- sys.env.get("GITHUB_REPOSITORY")
+          sha <- sys.env.get("GITHUB_SHA")
+        } yield s"$serverUrl/$repo/blob/$sha/").getOrElse(
+          "https://github.com/disneystreaming/smithy4s/tree/series/0.17/"
+        )
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
