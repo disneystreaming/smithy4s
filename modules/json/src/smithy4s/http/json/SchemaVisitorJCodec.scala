@@ -23,7 +23,9 @@ import java.util
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
+import smithy.api.Default
 import smithy.api.HttpPayload
+import smithy.api.Internal
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import alloy.Discriminated
@@ -1094,7 +1096,12 @@ private[smithy4s] class SchemaVisitorJCodec(
       ): (Z, JsonWriter) => Unit = {
         val codec = apply(instance)
         val jLabel = jsonLabel(field)
-        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
+        val hasDefault = instance.hints.has[Default]
+        val hasInternal = instance.hints.has[Internal]
+        if (hasInternal && hasDefault) { (_, _) =>
+          // we hide the field
+          ()
+        } else if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
           (z: Z, out: JsonWriter) =>
             {
               out.writeNonEscapedAsciiKey(jLabel)
