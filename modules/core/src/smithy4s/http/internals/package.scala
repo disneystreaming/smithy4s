@@ -63,7 +63,7 @@ package object internals {
   }
 
   private def fromToString(str: String): Option[PathSegment] = {
-    Option(str).map { str =>
+    Option(str).filter(_.nonEmpty).map { str =>
       {
         // handle query params in path
         val sanitized = str.split('?').head
