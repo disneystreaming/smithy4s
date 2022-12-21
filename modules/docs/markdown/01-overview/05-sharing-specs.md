@@ -23,7 +23,7 @@ In order to package Smithy files in jars so that they can be easily consumed by 
 A couple examples:
 
 * [smithy-aws-apigateway-traits](https://github.com/awslabs/smithy/tree/main/smithy-aws-apigateway-traits/src/main/resources/META-INF/smithy)
-* [smithy4s-protocols](https://github.com/disneystreaming/smithy4s/tree/main/modules/protocol/resources/META-INF/smithy)
+* [smithy4s-protocols](@GITHUB_BRANCH_URL@modules/protocol/resources/META-INF/smithy)
 
 ## Smithy4s-context
 
