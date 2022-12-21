@@ -37,6 +37,8 @@ trait Transformation[Func, Input, Output] {
 }
 
 object Transformation {
+  def of[Input](input: Input): PartiallyApplied[Input] =
+    new PartiallyApplied[Input](input)
 
   /**
     * A transformation that turns a monofunctor algebra into a bifunctor algebra by lifting the known errors in the

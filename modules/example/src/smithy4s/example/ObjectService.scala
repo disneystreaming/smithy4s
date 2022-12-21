@@ -22,7 +22,7 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
   def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = new Transformation.PartiallyApplied[ObjectServiceGen[F]](this)
+  def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)
 }
 
 object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {

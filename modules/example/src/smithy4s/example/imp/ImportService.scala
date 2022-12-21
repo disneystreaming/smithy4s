@@ -23,7 +23,7 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
 
   def importOperation(): F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = new Transformation.PartiallyApplied[ImportServiceGen[F]](this)
+  def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](this)
 }
 
 object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {

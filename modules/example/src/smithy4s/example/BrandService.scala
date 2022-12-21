@@ -16,7 +16,7 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
 
   def addBrands(brands: Option[List[String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = new Transformation.PartiallyApplied[BrandServiceGen[F]](this)
+  def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)
 }
 
 object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
