@@ -11,7 +11,7 @@ case class DefaultInMixinUsageTest(one: String = "test") extends DefaultInMixinT
 object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultInMixinUsageTest")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[DefaultInMixinUsageTest] = struct(
     string.required[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),

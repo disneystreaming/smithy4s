@@ -203,7 +203,7 @@ package foo
 
 trait HelloServiceGen[P[_, _, _, _, _]]{
 
-  def greet(name: String) : P[GreetInput, Greet.Error, GreetOutput, Nothing, Nothing]
+  def greet(name: String): P[GreetInput, Greet.Error, GreetOutput, Nothing, Nothing]
 
 }
 ```

@@ -10,7 +10,7 @@ case class NonEmptyListFormat()
 object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "nonEmptyListFormat")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Trait(selector = Some("list"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 

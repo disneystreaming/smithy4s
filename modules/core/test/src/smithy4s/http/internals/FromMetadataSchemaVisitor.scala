@@ -43,7 +43,7 @@ object FromMetadataSchemaVisitor extends SchemaVisitor.Default[FromMetadata] {
           case (Some(value), true) =>
             Right(value)
           case (None, true) =>
-            Left(s"Not found : ${field.label}")
+            Left(s"Not found: ${field.label}")
           case (other, _) =>
             Right((other: Any))
         }

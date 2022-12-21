@@ -10,7 +10,7 @@ case class AgeFormat()
 object AgeFormat extends ShapeTag.Companion[AgeFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "ageFormat")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Trait(selector = Some("integer"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 

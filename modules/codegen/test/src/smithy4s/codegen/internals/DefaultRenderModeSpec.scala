@@ -47,7 +47,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
-         |  val hints : Hints = Hints.empty
+         |  val hints: Hints = Hints.empty
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.optional[Test]("one", _.one),
@@ -90,7 +90,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
-         |  val hints : Hints = Hints.empty
+         |  val hints: Hints = Hints.empty
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.required[Test]("two", _.two).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
@@ -133,7 +133,7 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |object Test extends ShapeTag.Companion[Test] {
          |  val id: ShapeId = ShapeId("foo", "Test")
          |
-         |  val hints : Hints = Hints.empty
+         |  val hints: Hints = Hints.empty
          |
          |  implicit val schema: Schema[Test] = struct(
          |    string.required[Test]("three", _.three).addHints(smithy.api.Required()),

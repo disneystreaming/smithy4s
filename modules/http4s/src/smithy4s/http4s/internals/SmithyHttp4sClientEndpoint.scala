@@ -165,7 +165,7 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
             val schema = alt.instance
             val errorMetadataDecoder =
               Metadata.PartialDecoder.fromSchema(schema)
-            // TODO : apply proper memoization of error instances/
+            // TODO: apply proper memoization of error instances/
             // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
             // This is because the "compile entity encoder" method can trigger a transformation of hints, which
             // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.

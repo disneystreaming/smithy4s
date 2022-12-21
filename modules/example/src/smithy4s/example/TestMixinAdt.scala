@@ -15,13 +15,13 @@ sealed trait TestMixinAdt extends scala.Product with scala.Serializable {
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestMixinAdt")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
 
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
 
     val schema: Schema[TestAdtMemberWithMixin] = struct(
       string.optional[TestAdtMemberWithMixin]("a", _.a),
@@ -37,6 +37,6 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   implicit val schema: Schema[TestMixinAdt] = union(
     TestAdtMemberWithMixin.alt,
   ){
-    case c : TestAdtMemberWithMixin => TestAdtMemberWithMixin.alt(c)
+    case c: TestAdtMemberWithMixin => TestAdtMemberWithMixin.alt(c)
   }.withId(id).addHints(hints)
 }

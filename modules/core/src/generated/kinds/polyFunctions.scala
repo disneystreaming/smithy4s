@@ -48,13 +48,13 @@ object PolyFunction{
     type Algebra[G[_]] = PolyFunction[F, G]
   }
 
-  def identity[F[_]] : PolyFunction[F, F] = new PolyFunction[F, F]{
+  def identity[F[_]]: PolyFunction[F, F] = new PolyFunction[F, F]{
     def apply[A0](input: F[A0]): F[A0] = input
   }
 
   implicit def polyfunction_transformation[Alg[_[_]]: FunctorK, F[_], G[_]]: Transformation[PolyFunction[F, G], Alg[F], Alg[G]] =
     new Transformation[PolyFunction[F, G], Alg[F], Alg[G]]{
-      def apply(func: PolyFunction[F, G], algF: Alg[F]) : Alg[G] = FunctorK[Alg].mapK(algF, func)
+      def apply(func: PolyFunction[F, G], algF: Alg[F]): Alg[G] = FunctorK[Alg].mapK(algF, func)
     }
 }
 
@@ -85,13 +85,13 @@ object PolyFunction2{
     type Algebra[G[_, _]] = PolyFunction2[F, G]
   }
 
-  def identity[F[_, _]] : PolyFunction2[F, F] = new PolyFunction2[F, F]{
+  def identity[F[_, _]]: PolyFunction2[F, F] = new PolyFunction2[F, F]{
     def apply[A0, A1](input: F[A0, A1]): F[A0, A1] = input
   }
 
   implicit def polyfunction2_transformation[Alg[_[_, _]]: FunctorK2, F[_, _], G[_, _]]: Transformation[PolyFunction2[F, G], Alg[F], Alg[G]] =
     new Transformation[PolyFunction2[F, G], Alg[F], Alg[G]]{
-      def apply(func: PolyFunction2[F, G], algF: Alg[F]) : Alg[G] = FunctorK2[Alg].mapK2(algF, func)
+      def apply(func: PolyFunction2[F, G], algF: Alg[F]): Alg[G] = FunctorK2[Alg].mapK2(algF, func)
     }
 }
 
@@ -123,13 +123,13 @@ object PolyFunction5{
     type Algebra[G[_, _, _, _, _]] = PolyFunction5[F, G]
   }
 
-  def identity[F[_, _, _, _, _]] : PolyFunction5[F, F] = new PolyFunction5[F, F]{
+  def identity[F[_, _, _, _, _]]: PolyFunction5[F, F] = new PolyFunction5[F, F]{
     def apply[A0, A1, A2, A3, A4](input: F[A0, A1, A2, A3, A4]): F[A0, A1, A2, A3, A4] = input
   }
 
   implicit def polyfunction5_transformation[Alg[_[_, _, _, _, _]]: FunctorK5, F[_, _, _, _, _], G[_, _, _, _, _]]: Transformation[PolyFunction5[F, G], Alg[F], Alg[G]] =
     new Transformation[PolyFunction5[F, G], Alg[F], Alg[G]]{
-      def apply(func: PolyFunction5[F, G], algF: Alg[F]) : Alg[G] = FunctorK5[Alg].mapK5(algF, func)
+      def apply(func: PolyFunction5[F, G], algF: Alg[F]): Alg[G] = FunctorK5[Alg].mapK5(algF, func)
     }
 }
 

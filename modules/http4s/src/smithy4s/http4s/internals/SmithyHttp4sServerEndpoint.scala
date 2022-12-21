@@ -153,7 +153,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
           request.body.compile.drain *>
             totalDecoder.decode(metadata).liftTo[F]
       case None =>
-        // NB : only compiling the input codec if the data cannot be
+        // NB: only compiling the input codec if the data cannot be
         // totally extracted from the metadata.
         implicit val inputCodec =
           entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)

@@ -11,7 +11,7 @@ case class Candy(name: Option[String] = None)
 object Candy extends ShapeTag.Companion[Candy] {
   val id: ShapeId = ShapeId("smithy4s.example", "Candy")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[Candy] = struct(
     string.optional[Candy]("name", _.name),

@@ -11,7 +11,7 @@ case class AddBrandsInput(brands: Option[List[String]] = None)
 object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "AddBrandsInput")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[AddBrandsInput] = struct(
     BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands),

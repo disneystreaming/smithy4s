@@ -202,7 +202,7 @@ structure HealthRequest {
   query: String
 }
 
-@freeForm(i : 1, a: 2)
+@freeForm(i: 1, a: 2)
 structure HealthResponse {
   @required
   status: String

@@ -14,7 +14,7 @@ case class MixinExample(a: Option[String] = None, b: Option[Int] = None, c: Opti
 object MixinExample extends ShapeTag.Companion[MixinExample] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinExample")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[MixinExample] = struct(
     string.optional[MixinExample]("a", _.a),

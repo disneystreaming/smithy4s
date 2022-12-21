@@ -18,7 +18,7 @@ sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int, _h
 object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {
   val id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Documentation("FaceCard types"),
     IntEnum(),
   )

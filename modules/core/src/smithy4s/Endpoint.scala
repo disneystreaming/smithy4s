@@ -33,7 +33,7 @@ package smithy4s
   * throwables against the errors the operation knows about (which form an ADT
   * in the Scala representation)
   *
-  * NB : SI an SO respectively are derived from the @streaming trait in smithy.
+  * NB: SI an SO respectively are derived from the @streaming trait in smithy.
   * If this trait is present in one on one of the members of Input/Output, the
   * member is removed from the Scala representation, in order to avoid polluting
   * datatypes that typically fit in memory with concerns of streaming (which can

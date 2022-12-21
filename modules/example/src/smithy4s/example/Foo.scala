@@ -17,7 +17,7 @@ sealed trait Foo extends scala.Product with scala.Serializable {
 object Foo extends ShapeTag.Companion[Foo] {
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   case class IntCase(int: Int) extends Foo
   case class StrCase(str: String) extends Foo
@@ -25,22 +25,22 @@ object Foo extends ShapeTag.Companion[Foo] {
   case class BDecCase(bDec: BigDecimal) extends Foo
 
   object IntCase {
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
     val schema: Schema[IntCase] = bijection(int.addHints(hints), IntCase(_), _.int)
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
     val schema: Schema[StrCase] = bijection(string.addHints(hints), StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }
   object BIntCase {
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
     val schema: Schema[BIntCase] = bijection(bigint.addHints(hints), BIntCase(_), _.bInt)
     val alt = schema.oneOf[Foo]("bInt")
   }
   object BDecCase {
-    val hints : Hints = Hints.empty
+    val hints: Hints = Hints.empty
     val schema: Schema[BDecCase] = bijection(bigdecimal.addHints(hints), BDecCase(_), _.bDec)
     val alt = schema.oneOf[Foo]("bDec")
   }
@@ -51,9 +51,9 @@ object Foo extends ShapeTag.Companion[Foo] {
     BIntCase.alt,
     BDecCase.alt,
   ){
-    case c : IntCase => IntCase.alt(c)
-    case c : StrCase => StrCase.alt(c)
-    case c : BIntCase => BIntCase.alt(c)
-    case c : BDecCase => BDecCase.alt(c)
+    case c: IntCase => IntCase.alt(c)
+    case c: StrCase => StrCase.alt(c)
+    case c: BIntCase => BIntCase.alt(c)
+    case c: BDecCase => BDecCase.alt(c)
   }.withId(id).addHints(hints)
 }

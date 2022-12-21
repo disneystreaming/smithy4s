@@ -147,7 +147,7 @@ object Field {
   }
 
   trait LeftFolder[F[_], B] {
-    def compile[T](label: String, instance: F[T]) : (B, T) => B
+    def compile[T](label: String, instance: F[T]): (B, T) => B
   }
 
   type Wrapped[F[_], G[_], A] = F[G[A]]

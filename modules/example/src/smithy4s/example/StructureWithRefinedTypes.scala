@@ -10,7 +10,7 @@ case class StructureWithRefinedTypes(age: Age, personAge: PersonAge, fancyList: 
 object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefinedTypes] {
   val id: ShapeId = ShapeId("smithy4s.example", "StructureWithRefinedTypes")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[StructureWithRefinedTypes] = struct(
     Age.schema.required[StructureWithRefinedTypes]("age", _.age).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),

@@ -25,9 +25,9 @@ import kinds._
   *
   *{{{
   *  // assuming Foo is a code-generated interface
-  *  val fooOption : Foo[Option] = ???
+  *  val fooOption: Foo[Option] = ???
   *  val toList = new smithy4s.PolyFunction[Option, List]{def apply[A](fa: Option[A]): List[A] = fa.toList}
-  *  val fooList : Foo[List] = foo.transform(toList)
+  *  val fooList: Foo[List] = foo.transform(toList)
   *}}}
   *
   * It is possible to plug arbitrary transformations to mechanism, such as `cats.arrow.FunctionK`
@@ -68,12 +68,12 @@ object Transformation {
   // format: off
   implicit def functorK5_poly1_transformation[Alg[_[_, _, _, _, _]]: FunctorK5, F[_], G[_]]: Transformation[PolyFunction[F, G], FunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]] =
     new Transformation[PolyFunction[F, G], FunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{
-      def apply(func: PolyFunction[F, G], algF: FunctorAlgebra[Alg, F]) : FunctorAlgebra[Alg, G] = FunctorK5[Alg].mapK5[Kind1[F]#toKind5, Kind1[G]#toKind5](algF, toPolyFunction5(func))
+      def apply(func: PolyFunction[F, G], algF: FunctorAlgebra[Alg, F]): FunctorAlgebra[Alg, G] = FunctorK5[Alg].mapK5[Kind1[F]#toKind5, Kind1[G]#toKind5](algF, toPolyFunction5(func))
     }
 
   implicit def functorK5_poly2_transformation[Alg[_[_, _, _, _, _]]: FunctorK5, F[_,_], G[_, _]]: Transformation[PolyFunction2[F, G], BiFunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]] =
     new Transformation[PolyFunction2[F, G], BiFunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]]{
-      def apply(func: PolyFunction2[F, G], algF: BiFunctorAlgebra[Alg, F]) : BiFunctorAlgebra[Alg, G] = FunctorK5[Alg].mapK5[Kind2[F]#toKind5, Kind2[G]#toKind5](algF, toPolyFunction5(func))
+      def apply(func: PolyFunction2[F, G], algF: BiFunctorAlgebra[Alg, F]): BiFunctorAlgebra[Alg, G] = FunctorK5[Alg].mapK5[Kind2[F]#toKind5, Kind2[G]#toKind5](algF, toPolyFunction5(func))
     }
 
 
@@ -82,12 +82,12 @@ object Transformation {
   implicit def service_surfaceError_transformation[Alg[_[_, _, _, _, _]], F[_], G[_, _]](implicit service: Service[Alg]): Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]] =
      new Transformation[SurfaceError[F, G], FunctorAlgebra[Alg, F], BiFunctorAlgebra[Alg, G]]{
 
-       def apply(func: SurfaceError[F, G], algF: FunctorAlgebra[Alg, F]) : BiFunctorAlgebra[Alg, G] = {
+       def apply(func: SurfaceError[F, G], algF: FunctorAlgebra[Alg, F]): BiFunctorAlgebra[Alg, G] = {
         val polyFunction = service.toPolyFunction[Kind1[F]#toKind5](algF)
         val interpreter = new PolyFunction5[service.Operation, Kind2[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[E,O] = {
             val endpoint = service.opToEndpoint(op)
-            val catcher : Throwable => Option[E] = endpoint.errorable match {
+            val catcher: Throwable => Option[E] = endpoint.errorable match {
               case None => PartialFunction.empty[Throwable, Option[E]]
               case Some(value) => value.liftError(_)
             }
@@ -101,7 +101,7 @@ object Transformation {
   implicit def service_absorbError_transformation[Alg[_[_, _, _, _, _]], F[_, _], G[_]](implicit service: Service[Alg]): Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]] =
      new Transformation[AbsorbError[F, G], BiFunctorAlgebra[Alg, F], FunctorAlgebra[Alg, G]]{
 
-       def apply(func: AbsorbError[F, G], algF: BiFunctorAlgebra[Alg, F]) : FunctorAlgebra[Alg, G] = {
+       def apply(func: AbsorbError[F, G], algF: BiFunctorAlgebra[Alg, F]): FunctorAlgebra[Alg, G] = {
         val polyFunction = service.toPolyFunction[Kind2[F]#toKind5](algF)
         val interpreter = new PolyFunction5[service.Operation, Kind1[G]#toKind5]{
           def apply[I, E, O, SI, SO](op: service.Operation[I, E, O, SI, SO]): G[O] = {

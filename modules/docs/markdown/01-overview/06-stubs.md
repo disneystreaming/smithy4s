@@ -10,7 +10,7 @@ This class has a constructor parameter that requires a value. This value is what
 ```scala mdoc:silent
 import smithy4s.hello._
 import cats.effect._
-val stubbedHelloWorld : HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub)
+val stubbedHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub)
 ```
 
 Obviously, the generated methods can be overridden.
@@ -18,8 +18,8 @@ Obviously, the generated methods can be overridden.
 ```scala mdoc:silent
 import smithy4s.hello._
 import cats.effect._
-val overriddenHelloWorld : HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub){
-  override def hello(name: String, town: Option[String]) : IO[Greeting] = IO.pure {
+val overriddenHelloWorld: HelloWorldService[IO] = new HelloWorldService.Default[IO](IO.stub){
+  override def hello(name: String, town: Option[String]): IO[Greeting] = IO.pure {
     Greeting(s"Hello $name!")
   }
 }

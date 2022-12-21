@@ -11,7 +11,7 @@ case class MixinOptionalMemberDefaultAdded(a: String = "test")
 object MixinOptionalMemberDefaultAdded extends ShapeTag.Companion[MixinOptionalMemberDefaultAdded] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinOptionalMemberDefaultAdded")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[MixinOptionalMemberDefaultAdded] = struct(
     string.required[MixinOptionalMemberDefaultAdded]("a", _.a).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),
