@@ -46,7 +46,7 @@ class PathSpec() extends munit.FunSuite {
   }
 
   test("Parse path pattern into path segments") {
-    val result = pathSegments("/{head}/foo/{tail+}?hello=world")
+    val result = pathSegments("/{head}/foo/{tail+}")
     expect(
       result == Option(
         Vector(
@@ -57,7 +57,18 @@ class PathSpec() extends munit.FunSuite {
       )
     )
   }
-
+  test("Parse path pattern from path that has query param into path segments") {
+    val result = pathSegments("/{head}/foo/{tail+}?hello=world&hi")
+    expect(
+      result == Option(
+        Vector(
+          PathSegment.label("head"),
+          PathSegment.static("foo"),
+          PathSegment.greedy("tail")
+        )
+      )
+    )
+  }
   test("Write PathParams for DummyPath") {
     val result = HttpEndpoint
       .cast(
