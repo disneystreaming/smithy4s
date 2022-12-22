@@ -55,9 +55,9 @@ package object internals {
     queryParams.combineAll
       .map(splitQuery)
       .foldLeft[ListMap[String, List[String]]](ListMap.empty) {
-        case (acc,(k, v)) =>
+        case (acc, (k, v)) =>
           acc.get(k) match {
-            case Some(value) => acc + (k -> (v :: value))
+            case Some(value) => acc + (k -> (value :+ v))
             case None        => acc + (k -> List(v))
           }
       }

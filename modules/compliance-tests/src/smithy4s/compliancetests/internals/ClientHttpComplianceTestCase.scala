@@ -71,7 +71,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         parseQueryParams(testCase.queryParams)
       )
 
-    val uriAssert = assert.eql(expectedUri, request.uri)
+    val uriAssert =
+      assert.eql(expectedUri.renderString, request.uri.renderString)
     val methodAssert = assert.eql(
       testCase.method.toLowerCase(),
       request.method.name.toLowerCase()
@@ -185,8 +186,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     .through(utf8Encode)
                 }
                 .getOrElse(fs2.Stream.empty)
-
-            //  val headers = extractHeaders(testCase.headers).toList.flatten
 
             val headers = List(
               extractHeaders(testCase.headers),
