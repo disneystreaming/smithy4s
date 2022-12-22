@@ -8,7 +8,7 @@ use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {
-    operations: [SayHello, Listen, TestPath]
+    operations: [SayHello, Listen, TestPath,QueryPrecedence]
 }
 
 @http(method: "POST", uri: "/")
@@ -193,4 +193,64 @@ structure ErrorDetails {
     date: Timestamp
     @required
     location: String
+}
+
+apply QueryPrecedence @httpRequestTests([
+    {
+        id: "QueryPrecedence",
+        documentation: "Prefer named query parameters when serializing",
+        protocol: simpleRestJson,
+        method: "POST",
+        uri: "/Precedence",
+        body: "",
+        queryParams: [
+            "bar=named",
+            "qux=alsoFromMap"
+        ],
+        params: {
+            foo: "named",
+            baz: {
+                bar: "fromMap",
+                qux: "alsoFromMap"
+            }
+        },
+        appliesTo: "client",
+    },
+    {
+        id: "RestJsonServersPutAllQueryParamsInMap",
+        documentation: "Servers put all query params in map",
+        protocol: simpleRestJson,
+        method: "POST",
+        uri: "/Precedence",
+        body: "",
+        queryParams: [
+            "bar=named",
+            "qux=fromMap"
+        ],
+        params: {
+            foo: "named",
+            baz: {
+                bar: "named",
+                qux: "fromMap"
+            }
+        },
+        appliesTo: "server",
+    }
+])
+@http(method: "POST", uri: "/Precedence")
+operation QueryPrecedence {
+    input: QueryParamsInput
+}
+
+structure QueryParamsInput {
+    @httpQuery("bar")
+    foo: String
+
+    @httpQueryParams
+    baz: StringMap
+}
+
+map StringMap {
+    key: String,
+    value: String,
 }
