@@ -60,4 +60,22 @@ package object http4s extends Compat.Package {
       (CaseInsensitive(k.toString), v.map(_.value))
     }
 
+  private[smithy4s] def splitQueryAndPath(
+      segment: String
+  ): (String, Map[String, Seq[String]]) = {
+    segment.split("\\?", 2) match {
+      case Array(path) => (path, Map.empty)
+      case Array(path, query) =>
+        val params =
+          query.split("&").toList.foldLeft(Map.empty[String, Seq[String]]) {
+            case (acc, param) =>
+              val (k, v) = param.split("=", 2) match {
+                case Array(key, value) => (key, value)
+                case Array(key)        => (key, "")
+              }
+              acc.updated(k, acc.getOrElse(k, Seq.empty) :+ v)
+          }
+        (path, params)
+    }
+  }
 }
