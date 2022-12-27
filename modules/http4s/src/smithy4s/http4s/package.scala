@@ -62,27 +62,27 @@ package object http4s extends Compat.Package {
 
   private[smithy4s] def splitPathSegmentsAndQueryParams(
       path: List[String]
-  ): (List[String], Map[String, Seq[String]]) = {
+  ): (List[String], Map[String, List[String]]) = {
     path.lastOption
-      .fold((path, Map.empty[String, Seq[String]])) { segment =>
+      .fold((path, Map.empty[String, List[String]])) { segment =>
         val (last, queries) = splitPathAndQuery(segment)
         (path.dropRight(1) :+ last, queries)
       }
   }
   private def splitPathAndQuery(
       segment: String
-  ): (String, Map[String, Seq[String]]) = {
+  ): (String, Map[String, List[String]]) = {
     segment.split("\\?", 2) match {
       case Array(path) => (path, Map.empty)
       case Array(path, query) =>
         val params =
-          query.split("&").toList.foldLeft(Map.empty[String, Seq[String]]) {
+          query.split("&").toList.foldLeft(Map.empty[String, List[String]]) {
             case (acc, param) =>
               val (k, v) = param.split("=", 2) match {
                 case Array(key, value) => (key, value)
                 case Array(key)        => (key, "")
               }
-              acc.updated(k, acc.getOrElse(k, Seq.empty) :+ v)
+              acc.updated(k, acc.getOrElse(k, List.empty) :+ v)
           }
         (path, params)
     }
