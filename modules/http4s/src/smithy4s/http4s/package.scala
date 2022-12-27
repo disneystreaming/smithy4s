@@ -60,7 +60,16 @@ package object http4s extends Compat.Package {
       (CaseInsensitive(k.toString), v.map(_.value))
     }
 
-  private[smithy4s] def splitQueryAndPath(
+  private[smithy4s] def splitPathSegmentsAndQueryParams(
+      path: List[String]
+  ): (List[String], Map[String, Seq[String]]) = {
+    path.lastOption
+      .fold((path, Map.empty[String, Seq[String]])) { segment =>
+        val (last, queries) = splitPathAndQuery(segment)
+        (path.dropRight(1) :+ last, queries)
+      }
+  }
+  private def splitPathAndQuery(
       segment: String
   ): (String, Map[String, Seq[String]]) = {
     segment.split("\\?", 2) match {
