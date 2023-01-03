@@ -19,6 +19,7 @@ package internals
 
 import cats.MonadThrow
 import smithy4s.Endpoint
+import smithy4s.http.CodecAPI
 import smithy4s.kinds._
 
 // format: off
@@ -29,12 +30,11 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     service: smithy4s.Service.Aux[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
-    contentType: String
+    contentType: String,
+    codecAPI: CodecAPI
 )(implicit F: MonadThrow[F])
     extends PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
-
-  val codecAPI = new json.AwsJsonCodecAPI()
 
   def apply[I, E, O, SI, SO](
       op: Op[I, E, O, SI, SO]
