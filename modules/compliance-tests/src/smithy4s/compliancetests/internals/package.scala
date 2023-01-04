@@ -34,6 +34,11 @@ package object internals {
     )
   }
 
+  implicit class SchemaOps[A](val schema: Schema[A]) extends AnyVal {
+    def clearHints: Schema[A] =
+      schema.transformHintsTransitively(_ => Hints.empty)
+  }
+
   def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
