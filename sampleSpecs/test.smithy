@@ -198,7 +198,7 @@ structure ErrorDetails {
 @http(method: "PUT", uri: "/json-name-test")
 @httpRequestTests([
     {
-        id: "JsonNameTest",
+        id: "JsonNameRequestTest",
         protocol: simpleRestJson,
         documentation: "This is a test of the jsonName trait",
         method: "PUT",
@@ -216,7 +216,7 @@ structure ErrorDetails {
 ])
 @httpResponseTests([
     {
-        id: "JsonNameTest",
+        id: "JsonNameResponseTest",
         protocol: simpleRestJson,
         documentation: "This is a test of the jsonName trait",
         code: 200,
