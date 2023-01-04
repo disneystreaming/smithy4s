@@ -69,7 +69,7 @@ object HttpEndpoint {
     } yield {
       new HttpEndpoint[I] {
         def path(input: I): List[String] = encoder.encode(input)
-        val staticQueryParams: Map[String,String] = queryParams
+        val staticQueryParams: Map[String, String] = queryParams
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod
         val code: Int = http.code
