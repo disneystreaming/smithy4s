@@ -8,7 +8,7 @@ use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {
-    operations: [SayHello, Listen, TestPath]
+    operations: [SayHello, Listen, TestPath,JsonNameTest]
 }
 
 @http(method: "POST", uri: "/")
@@ -74,7 +74,6 @@ structure SayHelloPayload {
     result: String
 }
 
-
 @http(method: "GET", uri: "/listen")
 @readonly
 @httpRequestTests([
@@ -109,8 +108,8 @@ operation TestPath {
 // The following shapes are used by the documentation
 @simpleRestJson
 service HelloWorldService {
-  version: "1.0.0",
-  operations: [Hello]
+    version: "1.0.0",
+    operations: [Hello]
 }
 @httpRequestTests([
     {
@@ -130,15 +129,15 @@ service HelloWorldService {
 ])
 @http(method: "POST", uri: "/{name}", code: 200)
 operation Hello {
-  input := {
-    @httpLabel
-    @required
-    name: String
-  },
-  output := {
-    @required
-    message: String
-  }
+    input := {
+        @httpLabel
+        @required
+        name: String
+    },
+    output := {
+        @required
+        message: String
+    }
 }
 
 @httpResponseTests([
@@ -193,4 +192,50 @@ structure ErrorDetails {
     date: Timestamp
     @required
     location: String
+}
+
+
+@http(method: "PUT", uri: "/json-name-test")
+@httpRequestTests([
+    {
+        id: "JsonNameTest",
+        protocol: simpleRestJson,
+        documentation: "This is a test of the jsonName trait",
+        method: "PUT",
+        uri: "/json-name-test",
+        body:
+        """
+              {
+               "foo": "test"
+                }""",
+        bodyMediaType: "application/json",
+        params: {
+            bar: "test"
+        }
+    }
+])
+@httpResponseTests([
+    {
+        id: "JsonNameTest",
+        protocol: simpleRestJson,
+        documentation: "This is a test of the jsonName trait",
+        code: 200,
+        body:
+        """
+              {
+               "bar": "test"
+                }""",
+        bodyMediaType: "application/json",
+        params: {
+            foo: "test"
+        }
+    }
+])
+operation JsonNameTest {
+    input: JsonNameTestInputOutput,
+    output: JsonNameTestInputOutput
+}
+structure JsonNameTestInputOutput {
+    @jsonName("foo")
+    bar: String
 }
