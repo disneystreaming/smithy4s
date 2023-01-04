@@ -56,22 +56,41 @@ package object internals {
       str: String
   ): Option[Vector[PathSegment]] = {
     str
-      .split('/')
-      .toVector
-      .filterNot(_.isEmpty())
-      .traverse(fromToString(_))
+      .split('?')
+      .headOption
+      .flatMap(
+        _.split('/').toVector
+          .filterNot(_.isEmpty())
+          .traverse(fromToString(_))
+      )
+  }
+
+  private[http] def staticQueryParams(
+      uri: String
+  ): Map[String, String] = {
+    uri.split("\\?", 2) match {
+      case Array(_) => Map.empty
+      case Array(_, query) =>
+        query.split("&").toList.foldLeft(Map.empty[String, String]) {
+          case (acc, param) =>
+            val (k, v) = param.split("=", 2) match {
+              case Array(key)        => (key, "")
+              case Array(key, value) => (key, value)
+            }
+            acc.updated(k, v)
+        }
+    }
   }
 
   private def fromToString(str: String): Option[PathSegment] = {
     Option(str).filter(_.nonEmpty).map { str =>
       {
         // handle query params in path
-        val sanitized = str.split('?').head
-        if (sanitized.startsWith("{") && sanitized.endsWith("+}"))
-          PathSegment.greedy(sanitized.substring(1, sanitized.length() - 2))
-        else if (sanitized.startsWith("{") && sanitized.endsWith("}"))
-          PathSegment.label(sanitized.substring(1, sanitized.length() - 1))
-        else PathSegment.static(sanitized)
+        if (str.startsWith("{") && str.endsWith("+}"))
+          PathSegment.greedy(str.substring(1, str.length() - 2))
+        else if (str.startsWith("{") && str.endsWith("}"))
+          PathSegment.label(str.substring(1, str.length() - 1))
+        else PathSegment.static(str)
       }
     }
   }

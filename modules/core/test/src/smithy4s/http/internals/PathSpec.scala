@@ -69,6 +69,35 @@ class PathSpec() extends munit.FunSuite {
       )
     )
   }
+  test("parse static query params from DummyPath") {
+    val httpEndpoint = HttpEndpoint
+      .cast(
+        DummyPath
+      )
+      .toOption
+      .get
+
+    val sqp = httpEndpoint.staticQueryParams
+    val path = httpEndpoint.path
+
+    val expectedQueryMap = Map("value" -> "foo", "baz" -> "bar")
+    expect(sqp == expectedQueryMap)
+    expect(
+      path ==
+        List(
+          PathSegment.static("dummy-path"),
+          PathSegment.label("str"),
+          PathSegment.label("int"),
+          PathSegment.label("ts1"),
+          PathSegment.label("ts2"),
+          PathSegment.label("ts3"),
+          PathSegment.label("ts4"),
+          PathSegment.label("b"),
+          PathSegment.label("ie")
+        )
+    )
+  }
+
   test("Write PathParams for DummyPath") {
     val result = HttpEndpoint
       .cast(
