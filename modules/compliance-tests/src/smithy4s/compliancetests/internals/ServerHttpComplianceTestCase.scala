@@ -50,12 +50,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): Request[F] = {
     val expectedHeaders =
-      List(
-        extractHeaders(testCase.headers),
-        testCase.bodyMediaType.map(mt =>
-          Headers(`Content-Type`(MediaType.unsafeParse(mt)))
-        )
-      ).foldMap(_.combineAll)
+      testCase.bodyMediaType
+        .map(mt => Headers(`Content-Type`(MediaType.unsafeParse(mt))))
+        .getOrElse(Headers.empty) ++ parseHeaders(testCase.headers)
 
     val expectedMethod = Method
       .fromString(testCase.method)

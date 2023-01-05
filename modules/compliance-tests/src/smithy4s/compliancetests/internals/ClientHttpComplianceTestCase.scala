@@ -187,12 +187,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = List(
-              extractHeaders(testCase.headers),
-              Some(
-                Headers(`Content-Type`(MediaType.unsafeParse(mediaType.value)))
-              )
-            ).foldMap(_.combineAll)
+            val headers = Headers(
+              `Content-Type`(MediaType.unsafeParse(mediaType.value))
+            ) ++ parseHeaders(testCase.headers)
 
             req.body.compile.drain.as(
               Response[F](status)

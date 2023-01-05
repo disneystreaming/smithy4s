@@ -28,18 +28,21 @@ package object internals {
   // Due to AWS's usage of integer as the canonical representation of a Timestamp in smithy , we need to provide the decoder with instructions to use a Long instead.
   // therefore the timestamp type is switched to type epochSeconds: Long
   // This is just a workaround thats limited to testing scenarios
-  def mapAllTimestampsToEpoch[A](schema: Schema[A]): Schema[A] = {
+  private[compliancetests] def mapAllTimestampsToEpoch[A](
+      schema: Schema[A]
+  ): Schema[A] = {
     schema.transformHintsTransitively(h =>
       h.++(Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen))
     )
   }
 
-  implicit class SchemaOps[A](val schema: Schema[A]) extends AnyVal {
+  private[compliancetests] implicit class SchemaOps[A](val schema: Schema[A])
+      extends AnyVal {
     def clearHints: Schema[A] =
       schema.transformHintsTransitively(_ => Hints.empty)
   }
 
-  def splitQuery(queryString: String): (String, String) = {
+  private def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
         (
@@ -54,7 +57,7 @@ package object internals {
     }
   }
 
-  def parseQueryParams(
+  private[compliancetests] def parseQueryParams(
       queryParams: Option[List[String]]
   ): ListMap[String, List[String]] = {
     queryParams.combineAll
@@ -68,10 +71,10 @@ package object internals {
       }
   }
 
-  def extractHeaders(
+  private[compliancetests] def parseHeaders(
       maybeHeaders: Option[Map[String, String]]
-  ): Option[Headers] =
-    maybeHeaders.map(h =>
+  ): Headers =
+    maybeHeaders.fold(Headers.empty)(h =>
       Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
     )
 
