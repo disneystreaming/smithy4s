@@ -15,6 +15,7 @@ import scala.scalanative.sbtplugin.ScalaNativePlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.scalaJSLinkerConfig
 import org.scalajs.linker.interface.ModuleKind
 import org.scalajs.jsenv.nodejs.NodeJSEnv
+import com.github.sbt.git.SbtGit.git
 
 sealed trait Platform
 case object JSPlatform extends Platform
@@ -390,6 +391,20 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   }
 
   lazy val jsDimSettings = simpleJSLayout ++ Seq(
+    scalacOptions ++= {
+      // Map the sourcemaps to github paths instead of local directories
+      val flag =
+        if (scalaVersion.value.startsWith("3")) "-scalajs-mapSourceURI:"
+        else "-P:scalajs:mapSourceURI:"
+      val localSourcesPath = baseDirectory.value.toURI
+      val headCommit = git.gitHeadCommit.value.get
+      scmInfo.value.map { info =>
+        val remoteSourcesPath =
+          s"${info.browseUrl.toString
+            .replace("github.com", "raw.githubusercontent.com")}/$headCommit"
+        s"${flag}:$localSourcesPath->$remoteSourcesPath"
+      }
+    },
     Test / scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.CommonJSModule)
     },
