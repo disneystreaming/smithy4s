@@ -93,7 +93,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
   ): ComplianceTest[F] = {
     type R[I_, E_, O_, SE_, SO_] = F[O_]
 
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.clearHints)
+    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
       name = endpoint.id.toString + "(client|request): " + testCase.id,
@@ -151,7 +151,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       name = endpoint.id.toString + "(client|response): " + testCase.id,
       run = {
-        val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.clearHints)
+        val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
             .toLeft {

@@ -84,7 +84,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
 
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.clearHints)
+    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
       name = endpoint.id.toString + "(server|request): " + testCase.id,
@@ -140,7 +140,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
           errorSchema
             .toLeft {
               val outputDecoder = Document.Decoder.fromSchema(
-                mapAllTimestampsToEpoch(endpoint.output.clearHints)
+                mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
               )
               (doc: Document) =>
                 outputDecoder

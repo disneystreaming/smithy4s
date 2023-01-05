@@ -42,7 +42,7 @@ package object internals {
   private[compliancetests] implicit class SchemaOps[A](val schema: Schema[A])
       extends AnyVal {
 
-    def clearHints: Schema[A] =
+    def awsHintMask: Schema[A] =
       schema.transformHintsTransitively(awsMask.apply)
   }
 
