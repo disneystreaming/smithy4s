@@ -36,10 +36,14 @@ package object internals {
     )
   }
 
+  // a HintMask to hold onto hints that are necessary for correct document decoding
+  private val awsMask = HintMask(IntEnum)
+
   private[compliancetests] implicit class SchemaOps[A](val schema: Schema[A])
       extends AnyVal {
+
     def clearHints: Schema[A] =
-      schema.transformHintsTransitively(_ => Hints.empty)
+      schema.transformHintsTransitively(awsMask.apply)
   }
 
   private def splitQuery(queryString: String): (String, String) = {
