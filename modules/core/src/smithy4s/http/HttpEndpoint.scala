@@ -27,8 +27,8 @@ trait HttpEndpoint[I] {
   // Returns a path template as a list of segments, which can be constant strings or placeholders.
   def path: List[PathSegment]
 
-  // Returns a map of static query parameters that are found in the uri of Http hint, there cannot be multiple of the same key !.
-  def staticQueryParams: Map[String, String]
+  // Returns a map of static query parameters that are found in the uri of Http hint.
+  def staticQueryParams: Map[String, Seq[String]]
   def method: HttpMethod
   def code: Int
 
@@ -69,7 +69,7 @@ object HttpEndpoint {
     } yield {
       new HttpEndpoint[I] {
         def path(input: I): List[String] = encoder.encode(input)
-        val staticQueryParams: Map[String, String] = queryParams
+        val staticQueryParams: Map[String, Seq[String]] = queryParams
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod
         val code: Int = http.code

@@ -67,17 +67,17 @@ package object internals {
 
   private[http] def staticQueryParams(
       uri: String
-  ): Map[String, String] = {
+  ): Map[String, Seq[String]] = {
     uri.split("\\?", 2) match {
       case Array(_) => Map.empty
       case Array(_, query) =>
-        query.split("&").toList.foldLeft(Map.empty[String, String]) {
+        query.split("&").toList.foldLeft(Map.empty[String, Seq[String]]) {
           case (acc, param) =>
             val (k, v) = param.split("=", 2) match {
               case Array(key)        => (key, "")
               case Array(key, value) => (key, value)
             }
-            acc.updated(k, v)
+            acc.updated(k, acc.getOrElse(k, Seq.empty) :+ v)
         }
     }
   }
