@@ -57,12 +57,12 @@ package object internals {
   ): Option[Vector[PathSegment]] = {
     str
       .split('?')
-      .headOption
-      .flatMap(
-        _.split('/').toVector
-          .filterNot(_.isEmpty())
-          .traverse(fromToString(_))
-      )
+      .head
+      .split('/')
+      .toVector
+      .filterNot(_.isEmpty())
+      .traverse(fromToString(_))
+
   }
 
   private[http] def staticQueryParams(
@@ -83,16 +83,11 @@ package object internals {
   }
 
   private def fromToString(str: String): Option[PathSegment] = {
-    Option(str).filter(_.nonEmpty).map { str =>
-      {
-        // handle query params in path
-        if (str.startsWith("{") && str.endsWith("+}"))
-          PathSegment.greedy(str.substring(1, str.length() - 2))
-        else if (str.startsWith("{") && str.endsWith("}"))
-          PathSegment.label(str.substring(1, str.length() - 1))
-        else PathSegment.static(str)
-      }
-    }
+    if (str == null || str.isEmpty) None
+    else if (str.startsWith("{") && str.endsWith("+}"))
+      Some(PathSegment.greedy(str.substring(1, str.length() - 2)))
+    else if (str.startsWith("{") && str.endsWith("}"))
+      Some(PathSegment.label(str.substring(1, str.length() - 1)))
+    else Some(PathSegment.static(str))
   }
-
 }
