@@ -17,8 +17,6 @@
 package smithy4s.compliancetests
 package internals
 
-import java.nio.charset.StandardCharsets
-
 import cats.implicits._
 import org.http4s.headers.`Content-Type`
 import org.http4s.HttpApp
@@ -26,7 +24,6 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.Uri
-import org.typelevel.ci.CIString
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.http.CodecAPI
@@ -37,7 +34,7 @@ import smithy4s.Service
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
-import org.http4s.Header
+import org.http4s.Headers
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -70,23 +67,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       .withPath(
         Uri.Path.unsafeFromString(testCase.uri)
       )
-      .withQueryParams(
-        testCase.queryParams.combineAll.map {
-          _.split("=", 2) match {
-            case Array(k, v) =>
-              (
-                k,
-                Uri.decode(
-                  toDecode = v,
-                  charset = StandardCharsets.UTF_8,
-                  plusIsSpace = true
-                )
-              )
-          }
-        }.toMap
+      .withMultiValueQueryParams(
+        parseQueryParams(testCase.queryParams)
       )
 
-    val uriAssert = assert.eql(expectedUri, request.uri)
+    val uriAssert =
+      assert.eql(expectedUri.renderString, request.uri.renderString)
     val methodAssert = assert.eql(
       testCase.method.toLowerCase(),
       request.method.name.toLowerCase()
@@ -107,7 +93,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
   ): ComplianceTest[F] = {
     type R[I_, E_, O_, SE_, SO_] = F[O_]
 
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input)
+    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
       name = endpoint.id.toString + "(client|request): " + testCase.id,
@@ -165,7 +151,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       name = endpoint.id.toString + "(client|response): " + testCase.id,
       run = {
-        val revisedSchema = mapAllTimestampsToEpoch(endpoint.output)
+        val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
             .toLeft {
@@ -200,21 +186,15 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     .through(utf8Encode)
                 }
                 .getOrElse(fs2.Stream.empty)
-            val headers: Seq[Header.ToRaw] =
-              testCase.headers.toList
-                .flatMap(_.toList)
-                .map { case (key, value) =>
-                  Header.Raw(CIString(key), value)
-                }
-                .map(Header.ToRaw.rawToRaw)
-                .toSeq
+
+            val headers = Headers(
+              `Content-Type`(MediaType.unsafeParse(mediaType.value))
+            ) ++ parseHeaders(testCase.headers)
+
             req.body.compile.drain.as(
               Response[F](status)
                 .withBodyStream(body)
-                .putHeaders(headers: _*)
-                .putHeaders(
-                  `Content-Type`(MediaType.unsafeParse(mediaType.value))
-                )
+                .withHeaders(headers)
             )
           }
 

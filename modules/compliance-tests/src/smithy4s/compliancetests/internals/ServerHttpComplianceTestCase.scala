@@ -17,8 +17,6 @@
 package smithy4s.compliancetests
 package internals
 
-import java.nio.charset.StandardCharsets
-
 import cats.implicits._
 import org.http4s._
 import org.http4s.headers.`Content-Type`
@@ -52,14 +50,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): Request[F] = {
     val expectedHeaders =
-      List(
-        testCase.headers.map(h =>
-          Headers(h.toList.map(a => a: Header.ToRaw): _*)
-        ),
-        testCase.bodyMediaType.map(mt =>
-          Headers(`Content-Type`(MediaType.unsafeParse(mt)))
-        )
-      ).foldMap(_.combineAll)
+      testCase.bodyMediaType
+        .map(mt => Headers(`Content-Type`(MediaType.unsafeParse(mt))))
+        .getOrElse(Headers.empty) ++ parseHeaders(testCase.headers)
 
     val expectedMethod = Method
       .fromString(testCase.method)
@@ -69,20 +62,8 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       .withPath(
         Uri.Path.unsafeFromString(testCase.uri).addEndsWithSlash
       )
-      .withQueryParams(
-        testCase.queryParams.combineAll.map {
-          _.split("=", 2) match {
-            case Array(k, v) =>
-              (
-                k,
-                Uri.decode(
-                  toDecode = v,
-                  charset = StandardCharsets.UTF_8,
-                  plusIsSpace = true
-                )
-              )
-          }
-        }.toMap
+      .withMultiValueQueryParams(
+        parseQueryParams(testCase.queryParams)
       )
 
     val body =
@@ -103,7 +84,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
 
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input)
+    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
       name = endpoint.id.toString + "(server|request): " + testCase.id,
@@ -159,7 +140,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
           errorSchema
             .toLeft {
               val outputDecoder = Document.Decoder.fromSchema(
-                mapAllTimestampsToEpoch(endpoint.output)
+                mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
               )
               (doc: Document) =>
                 outputDecoder

@@ -14,19 +14,83 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package smithy4s
+package compliancetests
 
-import smithy4s.Hints
-import smithy4s.schema.Schema
+import org.http4s.{Header, Headers, Uri}
+import cats.implicits._
+
+import java.nio.charset.StandardCharsets
+import scala.collection.immutable.ListMap
 
 package object internals {
 
   // Due to AWS's usage of integer as the canonical representation of a Timestamp in smithy , we need to provide the decoder with instructions to use a Long instead.
   // therefore the timestamp type is switched to type epochSeconds: Long
   // This is just a workaround thats limited to testing scenarios
-  def mapAllTimestampsToEpoch[A](schema: Schema[A]): Schema[A] = {
+  private[compliancetests] def mapAllTimestampsToEpoch[A](
+      schema: Schema[A]
+  ): Schema[A] = {
     schema.transformHintsTransitively(h =>
       h.++(Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen))
     )
+  }
+
+  // a HintMask to hold onto hints that are necessary for correct document decoding
+  private val awsMask = HintMask(IntEnum)
+
+  private[compliancetests] implicit class SchemaOps[A](val schema: Schema[A])
+      extends AnyVal {
+
+    def awsHintMask: Schema[A] =
+      schema.transformHintsTransitively(awsMask.apply)
+  }
+
+  private def splitQuery(queryString: String): (String, String) = {
+    queryString.split("=", 2) match {
+      case Array(k, v) =>
+        (
+          k,
+          Uri.decode(
+            toDecode = v,
+            charset = StandardCharsets.UTF_8,
+            plusIsSpace = true
+          )
+        )
+      case Array(k) => (k, "")
+    }
+  }
+
+  private[compliancetests] def parseQueryParams(
+      queryParams: Option[List[String]]
+  ): ListMap[String, List[String]] = {
+    queryParams.combineAll
+      .map(splitQuery)
+      .foldLeft[ListMap[String, List[String]]](ListMap.empty) {
+        case (acc, (k, v)) =>
+          acc.get(k) match {
+            case Some(value) => acc + (k -> (value :+ v))
+            case None        => acc + (k -> List(v))
+          }
+      }
+  }
+
+  private[compliancetests] def parseHeaders(
+      maybeHeaders: Option[Map[String, String]]
+  ): Headers =
+    maybeHeaders.fold(Headers.empty)(h =>
+      Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
+    )
+
+  // regex for comma not between quotes as quotes can be used to escape commas in headers
+  private val commaNotBetweenQuotes = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"
+
+  private def parseSingleHeader(
+      kv: (String, String)
+  ): List[(String, String)] = {
+    kv match {
+      case (k, v) => v.split(commaNotBetweenQuotes).toList.map((k, _))
+    }
+
   }
 }
