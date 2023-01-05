@@ -15,7 +15,7 @@ operation Dummy {
   input: Queries
 }
 
-@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}")
+@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar")
 @readonly
 operation DummyPath {
   input: PathParams

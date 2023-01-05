@@ -114,9 +114,10 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   def inputToRequest(input: I): Request[F] = {
     val metadata = inputMetadataEncoder.encode(input)
     val path = httpEndpoint.path(input)
+    val staticQueries = httpEndpoint.staticQueryParams
     val uri = baseUri
       .copy(path = baseUri.path.addSegments(path.map(Uri.Path.Segment(_))))
-      .withMultiValueQueryParams(metadata.query)
+      .withMultiValueQueryParams(staticQueries ++ metadata.query)
     val headers = toHeaders(metadata.headers)
     val baseRequest = Request[F](method, uri, headers = headers)
     if (inputHasBody) {
