@@ -80,7 +80,7 @@ class PathSpec() extends munit.FunSuite {
     val sqp = httpEndpoint.staticQueryParams
     val path = httpEndpoint.path
 
-    val expectedQueryMap = Map("value" -> "foo", "baz" -> "bar")
+    val expectedQueryMap = Map("value" -> Seq("foo"), "baz" -> Seq("bar"))
     expect(sqp == expectedQueryMap)
     expect(
       path ==
