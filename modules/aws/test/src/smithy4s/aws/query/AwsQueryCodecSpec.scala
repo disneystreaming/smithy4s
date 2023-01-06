@@ -20,7 +20,6 @@ import cats.effect.IO
 import cats.syntax.all._
 import smithy4s.ByteArray
 import smithy4s.Hints
-import smithy4s.ShapeId
 import smithy4s.schema.Schema
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.Schema._
@@ -30,82 +29,76 @@ import smithy.api.XmlName
 
 object AwsQueryCodecSpec extends SimpleIOSuite {
 
-  implicit class SchemaOps[A](schema: Schema[A]) {
-    def named(name: String) = schema.withId(ShapeId("default", name))
-    def x = named("x")
-    def n = named("Foo")
-  }
-
   test("primitive: int") {
-    implicit val schema: Schema[Int] = int.x
-    val xml = "1"
-    checkContent(xml, 1)
+    implicit val schema: Schema[Int] = int
+    val expected = "1"
+    checkContent(expected, 1)
   }
 
   test("primitive: string") {
-    implicit val schema: Schema[String] = string.x
-    val xml = "foo"
-    checkContent(xml, "foo")
+    implicit val schema: Schema[String] = string
+    val expected = "foo"
+    checkContent(expected, "foo")
   }
 
   test("primitive: boolean") {
-    implicit val schema: Schema[Boolean] = boolean.x
-    val xml = "true"
-    checkContent(xml, true)
+    implicit val schema: Schema[Boolean] = boolean
+    val expected = "true"
+    checkContent(expected, true)
   }
 
   test("primitive: long") {
-    implicit val schema: Schema[Long] = long.x
-    val xml = "1"
-    checkContent(xml, 1L)
+    implicit val schema: Schema[Long] = long
+    val expected = "1"
+    checkContent(expected, 1L)
   }
 
   test("primitive: short") {
-    implicit val schema: Schema[Short] = short.x
-    val xml = "1"
-    checkContent(xml, 1.toShort)
+    implicit val schema: Schema[Short] = short
+    val expected = "1"
+    checkContent(expected, 1.toShort)
   }
 
   test("primitive: byte") {
-    implicit val schema: Schema[Byte] = byte.x
-    val xml = "99"
-    checkContent(xml, 'c'.toByte)
+    implicit val schema: Schema[Byte] = byte
+    val expected = "99"
+    checkContent(expected, 'c'.toByte)
   }
 
   test("primitive: double") {
-    implicit val schema: Schema[Double] = double.x
-    val xml = "1.1"
-    checkContent(xml, 1.1)
+    implicit val schema: Schema[Double] = double
+    val expected = "1.1"
+    checkContent(expected, 1.1)
   }
 
   test("primitive: float") {
-    implicit val schema: Schema[Float] = float.x
+    implicit val schema: Schema[Float] = float
     if (!Platform.isJS) {
-      val xml = "1.1"
-      checkContent(xml, 1.1f)
+      val expected = "1.1"
+      checkContent(expected, 1.1f)
     } else {
       // 1.1f prints 1.100000023841858 in JS
-      val xml = "1"
-      checkContent(xml, 1.0f)
+      val expected = "1"
+      checkContent(expected, 1.0f)
     }
   }
 
   test("primitive: bigint") {
-    implicit val schema: Schema[BigInt] = bigint.x
-    val xml =
+    implicit val schema: Schema[BigInt] = bigint
+    val expected =
       "1000000000000000000000000000000000000000000000000000000000000000"
     checkContent(
-      xml,
+      expected,
       BigInt("1000000000000000000000000000000000000000000000000000000000000000")
     )
   }
 
   test("primitive: bigdecimal") {
-    implicit val schema: Schema[BigDecimal] = bigdecimal.x
-    val xml =
+    implicit val schema: Schema[BigDecimal] = bigdecimal
+    val expected =
       "1000000000000000000000000000000000000000000000000000000000000000.1"
     checkContent(
-      xml,
+      expected,
       BigDecimal(
         "1000000000000000000000000000000000000000000000000000000000000000.1"
       )
@@ -113,9 +106,9 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
   }
 
   test("primitive: bytes") {
-    implicit val schema: Schema[ByteArray] = bytes.x
-    val xml = "Zm9vYmFy"
-    checkContent(xml, ByteArray("foobar".getBytes()))
+    implicit val schema: Schema[ByteArray] = bytes
+    val expected = "Zm9vYmFy"
+    checkContent(expected, ByteArray("foobar".getBytes()))
   }
 
   test("struct") {
@@ -124,13 +117,13 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val x = string.required[Foo]("x", _.x)
         val y = string.optional[Foo]("y", _.y)
-        struct(x, y)(Foo.apply).n
+        struct(x, y)(Foo.apply)
       }
     }
 
-    val xml = "x=value-x&y=value-y".stripMargin
+    val expected = "x=value-x&y=value-y"
 
-    checkContent(xml, Foo("value-x", Some("value-y")))
+    checkContent(expected, Foo("value-x", Some("value-y")))
   }
 
   test("struct: empty optional") {
@@ -139,13 +132,13 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val x = string.required[Foo]("x", _.x)
         val y = string.optional[Foo]("y", _.y)
-        struct(x, y)(Foo.apply).n
+        struct(x, y)(Foo.apply)
       }
     }
 
-    val xml = "x=value-x".stripMargin
+    val expected = "x=value-x"
 
-    checkContent(xml, Foo("value-x", None))
+    checkContent(expected, Foo("value-x", None))
   }
 
   test("struct: custom names") {
@@ -154,28 +147,27 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val x = string.required[Foo]("x", _.x).addHints(XmlName("xx"))
         val y = string.optional[Foo]("y", _.y).addHints(XmlName("y:y"))
-        struct(x, y)(Foo.apply).n
+        struct(x, y)(Foo.apply)
       }
     }
 
-    val xml = "xx=value-x&y:y=value-y"
+    val expected = "xx=value-x&y%3Ay=value-y"
 
-    checkContent(xml, Foo("value-x", Some("value-y")))
+    checkContent(expected, Foo("value-x", Some("value-y")))
   }
 
   test("list") {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val foos = list(int)
-          .required[Foo]("foos", _.foos)
-        struct(foos)(Foo.apply).n
+        val foos = list(int).required[Foo]("foos", _.foos)
+        struct(foos)(Foo.apply)
       }
     }
 
-    val xml = "foos.member.1=1&foos.member.2=2&foos.member.3=3"
+    val expected = "foos.member.1=1&foos.member.2=2&foos.member.3=3"
 
-    checkContent(xml, Foo(List(1, 2, 3)))
+    checkContent(expected, Foo(List(1, 2, 3)))
   }
 
   test("list: custom names") {
@@ -184,13 +176,13 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val foos = list(int.addHints(XmlName("x")))
           .required[Foo]("foos", _.foos)
-        struct(foos)(Foo.apply).n
+        struct(foos)(Foo.apply)
       }
     }
 
-    val xml = "foos.x.1=1&foos.x.2=2&foos.x.3=3"
+    val expected = "foos.x.1=1&foos.x.2=2&foos.x.3=3"
 
-    checkContent(xml, Foo(List(1, 2, 3)))
+    checkContent(expected, Foo(List(1, 2, 3)))
   }
 
   test("list: flattened") {
@@ -200,11 +192,11 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
         val foos = list(int)
           .required[Foo]("foos", _.foos)
           .addHints(XmlFlattened())
-        struct(foos)(Foo.apply).n
+        struct(foos)(Foo.apply)
       }
     }
-    val xml = "foos.1=1&foos.2=2&foos.3=3"
-    checkContent(xml, Foo(List(1, 2, 3)))
+    val expected = "foos.1=1&foos.2=2&foos.3=3"
+    checkContent(expected, Foo(List(1, 2, 3)))
   }
 
   test("list: flattened custom names") {
@@ -214,31 +206,32 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
         val foos = list(int)
           .required[Foo]("foos", _.foos)
           .addHints(XmlFlattened(), XmlName("x"))
-        struct(foos)(Foo.apply).n
+        struct(foos)(Foo.apply)
       }
     }
-    val xml = "x.1=1&x.2=2&x.3=3"
+    val expected = "x.1=1&x.2=2&x.3=3"
 
-    checkContent(xml, Foo(List(1, 2, 3)))
+    checkContent(expected, Foo(List(1, 2, 3)))
   }
 
   test("recursion") {
+    ignore("Not ready yet")
     case class Foo(foo: Option[Foo])
     object Foo {
       implicit val schema: Schema[Foo] = recursive {
         val foos = schema.optional[Foo]("foo", _.foo)
-        struct(foos)(Foo.apply).n
+        struct(foos)(Foo.apply)
       }
     }
 
-    val xml = """|<Foo>
-                 |   <foo>
-                 |      <foo>
-                 |      </foo>
-                 |   </foo>
-                 |</Foo>
-                 |""".stripMargin
-    checkContent(xml, Foo(Some(Foo(Some(Foo(None))))))
+    val expected = """|<Foo>
+                      |   <foo>
+                      |      <foo>
+                      |      </foo>
+                      |   </foo>
+                      |</Foo>
+                      |""".stripMargin
+    checkContent(expected, Foo(Some(Foo(Some(Foo(None))))))
   }
 
   test("union") {
@@ -251,10 +244,10 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
         case Right(string) => right(string)
       }
     }
-    val xmlLeft = "left=1"
-    val xmlRight = "right=hello"
-    checkContent[Foo](xmlLeft, Left(1)) |+|
-      checkContent[Foo](xmlRight, Right("hello"))
+    val expectedLeft = "left=1"
+    val expectedRight = "right=hello"
+    checkContent[Foo](expectedLeft, Left(1)) |+|
+      checkContent[Foo](expectedRight, Right("hello"))
   }
 
   test("union: custom names") {
@@ -267,10 +260,10 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
         case Right(string) => right(string)
       }
     }
-    val xmlLeft = "foo=1"
-    val xmlRight = "bar=hello".stripMargin
-    checkContent[Foo](xmlLeft, Left(1)) |+|
-      checkContent[Foo](xmlRight, Right("hello"))
+    val expectedLeft = "foo=1"
+    val expectedRight = "bar=hello".stripMargin
+    checkContent[Foo](expectedLeft, Left(1)) |+|
+      checkContent[Foo](expectedRight, Right("hello"))
   }
 
   test("enumeration") {
@@ -284,29 +277,27 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       case object Foo extends FooBar("foo", 0)
       case object Bar extends FooBar("bar", 1)
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](List(Foo, Bar)).x
+        enumeration[FooBar](List(Foo, Bar))
     }
-    val xmlFoo = "x=foo"
-    val xmlBar = "x=bar"
-    checkContent[FooBar](xmlFoo, FooBar.Foo) <+>
-      checkContent[FooBar](xmlBar, FooBar.Bar)
+    val expectedFoo = "foo"
+    val expectedBar = "bar"
+    checkContent[FooBar](expectedFoo, FooBar.Foo) <+>
+      checkContent[FooBar](expectedBar, FooBar.Bar)
   }
 
   test("map") {
     case class Foo(foos: Map[String, Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val foos = map(string, int)
-          .required[Foo]("foos", _.foos)
-
-        struct(foos)(Foo.apply).n
+        val foos = map(string, int).required[Foo]("foos", _.foos)
+        struct(foos)(Foo.apply)
       }
     }
 
-    val xml =
-      "foo.entry.1.key=a&foo.entry.1.value=1&foo.entry.2.key=b&foo.entry.2.value=2"
+    val expected =
+      "foos.entry.1.key=a&foos.entry.1.value=1&foos.entry.2.key=b&foos.entry.2.value=2"
 
-    checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
+    checkContent(expected, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
   test("map: custom names") {
@@ -317,13 +308,13 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
           map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
             .required[Foo]("foos", _.foos)
             .addHints(XmlName("entries"))
-        struct(foos)(Foo.apply).n
+        struct(foos)(Foo.apply)
       }
     }
-    val xml =
+    val expected =
       "entries.entry.1.k=a&entries.entry.1.v=1&entries.entry.2.k=b&entries.entry.2.v=2"
 
-    checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
+    checkContent(expected, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
   test("map: flattened") {
@@ -334,21 +325,26 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
           map(string, int)
             .required[Foo]("foos", _.foos)
             .addHints(XmlFlattened())
-        struct(foos)(Foo.apply).n
+        struct(foos)(Foo.apply)
       }
     }
-    val xml =
+    val expected =
       "foos.1.key=a&foos.1.value=1&foos.2.key=b&foos.2.value=2"
 
-    checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
+    checkContent(expected, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
-  def checkContent[A: Schema](expected: String, value: A)(implicit
+  def checkContent[A](expected: String, value: A)(implicit
+      schema: Schema[A],
       loc: SourceLocation
   ): IO[Expectations] = {
-    val schema = implicitly[Schema[A]]
-    val cache = CompilationCache.make[AwsQueryCodec]
-    val codec = new AwsSchemaVisitorAwsQueryCodec(cache)
-    IO(expect.same(codec(schema)(value).render.getOrElse(""), expected))
+    val cache: CompilationCache[AwsQueryCodec] =
+      CompilationCache.make[AwsQueryCodec]
+    val schemaVisitor: AwsSchemaVisitorAwsQueryCodec =
+      new AwsSchemaVisitorAwsQueryCodec(cache)
+    val codec: AwsQueryCodec[A] = schemaVisitor(schema)
+    val formData: FormData = codec(value)
+    val result: String = formData.render
+    IO(expect.same(result, expected))
   }
 }

@@ -18,6 +18,9 @@ package smithy4s
 
 case class PayloadPath(segments: List[PayloadPath.Segment]) {
   override def toString = PayloadPath.asString(this)
+
+  def prepend(segment: PayloadPath.Segment): PayloadPath =
+    copy(segment :: segments)
 }
 
 object PayloadPath {

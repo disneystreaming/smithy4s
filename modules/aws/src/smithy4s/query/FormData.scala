@@ -1,55 +1,57 @@
-package smithy4s.aws.query
+package smithy4s
+package aws.query
 
-final case class FormData(
-    values: Map[List[String], String],
-    primitive: Option[String]
-) {
-  lazy val render: Option[String] =
-    primitive.orElse(
-      if (values.isEmpty) None
-      else
-        Some(
-          values
-            .map { case (segments, value) =>
-              segments.reverse.mkString(".") + "=" + value
-            }
-            .mkString("&")
-        )
-    )
+import smithy4s.PayloadPath
+import smithy4s.http.internals.URIEncoderDecoder
 
-  def addSegment(segment: String): FormData = primitive match {
-    case Some(value) => FormData(Map(List(segment) -> value), None)
-    case None =>
-      FormData(
-        values.map { case (segments, value) =>
-          (segment :: segments, value)
-        },
-        None
-      )
+private[aws] sealed trait FormData extends Product with Serializable {
+  def render: String
+  def prepend(key: String): FormData
+  def prepend(index: Int): FormData
+}
+private[aws] object FormData {
+  final case object Empty extends FormData {
+    override def render: String = ""
+
+    override def prepend(key: String): FormData = this
+
+    override def prepend(index: Int): FormData = this
   }
 
-  def childOf(parent: String): FormData =
-    primitive match {
-      case Some(value) => FormData(Map(List(parent) -> value), None)
-      case None =>
-        FormData(
-          values.map { case (segments, value) =>
-            (segments ::: List(parent), value)
-          },
-          None
-        )
+  final case class SimpleValue(str: String) extends FormData {
+    override def render: String = URIEncoderDecoder.encode(str)
+
+    override def prepend(key: String): FormData = {
+      PathedValue(PayloadPath.fromString(key), str)
     }
 
-  def combine(other: FormData): FormData =
-    FormData(values ++ other.values, other.primitive)
-}
+    override def prepend(index: Int): FormData =
+      PathedValue(PayloadPath.fromString(index.toString), str)
+  }
+  final case class PathedValue(path: PayloadPath, value: String)
+      extends FormData {
 
-object FormData {
+    /**
+     * @todo Understand the root reason and have a better solution for a workaround removing the '.' prefix.
+     */
+    override def render: String =
+      URIEncoderDecoder.encode(path.toString.stripPrefix(".")) + "=" +
+        URIEncoderDecoder.encode(value)
 
-  val empty: FormData = FormData(Map.empty, None)
+    override def prepend(key: String): FormData =
+      copy(path.prepend(PayloadPath.Segment(key)), value)
 
-  def simple(value: String): FormData = FormData(Map.empty, Some(value))
+    override def prepend(index: Int): FormData =
+      copy(path.prepend(PayloadPath.Segment(index)), value)
+  }
+  final case class MultipleValues(values: Vector[FormData]) extends FormData {
+    override def render: String =
+      values.map(_.render).filter(str => str.nonEmpty).mkString("&")
 
-  def one(key: List[String], value: String): FormData =
-    FormData(Map(key -> value), None)
+    override def prepend(key: String): FormData =
+      copy(values.map(_.prepend(key)))
+
+    override def prepend(index: Int): FormData =
+      copy(values.map(_.prepend(index)))
+  }
 }

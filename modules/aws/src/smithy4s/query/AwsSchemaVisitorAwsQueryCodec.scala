@@ -1,4 +1,5 @@
-package smithy4s.aws.query
+package smithy4s
+package aws.query
 
 import smithy4s.schema._
 import smithy.api.{XmlFlattened, XmlName}
@@ -15,8 +16,8 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
   ): AwsQueryCodec[P] =
     (p: P) => {
       Primitive.stringWriter(tag, hints) match {
-        case Some(writer) => FormData.simple(writer(p))
-        case None         => FormData.empty
+        case Some(writer) => FormData.SimpleValue(writer(p))
+        case None         => FormData.Empty: FormData
       }
     }
 
@@ -27,25 +28,23 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       member: Schema[A]
   ): AwsQueryCodec[C[A]] = {
     val memberWriter = compile(member)
-    val key = if (hints.has[XmlFlattened]) {
-      Nil
-    } else {
-      List(getKey(hints, "member"))
-    }
-    println(s"KEY: ${key}")
+    val maybeKey =
+      if (hints.has[XmlFlattened]) None
+      else Option(getKey(member.hints, "member"))
 
-    (collection: C[A]) =>
-      tag
-        .iterator(collection)
-        .zipWithIndex
-        .map { case (member, index) =>
-          val newKey = ((index + 1).toString :: key).reverse.mkString(".")
-          println(s"NEW KEY: ${newKey}")
-          val data = memberWriter(member)
-          println(s"DATA: ${data}")
-          data.childOf(newKey)
-        }
-        .reduce(_ combine _)
+    (collection: C[A]) => {
+      val formData = FormData
+        .MultipleValues(
+          tag
+            .iterator(collection)
+            .zipWithIndex
+            .map { case (member, index) =>
+              memberWriter(member).prepend(index + 1)
+            }
+            .toVector
+        )
+      maybeKey.fold(formData: FormData)(key => formData.prepend(key))
+    }
   }
 
   override def map[K, V](
@@ -60,8 +59,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       val vField = value.required[KV]("value", _._2)
       Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
     }
-    val schema =
-      Schema.vector(kvSchema).addHints(hints)
+    val schema = Schema.vector(kvSchema).addHints(hints)
     val codec = compile(schema)
 
     (m: Map[K, V]) => codec(m.toVector)
@@ -74,8 +72,9 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       total: E => EnumValue[E]
   ): AwsQueryCodec[E] = {
     if (hints.has(IntEnum))
-      (value: E) => FormData.simple(total(value).intValue.toString)
-    else (value: E) => FormData.simple(total(value).stringValue)
+      (value: E) => FormData.SimpleValue(total(value).intValue.toString)
+    else
+      (value: E) => FormData.SimpleValue(total(value).stringValue)
   }
 
   override def struct[S](
@@ -92,31 +91,39 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
             label: String,
             instance: Schema[AA],
             get: S => AA
-        ): AwsQueryCodec[AA] = (a: AA) => compile(instance)(a)
+        ): AwsQueryCodec[AA] = {
+          val schema = compile(instance)
+          (a: AA) => schema(a)
+        }
 
         override def onOptional[AA](
             label: String,
             instance: Schema[AA],
             get: S => Option[AA]
         ): AwsQueryCodec[Option[AA]] = {
-          case Some(value) => compile(instance)(value)
-          case None        => FormData.empty
+          val schema = compile(instance)
+          new AwsQueryCodec[Option[AA]] {
+            override def apply(a: Option[AA]): FormData = a match {
+              case Some(value) => schema(value)
+              case None        => FormData.Empty
+            }
+          }
         }
       })
 
-      (s: S) => encoder(field.get(s)).childOf(fieldKey)
+      (s: S) => encoder(field.get(s)).prepend(fieldKey)
     }
 
     val codecs: Vector[AwsQueryCodec[S]] =
       fields.map(field => fieldEncoder(field))
 
-    val structKey = getKey(hints, shapeId.name)
-
     (s: S) =>
-      codecs
-        .map(codec => codec(s))
-        .reduce(_ combine _)
-        .childOf(structKey)
+      FormData
+        .MultipleValues(
+          codecs
+            .map(codec => codec(s))
+            .toVector
+        )
   }
 
   override def union[U](
@@ -130,14 +137,12 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       val key = getKey(alt.hints, alt.label)
       dispatch
         .projector(alt)(u)
-        .fold(FormData.empty)(a => compile(alt.instance)(a))
-        .childOf(key)
+        .fold(FormData.Empty: FormData)(a => compile(alt.instance)(a))
+        .prepend(key)
     }
 
     (u: U) =>
-      alternatives
-        .map(alt => encode(u, alt))
-        .reduce((l: FormData, r: FormData) => l.combine(r))
+      FormData.MultipleValues(alternatives.map(alt => encode(u, alt)).toVector)
   }
 
   override def biject[A, B](
@@ -150,9 +155,16 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       refinement: Refinement[A, B]
   ): AwsQueryCodec[B] = (b: B) => compile(schema)(refinement.from(b))
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): AwsQueryCodec[A] = (a: A) =>
-    suspend.map(schema => compile(schema)).value(a)
+  override def lazily[A](suspend: Lazy[Schema[A]]): AwsQueryCodec[A] =
+    new AwsQueryCodec[A] {
+      lazy val underlying: AwsQueryCodec[A] =
+        suspend.map(schema => compile(schema)).value
+      override def apply(a: A): FormData = { underlying(a) }
+    }
 
+  /**
+    * @todo Pay more attention to the AWS Query annotations
+   */
   private def getKey(hints: Hints, default: String): String =
     hints
       .get(XmlName)

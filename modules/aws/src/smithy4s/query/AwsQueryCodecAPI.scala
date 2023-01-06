@@ -42,5 +42,5 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
       codec: Codec[A],
       value: A
   ): Array[Byte] =
-    codec(value).render.fold(Array.emptyByteArray)(_.getBytes("UTF-8"))
+    codec(value).render.getBytes("UTF-8")
 }
