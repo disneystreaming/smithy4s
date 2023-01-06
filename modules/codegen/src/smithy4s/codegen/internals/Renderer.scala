@@ -32,10 +32,23 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
+import java.beans.Introspector.decapitalize
 
 private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
+
+  case class Config(errorsAsScala3Unions: Boolean)
+  object Config {
+    def load(metadata: Map[String, Node]): Renderer.Config = {
+      val errorsAsScala3Unions = metadata
+        .get("smithy4sErrorsAsScala3Unions")
+        .flatMap(_.asBooleanNode().asScala)
+        .map(_.getValue())
+        .getOrElse(false)
+      Renderer.Config(errorsAsScala3Unions = errorsAsScala3Unions)
+    }
+  }
 
   def apply(unit: CompilationUnit): List[Result] = {
     val r = new Renderer(unit)
@@ -334,14 +347,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val renderedErrorUnion = errorUnion.foldMap {
       case union @ Union(shapeId, _, alts, recursive, hints) =>
-        renderUnion(
-          shapeId,
-          union.nameRef,
-          alts,
-          recursive,
-          hints,
-          error = true
-        )
+        if (compilationUnit.rendererConfig.errorsAsScala3Unions)
+          renderErrorUnion(shapeId, union.nameRef, alts, recursive, hints)
+        else
+          renderUnion(
+            shapeId,
+            union.nameRef,
+            alts,
+            recursive,
+            hints,
+            error = true
+          )
     }
 
     lines(
@@ -551,7 +567,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderErrorable(op: Operation): Lines = {
     val errorName = NameRef(op.name + "Error")
-
+    val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
     if (op.errors.isEmpty) Lines.empty
     else
       lines(
@@ -560,18 +576,67 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         block(
           line"def liftError(throwable: Throwable): $option[$errorName] = throwable match"
         ) {
-          op.errors.collect { case Type.Ref(pkg, name) =>
-            line"case e: ${NameRef(pkg + "." + name)} => $some($errorName.${name}Case(e))"
-          } ++ List(line"case _ => $none")
-        },
-        block(
-          line"def unliftError(e: $errorName): Throwable = e match"
-        ) {
-          op.errors.collect { case Type.Ref(_, name) =>
-            line"case $errorName.${name}Case(e) => e"
+          if (scala3Unions) {
+            List(
+              line"case e: $errorName => $some(e)",
+              line"case _ => $none"
+            )
+          } else {
+            op.errors.collect { case Type.Ref(pkg, name) =>
+              line"case e: ${NameRef(pkg + "." + name)} => $some($errorName.${name}Case(e))"
+            } ++ List(line"case _ => $none")
           }
-        }
+        },
+        if (scala3Unions) line"def unliftError(e: $errorName): Throwable = e"
+        else
+          block(
+            line"def unliftError(e: $errorName): Throwable = e match"
+          ) {
+            op.errors.collect { case Type.Ref(_, name) =>
+              line"case $errorName.${name}Case(e) => e"
+            }
+          }
       )
+  }
+
+  private def renderErrorUnion(
+      shapeId: ShapeId,
+      name: NameRef,
+      alts: NonEmptyList[Alt],
+      recursive: Boolean,
+      hints: List[Hint]
+  ) = {
+    // Only Alts with UnionMember.TypeCase are valid for errors
+    val members = alts.collect {
+      case Alt(altName, _, UnionMember.TypeCase(tpe), _) => altName -> tpe
+    }
+    def altVal(altName: String) = line"${decapitalize(altName)}Alt"
+    lines(
+      deprecationAnnotation(hints),
+      line"type ${NameDef(name.name)} = ${members.map { case (_, tpe) => line"$tpe" }.intercalate(line" | ")}",
+      obj(name)(
+        renderId(shapeId),
+        newline,
+        renderHintsVal(hints),
+        newline,
+        block(
+          line"val schema: $unionSchema_[$name] ="
+        )(
+          members.map { case (altName, tpe) =>
+            line"""val ${altVal(
+              altName
+            )} = $tpe.schema.oneOf[${name}]("$altName")"""
+          },
+          block(
+            line"$union_(${members.map { case (n, _) => altVal(n) }.intercalate(line", ")})"
+          )(
+            members.map { case (altName, _) =>
+              line"case c: $altName => ${altVal(altName)}(c)"
+            }
+          )
+        )
+      )
+    )
   }
 
   private def renderUnion(

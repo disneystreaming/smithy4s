@@ -1,0 +1,10 @@
+# check if smithy4sCodegen works
+> compile
+
+$ exists target/scala-3.2.1/src_managed/main/hello/BadRequest.scala
+$ exists target/scala-3.2.1/src_managed/main/hello/InternalServerError.scala
+$ exists target/scala-3.2.1/src_managed/main/hello/HelloWorldService.scala
+$ exists target/scala-3.2.1/src_managed/main/hello/package.scala
+
+# check if code can run
+> run
