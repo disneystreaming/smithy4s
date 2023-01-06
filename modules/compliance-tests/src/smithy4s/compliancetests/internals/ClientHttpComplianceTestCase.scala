@@ -112,20 +112,16 @@ private[compliancetests] class ClientHttpComplianceTestCase[
           }
 
           reverseRoutes[Alg](app).use { client =>
-            // avoid blocking the test forever...
-            val recordedRequest =
-              ce.timeout(requestDeferred.get, 1.second)
-
             input
               .flatMap { in =>
-                service
+                // avoid blocking the test forever...
+                val request = ce.timeout(requestDeferred.get, 1.second)
+                val output: F[O] = service
                   .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
+                output.attemptNarrow[PayloadError].productR(request)
               }
-              // deal with the empty response generated in the mock
-              .attemptNarrow[PayloadError]
-              .productR(recordedRequest)
-              .flatMap(matchRequest(_, testCase))
+              .flatMap(req => matchRequest(req, testCase))
           }
         }
       }
