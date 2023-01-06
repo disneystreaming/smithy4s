@@ -394,8 +394,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     scalacOptions ++= {
       // Map the sourcemaps to github paths instead of local directories
       val flag =
-        if (scalaVersion.value.startsWith("3")) "-scalajs-mapSourceURI:"
-        else "-P:scalajs:mapSourceURI:"
+        if (scalaVersion.value.startsWith("3")) "-scalajs-mapSourceURI"
+        else "-P:scalajs:mapSourceURI"
       val localSourcesPath = baseDirectory.value.toURI
       val headCommit = git.gitHeadCommit.value.get
       scmInfo.value.map { info =>
