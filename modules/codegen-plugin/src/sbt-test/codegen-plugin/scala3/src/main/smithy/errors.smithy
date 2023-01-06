@@ -2,14 +2,14 @@ $version: "2.0"
 
 metadata smithy4sErrorsAsScala3Unions = true
 
-namespace hello
+namespace smithy4s.errors
 
-service HelloWorldService {
+service ErrorService {
   version: "1.0.0",
-  operations: [Hello]
+  operations: [ErrorOp]
 }
 
-operation Hello {
+operation ErrorOp {
   input: Unit,
   output: Unit,
   errors: [BadRequest, InternalServerError]

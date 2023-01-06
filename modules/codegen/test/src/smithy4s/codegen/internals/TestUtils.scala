@@ -43,7 +43,8 @@ object TestUtils {
   }
 
   /**
-    * Finds a code section starting with a given string and extracts a code section from it (based on indents)
+    * Finds a section starting with a given string and extracts a code section from it (based on indents)
+    * Removes empty lines too.
     * It then asserts on expected output
     */
   def assertContainsSection(fileContent: String, startsWith: String)(

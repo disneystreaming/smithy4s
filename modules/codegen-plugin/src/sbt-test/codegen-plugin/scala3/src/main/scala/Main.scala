@@ -14,15 +14,15 @@
  *  limitations under the License.
  */
 
-import hello.*
+import smithy4s.errors.*
 
 object Main extends App {
-  val service = HelloWorldServiceGen
+  val service = ErrorServiceGen
   val knownError1 = BadRequest("foo")
   val knownError2 = InternalServerError("bar")
   val unknownError = new RuntimeException("baz")
-  assert(service.Hello.liftError(unknownError) == None)
-  assert(service.Hello.liftError(knownError1) == Some(knownError1))
-  assert(service.Hello.liftError(knownError2) == Some(knownError2))
-  assert(service.Hello.unliftError(knownError1) == knownError1)
+  assert(service.ErrorOp.liftError(unknownError) == None)
+  assert(service.ErrorOp.liftError(knownError1) == Some(knownError1))
+  assert(service.ErrorOp.liftError(knownError2) == Some(knownError2))
+  assert(service.ErrorOp.unliftError(knownError1) == knownError1)
 }

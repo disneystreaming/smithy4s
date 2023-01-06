@@ -50,7 +50,7 @@ final class RendererConfigSpec extends munit.FunSuite {
         |}
         |""".stripMargin
 
-    testErrorsAsUnionsFalse(smithy)
+    testErrorsAsUnionsDisabled(smithy)
   }
 
   test("Renderer.Config.errorsAsScala3Unions = false") {
@@ -86,7 +86,7 @@ final class RendererConfigSpec extends munit.FunSuite {
         |}
         |""".stripMargin
 
-    testErrorsAsUnionsFalse(smithy)
+    testErrorsAsUnionsDisabled(smithy)
   }
 
   test("Renderer.Config.errorsAsScala3Unions = true") {
@@ -166,7 +166,7 @@ final class RendererConfigSpec extends munit.FunSuite {
     }
   }
 
-  private def testErrorsAsUnionsFalse(smithy: String) = {
+  private def testErrorsAsUnionsDisabled(smithy: String) = {
     val contents = generateScalaCode(smithy)
     val serviceCode = findServiceCode(contents)
 

@@ -32,7 +32,6 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
-import java.beans.Introspector.decapitalize
 
 private[internals] object Renderer {
 
@@ -348,7 +347,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val renderedErrorUnion = errorUnion.foldMap {
       case union @ Union(shapeId, _, alts, recursive, hints) =>
         if (compilationUnit.rendererConfig.errorsAsScala3Unions)
-          renderErrorUnion(shapeId, union.nameRef, alts, recursive, hints)
+          renderErrorAsScala3Union(shapeId, union.nameRef, alts, recursive, hints)
         else
           renderUnion(
             shapeId,
@@ -599,7 +598,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )
   }
 
-  private def renderErrorUnion(
+  private def renderErrorAsScala3Union(
       shapeId: ShapeId,
       name: NameRef,
       alts: NonEmptyList[Alt],
@@ -610,7 +609,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val members = alts.collect {
       case Alt(altName, _, UnionMember.TypeCase(tpe), _) => altName -> tpe
     }
-    def altVal(altName: String) = line"${decapitalize(altName)}Alt"
+    def altVal(altName: String) = line"${uncapitalise(altName)}Alt"
     lines(
       deprecationAnnotation(hints),
       line"type ${NameDef(name.name)} = ${members.map { case (_, tpe) => line"$tpe" }.intercalate(line" | ")}",
