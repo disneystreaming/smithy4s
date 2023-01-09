@@ -444,6 +444,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         (core.jvm(Scala213) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
+        (core.jvm(Scala3) / publishLocal).value,
 
         // for sbt
         (codegen.jvm(Scala212) / publishLocal).value,
