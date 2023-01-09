@@ -37,7 +37,7 @@ private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
 
-  case class Config(errorsAsScala3Unions: Boolean)
+  case class Config(errorsAsScala3Unions: Boolean, wildcardArgument: String)
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
       val errorsAsScala3Unions = metadata
@@ -45,7 +45,15 @@ private[internals] object Renderer {
         .flatMap(_.asBooleanNode().asScala)
         .map(_.getValue())
         .getOrElse(false)
-      Renderer.Config(errorsAsScala3Unions = errorsAsScala3Unions)
+      val wildcardArgument = metadata
+        .get("smithy4sWildcardArgument")
+        .flatMap(_.asStringNode().asScala)
+        .map(_.getValue())
+        .getOrElse("_")
+      Renderer.Config(
+        errorsAsScala3Unions = errorsAsScala3Unions,
+        wildcardArgument = wildcardArgument
+      )
     }
   }
 
@@ -133,6 +141,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   val names = new CollisionAvoidance.Names()
   import compilationUnit.namespace
+  import compilationUnit.rendererConfig.wildcardArgument
   import names._
 
   def renderDecl(decl: Decl): Lines = decl match {
@@ -250,7 +259,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints: $list[$genNameRef.Endpoint[_, _, _, _, _]] = $list"
+        line"val endpoints: $list[$genNameRef.Endpoint[$wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
           .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",

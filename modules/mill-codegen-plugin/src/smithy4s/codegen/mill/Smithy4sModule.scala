@@ -17,6 +17,7 @@
 package smithy4s.codegen.mill
 
 import coursier.maven.MavenRepository
+import scala.util.{Success, Try}
 import mill._
 import mill.api.PathRef
 import mill.define.Sources
@@ -48,6 +49,11 @@ trait Smithy4sModule extends ScalaModule {
   protected def smithy4sResourceOutputDir: T[PathRef] = T {
     PathRef(T.ctx().dest / "resources")
   }
+
+  protected def smithy4sGeneratedSmithyDir: T[PathRef] = T {
+    PathRef(T.ctx().dest / "smithy")
+  }
+
   protected def generateOpenApiSpecs: T[Boolean] = true
 
   def smithy4sAllowedNamespaces: T[Option[Set[String]]] = None
@@ -131,9 +137,47 @@ trait Smithy4sModule extends ScalaModule {
       smithy4sResolvedAllExternalDependencies()
   }
 
+  def smithy4sWildcardArgument: T[String] = T {
+    // This logic configures the default wildcard argument based on the scala version and scalac options
+    // In the following scenarios we use "?" instead of "_"
+    // 1. Scala version >= 3.1 ("_" is deprecated in 3.1 and becomes an error in 3.2)
+    // 2. Scala version is 3 and "-source:future" or "-source future" are in scalac options
+    val version = scalaVersion()
+    val majorVersion = version.takeWhile(_ != '.')
+    val minorVersion =
+      version.drop(majorVersion.length + 1).takeWhile(_ != '.')
+    def scalaOptionsContainsSourceFuture() = {
+      val options = scalacOptions()
+      options.contains("-source:future") || options
+        .sliding(2, 1)
+        .contains(Seq("-source", "future"))
+    }
+    (Try(majorVersion.toInt), Try(minorVersion.toInt)) match {
+      case (Success(3), Success(minorVersion)) if minorVersion >= 1 => "?"
+      case (Success(3), _) if scalaOptionsContainsSourceFuture()    => "?"
+      case _                                                        => "_"
+    }
+  }
+
+  def smithy4sGeneratedSmithyFiles: Sources = T.sources {
+    val file = smithy4sGeneratedSmithyDir().path / "generated-metadata.smithy"
+    val wildcardArg = smithy4sWildcardArgument()
+    os.remove(file)
+    os.write(
+      file,
+      s"""$$version: "2"
+         |metadata smithy4sWildcardArgument = "$wildcardArg"
+         |""".stripMargin,
+      createFolders = true
+    )
+    Seq(PathRef(file))
+  }
+
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
-    val specFiles = smithy4sInputDirs().map(_.path).filter(os.exists(_))
+    val specFiles = (smithy4sGeneratedSmithyFiles() ++ smithy4sInputDirs())
+      .map(_.path)
+      .filter(os.exists(_))
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
