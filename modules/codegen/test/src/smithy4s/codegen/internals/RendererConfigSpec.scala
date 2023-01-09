@@ -24,14 +24,14 @@ final class RendererConfigSpec extends munit.FunSuite {
       """
         |$version: "2.0"
         |
-        |namespace hello.world
+        |namespace smithy4s.errors
         |
-        |service HelloWorldService {
+        |service ErrorService {
         |  version: "1.0.0",
-        |  operations: [Hello]
+        |  operations: [Operation]
         |}
         |
-        |operation Hello {
+        |operation Operation {
         |  input: Unit,
         |  output: Unit,
         |  errors: [BadRequest, InternalServerError]
@@ -60,14 +60,14 @@ final class RendererConfigSpec extends munit.FunSuite {
         |
         |metadata smithy4sErrorsAsScala3Unions = false
         |
-        |namespace hello.world
+        |namespace smithy4s.errors
         |
-        |service HelloWorldService {
+        |service ErrorService {
         |  version: "1.0.0",
-        |  operations: [Hello]
+        |  operations: [Operation]
         |}
         |
-        |operation Hello {
+        |operation Operation {
         |  input: Unit,
         |  output: Unit,
         |  errors: [BadRequest, InternalServerError]
@@ -96,14 +96,14 @@ final class RendererConfigSpec extends munit.FunSuite {
         |
         |metadata smithy4sErrorsAsScala3Unions = true
         |
-        |namespace hello.world
+        |namespace smithy4s.errors
         |
-        |service HelloWorldService {
+        |service ErrorService {
         |  version: "1.0.0",
-        |  operations: [Hello]
+        |  operations: [Operation]
         |}
         |
-        |operation Hello {
+        |operation Operation {
         |  input: Unit,
         |  output: Unit,
         |  errors: [BadRequest, InternalServerError]
@@ -126,28 +126,28 @@ final class RendererConfigSpec extends munit.FunSuite {
     val serviceCode = findServiceCode(contents)
 
     assertContainsSection(serviceCode, "override val errorable")(
-      "override val errorable: Option[Errorable[HelloError]] = Some(this)"
+      "override val errorable: Option[Errorable[OperationError]] = Some(this)"
     )
-    assertContainsSection(serviceCode, "val error: UnionSchema[HelloError]")(
-      "val error: UnionSchema[HelloError] = HelloError.schema"
+    assertContainsSection(serviceCode, "val error: UnionSchema[OperationError]")(
+      "val error: UnionSchema[OperationError] = OperationError.schema"
     )
     assertContainsSection(serviceCode, "def liftError(throwable: Throwable)")(
-      """|def liftError(throwable: Throwable): Option[HelloError] = throwable match {
-         |  case e: HelloError => Some(e)
+      """|def liftError(throwable: Throwable): Option[OperationError] = throwable match {
+         |  case e: OperationError => Some(e)
          |  case _ => None
          |}""".stripMargin
     )
-    assertContainsSection(serviceCode, "def unliftError(e: HelloError)")(
-      "def unliftError(e: HelloError): Throwable = e"
+    assertContainsSection(serviceCode, "def unliftError(e: OperationError)")(
+      "def unliftError(e: OperationError): Throwable = e"
     )
 
-    assertContainsSection(serviceCode, "object HelloError")(
-      """|object HelloError {
-         |  val id: ShapeId = ShapeId("hello.world", "HelloError")
+    assertContainsSection(serviceCode, "object OperationError")(
+      """|object OperationError {
+         |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
-         |  val schema: UnionSchema[HelloError] = {
-         |    val badRequestAlt = BadRequest.schema.oneOf[HelloError]("BadRequest")
-         |    val internalServerErrorAlt = InternalServerError.schema.oneOf[HelloError]("InternalServerError")
+         |  val schema: UnionSchema[OperationError] = {
+         |    val badRequestAlt = BadRequest.schema.oneOf[OperationError]("BadRequest")
+         |    val internalServerErrorAlt = InternalServerError.schema.oneOf[OperationError]("InternalServerError")
          |    union(badRequestAlt, internalServerErrorAlt) {
          |      case c: BadRequest => badRequestAlt(c)
          |      case c: InternalServerError => internalServerErrorAlt(c)
@@ -159,7 +159,7 @@ final class RendererConfigSpec extends munit.FunSuite {
   }
 
   private def findServiceCode(contents: List[String]): String = {
-    contents.find(_.contains("trait HelloWorldServiceGen")) match {
+    contents.find(_.contains("trait ErrorServiceGen")) match {
       case None =>
         fail("No generated scala file contains valid service definition")
       case Some(svc) => svc
@@ -171,48 +171,48 @@ final class RendererConfigSpec extends munit.FunSuite {
     val serviceCode = findServiceCode(contents)
 
     assertContainsSection(serviceCode, "override val errorable")(
-      "override val errorable: Option[Errorable[HelloError]] = Some(this)"
+      "override val errorable: Option[Errorable[OperationError]] = Some(this)"
     )
-    assertContainsSection(serviceCode, "val error: UnionSchema[HelloError]")(
-      "val error: UnionSchema[HelloError] = HelloError.schema"
+    assertContainsSection(serviceCode, "val error: UnionSchema[OperationError]")(
+      "val error: UnionSchema[OperationError] = OperationError.schema"
     )
     assertContainsSection(serviceCode, "def liftError(throwable: Throwable)")(
-      """|def liftError(throwable: Throwable): Option[HelloError] = throwable match {
-         |  case e: BadRequest => Some(HelloError.BadRequestCase(e))
-         |  case e: InternalServerError => Some(HelloError.InternalServerErrorCase(e))
+      """|def liftError(throwable: Throwable): Option[OperationError] = throwable match {
+         |  case e: BadRequest => Some(OperationError.BadRequestCase(e))
+         |  case e: InternalServerError => Some(OperationError.InternalServerErrorCase(e))
          |  case _ => None
          |}""".stripMargin
     )
-    assertContainsSection(serviceCode, "def unliftError(e: HelloError)")(
-      """|def unliftError(e: HelloError): Throwable = e match {
-         |  case HelloError.BadRequestCase(e) => e
-         |  case HelloError.InternalServerErrorCase(e) => e
+    assertContainsSection(serviceCode, "def unliftError(e: OperationError)")(
+      """|def unliftError(e: OperationError): Throwable = e match {
+         |  case OperationError.BadRequestCase(e) => e
+         |  case OperationError.InternalServerErrorCase(e) => e
          |}""".stripMargin
     )
 
-    assertContainsSection(serviceCode, "sealed trait HelloError")(
-      """|sealed trait HelloError extends scala.Product with scala.Serializable {
-         |  @inline final def widen: HelloError = this
+    assertContainsSection(serviceCode, "sealed trait OperationError")(
+      """|sealed trait OperationError extends scala.Product with scala.Serializable {
+         |  @inline final def widen: OperationError = this
          |}""".stripMargin
     )
 
-    assertContainsSection(serviceCode, "object HelloError")(
-      """|object HelloError extends ShapeTag.Companion[HelloError] {
-         |  val id: ShapeId = ShapeId("hello.world", "HelloError")
+    assertContainsSection(serviceCode, "object OperationError")(
+      """|object OperationError extends ShapeTag.Companion[OperationError] {
+         |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
-         |  case class BadRequestCase(badRequest: BadRequest) extends HelloError
-         |  case class InternalServerErrorCase(internalServerError: InternalServerError) extends HelloError
+         |  case class BadRequestCase(badRequest: BadRequest) extends OperationError
+         |  case class InternalServerErrorCase(internalServerError: InternalServerError) extends OperationError
          |  object BadRequestCase {
          |    val hints: Hints = Hints.empty
          |    val schema: Schema[BadRequestCase] = bijection(BadRequest.schema.addHints(hints), BadRequestCase(_), _.badRequest)
-         |    val alt = schema.oneOf[HelloError]("BadRequest")
+         |    val alt = schema.oneOf[OperationError]("BadRequest")
          |  }
          |  object InternalServerErrorCase {
          |    val hints: Hints = Hints.empty
          |    val schema: Schema[InternalServerErrorCase] = bijection(InternalServerError.schema.addHints(hints), InternalServerErrorCase(_), _.internalServerError)
-         |    val alt = schema.oneOf[HelloError]("InternalServerError")
+         |    val alt = schema.oneOf[OperationError]("InternalServerError")
          |  }
-         |  implicit val schema: UnionSchema[HelloError] = union(
+         |  implicit val schema: UnionSchema[OperationError] = union(
          |    BadRequestCase.alt,
          |    InternalServerErrorCase.alt,
          |  ){
