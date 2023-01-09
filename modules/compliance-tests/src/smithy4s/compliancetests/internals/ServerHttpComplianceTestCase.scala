@@ -102,7 +102,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 
                   if (endpointInternal.id == endpoint.id)
                     inputDeferred.complete(in.asInstanceOf[I]) *>
-                      raiseError(new NotImplementedError)
+                      raiseError(new IntendedShortCircuit)
                   else raiseError(new Throwable("Wrong endpoint called"))
                 }
               }
@@ -112,7 +112,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
-                .attemptNarrow[NotImplementedError]
+                .attemptNarrow[IntendedShortCircuit]
                 .flatMap {
                   case Left(_) =>
                     ce.timeout(inputDeferred.get, 1.second).flatMap {
