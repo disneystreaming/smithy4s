@@ -60,7 +60,6 @@ private[codegen] object LineSegment {
     }
 
     override def toLine: Line = {
-      Line(Chain.one(self))
       val paramLines =
         typeParams.map(_.toLine).foldLeft(Line.empty) { case (acc, i) =>
           if (acc.nonEmpty) acc + Literal(",") + Line.space + i else i

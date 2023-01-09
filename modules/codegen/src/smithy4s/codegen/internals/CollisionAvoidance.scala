@@ -96,7 +96,7 @@ private[internals] object CollisionAvoidance {
           hints.map(modHint)
         )
     }
-    CompilationUnit(compilationUnit.namespace, declarations)
+    compilationUnit.copy(declarations = declarations)
   }
 
   private def modType(tpe: Type): Type = tpe match {
