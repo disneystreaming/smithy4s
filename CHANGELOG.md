@@ -1,4 +1,12 @@
 
+# 0.17.2
+
+## Scala 3 unions support for operation errors
+
+See https://github.com/disneystreaming/smithy4s/pull/707
+
+In order to render Operation errors as Scala 3 union types, a following metadata flag needs to be added: `metadata smithy4sErrorsAsScala3Unions = true` (in any of the smithy files that are used for code generation).
+
 # 0.17.0
 
 This 0.17.0 release of Smithy4s brings a number of improvements on the abstractions implemented by the generated code, in particular in terms of flexibility and user experience.

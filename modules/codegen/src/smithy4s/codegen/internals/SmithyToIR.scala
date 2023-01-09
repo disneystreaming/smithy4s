@@ -41,8 +41,9 @@ import Type.Alias
 private[codegen] object SmithyToIR {
 
   def apply(model: Model, namespace: String): CompilationUnit = {
+    val smithyToIR = new SmithyToIR(model, namespace)
     PostProcessor(
-      CompilationUnit(namespace, new SmithyToIR(model, namespace).allDecls)
+      CompilationUnit(namespace, smithyToIR.allDecls, smithyToIR.rendererConfig)
     )
   }
 
@@ -67,6 +68,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .iterator()
       .asScala
       .toList
+
+  val rendererConfig = Renderer.Config.load(model.getMetadata().asScala.toMap)
 
   private sealed trait DefaultRenderMode
   private object DefaultRenderMode {

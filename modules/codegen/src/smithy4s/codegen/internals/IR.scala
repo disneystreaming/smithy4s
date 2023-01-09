@@ -35,7 +35,8 @@ import LineSegment.{NameDef, NameRef}
 
 private[internals] case class CompilationUnit(
     namespace: String,
-    declarations: List[Decl]
+    declarations: List[Decl],
+    rendererConfig: Renderer.Config
 )
 
 private[internals] sealed trait Decl {

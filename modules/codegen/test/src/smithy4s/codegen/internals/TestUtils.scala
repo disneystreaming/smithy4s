@@ -22,22 +22,54 @@ import software.amazon.smithy.model.Model
 
 object TestUtils {
 
-  def runTest(
-      smithySpec: String,
-      expectedScalaCode: String
-  )(implicit
-      loc: Location
-  ): Unit = {
+  def generateScalaCode(smithySpec: String): List[String] = {
     val model = Model
       .assembler()
       .discoverModels()
       .addUnparsedModel("foo.smithy", smithySpec)
       .assemble()
       .unwrap()
+    CodegenImpl.generate(model, None, None).map(_._2.content)
+  }
 
-    val results = CodegenImpl.generate(model, None, None)
-    val scalaResults = results.map(_._2.content)
+  def runTest(
+      smithySpec: String,
+      expectedScalaCode: String
+  )(implicit
+      loc: Location
+  ): Unit = {
+    val scalaResults = generateScalaCode(smithySpec)
     Assertions.assertEquals(scalaResults, List(expectedScalaCode))
+  }
+
+  /**
+    * Finds a section starting with a given string and extracts a code section from it (based on indents)
+    * Removes empty lines too.
+    * It then asserts on expected output
+    */
+  def assertContainsSection(fileContent: String, startsWith: String)(
+      expectedSection: String
+  )(implicit loc: Location) = {
+    val lines =
+      fileContent.linesIterator.filter(_.trim.nonEmpty).zipWithIndex.toList
+    val lineMatches = lines.filter { case (l, _) =>
+      l.trim.startsWith(startsWith)
+    }
+    lineMatches match {
+      case (line, index) :: Nil =>
+        val indent = line.takeWhile(_ == ' ')
+        val validLineStartPatterns =
+          List(" ", ")", "}").map(s => s"$indent$s").toSet
+        val fromMatch = lines.drop(index + 1).map(_._1)
+        val sectionTail = fromMatch
+          .takeWhile(l => validLineStartPatterns.exists(l.startsWith))
+          .map(_.drop(indent.size))
+        val section = (line.drop(indent.size) :: sectionTail).mkString("\n")
+        Assertions.assertEquals(section, expectedSection)
+      case _ :: _ :: _ =>
+        Assertions.fail("Multiple lines match the code section pattern")
+      case Nil => Assertions.fail("No line matches the code section pattern")
+    }
   }
 
 }
