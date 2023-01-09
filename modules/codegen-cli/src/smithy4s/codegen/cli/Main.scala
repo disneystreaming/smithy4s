@@ -64,7 +64,9 @@ object Main {
         }
         .merge
     } catch {
-      case e: Throwable => e.printStackTrace(System.err)
+      case e: Throwable =>
+        e.printStackTrace(System.err)
+        System.exit(1)
     } finally {
       System.setErr(out)
     }
