@@ -69,7 +69,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .asScala
       .toList
 
-  val rendererConfig = Renderer.Config.load(model.getMetadata().asScala.toMap) 
+  val rendererConfig = Renderer.Config.load(model.getMetadata().asScala.toMap)
 
   private sealed trait DefaultRenderMode
   private object DefaultRenderMode {

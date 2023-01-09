@@ -347,7 +347,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val renderedErrorUnion = errorUnion.foldMap {
       case union @ Union(shapeId, _, alts, recursive, hints) =>
         if (compilationUnit.rendererConfig.errorsAsScala3Unions)
-          renderErrorAsScala3Union(shapeId, union.nameRef, alts, recursive, hints)
+          renderErrorAsScala3Union(
+            shapeId,
+            union.nameRef,
+            alts,
+            recursive,
+            hints
+          )
         else
           renderUnion(
             shapeId,
@@ -612,7 +618,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     def altVal(altName: String) = line"${uncapitalise(altName)}Alt"
     lines(
       deprecationAnnotation(hints),
-      line"type ${NameDef(name.name)} = ${members.map { case (_, tpe) => line"$tpe" }.intercalate(line" | ")}",
+      line"type ${NameDef(name.name)} = ${members
+        .map { case (_, tpe) => line"$tpe" }
+        .intercalate(line" | ")}",
       obj(name)(
         renderId(shapeId),
         newline,

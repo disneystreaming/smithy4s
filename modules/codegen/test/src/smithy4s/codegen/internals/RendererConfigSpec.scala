@@ -128,7 +128,10 @@ final class RendererConfigSpec extends munit.FunSuite {
     assertContainsSection(serviceCode, "override val errorable")(
       "override val errorable: Option[Errorable[OperationError]] = Some(this)"
     )
-    assertContainsSection(serviceCode, "val error: UnionSchema[OperationError]")(
+    assertContainsSection(
+      serviceCode,
+      "val error: UnionSchema[OperationError]"
+    )(
       "val error: UnionSchema[OperationError] = OperationError.schema"
     )
     assertContainsSection(serviceCode, "def liftError(throwable: Throwable)")(
@@ -173,7 +176,10 @@ final class RendererConfigSpec extends munit.FunSuite {
     assertContainsSection(serviceCode, "override val errorable")(
       "override val errorable: Option[Errorable[OperationError]] = Some(this)"
     )
-    assertContainsSection(serviceCode, "val error: UnionSchema[OperationError]")(
+    assertContainsSection(
+      serviceCode,
+      "val error: UnionSchema[OperationError]"
+    )(
       "val error: UnionSchema[OperationError] = OperationError.schema"
     )
     assertContainsSection(serviceCode, "def liftError(throwable: Throwable)")(
