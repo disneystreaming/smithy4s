@@ -39,9 +39,11 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 )(implicit
     ce: CompatEffect[F]
 ) {
+
   import ce._
   import org.http4s.implicits._
   import router._
+
   private[compliancetests] val originalService: Service[Alg] = serviceInstance
   private val baseUri = uri"http://localhost/"
 
@@ -110,19 +112,32 @@ private[compliancetests] class ServerHttpComplianceTestCase[
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
-                .attemptNarrow[NotImplementedError] *>
-                ce.timeout(inputDeferred.get, 1.second).flatMap { foundInput =>
-                  inputFromDocument
-                    .decode(testCase.params.getOrElse(Document.obj()))
-                    .liftTo[F]
-                    .map { decodedInput =>
-                      assert.eql(foundInput, decodedInput)
+                .attemptNarrow[NotImplementedError]
+                .flatMap {
+                  case Left(_) =>
+                    ce.timeout(inputDeferred.get, 1.second).flatMap {
+                      foundInput =>
+                        inputFromDocument
+                          .decode(testCase.params.getOrElse(Document.obj()))
+                          .liftTo[F]
+                          .map { decodedInput =>
+                            assert.eql(foundInput, decodedInput)
+                          }
+                    }
+                  case Right(response) =>
+                    response.body.compile.toVector.map { message =>
+                      assert.fail(
+                        s"Expected a NotImplementedError, but got a response with status ${response.status} and message ${message
+                          .map(_.toChar)
+                          .mkString}"
+                      )
                     }
                 }
             }
         }
       }
     )
+
   }
 
   private[compliancetests] def serverResponseTest[I, E, O, SE, SO](
