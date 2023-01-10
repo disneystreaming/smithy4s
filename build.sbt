@@ -615,6 +615,7 @@ lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
   .dependsOn(
     core,
+    complianceTests % "test->compile",
     json,
     dynamic % "test->compile",
     tests % "test->compile",
@@ -645,11 +646,13 @@ lazy val http4s = projectMatrix
       else moduleName.value
     },
     Test / allowedNamespaces := Seq(
-      "smithy4s.hello"
+      "smithy4s.hello","alloy.test"
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
+     Test / smithy4sSkip := Seq("openapi"),
+    Test/ smithy4sDependencies := Seq(Dependencies.Alloy.`protocol-tests`),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -729,7 +732,7 @@ lazy val tests = projectMatrix
 
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
-  .dependsOn(core, http4s % "compile->compile; test->compile")
+  .dependsOn(core)
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
@@ -753,10 +756,6 @@ lazy val complianceTests = projectMatrix
         moduleName.value + "-ce2"
       else moduleName.value
     },
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
-    ),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
