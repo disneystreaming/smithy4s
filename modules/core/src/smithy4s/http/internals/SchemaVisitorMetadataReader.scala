@@ -31,12 +31,9 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
-
-private[http] object SchemaVisitorMetadataReader
-    extends SchemaVisitorMetadataReader
-
-private[http] class SchemaVisitorMetadataReader()
-    extends SchemaVisitor.Cached[MetaDecode]
+private[http] class SchemaVisitorMetadataReader(
+    val cache: CompilationCache[MetaDecode]
+) extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
   override def primitive[P](
@@ -140,9 +137,7 @@ private[http] class SchemaVisitorMetadataReader()
       val schema = field.instance
       val label = field.label
       val fieldHints = field.hints
-      val maybeDefault = field.getDefault.flatMap(d =>
-        Document.Decoder.fromSchema(field.instance).decode(d).toOption
-      )
+      val maybeDefault = schema.getDefaultValue
       HttpBinding.fromHints(label, fieldHints, hints).map { binding =>
         val decoder: MetaDecode[_] =
           self(schema.addHints(Hints(binding)))

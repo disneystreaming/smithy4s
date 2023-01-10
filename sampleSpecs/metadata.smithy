@@ -15,7 +15,7 @@ operation Dummy {
   input: Queries
 }
 
-@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}")
+@http(method: "GET", uri: "/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar")
 @readonly
 operation DummyPath {
   input: PathParams
@@ -30,7 +30,7 @@ structure Queries {
   ts1: Timestamp,
   @timestampFormat("date-time")
   @httpQuery("ts2")
-  ts2 : Timestamp,
+  ts2: Timestamp,
   @httpQuery("ts3")
   @timestampFormat("epoch-seconds")
   ts3: Timestamp,
@@ -40,7 +40,7 @@ structure Queries {
   @httpQuery("b")
   b: Boolean,
   @httpQuery("sl")
-  sl : StringList,
+  sl: StringList,
   @httpQuery("nums")
   ie: Numbers,
   @httpQueryParams
@@ -61,7 +61,7 @@ structure Headers {
   ts1: Timestamp,
   @timestampFormat("date-time")
   @httpHeader("ts2")
-  ts2 : Timestamp,
+  ts2: Timestamp,
   @httpHeader("ts3")
   @timestampFormat("epoch-seconds")
   ts3: Timestamp,
@@ -71,7 +71,7 @@ structure Headers {
   @httpHeader("b")
   b: Boolean,
   @httpHeader("sl")
-  sl : StringList,
+  sl: StringList,
   @httpHeader("nums")
   ie: Numbers,
   @httpPrefixHeaders("foo-")
@@ -97,7 +97,7 @@ structure PathParams {
   @httpLabel
   @timestampFormat("date-time")
   @required
-  ts2 : Timestamp,
+  ts2: Timestamp,
   @httpLabel
   @timestampFormat("epoch-seconds")
   @required

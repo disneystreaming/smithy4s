@@ -21,20 +21,27 @@ import smithy4s.schema._
 import smithy4s.schema.Schema._
 
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.HashSet
 
 class CachedSchemaVisitorSpec() extends FunSuite {
 
+  type ConstUnit[A] = Unit
+  def discard[A](a: => A): Unit = { val _ = a }
+
   // Counter is effectively counting Misses - meaning the SchemaVisitor was actually evaluated again
-  class TestSchemaVisitor(counter: AtomicInteger)
-      extends SchemaVisitor.Cached[Option] { self =>
+  class TestSchemaVisitor(
+      counter: AtomicInteger,
+      val cache: CompilationCache[ConstUnit]
+  ) extends SchemaVisitor.Cached[ConstUnit] { self =>
+
+    private val lazyTracker: HashSet[ShapeId] = new HashSet()
 
     def primitive[P](
         shapeId: ShapeId,
         hints: Hints,
         tag: Primitive[P]
-    ): Option[P] = {
+    ): Unit = discard {
       counter.incrementAndGet()
-      None
     }
 
     def collection[C[_], A](
@@ -42,10 +49,9 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         hints: Hints,
         tag: CollectionTag[C],
         member: Schema[A]
-    ): Option[C[A]] = {
+    ): Unit = discard {
       self(member)
       counter.incrementAndGet()
-      None
     }
 
     def map[K, V](
@@ -53,11 +59,10 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         hints: Hints,
         key: Schema[K],
         value: Schema[V]
-    ): Option[Map[K, V]] = {
+    ): Unit = discard {
       self(key)
       self(value)
       counter.incrementAndGet()
-      None
     }
 
     def enumeration[E](
@@ -65,9 +70,8 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         hints: Hints,
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
-    ): Option[E] = {
+    ): Unit = discard {
       counter.incrementAndGet()
-      None
     }
 
     def struct[S](
@@ -75,12 +79,11 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         hints: Hints,
         fields: Vector[SchemaField[S, _]],
         make: IndexedSeq[Any] => S
-    ): Option[S] = {
+    ): Unit = discard {
       fields.foreach { field =>
         self(field.instance)
       }
       counter.incrementAndGet()
-      None
     }
 
     def union[U](
@@ -88,89 +91,117 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         hints: Hints,
         alternatives: Vector[SchemaAlt[U, _]],
         dispatch: Alt.Dispatcher[Schema, U]
-    ): Option[U] = {
+    ): Unit = discard {
       alternatives.foreach { alt =>
         self(alt.instance)
       }
       counter.incrementAndGet()
-      None
     }
 
     def biject[A, B](
         schema: Schema[A],
         bijection: Bijection[A, B]
-    ): Option[B] = {
+    ): Unit = discard {
       self(schema)
       counter.incrementAndGet()
-      None
     }
 
     def refine[A, B](
         schema: Schema[A],
         refinement: Refinement[A, B]
-    ): Option[B] = {
+    ): Unit = discard {
       self(schema)
       counter.incrementAndGet()
-      None
     }
 
-    def lazily[A](suspend: Lazy[Schema[A]]): Option[A] = {
-      counter.incrementAndGet()
-      self(suspend.value)
+    def lazily[A](suspend: Lazy[Schema[A]]): Unit = discard {
+      val shapeId = suspend.value.shapeId
+      if (!lazyTracker.contains(suspend.value.shapeId)) {
+        lazyTracker.add(shapeId)
+        counter.incrementAndGet()
+        self(suspend.value)
+        lazyTracker.remove(shapeId)
+      }
     }
   }
 
-  test("Sanity check should NOT hit cache on first visit") {
+  def checkSchema[A](schema: Schema[A]): Unit = {
+    val cache = CompilationCache.make[ConstUnit]
     val counter = new AtomicInteger(0)
-    val visitor = new TestSchemaVisitor(counter)
+    val visitor = new TestSchemaVisitor(counter, cache)
     val schema = Schema.int
-    val result: Option[Int] = visitor(schema)
-    assertEquals(result, None)
-    assertEquals(counter.get(), 1)
+    visitor(schema)
+    val before = counter.get()
+    visitor(schema)
+    val after = counter.get()
+    assertEquals(before, after)
   }
 
-  test(
-    "should hit the cache on second visit with the same schema resulting in counter = 1"
-  ) {
-    val counter = new AtomicInteger(0)
-    val visitor = new TestSchemaVisitor(counter)
-    val schema = Schema.int
-    val result: Option[Int] = visitor(schema)
-    val _ = visitor(schema)
-    assertEquals(result, None)
-    assertEquals(counter.get(), 1)
+  val header = "Cache should prevent recomputation: "
+
+  test(header + "primitive") {
+    checkSchema(int)
   }
 
-  test(
-    "should miss cache on second visit with different schema and the same ShapeId"
-  ) {
-    val counter = new AtomicInteger(0)
-    val visitor = new TestSchemaVisitor(counter)
-    val schema = Schema.unit
-    val lazySchema = Schema.recursive(schema)
-    val result = visitor(schema)
-    val _ = visitor(lazySchema)
-    assertEquals(result, None)
-    assertEquals(counter.get(), 2)
+  test(header + "collection") {
+    checkSchema(list(int))
   }
 
-  test(
-    "test struct with multiple schemas "
-  ) {
-    case class Foo(i: Int, s: String, b: Boolean)
-    val counter = new AtomicInteger(0)
-    val visitor = new TestSchemaVisitor(counter)
-    val schema: Schema[Foo] = struct(
-      int.required[Foo]("i", _.i),
-      string.required[Foo]("s", _.s),
-      boolean.required[Foo]("b", _.b)
-    ) {
-      Foo.apply
+  test(header + "map") {
+    checkSchema(map(string, int))
+  }
+
+  test(header + "enum") {
+    sealed abstract class FooBar(val stringValue: String, val intValue: Int)
+        extends smithy4s.Enumeration.Value {
+      val name = stringValue
+      val value = stringValue
+      val hints = Hints.empty
     }
-    val lazySchema = Schema.recursive(schema)
-    val result = visitor(schema)
-    val _ = visitor(lazySchema)
-    assertEquals(result, None)
-    assertEquals(counter.get(), 5)
+    case object Foo extends FooBar("foo", 0)
+    case object Bar extends FooBar("bar", 1)
+    val schema: Schema[FooBar] = enumeration[FooBar](List(Foo, Bar))
+    checkSchema(schema)
+  }
+
+  test(header + "struct") {
+    case class Foo(int: Int)
+    val schema = struct(int.required[Foo]("int", _.int))(Foo(_))
+    checkSchema(schema)
+  }
+
+  test(header + "union") {
+    type Foo = Either[Int, String]
+    val left = int.oneOf[Foo]("left", Left(_))
+    val right = string.oneOf[Foo]("right", Right(_))
+    val schema = union(left, right) {
+      case Left(int)     => left(int)
+      case Right(string) => right(string)
+    }
+
+    checkSchema(schema)
+  }
+
+  test((header + "lazy")) {
+    case class Foo(foo: Option[Foo])
+    object Foo {
+      val schema: Schema[Foo] = recursive {
+        val foos = schema.optional[Foo]("foo", _.foo)
+        struct(foos)(Foo.apply)
+      }
+    }
+    checkSchema(Foo.schema)
+  }
+
+  test(header + "bijection") {
+    case class Foo(x: Int)
+    val schema: Schema[Foo] = bijection(int, Foo(_), _.x)
+    checkSchema(schema)
+  }
+
+  test(header + "surjection") {
+    val schema: Schema[Int] =
+      int.refined(smithy.api.Range(None, Option(BigDecimal(1))))
+    checkSchema(schema)
   }
 }

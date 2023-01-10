@@ -21,7 +21,7 @@ import scala.annotation.implicitNotFound
 object AwsOperationKind {
 
   @implicitNotFound(
-    "Cannot prove that the operation has simple request/response semantics : it has (a) streamed component(s)."
+    "Cannot prove that the operation has simple request/response semantics: it has (a) streamed component(s)."
   )
   sealed trait Unary[StreamedInput, StreamedOutput]
   object Unary {

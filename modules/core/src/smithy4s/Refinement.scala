@@ -40,9 +40,6 @@ trait Refinement[A, B] { self =>
     */
   def unsafe(a: A): B
 
-  @deprecated("use unsafe instead")
-  def unchecked(a: A): B = unsafe(a)
-
   final val asFunction: A => Either[ConstraintError, B] =
     (a: A) =>
       apply(a).left.map(msg =>

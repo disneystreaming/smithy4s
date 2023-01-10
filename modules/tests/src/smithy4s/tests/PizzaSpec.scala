@@ -432,12 +432,50 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("path param failing refinement results in a BadRequest") {
+    (client, uri, log) =>
+      client
+        .send[Unit](
+          POST(uri = uri / "echo" / "too-short").withEntity(Json.obj()),
+          log
+        )
+        .map(_._1)
+        .map(assert.eql(_, 400))
+  }
+
+  routerTest("query param failing refinement results in a BadRequest") {
+    (client, uri, log) =>
+      client
+        .send[Unit](
+          POST(
+            (uri / "echo" / "long-enough")
+              .withQueryParam("queryParam", "too-short")
+          ).withEntity(Json.obj()),
+          log
+        )
+        .map(_._1)
+        .map(assert.eql(_, 400))
+  }
+
+  routerTest("body failing refinement results in a BadRequest") {
+    (client, uri, log) =>
+      client
+        .send[Unit](
+          POST(
+            uri / "echo" / "long-enough"
+          ).withEntity(Json.obj("data" -> Json.fromString("too-short"))),
+          log
+        )
+        .map(_._1)
+        .map(assert.eql(_, 400))
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {
     val matchResult = smithy4s.http
       .httpMatch(
-        PizzaAdminService,
+        PizzaAdminService.service,
         smithy4s.http.HttpMethod.POST,
         Vector("restaurant", "foo", "menu", "item")
       )
@@ -453,7 +491,7 @@ abstract class PizzaSpec
 
   pureTest("Negative: http no match (bad path)") {
     val matchResult = smithy4s.http.httpMatch(
-      PizzaAdminService,
+      PizzaAdminService.service,
       smithy4s.http.HttpMethod.POST,
       Vector("restaurants", "foo", "menu", "item")
     )
@@ -462,7 +500,7 @@ abstract class PizzaSpec
 
   pureTest("Negative: http no match (bad method)") {
     val matchResult = smithy4s.http.httpMatch(
-      PizzaAdminService,
+      PizzaAdminService.service,
       smithy4s.http.HttpMethod.PATCH,
       Vector("restaurant", "foo", "menu", "item")
     )

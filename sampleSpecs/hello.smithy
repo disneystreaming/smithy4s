@@ -1,8 +1,9 @@
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
+@tags(["testServiceTag"])
 service HelloWorldService {
   version: "1.0.0",
   // Indicates that all operations in `HelloWorldService`,
@@ -18,6 +19,7 @@ structure GenericServerError {
 }
 
 @http(method: "POST", uri: "/{name}", code: 200)
+@tags(["testOperationTag"])
 operation Hello {
   input: Person,
   output: Greeting

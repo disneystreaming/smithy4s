@@ -22,6 +22,45 @@ structure fancyListFormat {}
 )
 structure nameFormat {}
 
+@trait(selector: "list")
+@refinement(
+  targetType: "smithy4s.example.refined.NonEmptyList",
+  parameterised: true
+)
+structure nonEmptyListFormat {}
+
+@trait(selector: "map")
+@refinement(
+  targetType: "smithy4s.example.refined.NonEmptyMap",
+  parameterised: true
+)
+structure nonEmptyMapFormat {}
+
+@nonEmptyListFormat
+list NonEmptyStrings {
+  member: String
+}
+
+@nonEmptyListFormat
+list NonEmptyNames {
+  member: Name
+}
+
+structure Candy {
+  name: String
+}
+
+@nonEmptyListFormat
+list NonEmptyCandies {
+  member: Candy
+}
+
+@nonEmptyMapFormat
+map NonEmptyMapNumbers {
+  key: String
+  value: Integer
+}
+
 @ageFormat
 integer Age
 

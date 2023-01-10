@@ -43,7 +43,7 @@ private[internals] trait SchemaDescriptionDetailedImpl[A]
 }
 
 private[internals] object SchemaDescriptionDetailedImpl
-    extends SchemaVisitor.Cached[SchemaDescriptionDetailedImpl] { self =>
+    extends SchemaVisitor[SchemaDescriptionDetailedImpl] { self =>
 
   def of[A](shapeId: ShapeId, value: String): SchemaDescriptionDetailedImpl[A] =
     s => (s + shapeId, value)
@@ -160,7 +160,7 @@ private[internals] object SchemaDescriptionDetailedImpl
   }
 
   val conversion: SchemaDescriptionDetailedImpl ~> SchemaDescription =
-    new PolyFunction[SchemaDescriptionDetailedImpl, SchemaDescription] {
+    new (SchemaDescriptionDetailedImpl ~> SchemaDescription) {
       def apply[A](
           fa: SchemaDescriptionDetailedImpl[A]
       ): SchemaDescription[A] = fa(Set.empty)._2

@@ -24,9 +24,10 @@ import smithy4s.http.json.Cursor
 import smithy4s.http.json.JCodec
 import smithy4s.http.json.SchemaVisitorJCodec
 import smithy4s.schema.Primitive
+import smithy4s.schema.CompilationCache
 
-private[aws] object AwsSchemaVisitorJCodec
-    extends SchemaVisitorJCodec(maxArity = 1024) {
+private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
+    extends SchemaVisitorJCodec(maxArity = 1024, cache) {
 
   override def primitive[P](
       shapeId: ShapeId,

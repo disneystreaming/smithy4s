@@ -1,16 +1,16 @@
 package smithy4s.example.collision
 
-import smithy4s.Schema
 import smithy4s.Hints
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.struct
 
 case class ListInput(list: List[String])
 object ListInput extends ShapeTag.Companion[ListInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ListInput")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Input(),
   )
 

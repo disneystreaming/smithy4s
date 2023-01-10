@@ -33,10 +33,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     val smithy4sVersion =
       settingKey[String]("Smithy4sVersion")
 
-    val smithy4sInputDir =
-      settingKey[File](
-        "Input directory for smithy specs (.smithy or .json files)"
-      )
+    val smithy4sInputDirs = settingKey[Seq[File]](
+      "Input directories for smithy specs (.smithy or .json files)"
+    )
 
     val smithy4sOutputDir =
       settingKey[File](
@@ -63,13 +62,61 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "Sets whether this project should be used as a Smithy library by packaging the Smithy specs in the resulting jar"
       )
 
-    val smithy4sLocalJars =
+    val smithy4sExplicitCodegenOnlyDependencies =
+      taskKey[Seq[ModuleID]](
+        List(
+          "List of explicitly defined libraries for external dependencies that should be added to the classpath used by Smithy4s during code-generation",
+          "The smithy files and smithy validators contained by these jars are included in the Smithy4s code-generation process",
+          "Namespaces that were used for code generation in these dependencies will be excluded from code generation in this project.",
+          "By default, this includes the library dependencies annotated with the `Smithy4s` configuration of the current project and its upstreams"
+        ).mkString(" ")
+      )
+
+    val smithy4sExternallyTrackedDependencies =
+      taskKey[Seq[ModuleID]](
+        List(
+          "List of libraries that external dependencies indicate having used during their own code-generation process",
+          "If a project using Smithy4s depends on a library that contains Smithy4s generated code, local Smithy files might need the jars",
+          "that were used by Smithy4s when the library in question was built. By default, Smithy4s adds a line in the jar manifests of the",
+          "projects it is enabled on, to inform downstream projects of the jars they might want to pull during their own code-generation.",
+          "This is different from a transitive compile dependency, as the jars used during code-generation might not necessarily end up",
+          "on the compile class-path of a project"
+        ).mkString(" ")
+      )
+
+    val smithy4sNormalExternalDependencies =
+      taskKey[Seq[ModuleID]](
+        List(
+          "List of libraries that are declared normally and that will be added to the classpath of the code-generation process",
+          "By default, this includes all `libraryDependencies` matching the scope, both local and transitive"
+        ).mkString(" ")
+      )
+
+    val smithy4sAllExternalDependencies =
+      taskKey[Seq[ModuleID]](
+        List(
+          "Exhaustive list of external dependencies that should be added to the classpath used by Smithy4s during code-generation",
+          "The smithy files and smithy validators contained by these jars are included in the Smithy4s code-generation process",
+          "Namespaces that were used for code generation in these dependencies will be excluded from code generation in this project."
+        ).mkString(" ")
+      )
+
+    val smithy4sInternalDependenciesAsJars =
       taskKey[Seq[File]](
         List(
-          "List of jars for local dependencies that should be used as sources of Smithy specs.",
-          "Namespaces that were used for code generation in the upstream dependencies will be excluded from code generation in this project.",
-          "By default, this includes the jars produced by packaging your project's build dependencies, so they'll need to be compiled for the codegen task to run.",
-          "You can clear this (set to an empty list) if your Smithy specs don't have dependencies on other module."
+          "List of jars of internal dependencies that should be added to the classpath used by Smithy4s during code-generation",
+          "The smithy files and smithy validators contained by these jars are included in the Smithy4s code-generation process",
+          "Namespaces that were used for code generation in these dependencies will be excluded from code generation in this project.",
+          "By default, this includes the jars produced by packaging this project's local dependencies, which implies these should compile for the codegen task to run",
+          "This can be set to an empty list to prevent the inclusion of local dependencies during the code-gen process"
+        ).mkString(" ")
+      )
+
+    val smithy4sAllDependenciesAsJars =
+      taskKey[Seq[File]](
+        List(
+          "List of all jars for internal and external dependencies that should be used as sources of Smithy specs.",
+          "Namespaces that were used for code generation in these upstream dependencies will be excluded from code generation in this project."
         ).mkString(" ")
       )
 
@@ -77,10 +124,6 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       config("smithy4s").describedAs(
         "Dependencies containing Smithy code, used at codegen-time only."
       )
-
-    // A shortcut to `"smithy4s,compile"` to use when defining dependencies that need to be consumed
-    // at odegen-time (for their smithy specs) AND at compile-time (for the Scala-code they contain)
-    val Smithy4sCompile = List(Smithy4s, Compile).map(_.name).mkString(",")
 
     val smithy4sModelTransformers =
       settingKey[List[String]](
@@ -98,13 +141,45 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
 
   // Use this with any configuration to enable the codegen in it.
   def defaultSettings(config: Configuration) = Seq(
-    config / smithy4sInputDir := (config / sourceDirectory).value / "smithy",
+    config / smithy4sInputDirs := Seq(
+      (config / sourceDirectory).value / "smithy"
+    ),
     config / smithy4sOutputDir := (config / sourceManaged).value,
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,
-    config / smithy4sLocalJars := (config / internalDependencyAsJars).value
-      .map(_.data),
+    config / smithy4sInternalDependenciesAsJars := {
+      (config / internalDependencyAsJars).value.map(_.data)
+    },
+    config / smithy4sExplicitCodegenOnlyDependencies := {
+      transitiveLibraryDependencies.value
+        .filter(
+          _.configurations.exists(_.contains(Smithy4s.name))
+        )
+        .map(_.withConfigurations(None))
+        .distinct
+    },
+    config / smithy4sExternallyTrackedDependencies := {
+      (config / externalDependencyClasspath).value
+        .map(_.data)
+        .flatMap(extract)
+        .distinct
+    },
+    config / smithy4sNormalExternalDependencies := {
+      (config / externalDependencyClasspath).value
+        .flatMap(_.metadata.get(moduleID.key))
+        .distinct
+    },
+    config / smithy4sAllExternalDependencies := {
+      val all = (config / smithy4sNormalExternalDependencies).value ++
+        (config / smithy4sExplicitCodegenOnlyDependencies).value ++
+        (config / smithy4sExternallyTrackedDependencies).value
+      all.distinct
+    },
+    config / smithy4sAllDependenciesAsJars := {
+      (config / smithy4sInternalDependenciesAsJars).value ++
+        fetch(config / smithy4sAllExternalDependencies).value
+    },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")
     ),
@@ -113,28 +188,108 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
     ),
     config / cleanFiles += (config / smithy4sOutputDir).value,
     config / cleanFiles += (config / smithy4sResourceDir).value,
-    config / smithy4sModelTransformers := List.empty
+    config / smithy4sModelTransformers := List.empty,
+    config / packageBin / packageOptions += {
+      // This piece of logic aims at tracking the dependencies that Smithy4s used to generate
+      // code at build time, in the manifest of the jar. This helps automatically pulling
+      // the corresponding jars and prevents the users from having to search
+      import java.util.jar.Manifest
+      val manifest = new Manifest
+      val scalaBin = scalaBinaryVersion.?.value
+      val deps = libraryDependencies.value
+        .filter(_.configurations.exists(_.contains(Smithy4s.name)))
+        .flatMap(moduleIdEncode(_, scalaBin))
+        .mkString(",")
+
+      manifest
+        .getMainAttributes()
+        .put(new java.util.jar.Attributes.Name(SMITHY4S_DEPENDENCIES), deps)
+      Package.JarManifest(manifest)
+    }
   )
 
   override lazy val projectSettings =
-    defaultSettings(Compile)
+    defaultSettings(Compile) ++ Seq(
+      libraryDependencies ++= Seq(
+        BuildInfo.alloyOrg % "alloy-core" % BuildInfo.alloyVersion % Smithy4s
+      )
+    )
 
-  private def findCodeGenDependencies(
-      updateReport: UpdateReport
-  ): List[os.Path] =
-    for {
-      markerConfig <- List(Smithy4s)
-      smithy4sConfigReport <- updateReport.configuration(markerConfig).toList
-      module <- smithy4sConfigReport.modules
-      artifactFile <- module.artifacts
-    } yield {
-      val (_, file) = artifactFile
-      os.Path(file)
+  private def moduleIdEncode(
+      moduleId: ModuleID,
+      scalaBinaryVersion: Option[String]
+  ): List[String] = {
+    (moduleId.crossVersion, scalaBinaryVersion) match {
+      case (Disabled, _) =>
+        List(s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}")
+      case (_: Binary, Some(sbv)) =>
+        List(
+          s"${moduleId.organization}:${moduleId.name}_${sbv}:${moduleId.revision}"
+        )
+      case (_, _) => Nil
     }
+  }
+
+  /**
+   * Retrieves the smithy4sDependencies that compile-dependencies may have listed
+   * in their jar manifests when they were packaged.
+   */
+  private def fetch(
+      dependenciesTask: Def.Initialize[Task[Seq[ModuleID]]]
+  ): Def.Initialize[Task[Seq[File]]] =
+    Def.task {
+
+      def getJars(ids: Seq[ModuleID]): Seq[File] = {
+        val syntheticModule =
+          organization.value % (name.value + "-smithy4s-resolution") % version.value
+        val depRes = (update / dependencyResolution).value
+        val updc = (update / updateConfiguration).value
+        val uwconfig = (update / unresolvedWarningConfiguration).value
+        val smInfo = (update / scalaModuleInfo).value
+        val modDescr = depRes.moduleDescriptor(
+          syntheticModule,
+          ids.toVector,
+          smInfo
+        )
+
+        depRes
+          .update(
+            modDescr,
+            updc,
+            uwconfig,
+            streams.value.log
+          )
+          .map(_.allFiles)
+          .fold(uw => throw uw.resolveException, identity)
+      }
+      getJars(dependenciesTask.value)
+    }
+
+  def transitiveLibraryDependencies: Def.Initialize[Task[Seq[ModuleID]]] = {
+    val make = new ScopeFilter.Make {}
+    import make.{inDependencies => inDeps, _}
+    val selectDeps = ScopeFilter(inDeps(ThisProject, includeRoot = true))
+    val allDeps = libraryDependencies.?.all(selectDeps)
+    Def
+      .taskDyn(
+        allDeps.map(_.flatMap(_.getOrElse(Seq.empty)))
+      )
+  }
+
+  private lazy val simple = raw"([^:]*):([^:]*):([^:]*)".r
+  private lazy val cross = raw"([^:]*)::([^:]*):([^:]*)".r
+  private def extract(jarFile: java.io.File): Seq[ModuleID] = {
+    JarUtils
+      .extractSmithy4sDependencies(jarFile)
+      .collect {
+        case cross(org, art, version)  => org %% art % version
+        case simple(org, art, version) => org % art % version
+      }
+  }
 
   def cachedSmithyCodegen(conf: Configuration) = Def.task {
     val inputFiles =
-      Option((conf / smithy4sInputDir).value)
+      Option((conf / smithy4sInputDirs).value).toSeq.flatten
         .filter(_.exists())
         .toList
     val outputPath = (conf / smithy4sOutputDir).value
@@ -143,13 +298,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (conf / smithy4sAllowedNamespaces).?.value.map(_.toSet)
     val excludedNamespaces =
       (conf / smithy4sExcludedNamespaces).?.value.map(_.toSet)
-    val updateReport = (conf / update).value
-
-    val localDependencyJars =
-      (conf / smithy4sLocalJars).value.map(os.Path(_)).toList
-
-    val externalDependencyJars = findCodeGenDependencies(updateReport)
-    val localJars = localDependencyJars ++ externalDependencyJars
+    val localJars =
+      (conf / smithy4sAllDependenciesAsJars).value.map(os.Path(_)).toList
     val res =
       (conf / resolvers).value.toList.collect { case m: MavenRepository =>
         m.root
@@ -167,7 +317,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       output = os.Path(outputPath),
       resourceOutput = os.Path(resourceOutputPath),
       skip = skipSet,
-      discoverModels = true, // we need protocol here
+      discoverModels = false,
       allowedNS = allowedNamespaces,
       excludedNS = excludedNamespaces,
       repositories = res,

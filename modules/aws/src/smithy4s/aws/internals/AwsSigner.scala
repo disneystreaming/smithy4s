@@ -133,7 +133,7 @@ object AwsSigner {
     lazy val queryParams: List[(String, String)] =
       metadata.queryFlattened.sortBy(_._1).toList
 
-    // !\ Important : these must remain in the same order
+    // !\ Important: these must remain in the same order
     lazy val baseHeaders: List[(CaseInsensitive, String)] = List(
       CaseInsensitive("Content-Type") -> contentType,
       CaseInsensitive("host") -> host,

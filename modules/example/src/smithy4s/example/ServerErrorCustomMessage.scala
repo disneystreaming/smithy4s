@@ -1,11 +1,11 @@
 package smithy4s.example
 
-import smithy4s.Schema
 import smithy4s.Hints
-import smithy4s.schema.Schema.string
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.struct
 
 case class ServerErrorCustomMessage(messageField: Option[String] = None) extends Throwable {
   override def getMessage(): String = messageField.orNull
@@ -13,7 +13,7 @@ case class ServerErrorCustomMessage(messageField: Option[String] = None) extends
 object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMessage] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerErrorCustomMessage")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
 

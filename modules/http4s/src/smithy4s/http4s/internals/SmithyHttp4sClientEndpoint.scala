@@ -25,6 +25,8 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
+import scodec.bits.ByteVector
+import smithy4s.kinds._
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
 
@@ -33,76 +35,94 @@ import smithy4s.schema.SchemaAlt
   * client into a high-level, domain specific function.
   */
 // format: off
-private[smithy4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
+private[http4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
   def send(input: I): F[O]
 }
 // format: on
 
-private[smithy4s] object SmithyHttp4sClientEndpoint {
+private[http4s] object SmithyHttp4sClientEndpoint {
 
-  def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      entityCompiler: EntityCompiler[F]
-  ): Option[SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]] =
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
-        baseUri,
-        client,
-        endpoint,
-        httpEndpoint,
-        entityCompiler
-      )
+      compilerContext: CompilerContext[F],
+      middleware: Client[F] => Client[F]
+  ): Either[
+    HttpEndpoint.HttpEndpointError,
+    SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
+  ] =
+    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
+      toHttp4sMethod(httpEndpoint.method)
+        .leftMap { e =>
+          HttpEndpoint.HttpEndpointError(
+            "Couldn't parse HTTP method: " + e
+          )
+        }
+        .map { method =>
+          new SmithyHttp4sClientEndpointImpl[F, Op, I, E, O, SI, SO](
+            baseUri,
+            client,
+            method,
+            endpoint,
+            httpEndpoint,
+            compilerContext,
+            middleware
+          )
+        }
     }
 
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
-                                                                                                  baseUri: Uri,
-                                                                                                  client: Client[F],
-                                                                                                  endpoint: Endpoint[Op, I, E, O, SI, SO],
-                                                                                                  httpEndpoint: HttpEndpoint[I],
-                                                                                                  entityCompiler: EntityCompiler[F]
+private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+  baseUri: Uri,
+  client: Client[F],
+  method: org.http4s.Method,
+  endpoint: Endpoint[Op, I, E, O, SI, SO],
+  httpEndpoint: HttpEndpoint[I],
+  compilerContext: CompilerContext[F],
+  middleware: Client[F] => Client[F]
 )(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
+  private val transformedClient: Client[F] = middleware(client)
+
   def send(input: I): F[O] = {
-    client
+    transformedClient
       .run(inputToRequest(input))
       .use { response =>
         outputFromResponse(response)
       }
   }
 
-  private val method: org.http4s.Method = toHttp4sMethod(httpEndpoint.method)
-
+  import compilerContext._
   private val inputSchema: Schema[I] = endpoint.input
   private val outputSchema: Schema[O] = endpoint.output
 
   private val inputMetadataEncoder =
     Metadata.Encoder.fromSchema(inputSchema)
   private val inputHasBody =
-    Metadata.TotalDecoder.fromSchema(inputSchema).isEmpty
+    Metadata.TotalDecoder.fromSchema(inputSchema, metadataDecoderCache).isEmpty
   private implicit val inputEntityEncoder: EntityEncoder[F, I] =
-    entityCompiler.compileEntityEncoder(inputSchema)
+    entityCompiler.compileEntityEncoder(inputSchema, entityCache)
   private val outputMetadataDecoder =
-    Metadata.PartialDecoder.fromSchema(outputSchema)
+    Metadata.PartialDecoder.fromSchema(outputSchema, metadataDecoderCache)
   private implicit val outputCodec: EntityDecoder[F, BodyPartial[O]] =
-    entityCompiler.compilePartialEntityDecoder(outputSchema)
+    entityCompiler.compilePartialEntityDecoder(outputSchema, entityCache)
 
   def inputToRequest(input: I): Request[F] = {
     val metadata = inputMetadataEncoder.encode(input)
     val path = httpEndpoint.path(input)
+    val staticQueries = httpEndpoint.staticQueryParams
     val uri = baseUri
       .copy(path = baseUri.path.addSegments(path.map(Uri.Path.Segment(_))))
-      .withMultiValueQueryParams(metadata.query)
+      .withMultiValueQueryParams(staticQueries ++ metadata.query)
     val headers = toHeaders(metadata.headers)
     val baseRequest = Request[F](method, uri, headers = headers)
     if (inputHasBody) {
       baseRequest.withEntity(input)
-    } else baseRequest
+    } else baseRequest.withEntity(ByteVector.empty)
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
@@ -146,8 +166,16 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
             val schema = alt.instance
             val errorMetadataDecoder =
               Metadata.PartialDecoder.fromSchema(schema)
+            // TODO: apply proper memoization of error instances/
+            // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
+            // This is because the "compile entity encoder" method can trigger a transformation of hints, which
+            // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
+            val ephemeralEntityCache = entityCompiler.createCache()
             implicit val errorCodec =
-              entityCompiler.compilePartialEntityDecoder(schema)
+              entityCompiler.compilePartialEntityDecoder(
+                schema,
+                ephemeralEntityCache
+              )
 
             (response: Response[F]) => {
               decodeResponse[A](response, errorMetadataDecoder)
@@ -155,7 +183,7 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
                 .map(alt.inject)
             }
           }
-        }.unsafeCache(allAlternatives.map(Existential.wrap(_)))
+        }.unsafeCacheBy(allAlternatives.map(Kind1.existential(_)), identity(_))
 
         (response: Response[F]) => {
           val discriminator = getErrorDiscriminator(response)
@@ -175,18 +203,18 @@ private[smithy4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], 
       metadataDecoder: Metadata.PartialDecoder[T]
   )(implicit
       entityDecoder: EntityDecoder[F, BodyPartial[T]]
-  ): F[Either[MetadataError, T]] = {
+  ): F[Either[HttpContractError, T]] = {
     val headers = getHeaders(response)
     val metadata =
       Metadata(headers = headers, statusCode = Some(response.status.code))
     metadataDecoder.total match {
       case Some(totalDecoder) =>
-        totalDecoder.decode(metadata).pure[F]
+        totalDecoder.decode(metadata).pure[F].widen
       case None =>
         for {
           metadataPartial <- metadataDecoder.decode(metadata).pure[F]
           bodyPartial <- response.as[BodyPartial[T]]
-        } yield metadataPartial.map(_.combine(bodyPartial))
+        } yield metadataPartial.flatMap(_.combineCatch(bodyPartial))
     }
   }
 }

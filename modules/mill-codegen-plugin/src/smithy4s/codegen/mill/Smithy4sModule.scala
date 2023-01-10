@@ -19,16 +19,26 @@ package smithy4s.codegen.mill
 import coursier.maven.MavenRepository
 import mill._
 import mill.api.PathRef
-import mill.define.{Source, Sources}
+import mill.define.Sources
 import mill.scalalib._
-import smithy4s.codegen.{CodegenArgs, Codegen => Smithy4s, FileType}
-import smithy4s.codegen.mill.BuildInfo
+import smithy4s.codegen.{
+  CodegenArgs,
+  Codegen => Smithy4s,
+  FileType,
+  BuildInfo,
+  JarUtils,
+  SMITHY4S_DEPENDENCIES
+}
+import mill.modules.Jvm
+import mill.scalalib.CrossVersion.Binary
+import mill.scalalib.CrossVersion.Constant
+import mill.scalalib.CrossVersion.Full
 
 trait Smithy4sModule extends ScalaModule {
 
   /** Input directory for .smithy files */
-  protected def smithy4sInputDir: Source = T.source {
-    PathRef(millSourcePath / "smithy")
+  protected def smithy4sInputDirs: Sources = T.sources {
+    Seq(PathRef(millSourcePath / "smithy"))
   }
 
   protected def smithy4sOutputDir: T[PathRef] = T {
@@ -44,9 +54,35 @@ trait Smithy4sModule extends ScalaModule {
 
   def smithy4sExcludedNamespaces: T[Option[Set[String]]] = None
 
+  def smithy4sDefaultIvyDeps: T[Agg[Dep]] = Agg(
+    ivy"${BuildInfo.alloyOrg}:alloy-core:${BuildInfo.alloyVersion}"
+  )
+
   def smithy4sIvyDeps: T[Agg[Dep]] = T { Agg.empty[Dep] }
 
-  def smithy4sLocalJars: T[List[PathRef]] = T {
+  def smithy4sAllDeps: T[Agg[Dep]] = T {
+    smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
+  }
+
+  override def manifest: T[Jvm.JarManifest] = T {
+    val m = super.manifest()
+    val deps = smithy4sIvyDeps().iterator.toList.flatMap { d =>
+      val mod = d.dep.module
+      val org = mod.organization.value
+      val name = mod.name.value
+      val version = d.dep.version
+      d.cross match {
+        case Binary(_)      => List(s"$org::$name:$version")
+        case Constant(_, _) => List(s"$org:$name:$version")
+        case Full(_)        => Nil
+      }
+    }
+    if (deps.nonEmpty) {
+      m.add(SMITHY4S_DEPENDENCIES -> deps.mkString(","))
+    } else m
+  }
+
+  def smithy4sInternalDependenciesAsJars: T[List[PathRef]] = T {
     T.traverse(moduleDeps)(_.jar)
       .map(_.toList.map(_.path).map(PathRef(_)))
   }
@@ -62,18 +98,42 @@ trait Smithy4sModule extends ScalaModule {
   def smithy4sSmithyLibrary: T[Boolean] = true
 
   def smithy4sTransitiveIvyDeps: T[Agg[Dep]] = T {
-    smithy4sIvyDeps() ++ T
-      .traverse(moduleDeps)(_.transitiveIvyDeps)()
+    smithy4sAllDeps() ++ T
+      .traverse(moduleDeps) {
+        case m if m.isInstanceOf[Smithy4sModule] =>
+          m.asInstanceOf[Smithy4sModule].smithy4sTransitiveIvyDeps
+        case _ => T.task(mill.api.Result.create(Agg.empty))
+      }()
       .flatten
   }
 
-  def smithy4sResolvedIvyDeps: T[Agg[PathRef]] = T {
-    resolveDeps(T.task { smithy4sTransitiveIvyDeps() })()
+  def smithy4sExternallyTrackedIvyDeps: T[Agg[Dep]] = T {
+    resolveDeps(transitiveIvyDeps)().flatMap { pathRef =>
+      val deps = JarUtils
+        .extractSmithy4sDependencies(pathRef.path.toIO)
+        .map(dep => ivy"$dep")
+      Agg.from(deps)
+    }
+  }
+
+  def smithy4sAllExternalDependencies: T[Agg[Dep]] = T {
+    transitiveIvyDeps() ++
+      smithy4sTransitiveIvyDeps() ++
+      smithy4sExternallyTrackedIvyDeps()
+  }
+
+  def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = T {
+    resolveDeps(smithy4sAllExternalDependencies)()
+  }
+
+  def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
+    smithy4sInternalDependenciesAsJars() ++
+      smithy4sResolvedAllExternalDependencies()
   }
 
   def smithy4sCodegen: T[(PathRef, PathRef)] = T {
 
-    val specFiles = List(smithy4sInputDir().path).filter(os.exists(_))
+    val specFiles = smithy4sInputDirs().map(_.path).filter(os.exists(_))
 
     val scalaOutput = smithy4sOutputDir().path
     val resourcesOutput = smithy4sResourceOutputDir().path
@@ -88,17 +148,15 @@ trait Smithy4sModule extends ScalaModule {
 
     val skipSet = skipResources ++ skipOpenApi
 
-    val resolvedDeps = smithy4sResolvedIvyDeps().iterator.map(_.path).toList
-
-    val localJars = smithy4sLocalJars().map(_.path)
-    val allLocalJars = localJars ++ resolvedDeps
+    val allLocalJars =
+      smithy4sAllDependenciesAsJars().map(_.path).iterator.to(List)
 
     val args = CodegenArgs(
       specs = specFiles.toList,
       output = scalaOutput,
       resourceOutput = resourcesOutput,
       skip = skipSet,
-      discoverModels = true,
+      discoverModels = false,
       allowedNS = smithy4sAllowedNamespaces(),
       excludedNS = smithy4sExcludedNamespaces(),
       repositories = smithy4sRepositories(),
@@ -106,6 +164,7 @@ trait Smithy4sModule extends ScalaModule {
       transformers = smithy4sModelTransformers(),
       localJars = allLocalJars
     )
+
     Smithy4s.processSpecs(args)
     (PathRef(scalaOutput), PathRef(resourcesOutput))
   }
@@ -115,7 +174,10 @@ trait Smithy4sModule extends ScalaModule {
     scalaOutput +: super.generatedSources()
   }
 
-  override def resources: Sources = T.sources {
-    super.resources() :+ smithy4sResourceOutputDir()
+  def generatedResources: T[PathRef] = T {
+    smithy4sCodegen()
+    smithy4sResourceOutputDir()
   }
+
+  override def localClasspath = super.localClasspath() :+ generatedResources()
 }

@@ -32,6 +32,7 @@ import org.typelevel.ci.CIString
 import smithy4s.aws.SimpleHttpClient
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
+import org.http4s.Method
 
 final class AwsHttp4sBackend[F[_]: Concurrent](client: Client[F])
     extends SimpleHttpClient[F] {
@@ -53,12 +54,13 @@ object AwsHttp4sBackend {
 
     for {
       endpoint <- Uri.fromString(request.uri).liftTo[F]
-      method = request.httpMethod match {
-        case HttpMethod.POST   => POST
-        case HttpMethod.GET    => GET
-        case HttpMethod.PATCH  => PATCH
-        case HttpMethod.PUT    => PUT
-        case HttpMethod.DELETE => DELETE
+      method <- request.httpMethod match {
+        case HttpMethod.POST         => POST.pure[F]
+        case HttpMethod.GET          => GET.pure[F]
+        case HttpMethod.PATCH        => PATCH.pure[F]
+        case HttpMethod.PUT          => PUT.pure[F]
+        case HttpMethod.DELETE       => DELETE.pure[F]
+        case HttpMethod.OTHER(value) => Method.fromString(value).liftTo[F]
       }
       req = request.body
         .foldLeft(
