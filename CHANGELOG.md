@@ -1,11 +1,74 @@
 
 # 0.17.2
 
-## Scala 3 unions support for operation errors
+This release is backward binary-compatible with the previous releases from the the 0.17.x lineage.
+
+## User-facing features
+
+### Scala 3 unions support for operation errors
 
 See https://github.com/disneystreaming/smithy4s/pull/707
 
 In order to render Operation errors as Scala 3 union types, a following metadata flag needs to be added: `metadata smithy4sErrorsAsScala3Unions = true` (in any of the smithy files that are used for code generation).
+
+### Source-mapping github paths are now automatically added during scala-js compilation
+
+This will make it easier to run front-end debuggers on webpage build with smithy4s-issued clients
+
+See https://github.com/disneystreaming/smithy4s/pull/706
+
+### Addition of Transformation.apply utilty method :
+
+it's now possible to invoke transformations more conveniently in polymorhic code, via a method in the `Transformation` companion object
+
+See  https://github.com/disneystreaming/smithy4s/pull/681
+
+## Bug fixes
+
+### Static query params are now handled correctly
+
+It is now possible to define static query parameters when using the http trait :
+
+```smithy
+@http(method: "GET", uri: "/foo?bar=baz)
+operation Foo {}
+```
+
+### Service interfaces now receive the set of all operations tied to resources transitively tied to the service
+
+For instance, when running the code-generator, the `Library` interface will now receive a `getBook` method, which
+wasn't previously the case
+
+```smithy
+service Library {
+  resources: [Book]
+}
+
+resource Book {
+  read: GetBook
+}
+
+@readonly
+operation GetBook {
+}
+```
+
+### Other fixes and improvements :
+
+See https://github.com/disneystreaming/smithy4s/pull/689
+
+* Various codegen fixes and improvements  by @Baccata in https://github.com/disneystreaming/smithy4s/pull/677
+* fix for timestamp format issue for aws tests by @yisraelU in https://github.com/disneystreaming/smithy4s/pull/675
+* Make whitespace around colons consistent by @kubukoz in https://github.com/disneystreaming/smithy4s/pull/682
+* Add resource operations to generated service by @Baccata in https://github.com/disneystreaming/smithy4s/pull/686
+* fix path segment parsing when suffixed with query by @yisraelU in https://github.com/disneystreaming/smithy4s/pull/689
+* Compliancetests fixes improvements by @yisraelU in https://github.com/disneystreaming/smithy4s/pull/680
+* restructured timeout call and attemptNarrow by @yisraelU in https://github.com/disneystreaming/smithy4s/pull/708
+* [compliance tests] addresses timeouts on the server side  by @yisraelU in https://github.com/disneystreaming/smithy4s/pull/712
+* Fix ShapeId.parse not working for valid shapes by @kubukoz in https://github.com/disneystreaming/smithy4s/pull/714
+* codegen cli should use a non-zero exit code when failing by @daddykotex in https://github.com/disneystreaming/smithy4s/pull/713
+
+
 
 # 0.17.0
 
