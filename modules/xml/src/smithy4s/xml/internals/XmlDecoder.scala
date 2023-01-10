@@ -17,14 +17,14 @@
 package smithy4s.xml
 package internals
 
+import cats.data.NonEmptyList
+import smithy4s.ConstraintError
 import smithy4s.xml.XmlDocument
 import smithy4s.xml.XmlDocument.XmlQName
-import smithy4s.xml.internals.XmlCursor.Nodes
-import smithy4s.xml.internals.XmlCursor.NoNode
-import smithy4s.xml.internals.XmlCursor.FailedNode
 import smithy4s.xml.internals.XmlCursor.AttrNode
-import smithy4s.ConstraintError
-import cats.data.NonEmptyList
+import smithy4s.xml.internals.XmlCursor.FailedNode
+import smithy4s.xml.internals.XmlCursor.NoNode
+import smithy4s.xml.internals.XmlCursor.Nodes
 
 /**
   * This constructs allow for decoding XML data. It is not limited to top-level
@@ -52,15 +52,15 @@ private[smithy4s] trait XmlDecoder[A] { self =>
           }
         }
     }
-  final def down(tag: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
+  def down(tag: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
       self.decode(cursor.down(tag))
   }
-  final def attribute(attr: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
+  def attribute(attr: XmlQName): XmlDecoder[A] = new XmlDecoder[A] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] =
       self.decode(cursor.attr(attr))
   }
-  final def optional: XmlDecoder[Option[A]] = new XmlDecoder[Option[A]] {
+  def optional: XmlDecoder[Option[A]] = new XmlDecoder[Option[A]] {
     def decode(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] = {
       cursor match {
         case NoNode(_) => Right(None)

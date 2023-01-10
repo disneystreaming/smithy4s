@@ -17,15 +17,16 @@
 package smithy4s.xml
 package internals
 
-import smithy4s.schema._
-import smithy4s.schema.Schema
-import smithy4s._
+import cats.data.NonEmptyList
+import cats.syntax.all._
+import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
-import smithy.api.XmlAttribute
-import cats.syntax.all._
+import smithy4s._
 import smithy4s.internals.SchemaDescription
-import cats.data.NonEmptyList
+import smithy4s.schema.Schema
+import smithy4s.schema._
+
 import XmlDocument.XmlQName
 
 private[smithy4s] object XmlDecoderSchemaVisitor extends XmlDecoderSchemaVisitor
