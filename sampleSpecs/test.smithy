@@ -8,7 +8,7 @@ use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {
-    operations: [SayHello, Listen, TestPath]
+    operations: [SayHello, Listen, TestPath,TestPayloadStructure]
 }
 
 @http(method: "POST", uri: "/")
@@ -193,4 +193,44 @@ structure ErrorDetails {
     date: Timestamp
     @required
     location: String
+}
+
+@idempotent
+@http(uri: "/payload", method: "POST")
+operation TestPayloadStructure {
+    input: TestPayloadStructureInputOutput,
+    output: TestPayloadStructureInputOutput
+}
+apply TestPayloadStructure @httpRequestTests([
+    {
+        id: "RestJsonHttpWithHeadersButNoPayload",
+        documentation: "Serializes an request with header members but no payload",
+        protocol: simpleRestJson,
+        method: "POST",
+        uri: "/payload",
+        body: "{}",
+        bodyMediaType: "application/json",
+        headers: {
+            "Content-Type": "application/json",
+            "X-Amz-Test-Id": "t-12345"
+        },
+        requireHeaders: [
+            "Content-Length"
+        ],
+        params: {
+            testId: "t-12345"
+        }
+    }
+])
+
+structure TestPayloadStructureInputOutput {
+    @httpHeader("X-Amz-Test-Id")
+    testId: String,
+
+    @httpPayload
+    payloadConfig: PayloadConfig
+}
+
+structure PayloadConfig {
+    data: Integer
 }
