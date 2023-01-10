@@ -2,19 +2,18 @@ $version: "2"
 
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
-  errors: [GenericServerError, GenericClientError],
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book, Echo]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
 operation AddMenuItem {
   input: AddMenuItemRequest,
-  errors: [PriceError],
+  errors: [PriceError, GenericServerError, GenericClientError],
   output: AddMenuItemResult
 }
 
@@ -87,7 +86,7 @@ structure PriceError {
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
 operation GetMenu {
   input: GetMenuRequest,
-  errors: [NotFoundError, FallbackError],
+  errors: [NotFoundError, FallbackError, FallbackError2, GenericClientError],
   output: GetMenuResult
 }
 
@@ -112,6 +111,13 @@ structure NotFoundError {
 
 @error("client")
 structure FallbackError {
+  @required
+  error: String
+}
+
+// added to test error handling scenarios in `operation GetMenu`
+@error("client")
+structure FallbackError2 {
   @required
   error: String
 }
@@ -196,7 +202,7 @@ structure HealthRequest {
   query: String
 }
 
-@freeForm(i : 1, a: 2)
+@freeForm(i: 1, a: 2)
 structure HealthResponse {
   @required
   status: String
@@ -288,4 +294,45 @@ structure CustomCodeInput {
 structure CustomCodeOutput {
   @httpResponseCode
   code: Integer
+}
+
+@http(method: "POST", uri: "/book/{name}", code: 200)
+operation Book {
+  input := {
+    @httpLabel
+    @required
+    name: String,
+
+    @httpQuery("town")
+    town: String
+  },
+  output := {
+    @required
+    message: String
+  }
+}
+
+@http(method: "POST", uri: "/echo/{pathParam}")
+operation Echo {
+  input := {
+    @required
+    @httpLabel
+    @length(min: 10)
+    pathParam: String,
+
+    @httpQuery("queryParam")
+    @length(min: 10)
+    queryParam: String,
+
+    @httpPayload
+    @required
+    body: EchoBody
+  }
+  // this operation must NOT have any errors
+  errors: []
+}
+
+structure EchoBody {
+  @length(min: 10)
+  data: String
 }

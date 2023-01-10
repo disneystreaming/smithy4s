@@ -20,9 +20,10 @@ package internals
 
 import smithy4s.schema._
 
-private[smithy4s] object ErrorCodeSchemaVisitor
-    extends SchemaVisitor.Cached[HttpCode]
-    with SchemaVisitor.Default[HttpCode] {
+private[http] class ErrorCodeSchemaVisitor(
+    val cache: CompilationCache[HttpCode]
+) extends SchemaVisitor.Cached[HttpCode]
+    with SchemaVisitor.Default[HttpCode] { compile =>
   def default[A]: A => Option[Int] = _ => None
 
   override def union[U](
@@ -30,15 +31,11 @@ private[smithy4s] object ErrorCodeSchemaVisitor
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
       dispatcher: Alt.Dispatcher[Schema, U]
-  ): HttpCode[U] = { (s) =>
-    processAltWithValue(dispatcher.underlying(s))
-  }
-
-  def processAltWithValue[S, B](
-      withValue: Alt.WithValue[Schema, S, B]
-  ): Option[Int] = {
-    val httpCode = apply(withValue.alt.instance)
-    httpCode(withValue.value)
+  ): HttpCode[U] = {
+    dispatcher.compile(new Alt.Precompiler[Schema, HttpCode] {
+      def apply[A](label: String, instance: Schema[A]): HttpCode[A] =
+        compile(instance)
+    })
   }
 
   override def lazily[A](suspend: Lazy[Schema[A]]): HttpCode[A] =

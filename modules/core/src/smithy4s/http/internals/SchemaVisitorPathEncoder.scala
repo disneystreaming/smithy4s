@@ -26,7 +26,7 @@ import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 import smithy.api.Http
 
 object SchemaVisitorPathEncoder
-    extends SchemaVisitor.Cached[MaybePathEncode]
+    extends SchemaVisitor[MaybePathEncode]
     with SchemaVisitor.Default[MaybePathEncode] {
   self =>
 

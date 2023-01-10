@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
+import kinds._
 
 /**
   * Represents a member of coproduct type (sealed trait)
@@ -36,7 +37,10 @@ final case class Alt[F[_], U, A](
 }
 object Alt {
 
-  final case class WithValue[F[_], U, A](alt: Alt[F, U, A], value: A) {
+  final case class WithValue[F[_], U, A](
+      private[Alt] val alt: Alt[F, U, A],
+      value: A
+  ) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
       WithValue(alt.mapK(fk), value)
   }
@@ -59,11 +63,12 @@ object Alt {
     * function into an encoder that works on the union.
     */
   trait Dispatcher[F[_], U] {
-    def underlying: U => Alt.WithValue[F, U, _]
 
     def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
         encoderK: EncoderK[G, Result]
     ): G[U]
+
+    def projector[A](alt: Alt[F, U, A]): U => Option[A]
   }
 
   object Dispatcher {
@@ -73,16 +78,20 @@ object Alt {
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
 
-    private[smithy4s] class Impl[F[_], U](
+    private[smithy4s] case class Impl[F[_], U](
         alts: Vector[Alt[F, U, _]],
-        val underlying: U => Alt.WithValue[F, U, _]
+        underlying: U => Alt.WithValue[F, U, _]
     ) extends Dispatcher[F, U] {
       def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
           encoderK: EncoderK[G, Result]
       ): G[U] = {
         val precompiledAlts =
           precompile.toPolyFunction
-            .unsafeCache(alts.map(smithy4s.Existential.wrap(_)))
+            .unsafeCacheBy[String](
+              alts.map(Kind1.existential(_)),
+              (alt: Kind1.Existential[Alt[F, U, *]]) =>
+                alt.asInstanceOf[Alt[F, U, _]].label
+            )
 
         encoderK.absorb[U] { u =>
           underlying(u) match {
@@ -90,6 +99,13 @@ object Alt {
               encoderK(precompiledAlts(awv.alt), awv.value)
           }
         }
+      }
+
+      def projector[A](alt: Alt[F, U, A]): U => Option[A] = { u =>
+        val under = underlying(u)
+        if (under.alt.label == alt.label)
+          Some(under.value.asInstanceOf[A])
+        else None
       }
     }
   }

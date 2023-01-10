@@ -1,10 +1,10 @@
 $version: "2"
 
-namespace smithy4s.example
+namespace smithy4s.example.test
 
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {
@@ -37,14 +37,16 @@ service HelloService {
     {
         id: "say_hello"
         protocol: simpleRestJson
-        params: { result: "Hello!" }
+        params: { payload: { result: "Hello!" }, header1: "V1" }
         body: "{\"result\":\"Hello!\"}"
+        headers: { "X-H1": "V1"}
         code: 200
     }
 ])
 operation SayHello {
     input: SayHelloInput,
     output: SayHelloOutput
+    errors: [SimpleError, ComplexError]
 }
 
 @input
@@ -59,6 +61,15 @@ structure SayHelloInput {
 }
 
 structure SayHelloOutput {
+    @required
+    @httpPayload
+    payload: SayHelloPayload
+
+    @required
+    @httpHeader("X-H1")
+    header1: String
+}
+structure SayHelloPayload {
     @required
     result: String
 }
@@ -95,7 +106,7 @@ operation TestPath {
     }
 }
 
-// The following shapes are used
+// The following shapes are used by the documentation
 @simpleRestJson
 service HelloWorldService {
   version: "1.0.0",
@@ -128,4 +139,58 @@ operation Hello {
     @required
     message: String
   }
+}
+
+@httpResponseTests([
+    {
+        id: "simple_error"
+        protocol: simpleRestJson
+        params: { expected: -1 }
+        code: 400
+        body: "{\"expected\":-1}"
+        bodyMediaType: "application/json"
+        requireHeaders: ["X-Error-Type"]
+    }
+])
+@error("client")
+structure SimpleError {
+    @required
+    expected: Integer
+}
+@httpResponseTests([
+    {
+        id: "complex_error"
+        protocol: simpleRestJson
+        params: { value: -1, message: "some error message", details: { date: 123, location: "NYC"} }
+        code: 504
+        body: "{\"value\":-1,\"message\":\"some error message\",\"details\":{\"date\":123,\"location\":\"NYC\"}}"
+        bodyMediaType: "application/json"
+        requireHeaders: ["X-Error-Type"]
+    },
+    {
+        id: "complex_error_no_details"
+        protocol: simpleRestJson
+        params: { value: -1, message: "some error message" }
+        code: 504
+        body: "{\"value\":-1,\"message\":\"some error message\"}"
+        bodyMediaType: "application/json"
+        requireHeaders: ["X-Error-Type"]
+    }
+])
+@error("server")
+@httpError(504)
+structure ComplexError {
+    @required
+    value: Integer
+    @required
+    message: String
+    details: ErrorDetails
+}
+
+structure ErrorDetails {
+    @required
+    @timestampFormat("epoch-seconds")
+    date: Timestamp
+    @required
+    location: String
 }

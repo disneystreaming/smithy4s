@@ -22,21 +22,30 @@ import cats.data.OptionT
 import cats.implicits._
 import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
+import smithy4s.kinds._
+import org.typelevel.vault.Key
+import cats.effect.SyncIO
 
 // format: off
 class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
-    service: smithy4s.Service[Alg, Op],
-    impl: Interpreter[Op, F],
+    service: smithy4s.Service.Aux[Alg, Op],
+    impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
-    codecs: EntityCompiler[F]
+    entityCompiler: EntityCompiler[F],
+    middleware: ServerEndpointMiddleware[F]
 )(implicit effect: EffectCompat[F]) {
+
+  private val pathParamsKey =
+    Key.newKey[SyncIO, smithy4s.http.PathParams].unsafeRunSync()
+
+  private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
   val routes: HttpRoutes[F] = Kleisli { request =>
     for {
       endpoints <- perMethodEndpoint.get(request.method).toOptionT[F]
       path = request.uri.path.segments.map(_.decoded()).toArray
       (endpoint, pathParams) <- endpoints.collectFirstSome(_.matchTap(path)).toOptionT[F]
-      response <- OptionT.liftF(endpoint.run(pathParams, request))
+      response <- OptionT.liftF(endpoint.httpApp(request.withAttribute(pathParamsKey, pathParams)))
     } yield response
   }
   // format: on
@@ -44,14 +53,16 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
   private val http4sEndpoints: List[SmithyHttp4sServerEndpoint[F]] =
     service.endpoints
       .map { ep =>
-        SmithyHttp4sServerEndpoint(
+        SmithyHttp4sServerEndpoint.make(
           impl,
           ep,
-          codecs,
-          errorTransformation
+          compilerContext,
+          errorTransformation,
+          middleware.prepare(service) _,
+          pathParamsKey
         )
       }
-      .collect { case Some(http4sEndpoint) =>
+      .collect { case Right(http4sEndpoint) =>
         http4sEndpoint
       }
 

@@ -17,6 +17,8 @@
 package smithy4s
 package schema
 
+import smithy4s.kinds.PolyFunction
+
 /**
   * Represents a member of product type (case class)
   */
@@ -145,7 +147,7 @@ object Field {
   }
 
   trait LeftFolder[F[_], B] {
-    def compile[T](label: String, instance: F[T]) : (B, T) => B
+    def compile[T](label: String, instance: F[T]): (B, T) => B
   }
 
   type Wrapped[F[_], G[_], A] = F[G[A]]
@@ -166,7 +168,7 @@ object Field {
     }
 
     def getDefault: Option[Document] =
-      field.instance.hints.get(smithy.api.Default).map(_.value)
+      field.instance.getDefault
 
   }
 

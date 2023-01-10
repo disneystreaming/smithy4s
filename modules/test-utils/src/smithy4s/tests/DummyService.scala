@@ -18,19 +18,21 @@ package smithy4s
 package tests
 
 import cats.Applicative
+import smithy4s.kinds._
 
 object DummyService {
 
   def apply[F[_]]: PartiallyApplied[F] = new PartiallyApplied[F]
 
   class PartiallyApplied[F[_]] {
-    def create[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](implicit
-        service: Service[Alg, Op],
+    def create[Alg[_[_, _, _, _, _]]](implicit
+        service: Service[Alg],
         F: Applicative[F]
-    ): smithy4s.Monadic[Alg, F] = {
-      service.transform[GenLift[F]#λ] {
-        service.opToEndpoint.andThen[GenLift[F]#λ](
-          new Transformation[Endpoint[Op, *, *, *, *, *], GenLift[F]#λ] {
+    ): FunctorAlgebra[Alg, F] = {
+      type Op[I, E, O, SI, SO] = service.Operation[I, E, O, SI, SO]
+      service.fromPolyFunction[Kind1[F]#toKind5] {
+        service.opToEndpoint.andThen[Kind1[F]#toKind5](
+          new PolyFunction5[service.Endpoint, Kind1[F]#toKind5] {
             def apply[I, E, O, SI, SO](
                 ep: Endpoint[Op, I, E, O, SI, SO]
             ): F[O] =

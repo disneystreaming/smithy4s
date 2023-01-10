@@ -19,10 +19,13 @@ package smithy4s.aws
 import aws.protocols.AwsJson1_0
 import aws.protocols.AwsJson1_1
 import smithy4s.Hints
+import smithy4s.ShapeTag
 
 private[aws] sealed trait AwsProtocol extends Product with Serializable {}
 
 private[aws] object AwsProtocol {
+  val supportedProtocols: List[ShapeTag[_]] =
+    List(AwsJson1_0, AwsJson1_1)
 
   def apply(hints: Hints): Option[AwsProtocol] =
     hints

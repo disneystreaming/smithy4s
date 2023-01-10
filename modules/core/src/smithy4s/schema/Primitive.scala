@@ -17,6 +17,7 @@
 package smithy4s
 package schema
 
+import smithy4s.kinds.PolyFunction
 import smithy4s.http.HttpBinding
 import smithy.api.TimestampFormat
 

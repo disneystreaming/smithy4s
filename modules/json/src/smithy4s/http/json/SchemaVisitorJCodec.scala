@@ -26,8 +26,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy4s.api.Discriminated
-import smithy4s.api.Untagged
+import alloy.Discriminated
+import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
@@ -38,8 +38,10 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 
-private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
-    extends SchemaVisitor.Cached[JCodec] { self =>
+private[smithy4s] class SchemaVisitorJCodec(
+    maxArity: Int,
+    val cache: CompilationCache[JCodec]
+) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
 
   object PrimitiveJCodecs {
@@ -270,8 +272,13 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
         Timestamp(epochSecond, ((timestamp - epochSecond) * 1000000000).toInt)
       }
 
-      def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-        out.writeVal(BigDecimal(x.epochSecond) + x.nano / 1000000000.0)
+      def encodeValue(x: Timestamp, out: JsonWriter): Unit = {
+        if (x.nano == 0) {
+          out.writeVal(x.epochSecond)
+        } else {
+          out.writeVal(BigDecimal(x.epochSecond) + x.nano / 1000000000.0)
+        }
+      }
 
       def decodeKey(in: JsonReader): Timestamp = {
         val timestamp = in.readKeyAsBigDecimal()
@@ -757,23 +764,25 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
     def encodeKey(x: A, out: JsonWriter): Unit = underlying.encodeKey(x, out)
   }
 
-  private def taggedUnion[Z](
-      alternatives: Vector[Alt[Schema, Z, _]]
-  )(total: Z => Alt.WithValue[Schema, Z, _]): JCodec[Z] =
-    new JCodec[Z] {
+  private type Writer[A] = A => JsonWriter => Unit
+
+  private def taggedUnion[U](
+      alternatives: Vector[Alt[Schema, U, _]]
+  )(dispatch: Alt.Dispatcher[Schema, U]): JCodec[U] =
+    new JCodec[U] {
       val expecting: String = "tagged-union"
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
+      def jsonLabel[A](alt: Alt[Schema, U, A]): String =
         alt.hints.get(JsonName) match {
           case None    => alt.label
           case Some(x) => x.value
         }
 
       private[this] val handlerMap =
-        new util.HashMap[String, (Cursor, JsonReader) => Z] {
-          def handler[A](alt: Alt[Schema, Z, A]) = {
+        new util.HashMap[String, (Cursor, JsonReader) => U] {
+          def handler[A](alt: Alt[Schema, U, A]) = {
             val codec = apply(alt.instance)
             (cursor: Cursor, reader: JsonReader) =>
               alt.inject(cursor.decode(codec, reader))
@@ -782,7 +791,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z =
+      def decodeValue(cursor: Cursor, in: JsonReader): U =
         if (in.isNextToken('{')) {
           if (in.isNextToken('}'))
             in.decodeError("Expected a single key/value pair")
@@ -802,41 +811,44 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           }
         } else in.decodeError("Expected JSON object")
 
-      private[this] val altCache =
-        new PolyFunction[Alt[Schema, Z, *], JCodec] {
-          def apply[A](fa: Alt[Schema, Z, A]): JCodec[A] =
-            self.apply(fa.instance)
-        }.unsafeCache((alternatives).map(alt => Existential.wrap(alt)))
+      val precompiler = new smithy4s.schema.Alt.Precompiler[Schema, Writer] {
+        def apply[A](label: String, instance: Schema[A]): Writer[A] = {
+          val jsonLabel =
+            instance.hints.get(JsonName).map(_.value).getOrElse(label)
+          val jcodecA = instance.compile(self)
+          a =>
+            out => {
+              out.writeObjectStart()
+              out.writeKey(jsonLabel)
+              jcodecA.encodeValue(a, out)
+              out.writeObjectEnd()
+            }
+        }
+      }
+      val writer = dispatch.compile(precompiler)
 
-      def encodeValue(z: Z, out: JsonWriter): Unit = {
-        def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
-          altCache(awv.alt).encodeValue(awv.value, out)
-
-        out.writeObjectStart()
-        val awv = total(z)
-        out.writeKey(jsonLabel(awv.alt))
-        writeValue(awv)
-        out.writeObjectEnd()
+      def encodeValue(u: U, out: JsonWriter): Unit = {
+        writer(u)(out)
       }
 
-      def decodeKey(in: JsonReader): Z =
+      def decodeKey(in: JsonReader): U =
         in.decodeError("Cannot use coproducts as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit =
+      def encodeKey(u: U, out: JsonWriter): Unit =
         out.encodeError("Cannot use coproducts as keys")
     }
 
-  private def untaggedUnion[Z](
-      alternatives: Vector[Alt[Schema, Z, _]]
-  )(total: Z => Alt.WithValue[Schema, Z, _]): JCodec[Z] = new JCodec[Z] {
+  private def untaggedUnion[U](
+      alternatives: Vector[Alt[Schema, U, _]]
+  )(dispatch: Alt.Dispatcher[Schema, U]): JCodec[U] = new JCodec[U] {
     def expecting: String = "untaggedUnion"
 
     override def canBeKey: Boolean = false
 
-    private[this] val handlerList: Array[(Cursor, JsonReader) => Z] = {
-      val res = Array.newBuilder[(Cursor, JsonReader) => Z]
+    private[this] val handlerList: Array[(Cursor, JsonReader) => U] = {
+      val res = Array.newBuilder[(Cursor, JsonReader) => U]
 
-      def handler[A](alt: Alt[Schema, Z, A]) = {
+      def handler[A](alt: Alt[Schema, U, A]) = {
         val codec = apply(alt.instance)
         (cursor: Cursor, reader: JsonReader) =>
           alt.inject(cursor.decode(codec, reader))
@@ -846,8 +858,8 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       res.result()
     }
 
-    def decodeValue(cursor: Cursor, in: JsonReader): Z = {
-      var z: Z = null.asInstanceOf[Z]
+    def decodeValue(cursor: Cursor, in: JsonReader): U = {
+      var z: U = null.asInstanceOf[U]
       val len = handlerList.length
       var i = 0
       while (z == null && i < len) {
@@ -865,45 +877,45 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       else cursor.payloadError(this, "Could not decode untagged union")
     }
 
-    private[this] val altCache =
-      new PolyFunction[Alt[Schema, Z, *], JCodec] {
-        def apply[A](fa: Alt[Schema, Z, A]): JCodec[A] = self.apply(fa.instance)
-      }.unsafeCache((alternatives).map(alt => Existential.wrap(alt)))
+    val precompiler = new smithy4s.schema.Alt.Precompiler[Schema, Writer] {
+      def apply[A](label: String, instance: Schema[A]): Writer[A] = {
+        val jcodecA = instance.compile(self)
+        a => out => jcodecA.encodeValue(a, out)
+      }
+    }
+    val writer = dispatch.compile(precompiler)
 
-    def encodeValue(z: Z, out: JsonWriter): Unit = {
-      def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
-        altCache(awv.alt).encodeValue(awv.value, out)
-
-      writeValue(total(z))
+    def encodeValue(u: U, out: JsonWriter): Unit = {
+      writer(u)(out)
     }
 
-    def decodeKey(in: JsonReader): Z =
+    def decodeKey(in: JsonReader): U =
       in.decodeError("Cannot use coproducts as keys")
 
-    def encodeKey(x: Z, out: JsonWriter): Unit =
+    def encodeKey(u: U, out: JsonWriter): Unit =
       out.encodeError("Cannot use coproducts as keys")
   }
 
-  private def discriminatedUnion[Z](
-      alternatives: Vector[Alt[Schema, Z, _]],
+  private def discriminatedUnion[U](
+      alternatives: Vector[Alt[Schema, U, _]],
       discriminated: Discriminated
-  )(total: Z => Alt.WithValue[Schema, Z, _]): JCodec[Z] =
-    new JCodec[Z] {
+  )(dispatch: Alt.Dispatcher[Schema, U]): JCodec[U] =
+    new JCodec[U] {
       def expecting: String = "discriminated-union"
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[Schema, Z, A]): String =
+      def jsonLabel[A](alt: Alt[Schema, U, A]): String =
         alt.hints.get(JsonName) match {
           case None    => alt.label
           case Some(x) => x.value
         }
 
       private[this] val handlerMap =
-        new util.HashMap[String, (Cursor, JsonReader) => Z] {
+        new util.HashMap[String, (Cursor, JsonReader) => U] {
           def handler[A](
-              alt: Alt[Schema, Z, A]
-          ): (Cursor, JsonReader) => Z = {
+              alt: Alt[Schema, U, A]
+          ): (Cursor, JsonReader) => U = {
             val codec = apply(alt.instance)
             (cursor: Cursor, reader: JsonReader) =>
               alt.inject(cursor.decode(codec, reader))
@@ -912,7 +924,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
           alternatives.foreach(alt => put(jsonLabel(alt), handler(alt)))
         }
 
-      def decodeValue(cursor: Cursor, in: JsonReader): Z =
+      def decodeValue(cursor: Cursor, in: JsonReader): U =
         if (in.isNextToken('{')) {
           in.setMark()
           if (in.skipToKey(discriminated.value)) {
@@ -930,30 +942,28 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
             )
         } else in.decodeError("Expected JSON object")
 
-      private[this] val altCache =
-        new PolyFunction[Alt[Schema, Z, *], JCodec] {
-          def apply[A](fa: Alt[Schema, Z, A]): JCodec[A] = {
-            val label = jsonLabel(fa)
-            self.apply(
-              fa.instance
-                .addHints(
-                  Hints(DiscriminatedUnionMember(discriminated.value, label))
-                )
+      val precompiler = new smithy4s.schema.Alt.Precompiler[Schema, Writer] {
+        def apply[A](label: String, instance: Schema[A]): Writer[A] = {
+          val jsonLabel =
+            instance.hints.get(JsonName).map(_.value).getOrElse(label)
+          val jcodecA = instance
+            .addHints(
+              Hints(DiscriminatedUnionMember(discriminated.value, jsonLabel))
             )
-          }
-        }.unsafeCache((alternatives).map(alt => Existential.wrap(alt)))
+            .compile(self)
+          a => out => jcodecA.encodeValue(a, out)
+        }
+      }
+      val writer = dispatch.compile(precompiler)
 
-      def encodeValue(z: Z, out: JsonWriter): Unit = {
-        def writeValue[A](awv: Alt.WithValue[Schema, Z, A]): Unit =
-          altCache(awv.alt).encodeValue(awv.value, out)
-
-        writeValue(total(z))
+      def encodeValue(u: U, out: JsonWriter): Unit = {
+        writer(u)(out)
       }
 
-      def decodeKey(in: JsonReader): Z =
+      def decodeKey(in: JsonReader): U =
         in.decodeError("Cannot use coproducts as keys")
 
-      def encodeKey(x: Z, out: JsonWriter): Unit =
+      def encodeKey(x: U, out: JsonWriter): Unit =
         out.encodeError("Cannot use coproducts as keys")
     }
 
@@ -963,10 +973,9 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): JCodec[U] = hints match {
-    case Untagged.hint(_) => untaggedUnion(alternatives)(dispatch.underlying)
-    case Discriminated.hint(d) =>
-      discriminatedUnion(alternatives, d)(dispatch.underlying)
-    case _ => taggedUnion(alternatives)(dispatch.underlying)
+    case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
+    case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)
+    case _                     => taggedUnion(alternatives)(dispatch)
   }
 
   override def enumeration[E](
@@ -1135,9 +1144,7 @@ private[smithy4s] class SchemaVisitorJCodec(maxArity: Int)
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
       val jLabel = jsonLabel(field)
-      val decode: Document => Option[Any] =
-        Document.Decoder.fromSchema(field.instance).decode(_).toOption
-      val decoded = field.getDefault.flatMap(decode)
+      val decoded: Option[Any] = field.instance.getDefaultValue
       val default = decoded.orNull
       (field, jLabel, default)
     }

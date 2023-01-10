@@ -9,7 +9,7 @@ metadata suppressions = [
 
 namespace smithy4s.dynamic.model
 
-use smithy4s.api#discriminated
+use alloy#discriminated
 
 /// This is a best-effort meta-representation of the smithy-model, that we should be able
 /// to deserialise from Json.

@@ -1,17 +1,17 @@
 package smithy4s.example
 
-import smithy4s.Schema
 import smithy4s.Hints
-import smithy4s.schema.Schema.string
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.struct
 
 case class PutObjectInput(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None)
 object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "PutObjectInput")
 
-  val hints : Hints = Hints.empty
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[PutObjectInput] = struct(
     ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),

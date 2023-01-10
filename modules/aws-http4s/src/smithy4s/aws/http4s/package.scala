@@ -23,8 +23,8 @@ import org.http4s.client.Client
 
 package object http4s {
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
+  implicit final class ServiceOps[Alg[_[_, _, _, _, _]]](
+      private[this] val service: smithy4s.Service[Alg]
   ) {
 
     def awsClient[F[_]: Temporal](
@@ -32,7 +32,7 @@ package object http4s {
         awsRegion: AwsRegion
     ): Resource[F, AwsClient[Alg, F]] = for {
       env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
-      awsClient <- AwsClient(serviceProvider.service, env)
+      awsClient <- AwsClient(service, env)
     } yield awsClient
 
   }

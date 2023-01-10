@@ -24,7 +24,6 @@ import com.monovore.decline.Opts
 import java.nio.file
 
 object Options {
-
   implicit val osPathArg: Argument[os.Path] = new Argument[os.Path] {
     def defaultMetavar: String = "path"
     def read(string: String): ValidatedNel[String, os.Path] =
@@ -92,7 +91,7 @@ object Options {
   val localJarsOpt: Opts[Option[List[os.Path]]] =
     Opts
       .option[List[os.Path]](
-        "localJars",
+        "local-jars",
         "Comma-delimited list of local JAR files containing smithy files"
       )
       .orNone

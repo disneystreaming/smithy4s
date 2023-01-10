@@ -26,6 +26,9 @@ trait HttpEndpoint[I] {
 
   // Returns a path template as a list of segments, which can be constant strings or placeholders.
   def path: List[PathSegment]
+
+  // Returns a map of static query parameters that are found in the uri of Http hint.
+  def staticQueryParams: Map[String, Seq[String]]
   def method: HttpMethod
   def code: Int
 
@@ -38,28 +41,42 @@ object HttpEndpoint {
 
   def unapply[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = cast(endpoint)
+  ): Option[HttpEndpoint[I]] = cast(endpoint).toOption
 
   def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
       endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Option[HttpEndpoint[I]] = {
+  ): Either[HttpEndpointError, HttpEndpoint[I]] = {
     for {
-      http <- endpoint.hints.get(Http)
-      httpMethod <- HttpMethod.fromString(http.method.value)
-      httpPath <- internals.pathSegments(http.uri.value)
+      http <- endpoint.hints
+        .get(Http)
+        .toRight(HttpEndpointError("Operation doesn't have a @http trait"))
+      httpMethod = HttpMethod.fromStringOrDefault(http.method.value)
+      queryParams = internals.staticQueryParams(http.uri.value)
+      httpPath <- internals
+        .pathSegments(http.uri.value)
+        .toRight(
+          HttpEndpointError(
+            s"Unable to parse HTTP path template: ${http.uri.value}"
+          )
+        )
+
       encoder <- SchemaVisitorPathEncoder(
-        endpoint.input
-          .addHints(http)
+        endpoint.input.addHints(http)
+      ).toRight(
+        HttpEndpointError("Unable to encode operation input in HTTP path")
       )
 
     } yield {
       new HttpEndpoint[I] {
         def path(input: I): List[String] = encoder.encode(input)
+        val staticQueryParams: Map[String, Seq[String]] = queryParams
         val path: List[PathSegment] = httpPath.toList
         val method: HttpMethod = httpMethod
         val code: Int = http.code
       }
     }
   }
+
+  case class HttpEndpointError(message: String) extends Exception(message)
 
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+//  This file is NOT generated!
 package smithy4s.example
 
 import cats.effect._

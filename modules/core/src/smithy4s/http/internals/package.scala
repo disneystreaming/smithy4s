@@ -52,23 +52,42 @@ package object internals {
       }
   }
 
-  private[smithy4s] def pathSegments(
+  private[http] def pathSegments(
       str: String
   ): Option[Vector[PathSegment]] = {
     str
+      .split('?')
+      .head
       .split('/')
       .toVector
       .filterNot(_.isEmpty())
       .traverse(fromToString(_))
+
+  }
+
+  private[http] def staticQueryParams(
+      uri: String
+  ): Map[String, Seq[String]] = {
+    uri.split("\\?", 2) match {
+      case Array(_) => Map.empty
+      case Array(_, query) =>
+        query.split("&").toList.foldLeft(Map.empty[String, Seq[String]]) {
+          case (acc, param) =>
+            val (k, v) = param.split("=", 2) match {
+              case Array(key)        => (key, "")
+              case Array(key, value) => (key, value)
+            }
+            acc.updated(k, acc.getOrElse(k, Seq.empty) :+ v)
+        }
+    }
   }
 
   private def fromToString(str: String): Option[PathSegment] = {
-    if (str.isEmpty()) None
+    if (str == null || str.isEmpty) None
     else if (str.startsWith("{") && str.endsWith("+}"))
       Some(PathSegment.greedy(str.substring(1, str.length() - 2)))
     else if (str.startsWith("{") && str.endsWith("}"))
       Some(PathSegment.label(str.substring(1, str.length() - 1)))
     else Some(PathSegment.static(str))
   }
-
 }

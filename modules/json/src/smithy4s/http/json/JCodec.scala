@@ -19,10 +19,10 @@ package http
 package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import smithy4s.PolyFunction
 import smithy4s.capability.Invariant
 
 import scala.collection.{Map => MMap}
+import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * Construct that expresses the ability to decode an http message,
@@ -101,7 +101,7 @@ trait JCodec[A] extends JsonCodec[A] {
 
 }
 
-object JCodec {
+object JCodec extends CachedSchemaCompiler.Impl[JCodec] {
 
   implicit val jcodecInvariant: Invariant[JCodec] = new Invariant[JCodec] {
     def imap[A, B](fa: JCodec[A])(to: A => B, from: B => A): JCodec[B] =
@@ -119,16 +119,11 @@ object JCodec {
     }
   }
 
-  def fromSchema[A](schema: Schema[A]): JCodec[A] =
-    schema.compile(codecs.schemaVisitorJCodec)
+  type Aux[A] = JCodec[A]
 
-  implicit def deriveJCodecFromSchema[A](implicit
-      schema: Schema[A]
-  ): JCodec[A] = jcodecCache(schema)
-
-  private val jcodecCache =
-    new PolyFunction[smithy4s.Schema, JCodec] {
-      def apply[A](fa: smithy4s.Schema[A]): JCodec[A] = fromSchema(fa)
-    }.unsafeMemoise
+  def fromSchema[A](
+      schema: Schema[A],
+      cache: Cache
+  ): JCodec[A] = schema.compile(codecs.schemaVisitorJCodec(cache))
 
 }

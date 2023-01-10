@@ -25,6 +25,7 @@ import cats.effect.Resource
 import org.http4s.HttpApp
 import smithy4s.example._
 import software.amazon.smithy.model.{Model => SModel}
+import software.amazon.smithy.model.loader.ModelAssembler
 
 class DynamicHttpProxy(client: Client[IO]) {
 
@@ -43,7 +44,7 @@ class DynamicHttpProxy(client: Client[IO]) {
           .getOrElse(sys.error("service not found in DSI"))
       }
 
-  val dynamicPizza: IO[smithy4s.Monadic[PizzaAdminServiceGen, IO]] =
+  val dynamicPizza: IO[PizzaAdminService[IO]] =
     dynamicServiceIO
       .flatMap { dsi =>
         SimpleRestJsonBuilder(dsi.service)
@@ -63,11 +64,9 @@ class DynamicHttpProxy(client: Client[IO]) {
     IO(
       SModel
         .assembler()
-        .addImport(s"./sampleSpecs/$fileName")
-        .addImport(
-          "./modules/protocol/resources/META-INF/smithy/smithy4s.smithy"
-        )
         .discoverModels()
+        .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
+        .addImport(s"./sampleSpecs/$fileName")
         .assemble()
         .unwrap()
     )

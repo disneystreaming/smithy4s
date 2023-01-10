@@ -22,7 +22,7 @@ import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 import smithy4s.capability.EncoderK
 import smithy4s.schema._
 
@@ -45,7 +45,7 @@ import smithy4s.schema.Primitive.PUUID
 import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PString
-import smithy4s.api.Untagged
+import alloy.Untagged
 
 trait DocumentEncoder[A] { self =>
 
@@ -75,8 +75,9 @@ object DocumentEncoder {
 
 }
 
-object DocumentEncoderSchemaVisitor
-    extends SchemaVisitor.Cached[DocumentEncoder] {
+class DocumentEncoderSchemaVisitor(
+    val cache: CompilationCache[DocumentEncoder]
+) extends SchemaVisitor.Cached[DocumentEncoder] {
   self =>
   override def primitive[P](
       shapeId: ShapeId,
