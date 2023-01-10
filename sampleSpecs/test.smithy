@@ -222,7 +222,27 @@ apply TestPayloadStructure @httpRequestTests([
         }
     },
     {
-        id: "RestJsonHttpWithHeadersButNoPayloadButWithEmptyParens",
+        id: "RestJsonHttpWithHeadersButEmptyBody",
+        documentation: "Serializes an request with header members but no payload",
+        protocol: simpleRestJson,
+        method: "POST",
+        uri: "/payload",
+        body: "",
+        bodyMediaType: "application/json",
+        headers: {
+            "Content-Type": "application/json",
+            "X-Amz-Test-Id": "t-12345"
+        },
+        requireHeaders: [
+            "Content-Length"
+        ],
+        params: {
+            testId: "t-12345"
+            payloadConfig:{} // This is the important part
+        }
+    },
+    {
+        id: "RestJsonHttpWithHeadersButNoPayloadButWithEmptyParensInParams",
         documentation: "Serializes an request with header members but no payload",
         protocol: simpleRestJson,
         method: "POST",
