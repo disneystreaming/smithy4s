@@ -218,8 +218,3 @@ to run. The abstract context has 5 type parameters:
 * streamed output (Nothing, most of the time)
 
 Keeping track of these parameters is really important for the implementation  intepreters. It also opens the door for providing interpreters that work against bi-functors (`EitherT[IO, *, *]`) without changing the generated code.
-
-
-### Currently **not** supported (in particular)
-
-Smithy has a `resource` type of shape, that represents CRUD specialised services. It is currently not supported in Smithy4s.
