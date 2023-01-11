@@ -2,6 +2,8 @@ package smithy4s
 package aws.query
 
 import smithy4s.PayloadPath
+import smithy4s.PayloadPath.Segment
+import scala.collection.mutable
 import smithy4s.http.internals.URIEncoderDecoder
 
 private[aws] sealed trait FormData extends Product with Serializable {
@@ -10,7 +12,7 @@ private[aws] sealed trait FormData extends Product with Serializable {
   def prepend(index: Int): FormData
 }
 private[aws] object FormData {
-  final case object Empty extends FormData {
+  case object Empty extends FormData {
     override def render: String = ""
 
     override def prepend(key: String): FormData = this
@@ -22,11 +24,11 @@ private[aws] object FormData {
     override def render: String = URIEncoderDecoder.encode(str)
 
     override def prepend(key: String): FormData = {
-      PathedValue(PayloadPath.fromString(key), str)
+      PathedValue(PayloadPath(key), str)
     }
 
     override def prepend(index: Int): FormData =
-      PathedValue(PayloadPath.fromString(index.toString), str)
+      PathedValue(PayloadPath(index), str)
   }
   final case class PathedValue(path: PayloadPath, value: String)
       extends FormData {
@@ -34,9 +36,29 @@ private[aws] object FormData {
     /**
      * @todo Understand the root reason and have a better solution for a workaround removing the '.' prefix.
      */
-    override def render: String =
-      URIEncoderDecoder.encode(path.toString.stripPrefix(".")) + "=" +
-        URIEncoderDecoder.encode(value)
+    override def render: String = {
+      val lastIndex = path.segments.size - 1
+      val key = path.segments.zipWithIndex
+        .foldLeft(new mutable.StringBuilder) {
+
+          case (builder, (Segment.Label(label), i)) if i < lastIndex =>
+            builder.append(URIEncoderDecoder.encode(label))
+            builder.append('.')
+
+          case (builder, (Segment.Index(index), i)) if i < lastIndex =>
+            builder.append(index)
+            builder.append('.')
+
+          case (builder, (Segment.Label(label), _)) =>
+            builder.append(URIEncoderDecoder.encode(label))
+
+          case (builder, (Segment.Index(index), _)) =>
+            builder.append(index)
+        }
+        .toString()
+
+      key + "=" + URIEncoderDecoder.encode(value)
+    }
 
     override def prepend(key: String): FormData =
       copy(path.prepend(PayloadPath.Segment(key)), value)
