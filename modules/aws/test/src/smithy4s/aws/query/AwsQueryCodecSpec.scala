@@ -215,23 +215,19 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
   }
 
   test("recursion") {
-    ignore("Not ready yet")
-    case class Foo(foo: Option[Foo])
-    object Foo {
-      implicit val schema: Schema[Foo] = recursive {
-        val foos = schema.optional[Foo]("foo", _.foo)
-        struct(foos)(Foo.apply)
+    case class IntList(head: Int, tail: Option[IntList])
+    object IntList {
+      implicit val schema: Schema[IntList] = recursive {
+        val head = int.required[IntList]("head", _.head)
+        val tail = schema.optional[IntList]("tail", _.tail)
+        struct(head, tail)(IntList.apply)
       }
     }
 
-    val expected = """|<Foo>
-                      |   <foo>
-                      |      <foo>
-                      |      </foo>
-                      |   </foo>
-                      |</Foo>
-                      |""".stripMargin
-    checkContent(expected, Foo(Some(Foo(Some(Foo(None))))))
+    val input = IntList(1, Some(IntList(2, None)))
+
+    val expected = "head=1&tail.head=2"
+    checkContent(expected, input)
   }
 
   test("union") {
