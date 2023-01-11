@@ -56,12 +56,20 @@ object ProtocolComplianceTest extends SimpleIOSuite {
 
   tests.foreach(tc =>
     test(tc.name) {
-      tc.run.map[Expectations] {
-        case Left(value) =>
-          Expectations.Helpers.failure(value)
-        case Right(_) =>
-          Expectations.Helpers.success
-      }
+      tc.run
+        .map[Expectations] {
+          case Left(value) =>
+            Expectations.Helpers.failure(value)
+          case Right(_) =>
+            Expectations.Helpers.success
+        }
+        .attempt
+        .map {
+          case Right(expectations) => expectations
+          case Left(e)             =>
+            e.printStackTrace()
+            failure(e.getMessage())
+        }
     }
   )
 }
