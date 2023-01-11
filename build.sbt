@@ -646,13 +646,14 @@ lazy val http4s = projectMatrix
       else moduleName.value
     },
     Test / allowedNamespaces := Seq(
-      "smithy4s.hello","alloy.test"
+      "smithy4s.hello",
+      "alloy.test"
     ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
-     Test / smithy4sSkip := Seq("openapi"),
-    Test/ smithy4sDependencies := Seq(Dependencies.Alloy.`protocol-tests`),
+    Test / smithy4sSkip := Seq("openapi"),
+    Test / smithy4sDependencies := Seq(Dependencies.Alloy.`protocol-tests`),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -755,7 +756,7 @@ lazy val complianceTests = projectMatrix
       if (virtualAxes.value.contains(CatsEffect2Axis))
         moduleName.value + "-ce2"
       else moduleName.value
-    },
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
