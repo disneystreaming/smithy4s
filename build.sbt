@@ -280,7 +280,7 @@ lazy val `aws-kernel` = projectMatrix
     genSmithy(Compile),
     Test / envVars ++= Map("TEST_VAR" -> "hello"),
     scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
       "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
@@ -319,6 +319,9 @@ lazy val aws = projectMatrix
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithy4sDependencies ++= Seq(
       Dependencies.Smithy.awsTraits
+    ),
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
     )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
