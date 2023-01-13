@@ -259,14 +259,15 @@ lazy val mqtt = projectMatrix
   .dependsOn(core)
   .settings(
     smithy4sDependencies ++= Seq(
-      Dependencies.Smithy.mqtt,
+      Dependencies.Smithy.mqtt
     ),
     Compile / allowedNamespaces := Seq(
-      "smithy.mqtt",
+      "smithy.mqtt"
     ),
     Test / smithySpecs := Seq(
-        ),
-    genSmithy(Compile),
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "mqtt.smithy"
+    ),
+    genSmithy(Compile)
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .jsPlatform(
