@@ -621,8 +621,6 @@ lazy val xml = projectMatrix
     core % "test->test;compile->compile",
     scalacheck % "test -> compile"
   )
-  // TODO remove when we start implementing associated AWS protocols
-  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
   .settings(
     isCE3 := true,
     isMimaEnabled := false,
