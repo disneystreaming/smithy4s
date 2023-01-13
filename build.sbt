@@ -69,7 +69,8 @@ lazy val allModules = Seq(
   dynamic,
   testUtils,
   guides,
-  complianceTests
+  complianceTests,
+  mqtt
 ).flatMap(_.projectRefs)
 
 lazy val docs =
@@ -251,6 +252,31 @@ lazy val scalacheck = projectMatrix
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+lazy val mqtt = projectMatrix
+  .in(file("modules/mqtt"))
+  .dependsOn(core)
+  .settings(
+    smithy4sDependencies ++= Seq(
+      Dependencies.Smithy.mqtt,
+    ),
+    Compile / allowedNamespaces := Seq(
+      "smithy.mqtt",
+    ),
+    Test / smithySpecs := Seq(
+        ),
+    genSmithy(Compile),
+  )
+  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
+  .jsPlatform(
+    latest2ScalaVersions,
+    jsDimSettings ++ Seq(
+      Test / jsEnv := new NodeJSEnv(
+        NodeJSEnv.Config().withEnv(Map("TEST_VAR" -> "hello"))
+      )
+    )
+  )
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**

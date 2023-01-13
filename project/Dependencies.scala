@@ -20,6 +20,7 @@ object Dependencies {
     val model = org % "smithy-model" % version
     val testTraits = org % "smithy-protocol-test-traits" % version
     val build = org % "smithy-build" % version
+    val mqtt = org % "smithy-mqtt-traits" % version
     val awsTraits = org % "smithy-aws-traits" % version
     val waiters = org % "smithy-waiters" % version
   }
