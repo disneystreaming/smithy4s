@@ -101,6 +101,8 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
     codec match {
       case Left(encoder) => encoder(value).render.getBytes("UTF-8")
       case Right(_) =>
-        throw new RuntimeException("Boom! TODO: define a proper error")
+        throw new IllegalStateException(
+          "Invalid codec: got XML decoder, must be AWS query encoder"
+        )
     }
 }
