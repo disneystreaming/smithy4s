@@ -24,7 +24,6 @@ import smithy4s.{PayloadPath, Schema}
 import smithy4s.xml.internals.XmlDecoder
 import smithy4s.xml.internals.XmlCursor
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
-import smithy4s.internals.InputOutput
 import smithy4s.xml.XmlDocument
 import fs2.Stream
 import fs2.data.xml._
@@ -44,10 +43,18 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
       cache: Cache
   ): Codec[A] =
     schema.hints match {
-      case InputOutput.hint(InputOutput.Input) =>
-        Left(schema.compile(new AwsSchemaVisitorAwsQueryCodec(cache)))
-      case InputOutput.hint(InputOutput.Output) =>
-        Right(schema.compile(XmlDecoderSchemaVisitor))
+      case AwsQueryEnrichment.hint(
+            AwsQueryEnrichment(operationName, version)
+          ) =>
+        Left(
+          schema.compile(
+            new AwsSchemaVisitorAwsQueryCodec(cache, operationName, version)
+          )
+        )
+      case _ =>
+        Right(
+          schema.compile(XmlDecoderSchemaVisitor)
+        )
     }
 
   override def mediaType[A](codec: Codec[A]): HttpMediaType =
@@ -96,7 +103,18 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
 
   override def writeToArray[A](codec: Codec[A], value: A): Array[Byte] =
     codec match {
-      case Left(encoder) => encoder(value).render.getBytes("UTF-8")
+
+      case Left(encoder) =>
+        val formData = encoder(value)
+        val operationName =
+          FormData.PathedValue(PayloadPath("Action"), encoder.operationName)
+        val version =
+          FormData.PathedValue(PayloadPath("Version"), encoder.version)
+        FormData
+          .MultipleValues(Vector(formData, operationName, version))
+          .render
+          .getBytes("UTF-8")
+
       case Right(_) =>
         throw new IllegalStateException(
           "Invalid codec: got XML decoder, must be AWS query encoder"

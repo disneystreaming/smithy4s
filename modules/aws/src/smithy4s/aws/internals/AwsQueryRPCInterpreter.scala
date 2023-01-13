@@ -49,10 +49,11 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
     new Endpoint[Op, I, E, O, SI, SO] {
       def id: ShapeId = endpoint.id
       def input: Schema[I] =
-        // TODO: Pass a service id and version
-        endpoint.input.addHints(smithy4s.internals.InputOutput.Input.widen)
-      def output: Schema[O] =
-        endpoint.output.addHints(smithy4s.internals.InputOutput.Output.widen)
+        endpoint.input.addHints(
+          smithy4s.aws.query
+            .AwsQueryEnrichment(endpoint.id.name, service.version)
+        )
+      def output: Schema[O] = endpoint.output
       def streamedInput: StreamingSchema[SI] = endpoint.streamedInput
       def streamedOutput: StreamingSchema[SO] = endpoint.streamedOutput
       def hints: Hints = endpoint.hints

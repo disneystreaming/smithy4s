@@ -26,6 +26,7 @@ private[aws] sealed trait FormData extends Product with Serializable {
   def render: String
   def prepend(key: String): FormData
   def prepend(index: Int): FormData
+  def widen: FormData = this
 }
 private[aws] object FormData {
   case object Empty extends FormData {
@@ -82,6 +83,7 @@ private[aws] object FormData {
     override def prepend(index: Int): FormData =
       copy(path.prepend(PayloadPath.Segment(index)), value)
   }
+
   final case class MultipleValues(values: Vector[FormData]) extends FormData {
     override def render: String =
       values.map(_.render).filter(str => str.nonEmpty).mkString("&")
