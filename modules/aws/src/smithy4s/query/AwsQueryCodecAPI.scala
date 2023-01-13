@@ -76,10 +76,7 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
         .head
         .compile
         .lastOrError
-        .map(a =>
-          // TODO: have no idea if it's correct or not
-          BodyPartial(Map.empty.withDefaultValue(a))
-        )
+        .map(a => BodyPartial(_ => a))
         .attempt
         .unsafeRunSync()
         .leftMap(e =>
