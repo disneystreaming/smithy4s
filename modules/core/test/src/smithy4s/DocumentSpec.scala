@@ -283,18 +283,21 @@ class DocumentSpec() extends FunSuite {
     expect.same(document, expectedDocument)
     expect.same(roundTripped, Right(mapTest))
   }
-  
+
   test(
-    "optional values allow Document.DNull"
+    "optional fields for structs should decode Document.DNull"
   ) {
     val optionalFieldSchema =
       Schema
-        .struct[Option[String]](Schema.string.optional[Option[String]]("test", identity))(identity)
+        .struct[Option[String]](
+          Schema.string.optional[Option[String]]("test", identity)
+        )(identity)
 
-    val result = Document.Decoder
+    val decoded = Document.Decoder
       .fromSchema(optionalFieldSchema)
       .decode(Document.obj("test" -> Document.DNull))
-    expect.same(result, Left(None))
+
+    expect.same(decoded, Right(None))
 
   }
 }

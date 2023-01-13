@@ -311,7 +311,6 @@ class DocumentDecoderSchemaVisitor(
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
-
       val maybeDefault = field.instance.getDefault
 
       if (field.isOptional) {
@@ -323,6 +322,7 @@ class DocumentDecoderSchemaVisitor(
           val path = PayloadPath.Segment(jLabel) :: pp
           fields
             .get(jLabel) match {
+            case Some(DNull) => buffer(None)
             case Some(document) =>
               buffer(Some(apply(field.instance)(path, document)))
             case None => buffer(None)
