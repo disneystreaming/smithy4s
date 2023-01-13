@@ -92,7 +92,7 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
       codec: Codec[A],
       bytes: ByteBuffer
   ): Either[PayloadError, BodyPartial[A]] =
-    decodeFromByteArrayPartial(codec, bytes.array())
+    throw new IllegalStateException("Must have not been called")
 
   override def writeToArray[A](codec: Codec[A], value: A): Array[Byte] =
     codec match {
