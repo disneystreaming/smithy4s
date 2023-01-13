@@ -40,7 +40,7 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
       op: Op[I, E, O, SI, SO]
   ): AwsCall[F, I, E, O, SI, SO] = {
     val (input, endpoint) = service.endpoint(op)
-    awsEndpoints(amendEndpoint(endpoint)).toAwsCall(input)
+    awsEndpoints(endpoint).toAwsCall(input)
   }
 
   private def amendEndpoint[I, E, O, SI, SO](
@@ -76,7 +76,7 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
       ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] =
-        new AwsUnaryEndpoint(awsEnv, signer, endpoint, codecAPI)
+        new AwsUnaryEndpoint(awsEnv, signer, amendEndpoint(endpoint), codecAPI)
     }.unsafeCacheBy(
       service.endpoints.map(Kind5.existential(_)),
       identity
