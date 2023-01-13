@@ -302,7 +302,7 @@ lazy val `aws-kernel` = projectMatrix
  */
 lazy val aws = projectMatrix
   .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json)
+  .dependsOn(`aws-kernel`, json, xml)
   .settings(
     isCE3 := true,
     libraryDependencies ++= {
