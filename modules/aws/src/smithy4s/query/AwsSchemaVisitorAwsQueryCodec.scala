@@ -133,13 +133,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
     val codecs: Vector[AwsQueryCodec[S]] =
       fields.map(field => fieldEncoder(field))
 
-    (s: S) =>
-      FormData
-        .MultipleValues(
-          codecs
-            .map(codec => codec(s))
-            .toVector
-        )
+    (s: S) => FormData.MultipleValues(codecs.map(codec => codec(s)))
   }
 
   override def union[U](
@@ -157,8 +151,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
         .prepend(key)
     }
 
-    (u: U) =>
-      FormData.MultipleValues(alternatives.map(alt => encode(u, alt)).toVector)
+    (u: U) => FormData.MultipleValues(alternatives.map(alt => encode(u, alt)))
   }
 
   override def biject[A, B](
