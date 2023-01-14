@@ -742,6 +742,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.PackedInputs
     case d: DeprecatedTrait =>
       Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
+    case doc: DocumentationTrait =>
+      Hint.Documentation(doc.getValue())
     case _: ErrorMessageTrait =>
       Hint.ErrorMessage
     case _: VectorTrait =>

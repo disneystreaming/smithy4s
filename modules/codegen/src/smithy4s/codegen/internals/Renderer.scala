@@ -164,11 +164,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
+  private def documentationAnnotation(hints: List[Hint]): Line = {
+    hints
+      .collectFirst { case h: Hint.Documentation => h }
+      .foldMap { doc =>
+        line"/** ${doc.docString} */"
+      }
+  }
+
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
       case TypeAlias(_, name, _, _, _, hints) =>
         lines(
           deprecationAnnotation(hints),
+          documentationAnnotation(hints),
           line"type $name = ${compilationUnit.namespace}.${name}.Type"
         )
     }
@@ -220,12 +229,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       deprecationAnnotation(hints),
+      documentationAnnotation(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
           lines(
             deprecationAnnotation(op.hints),
+            documentationAnnotation(op.hints),
             line"def ${op.methodName}(${op.renderArgs}): F[${op
               .renderAlgParams(genNameRef.name)}]"
           )
@@ -555,6 +566,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       deprecationAnnotation(product.hints),
+      documentationAnnotation(product.hints),
       base
     )
   }
@@ -618,6 +630,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     def altVal(altName: String) = line"${uncapitalise(altName)}Alt"
     lines(
       deprecationAnnotation(hints),
+      documentationAnnotation(hints),
       line"type ${NameDef(name.name)} = ${members
         .map { case (_, tpe) => line"$tpe" }
         .intercalate(line" | ")}",
@@ -665,6 +678,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       deprecationAnnotation(hints),
+      documentationAnnotation(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends scala.Product with scala.Serializable"
       )(
@@ -681,6 +695,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             // format: off
             lines(
               deprecationAnnotation(altHints),
+              documentationAnnotation(altHints),
               line"case object $cn extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
@@ -690,6 +705,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             lines(
               deprecationAnnotation(altHints),
+              documentationAnnotation(altHints),
               line"case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
@@ -792,6 +808,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint]
   ): Lines = lines(
     deprecationAnnotation(hints),
+    documentationAnnotation(hints),
     block(
       line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
     )(
@@ -812,6 +829,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
         lines(
           deprecationAnnotation(hints),
+          documentationAnnotation(hints),
           line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
         )
       },
@@ -838,6 +856,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val closing = if (recursive) ")" else ""
     lines(
       deprecationAnnotation(hints),
+      documentationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),

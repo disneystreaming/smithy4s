@@ -8,6 +8,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.enumeration
 
 @deprecated
+/** some docs here */
 sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override val value: String = _value
   override val name: String = _name
