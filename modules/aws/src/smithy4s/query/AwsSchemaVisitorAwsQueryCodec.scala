@@ -22,7 +22,7 @@ import smithy.api.{XmlFlattened, XmlName}
 import smithy4s.{Schema => _, _}
 
 private[aws] class AwsSchemaVisitorAwsQueryCodec(
-    val cache: CompilationCache[AwsQueryCodec],
+    val cache: CompilationCache[AwsQueryCodec]
 ) extends SchemaVisitor.Cached[AwsQueryCodec] { compile =>
 
   override def primitive[P](
