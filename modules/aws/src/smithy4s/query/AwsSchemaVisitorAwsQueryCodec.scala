@@ -29,13 +29,13 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): AwsQueryCodec[P] =
-    (p: P) => {
+  ): AwsQueryCodec[P] = new AwsQueryCodec[P] {
+    override def apply(p: P): FormData =
       Primitive.stringWriter(tag, hints) match {
-        case Some(writer) => FormData.SimpleValue(writer(p))
-        case None         => FormData.Empty: FormData
+        case Some(writer) => FormData.SimpleValue(writer(p)).widen
+        case None         => FormData.Empty.widen
       }
-    }
+  }
 
   override def collection[C[_], A](
       shapeId: ShapeId,
@@ -48,18 +48,21 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       if (hints.has[XmlFlattened]) None
       else Option(getKey(member.hints, "member"))
 
-    (collection: C[A]) => {
-      val formData = FormData
-        .MultipleValues(
-          tag
-            .iterator(collection)
-            .zipWithIndex
-            .map { case (member, index) =>
-              memberWriter(member).prepend(index + 1)
-            }
-            .toVector
-        )
-      maybeKey.fold(formData: FormData)(key => formData.prepend(key))
+    new AwsQueryCodec[C[A]] {
+      override def apply(collection: C[A]): FormData = {
+        val formData = FormData
+          .MultipleValues(
+            tag
+              .iterator(collection)
+              .zipWithIndex
+              .map { case (member, index) =>
+                memberWriter(member).prepend(index + 1)
+              }
+              .toVector
+          )
+          .widen
+        maybeKey.fold(formData)(key => formData.prepend(key))
+      }
     }
   }
 
@@ -78,7 +81,9 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
     val schema = Schema.vector(kvSchema).addHints(hints)
     val codec = compile(schema)
 
-    (m: Map[K, V]) => codec(m.toVector)
+    new AwsQueryCodec[Map[K, V]] {
+      override def apply(m: Map[K, V]): FormData = codec(m.toVector)
+    }
   }
 
   override def enumeration[E](
@@ -88,9 +93,15 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       total: E => EnumValue[E]
   ): AwsQueryCodec[E] = {
     if (hints.has(IntEnum))
-      (value: E) => FormData.SimpleValue(total(value).intValue.toString)
+      new AwsQueryCodec[E] {
+        def apply(value: E): FormData =
+          FormData.SimpleValue(total(value).intValue.toString)
+      }
     else
-      (value: E) => FormData.SimpleValue(total(value).stringValue)
+      new AwsQueryCodec[E] {
+        def apply(value: E): FormData =
+          FormData.SimpleValue(total(value).stringValue)
+      }
   }
 
   override def struct[S](
@@ -109,7 +120,9 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
             get: S => AA
         ): AwsQueryCodec[AA] = {
           val schema = compile(instance)
-          (a: AA) => schema(a)
+          new AwsQueryCodec[AA] {
+            def apply(a: AA): FormData = schema(a)
+          }
         }
 
         override def onOptional[AA](
@@ -127,19 +140,19 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
         }
       })
 
-      (s: S) => encoder(field.get(s)).prepend(fieldKey)
+      new AwsQueryCodec[S] {
+        def apply(s: S): FormData =
+          encoder(field.get(s)).prepend(fieldKey)
+      }
     }
 
     val codecs: Vector[AwsQueryCodec[S]] =
       fields.map(field => fieldEncoder(field))
 
-    (s: S) =>
-      FormData
-        .MultipleValues(
-          codecs
-            .map(codec => codec(s))
-            .toVector
-        )
+    new AwsQueryCodec[S] {
+      def apply(s: S): FormData =
+        FormData.MultipleValues(codecs.map(codec => codec(s)))
+    }
   }
 
   override def union[U](
@@ -153,23 +166,29 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       val key = getKey(alt.hints, alt.label)
       dispatch
         .projector(alt)(u)
-        .fold(FormData.Empty: FormData)(a => compile(alt.instance)(a))
+        .fold(FormData.Empty.widen)(a => compile(alt.instance)(a))
         .prepend(key)
     }
 
-    (u: U) =>
-      FormData.MultipleValues(alternatives.map(alt => encode(u, alt)).toVector)
+    new AwsQueryCodec[U] {
+      def apply(u: U): FormData =
+        FormData.MultipleValues(alternatives.map(alt => encode(u, alt)))
+    }
   }
 
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): AwsQueryCodec[B] = (b: B) => compile(schema)(bijection.from(b))
+  ): AwsQueryCodec[B] = new AwsQueryCodec[B] {
+    def apply(b: B): FormData = compile(schema)(bijection.from(b))
+  }
 
   override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): AwsQueryCodec[B] = (b: B) => compile(schema)(refinement.from(b))
+  ): AwsQueryCodec[B] = new AwsQueryCodec[B] {
+    def apply(b: B): FormData = compile(schema)(refinement.from(b))
+  }
 
   override def lazily[A](suspend: Lazy[Schema[A]]): AwsQueryCodec[A] =
     new AwsQueryCodec[A] {

@@ -20,6 +20,7 @@ import cats.MonadThrow
 import cats.effect.Resource
 import cats.syntax.all._
 import internals.AwsJsonRPCInterpreter
+import internals.AwsQueryRPCInterpreter
 
 object AwsClient {
 
@@ -78,12 +79,11 @@ object AwsClient {
             new json.AwsJsonCodecAPI()
           )
         case AwsProtocol.AWS_QUERY(_) =>
-          new AwsJsonRPCInterpreter[Alg, service.Operation, F](
+          new AwsQueryRPCInterpreter[Alg, service.Operation, F](
             service,
             endpointPrefix,
             awsEnv,
-            "application/x-www-form-urlencoded",
-            new query.AwsQueryCodecAPI()
+            "application/x-www-form-urlencoded"
           )
       }
 

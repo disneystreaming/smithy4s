@@ -302,7 +302,7 @@ lazy val `aws-kernel` = projectMatrix
  */
 lazy val aws = projectMatrix
   .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json)
+  .dependsOn(`aws-kernel`, json, xml)
   .settings(
     isCE3 := true,
     libraryDependencies ++= {
@@ -621,8 +621,6 @@ lazy val xml = projectMatrix
     core % "test->test;compile->compile",
     scalacheck % "test -> compile"
   )
-  // TODO remove when we start implementing associated AWS protocols
-  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
   .settings(
     isCE3 := true,
     isMimaEnabled := false,
