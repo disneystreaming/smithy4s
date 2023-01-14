@@ -83,8 +83,7 @@ object AwsClient {
             service,
             endpointPrefix,
             awsEnv,
-            "application/x-www-form-urlencoded",
-            new query.AwsQueryCodecAPI()
+            "application/x-www-form-urlencoded"
           )
       }
 

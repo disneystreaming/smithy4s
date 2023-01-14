@@ -20,20 +20,23 @@ import cats.effect.SyncIO
 import cats.syntax.either._
 import smithy4s.http.{BodyPartial, CodecAPI, HttpMediaType, PayloadError}
 import smithy4s.schema.CompilationCache
-import smithy4s.{PayloadPath, Schema}
-import smithy4s.xml.internals.XmlDecoder
-import smithy4s.xml.internals.XmlCursor
-import smithy4s.xml.internals.XmlDecoderSchemaVisitor
+import smithy4s.PayloadPath
 import smithy4s.xml.XmlDocument
 import fs2.Stream
 import fs2.data.xml._
 import fs2.data.xml.dom._
 
 import java.nio.ByteBuffer
+import smithy4s.schema.Schema
+import smithy.api.XmlName
+import smithy4s.internals.InputOutput
 
-private[aws] class AwsQueryCodecAPI() extends CodecAPI {
+private[aws] class AwsQueryCodecAPI(
+    operationName: String,
+    serviceVersion: String
+) extends CodecAPI {
 
-  override type Codec[A] = Either[AwsQueryCodec[A], XmlDecoder[A]]
+  override type Codec[A] = Either[AwsQueryCodec[A], XmlDocument.Decoder[A]]
   override type Cache = CompilationCache[AwsQueryCodec]
 
   override def createCache(): Cache = CompilationCache.make[AwsQueryCodec]
@@ -42,19 +45,21 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
       schema: Schema[A],
       cache: Cache
   ): Codec[A] =
-    schema.hints match {
-      case AwsQueryEnrichment.hint(
-            AwsQueryEnrichment(operationName, version)
-          ) =>
-        Left(
-          schema.compile(
-            new AwsSchemaVisitorAwsQueryCodec(cache, operationName, version)
+    schema.hints.get(InputOutput) match {
+      case Some(InputOutput.Input) =>
+        val visitor =
+          new AwsSchemaVisitorAwsQueryCodec(
+            cache,
+            operationName,
+            serviceVersion
           )
-        )
-      case _ =>
-        Right(
-          schema.compile(XmlDecoderSchemaVisitor)
-        )
+        val awsQueryEncoder = schema.compile(visitor)
+        Left(awsQueryEncoder)
+      case Some(InputOutput.Output) | None =>
+        val responseSchema =
+          AwsQueryCodecAPI.xmlResponseSchema(operationName, schema)
+        val xmlDecoder = XmlDocument.Decoder.fromSchema(responseSchema)
+        Right(xmlDecoder)
     }
 
   override def mediaType[A](codec: Codec[A]): HttpMediaType =
@@ -77,8 +82,7 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
         .emit[SyncIO, String](new String(bytes, "UTF-8"))
         .through(events[SyncIO, String]())
         .through(documents[SyncIO, XmlDocument])
-        .map(doc => XmlCursor.fromDocument(doc))
-        .map(cursor => xmlDecoder.decode(cursor))
+        .map(xmlDecoder.decode)
         .rethrow
         .head
         .compile
@@ -106,12 +110,12 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
 
       case Left(encoder) =>
         val formData = encoder(value)
-        val operationName =
-          FormData.PathedValue(PayloadPath("Action"), encoder.operationName)
-        val version =
-          FormData.PathedValue(PayloadPath("Version"), encoder.version)
+        val operationNameValue =
+          FormData.PathedValue(PayloadPath("Action"), operationName)
+        val versionValue =
+          FormData.PathedValue(PayloadPath("Version"), serviceVersion)
         FormData
-          .MultipleValues(Vector(formData, operationName, version))
+          .MultipleValues(Vector(formData, operationNameValue, versionValue))
           .render
           .getBytes("UTF-8")
 
@@ -120,4 +124,25 @@ private[aws] class AwsQueryCodecAPI() extends CodecAPI {
           "Invalid codec: got XML decoder, must be AWS query encoder"
         )
     }
+}
+
+object AwsQueryCodecAPI {
+
+  /**
+    * Amend the schema to be able to work the the response xml payload, which wraps the output
+    * in two different layers of xml nodes.
+    *
+    * See https://smithy.io/2.0/aws/protocols/aws-query-protocol.html?highlight=aws%20query%20protocol#response-serialization
+    */
+  def xmlResponseSchema[A](
+      operationName: String,
+      outputSchema: Schema[A]
+  ): Schema[A] = {
+    val resultName = operationName + "Result"
+    val responseName = operationName + "Response"
+    val resultField =
+      outputSchema.required[A](resultName, identity[A])
+    Schema.struct(resultField)(identity[A]).addHints(XmlName(responseName))
+  }
+
 }

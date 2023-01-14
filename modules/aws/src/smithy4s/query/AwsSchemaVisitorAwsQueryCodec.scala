@@ -37,8 +37,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
         case Some(writer) => FormData.SimpleValue(writer(p)).widen
         case None         => FormData.Empty.widen
       }
-    val operationName: String = compile.operationName
-    val version: String = compile.version
   }
 
   override def collection[C[_], A](
@@ -67,8 +65,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
           .widen
         maybeKey.fold(formData)(key => formData.prepend(key))
       }
-      val operationName: String = compile.operationName
-      val version: String = compile.version
     }
   }
 
@@ -89,8 +85,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
 
     new AwsQueryCodec[Map[K, V]] {
       override def apply(m: Map[K, V]): FormData = codec(m.toVector)
-      val operationName: String = compile.operationName
-      val version: String = compile.version
     }
   }
 
@@ -104,16 +98,11 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       new AwsQueryCodec[E] {
         def apply(value: E): FormData =
           FormData.SimpleValue(total(value).intValue.toString)
-        val operationName: String = compile.operationName
-        val version: String = compile.version
       }
     else
       new AwsQueryCodec[E] {
         def apply(value: E): FormData =
           FormData.SimpleValue(total(value).stringValue)
-
-        val operationName: String = compile.operationName
-        val version: String = compile.version
       }
   }
 
@@ -135,9 +124,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
           val schema = compile(instance)
           new AwsQueryCodec[AA] {
             def apply(a: AA): FormData = schema(a)
-
-            val operationName: String = compile.operationName
-            val version: String = compile.version
           }
         }
 
@@ -152,8 +138,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
               case Some(value) => schema(value)
               case None        => FormData.Empty
             }
-            val operationName: String = compile.operationName
-            val version: String = compile.version
           }
         }
       })
@@ -161,9 +145,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       new AwsQueryCodec[S] {
         def apply(s: S): FormData =
           encoder(field.get(s)).prepend(fieldKey)
-
-        val operationName: String = compile.operationName
-        val version: String = compile.version
       }
     }
 
@@ -173,9 +154,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
     new AwsQueryCodec[S] {
       def apply(s: S): FormData =
         FormData.MultipleValues(codecs.map(codec => codec(s)))
-
-      val operationName: String = compile.operationName
-      val version: String = compile.version
     }
   }
 
@@ -197,9 +175,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
     new AwsQueryCodec[U] {
       def apply(u: U): FormData =
         FormData.MultipleValues(alternatives.map(alt => encode(u, alt)))
-
-      val operationName: String = compile.operationName
-      val version: String = compile.version
     }
   }
 
@@ -208,9 +183,6 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       bijection: Bijection[A, B]
   ): AwsQueryCodec[B] = new AwsQueryCodec[B] {
     def apply(b: B): FormData = compile(schema)(bijection.from(b))
-
-    val operationName: String = compile.operationName
-    val version: String = compile.version
   }
 
   override def refine[A, B](
@@ -218,19 +190,12 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       refinement: Refinement[A, B]
   ): AwsQueryCodec[B] = new AwsQueryCodec[B] {
     def apply(b: B): FormData = compile(schema)(refinement.from(b))
-
-    val operationName: String = compile.operationName
-    val version: String = compile.version
   }
 
   override def lazily[A](suspend: Lazy[Schema[A]]): AwsQueryCodec[A] =
     new AwsQueryCodec[A] {
       lazy val underlying: AwsQueryCodec[A] =
         suspend.map(schema => compile(schema)).value
-
-      val operationName: String = compile.operationName
-      val version: String = compile.version
-
       override def apply(a: A): FormData = { underlying(a) }
     }
 

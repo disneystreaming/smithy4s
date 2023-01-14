@@ -18,9 +18,9 @@ package smithy4s.aws
 package internals
 
 import cats.MonadThrow
-import smithy4s.{Endpoint, Hints, Schema, ShapeId, StreamingSchema}
-import smithy4s.http.CodecAPI
+import smithy4s.Endpoint
 import smithy4s.kinds._
+import smithy4s.aws.query.AwsQueryCodecAPI
 
 // format: off
 /**
@@ -30,8 +30,7 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
     service: smithy4s.Service.Aux[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
-    contentType: String,
-    codecAPI: CodecAPI
+    contentType: String
 )(implicit F: MonadThrow[F])
     extends PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
@@ -41,24 +40,6 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
   ): AwsCall[F, I, E, O, SI, SO] = {
     val (input, endpoint) = service.endpoint(op)
     awsEndpoints(endpoint).toAwsCall(input)
-  }
-
-  private def amendEndpoint[I, E, O, SI, SO](
-      endpoint: Endpoint[Op, I, E, O, SI, SO]
-  ): Endpoint[Op, I, E, O, SI, SO] = {
-    new Endpoint[Op, I, E, O, SI, SO] {
-      def id: ShapeId = endpoint.id
-      def input: Schema[I] =
-        endpoint.input.addHints(
-          smithy4s.aws.query
-            .AwsQueryEnrichment(endpoint.id.name, service.version)
-        )
-      def output: Schema[O] = endpoint.output
-      def streamedInput: StreamingSchema[SI] = endpoint.streamedInput
-      def streamedOutput: StreamingSchema[SO] = endpoint.streamedOutput
-      def hints: Hints = endpoint.hints
-      def wrap(input: I): Op[I, E, O, SI, SO] = endpoint.wrap(input)
-    }
   }
 
   private val signer: AwsSigner[F] = AwsSigner.rpcSigner[F](
@@ -75,8 +56,10 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
     ] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
-      ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] =
-        new AwsUnaryEndpoint(awsEnv, signer, amendEndpoint(endpoint), codecAPI)
+      ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] = {
+        val codecAPI = new AwsQueryCodecAPI(endpoint.id.name, service.version)
+        new AwsUnaryEndpoint(awsEnv, signer, endpoint, codecAPI)
+      }
     }.unsafeCacheBy(
       service.endpoints.map(Kind5.existential(_)),
       identity
