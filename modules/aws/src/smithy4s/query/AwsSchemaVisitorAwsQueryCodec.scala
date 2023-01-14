@@ -23,8 +23,6 @@ import smithy4s.{Schema => _, _}
 
 private[aws] class AwsSchemaVisitorAwsQueryCodec(
     val cache: CompilationCache[AwsQueryCodec],
-    val operationName: String,
-    val version: String
 ) extends SchemaVisitor.Cached[AwsQueryCodec] { compile =>
 
   override def primitive[P](

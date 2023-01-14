@@ -337,7 +337,7 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
     val cache: CompilationCache[AwsQueryCodec] =
       CompilationCache.make[AwsQueryCodec]
     val schemaVisitor: AwsSchemaVisitorAwsQueryCodec =
-      new AwsSchemaVisitorAwsQueryCodec(cache, operationName = "", version = "")
+      new AwsSchemaVisitorAwsQueryCodec(cache)
     val codec: AwsQueryCodec[A] = schemaVisitor(schema)
     val formData: FormData = codec(value)
     val result: String = formData.render

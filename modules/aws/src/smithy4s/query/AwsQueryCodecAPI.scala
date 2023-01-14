@@ -47,12 +47,7 @@ private[aws] class AwsQueryCodecAPI(
   ): Codec[A] =
     schema.hints.get(InputOutput) match {
       case Some(InputOutput.Input) =>
-        val visitor =
-          new AwsSchemaVisitorAwsQueryCodec(
-            cache,
-            operationName,
-            serviceVersion
-          )
+        val visitor = new AwsSchemaVisitorAwsQueryCodec(cache)
         val awsQueryEncoder = schema.compile(visitor)
         Left(awsQueryEncoder)
       case Some(InputOutput.Output) | None =>
@@ -126,7 +121,7 @@ private[aws] class AwsQueryCodecAPI(
     }
 }
 
-object AwsQueryCodecAPI {
+private[aws] object AwsQueryCodecAPI {
 
   /**
     * Amend the schema to be able to work the the response xml payload, which wraps the output
@@ -134,7 +129,7 @@ object AwsQueryCodecAPI {
     *
     * See https://smithy.io/2.0/aws/protocols/aws-query-protocol.html?highlight=aws%20query%20protocol#response-serialization
     */
-  def xmlResponseSchema[A](
+  private def xmlResponseSchema[A](
       operationName: String,
       outputSchema: Schema[A]
   ): Schema[A] = {
