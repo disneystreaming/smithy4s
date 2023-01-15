@@ -176,8 +176,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val typeAliases = compilationUnit.declarations.collect {
       case TypeAlias(_, name, _, _, _, hints) =>
         lines(
-          deprecationAnnotation(hints),
           documentationAnnotation(hints),
+          deprecationAnnotation(hints),
           line"type $name = ${compilationUnit.namespace}.${name}.Type"
         )
     }
@@ -228,15 +228,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opTraitNameRef = opTraitName.toNameRef
 
     lines(
-      deprecationAnnotation(hints),
       documentationAnnotation(hints),
+      deprecationAnnotation(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
           lines(
-            deprecationAnnotation(op.hints),
             documentationAnnotation(op.hints),
+            deprecationAnnotation(op.hints),
             line"def ${op.methodName}(${op.renderArgs}): F[${op
               .renderAlgParams(genNameRef.name)}]"
           )
@@ -565,8 +565,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         )
 
     lines(
-      deprecationAnnotation(product.hints),
       documentationAnnotation(product.hints),
+      deprecationAnnotation(product.hints),
       base
     )
   }
@@ -629,8 +629,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
     def altVal(altName: String) = line"${uncapitalise(altName)}Alt"
     lines(
-      deprecationAnnotation(hints),
       documentationAnnotation(hints),
+      deprecationAnnotation(hints),
       line"type ${NameDef(name.name)} = ${members
         .map { case (_, tpe) => line"$tpe" }
         .intercalate(line" | ")}",
@@ -677,8 +677,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
     lines(
-      deprecationAnnotation(hints),
       documentationAnnotation(hints),
+      deprecationAnnotation(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends scala.Product with scala.Serializable"
       )(
@@ -694,8 +694,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             // format: off
             lines(
-              deprecationAnnotation(altHints),
               documentationAnnotation(altHints),
+              deprecationAnnotation(altHints),
               line"case object $cn extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
@@ -704,8 +704,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
             val cn = caseName(a)
             lines(
-              deprecationAnnotation(altHints),
               documentationAnnotation(altHints),
+              deprecationAnnotation(altHints),
               line"case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
@@ -807,8 +807,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): Lines = lines(
-    deprecationAnnotation(hints),
     documentationAnnotation(hints),
+    deprecationAnnotation(hints),
     block(
       line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
     )(
@@ -828,8 +828,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val valueHints = line"$Hints_(${memberHints(e.hints)})"
 
         lines(
-          deprecationAnnotation(hints),
           documentationAnnotation(hints),
+          deprecationAnnotation(hints),
           line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
         )
       },
@@ -855,8 +855,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
     val closing = if (recursive) ")" else ""
     lines(
-      deprecationAnnotation(hints),
       documentationAnnotation(hints),
+      deprecationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
         renderHintsVal(hints),
