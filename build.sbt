@@ -166,7 +166,8 @@ lazy val core = projectMatrix
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
-      "alloy"
+      "alloy",
+      "alloy.common"
     ),
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters

@@ -91,6 +91,7 @@ private[codegen] object CodegenImpl { self =>
     val reserved =
       Set(
         "alloy",
+        "alloy.common",
         "smithy4s.api",
         "smithy4s.meta"
       )
