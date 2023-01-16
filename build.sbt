@@ -376,9 +376,9 @@ lazy val codegen = projectMatrix
       version,
       scalaBinaryVersion,
       "smithyOrg" -> Dependencies.Smithy.org,
-      "smithyVersion" -> Dependencies.Smithy.version,
+      "smithyVersion" -> Dependencies.Smithy.smithyVersion,
       "alloyOrg" -> Dependencies.Alloy.org,
-      "alloyVersion" -> Dependencies.Alloy.version
+      "alloyVersion" -> Dependencies.Alloy.alloyVersion
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(
