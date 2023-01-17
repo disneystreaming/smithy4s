@@ -11,17 +11,17 @@ object Dependencies {
 
   val Jsoniter =
     Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.20.1"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.20.3"
     )
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val version = "1.26.4"
-    val model = org % "smithy-model" % version
-    val testTraits = org % "smithy-protocol-test-traits" % version
-    val build = org % "smithy-build" % version
-    val awsTraits = org % "smithy-aws-traits" % version
-    val waiters = org % "smithy-waiters" % version
+    val smithyVersion = "1.26.4"
+    val model = org % "smithy-model" % smithyVersion
+    val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
+    val build = org % "smithy-build" % smithyVersion
+    val awsTraits = org % "smithy-aws-traits" % smithyVersion
+    val waiters = org % "smithy-waiters" % smithyVersion
   }
 
   val Alloy = new {
@@ -79,7 +79,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.4")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.5")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.17" else "0.22.15")
@@ -121,9 +121,9 @@ object Dependencies {
   object MunitMilestone extends MunitCross("1.0.0-M6")
 
   val Scalacheck = new {
-    val version = "1.16.0"
+    val scalacheckVersion = "1.16.0"
     val scalacheck =
-      Def.setting("org.scalacheck" %%% "scalacheck" % version)
+      Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
   object Webjars {
