@@ -66,7 +66,7 @@ object ProtocolComplianceTest extends SimpleIOSuite {
         .attempt
         .map {
           case Right(expectations) => expectations
-          case Left(e)             =>
+          case Left(e) =>
             e.printStackTrace()
             failure(e.getMessage())
         }

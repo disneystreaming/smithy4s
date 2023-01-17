@@ -19,7 +19,7 @@ package compliancetests
 
 import org.http4s.{Header, Headers, Uri}
 import cats.implicits._
-
+import cats.data.Chain
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
@@ -82,15 +82,33 @@ package object internals {
       Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
     )
 
-  // regex for comma not between quotes as quotes can be used to escape commas in headers
-  private val commaNotBetweenQuotes = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"
-
   private def parseSingleHeader(
       kv: (String, String)
   ): List[(String, String)] = {
     kv match {
-      case (k, v) => v.split(commaNotBetweenQuotes).toList.map((k, _))
+      case (k, v) => parseList(v).map((k, _))
     }
-
   }
+
+  // splits string into List utilizing a comma that is not between quotes as quotes can be used to escape commas in headers
+  private def parseList(s: String): List[String] = {
+    s.foldLeft((Chain.empty[String], 0, 0, false)) {
+      case ((acc, begin, end, quote), elem) =>
+        elem match {
+          case '"' => (acc, begin, end + 1, !quote)
+          case ',' if !quote && begin < end =>
+            (acc :+ s.substring(begin, end), end + 1, end + 1, quote)
+          case c if c.isWhitespace && begin == end =>
+            (acc, begin + 1, end + 1, quote)
+          case _ =>
+            if (s.length == end + 1)
+              (acc :+ s.substring(begin, end + 1), end + 1, end + 1, quote)
+            else {
+              (acc, begin, end + 1, quote)
+            }
+        }
+    }._1
+      .toList
+  }
+
 }
