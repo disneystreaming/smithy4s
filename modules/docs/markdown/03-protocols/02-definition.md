@@ -31,7 +31,7 @@ In summary, TCP/IP is a collection of protocols, grouped into layers, that make 
 
 ## HTTP
 
-Before we move on, let's make sure we have a common understanding of what HTTP actually is. HTTP stands for HyperText Transfer Protocol. As mentioned above, it builds upon TCP to send messages between two hosts. The most important thing for us to understand here is what HTTP defines and what is does not define.
+Before we move on, let's make sure we have a common understanding of what HTTP actually is. HTTP stands for HyperText Transfer Protocol. As mentioned above, it builds upon TCP to send messages between two hosts. The most important thing for us to understand here is what HTTP defines and what it does not define.
 
 HTTP defines semantics for communicating between host applications in a request-response model. We are all likely familiar with making an HTTP request and getting back a response. The most basic example of this is loading a web page on the internet.
 
@@ -79,7 +79,7 @@ The main protocol that we have defined for use in smithy4s is `alloy#simpleRestJ
 
 #### gRPC
 
-gRPC is a framework for remote procedure calls. At the same time, we can consider it to be another protocol that is defined at the same level that `alloy#simpleRestJson` is defined. GRPC, in its current implementation, uses HTTP version 2 under the hood. It has additional definition around what the HTTP interactions look like such as the bodies being encoded with protocol buffers (protobuf). Additionally, all gRPC messages are sent with the HTTP POST method and use a specific header to specify which remote procedure is being invoked.
+gRPC is a framework for remote procedure calls. At the same time, we can consider it to be another protocol that is defined at the same level that `alloy#simpleRestJson` is defined. gRPC, in its current implementation, uses HTTP version 2 under the hood. It has additional definition around what the HTTP interactions look like such as the bodies being encoded with protocol buffers (protobuf). Additionally, all gRPC messages are sent with the HTTP POST method and use a specific header to specify which remote procedure is being invoked.
 
 There are quite a few other nuanced requirements for what makes up the gRPC protocol, but hopefully these few have showed you how gRPC builds on what HTTP provides to create a unique interaction pattern.
 
