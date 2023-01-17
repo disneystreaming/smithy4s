@@ -90,16 +90,23 @@ package object internals {
     }
   }
 
-  // splits string into List utilizing a comma that is not between quotes as quotes can be used to escape commas in headers
+  /*
+   This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
+   what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
+   */
   private def parseList(s: String): List[String] = {
     s.foldLeft((Chain.empty[String], 0, 0, false)) {
       case ((acc, begin, end, quote), elem) =>
         elem match {
+          // we are in a quote so we negate the quote state and move on
           case '"' => (acc, begin, end + 1, !quote)
-          case ',' if !quote && begin < end =>
-            (acc :+ s.substring(begin, end), end + 1, end + 1, quote)
+          // we see a comma, we are not in a quote if we actually have some data,  we add the current string to the accumulator and move both beginning and end pointers to the next character otherwise we move along
+          case ',' if !quote  =>
+            if ( begin < end) (acc :+ s.substring(begin, end), end + 1, end + 1, quote) else (acc, end + 1, end + 1, quote)
+          // we see a whitespace character and we have not captured any data yet so we move the beginning pointer and end pointer to the next character
           case c if c.isWhitespace && begin == end =>
-            (acc, begin + 1, end + 1, quote)
+            (acc, begin + 1, begin + 1, quote)
+          // default case if we have reached the end of the string , we must have some data we add it to the accumulator else we just increment the end pointer
           case _ =>
             if (s.length == end + 1)
               (acc :+ s.substring(begin, end + 1), end + 1, end + 1, quote)
