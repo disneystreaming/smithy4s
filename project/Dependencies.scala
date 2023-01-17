@@ -26,7 +26,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val version = "0.1.8"
+    val alloyVersion = "0.1.8"
     val core = org % "alloy-core" % version
     val openapi = org %% "alloy-openapi" % version
     val `protocol-tests` = org % "alloy-protocol-tests" % version
