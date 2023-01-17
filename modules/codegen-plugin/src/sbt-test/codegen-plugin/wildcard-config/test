@@ -14,11 +14,15 @@
 
 > ++2.13.10 root/compile
 $ exists target/scala-2.13/src_managed/main/smithy/generated-metadata.smithy
+$ exists target/scala-2.13/resource_managed/main/META-INF/smithy/generated-metadata.smithy
 
 > ++3.2.1 root/compile
 $ exists target/scala-3.2.1/src_managed/main/smithy/generated-metadata.smithy
+$ exists target/scala-3.2.1/resource_managed/main/META-INF/smithy/generated-metadata.smithy
 
 # ensure metadata file is re-generated after deleting
 $ delete target/scala-2.13/src_managed/main/smithy/generated-metadata.smithy
+$ delete target/scala-3.2.1/resource_managed/main/META-INF/smithy/generated-metadata.smithy
 > ++3.2.1 root/compile
 $ exists target/scala-3.2.1/src_managed/main/smithy/generated-metadata.smithy
+$ exists target/scala-3.2.1/resource_managed/main/META-INF/smithy/generated-metadata.smithy
