@@ -16,7 +16,7 @@ package object example {
   val DeprecatedService = DeprecatedServiceGen
 
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
-  /** This is a simple example of a "quoted string" */
+  /** A plain Smithy string */
   type AString = smithy4s.example.AString.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type SomeValue = smithy4s.example.SomeValue.Type

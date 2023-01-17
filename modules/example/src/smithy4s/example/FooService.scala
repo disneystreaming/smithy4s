@@ -11,9 +11,14 @@ import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.Schema.unit
 
+/** The most basics of services
+  */
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
 
+  /** Returns a useful Foo
+    * No input necessary to find our Foo
+    */
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
@@ -30,7 +35,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    smithy.api.Documentation("The most basics of services\nGetFoo is it\'s only operation"),
+  )
 
   val endpoints: List[FooServiceGen.Endpoint[_, _, _, _, _]] = List(
     GetFoo,
@@ -69,6 +76,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200),
+      smithy.api.Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""),
       smithy.api.Readonly(),
     )
     def wrap(input: Unit) = GetFoo()

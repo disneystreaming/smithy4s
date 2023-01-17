@@ -32,6 +32,7 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
+import scala.annotation.tailrec
 
 private[internals] object Renderer {
 
@@ -70,7 +71,6 @@ private[internals] object Renderer {
         .flatMap(_.segments.toList)
         .groupBy {
           // we need to compare NameRefs as they would be imported in order to avoid unnecessarily qualifying types in the same package
-          //
           case ref: NameRef => ref.asImport
           case other        => other
         }
@@ -164,11 +164,33 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
-  private def documentationAnnotation(hints: List[Hint]): Line = {
+  /**
+    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments
+    *
+    * @param l splitted docstring from the IR
+    * @return formatted list of scaladoc lines
+    */
+  private def makeDocLines(l: List[String]): List[Line] = {
+    @tailrec
+    def loop(l: List[String], acc: List[Line]): List[Line] = {
+      l match {
+        case Nil                  => acc
+        case _ :: tl if tl == Nil => loop(tl, acc :+ line"  */")
+        case hd :: tl             => loop(tl, acc :+ line"  * $hd")
+      }
+    }
+    loop(l.tail, List(line"/** ${l.head}"))
+  }
+
+  private def documentationAnnotation(hints: List[Hint]): Lines = {
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
-        line"/** ${doc.docString} */"
+        val lines = doc.docString.split(System.lineSeparator()).toList
+        val scalaDoc =
+          if (lines.length > 1) makeDocLines(lines)
+          else List(line"/** ${lines.head} */")
+        Lines(scalaDoc)
       }
   }
 

@@ -2,7 +2,7 @@ $version: "2"
 
 namespace smithy4s.example
 
-@documentation("This is a simple example of a \"quoted string\"")
+@documentation("A plain Smithy string")
 string AString
 
 structure AStructure {

@@ -4,8 +4,11 @@ use smithy4s.meta#adtMember
 
 integer OrderNumber
 
+/// Our order types have different ways to identify a product
+/// Except for preview orders, these don't have an ID 
 union OrderType {
   online: OrderNumber,
+  /// For an InStoreOrder a location ID isn't needed
   inStore: InStoreOrder,
   preview: Unit
 }
