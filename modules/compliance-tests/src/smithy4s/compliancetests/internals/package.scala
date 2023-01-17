@@ -101,8 +101,10 @@ package object internals {
           // we are in a quote so we negate the quote state and move on
           case '"' => (acc, begin, end + 1, !quote)
           // we see a comma, we are not in a quote if we actually have some data,  we add the current string to the accumulator and move both beginning and end pointers to the next character otherwise we move along
-          case ',' if !quote  =>
-            if ( begin < end) (acc :+ s.substring(begin, end), end + 1, end + 1, quote) else (acc, end + 1, end + 1, quote)
+          case ',' if !quote =>
+            if (begin < end)
+              (acc :+ s.substring(begin, end), end + 1, end + 1, quote)
+            else (acc, end + 1, end + 1, quote)
           // we see a whitespace character and we have not captured any data yet so we move the beginning pointer and end pointer to the next character
           case c if c.isWhitespace && begin == end =>
             (acc, begin + 1, begin + 1, quote)
