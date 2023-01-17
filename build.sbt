@@ -166,7 +166,8 @@ lazy val core = projectMatrix
     allowedNamespaces := Seq(
       "smithy.api",
       "smithy.waiters",
-      "alloy"
+      "alloy",
+      "alloy.common"
     ),
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters
@@ -376,9 +377,9 @@ lazy val codegen = projectMatrix
       version,
       scalaBinaryVersion,
       "smithyOrg" -> Dependencies.Smithy.org,
-      "smithyVersion" -> Dependencies.Smithy.version,
+      "smithyVersion" -> Dependencies.Smithy.smithyVersion,
       "alloyOrg" -> Dependencies.Alloy.org,
-      "alloyVersion" -> Dependencies.Alloy.version
+      "alloyVersion" -> Dependencies.Alloy.alloyVersion
     ),
     buildInfoPackage := "smithy4s.codegen",
     libraryDependencies ++= Seq(

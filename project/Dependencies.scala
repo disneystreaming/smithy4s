@@ -16,19 +16,19 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val version = "1.26.4"
-    val model = org % "smithy-model" % version
-    val testTraits = org % "smithy-protocol-test-traits" % version
-    val build = org % "smithy-build" % version
-    val awsTraits = org % "smithy-aws-traits" % version
-    val waiters = org % "smithy-waiters" % version
+    val smithyVersion = "1.26.4"
+    val model = org % "smithy-model" % smithyVersion
+    val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
+    val build = org % "smithy-build" % smithyVersion
+    val awsTraits = org % "smithy-aws-traits" % smithyVersion
+    val waiters = org % "smithy-waiters" % smithyVersion
   }
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val version = "0.1.2"
-    val core = org % "alloy-core" % version
-    val openapi = org %% "alloy-openapi" % version
+    val alloyVersion = "0.1.8"
+    val core = org % "alloy-core" % alloyVersion
+    val openapi = org %% "alloy-openapi" % alloyVersion
   }
 
   val Cats = new {
@@ -120,9 +120,9 @@ object Dependencies {
   object MunitMilestone extends MunitCross("1.0.0-M6")
 
   val Scalacheck = new {
-    val version = "1.16.0"
+    val scalacheckVersion = "1.16.0"
     val scalacheck =
-      Def.setting("org.scalacheck" %%% "scalacheck" % version)
+      Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
 
   object Webjars {
