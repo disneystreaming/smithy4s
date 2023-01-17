@@ -71,7 +71,7 @@ RESTful systems might use HTTP, but they don't need to. Similarly, HTTP services
 
 ## High Level Protocols
 
-Here we will discuss several "High Level Protocols." There isn't an official term for these, but we will coin them as such to differentiate them from the protocols discussed above. All of the following protocols build on top of HTTP, but define different semantics on top of it.
+Here we will discuss several "High Level Protocols." There isn't an official term for these, but we will coin them as such to differentiate them from the protocols discussed above. All of the following protocols build on top of HTTP (although they don't have to), but define different semantics on top of it.
 
 #### alloy#simpleRestJson
 
@@ -87,7 +87,13 @@ There are quite a few other nuanced requirements for what makes up the gRPC prot
 
 AWS themselves have defined quite a few protocols in Smithy. Examples of this range from `aws.protocols#restJson1` which is very similar to `alloy#simpleRestJson` to `aws.protocols#restXml`. You can read more about these protocols in the [Smithy documentation](https://smithy.io/2.0/aws/protocols/index.html).
 
-## Defining Protocols in Smithy
+## Protocols in Smithy
+
+In the context of Smithy, a protocol is a set of concrete rules that define how data modelled in Smithy gets transcribed into lower-level semantics. A protocol definition in Smithy can be accompanied by a set of trait annotations which hold further information about how the Smithy shapes are transcribed.
+
+For example, the `alloy#simpleRestJson` protocol relies on the `smithy.api#http` trait annotation to provide information about which HTTP endpoint will map to each Smithy operation shape. Without the `smithy.api#http` trait, one would not be able to specify the protocol-specific semantics of an API. This is how Smithy, the language itself, is protocol agnostic while still allowing users to define APIs which conform to various protocols.
+
+#### How to Define a Protocol
 
 Protocols can be defined in Smithy as traits that are marked with the `@protocolDefinition` [trait](https://smithy.io/2.0/spec/protocol-traits.html#protocoldefinition-trait). For example, the (slightly simplified) definition of `alloy#simpleRestJson` looks like:
 
@@ -103,4 +109,4 @@ This then allows you to annotate service shapes with the protocol. Although the 
 
 ## Conclusion
 
-Hopefully this article has helped to outline what a protocol is and more specifically what layers of protocols we are building upon to create something like the `alloy#simpleRestJson` protocol. If you have any more questions about protocols, especially the protocols we have defined and use in Smithy4s, don't hesitate to reach out.
+Hopefully, this article has helped to outline what a protocol is and more specifically what layers of protocols we are building upon to create something like the `alloy#simpleRestJson` protocol. If you have any more questions about protocols, especially the protocols we have defined and use in Smithy4s, don't hesitate to reach out.
