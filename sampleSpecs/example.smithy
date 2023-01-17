@@ -44,9 +44,9 @@ service FooService {
 @readonly
 @http(method: "GET", uri: "/foo", code: 200)
 operation GetFoo {
-  // Represents the structure of the output of the Foo
-  // if we find a Foo at all
-  // else we return a generic HTTP error code
+  /// Represents the structure of the output of the Foo
+  /// if we find a Foo at all
+  /// else we return a generic HTTP error code
   output: GetFooOutput
 }
 
