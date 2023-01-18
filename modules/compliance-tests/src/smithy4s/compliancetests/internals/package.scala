@@ -94,7 +94,7 @@ package object internals {
    This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
    what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
    */
-  private def parseList(s: String): List[String] = {
+  private[compliancetests] def parseList(s: String): List[String] = {
     s.foldLeft((Chain.empty[String], 0, 0, false)) {
       case ((acc, begin, end, quote), elem) =>
         elem match {
