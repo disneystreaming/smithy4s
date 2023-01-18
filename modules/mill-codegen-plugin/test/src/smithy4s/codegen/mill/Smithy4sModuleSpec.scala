@@ -119,7 +119,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     compileWorks(foo, ev)
 
     val metadata =
-      ev.outPath / "smithy4sGeneratedSmithyDir.dest" / "smithy" / "generated-metadata.smithy"
+      ev.outPath / "smithy4sGeneratedSmithyMetadataFile.dest" / "smithy" / "generated-metadata.smithy"
     checkFileExist(metadata, shouldExist = true)
     assert(
       os.read(metadata).contains("metadata smithy4sWildcardArgument = \"?\"")

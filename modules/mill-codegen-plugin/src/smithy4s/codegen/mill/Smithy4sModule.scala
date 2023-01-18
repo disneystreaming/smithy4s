@@ -50,8 +50,8 @@ trait Smithy4sModule extends ScalaModule {
     PathRef(T.ctx().dest / "resources")
   }
 
-  protected def smithy4sGeneratedSmithyDir: T[PathRef] = T {
-    PathRef(T.ctx().dest / "smithy")
+  protected def smithy4sGeneratedSmithyMetadataFile: T[PathRef] = T {
+    PathRef(T.ctx().dest / "smithy" / "generated-metadata.smithy")
   }
 
   protected def generateOpenApiSpecs: T[Boolean] = true
@@ -160,7 +160,7 @@ trait Smithy4sModule extends ScalaModule {
   }
 
   def smithy4sGeneratedSmithyFiles: Sources = T.sources {
-    val file = smithy4sGeneratedSmithyDir().path / "generated-metadata.smithy"
+    val file = smithy4sGeneratedSmithyMetadataFile().path
     val wildcardArg = smithy4sWildcardArgument()
     os.remove(file)
     os.write(

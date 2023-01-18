@@ -45,12 +45,11 @@ private[smithy4s] object SmithyResources {
     val metadataFile = smithyFolder / "manifest"
 
     val metadataFileContent =
-      (trackingFile :: localSmithyFiles)
-        .flatMap {
-          case f if os.isDir(f) =>
-            os.walk(f).filter(os.isFile(_)).map(_.relativeTo(f))
-          case f => RelPath(f.last) :: Nil
-        }
+      (trackingFile :: localSmithyFiles).flatMap {
+        case f if os.isDir(f) =>
+          os.walk(f).filter(os.isFile(_)).map(_.relativeTo(f))
+        case f => RelPath(f.last) :: Nil
+      }.distinct
 
     os.write.over(
       metadataFile,
