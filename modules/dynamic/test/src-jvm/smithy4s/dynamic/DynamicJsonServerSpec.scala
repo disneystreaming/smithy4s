@@ -25,7 +25,7 @@ import cats.syntax.all._
  * creates a dummy instance for it (that returns 0 values for all the fields of outputs),
  * and serves it over an example JSON-RPC-like protocol (returning a `Document => IO[Document]`)
  */
-class DynamicJsonServerSpec() extends munit.FunSuite {
+class DynamicJsonServerSpec() extends DummyIO.Suite {
 
   case class JsonIO(fn: Document => IO[Document]) {
     def apply(json: Document): IO[Document] = fn(json)
@@ -45,7 +45,7 @@ class DynamicJsonServerSpec() extends munit.FunSuite {
 
   def testJsonIO(name: String)(run: JsonIO => IO[Unit]): Unit =
     test(name) {
-      sharedResource.flatMap(run).check()
+      sharedResource.flatMap(run)
     }
 
   testJsonIO("Dynamic service is correctly wired: Put") { jsonIO =>

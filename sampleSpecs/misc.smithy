@@ -113,14 +113,3 @@ structure RangeCheck {
 @pattern("^\\uD83D\\uDE0E$")
 string UnicodeRegexString
 
-service Library {
-  resources: [Book]
-}
-
-resource Book {
-  read: GetBook
-}
-
-@readonly
-operation GetBook {
-}
