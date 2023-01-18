@@ -174,9 +174,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     @tailrec
     def loop(l: List[String], acc: List[Line]): List[Line] = {
       l match {
-        case Nil                  => acc
-        case _ :: tl if tl == Nil => loop(tl, acc :+ line"  */")
-        case hd :: tl             => loop(tl, acc :+ line"  * $hd")
+        case Nil => acc
+        case hd :: tl if tl == Nil =>
+          loop(tl, acc :+ line"  * $hd" :+ line"  */")
+        case hd :: tl => loop(tl, acc :+ line"  * $hd")
       }
     }
     loop(l.tail, List(line"/** ${l.head}"))

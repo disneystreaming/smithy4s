@@ -13,6 +13,7 @@ import smithy4s.schema.Schema.union
 
 /** Helpful information for Foo
   * int, bigInt and bDec are useful number constructs
+  * The string case is there because.
   */
 sealed trait Foo extends scala.Product with scala.Serializable {
   @inline final def widen: Foo = this
@@ -26,6 +27,7 @@ object Foo extends ShapeTag.Companion[Foo] {
 
   case class IntCase(int: Int) extends Foo
   /** this is a comment saying you should be careful for this case
+    * you never know what lies ahead with Strings like this
     */
   case class StrCase(str: String) extends Foo
   case class BIntCase(bInt: BigInt) extends Foo

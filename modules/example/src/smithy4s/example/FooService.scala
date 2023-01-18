@@ -12,12 +12,14 @@ import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.Schema.unit
 
 /** The most basics of services
+  * GetFoo is it's only operation
   */
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
 
   /** Returns a useful Foo
     * No input necessary to find our Foo
+    * The path for this operation is "/foo"
     */
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 

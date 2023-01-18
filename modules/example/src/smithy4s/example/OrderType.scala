@@ -10,6 +10,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
 /** Our order types have different ways to identify a product
+  * Except for preview orders, these don't have an ID
   */
 sealed trait OrderType extends scala.Product with scala.Serializable {
   @inline final def widen: OrderType = this

@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.struct
 /** Input for getting an Object
   * all fields are required
   * and are given through HTTP labels
+  * See https://smithy.io/2.0/spec/http-bindings.html?highlight=httppayload#http-uri-label
   */
 case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
