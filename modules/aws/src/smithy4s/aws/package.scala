@@ -39,8 +39,7 @@ package object aws {
      new PolyFunction5[service.Operation, Kind1[F]#toKind5] {
       override def apply[A0, A1, A2, A3, A4](op: service.Operation[A0, A1, A2, A3, A4]): F[A2] = {
   // format: on
-          val endpoint = service.opToEndpoint(
-            op)
+          val endpoint = service.opToEndpoint(op)
           (endpoint.streamedInput, endpoint.streamedOutput) match {
             case (StreamingSchema.NoStream, StreamingSchema.NoStream) =>
               interpreter(op).run
