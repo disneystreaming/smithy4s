@@ -22,11 +22,11 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
-import smithy4s.example.test._
 import smithy4s.http4s._
+import alloy.test.PizzaAdminService
 import weaver._
 
-object WeaverComplianceTest extends SimpleIOSuite {
+object ProtocolComplianceTest extends SimpleIOSuite {
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = alloy.SimpleRestJson
     val protocolTag = alloy.SimpleRestJson
@@ -52,16 +52,24 @@ object WeaverComplianceTest extends SimpleIOSuite {
   }
 
   val tests: List[ComplianceTest[IO]] = HttpProtocolCompliance
-    .clientAndServerTests(SimpleRestJsonIntegration, HelloService)
+    .clientAndServerTests(SimpleRestJsonIntegration, PizzaAdminService)
 
   tests.foreach(tc =>
     test(tc.name) {
-      tc.run.map[Expectations] {
-        case Left(value) =>
-          Expectations.Helpers.failure(value)
-        case Right(_) =>
-          Expectations.Helpers.success
-      }
+      tc.run
+        .map[Expectations] {
+          case Left(value) =>
+            Expectations.Helpers.failure(value)
+          case Right(_) =>
+            Expectations.Helpers.success
+        }
+        .attempt
+        .map {
+          case Right(expectations) => expectations
+          case Left(e) =>
+            e.printStackTrace()
+            failure(e.getMessage())
+        }
     }
   )
 }
