@@ -18,7 +18,7 @@ package smithy4s
 
 import cats.MonadThrow
 import smithy4s.kinds._
-
+import smithy4s.aws.AwsOperationKind.Unary.unary
 package object aws {
 
   type Timestamp = smithy4s.Timestamp
