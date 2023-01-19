@@ -29,13 +29,12 @@ class ResourceSpec() extends munit.FunSuite {
     loadDynamicModel("resources.smithy").map { model =>
       val compiled = DynamicSchemaIndex.load(model)
 
-      val endpoints = compiled.allServices.head.service.endpoints
-      expect.same(
-        endpoints.map(_.id).toSet,
-        List("ListPublishers", "GetBook", "BuyBook")
-          .map(id => s"smithy4s.example#$id")
-          .toSet
-      )
+      val endpoints =
+        compiled.allServices.head.service.endpoints.map(_.id).toSet
+      val expectedEndpoints = List("ListPublishers", "GetBook", "BuyBook")
+        .map(id => ShapeId.parse(s"smithy4s.example#$id").get)
+        .toSet
+      expect.same(endpoints, expectedEndpoints)
     }
   }
 

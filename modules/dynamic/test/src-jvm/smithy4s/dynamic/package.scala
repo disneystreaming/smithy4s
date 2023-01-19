@@ -8,7 +8,7 @@ import cats.syntax.all._
 
 package object dynamic {
   // This is not ideal, but it does the job.
-  private val cwd = System.getProperty("user.dir");
+  private lazy val cwd = System.getProperty("user.dir");
 
   def loadDynamicModel(specName: String) =
     IO {
