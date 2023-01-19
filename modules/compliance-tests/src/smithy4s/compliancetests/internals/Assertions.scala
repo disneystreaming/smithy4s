@@ -50,13 +50,26 @@ private[internals] object assert {
     }
   }
 
-  def eql[A](expected: A, actual: A): ComplianceResult = {
-    if (expected == actual) {
-      success
-    } else {
+  def arrEql(expected: Array[Any], actual: Array[Any]): ComplianceResult = {
+    if (java.util.Arrays.deepEquals(expected, actual)) success
+    else
       fail(
-        s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+        s"Arrays are not equal  ${pprint.apply(actual)} \n expected:  ${pprint.apply(expected)}"
       )
+  }
+  Tuple2
+  def eql[A](expected: A, actual: A): ComplianceResult = {
+    expected match {
+      case expected1: Array[Any] =>
+        arrEql(expected1, actual.asInstanceOf[Array[Any]])
+      case _ =>
+        if (expected == actual) {
+          success
+        } else {
+          fail(
+            s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+          )
+        }
     }
   }
 

@@ -635,6 +635,8 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
         Dependencies.Alloy.core % Test,
+        Dependencies.Alloy.`protocol-tests` % Test,
+        Dependencies.Smithy.build % Test,
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
@@ -654,7 +656,6 @@ lazy val http4s = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
     Test / smithy4sSkip := Seq("openapi"),
-    Test / smithy4sDependencies := Seq(Dependencies.Alloy.`protocol-tests`),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)

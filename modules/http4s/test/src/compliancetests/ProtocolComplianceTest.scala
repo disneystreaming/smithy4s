@@ -22,8 +22,12 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
+import smithy4s.ShapeId
 import smithy4s.http4s._
-import alloy.test.PizzaAdminService
+import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model._
+import smithy4s.dynamic._
+import smithy4s.dynamic.DynamicSchemaIndex.load
 import weaver._
 
 object ProtocolComplianceTest extends SimpleIOSuite {
@@ -51,25 +55,40 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   }
 
-  val tests: List[ComplianceTest[IO]] = HttpProtocolCompliance
-    .clientAndServerTests(SimpleRestJsonIntegration, PizzaAdminService)
+  private val smithyModel = Model.assembler().discoverModels.assemble.unwrap()
+  private val node = ModelSerializer.builder().build.serialize(smithyModel)
+  private val doc = NodeToDocument(node)
+  smithy4s.Document
+    .decode[smithy4s.dynamic.model.Model](doc).map(load) match {
+    case Left(value) => println(value)
+    case Right(dsi) => {
+      val tests: List[ComplianceTest[IO]] = dsi
+        .getService(ShapeId("alloy.test", "PizzaAdminService"))
+        .toList
+        .flatMap(wrapper => {
+          HttpProtocolCompliance
+            .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
+        })
 
-  tests.foreach(tc =>
-    test(tc.name) {
-      tc.run
-        .map[Expectations] {
-          case Left(value) =>
-            Expectations.Helpers.failure(value)
-          case Right(_) =>
-            Expectations.Helpers.success
+      tests.foreach(tc =>
+        test(tc.name) {
+          tc.run
+            .map[Expectations] {
+              case Left(value) =>
+                Expectations.Helpers.failure(value)
+              case Right(_) =>
+                Expectations.Helpers.success
+            }
+            .attempt
+            .map {
+              case Right(expectations) => expectations
+              case Left(e) =>
+                e.printStackTrace()
+                failure(e.getMessage)
+            }
         }
-        .attempt
-        .map {
-          case Right(expectations) => expectations
-          case Left(e) =>
-            e.printStackTrace()
-            failure(e.getMessage())
-        }
+      )
     }
-  )
+  }
+
 }

@@ -164,13 +164,17 @@ private[compliancetests] class ServerHttpComplianceTestCase[
             }
             .left
             .map { errorInfo =>
+
               val errorDecoder = Document.Decoder.fromSchema(errorInfo.schema)
               (doc: Document) =>
                 errorDecoder
                   .decode(doc)
                   .liftTo[F]
-                  .map(errCase =>
+                  .map(errCase => {
+                    println("schema for error+" +errorInfo.schema)
+                    println("Error case: " + errCase.asInstanceOf[Array[Any]].mkString("Array(", ", ", ")"))
                     errorInfo.errorable.unliftError(errCase.asInstanceOf[E])
+                  }
                   )
             }
         }
