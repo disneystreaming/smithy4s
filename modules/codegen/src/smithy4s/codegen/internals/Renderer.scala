@@ -50,6 +50,13 @@ private[internals] object Renderer {
         .flatMap(_.asStringNode().asScala)
         .map(_.getValue())
         .getOrElse("_")
+
+      if (wildcardArgument != "?" && wildcardArgument != "_") {
+        throw new IllegalArgumentException(
+          s"`smithy4sWildcardArgument` possible values are: `?` or `_`. found `$wildcardArgument`."
+        )
+      }
+
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
         wildcardArgument = wildcardArgument
