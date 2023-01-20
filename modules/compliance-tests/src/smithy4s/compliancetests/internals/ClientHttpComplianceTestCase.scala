@@ -158,17 +158,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   .liftTo[F]
             }
             .left
-            .map { errorInfo =>
-              val errorDecoder = Document.Decoder.fromSchema(errorInfo.schema)
-              (doc: Document) =>
-                errorDecoder
-                  .decode(doc)
-                  .map(a => errorInfo.inject(a))
-                  .liftTo[F]
-                  .map(errCase =>
-                    errorInfo.errorable.unliftError(errCase)
-                  )
-            }
+            .map(_.kleisliFy[F])
         }
         val mediaType = aMediatype(endpoint.output, codecs)
         val status = Status.fromInt(testCase.code).liftTo[F]
@@ -245,6 +235,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         .filter(_.protocol == protocolTag.id.toString())
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientResponseTest(endpoint, tc))
+
       val errorResponseTests = endpoint.errorable.toList
         .flatMap { errorrable =>
           errorrable.error.alternatives.flatMap { errorAlt =>
@@ -259,7 +250,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   endpoint,
                   tc,
                   errorSchema =
-                    Some(ErrorResponseTest(errorAlt.instance,errorAlt.inject, errorrable))
+                    Some(ErrorResponseTest.from(errorAlt, errorrable))
                 )
               )
           }

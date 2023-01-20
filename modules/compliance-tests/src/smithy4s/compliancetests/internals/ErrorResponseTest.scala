@@ -17,11 +17,34 @@
 package smithy4s.compliancetests
 package internals
 
+import smithy4s.Document
 import smithy4s.schema.Schema
 import smithy4s.Errorable
+import cats.ApplicativeThrow
+import cats.syntax.all._
 
 private[compliancetests] final case class ErrorResponseTest[A, E](
     schema: Schema[A],
-    inject : A => E,
+    inject: A => E,
     errorable: Errorable[E]
-)
+) {
+
+  def kleisliFy[F[_]: ApplicativeThrow]: Document => F[Throwable] = {
+    val errorDecoder = Document.Decoder.fromSchema(schema)
+    (doc: Document) =>
+      errorDecoder
+        .decode(doc)
+        .map(inject)
+        .liftTo[F]
+        .map(errorable.unliftError(_))
+  }
+
+}
+
+private[compliancetests] object ErrorResponseTest {
+  def from[E, A](
+      errorAlt: smithy4s.schema.SchemaAlt[E, A],
+      errorable: smithy4s.Errorable[E]
+  ): ErrorResponseTest[A, E] =
+    ErrorResponseTest(errorAlt.instance, errorAlt.inject, errorable)
+}

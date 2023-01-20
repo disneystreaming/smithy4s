@@ -59,7 +59,8 @@ object ProtocolComplianceTest extends SimpleIOSuite {
   private val node = ModelSerializer.builder().build.serialize(smithyModel)
   private val doc = NodeToDocument(node)
   smithy4s.Document
-    .decode[smithy4s.dynamic.model.Model](doc).map(load) match {
+    .decode[smithy4s.dynamic.model.Model](doc)
+    .map(load) match {
     case Left(value) => println(value)
     case Right(dsi) => {
       val tests: List[ComplianceTest[IO]] = dsi

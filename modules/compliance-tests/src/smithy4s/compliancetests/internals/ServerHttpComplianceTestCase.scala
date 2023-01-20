@@ -163,18 +163,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   .liftTo[F]
             }
             .left
-            .map { errorInfo =>
-
-              val errorDecoder = Document.Decoder.fromSchema(errorInfo.schema)
-              (doc: Document) =>
-                errorDecoder
-                  .decode(doc)
-                  .liftTo[F]
-                  .map(errCase => {
-                          errorInfo.errorable.unliftError(errorInfo.inject(errCase))
-                  }
-                  )
-            }
+            .map(_.kleisliFy[F])
         }
 
         val fakeImpl: FunctorInterpreter[NoInputOp, F] =
@@ -296,7 +285,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   endpoint,
                   tc,
                   errorSchema =
-                    Some(ErrorResponseTest(errorAlt.instance,errorAlt.inject, errorrable))
+                    Some(ErrorResponseTest.from(errorAlt, errorrable))
                 )
               )
           }
