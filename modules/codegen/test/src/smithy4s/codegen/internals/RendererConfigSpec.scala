@@ -161,6 +161,64 @@ final class RendererConfigSpec extends munit.FunSuite {
 
   }
 
+  test("Renderer.Config.wildcardArgument = \"?\"") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sWildcardArgument = "?"
+        |
+        |namespace smithy4s
+        |
+        |service ErrorService {
+        |  version: "1.0.0",
+        |  operations: [Operation]
+        |}
+        |
+        |operation Operation {
+        |  input: Unit,
+        |  output: Unit,
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy)
+    val serviceCode = findServiceCode(contents)
+
+    assertContainsSection(serviceCode, "val endpoints")(
+      """val endpoints: List[ErrorServiceGen.Endpoint[?, ?, ?, ?, ?]] = List(
+        |  Operation,
+        |)""".stripMargin
+    )
+  }
+
+  test("Renderer.Config.wildcardArgument = default") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |service ErrorService {
+        |  version: "1.0.0",
+        |  operations: [Operation]
+        |}
+        |
+        |operation Operation {
+        |  input: Unit,
+        |  output: Unit,
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy)
+    val serviceCode = findServiceCode(contents)
+
+    assertContainsSection(serviceCode, "val endpoints")(
+      """val endpoints: List[ErrorServiceGen.Endpoint[_, _, _, _, _]] = List(
+        |  Operation,
+        |)""".stripMargin
+    )
+  }
+
   private def findServiceCode(contents: List[String]): String = {
     contents.find(_.contains("trait ErrorServiceGen")) match {
       case None =>
