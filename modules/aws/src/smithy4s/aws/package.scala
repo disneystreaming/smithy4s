@@ -35,7 +35,7 @@ package object aws {
     MonadThrow[F].catchNonFatal(new String(bytes, "UTF-8"))
 
   // format: off
- private[aws] def simplify[Alg[_[_, _, _, _, _]], F[_]:ApplicativeThrow](service: Service[Alg]): service.Interpreter[AwsCall[F, *, *, *, *, *]] => service.FunctorInterpreter[F] = {
+  private[aws] def simplify[Alg[_[_, _, _, _, _]], F[_]:ApplicativeThrow](service: Service[Alg]): service.Interpreter[AwsCall[F, *, *, *, *, *]] => service.FunctorInterpreter[F] = {
     interpreter =>
      new PolyFunction5[service.Operation, Kind1[F]#toKind5] {
       override def apply[I, E, O, SI, SO ](op: service.Operation[I, E, O, SI, SO ]): F[O] = {
