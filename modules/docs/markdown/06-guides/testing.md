@@ -7,7 +7,7 @@ In this guide, we will give you some guiding principles and other things to cons
 
 ## What Smithy4s Does
 
-For starters, let's briefly cover what it is that Smithy4s does. At a high level, Smithy4s takes your Smithy model and generates Scala code based on that model. The model is essentially just a Scala representation of the Smithy model. The generated code _does not_ contain any logic for any specific library such as http4s or jsoniter. Instead, it contains abstractions that Smithy4s itself defines that interpreters can be based on. This means that the generated code is not coupled to any library (other than Smithy4s itself). The interpreters that we have created in Smithy4s will then take the generated code and use it to power, for example, and HTTP service that uses http4s and jsoniter.
+For starters, let's briefly cover what it is that Smithy4s does. At a high level, Smithy4s takes your Smithy model and generates Scala code based on that model. The model is essentially just a Scala representation of the Smithy model. The generated code _does not_ contain any logic for any specific library such as http4s or jsoniter. Instead, it contains abstractions that Smithy4s itself defines that interpreters can be based on. This means that the generated code is not coupled to any library (other than Smithy4s itself). The interpreters that we have created in Smithy4s will then take the generated code and use it to power, for example, an HTTP service that uses http4s and jsoniter.
 
 ## How we Test Smithy4s
 
