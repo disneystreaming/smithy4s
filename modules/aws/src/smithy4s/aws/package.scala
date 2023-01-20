@@ -19,6 +19,7 @@ package smithy4s
 import cats.{ApplicativeThrow, MonadThrow}
 import smithy4s.kinds._
 import smithy4s.aws.AwsOperationKind.Unary.unary
+
 package object aws {
 
   type Timestamp = smithy4s.Timestamp
@@ -34,10 +35,10 @@ package object aws {
     MonadThrow[F].catchNonFatal(new String(bytes, "UTF-8"))
 
   // format: off
-  def simplify[Alg[_[_, _, _, _, _]], F[_]:ApplicativeThrow](service: Service[Alg]): service.Interpreter[AwsCall[F, *, *, *, *, *]] => service.FunctorInterpreter[F] = {
+ private[aws] def simplify[Alg[_[_, _, _, _, _]], F[_]:ApplicativeThrow](service: Service[Alg]): service.Interpreter[AwsCall[F, *, *, *, *, *]] => service.FunctorInterpreter[F] = {
     interpreter =>
      new PolyFunction5[service.Operation, Kind1[F]#toKind5] {
-      override def apply[A0, A1, A2, A3, A4](op: service.Operation[A0, A1, A2, A3, A4]): F[A2] = {
+      override def apply[I, E, O, SI, SO ](op: service.Operation[I, E, O, SI, SO ]): F[O] = {
   // format: on
           val endpoint = service.opToEndpoint(op)
           (endpoint.streamedInput, endpoint.streamedOutput) match {
@@ -45,7 +46,7 @@ package object aws {
               interpreter(op).run
             case _ =>
               ApplicativeThrow[F].raiseError(
-                new Exception(
+                new IllegalAccessException(
                   "attempting to call a streaming operation with a non-streaming client"
                 )
               )
