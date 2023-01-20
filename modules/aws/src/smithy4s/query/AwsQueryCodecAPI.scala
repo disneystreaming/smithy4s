@@ -55,6 +55,7 @@ private[aws] class AwsQueryCodecAPI(
           AwsQueryCodecAPI.xmlResponseSchema(operationName, schema)
         val xmlDecoder = XmlDocument.Decoder.fromSchema(responseSchema)
         Right(xmlDecoder)
+      case Some(InputOutput.Error) => sys.error("Unimplemented")
     }
 
   override def mediaType[A](codec: Codec[A]): HttpMediaType =

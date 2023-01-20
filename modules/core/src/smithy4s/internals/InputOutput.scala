@@ -36,15 +36,21 @@ object InputOutput extends ShapeTag.Companion[InputOutput] {
       .constant(Output)
       .withId(ShapeId("smithy4s", "Output"))
       .oneOf[InputOutput]("output")
+    val errorAlt = Schema
+      .constant(Error)
+      .withId(ShapeId("smithy4s", "Error"))
+      .oneOf[InputOutput]("error")
     Schema
-      .union(inputAlt, outputAlt) {
+      .union(inputAlt, outputAlt, errorAlt) {
         case Input  => inputAlt(Input)
         case Output => outputAlt(Output)
+        case Error  => errorAlt(Error)
       }
       .withId(id)
   }
 
   case object Input extends InputOutput
   case object Output extends InputOutput
+  case object Error extends InputOutput
 
 }
