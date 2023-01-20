@@ -32,7 +32,7 @@ operation GetObject {
 }
 
 /// The most basics of services
-/// GetFoo is it's only operation
+/// GetFoo is its only operation
 service FooService {
   version: "1.0.0",
   operations: [GetFoo]
