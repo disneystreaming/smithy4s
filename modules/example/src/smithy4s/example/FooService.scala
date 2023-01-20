@@ -12,7 +12,7 @@ import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.Schema.unit
 
 /** The most basics of services
-  * GetFoo is it's only operation
+  * GetFoo is its only operation
   */
 trait FooServiceGen[F[_, _, _, _, _]] {
   self =>
@@ -38,7 +38,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("The most basics of services\nGetFoo is it\'s only operation"),
+    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
   )
 
   val endpoints: List[FooServiceGen.Endpoint[_, _, _, _, _]] = List(
