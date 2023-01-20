@@ -131,7 +131,7 @@ private[internals] object Renderer {
 
 private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
-  val names = new CollisionAvoidance.Names()
+  private val names = new CollisionAvoidance.Names()
   import compilationUnit.namespace
   import names._
 
@@ -878,11 +878,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  implicit class TypeRefExt(tpe: Type.Ref) {
-    def renderFull: String = s"${tpe.namespace}.${tpe.name}"
-  }
-
-  implicit class TypeExt(tpe: Type) {
+  private implicit class TypeExt(tpe: Type) {
     val schemaPkg_ = "smithy4s.schema.Schema"
     def schemaRef: Line = tpe match {
       case Type.PrimitiveType(p) => NameRef(schemaRefP(p)).toLine
@@ -963,13 +959,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case _              => None
   }
 
-  def renderId(shapeId: ShapeId): Line = {
+  private def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
   }
 
-  def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
+  private def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
     lines(line"val hints: $Hints_ = $Hints_.empty")
   } else {
     line"val hints: $Hints_ = $Hints_".args {
@@ -977,12 +973,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  def memberHints(hints: List[Hint]): Line = {
+  private def memberHints(hints: List[Hint]): Line = {
     val h = hints.map(renderHint).collect { case Some(v) => v }
     if (h.isEmpty) Line.empty else h.intercalate(Line.comma)
   }
 
-  def renderConstraintValidation(hints: List[Hint]): Line = {
+  private def renderConstraintValidation(hints: List[Hint]): Line = {
     val tags = hints.collect { case t: Hint.Constraint => t }
     if (tags.isEmpty) Line.empty
     else {
@@ -997,18 +993,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def shapeTag(name: NameRef): Line =
     line"$ShapeTag_.Companion[$name]"
 
-  type TopLevel = Boolean
-  type InCollection = Boolean
+  private type TopLevel = Boolean
+  private type InCollection = Boolean
 
-  type Contextual[A] = cats.data.Reader[TopLevel, A]
-  type CString = Contextual[(InCollection, Line)]
+  private type Contextual[A] = cats.data.Reader[TopLevel, A]
+  private type CString = Contextual[(InCollection, Line)]
 
-  implicit class ContextualOps(val line: Line) {
+  private implicit class ContextualOps(val line: Line) {
     def write: CString = (false, line).pure[Contextual]
     def writeCollection: CString = (true, line).pure[Contextual]
   }
 
-  implicit class CStringOps(val str: CString) {
+  private implicit class CStringOps(val str: CString) {
     def runDefault = str.run(false)._2
   }
 
