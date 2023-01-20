@@ -17,10 +17,11 @@
 package smithy4s.compliancetests
 package internals
 
-import smithy4s.schema.SchemaAlt
+import smithy4s.schema.Schema
 import smithy4s.Errorable
 
 private[compliancetests] final case class ErrorResponseTest[A, E](
-    schema: SchemaAlt[E,A],
+    schema: Schema[A],
+    inject : A => E,
     errorable: Errorable[E]
 )

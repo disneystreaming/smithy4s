@@ -171,9 +171,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   .decode(doc)
                   .liftTo[F]
                   .map(errCase => {
-                    println("schema for error+" +errorInfo.schema)
-                    println("Error case: " + errCase.asInstanceOf[Array[Any]].mkString("Array(", ", ", ")"))
-                    errorInfo.errorable.unliftError(errCase.asInstanceOf[E])
+                          errorInfo.errorable.unliftError(errorInfo.inject(errCase))
                   }
                   )
             }
@@ -298,7 +296,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   endpoint,
                   tc,
                   errorSchema =
-                    Some(ErrorResponseTest(errorAlt.instance, errorrable))
+                    Some(ErrorResponseTest(errorAlt.instance,errorAlt.inject, errorrable))
                 )
               )
           }
