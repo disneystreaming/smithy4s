@@ -17,7 +17,6 @@
 package smithy4s.dynamic
 
 import munit.FunSuite
-import DummyIO._
 import smithy4s.ShapeId
 import smithy4s.schema.Schema.EnumerationSchema
 import munit.Location
@@ -87,7 +86,6 @@ class EnumSpec extends FunSuite {
 
         assertEquals(eValues, expectedValues)
       }
-      .check()
   }
 
   test("dynamic enums have names if they're in the model") {

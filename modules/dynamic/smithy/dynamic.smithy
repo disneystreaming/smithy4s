@@ -184,11 +184,20 @@ structure ServiceShape {
   version: String,
   errors: MemberList,
   operations: MemberList,
+  resources: MemberList,
   traits: TraitMap
 }
 
-/// TODO
 structure ResourceShape {
+  /// ignored: identifiers, properties, collectionOperations
+  create: MemberShape,
+  put: MemberShape,
+  read: MemberShape,
+  update: MemberShape,
+  delete: MemberShape,
+  list: MemberShape,
+  operations: MemberList,
+  resources: MemberList
 }
 
 

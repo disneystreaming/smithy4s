@@ -204,24 +204,25 @@ lazy val core = projectMatrix
       "smithy4s.example.collision"
     ),
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "resources.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     Compile / packageSrc / mappings ++= {
@@ -564,7 +565,8 @@ lazy val dynamic = projectMatrix
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
       Dependencies.Cats.core.value
     ),
-    libraryDependencies ++= munitDeps.value,
+    libraryDependencies ++= List
+      .concat(munitDeps.value, List(Dependencies.Alloy.core % Test)),
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
