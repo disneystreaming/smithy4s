@@ -82,7 +82,7 @@ object Dependencies {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.4.5")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.17" else "0.22.15")
+    val http4sVersion = Def.setting(if (isCE3.value) "0.23.18" else "0.22.15")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
