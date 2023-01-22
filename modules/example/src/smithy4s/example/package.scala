@@ -42,5 +42,11 @@ package object example {
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type StringList = smithy4s.example.StringList.Type
+  /** Multiple line doc comment for another string
+    * I'm putting a random \*\/ here. Who would do such a thing?
+    * Because.
+    * Seriously, it's import to escape special characters.
+    */
+  type AnotherString = smithy4s.example.AnotherString.Type
 
 }

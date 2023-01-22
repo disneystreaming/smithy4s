@@ -199,7 +199,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       .collectFirst { case h: Hint.Documentation => h }
       .map { doc =>
         val shapeDocs =
-          NonEmptyList.fromList(doc.docString.linesIterator.toList)
+          NonEmptyList.fromList(
+            doc.docString.replace("*/", "\\*\\/").linesIterator.toList
+          )
         val memberDocs = doc.memberDocs
         (shapeDocs, memberDocs)
       }
