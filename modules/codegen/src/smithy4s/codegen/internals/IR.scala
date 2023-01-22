@@ -250,7 +250,7 @@ private[internals] object Hint {
   case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   case class Default(typedNode: Fix[TypedNode]) extends Hint
-  case class Documentation(docString: String) extends Hint
+  case class Documentation(docString: String, memberDocs: Map[String, String]) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
   // traits that get rendered generically

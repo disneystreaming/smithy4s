@@ -168,32 +168,52 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     * Returns the given list of Smithy documentation strings formatted as Scaladoc comments
     *
     * @param l splitted docstring from the IR
+    * @param memberDocs the documentation strings of the members of the shape
     * @return formatted list of scaladoc lines
     */
-  private def makeDocLines(nel: NonEmptyList[String]): List[Line] = {
+  private def makeDocLines(
+      nel: NonEmptyList[String],
+      memberDocs: Map[String, String]
+  ): List[Line] = {
     @tailrec
-    def loop(l: List[String], acc: List[Line]): List[Line] = {
+    def loop(
+        l: List[String],
+        acc: List[Line],
+        memberDocs: Map[String, String]
+    ): List[Line] = {
       l match {
         case hd :: Nil => acc :+ line"  * $hd" :+ line"  */"
-        case hd :: tl  => loop(tl, acc :+ line"  * $hd")
-        case Nil       => acc
+        case hd :: tl  => loop(tl, acc :+ line"  * $hd", memberDocs)
+        case Nil       =>
+          // TODO: when memberDocs returns something useful
+          // make it render as scaladoc nicely
+          acc :+ line"${memberDocs.toString()}"
+
       }
     }
-    loop(nel.tail, List(line"/** ${nel.head}"))
+    loop(nel.tail, List(line"/** ${nel.head}"), memberDocs)
   }
 
   private def documentationAnnotation(hints: List[Hint]): Lines = {
     hints
       .collectFirst { case h: Hint.Documentation => h }
-      .flatMap { doc =>
-        NonEmptyList.fromList(doc.docString.linesIterator.toList)
+      .map { doc =>
+        val shapeDocs =
+          NonEmptyList.fromList(doc.docString.linesIterator.toList)
+        val memberDocs = doc.memberDocs
+        (shapeDocs, memberDocs)
       }
-      .foldMap(nel => {
-        val lines =
-          if (nel.size > 1) makeDocLines(nel)
-          else List(line"/** ${nel.head} */")
-        Lines(lines)
-      })
+      .foldMap {
+        case (Some(shapeDocs), memberDocs) => {
+          val lines =
+            if (shapeDocs.size > 1) makeDocLines(shapeDocs, memberDocs)
+            else List(line"/** ${shapeDocs.head} */")
+          Lines(lines)
+        }
+        case (None, memberDocs) => {
+          Lines(List(line"${memberDocs.toString()}"))
+        }
+      }
   }
 
   def renderPackageContents: Lines = {

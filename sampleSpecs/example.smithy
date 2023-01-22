@@ -50,6 +50,7 @@ operation GetFoo {
   output: GetFooOutput
 }
 
+/// A key and bucket is always required for putting a new file in a bucket
 structure PutObjectInput {
     // Sent in the URI label named "key".
     @required
