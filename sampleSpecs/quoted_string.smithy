@@ -7,7 +7,7 @@ string AString
 
 /// Multiple line doc comment for another string
 /// Containing a random */ here.
-/// Seriously, it's import to escape special characters.
+/// Seriously, it's important to escape special characters.
 string AnotherString
 
 structure AStructure {

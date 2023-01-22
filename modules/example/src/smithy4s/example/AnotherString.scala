@@ -8,14 +8,13 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
 /** Multiple line doc comment for another string
-  * I'm putting a random \*\/ here. Who would do such a thing?
-  * Because.
-  * Seriously, it's import to escape special characters.
+  * Containing a random \*\/ here.
+  * Seriously, it's important to escape special characters.
   */
 object AnotherString extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "AnotherString")
   val hints: Hints = Hints(
-    smithy.api.Documentation("Multiple line doc comment for another string\nI\'m putting a random */ here. Who would do such a thing?\nBecause.\nSeriously, it\'s import to escape special characters."),
+    smithy.api.Documentation("Multiple line doc comment for another string\nContaining a random */ here.\nSeriously, it\'s important to escape special characters."),
   )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[AnotherString] = bijection(underlyingSchema, asBijection)
