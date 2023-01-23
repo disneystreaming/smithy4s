@@ -26,8 +26,6 @@ import smithy4s.ShapeId
 import smithy4s.http4s._
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model._
-import software.amazon.smithy.model.shapes.{ShapeId => AwsShapeId}
-import software.amazon.smithy.model.transform._
 import smithy4s.dynamic._
 import smithy4s.Document
 import smithy4s.dynamic.DynamicSchemaIndex.load
@@ -59,18 +57,7 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   }
 
-  lazy val map = {
-    val local = new java.util.HashMap[AwsShapeId, AwsShapeId]()
-    local.put(
-      AwsShapeId.from("aws.protocols#restJson1"),
-      AwsShapeId.from("alloy#simpleRestJson")
-    )
-    local
-  }
-
   private val smithyModel = Model.assembler().discoverModels.assemble.unwrap()
-  /*  private val transformToRestJson =
-    ModelTransformer.create().renameShapes(smithyModel, map)*/
   private val node =
     ModelSerializer.builder().build.serialize(smithyModel)
   private val doc = NodeToDocument(node)
