@@ -181,20 +181,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def documentationAnnotation(hints: List[Hint]): Lines = {
-    def split(s: String) = s.replace("*/", "\\*\\/").linesIterator.toList
+    def split(s: String) =
+      NonEmptyList.fromList(s.replace("*/", "\\*\\/").linesIterator.toList)
 
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .map { doc =>
-        split(doc.docString) ++
-          doc.memberDocs.flatMap { case (memberName, memberDoc) =>
+        val shapeLinesOpt = split(doc.docString).map(_.toList)
+        val memberLinesOpt = doc.memberDocs.flatMap {
+          case (memberName, memberDoc) =>
             split(memberDoc) match {
-              case head :: rest =>
+              case Some(NonEmptyList(head, rest)) =>
                 s"@param $memberName $head" :: rest
-
-              case Nil => sys.error("impossible: no lines")
+              case None => Nil
             }
-          }
+        }.toList
+
+        List(shapeLinesOpt, Some(memberLinesOpt)).flatten.flatten
       }
       .flatMap(NonEmptyList.fromList(_))
       .foldMap {
