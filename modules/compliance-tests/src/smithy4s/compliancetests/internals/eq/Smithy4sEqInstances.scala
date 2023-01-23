@@ -9,8 +9,10 @@ trait Smithy4sEqInstances {
   implicit def arrayEq[A: Eq]: Eq[Array[A]] = (x: Array[A], y: Array[A]) =>
     x.zip(y).forall { case (a, b) => a === b }
 
-  implicit def indexedSeqEq[A: Eq]: Eq[collection.IndexedSeq[A]] = (xs: collection.IndexedSeq[A], ys: collection.IndexedSeq[A]) => if (xs eq ys) true
-  else StaticMethods.iteratorEq(xs.iterator, ys.iterator)
+  implicit def indexedSeqEq[A: Eq]: Eq[IndexedSeq[A]] =
+    (xs: IndexedSeq[A], ys: IndexedSeq[A]) =>
+      if (xs eq ys) true
+      else StaticMethods.iteratorEq(xs.iterator, ys.iterator)
 
   implicit val byteArrayEq: Eq[ByteArray] = (x: ByteArray, y: ByteArray) =>
     Eq[Array[Byte]].contramap[ByteArray](_.array).eqv(x, y)
