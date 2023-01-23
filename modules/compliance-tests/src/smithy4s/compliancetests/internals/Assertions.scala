@@ -30,7 +30,7 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = Left(msg)
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
+    bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
 
   private def jsonEql(expected: String, actual: String): ComplianceResult = {
     (expected.isEmpty, actual.isEmpty) match {
