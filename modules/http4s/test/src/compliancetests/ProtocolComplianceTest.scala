@@ -27,6 +27,7 @@ import smithy4s.http4s._
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model._
 import smithy4s.dynamic.NodeToDocument
+import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.Document
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.http.PayloadError
