@@ -30,11 +30,13 @@ import smithy4s.http.CodecAPI
 import smithy4s.Document
 import smithy4s.http.PayloadError
 import smithy4s.Service
+import cats.Eq
 
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
 import org.http4s.Headers
+import smithy4s.schema.Alt
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -148,7 +150,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       name = endpoint.id.toString + "(client|response): " + testCase.id,
       run = {
         val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
-        val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
+        implicit val outputEq: Eq[O] =
+          smithy4s.compliancetests.internals.eq.EqSchemaVisitor(revisedSchema)
+        val buildResult = {
           errorSchema
             .toLeft {
               val outputDecoder = Document.Decoder.fromSchema(revisedSchema)
@@ -158,7 +162,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   .liftTo[F]
             }
             .left
-            .map(_.kleisliFy[F])
+            .map(_.errorEq[F])
         }
         val mediaType = aMediatype(endpoint.output, codecs)
         val status = Status.fromInt(testCase.code).liftTo[F]
@@ -189,16 +193,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             val doc = testCase.params.getOrElse(Document.obj())
             buildResult match {
               case Left(onError) =>
-                onError(doc).flatMap { expectedErr =>
-                  val res: F[O] = service
-                    .toPolyFunction[R](client)
-                    .apply(endpoint.wrap(dummyInput))
-                  res
-                    .map { _ => assert.success }
-                    .recover { case ex: Throwable =>
-                      assert.eql(expectedErr, ex)
-                    }
-                }
+                val res: F[O] = service
+                  .toPolyFunction[R](client)
+                  .apply(endpoint.wrap(dummyInput))
+                res
+                  .map { _ => assert.success }
+                  .recoverWith { case ex: Throwable => onError(doc, ex) }
               case Right(onOutput) =>
                 onOutput(doc).flatMap { expectedOutput =>
                   val res: F[O] = service
@@ -249,8 +249,17 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 clientResponseTest(
                   endpoint,
                   tc,
-                  errorSchema =
-                    Some(ErrorResponseTest.from(errorAlt, errorrable))
+                  errorSchema = Some(
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        Alt.Dispatcher(
+                          errorrable.error.alternatives,
+                          errorrable.error.dispatch(_)
+                        ),
+                        errorrable
+                      )
+                  )
                 )
               )
           }

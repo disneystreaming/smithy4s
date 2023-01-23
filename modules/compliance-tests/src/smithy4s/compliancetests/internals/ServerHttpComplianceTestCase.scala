@@ -18,17 +18,20 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
+import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
 import smithy4s.Document
 import smithy4s.Service
 import smithy4s.kinds._
+import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
 import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Errorable
+import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
@@ -87,6 +90,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   ): ComplianceTest[F] = {
 
     val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
+    implicit val inputEq: Eq[I] = EqSchemaVisitor(revisedSchema)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
       name = endpoint.id.toString + "(server|request): " + testCase.id,
@@ -284,8 +288,17 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                 serverResponseTest(
                   endpoint,
                   tc,
-                  errorSchema =
-                    Some(ErrorResponseTest.from(errorAlt, errorrable))
+                  errorSchema = Some(
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        Alt.Dispatcher(
+                          errorrable.error.alternatives,
+                          errorrable.error.dispatch(_)
+                        ),
+                        errorrable
+                      )
+                  )
                 )
               )
           }

@@ -62,7 +62,7 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     .decode[smithy4s.dynamic.model.Model](doc)
     .map(load) match {
     case Left(value) => println(value)
-    case Right(dsi) => {
+    case Right(dsi) =>
       val tests: List[ComplianceTest[IO]] = dsi
         .getService(ShapeId("alloy.test", "PizzaAdminService"))
         .toList
@@ -83,13 +83,10 @@ object ProtocolComplianceTest extends SimpleIOSuite {
             .attempt
             .map {
               case Right(expectations) => expectations
-              case Left(e) =>
-                e.printStackTrace()
-                failure(e.getMessage)
+              case Left(e)             => failure(e.getMessage)
             }
         }
       )
-    }
   }
 
 }

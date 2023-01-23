@@ -21,22 +21,49 @@ import smithy4s.Document
 import smithy4s.schema.Schema
 import smithy4s.Errorable
 import cats.ApplicativeThrow
+import cats.kernel.Eq
 import cats.syntax.all._
+import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
+import smithy4s.compliancetests.ComplianceTest.ComplianceResult
+import smithy4s.schema.Alt.Dispatcher
 
 private[compliancetests] final case class ErrorResponseTest[A, E](
     schema: Schema[A],
     inject: A => E,
+    dispatcher: E => Option[A],
     errorable: Errorable[E]
 ) {
 
+  lazy val errorDecoder: Document.Decoder[A] =
+    Document.Decoder.fromSchema(schema)
+  implicit lazy val eq: Eq[A] = EqSchemaVisitor(schema)
+
+  private def dispatchThrowable(t: Throwable): Option[A] = {
+    errorable.liftError(t).flatMap(dispatcher(_))
+  }
+
+  def errorEq[F[_]: ApplicativeThrow]
+      : (Document, Throwable) => F[ComplianceResult] = {
+
+    (doc: Document, throwable: Throwable) =>
+      errorDecoder
+        .decode(doc)
+        .map(inject)
+        .map { e =>
+          (dispatcher(e), dispatchThrowable(throwable)) match {
+            case (Some(a1), Some(a2)) => assert.eql(a1, a2)
+            case _                    => assert.fail("")
+          }
+        }
+        .liftTo[F]
+  }
   def kleisliFy[F[_]: ApplicativeThrow]: Document => F[Throwable] = {
-    val errorDecoder = Document.Decoder.fromSchema(schema)
     (doc: Document) =>
       errorDecoder
         .decode(doc)
         .map(inject)
+        .map(errorable.unliftError)
         .liftTo[F]
-        .map(errorable.unliftError(_))
   }
 
 }
@@ -44,7 +71,13 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
 private[compliancetests] object ErrorResponseTest {
   def from[E, A](
       errorAlt: smithy4s.schema.SchemaAlt[E, A],
+      dispatcher: Dispatcher[Schema, E],
       errorable: smithy4s.Errorable[E]
   ): ErrorResponseTest[A, E] =
-    ErrorResponseTest(errorAlt.instance, errorAlt.inject, errorable)
+    ErrorResponseTest(
+      errorAlt.instance,
+      errorAlt.inject,
+      dispatcher.projector(errorAlt),
+      errorable
+    )
 }
