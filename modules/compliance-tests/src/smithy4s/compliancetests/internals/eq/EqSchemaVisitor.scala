@@ -21,10 +21,10 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   ): Eq[C[A]] = {
     implicit val memberEq: Eq[A] = self(member)
     tag match {
-      case CollectionTag.ListTag       => Eq[C[A]]
-      case CollectionTag.SetTag        => Eq[C[A]]
-      case CollectionTag.VectorTag     => Eq[C[A]]
-      case CollectionTag.IndexedSeqTag => Eq[C[A]]
+      case CollectionTag.ListTag       => Eq[List[A]]
+      case CollectionTag.SetTag        => Eq[Set[A]]
+      case CollectionTag.VectorTag     => Eq[Vector[A]]
+      case CollectionTag.IndexedSeqTag => Eq[IndexedSeq[A]]
     }
   }
 
