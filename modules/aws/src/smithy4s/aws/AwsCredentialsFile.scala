@@ -16,15 +16,14 @@
 
 package smithy4s.aws
 
+import cats.effect.Resource
+import cats.effect.Sync
 import cats.syntax.all._
+import java.nio.file.Paths
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
 import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsCredentials
-
-import java.nio.file.Paths
-import cats.effect.Sync
-import cats.effect.Resource
 
 final case class AwsCredentialsFile(
     default: Option[AwsCredentials],
