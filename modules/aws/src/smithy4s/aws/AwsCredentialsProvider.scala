@@ -16,15 +16,18 @@
 
 package smithy4s.aws
 
-import cats.MonadThrow
+import cats.effect.Async
 import cats.effect.Clock
+import cats.effect.Sync
+import cats.effect.Ref
 import cats.effect.Resource
 import cats.effect.Temporal
-import cats.effect.kernel.Ref
+import cats.MonadThrow
 import cats.syntax.all._
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
 import smithy4s.aws.kernel.AWS_SESSION_TOKEN
+import smithy4s.aws.kernel.AwsCredentials
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
@@ -36,24 +39,33 @@ object AwsCredentialsProvider {
 
   def default[F[_]](
       httpClient: SimpleHttpClient[F]
-  )(implicit F: Temporal[F]): Resource[F, F[AwsCredentials]] = {
-    Resource
-      .eval(fromEnv[F])
-      .map(F.pure)
-      .orElse(refreshing[F](fromECS(httpClient)))
+  )(implicit F: Async[F]): Resource[F, F[AwsCredentials]] = {
+    val env = Resource.eval(fromEnv[F]).map(F.pure)
+    val fromDisk = Resource.eval(loadFromDisk[F]).map(F.pure)
+    env
+      .orElse(fromDisk)
       .orElse(refreshing[F](fromEC2(httpClient)))
   }
 
   def fromEnv[F[_]](implicit F: MonadThrow[F]): F[AwsCredentials] = {
-    val either = for {
+    val either: Either[Throwable, AwsCredentials] = for {
       keyId <- SysEnv.envValue(AWS_ACCESS_KEY_ID)
       accessKey <- SysEnv.envValue(AWS_SECRET_ACCESS_KEY)
       session = SysEnv.envValue(AWS_SESSION_TOKEN).toOption
     } yield AwsCredentials.Default(keyId, accessKey, session)
-    either match {
-      case Right(value) => F.pure(value)
-      case Left(t)      => F.raiseError(t)
-    }
+    either.liftTo[F]
+  }
+
+  def loadFromDisk[F[_]](implicit F: Sync[F]): F[AwsCredentials] = {
+    SysEnv
+      .envValue("HOME")
+      .liftTo[F]
+      .flatMap { home =>
+        AwsCredentialsFile.loadFromDisk(
+          home,
+          SysEnv.envValue("AWS_PROFILE").toOption
+        )
+      }
   }
 
   val AWS_CONTAINER_CREDENTIALS_RELATIVE_URI =
