@@ -26,8 +26,12 @@ import smithy4s.ShapeId
 import smithy4s.http4s._
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model._
+import software.amazon.smithy.model.shapes.{ShapeId => AwsShapeId}
+import software.amazon.smithy.model.transform._
 import smithy4s.dynamic._
+import smithy4s.Document
 import smithy4s.dynamic.DynamicSchemaIndex.load
+import smithy4s.http.PayloadError
 import weaver._
 
 object ProtocolComplianceTest extends SimpleIOSuite {
@@ -55,38 +59,58 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   }
 
-  private val smithyModel = Model.assembler().discoverModels.assemble.unwrap()
-  private val node = ModelSerializer.builder().build.serialize(smithyModel)
-  private val doc = NodeToDocument(node)
-  smithy4s.Document
-    .decode[smithy4s.dynamic.model.Model](doc)
-    .map(load) match {
-    case Left(value) => println(value)
-    case Right(dsi) =>
-      val tests: List[ComplianceTest[IO]] = dsi
-        .getService(ShapeId("alloy.test", "PizzaAdminService"))
-        .toList
-        .flatMap(wrapper => {
-          HttpProtocolCompliance
-            .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
-        })
-
-      tests.foreach(tc =>
-        test(tc.name) {
-          tc.run
-            .map[Expectations] {
-              case Left(value) =>
-                Expectations.Helpers.failure(value)
-              case Right(_) =>
-                Expectations.Helpers.success
-            }
-            .attempt
-            .map {
-              case Right(expectations) => expectations
-              case Left(e)             => failure(e.getMessage)
-            }
-        }
-      )
+  lazy val map = {
+    val local = new java.util.HashMap[AwsShapeId, AwsShapeId]()
+    local.put(
+      AwsShapeId.from("aws.protocols#restJson1"),
+      AwsShapeId.from("alloy#simpleRestJson")
+    )
+    local
   }
 
+  private val smithyModel = Model.assembler().discoverModels.assemble.unwrap()
+  /*  private val transformToRestJson =
+    ModelTransformer.create().renameShapes(smithyModel, map)*/
+  private val node =
+    ModelSerializer.builder().build.serialize(smithyModel)
+  private val doc = NodeToDocument(node)
+  private val dynamicSchemaIndex: DynamicSchemaIndex =
+    loadDynamic(doc).getOrElse(sys.error("unable to load Dynamic model"))
+
+  val pizzaSpec = generatetests(ShapeId("alloy.test", "PizzaAdminService"))
+
+  pizzaSpec(dynamicSchemaIndex).foreach(tc =>
+    test(tc.name) {
+      tc.run
+        .map[Expectations] {
+          case Left(value) =>
+            Expectations.Helpers.failure(value)
+          case Right(_) =>
+            Expectations.Helpers.success
+        }
+        .attempt
+        .map {
+          case Right(expectations) => expectations
+          case Left(e)             => failure(e.getMessage)
+        }
+    }
+  )
+
+  private def generatetests(
+      shapeId: ShapeId
+  ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
+    dynamicSchemaIndex
+      .getService(shapeId)
+      .toList
+      .flatMap(wrapper => {
+        HttpProtocolCompliance
+          .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
+      })
+  }
+
+  private def loadDynamic(
+      doc: Document
+  ): Either[PayloadError, DynamicSchemaIndex] = {
+    Document.decode[smithy4s.dynamic.model.Model](doc).map(load)
+  }
 }
