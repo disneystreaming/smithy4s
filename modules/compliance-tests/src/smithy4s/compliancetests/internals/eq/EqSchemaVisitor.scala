@@ -6,6 +6,8 @@ import cats.kernel.Eq
 import smithy4s._
 import smithy4s.schema.{Schema, _}
 
+import java.util.UUID
+
 object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def primitive[P](
       shapeId: ShapeId,
@@ -121,21 +123,21 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
     primitive match {
-      case Primitive.PShort      => Eq[P]
-      case Primitive.PInt        => Eq[P]
-      case Primitive.PFloat      => Eq[P]
-      case Primitive.PLong       => Eq[P]
-      case Primitive.PDouble     => Eq[P]
-      case Primitive.PBigInt     => Eq[P]
-      case Primitive.PBigDecimal => Eq[P]
-      case Primitive.PBoolean    => Eq[P]
-      case Primitive.PString     => Eq[P]
-      case Primitive.PUUID       => Eq[P]
-      case Primitive.PByte       => Eq[P]
-      case Primitive.PBlob       => Eq[P]
-      case Primitive.PDocument   => Eq[P]
-      case Primitive.PTimestamp  => Eq[P]
-      case Primitive.PUnit       => Eq[P]
+      case Primitive.PShort      => Eq[Short]
+      case Primitive.PInt        => Eq[Int]
+      case Primitive.PFloat      => Eq[Float]
+      case Primitive.PLong       => Eq[Long]
+      case Primitive.PDouble     => Eq[Double]
+      case Primitive.PBigInt     => Eq[BigInt]
+      case Primitive.PBigDecimal => Eq[BigDecimal]
+      case Primitive.PBoolean    => Eq[Boolean]
+      case Primitive.PString     => Eq[String]
+      case Primitive.PUUID       => Eq[UUID]
+      case Primitive.PByte       => Eq[Byte]
+      case Primitive.PBlob       => Eq[ByteArray]
+      case Primitive.PDocument   => Eq[Document]
+      case Primitive.PTimestamp  => Eq[Timestamp]
+      case Primitive.PUnit       => Eq[Unit]
     }
   }
 
