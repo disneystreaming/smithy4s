@@ -51,6 +51,17 @@ private[internals] object assert {
     }
   }
 
+  def neq[A: Eq](expected: A, actual: A): ComplianceResult = {
+    if (expected =!= actual) {
+      success
+    } else {
+      fail(
+        s"This test passed when it was supposed to fail, Actual value: ${pprint
+          .apply(actual)} was equal to ${pprint.apply(expected)}."
+      )
+    }
+  }
+
   def eql[A: Eq](expected: A, actual: A): ComplianceResult = {
     if (expected === actual) {
       success
