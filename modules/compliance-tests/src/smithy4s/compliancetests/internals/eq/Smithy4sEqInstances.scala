@@ -8,7 +8,8 @@ trait Smithy4sEqInstances {
   implicit def arrayEq[A: Eq]: Eq[Array[A]] = (x: Array[A], y: Array[A]) =>
     x.zip(y).forall { case (a, b) => a === b }
 
-  implicit def indexedSeq[A: Eq]: Eq[IndexedSeq[A]] = Eq[Seq[A]].contramap(_.toSeq)
+  implicit def indexedSeq[A: Eq]: Eq[IndexedSeq[A]] =
+    Eq[Seq[A]].contramap(_.toSeq)
 
   implicit val byteArrayEq: Eq[ByteArray] = (x: ByteArray, y: ByteArray) =>
     Eq[Array[Byte]].contramap[ByteArray](_.array).eqv(x, y)

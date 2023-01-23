@@ -5,7 +5,7 @@ import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
 import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
-import weaver.{ Expectations, FunSuite}
+import weaver.{Expectations, FunSuite}
 
 object EqVisitorSpec extends FunSuite {
 
@@ -278,7 +278,7 @@ object EqVisitorSpec extends FunSuite {
 
   test("enumeration") {
     sealed abstract class FooBar(val stringValue: String, val intValue: Int)
-      extends smithy4s.Enumeration.Value {
+        extends smithy4s.Enumeration.Value {
       val name = stringValue
       val value = stringValue
       val hints = Hints.empty
@@ -303,4 +303,3 @@ object EqVisitorSpec extends FunSuite {
     expect(eq.eqv(a0, a1)) and expect(eq.neqv(a0, a2))
   }
 }
-
