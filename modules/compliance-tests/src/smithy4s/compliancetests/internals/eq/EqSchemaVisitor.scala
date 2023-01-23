@@ -97,11 +97,12 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): Eq[U] = {
+    // A version of `Eq` that assumes that the RHS is "up-casted" to U.
     trait AltEq[A] {
       def eqv(a: A, u: U): Boolean
     }
 
-    // The encoded form that Eq works against is a curried function.
+    // The encoded form that Eq works against is a partially-applied curried function.
     implicit val encoderKInstance = new EncoderK[AltEq, U => Boolean] {
       def apply[A](fa: AltEq[A], a: A): U => Boolean = { (u: U) =>
         fa.eqv(a, u)
