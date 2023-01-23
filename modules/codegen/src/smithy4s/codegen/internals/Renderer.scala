@@ -32,7 +32,6 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
-import scala.annotation.tailrec
 
 private[internals] object Renderer {
 
@@ -165,56 +164,46 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   /**
-    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments
+    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
     *
-    * @param l splitted docstring from the IR
-    * @param memberDocs the documentation strings of the members of the shape
     * @return formatted list of scaladoc lines
     */
   private def makeDocLines(
-      nel: NonEmptyList[String],
-      memberDocs: Map[String, String]
-  ): List[Line] = {
-    @tailrec
-    def loop(
-        l: List[String],
-        acc: List[Line],
-        memberDocs: Map[String, String]
-    ): List[Line] = {
-      l match {
-        case hd :: Nil => acc :+ line"  * $hd" :+ line"  */"
-        case hd :: tl  => loop(tl, acc :+ line"  * $hd", memberDocs)
-        case Nil       =>
-          // TODO: when memberDocs returns something useful
-          // make it render as scaladoc nicely
-          acc :+ line"${memberDocs.toString()}"
-
-      }
-    }
-    loop(nel.tail, List(line"/** ${nel.head}"), memberDocs)
+      rawLines: NonEmptyList[String]
+  ): Lines = {
+    Lines(
+      rawLines
+        .mkString_("/** ", "\n  * ", "\n  */")
+        .linesIterator
+        .toList
+        .map(Line(_))
+    )
   }
 
   private def documentationAnnotation(hints: List[Hint]): Lines = {
+    def split(s: String) = s.replace("*/", "\\*\\/").linesIterator.toList
+
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .map { doc =>
-        val shapeDocs =
-          NonEmptyList.fromList(
-            doc.docString.replace("*/", "\\*\\/").linesIterator.toList
-          )
-        val memberDocs = doc.memberDocs
-        (shapeDocs, memberDocs)
+        split(doc.docString) ++
+          doc.memberDocs.flatMap { case (memberName, memberDoc) =>
+            split(memberDoc) match {
+              case head :: rest =>
+                s"@param $memberName $head" :: rest
+
+              case Nil => sys.error("impossible: no lines")
+            }
+          }
       }
+      .flatMap(NonEmptyList.fromList(_))
       .foldMap {
-        case (Some(shapeDocs), memberDocs) => {
-          val lines =
-            if (shapeDocs.size > 1) makeDocLines(shapeDocs, memberDocs)
-            else List(line"/** ${shapeDocs.head} */")
-          Lines(lines)
-        }
-        case (None, memberDocs) => {
-          Lines(List(line"${memberDocs.toString()}"))
-        }
+        case NonEmptyList(documentationLine, Nil) =>
+          Lines(line"/** $documentationLine */")
+
+        // more than one line
+        case documentationLines =>
+          makeDocLines(documentationLines)
       }
   }
 

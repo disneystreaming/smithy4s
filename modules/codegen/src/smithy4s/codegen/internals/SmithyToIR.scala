@@ -738,19 +738,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.PackedInputs
     case d: DeprecatedTrait =>
       Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
-    case doc: DocumentationTrait =>
-      val memberDocs = shape
-        .members()
-        .asScala
-        .map(_.getTarget())
-        .map(shapeId => (shapeId.name, model.expectShape(shapeId)))
-        .map({ case (name, shape) =>
-          (name, shape.getTrait(classOf[DocumentationTrait]).asScala)
-        })
-        .collect({ case (name, Some(v)) => (name, v.getValue()) })
-        .toMap
-
-      Hint.Documentation(doc.getValue(), memberDocs)
     case _: ErrorMessageTrait =>
       Hint.ErrorMessage
     case _: VectorTrait =>
@@ -762,6 +749,31 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
+  }
+
+  private def documentationHint(shape: Shape): Option[Hint] = {
+    val memberDocs = shape
+      .members()
+      .asScala
+      .map { member =>
+        val memberDocs = member.getTrait(classOf[DocumentationTrait]).asScala
+        def targetDocs = model
+          .expectShape(member.getTarget)
+          .getTrait(classOf[DocumentationTrait])
+          .asScala
+
+        (
+          member.getMemberName(),
+          memberDocs.orElse(targetDocs)
+        )
+      }
+      .collect { case (name, Some(v)) => (name, v.getValue()) }
+      .toMap
+
+    // todo: what if the shape in question doesn't have docs, but members do?
+    shape.getTrait(classOf[DocumentationTrait]).asScala.map { doc =>
+      Hint.Documentation(doc.getValue(), memberDocs)
+    }
   }
 
   private def hints(shape: Shape): List[Hint] = {
@@ -778,9 +790,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
-    traits.collect(traitToHint(shape)) ++ nonConstraintNonMetaTraits.map(
-      unfoldTrait
-    )
+    traits.collect(traitToHint(shape)) ++
+      documentationHint(shape) ++
+      nonConstraintNonMetaTraits.map(unfoldTrait)
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
