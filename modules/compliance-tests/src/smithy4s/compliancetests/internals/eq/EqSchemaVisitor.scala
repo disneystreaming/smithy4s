@@ -7,6 +7,7 @@ import smithy4s._
 import smithy4s.schema.{Schema, _}
 
 import java.util.UUID
+import smithy4s.capability.EncoderK
 
 object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def primitive[P](
@@ -96,8 +97,44 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): Eq[U] = {
-    // just to make sure we don't forget to implement this
-    throw new NotImplementedError("EqSchemaVisitor does not support unions")
+    trait AltEq[A] {
+      def eqv(a: A, u: U): Boolean
+    }
+
+    // The encoded form that Eq works against is a curried function.
+    implicit val encoderKInstance = new EncoderK[AltEq, U => Boolean] {
+      def apply[A](fa: AltEq[A], a: A): U => Boolean = { (u: U) =>
+        fa.eqv(a, u)
+      }
+      def absorb[A](f: A => (U => Boolean)): AltEq[A] = new AltEq[A] {
+        def eqv(a: A, u: U): Boolean = f(a)(u)
+      }
+    }
+
+    val precompiler = new Alt.Precompiler[Schema, AltEq] {
+      def apply[A](label: String, instance: Schema[A]): AltEq[A] = {
+        // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
+        // is lost in the precompiler.
+        val altA =
+          alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+        // We're using it to get a function that lets us project the `U` against `A`.
+        // `U` is not necessarily an `A, so this function returns an `Option`
+        val projectA: U => Option[A] = dispatch.projector(altA)
+        val eqA = instance.compile(self)
+        new AltEq[A] {
+          def eqv(a: A, u: U): Boolean = projectA(u) match {
+            case None => false // U is not an A.
+            case Some(a2) =>
+              eqA.eqv(a, a2) // U is an A, we delegate the comparison
+          }
+        }
+      }
+    }
+
+    val altEqU = dispatch.compile(precompiler)
+    new Eq[U] {
+      def eqv(x: U, y: U): Boolean = altEqU.eqv(x, y)
+    }
   }
 
   override def biject[A, B](
