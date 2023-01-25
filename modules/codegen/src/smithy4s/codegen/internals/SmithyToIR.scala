@@ -770,9 +770,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       .collect { case (name, Some(v)) => (name, v.getValue()) }
       .toMap
 
+
     // todo: what if the shape in question doesn't have docs, but members do?
     shape.getTrait(classOf[DocumentationTrait]).asScala.map { doc =>
-      Hint.Documentation(doc.getValue(), memberDocs)
+      val memberDocsPresent = if (memberDocs.isEmpty) None else Some(memberDocs)
+      Hint.Documentation(Option(doc.getValue), memberDocsPresent)
     }
   }
 

@@ -186,18 +186,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     hints
       .collectFirst { case h: Hint.Documentation => h }
-      .map { doc =>
-        val shapeLinesOpt = split(doc.docString).map(_.toList)
-        val memberLinesOpt = doc.memberDocs.flatMap {
+      .flatMap { doc =>
+        val shapeLinesOpt = doc.docString.map(split(_)).map(_.toList)
+        val memberLinesOpt = doc.memberDocs.map(m => m.flatMap {
           case (memberName, memberDoc) =>
             split(memberDoc) match {
               case Some(NonEmptyList(head, rest)) =>
                 s"@param $memberName $head" :: rest
               case None => Nil
             }
-        }.toList
+        })
 
-        List(shapeLinesOpt, Some(memberLinesOpt)).flatten.flatten
+        List(shapeLinesOpt, memberLinesOpt).flatten.flatten
       }
       .flatMap(NonEmptyList.fromList(_))
       .foldMap {
