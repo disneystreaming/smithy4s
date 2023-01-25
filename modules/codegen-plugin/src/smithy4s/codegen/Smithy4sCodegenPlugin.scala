@@ -329,7 +329,9 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
           .map(_.allFiles)
           .fold(uw => throw uw.resolveException, identity)
       }
-      getJars(dependenciesTask.value)
+      // Forcing configurations to None as the dynamic fetcher seems to emit
+      // every moduleID that has a configuration.
+      getJars(dependenciesTask.value.map(_.withConfigurations(None)))
     }
 
   def transitiveLibraryDependencies: Def.Initialize[Task[Seq[ModuleID]]] = {
