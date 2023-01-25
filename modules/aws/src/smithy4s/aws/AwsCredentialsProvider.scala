@@ -18,13 +18,15 @@ package smithy4s.aws
 
 import cats.effect.Async
 import cats.effect.Clock
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.effect.Ref
 import cats.effect.Resource
 import cats.effect.Temporal
 import cats.MonadThrow
 import cats.syntax.all._
+import fs2.io.file.Files
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
+import smithy4s.aws.kernel.AWS_PROFILE
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
 import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsCredentials
@@ -41,10 +43,13 @@ object AwsCredentialsProvider {
       httpClient: SimpleHttpClient[F]
   )(implicit F: Async[F]): Resource[F, F[AwsCredentials]] = {
     val env = Resource.eval(fromEnv[F]).map(F.pure)
-    val fromDisk = Resource.eval(loadFromDisk[F]).map(F.pure)
+    val _fromDisk =
+      defaultCredentialsFile.flatMap(path =>
+        fromDisk[F](path, getProfileFromEnv)
+      )
     env
-      .orElse(fromDisk)
       .orElse(refreshing[F](fromEC2(httpClient)))
+      .orElse(Resource.eval(_fromDisk).map(F.pure))
   }
 
   def fromEnv[F[_]](implicit F: MonadThrow[F]): F[AwsCredentials] = {
@@ -56,16 +61,28 @@ object AwsCredentialsProvider {
     either.liftTo[F]
   }
 
-  def loadFromDisk[F[_]](implicit F: Sync[F]): F[AwsCredentials] = {
+  def getProfileFromEnv: Option[String] =
+    SysEnv.envValue(AWS_PROFILE).toOption
+
+  def defaultCredentialsFile[F[_]: Files: MonadThrow]: F[fs2.io.file.Path] =
     SysEnv
       .envValue("HOME")
       .liftTo[F]
       .flatMap { home =>
-        AwsCredentialsFile.loadFromDisk(
-          home,
-          SysEnv.envValue("AWS_PROFILE").toOption
-        )
+        val path = fs2.io.file.Path(s"$home/.aws/credentials")
+        Files[F]
+          .exists(path)
+          .ifM(
+            path.pure[F],
+            MonadThrow[F].raiseError(AwsCredentialsFileException("rip"))
+          )
       }
+
+  def fromDisk[F[_]: Concurrent: Files](
+      path: fs2.io.file.Path,
+      profile: Option[String]
+  ): F[AwsCredentials] = {
+    AwsCredentialsFile.fromDisk(path, profile)
   }
 
   val AWS_CONTAINER_CREDENTIALS_RELATIVE_URI =

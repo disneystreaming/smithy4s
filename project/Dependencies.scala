@@ -51,8 +51,11 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
+    val fs2Version = "3.5.0"
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.4.0")
+      Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
+    val io: Def.Initialize[ModuleID] =
+      Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
   }
 
   object Mill {

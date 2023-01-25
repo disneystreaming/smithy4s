@@ -16,14 +16,18 @@
 
 package smithy4s.aws
 
-import cats.effect.Resource
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.all._
-import java.nio.file.Paths
+import fs2.io.file.Files
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
 import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsCredentials
+
+final case class AwsCredentialsFileException(
+    message: String,
+    cause: Throwable = null
+) extends RuntimeException(message, cause)
 
 final case class AwsCredentialsFile(
     default: Option[AwsCredentials],
@@ -31,36 +35,43 @@ final case class AwsCredentialsFile(
 )
 
 object AwsCredentialsFile {
-  def loadFromDisk[F[_]](home: String, profile: Option[String])(implicit
-      F: Sync[F]
+  private type LoadCredentials[A] = Either[AwsCredentialsFileException, A]
+
+  def fromDisk[F[_]](path: fs2.io.file.Path, profile: Option[String])(implicit
+      F: Concurrent[F],
+      Files: Files[F]
   ): F[AwsCredentials] = {
-    loadFile(home)
-      .use(lines => processFileLines(lines).pure[F])
-      .flatMap(creds =>
-        profile
-          .map(p =>
-            creds.profiles
-              .get(p)
-              .toRight(
-                new RuntimeException(
-                  s"Profile `$p` was not found in the credentials file."
-                )
-              )
-              .liftTo[F]
+    for {
+      lines <- Files.readUtf8Lines(path).compile.toList
+      creds <- processFileLines(lines).liftTo[F]
+
+      defaultProfile = creds.default
+      requestedProfile <- profile.traverse { p =>
+        creds.profiles
+          .get(p)
+          .toRight(
+            AwsCredentialsFileException(
+              s"Profile `$p` was not found in the credentials file."
+            )
           )
-          .getOrElse(
-            creds.default
-              .toRight(
-                new RuntimeException(
-                  s"No default profile is available in the credentials file."
-                )
-              )
-              .liftTo[F]
+          .liftTo[F]
+      }
+
+      finalProfile <- requestedProfile
+        .orElse(defaultProfile)
+        .toRight(
+          AwsCredentialsFileException(
+            "No default profile is available in the credentials file."
           )
-      )
+        )
+        .liftTo[F]
+
+    } yield finalProfile
   }
 
-  private[aws] def processFileLines(lines: List[String]): AwsCredentialsFile = {
+  private[aws] def processFileLines(
+      lines: List[String]
+  ): LoadCredentials[AwsCredentialsFile] = {
     def inProfile(
         rest: List[String],
         currentProfile: String,
@@ -98,42 +109,60 @@ object AwsCredentialsFile {
           data
       }
     }
-
-    val data = lookingForProfile(lines.filter(_.trim.nonEmpty), Map.empty)
-    AwsCredentialsFile.profilesFromMap(data)
+    Either
+      .catchNonFatal(
+        lookingForProfile(lines.filter(_.trim.nonEmpty), Map.empty)
+      )
+      .leftMap(ex =>
+        AwsCredentialsFileException("Unable to parse credentials file.", ex)
+      )
+      .flatMap { data =>
+        AwsCredentialsFile.profilesFromMap(data)
+      }
   }
 
-  private def loadFile[F[_]: Sync](home: String): Resource[F, List[String]] =
-    Resource
-      .fromAutoCloseable(
-        Sync[F].delay(
-          scala.io.Source
-            .fromFile(Paths.get(home, ".aws", "credentials").toUri())
+  private def credentialsFromMap(
+      data: Map[String, String]
+  ): LoadCredentials[AwsCredentials] = {
+    def required(key: String): LoadCredentials[String] =
+      data
+        .get(key.toLowerCase())
+        .toRight(
+          AwsCredentialsFileException(
+            s"'$key' is missing from the profile data."
+          )
         )
-      )
-      .map(_.getLines().toList)
-
-  private def credentialsFromMap(data: Map[String, String]): AwsCredentials =
-    AwsCredentials.Default(
-      data(AWS_ACCESS_KEY_ID.toLowerCase()),
-      data(AWS_SECRET_ACCESS_KEY.toLowerCase()),
-      data.get(AWS_SESSION_TOKEN.toLowerCase())
-    )
+    def optional(key: String): Option[String] =
+      data.get(key.toLowerCase())
+    (
+      required(AWS_ACCESS_KEY_ID),
+      required(AWS_SECRET_ACCESS_KEY),
+      Right(optional(AWS_SESSION_TOKEN))
+    ).mapN { case (key, secret, sessionToken) =>
+      AwsCredentials.Default(key, secret, sessionToken)
+    }
+  }
 
   private def profilesFromMap(
       dataPerProfile: Map[String, Map[String, String]]
-  ): AwsCredentialsFile = {
-    val default = dataPerProfile.get("default").map(credentialsFromMap)
-    val others = dataPerProfile
+  ): LoadCredentials[AwsCredentialsFile] = {
+    val defaultF: LoadCredentials[Option[AwsCredentials]] =
+      dataPerProfile
+        .get("default")
+        .traverse(credentialsFromMap)
+    val othersF: LoadCredentials[Map[String, AwsCredentials]] = dataPerProfile
       .filterNot(_._1 == "default")
-      .map { case (profile, data) =>
-        profile -> credentialsFromMap(data)
+      .toList
+      .traverse { case (profile, data) =>
+        credentialsFromMap(data).tupleLeft(profile)
       }
-    AwsCredentialsFile(default, others)
+      .map(_.toMap)
+
+    (defaultF, othersF).mapN(AwsCredentialsFile.apply)
   }
 }
 
-object Profile {
+private object Profile {
   private val profileMatch = "([\\w_-]*)"
   object Default {
     def unapply(s: String): Option[String] =
