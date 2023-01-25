@@ -74,7 +74,11 @@ object AwsCredentialsProvider {
           .exists(path)
           .ifM(
             path.pure[F],
-            MonadThrow[F].raiseError(AwsCredentialsFileException("rip"))
+            MonadThrow[F].raiseError(
+              AwsCredentialsFileException(
+                s"Credentials file not found at '$path'"
+              )
+            )
           )
       }
 
