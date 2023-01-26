@@ -10,10 +10,12 @@ import smithy4s.schema.Schema.struct
   * all fields are required
   * and are given through HTTP labels
   * See https://smithy.io/2.0/spec/http-bindings.html?highlight=httppayload#http-uri-label
-  * @param key Sent in the URI label named "key".
-  * Key can also be seen as the filename
-  * It is always required for a GET operation
-  * @param bucketName Sent in the URI label named "bucketName".
+  * @param key
+  *   Sent in the URI label named "key".
+  *   Key can also be seen as the filename
+  *   It is always required for a GET operation
+  * @param bucketName
+  *   Sent in the URI label named "bucketName".
   */
 case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
