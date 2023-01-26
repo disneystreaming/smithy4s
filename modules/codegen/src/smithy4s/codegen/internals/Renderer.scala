@@ -169,7 +169,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     * @return formatted list of scaladoc lines
     */
   private def makeDocLines(
-      rawLines: NonEmptyList[String]
+      rawLines: List[String]
   ): Lines = {
     Lines(
       rawLines
@@ -181,32 +181,19 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def documentationAnnotation(hints: List[Hint]): Lines = {
-    def split(s: String) =
-      NonEmptyList.fromList(s.replace("*/", "\\*\\/").linesIterator.toList)
-
     hints
       .collectFirst { case h: Hint.Documentation => h }
-      .flatMap { doc =>
-        val shapeLinesOpt = doc.docString.map(split(_)).map(_.toList)
-        val memberLinesOpt = doc.memberDocs.map(m => m.flatMap {
-          case (memberName, memberDoc) =>
-            split(memberDoc) match {
-              case Some(NonEmptyList(head, rest)) =>
-                s"@param $memberName $head" :: rest
-              case None => Nil
-            }
-        })
-
-        List(shapeLinesOpt, memberLinesOpt).flatten.flatten
-      }
-      .flatMap(NonEmptyList.fromList(_))
-      .foldMap {
-        case NonEmptyList(documentationLine, Nil) =>
-          Lines(line"/** $documentationLine */")
-
-        // more than one line
-        case documentationLines =>
-          makeDocLines(documentationLines)
+      .foldMap { doc =>
+        val shapeDocs =
+          if (doc.docLines.length > 1) makeDocLines(doc.docLines)
+          else Lines(line"/* ${doc.docLines.head} */")
+        val memberDocs = doc.memberDocLines.map {  
+          case (memberName, head :: _) =>
+            Lines(s"@param $memberName $head")
+          case _ => Lines("")
+        
+        }
+        Lines(shapeDocs, memberDocs)
       }
   }
 

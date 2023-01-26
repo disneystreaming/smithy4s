@@ -752,6 +752,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {
+
+    def split(s: String) =
+      s.replace("*/", "\\*\\/").linesIterator.toList
     val memberDocs = shape
       .members()
       .asScala
@@ -767,14 +770,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           memberDocs.orElse(targetDocs)
         )
       }
-      .collect { case (name, Some(v)) => (name, v.getValue()) }
+      .collect { case (name, Some(v)) => (name, split(v.getValue())) }
       .toMap
 
-
-    // todo: what if the shape in question doesn't have docs, but members do?
     shape.getTrait(classOf[DocumentationTrait]).asScala.map { doc =>
-      val memberDocsPresent = if (memberDocs.isEmpty) None else Some(memberDocs)
-      Hint.Documentation(Option(doc.getValue), memberDocsPresent)
+      val shapeDocs = split(doc.getValue())
+      Hint.Documentation(shapeDocs, memberDocs)
     }
   }
 
