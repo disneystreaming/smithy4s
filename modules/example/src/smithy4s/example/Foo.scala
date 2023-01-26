@@ -14,8 +14,9 @@ import smithy4s.schema.Schema.union
 /** Helpful information for Foo
   * int, bigInt and bDec are useful number constructs
   * The string case is there because.
-  * @param str this is a comment saying you should be careful for this case
-  * you never know what lies ahead with Strings like this
+  * @param str
+  *   this is a comment saying you should be careful for this case
+  *   you never know what lies ahead with Strings like this
   */
 sealed trait Foo extends scala.Product with scala.Serializable {
   @inline final def widen: Foo = this

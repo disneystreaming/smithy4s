@@ -171,12 +171,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def makeDocLines(
       rawLines: List[String]
   ): Lines = {
-    Lines(
+    lines(
       rawLines
         .mkString_("/** ", "\n  * ", "\n  */")
         .linesIterator
         .toList
-        .map(Line(_))
     )
   }
 
@@ -184,16 +183,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
-        val shapeDocs =
-          if (doc.docLines.length > 1) makeDocLines(doc.docLines)
-          else Lines(line"/* ${doc.docLines.head} */")
-        val memberDocs = doc.memberDocLines.map {  
-          case (memberName, head :: _) =>
-            Lines(s"@param $memberName $head")
-          case _ => Lines("")
-        
-        }
-        Lines(shapeDocs, memberDocs)
+        val shapeDocs: List[String] = doc.docLines
+        val memberDocs: List[String] = doc.memberDocLines.flatMap {
+          case (memberName, text) =>
+            s"@param $memberName" :: text.map("  " + _)
+        }.toList
+
+        val maybeNewline =
+          if (shapeDocs.nonEmpty && memberDocs.nonEmpty) List("", "") else Nil
+        val allDocs = shapeDocs ++ maybeNewline ++ memberDocs
+        if (allDocs.size == 1) lines("/** " + allDocs.head + " */")
+        else makeDocLines(shapeDocs ++ memberDocs)
       }
   }
 
