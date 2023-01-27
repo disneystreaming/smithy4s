@@ -19,5 +19,7 @@ package smithy4s
 package object internals {
   type SchemaDescription[A] = String
   val SchemaDescriptionDetailed: Schema ~> SchemaDescription =
-    SchemaDescriptionDetailedImpl.mapK(SchemaDescriptionDetailedImpl.conversion)
+    SchemaDescriptionDetailedImpl.andThen(
+      SchemaDescriptionDetailedImpl.conversion
+    )
 }

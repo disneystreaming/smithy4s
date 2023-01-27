@@ -1,18 +1,18 @@
 package smithy4s.example.error
 
-import smithy4s.Schema
 import smithy4s.Hints
-import smithy4s.schema.Schema.string
+import smithy4s.Schema
 import smithy4s.ShapeId
-import smithy4s.schema.Schema.struct
 import smithy4s.ShapeTag
+import smithy4s.schema.Schema.string
+import smithy4s.schema.Schema.struct
 
 case class NotFoundError(error: Option[String] = None) extends Throwable {
 }
 object NotFoundError extends ShapeTag.Companion[NotFoundError] {
   val id: ShapeId = ShapeId("smithy4s.example.error", "NotFoundError")
 
-  val hints : Hints = Hints(
+  val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
   )

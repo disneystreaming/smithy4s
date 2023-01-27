@@ -17,6 +17,7 @@
 package smithy4s
 package http4s
 
+import smithy4s.kinds._
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
@@ -24,11 +25,12 @@ import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
 // format: off
 class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     baseUri: Uri,
-    service: smithy4s.Service[Alg, Op],
+    service: smithy4s.Service.Aux[Alg, Op],
     client: Client[F],
-    entityCompiler: EntityCompiler[F]
+    entityCompiler: EntityCompiler[F],
+    middleware: ClientEndpointMiddleware[F]
 )(implicit effect: EffectCompat[F])
-    extends Interpreter[Op, F] {
+    extends FunctorInterpreter[Op, F] {
 // format: on
 
   private val compilerContext = internals.CompilerContext.make(entityCompiler)
@@ -42,22 +44,31 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
   }
 
   private val clientEndpoints =
-    new Transformation[
+    new PolyFunction5[
       Endpoint[Op, *, *, *, *, *],
       SmithyHttp4sClientEndpoint[F, Op, *, *, *, *, *]
     ] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
       ): SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] =
-        SmithyHttp4sClientEndpoint(
-          baseUri,
-          client,
-          endpoint,
-          compilerContext
-        ).getOrElse(
-          sys.error(
-            s"Operation ${endpoint.name} is not bound to http semantics"
+        SmithyHttp4sClientEndpoint
+          .make(
+            baseUri,
+            client,
+            endpoint,
+            compilerContext,
+            middleware.prepare(service)(endpoint)
           )
-        )
-    }.precompute(service.endpoints.map(smithy4s.Kind5.existential(_)))
+          .left
+          .map { e =>
+            throw new Exception(
+              s"Operation ${endpoint.name} is not bound to http semantics",
+              e
+            )
+          }
+          .merge
+    }.unsafeCacheBy(
+      service.endpoints.map(smithy4s.kinds.Kind5.existential(_)),
+      identity
+    )
 }

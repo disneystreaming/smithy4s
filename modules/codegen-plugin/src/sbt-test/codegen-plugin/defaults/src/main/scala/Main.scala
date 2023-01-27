@@ -16,8 +16,8 @@
 
 package demo
 
-import smithy4s.codegen.ModelLoader
 import smithy4s.dynamic.DynamicSchemaIndex
+import software.amazon.smithy.model.Model
 
 object Main extends App {
   try {
@@ -29,17 +29,7 @@ object Main extends App {
       sys.exit(1)
   }
 
-  def buildSchemaIndex() =
-    ModelLoader
-      .load(
-        specs = Set.empty,
-        dependencies = Nil,
-        repositories = Nil,
-        transformers = Nil,
-        discoverModels = true,
-        localJars = Nil
-      )
-      ._2
+  def buildSchemaIndex() = Model.assembler().assemble().unwrap()
 
   val model = buildSchemaIndex()
   DynamicSchemaIndex.loadModel(model).toTry.get

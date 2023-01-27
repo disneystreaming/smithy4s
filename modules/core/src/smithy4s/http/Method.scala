@@ -16,21 +16,23 @@
 
 package smithy4s.http
 
-sealed trait HttpMethod {
+sealed trait HttpMethod extends Product with Serializable {
   def showUppercase = this match {
-    case HttpMethod.PUT    => "PUT"
-    case HttpMethod.POST   => "POST"
-    case HttpMethod.DELETE => "DELETE"
-    case HttpMethod.GET    => "GET"
-    case HttpMethod.PATCH  => "PATCH"
+    case HttpMethod.PUT          => "PUT"
+    case HttpMethod.POST         => "POST"
+    case HttpMethod.DELETE       => "DELETE"
+    case HttpMethod.GET          => "GET"
+    case HttpMethod.PATCH        => "PATCH"
+    case HttpMethod.OTHER(value) => value.toUpperCase
   }
 
   def showCapitalised = this match {
-    case HttpMethod.PUT    => "Put"
-    case HttpMethod.POST   => "Post"
-    case HttpMethod.DELETE => "Delete"
-    case HttpMethod.GET    => "Get"
-    case HttpMethod.PATCH  => "Patch"
+    case HttpMethod.PUT          => "Put"
+    case HttpMethod.POST         => "Post"
+    case HttpMethod.DELETE       => "Delete"
+    case HttpMethod.GET          => "Get"
+    case HttpMethod.PATCH        => "Patch"
+    case HttpMethod.OTHER(value) => value.capitalize
   }
 }
 
@@ -40,10 +42,20 @@ object HttpMethod {
   case object DELETE extends HttpMethod
   case object GET extends HttpMethod
   case object PATCH extends HttpMethod
+  case class OTHER(value: String) extends HttpMethod
 
-  val values = List(PUT, POST, DELETE, GET, PATCH)
+  val values: List[HttpMethod] =
+    List(PUT, POST, DELETE, GET, PATCH)
 
-  def fromString(s: String): Option[HttpMethod] = values.find { m =>
-    CaseInsensitive(s) == CaseInsensitive(m.showCapitalised)
+  def fromStringOrDefault(s: String): HttpMethod =
+    fromStringOption(s).getOrElse(OTHER(s.toUpperCase))
+
+  private def fromStringOption(s: String): Option[HttpMethod] = {
+    val nameCI = CaseInsensitive(s)
+
+    values
+      .find { m =>
+        nameCI == CaseInsensitive(m.showCapitalised)
+      }
   }
 }

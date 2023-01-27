@@ -21,12 +21,11 @@ import java.util.Base64
 import java.util.UUID
 
 import smithy.api.JsonName
-import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 import smithy4s.capability.Covariant
 import smithy4s.Document._
 import smithy4s.http.PayloadError
@@ -303,8 +302,6 @@ class DocumentDecoderSchemaVisitor(
   ): DocumentDecoder[S] = {
     def jsonLabel[A](field: Field[Schema, S, A]): String =
       field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
-    def getDefault[A](field: Field[Schema, S, A]): Option[Document] =
-      field.instance.hints.get(Default).map(_.value)
 
     def fieldDecoder[A](
         field: Field[Schema, S, A]
@@ -314,8 +311,7 @@ class DocumentDecoderSchemaVisitor(
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
-
-      val maybeDefault = getDefault(field)
+      val maybeDefault = field.instance.getDefault
 
       if (field.isOptional) {
         (
@@ -326,6 +322,7 @@ class DocumentDecoderSchemaVisitor(
           val path = PayloadPath.Segment(jLabel) :: pp
           fields
             .get(jLabel) match {
+            case Some(DNull) => buffer(None)
             case Some(document) =>
               buffer(Some(apply(field.instance)(path, document)))
             case None => buffer(None)

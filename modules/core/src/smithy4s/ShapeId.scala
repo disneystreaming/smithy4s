@@ -28,8 +28,13 @@ object ShapeId extends ShapeTag.Has[ShapeId] {
     if (!string.contains('#')) None
     else {
       val segments = string.split("#")
-      if (segments.length > 1) None
-      else Some(ShapeId(segments(0), segments(1)))
+      if (
+        segments.length == 2 &&
+        segments(0).nonEmpty &&
+        segments(1).nonEmpty
+      )
+        Some(ShapeId(segments(0), segments(1)))
+      else None
     }
   }
 

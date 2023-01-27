@@ -41,21 +41,53 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
     .map(alt => alt.instance.shapeId.name -> alt)
     .toMap[String, SchemaAlt[E, _]]
 
-  private val byStatusCode = {
-    alts
-      .groupBy { alt =>
-        alt.hints
-          .get(HttpError)
-          .map(_.value)
-          .orElse(alt.hints.get(Error).map {
-            case Error.CLIENT => 400
-            case Error.SERVER => 500
-          })
+  // build a map: status code to alternative
+  // exclude all status code that are used on multiple alternative
+  // in essence, it gives a `Map[Int, SchemaAlt[E, _]]` that's used
+  // for the lookup
+  private val byStatusCode: Int => Option[SchemaAlt[E, _]] = {
+    val perStatusCode: Map[Int, SchemaAlt[E, _]] = alts
+      .flatMap { alt =>
+        alt.hints.get(HttpError).map { he => he.value -> alt }
       }
+      .groupBy(_._1)
       .collect {
-        case (Some(key), values) if values.size == 1 => key -> values.head
+        // Discard alternative where another alternative has the same http status code
+        case (status, allAlts) if allAlts.size == 1 => status -> allAlts.head._2
       }
-  }.toMap[Int, SchemaAlt[E, _]]
+      .toMap
+    val errorForStatus: Int => Option[SchemaAlt[E, _]] = perStatusCode.get
+
+    lazy val fallbackError: Int => Option[SchemaAlt[E, _]] = {
+      // grab the alt that's annotated with the expected `Error` hint
+      // only if there is only one
+      def forErrorType(expected: Error): Option[SchemaAlt[E, _]] = {
+        val matchingAlts = alts
+          .flatMap { alt =>
+            alt.hints
+              .get(HttpError)
+              .fold(
+                alt.hints.get(Error).collect {
+                  case e if e == expected => alt
+                }
+              )(_ => None)
+
+          }
+        if (matchingAlts.size == 1) matchingAlts.headOption else None
+      }
+      val clientAlt: Option[SchemaAlt[E, _]] = forErrorType(Error.CLIENT)
+      val serverAlt: Option[SchemaAlt[E, _]] = forErrorType(Error.SERVER)
+
+      { intStatus =>
+        if (intStatus >= 400 && intStatus < 500) clientAlt
+        else if (intStatus >= 500 && intStatus < 600) serverAlt
+        else None
+      }
+    }
+
+    inputStatus =>
+      errorForStatus(inputStatus).orElse(fallbackError(inputStatus))
+  }
 
   def getPreciseAlternative(
       discriminator: ErrorDiscriminator
@@ -63,7 +95,7 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
     discriminator match {
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)
-      case StatusCode(int) => byStatusCode.get(int)
+      case StatusCode(int) => byStatusCode(int)
     }
   }
 }

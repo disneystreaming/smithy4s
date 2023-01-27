@@ -18,11 +18,11 @@ package smithy4s.codegen.cli
 
 import cats.implicits._
 import com.monovore.decline.Command
+import smithy4s.codegen.DumpModelArgs
 
 import Options._
 
 object DumpModelCommand {
-  import Smithy4sCommand._
 
   val options = (
     specsArgs,
@@ -32,8 +32,8 @@ object DumpModelCommand {
     localJarsOpt.map(_.getOrElse(Nil))
   ).mapN(DumpModelArgs.apply)
 
-  val command: Command[DumpModel] =
+  val command: Command[Smithy4sCommand.DumpModel] =
     Command("dump-model", "Output a JSON view of the Smithy models")(
-      options.map(DumpModel.apply)
+      options.map(Smithy4sCommand.DumpModel.apply)
     )
 }

@@ -26,8 +26,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy4s.api.Discriminated
-import smithy4s.api.Untagged
+import alloy.Discriminated
+import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
@@ -1144,9 +1144,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
       val jLabel = jsonLabel(field)
-      val decode: Document => Option[Any] =
-        Document.Decoder.fromSchema(field.instance).decode(_).toOption
-      val decoded = field.getDefault.flatMap(decode)
+      val decoded: Option[Any] = field.instance.getDefaultValue
       val default = decoded.orNull
       (field, jLabel, default)
     }

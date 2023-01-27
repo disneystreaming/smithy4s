@@ -151,15 +151,16 @@ private[dynamic] object Compiler {
       )
     }
 
-    private def allHints(traits: Option[Map[IdRef, Document]]): Hints =
+    private def allHints(traits: Option[Map[IdRef, Document]]): Hints = {
+      val ignoredHints = List(IdRef("smithy.api#enumValue"))
+
       Hints.fromSeq {
-        traits
-          .getOrElse(Map.empty)
-          .collect { case (ValidIdRef(k), v) =>
+        (traits.getOrElse(Map.empty) -- ignoredHints).collect {
+          case (ValidIdRef(k), v) =>
             toHint(k, v)
-          }
-          .toSeq
+        }.toSeq
       }
+    }
 
     private def update[A](
         shapeId: ShapeId,
@@ -236,7 +237,7 @@ private[dynamic] object Compiler {
           .flatMap { case (k, m) =>
             getTrait[smithy.api.EnumValue](m.traits).toList.map {
               _.value match {
-                case Document.DString(s) => (k, s)
+                case Document.DString(s) => (k, s, m.traits)
                 case v =>
                   throw new IllegalArgumentException(
                     s"enum value $k has a non-string value: $v"
@@ -245,13 +246,13 @@ private[dynamic] object Compiler {
             }
           }
           .zipWithIndex
-          .map { case ((name, stringValue), i) =>
+          .map { case ((name, stringValue, traits), i) =>
             EnumValue(
               stringValue = stringValue,
               intValue = i,
               value = i,
               name = name,
-              hints = Hints.empty
+              hints = allHints(traits)
             )
           }
 
@@ -269,7 +270,7 @@ private[dynamic] object Compiler {
             _.value match {
               case Document.DNumber(num) =>
                 // toInt is safe because Smithy validates the model at loading time
-                (k, num.toInt)
+                (k, num.toInt, m.traits)
               case v =>
                 throw new IllegalArgumentException(
                   s"intEnum value $k has a non-numeric value: $v"
@@ -277,13 +278,13 @@ private[dynamic] object Compiler {
             }
           }
         }
-        .map { case (name, intValue) =>
+        .map { case (name, intValue, traits) =>
           intValue -> EnumValue(
             stringValue = name,
             intValue = intValue,
             value = intValue,
             name = name,
-            hints = Hints.empty
+            hints = allHints(traits)
           )
         }
         .toMap
@@ -307,7 +308,7 @@ private[dynamic] object Compiler {
       update(id, shape.traits, document)
 
     override def stringShape(id: ShapeId, shape: StringShape): Unit = {
-      val maybeUuid = getTrait[smithy4s.api.UuidFormat](shape.traits)
+      val maybeUuid = getTrait[alloy.UuidFormat](shape.traits)
       val maybeEnum = getTrait[smithy.api.Enum](shape.traits)
       (maybeUuid, maybeEnum) match {
         case (Some(_), _) => update(id, shape.traits, uuid)
@@ -425,12 +426,42 @@ private[dynamic] object Compiler {
     }
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
+      def resourceOperations(resource: MemberShape): List[MemberShape] = {
+        model.shapes
+          .get(resource.target)
+          .map(resource.target -> _)
+          .collect { case (ValidIdRef(_), Shape.ResourceCase(resource)) =>
+            resource
+          }
+          .toList
+          .flatMap { resource =>
+            val lifecycle = List(
+              resource.create,
+              resource.put,
+              resource.read,
+              resource.update,
+              resource.delete,
+              resource.list
+            )
+            val operations = resource.operations.sequence
+            val recursive =
+              resource.resources.traverse(_.flatMap(resourceOperations))
+            List.concat(lifecycle, operations, recursive).flatten
+          }
+
+      }
       val serviceErrors: List[MemberShape] =
         shape.errors.toList.flatten
+
+      val operations = List
+        .concat(
+          shape.operations,
+          shape.resources.map(_.flatMap(resourceOperations))
+        )
+        .flatten
       val lEndpoints =
-        shape.operations.toList
-          .flatMap(_.map(_.target))
-          .flatMap(id => model.shapes.get(id).map(id -> _))
+        operations
+          .flatMap(op => model.shapes.get(op.target).map(op.target -> _))
           .collect { case (ValidIdRef(id), Shape.OperationCase(op)) =>
             compileOperation(id, serviceErrors, op)
           }

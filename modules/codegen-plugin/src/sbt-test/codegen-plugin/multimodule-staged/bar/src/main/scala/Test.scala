@@ -17,9 +17,13 @@
 package bar
 
 import foo._
+import upstream._
 
 object BarTest {
 
-  def main(args: Array[String]): Unit = println(Bar(Some(Foo(Some(1)))))
+  def main(args: Array[String]): Unit = {
+    println(Upstream(1))
+    println(Bar(Some(Foo(Some(1)))))
+  }
 
 }

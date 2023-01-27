@@ -24,7 +24,7 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: function ({docPath}) {
+          editUrl: function ({ docPath }) {
             return `https://github.com/disneystreaming/smithy4s/edit/main/modules/docs/src/${docPath}`
           },
           path: '../docs/target/jvm-2.13/mdoc'
@@ -80,6 +80,18 @@ const config = {
                 label: 'GitHub',
                 href: 'https://github.com/disneystreaming/smithy4s',
               },
+            ],
+          },
+          {
+            title: 'Special thanks',
+            items: [
+              {
+                html: `
+                    <a href="https://www.yourkit.com/" target="_blank" rel="noreferrer noopener" aria-label="Profiled with yourkit">
+                      <img src="https://www.yourkit.com/images/yk_logo.svg" alt="Profiled with yourkit" />
+                    </a>
+                  `
+              }
             ],
           },
         ],

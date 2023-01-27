@@ -33,7 +33,7 @@ import smithy4s.example.{
   Three,
   UntaggedUnion
 }
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
@@ -129,7 +129,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Optional decode from present value") {
-    val json = """{"a" : 1, "_b": 2}"""
+    val json = """{"a": 1, "_b": 2}"""
     val result = readFromString[Foo](json)
     expect.same(result, Foo(1, Some(2)))
   }
@@ -153,19 +153,19 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Optional decode from absent value") {
-    val json = """{"a" : 1}"""
+    val json = """{"a": 1}"""
     val result = readFromString[Foo](json)
     expect.same(result, Foo(1, None))
   }
 
   test("Optional decode from null value") {
-    val json = """{"a" : 1, "_b": null}"""
+    val json = """{"a": 1, "_b": null}"""
     val result = readFromString[Foo](json)
     expect.same(result, Foo(1, None))
   }
 
   test("Optional: path gets surfaced in errors") {
-    val json = """{"a" : 1, "_b": "foo"}"""
+    val json = """{"a": 1, "_b": "foo"}"""
     try {
       val _ = readFromString[Foo](json)
       fail("Unexpected success")
@@ -186,7 +186,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
         struct(name)(Bar.apply)
       }
     }
-    val json = """{"missing" : "oops"}"""
+    val json = """{"missing": "oops"}"""
     try {
       val _ = readFromString[Bar](json)
       fail("Unexpected success")
@@ -259,14 +259,14 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Discriminated union decoding tolerates whitespace") {
-    val json = """ { "tpe" : "one" , "value" : "hello" }"""
+    val json = """ { "tpe": "one" , "value": "hello" }"""
     val result = readFromString[TestBiggerUnion](json)
 
     expect.same(result, TestBiggerUnion.OneCase(One(Some("hello"))))
   }
 
   test("Discriminated union discriminator can follow other keys") {
-    val json = """ { "value" : "hello", "tpe" : "one" }"""
+    val json = """ { "value": "hello", "tpe": "one" }"""
     val result = readFromString[TestBiggerUnion](json)
 
     expect.same(result, TestBiggerUnion.OneCase(One(Some("hello"))))
@@ -292,8 +292,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Union gets routed to the correct codec") {
-    val jsonInt = """{"int" :  1}"""
-    val jsonStr = """{"_string" : "foo"}"""
+    val jsonInt = """{"int":  1}"""
+    val jsonStr = """{"_string": "foo"}"""
     val int = readFromString[Either[Int, String]](jsonInt)
     val str = readFromString[Either[Int, String]](jsonStr)
     expect.same(int, Left(1))
@@ -301,7 +301,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Union: path gets surfaced in errors") {
-    val json = """{"int" : null}"""
+    val json = """{"int": null}"""
     try {
       val _ = readFromString[Either[Int, String]](json)
       fail("Unexpected success")
