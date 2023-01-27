@@ -22,63 +22,68 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException
 import smithy4s.http.PayloadError
 
 class Cursor private () {
-  private[this] var stack: Array[PayloadPath.Segment] =
-    new Array[PayloadPath.Segment](8)
-  private[this] var top: Int = 0
-  private var expecting: String = null
+  private[this] var indexStack: Array[Int] = new Array[Int](8)
+  private[this] var labelStack: Array[String] = new Array[String](8)
+  private[this] var top: Int = _
+  private var expecting: String = _
 
   def decode[A](codec: JCodec[A], in: JsonReader): A = {
     this.expecting = codec.expecting
     codec.decodeValue(this, in)
   }
 
-  def under[A](segment: PayloadPath.Segment)(f: => A): A = {
-    if (top >= stack.length) stack = java.util.Arrays.copyOf(stack, top << 1)
-    stack(top) = segment
+  def under[A](label: String)(f: => A): A = {
+    if (top >= labelStack.length) growStacks()
+    labelStack(top) = label
     top += 1
     val res = f
     top -= 1
     res
   }
 
-  def under[A](label: String)(f: => A): A =
-    under(new PayloadPath.Segment.Label(label))(f)
-
-  def under[A](index: Int)(f: => A): A =
-    under(new PayloadPath.Segment.Index(index))(f)
+  def under[A](index: Int)(f: => A): A = {
+    if (top >= indexStack.length) growStacks()
+    indexStack(top) = index
+    top += 1
+    val res = f
+    top -= 1
+    res
+  }
 
   def payloadError[A](codec: JCodec[A], message: String): Nothing =
-    throw PayloadError(getPath(), codec.expecting, message)
+    throw new PayloadError(getPath(Nil), codec.expecting, message)
 
   def requiredFieldError[A](codec: JCodec[A], field: String): Nothing =
     requiredFieldError(codec.expecting, field)
 
   def requiredFieldError[A](expecting: String, field: String): Nothing = {
-    var top = this.top
-    if (top >= stack.length) stack = java.util.Arrays.copyOf(stack, top << 1)
-    stack(top) = new PayloadPath.Segment.Label(field)
-    top += 1
-    var list: List[PayloadPath.Segment] = Nil
-    while (top > 0) {
-      top -= 1
-      list = stack(top) :: list
-    }
-    throw PayloadError(PayloadPath(list), expecting, "Missing required field")
+    val path = getPath(new PayloadPath.Segment.Label(field) :: Nil)
+    throw new PayloadError(path, expecting, "Missing required field")
   }
 
-  private def getPath(): PayloadPath = {
+  private def getPath(segments: List[PayloadPath.Segment]): PayloadPath = {
     var top = this.top
-    var list: List[PayloadPath.Segment] = Nil
+    var list = segments
     while (top > 0) {
       top -= 1
-      list = stack(top) :: list
+      val label = labelStack(top)
+      val segment =
+        if (label ne null) new PayloadPath.Segment.Label(label)
+        else new PayloadPath.Segment.Index(indexStack(top))
+      list = segment :: list
     }
-    PayloadPath(list)
+    new PayloadPath(list)
   }
 
   private def getExpected(): String =
     if (expecting != null) expecting
     else throw new IllegalStateException("Expected should have been fulfilled")
+
+  private[this] def growStacks(): Unit = {
+    val size = top << 1
+    labelStack = java.util.Arrays.copyOf(labelStack, size)
+    indexStack = java.util.Arrays.copyOf(indexStack, size)
+  }
 }
 
 object Cursor {
@@ -86,14 +91,13 @@ object Cursor {
   def withCursor[A](expecting: String)(f: Cursor => A): A = {
     val cursor = new Cursor()
     cursor.expecting = expecting
-    try {
-      f(cursor)
-    } catch {
+    try f(cursor)
+    catch {
       case e: JsonReaderException => payloadError(cursor, e.getMessage())
       case e: ConstraintError     => payloadError(cursor, e.message)
     }
   }
 
   private[this] def payloadError(cursor: Cursor, message: String): Nothing =
-    throw PayloadError(cursor.getPath(), cursor.getExpected(), message)
+    throw new PayloadError(cursor.getPath(Nil), cursor.getExpected(), message)
 }
