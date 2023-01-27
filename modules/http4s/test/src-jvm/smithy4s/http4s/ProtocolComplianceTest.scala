@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package smithy4s.http4s
 
 import cats.effect.IO
 import cats.effect.Resource
@@ -65,7 +65,7 @@ object ProtocolComplianceTest extends SimpleIOSuite {
   private val dynamicSchemaIndex: DynamicSchemaIndex =
     loadDynamic(doc).getOrElse(sys.error("unable to load Dynamic model"))
 
-  val pizzaSpec = generatetests(ShapeId("alloy.test", "PizzaAdminService"))
+  val pizzaSpec = generateTests(ShapeId("alloy.test", "PizzaAdminService"))
 
   pizzaSpec(dynamicSchemaIndex).foreach(tc =>
     test(tc.name) {
@@ -84,7 +84,7 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   )
 
-  private def generatetests(
+  private def generateTests(
       shapeId: ShapeId
   ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
     dynamicSchemaIndex
