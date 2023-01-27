@@ -16,13 +16,10 @@
 
 package smithy4s
 
-import munit._
 import smithy4s.example._
 import smithy4s.kinds.PolyFunction
-
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import munit._
+import scala.util.{Failure, Success, Try}
 class TransformationSpec() extends FunSuite {
 
   test("transform method can be called with poly functions") {

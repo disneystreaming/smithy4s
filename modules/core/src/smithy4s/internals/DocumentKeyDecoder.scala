@@ -16,15 +16,15 @@
 
 package smithy4s.internals
 
-import smithy4s.Document._
+import java.util.Base64
+import java.util.UUID
+
 import smithy4s._
+import smithy4s.Document._
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
-
-import java.util.Base64
-import java.util.UUID
 
 trait DocumentKeyDecoder[A] { self =>
   def apply(v: Document): Either[DocumentKeyDecoder.DecodeError, A] =

@@ -20,17 +20,17 @@ import cats.effect.IO
 import cats.effect.Resource
 import org.http4s._
 import org.http4s.client.Client
-import smithy4s.Document
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.compliancetests._
-import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.dynamic.DynamicSchemaIndex.load
-import smithy4s.dynamic.NodeToDocument
-import smithy4s.http.PayloadError
-import smithy4s.kinds.FunctorAlgebra
-import software.amazon.smithy.model._
 import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model._
+import smithy4s.dynamic.NodeToDocument
+import smithy4s.dynamic.DynamicSchemaIndex
+import smithy4s.Document
+import smithy4s.dynamic.DynamicSchemaIndex.load
+import smithy4s.http.PayloadError
 import weaver._
 
 object ProtocolComplianceTest extends SimpleIOSuite {

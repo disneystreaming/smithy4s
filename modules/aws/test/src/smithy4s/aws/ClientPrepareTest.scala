@@ -16,8 +16,8 @@
 
 package smithy4s.aws
 
-import smithy4s.example.aws.MyThing
 import weaver._
+import smithy4s.example.aws.MyThing
 
 object ClientPrepareTest extends FunSuite {
   test(

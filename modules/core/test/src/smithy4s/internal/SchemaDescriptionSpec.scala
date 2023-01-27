@@ -17,11 +17,11 @@
 package smithy4s
 package internals
 
+import smithy4s.example._
 import munit._
 import org.scalacheck.Gen
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import smithy4s.example._
 
 class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
   val genPrim: Gen[Schema[Any]] = Gen.oneOf[Schema[Any]](

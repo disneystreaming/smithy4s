@@ -16,24 +16,22 @@
 
 package smithy4s.decline.core
 
-import cats.data.NonEmptyList
-import cats.data.NonEmptyVector
-import cats.data.Validated
+import cats.data.{NonEmptyVector, Validated, NonEmptyList}
 import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
-import smithy.api.Documentation
-import smithy.api.ExternalDocumentation
-import smithy.api.TimestampFormat
-import smithy4s.Bijection
-import smithy4s.ByteArray
-import smithy4s.Hints
-import smithy4s.Lazy
-import smithy4s.Timestamp
+import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
+import smithy4s.{
+  Bijection,
+  ByteArray,
+  Hints,
+  Lazy,
+  Refinement,
+  ShapeId,
+  Timestamp
+}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
-import smithy4s.schema.CollectionTag
-import smithy4s.schema.CollectionTag.ListTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
@@ -41,9 +39,8 @@ import smithy4s.schema.Schema._
 import smithy4s.schema._
 
 import java.util.UUID
-
-import smithy4s.Refinement
-import smithy4s.ShapeId
+import smithy4s.schema.CollectionTag
+import smithy4s.schema.CollectionTag.ListTag
 
 object OptsVisitor extends SchemaVisitor[Opts] { self =>
 

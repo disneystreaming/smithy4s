@@ -16,13 +16,13 @@
 
 package smithy4s.api.validation
 
-import smithy4s.meta.validation.RefinementTraitValidator
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.SourceLocation
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.validation._
 
 import scala.jdk.CollectionConverters._
+import smithy4s.meta.validation.RefinementTraitValidator
+import software.amazon.smithy.model.SourceLocation
 
 object RefinementTraitValidatorSpec extends weaver.FunSuite {
 

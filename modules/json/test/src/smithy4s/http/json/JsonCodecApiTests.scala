@@ -18,8 +18,8 @@ package smithy4s.http.json
 
 import munit.FunSuite
 import smithy.api.JsonName
-import smithy4s.HintMask
 import smithy4s.schema.Schema
+import smithy4s.HintMask
 
 class JsonCodecApiTests extends FunSuite {
 

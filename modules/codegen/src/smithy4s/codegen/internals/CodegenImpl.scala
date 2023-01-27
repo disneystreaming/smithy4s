@@ -19,10 +19,10 @@ package internals
 
 import alloy.openapi._
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.node.Node
-import software.amazon.smithy.model.shapes.ModelSerializer
 
 import scala.jdk.CollectionConverters._
+import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.shapes.ModelSerializer
 
 private[codegen] object CodegenImpl { self =>
 

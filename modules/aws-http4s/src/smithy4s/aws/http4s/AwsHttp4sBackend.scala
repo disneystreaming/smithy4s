@@ -17,13 +17,12 @@
 package smithy4s.aws
 package http4s
 
-import cats.MonadThrow
 import cats.effect.Concurrent
+import cats.MonadThrow
 import cats.implicits._
 import fs2.Chunk
 import org.http4s.Header
 import org.http4s.Headers
-import org.http4s.Method
 import org.http4s.Method._
 import org.http4s.Request
 import org.http4s.Response
@@ -33,6 +32,7 @@ import org.typelevel.ci.CIString
 import smithy4s.aws.SimpleHttpClient
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
+import org.http4s.Method
 
 final class AwsHttp4sBackend[F[_]: Concurrent](client: Client[F])
     extends SimpleHttpClient[F] {

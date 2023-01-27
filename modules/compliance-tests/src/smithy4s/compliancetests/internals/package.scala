@@ -17,12 +17,9 @@
 package smithy4s
 package compliancetests
 
-import cats.data.Chain
+import org.http4s.{Header, Headers, Uri}
 import cats.implicits._
-import org.http4s.Header
-import org.http4s.Headers
-import org.http4s.Uri
-
+import cats.data.Chain
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 

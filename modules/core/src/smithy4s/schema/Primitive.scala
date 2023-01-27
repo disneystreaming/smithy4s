@@ -17,9 +17,9 @@
 package smithy4s
 package schema
 
-import smithy.api.TimestampFormat
-import smithy4s.http.HttpBinding
 import smithy4s.kinds.PolyFunction
+import smithy4s.http.HttpBinding
+import smithy.api.TimestampFormat
 
 sealed trait Primitive[T] {
   final def schema(shapeId: ShapeId): Schema[T] =

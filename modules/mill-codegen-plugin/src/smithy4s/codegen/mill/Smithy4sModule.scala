@@ -20,17 +20,19 @@ import coursier.maven.MavenRepository
 import mill._
 import mill.api.PathRef
 import mill.define.Sources
+import mill.scalalib._
+import smithy4s.codegen.{
+  CodegenArgs,
+  Codegen => Smithy4s,
+  FileType,
+  BuildInfo,
+  JarUtils,
+  SMITHY4S_DEPENDENCIES
+}
 import mill.modules.Jvm
 import mill.scalalib.CrossVersion.Binary
 import mill.scalalib.CrossVersion.Constant
 import mill.scalalib.CrossVersion.Full
-import mill.scalalib._
-import smithy4s.codegen.BuildInfo
-import smithy4s.codegen.CodegenArgs
-import smithy4s.codegen.FileType
-import smithy4s.codegen.JarUtils
-import smithy4s.codegen.SMITHY4S_DEPENDENCIES
-import smithy4s.codegen.{Codegen => Smithy4s}
 
 trait Smithy4sModule extends ScalaModule {
 

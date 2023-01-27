@@ -17,18 +17,14 @@
 package smithy4s.decline.core
 
 import cats.Functor
-import cats.MonadError
-import cats.data.Validated.Valid
-import cats.implicits._
+import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
-import smithy4s.ConstraintError
-import smithy4s.Schema
+import cats.data.Validated.Valid
+import smithy4s.{ByteArray, ConstraintError, Document, Schema}
+import cats.implicits._
+import cats.MonadError
 
 import java.util.Base64
-
-import smithy4s.ByteArray
-import smithy4s.Document
-import smithy4s.capability.Covariant
 
 object commons {
   def toKebabCase(s: String): String =

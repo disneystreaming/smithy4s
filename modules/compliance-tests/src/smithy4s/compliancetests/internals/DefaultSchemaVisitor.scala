@@ -18,18 +18,14 @@ package smithy4s.compliancetests
 package internals
 
 import cats.Id
-import smithy4s.Bijection
-import smithy4s.ByteArray
-import smithy4s.Document.DNull
-import smithy4s.Hints
-import smithy4s.Lazy
-import smithy4s.Refinement
-import smithy4s.ShapeId
-import smithy4s.Timestamp
-import smithy4s.schema.Primitive._
-import smithy4s.schema._
 
 import java.util.UUID
+import smithy4s.schema._
+import smithy4s.Timestamp
+import smithy4s.ByteArray
+import smithy4s.schema.Primitive._
+import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
+import smithy4s.Document.DNull
 
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 

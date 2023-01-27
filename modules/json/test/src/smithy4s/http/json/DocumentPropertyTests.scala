@@ -18,13 +18,12 @@ package smithy4s.http.json
 
 import cats.Show
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import munit._
 import org.scalacheck.Gen
-import org.scalacheck.Prop
 import smithy4s.Document
 import smithy4s.Schema
 import smithy4s.scalacheck.DynData
-
+import munit._
+import org.scalacheck.Prop
 import Prop._
 
 class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {

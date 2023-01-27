@@ -17,15 +17,15 @@
 package smithy4s.compliancetests
 package internals
 
+import smithy4s.Document
+import smithy4s.schema.Schema
+import smithy4s.Errorable
 import cats.ApplicativeThrow
 import cats.kernel.Eq
 import cats.syntax.all._
-import smithy4s.Document
-import smithy4s.Errorable
-import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
+import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.schema.Alt.Dispatcher
-import smithy4s.schema.Schema
 
 private[compliancetests] final case class ErrorResponseTest[A, E](
     schema: Schema[A],

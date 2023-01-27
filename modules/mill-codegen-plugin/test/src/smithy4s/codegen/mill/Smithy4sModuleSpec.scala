@@ -16,18 +16,17 @@
 
 package smithy4s.codegen.mill
 
-import coursier.Repository
-import coursier.ivy.IvyRepository
-import mill._
-import mill.define.Task
-import mill.scalalib._
-import mill.scalalib.publish.PomSettings
-import mill.scalalib.publish.VersionControl
 import mill.testkit.MillTestKit
+import mill.scalalib._
+import mill._
 import munit.Location
 import sourcecode.FullName
-
 import java.nio.file.Paths
+import mill.scalalib.publish.PomSettings
+import mill.scalalib.publish.VersionControl
+import coursier.Repository
+import coursier.ivy.IvyRepository
+import mill.define.Task
 
 class Smithy4sModuleSpec extends munit.FunSuite {
   private val resourcePath =

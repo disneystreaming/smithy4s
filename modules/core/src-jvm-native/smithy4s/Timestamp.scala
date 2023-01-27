@@ -17,9 +17,7 @@
 package smithy4s
 
 import smithy.api.TimestampFormat
-
-import scala.util.control.NoStackTrace
-import scala.util.control.NonFatal
+import scala.util.control.{NoStackTrace, NonFatal}
 
 case class Timestamp private (epochSecond: Long, nano: Int)
     extends TimestampPlatform {

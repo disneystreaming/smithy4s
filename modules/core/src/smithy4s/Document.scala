@@ -19,7 +19,6 @@ package smithy4s
 import smithy4s.Document._
 import smithy4s.http.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
-
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
 

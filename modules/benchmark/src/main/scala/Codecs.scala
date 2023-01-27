@@ -17,8 +17,8 @@
 package smithy4s.benchmark
 
 import io.circe._
-import smithy4s.Timestamp
 import smithy4s._
+import smithy4s.Timestamp
 
 import java.util.Base64
 

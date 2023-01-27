@@ -21,10 +21,10 @@ import cats.Show
 import cats.data.NonEmptyList
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import org.scalacheck.Prop._
 import smithy4s.http.PathSegment.GreedySegment
 import smithy4s.http.PathSegment.LabelSegment
 import smithy4s.http.PathSegment.StaticSegment
+import org.scalacheck.Prop._
 
 class MatchPathSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 

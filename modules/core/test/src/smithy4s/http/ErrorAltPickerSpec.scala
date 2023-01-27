@@ -18,7 +18,6 @@ package smithy4s
 package http
 
 import smithy4s.example._
-
 import ErrorHandlingServiceGen._
 
 final class ErrorAltPickerSpec extends munit.FunSuite {

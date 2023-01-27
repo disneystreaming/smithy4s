@@ -16,12 +16,12 @@
 
 package smithy4s.compliancetests
 
-import cats.effect.Resource
-import org.http4s.HttpApp
 import smithy4s.Service
-import smithy4s.ShapeTag
-import smithy4s.http.CodecAPI
+import cats.effect.Resource
 import smithy4s.kinds.FunctorAlgebra
+import smithy4s.http.CodecAPI
+import smithy4s.ShapeTag
+import org.http4s.HttpApp
 
 /* A construct encapsulating the action of turning an http4s route into
  * an an algebra

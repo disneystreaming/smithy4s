@@ -16,10 +16,11 @@
 
 package smithy4s.http4s
 
-import cats.effect.IO
+import weaver._
+
 import org.http4s.HttpApp
 import org.http4s.client.Client
-import weaver._
+import cats.effect.IO
 
 // This is a non-regression test for https://github.com/disneystreaming/smithy4s/issues/181
 object RecursiveInputSpec extends FunSuite {

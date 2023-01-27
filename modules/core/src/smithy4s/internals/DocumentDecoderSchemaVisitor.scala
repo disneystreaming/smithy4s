@@ -17,20 +17,20 @@
 package smithy4s
 package internals
 
-import alloy.Discriminated
+import java.util.Base64
+import java.util.UUID
+
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import smithy4s.Document._
+import alloy.Discriminated
 import smithy4s.capability.Covariant
+import smithy4s.Document._
 import smithy4s.http.PayloadError
-import smithy4s.schema.Primitive._
 import smithy4s.schema._
-
-import java.util.Base64
-import java.util.UUID
+import smithy4s.schema.Primitive._
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A

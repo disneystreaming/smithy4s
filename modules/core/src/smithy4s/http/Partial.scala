@@ -16,8 +16,8 @@
 
 package smithy4s.http
 
-import scala.annotation.nowarn
 import scala.collection.{Map => MMap}
+import scala.annotation.nowarn
 
 final class MetadataPartial[A] private[smithy4s] (
     private[smithy4s] val decoded: MMap[String, Any]

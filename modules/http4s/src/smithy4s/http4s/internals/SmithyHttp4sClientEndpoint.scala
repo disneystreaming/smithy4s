@@ -26,8 +26,8 @@ import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
 import scodec.bits.ByteVector
-import smithy4s.http._
 import smithy4s.kinds._
+import smithy4s.http._
 import smithy4s.schema.SchemaAlt
 
 /**

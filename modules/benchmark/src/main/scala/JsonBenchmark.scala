@@ -20,9 +20,9 @@ import io.circe.syntax._
 import org.openjdk.jmh.annotations._
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
-import smithy4s.HintMask
 
 import java.util.concurrent.TimeUnit
+import smithy4s.HintMask
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

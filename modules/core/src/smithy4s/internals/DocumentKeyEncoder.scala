@@ -16,16 +16,16 @@
 
 package smithy4s.internals
 
+import java.util.Base64
+
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
 import smithy4s._
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
-import smithy4s.schema.Schema
 import smithy4s.schema.SchemaVisitor
-
-import java.util.Base64
+import smithy4s.schema.Schema
 
 trait DocumentKeyEncoder[A] { self =>
   def apply(a: A): String

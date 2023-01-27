@@ -16,10 +16,10 @@
 
 package smithy4s
 
-import cats.Eq
-import cats.Show
-import munit.Assertions
 import munit.Location
+import munit.Assertions
+import cats.Show
+import cats.Eq
 
 object expect {
 

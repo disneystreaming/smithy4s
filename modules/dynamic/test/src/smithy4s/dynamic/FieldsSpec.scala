@@ -16,15 +16,14 @@
 
 package smithy4s.dynamic
 
-import smithy4s.Hints
 import smithy4s.Lazy
 import smithy4s.Service
-import smithy4s.ShapeId
-import smithy4s.schema.Schema
-import smithy4s.schema.SchemaField
+import smithy4s.Hints
 import smithy4s.schema.SchemaVisitor
-
 import Fixtures._
+import smithy4s.ShapeId
+import smithy4s.schema.SchemaField
+import smithy4s.schema.Schema
 
 class FieldsSpec() extends munit.FunSuite {
 

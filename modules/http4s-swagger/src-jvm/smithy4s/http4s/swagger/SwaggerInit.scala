@@ -17,8 +17,8 @@
 package smithy4s.http4s.swagger
 
 import cats.Applicative
-import cats.data.NonEmptyList
 import cats.syntax.all._
+import cats.data.NonEmptyList
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`Content-Type`

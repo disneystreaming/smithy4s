@@ -16,8 +16,8 @@
 
 package smithy4s.aws
 
-import cats.effect.Resource
 import cats.effect.Temporal
+import cats.effect.Resource
 import cats.implicits._
 
 trait AwsEnvironment[F[_]] {

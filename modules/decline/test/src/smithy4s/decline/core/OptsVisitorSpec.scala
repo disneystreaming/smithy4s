@@ -18,9 +18,8 @@ package smithy4s.decline.core
 
 import cats.implicits._
 import cats.kernel.Eq
-import com.monovore.decline.Command
+import com.monovore.decline.{Command, Opts}
 import com.monovore.decline.Help
-import com.monovore.decline.Opts
 import smithy.api.Length
 import smithy.api.TimestampFormat
 import smithy4s.Document

@@ -16,11 +16,11 @@
 
 package smithy4s.compliancetests
 
+import smithy4s.Service
 import cats.effect.Resource
 import org.http4s.HttpRoutes
-import smithy4s.Service
-import smithy4s.ShapeTag
 import smithy4s.kinds.FunctorAlgebra
+import smithy4s.ShapeTag
 
 /* A construct encapsulating the action of turning an algebra implementation into
  * an http route (modelled using Http4s, but could be backed by any other library

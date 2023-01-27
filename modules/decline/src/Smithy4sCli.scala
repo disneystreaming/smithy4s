@@ -16,11 +16,11 @@
 
 package smithy4s.decline
 
+import cats.implicits._
 import cats.MonadThrow
 import cats.effect.std.Console
-import cats.implicits._
-import com.monovore.decline.Command
 import com.monovore.decline.Opts
+import com.monovore.decline.Command
 import smithy.api.Documentation
 import smithy.api.ExternalDocumentation
 import smithy.api.Http
@@ -29,7 +29,6 @@ import smithy4s.decline.core._
 import smithy4s.decline.util.PrinterApi
 import smithy4s.http.HttpEndpoint
 import smithy4s.kinds._
-
 import commons._
 
 final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](

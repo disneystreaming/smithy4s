@@ -19,13 +19,13 @@ package smithy4s.decline.util
 import cats.Applicative
 import cats.effect.std.Console
 import cats.implicits._
-import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy4s.Endpoint
 import smithy4s.decline.core.Printer
 import smithy4s.http.CodecAPI
 
 import scala.{Console => SConsole}
+import com.monovore.decline.Argument
 
 trait PrinterApi[F[_]] {
 

@@ -16,13 +16,12 @@
 
 package smithy4s.http4s.swagger
 
-import cats.data.NonEmptyList
 import cats.effect.IO
-import cats.effect.Resource
-import org.webjars.WebJarAssetLocator
 import weaver._
-
+import cats.effect.Resource
 import scala.io.Source
+import org.webjars.WebJarAssetLocator
+import cats.data.NonEmptyList
 
 object SwaggerInitSpec extends SimpleIOSuite with TestCompat {
   private lazy val swaggerUiVersion =

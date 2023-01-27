@@ -17,8 +17,8 @@
 package smithy4s
 package aws
 
-import cats.effect.Resource
 import cats.effect.Temporal
+import cats.effect.Resource
 import org.http4s.client.Client
 
 package object http4s {
