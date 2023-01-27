@@ -23,7 +23,7 @@ import org.http4s.client.Client
 import smithy4s.kinds.FunctorAlgebra
 import smithy4s.Service
 import smithy4s.ShapeId
-import smithy4s.http4s._
+import smithy4s.compliancetests._
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model._
 import smithy4s.dynamic.NodeToDocument
