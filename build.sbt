@@ -310,6 +310,7 @@ lazy val aws = projectMatrix
       // Only building this module against CE3
       Seq(
         Dependencies.Fs2.core.value,
+        Dependencies.Fs2.io.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
