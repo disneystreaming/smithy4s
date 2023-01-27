@@ -19,13 +19,13 @@ package http4s
 package swagger
 
 import cats.data.NonEmptyList
+import cats.data.OptionT
 import cats.effect.Sync
+import org.http4s.HttpRoutes
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.Location
-import org.http4s.HttpRoutes
 import org.webjars.WebJarAssetLocator
-import cats.data.OptionT
 
 private[smithy4s] abstract class Docs[F[_]](
     ids: NonEmptyList[HasId],

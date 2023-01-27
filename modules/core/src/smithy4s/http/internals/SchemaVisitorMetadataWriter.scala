@@ -20,18 +20,15 @@ package internals
 
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.schema.{
-  CollectionTag,
-  EnumValue,
-  Field,
-  Primitive,
-  SchemaAlt,
-  SchemaField,
-  SchemaVisitor
-}
-
 import smithy4s.schema.Alt
+import smithy4s.schema.CollectionTag
 import smithy4s.schema.CompilationCache
+import smithy4s.schema.EnumValue
+import smithy4s.schema.Field
+import smithy4s.schema.Primitive
+import smithy4s.schema.SchemaAlt
+import smithy4s.schema.SchemaField
+import smithy4s.schema.SchemaVisitor
 
 /**
  * This schema visitor works on data that is annotated with :

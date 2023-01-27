@@ -18,15 +18,15 @@ package smithy4s
 package http
 package internals
 
+import smithy.api.HttpPayload
 import smithy4s.http.HttpMediaType
-
-import schema._
 import smithy4s.schema.Primitive._
+
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
+import schema._
 import StringAndBlobCodecSchemaVisitor._
-import smithy.api.HttpPayload
-import java.nio.ByteBuffer
 
 private[http] object StringAndBlobCodecSchemaVisitor {
 

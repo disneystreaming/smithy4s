@@ -16,14 +16,15 @@
 
 package smithy4s.codegen
 
-import sjsonnew._
-import BasicJsonProtocol._
-import sbt.FileInfo
-import sbt.HashFileInfo
-import sjsonnew._
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
+import sbt.FileInfo
+import sbt.HashFileInfo
 import sbt.io.Hash
+import sjsonnew._
+import sjsonnew._
+
+import BasicJsonProtocol._
 
 // Json codecs used by SBT's caching constructs
 private[smithy4s] object JsonConverters {

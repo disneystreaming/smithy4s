@@ -16,10 +16,12 @@
 
 package smithy4s.tests
 
+import cats.Show
 import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
 import io.circe._
+import org.http4s.EntityDecoder
 import org.http4s.Request
 import org.http4s.Uri
 import org.http4s.circe._
@@ -32,8 +34,6 @@ import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
 import smithy4s.http.PayloadError
 import weaver._
-import cats.Show
-import org.http4s.EntityDecoder
 
 abstract class PizzaSpec
     extends IOSuite

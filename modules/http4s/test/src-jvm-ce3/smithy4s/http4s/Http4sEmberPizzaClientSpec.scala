@@ -20,14 +20,14 @@ import cats.effect.IO
 import cats.effect.Resource
 import cats.effect.syntax.resource._
 import cats.implicits._
-import com.comcast.ip4s._
 import com.comcast.ip4s.Port
-import org.http4s.ember.client.EmberClientBuilder
-import org.http4s.ember.server.EmberServerBuilder
+import com.comcast.ip4s._
 import org.http4s.HttpApp
 import org.http4s.Uri
-import smithy4s.example._
+import org.http4s.ember.client.EmberClientBuilder
+import org.http4s.ember.server.EmberServerBuilder
 import smithy4s.example.PizzaAdminService
+import smithy4s.example._
 import weaver._
 
 object Http4sEmberPizzaClientSpec extends IOSuite {

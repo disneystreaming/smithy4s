@@ -16,8 +16,8 @@
 
 package smithy4s
 
-import munit._
 import cats.syntax.all._
+import munit._
 
 class CollectionInTraitsSmokeSpec() extends FunSuite {
 

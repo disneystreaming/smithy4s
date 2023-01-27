@@ -19,9 +19,8 @@ package http.internals
 
 import smithy4s.Hints
 import smithy4s.schema.Field
-
-import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.SchemaField
+import smithy4s.schema.SchemaVisitor
 
 trait FromMetadata[+A] {
   def read(metadata: Map[String, Any]): Either[String, A]

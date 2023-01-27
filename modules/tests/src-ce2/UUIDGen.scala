@@ -16,8 +16,9 @@
 
 package cats.effect.std
 
-import java.util.UUID
 import cats.effect._
+
+import java.util.UUID
 
 object UUIDGen {
   def randomUUID[F[_]: Sync]: F[UUID] = Sync[F].delay(UUID.randomUUID())

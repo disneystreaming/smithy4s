@@ -16,8 +16,8 @@
 
 package smithy4s
 
-import smithy.api.HttpHeader
 import munit._
+import smithy.api.HttpHeader
 
 class HintsSpec() extends FunSuite {
   test("hints work as expected with newtypes") {

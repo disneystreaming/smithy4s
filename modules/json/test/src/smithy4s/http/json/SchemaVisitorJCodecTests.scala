@@ -17,28 +17,25 @@
 package smithy4s
 package http.json
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
-import smithy.api.JsonName
-import smithy4s.schema.Schema._
-
-import smithy4s.http.PayloadError
-import smithy4s.example.{
-  CheckedOrUnchecked,
-  CheckedOrUnchecked2,
-  Four,
-  One,
-  PayloadData,
-  RangeCheck,
-  TestBiggerUnion,
-  Three,
-  UntaggedUnion
-}
 import alloy.Discriminated
+import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
+import munit.FunSuite
+import smithy.api.Default
+import smithy.api.JsonName
+import smithy4s.example.CheckedOrUnchecked
+import smithy4s.example.CheckedOrUnchecked2
+import smithy4s.example.Four
+import smithy4s.example.One
+import smithy4s.example.PayloadData
+import smithy4s.example.RangeCheck
+import smithy4s.example.TestBiggerUnion
+import smithy4s.example.Three
+import smithy4s.example.UntaggedUnion
+import smithy4s.http.PayloadError
+import smithy4s.schema.Schema._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
-import munit.FunSuite
-import smithy.api.Default
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 

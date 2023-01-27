@@ -17,12 +17,13 @@
 package smithy4s
 package http
 
-import smithy4s.http.internals.MetaEncode._
-import smithy4s.http.internals.SchemaVisitorMetadataWriter
-import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
-import smithy4s.schema.CompilationCache
+import smithy4s.http.internals.MetaEncode._
+import smithy4s.http.internals.SchemaVisitorMetadataReader
+import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.CompilationCache
+
 import scala.collection.mutable.{Map => MMap}
 
 /**

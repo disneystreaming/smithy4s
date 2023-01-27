@@ -17,15 +17,13 @@
 package smithy4s
 package internals
 
-import smithy4s.schema.{
-  Primitive,
-  EnumValue,
-  SchemaField,
-  SchemaAlt,
-  Alt,
-  SchemaVisitor,
-  CollectionTag
-}
+import smithy4s.schema.Alt
+import smithy4s.schema.CollectionTag
+import smithy4s.schema.EnumValue
+import smithy4s.schema.Primitive
+import smithy4s.schema.SchemaAlt
+import smithy4s.schema.SchemaField
+import smithy4s.schema.SchemaVisitor
 
 private[internals] trait SchemaDescriptionDetailedImpl[A]
     extends (Set[ShapeId] => (Set[ShapeId], String)) {

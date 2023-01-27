@@ -16,16 +16,16 @@
 
 package smithy4s.http4s
 
-import smithy4s.dynamic._
-import smithy4s.ShapeId
-import org.http4s.client.Client
-import cats.implicits._
 import cats.effect.IO
 import cats.effect.Resource
+import cats.implicits._
 import org.http4s.HttpApp
+import org.http4s.client.Client
+import smithy4s.ShapeId
+import smithy4s.dynamic._
 import smithy4s.example._
-import software.amazon.smithy.model.{Model => SModel}
 import software.amazon.smithy.model.loader.ModelAssembler
+import software.amazon.smithy.model.{Model => SModel}
 
 class DynamicHttpProxy(client: Client[IO]) {
 

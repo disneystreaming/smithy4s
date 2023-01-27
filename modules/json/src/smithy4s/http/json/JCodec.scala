@@ -20,9 +20,9 @@ package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import smithy4s.capability.Invariant
+import smithy4s.schema.CachedSchemaCompiler
 
 import scala.collection.{Map => MMap}
-import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * Construct that expresses the ability to decode an http message,

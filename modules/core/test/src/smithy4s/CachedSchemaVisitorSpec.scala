@@ -17,11 +17,11 @@
 package smithy4s
 
 import munit.FunSuite
-import smithy4s.schema._
 import smithy4s.schema.Schema._
+import smithy4s.schema._
 
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.HashSet
+import java.util.concurrent.atomic.AtomicInteger
 
 class CachedSchemaVisitorSpec() extends FunSuite {
 

@@ -18,31 +18,32 @@ package smithy4s
 package tests
 
 import cats.Id
-import java.util.UUID
-import smithy4s.schema.CollectionTag
-import smithy4s.schema.Field
 import smithy4s.schema.Alt
-import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.SchemaAlt
-import smithy4s.schema.SchemaField
-import smithy4s.schema.Schema
+import smithy4s.schema.CollectionTag
 import smithy4s.schema.EnumValue
+import smithy4s.schema.Field
 import smithy4s.schema.Primitive
+import smithy4s.schema.Primitive.PBigDecimal
 import smithy4s.schema.Primitive.PBigInt
 import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PDocument
+import smithy4s.schema.Primitive.PBoolean
 import smithy4s.schema.Primitive.PByte
-import smithy4s.schema.Primitive.PBigDecimal
+import smithy4s.schema.Primitive.PDocument
+import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PFloat
 import smithy4s.schema.Primitive.PInt
+import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PShort
 import smithy4s.schema.Primitive.PString
-import smithy4s.schema.Primitive.PUnit
-import smithy4s.schema.Primitive.PLong
-import smithy4s.schema.Primitive.PDouble
-import smithy4s.schema.Primitive.PBoolean
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema.Primitive.PUUID
+import smithy4s.schema.Primitive.PUnit
+import smithy4s.schema.Schema
+import smithy4s.schema.SchemaAlt
+import smithy4s.schema.SchemaField
+import smithy4s.schema.SchemaVisitor
+
+import java.util.UUID
 
 object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 

@@ -17,9 +17,9 @@
 package smithy4s
 
 import cats.Id
+import munit._
 import smithy4s.example.PackedInput
 import smithy4s.example.PackedInputsService
-import munit._
 
 class PackedInputsSmokeSpec() extends FunSuite {
 

@@ -20,9 +20,9 @@ import cats.effect.IO
 import org.http4s._
 import org.http4s.implicits._
 import org.typelevel.ci.CIString
-import weaver._
 import smithy4s.HasId
 import smithy4s.ShapeId
+import weaver._
 
 object DocsSpec extends SimpleIOSuite with TestCompat {
 

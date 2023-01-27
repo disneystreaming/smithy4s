@@ -18,6 +18,7 @@ package smithy4s.compliancetests
 
 import cats.effect._
 import cats.effect.concurrent.Deferred
+
 import scala.concurrent.duration.FiniteDuration
 
 private[compliancetests] class CompatEffect[F[_]](implicit

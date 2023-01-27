@@ -17,10 +17,11 @@
 package smithy4s
 
 import org.scalacheck.Gen.Choose
+import org.scalacheck.Prop._
 import org.scalacheck._
 import smithy.api.TimestampFormat
+
 import scalajs.js.Date
-import org.scalacheck.Prop._
 
 class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 

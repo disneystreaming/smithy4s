@@ -19,7 +19,9 @@ package http.json
 
 import cats.Show
 import com.github.plokhotnyuk.jsoniter_scala.core._
+import munit._
 import org.scalacheck.Gen
+import org.scalacheck.Prop
 import smithy.api.Length
 import smithy.api.Range
 import smithy4s.ByteArray
@@ -27,12 +29,10 @@ import smithy4s.Hints
 import smithy4s.http.PayloadError
 import smithy4s.scalacheck.DynData
 import smithy4s.scalacheck._
-import smithy4s.schema._
 import smithy4s.schema.Schema._
-import munit._
+import smithy4s.schema._
 
 import codecs.schemaVisitorJCodec
-import org.scalacheck.Prop
 import Prop._
 
 class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {

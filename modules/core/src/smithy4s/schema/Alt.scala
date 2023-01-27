@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
+
 import kinds._
 
 /**

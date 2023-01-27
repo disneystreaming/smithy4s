@@ -16,14 +16,21 @@
 
 package smithy4s.http.internals
 
-import smithy4s.schema._
-import PathEncode.MaybePathEncode
+import smithy.api.Http
 import smithy.api.TimestampFormat
 import smithy4s.Bijection
+import smithy4s.Hints
+import smithy4s.IntEnum
+import smithy4s.Lazy
+import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.http.PathSegment
-import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
-import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
-import smithy.api.Http
+import smithy4s.http.PathSegment.GreedySegment
+import smithy4s.http.PathSegment.LabelSegment
+import smithy4s.http.PathSegment.StaticSegment
+import smithy4s.schema._
+
+import PathEncode.MaybePathEncode
 
 object SchemaVisitorPathEncoder
     extends SchemaVisitor[MaybePathEncode]

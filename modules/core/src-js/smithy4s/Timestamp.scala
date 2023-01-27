@@ -18,8 +18,11 @@ package smithy4s
 
 import smithy.api.TimestampFormat
 import smithy4s.Timestamp._
+
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
+
 import scalajs.js.Date
-import scala.util.control.{NoStackTrace, NonFatal}
 
 case class Timestamp private (epochSecond: Long, nano: Int) {
   def isAfter(other: Timestamp): Boolean = {

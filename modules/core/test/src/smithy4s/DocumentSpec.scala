@@ -16,11 +16,11 @@
 
 package smithy4s
 
-import smithy.api.JsonName
-import smithy.api.Default
 import alloy.Discriminated
-import smithy4s.example.IntList
 import munit._
+import smithy.api.Default
+import smithy.api.JsonName
+import smithy4s.example.IntList
 
 class DocumentSpec() extends FunSuite {
 

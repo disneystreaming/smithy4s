@@ -18,6 +18,7 @@ package smithy4s
 package http.internals
 
 import cats.syntax.all._
+import munit._
 import smithy4s.Schema
 import smithy4s.Timestamp
 import smithy4s.example.Headers
@@ -31,7 +32,6 @@ import smithy4s.http.HttpBinding
 import smithy4s.http.Metadata
 import smithy4s.http.MetadataError
 import smithy4s.internals.InputOutput
-import munit._
 
 class MetadataSpec() extends FunSuite {
 

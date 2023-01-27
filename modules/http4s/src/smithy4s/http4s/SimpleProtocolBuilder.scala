@@ -22,8 +22,8 @@ import cats.syntax.all._
 import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
-import smithy4s.http.CodecAPI
 import org.http4s.implicits._
+import smithy4s.http.CodecAPI
 import smithy4s.kinds._
 
 /**

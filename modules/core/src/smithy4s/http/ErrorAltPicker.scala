@@ -18,12 +18,13 @@ package smithy4s
 package http
 
 import smithy.api.Error
-import smithy4s.schema.SchemaAlt
-import ErrorAltPicker.ErrorDiscriminator
 import smithy.api.HttpError
 import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.FullId
 import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.NameOnly
 import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.StatusCode
+import smithy4s.schema.SchemaAlt
+
+import ErrorAltPicker.ErrorDiscriminator
 
 /**
   * Utility class to help find the best alternative out of a error union

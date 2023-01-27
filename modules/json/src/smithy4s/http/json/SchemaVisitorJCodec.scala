@@ -18,21 +18,20 @@ package smithy4s
 package http
 package json
 
-import java.util.UUID
-import java.util
-
+import alloy.Discriminated
+import alloy.Untagged
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import alloy.Discriminated
-import alloy.Untagged
-import smithy4s.internals.DiscriminatedUnionMember
-import smithy4s.schema._
-import smithy4s.schema.Primitive._
 import smithy4s.Timestamp
+import smithy4s.internals.DiscriminatedUnionMember
+import smithy4s.schema.Primitive._
+import smithy4s.schema._
 
+import java.util
+import java.util.UUID
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer

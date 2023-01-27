@@ -19,12 +19,13 @@ package http4s
 
 import cats.data.Kleisli
 import cats.data.OptionT
+import cats.effect.SyncIO
 import cats.implicits._
 import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 import smithy4s.kinds._
+
 import org.typelevel.vault.Key
-import cats.effect.SyncIO
 
 // format: off
 class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](

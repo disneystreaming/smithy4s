@@ -16,15 +16,15 @@
 
 package smithy4s
 
+import cats.implicits._
 import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.Media
+import org.http4s.ParseFailure
 import org.http4s.{Method => Http4sMethod}
 import org.typelevel.ci.CIString
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.{HttpMethod => SmithyMethod}
-import org.http4s.ParseFailure
-import cats.implicits._
 
 package object http4s extends Compat.Package {
 

@@ -22,17 +22,18 @@ import cats.data.Kleisli
 import cats.syntax.all._
 import org.http4s.EntityEncoder
 import org.http4s.Headers
+import org.http4s.HttpApp
 import org.http4s.Message
 import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
+import org.typelevel.vault.Key
 import smithy4s.http.Metadata
 import smithy4s.http._
-import smithy4s.schema.Alt
 import smithy4s.kinds._
-import org.http4s.HttpApp
-import org.typelevel.vault.Key
+
+import smithy4s.schema.Alt
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes

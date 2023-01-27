@@ -16,14 +16,15 @@
 
 package smithy4s.schema
 
+import cats.syntax.all._
 import munit._
-import smithy4s.ShapeId
+import smithy4s.Bijection
 import smithy4s.Hints
 import smithy4s.Lazy
-import smithy4s.Bijection
 import smithy4s.Refinement
+import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import cats.syntax.all._
+
 import Schema._
 
 class HintsTransformationSpec() extends FunSuite {

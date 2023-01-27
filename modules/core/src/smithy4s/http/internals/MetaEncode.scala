@@ -19,6 +19,7 @@ package http
 package internals
 
 import smithy4s.capability.Contravariant
+
 import HttpBinding._
 import MetaEncode._
 

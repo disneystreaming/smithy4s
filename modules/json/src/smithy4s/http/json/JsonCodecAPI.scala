@@ -20,11 +20,10 @@ package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
 import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
+import smithy4s.schema.CompilationCache
+import smithy4s.schema.SchemaVisitor
 
 import java.nio.ByteBuffer
-
-import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.CompilationCache
 
 abstract class JsonCodecAPI(
     makeVisitor: CompilationCache[JCodec] => SchemaVisitor[JCodec],

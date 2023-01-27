@@ -17,11 +17,13 @@
 package smithy4s
 package dynamic
 
-import model._
-import software.amazon.smithy.model.{Model => SModel}
-import software.amazon.smithy.model.shapes.ModelSerializer
-import java.nio.file.Paths
 import cats.syntax.all._
+import software.amazon.smithy.model.shapes.ModelSerializer
+import software.amazon.smithy.model.{Model => SModel}
+
+import java.nio.file.Paths
+
+import model._
 import http.HttpEndpoint
 import DummyIO._
 

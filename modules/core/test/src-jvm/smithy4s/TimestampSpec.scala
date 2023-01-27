@@ -18,12 +18,13 @@ package smithy4s
 
 import cats.Show
 import org.scalacheck.Gen.Choose
+import org.scalacheck.Prop._
 import org.scalacheck._
 import smithy.api.TimestampFormat
+
 import java.time._
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import org.scalacheck.Prop._
 
 class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
 

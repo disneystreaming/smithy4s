@@ -17,8 +17,9 @@
 package smithy4s
 package schema
 
-import Schema._
 import munit._
+
+import Schema._
 
 final class AltSpec extends FunSuite {
 

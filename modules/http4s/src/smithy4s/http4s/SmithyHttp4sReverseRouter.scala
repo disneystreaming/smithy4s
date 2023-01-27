@@ -17,10 +17,10 @@
 package smithy4s
 package http4s
 
-import smithy4s.kinds._
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
+import smithy4s.kinds._
 
 // format: off
 class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](

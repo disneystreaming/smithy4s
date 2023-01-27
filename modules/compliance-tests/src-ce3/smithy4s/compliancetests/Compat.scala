@@ -20,6 +20,7 @@ import cats.effect.Async
 import cats.effect.Deferred
 import com.comcast.ip4s.Host
 import com.comcast.ip4s.Port
+
 import scala.concurrent.duration.FiniteDuration
 
 private[compliancetests] class CompatEffect[F[_]](implicit

@@ -19,6 +19,7 @@ package smithy4s.codegen
 import sbt.Keys._
 import sbt.util.CacheImplicits._
 import sbt.{fileJsonFormatter => _, _}
+
 import JsonConverters._
 
 object Smithy4sCodegenPlugin extends AutoPlugin {

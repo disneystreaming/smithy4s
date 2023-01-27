@@ -16,9 +16,9 @@
 
 package smithy4s.compliancetests
 
-import cats.Monoid
-import cats.MonadThrow
 import cats.Applicative
+import cats.MonadThrow
+import cats.Monoid
 
 abstract class CompatUtils[F[_]: MonadThrow] {
   def raiseError[A](err: Throwable): F[A] =

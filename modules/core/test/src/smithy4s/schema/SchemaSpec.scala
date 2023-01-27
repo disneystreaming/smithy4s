@@ -18,8 +18,9 @@ package smithy4s
 package schema
 
 import munit._
-import Schema._
 import smithy.api.Default
+
+import Schema._
 
 final class SchemaSpec extends FunSuite {
 

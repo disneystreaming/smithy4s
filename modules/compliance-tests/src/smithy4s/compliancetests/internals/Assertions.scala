@@ -17,13 +17,15 @@
 package smithy4s.compliancetests
 package internals
 
-import cats.implicits._
-import ComplianceTest._
 import cats.Eq
+import cats.implicits._
 import io.circe.parser._
 import org.http4s.Headers
 import org.typelevel.ci.CIString
-import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
+import smithy.test.HttpRequestTestCase
+import smithy.test.HttpResponseTestCase
+
+import ComplianceTest._
 
 private[internals] object assert {
   def success: ComplianceResult = Right(())

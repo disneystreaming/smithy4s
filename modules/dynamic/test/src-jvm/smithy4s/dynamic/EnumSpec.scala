@@ -17,15 +17,16 @@
 package smithy4s.dynamic
 
 import munit.FunSuite
-import DummyIO._
-import smithy4s.ShapeId
-import smithy4s.schema.Schema.EnumerationSchema
 import munit.Location
-import smithy4s.schema.EnumValue
-import smithy4s.Hints
 import smithy4s.Document
-import smithy4s.schema.Schema
+import smithy4s.Hints
 import smithy4s.IntEnum
+import smithy4s.ShapeId
+import smithy4s.schema.EnumValue
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema.EnumerationSchema
+
+import DummyIO._
 
 class EnumSpec extends FunSuite {
   val model = """
