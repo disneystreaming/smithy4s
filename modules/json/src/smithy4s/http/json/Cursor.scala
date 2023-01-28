@@ -32,23 +32,39 @@ class Cursor private () {
     codec.decodeValue(this, in)
   }
 
+  def under[A](segment: PayloadPath.Segment)(f: => A): A =
+    segment match {
+      case i: PayloadPath.Segment.Index => under(i.index)(f)
+      case l: PayloadPath.Segment.Label => under(l.label)(f)
+    }
+
   def under[A](label: String)(f: => A): A = {
-    if (top >= labelStack.length) growStacks()
-    labelStack(top) = label
-    top += 1
+    push(label)
     val res = f
-    top -= 1
+    pop()
     res
   }
 
   def under[A](index: Int)(f: => A): A = {
+    push(index)
+    val res = f
+    pop()
+    res
+  }
+
+  def push(label: String): Unit = {
+    if (top >= labelStack.length) growStacks()
+    labelStack(top) = label
+    top += 1
+  }
+
+  def push(index: Int): Unit = {
     if (top >= indexStack.length) growStacks()
     indexStack(top) = index
     top += 1
-    val res = f
-    top -= 1
-    res
   }
+
+  def pop(): Unit = top -= 1
 
   def payloadError[A](codec: JCodec[A], message: String): Nothing =
     throw new PayloadError(getPath(Nil), codec.expecting, message)
