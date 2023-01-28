@@ -755,23 +755,27 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     def split(s: String) =
       s.replace("*/", "\\*\\/").linesIterator.toList
-    val memberDocs = shape
-      .members()
-      .asScala
-      .map { member =>
-        val memberDocs = member.getTrait(classOf[DocumentationTrait]).asScala
-        def targetDocs = model
-          .expectShape(member.getTarget)
-          .getTrait(classOf[DocumentationTrait])
+    val memberDocs: Map[String, List[String]] =
+      if (shape.isUnionShape()) Map.empty
+      else
+        shape
+          .members()
           .asScala
+          .map { member =>
+            val memberDocs =
+              member.getTrait(classOf[DocumentationTrait]).asScala
+            def targetDocs = model
+              .expectShape(member.getTarget)
+              .getTrait(classOf[DocumentationTrait])
+              .asScala
 
-        (
-          member.getMemberName(),
-          memberDocs.orElse(targetDocs)
-        )
-      }
-      .collect { case (name, Some(v)) => (name, split(v.getValue())) }
-      .toMap
+            (
+              member.getMemberName(),
+              memberDocs.orElse(targetDocs)
+            )
+          }
+          .collect { case (name, Some(v)) => (name, split(v.getValue())) }
+          .toMap
 
     shape.getTrait(classOf[DocumentationTrait]).asScala.map { doc =>
       val shapeDocs = split(doc.getValue())

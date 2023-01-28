@@ -701,13 +701,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
-    val shapeDocs = hints
-      .collectFirst { case h: Hint.Documentation => h }
-      .map(doc => List(Hint.Documentation(doc.docLines, Map())))
-      .getOrElse(List())
-
     lines(
-      documentationAnnotation(shapeDocs),
+      documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends scala.Product with scala.Serializable"
