@@ -902,16 +902,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val schemaPkg_ = "smithy4s.schema.Schema"
     def schemaRef: Line = tpe match {
       case Type.PrimitiveType(p) => NameRef(schemaRefP(p)).toLine
-      case Type.Collection(collectionType, member) =>
+      case Type.Collection(collectionType, member, hints) =>
         val col = collectionType match {
           case CollectionType.List       => s"$schemaPkg_.list"
           case CollectionType.Set        => s"$schemaPkg_.set"
           case CollectionType.Vector     => s"$schemaPkg_.vector"
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
-        line"${NameRef(col)}(${member.schemaRef})"
-      case Type.Map(key, value) =>
-        line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}, ${value.schemaRef})"
+        val hintsLine =
+          if (hints.isEmpty) Line.empty
+          else line".addHints(${memberHints(hints)})"
+        line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
+      case Type.Map(key, keyHints, value, valueHints) =>
+        val keyHintsLine =
+          if (keyHints.isEmpty) Line.empty
+          else line".addHints(${memberHints(keyHints)})"
+        val valueHintsLine =
+          if (valueHints.isEmpty) Line.empty
+          else line".addHints(${memberHints(valueHints)})"
+        line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
             name,
