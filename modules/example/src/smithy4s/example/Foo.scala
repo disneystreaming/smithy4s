@@ -11,15 +11,24 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
+/** Helpful information for Foo
+  * int, bigInt and bDec are useful number constructs
+  * The string case is there because.
+  */
 sealed trait Foo extends scala.Product with scala.Serializable {
   @inline final def widen: Foo = this
 }
 object Foo extends ShapeTag.Companion[Foo] {
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
+  )
 
   case class IntCase(int: Int) extends Foo
+  /** this is a comment saying you should be careful for this case
+    * you never know what lies ahead with Strings like this
+    */
   case class StrCase(str: String) extends Foo
   case class BIntCase(bInt: BigInt) extends Foo
   case class BDecCase(bDec: BigDecimal) extends Foo
@@ -30,7 +39,9 @@ object Foo extends ShapeTag.Companion[Foo] {
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
-    val hints: Hints = Hints.empty
+    val hints: Hints = Hints(
+      smithy.api.Documentation("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
+    )
     val schema: Schema[StrCase] = bijection(string.addHints(hints), StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }

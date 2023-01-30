@@ -105,7 +105,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     new ShapeVisitor[Option[Decl]] {
 
       private def getDefault(shape: Shape): Option[Decl] = {
-        val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val hints = SmithyToIR.this.hints(shape)
 
         val recursive = hints.exists {
           case Hint.Trait => true
@@ -218,7 +218,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
-        val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
           case Hint.Trait => true
           case _          => false
@@ -251,7 +251,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       override def unionShape(shape: UnionShape): Option[Decl] = {
         val rec = isRecursive(shape.getId())
 
-        val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
           case Hint.Trait => true
           case _          => false
@@ -681,10 +681,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     }
 
-  private def hints(shape: Shape): List[Hint] = traitsToHints(
-    shape.getAllTraits().asScala.values.toList
-  )
-
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
     Type.Ref(shapeId.getNamespace(), shapeId.getName())
@@ -730,7 +726,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
-  private val traitToHint: PartialFunction[Trait, Hint] = {
+  private def traitToHint(shape: Shape): PartialFunction[Trait, Hint] = {
     case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>
       val shapeIds = t.getTraits()
@@ -755,7 +751,40 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
   }
 
-  private def traitsToHints(traits: List[Trait]): List[Hint] = {
+  private def documentationHint(shape: Shape): Option[Hint] = {
+
+    def split(s: String) =
+      s.replace("*/", "\\*\\/").linesIterator.toList
+    val memberDocs: Map[String, List[String]] =
+      if (shape.isUnionShape()) Map.empty
+      else
+        shape
+          .members()
+          .asScala
+          .map { member =>
+            val memberDocs =
+              member.getTrait(classOf[DocumentationTrait]).asScala
+            def targetDocs = model
+              .expectShape(member.getTarget)
+              .getTrait(classOf[DocumentationTrait])
+              .asScala
+
+            (
+              member.getMemberName(),
+              memberDocs.orElse(targetDocs)
+            )
+          }
+          .collect { case (name, Some(v)) => (name, split(v.getValue())) }
+          .toMap
+
+    shape.getTrait(classOf[DocumentationTrait]).asScala.map { doc =>
+      val shapeDocs = split(doc.getValue())
+      Hint.Documentation(shapeDocs, memberDocs)
+    }
+  }
+
+  private def hints(shape: Shape): List[Hint] = {
+    val traits = shape.getAllTraits().asScala.values.toList
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -768,7 +797,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
-    traits.collect(traitToHint) ++ nonConstraintNonMetaTraits.map(unfoldTrait)
+    traits.collect(traitToHint(shape)) ++
+      documentationHint(shape) ++
+      nonConstraintNonMetaTraits.map(unfoldTrait)
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
