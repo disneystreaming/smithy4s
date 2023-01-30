@@ -561,14 +561,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .accept(this)
           .map { tpe =>
             val _hints = hints(x)
+            val memberHints = hints(x.getMember())
             if (_hints.contains(Hint.UniqueItems)) {
-              Type.Collection(CollectionType.Set, tpe)
+              Type.Collection(CollectionType.Set, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.Vector)) {
-              Type.Collection(CollectionType.Vector, tpe)
+              Type.Collection(CollectionType.Vector, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.IndexedSeq)) {
-              Type.Collection(CollectionType.IndexedSeq, tpe)
+              Type.Collection(CollectionType.IndexedSeq, tpe, memberHints)
             } else {
-              Type.Collection(CollectionType.List, tpe)
+              Type.Collection(CollectionType.List, tpe, memberHints)
             }
           }
           .map { tpe =>
@@ -582,7 +583,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       override def setShape(x: SetShape): Option[Type] =
         x.getMember()
           .accept(this)
-          .map(Type.Collection(CollectionType.Set, _))
+          .map(Type.Collection(CollectionType.Set, _, hints(x.getMember())))
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
@@ -598,11 +599,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
         v <- x.getValue().accept(this)
-      } yield Type.Map(k, v)).map { tpe =>
-        val externalOrBase =
-          getExternalOrBase(x, tpe)
-        val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+      } yield Type.Map(k, hints(x.getKey()), v, hints(x.getValue()))).map {
+        tpe =>
+          val externalOrBase =
+            getExternalOrBase(x, tpe)
+          val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+          Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
       }
 
       def byteShape(x: ByteShape): Option[Type] =
@@ -1052,11 +1054,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // List
       case (
             N.ArrayNode(list),
-            Type.Collection(collectionType, mem)
+            Type.Collection(collectionType, mem, _)
           ) =>
         TypedNode.CollectionTN(collectionType, list.map(NodeAndType(_, mem)))
       // Map
-      case (N.MapNode(map), Type.Map(keyType, valueType)) =>
+      case (N.MapNode(map), Type.Map(keyType, _, valueType, _)) =>
         TypedNode.MapTN(map.map { case (k, v) =>
           (NodeAndType(k, keyType) -> NodeAndType(v, valueType))
         })

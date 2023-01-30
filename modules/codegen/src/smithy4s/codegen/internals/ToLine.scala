@@ -47,11 +47,11 @@ private[internals] object ToLine {
     override def render(a: Type): Line = typeToNameRef(a).toLine
 
     private def typeToNameRef(tpe: Type): NameRef = tpe match {
-      case Type.Collection(collectionType, member) =>
+      case Type.Collection(collectionType, member, _) =>
         val inner = typeToNameRef(member)
         val col = collectionType.tpe
         col.copy(typeParams = List(inner))
-      case Type.Map(key, value) =>
+      case Type.Map(key, _, value, _) =>
         val keyTpe = typeToNameRef(key)
         val valueTpe = typeToNameRef(value)
         NameRef("scala.collection.immutable", "Map").copy(typeParams =
