@@ -101,9 +101,18 @@ private[internals] object CollisionAvoidance {
 
   private def modType(tpe: Type): Type = tpe match {
     case Type.Collection(collectionType, member, memberHints) =>
-      Type.Collection(collectionType, modType(member), memberHints)
+      Type.Collection(
+        collectionType = collectionType,
+        member = modType(member),
+        memberHints = memberHints.map(modHint(_))
+      )
     case Type.Map(key, keyHints, value, valueHints) =>
-      Type.Map(modType(key), keyHints, modType(value), valueHints)
+      Type.Map(
+        key = modType(key),
+        keyHints = keyHints.map(modHint(_)),
+        value = modType(value),
+        valueHints = valueHints.map(modHint(_))
+      )
     case Type.Ref(namespace, name) =>
       Type.Ref(namespace, protectType(name.capitalize))
     case Alias(namespace, name, tpe, isUnwrapped) =>

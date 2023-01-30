@@ -44,7 +44,7 @@ final class RendererSpec extends munit.FunSuite {
       }
 
     val memberSchemaString =
-      """string.addHints(smithy.api.documentation("listFoo"), smithy.api.deprecated(message = None, since = None))"""
+      """string.addHints(smithy.api.Documentation("listFoo"), smithy.api.Deprecated(message = None, since = None))"""
     val requiredString =
       s"""val underlyingSchema: Schema[List[String]] = list($memberSchemaString)"""
     assert(definition.contains(requiredString))
@@ -78,9 +78,9 @@ final class RendererSpec extends munit.FunSuite {
       }
 
     val keySchemaString =
-      """string.addHints(smithy.api.documentation("mapFoo"))"""
+      """string.addHints(smithy.api.Documentation("mapFoo"))"""
     val valueSchemaString =
-      """int.addHints(smithy.api.documentation("mapBar"), smithy.api.deprecated(message = None, since = None))"""
+      """int.addHints(smithy.api.Documentation("mapBar"), smithy.api.Deprecated(message = None, since = None))"""
     val requiredString =
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
