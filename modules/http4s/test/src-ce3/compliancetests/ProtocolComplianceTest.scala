@@ -18,7 +18,7 @@ package compliancetests
 
 import alloy.SimpleRestJson
 import cats.effect.{IO, Resource}
-import org.http4s.*
+import org.http4s._
 import org.http4s.client.Client
 import smithy4s.{Service, ShapeId}
 import smithy4s.compliancetests.{
@@ -30,7 +30,7 @@ import smithy4s.compliancetests.{
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
-import weaver.*
+import weaver._
 
 object ProtocolComplianceTest extends SimpleIOSuite {
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
