@@ -63,10 +63,9 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Eq[E] =
-    (x: E, y: E) => {
+    Eq.by { x =>
       val enumX = total(x)
-      val enumY = total(y)
-      enumX.intValue === enumY.intValue && enumX.stringValue === enumY.stringValue
+      (enumX.intValue, enumX.stringValue)
     }
 
   override def struct[S](
