@@ -309,4 +309,35 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
     expect.same(result, expected)
   }
 
+  test(
+    "no validation events are returned when one refinement is applied to a simple member shape"
+  ) {
+    val modelString =
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |structure SomeTest{
+         |  @trtOne
+         |  value: String
+         |}
+         |""".stripMargin
+
+    val model = Model
+      .assembler()
+      .disableValidation()
+      .discoverModels()
+      .addUnparsedModel("test.smithy", modelString)
+      .assemble()
+      .unwrap()
+
+    val result = validator.validate(model).asScala.toList
+    val expected = List.empty
+    expect.same(result, expected)
+  }
+
 }
