@@ -18,6 +18,7 @@ package smithy4s.compliancetests
 
 import alloy.SimpleRestJson
 import cats.effect.{IO, Resource}
+import cats.effect.unsafe.IORuntime
 import org.http4s._
 import smithy4s.{Document, Schema, Service, ShapeId}
 import org.http4s.client.Client
@@ -29,8 +30,6 @@ import smithy4s.dynamic.model.Model
 import smithy4s.http.PayloadError
 import smithy4s.http4s.SimpleRestJsonBuilder
 import weaver._
-
-import java.nio.file.{Files, Paths}
 
 object ProtocolComplianceTest extends SimpleIOSuite {
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
@@ -59,32 +58,41 @@ object ProtocolComplianceTest extends SimpleIOSuite {
 
   private val path = sys.env
     .get("MODEL_DUMP")
-    .map(Paths.get(_))
+    .map(fs2.io.file.Path(_))
     .getOrElse(sys.error("MODEL_DUMP env var not set"))
 
-  private val bytes: Array[Byte] = Files.readAllBytes(path)
-  private val doc = decodeDocument(bytes)
-  private val dynamicSchemaIndex =
-    loadDynamic(doc).getOrElse(sys.error("unable to load Dynamic path"))
+  private implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
+  private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = fs2.io.file
+    .Files[IO]
+    .readAll(path)
+    .compile
+    .toVector
+    .map(_.toArray)
+    .map(decodeDocument)
+    .map(loadDynamic(_).getOrElse(sys.error("unable to load Dynamic path")))
 
   val pizzaSpec = generateTests(ShapeId("alloy.test", "PizzaAdminService"))
 
-  pizzaSpec(dynamicSchemaIndex).foreach(tc =>
-    test(tc.name) {
-      tc.run
-        .map[Expectations] {
-          case Left(value) =>
-            Expectations.Helpers.failure(value)
-          case Right(_) =>
-            Expectations.Helpers.success
+  dynamicSchemaIndexLoader
+    .map(
+      pizzaSpec(_).foreach(tc =>
+        test(tc.name) {
+          tc.run
+            .map[Expectations] {
+              case Left(value) =>
+                Expectations.Helpers.failure(value)
+              case Right(_) =>
+                Expectations.Helpers.success
+            }
+            .attempt
+            .map {
+              case Right(expectations) => expectations
+              case Left(e)             => failure(e.getMessage)
+            }
         }
-        .attempt
-        .map {
-          case Right(expectations) => expectations
-          case Left(e)             => failure(e.getMessage)
-        }
-    }
-  )
+      )
+    )
+    .unsafeRunAndForget()
 
   private def generateTests(
       shapeId: ShapeId
