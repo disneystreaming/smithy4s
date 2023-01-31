@@ -757,6 +757,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     def split(s: String) =
       s.replace("*/", "\\*\\/").linesIterator.toList
+    val shapeDocs = shape
+      .getTrait(classOf[DocumentationTrait])
+      .asScala
+      .fold(List.empty[String])(doc => split(doc.getValue()))
     val memberDocs: Map[String, List[String]] =
       if (shape.isUnionShape()) Map.empty
       else
@@ -779,10 +783,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .collect { case (name, Some(v)) => (name, split(v.getValue())) }
           .toMap
 
-    shape.getTrait(classOf[DocumentationTrait]).asScala.map { doc =>
-      val shapeDocs = split(doc.getValue())
-      Hint.Documentation(shapeDocs, memberDocs)
-    }
+    if (shapeDocs.nonEmpty || memberDocs.nonEmpty) {
+      Some(Hint.Documentation(shapeDocs, memberDocs))
+    } else None
   }
 
   private def hints(shape: Shape): List[Hint] = {
