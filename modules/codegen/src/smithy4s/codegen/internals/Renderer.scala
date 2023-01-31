@@ -1038,11 +1038,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
   }
 
-  def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
-    lines(line"val hints: $Hints_ = $Hints_.empty")
-  } else {
-    line"val hints: $Hints_ = $Hints_".args {
-      hints.flatMap(renderHint(_).toList)
+  def renderHintsVal(hints: List[Hint]): Lines = {
+    val base = line"val hints: $Hints_ = $Hints_"
+    hints.flatMap(renderHint) match {
+      case Nil  => lines(base + line".empty")
+      case args => base.args(args)
     }
   }
 
