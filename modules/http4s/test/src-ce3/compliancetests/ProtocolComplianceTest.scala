@@ -14,22 +14,23 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package compliancetests
 
 import alloy.SimpleRestJson
 import cats.effect.{IO, Resource}
-import cats.effect.unsafe.IORuntime
-import org.http4s._
-import smithy4s.{Document, Schema, Service, ShapeId}
+import org.http4s.*
 import org.http4s.client.Client
-import smithy4s.schema.Schema.document
-import smithy4s.kinds.FunctorAlgebra
+import smithy4s.{Service, ShapeId}
+import smithy4s.compliancetests.{
+  ComplianceTest,
+  HttpProtocolCompliance,
+  ReverseRouter,
+  Router
+}
 import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.dynamic.DynamicSchemaIndex.load
-import smithy4s.dynamic.model.Model
-import smithy4s.http.PayloadError
 import smithy4s.http4s.SimpleRestJsonBuilder
-import weaver._
+import smithy4s.kinds.FunctorAlgebra
+import weaver.*
 
 object ProtocolComplianceTest extends SimpleIOSuite {
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
@@ -56,43 +57,25 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   }
 
-  private val path = sys.env
-    .get("MODEL_DUMP")
-    .map(fs2.io.file.Path(_))
-    .getOrElse(sys.error("MODEL_DUMP env var not set"))
-
-  private implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
-  private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = fs2.io.file
-    .Files[IO]
-    .readAll(path)
-    .compile
-    .toVector
-    .map(_.toArray)
-    .map(decodeDocument)
-    .map(loadDynamic(_).getOrElse(sys.error("unable to load Dynamic path")))
-
   val pizzaSpec = generateTests(ShapeId("alloy.test", "PizzaAdminService"))
 
-  dynamicSchemaIndexLoader
-    .map(
-      pizzaSpec(_).foreach(tc =>
-        test(tc.name) {
-          tc.run
-            .map[Expectations] {
-              case Left(value) =>
-                Expectations.Helpers.failure(value)
-              case Right(_) =>
-                Expectations.Helpers.success
-            }
-            .attempt
-            .map {
-              case Right(expectations) => expectations
-              case Left(e)             => failure(e.getMessage)
-            }
-        }
-      )
-    )
-    .unsafeRunAndForget()
+  pizzaSpec(dynamicSchemaIndexLoader(SimpleRestJsonIntegration.codecs)).foreach(
+    tc =>
+      test(tc.name) {
+        tc.run
+          .map[Expectations] {
+            case Left(value) =>
+              Expectations.Helpers.failure(value)
+            case Right(_) =>
+              Expectations.Helpers.success
+          }
+          .attempt
+          .map {
+            case Right(expectations) => expectations
+            case Left(e)             => failure(e.getMessage)
+          }
+      }
+  )
 
   private def generateTests(
       shapeId: ShapeId
@@ -106,18 +89,4 @@ object ProtocolComplianceTest extends SimpleIOSuite {
       })
   }
 
-  private def decodeDocument(bytes: Array[Byte]): Document = {
-    val schema: Schema[Document] = document
-    val codecApi = SimpleRestJsonIntegration.codecs
-    val codec: codecApi.Codec[Document] = codecApi.compileCodec(schema)
-    codecApi
-      .decodeFromByteArray[Document](codec, bytes)
-      .getOrElse(sys.error("unable to decode smithy model into document"))
-  }
-
-  private def loadDynamic(
-      doc: Document
-  ): Either[PayloadError, DynamicSchemaIndex] = {
-    Document.decode[Model](doc).map(load)
-  }
 }
