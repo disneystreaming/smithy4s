@@ -301,7 +301,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
         .shapeId(ShapeId.fromParts("test", "trtOne"))
         .severity(Severity.ERROR)
         .message(
-          "Error validating trait `smithy4s.meta#refinement`.providerImport: String value provided for `smithy4s.meta#Import` must match regular expression: ^(?:_root_\\.)?(?:[a-zA-Z][\\w]*\\.?)*\\.(?:_|given)$"
+          "Error validating trait `smithy4s.meta#refinement`.providerImport: String value provided for `smithy4s.meta#Import` must match regular expression: ^(?:_root_\\.)?(?:[a-zA-Z`][\\w]*\\.?)*\\.(?:_|given)$"
         )
         .build()
     )
