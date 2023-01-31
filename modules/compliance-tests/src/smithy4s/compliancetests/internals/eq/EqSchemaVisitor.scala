@@ -17,7 +17,6 @@
 package smithy4s.compliancetests.internals.eq
 
 import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
-import cats.implicits.catsSyntaxEq
 import cats.kernel.Eq
 import smithy4s._
 import smithy4s.schema.{Schema, _}
