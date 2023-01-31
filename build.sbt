@@ -649,7 +649,7 @@ lazy val http4s = projectMatrix
       else moduleName.value
     },
     Test / allowedNamespaces := Seq("smithy4s.hello"),
-    Test / smithy4sDependencies :=  Seq(Dependencies.Alloy.`protocol-tests`),
+    Test / complianceTestDependencies :=  Seq(Dependencies.Alloy.`protocol-tests`),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
@@ -879,6 +879,9 @@ def genSmithy(config: Configuration) = Def.settings(
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
 def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
 
+// SBT setting to specify artifacts to be included in the Smithy model for compliance testing
+val complianceTestDependencies     = SettingKey[Seq[ModuleID]]("complianceTestDependencies")
+
 // writes out a json representation of the smithy model pulled from Smithy4s dependencies config
 def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] = Def.task{
   val dumpModelCp = (`codegen-cli`.jvm(
@@ -886,10 +889,8 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] = Def.task
     ) / Compile / fullClasspath).value
       .map(_.data)
   val mc = "smithy4s.codegen.cli.Main"
-  val cp = dumpModelCp
-    .map(_.getAbsolutePath())
-    .mkString(":")
-  val dependencies = List("--dependencies", (config / smithy4sDependencies).?.value.getOrElse(Seq.empty).map {
+  val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
+  val dependencies = List("--dependencies", (config / complianceTestDependencies).?.value.getOrElse(Seq.empty).map {
     moduleId =>
       s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
   }.mkString(","))

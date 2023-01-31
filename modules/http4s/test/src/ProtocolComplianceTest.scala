@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.http4s
+package smithy4s.compliancetests
 
 import alloy.SimpleRestJson
 import cats.effect.{IO, Resource}
@@ -23,7 +23,6 @@ import smithy4s.{Document, Schema, Service, ShapeId}
 import org.http4s.client.Client
 import smithy4s.schema.Schema.document
 import smithy4s.kinds.FunctorAlgebra
-import smithy4s.compliancetests._
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.dynamic.model.Model
