@@ -16,26 +16,26 @@
 
 package smithy4s.http4s
 
-import cats.effect.IO
-import cats.effect.Resource
+import alloy.SimpleRestJson
+import cats.effect.{IO, Resource}
 import org.http4s._
+import smithy4s.{Document, Schema, Service, ShapeId}
 import org.http4s.client.Client
+import smithy4s.schema.Schema.document
 import smithy4s.kinds.FunctorAlgebra
-import smithy4s.Service
-import smithy4s.ShapeId
 import smithy4s.compliancetests._
-import software.amazon.smithy.model.shapes.ModelSerializer
-import software.amazon.smithy.model._
-import smithy4s.dynamic.NodeToDocument
 import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.Document
 import smithy4s.dynamic.DynamicSchemaIndex.load
+import smithy4s.dynamic.model.Model
 import smithy4s.http.PayloadError
+import smithy4s.http4s.SimpleRestJsonBuilder
 import weaver._
+
+import java.nio.file.{Files, Paths}
 
 object ProtocolComplianceTest extends SimpleIOSuite {
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
-    type Protocol = alloy.SimpleRestJson
+    type Protocol = SimpleRestJson
     val protocolTag = alloy.SimpleRestJson
 
     def codecs = SimpleRestJsonBuilder.codecs
@@ -58,12 +58,15 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   }
 
-  private val smithyModel = Model.assembler().discoverModels.assemble.unwrap()
-  private val node =
-    ModelSerializer.builder().build.serialize(smithyModel)
-  private val doc = NodeToDocument(node)
-  private val dynamicSchemaIndex: DynamicSchemaIndex =
-    loadDynamic(doc).getOrElse(sys.error("unable to load Dynamic model"))
+  private val path = sys.env
+    .get("MODEL_DUMP")
+    .map(Paths.get(_))
+    .getOrElse(sys.error("MODEL_DUMP env var not set"))
+
+  private val bytes: Array[Byte] = Files.readAllBytes(path)
+  private val doc = decodeDocument(bytes)
+  private val dynamicSchemaIndex =
+    loadDynamic(doc).getOrElse(sys.error("unable to load Dynamic path"))
 
   val pizzaSpec = generateTests(ShapeId("alloy.test", "PizzaAdminService"))
 
@@ -96,9 +99,18 @@ object ProtocolComplianceTest extends SimpleIOSuite {
       })
   }
 
+  private def decodeDocument(bytes: Array[Byte]): Document = {
+    val schema: Schema[Document] = document
+    val codecApi = SimpleRestJsonIntegration.codecs
+    val codec: codecApi.Codec[Document] = codecApi.compileCodec(schema)
+    codecApi
+      .decodeFromByteArray[Document](codec, bytes)
+      .getOrElse(sys.error("unable to decode smithy model into document"))
+  }
+
   private def loadDynamic(
       doc: Document
   ): Either[PayloadError, DynamicSchemaIndex] = {
-    Document.decode[smithy4s.dynamic.model.Model](doc).map(load)
+    Document.decode[Model](doc).map(load)
   }
 }
