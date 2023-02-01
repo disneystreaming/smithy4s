@@ -754,35 +754,43 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def documentationHint(shape: Shape): Option[Hint] = {
-
     def split(s: String) =
       s.replace("*/", "\\*\\/").linesIterator.toList
     val shapeDocs = shape
       .getTrait(classOf[DocumentationTrait])
       .asScala
-      .fold(List.empty[String])(doc => split(doc.getValue()))
-    val memberDocs: Map[String, List[String]] =
-      if (shape.isUnionShape()) Map.empty
-      else
-        shape
-          .members()
-          .asScala
-          .map { member =>
-            val memberDocs =
-              member.getTrait(classOf[DocumentationTrait]).asScala
-            def targetDocs = model
-              .expectShape(member.getTarget)
-              .getTrait(classOf[DocumentationTrait])
-              .asScala
+      .foldMap(doc => split(doc.getValue()))
+    def getMemberDocs(shape: Shape): Map[String, List[String]] =
+      shape match {
+        case _: UnionShape => Map.empty
+        case op: OperationShape =>
+          op.getInput()
+            .asScala
+            .map(id => getMemberDocs(model.expectShape(id)))
+            .getOrElse(Map.empty)
+        case _ =>
+          shape
+            .members()
+            .asScala
+            .map { member =>
+              val memberDocs =
+                member.getTrait(classOf[DocumentationTrait]).asScala
+              def targetDocs = model
+                .expectShape(member.getTarget)
+                .getTrait(classOf[DocumentationTrait])
+                .asScala
 
-            (
-              member.getMemberName(),
-              memberDocs.orElse(targetDocs)
-            )
-          }
-          .collect { case (name, Some(v)) => (name, split(v.getValue())) }
-          .toMap
+              (
+                member.getMemberName(),
+                memberDocs.orElse(targetDocs)
+              )
+            }
+            .collect { case (name, Some(v)) => (name, split(v.getValue())) }
+            .toMap
 
+      }
+
+    val memberDocs = getMemberDocs(shape)
     if (shapeDocs.nonEmpty || memberDocs.nonEmpty) {
       Some(Hint.Documentation(shapeDocs, memberDocs))
     } else None
