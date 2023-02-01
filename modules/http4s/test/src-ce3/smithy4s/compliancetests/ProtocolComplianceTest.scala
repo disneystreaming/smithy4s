@@ -21,12 +21,6 @@ import cats.effect.Resource
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.{Document, Service, ShapeId}
-import smithy4s.compliancetests.{
-  ComplianceTest,
-  HttpProtocolCompliance,
-  ReverseRouter,
-  Router
-}
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
