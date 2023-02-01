@@ -4,8 +4,11 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.example.refined.Age
+import smithy4s.example.refined.Age.provider._
 import smithy4s.example.refined.Name
 import smithy4s.schema.Schema.bijection
+import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.union
 
 sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
@@ -20,8 +23,10 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
   case class DogNameCase(dogName: Name) extends UnionWithRefinedTypes
 
   object AgeCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[AgeCase] = bijection(Age.schema.addHints(hints), AgeCase(_), _.age)
+    val hints: Hints = Hints(
+      smithy4s.example.AgeFormat(),
+    )
+    val schema: Schema[AgeCase] = bijection(int.refined[Age](smithy4s.example.AgeFormat()).addHints(hints), AgeCase(_), _.age)
     val alt = schema.oneOf[UnionWithRefinedTypes]("age")
   }
   object DogNameCase {

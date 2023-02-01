@@ -22,7 +22,6 @@ package object example {
   type SomeValue = smithy4s.example.SomeValue.Type
   type TestString = smithy4s.example.TestString.Type
   type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
-  type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type
   type Name = smithy4s.example.Name.Type
   type NonEmptyStrings = smithy4s.example.NonEmptyStrings.Type
@@ -35,7 +34,6 @@ package object example {
   type FancyList = smithy4s.example.FancyList.Type
   @deprecated
   type Strings = smithy4s.example.Strings.Type
-  type PersonAge = smithy4s.example.PersonAge.Type
   @deprecated
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
