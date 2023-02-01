@@ -26,7 +26,7 @@ import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
@@ -683,6 +683,28 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     }
 
+  private def imputeZeroValuesOnDefaultTraits(
+      shape: Shape
+  ): List[Trait] = shape.getAllTraits().asScala.values.toList.map {
+    case default: DefaultTrait if default.toNode == Node.nullNode =>
+      val tpe = shape.asMemberShape().asScala match {
+        case Some(memShape) => model.getShape(memShape.getTarget).get.getType
+        case None           => shape.getType
+      }
+      val newNode = tpe match {
+        case ShapeType.STRING  => Node.from("")
+        case ShapeType.MAP     => Node.objectNode()
+        case ShapeType.INTEGER => Node.from(0)
+        case ShapeType.LONG    => Node.from(0L)
+        case ShapeType.DOUBLE  => Node.from(0.0d)
+        case ShapeType.SHORT   => Node.from(0: Short)
+        case ShapeType.FLOAT   => Node.from(0.0f)
+        case _                 => default.toNode
+      }
+      new DefaultTrait(newNode)
+    case other => other
+  }
+
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
     Type.Ref(shapeId.getNamespace(), shapeId.getName())
@@ -789,7 +811,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private def hints(shape: Shape): List[Hint] = {
-    val traits = shape.getAllTraits().asScala.values.toList
+    val traits = imputeZeroValuesOnDefaultTraits(shape)
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -1068,6 +1090,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Primitive
       case (node, Type.PrimitiveType(p)) =>
         unfoldNodeAndTypeP(node, p)
+      case (node, Type.Collection(collectionType, _, _))
+          if node == Node.nullNode =>
+        TypedNode.CollectionTN(collectionType, List.empty)
+      case (node, Type.Map(_, _, _, _)) if node == Node.nullNode =>
+        TypedNode.MapTN(List.empty)
       case (node, tpe) => throw UnhandledTraitBinding(node, tpe)
     }
 
@@ -1098,6 +1125,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       TypedNode.PrimitiveTN(Primitive.Bool, bool)
     case (node, Primitive.Document) =>
       TypedNode.PrimitiveTN(Primitive.Document, node)
+    case (node, Primitive.String) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.String, "")
+    case (node, Primitive.Int) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Int, 0)
+    case (node, Primitive.Long) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Long, 0L)
+    case (node, Primitive.Double) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Double, 0.0)
+    case (node, Primitive.Float) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
+    case (node, Primitive.Short) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
     case other =>
       throw new NotImplementedError(s"Unsupported case: $other")
   }

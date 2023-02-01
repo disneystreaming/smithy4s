@@ -8,10 +8,33 @@ list StringList {
   member: String
 }
 
+map DefaultStringMap {
+  key: String
+  value: String
+}
+
 structure DefaultTest {
   one: Integer = 1
   two: String = "test"
   three: StringList = []
+  @default
+  four: StringList
+  @default
+  five: String
+  @default
+  six: Integer
+  @default
+  seven: Document
+  @default
+  eight: DefaultStringMap
+  @default
+  nine: Short
+  @default
+  ten: Double
+  @default
+  eleven: Float
+  @default
+  twelve: Long
 }
 
 structure DefaultOrderingTest {
