@@ -26,6 +26,7 @@ import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
 import weaver._
 import cats.effect.IO
+import cats.effect.std.Env
 import cats.effect.unsafe.IORuntime
 import smithy4s.Schema
 import smithy4s.http.PayloadError
@@ -34,7 +35,7 @@ import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
 
-object ProtocolComplianceTest extends SimpleIOSuite with EnvCompat {
+object ProtocolComplianceTest extends SimpleIOSuite {
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = SimpleRestJson
@@ -62,21 +63,25 @@ object ProtocolComplianceTest extends SimpleIOSuite with EnvCompat {
 
   val pizzaSpec = generateTests(ShapeId("alloy.test", "PizzaAdminService"))
 
-  private val path =
-    env
-      .get("MODEL_DUMP")
-      .map(fs2.io.file.Path(_))
-      .getOrElse(sys.error("MODEL_DUMP env var not set"))
+  private val path = Env
+    .make[IO]
+    .get("MODEL_DUMP")
+    .map(_.fold(sys.error(""))(fs2.io.file.Path(_)))
 
   private implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
-  private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = fs2.io.file
-    .Files[IO]
-    .readAll(path)
-    .compile
-    .toVector
-    .map(_.toArray)
-    .map(decodeDocument(_, SimpleRestJsonIntegration.codecs))
-    .map(loadDynamic(_).getOrElse(sys.error("unable to load Dynamic path")))
+  private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
+    for {
+      p <- path
+      dsi <- fs2.io.file
+        .Files[IO]
+        .readAll(p)
+        .compile
+        .toVector
+        .map(_.toArray)
+        .map(decodeDocument(_, SimpleRestJsonIntegration.codecs))
+        .map(loadDynamic(_).getOrElse(sys.error("unable to load Dynamic path")))
+    } yield dsi
+  }
 
   dynamicSchemaIndexLoader
     .map(
