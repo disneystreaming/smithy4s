@@ -200,14 +200,21 @@ will result in the `"software.amazon.smithy" % "smithy-aws-iam-traits" % "1.14.1
 and used for the smithy-level classpath of the smithy files contained by `downstream`. This effectively means that smithy files
 in `downstream` can use the Smithy shapes present in the `smithy-aws-iam-traits` artifact.
 
-
-
-One side-effect of this is that if you produce JARs containing artifacts produced by Smithy4s code generation, they'll contain a `smithy4s.tracking.smithy`. This could be a problematic file if you're using `sbt-assembly` because if you depend on multiple JARs that contain this file, you'll need to write a custom `assemblyMergeStrategy`, like so:
+One side-effect of this is that if you produce JARs containing artifacts produced by Smithy4s code generation, they'll contain some common files with other smithy projects, particularly within the `META-INF` folder. You'll need to write a custom `assemblyMergeStrategy`, like so:
 
 ```sbt
 assemblyMergeStrategy := {
-  case "META-INF/smithy/smithy4s.tracking.smithy" =>
-    MergeStrategy.discard
+  case PathList("META-INF", xs @ _*) =>
+        (xs map { _.toLowerCase }) match {
+          // http4s-swagger provides the swagger webjar, which can conflict
+          case "resources" :: "webjars" :: xs               => MergeStrategy.first
+          // There is no harm in removing the tracking file
+          case "smithy" :: "smithy4s.tracking.smithy"       => MergeStrategy.discard
+          // Keep the correct smithy manifest
+          case "smithy" :: "manifest"                       => MergeStrategy.first
+          // Discard the rest
+          case _                                            => MergeStrategy.discard
+        }
   case x =>
     val oldStrategy = assemblyMergeStrategy.value
     oldStrategy(x)
