@@ -205,16 +205,16 @@ One side-effect of this is that if you produce JARs containing artifacts produce
 ```sbt
 assemblyMergeStrategy := {
   case PathList("META-INF", xs @ _*) =>
-        xs map { _.toLowerCase } match {
-          // http4s-swagger provides the swagger webjar, which can conflict
-          case "resources" :: "webjars" :: xs               => MergeStrategy.first
-          // There is no harm in removing the tracking file
-          case "smithy" :: "smithy4s.tracking.smithy"       => MergeStrategy.discard
-          // Keep the correct smithy manifest
-          case "smithy" :: "manifest"                       => MergeStrategy.first
-          // Discard the rest
-          case _                                            => MergeStrategy.discard
-        }
+    xs.map(_.toLowerCase) match {
+      // http4s-swagger provides the swagger webjar, which can conflict
+      case "resources" :: "webjars" :: xs               => MergeStrategy.first
+      // There is no harm in removing the tracking file
+      case "smithy" :: "smithy4s.tracking.smithy"       => MergeStrategy.discard
+      // Keep the correct smithy manifest
+      case "smithy" :: "manifest"                       => MergeStrategy.first
+      // Discard the rest
+      case _                                            => MergeStrategy.discard
+    }
   case x =>
     val oldStrategy = assemblyMergeStrategy.value
     oldStrategy(x)
