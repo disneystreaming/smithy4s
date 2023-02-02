@@ -195,15 +195,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
-  private def documentationAnnotation(hints: List[Hint]): Lines = {
+  private def documentationAnnotation(
+      hints: List[Hint],
+      skipMemberDocs: Boolean = false
+  ): Lines = {
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
         val shapeDocs: List[String] = doc.docLines
-        val memberDocs: List[String] = doc.memberDocLines.flatMap {
-          case (memberName, text) =>
-            s"@param $memberName" :: text.map("  " + _)
-        }.toList
+        val memberDocs: List[String] =
+          if (skipMemberDocs) List.empty
+          else
+            doc.memberDocLines.flatMap { case (memberName, text) =>
+              s"@param $memberName" :: text.map("  " + _)
+            }.toList
 
         val maybeNewline =
           if (shapeDocs.nonEmpty && memberDocs.nonEmpty) List("", "") else Nil
@@ -276,7 +281,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         ops.map { op =>
           lines(
-            documentationAnnotation(op.hints),
+            documentationAnnotation(
+              op.hints,
+              op.hints.contains(Hint.PackedInputs)
+            ),
             deprecationAnnotation(op.hints),
             line"def ${op.methodName}(${op.renderArgs}): F[${op
               .renderAlgParams(genNameRef.name)}]"

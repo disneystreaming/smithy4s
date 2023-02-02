@@ -33,7 +33,7 @@ final class RendererSpec extends munit.FunSuite {
         |}
         |""".stripMargin
 
-    val contents = generateScalaCode(smithy)
+    val contents = generateScalaCode(smithy).values
     val definition =
       contents.find(_.contains("object ListWithMemberHints")) match {
         case None =>
@@ -67,7 +67,7 @@ final class RendererSpec extends munit.FunSuite {
         |}
         |""".stripMargin
 
-    val contents = generateScalaCode(smithy)
+    val contents = generateScalaCode(smithy).values
     val definition =
       contents.find(_.contains("object MapWithMemberHints")) match {
         case None =>
