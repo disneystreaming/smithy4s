@@ -891,8 +891,10 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val mc = "smithy4s.codegen.cli.mainClass"
     val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
+    val mc = (`codegen-cli`.jvm(Smithy4sBuildPlugin.Scala213) / Compile / mainClass).value.getOrElse(
+      throw new Exception("No main class found")
+    )
 
     import sjsonnew._
     import BasicJsonProtocol._
