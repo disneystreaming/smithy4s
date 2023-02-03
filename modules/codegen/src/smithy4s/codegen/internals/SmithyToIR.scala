@@ -249,8 +249,28 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         } else p
       }
 
+      private def getMixins(shape: UnionShape): List[Type] = {
+        val memberTargets = shape
+          .members()
+          .asScala
+          .toList
+          .map(mem => model.expectShape(mem.getTarget))
+        val mixins = memberTargets
+          .map(_.getMixins.asScala.toSet)
+
+        val union = mixins.foldLeft(Set.empty[ShapeId])(_ union _)
+
+        val result = mixins.foldLeft(union)(_ intersect _)
+
+        result.flatMap(_.tpe).toList
+      }
+
       override def unionShape(shape: UnionShape): Option[Decl] = {
         val rec = isRecursive(shape.getId())
+
+        val mixins =
+          if (shape.hasTrait(classOf[AdtTrait])) getMixins(shape)
+          else List.empty
 
         val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
@@ -258,7 +278,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           case _          => false
         }
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.getId(), shape.name, alts, rec || isTrait, hints)
+          Union(shape.getId(), shape.name, alts, mixins, rec || isTrait, hints)
         }
       }
 
@@ -956,6 +976,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private case class NodeAndType(node: Node, tpe: Type)
 
+  private def getAdtParent(shape: Shape): Option[ShapeId] = {
+    val result = model
+      .getMemberShapes()
+      .asScala
+      .toList
+      .filter(_.getTarget == shape.toShapeId)
+      .find(mem =>
+        model.expectShape(mem.getContainer).hasTrait(classOf[AdtTrait])
+      )
+
+    result.map(_.getContainer)
+  }
+
   private object UnRef {
     def unapply(tpe: Type): Option[Shape] = tpe match {
       case Type.Ref(ns, name) =>
@@ -963,11 +996,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getShape(ShapeId.fromParts(ns, name))
           .asScala
         maybeShape.map { shape =>
-          shape.getTrait(classOf[AdtMemberTrait]).asScala match {
-            case Some(adtMemberTrait) =>
+          val fromAdtMember = shape
+            .getTrait(classOf[AdtMemberTrait])
+            .asScala
+            .map(_.getValue)
+          val adtParent: Option[ShapeId] =
+            fromAdtMember orElse getAdtParent(shape)
+          adtParent match {
+            case Some(parent) =>
               val cId = shape.getId
               val newNs =
-                cId.getNamespace + "." + adtMemberTrait.getValue.getName
+                cId.getNamespace + "." + parent.getName
               val error = new Exception(
                 s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
               )
