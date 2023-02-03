@@ -218,6 +218,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
 
+      private def isPartOfAdt(shape: Shape): Boolean = {
+        getAdtParent(shape).isDefined
+      }
+
       override def structureShape(shape: StructureShape): Option[Decl] = {
         val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
@@ -244,7 +248,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hints,
             isMixin
           ).some
-        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+        if (
+          shape.hasTrait(classOf[AdtMemberTrait]) ||
+          isPartOfAdt(shape)
+        ) {
           if (renderAdtMemberStructures) p else None
         } else p
       }
