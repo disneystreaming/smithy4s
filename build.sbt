@@ -891,7 +891,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val mc = "smithy4s.codegen.cli.Main"
+    val mc = "smithy4s.codegen.cli.mainClass"
     val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
 
     import sjsonnew._
