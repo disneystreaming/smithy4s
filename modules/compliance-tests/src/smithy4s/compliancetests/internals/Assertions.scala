@@ -51,7 +51,7 @@ private[internals] object assert {
     }
   }
 
-  def neq[A: Eq](expected: A, actual: A): ComplianceResult = {
+  def neql[A: Eq](expected: A, actual: A): ComplianceResult = {
     if (expected =!= actual) {
       success
     } else {
