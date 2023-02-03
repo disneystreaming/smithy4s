@@ -84,7 +84,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   private val path = Env
     .make[IO]
     .get("MODEL_DUMP")
-    .map(_.fold(sys.error(""))(fs2.io.file.Path(_)))
+    .map(_.fold(sys.error("MODEL_DUMP env var not set"))(fs2.io.file.Path(_)))
 
   private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
