@@ -33,6 +33,8 @@ import smithy4s.schema.Alt
 import smithy4s.kinds._
 import org.http4s.HttpApp
 import org.typelevel.vault.Key
+import smithy4s.http4s.kernel._
+import cats.effect.Concurrent
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -52,7 +54,7 @@ private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
 private[http4s] object SmithyHttp4sServerEndpoint {
 
   // format: off
-  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
@@ -97,7 +99,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
     pathParamsKey: Key[PathParams]
-)(implicit F: EffectCompat[F]) extends SmithyHttp4sServerEndpoint[F] {
+)(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
 // format: on
   import compilerContext._
 

@@ -18,10 +18,12 @@ package smithy4s
 package aws
 package internals
 
-import cats.MonadThrow
 import cats.syntax.all._
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
+import smithy4s.http4s.kernel._
+import cats.effect.Concurrent
+import cats.effect.syntax.all._
 
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
@@ -29,17 +31,21 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   signer: AwsSigner[F],
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   codecAPI: CodecAPI
-)(implicit F: MonadThrow[F]) { outer =>
+)(implicit F: Concurrent[F]) { outer =>
 // format: on
 
+  private val entityCompiler = EntityCompiler.fromCodecAPI(codecAPI)
+  private val cache = entityCompiler.createCache()
   private val metadataEncoder = Metadata.Encoder.fromSchema(endpoint.input)
   private val inputHasBody =
     Metadata.TotalDecoder.fromSchema(endpoint.input).isEmpty
-  private val inputCodec = codecAPI.compileCodec(endpoint.input)
+  private val inputCodec =
+    codecAPI.compileCodec(endpoint.input)
 
   private val maybeOutputMetadataDecoder =
     Metadata.TotalDecoder.fromSchema(endpoint.output)
-  private val outputCodec = codecAPI.compileCodec(endpoint.output)
+  private val outputCodec =
+    entityCompiler.compileEntityDecoder(endpoint.output, cache)
   private val getErrorType: HttpResponse => F[Option[String]] =
     AwsErrorTypeDecoder.fromResponse[F](codecAPI)
 
@@ -56,7 +62,10 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
       else None
     signer
       .sign(endpoint.name, metadata, payload)
-      .flatMap(awsEnv.httpClient.run)
+      .flatMap(_.toHttp4s[F])
+      .toResource
+      .flatMap(awsEnv.httpClient.run(_))
+      .use(HttpResponse.fromHttp4s(_))
       .flatMap { response =>
         if (response.statusCode < 400) {
           val maybeOutput = maybeOutputMetadataDecoder match {

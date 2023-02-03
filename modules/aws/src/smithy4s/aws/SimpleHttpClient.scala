@@ -19,6 +19,12 @@ package smithy4s.aws
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
 import smithy4s.http.Metadata
+import cats.MonadThrow
+import cats.syntax.all._
+import cats.effect.Concurrent
+import fs2.Chunk
+import org.http4s._
+import org.http4s.Method._
 
 /**
   * A low level http-client interface that third parties can implement to
@@ -34,6 +40,30 @@ trait HttpRequest {
   def uri: String
   def headers: List[(CaseInsensitive, String)]
   def body: Option[Array[Byte]]
+
+  def toHttp4s[F[_]: MonadThrow]: F[Request[F]] = {
+    val http4sHeaders: Seq[Header.ToRaw] = headers.map { case (k, v) => (k.toString, v) }
+
+    for {
+      endpoint <- Uri.fromString(uri).liftTo[F]
+      method <- httpMethod match {
+        case HttpMethod.POST         => POST.pure[F]
+        case HttpMethod.GET          => GET.pure[F]
+        case HttpMethod.PATCH        => PATCH.pure[F]
+        case HttpMethod.PUT          => PUT.pure[F]
+        case HttpMethod.DELETE       => DELETE.pure[F]
+        case HttpMethod.OTHER(value) => Method.fromString(value).liftTo[F]
+      }
+      req = body
+        .foldLeft(
+          Request[F](
+            method = method,
+            uri = endpoint
+          )
+        )(_.withEntity(_))
+        .putHeaders(http4sHeaders: _*)
+    } yield req
+  }
 }
 
 object HttpRequest {
@@ -57,5 +87,21 @@ case class HttpResponse(
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2).toList }
   )
+
+}
+
+object HttpResponse {
+
+  def fromHttp4s[F[_]: Concurrent](
+      response: Response[F]
+  ): F[HttpResponse] = {
+    val headers = response.headers.headers.toList.map { header =>
+      CaseInsensitive(header.name.toString) -> header.value
+    }
+    response.body.chunks.compile.toVector
+      .map(Chunk.concat(_))
+      .map(_.toArray)
+      .map(HttpResponse(response.status.code, headers, _))
+  }
 
 }

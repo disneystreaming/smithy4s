@@ -10,7 +10,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.17.0"
+ThisBuild / mimaBaseVersion := "0.18.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   example,
   tests,
   http4s,
+  `http4s-kernel`,
   `http4s-swagger`,
   decline,
   codegenPlugin,
@@ -113,7 +114,6 @@ lazy val docs =
         )
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
-      isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value,
@@ -265,7 +265,6 @@ lazy val `aws-kernel` = projectMatrix
   .in(file("modules/aws-kernel"))
   .dependsOn(core)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -302,13 +301,12 @@ lazy val `aws-kernel` = projectMatrix
  */
 lazy val aws = projectMatrix
   .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json, xml)
+  .dependsOn(`aws-kernel`, `http4s-kernel`, json, xml)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= {
       // Only building this module against CE3
       Seq(
-        Dependencies.Fs2.core.value,
+        Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
@@ -340,7 +338,6 @@ lazy val `aws-http4s` = projectMatrix
   .in(file("modules/aws-http4s"))
   .dependsOn(aws)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.client.value,
@@ -411,7 +408,6 @@ lazy val `codegen-cli` = projectMatrix
   .dependsOn(codegen)
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
@@ -502,7 +498,6 @@ lazy val millCodegenPlugin = projectMatrix
 lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
     name := "decline",
-    isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
       Dependencies.CatsEffect3.value,
@@ -546,7 +541,6 @@ lazy val protocolTests = projectMatrix
   .jvmPlatform(Seq(Scala213), jvmDimSettings)
   .dependsOn(protocol)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -622,7 +616,6 @@ lazy val xml = projectMatrix
     scalacheck % "test -> compile"
   )
   .settings(
-    isCE3 := true,
     isMimaEnabled := false,
     libraryDependencies ++= Seq(
       Dependencies.Fs2Data.xml.value,
@@ -642,22 +635,16 @@ lazy val xml = projectMatrix
 lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
   .dependsOn(
-    core,
+    `http4s-kernel`,
     json,
     dynamic % "test->compile",
     tests % "test->compile",
     testUtils % "test->compile"
   )
   .settings(
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     isMimaEnabled := true,
     libraryDependencies ++= {
-      val ce3 =
-        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
-        else Seq.empty
-
-      ce3 ++ Seq(
-        Dependencies.Http4s.core.value,
+      Seq(
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
         Dependencies.Alloy.core % Test,
@@ -666,11 +653,6 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.emberClient.value % Test,
         Dependencies.Http4s.emberServer.value % Test
       )
-    },
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
     },
     Test / allowedNamespaces := Seq(
       "smithy4s.hello"
@@ -683,24 +665,34 @@ lazy val http4s = projectMatrix
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
 /**
+ * Module that contains an http4s-specific `EntityCompiler` construct
+ * that codifies the compilatin of smithy4s Schemas to EntityEncoders and
+ * EntityDecoders
+ */
+lazy val `http4s-kernel` = projectMatrix
+  .in(file("modules/http4s-kernel"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.core.value
+    )
+  )
+  .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+/**
  * Module that contains a function to derive a documentation endpoint
  */
 lazy val `http4s-swagger` = projectMatrix
   .in(file("modules/http4s-swagger"))
   .dependsOn(http4s)
   .settings(
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       Seq(
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Webjars.swaggerUi,
         Dependencies.Webjars.webjarsLocator
       )
-    },
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -724,16 +716,11 @@ lazy val tests = projectMatrix
   .in(file("modules/tests"))
   .dependsOn(core)
   .settings(
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     allowedNamespaces := Seq(
       "smithy4s.example"
     ),
     libraryDependencies ++= {
-      val ce3 =
-        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
-        else Seq.empty
-
-      ce3 ++ Seq(
+      Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
@@ -746,11 +733,6 @@ lazy val tests = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
     ),
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
-    },
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -763,23 +745,14 @@ lazy val complianceTests = projectMatrix
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
     Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
-      val ce3 =
-        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
-        else Seq.empty
-      ce3 ++ Seq(
+      Seq(
         Dependencies.Circe.parser.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Pprint.core.value
       )
-    },
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
     },
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy"
@@ -829,7 +802,6 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
-    isCE3 := true,
     libraryDependencies += Dependencies.Http4s.emberServer.value,
     genSmithy(Compile),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
@@ -854,7 +826,6 @@ lazy val guides = projectMatrix
       (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy"
     ),
     genSmithy(Compile),
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberServer.value,
       Dependencies.Http4s.emberClient.value,

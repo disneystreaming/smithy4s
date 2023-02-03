@@ -29,6 +29,8 @@ import scodec.bits.ByteVector
 import smithy4s.kinds._
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
+import smithy4s.http4s.kernel._
+import cats.effect.Concurrent
 
 /**
   * A construct that encapsulates interprets and a low-level
@@ -42,7 +44,7 @@ private[http4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, 
 
 private[http4s] object SmithyHttp4sClientEndpoint {
 
-  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
@@ -83,7 +85,7 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   httpEndpoint: HttpEndpoint[I],
   compilerContext: CompilerContext[F],
   middleware: Client[F] => Client[F]
-)(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
+)(implicit effect: Concurrent[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
   private val transformedClient: Client[F] = middleware(client)

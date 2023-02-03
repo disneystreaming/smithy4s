@@ -22,9 +22,11 @@ import cats.data.OptionT
 import cats.implicits._
 import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
+import smithy4s.http4s.kernel._
 import smithy4s.kinds._
 import org.typelevel.vault.Key
 import cats.effect.SyncIO
+import cats.effect.Concurrent
 
 // format: off
 class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
@@ -33,7 +35,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     entityCompiler: EntityCompiler[F],
     middleware: ServerEndpointMiddleware[F]
-)(implicit effect: EffectCompat[F]) {
+)(implicit effect: Concurrent[F]) {
 
   private val pathParamsKey =
     Key.newKey[SyncIO, smithy4s.http.PathParams].unsafeRunSync()

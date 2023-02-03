@@ -16,7 +16,7 @@
 
 package smithy4s.http4s.internals
 
-import smithy4s.http4s.EntityCompiler
+import smithy4s.http4s.kernel._
 import smithy4s.http.Metadata
 
 private[http4s] trait CompilerContext[F[_]] {

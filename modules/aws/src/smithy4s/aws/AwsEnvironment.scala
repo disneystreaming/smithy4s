@@ -18,19 +18,20 @@ package smithy4s.aws
 
 import cats.effect.Temporal
 import cats.effect.Resource
-import cats.implicits._
+import org.http4s.client.Client
+import cats.syntax.all._
 
 trait AwsEnvironment[F[_]] {
   def credentials: F[AwsCredentials]
   def region: F[AwsRegion]
   def timestamp: F[Timestamp]
-  def httpClient: SimpleHttpClient[F]
+  def httpClient: Client[F]
 }
 
 object AwsEnvironment {
 
   def default[F[_]](
-      client: SimpleHttpClient[F],
+      client: Client[F],
       region: AwsRegion
   )(implicit F: Temporal[F]): Resource[F, AwsEnvironment[F]] =
     AwsCredentialsProvider.default[F](client).map { credentialsF =>
@@ -44,7 +45,7 @@ object AwsEnvironment {
     }
 
   def make[F[_]](
-      client: SimpleHttpClient[F],
+      client: Client[F],
       awsRegion: F[AwsRegion],
       creds: F[AwsCredentials],
       time: F[Timestamp]
@@ -55,7 +56,7 @@ object AwsEnvironment {
 
     def timestamp: F[Timestamp] = time
 
-    def httpClient: SimpleHttpClient[F] = client
+    def httpClient: Client[F] = client
   }
 
 }

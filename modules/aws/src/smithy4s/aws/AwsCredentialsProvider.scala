@@ -16,11 +16,7 @@
 
 package smithy4s.aws
 
-import cats.MonadThrow
-import cats.effect.Clock
-import cats.effect.Resource
-import cats.effect.Temporal
-import cats.effect.kernel.Ref
+import cats.effect._
 import cats.syntax.all._
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
@@ -28,23 +24,40 @@ import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
-import smithy4s.http.HttpMethod
+import smithy4s.http4s.kernel.EntityCompiler
 
 import scala.concurrent.duration._
+import org.http4s.client.Client
+import org.http4s.syntax.all._
 
 object AwsCredentialsProvider {
 
-  def default[F[_]](
-      httpClient: SimpleHttpClient[F]
-  )(implicit F: Temporal[F]): Resource[F, F[AwsCredentials]] = {
-    Resource
-      .eval(fromEnv[F])
-      .map(F.pure)
-      .orElse(refreshing[F](fromECS(httpClient)))
-      .orElse(refreshing[F](fromEC2(httpClient)))
+  def default[F[_]: Temporal](
+      httpClient: Client[F]
+  ): Resource[F, F[AwsCredentials]] = {
+    val provider = new AwsCredentialsProvider[F]
+    provider.default(httpClient)
   }
 
-  def fromEnv[F[_]](implicit F: MonadThrow[F]): F[AwsCredentials] = {
+}
+
+class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
+
+  val entityCompiler =
+    EntityCompiler.fromCodecAPI[F](new json.AwsJsonCodecAPI())
+  val cache = entityCompiler.createCache()
+  implicit val metadataDecoder =
+    entityCompiler.compileEntityDecoder(AwsInstanceMetadata.schema, cache)
+
+  def default(httpClient: Client[F]): Resource[F, F[AwsCredentials]] = {
+    Resource
+      .eval(fromEnv)
+      .map(F.pure)
+      .orElse(refreshing(fromECS(httpClient)))
+      .orElse(refreshing(fromEC2(httpClient)))
+  }
+
+  val fromEnv: F[AwsCredentials] = {
     val either = for {
       keyId <- SysEnv.envValue(AWS_ACCESS_KEY_ID)
       accessKey <- SysEnv.envValue(AWS_SECRET_ACCESS_KEY)
@@ -60,47 +73,22 @@ object AwsCredentialsProvider {
     "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"
 
   val AWS_EC2_METADATA_URI =
-    "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+    uri"http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
-  val codecAPI = new json.AwsJsonCodecAPI()
-
-  val instanceMetadataCodec = codecAPI.compileCodec(AwsInstanceMetadata.schema)
-
-  def fromEC2[F[_]: MonadThrow](
-      httpClient: SimpleHttpClient[F]
-  ): F[AwsTemporaryCredentials] =
+  def fromEC2(httpClient: Client[F]): F[AwsTemporaryCredentials] =
     for {
-      roleRes <- httpClient.run(
-        HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI)
+      roleName <- httpClient.expect[String](AWS_EC2_METADATA_URI)
+      metadataRes <- httpClient.expect[AwsInstanceMetadata](
+        AWS_EC2_METADATA_URI.addSegment(roleName)
       )
-      roleName <- utf8String[F](roleRes.body)
-      metadataRes <- httpClient.run(
-        HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI + roleName)
-      )
-      maybeCreds = codecAPI.decodeFromByteArray(
-        instanceMetadataCodec,
-        metadataRes.body
-      )
-      creds <- MonadThrow[F].fromEither(maybeCreds)
-    } yield creds
+    } yield metadataRes
 
-  def fromECS[F[_]: MonadThrow](
-      httpClient: SimpleHttpClient[F]
-  ): F[AwsTemporaryCredentials] =
-    for {
-      response <- httpClient.run(
-        HttpRequest.Raw(HttpMethod.GET, AWS_EC2_METADATA_URI)
-      )
-      maybeCreds = codecAPI.decodeFromByteArray(
-        instanceMetadataCodec,
-        response.body
-      )
-      creds <- MonadThrow[F].fromEither(maybeCreds)
-    } yield creds
+  def fromECS(httpClient: Client[F]): F[AwsTemporaryCredentials] =
+    httpClient.expect[AwsInstanceMetadata](AWS_EC2_METADATA_URI).widen
 
-  def refreshing[F[_]](
+  def refreshing(
       get: F[AwsTemporaryCredentials]
-  )(implicit F: Temporal[F]): Resource[F, F[AwsCredentials]] = {
+  ): Resource[F, F[AwsCredentials]] = {
     def refreshLoop(ref: Ref[F, AwsTemporaryCredentials]): F[Unit] = {
       for {
         lastCredentials <- ref.get
