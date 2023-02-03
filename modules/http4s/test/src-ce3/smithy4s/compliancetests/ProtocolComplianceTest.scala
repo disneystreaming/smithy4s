@@ -27,7 +27,6 @@ import smithy4s.kinds.FunctorAlgebra
 import weaver._
 import cats.effect.IO
 import cats.effect.std.Env
-import cats.effect.unsafe.IORuntime
 import smithy4s.Schema
 import smithy4s.http.PayloadError
 import smithy4s.http.CodecAPI
@@ -35,7 +34,24 @@ import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
 
-object ProtocolComplianceTest extends SimpleIOSuite {
+/**
+  * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
+  * to let weaver run it.
+  *
+  * As a result, it's likely this cannot be run via clicks in IntelliJ, because the tests
+  * are dynamically created via effects, which makes it impossible to implement `RunnableSuite`,
+  * which is required to run tests via IntelliJ.
+  */
+object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
+
+  implicit protected def effectCompat: EffectCompat[IO] = CatsUnsafeRun
+  def getSuite: EffectSuite[IO] = this
+
+  def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
+    fs2.Stream
+      .evals(dynamicSchemaIndexLoader.map(pizzaSpec(_)))
+      .parEvalMapUnbounded(runInWeaver)
+  }
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = SimpleRestJson
@@ -61,14 +77,15 @@ object ProtocolComplianceTest extends SimpleIOSuite {
     }
   }
 
-  val pizzaSpec = generateTests(ShapeId("alloy.test", "PizzaAdminService"))
+  private val pizzaSpec = generateTests(
+    ShapeId("alloy.test", "PizzaAdminService")
+  )
 
   private val path = Env
     .make[IO]
     .get("MODEL_DUMP")
     .map(_.fold(sys.error(""))(fs2.io.file.Path(_)))
 
-  private implicit val runtime: IORuntime = cats.effect.unsafe.IORuntime.global
   private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
       p <- path
@@ -82,27 +99,6 @@ object ProtocolComplianceTest extends SimpleIOSuite {
         .map(loadDynamic(_).getOrElse(sys.error("unable to load Dynamic path")))
     } yield dsi
   }
-
-  dynamicSchemaIndexLoader
-    .map(
-      pizzaSpec(_).foreach(tc =>
-        test(tc.name) {
-          tc.run
-            .map[Expectations] {
-              case Left(value) =>
-                Expectations.Helpers.failure(value)
-              case Right(_) =>
-                Expectations.Helpers.success
-            }
-            .attempt
-            .map {
-              case Right(expectations) => expectations
-              case Left(e)             => failure(e.getMessage)
-            }
-        }
-      )
-    )
-    .unsafeRunAndForget()
 
   private def generateTests(
       shapeId: ShapeId
@@ -132,5 +128,21 @@ object ProtocolComplianceTest extends SimpleIOSuite {
       .decodeFromByteArray[Document](codec, bytes)
       .getOrElse(sys.error("unable to decode smithy model into document"))
   }
+
+  private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = Test(
+    tc.name,
+    tc.run
+      .map[Expectations] {
+        case Left(value) =>
+          Expectations.Helpers.failure(value)
+        case Right(_) =>
+          Expectations.Helpers.success
+      }
+      .attempt
+      .map {
+        case Right(expectations) => expectations
+        case Left(e) => weaver.Expectations.Helpers.failure(e.getMessage)
+      }
+  )
 
 }
