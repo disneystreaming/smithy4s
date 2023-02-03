@@ -1,6 +1,9 @@
+$version: "2.0"
+
 namespace smithy4s.example
 
 use smithy4s.meta#adtMember
+use smithy4s.meta#adt
 
 integer OrderNumber
 
@@ -32,3 +35,32 @@ structure testTrait {
   }
 })
 string TestString
+
+@adt
+union TestAdt {
+  one: AdtOne
+  two: AdtTwo
+}
+
+@mixin
+structure AdtMixinOne {
+  lng: Long
+}
+
+@mixin
+structure AdtMixinTwo {
+  sht: Short
+}
+
+@mixin
+structure AdtMixinThree {
+  blb: Blob
+}
+
+structure AdtOne with [AdtMixinOne, AdtMixinTwo, AdtMixinThree] {
+  str: String
+}
+
+structure AdtTwo with [AdtMixinOne, AdtMixinTwo] {
+  int: Integer
+}

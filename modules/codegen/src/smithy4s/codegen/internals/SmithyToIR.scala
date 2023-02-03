@@ -24,6 +24,7 @@ import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
+import smithy4s.meta.AdtTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node.Node
@@ -866,14 +867,18 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
     }
 
-    def alts =
+    def alts = {
+      val isAdt = shape.hasTrait(classOf[AdtTrait])
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (
+            isAdt || memberTarget
+              .hasTrait(classOf[AdtMemberTrait])
+          ) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
               .map(Left(_))
@@ -891,15 +896,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             Alt(name, UnionMember.ProductCase(p), h)
         }
         .toList
+    }
 
-    def getAltTypes: List[AltInfo] =
+    def getAltTypes: List[AltInfo] = {
+      val isAdt = shape.hasTrait(classOf[AdtTrait])
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (isAdt || memberTarget.hasTrait(classOf[AdtMemberTrait])) {
             (member.getMemberName(), member.tpe.map(Left(_)))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)))
@@ -912,6 +919,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
+    }
 
   }
 
