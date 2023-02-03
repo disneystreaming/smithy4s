@@ -25,6 +25,7 @@ import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
 import weaver._
+import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
 import smithy4s.Schema
@@ -84,7 +85,10 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   private val path = Env
     .make[IO]
     .get("MODEL_DUMP")
-    .map(_.fold(sys.error("MODEL_DUMP env var not set"))(fs2.io.file.Path(_)))
+    .flatMap(
+      _.liftTo[IO](sys.error("MODEL_DUMP env var not set"))
+        .map(fs2.io.file.Path(_))
+    )
 
   private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
@@ -96,7 +100,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         .toVector
         .map(_.toArray)
         .map(decodeDocument(_, SimpleRestJsonIntegration.codecs))
-        .map(loadDynamic(_).getOrElse(sys.error("unable to load Dynamic path")))
+        .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }
 

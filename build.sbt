@@ -635,7 +635,6 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
         Dependencies.Alloy.core % Test,
-        Dependencies.Alloy.`protocol-tests` % Test,
         Dependencies.Smithy.build % Test,
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test,
@@ -649,24 +648,23 @@ lazy val http4s = projectMatrix
       else moduleName.value
     },
     Test / allowedNamespaces := Seq("smithy4s.hello"),
-    Test / complianceTestDependencies := Seq(
-      Dependencies.Alloy.`protocol-tests`
-    ),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
     Test / smithy4sSkip := Seq("openapi"),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
+    Test / complianceTestDependencies := Seq(
+      Dependencies.Alloy.`protocol-tests`
+    ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / envVars) ++= {
       val files: Seq[File] =
         (Test / resourceGenerators) {
           _.join.map(_.flatten)
         }.value
-
-      files.foldLeft(Map.empty[String, String]) { case (acc, file) =>
-        acc.updated("MODEL_DUMP", file.getAbsolutePath)
-      }
+      files.headOption.map{ file =>
+      Map("MODEL_DUMP"-> file.getAbsolutePath)
+      }.getOrElse(Map.empty)
     }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
