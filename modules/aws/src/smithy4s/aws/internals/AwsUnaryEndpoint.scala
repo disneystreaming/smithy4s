@@ -24,6 +24,7 @@ import smithy4s.schema.SchemaAlt
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
 import cats.effect.syntax.all._
+import org.http4s.EntityDecoder
 
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
@@ -42,10 +43,9 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   private val inputCodec =
     codecAPI.compileCodec(endpoint.input)
 
-  private val maybeOutputMetadataDecoder =
-    Metadata.TotalDecoder.fromSchema(endpoint.output)
-  private val outputCodec =
+  private implicit val outputEntityDecoder: EntityDecoder[F, O] =
     entityCompiler.compileEntityDecoder(endpoint.output, cache)
+
   private val getErrorType: HttpResponse => F[Option[String]] =
     AwsErrorTypeDecoder.fromResponse[F](codecAPI)
 
@@ -65,31 +65,26 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
       .flatMap(_.toHttp4s[F])
       .toResource
       .flatMap(awsEnv.httpClient.run(_))
-      .use(HttpResponse.fromHttp4s(_))
-      .flatMap { response =>
-        if (response.statusCode < 400) {
-          val maybeOutput = maybeOutputMetadataDecoder match {
-            case Some(totalDecoder) => totalDecoder.decode(response.metadata)
-            case None =>
-              codecAPI.decodeFromByteArray(outputCodec, response.body)
-          }
-          maybeOutput match {
-            case Right(value) => F.pure[O](value)
-            case Left(err)    => F.raiseError[O](err)
-          }
+      .use { http4sResponse =>
+        if (http4sResponse.status.isSuccess) {
+          http4sResponse.as[O]
         } else {
-          getErrorType(response).flatMap[O] { maybeDiscriminator =>
-            val errAndAlt = for {
-              discriminator <- maybeDiscriminator
-              err <- endpoint.errorable
-              oneOf <- err.error.alternatives.find(_.label == discriminator)
-            } yield (err, oneOf)
+          HttpResponse.fromHttp4s[F](http4sResponse).flatMap { response =>
+            getErrorType(response).flatMap[O] { maybeDiscriminator =>
+              val errAndAlt = for {
+                discriminator <- maybeDiscriminator
+                err <- endpoint.errorable
+                oneOf <- err.error.alternatives.find(_.label == discriminator)
+              } yield (err, oneOf)
 
-            errAndAlt match {
-              case Some((err, alt)) =>
-                processError(err, alt, response)
-              case None =>
-                F.raiseError(AwsClientError(response.statusCode, response.body))
+              errAndAlt match {
+                case Some((err, alt)) =>
+                  processError(err, alt, response)
+                case None =>
+                  F.raiseError(
+                    AwsClientError(response.statusCode, response.body)
+                  )
+              }
             }
           }
         }

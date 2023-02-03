@@ -17,7 +17,7 @@
 package smithy4s.aws
 package internals
 
-import cats.MonadThrow
+import cats.effect.Concurrent
 import smithy4s.Endpoint
 import smithy4s.kinds._
 import smithy4s.aws.query.AwsQueryCodecAPI
@@ -31,7 +31,7 @@ private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], 
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
     contentType: String
-)(implicit F: MonadThrow[F])
+)(implicit F: Concurrent[F])
     extends PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
 

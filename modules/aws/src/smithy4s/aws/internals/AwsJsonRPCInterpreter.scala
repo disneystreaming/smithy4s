@@ -17,7 +17,7 @@
 package smithy4s.aws
 package internals
 
-import cats.MonadThrow
+import cats.effect.Concurrent
 import smithy4s.Endpoint
 import smithy4s.http.CodecAPI
 import smithy4s.kinds._
@@ -32,7 +32,7 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     awsEnv: AwsEnvironment[F],
     contentType: String,
     codecAPI: CodecAPI
-)(implicit F: MonadThrow[F])
+)(implicit F: Concurrent[F])
     extends PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
 

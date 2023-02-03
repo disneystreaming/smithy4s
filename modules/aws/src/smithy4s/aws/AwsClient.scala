@@ -16,7 +16,7 @@
 
 package smithy4s.aws
 
-import cats.MonadThrow
+import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.syntax.all._
 import internals.AwsJsonRPCInterpreter
@@ -24,7 +24,7 @@ import internals.AwsQueryRPCInterpreter
 
 object AwsClient {
 
-  def apply[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
+  def apply[Alg[_[_, _, _, _, _]], F[_]: Concurrent](
       service: smithy4s.Service[Alg],
       awsEnv: AwsEnvironment[F]
   ): Resource[F, AwsClient[Alg, F]] =
@@ -57,7 +57,7 @@ object AwsClient {
       endpointPrefix: String
   ) {
 
-    private def interpreter[F[_]: MonadThrow](
+    private def interpreter[F[_]: Concurrent](
         awsEnv: AwsEnvironment[F]
     ): service.Interpreter[AwsCall[F, *, *, *, *, *]] =
       awsProtocol match {
@@ -87,7 +87,7 @@ object AwsClient {
           )
       }
 
-    def build[F[_]: MonadThrow](
+    def build[F[_]: Concurrent](
         awsEnv: AwsEnvironment[F]
     ): AwsClient[Alg, F] = service.fromPolyFunction(interpreter(awsEnv))
   }

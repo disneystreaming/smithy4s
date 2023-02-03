@@ -42,7 +42,9 @@ trait HttpRequest {
   def body: Option[Array[Byte]]
 
   def toHttp4s[F[_]: MonadThrow]: F[Request[F]] = {
-    val http4sHeaders: Seq[Header.ToRaw] = headers.map { case (k, v) => (k.toString, v) }
+    val http4sHeaders: Seq[Header.ToRaw] = headers.map { case (k, v) =>
+      (k.toString, v)
+    }
 
     for {
       endpoint <- Uri.fromString(uri).liftTo[F]
