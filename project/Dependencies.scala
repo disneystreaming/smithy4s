@@ -82,7 +82,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.5")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.6")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.18" else "0.22.15")
