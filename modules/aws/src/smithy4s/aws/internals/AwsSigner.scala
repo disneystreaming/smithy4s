@@ -17,27 +17,28 @@
 package smithy4s.aws
 package internals
 
-import cats.Monad
+import cats.MonadThrow
 import cats.syntax.all._
 import smithy4s.ShapeId
 import smithy4s.aws.kernel.AwsSignature
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpMethod
 import smithy4s.http.Metadata
+import org.http4s.Request
 
 private[aws] trait AwsSigner[F[_]] {
   def sign(
       endpointName: String,
       metadata: Metadata,
-      body: Option[Array[Byte]]
-  ): F[HttpRequest]
+      body: AwsHttpBody[F]
+  ): F[Request[F]]
 }
 
 object AwsSigner {
 
   private[aws] val EMPTY_PATH = "/"
 
-  private[aws] def rpcSigner[F[_]: Monad](
+  private[aws] def rpcSigner[F[_]: MonadThrow](
       serviceId: ShapeId,
       endpointPrefix: String,
       environment: AwsEnvironment[F],
@@ -45,7 +46,7 @@ object AwsSigner {
   ): AwsSigner[F] =
     new RPCSigner[F](serviceId, endpointPrefix, environment, contentType)
 
-  private class RPCSigner[F[_]: Monad](
+  private class RPCSigner[F[_]: MonadThrow](
       serviceId: ShapeId,
       endpointPrefix: String,
       awsEnv: AwsEnvironment[F],
@@ -54,14 +55,14 @@ object AwsSigner {
     def sign(
         endpointName: String,
         metadata: Metadata,
-        body: Option[Array[Byte]]
-    ): F[HttpRequest] = {
+        body: AwsHttpBody[F]
+    ): F[Request[F]] = {
       for {
         r <- awsEnv.region
         c <- awsEnv.credentials
         t <- awsEnv.timestamp
       } yield {
-        Request(
+        AwsSignedRequest(
           serviceName = serviceId.name,
           operationName = endpointName,
           endpointPrefix = endpointPrefix,
@@ -73,11 +74,11 @@ object AwsSigner {
           accessToken = c.sessionToken,
           metadata = metadata,
           timestamp = t,
-          body = body,
+          body = body.maybeBytes,
           contentType = contentType
-        )
+        ).toHttp4s[F]
       }
-    }
+    }.flatten
   }
 
   /**
@@ -85,7 +86,7 @@ object AwsSigner {
   * required to fulfil the aws signature algorithm and construct
   * an http request.
   */
-  private case class Request(
+  private case class AwsSignedRequest(
       serviceName: String,
       operationName: String,
       endpointPrefix: String,

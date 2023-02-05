@@ -16,18 +16,7 @@
 
 package smithy4s.aws
 
-// format: off
-trait AwsCall[F[_], Input, Err, Output, StreamedInput, StreamedOutput] {
-
-  /**
-    * Runs the call and exposes the output in an effect, provided it is proven that the
-    * call does not have a streamed component to it.
-    */
-  def run(implicit ev: AwsOperationKind.Unary[StreamedInput, StreamedOutput]): F[Output]
-
-  // /**
-  //   * Uploads a payload and returns an effect, provided it is proven that the call has a
-  //   * streamed input of type Byte, and no streamed output.
-  //   */
-  // def upload[P](payload: P)(implicit uploadable: AwsUploadable[F, P], ev: AwsOperationKind.ByteUpload[StreamedInput, StreamedOutput]): F[Output]
+trait AwsUploadable[F[_], A] {
+  def size(a: A): Long
+  def bytes(a: A): fs2.Stream[F, Byte]
 }

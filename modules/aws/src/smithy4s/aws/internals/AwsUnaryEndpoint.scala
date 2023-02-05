@@ -58,11 +58,11 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   private def run(input: I): F[O] = {
     val metadata = metadataEncoder.encode(input)
     val payload =
-      if (inputHasBody) Some(codecAPI.writeToArray(inputCodec, input))
-      else None
+      if (inputHasBody)
+        AwsHttpBody.InMemory(codecAPI.writeToArray(inputCodec, input))
+      else AwsHttpBody.Empty
     signer
       .sign(endpoint.name, metadata, payload)
-      .flatMap(_.toHttp4s[F])
       .toResource
       .flatMap(awsEnv.httpClient.run(_))
       .use { http4sResponse =>
