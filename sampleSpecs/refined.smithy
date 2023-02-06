@@ -61,6 +61,12 @@ map NonEmptyMapNumbers {
   value: Integer
 }
 
+@ageFormat
+integer Age
+
+@ageFormat
+integer PersonAge
+
 @fancyListFormat
 list FancyList {
   member: String
@@ -80,10 +86,8 @@ string Name
 string DogName
 
 structure StructureWithRefinedTypes {
-  @ageFormat
-  age: Integer,
-  @ageFormat
-  personAge: Integer,
+  age: Age,
+  personAge: PersonAge,
   fancyList: FancyList,
   unwrappedFancyList: UnwrappedFancyList,
   name: Name,
@@ -91,7 +95,11 @@ structure StructureWithRefinedTypes {
 }
 
 union UnionWithRefinedTypes {
-  @ageFormat
-  age: Integer,
+  age: Age,
   dogName: DogName
+}
+
+structure StructureWithRefinedMember {
+  @ageFormat
+  otherAge: Integer,
 }
