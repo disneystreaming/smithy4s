@@ -38,8 +38,19 @@ public final class AdtTraitValidator extends AbstractValidator {
 	@Override
 	public List<ValidationEvent> validate(Model model) {
 		return model.getShapesWithTrait(AdtTrait.class).stream().flatMap(adtShape -> {
-			Set<Shape> adtMemberShapes = new HashSet<>(adtShape.asUnionShape()
-					.orElseThrow(() -> new RuntimeException("adt trait may only be used on union shapes")).members());
+			Set<Shape> adtMemberShapes = adtShape.asUnionShape()
+					.orElseThrow(() -> new RuntimeException("adt trait may only be used on union shapes")).members()
+					.stream().map(mem -> model.expectShape(mem.getTarget())).collect(Collectors.toSet());
+			List<Shape> nonStructures = adtMemberShapes.stream().filter(mem -> !mem.asStructureShape().isPresent())
+					.collect(Collectors.toList());
+			if (!nonStructures.isEmpty()) {
+				String nonStruct = nonStructures.stream().map(s -> s.getId().toString())
+						.collect(Collectors.joining(", "));
+				return Stream.of(error(adtShape,
+						String.format(
+								"Some members of %s were found to target non-structure shapes. Instead they target %s",
+								adtShape.getId(), nonStruct)));
+			}
 			if (adtMemberShapes.isEmpty()) {
 				return Stream.of(error(adtShape, "unions with the adt trait must contain at least one member"));
 			} else {

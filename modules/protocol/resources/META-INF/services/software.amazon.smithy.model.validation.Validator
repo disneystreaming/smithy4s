@@ -1,3 +1,4 @@
 smithy4s.meta.validation.AdtMemberTraitValidator
+smithy4s.meta.validation.AdtTraitValidator
 smithy4s.meta.validation.ErrorMessageTraitValidator
 smithy4s.meta.validation.RefinementTraitValidator
