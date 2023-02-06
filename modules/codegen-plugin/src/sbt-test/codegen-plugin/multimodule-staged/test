@@ -2,8 +2,8 @@
 > foo/publishLocal
 > upstream/publishLocal
 > bar/compile
-$ exists bar/target/scala-2.13/src_managed/main/bar/Bar.scala
-$ absent bar/target/scala-2.13/src_managed/main/foo/Foo.scala
+$ exists bar/target/scala-2.13/src_managed/main/scala/bar/Bar.scala
+$ absent bar/target/scala-2.13/src_managed/main/scala/foo/Foo.scala
 
 # check if code can run, this can reveal runtime issues# such as initialization errors
 > bar/run
