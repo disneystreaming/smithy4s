@@ -218,10 +218,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         }
       }
 
-      private def isPartOfAdt(shape: Shape): Boolean = {
-        getAdtParent(shape).isDefined
-      }
-
       override def structureShape(shape: StructureShape): Option[Decl] = {
         val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
@@ -248,10 +244,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hints,
             isMixin
           ).some
-        if (
-          shape.hasTrait(classOf[AdtMemberTrait]) ||
-          isPartOfAdt(shape)
-        ) {
+        if (isPartOfAdt(shape)) {
           if (renderAdtMemberStructures) p else None
         } else p
       }
@@ -895,17 +888,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
 
     def alts = {
-      val isAdt = shape.hasTrait(classOf[AdtTrait])
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (
-            isAdt || memberTarget
-              .hasTrait(classOf[AdtMemberTrait])
-          ) {
+          if (isPartOfAdt(memberTarget)) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
               .map(Left(_))
@@ -926,14 +915,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
 
     def getAltTypes: List[AltInfo] = {
-      val isAdt = shape.hasTrait(classOf[AdtTrait])
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (isAdt || memberTarget.hasTrait(classOf[AdtMemberTrait])) {
+          if (isPartOfAdt(memberTarget)) {
             (member.getMemberName(), member.tpe.map(Left(_)))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)))
@@ -982,6 +970,11 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   }
 
   private case class NodeAndType(node: Node, tpe: Type)
+
+  private def isPartOfAdt(shape: Shape): Boolean = {
+    shape.hasTrait(classOf[AdtMemberTrait]) ||
+    getAdtParent(shape).isDefined
+  }
 
   private def getAdtParent(shape: Shape): Option[ShapeId] = {
     val result = model
