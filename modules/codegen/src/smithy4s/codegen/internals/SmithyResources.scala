@@ -34,8 +34,9 @@ private[smithy4s] object SmithyResources {
   ): List[os.Path] = {
 
     val localSmithyFiles = specs.flatMap { spec =>
-      if (os.isDir(spec)) os.walk(spec).filter(_.ext == "smithy")
-      else if (spec.ext == "smithy") List(spec)
+      if (os.isDir(spec))
+        os.walk(spec).filter(f => Set("smithy", "json").contains(f.ext))
+      else if (Set("smithy", "json").contains(spec.ext)) List(spec)
       else Nil
     }
 
