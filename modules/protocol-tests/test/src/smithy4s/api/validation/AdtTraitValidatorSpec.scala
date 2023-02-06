@@ -67,6 +67,49 @@ object AdtTraitValidatorSpec extends FunSuite {
     expect(result == expected)
   }
 
+  test("AdtTrait - return error when union has no members") {
+    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
+    val adtTrait = new AdtTrait()
+    val structMember = MemberShape
+      .builder()
+      .id("test#struct$testing")
+      .target("smithy.api#String")
+      .build()
+    val struct =
+      StructureShape
+        .builder()
+        .id("test#struct")
+        .addMember(structMember)
+        .build()
+
+    val union =
+      UnionShape
+        .builder()
+        .addTrait(adtTrait)
+        .id(unionShapeId)
+        .build()
+    val model =
+      Model
+        .builder()
+        .addShapes(struct, union)
+        .build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("AdtTrait")
+        .shape(union)
+        .severity(Severity.ERROR)
+        .message(
+          "unions with the adt trait must contain at least one member"
+        )
+        .build()
+    )
+    expect(result == expected)
+  }
+
   test("AdtTrait - return error when union does not target the structure") {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
     val adtTrait = new AdtTrait()
