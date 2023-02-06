@@ -640,6 +640,7 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
         Dependencies.Alloy.core % Test,
+        Dependencies.Smithy.build % Test,
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
@@ -651,16 +652,25 @@ lazy val http4s = projectMatrix
         moduleName.value + "-ce2"
       else moduleName.value
     },
-    Test / allowedNamespaces := Seq(
-      "smithy4s.hello",
-      "alloy.test"
-    ),
+    Test / allowedNamespaces := Seq("smithy4s.hello"),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
     Test / smithy4sSkip := Seq("openapi"),
-    Test / smithy4sDependencies := Seq(Dependencies.Alloy.`protocol-tests`),
-    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
+    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
+    Test / complianceTestDependencies := Seq(
+      Dependencies.Alloy.`protocol-tests`
+    ),
+    (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
+    (Test / envVars) ++= {
+      val files: Seq[File] =
+        (Test / resourceGenerators) {
+          _.join.map(_.flatten)
+        }.value
+      files.headOption.map{ file =>
+      Map("MODEL_DUMP"-> file.getAbsolutePath)
+      }.getOrElse(Map.empty)
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -873,6 +883,90 @@ def genSmithy(config: Configuration) = Def.settings(
 )
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
 def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
+
+// SBT setting to specify artifacts to be included in the Smithy model for compliance testing
+val complianceTestDependencies =
+  SettingKey[Seq[ModuleID]]("complianceTestDependencies")
+
+// writes out a json representation of the smithy model pulled from Smithy4s dependencies config
+// result is cached using the dependency list as the cache key
+def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
+  Def.task {
+    val dumpModelCp = (`codegen-cli`.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / fullClasspath).value
+      .map(_.data)
+    val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
+    val mc = (`codegen-cli`.jvm(Smithy4sBuildPlugin.Scala213) / Compile / mainClass).value.getOrElse(
+      throw new Exception("No main class found")
+    )
+
+    import sjsonnew._
+    import BasicJsonProtocol._
+    import sbt.FileInfo
+    import sbt.HashFileInfo
+    import sbt.io.Hash
+    import scala.jdk.CollectionConverters._
+    implicit val pathFormat: JsonFormat[File] =
+      BasicJsonProtocol.projectFormat[File, HashFileInfo](
+        p => {
+          if (p.isFile()) FileInfo.hash(p)
+          else
+            // If the path is a directory, we get the hashes of all files
+            // then hash the concatenation of the hash's bytes.
+            FileInfo.hash(
+              p,
+              Hash(
+                Files
+                  .walk(p.toPath(), 2)
+                  .collect(Collectors.toList())
+                  .asScala
+                  .map(_.toFile())
+                  .map(Hash(_))
+                  .foldLeft(Array.emptyByteArray)(_ ++ _)
+              )
+            )
+        },
+        hash => hash.file
+      )
+    val s = (config / streams).value
+
+    val cached =
+      Tracked.inputChanged[List[String], Seq[File]](
+        s.cacheStoreFactory.make("input")
+      ) {
+        Function.untupled {
+          Tracked
+            .lastOutput[(Boolean, List[String]), Seq[File]](
+              s.cacheStoreFactory.make("output")
+            ) { case ((changed, deps), outputs) =>
+              if (changed || outputs.isEmpty) {
+                val res =
+                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps).!!
+                val file =
+                  (config / resourceManaged).value / "compliance-tests.json"
+                IO.write(file, res)
+                Seq(file)
+
+              } else {
+                outputs.getOrElse(Seq.empty)
+              }
+            }
+        }
+      }
+
+    val trackedFiles = List(
+      "--dependencies",
+      (config / complianceTestDependencies).?.value
+        .getOrElse(Seq.empty)
+        .map { moduleId =>
+          s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
+        }
+        .mkString(",")
+    )
+
+    cached(trackedFiles)
+  }
 
 /**
  * Dogfooding task that calls the codegen module, to generate smithy standard
