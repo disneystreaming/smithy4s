@@ -1,0 +1,3 @@
+# check if smithy4sCodegen works
+> compile
+$ exists target/scala-2.13/src_managed/main/smithy/rules
