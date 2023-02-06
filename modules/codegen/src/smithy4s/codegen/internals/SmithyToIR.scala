@@ -231,7 +231,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getMixins()
           .asScala
           .filter(mixinId => doFieldsMatch(mixinId, fields))
-        val mixins = filteredMixins.flatMap(_.tpe).toList
+        val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
+          .flatMap(_.tpe)
+          .toList
         val isMixin = shape.hasTrait(classOf[MixinTrait])
 
         val p =
@@ -250,6 +252,10 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       private def getMixins(shape: UnionShape): List[Type] = {
+        getMixinShapeIds(shape).flatMap(_.tpe)
+      }
+
+      private def getMixinShapeIds(shape: UnionShape): List[ShapeId] = {
         val memberTargets = shape
           .members()
           .asScala
@@ -262,7 +268,26 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
         val result = mixins.foldLeft(union)(_ intersect _)
 
-        result.flatMap(_.tpe).toList
+        result.toList
+      }
+
+      // Filters out any mixins which exist on the parent ADT (if it is part of an ADT)
+      // This is so the case classes in the ADT won't also extend the same mixins
+      // as the parent sealed trait. This leads to cleaner generated code (no redundancy).
+      private def filterMixinsExistOnParentAdt(
+          mixinIds: Set[ShapeId],
+          shape: StructureShape
+      ): Set[ShapeId] = {
+        getAdtParent(shape) match {
+          case None => mixinIds
+          case Some(parentId) =>
+            model.expectShape(parentId).asUnionShape.asScala match {
+              case None => mixinIds
+              case Some(union) =>
+                val unionMixins = getMixinShapeIds(union)
+                mixinIds.filter(!unionMixins.contains(_))
+            }
+        }
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
