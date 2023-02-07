@@ -64,3 +64,19 @@ structure AdtOne with [AdtMixinOne, AdtMixinTwo, AdtMixinThree] {
 structure AdtTwo with [AdtMixinOne, AdtMixinTwo] {
   int: Integer
 }
+
+@adt
+union Podcast {
+  video: Video
+  audio: Audio
+}
+
+@mixin
+structure PodcastCommon {
+  title: String
+  url: String
+  durationMillis: Long
+}
+
+structure Video with [PodcastCommon] {}
+structure Audio with [PodcastCommon] {}

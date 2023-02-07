@@ -28,7 +28,7 @@ string adtMember
 /// Implies that all members of the union are annotated with the `adtMember` trait.
 /// Further signals that the `sealed trait` for this adt will extend the traits
 /// defined by any mixins that are present on all of the adt members.
-@trait(selector: "union :test(> member > structure)")
+@trait(selector: ":test(union :test(> member > structure), :not([trait|mixin]))")
 structure adt {}
 
 // the indexedSeq trait can be added to list shapes in order for the generated collection
