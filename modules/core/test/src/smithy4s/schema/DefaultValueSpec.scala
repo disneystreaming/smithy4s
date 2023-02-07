@@ -1,0 +1,96 @@
+package smithy4s
+package schema
+
+import munit._
+
+final class DefaultValueSpec extends FunSuite {
+
+  test("int") {
+    testCase(Schema.int, 0)
+  }
+
+  test("long") {
+    testCase(Schema.long, 0L)
+  }
+
+  test("short") {
+    testCase(Schema.short, 0: Short)
+  }
+
+  test("float") {
+    testCase(Schema.float, 0f)
+  }
+
+  test("double") {
+    testCase(Schema.double, 0d)
+  }
+
+  test("list") {
+    testCase(Schema.list(Schema.int), List.empty[Int])
+  }
+
+  test("map") {
+    testCase(Schema.map(Schema.string, Schema.int), Map.empty[String, Int])
+  }
+
+  test("struct") {
+    case class Foo(x: Int, y: Option[Int])
+    val s = Schema.struct(
+      Schema.int.required[Foo]("x", _.x),
+      Schema.int.optional[Foo]("y", _.y)
+    )(Foo.apply)
+    testCaseOpt(s, None)
+  }
+
+  test("union") {
+    type Foo = Either[Int, String]
+    val left = Schema.int.oneOf[Foo]("left", Left(_))
+    val right = Schema.string.oneOf[Foo]("right", Right(_))
+    val u: Schema[Foo] = Schema.union(left, right) {
+      case Left(int)     => left(int)
+      case Right(string) => right(string)
+    }
+    testCaseOpt(u, None)
+  }
+
+  test("enumeration") {
+    sealed abstract class FooBar(val stringValue: String, val intValue: Int)
+        extends smithy4s.Enumeration.Value {
+      val name = stringValue
+      val value = stringValue
+      val hints = Hints.empty
+    }
+    case object Foo extends FooBar("foo", 0)
+    val e: Schema[FooBar] = Schema.enumeration[FooBar](List(Foo))
+    testCaseOpt(e, None)
+  }
+
+  test("bijection") {
+    val b: Schema[Int] =
+      Schema.int.refined(smithy.api.Range(None, Option(BigDecimal(1))))
+    testCase(b, 0)
+  }
+
+  test("recursive") {
+    case class Foo(foo: Option[Foo])
+    object Foo {
+      val f: Schema[Foo] = Schema.recursive {
+        val foos = f.optional[Foo]("foo", _.foo)
+        Schema.struct(foos)(Foo.apply)
+      }
+    }
+    testCaseOpt(Foo.f, None)
+  }
+
+  private def testCaseOpt[A](schema: Schema[A], expect: Option[A])(implicit
+      loc: Location
+  ): Unit = {
+    val sch = schema.addHints(smithy.api.Default(Document.DNull))
+    val res = sch.getDefaultValue
+    assertEquals(res, expect)
+  }
+
+  private def testCase[A](schema: Schema[A], expect: A)(implicit
+      loc: Location
+  ): Unit = testCaseOpt(schema, Some(expect))
+}

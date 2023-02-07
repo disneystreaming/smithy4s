@@ -79,7 +79,7 @@ sealed trait Schema[A]{
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
   final def getDefault: Option[Document] =
-      this.hints.get(smithy.api.Default).map(_.value)
+      DefaultValueSchemaVisitor(this).getDefault
 
   final def getDefaultValue: Option[A] = getDefault.flatMap(Document.Decoder.fromSchema(this).decode(_).toOption)
 
