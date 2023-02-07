@@ -2,6 +2,7 @@ package smithy4s
 package schema
 
 import munit._
+import smithy.api.TimestampFormat
 
 final class DefaultValueSpec extends FunSuite {
 
@@ -23,6 +24,40 @@ final class DefaultValueSpec extends FunSuite {
 
   test("double") {
     testCase(Schema.double, 0d)
+  }
+
+  test("big decimal") {
+    testCase(Schema.bigdecimal, BigDecimal(0))
+  }
+
+  test("big int") {
+    testCase(Schema.bigint, BigInt(0))
+  }
+
+  test("string") {
+    testCase(Schema.string, "")
+  }
+
+  test("blob") {
+    testCase(Schema.bytes, ByteArray(Array.empty))
+  }
+
+  test("timestamp - epoch") {
+    testCase(Schema.timestamp, Timestamp(0, 0))
+  }
+
+  test("timestamp - date_time") {
+    testCase(
+      Schema.timestamp.addHints(TimestampFormat.DATE_TIME.widen),
+      Timestamp(0, 0)
+    )
+  }
+
+  test("timestamp - http_date") {
+    testCase(
+      Schema.timestamp.addHints(TimestampFormat.HTTP_DATE.widen),
+      Timestamp(0, 0)
+    )
   }
 
   test("list") {

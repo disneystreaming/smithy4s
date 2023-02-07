@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.schema.Primitive._
+import smithy.api.TimestampFormat
 
 trait GetDefaultValue[A] { self =>
   def getDefault: Option[Document]
@@ -53,11 +54,20 @@ object DefaultValueSchemaVisitor extends SchemaVisitor[GetDefaultValue] {
   ): GetDefaultValue[P] = from(
     hints,
     tag match {
-      case PShort      => Some(Document.fromInt(0))
-      case PString     => Some(Document.fromString(""))
-      case PFloat      => Some(Document.fromDouble(0))
-      case PDouble     => Some(Document.fromDouble(0))
-      case PTimestamp  => None
+      case PShort  => Some(Document.fromInt(0))
+      case PString => Some(Document.fromString(""))
+      case PFloat  => Some(Document.fromDouble(0))
+      case PDouble => Some(Document.fromDouble(0))
+      case PTimestamp =>
+        hints
+          .get(TimestampFormat)
+          .getOrElse(TimestampFormat.DATE_TIME) match {
+          case TimestampFormat.DATE_TIME =>
+            Some(Document.fromString("1970-01-01T00:00:00.00Z"))
+          case TimestampFormat.HTTP_DATE =>
+            Some(Document.fromString("Thu, 01 Jan 1970 00:00:00 GMT"))
+          case TimestampFormat.EPOCH_SECONDS => Some(Document.fromLong(0L))
+        }
       case PBlob       => Some(Document.fromString(""))
       case PBigInt     => Some(Document.fromBigDecimal(BigDecimal(0)))
       case PUUID       => None
