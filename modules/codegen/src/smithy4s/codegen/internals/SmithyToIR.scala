@@ -30,7 +30,7 @@ import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.{RequiredTrait, TimestampFormatTrait}
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
@@ -692,14 +692,31 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         case None           => shape.getType
       }
       val newNode = tpe match {
-        case ShapeType.STRING  => Node.from("")
-        case ShapeType.MAP     => Node.objectNode()
-        case ShapeType.INTEGER => Node.from(0)
-        case ShapeType.LONG    => Node.from(0L)
-        case ShapeType.DOUBLE  => Node.from(0.0d)
-        case ShapeType.SHORT   => Node.from(0: Short)
-        case ShapeType.FLOAT   => Node.from(0.0f)
-        case _                 => default.toNode
+        case ShapeType.STRING      => Node.from("")
+        case ShapeType.MAP         => Node.objectNode()
+        case ShapeType.LIST        => Node.arrayNode()
+        case ShapeType.INTEGER     => Node.from(0)
+        case ShapeType.BIG_DECIMAL => Node.from(0)
+        case ShapeType.BIG_INTEGER => Node.from(0)
+        case ShapeType.LONG        => Node.from(0L)
+        case ShapeType.DOUBLE      => Node.from(0.0d)
+        case ShapeType.SHORT       => Node.from(0: Short)
+        case ShapeType.FLOAT       => Node.from(0.0f)
+        case ShapeType.BOOLEAN     => Node.from(false)
+        case ShapeType.BLOB        => Node.arrayNode()
+        case ShapeType.BYTE        => Node.from(0)
+        case ShapeType.TIMESTAMP =>
+          shape
+            .getTrait(classOf[TimestampFormatTrait])
+            .asScala
+            .map(_.getValue) match {
+            case Some(TimestampFormatTrait.DATE_TIME) =>
+              Node.from("1970-01-01T00:00:00.00Z")
+            case Some(TimestampFormatTrait.HTTP_DATE) =>
+              Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
+            case _ => Node.from(0)
+          }
+        case _ => default.toNode
       }
       new DefaultTrait(newNode)
     case other => other
@@ -1137,6 +1154,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
     case (node, Primitive.Short) if node == Node.nullNode =>
       TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
+    case (node, Primitive.Byte) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
+    case (node, Primitive.ByteArray) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.ByteArray, Array.empty[Byte])
+    case (node, Primitive.Bool) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Bool, false)
+    case (node, Primitive.Timestamp) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(
+        Primitive.Timestamp,
+        java.time.Instant.ofEpochSecond(0)
+      )
     case other =>
       throw new NotImplementedError(s"Unsupported case: $other")
   }

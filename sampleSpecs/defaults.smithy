@@ -35,6 +35,20 @@ structure DefaultTest {
   eleven: Float
   @default
   twelve: Long
+  @default
+  thirteen: Timestamp
+  @default
+  @timestampFormat("http-date")
+  fourteen: Timestamp
+  @default
+  @timestampFormat("date-time")
+  fifteen: Timestamp
+  @default
+  sixteen: Byte
+  @default
+  seventeen: Blob
+  @default
+  eighteen: Boolean
 }
 
 structure DefaultOrderingTest {

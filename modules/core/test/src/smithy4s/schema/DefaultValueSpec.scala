@@ -6,6 +6,10 @@ import smithy.api.TimestampFormat
 
 final class DefaultValueSpec extends FunSuite {
 
+  test("boolean") {
+    testCase(Schema.boolean, false)
+  }
+
   test("int") {
     testCase(Schema.int, 0)
   }
