@@ -66,6 +66,12 @@ final class DefaultValueSpec extends FunSuite {
   }
 
   test("bijection") {
+    case class Foo(x: Int)
+    val b: Schema[Foo] = Schema.bijection(Schema.int, Foo(_), _.x)
+    testCase(b, Foo(0))
+  }
+
+  test("refined") {
     val b: Schema[Int] =
       Schema.int.refined(smithy.api.Range(None, Option(BigDecimal(1))))
     testCase(b, 0)
