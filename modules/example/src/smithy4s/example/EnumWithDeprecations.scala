@@ -10,10 +10,12 @@ import smithy4s.schema.Schema.enumeration
 /** some docs here */
 @deprecated
 sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+  override type EnumType = EnumWithDeprecations
   override val value: String = _value
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
+  override val enumeration: Enumeration[EnumType] = EnumWithDeprecations
   @inline final def widen: EnumWithDeprecations = this
 }
 object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {
