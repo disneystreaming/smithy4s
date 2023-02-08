@@ -838,11 +838,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             if (defaultRenderMode == DefaultRenderMode.Full)
               maybeDefault(member)
             else List.empty
+          val defaultable = member.hasTrait(classOf[DefaultTrait]) &&
+            !member.tpe.exists(_.isExternal)
           (
             member.getMemberName(),
             member.tpe,
-            member.hasTrait(classOf[RequiredTrait]) ||
-              member.hasTrait(classOf[DefaultTrait]),
+            member.hasTrait(classOf[RequiredTrait]) || defaultable,
             hints(member) ++ default ++ noDefault
           )
         }

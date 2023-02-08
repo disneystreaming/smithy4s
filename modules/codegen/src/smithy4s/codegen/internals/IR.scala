@@ -170,6 +170,11 @@ private[internals] sealed trait Type {
     case other                    => other
   }
 
+  def isExternal: Boolean = this.dealiased match {
+    case _: Type.ExternalType => true
+    case _                    => false
+  }
+
   def isResolved: Boolean = {
     val isUnwrapped = this match {
       case Type.Alias(_, _, _, unwrapped) => unwrapped
