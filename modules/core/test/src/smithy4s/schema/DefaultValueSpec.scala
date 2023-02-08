@@ -113,7 +113,7 @@ final class DefaultValueSpec extends FunSuite {
   test("refined") {
     val b: Schema[Int] =
       Schema.int.refined(smithy.api.Range(None, Option(BigDecimal(1))))
-    testCase(b, 0)
+    testCaseOpt(b, None)
   }
 
   test("recursive") {
