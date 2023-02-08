@@ -16,13 +16,14 @@
 
 package smithy4s.api.validation
 
+import smithy4s.meta.validation.RefinementTraitValidator
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
+import software.amazon.smithy.model.SourceLocation
+import software.amazon.smithy.model.traits.DefaultTrait
 import software.amazon.smithy.model.validation._
 
 import scala.jdk.CollectionConverters._
-import smithy4s.meta.validation.RefinementTraitValidator
-import software.amazon.smithy.model.SourceLocation
 
 object RefinementTraitValidatorSpec extends weaver.FunSuite {
 
@@ -286,6 +287,83 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
     val result = validator.validate(model).asScala.toList
     val expected = List.empty
     expect.same(result, expected)
+  }
+
+  test(
+    "simple int has synthetic default trait - generate no warning"
+  ) {
+    val model = loadModel(
+      """|namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trtOne
+         |integer MyInt
+         |
+         |structure SomeTest{
+         |  value: MyInt
+         |}
+         |""".stripMargin
+    )
+
+    val result = validator.validate(model).asScala.toList
+    val expected = List.empty
+    // no warning is emitted because its a synthetic default trait
+    expect.same(result, expected) &&
+    expect(
+      model
+        .expectShape(ShapeId.from("test#MyInt"))
+        .hasTrait(classOf[DefaultTrait])
+    )
+  }
+
+  test(
+    "simple int has user defined default trait - generate warning"
+  ) {
+    val model = loadModel(
+      """|$version: "2"
+         |
+         |namespace test
+         |
+         |use smithy4s.meta#refinement
+         |
+         |@trait()
+         |@refinement(targetType: "test.one", providerImport: "test.one.prov")
+         |structure trtOne {}
+         |
+         |@trtOne
+         |@default(5)
+         |integer MyInt
+         |
+         |structure SomeTest{
+         |  value: MyInt
+         |}
+         |""".stripMargin
+    )
+
+    val result = validator.validate(model).asScala.toList
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .sourceLocation(new SourceLocation("test.smithy", 13, 1))
+        .id("RefinementTrait")
+        .shapeId(ShapeId.fromParts("test", "MyInt"))
+        .severity(Severity.WARNING)
+        .message(
+          "test#trtOne is a refinement trait. It is applied to test#MyInt along with a @default trait. You should avoid mixing the two."
+        )
+        .build()
+    )
+    expect.same(result, expected) &&
+    expect(
+      model
+        .expectShape(ShapeId.from("test#MyInt"))
+        .hasTrait(classOf[DefaultTrait])
+    )
   }
 
   private def loadModel(modelString: String): Model = {
