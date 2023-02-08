@@ -20,7 +20,7 @@ import cats.kernel.Eq
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
-import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
+import smithy4s.{ByteArray, Enumeration, Hints, ShapeId, Timestamp}
 import weaver.{Expectations, FunSuite}
 
 object EqVisitorSpec extends FunSuite {
@@ -295,13 +295,19 @@ object EqVisitorSpec extends FunSuite {
   test("enumeration") {
     sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
+      override type EnumType = FooBar
+
       val name = stringValue
       val value = stringValue
       val hints = Hints.empty
+      def enumeration: Enumeration[EnumType] = FooBar
     }
-    object FooBar {
-      case object Foo extends FooBar("foo", 0)
+    object FooBar extends Enumeration[FooBar] {
+      def hints = Hints.empty
+      def id = ShapeId("", "FooBar")
+      def values: List[FooBar] = List(Foo, Bar)
 
+      case object Foo extends FooBar("foo", 0)
       case object Bar extends FooBar("neq", 1)
 
       implicit val schema: Schema[FooBar] =
