@@ -18,128 +18,79 @@ package smithy4s
 package schema
 
 import smithy4s.schema.Primitive._
-import smithy.api.TimestampFormat
 
-trait GetDefaultValue[A] { self =>
-  def getDefault: Option[Document]
-}
-
-object GetDefaultValue {
-  def none[A]: GetDefaultValue[A] = new GetDefaultValue[A] {
-    def getDefault: Option[Document] = None
-  }
-}
-
-object DefaultValueSchemaVisitor extends SchemaVisitor[GetDefaultValue] {
-
-  private def instance[A](maybeDefault: Option[Document]): GetDefaultValue[A] =
-    new GetDefaultValue[A] {
-      def getDefault: Option[Document] = maybeDefault
-    }
-
-  private def from[A](
-      hints: Hints,
-      onNullDefault: => Option[Document]
-  ): GetDefaultValue[A] = {
-    hints.get(smithy.api.Default).map(_.value) match {
-      case Some(d) if d == Document.DNull => instance(onNullDefault)
-      case d                              => instance(d)
-    }
-  }
+private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
   def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): GetDefaultValue[P] = from(
-    hints,
+  ): Option[P] =
     tag match {
-      case PShort  => Some(Document.fromInt(0))
-      case PString => Some(Document.fromString(""))
-      case PFloat  => Some(Document.fromDouble(0))
-      case PDouble => Some(Document.fromDouble(0))
-      case PTimestamp =>
-        hints
-          .get(TimestampFormat)
-          .getOrElse(TimestampFormat.DATE_TIME) match {
-          case TimestampFormat.DATE_TIME =>
-            Some(Document.fromString("1970-01-01T00:00:00.00Z"))
-          case TimestampFormat.HTTP_DATE =>
-            Some(Document.fromString("Thu, 01 Jan 1970 00:00:00 GMT"))
-          case TimestampFormat.EPOCH_SECONDS => Some(Document.fromLong(0L))
-        }
-      case PBlob       => Some(Document.fromString(""))
-      case PBigInt     => Some(Document.fromBigDecimal(BigDecimal(0)))
+      case PShort      => Some(0: Short)
+      case PString     => Some("")
+      case PFloat      => Some(0f)
+      case PDouble     => Some(0d)
+      case PInt        => Some(0)
+      case PLong       => Some(0L)
+      case PBoolean    => Some(false)
+      case PTimestamp  => Some(Timestamp.epoch)
+      case PBlob       => Some(ByteArray.empty)
+      case PBigInt     => Some(BigInt(0))
+      case PBigDecimal => Some(BigDecimal(0))
+      case PDocument   => Some(Document.DNull)
       case PUUID       => None
-      case PInt        => Some(Document.fromInt(0))
-      case PBigDecimal => Some(Document.fromBigDecimal(BigDecimal(0)))
-      case PBoolean    => Some(Document.fromBoolean(false))
-      case PLong       => Some(Document.fromLong(0))
       case PByte       => None
       case PUnit       => None
-      case PDocument   => Some(Document.DNull)
     }
-  )
 
   def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
       tag: CollectionTag[C],
       member: Schema[A]
-  ): GetDefaultValue[C[A]] = from(hints, Some(Document.array()))
+  ): Option[C[A]] = Some(tag.empty)
 
   def map[K, V](
       shapeId: ShapeId,
       hints: Hints,
       key: Schema[K],
       value: Schema[V]
-  ): GetDefaultValue[Map[K, V]] = from(hints, Some(Document.obj()))
+  ): Option[Map[K, V]] = Some(Map.empty)
 
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): GetDefaultValue[E] = from(hints, None)
+  ): Option[E] = None
 
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
-  ): GetDefaultValue[S] = from(hints, None)
+  ): Option[S] = None
 
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
-  ): GetDefaultValue[U] = from(hints, None)
+  ): Option[U] = None
 
   def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): GetDefaultValue[B] = {
-    val res = apply(schema)
-    new GetDefaultValue[B] {
-      def getDefault: Option[Document] = res.getDefault
-    }
+  ): Option[B] = {
+    schema.compile(this).map(bijection.to)
   }
 
   def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): GetDefaultValue[B] = {
-    val res = apply(schema)
-    new GetDefaultValue[B] {
-      def getDefault: Option[Document] = res.getDefault
-    }
-  }
+  ): Option[B] = None
 
-  def lazily[A](suspend: Lazy[Schema[A]]): GetDefaultValue[A] = {
-    lazy val underlying = apply(suspend.value)
-    new GetDefaultValue[A] {
-      def getDefault: Option[Document] = underlying.getDefault
-    }
-  }
+  def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
+    suspend.map(_.compile(this)).value
 }
