@@ -15,7 +15,7 @@ sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intVa
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
-  override val enumeration: Enumeration[EnumType] = EnumWithDeprecations
+  override def enumeration: Enumeration[EnumType] = EnumWithDeprecations
   @inline final def widen: EnumWithDeprecations = this
 }
 object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {

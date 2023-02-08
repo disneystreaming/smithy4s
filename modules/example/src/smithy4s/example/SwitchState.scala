@@ -13,7 +13,7 @@ sealed abstract class SwitchState(_value: String, _name: String, _intValue: Int,
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
-  override val enumeration: Enumeration[EnumType] = SwitchState
+  override def enumeration: Enumeration[EnumType] = SwitchState
   @inline final def widen: SwitchState = this
 }
 object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[SwitchState] {

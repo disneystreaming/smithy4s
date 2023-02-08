@@ -15,7 +15,7 @@ sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int, _h
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
-  override val enumeration: Enumeration[EnumType] = FaceCard
+  override def enumeration: Enumeration[EnumType] = FaceCard
   @inline final def widen: FaceCard = this
 }
 object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {

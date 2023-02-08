@@ -866,7 +866,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"override val name: String = _name",
       line"override val intValue: Int = _intValue",
       line"override val hints: $Hints_ = _hints",
-      line"override val enumeration: $Enumeration_[EnumType] = $name",
+      line"override def enumeration: $Enumeration_[EnumType] = $name",
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(

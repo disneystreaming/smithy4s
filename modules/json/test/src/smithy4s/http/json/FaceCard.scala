@@ -25,7 +25,7 @@ sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int)
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: smithy4s.Hints = smithy4s.Hints.empty
-  override val enumeration: smithy4s.Enumeration[EnumType] = FaceCard
+  override def enumeration: smithy4s.Enumeration[EnumType] = FaceCard
   @inline final def widen: FaceCard = this
 }
 object FaceCard

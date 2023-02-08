@@ -13,7 +13,7 @@ sealed abstract class Letters(_value: String, _name: String, _intValue: Int, _hi
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
-  override val enumeration: Enumeration[EnumType] = Letters
+  override def enumeration: Enumeration[EnumType] = Letters
   @inline final def widen: Letters = this
 }
 object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {

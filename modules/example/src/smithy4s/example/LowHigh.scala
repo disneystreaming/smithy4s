@@ -13,7 +13,7 @@ sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hi
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
-  override val enumeration: Enumeration[EnumType] = LowHigh
+  override def enumeration: Enumeration[EnumType] = LowHigh
   @inline final def widen: LowHigh = this
 }
 object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
