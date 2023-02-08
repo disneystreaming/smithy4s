@@ -30,15 +30,21 @@ import java.util.stream.Stream;
 
 public final class RefinementTraitValidator extends AbstractValidator {
 
-	boolean isAllowedType(Shape shape) {
+	boolean isSimple(Model model, Shape shape) {
+		return shape.getType().getCategory() == ShapeType.Category.SIMPLE
+				|| shape.getType().getCategory() == ShapeType.Category.MEMBER && shape.asMemberShape()
+						.map(ms -> model.expectShape(ms.getTarget())).map(s -> isSimple(model, s)).orElse(false);
+	}
+
+	boolean isAllowedType(Model model, Shape shape) {
 		boolean notConstrained = shape.getAllTraits().values().stream().allMatch(t -> {
 			boolean isConstrained = t instanceof EnumTrait || t instanceof LengthTrait || t instanceof RangeTrait
 					|| t instanceof PatternTrait;
 			return !isConstrained;
 		});
-		boolean isSimple = shape.getType().getCategory() == ShapeType.Category.SIMPLE && notConstrained;
+		boolean _isSimple = isSimple(model, shape) && notConstrained;
 		boolean isCollection = shape.isListShape() || shape.isMapShape() || shape.isSetShape();
-		return isSimple || isCollection;
+		return _isSimple || isCollection;
 	}
 
 	@Override
@@ -51,7 +57,7 @@ public final class RefinementTraitValidator extends AbstractValidator {
 			}).count();
 			if (numRefinedTraits > 1) {
 				return Stream.of(error(s, "Shapes may only be annotated with one refinement trait"));
-			} else if (numRefinedTraits == 1 && !isAllowedType(s)) {
+			} else if (numRefinedTraits == 1 && !isAllowedType(model, s)) {
 				return Stream.of(error(s,
 						"refinements can only be used on simpleShapes, list, set, and map. Simple shapes must not be constrained by enum, length, range, or pattern traits"));
 			} else {
