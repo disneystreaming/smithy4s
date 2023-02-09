@@ -17,6 +17,7 @@
 package smithy4s.schema
 
 import munit._
+import smithy4s.Enumeration
 import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Lazy
@@ -52,15 +53,26 @@ class HintsTransformationSpec() extends FunSuite {
   test(header("enum")) {
     sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
+      override type EnumType = FooBar
       val name = stringValue
       val value = stringValue
       val hints = Hints.empty
+      def enumeration: Enumeration[EnumType] = FooBar
 
     }
-    case object Foo extends FooBar("foo", 0)
-    implicit val schema: Schema[FooBar] = enumeration[FooBar](List(Foo))
+    object FooBar extends Enumeration[FooBar] {
+      def hints = Hints.empty
+      def id = ShapeId("", "FooBar")
+      def values: List[FooBar] = List(Foo)
+
+      case object Foo extends FooBar("foo", 0)
+
+      implicit val schema: Schema[FooBar] =
+        enumeration[FooBar](List(Foo))
+    }
+    implicit val schema: Schema[FooBar] = enumeration[FooBar](FooBar.values)
     // 1 for the enum, 1 for the enum value
-    checkSchema(Foo: FooBar, 2)
+    checkSchema(FooBar.Foo: FooBar, 2)
   }
 
   test(header("struct")) {
