@@ -67,13 +67,12 @@ sealed hierarchy instead of in its own file.
 
 Using the `adt` trait does come with some restrictions. First are requirements for the union which is annotated with the `adt` trait:
 
-1. The union must contain at least one member
-2. The union's members must only target structure shapes
+- The union must contain at least one member
+- The union's members must only target structure shapes
 
-Additionally, there are some requirements that are added onto the structure shapes that the union targets:
+Additionally, there is a requirement that is added onto the structure shapes that the union targets:
 
-1. The structures must NOT be the target of any other union, structure, etc. They can only be the target in the ONE union that is annotated with the `adt` trait.
-2. The structures must contain at least one member.
+- The structures must NOT be the target of any other union, structure, etc. They can only be the target in the ONE union that is annotated with the `adt` trait.
 
 A validator will be run automatically on your model to make sure it conforms to the requirements above.
 
