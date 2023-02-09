@@ -292,8 +292,6 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
       .asScala
       .toList
 
-    println(result)
-
     val expected = List(
       ValidationEvent
         .builder()

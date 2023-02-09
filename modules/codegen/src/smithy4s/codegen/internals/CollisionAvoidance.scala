@@ -64,11 +64,12 @@ private[internals] object CollisionAvoidance {
         )
       case p: Product =>
         modProduct(p)
-      case Union(shapeId, name, alts, recursive, hints) =>
+      case Union(shapeId, name, alts, mixins, recursive, hints) =>
         Union(
           shapeId,
           protectType(name.capitalize),
           alts.map(modAlt),
+          mixins.map(modType),
           recursive,
           hints.map(modHint)
         )

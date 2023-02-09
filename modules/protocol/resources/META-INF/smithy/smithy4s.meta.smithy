@@ -25,6 +25,12 @@ structure packedInputs {}
 @idRef(failWhenMissing: true, selector: "union")
 string adtMember
 
+/// Implies that all members of the union are annotated with the `adtMember` trait.
+/// Further signals that the `sealed trait` for this adt will extend the traits
+/// defined by any mixins that are present on all of the adt members.
+@trait(selector: ":test(union :test(> member > structure), :not([trait|mixin]))")
+structure adt {}
+
 // the indexedSeq trait can be added to list shapes in order for the generated collection
 // fields to be of type `IndexedSeq` instead of `List`. When decoding instances of IndexedSeq
 // from various formats, Smithy4s will do a best effort to try and back the IndexedSeq

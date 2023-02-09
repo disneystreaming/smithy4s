@@ -17,20 +17,20 @@
 package smithy4s.api.validation
 
 import weaver._
-import smithy4s.meta.AdtMemberTrait
+import smithy4s.meta.AdtTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.validation.{Severity, ValidationEvent}
 
 import scala.jdk.CollectionConverters._
-import smithy4s.meta.validation.AdtMemberTraitValidator
+import smithy4s.meta.validation.AdtTraitValidator
 
-object AdtMemberTraitValidatorSpec extends FunSuite {
-  private val validator = new AdtMemberTraitValidator()
+object AdtTraitValidatorSpec extends FunSuite {
+  private val validator = new AdtTraitValidator()
 
-  test("return no error when union targets the structure") {
+  test("AdtTrait - return no error when union targets the structure") {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
-    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val adtTrait = new AdtTrait()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -40,7 +40,6 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       StructureShape
         .builder()
         .id("test#struct")
-        .addTrait(adtTrait)
         .addMember(structMember)
         .build()
 
@@ -50,9 +49,17 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       .target(struct.getId)
       .build()
     val union =
-      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
+      UnionShape
+        .builder()
+        .addTrait(adtTrait)
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .build()
     val model =
-      Model.builder().addShapes(struct, union).build()
+      Model
+        .builder()
+        .addShapes(struct, union)
+        .build()
 
     val result = validator.validate(model).asScala.toList
 
@@ -60,9 +67,9 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     expect(result == expected)
   }
 
-  test("return error when union does not target the structure") {
+  test("AdtTrait - return error when union has no members") {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
-    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val adtTrait = new AdtTrait()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -72,7 +79,49 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       StructureShape
         .builder()
         .id("test#struct")
+        .addMember(structMember)
+        .build()
+
+    val union =
+      UnionShape
+        .builder()
         .addTrait(adtTrait)
+        .id(unionShapeId)
+        .build()
+    val model =
+      Model
+        .builder()
+        .addShapes(struct, union)
+        .build()
+
+    val result = validator.validate(model).asScala.toList
+
+    val expected = List(
+      ValidationEvent
+        .builder()
+        .id("AdtTrait")
+        .shape(union)
+        .severity(Severity.ERROR)
+        .message(
+          "unions with the adt trait must contain at least one member"
+        )
+        .build()
+    )
+    expect(result == expected)
+  }
+
+  test("AdtTrait - return error when union does not target the structure") {
+    val unionShapeId = ShapeId.fromParts("test", "MyUnion")
+    val adtTrait = new AdtTrait()
+    val structMember = MemberShape
+      .builder()
+      .id("test#struct$testing")
+      .target("smithy.api#String")
+      .build()
+    val struct =
+      StructureShape
+        .builder()
+        .id("test#struct")
         .addMember(structMember)
         .build()
 
@@ -82,30 +131,38 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       .target(ShapeId.fromParts("smithy.api", "String"))
       .build()
     val union =
-      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
+      UnionShape
+        .builder()
+        .addTrait(adtTrait)
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .build()
 
+    val str = StringShape.builder.id("smithy.api#String").build()
     val model =
-      Model.builder().addShapes(struct, union).build()
+      Model.builder().addShapes(struct, union, str).build()
 
     val result = validator.validate(model).asScala.toList
 
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtValidator")
-        .shape(struct)
+        .id("AdtTrait")
+        .shape(union)
         .severity(Severity.ERROR)
         .message(
-          "test#MyUnion must have exactly one member targeting test#struct"
+          "Some members of test#MyUnion were found to target non-structure shapes. Instead they target smithy.api#String"
         )
         .build()
     )
     expect(result == expected)
   }
 
-  test("return error when structure is targeted by multiple unions") {
+  test(
+    "AdtTrait - return error when structure is targeted by multiple unions"
+  ) {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
-    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val adtTrait = new AdtTrait()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -115,7 +172,6 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       StructureShape
         .builder()
         .id("test#struct")
-        .addTrait(adtTrait)
         .addMember(structMember)
         .build()
 
@@ -125,7 +181,12 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       .target(struct.getId)
       .build()
     val union =
-      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
+      UnionShape
+        .builder()
+        .addTrait(adtTrait)
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .build()
 
     val union2ShapeId = ShapeId.fromParts("test", "MyUnionTwo")
     val unionMember2 = unionMember.toBuilder
@@ -153,9 +214,11 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     expect(result == expected)
   }
 
-  test("return error when structure is targeted by a union and a structure") {
+  test(
+    "AdtTrait - return error when structure is targeted by a union and a structure"
+  ) {
     val unionShapeId = ShapeId.fromParts("test", "MyUnion")
-    val adtTrait = new AdtMemberTrait(unionShapeId)
+    val adtTrait = new AdtTrait()
     val structMember = MemberShape
       .builder()
       .id("test#struct$testing")
@@ -165,7 +228,6 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       StructureShape
         .builder()
         .id("test#struct")
-        .addTrait(adtTrait)
         .addMember(structMember)
         .build()
 
@@ -175,7 +237,12 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
       .target(struct.getId)
       .build()
     val union =
-      UnionShape.builder().id(unionShapeId).addMember(unionMember).build()
+      UnionShape
+        .builder()
+        .addTrait(adtTrait)
+        .id(unionShapeId)
+        .addMember(unionMember)
+        .build()
 
     val struct2ShapeId = ShapeId.fromParts("test", "MyStruct2")
     val structMember2 = unionMember.toBuilder

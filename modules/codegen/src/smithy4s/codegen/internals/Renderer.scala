@@ -154,8 +154,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case Service(shapeId, name, ops, hints, version) =>
       renderService(shapeId, name, ops, hints, version)
     case p: Product => renderProduct(p)
-    case union @ Union(shapeId, _, alts, recursive, hints) =>
-      renderUnion(shapeId, union.nameRef, alts, recursive, hints)
+    case union @ Union(shapeId, _, alts, mixins, recursive, hints) =>
+      renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, values, hints) =>
@@ -401,11 +401,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     } yield Union(
       ShapeId.fromParts(namespace, op.shapeId.getName() + "Error"),
       name,
-      alts
+      alts,
+      List.empty
     )
 
     val renderedErrorUnion = errorUnion.foldMap {
-      case union @ Union(shapeId, _, alts, recursive, hints) =>
+      case union @ Union(shapeId, _, alts, mixin, recursive, hints) =>
         if (compilationUnit.rendererConfig.errorsAsScala3Unions)
           renderErrorAsScala3Union(
             shapeId,
@@ -419,6 +420,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             shapeId,
             union.nameRef,
             alts,
+            mixin,
             recursive,
             hints,
             error = true
@@ -712,6 +714,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       shapeId: ShapeId,
       name: NameRef,
       alts: NonEmptyList[Alt],
+      mixins: List[Type],
       recursive: Boolean,
       hints: List[Hint],
       error: Boolean = false
@@ -725,11 +728,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
+    val mixinLines = mixins.map(m => line"$m")
+    val mixinExtends = mixinLines.intercalate(line" with ")
+    val mixinExtendsStatement =
+      if (mixinExtends.segments.isEmpty) Line.empty
+      else line"$mixinExtends with "
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed trait ${NameDef(name.name)} extends scala.Product with scala.Serializable"
+        line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this"
       ),

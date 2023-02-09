@@ -82,6 +82,7 @@ private[internals] case class Union(
     shapeId: ShapeId,
     name: String,
     alts: NonEmptyList[Alt],
+    mixins: List[Type],
     recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl

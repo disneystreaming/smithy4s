@@ -24,6 +24,7 @@ import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
+import smithy4s.meta.AdtTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
@@ -230,7 +231,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getMixins()
           .asScala
           .filter(mixinId => doFieldsMatch(mixinId, fields))
-        val mixins = filteredMixins.flatMap(_.tpe).toList
+        val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
+          .flatMap(_.tpe)
+          .toList
         val isMixin = shape.hasTrait(classOf[MixinTrait])
 
         val p =
@@ -243,13 +246,56 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hints,
             isMixin
           ).some
-        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+        if (isPartOfAdt(shape)) {
           if (renderAdtMemberStructures) p else None
         } else p
       }
 
+      private def getMixins(shape: UnionShape): List[Type] = {
+        getMixinShapeIds(shape).flatMap(_.tpe)
+      }
+
+      private def getMixinShapeIds(shape: UnionShape): List[ShapeId] = {
+        val memberTargets = shape
+          .members()
+          .asScala
+          .toList
+          .map(mem => model.expectShape(mem.getTarget))
+        val mixins = memberTargets
+          .map(_.getMixins.asScala.toSet)
+
+        val union = mixins.foldLeft(Set.empty[ShapeId])(_ union _)
+
+        val result = mixins.foldLeft(union)(_ intersect _)
+
+        result.toList
+      }
+
+      // Filters out any mixins which exist on the parent ADT (if it is part of an ADT)
+      // This is so the case classes in the ADT won't also extend the same mixins
+      // as the parent sealed trait. This leads to cleaner generated code (no redundancy).
+      private def filterMixinsExistOnParentAdt(
+          mixinIds: Set[ShapeId],
+          shape: StructureShape
+      ): Set[ShapeId] = {
+        getAdtParent(shape) match {
+          case None => mixinIds
+          case Some(parentId) =>
+            model.expectShape(parentId).asUnionShape.asScala match {
+              case None => mixinIds
+              case Some(union) =>
+                val unionMixins = getMixinShapeIds(union)
+                mixinIds.filter(!unionMixins.contains(_))
+            }
+        }
+      }
+
       override def unionShape(shape: UnionShape): Option[Decl] = {
         val rec = isRecursive(shape.getId())
+
+        val mixins =
+          if (shape.hasTrait(classOf[AdtTrait])) getMixins(shape)
+          else List.empty
 
         val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
@@ -257,7 +303,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           case _          => false
         }
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.getId(), shape.name, alts, rec || isTrait, hints)
+          Union(shape.getId(), shape.name, alts, mixins, rec || isTrait, hints)
         }
       }
 
@@ -905,14 +951,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
     }
 
-    def alts =
+    def alts = {
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (isPartOfAdt(memberTarget)) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
               .map(Left(_))
@@ -930,15 +976,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             Alt(name, UnionMember.ProductCase(p), h)
         }
         .toList
+    }
 
-    def getAltTypes: List[AltInfo] =
+    def getAltTypes: List[AltInfo] = {
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (isPartOfAdt(memberTarget)) {
             (member.getMemberName(), member.tpe.map(Left(_)))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)))
@@ -951,6 +998,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
+    }
 
   }
 
@@ -987,6 +1035,24 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private case class NodeAndType(node: Node, tpe: Type)
 
+  private def isPartOfAdt(shape: Shape): Boolean = {
+    shape.hasTrait(classOf[AdtMemberTrait]) ||
+    getAdtParent(shape).isDefined
+  }
+
+  private def getAdtParent(shape: Shape): Option[ShapeId] = {
+    val result = model
+      .getMemberShapes()
+      .asScala
+      .toList
+      .filter(_.getTarget == shape.toShapeId)
+      .find(mem =>
+        model.expectShape(mem.getContainer).hasTrait(classOf[AdtTrait])
+      )
+
+    result.map(_.getContainer)
+  }
+
   private object UnRef {
     def unapply(tpe: Type): Option[Shape] = tpe match {
       case Type.Ref(ns, name) =>
@@ -994,11 +1060,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getShape(ShapeId.fromParts(ns, name))
           .asScala
         maybeShape.map { shape =>
-          shape.getTrait(classOf[AdtMemberTrait]).asScala match {
-            case Some(adtMemberTrait) =>
+          val fromAdtMember = shape
+            .getTrait(classOf[AdtMemberTrait])
+            .asScala
+            .map(_.getValue)
+          val adtParent: Option[ShapeId] =
+            fromAdtMember orElse getAdtParent(shape)
+          adtParent match {
+            case Some(parent) =>
               val cId = shape.getId
               val newNs =
-                cId.getNamespace + "." + adtMemberTrait.getValue.getName
+                cId.getNamespace + "." + parent.getName
               val error = new Exception(
                 s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
               )
