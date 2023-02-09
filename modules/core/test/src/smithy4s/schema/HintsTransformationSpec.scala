@@ -70,7 +70,6 @@ class HintsTransformationSpec() extends FunSuite {
       implicit val schema: Schema[FooBar] =
         enumeration[FooBar](List(Foo))
     }
-    implicit val schema: Schema[FooBar] = enumeration[FooBar](FooBar.values)
     // 1 for the enum, 1 for the enum value
     checkSchema(FooBar.Foo: FooBar, 2)
   }

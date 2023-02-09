@@ -95,13 +95,22 @@ final class DefaultValueSpec extends FunSuite {
   test("enumeration") {
     sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
+      type EnumType = FooBar
+      val id: ShapeId = ShapeId("test", "FooBar")
       val name = stringValue
       val value = stringValue
       val hints = Hints.empty
+      def enumeration: Enumeration[FooBar] = FooBar
     }
-    case object Foo extends FooBar("foo", 0)
-    val e: Schema[FooBar] = Schema.enumeration[FooBar](List(Foo))
-    testCaseOpt(e, None)
+    object FooBar extends smithy4s.Enumeration[FooBar] {
+      case object Foo extends FooBar("foo", 0)
+      def id: ShapeId = ShapeId("test", "FooBar")
+      val hints = Hints.empty
+      def values: List[FooBar] = List(Foo)
+      val schema: Schema[FooBar] = Schema.enumeration[FooBar](values)
+    }
+
+    testCaseOpt(FooBar.schema, None)
   }
 
   test("bijection") {
