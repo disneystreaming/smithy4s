@@ -88,6 +88,8 @@ string DogName
 structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
+  @required
+  requiredAge: Age,
   fancyList: FancyList,
   unwrappedFancyList: UnwrappedFancyList,
   name: Name,
