@@ -31,7 +31,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "validation events are returned when multiple refinements are applied to one shape"
   ) {
-    val modelString =
+    val model = loadModel(
       """|namespace test
          |
          |use smithy4s.meta#refinement
@@ -48,14 +48,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |@trtTwo
          |integer TestIt
          |""".stripMargin
-
-    val model = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .unwrap()
+    )
 
     val result = validator.validate(model).asScala.toList
     val expected = List(
@@ -76,7 +69,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "no validation events are returned when one refinement is applied to a shape"
   ) {
-    val modelString =
+    val model = loadModel(
       """|namespace test
          |
          |use smithy4s.meta#refinement
@@ -92,14 +85,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |@trtOne
          |integer TestIt
          |""".stripMargin
-
-    val model = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .unwrap()
+    )
 
     val result = validator.validate(model).asScala.toList
     val expected = List.empty
@@ -109,7 +95,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "no validation events are returned when all shapes have only one refinement"
   ) {
-    val modelString =
+    val model = loadModel(
       """|namespace test
          |
          |use smithy4s.meta#refinement
@@ -128,14 +114,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |@trtTwo
          |integer TestItAgain
          |""".stripMargin
-
-    val model = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .unwrap()
+    )
 
     val result = validator.validate(model).asScala.toList
     val expected = List.empty
@@ -145,7 +124,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "validation events are returned when using refinement trait on disallowed shape"
   ) {
-    val modelString =
+    val model = loadModel(
       """|namespace test
          |
          |use smithy4s.meta#refinement
@@ -157,14 +136,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |@trtOne
          |structure TestIt {}
          |""".stripMargin
-
-    val model = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .unwrap()
+    )
 
     val result = validator.validate(model).asScala.toList
     val expected = List(
@@ -185,7 +157,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "validation events are returned when using refinement trait on disallowed shape - enum"
   ) {
-    val modelString =
+    val model = loadModel(
       """|namespace test
          |
          |use smithy4s.meta#refinement
@@ -201,14 +173,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |])
          |string TestIt
          |""".stripMargin
-
-    val model = Model
-      .assembler()
-      .disableValidation()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .unwrap()
+    )
 
     val result = validator.validate(model).asScala.toList
     val expected = List(
@@ -268,7 +233,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "check that provider import format is valid - should fail"
   ) {
-    val modelString =
+    val result = loadValidationErrors(
       """|$version: "2.0"
          |
          |namespace test
@@ -282,15 +247,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |@trtOne
          |string TestIt
          |""".stripMargin
-
-    val result = Model
-      .assembler()
-      .discoverModels()
-      .addUnparsedModel("test.smithy", modelString)
-      .assemble()
-      .getValidationEvents()
-      .asScala
-      .toList
+    )
 
     val expected = List(
       ValidationEvent
@@ -310,7 +267,7 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
   test(
     "no validation events are returned when one refinement is applied to a simple member shape"
   ) {
-    val modelString =
+    val model = loadModel(
       """|namespace test
          |
          |use smithy4s.meta#refinement
@@ -324,18 +281,34 @@ object RefinementTraitValidatorSpec extends weaver.FunSuite {
          |  value: String
          |}
          |""".stripMargin
+    )
 
-    val model = Model
+    val result = validator.validate(model).asScala.toList
+    val expected = List.empty
+    expect.same(result, expected)
+  }
+
+  private def loadModel(modelString: String): Model = {
+    Model
       .assembler()
       .disableValidation()
       .discoverModels()
       .addUnparsedModel("test.smithy", modelString)
       .assemble()
       .unwrap()
+  }
 
-    val result = validator.validate(model).asScala.toList
-    val expected = List.empty
-    expect.same(result, expected)
+  private def loadValidationErrors(
+      modelString: String
+  ): List[ValidationEvent] = {
+    Model
+      .assembler()
+      .discoverModels()
+      .addUnparsedModel("test.smithy", modelString)
+      .assemble()
+      .getValidationEvents()
+      .asScala
+      .toList
   }
 
 }
