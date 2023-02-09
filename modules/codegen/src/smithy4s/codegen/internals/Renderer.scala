@@ -1141,6 +1141,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Bool       => t => line"${t.toString}"
       case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => renderStringLiteral
+      case Primitive.Byte   => b => line"${b.toString}"
+      case Primitive.ByteArray =>
+        ba =>
+          line"${NameRef("smithy4s", "ByteArray")}(Array(${ba.mkString(", ")}))"
+      case Primitive.Timestamp =>
+        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {
