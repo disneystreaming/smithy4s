@@ -38,11 +38,13 @@ public final class RefinementTraitValidator extends AbstractValidator {
 
 	boolean isAllowedType(Model model, Shape shape) {
 		boolean notConstrained = shape.getAllTraits().values().stream().allMatch(t -> {
+			@SuppressWarnings("deprecation") // EnumTrait
 			boolean isConstrained = t instanceof EnumTrait || t instanceof LengthTrait || t instanceof RangeTrait
 					|| t instanceof PatternTrait;
 			return !isConstrained;
 		});
 		boolean _isSimple = isSimple(model, shape) && notConstrained;
+		@SuppressWarnings("deprecation") // isSetShape
 		boolean isCollection = shape.isListShape() || shape.isMapShape() || shape.isSetShape();
 		return _isSimple || isCollection;
 	}
