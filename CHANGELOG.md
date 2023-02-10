@@ -45,6 +45,9 @@ See https://github.com/disneystreaming/smithy4s/pull/744
 It is now possible to load credentials from an AWS-compliant configuration file (typically found under ~/.aws/credentials).
 This is wired by default in the clients, and has lower precedence than the other providers.
 
+### Improve docs
+
+We've improved and added new sections to the documentation, in particular around AWS SDK usage and model pre-processing.
 ## Bug fixes
 
 ### Null default value traits are now correctly handled
@@ -131,7 +134,7 @@ See https://github.com/disneystreaming/smithy4s/pull/706
 
 it's now possible to invoke transformations more conveniently in polymorhic code, via a method in the `Transformation` companion object
 
-See  https://github.com/disneystreaming/smithy4s/pull/681
+See https://github.com/disneystreaming/smithy4s/pull/681
 
 ## Bug fixes
 
