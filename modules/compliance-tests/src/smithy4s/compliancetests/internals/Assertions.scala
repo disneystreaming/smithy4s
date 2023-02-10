@@ -19,6 +19,7 @@ package internals
 
 import cats.implicits._
 import ComplianceTest._
+import cats.Eq
 import io.circe.parser._
 import org.http4s.Headers
 import org.typelevel.ci.CIString
@@ -29,7 +30,7 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = Left(msg)
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
+    bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
 
   private def jsonEql(expected: String, actual: String): ComplianceResult = {
     (expected.isEmpty, actual.isEmpty) match {
@@ -50,8 +51,19 @@ private[internals] object assert {
     }
   }
 
-  def eql[A](expected: A, actual: A): ComplianceResult = {
-    if (expected == actual) {
+  def neql[A: Eq](expected: A, actual: A): ComplianceResult = {
+    if (expected =!= actual) {
+      success
+    } else {
+      fail(
+        s"This test passed when it was supposed to fail, Actual value: ${pprint
+          .apply(actual)} was equal to ${pprint.apply(expected)}."
+      )
+    }
+  }
+
+  def eql[A: Eq](expected: A, actual: A): ComplianceResult = {
+    if (expected === actual) {
       success
     } else {
       fail(

@@ -16,11 +16,11 @@
 
 package smithy4s.codegen.internals
 
-import cats.data.NonEmptyList
 import cats.kernel.Monoid
 import cats.syntax.all._
 
 import LineSegment.{Literal, NameRef}
+import cats.Foldable
 
 /**
   * Construct allowing to flatten arbitrary levels of nested lists
@@ -34,20 +34,16 @@ private[internals] object ToLines {
   def render[A](a: A)(implicit A: ToLines[A]): Lines = A.render(a)
   implicit val identity: ToLines[Lines] = r => r
 
-  implicit def listToLines[A](implicit A: ToLines[A]): ToLines[List[A]] = {
-    (l: List[A]) =>
-      val lines: List[List[Line]] = l.map(A.render).map(r => r.list)
-      Lines(lines.flatten)
+  implicit def foldableRenderable[L[_]: Foldable, A](implicit
+      A: ToLines[A]
+  ): ToLines[L[A]] = { (l: L[A]) =>
+    val lines: List[List[Line]] = l.toList.map(A.render).map(r => r.list)
+    Lines(lines.flatten)
   }
 
   implicit def tupleRenderable[A](implicit
       A: ToLines[A]
   ): ToLines[(String, A)] = (t: (String, A)) => A.render(t._2).addImport(t._1)
-
-  implicit def nelRenderable[A](implicit
-      A: ToLines[A]
-  ): ToLines[NonEmptyList[A]] =
-    (l: NonEmptyList[A]) => listToLines(A).render(l.toList)
 
   implicit def lineToLines[A: ToLine]: ToLines[A] = (a: A) => {
     val line = ToLine[A].render(a)

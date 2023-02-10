@@ -60,7 +60,7 @@ list IntList {
 }
 
 set StringSet {
-  member: Set
+  member: String
 }
 
 // At this time, only string shapes can be used as keys to map.

@@ -9,14 +9,18 @@ object Dependencies {
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0"
     )
 
-  val Jsoniter =
-    Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.20.6"
+  val Jsoniter = new {
+    val org = "com.github.plokhotnyuk.jsoniter-scala"
+    val jsoniterScalaVersion = "2.20.6"
+    val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
+    val macros = Def.setting(
+      org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
     )
+  }
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.26.4"
+    val smithyVersion = "1.27.2"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -26,7 +30,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.9"
+    val alloyVersion = "0.1.11"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -82,7 +86,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.5")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.6")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.18" else "0.22.15")
@@ -133,6 +137,12 @@ object Dependencies {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.5"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
+  }
+
+  object AwsSpecSummary {
+    val awsSpecSummaryVersion = "2023.02.09"
+    val value =
+      "com.disneystreaming.smithy" % "aws-spec-summary" % awsSpecSummaryVersion
   }
 
 }

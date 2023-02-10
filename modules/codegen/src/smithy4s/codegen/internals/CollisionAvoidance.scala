@@ -64,11 +64,12 @@ private[internals] object CollisionAvoidance {
         )
       case p: Product =>
         modProduct(p)
-      case Union(shapeId, name, alts, recursive, hints) =>
+      case Union(shapeId, name, alts, mixins, recursive, hints) =>
         Union(
           shapeId,
           protectType(name.capitalize),
           alts.map(modAlt),
+          mixins.map(modType),
           recursive,
           hints.map(modHint)
         )
@@ -100,9 +101,19 @@ private[internals] object CollisionAvoidance {
   }
 
   private def modType(tpe: Type): Type = tpe match {
-    case Type.Collection(collectionType, member) =>
-      Type.Collection(collectionType, modType(member))
-    case Type.Map(key, value) => Type.Map(modType(key), modType(value))
+    case Type.Collection(collectionType, member, memberHints) =>
+      Type.Collection(
+        collectionType = collectionType,
+        member = modType(member),
+        memberHints = memberHints.map(modHint(_))
+      )
+    case Type.Map(key, keyHints, value, valueHints) =>
+      Type.Map(
+        key = modType(key),
+        keyHints = keyHints.map(modHint(_)),
+        value = modType(value),
+        valueHints = valueHints.map(modHint(_))
+      )
     case Type.Ref(namespace, name) =>
       Type.Ref(namespace, protectType(name.capitalize))
     case Alias(namespace, name, tpe, isUnwrapped) =>

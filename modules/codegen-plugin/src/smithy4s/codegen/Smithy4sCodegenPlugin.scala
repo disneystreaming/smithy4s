@@ -161,7 +161,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
       (config / sourceDirectory).value / "smithy",
       (config / sourceManaged).value / "smithy"
     ),
-    config / smithy4sOutputDir := (config / sourceManaged).value,
+    config / smithy4sOutputDir := (config / sourceManaged).value / "scala",
     config / smithy4sResourceDir := (config / resourceManaged).value,
     config / smithy4sCodegen := cachedSmithyCodegen(config).value,
     config / smithy4sSmithyLibrary := true,

@@ -25,6 +25,7 @@ import smithy4s.http.PayloadError
 import smithy4s.example.{
   CheckedOrUnchecked,
   CheckedOrUnchecked2,
+  FaceCard,
   Four,
   One,
   PayloadData,

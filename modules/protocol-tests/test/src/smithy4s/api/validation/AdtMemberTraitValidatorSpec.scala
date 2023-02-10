@@ -92,7 +92,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtMemberTrait")
+        .id("AdtValidator")
         .shape(struct)
         .severity(Severity.ERROR)
         .message(
@@ -142,7 +142,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtMemberTrait")
+        .id("AdtValidator")
         .shape(union2)
         .severity(Severity.ERROR)
         .message(
@@ -195,7 +195,7 @@ object AdtMemberTraitValidatorSpec extends FunSuite {
     val expected = List(
       ValidationEvent
         .builder()
-        .id("AdtMemberTrait")
+        .id("AdtValidator")
         .shape(struct2)
         .severity(Severity.ERROR)
         .message(

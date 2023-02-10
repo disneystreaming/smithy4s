@@ -29,9 +29,16 @@ private[smithy4s] object SmithyResources {
 
   def produce(
       resourceOutputFolder: os.Path,
-      localSmithyFiles: List[os.Path],
+      specs: List[os.Path],
       namespaces: List[String]
   ): List[os.Path] = {
+
+    val localSmithyFiles = specs.flatMap { spec =>
+      if (os.isDir(spec))
+        os.walk(spec).filter(f => Set("smithy", "json").contains(f.ext))
+      else if (Set("smithy", "json").contains(spec.ext)) List(spec)
+      else Nil
+    }
 
     val smithyFolder = resourceOutputFolder / "META-INF" / "smithy"
     val trackingFile = smithyFolder / s"smithy4s.tracking.smithy"
@@ -60,10 +67,6 @@ private[smithy4s] object SmithyResources {
     os.write.over(trackingFile, content, createFolders = true)
 
     localSmithyFiles
-      .flatMap {
-        case p if os.isDir(p) => os.list(p)
-        case p                => List(p)
-      }
       .foreach { path =>
         os.copy.over(
           from = path,
