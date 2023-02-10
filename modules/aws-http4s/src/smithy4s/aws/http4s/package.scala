@@ -20,6 +20,7 @@ package aws
 import cats.effect.Async
 import cats.effect.Resource
 import org.http4s.client.Client
+import smithy4s.kinds.FunctorAlgebra
 
 package object http4s {
 
@@ -33,6 +34,14 @@ package object http4s {
     ): Resource[F, AwsClient[Alg, F]] = for {
       env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
       awsClient <- AwsClient(service, env)
+    } yield awsClient
+
+    def simpleAwsClient[F[_]: Async](
+        client: Client[F],
+        awsRegion: AwsRegion
+    ): Resource[F, FunctorAlgebra[Alg, F]] = for {
+      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
+      awsClient <- AwsClient.simple(service, env)
     } yield awsClient
 
   }
