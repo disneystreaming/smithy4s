@@ -140,7 +140,7 @@ object Dependencies {
   }
 
   object AwsSpecSummary {
-    val awsSpecSummaryVersion = "2023.02.09"
+    val awsSpecSummaryVersion = "2023.02.10"
     val value =
       "com.disneystreaming.smithy" % "aws-spec-summary" % awsSpecSummaryVersion
   }
