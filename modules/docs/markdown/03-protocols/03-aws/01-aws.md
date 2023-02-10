@@ -22,7 +22,8 @@ The version corresponds tho the latest release in this repo: [aws-sdk-smithy-spe
 
 AWS does not publishes the specs to their services to Maven. However, The specs in question (that are written in json syntax) can be found in some of the [official SDKs](https://github.com/aws/aws-sdk-js-v3/tree/main/codegen/sdk-codegen/aws-models) published by AWS. These `.json files` can be understood by smithy4s, just like `.smithy`, and can be used to generate code.
 
-The **aws-sdk-smithy-specs** project periodically publishes the specs to Maven central to ease the consumption.
+The **aws-sdk-smithy-specs** project periodically gathers the specs from the Javascript SDK repo and publishes them
+to maven central to lower the barrier of entry.
 
 ### Note on pre-built artifacts
 
