@@ -88,9 +88,15 @@ object CollectionTag {
     ): ((A => Unit) => Unit) => IndexedSeq[A] =
       schema.compile(CTSchemaVisitor) match {
         case Some(ct) => { (put: (A => Unit) => Unit) =>
-          val builder = cols.ArraySeq.newBuilder(ct)
-          put(builder.+=(_))
-          builder.result()
+          var as = Array.ofDim(8)(ct)
+          var i = 0
+          put { a =>
+            if (i == as.length) as = copyOf(as, i << 1)
+            as(i) = a
+            i += 1
+          }
+          if (i < as.length) as = copyOf(as, i)
+          cols.ArraySeq.unsafeWrapArray(as)
         }
         case None => { (put: (A => Unit) => Unit) =>
           val builder = IndexedSeq.newBuilder[A]
@@ -99,6 +105,19 @@ object CollectionTag {
         }
       }
   }
+
+  private[this] def copyOf[A](original: Array[A], newLength: Int): Array[A] =
+    ((original: @unchecked) match {
+      case x: Array[AnyRef]  => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Long]    => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Double]  => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Int]     => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Float]   => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Short]   => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Char]    => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Byte]    => java.util.Arrays.copyOf(x, newLength)
+      case x: Array[Boolean] => java.util.Arrays.copyOf(x, newLength)
+    }).asInstanceOf[Array[A]]
 
   private[this] type MaybeCT[A] = Option[ClassTag[A]]
 
