@@ -9,10 +9,14 @@ object Dependencies {
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0"
     )
 
-  val Jsoniter =
-    Def.setting(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.20.3"
+  val Jsoniter = new {
+    val org = "com.github.plokhotnyuk.jsoniter-scala"
+    val jsoniterScalaVersion = "2.20.3"
+    val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
+    val macros = Def.setting(
+      org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
     )
+  }
 
   val Smithy = new {
     val org = "software.amazon.smithy"
@@ -133,6 +137,12 @@ object Dependencies {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.15.5"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
+  }
+
+  object AwsSpecSummary {
+    val awsSpecSummaryVersion = "2023.02.09"
+    val value =
+      "com.disneystreaming.smithy" % "aws-spec-summary" % awsSpecSummaryVersion
   }
 
 }

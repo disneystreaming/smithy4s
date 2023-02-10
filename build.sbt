@@ -109,14 +109,17 @@ lazy val docs =
           sha <- sys.env.get("GITHUB_SHA")
         } yield s"$serverUrl/$repo/blob/$sha/").getOrElse(
           "https://github.com/disneystreaming/smithy4s/tree/series/0.17/"
-        )
+        ),
+        "AWS_SPEC_VERSION" -> Dependencies.AwsSpecSummary.awsSpecSummaryVersion
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
       libraryDependencies ++= Seq(
+        Dependencies.Jsoniter.macros.value,
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value,
-        Dependencies.Decline.effect.value
+        Dependencies.Decline.effect.value,
+        Dependencies.AwsSpecSummary.value
       ),
       Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
@@ -605,7 +608,7 @@ lazy val json = projectMatrix
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
-      Dependencies.Jsoniter.value
+      Dependencies.Jsoniter.core.value
     ),
     libraryDependencies ++= munitDeps.value
   )
@@ -667,9 +670,11 @@ lazy val http4s = projectMatrix
         (Test / resourceGenerators) {
           _.join.map(_.flatten)
         }.value
-      files.headOption.map{ file =>
-      Map("MODEL_DUMP"-> file.getAbsolutePath)
-      }.getOrElse(Map.empty)
+      files.headOption
+        .map { file =>
+          Map("MODEL_DUMP" -> file.getAbsolutePath)
+        }
+        .getOrElse(Map.empty)
     }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -897,7 +902,9 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
     ) / Compile / fullClasspath).value
       .map(_.data)
     val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
-    val mc = (`codegen-cli`.jvm(Smithy4sBuildPlugin.Scala213) / Compile / mainClass).value.getOrElse(
+    val mc = (`codegen-cli`.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / mainClass).value.getOrElse(
       throw new Exception("No main class found")
     )
 

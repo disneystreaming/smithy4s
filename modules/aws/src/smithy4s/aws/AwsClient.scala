@@ -33,6 +33,15 @@ object AwsClient {
       .map(_.build(awsEnv))
       .liftTo[Resource[F, *]]
 
+  def simple[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
+      service: smithy4s.Service[Alg],
+      awsEnv: AwsEnvironment[F]
+  ): Resource[F, service.Impl[F]] =
+    prepare(service)
+      .leftWiden[Throwable]
+      .map(_.buildSimple(awsEnv))
+      .liftTo[Resource[F, *]]
+
   def prepare[Alg[_[_, _, _, _, _]]](
       service: smithy4s.Service[Alg]
   ): Either[AwsClientInitialisationError, AWSInterpreterBuilder[Alg]] =
