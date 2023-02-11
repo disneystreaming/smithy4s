@@ -149,7 +149,7 @@ lazy val app = project.in(file("app"))
 
     // Must match the `getName` method implemented above
     Compile / smithy4sModelTransformers += "RemoveBeforeCodegenTransformation",
-    Compile / smithy4sAllDependenciesAsJars += (transformers / Compile / packageBin).value
+    Compile / smithy4sAllDependenciesAsJars += (preprocessors / Compile / packageBin).value
   )
 ```
 
