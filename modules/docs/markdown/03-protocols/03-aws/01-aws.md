@@ -81,3 +81,68 @@ that the version of the spec might not be the latest one. Refer yourself to [thi
 ```scala mdoc:passthrough
 docs.AwsServiceList.renderServiceList()
 ```
+
+## Localstack
+
+It is a common need to be able to test AWS operations on a local environment. For that, many engineers have turned to [Localstack](https://localstack.cloud/).
+
+Below, we will show how you can implement an http4s middleware that is configured to proxy requests to a local environment.
+
+### Implementation
+
+To accommplish this, we will need to create a Middleware that will proxy requests to the Localstack host and port. An example of this is below.
+
+```scala mdoc:compile-only
+import cats.effect._
+import cats.syntax.all._
+import com.amazonaws.dynamodb._
+import org.http4s.client.Client
+import org.http4s.ember.client.EmberClientBuilder
+import org.http4s._
+import org.typelevel.ci._
+import smithy4s.aws._
+import smithy4s.aws.http4s._
+import smithy4s.aws.kernel.AwsRegion
+
+object LocalstackProxy {
+  def apply[F[_]: Async](client: Client[F]): Client[F] = Client { req =>
+    client.run(
+      req.withUri(
+        req.uri.copy(authority =
+          req.uri.authority.map(x =>
+            x.copy(
+              host = Uri.RegName("localhost"),
+              port = Some(4566)
+            )
+          )
+        )
+      )
+      .putHeaders(Header.Raw(ci"host", "localhost"))
+    )
+  }
+}
+
+object Localstack {
+  def env[F[_]](client: Client[F], region: AwsRegion)(implicit
+      F: Async[F]
+  ): AwsEnvironment[F] = AwsEnvironment.make[F](
+    AwsHttp4sBackend(client),
+    F.pure(region),
+    F.pure(AwsCredentials.Default("mock-key-id", "mock-secret-key", None)),
+    F.realTime.map(_.toSeconds).map(Timestamp(_, 0))
+  )
+
+  def client[F[_]](client: Client[F], region: AwsRegion)(implicit
+      F: Async[F]
+  ): Resource[F, DynamoDB.Impl[F]] = 
+    AwsClient.simple(DynamoDB.service, env[F](LocalstackProxy[F](client), region))
+}
+
+def myResource[F[_]](implicit F: Async[F]) = for {
+  underlying <- EmberClientBuilder
+    .default[F]
+    .withoutCheckEndpointAuthentication
+    .build
+  client <- Localstack.client[F](underlying, AwsRegion.US_EAST_1)
+} yield client
+```
