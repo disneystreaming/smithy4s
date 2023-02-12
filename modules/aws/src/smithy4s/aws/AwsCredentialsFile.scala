@@ -91,6 +91,8 @@ object AwsCredentialsFile {
       }
     }
 
+    def withoutComments(line: String): String = line.replaceAll("#.+", "")
+
     def lookingForProfile(
         rest: List[String],
         data: Map[String, Map[String, String]]
@@ -111,7 +113,10 @@ object AwsCredentialsFile {
     }
     Either
       .catchNonFatal(
-        lookingForProfile(lines.filter(_.trim.nonEmpty), Map.empty)
+        lookingForProfile(
+          lines.map(withoutComments).filter(_.trim.nonEmpty),
+          Map.empty
+        )
       )
       .leftMap(ex =>
         AwsCredentialsFileException("Unable to parse credentials file.", ex)

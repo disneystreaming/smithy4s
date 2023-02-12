@@ -48,6 +48,22 @@ object AwsCredentialsFileTest extends FunSuite {
     }
   }
 
+  test("parse comments") {
+    expectRight(
+      AwsCredentialsFile.processFileLines(
+        asLines(
+          """|# A comment
+             |[default] # another comment
+             |aws_secret_access_key = sec
+             |aws_access_key_id     = key #yet another comment
+             |aws_session_token     = token""".stripMargin
+        )
+      )
+    ) { res =>
+      expect.same(Some(creds), res.default)
+    }
+  }
+
   test("find some other profile") {
     expectRight(
       AwsCredentialsFile.processFileLines(
