@@ -1,3 +1,21 @@
+# 0.17.4
+
+This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
+
+## Improvements
+
+### More efficient Json parsing of ArraySeq
+
+See https://github.com/disneystreaming/smithy4s/pull/806
+
+### Fix parsing logic of AWS credentials file to allow for comments
+
+See https://github.com/disneystreaming/smithy4s/pull/811
+
+### Add documentation on how to point AWS clients to local environments
+
+See https://github.com/disneystreaming/smithy4s/pull/812
+
 # 0.17.3
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
