@@ -84,7 +84,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
     )
     def wrap(input: PutObjectInput) = PutObject(input)
     override val errorable: Option[Errorable[PutObjectError]] = Some(this)
-    val error: UnionSchema[PutObjectError] = PutObjectError.schema
+    val error: UnionSchema[PutObjectError] = PutObjectError.schema.addHints(smithy4s.internals.InputOutput.Error.widen).asInstanceOf[UnionSchema[PutObjectError]]
     def liftError(throwable: Throwable): Option[PutObjectError] = throwable match {
       case e: ServerError => Some(PutObjectError.ServerErrorCase(e))
       case e: NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
@@ -141,7 +141,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
     )
     def wrap(input: GetObjectInput) = GetObject(input)
     override val errorable: Option[Errorable[GetObjectError]] = Some(this)
-    val error: UnionSchema[GetObjectError] = GetObjectError.schema
+    val error: UnionSchema[GetObjectError] = GetObjectError.schema.addHints(smithy4s.internals.InputOutput.Error.widen).asInstanceOf[UnionSchema[GetObjectError]]
     def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
       case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
       case _ => None

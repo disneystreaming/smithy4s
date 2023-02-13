@@ -577,7 +577,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     else
       lines(
         line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",
-        line"val error: $unionSchema_[$errorName] = $errorName.schema",
+        line"val error: $unionSchema_[$errorName] = $errorName.schema.addHints(smithy4s.internals.InputOutput.Error.widen).asInstanceOf[$unionSchema_[$errorName]]",
         block(
           line"def liftError(throwable: Throwable): $option[$errorName] = throwable match"
         ) {

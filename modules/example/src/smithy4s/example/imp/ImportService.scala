@@ -81,7 +81,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     )
     def wrap(input: Unit) = ImportOperation()
     override val errorable: Option[Errorable[ImportOperationError]] = Some(this)
-    val error: UnionSchema[ImportOperationError] = ImportOperationError.schema
+    val error: UnionSchema[ImportOperationError] = ImportOperationError.schema.addHints(smithy4s.internals.InputOutput.Error.widen).asInstanceOf[UnionSchema[ImportOperationError]]
     def liftError(throwable: Throwable): Option[ImportOperationError] = throwable match {
       case e: NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
       case _ => None

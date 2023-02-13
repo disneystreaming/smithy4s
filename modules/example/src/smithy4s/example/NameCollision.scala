@@ -75,7 +75,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
     val hints: Hints = Hints.empty
     def wrap(input: Unit) = MyOp()
     override val errorable: Option[Errorable[MyOpError]] = Some(this)
-    val error: UnionSchema[MyOpError] = MyOpError.schema
+    val error: UnionSchema[MyOpError] = MyOpError.schema.addHints(smithy4s.internals.InputOutput.Error.widen).asInstanceOf[UnionSchema[MyOpError]]
     def liftError(throwable: Throwable): Option[MyOpError] = throwable match {
       case e: smithy4s.example.MyOpError => Some(MyOpError.MyOpErrorCase(e))
       case _ => None
