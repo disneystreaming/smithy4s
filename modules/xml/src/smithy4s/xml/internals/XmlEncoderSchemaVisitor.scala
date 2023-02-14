@@ -27,6 +27,7 @@ import smithy4s.{Schema => _, _}
 
 import XmlDocument._
 import cats.kernel.Monoid
+import smithy4s.internals.InputOutput
 
 private[smithy4s] object XmlEncoderSchemaVisitor extends XmlEncoderSchemaVisitor
 
@@ -147,7 +148,52 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     }
   }
 
-  def union[U](
+  private def errorUnion[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[Schema, U]
+  ): XmlEncoder[U] = new XmlEncoder[U] {
+    override def encodesUnion: Boolean = true
+    val underlying = dispatch.compile(new Alt.Precompiler[Schema, XmlEncoder] {
+      def apply[A](label: String, instance: Schema[A]): XmlEncoder[A] = {
+        val outer = compile(instance)
+        val errorType = hints
+          .get(smithy.api.Error)
+          .map { tpe =>
+            if (tpe == smithy.api.Error.SERVER) "Receiver" else "Sender"
+          }
+          .getOrElse("Receiver") // assume server is at fault if not specified
+        val extraElems = List(
+          XmlElem(
+            XmlQName(None, "Type"),
+            List.empty,
+            List(XmlText(errorType))
+          ),
+          XmlElem(
+            XmlQName(None, "Code"),
+            List.empty,
+            List(XmlText(instance.shapeId.name))
+          )
+        )
+        new XmlEncoder[A] {
+          def encode(value: A): List[XmlContent] = {
+            List(
+              XmlElem(
+                XmlQName(None, "Error"),
+                List.empty,
+                extraElems ++ outer.encode(value)
+              )
+            )
+          }
+        }
+      }
+    })
+    def encode(value: U): List[XmlContent] =
+      underlying.encode(value)
+  }
+
+  private def standardUnion[U](
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
@@ -161,6 +207,17 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       }
     })
     def encode(value: U): List[XmlContent] = underlying.encode(value)
+  }
+
+  def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[Schema, U]
+  ): XmlEncoder[U] = hints.get(InputOutput) match {
+    case Some(InputOutput.Error) =>
+      errorUnion(shapeId, hints, alternatives, dispatch)
+    case _ => standardUnion(shapeId, hints, alternatives, dispatch)
   }
 
   def biject[A, B](

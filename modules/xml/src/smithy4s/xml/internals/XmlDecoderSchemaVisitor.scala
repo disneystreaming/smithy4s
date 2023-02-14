@@ -26,8 +26,9 @@ import smithy4s._
 import smithy4s.internals.SchemaDescription
 import smithy4s.schema.Schema
 import smithy4s.schema._
+import smithy4s.internals.InputOutput
 
-import XmlDocument.XmlQName
+import XmlDocument.{XmlQName, XmlElem, XmlText}
 
 private[smithy4s] object XmlDecoderSchemaVisitor extends XmlDecoderSchemaVisitor
 
@@ -148,7 +149,58 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     }
   }
 
-  def union[U](
+  private def errorUnion[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[Schema, U]
+  ): XmlDecoder[U] = {
+    def altDecoder[A](alt: SchemaAlt[U, A]): (String, XmlDecoder[U]) = {
+      val altName = alt.instance.shapeId.name
+      val decoder = compile(alt.instance).map(alt.inject)
+      (altName, decoder)
+    }
+    val altMap = alternatives.map(altDecoder(_)).toMap[String, XmlDecoder[U]]
+    new XmlDecoder[U] {
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = {
+        cursor match {
+          case s @ XmlCursor.Nodes(
+                history,
+                NonEmptyList(XmlElem(XmlQName(None, "Error"), _, nodes), Nil)
+              ) =>
+            val discriminator = nodes.collect {
+              case XmlElem(
+                    XmlQName(None, "Code"),
+                    _,
+                    List(XmlText(identifier))
+                  ) =>
+                identifier
+            }.headOption
+            discriminator match {
+              case Some(dis) =>
+                altMap.get(dis) match {
+                  case Some(value) => value.decode(s)
+                  case None =>
+                    Left(
+                      XmlDecodeError(history, s"Not a valid alternative")
+                    )
+                }
+              case None =>
+                Left(
+                  XmlDecodeError(
+                    history,
+                    "No 'Code' field in Error union was found"
+                  )
+                )
+            }
+          case other =>
+            Left(XmlDecodeError(other.history, "Expected Error Node"))
+        }
+      }
+    }
+  }
+
+  private def standardUnion[U](
       shapeId: ShapeId,
       hints: Hints,
       alternatives: Vector[SchemaAlt[U, _]],
@@ -176,6 +228,18 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       }
     }
   }
+
+  def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[Schema, U]
+  ): XmlDecoder[U] =
+    hints.get(InputOutput) match {
+      case Some(InputOutput.Error) =>
+        errorUnion(shapeId, hints, alternatives, dispatch)
+      case _ => standardUnion(shapeId, hints, alternatives, dispatch)
+    }
 
   def biject[A, B](
       schema: Schema[A],

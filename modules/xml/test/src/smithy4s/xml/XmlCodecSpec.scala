@@ -340,6 +340,45 @@ object XmlCodecSpec extends SimpleIOSuite {
       checkContent[Foo](xmlRight, Right("hello"))
   }
 
+  test("union - error") {
+    case class Foo(x: String)
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = string.required[Foo]("x", _.x)
+        struct(x)(Foo.apply).named("Foo")
+      }
+    }
+    case class Bar(y: String)
+    object Bar {
+      implicit val schema: Schema[Bar] = {
+        val y = string.required[Bar]("y", _.y)
+        struct(y)(Bar.apply).named("Bar")
+      }
+    }
+    implicit val schema: Schema[Either[Foo, Bar]] = {
+      val left = Foo.schema.oneOf[Either[Foo, Bar]]("left", Left(_))
+      val right = Bar.schema.oneOf[Either[Foo, Bar]]("right", Right(_))
+      union(left, right) {
+        case Left(foo)  => left(foo)
+        case Right(bar) => right(bar)
+      }.addHints(smithy4s.internals.InputOutput.Error.widen)
+    }
+    val xmlLeft = """|<Error>
+                     |    <Type>Receiver</Type>
+                     |    <Code>Foo</Code>
+                     |    <x>foo foo</x>
+                     |</Error>
+                     |""".stripMargin
+    val xmlRight = """|<Error>
+                      |    <Type>Receiver</Type>
+                      |    <Code>Bar</Code>
+                      |    <y>bar bar</y>
+                      |</Error>
+                      |""".stripMargin
+    checkContent[Either[Foo, Bar]](xmlLeft, Left(Foo("foo foo"))) |+|
+      checkContent[Either[Foo, Bar]](xmlRight, Right(Bar("bar bar")))
+  }
+
   test("union: custom names") {
     type Foo = Either[Int, String]
     implicit val schema: Schema[Foo] = {
