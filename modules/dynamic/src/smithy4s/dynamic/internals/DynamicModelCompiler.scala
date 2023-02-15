@@ -426,12 +426,42 @@ private[dynamic] object Compiler {
     }
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
+      def resourceOperations(resource: MemberShape): List[MemberShape] = {
+        model.shapes
+          .get(resource.target)
+          .map(resource.target -> _)
+          .collect { case (ValidIdRef(_), Shape.ResourceCase(resource)) =>
+            resource
+          }
+          .toList
+          .flatMap { resource =>
+            val lifecycle = List(
+              resource.create,
+              resource.put,
+              resource.read,
+              resource.update,
+              resource.delete,
+              resource.list
+            )
+            val operations = resource.operations.sequence
+            val recursive =
+              resource.resources.traverse(_.flatMap(resourceOperations))
+            List.concat(lifecycle, operations, recursive).flatten
+          }
+
+      }
       val serviceErrors: List[MemberShape] =
         shape.errors.toList.flatten
+
+      val operations = List
+        .concat(
+          shape.operations,
+          shape.resources.map(_.flatMap(resourceOperations))
+        )
+        .flatten
       val lEndpoints =
-        shape.operations.toList
-          .flatMap(_.map(_.target))
-          .flatMap(id => model.shapes.get(id).map(id -> _))
+        operations
+          .flatMap(op => model.shapes.get(op.target).map(op.target -> _))
           .collect { case (ValidIdRef(id), Shape.OperationCase(op)) =>
             compileOperation(id, serviceErrors, op)
           }

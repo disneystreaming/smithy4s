@@ -6,6 +6,11 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
+/** @param foo
+  *   Helpful information for Foo
+  *   int, bigInt and bDec are useful number constructs
+  *   The string case is there because.
+  */
 case class GetFooOutput(foo: Option[Foo] = None)
 object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetFooOutput")

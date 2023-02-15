@@ -16,6 +16,7 @@ package object example {
   val DeprecatedService = DeprecatedServiceGen
 
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
+  /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type SomeValue = smithy4s.example.SomeValue.Type
@@ -32,6 +33,7 @@ package object example {
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type FancyList = smithy4s.example.FancyList.Type
+  type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
   @deprecated
   type Strings = smithy4s.example.Strings.Type
   type PersonAge = smithy4s.example.PersonAge.Type
@@ -41,5 +43,10 @@ package object example {
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type StringList = smithy4s.example.StringList.Type
+  /** Multiple line doc comment for another string
+    * Containing a random \*\/ here.
+    * Seriously, it's important to escape special characters.
+    */
+  type AnotherString = smithy4s.example.AnotherString.Type
 
 }

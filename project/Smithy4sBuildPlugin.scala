@@ -397,7 +397,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       val flag =
         if (scalaVersion.value.startsWith("3")) "-scalajs-mapSourceURI"
         else "-P:scalajs:mapSourceURI"
-      val localSourcesPath = baseDirectory.value.toURI
+      val localSourcesPath = (LocalRootProject / baseDirectory).value.toURI
       val headCommit = git.gitHeadCommit.value.get
       scmInfo.value.map { info =>
         val remoteSourcesPath =

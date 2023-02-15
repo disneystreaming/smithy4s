@@ -16,6 +16,13 @@ lazy val foo = (project in file("foo"))
     )
   )
 
+lazy val upstream = (project in file("upstream"))
+  .settings(
+    crossScalaVersions := Nil,
+    crossPaths := false,
+    autoScalaLibrary := false
+  )
+
 lazy val bar = (project in file("bar"))
   .enablePlugins(Smithy4sCodegenPlugin)
   .settings(
@@ -23,6 +30,7 @@ lazy val bar = (project in file("bar"))
     // that foo depended on for its own codegen. Therefore, these are retrieved from foo's manifest,
     // resolved and added to the list of jars to seek smithy models from during code generation
     libraryDependencies ++= Seq(
+      "foobar" % "upstream" % version.value % Smithy4s,
       "foobar" %% "foo" % version.value
     )
   )

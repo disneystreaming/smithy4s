@@ -66,6 +66,66 @@ class Smithy4sModuleSpec extends munit.FunSuite {
     )
   }
 
+  test("wildcard settings") {
+    class Test(version: String, options: Seq[String])
+        extends testKit.BaseModule
+        with Smithy4sModule {
+      override def scalaVersion = version
+      override def scalacOptions = options
+    }
+
+    def getArg(version: String, options: Seq[String]): String = {
+      val module = new Test(version, options)
+      val ev =
+        testKit.staticTestEvaluator(module)(
+          FullName(s"wildcard-settings-$version-$options")
+        )
+      val result = ev(module.smithy4sWildcardArgument).map(_._1)
+      assertEquals(
+        result.isRight,
+        true,
+        s"Failed with the following error: ${result.swap.getOrElse("error unavailable")}"
+      )
+      result.toOption.get
+    }
+
+    val msg1 = """use "_" if major version is not 3"""
+    assertEquals(getArg("2.13.2", Seq()), "_", msg1)
+    assertEquals(getArg("2.13.2", Seq("-source", "future")), "_", msg1)
+    assertEquals(getArg("2.13.2", Seq("-source:future")), "_", msg1)
+
+    val msg2 =
+      """use "?" if major version >= 3.1 or using -source:future or -source future"""
+    assertEquals(getArg("3.1.foobar", Seq()), "?", msg2)
+    assertEquals(getArg("3.0.foobar", Seq("-source", "future")), "?", msg2)
+    assertEquals(getArg("3.0.foobar", Seq("-source:future")), "?", msg2)
+
+    val msg3 =
+      """use "_" if major version < 3.1 and not using -source:future or -source future"""
+    assertEquals(getArg("3.0.foobar", Seq()), "_", msg3)
+    assertEquals(getArg("3.foobar.foobar", Seq()), "_", msg3)
+  }
+
+  test("codegen with wildcards") {
+    object foo extends testKit.BaseModule with Smithy4sModule {
+      override def scalaVersion = "3.2.1"
+      override def ivyDeps = Agg(coreDep)
+      override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
+      override def millSourcePath = resourcePath / "service"
+    }
+    val ev =
+      testKit.staticTestEvaluator(foo)(FullName(s"codegen-wildcards-compiles"))
+
+    compileWorks(foo, ev)
+
+    val metadata =
+      ev.outPath / "smithy4sGeneratedSmithyMetadataFile.dest" / "smithy" / "generated-metadata.smithy"
+    checkFileExist(metadata, shouldExist = true)
+    assert(
+      os.read(metadata).contains("metadata smithy4sWildcardArgument = \"?\"")
+    )
+  }
+
   test("codegen with dependencies") {
     object foo extends testKit.BaseModule with Smithy4sModule {
       override def scalaVersion = "2.13.10"

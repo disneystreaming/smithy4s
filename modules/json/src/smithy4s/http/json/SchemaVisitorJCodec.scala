@@ -462,7 +462,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)
-            builder += cursor.under(i)(cursor.decode(a, in))
+            cursor.push(i)
+            builder += cursor.decode(a, in)
+            cursor.pop()
             i += 1
             in.isNextToken(',')
           }) ()
@@ -512,7 +514,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)
-            builder += cursor.under(i)(cursor.decode(a, in))
+            cursor.push(i)
+            builder += cursor.decode(a, in)
+            cursor.pop()
             i += 1
             in.isNextToken(',')
           }) ()
@@ -559,7 +563,9 @@ private[smithy4s] class SchemaVisitorJCodec(
             var i = 0
             while ({
               if (i >= maxArity) maxArityError(cursor)
-              put(cursor.under(i)(cursor.decode(a, in)))
+              cursor.push(i)
+              put(cursor.decode(a, in))
+              cursor.pop()
               i += 1
               in.isNextToken(',')
             }) ()
@@ -616,7 +622,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)
-            builder += cursor.under(i)(cursor.decode(a, in))
+            cursor.push(i)
+            builder += cursor.decode(a, in)
+            cursor.pop()
             i += 1
             in.isNextToken(',')
           }) ()
@@ -663,8 +671,12 @@ private[smithy4s] class SchemaVisitorJCodec(
             if (i >= maxArity) maxArityError(cursor)
             builder += (
               (
-                jk.decodeKey(in),
-                cursor.under(i)(cursor.decode(jv, in))
+                jk.decodeKey(in), {
+                  cursor.push(i)
+                  val result = cursor.decode(jv, in)
+                  cursor.pop()
+                  result
+                }
               )
             )
             i += 1
@@ -798,11 +810,11 @@ private[smithy4s] class SchemaVisitorJCodec(
           else {
             in.rollbackToken()
             val key = in.readKeyAsString()
-            val result = cursor.under(key) {
-              val handler = handlerMap.get(key)
-              if (handler eq null) in.discriminatorValueError(key)
-              handler(cursor, in)
-            }
+            cursor.push(key)
+            val handler = handlerMap.get(key)
+            if (handler eq null) in.discriminatorValueError(key)
+            val result = handler(cursor, in)
+            cursor.pop()
             if (in.isNextToken('}')) result
             else {
               in.rollbackToken()
@@ -931,11 +943,12 @@ private[smithy4s] class SchemaVisitorJCodec(
             val key = in.readString("")
             in.rollbackToMark()
             in.rollbackToken()
-            cursor.under(key) {
-              val handler = handlerMap.get(key)
-              if (handler eq null) in.discriminatorValueError(key)
-              handler(cursor, in)
-            }
+            cursor.push(key)
+            val handler = handlerMap.get(key)
+            if (handler eq null) in.discriminatorValueError(key)
+            val result = handler(cursor, in)
+            cursor.pop()
+            result
           } else
             in.decodeError(
               s"Unable to find discriminator ${discriminated.value}"
@@ -1071,14 +1084,23 @@ private[smithy4s] class SchemaVisitorJCodec(
     val codec = apply(field.instance)
     val label = field.label
     if (field.isRequired) { (cursor, in, mmap) =>
-      val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
+      val _ = mmap.put(
+        label, {
+          cursor.push(label)
+          val result = cursor.decode(codec, in)
+          cursor.pop()
+          result
+        }
+      )
     } else { (cursor, in, mmap) =>
-      cursor.under[Unit](label) {
+      {
+        cursor.push(label)
         if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
         else {
           in.rollbackToken()
           val _ = mmap.put(label, cursor.decode(codec, in))
         }
+        cursor.pop()
       }
     }
   }

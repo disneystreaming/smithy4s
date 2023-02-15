@@ -3,7 +3,7 @@ namespace smithy4s.example
 use smithy4s.meta#refinement
 use smithy4s.meta#unwrap
 
-@trait(selector: "integer")
+@trait(selector: ":test(integer, member > integer)")
 @refinement(
   targetType: "smithy4s.example.refined.Age",
   providerImport: "smithy4s.example.refined.Age.provider._"
@@ -88,6 +88,8 @@ string DogName
 structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
+  @required
+  requiredAge: Age,
   fancyList: FancyList,
   unwrappedFancyList: UnwrappedFancyList,
   name: Name,
@@ -97,4 +99,9 @@ structure StructureWithRefinedTypes {
 union UnionWithRefinedTypes {
   age: Age,
   dogName: DogName
+}
+
+structure StructureWithRefinedMember {
+  @ageFormat
+  otherAge: Integer,
 }

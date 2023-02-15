@@ -109,14 +109,17 @@ lazy val docs =
           sha <- sys.env.get("GITHUB_SHA")
         } yield s"$serverUrl/$repo/blob/$sha/").getOrElse(
           "https://github.com/disneystreaming/smithy4s/tree/series/0.17/"
-        )
+        ),
+        "AWS_SPEC_VERSION" -> Dependencies.AwsSpecSummary.awsSpecSummaryVersion
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
       libraryDependencies ++= Seq(
+        Dependencies.Jsoniter.macros.value,
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value,
-        Dependencies.Decline.effect.value
+        Dependencies.Decline.effect.value,
+        Dependencies.AwsSpecSummary.value
       ),
       Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
@@ -204,24 +207,25 @@ lazy val core = projectMatrix
       "smithy4s.example.collision"
     ),
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "resources.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     Compile / packageSrc / mappings ++= {
@@ -309,6 +313,7 @@ lazy val aws = projectMatrix
       // Only building this module against CE3
       Seq(
         Dependencies.Fs2.core.value,
+        Dependencies.Fs2.io.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
@@ -391,7 +396,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.0.16"
+      "io.get-coursier" %% "coursier" % "2.1.0-RC5"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -443,6 +448,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         // for the code being built
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
+        (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala3) / publishLocal).value,
@@ -483,6 +489,7 @@ lazy val millCodegenPlugin = projectMatrix
         // for the code being built
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
+        (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
 
@@ -564,7 +571,8 @@ lazy val dynamic = projectMatrix
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
       Dependencies.Cats.core.value
     ),
-    libraryDependencies ++= munitDeps.value,
+    libraryDependencies ++= List
+      .concat(munitDeps.value, List(Dependencies.Alloy.core % Test)),
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
@@ -600,7 +608,7 @@ lazy val json = projectMatrix
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
-      Dependencies.Jsoniter.value
+      Dependencies.Jsoniter.core.value
     ),
     libraryDependencies ++= munitDeps.value
   )

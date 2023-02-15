@@ -122,8 +122,7 @@ final class RendererConfigSpec extends munit.FunSuite {
         |}
         |""".stripMargin
 
-    val contents = generateScalaCode(smithy)
-    val serviceCode = findServiceCode(contents)
+    val serviceCode = generateScalaCode(smithy)("smithy4s.errors.ErrorService")
 
     assertContainsSection(serviceCode, "override val errorable")(
       "override val errorable: Option[Errorable[OperationError]] = Some(this)"
@@ -161,17 +160,64 @@ final class RendererConfigSpec extends munit.FunSuite {
 
   }
 
-  private def findServiceCode(contents: List[String]): String = {
-    contents.find(_.contains("trait ErrorServiceGen")) match {
-      case None =>
-        fail("No generated scala file contains valid service definition")
-      case Some(svc) => svc
-    }
+  test("Renderer.Config.wildcardArgument = \"?\"") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |metadata smithy4sWildcardArgument = "?"
+        |
+        |namespace smithy4s
+        |
+        |service Service {
+        |  version: "1.0.0",
+        |  operations: [Operation]
+        |}
+        |
+        |operation Operation {
+        |  input: Unit,
+        |  output: Unit,
+        |}
+        |""".stripMargin
+
+    val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
+
+    assertContainsSection(serviceCode, "val endpoints")(
+      """val endpoints: List[ServiceGen.Endpoint[?, ?, ?, ?, ?]] = List(
+        |  Operation,
+        |)""".stripMargin
+    )
+  }
+
+  test("Renderer.Config.wildcardArgument = default") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |service Service {
+        |  version: "1.0.0",
+        |  operations: [Operation]
+        |}
+        |
+        |operation Operation {
+        |  input: Unit,
+        |  output: Unit,
+        |}
+        |""".stripMargin
+
+    val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
+
+    assertContainsSection(serviceCode, "val endpoints")(
+      """val endpoints: List[ServiceGen.Endpoint[_, _, _, _, _]] = List(
+        |  Operation,
+        |)""".stripMargin
+    )
   }
 
   private def testErrorsAsUnionsDisabled(smithy: String) = {
-    val contents = generateScalaCode(smithy)
-    val serviceCode = findServiceCode(contents)
+    val serviceCode = generateScalaCode(smithy)("smithy4s.errors.ErrorService")
 
     assertContainsSection(serviceCode, "override val errorable")(
       "override val errorable: Option[Errorable[OperationError]] = Some(this)"

@@ -24,6 +24,7 @@ package object kernel {
   val AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
   val AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"
   val AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN"
+  val AWS_PROFILE = "AWS_PROFILE"
   val `X-Amzn-Errortype` = "X-Amzn-Errortype"
 
   type AwsRegion = AwsRegion.Type
