@@ -17,8 +17,16 @@
 package smithy4s.compliancetests
 
 import ComplianceTest.ComplianceResult
+import smithy4s.ShapeId
 
-case class ComplianceTest[F[_]](name: String, run: F[ComplianceResult])
+case class ComplianceTest[F[_]](
+    id: String,
+    endpoint: ShapeId,
+    meta: String,
+    run: F[ComplianceResult]
+) {
+  def show = s"${endpoint.id}$meta: $id"
+}
 
 object ComplianceTest {
   type ComplianceResult = Either[String, Unit]

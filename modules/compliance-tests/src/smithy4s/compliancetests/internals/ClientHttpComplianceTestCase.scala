@@ -98,7 +98,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
-      name = endpoint.id.toString + "(client|request): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      "(client|request)",
       run = {
         val input = inputFromDocument
           .decode(testCase.params.getOrElse(Document.obj()))
@@ -112,7 +114,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .flatMap(requestDeferred.complete(_))
               .as(Response[F]())
           }
-
           reverseRoutes[Alg](app).use { client =>
             input
               .flatMap { in =>
@@ -147,7 +148,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val dummyInput = DefaultSchemaVisitor(endpoint.input)
 
     ComplianceTest[F](
-      name = endpoint.id.toString + "(client|response): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      "(client|response)",
       run = {
         val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
         implicit val outputEq: Eq[O] =

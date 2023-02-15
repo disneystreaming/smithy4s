@@ -656,15 +656,18 @@ lazy val http4s = projectMatrix
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
+    (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer","MalformedOperationsTransformer"),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / envVars) ++= {
       val files: Seq[File] =
         (Test / resourceGenerators) {
           _.join.map(_.flatten)
         }.value
-      files.headOption.map{ file =>
-      Map("MODEL_DUMP"-> file.getAbsolutePath)
-      }.getOrElse(Map.empty)
+      files.headOption
+        .map { file =>
+          Map("MODEL_DUMP" -> file.getAbsolutePath)
+        }
+        .getOrElse(Map.empty)
     }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -760,7 +763,9 @@ lazy val complianceTests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
-        Dependencies.Pprint.core.value
+        Dependencies.Pprint.core.value,
+        Dependencies.Smithy.model,
+        Dependencies.Smithy.build
       )
     },
     moduleName := {
@@ -891,8 +896,14 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
-    val mc = (`codegen-cli`.jvm(Smithy4sBuildPlugin.Scala213) / Compile / mainClass).value.getOrElse(
+    val complianceTestsCp = (complianceTests.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / fullClasspath).value
+      .map(_.data)
+    val cp = (dumpModelCp ++ complianceTestsCp).map(_.getAbsolutePath()).mkString(":")
+    val mc = (`codegen-cli`.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / mainClass).value.getOrElse(
       throw new Exception("No main class found")
     )
 
@@ -926,6 +937,11 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       )
     val s = (config / streams).value
 
+    val transforms = (config / smithy4sModelTransformers).value
+
+
+   val args =  if(transforms.isEmpty) List.empty else List("--transformers", transforms.mkString(","))
+
     val cached =
       Tracked.inputChanged[List[String], Seq[File]](
         s.cacheStoreFactory.make("input")
@@ -937,7 +953,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
             ) { case ((changed, deps), outputs) =>
               if (changed || outputs.isEmpty) {
                 val res =
-                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps).!!
+                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
                 val file =
                   (config / resourceManaged).value / "compliance-tests.json"
                 IO.write(file, res)

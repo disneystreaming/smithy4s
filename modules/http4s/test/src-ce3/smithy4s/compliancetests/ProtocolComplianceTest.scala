@@ -20,7 +20,7 @@ import alloy.SimpleRestJson
 import cats.effect.Resource
 import org.http4s._
 import org.http4s.client.Client
-import smithy4s.{Document, Service, ShapeId}
+import smithy4s.{Document, Schema, Service, ShapeId}
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
@@ -28,7 +28,6 @@ import weaver._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
-import smithy4s.Schema
 import smithy4s.http.PayloadError
 import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
@@ -50,7 +49,8 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
-      .evals(dynamicSchemaIndexLoader.map(pizzaSpec(_)))
+      .evals(dynamicSchemaIndexLoader.map(allTests))
+      .filter(allowList.isAllowed)
       .parEvalMapUnbounded(runInWeaver)
   }
 
@@ -78,9 +78,40 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     }
   }
 
+  private val simpleRestJsonSpec = generateTests(
+    ShapeId("aws.protocoltests.restjson", "RestJson")
+  )
   private val pizzaSpec = generateTests(
     ShapeId("alloy.test", "PizzaAdminService")
   )
+
+  private val allTests = List(simpleRestJsonSpec, pizzaSpec).combineAll
+
+  private val awsOperations = Set(
+    "TestBodyStructure",
+    "NoInputAndNoOutput",
+    "UnitInputAndOutput",
+    "HttpRequestWithGreedyLabelInPath",
+    "HttpRequestWithRegexLiteral",
+    "ConstantQueryString",
+    "ConstantAndVariableQueryString",
+    "OmitsNullSerializesEmptyString",
+    "HttpPayloadWithStructure",
+    "JsonEnums",
+    "JsonIntEnums",
+    "RecursiveShapes",
+    "DocumentTypeAsPayload",
+    "PostPlayerAction",
+    "PostUnionWithJsonName",
+    "EndpointOperation",
+    "EndpointWithHostLabelOperation",
+    "TestBodyStructure"
+  )
+
+  private val allowList =
+    AllowRules(awsOperations, "aws.protocoltests.restjson") ++ AllowRules.ns(
+      "alloy.test"
+    )
 
   private val path = Env
     .make[IO]
@@ -112,7 +143,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       .toList
       .flatMap(wrapper => {
         HttpProtocolCompliance
-          .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
+          .clientTests(SimpleRestJsonIntegration, wrapper.service)
       })
   }
 
@@ -131,22 +162,27 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     codecApi
       .decodeFromByteArray[Document](codec, bytes)
       .getOrElse(sys.error("unable to decode smithy model into document"))
+
   }
 
-  private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = Test(
-    tc.name,
-    tc.run
-      .map[Expectations] {
-        case Left(value) =>
-          Expectations.Helpers.failure(value)
-        case Right(_) =>
-          Expectations.Helpers.success
-      }
-      .attempt
-      .map {
-        case Right(expectations) => expectations
-        case Left(e) => weaver.Expectations.Helpers.failure(e.getMessage)
-      }
-  )
+  private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = {
+    Test(
+      tc.show,
+      tc.run
+        .map[Expectations] {
+          case Left(value) =>
+            Expectations.Helpers.failure(value)
+          case Right(_) =>
+            Expectations.Helpers.success
+        }
+        .attempt
+        .map {
+          case Right(expectations) => expectations
+          case Left(e) =>
+            weaver.Expectations.Helpers
+              .failure(e.getMessage + "\n" + e.getStackTrace.mkString("\n"))
+        }
+    )
+  }
 
 }

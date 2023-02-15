@@ -93,7 +93,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     implicit val inputEq: Eq[I] = EqSchemaVisitor(revisedSchema)
     val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
     ComplianceTest[F](
-      name = endpoint.id.toString + "(server|request): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      "(server|request)",
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
@@ -151,7 +153,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   ): ComplianceTest[F] = {
 
     ComplianceTest[F](
-      name = endpoint.id.toString + "(server|response): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      "(server|response)",
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)
 
