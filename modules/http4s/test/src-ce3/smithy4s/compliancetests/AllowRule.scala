@@ -15,7 +15,6 @@ final case class AllowRules(tests: Set[AllowRule]) {
   def ++(tests: AllowRules): AllowRules =
     this.copy(tests = this.tests ++ tests.tests)
 
-  def and(tests: AllowRules): AllowRules = AllowRules(this.tests ++ tests.tests)
   def isAllowed[F[_]](complianceTest: ComplianceTest[F]): Boolean =
     tests.exists {
       case AllowRule.HasTestId(id)    => complianceTest.id == id
@@ -25,7 +24,7 @@ final case class AllowRules(tests: Set[AllowRule]) {
 }
 object AllowRules {
   def ns(ns: String): AllowRules = AllowRules(Set(HasNamespace(ns)))
-  def apply(ids: Set[String], namespace: String): AllowRules = AllowRules(
+  def shapeIds(namespace: String, ids: Set[String]): AllowRules = AllowRules(
     ids.map(id => HasShapeId(ShapeId(namespace, id)))
   )
 

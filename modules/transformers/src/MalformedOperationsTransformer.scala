@@ -1,4 +1,4 @@
-package transformers
+package smithy4s.transformers
 
 import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
 import software.amazon.smithy.model.Model

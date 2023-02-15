@@ -753,6 +753,19 @@ lazy val tests = projectMatrix
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
+lazy val transformers = projectMatrix
+  .in(file("modules/transformers"))
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.Smithy.model,
+      Dependencies.Smithy.build
+    )
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
   .dependsOn(core)
@@ -772,8 +785,6 @@ lazy val complianceTests = projectMatrix
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Pprint.core.value,
-        Dependencies.Smithy.model,
-        Dependencies.Smithy.build
       )
     },
     moduleName := {
@@ -904,11 +915,11 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val complianceTestsCp = (complianceTests.jvm(
+    val modelTransformersCp = (transformers.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val cp = (dumpModelCp ++ complianceTestsCp).map(_.getAbsolutePath()).mkString(":")
+    val cp = (dumpModelCp ++ modelTransformersCp).map(_.getAbsolutePath()).mkString(":")
     val mc = (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / mainClass).value.getOrElse(

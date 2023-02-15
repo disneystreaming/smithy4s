@@ -109,7 +109,10 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   )
 
   private val allowList =
-    AllowRules(awsOperations, "aws.protocoltests.restjson") ++ AllowRules.ns(
+    AllowRules.shapeIds(
+      "aws.protocoltests.restjson",
+      awsOperations
+    ) ++ AllowRules.ns(
       "alloy.test"
     )
 
