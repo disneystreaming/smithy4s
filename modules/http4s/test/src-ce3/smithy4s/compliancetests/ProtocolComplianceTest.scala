@@ -87,32 +87,8 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   private val allTests = List(simpleRestJsonSpec, pizzaSpec).combineAll
 
-  private val awsOperations = Set(
-    "TestBodyStructure",
-    "NoInputAndNoOutput",
-    "UnitInputAndOutput",
-    "HttpRequestWithGreedyLabelInPath",
-    "HttpRequestWithRegexLiteral",
-    "ConstantQueryString",
-    "ConstantAndVariableQueryString",
-    "OmitsNullSerializesEmptyString",
-    "HttpPayloadWithStructure",
-    "JsonEnums",
-    "JsonIntEnums",
-    "RecursiveShapes",
-    "DocumentTypeAsPayload",
-    "PostPlayerAction",
-    "PostUnionWithJsonName",
-    "EndpointOperation",
-    "EndpointWithHostLabelOperation",
-    "TestBodyStructure"
-  )
-
   private val allowList =
-    AllowRules.shapeIds(
-      "aws.protocoltests.restjson",
-      awsOperations
-    ) ++ AllowRules.ns(
+    AllowRules.testIds(AwsTestSupportedTestIds.testIds) ++ AllowRules.ns(
       "alloy.test"
     )
 
@@ -146,7 +122,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       .toList
       .flatMap(wrapper => {
         HttpProtocolCompliance
-          .clientTests(SimpleRestJsonIntegration, wrapper.service)
+          .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
       })
   }
 

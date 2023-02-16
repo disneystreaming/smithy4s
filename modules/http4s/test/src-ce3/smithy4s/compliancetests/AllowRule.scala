@@ -28,4 +28,8 @@ object AllowRules {
     ids.map(id => HasShapeId(ShapeId(namespace, id)))
   )
 
+  def testIds(ids: Set[String]): AllowRules = AllowRules(
+    ids.map(AllowRule.HasTestId)
+  )
+
 }
