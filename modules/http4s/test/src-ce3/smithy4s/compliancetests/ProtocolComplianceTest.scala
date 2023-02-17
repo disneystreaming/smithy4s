@@ -88,7 +88,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   private val allTests = List(simpleRestJsonSpec, pizzaSpec).combineAll
 
   private val allowList =
-    AllowRules.testIds(AwsTestSupportedTestIds.testIds) ++ AllowRules.ns(
+   AllowRules(AwsTestSupportedTestIds.testIds) ++ AllowRules.ns(
       "alloy.test"
     )
 
@@ -159,7 +159,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
           case Right(expectations) => expectations
           case Left(e) =>
             weaver.Expectations.Helpers
-              .failure(e.getMessage + "\n" + e.getStackTrace.mkString("\n"))
+              .failure( e.getMessage )
         }
     )
   }

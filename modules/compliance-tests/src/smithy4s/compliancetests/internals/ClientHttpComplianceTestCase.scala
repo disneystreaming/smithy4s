@@ -31,7 +31,7 @@ import smithy4s.Document
 import smithy4s.http.PayloadError
 import smithy4s.Service
 import cats.Eq
-
+import smithy4s.compliancetests.internals.TestConfig._
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
@@ -100,7 +100,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
-      "(client|request)",
+      clientReq,
       run = {
         val input = inputFromDocument
           .decode(testCase.params.getOrElse(Document.obj()))
@@ -150,7 +150,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
-      "(client|response)",
+      clientRes,
       run = {
         val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
         implicit val outputEq: Eq[O] =

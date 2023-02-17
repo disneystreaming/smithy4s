@@ -32,7 +32,7 @@ import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Errorable
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-
+import smithy4s.compliancetests.internals.TestConfig._
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]
@@ -95,7 +95,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
-      "(server|request)",
+      serverReq,
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
@@ -155,7 +155,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
-      "(server|response)",
+      serverRes,
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)
 

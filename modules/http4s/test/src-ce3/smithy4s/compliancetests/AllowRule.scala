@@ -1,13 +1,16 @@
 package smithy4s.compliancetests
 
-import smithy4s.compliancetests.AllowRule.{HasNamespace, HasShapeId}
+import smithy4s.compliancetests.Rule.{HasNamespace, HasShapeId, HasTestId}
 import smithy4s.ShapeId
+import smithy4s.compliancetests.internals.TestConfig
+import smithy4s.compliancetests.internals.TestConfig.TestConfigs
 
-sealed trait AllowRule
-object AllowRule {
-  final case class HasTestId(id: String) extends AllowRule
-  final case class HasNamespace(ns: String) extends AllowRule
-  final case class HasShapeId(id: ShapeId) extends AllowRule
+case class AllowRule(allowRule: Rule, configs: TestConfigs)
+sealed trait Rule
+object Rule {
+  final case class HasTestId(id: String) extends Rule
+  final case class HasNamespace(ns: String) extends Rule
+  final case class HasShapeId(id: ShapeId) extends Rule
 }
 
 final case class AllowRules(tests: Set[AllowRule]) {
@@ -16,20 +19,25 @@ final case class AllowRules(tests: Set[AllowRule]) {
     this.copy(tests = this.tests ++ tests.tests)
 
   def isAllowed[F[_]](complianceTest: ComplianceTest[F]): Boolean =
-    tests.exists {
-      case AllowRule.HasTestId(id)    => complianceTest.id == id
-      case AllowRule.HasNamespace(ns) => complianceTest.endpoint.namespace == ns
-      case AllowRule.HasShapeId(id)   => complianceTest.endpoint == id
+    tests.exists { case AllowRule(rule, configs) =>
+      val res0 = rule match {
+        case Rule.HasTestId(id) => complianceTest.id == id
+        case HasNamespace(ns)   => complianceTest.endpoint.namespace == ns
+        case HasShapeId(id)     => complianceTest.endpoint == id
+      }
+      res0 && configs.configs.contains(complianceTest.config)
     }
 }
 object AllowRules {
-  def ns(ns: String): AllowRules = AllowRules(Set(HasNamespace(ns)))
-  def shapeIds(namespace: String, ids: Set[String]): AllowRules = AllowRules(
-    ids.map(id => HasShapeId(ShapeId(namespace, id)))
+  def ns(ns: String): AllowRules = AllowRules(
+    Set(AllowRule(HasNamespace(ns), TestConfig.all))
   )
 
+  def testId(id: String, configs: TestConfigs): AllowRule = AllowRule(HasTestId(id), configs)
+    def testId(id: String): AllowRule = AllowRule(HasTestId(id), TestConfig.all)
+
   def testIds(ids: Set[String]): AllowRules = AllowRules(
-    ids.map(AllowRule.HasTestId)
+    ids.map(id => AllowRule(HasTestId(id), TestConfig.all))
   )
 
 }

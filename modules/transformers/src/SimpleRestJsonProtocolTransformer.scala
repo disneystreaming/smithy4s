@@ -6,7 +6,7 @@ import software.amazon.smithy.model.shapes.ShapeId
 
 import java.util.{HashMap => JHMap}
 
-final class ProtocolTransformer extends ProjectionTransformer {
+final class SimpleRestJsonProtocolTransformer extends ProjectionTransformer {
   override def getName: String = "ProtocolTransformer"
 
   def transform(ctx: TransformContext): Model = {
