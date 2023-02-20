@@ -23,9 +23,13 @@ import org.http4s.Media
 import org.http4s.{Method => Http4sMethod}
 import org.typelevel.ci.CIString
 import smithy4s.http.CaseInsensitive
+import smithy4s.http.PathParams
 import smithy4s.http.{HttpMethod => SmithyMethod}
 import org.http4s.ParseFailure
-import cats.implicits._
+import cats.syntax.all._
+import smithy4s.http.Metadata
+import org.http4s.Request
+import org.http4s.Response
 
 package object kernel {
 
@@ -60,5 +64,35 @@ package object kernel {
     req.headers.headers.groupBy(_.name).map { case (k, v) =>
       (CaseInsensitive(k.toString), v.map(_.value))
     }
+
+  private[smithy4s] def getQueryParams[F[_]](
+      request: Request[F]
+  ): Map[String, List[String]] =
+    request.uri.query.pairs
+      .collect {
+        case (name, None)        => name -> "true"
+        case (name, Some(value)) => name -> value
+      }
+      .groupBy(_._1)
+      .map { case (k, v) => k -> v.map(_._2).toList }
+
+  private[smithy4s] def getRequestMetadata[F[_]](
+      pathParams: PathParams,
+      request: Request[F]
+  ): Metadata =
+    Metadata(
+      path = pathParams,
+      query = getQueryParams(request),
+      headers = getHeaders(request),
+      statusCode = None
+    )
+
+  private[smithy4s] def getResponseMetadata[F[_]](
+      response: Response[F]
+  ): Metadata =
+    Metadata(
+      headers = getHeaders(response),
+      statusCode = Some(response.status.code)
+    )
 
 }

@@ -31,7 +31,7 @@ package object http4s {
         client: Client[F],
         awsRegion: AwsRegion
     ): Resource[F, AwsClient[Alg, F]] = for {
-      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
+      env <- AwsEnvironment.default(client, awsRegion)
       awsClient <- AwsClient(service, env)
     } yield awsClient
 

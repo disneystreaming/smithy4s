@@ -25,39 +25,29 @@ import smithy4s.schema.Primitive._
 import java.nio.charset.StandardCharsets
 
 import StringAndBlobCodecSchemaVisitor._
-import smithy.api.HttpPayload
 import java.nio.ByteBuffer
 
 private[http] object StringAndBlobCodecSchemaVisitor {
 
-  trait SimpleCodec[A] { self =>
+  trait SimpleCodec[A] extends CodecAPI.Codec[A] { self =>
+
     def mediaType: HttpMediaType
     def fromBytes(bytes: Array[Byte]): A
     def toBytes(a: A): Array[Byte]
-    def imap[B](to: A => B, from: B => A): SimpleCodec[B] = new SimpleCodec[B] {
-      def mediaType: HttpMediaType = self.mediaType
-      def fromBytes(bytes: Array[Byte]): B = to(self.fromBytes(bytes))
-      def toBytes(b: B): Array[Byte] = self.toBytes(from(b))
-    }
-    def xmap[B](
-        to: A => Either[ConstraintError, B],
-        from: B => A
-    ): SimpleCodec[B] = new SimpleCodec[B] {
-      def mediaType: HttpMediaType = self.mediaType
-      def fromBytes(bytes: Array[Byte]): B = to(self.fromBytes(bytes)) match {
-        case Right(value) => value
-        case Left(e)      => throw e
-      }
-      def toBytes(b: B): Array[Byte] = self.toBytes(from(b))
-    }
+    def decodeFromByteArray(
+        bytes: Array[Byte]
+    ): Either[PayloadError, A] = Right(fromBytes(bytes))
+
+    def decodeFromByteBuffer(
+        bytes: ByteBuffer
+    ): Either[PayloadError, A] = ??? // TODO
+
+    def writeToArray(value: A): Array[Byte] = toBytes(value)
   }
 
   sealed trait CodecResult[A]
-  case class SimpleCodecResult[A](simpleCodec: SimpleCodec[A])
+  case class SimpleCodecResult[A](simpleCodec: CodecAPI.Codec[A])
       extends CodecResult[A]
-  case class BodyCodecResult[A](
-      codec: CodecAPI.Codec[A]
-  ) extends CodecResult[A]
   case class NoCodecResult[A]() extends CodecResult[A]
 
   object CodecResult {
@@ -69,8 +59,7 @@ private[http] object StringAndBlobCodecSchemaVisitor {
         )(to: A => B, from: B => A): CodecResult[B] = fa match {
           case SimpleCodecResult(simpleCodec) =>
             SimpleCodecResult(simpleCodec.imap(to, from))
-          case BodyCodecResult(codec) => BodyCodecResult(codec.imap(to, from))
-          case NoCodecResult()        => NoCodecResult()
+          case NoCodecResult() => NoCodecResult()
         }
         def xmap[A, B](
             fa: CodecResult[A]
@@ -78,8 +67,7 @@ private[http] object StringAndBlobCodecSchemaVisitor {
           fa match {
             case SimpleCodecResult(simpleCodec) =>
               SimpleCodecResult(simpleCodec.xmap(to, from))
-            case BodyCodecResult(codec) => BodyCodecResult(codec.xmap(to, from))
-            case NoCodecResult()        => NoCodecResult()
+            case NoCodecResult() => NoCodecResult()
           }
       }
 
@@ -134,85 +122,6 @@ private[http] class StringAndBlobCodecSchemaVisitor
     case PTimestamp | PUUID | PBigInt | PUnit | PBoolean | PLong | PShort |
         PDocument | PByte | PDouble | PFloat | PBigDecimal | PInt =>
       noop
-  }
-
-  override def struct[S](
-      shapeId: ShapeId,
-      hints: Hints,
-      fields: Vector[SchemaField[S, _]],
-      make: IndexedSeq[Any] => S
-  ): CodecResult[S] = {
-    def processField[A](field: SchemaField[S, A]): CodecResult[S] = {
-      val folder = new Field.FolderK[Schema, S, CodecResult]() {
-        override def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): CodecResult[AA] = apply(instance)
-        override def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): CodecResult[Option[AA]] = apply(instance) match {
-          case SimpleCodecResult(simpleCodec) =>
-            SimpleCodecResult(new SimpleCodec[Option[AA]] {
-              def mediaType: HttpMediaType = simpleCodec.mediaType
-
-              def fromBytes(bytes: Array[Byte]): Option[AA] =
-                if (bytes.isEmpty) None else Some(simpleCodec.fromBytes(bytes))
-
-              def toBytes(a: Option[AA]): Array[Byte] = a match {
-                case Some(value) => simpleCodec.toBytes(value)
-                case None        => Array.emptyByteArray
-              }
-            })
-          case BodyCodecResult(_) => NoCodecResult[Option[AA]]()
-          case NoCodecResult()    => NoCodecResult[Option[AA]]()
-        }
-      }
-      val instance: CodecResult[A] = field.foldK(folder)
-
-      instance match {
-        case SimpleCodecResult(simpleCodec) =>
-          BodyCodecResult(new CodecAPI.Codec[S] {
-            def mediaType: HttpMediaType = simpleCodec.mediaType
-
-            def decodeFromByteArrayPartial(
-                bytes: Array[Byte]
-            ): Either[PayloadError, BodyPartial[S]] = {
-              val a = simpleCodec.fromBytes(bytes)
-              Right(BodyPartial { map =>
-                def access(l: String) = if (l == field.label) a else map(l)
-                val vec = Vector.newBuilder[Any]
-                fields.foreach { f =>
-                  vec += access(f.label)
-                }
-                make(vec.result())
-              })
-            }
-
-            def decodeFromByteBufferPartial(
-                bytes: ByteBuffer
-            ): Either[PayloadError, BodyPartial[S]] = {
-              val arr: Array[Byte] =
-                Array.ofDim[Byte](bytes.remaining())
-              val _ = bytes.get(arr)
-              decodeFromByteArrayPartial(arr)
-            }
-
-            def writeToArray(value: S): Array[Byte] =
-              simpleCodec.toBytes(field.get(value))
-          })
-        case BodyCodecResult(_) => noop[S]
-        case NoCodecResult()    => noop[S]
-      }
-    }
-
-    fields
-      .find(p => p.instance.hints.get(HttpPayload).isDefined)
-      .map { field => processField(field) }
-      .getOrElse(noop[S])
-
   }
 
   override def biject[A, B](

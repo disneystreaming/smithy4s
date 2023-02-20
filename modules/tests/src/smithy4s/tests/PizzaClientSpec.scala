@@ -30,6 +30,8 @@ import org.typelevel.ci.CIString
 import smithy4s.example._
 import smithy4s.Timestamp
 import weaver._
+import smithy4s.http.UnknownErrorResponse
+import smithy4s.http.CaseInsensitive
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -90,6 +92,17 @@ abstract class PizzaClientSpec extends IOSuite {
     }
   }
 
+  private def unknownResponse(
+      code: Int,
+      headers: Map[String, String],
+      body: String
+  ): UnknownErrorResponse =
+    UnknownErrorResponse(
+      code,
+      headers.map { case (k, v) => CaseInsensitive(k) -> List(v) },
+      body
+    )
+
   clientTestForError(
     "Receives errors as exceptions",
     Response(status = Status.NotFound)
@@ -115,7 +128,7 @@ abstract class PizzaClientSpec extends IOSuite {
       .withEntity(
         Json.obj("message" -> Json.fromString("generic client error message"))
       ),
-    smithy4s.http.UnknownErrorResponse(
+    unknownResponse(
       407,
       Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
       """{"message":"generic client error message"}"""
@@ -213,7 +226,7 @@ abstract class PizzaClientSpec extends IOSuite {
   type Res = (PizzaAdminService[IO], Backend)
   def sharedResource: Resource[IO, (PizzaAdminService[IO], Backend)] =
     for {
-      ref <- Resource.eval(Compat.ref(State.empty))
+      ref <- Resource.eval(IO.ref(State.empty))
       app = router(ref)
       client <- makeClient match {
         case Left(fromHttpApp) => fromHttpApp(app)
@@ -225,7 +238,7 @@ abstract class PizzaClientSpec extends IOSuite {
       }
     } yield (client, Backend(ref))
 
-  case class Backend(ref: Compat.Ref[IO, State]) {
+  case class Backend(ref: Ref[IO, State]) {
     def prepResponse(key: String, response: Response[IO]): IO[Unit] =
       ref.update(_.prepResponse(key, response))
 
@@ -260,7 +273,7 @@ abstract class PizzaClientSpec extends IOSuite {
     val empty = State(Map.empty, Map.empty)
   }
 
-  def router(ref: Compat.Ref[IO, State]) = {
+  def router(ref: Ref[IO, State]) = {
     def storeAndReturn(key: String, request: Request[IO]): IO[Response[IO]] =
       // Collecting the whole body eagerly to make sure we don't consume it after closing the connection
       request.body.compile.toVector.flatMap { body =>

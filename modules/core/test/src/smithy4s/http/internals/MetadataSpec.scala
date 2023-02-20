@@ -48,57 +48,7 @@ class MetadataSpec() extends FunSuite {
   implicit val validationChecksSchema: Schema[ValidationChecks] =
     ValidationChecks.schema.addHints(InputOutput.Input.widen)
 
-  def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
-      s: Schema[A],
-      loc: Location
-  ): Unit = {
-    val encoded = Metadata.encode(a)
-    val result = Metadata
-      .decodePartial[A](encoded)
-      .left
-      .map(_.getMessage())
-      .flatMap { partial =>
-        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
-      }
-    expect.same(encoded, expectedEncoding)
-    expect(result == Right(a))
-    checkRoundTripTotal(a, expectedEncoding)
-  }
-
-  def checkRoundTripDefault[A](expectedDecoded: A)(implicit
-      s: Schema[A],
-      loc: Location
-  ): Unit = {
-    val result = Metadata
-      .decodePartial[A](Metadata.empty)
-      .left
-      .map(_.getMessage())
-      .flatMap { partial =>
-        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
-      }
-    expect.same(result, Right(expectedDecoded))
-    checkRoundTripTotalDefault(expectedDecoded)
-  }
-
-  def checkRoundTripError[A](a: A, expectedEncoding: Metadata, message: String)(
-      implicit
-      s: Schema[A],
-      loc: Location
-  ): Unit = {
-    val encoded = Metadata.encode(a)
-    val result = Metadata
-      .decodePartial[A](encoded)
-      .left
-      .map(_.getMessage())
-      .flatMap { partial =>
-        s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
-      }
-    expect.same(encoded, expectedEncoding)
-    expect.same(result, Left(message))
-    checkRoundTripTotalError(a, expectedEncoding, message)
-  }
-
-  def checkRoundTripTotalError[A](
+  def checkRoundTripError[A](
       a: A,
       expectedEncoding: Metadata,
       message: String
@@ -108,43 +58,37 @@ class MetadataSpec() extends FunSuite {
   ): Unit = {
     val encoded = Metadata.encode(a)
     val result = Metadata
-      .decodeTotal[A](encoded)
-      .map(
-        _.left
-          .map(_.getMessage())
-      )
+      .decode[A](encoded)
+      .left
+      .map(_.getMessage())
 
     expect.same(encoded, expectedEncoding)
-    expect.same(result, Some(Left(message)))
+    expect.same(result, Left(message))
   }
 
-  def checkRoundTripTotal[A](a: A, expectedEncoding: Metadata)(implicit
+  def checkRoundTrip[A](a: A, expectedEncoding: Metadata)(implicit
       s: Schema[A],
       loc: Location
   ): Unit = {
     val encoded = Metadata.encode(a)
     val result = Metadata
-      .decodeTotal[A](encoded)
-      .map(
-        _.left
-          .map(_.getMessage())
-      )
+      .decode[A](encoded)
+      .left
+      .map(_.getMessage())
 
     expect.same(encoded, expectedEncoding)
-    expect.same(result, Some(Right(a)))
+    expect.same(result, Right(a))
   }
 
-  def checkRoundTripTotalDefault[A](expectedDecoded: A)(implicit
+  def checkRoundTripDefault[A](expectedDecoded: A)(implicit
       s: Schema[A],
       loc: Location
   ): Unit = {
     val result = Metadata
-      .decodeTotal[A](Metadata.empty)
-      .map(
-        _.left
-          .map(_.getMessage())
-      )
-    expect.same(result, Some(Right(expectedDecoded)))
+      .decode[A](Metadata.empty)
+      .left
+      .map(_.getMessage())
+    expect.same(result, Right(expectedDecoded))
   }
 
   val epochString = "1970-01-01T00:00:00Z"
@@ -391,35 +335,35 @@ class MetadataSpec() extends FunSuite {
   test("bad data gets caught") {
     val metadata =
       Metadata(query = Map("ts3" -> List("Thu, 01 Jan 1970 00:00:00 GMT")))
-    val result = Metadata.decodeTotal[Queries](metadata)
+    val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.WrongType(
       "ts3",
       HttpBinding.QueryBinding("ts3"),
       "epoch-second timestamp",
       "Thu, 01 Jan 1970 00:00:00 GMT"
     )
-    expect.same(result, Some(Left(expected)))
+    expect.same(result, Left(expected))
   }
 
   test("missing data gets caught") {
     val metadata = Metadata.empty
-    val result = Metadata.decodeTotal[PathParams](metadata)
+    val result = Metadata.decode[PathParams](metadata)
     val expected = MetadataError.NotFound(
       "str",
       HttpBinding.PathBinding("str")
     )
-    expect.same(result, Some(Left(expected)))
+    expect.same(result, Left(expected))
   }
 
   test("too many parameters get caught") {
     val metadata =
       Metadata(query = Map("ts3" -> List("1", "2", "3")))
-    val result = Metadata.decodeTotal[Queries](metadata)
+    val result = Metadata.decode[Queries](metadata)
     val expected = MetadataError.ArityError(
       "ts3",
       HttpBinding.QueryBinding("ts3")
     )
-    expect.same(result, Some(Left(expected)))
+    expect.same(result, Left(expected))
   }
 
 }

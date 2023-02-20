@@ -21,8 +21,6 @@ package internals
 import smithy4s.capability.Covariant
 import smithy4s.http.internals.MetaDecode._
 
-import scala.collection.mutable.{Map => MMap}
-
 import HttpBinding._
 
 private[http] sealed abstract class MetaDecode[+A] {
@@ -30,20 +28,19 @@ private[http] sealed abstract class MetaDecode[+A] {
     case StringValueMetaDecode(f) => StringValueMetaDecode(f andThen to)
     case StringCollectionMetaDecode(f) =>
       StringCollectionMetaDecode(f andThen to)
-    case StringMapMetaDecode(f)     => StringMapMetaDecode(f andThen to)
-    case StringListMapMetaDecode(f) => StringListMapMetaDecode(f andThen to)
-    case EmptyMetaDecode            => EmptyMetaDecode
-    case StructureMetaDecode(f, maybeTotal) => {
-      val newTotal = maybeTotal.map { total => (m: Metadata) =>
-        total(m).map(to)
-      }
-      StructureMetaDecode(f, newTotal)
+    case StringMapMetaDecode(f)        => StringMapMetaDecode(f andThen to)
+    case StringListMapMetaDecode(f)    => StringListMapMetaDecode(f andThen to)
+    case EmptyMetaDecode               => EmptyMetaDecode
+    case ImpossibleMetaDecode(message) => ImpossibleMetaDecode(message)
+    case StructureMetaDecode(f) => {
+      StructureMetaDecode(f andThen (_.map(to)))
     }
   }
 
   private[internals] def updateMetadata(
       binding: HttpBinding,
       fieldName: String,
+      fieldIndex: Int,
       optional: Boolean,
       reservedQueries: Set[String],
       maybeDefault: Option[Any]
@@ -60,8 +57,8 @@ private[http] sealed abstract class MetaDecode[+A] {
         m(metadata).get(key) match {
           case Some(value) if optional => process(value, fieldName, putField.putSome(_, _))
           case Some(value)             => process(value, fieldName, putField.putRequired(_, _))
-          case None if maybeDefault.isDefined => putField.putRequired(fieldName, maybeDefault.get)
-          case None if optional        => putField.putNone(fieldName)
+          case None if maybeDefault.isDefined => putField.putRequired(fieldIndex, maybeDefault.get)
+          case None if optional        => putField.putNone(fieldIndex)
           case None => throw new MetadataError.NotFound(fieldName, binding)
         }
     }
@@ -70,27 +67,27 @@ private[http] sealed abstract class MetaDecode[+A] {
     (binding, this) match {
       case (PathBinding(path), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.path, path) { (value, fieldName, putField) =>
-          putField(fieldName, f(value))
+          putField(fieldIndex, f(value))
         }
       case (HeaderBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
-            putField(fieldName, f(values.head))
+            putField(fieldIndex, f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
-          putField(fieldName, f(values.iterator))
+          putField(fieldIndex, f(values.iterator))
         }
       case (QueryBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
-            putField(fieldName, f(values.head))
+            putField(fieldIndex, f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
-          putField(fieldName, f(values.iterator))
+          putField(fieldIndex, f(values.iterator))
         }
       case (QueryParamsBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -101,9 +98,9 @@ private[http] sealed abstract class MetaDecode[+A] {
                 k -> values.head
               } else throw MetadataError.ArityError(fieldName, QueryBinding(k))
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty && optional) putField.putSome(fieldIndex, f(iter))
+          else if (iter.isEmpty && optional) putField.putNone(fieldIndex)
+          else putField.putRequired(fieldIndex, f(iter))
       }
       case (QueryParamsBinding, StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -112,9 +109,9 @@ private[http] sealed abstract class MetaDecode[+A] {
             .map { case (k, values) =>
               k -> values.iterator
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty && optional) putField.putSome(fieldIndex, f(iter))
+          else if (iter.isEmpty && optional) putField.putNone(fieldIndex)
+          else putField.putRequired(fieldIndex, f(iter))
       }
       case (HeaderPrefixBinding(prefix), StringMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -126,9 +123,9 @@ private[http] sealed abstract class MetaDecode[+A] {
                 } else
                   throw MetadataError.ArityError(fieldName, HeaderBinding(k))
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty && optional) putField.putSome(fieldIndex, f(iter))
+          else if (iter.isEmpty && optional) putField.putNone(fieldIndex)
+          else putField.putRequired(fieldIndex, f(iter))
       }
       case (HeaderPrefixBinding(prefix), StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -137,22 +134,22 @@ private[http] sealed abstract class MetaDecode[+A] {
               case (k, values) if k.startsWith(prefix) =>
                 k.toString.drop(prefix.length()) -> values.iterator
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty && optional) putField.putSome(fieldIndex, f(iter))
+          else if (iter.isEmpty && optional) putField.putNone(fieldIndex)
+          else putField.putRequired(fieldIndex, f(iter))
       }
       case (StatusCodeBinding, _) =>
         (metadata, putField) =>
           metadata.statusCode match {
             case None =>
-              if (optional) putField.putNone(fieldName)
+              if (optional) putField.putNone(fieldIndex)
               else
                 sys.error(
                   "Status code is not available and required field needs it."
                 )
             case Some(value) =>
-              if (optional) putField.putSome(fieldName, value)
-              else putField.putRequired(fieldName, value)
+              if (optional) putField.putSome(fieldIndex, value)
+              else putField.putRequired(fieldIndex, value)
           }
       case _ => (metadata: Metadata, buffer) => ()
     }
@@ -173,15 +170,16 @@ private[http] object MetaDecode {
   final case class StringMapMetaDecode[A](f: Iterator[(String, String)] => A) extends MetaDecode[A]
   final case class StringListMapMetaDecode[A](f: Iterator[(String, Iterator[String])] => A) extends MetaDecode[A]
   case object EmptyMetaDecode extends MetaDecode[Nothing]
-  final case class StructureMetaDecode[A](f: Metadata => Either[MetadataError, MMap[String, Any]], total: Option[Metadata => Either[MetadataError, A]]) extends MetaDecode[A]
+  final case class StructureMetaDecode[A](f: Metadata => Either[MetadataError, A]) extends MetaDecode[A]
+  final case class ImpossibleMetaDecode(message: String) extends MetaDecode[Nothing]
   // format: on
 
-  type PutFieldCallback = (String, Any) => Unit
+  type PutFieldCallback = (Int, Any) => Unit
 
   trait PutField {
-    def putRequired(fieldName: String, value: Any): Unit
-    def putSome(fieldName: String, value: Any): Unit
-    def putNone(fieldName: String): Unit
+    def putRequired(index: Int, value: Any): Unit
+    def putSome(index: Int, value: Any): Unit
+    def putNone(index: Int): Unit
   }
 
   implicit val covariantInstance: Covariant[MetaDecode] =

@@ -23,7 +23,6 @@ import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.CachedSchemaCompiler
-import scala.collection.mutable.{Map => MMap}
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -146,96 +145,48 @@ object Metadata {
     encoder.encode(a)
 
   /**
-    * Decodes all the fields that are bound to http metadata,
-    * shoving values in a map.
-    */
-  def decodePartial[A](metadata: Metadata)(implicit
-      decoder: PartialDecoder[A]
-  ): Either[MetadataError, MetadataPartial[A]] =
-    decoder.decode(metadata)
-
-  /**
     * If possible, attempts to decode the whole data from http metadata.
     * This will only return a non-empty value when all fields of the datatype
     * are bound to http metadata (ie path parameters, headers, query, status code)
     *
     * @return None when the value cannot be decoded just from metadata
     */
-  def decodeTotal[A](metadata: Metadata)(implicit
-      decoder: PartialDecoder[A]
-  ): Option[Either[MetadataError, A]] =
-    decoder.total.map(_.decode(metadata))
+  def decode[A](metadata: Metadata)(implicit
+      decoder: Decoder[A]
+  ): Either[MetadataError, A] =
+    decoder.decode(metadata)
 
   /**
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait PartialDecoder[A] {
-    def decode(metadata: Metadata): Either[MetadataError, MetadataPartial[A]]
-
-    def total: Option[TotalDecoder[A]]
-  }
-
-  object PartialDecoder extends CachedSchemaCompiler.Impl[PartialDecoder] {
-    type Aux[A] = internals.MetaDecode[A]
-
-    def apply[A](implicit instance: PartialDecoder[A]): PartialDecoder[A] =
-      instance
-
-    def fromSchema[A](
-        schema: Schema[A],
-        cache: CompilationCache[internals.MetaDecode]
-    ): PartialDecoder[A] = {
-      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
-      val (partial, maybeTotal) =
-        metaDecode match {
-          case internals.MetaDecode.StructureMetaDecode(partial, maybeTotal) =>
-            (partial, maybeTotal)
-          case _ => ((_: Metadata) => Right(MMap.empty[String, Any]), None)
-        }
-
-      new PartialDecoder[A] {
-        def decode(
-            metadata: Metadata
-        ): Either[MetadataError, MetadataPartial[A]] =
-          partial(metadata).map(MetadataPartial(_))
-
-        def total: Option[TotalDecoder[A]] =
-          maybeTotal.map(total =>
-            new TotalDecoder[A] {
-              def decode(metadata: Metadata): Either[MetadataError, A] =
-                total(metadata)
-            }
-          )
-      }
-    }
-
-  }
-
-  /**
-    * Reads metadata and produces a value. Cannot be produced implicitly from a schema,
-    * as the required information is not available at the typelevel.
-    */
-  trait TotalDecoder[A] {
+  trait Decoder[A] {
     def decode(metadata: Metadata): Either[MetadataError, A]
   }
 
-  object TotalDecoder {
-    def apply[A](implicit instance: TotalDecoder[A]): TotalDecoder[A] =
-      instance
+  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+    type Aux[A] = internals.MetaDecode[A]
 
-    def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] =
-      fromSchema(schema, CompilationCache.nop)
+    def apply[A](implicit instance: Decoder[A]): Decoder[A] =
+      instance
 
     def fromSchema[A](
         schema: Schema[A],
         cache: CompilationCache[internals.MetaDecode]
-    ): Option[TotalDecoder[A]] = {
+    ): Decoder[A] = {
       val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
       metaDecode match {
-        case internals.MetaDecode.StructureMetaDecode(_, maybeTotal) =>
-          maybeTotal.map { total => (metadata: Metadata) => total(metadata) }
-        case _ => None
+        case internals.MetaDecode.StructureMetaDecode(decodeFunction) =>
+          decodeFunction(_: Metadata)
+        case internals.MetaDecode.ImpossibleMetaDecode(message) =>
+          (_: Metadata) => Left(MetadataError.ImpossibleDecoding(message))
+        case _ =>
+          (_: Metadata) =>
+            Left(
+              MetadataError.ImpossibleDecoding(
+                "Impossible to formulate a decoder for the data"
+              )
+            )
       }
     }
   }

@@ -36,16 +36,16 @@ class StringAndBlobSpec() extends munit.FunSuite {
         schema: Schema[A],
         cache: Cache
     ): Codec[A] = Dummy
-    def decodeFromByteArrayPartial[A](
+    def decodeFromByteArray[A](
         codec: Codec[A],
         bytes: Array[Byte]
-    ): Either[PayloadError, BodyPartial[A]] = Left(
+    ): Either[PayloadError, A] = Left(
       PayloadError(PayloadPath.root, "error", "error")
     )
-    def decodeFromByteBufferPartial[A](
+    def decodeFromByteBuffer[A](
         codec: Codec[A],
         bytes: ByteBuffer
-    ): Either[PayloadError, BodyPartial[A]] = Left(
+    ): Either[PayloadError, A] = Left(
       PayloadError(PayloadPath.root, "error", "error")
     )
     def writeToArray[A](codec: Codec[A], value: A): Array[Byte] = Array.empty
@@ -54,48 +54,54 @@ class StringAndBlobSpec() extends munit.FunSuite {
   val stringsAndBlobs =
     CodecAPI.nativeStringsAndBlob(dummy)
 
-  test("Strings") {
-    val input = StringBody("hello")
-    val codec = stringsAndBlobs.compileCodec(StringBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+  private def compilePartial[A](schema: Schema[A]) = {
+    val transform = smithy4s.internals.ToPartialSchema(
+      _.has(smithy.api.HttpPayload),
+      payload = true
+    )
+    stringsAndBlobs.compileCodec(
+      transform(schema).getOrElse(fail("Could not compile a partial schema"))
+    )
+  }
+
+  def check[A: Schema](
+      input: A,
+      expectedBodyString: String,
+      expectedMediaType: String
+  ): Unit = {
+    val codec = compilePartial(implicitly[Schema[A]])
+    val result = stringsAndBlobs.writeToArray(codec, PartialData.Total(input))
+    val roundTripped = stringsAndBlobs
+      .decodeFromByteArray(codec, result)
+      .map(PartialData.unsafeReconcile(_))
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
+    expect(result.sameElements(expectedBodyString.getBytes()))
     expect.same(Right(input), roundTripped)
-    expect.same(HttpMediaType("text/plain"), mediaType)
+    expect.same(HttpMediaType(expectedMediaType), mediaType)
+  }
+
+  test("Strings") {
+    check(StringBody("hello"), "hello", "text/plain")
   }
 
   test("Strings (custom media-type)") {
-    val input = CSVBody(CSV("hello"))
-    val codec = stringsAndBlobs.compileCodec(CSVBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
-    val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
-    expect.same(Right(input), roundTripped)
-    expect.same(HttpMediaType("text/csv"), mediaType)
+    check(CSVBody(CSV("hello")), "hello", "text/csv")
   }
 
   test("Blobs") {
-    val input = BlobBody(ByteArray("hello".getBytes()))
-    val codec = stringsAndBlobs.compileCodec(BlobBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
-    val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
-    expect.same(Right(input), roundTripped)
-    expect.same(HttpMediaType("application/octet-stream"), mediaType)
+    check(
+      BlobBody(ByteArray("hello".getBytes())),
+      "hello",
+      "application/octet-stream"
+    )
   }
 
   test("Blobs (custom media-type)") {
-    val input = PNGBody(PNG(ByteArray("hello".getBytes())))
-    val codec = stringsAndBlobs.compileCodec(PNGBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
-    val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
-    expect.same(Right(input), roundTripped)
-    expect.same(HttpMediaType("image/png"), mediaType)
+    check(
+      PNGBody(PNG(ByteArray("hello".getBytes()))),
+      "hello",
+      "image/png"
+    )
   }
 
   test("Delegates to some other codec when neither strings not bytes") {

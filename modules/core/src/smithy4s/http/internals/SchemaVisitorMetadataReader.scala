@@ -29,8 +29,8 @@ import smithy4s.http.internals.MetaDecode.{
 }
 import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
+import scala.collection.immutable.ArraySeq
 
-import scala.collection.mutable.{Map => MMap}
 private[http] class SchemaVisitorMetadataReader(
     val cache: CompilationCache[MetaDecode]
 ) extends SchemaVisitor.Cached[MetaDecode]
@@ -44,10 +44,7 @@ private[http] class SchemaVisitorMetadataReader(
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
     tag match {
       case Primitive.PUnit =>
-        MetaDecode.StructureMetaDecode(
-          _ => Right(MMap.empty[String, Any]),
-          Some(_ => Right(()))
-        )
+        MetaDecode.StructureMetaDecode(_ => Right(()))
       case other =>
         Primitive.stringParser(other, hints) match {
           case Some(parse) => MetaDecode.from(desc)(parse)
@@ -132,8 +129,9 @@ private[http] class SchemaVisitorMetadataReader(
         .toSet
 
     def decodeField[A](
-        field: SchemaField[S, A]
-    ): Option[FieldDecode] = {
+        field: SchemaField[S, A],
+        index: Int
+    ): Either[String, FieldDecode] = {
       val schema = field.instance
       val label = field.label
       val fieldHints = field.hints
@@ -145,66 +143,36 @@ private[http] class SchemaVisitorMetadataReader(
           .updateMetadata(
             binding,
             label,
+            index,
             field.isOptional,
             reservedQueries,
             maybeDefault
           )
         FieldDecode(label, binding, update)
+      } match {
+        case None              => Left(label)
+        case Some(fieldDecode) => Right(fieldDecode)
       }
     }
-    val fieldUpdates: Vector[FieldDecode] =
-      fields.flatMap(f => decodeField(f))
-
-    val partial = { (metadata: Metadata) =>
-      val buffer = MMap.empty[String, Any]
-      val putField: PutField = new PutField {
-        def putRequired(fieldName: String, value: Any): Unit =
-          buffer += (fieldName -> value)
-
-        def putSome(fieldName: String, value: Any): Unit =
-          buffer += (fieldName -> value)
-
-        def putNone(fieldName: String): Unit = ()
+    val maybeUpdates: Either[String, Vector[FieldDecode]] =
+      fields.zipWithIndex.traverse { case (field, index) =>
+        decodeField(field, index)
       }
-      var currentFieldName: String = null
-      var currentBinding: HttpBinding = null
-      try {
-        fieldUpdates.foreach { case FieldDecode(fieldName, binding, update) =>
-          currentFieldName = fieldName
-          currentBinding = binding
-          update(metadata, putField)
-        }
-        Right(buffer)
-      } catch {
-        case e: MetadataError => Left(e)
-        case MetaDecode.MetaDecodeError(const) =>
-          Left(const(currentFieldName, currentBinding))
-        case ConstraintError(_, message) =>
-          Left(
-            MetadataError.FailedConstraint(
-              currentFieldName,
-              currentBinding,
-              message
-            )
-          )
-      }
-    }
 
-    val total =
-      if (fieldUpdates.size < fields.size) None
-      else
-        Some { (metadata: Metadata) =>
-          val buffer = Vector.newBuilder[Any]
+    maybeUpdates.map {
+      fieldUpdates =>
+        { (metadata: Metadata) =>
+          val buffer = Array.fill[Any](fields.size)(null)
           val putField: PutField = new PutField {
-            def putRequired(fieldName: String, value: Any): Unit =
-              buffer += value
+            def putRequired(fieldIndex: Int, value: Any): Unit =
+              buffer(fieldIndex) = value
 
-            def putSome(fieldName: String, value: Any): Unit =
-              buffer += Some(value)
+            def putSome(fieldIndex: Int, value: Any): Unit =
+              buffer(fieldIndex) = Some(value)
 
-            def putNone(fieldName: String): Unit = buffer += None
+            def putNone(fieldIndex: Int): Unit =
+              buffer(fieldIndex) = None
           }
-
           var currentFieldName: String = null
           var currentBinding: HttpBinding = null
           try {
@@ -214,7 +182,7 @@ private[http] class SchemaVisitorMetadataReader(
                 currentBinding = binding
                 update(metadata, putField)
             }
-            Right(make(buffer.result()))
+            Right(make(ArraySeq.unsafeWrapArray(buffer)))
           } catch {
             case e: MetadataError => Left(e)
             case MetaDecode.MetaDecodeError(const) =>
@@ -229,8 +197,13 @@ private[http] class SchemaVisitorMetadataReader(
               )
           }
         }
-
-    StructureMetaDecode(partial, total)
+    } match {
+      case Left(fieldName) =>
+        MetaDecode.ImpossibleMetaDecode(
+          s"Field $fieldName is not bound to http metadata"
+        )
+      case Right(decode) => StructureMetaDecode(decode)
+    }
   }
 
   override def union[U](

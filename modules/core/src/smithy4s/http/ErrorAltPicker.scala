@@ -21,9 +21,6 @@ import smithy.api.Error
 import smithy4s.schema.SchemaAlt
 import ErrorAltPicker.ErrorDiscriminator
 import smithy.api.HttpError
-import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.FullId
-import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.NameOnly
-import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.StatusCode
 
 /**
   * Utility class to help find the best alternative out of a error union
@@ -32,7 +29,30 @@ import smithy4s.http.ErrorAltPicker.ErrorDiscriminator.StatusCode
   *
   * @param alts alternatives of the error union to choose from
   */
-final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
+final class ErrorAltPicker[E](
+    alts: Vector[SchemaAlt[E, _]],
+    header: CaseInsensitive = CaseInsensitive(errorTypeHeader)
+) extends {
+
+  def apply(
+      code: Int,
+      headers: Map[CaseInsensitive, List[String]]
+  ): Option[SchemaAlt[E, _]] = {
+    val disc = headers
+      .get(header)
+      .flatMap(_.headOption)
+      .map(errorType =>
+        ShapeId
+          .parse(errorType)
+          .map(ErrorAltPicker.ErrorDiscriminator.FullId(_))
+          .getOrElse(ErrorAltPicker.ErrorDiscriminator.NameOnly(errorType))
+      )
+      .getOrElse(
+        ErrorAltPicker.ErrorDiscriminator.StatusCode(code)
+      )
+    getPreciseAlternative(disc)
+  }
+
   private val byShapeId = alts
     .map { alt => alt.instance.shapeId -> alt }
     .toMap[ShapeId, SchemaAlt[E, _]]
@@ -89,9 +109,10 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
       errorForStatus(inputStatus).orElse(fallbackError(inputStatus))
   }
 
-  def getPreciseAlternative(
+  private[http] def getPreciseAlternative(
       discriminator: ErrorDiscriminator
   ): Option[SchemaAlt[E, _]] = {
+    import ErrorAltPicker.ErrorDiscriminator._
     discriminator match {
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)
@@ -101,9 +122,11 @@ final class ErrorAltPicker[E](alts: Vector[SchemaAlt[E, _]]) {
 }
 
 object ErrorAltPicker {
-  sealed trait ErrorDiscriminator extends Product with Serializable
+  private[http] sealed trait ErrorDiscriminator
+      extends Product
+      with Serializable
 
-  object ErrorDiscriminator {
+  private[http] object ErrorDiscriminator {
     case class FullId(shapeId: ShapeId) extends ErrorDiscriminator
     case class NameOnly(name: String) extends ErrorDiscriminator
     case class StatusCode(int: Int) extends ErrorDiscriminator

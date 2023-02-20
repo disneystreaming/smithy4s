@@ -28,6 +28,7 @@ import org.http4s.headers.`Content-Type`
 import smithy4s.http.BodyPartial
 import smithy4s.http.CodecAPI
 import smithy4s.http.Metadata
+import smithy4s.schema.Schema
 
 trait EntityCompiler[F[_]] {
 
@@ -120,6 +121,23 @@ object EntityCompiler {
               .liftTo[DecodeResult[F, *]]
           )
       }
+
+      // def compileMessageDecoder[A](
+      //     schema: Schema[A],
+      //     cache: Cache
+      // ): EntityDecoder[F, A] = {
+      //   val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
+      //   val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
+      //   val partialDecoder = Metadata.PartialDecoder.fromSchema(schema)
+      //   partialDecoder.total match {
+      //     case None =>
+      //     case Some(value) =>
+      //       new EntityDecoder[F, A] {
+      //         def decode(m: Media[F], strict: Boolean): DecodeResult[F, A] = {
+      //         }
+      //       }
+      //   }
+      // }
 
       def compilePartialEntityDecoder[A](
           schema: Schema[A],

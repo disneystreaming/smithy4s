@@ -30,6 +30,7 @@ import scala.concurrent.duration._
 import org.http4s.client.Client
 import org.http4s.syntax.all._
 
+import smithy4s.http4s.kernel.EntityCompiler
 object AwsCredentialsProvider {
 
   def default[F[_]: Temporal](

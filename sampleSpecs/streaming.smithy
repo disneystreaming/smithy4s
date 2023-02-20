@@ -35,5 +35,3 @@ structure GetStreamedObjectOutput {
 
 @streaming
 blob StreamedBlob
-
-

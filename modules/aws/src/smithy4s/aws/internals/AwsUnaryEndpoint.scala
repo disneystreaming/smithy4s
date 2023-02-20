@@ -26,6 +26,7 @@ import cats.effect.Concurrent
 import cats.effect.syntax.all._
 import org.http4s.EntityDecoder
 
+import smithy4s.http4s.kernel.EntityCompiler
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   awsEnv: AwsEnvironment[F],

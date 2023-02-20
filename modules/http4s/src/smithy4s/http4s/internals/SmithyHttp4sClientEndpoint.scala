@@ -26,7 +26,6 @@ import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
 import scodec.bits.ByteVector
-import smithy4s.kinds._
 import smithy4s.http._
 import smithy4s.schema.SchemaAlt
 import smithy4s.http4s.kernel._
@@ -108,10 +107,20 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
     Metadata.TotalDecoder.fromSchema(inputSchema, metadataDecoderCache).isEmpty
   private implicit val inputEntityEncoder: EntityEncoder[F, I] =
     entityCompiler.compileEntityEncoder(inputSchema, entityCache)
-  private val outputMetadataDecoder =
-    Metadata.PartialDecoder.fromSchema(outputSchema, metadataDecoderCache)
-  private implicit val outputCodec: EntityDecoder[F, BodyPartial[O]] =
-    entityCompiler.compilePartialEntityDecoder(outputSchema, entityCache)
+  private implicit val outputDecoder: EntityDecoder[F, O] =
+    entityCompiler.compileEntityDecoder(outputSchema, entityCache)
+  private val errorDecoder: ErrorDecoder[F, E] = {
+    val alts =
+      endpoint.errorable.map(_.error.alternatives).getOrElse(Vector.empty)
+    val errorAltPicker =
+      new ErrorAltPicker(alts, CaseInsensitive(errorTypeHeader))
+    def discriminate(response: Response[F]): F[Option[SchemaAlt[E, _]]] = {
+      val code = response.status.code
+      val headers = getHeaders(response)
+      effect.pure(errorAltPicker(code, headers))
+    }
+    ErrorDecoder.compile(endpoint.errorable, entityCompiler, discriminate)
+  }
 
   def inputToRequest(input: I): Request[F] = {
     val metadata = inputMetadataEncoder.encode(input)
@@ -132,91 +141,13 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
     else outputFromErrorResponse(response)
 
   private def outputFromSuccessResponse(response: Response[F]): F[O] = {
-    decodeResponse(response, outputMetadataDecoder).rethrow
+    response.as[O]
   }
 
-  private def errorResponseFallBack(response: Response[F]): F[O] = {
-    val headers = toMap(response.headers)
-    val code = response.status.code
-    response.as[String].flatMap { case body =>
-      effect.raiseError(UnknownErrorResponse(code, headers, body))
-    }
+  private def outputFromErrorResponse(response: Response[F]): F[O] = {
+    errorDecoder
+      .decodeErrorAsThrowable(response)
+      .flatMap(effect.raiseError[O](_))
   }
 
-  private def getErrorDiscriminator(response: Response[F]) = {
-    getFirstHeader(response, errorTypeHeader)
-      .map(errorType =>
-        ShapeId
-          .parse(errorType)
-          .map(ErrorAltPicker.ErrorDiscriminator.FullId(_))
-          .getOrElse(ErrorAltPicker.ErrorDiscriminator.NameOnly(errorType))
-      )
-      .getOrElse(
-        ErrorAltPicker.ErrorDiscriminator.StatusCode(response.status.code)
-      )
-  }
-
-  private val outputFromErrorResponse: Response[F] => F[O] = {
-    endpoint.errorable match {
-      case None => errorResponseFallBack(_)
-      case Some(err) =>
-        val allAlternatives = err.error.alternatives
-        val picker = new ErrorAltPicker(allAlternatives)
-        type ErrorDecoder[A] = Response[F] => F[E]
-        val decodeFunction = new PolyFunction[SchemaAlt[E, *], ErrorDecoder] {
-          def apply[A](alt: SchemaAlt[E, A]): Response[F] => F[E] = {
-            val schema = alt.instance
-            val errorMetadataDecoder =
-              Metadata.PartialDecoder.fromSchema(schema)
-            // TODO: apply proper memoization of error instances/
-            // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
-            // This is because the "compile entity encoder" method can trigger a transformation of hints, which
-            // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
-            val ephemeralEntityCache = entityCompiler.createCache()
-            implicit val errorCodec =
-              entityCompiler.compilePartialEntityDecoder(
-                schema,
-                ephemeralEntityCache
-              )
-
-            (response: Response[F]) => {
-              decodeResponse[A](response, errorMetadataDecoder)
-                .flatMap(_.liftTo[F])
-                .map(alt.inject)
-            }
-          }
-        }.unsafeCacheBy(allAlternatives.map(Kind1.existential(_)), identity(_))
-
-        (response: Response[F]) => {
-          val discriminator = getErrorDiscriminator(response)
-          picker.getPreciseAlternative(discriminator) match {
-            case None => errorResponseFallBack(response)
-            case Some(alt) =>
-              decodeFunction(alt)(response)
-                .map(err.unliftError)
-                .flatMap(effect.raiseError)
-          }
-        }
-    }
-  }
-
-  private def decodeResponse[T](
-      response: Response[F],
-      metadataDecoder: Metadata.PartialDecoder[T]
-  )(implicit
-      entityDecoder: EntityDecoder[F, BodyPartial[T]]
-  ): F[Either[HttpContractError, T]] = {
-    val headers = getHeaders(response)
-    val metadata =
-      Metadata(headers = headers, statusCode = Some(response.status.code))
-    metadataDecoder.total match {
-      case Some(totalDecoder) =>
-        totalDecoder.decode(metadata).pure[F].widen
-      case None =>
-        for {
-          metadataPartial <- metadataDecoder.decode(metadata).pure[F]
-          bodyPartial <- response.as[BodyPartial[T]]
-        } yield metadataPartial.flatMap(_.combineCatch(bodyPartial))
-    }
-  }
 }

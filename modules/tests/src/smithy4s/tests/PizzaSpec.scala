@@ -545,7 +545,7 @@ abstract class PizzaSpec
   type Res = (Client[IO], Uri)
   def sharedResource: Resource[IO, (Client[IO], Uri)] = for {
     stateRef <- Resource.eval(
-      Compat.ref(PizzaAdminServiceImpl.State(Map.empty))
+      IO.ref(PizzaAdminServiceImpl.State(Map.empty))
     )
     impl = new PizzaAdminServiceImpl(stateRef)
     res <- runServer(

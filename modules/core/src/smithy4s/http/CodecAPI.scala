@@ -18,7 +18,6 @@ package smithy4s
 package http
 
 import java.nio.ByteBuffer
-import scala.collection.{Map => MMap}
 
 import internals.StringAndBlobCodecSchemaVisitor
 
@@ -57,48 +56,28 @@ trait CodecAPI {
   def compileCodec[A](schema: Schema[A], cache: Cache): Codec[A]
 
   /**
-    * Decodes partial data from a byte array
+    * Decodes data from a byte array
     *
     * @param codec the implementation-specific codec type
     * @param bytes an byte array
-    * @return either a PayloadError, or the partial data, which can be combined
-    * with partial data coming from the metadata.
+    * @return either a PayloadError, or the data
     */
-  def decodeFromByteArrayPartial[A](
-      codec: Codec[A],
-      bytes: Array[Byte]
-  ): Either[PayloadError, BodyPartial[A]]
-
   def decodeFromByteArray[A](
       codec: Codec[A],
       bytes: Array[Byte]
-  ): Either[PayloadError, A] =
-    decodeFromByteArrayPartial(codec, bytes).flatMap(
-      _.completeCatch(MMap.empty)
-    )
+  ): Either[PayloadError, A]
 
   /**
-    * Decodes partial data from a byte buffer, returning a function that is able
-    * to reconstruct the full data, provided a map resulting from the decoding
-    * of the metadata.
+    * Decodes data from a byte buffer
     *
-    * @param codec the implementation-specific codec
-    * @param bytes a bytue buffer
-    * @return either a PayloadError, or the partial data, which can be combined
-    * with partial data coming from the metadata.
+    * @param codec the implementation-specific codec type
+    * @param bytes an byte array
+    * @return either a PayloadError, or the data
     */
-  def decodeFromByteBufferPartial[A](
-      codec: Codec[A],
-      bytes: ByteBuffer
-  ): Either[PayloadError, BodyPartial[A]]
-
   def decodeFromByteBuffer[A](
       codec: Codec[A],
       bytes: ByteBuffer
-  ): Either[PayloadError, A] =
-    decodeFromByteBufferPartial(codec, bytes).flatMap(
-      _.completeCatch(MMap.empty)
-    )
+  ): Either[PayloadError, A]
 
   /**
     * Writes data to a byte array. Field values bound
@@ -116,28 +95,28 @@ object CodecAPI {
   trait Codec[A] { self =>
     def mediaType: HttpMediaType
 
-    def decodeFromByteArrayPartial(
+    def decodeFromByteArray(
         bytes: Array[Byte]
-    ): Either[PayloadError, BodyPartial[A]]
+    ): Either[PayloadError, A]
 
-    def decodeFromByteBufferPartial(
+    def decodeFromByteBuffer(
         bytes: ByteBuffer
-    ): Either[PayloadError, BodyPartial[A]]
+    ): Either[PayloadError, A]
 
     def writeToArray(value: A): Array[Byte]
 
     def imap[B](to: A => B, from: B => A): Codec[B] = new Codec[B] {
       def mediaType: HttpMediaType = self.mediaType
 
-      def decodeFromByteArrayPartial(
+      def decodeFromByteArray(
           bytes: Array[Byte]
-      ): Either[PayloadError, BodyPartial[B]] =
-        self.decodeFromByteArrayPartial(bytes).map(_.map(to))
+      ): Either[PayloadError, B] =
+        self.decodeFromByteArray(bytes).map(to)
 
-      def decodeFromByteBufferPartial(
+      def decodeFromByteBuffer(
           bytes: ByteBuffer
-      ): Either[PayloadError, BodyPartial[B]] =
-        self.decodeFromByteBufferPartial(bytes).map(_.map(to))
+      ): Either[PayloadError, B] =
+        self.decodeFromByteBuffer(bytes).map(to)
 
       def writeToArray(value: B): Array[Byte] = self.writeToArray(from(value))
     }
@@ -158,17 +137,17 @@ object CodecAPI {
 
     def mediaType[A](codec: Codec[A]): HttpMediaType = codec.mediaType
 
-    def decodeFromByteArrayPartial[A](
+    def decodeFromByteArray[A](
         codec: Codec[A],
         bytes: Array[Byte]
-    ): Either[PayloadError, BodyPartial[A]] =
-      codec.decodeFromByteArrayPartial(bytes)
+    ): Either[PayloadError, A] =
+      codec.decodeFromByteArray(bytes)
 
-    def decodeFromByteBufferPartial[A](
+    def decodeFromByteBuffer[A](
         codec: Codec[A],
         bytes: ByteBuffer
-    ): Either[PayloadError, BodyPartial[A]] =
-      codec.decodeFromByteBufferPartial(bytes)
+    ): Either[PayloadError, A] =
+      codec.decodeFromByteBuffer(bytes)
 
     def writeToArray[A](codec: Codec[A], value: A): Array[Byte] =
       codec.writeToArray(value)
@@ -195,7 +174,7 @@ object CodecAPI {
         val stringAndBlobResult =
           schema.compile(new internals.StringAndBlobCodecSchemaVisitor())
         stringAndBlobResult match {
-          case StringAndBlobCodecSchemaVisitor.BodyCodecResult(bodyCodec) =>
+          case StringAndBlobCodecSchemaVisitor.SimpleCodecResult(bodyCodec) =>
             bodyCodec
           case _ =>
             val underlyingCodec = underlying.compileCodec(schema, cache)
@@ -203,15 +182,15 @@ object CodecAPI {
               def mediaType: HttpMediaType =
                 underlying.mediaType(underlyingCodec)
 
-              def decodeFromByteArrayPartial(
+              def decodeFromByteArray(
                   bytes: Array[Byte]
-              ): Either[PayloadError, BodyPartial[A]] =
-                underlying.decodeFromByteArrayPartial(underlyingCodec, bytes)
+              ): Either[PayloadError, A] =
+                underlying.decodeFromByteArray(underlyingCodec, bytes)
 
-              def decodeFromByteBufferPartial(
+              def decodeFromByteBuffer(
                   bytes: ByteBuffer
-              ): Either[PayloadError, BodyPartial[A]] =
-                underlying.decodeFromByteBufferPartial(underlyingCodec, bytes)
+              ): Either[PayloadError, A] =
+                underlying.decodeFromByteBuffer(underlyingCodec, bytes)
 
               def writeToArray(value: A): Array[Byte] =
                 underlying.writeToArray(underlyingCodec, value)
