@@ -59,7 +59,7 @@ private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
       }
 
     def encodeValue(d: Double, out: JsonWriter): Unit =
-      if (_root_.java.lang.Double.isFinite(d)) out.writeVal(d)
+      if (java.lang.Double.isFinite(d)) out.writeVal(d)
       else
         out.writeNonEscapedAsciiVal {
           if (d != d) "NaN"
@@ -89,7 +89,7 @@ private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
       }
 
     def encodeValue(f: Float, out: JsonWriter): Unit =
-      if (_root_.java.lang.Float.isFinite(f)) out.writeVal(f)
+      if (java.lang.Float.isFinite(f)) out.writeVal(f)
       else
         out.writeNonEscapedAsciiVal {
           if (f != f) "NaN"
