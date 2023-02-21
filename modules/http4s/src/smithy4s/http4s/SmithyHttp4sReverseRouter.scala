@@ -62,7 +62,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
           .left
           .map { e =>
             throw new Exception(
-              s"Operation ${endpoint.name} is not bound to http semantics",
+              s"Operation ${endpoint.name} is not bound to http semantics: ${e.message}",
               e
             )
           }

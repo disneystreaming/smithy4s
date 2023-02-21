@@ -100,7 +100,13 @@ private[codegen] object ModelLoader {
       t.transform(TransformContext.builder().model(m).build())
     )
 
-    (validatorClassLoader, transformedModel)
+    val postTransformationModel = Model
+      .assembler(validatorClassLoader)
+      .addModel(transformedModel)
+      .assemble()
+      .unwrap
+
+    (validatorClassLoader, postTransformationModel)
   }
 
   private def resolveDependencies(
