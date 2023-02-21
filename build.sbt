@@ -647,7 +647,11 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
-        Dependencies.Http4s.emberServer.value % Test
+        Dependencies.Http4s.emberServer.value % Test,
+        Dependencies.Circe.core.value % Test,
+        Dependencies.Circe.generic.value % Test,
+        Dependencies.Circe.fs2.value % Test,
+        Dependencies.Alloy.`protocol-tests` % Test,
       )
     },
     moduleName := {
@@ -664,7 +668,7 @@ lazy val http4s = projectMatrix
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
-    (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer","MalformedOperationsTransformer"),
+    (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
     (Test / envVars) ++= {
       val files: Seq[File] =
@@ -915,11 +919,14 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
+    val transforms = (config / smithy4sModelTransformers).value
     val modelTransformersCp = (transformers.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val cp = (dumpModelCp ++ modelTransformersCp).map(_.getAbsolutePath()).mkString(":")
+
+
+    val cp =  (if(transforms.isEmpty)dumpModelCp else dumpModelCp ++ modelTransformersCp ).map(_.getAbsolutePath()).mkString(":")
     val mc = (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / mainClass).value.getOrElse(
@@ -956,25 +963,20 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       )
     val s = (config / streams).value
 
-    val transforms = (config / smithy4sModelTransformers).value
-
 
    val args =  if(transforms.isEmpty) List.empty else List("--transformers", transforms.mkString(","))
-
     val cached =
-      Tracked.inputChanged[List[String], Seq[File]](
+      Tracked.inputChanged[(List[String],String), Seq[File]](
         s.cacheStoreFactory.make("input")
       ) {
         Function.untupled {
           Tracked
-            .lastOutput[(Boolean, List[String]), Seq[File]](
+            .lastOutput[(Boolean, (List[String],String)), Seq[File]](
               s.cacheStoreFactory.make("output")
-            ) { case ((changed, deps), outputs) =>
+            ) { case ((changed, (deps,_ )), outputs) =>
               if (changed || outputs.isEmpty) {
-                val res =
-                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
-                val file =
-                  (config / resourceManaged).value / "compliance-tests.json"
+                val res = ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
+                val file = (config / resourceManaged).value / "compliance-tests.json"
                 IO.write(file, res)
                 Seq(file)
 
@@ -995,7 +997,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
         .mkString(",")
     )
 
-    cached(trackedFiles)
+    cached(trackedFiles->(config / resourceManaged).value.getAbsolutePath)
   }
 
 /**

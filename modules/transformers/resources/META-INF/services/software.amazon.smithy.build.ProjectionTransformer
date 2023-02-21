@@ -1,2 +1,1 @@
-smithy4s.transformers.ProtocolTransformer
-smithy4s.transformers.MalformedOperationsTransformer
+smithy4s.transformers.SimpleRestJsonProtocolTransformer

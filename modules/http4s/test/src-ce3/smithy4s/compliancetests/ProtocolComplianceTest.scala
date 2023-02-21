@@ -33,6 +33,7 @@ import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
+import io.circe.fs2._
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -45,13 +46,17 @@ import smithy4s.schema.Schema.document
 object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   implicit protected def effectCompat: EffectCompat[IO] = CatsUnsafeRun
+
   def getSuite: EffectSuite[IO] = this
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
-      .evals(dynamicSchemaIndexLoader.map(allTests))
-      .filter(allowList.isAllowed)
-      .parEvalMapUnbounded(runInWeaver)
+      .eval(allTestsIO)
+      .flatMap(allowList =>
+        fs2.Stream
+          .evals(dynamicSchemaIndexLoader.map(allTests))
+          .parEvalMapUnbounded(runInWeaver(allowList: AllowRules, _))
+      )
   }
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
@@ -87,11 +92,6 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   private val allTests = List(simpleRestJsonSpec, pizzaSpec).combineAll
 
-  private val allowList =
-   AllowRules(AwsTestSupportedTestIds.testIds) ++ AllowRules.ns(
-      "alloy.test"
-    )
-
   private val path = Env
     .make[IO]
     .get("MODEL_DUMP")
@@ -112,6 +112,15 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         .map(decodeDocument(_, SimpleRestJsonIntegration.codecs))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
+  }
+  private val allTestsIO: IO[AllowRules] = {
+    fs2.Stream
+      .evalSeq(readConfigFromJar)
+      .through(byteArrayParser)
+      .through(decoder[IO, AllowRule])
+      .compile
+      .toVector
+      .map(AllowRules)
   }
 
   private def generateTests(
@@ -144,24 +153,66 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   }
 
-  private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = {
+  private def runInWeaver(
+      allowList: AllowRules,
+      tc: ComplianceTest[IO]
+  ): IO[TestOutcome] = {
+    val runner: IO[Expectations] = {
+      if (allowList.isAllowed(tc) || tc.show.contains("alloy")) {
+        tc.run
+          .map(res => expectSuccess(res))
+          .attempt
+          .map {
+            case Right(expectations) => expectations
+            case Left(throwable) =>
+              Expectations.Helpers.failure(
+                s"unexpected error when running test ${throwable.getMessage}"
+              )
+          }
+      } else tc.run.map(res => expectFailure(res))
+    }
+
     Test(
       tc.show,
-      tc.run
-        .map[Expectations] {
-          case Left(value) =>
-            Expectations.Helpers.failure(value)
-          case Right(_) =>
-            Expectations.Helpers.success
-        }
-        .attempt
-        .map {
-          case Right(expectations) => expectations
-          case Left(e) =>
-            weaver.Expectations.Helpers
-              .failure( e.getMessage )
-        }
+      runner
     )
+  }
+
+  def expectSuccess(
+      res: ComplianceTest.ComplianceResult
+  ): Expectations = {
+    res.bifoldMap(
+      Expectations.Helpers.failure(_),
+      _ => Expectations.Helpers.success
+    )
+  }
+
+  def expectFailure(
+      res: ComplianceTest.ComplianceResult
+  ): Expectations = {
+    res.bifoldMap(
+      _ => Expectations.Helpers.success,
+      _ =>
+        Expectations.Helpers.failure(
+          "An expected failure has passed, we might need to update the AllowList  "
+        )
+    )
+  }
+
+  def readConfigFromJar: IO[Seq[Byte]] = {
+    Resource
+      .fromAutoCloseable(
+        IO(
+          new java.io.BufferedReader(
+            new java.io.InputStreamReader(
+              getClass.getResourceAsStream("/META-INF/json/test-config.json")
+            )
+          )
+        )
+      )
+      .use { reader =>
+        IO(reader.lines().toArray().flatMap(_.toString.getBytes)).map(_.toSeq)
+      }
   }
 
 }
