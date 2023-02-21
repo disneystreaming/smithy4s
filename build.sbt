@@ -670,7 +670,7 @@ lazy val http4s = projectMatrix
     ),
     (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
-    (Test / envVars) ++= {
+    (Test / envVars) := {
       val files: Seq[File] =
         (Test / resourceGenerators) {
           _.join.map(_.flatten)
@@ -763,7 +763,10 @@ lazy val transformers = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.Smithy.model,
-      Dependencies.Smithy.build
+      Dependencies.Smithy.build,
+        Dependencies.Smithy.testTraits,
+      Dependencies.Smithy.awsTraits,
+        Dependencies.Alloy.core,
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
