@@ -340,13 +340,17 @@ lazy val aws = projectMatrix
  */
 lazy val `aws-http4s` = projectMatrix
   .in(file("modules/aws-http4s"))
-  .dependsOn(aws)
+  .dependsOn(aws,
+    complianceTests % "test->compile",
+    json,
+    dynamic % "test->compile")
   .settings(
     isCE3 := true,
     libraryDependencies ++= {
       Seq(
         Dependencies.Http4s.client.value,
-        Dependencies.Http4s.emberClient.value % Test
+        Dependencies.Http4s.emberClient.value % Test,
+        Dependencies.Weaver.cats.value % Test
       )
     },
     Test / smithy4sDependencies ++= Seq(
@@ -354,7 +358,25 @@ lazy val `aws-http4s` = projectMatrix
       Dependencies.Smithy.awsTraits
     ),
     Test / allowedNamespaces := Seq("com.amazonaws.dynamodb"),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
+    Test / complianceTestDependencies := Seq(
+      Dependencies.Alloy.`protocol-tests`
+    ),
+    (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
+    (Test / smithy4sModelTransformers) := Seq.empty,
+    (Test / envVars) ++= {
+      val files: Seq[File] =
+        (Test / resourceGenerators) {
+          _.join.map(_.flatten)
+        }.value
+      files.headOption
+        .map { file =>
+          Map("MODEL_DUMP" -> file.getAbsolutePath,
+            "AWS_ACCESS_KEY_ID" -> "TEST_KEY",
+            "AWS_SECRET_ACCESS_KEY" -> "TEST_SECRET")
+        }
+        .getOrElse(Map.empty)
+    }
   )
   .jvmPlatform(
     latest2ScalaVersions,
