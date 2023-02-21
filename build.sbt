@@ -650,7 +650,6 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.emberServer.value % Test,
         Dependencies.Circe.core.value % Test,
         Dependencies.Circe.generic.value % Test,
-        Dependencies.Circe.fs2.value % Test,
         Dependencies.Alloy.`protocol-tests` % Test,
       )
     },

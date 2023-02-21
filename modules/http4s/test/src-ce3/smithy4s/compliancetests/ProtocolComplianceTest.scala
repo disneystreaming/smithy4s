@@ -25,6 +25,7 @@ import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
 import weaver._
+import io.circe.parser._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
@@ -33,7 +34,6 @@ import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
-import io.circe.fs2._
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -116,10 +116,10 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   private val allTestsIO: IO[AllowRules] = {
     fs2.Stream
       .evalSeq(readConfigFromJar)
-      .through(byteArrayParser)
-      .through(decoder[IO, AllowRule])
+      .through(fs2.text.utf8.decode)
       .compile
       .toVector
+      .flatMap(vec => decode[Vector[AllowRule]](vec.mkString).liftTo[IO])
       .map(AllowRules)
   }
 

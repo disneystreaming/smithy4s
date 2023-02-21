@@ -46,7 +46,6 @@ object Dependencies {
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
-    val fs2 = Def.setting("io.circe" %%% "circe-fs2" % "0.14.1")
   }
 
   object Decline {
