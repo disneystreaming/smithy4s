@@ -25,10 +25,6 @@ object AwsClientInitialisationError {
       extends Exception(s"${serviceId.show} is not an AWS service")
       with AwsClientInitialisationError
 
-  case class NoEndpointPrefix(awsService: _root_.aws.api.Service)
-      extends Exception(s"No endpoint prefix for $awsService")
-      with AwsClientInitialisationError
-
   case class UnsupportedProtocol(
       serviceId: ShapeId,
       knownProtocols: List[ShapeTag[_]]
