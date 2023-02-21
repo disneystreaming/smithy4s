@@ -19,6 +19,7 @@ package http4s
 
 import smithy4s.internals.InputOutput
 
+import smithy4s.json.codecs
 object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024)
 
 class SimpleRestJsonBuilder(maxArity: Int)

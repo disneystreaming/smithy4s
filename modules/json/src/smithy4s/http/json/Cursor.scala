@@ -15,7 +15,8 @@
  */
 
 package smithy4s
-package http.json
+package http
+package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException

@@ -9,8 +9,9 @@ import cats.syntax.all._
 import cats.effect.Concurrent
 import org.http4s.EntityDecoder
 import cats.MonadThrow
+import smithy4s.schema.CachedSchemaCompiler
 
-trait ErrorDecoder[F[_], E] {
+trait MessageErrorDecoder[F[_], E] {
 
   def decodeError(response: Response[F]): F[E]
 
@@ -18,19 +19,19 @@ trait ErrorDecoder[F[_], E] {
 
 }
 
-object ErrorDecoder {
+object MessageErrorDecoder {
 
   def compile[F[_]: Concurrent, E](
       maybeErrorable: Option[Errorable[E]],
-      entityCompiler: EntityCompiler[F],
+      entityCompiler: CachedSchemaCompiler[EntityDecoder[F, *]],
       discriminator: Response[F] => F[Option[SchemaAlt[E, _]]]
-  ): ErrorDecoder[F, E] = maybeErrorable match {
+  ): MessageErrorDecoder[F, E] = maybeErrorable match {
     case None            => errorResponseFallBack[F, E]
     case Some(errorable) => compileAux(errorable, entityCompiler, discriminator)
   }
 
-  private def errorResponseFallBack[F[_]: Concurrent, E]: ErrorDecoder[F, E] =
-    new ErrorDecoder[F, E] {
+  private def errorResponseFallBack[F[_]: Concurrent, E]: MessageErrorDecoder[F, E] =
+    new MessageErrorDecoder[F, E] {
       def decodeError(response: Response[F]): F[E] =
         decodeErrorAsThrowable(response).flatMap(MonadThrow[F].raiseError[E](_))
 
@@ -46,9 +47,9 @@ object ErrorDecoder {
 
   private def compileAux[F[_], E](
       errorable: Errorable[E],
-      entityCompiler: EntityCompiler[F],
+      entityCompiler: CachedSchemaCompiler[EntityDecoder[F, *]],
       discriminator: Response[F] => F[Option[SchemaAlt[E, _]]]
-  )(implicit F: Concurrent[F]): ErrorDecoder[F, E] = new ErrorDecoder[F, E] {
+  )(implicit F: Concurrent[F]): MessageErrorDecoder[F, E] = new MessageErrorDecoder[F, E] {
 
     def decodeError(
         response: Response[F]
@@ -80,7 +81,7 @@ object ErrorDecoder {
           // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
           val ephemeralEntityCache = entityCompiler.createCache()
           implicit val errorCodec: EntityDecoder[F, A] =
-            entityCompiler.compileEntityDecoder(schema, ephemeralEntityCache)
+            entityCompiler.fromSchema(schema, ephemeralEntityCache)
 
           (_: Response[F]).as[A].map(alt.inject)
         }

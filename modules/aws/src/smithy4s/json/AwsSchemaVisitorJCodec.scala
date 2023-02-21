@@ -20,9 +20,9 @@ package aws.json
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy4s.Timestamp
-import smithy4s.http.json.Cursor
-import smithy4s.http.json.JCodec
-import smithy4s.http.json.SchemaVisitorJCodec
+import smithy4s.json.Cursor
+import smithy4s.json.JCodec
+import smithy4s.json.SchemaVisitorJCodec
 import smithy4s.schema.Primitive
 import smithy4s.schema.CompilationCache
 

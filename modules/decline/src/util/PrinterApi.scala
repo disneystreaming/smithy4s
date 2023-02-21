@@ -27,6 +27,7 @@ import smithy4s.http.CodecAPI
 import scala.{Console => SConsole}
 import com.monovore.decline.Argument
 
+import smithy4s.json.codecs
 trait PrinterApi[F[_]] {
 
   def printer[Op[_, _, _, _, _], I, O](

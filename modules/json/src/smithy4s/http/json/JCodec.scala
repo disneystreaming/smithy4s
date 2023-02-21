@@ -21,7 +21,6 @@ package json
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import smithy4s.capability.Invariant
 
-import scala.collection.{Map => MMap}
 import smithy4s.schema.CachedSchemaCompiler
 
 /**
@@ -47,26 +46,6 @@ trait JCodec[A] extends JsonCodec[A] {
     */
   def expectBody: Boolean = true
 
-  final val messageCodec: MessageCodec[A] =
-    new MessageCodec[A] {
-
-      def decodeValue(
-          in: JsonReader,
-          default: MMap[String, Any] => A
-      ): MMap[String, Any] => A = self.decodeMessage(in)
-
-      def encodeValue(x: MMap[String, Any] => A, out: JsonWriter): Unit =
-        out.encodeError("Cannot encode as message codec")
-
-      def nullValue: MMap[String, Any] => A =
-        null.asInstanceOf[MMap[String, Any] => A]
-    }
-
-  def decodeMessage(in: JsonReader): MMap[String, Any] => A =
-    Cursor.withCursor(expecting) { cursor =>
-      val result = decodeValue(cursor, in)
-      (_: MMap[String, Any]) => result
-    }
   def decodeValue(cursor: Cursor, in: JsonReader): A
 
   override final def decodeValue(in: JsonReader, default: A): A =
@@ -80,9 +59,6 @@ trait JCodec[A] extends JsonCodec[A] {
     new JCodec[B] {
       override def expecting: String = self.expecting
       override def canBeKey: Boolean = self.canBeKey
-
-      override def decodeMessage(in: JsonReader): MMap[String, Any] => B =
-        self.decodeMessage(in) andThen to
 
       def decodeValue(cursor: Cursor, in: JsonReader): B =
         to(self.decodeValue(cursor, in))

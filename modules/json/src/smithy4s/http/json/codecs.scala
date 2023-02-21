@@ -15,7 +15,8 @@
  */
 
 package smithy4s
-package http.json
+package http
+package json
 
 import alloy.Discriminated
 import alloy.Untagged

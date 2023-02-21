@@ -78,10 +78,18 @@ sealed trait Schema[A]{
 
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
+  final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
+
   final def getDefault: Option[Document] =
       this.hints.get(smithy.api.Default).map(_.value)
 
   final def getDefaultValue: Option[A] = getDefault.flatMap(Document.Decoder.fromSchema(this).decode(_).toOption)
+
+  final def partial(filter: SchemaField[_, _] => Boolean): Wedge[Schema[PartialData[A]], Schema[A]] =
+    smithy4s.internals.ToPartialSchema(filter, payload = false)(this)
+
+  final def payloadPartial(find: SchemaField[_, _] => Boolean): Wedge[Schema[PartialData[A]], Schema[A]] =
+    smithy4s.internals.ToPartialSchema(find, payload = true)(this)
 
 }
 

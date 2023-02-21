@@ -23,7 +23,6 @@ import java.util
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
-import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import alloy.Discriminated
@@ -1158,22 +1157,15 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      private[this] val documentFields =
-        fields.filter { case (field, _, _) =>
-          HttpBinding
-            .fromHints(field.label, field.hints, structHints)
-            .isEmpty
-        }
-
       private[this] val handlers =
-        new util.HashMap[String, Handler](documentFields.length << 1, 0.5f) {
-          documentFields.foreach { case (field, jLabel, _) =>
+        new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
+          fields.foreach { case (field, jLabel, _) =>
             put(jLabel, fieldHandler(field))
           }
         }
 
       private[this] val documentEncoders =
-        documentFields.map(labelledField => fieldEncoder(labelledField._1))
+        fields.map(labelledField => fieldEncoder(labelledField._1))
 
       def expecting: String = "object"
 
@@ -1181,11 +1173,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
         decodeValue_(cursor, in)(emptyMetadata)
-
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
-        Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,
@@ -1244,65 +1231,6 @@ private[smithy4s] class SchemaVisitorJCodec(
         out.encodeError("Cannot use products as keys")
     }
 
-  private def payloadStruct[A, Z](
-      payloadField: Field[Schema, Z, _],
-      fields: LabelledFields[Z]
-  )(codec: JCodec[payloadField.T], const: Vector[Any] => Z): JCodec[Z] =
-    new JCodec[Z] {
-      def expecting: String = "object"
-
-      override def canBeKey = false
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Z =
-        decodeValue_(cursor, in)(emptyMetadata)
-
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
-        Cursor.withCursor(expecting)(decodeValue_(_, in))
-
-      private def decodeValue_(
-          cursor: Cursor,
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z = {
-        val buffer = new util.HashMap[String, Any](2, 0.5f)
-        // In this case, one field assumes the whole payload. We use
-        // its associated codec.
-        buffer.put(payloadField.label, cursor.decode(codec, in))
-
-        // At this point, we have parsed the json and retrieved
-        // all the values that interest us for the construction
-        // of our domain object.
-        // We therefore reconcile the values pulled from the json
-        // with the ones pull the metadata, and call the constructor
-        // on it.
-        { (meta: scala.collection.Map[String, Any]) =>
-          meta.foreach(kv => buffer.put(kv._1, kv._2))
-          val stage2 = new VectorBuilder[Any]
-          fields.foreach { case (f, jsonLabel, _) =>
-            stage2 += {
-              val value = buffer.get(f.label)
-              if (f.isRequired) {
-                if (value == null)
-                  cursor.requiredFieldError(jsonLabel, jsonLabel)
-                value
-              } else Option(value)
-            }
-          }
-          const(stage2.result())
-        }
-      }
-
-      def encodeValue(z: Z, out: JsonWriter): Unit =
-        payloadField.foreachT(z)(codec.encodeValue(_, out))
-
-      def decodeKey(in: JsonReader): Z =
-        in.decodeError("Cannot use products as keys")
-
-      def encodeKey(x: Z, out: JsonWriter): Unit =
-        out.encodeError("Cannot use products as keys")
-    }
-
   private def basicStruct[A, S](
       fields: LabelledFields[S],
       structHints: Hints
@@ -1328,11 +1256,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       make: IndexedSeq[Any] => S
   ): JCodec[S] = {
     val lFields = labelledFields[S](fields)
-    (fields.find(_.hints.get(HttpPayload).isDefined), hints) match {
-      case (Some(payloadField), _) =>
-        val codec = apply(payloadField.instance)
-        payloadStruct(payloadField, lFields)(codec, make)
-      case (None, DiscriminatedUnionMember.hint(d)) =>
+    hints match {
+      case DiscriminatedUnionMember.hint(d) =>
         val encode =
           if (
             d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&

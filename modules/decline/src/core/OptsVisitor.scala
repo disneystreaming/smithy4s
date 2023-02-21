@@ -42,6 +42,7 @@ import java.util.UUID
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.CollectionTag.ListTag
 
+import smithy4s.json.codecs
 object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
   private def field[P: Argument](

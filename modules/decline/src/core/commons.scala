@@ -26,6 +26,7 @@ import cats.MonadError
 
 import java.util.Base64
 
+import smithy4s.json.codecs
 object commons {
   def toKebabCase(s: String): String =
     s.replaceAll("([A-Z])", "-$1").toLowerCase.drop(1)

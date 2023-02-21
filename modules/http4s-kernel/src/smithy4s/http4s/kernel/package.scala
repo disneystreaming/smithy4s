@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package http4s
+package smithy4s.http4s
 
 import org.http4s.Header
 import org.http4s.Headers

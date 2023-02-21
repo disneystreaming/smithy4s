@@ -12,10 +12,10 @@ private[smithy4s] sealed trait PartialData[A] {
 }
 // format: off
 private[smithy4s] object PartialData {
-  case class Total[A](a: A) extends PartialData[A] {
+  final case class Total[A](a: A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
-  case class Partial[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
+  final case class Partial[A](indexes: IndexedSeq[Int], partialData: IndexedSeq[Any], make: IndexedSeq[Any] => A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Partial(indexes, partialData, make andThen f)
   }
 

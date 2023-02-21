@@ -21,10 +21,10 @@ package json
 import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
 import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
 
-import java.nio.ByteBuffer
-
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
+
+import java.nio.ByteBuffer
 
 abstract class JsonCodecAPI(
     makeVisitor: CompilationCache[JCodec] => SchemaVisitor[JCodec],
@@ -38,7 +38,12 @@ abstract class JsonCodecAPI(
       hintMask: Option[HintMask],
       readerConfig: ReaderConfig,
       writerConfig: WriterConfig
-  ) = this(_ => schemaVisitorJCodec, hintMask, readerConfig, writerConfig)
+  ) = this(
+    (_: CompilationCache[JCodec]) => schemaVisitorJCodec,
+    hintMask,
+    readerConfig,
+    writerConfig
+  )
 
   type Cache = CompilationCache[JCodec]
   type Codec[A] = JCodec[A]
@@ -56,31 +61,27 @@ abstract class JsonCodecAPI(
   def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
     HttpMediaType("application/json")
 
-  override def decodeFromByteArrayPartial[A](
+  override def decodeFromByteArray[A](
       codec: Codec[A],
       bytes: Array[Byte]
-  ): Either[PayloadError, BodyPartial[A]] =
+  ): Either[PayloadError, A] =
     try {
       Right {
-        BodyPartial(
-          com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromArray(bytes, readerConfig)(codec.messageCodec)
-        )
+        com.github.plokhotnyuk.jsoniter_scala.core
+          .readFromArray(bytes, readerConfig)(codec)
       }
     } catch {
       case e: PayloadError => Left(e)
     }
 
-  override def decodeFromByteBufferPartial[A](
+  override def decodeFromByteBuffer[A](
       codec: Codec[A],
       bytes: ByteBuffer
-  ): Either[PayloadError, BodyPartial[A]] = {
+  ): Either[PayloadError, A] = {
     try {
       Right {
-        BodyPartial(
-          com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromByteBuffer(bytes, readerConfig)(codec.messageCodec)
-        )
+        com.github.plokhotnyuk.jsoniter_scala.core
+          .readFromByteBuffer(bytes, readerConfig)(codec)
       }
     } catch {
       case e: PayloadError => Left(e)
