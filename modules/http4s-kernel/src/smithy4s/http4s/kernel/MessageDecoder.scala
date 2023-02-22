@@ -7,10 +7,8 @@ import smithy4s.http.PathParams
 import org.http4s.EntityDecoder
 import smithy4s.schema._
 import smithy4s.PartialData
-import smithy4s.Wedge
 import cats.effect.Concurrent
-import smithy4s.http.HttpBinding
-import smithy.api.HttpPayload
+import smithy4s.http.HttpRestSchema
 import org.typelevel.vault.Key
 import smithy4s.http.Metadata
 import cats.syntax.all._
@@ -70,12 +68,9 @@ object MessageDecoder {
   /**
     * A compiler for MessageDecoder that abides by REST-semantics :
     * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`,
-    * `httpStatusCode` ... are decoded from the Metadata
+    * `httpStatusCode` ... are decoded from the corresponding metadata.
     *
-    * @param key
-    * @param entityDecoderCompiler
-    * @param F
-    * @return
+    * The rest is decoded from the body.
     */
   def restSchemaCompiler[F[_]](
       key: Key[PathParams],
@@ -99,23 +94,8 @@ object MessageDecoder {
           fullSchema: Schema[A],
           cache: Cache
       ): MessageDecoder[F, A] = {
-
-        def isMetadataField(field: SchemaField[_, _]): Boolean = HttpBinding
-          .fromHints(field.label, field.instance.hints, fullSchema.hints)
-          .isDefined
-
-        def isPayloadField(field: SchemaField[_, _]): Boolean =
-          field.instance.hints.has[HttpPayload]
-
-        val maybeMetadataSchema: Wedge[Schema[PartialData[A]], Schema[A]] =
-          fullSchema.partial(isMetadataField)
-        val maybeBodySchema: Wedge[Schema[PartialData[A]], Schema[A]] =
-          fullSchema
-            .payloadPartial(isPayloadField)
-            .orElse(fullSchema.partial(!isMetadataField(_)))
-
-        (maybeMetadataSchema, maybeBodySchema) match {
-          case (Wedge.Right(metadataSchema), _) =>
+        HttpRestSchema(fullSchema) match {
+          case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
             val metadataDecoder =
               Metadata.Decoder.fromSchema(metadataSchema, cache._2)
@@ -124,12 +104,12 @@ object MessageDecoder {
               key,
               drainMessage = true
             )
-          case (_, Wedge.Right(bodySchema)) =>
+          case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
             implicit val bodyDecoder: EntityDecoder[F, A] =
               entityDecoderCompiler.fromSchema(bodySchema, cache._1)
-            fromEntityDecoder(F, bodyDecoder)
-          case (Wedge.Left(metadataSchema), Wedge.Left(bodySchema)) =>
+            MessageDecoder.fromEntityDecoder(F, bodyDecoder)
+          case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
             val metadataDecoder =
               Metadata.Decoder.fromSchema(metadataSchema, cache._2)
             val metadataMessageDecoder =
@@ -154,12 +134,6 @@ object MessageDecoder {
               } yield PartialData.unsafeReconcile(metadataPartial, bodyPartial)
             }
             //format: on
-          case (_, _) =>
-            // When all else fails, attempt to decode the whole thing from the body.
-            implicit val bodyDecoder: EntityDecoder[F, A] =
-              entityDecoderCompiler.fromSchema(fullSchema, cache._1)
-            fromEntityDecoder(F, bodyDecoder)
-
         }
       }
     }
