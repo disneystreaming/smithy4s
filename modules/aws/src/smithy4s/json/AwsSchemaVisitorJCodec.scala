@@ -23,8 +23,8 @@ import smithy4s.Timestamp
 import smithy4s.http.json.Cursor
 import smithy4s.http.json.JCodec
 import smithy4s.http.json.SchemaVisitorJCodec
-import smithy4s.schema.Primitive
 import smithy4s.schema.CompilationCache
+import smithy4s.schema.Primitive
 
 private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
     extends SchemaVisitorJCodec(maxArity = 1024, cache) {

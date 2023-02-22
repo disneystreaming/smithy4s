@@ -136,7 +136,7 @@ object AwsSchemaVisitorJCodecTest extends FunSuite {
 
     expect.same(expected, result)
   }
-  
+
   test("encoding NaN as a Float") {
     val ff = FooFloat(Float.NaN)
     val result = writeToString[FooFloat](ff)
