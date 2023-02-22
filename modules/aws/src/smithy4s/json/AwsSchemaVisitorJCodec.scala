@@ -82,7 +82,7 @@ private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
         if (in.isCharBufEqualsTo(len, "NaN")) Float.NaN
         else if (in.isCharBufEqualsTo(len, "Infinity")) Float.PositiveInfinity
         else if (in.isCharBufEqualsTo(len, "-Infinity")) Float.NegativeInfinity
-        else in.decodeError("illegal double")
+        else in.decodeError("illegal float")
       } else {
         in.rollbackToken()
         in.readFloat()

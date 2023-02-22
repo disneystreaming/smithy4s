@@ -16,7 +16,7 @@
 
 package smithy4s.aws
 
-import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
+import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http.json.JCodec
 import smithy4s.schema.CompilationCache
@@ -33,6 +33,15 @@ object AwsSchemaVisitorJCodecTest extends FunSuite {
       struct(d)(FooDouble.apply)
     }
   }
+
+  case class FooFloat(f: Float)
+  object FooFloat {
+    implicit val schema: Schema[FooFloat] = {
+      val f = float.required[FooFloat]("f", _.f)
+      struct(f)(FooFloat.apply)
+    }
+  }
+
   val cache = CompilationCache.nop[JCodec]
   val awsSchemaVisitor: SchemaVisitor[JCodec] = new AwsSchemaVisitorJCodec(
     cache = cache
@@ -45,32 +54,131 @@ object AwsSchemaVisitorJCodecTest extends FunSuite {
     .withThrowReaderExceptionWithStackTrace(true)
     .withAppendHexDumpToParseException(true)
     .withCheckForEndOfInput(false)
-  
+
   def readFromString[A: JCodec](str: String): A = {
     com.github.plokhotnyuk.jsoniter_scala.core
       .readFromString[A](str, readerConfig)
   }
 
-  test("encoding NaN as a Double") {
-    ???
+  test("encoding a normal Double") {
+    val fd = FooDouble(8.0)
+    val result = writeToString[FooDouble](fd)
+    val expected = """{"d":8.0}"""
+
+    expect.same(expected, result)
+  }
+
+  test("decoding a normal Double") {
+    val input = """{"d" : 8.0}"""
+    val result = readFromString[FooDouble](input)
+    val expected = FooDouble(8.0)
+
+    expect.same(expected, result)
+  }
+
+  test("encoding a Double as NaN") {
+    val fd = FooDouble(Double.NaN)
+    val result = writeToString[FooDouble](fd)
+    val expected = """{"d":"NaN"}"""
+
+    expect.same(expected, result)
   }
 
   test("decoding NaN as a Double") {
-    ???
+    val input = """{"d" : "NaN"}"""
+    val result = readFromString[FooDouble](input)
+
+    expect(result.d.isNaN())
   }
+
   test("encoding Infinity as a Double") {
-    ???
+    val fd = FooDouble(Double.PositiveInfinity)
+    val result = writeToString[FooDouble](fd)
+    val expected = """{"d":"Infinity"}"""
+
+    expect.same(expected, result)
   }
 
   test("decoding Infinity as a Double") {
-    ???
+    val input = """{"d" : "Infinity"}"""
+    val result = readFromString[FooDouble](input)
+
+    expect(result.d.isPosInfinity)
   }
 
   test("encoding -Infinity as a Double") {
-    ???
+    val fd = FooDouble(Double.NegativeInfinity)
+    val result = writeToString[FooDouble](fd)
+    val expected = """{"d":"-Infinity"}"""
+
+    expect.same(expected, result)
   }
 
   test("decoding -Infinity as a Double") {
-    ???
+    val input = """{"d" : "-Infinity"}"""
+    val result = readFromString[FooDouble](input)
+
+    expect(result.d.isNegInfinity)
+  }
+
+  test("encoding a normal Float") {
+    val ff = FooFloat(12.34f)
+    val result = writeToString[FooFloat](ff)
+    val expected = """{"f":12.34}"""
+
+    expect.same(expected, result)
+  }
+
+  test("decoding a normal Float") {
+    val input = """{"f" : 12.34}"""
+    val result = readFromString[FooFloat](input)
+    val expected = FooFloat(12.34f)
+
+    expect.same(expected, result)
+  }
+  
+  test("encoding NaN as a Float") {
+    val ff = FooFloat(Float.NaN)
+    val result = writeToString[FooFloat](ff)
+    val expected = """{"f":"NaN"}"""
+
+    expect.same(expected, result)
+  }
+
+  test("decoding NaN as a Float") {
+    val input = """{"f" : "NaN"}"""
+    val result = readFromString[FooFloat](input)
+
+    expect(result.f.isNaN())
+  }
+
+  test("encoding Infinity as a Float") {
+    val ff = FooFloat(Float.PositiveInfinity)
+    val result = writeToString[FooFloat](ff)
+    val expected = """{"f":"Infinity"}"""
+
+    expect.same(expected, result)
+  }
+
+  test("decoding Infinity as a Float") {
+    val input = """{"f" : "Infinity"}"""
+    val result = readFromString[FooFloat](input)
+
+    expect(result.f.isPosInfinity)
+  }
+
+  test("encoding -Infinity as a Float") {
+    val ff = FooFloat(Float.NegativeInfinity)
+    val result = writeToString[FooFloat](ff)
+    val expected = """{"f":"-Infinity"}"""
+
+    expect.same(expected, result)
+  }
+
+  test("decoding -Infinity as a Float") {
+    val input = """{"f" : "-Infinity" }"""
+    val result = readFromString[FooFloat](input)
+
+    expect(result.f.isNegInfinity)
   }
 }
