@@ -19,6 +19,7 @@ package dynamic
 package internals
 
 private[internals] class DynamicSchemaIndexImpl(
+    metadataMap: Map[String, Document],
     serviceMap: Map[ShapeId, DynamicService],
     schemaMap: Map[ShapeId, Schema[DynData]]
 ) extends DynamicSchemaIndex {
@@ -31,4 +32,5 @@ private[internals] class DynamicSchemaIndexImpl(
   ): Option[Schema[_]] =
     schemaMap.get(shapeId)
 
+  override def metadata: Map[String, Document] = metadataMap
 }

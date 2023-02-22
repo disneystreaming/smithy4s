@@ -30,11 +30,9 @@ class CollectionSpec() extends DummyIO.Suite {
               ListShape(
                 MemberShape(
                   IdRef("smithy.api#String"),
-                  Some(
-                    Map(
-                      IdRef("smithy.api#documentation") -> Document.fromString(
-                        "listFoo"
-                      )
+                  Map(
+                    IdRef("smithy.api#documentation") -> Document.fromString(
+                      "listFoo"
                     )
                   )
                 )
@@ -47,23 +45,19 @@ class CollectionSpec() extends DummyIO.Suite {
               MapShape(
                 MemberShape(
                   IdRef("smithy.api#String"),
-                  Some(
-                    Map(
-                      IdRef("smithy.api#documentation") -> Document.fromString(
-                        "mapFoo"
-                      )
+                  Map(
+                    IdRef("smithy.api#documentation") -> Document.fromString(
+                      "mapFoo"
                     )
                   )
                 ),
                 MemberShape(
                   IdRef("smithy.api#Integer"),
-                  Some(
-                    Map(
-                      IdRef("smithy.api#documentation") -> Document.fromString(
-                        "mapBar"
-                      ),
-                      IdRef("smithy.api#deprecated") -> Document.obj()
-                    )
+                  Map(
+                    IdRef("smithy.api#documentation") -> Document.fromString(
+                      "mapBar"
+                    ),
+                    IdRef("smithy.api#deprecated") -> Document.obj()
                   )
                 )
               )
