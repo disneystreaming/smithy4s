@@ -169,7 +169,12 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
                 s"unexpected error when running test ${throwable.getMessage}"
               )
           }
-      } else tc.run.map(res => expectFailure(res))
+
+      } else
+        tc.run.map(res => expectFailure(res)).attempt.map {
+          case Right(expectations) => expectations
+          case Left(_)             => Expectations.Helpers.success
+        }
     }
 
     Test(

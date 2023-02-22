@@ -968,14 +968,14 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
 
    val args =  if(transforms.isEmpty) List.empty else List("--transformers", transforms.mkString(","))
     val cached =
-      Tracked.inputChanged[(List[String],String), Seq[File]](
+      Tracked.inputChanged[List[String], Seq[File]](
         s.cacheStoreFactory.make("input")
       ) {
         Function.untupled {
           Tracked
-            .lastOutput[(Boolean, (List[String],String)), Seq[File]](
+            .lastOutput[(Boolean, List[String]), Seq[File]](
               s.cacheStoreFactory.make("output")
-            ) { case ((changed, (deps,_ )), outputs) =>
+            ) { case ((changed, deps), outputs) =>
               if (changed || outputs.isEmpty) {
                 val res = ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
                 val file = (config / resourceManaged).value / "compliance-tests.json"
@@ -999,7 +999,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
         .mkString(",")
     )
 
-    cached(trackedFiles->(config / resourceManaged).value.getAbsolutePath)
+    cached(trackedFiles)
   }
 
 /**
