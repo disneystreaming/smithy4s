@@ -28,6 +28,8 @@ trait DynamicSchemaIndex {
     allServices.find(_.service.id == shapeId)
 
   def getSchema(shapeId: ShapeId): Option[Schema[_]]
+
+  def metadata: Map[String, Document]
 }
 
 object DynamicSchemaIndex extends DynamicSchemaIndexPlatform {

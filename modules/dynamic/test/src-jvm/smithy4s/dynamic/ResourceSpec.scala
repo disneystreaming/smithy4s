@@ -13,12 +13,11 @@ class ResourceSpec() extends munit.FunSuite {
         Shape.ServiceCase(
           ServiceShape(
             version = None,
-            errors = None,
-            operations = None,
-            resources = Some(
-              List(MemberShape(IdRef("smithy4s.example#Publisher"), None))
-            ),
-            traits = None
+            errors = List.empty,
+            operations = List.empty,
+            resources =
+              List(MemberShape(IdRef("smithy4s.example#Publisher"), Map.empty)),
+            traits = Map.empty
           )
         )
       )
