@@ -648,8 +648,6 @@ lazy val http4s = projectMatrix
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
         Dependencies.Http4s.emberServer.value % Test,
-        Dependencies.Circe.core.value % Test,
-        Dependencies.Circe.generic.value % Test,
         Dependencies.Alloy.`protocol-tests` % Test,
       )
     },
