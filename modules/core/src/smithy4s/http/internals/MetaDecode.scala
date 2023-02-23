@@ -45,7 +45,6 @@ private[http] sealed abstract class MetaDecode[+A] {
       binding: HttpBinding,
       fieldName: String,
       optional: Boolean,
-      reservedQueries: Set[String],
       maybeDefault: Option[Any]
   ): (Metadata, PutField) => Unit = {
     // format: off
@@ -94,8 +93,7 @@ private[http] sealed abstract class MetaDecode[+A] {
         }
       case (QueryParamsBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
-          val iter = metadata.query.iterator
-            .filterNot { case (k, _) => reservedQueries(k) }
+          val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
             .map { case (k, values) =>
               if (values.size == 1) {
                 k -> values.head
@@ -108,7 +106,6 @@ private[http] sealed abstract class MetaDecode[+A] {
       case (QueryParamsBinding, StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
           val iter = metadata.query.iterator
-            .filterNot { case (k, _) => reservedQueries(k) }
             .map { case (k, values) =>
               k -> values.iterator
             }
