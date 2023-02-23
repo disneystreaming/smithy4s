@@ -126,7 +126,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   private def generateAllowList(dsi: DynamicSchemaIndex): AllowRules = {
     dsi.metadata
-      .get("restJsonAllowList")
+      .get("alloyRestJsonAllowList")
       .collect { case Document.DArray(value) =>
         AllowRules(
           value
