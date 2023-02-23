@@ -220,4 +220,4 @@ Keeping track of these parameters is really important for the implementation  in
 
 ### Currently **not** supported (in particular)
 
-Smithy has a `resource` type of shape, that represents CRUD specialised services. It is currently not supported in Smithy4s.
+Smithy has a `resource` type of shape, that represents CRUD specialized services. Smithy4s only transitively transfers the operations defined in a `resource` to the service that lists that `resource`.
