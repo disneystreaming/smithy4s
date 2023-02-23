@@ -20,19 +20,12 @@ package internals
 
 import cats.data.Kleisli
 import cats.syntax.all._
-import org.http4s.EntityEncoder
-import org.http4s.Headers
-import org.http4s.Message
 import org.http4s.Method
-import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
-import smithy4s.http.Metadata
 import smithy4s.http._
-import smithy4s.schema.Alt
 import smithy4s.kinds._
 import org.http4s.HttpApp
-import org.typelevel.vault.Key
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
 
@@ -57,14 +50,10 @@ private[http4s] object SmithyHttp4sServerEndpoint {
   def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      compilerContext: CompilerContext[F],
+      compilerContext: ServerCompilerContext[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
-      pathParamsKey: Key[PathParams]
-  ): Either[
-    HttpEndpoint.HttpEndpointError,
-    SmithyHttp4sServerEndpoint[F]
-  ] =
+  ): Either[HttpEndpoint.HttpEndpointError,SmithyHttp4sServerEndpoint[F]] =
   // format: on
     HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
       toHttp4sMethod(httpEndpoint.method)
@@ -81,8 +70,7 @@ private[http4s] object SmithyHttp4sServerEndpoint {
             httpEndpoint,
             compilerContext,
             errorTransformation,
-            middleware,
-            pathParamsKey
+            middleware
           )
         }
     }
@@ -95,15 +83,21 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     val method: Method,
     httpEndpoint: HttpEndpoint[I],
-    compilerContext: CompilerContext[F],
+    compilerContext: ServerCompilerContext[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
-    pathParamsKey: Key[PathParams]
 )(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
-// format: on
   import compilerContext._
 
-  type ==>[A, B] = Kleisli[F, A, B]
+  val requestDecoder: RequestDecoder[F, I] =
+    requestDecoderCompiler.fromSchema(endpoint.input, requestDecoderCache)
+  val responseEncoder: ResponseEncoder[F, O] =
+    responseEncoderCompiler.fromSchema(endpoint.output, responseEncoderCache)
+  private val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] =
+    responseEncoderCompiler.fromSchema(HttpContractError.schema, responseEncoderCache)
+  private val errorResponseEncoder: ResponseEncoder[F, E] =
+    ResponseEncoder.forError(smithy4s.errorTypeHeader, endpoint.errorable, responseEncoderCompiler)
+  // format: on
 
   def matches(path: Array[String]): Option[PathParams] = {
     httpEndpoint.matches(path)
@@ -113,33 +107,15 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   override val httpApp: HttpApp[F] =
     applyMiddleware(HttpApp[F] { req =>
-      val pathParams = req.attributes.lookup(pathParamsKey).getOrElse(Map.empty)
-
       val run: F[O] = for {
-        metadata <- getMetadata(pathParams, req)
-        input <- extractInput(metadata, req)
+        input <- requestDecoder.decodeRequest(req)
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
       run
         .recoverWith(transformError)
-        .flatMap(successResponse)
+        .map(responseEncoder.addToResponse(successResponseBase, _))
     }).handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
-
-  private val inputSchema: Schema[I] = endpoint.input
-  private val outputSchema: Schema[O] = endpoint.output
-
-  private val inputMetadataDecoder =
-    Metadata.PartialDecoder.fromSchema(inputSchema, metadataDecoderCache)
-  private implicit val outputEntityEncoder: EntityEncoder[F, O] =
-    entityCompiler.compileEntityEncoder(outputSchema, entityCache)
-
-  private val outputMetadataCache = Metadata.Encoder.createCache()
-  private val outputMetadataEncoder =
-    Metadata.Encoder.fromSchema(outputSchema, outputMetadataCache)
-  private implicit val httpContractErrorCodec
-      : EntityEncoder[F, HttpContractError] =
-    entityCompiler.compileEntityEncoder(HttpContractError.schema, entityCache)
 
   private val transformError: PartialFunction[Throwable, F[O]] = {
     case e @ endpoint.Error(_, _) => F.raiseError(e)
@@ -148,107 +124,19 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       errorTransformation(other).flatMap(F.raiseError)
   }
 
-  private val extractInput: (Metadata, Request[F]) => F[I] = {
-    inputMetadataDecoder.total match {
-      case Some(totalDecoder) =>
-        (metadata, request) =>
-          request.body.compile.drain *>
-            totalDecoder.decode(metadata).liftTo[F]
-      case None =>
-        // NB: only compiling the input codec if the data cannot be
-        // totally extracted from the metadata.
-        implicit val inputCodec =
-          entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
-        (metadata, request) =>
-          for {
-            metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
-            bodyPartial <- request.as[BodyPartial[I]]
-            decoded <- metadataPartial.combineCatch(bodyPartial).liftTo[F]
-          } yield decoded
-    }
-  }
+  private val successResponseBase: Response[F] =
+    Response[F](Status.fromInt(httpEndpoint.code).getOrElse(Status.Ok))
+  private val internalErrorBase: Response[F] =
+    Response[F](Status.InternalServerError)
+  private val badRequestBase: Response[F] = Response[F](Status.BadRequest)
 
-  private def putHeaders(m: Message[F], headers: Headers) =
-    m.putHeaders(headers.headers)
-
-  private def status(code: Int): Status = Status
-    .fromInt(code)
-    .getOrElse(sys.error(s"Invalid status code: $code"))
-
-  private def getMetadata(pathParams: PathParams, request: Request[F]) =
-    Metadata(
-      path = pathParams,
-      headers = getHeaders(request),
-      query = request.uri.query.pairs
-        .collect {
-          case (name, None)        => name -> "true"
-          case (name, Some(value)) => name -> value
-        }
-        .groupBy(_._1)
-        .map { case (k, v) => k -> v.map(_._2).toList }
-    ).pure[F]
-
-  private def successResponse(output: O): F[Response[F]] = {
-    val outputMetadata = outputMetadataEncoder.encode(output)
-    val outputHeaders = toHeaders(outputMetadata.headers)
-    val statusCode = outputMetadata.statusCode.getOrElse(httpEndpoint.code)
-    val httpStatus = status(statusCode)
-
-    putHeaders(Response[F](httpStatus), outputHeaders)
-      .withEntity(output)
-      .pure[F]
-  }
-
-  def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
-    def errorHeaders(errorLabel: String, metadata: Metadata): Headers =
-      toHeaders(metadata.headers).put(errorTypeHeader -> errorLabel)
-    val errorUnionSchema = errorable.error
-    val dispatcher =
-      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.dispatch)
-    type ErrorEncoder[Err] = Err => Response[F]
-    val precompiler = new Alt.Precompiler[Schema, ErrorEncoder] {
-      def apply[Err](
-          label: String,
-          errorSchema: Schema[Err]
-      ): ErrorEncoder[Err] = {
-        implicit val errorCodec =
-          entityCompiler.compileEntityEncoder(errorSchema, entityCache)
-        val metadataEncoder = Metadata.Encoder.fromSchema(errorSchema)
-        errorValue => {
-          val errorCode =
-            http.HttpStatusCode.fromSchema(errorSchema).code(errorValue, 500)
-          val metadata = metadataEncoder.encode(errorValue)
-          val headers = errorHeaders(label, metadata)
-          val status =
-            Status.fromInt(errorCode).getOrElse(Status.InternalServerError)
-          Response(status, headers = headers).withEntity(errorValue)
-        }
-      }
-    }
-    dispatcher.compile(precompiler)
-  }
-
-  val errorResponse: Throwable => F[Response[F]] = {
-    endpoint.errorable match {
-      case Some(errorable) =>
-        val processError: E => Response[F] = compileErrorable(errorable)
-
-        {
-          case e: HttpContractError =>
-            Response[F](Status.BadRequest).withEntity(e).pure[F]
-          case endpoint.Error((_, e)) =>
-            F.pure(processError(e))
-          case e: Throwable =>
-            F.raiseError(e)
-        }
-
-      case None => {
-        case e: HttpContractError =>
-          Response[F](Status.BadRequest).withEntity(e).pure[F]
-        case e: Throwable =>
-          F.raiseError(e)
-      }
-    }
+  def errorResponse(throwable: Throwable): F[Response[F]] = throwable match {
+    case e: HttpContractError =>
+      F.pure(contractErrorResponseEncoder.addToResponse(badRequestBase, e))
+    case endpoint.Error((_, e)) =>
+      F.pure(errorResponseEncoder.addToResponse(internalErrorBase, e))
+    case e: Throwable =>
+      F.raiseError(e)
   }
 
 }

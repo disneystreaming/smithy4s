@@ -24,13 +24,12 @@ import smithy4s.aws.kernel.AWS_SESSION_TOKEN
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
-import smithy4s.http4s.kernel.EntityCompiler
+import smithy4s.http4s.kernel.EntityDecoders
 
 import scala.concurrent.duration._
 import org.http4s.client.Client
 import org.http4s.syntax.all._
 
-import smithy4s.http4s.kernel.EntityCompiler
 object AwsCredentialsProvider {
 
   def default[F[_]: Temporal](
@@ -45,7 +44,7 @@ object AwsCredentialsProvider {
 class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
 
   val entityCompiler =
-    EntityCompiler.fromCodecAPI[F](new json.AwsJsonCodecAPI())
+    EntityDecoders.fromCodecAPI[F](new json.AwsJsonCodecAPI())
   val cache = entityCompiler.createCache()
   implicit val metadataDecoder =
     entityCompiler.compileEntityDecoder(AwsInstanceMetadata.schema, cache)

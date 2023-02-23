@@ -3,13 +3,11 @@ package smithy4s.http4s.kernel
 import org.http4s.Request
 import org.http4s.Response
 import cats.MonadThrow
-import smithy4s.http.PathParams
 import org.http4s.EntityDecoder
 import smithy4s.schema._
 import smithy4s.PartialData
 import cats.effect.Concurrent
 import smithy4s.http.HttpRestSchema
-import org.typelevel.vault.Key
 import smithy4s.http.Metadata
 import cats.syntax.all._
 
@@ -28,9 +26,15 @@ object MessageDecoder {
     def decodeResponse(response: Response[F]): F[A] = response.as[A]
   }
 
+  /**
+    * Creates a MessageDecoder that decodes an HTTP message by looking at the
+    * metadata.
+    *
+    * NB: This decoder assumes that incoming requests have been enriched with pre-extracted
+    * path-parameters in the vault.
+    */
   def fromMetadataDecoder[F[_]: Concurrent, A](
       metadataDecoder: Metadata.Decoder[A],
-      pathParamsKey: Key[PathParams],
       drainMessage: Boolean
   ): MessageDecoder[F, A] = new MessageDecoder[F, A] {
     def decodeRequest(request: Request[F]): F[A] = {
@@ -73,7 +77,6 @@ object MessageDecoder {
     * The rest is decoded from the body.
     */
   def restSchemaCompiler[F[_]](
-      key: Key[PathParams],
       entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
   )(implicit
       F: Concurrent[F]
@@ -101,7 +104,6 @@ object MessageDecoder {
               Metadata.Decoder.fromSchema(metadataSchema, cache._2)
             MessageDecoder.fromMetadataDecoder(
               metadataDecoder,
-              key,
               drainMessage = true
             )
           case HttpRestSchema.OnlyBody(bodySchema) =>
@@ -115,7 +117,6 @@ object MessageDecoder {
             val metadataMessageDecoder =
               MessageDecoder.fromMetadataDecoder[F, PartialData[A]](
                 metadataDecoder,
-                key,
                 drainMessage = false
               )
             implicit val bodyDecoder: EntityDecoder[F, PartialData[A]] =

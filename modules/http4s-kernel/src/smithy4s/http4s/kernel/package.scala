@@ -29,8 +29,27 @@ import cats.syntax.all._
 import smithy4s.http.Metadata
 import org.http4s.Request
 import org.http4s.Response
+import smithy4s.capability.Covariant
+import smithy4s.ConstraintError
+import org.http4s.EntityDecoder
+import cats.Monad
+import org.http4s.DecodeResult
+import org.http4s.InvalidMessageBodyFailure
+import org.typelevel.vault.Key
+import cats.effect.SyncIO
 
 package object kernel {
+
+  /**
+    * A vault key that is used to store extracted path-parameters into request during
+    * the routing logic.
+    *
+    * The http path matching logic extracts the relevant segment of the URI in order
+    * to verify that a request corresponds to an endpoint. This information MUST be stored
+    * in the request before any decoding of metadata is attempted, as it'll fail otherwise.
+    */
+  val pathParamsKey: Key[PathParams] =
+    Key.newKey[SyncIO, PathParams].unsafeRunSync()
 
   private[smithy4s] def toHttp4sMethod(
       method: SmithyMethod
@@ -94,4 +113,21 @@ package object kernel {
       statusCode = Some(response.status.code)
     )
 
+  implicit def covariantEntityDecoder[F[_]](implicit
+      F: Monad[F]
+  ): Covariant[EntityDecoder[F, *]] = new Covariant[EntityDecoder[F, *]] {
+    def map[A, B](fa: EntityDecoder[F, A])(f: A => B): EntityDecoder[F, B] =
+      fa.map(f)
+
+    def emap[A, B](
+        fa: EntityDecoder[F, A]
+    )(f: A => Either[ConstraintError, B]): EntityDecoder[F, B] =
+      fa.flatMapR(a =>
+        f(a) match {
+          case Left(ce) =>
+            DecodeResult.failureT(InvalidMessageBodyFailure(ce.message))
+          case Right(value) => DecodeResult.successT(value)
+        }
+      )
+  }
 }

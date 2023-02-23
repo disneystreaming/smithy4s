@@ -17,26 +17,30 @@
 package smithy4s.http4s.internals
 
 import smithy4s.http4s.kernel._
-import smithy4s.http.Metadata
+// import smithy4s.http.Metadata
+import smithy4s.schema.CachedSchemaCompiler
 
-private[http4s] trait CompilerContext[F[_]] {
-  val entityCompiler: EntityCompiler[F]
-  val entityCache: entityCompiler.Cache
-  val metadataDecoderCache: Metadata.PartialDecoder.Cache
-  val metadataEncoderCache: Metadata.PartialDecoder.Cache
+private[http4s] trait ServerCompilerContext[F[_]] {
+  // format: off
+  val requestDecoderCompiler: CachedSchemaCompiler[RequestDecoder[F, *]]
+  val requestDecoderCache: requestDecoderCompiler.Cache
+  val responseEncoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
+  val responseEncoderCache: responseEncoderCompiler.Cache
+  // format: on
 }
 
-private[http4s] object CompilerContext {
+private[http4s] object ServerCompilerContext {
 
-  def make[F[_]](ec: EntityCompiler[F]): CompilerContext[F] =
-    new CompilerContext[F] {
-      val entityCompiler: EntityCompiler[F] = ec
-      val entityCache: entityCompiler.Cache = entityCompiler.createCache()
-      val metadataDecoderCache: Metadata.PartialDecoder.Cache =
-        Metadata.PartialDecoder.createCache()
-      val metadataEncoderCache: Metadata.PartialDecoder.Cache =
-        Metadata.PartialDecoder.createCache()
-
+  def makeServer[F[_]](
+      input: CachedSchemaCompiler[RequestDecoder[F, *]],
+      output: CachedSchemaCompiler[ResponseEncoder[F, *]]
+  ): ServerCompilerContext[F] =
+    new ServerCompilerContext[F] {
+      //format: off
+      val requestDecoderCompiler: CachedSchemaCompiler[RequestDecoder[F, *]] = input
+      val requestDecoderCache: requestDecoderCompiler.Cache = requestDecoderCompiler.createCache()
+      val responseEncoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]] = output
+      val responseEncoderCache: responseEncoderCompiler.Cache = responseEncoderCompiler.createCache()
     }
 
 }

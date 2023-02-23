@@ -19,38 +19,87 @@ package http
 
 import smithy.api.Error
 import smithy4s.schema.SchemaAlt
-import ErrorAltPicker.ErrorDiscriminator
 import smithy.api.HttpError
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.capability.Covariant
+import smithy4s.kinds.PolyFunction
+import smithy4s.kinds.Kind1
 
 /**
-  * Utility class to help find the best alternative out of a error union
-  * type. This is useful when deserializing on the client side of a request/
-  * response round trip.
-  *
-  * @param alts alternatives of the error union to choose from
+  * Utility function to help find the decoder matching a certain discriminator
+  * This is useful when deserializing on the client side of a request/response round trip.
   */
-final class ErrorAltPicker[E](
+object HttpErrorSelector {
+
+  /**
+    * Given a vector of alternatives, and a schema compiler, selects the decoder
+    * associated to the given discriminator.
+    *
+    * @param maybeErrorable: the Errorable instance associated to an operation
+    * @param compiler: the compiler for a given decoder
+    */
+  def apply[F[_]: Covariant, E](
+      maybeErrorable: Option[Errorable[E]],
+      compiler: CachedSchemaCompiler[F]
+  ): HttpDiscriminator => Option[F[E]] = maybeErrorable match {
+    case None => _ => None
+    case Some(errorable) =>
+      new HttpErrorSelector[F, E](
+        errorable.error.alternatives,
+        compiler
+      )
+  }
+
+  /**
+    * Given a vector of alternatives, and a schema compiler, selects the decoder
+    * associated to the given discriminator, and maps it so that it lifts
+    * a throwable
+    *
+    * @param maybeErrorable: the Errorable instance associated to an operation
+    * @param compiler: the compiler for a given decoder
+    */
+  def asThrowable[F[_]: Covariant, E](
+      maybeErrorable: Option[Errorable[E]],
+      compiler: CachedSchemaCompiler[F]
+  ): HttpDiscriminator => Option[F[Throwable]] = maybeErrorable match {
+    case None => _ => None
+    case Some(errorable) =>
+      new HttpErrorSelector[F, E](
+        errorable.error.alternatives,
+        compiler
+      ).andThen(_.map(Covariant[F].map(_)(errorable.unliftError)))
+  }
+
+}
+
+private[http] final class HttpErrorSelector[F[_]: Covariant, E](
     alts: Vector[SchemaAlt[E, _]],
-    header: CaseInsensitive = CaseInsensitive(errorTypeHeader)
-) extends {
+    compiler: CachedSchemaCompiler[F]
+) extends (HttpDiscriminator => Option[F[E]]) {
+
+  type ConstF[A] = F[E]
+  val cachedDecoders: PolyFunction[SchemaAlt[E, *], ConstF] =
+    new PolyFunction[SchemaAlt[E, *], ConstF] {
+      def apply[A](alt: SchemaAlt[E, A]): F[E] = {
+        val schema = alt.instance
+        // TODO: apply proper memoization of error instances/
+        // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
+        // This is because the "compile entity encoder" method can trigger a transformation of hints, which
+        // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
+        val cache = compiler.createCache()
+        val errorCodec: F[A] = compiler.fromSchema(schema, cache)
+        Covariant[F].map[A, E](errorCodec)(alt.inject)
+      }
+    }.unsafeCacheBy(
+      alts.map(Kind1.existential(_)),
+      identity(_)
+    )
 
   def apply(
-      code: Int,
-      headers: Map[CaseInsensitive, List[String]]
-  ): Option[SchemaAlt[E, _]] = {
-    val disc = headers
-      .get(header)
-      .flatMap(_.headOption)
-      .map(errorType =>
-        ShapeId
-          .parse(errorType)
-          .map(ErrorAltPicker.ErrorDiscriminator.FullId(_))
-          .getOrElse(ErrorAltPicker.ErrorDiscriminator.NameOnly(errorType))
-      )
-      .getOrElse(
-        ErrorAltPicker.ErrorDiscriminator.StatusCode(code)
-      )
-    getPreciseAlternative(disc)
+      discriminator: HttpDiscriminator
+  ): Option[F[E]] = {
+    val alt = getPreciseAlternative(discriminator)
+    alt.map(cachedDecoders(_))
   }
 
   private val byShapeId = alts
@@ -110,25 +159,13 @@ final class ErrorAltPicker[E](
   }
 
   private[http] def getPreciseAlternative(
-      discriminator: ErrorDiscriminator
+      discriminator: HttpDiscriminator
   ): Option[SchemaAlt[E, _]] = {
-    import ErrorAltPicker.ErrorDiscriminator._
+    import HttpErrorDiscriminator._
     discriminator match {
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)
       case StatusCode(int) => byStatusCode(int)
     }
-  }
-}
-
-object ErrorAltPicker {
-  private[http] sealed trait ErrorDiscriminator
-      extends Product
-      with Serializable
-
-  private[http] object ErrorDiscriminator {
-    case class FullId(shapeId: ShapeId) extends ErrorDiscriminator
-    case class NameOnly(name: String) extends ErrorDiscriminator
-    case class StatusCode(int: Int) extends ErrorDiscriminator
   }
 }

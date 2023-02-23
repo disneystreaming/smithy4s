@@ -119,7 +119,7 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
       val headers = getHeaders(response)
       effect.pure(errorAltPicker(code, headers))
     }
-    ErrorDecoder.compile(endpoint.errorable, entityCompiler, discriminate)
+    ErrorResponseDecoder.compile(endpoint.errorable, entityCompiler, discriminate)
   }
 
   def inputToRequest(input: I): Request[F] = {

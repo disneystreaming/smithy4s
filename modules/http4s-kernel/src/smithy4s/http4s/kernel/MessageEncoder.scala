@@ -1,14 +1,14 @@
 package smithy4s.http4s.kernel
 
+import cats.effect.Concurrent
+import org.http4s.EntityEncoder
 import org.http4s.Request
 import org.http4s.Response
-import org.http4s.EntityEncoder
 import org.http4s.Status
-import smithy4s.schema._
 import smithy4s.PartialData
-import cats.effect.Concurrent
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
+import smithy4s.schema._
 
 trait MessageEncoder[F[_], A]
     extends RequestEncoder[F, A]

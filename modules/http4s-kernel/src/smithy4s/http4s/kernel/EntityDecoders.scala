@@ -18,14 +18,14 @@ package smithy4s
 package http4s
 package kernel
 
+import cats.effect.kernel.Async
 import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.MediaType
 import org.http4s._
 import smithy4s.http.CodecAPI
-import smithy4s.schema.Schema
-import cats.effect.kernel.Async
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.Schema
 
 object EntityDecoders {
 
