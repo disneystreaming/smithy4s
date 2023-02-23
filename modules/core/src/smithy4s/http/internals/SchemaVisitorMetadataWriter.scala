@@ -18,6 +18,7 @@ package smithy4s
 package http
 package internals
 
+import smithy.api.HttpQueryParams
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.{
@@ -139,13 +140,20 @@ class SchemaVisitorMetadataWriter(
           field.leftFolder(folderT)
         }
     }
-    val updateFunctions = fields.flatMap(field => encodeField(field))
+    // pull out the query params field as it must be applied last to the metadata
+    val (queryParamFieldVec, theRest) =
+      fields.partition(_.instance.hints.has[HttpQueryParams])
+    val queryParams = queryParamFieldVec.headOption.flatMap(encodeField)
+    val updateFunctions = theRest.flatMap(field => encodeField(field))
 
-    StructureMetaEncode(s =>
-      updateFunctions.foldLeft(Metadata.empty)((metadata, updateFunction) =>
-        updateFunction(metadata, s)
-      )
-    )
+    StructureMetaEncode(s => {
+      //  this is a non commutative operation
+      val metadata =
+        updateFunctions.foldLeft(Metadata.empty)((metadata, updateFunction) =>
+          updateFunction(metadata, s)
+        )
+      queryParams.fold(metadata)(updateFunction => updateFunction(metadata, s))
+    })
   }
 
   override def union[U](

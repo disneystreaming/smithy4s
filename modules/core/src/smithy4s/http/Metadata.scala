@@ -73,6 +73,11 @@ case class Metadata(
         copy(query = query + (key -> (value +: existing)))
       case None => copy(query = query + (key -> List(value)))
     }
+  def addQueryParamsIfNoExist(key: String, values: String*): Metadata =
+    query.get(key) match {
+      case Some(_) => self
+      case None    => copy(query = query + (key -> values.toList))
+    }
   def addMultipleHeaders(
       ciKey: CaseInsensitive,
       value: List[String]
