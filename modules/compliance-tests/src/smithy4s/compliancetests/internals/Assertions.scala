@@ -21,6 +21,7 @@ import cats.implicits._
 import ComplianceTest._
 import cats.Eq
 import io.circe.parser._
+import io.circe.Json
 import org.http4s.Headers
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
@@ -39,7 +40,7 @@ private[internals] object assert {
       case (false, true) => fail(s"Expected $expected, but got empty body")
       case (false, false) =>
         (parse(expected), parse(actual)) match {
-          case (Right(a), Right(b)) if a == b => success
+          case (Right(a), Right(b)) if Eq[Json].eqv(a,b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
             fail(s"Expected JSON is invalid: $expected \n Error $a ")

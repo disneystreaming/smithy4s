@@ -22,15 +22,11 @@ import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
-import smithy4s.Document
-import smithy4s.Service
+import smithy4s.{Document, Errorable, Hints, Service, ShapeId}
 import smithy4s.kinds._
 import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
-import smithy4s.ShapeId
-import smithy4s.Hints
-import smithy4s.Errorable
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.compliancetests.internals.TestConfig._
 private[compliancetests] class ServerHttpComplianceTestCase[
@@ -236,7 +232,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
           }
           def id: smithy4s.ShapeId = ShapeId("custom", "endpoint")
           def input: smithy4s.Schema[Unit] = smithy4s.Schema.unit
-          def output: smithy4s.Schema[O] = endpoint.output
+          def output: smithy4s.Schema[O] = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
           def streamedInput: smithy4s.StreamingSchema[Nothing] =
             smithy4s.StreamingSchema.NoStream
           def streamedOutput: smithy4s.StreamingSchema[Nothing] =
