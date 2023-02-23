@@ -91,6 +91,8 @@ private[http] sealed abstract class MetaDecode[+A] {
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
           putField(fieldName, f(values.iterator))
         }
+        // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait 
+      // when targeting Map[String,String] we take the first value encountered
       case (QueryParamsBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
           val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
