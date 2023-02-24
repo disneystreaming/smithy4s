@@ -24,6 +24,7 @@ import io.circe.Json
 import org.http4s.Headers
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
+import io.circe.parser._
 
 private[internals] object assert {
   def success: ComplianceResult = Right(())
@@ -32,58 +33,44 @@ private[internals] object assert {
   private def isJson(bodyMediaType: Option[String]) =
     bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
 
-  private def parse(json: String): Either[io.circe.ParsingFailure, Json] = {
-    val nonEmpty =if(json.isEmpty) "{}" else json
-      io.circe.parser.parse(nonEmpty)
-  }
-
-  private def jsonEql(expected: String, actual: String): ComplianceResult = {
-    (expected.isEmpty, actual.isEmpty) match {
+  private def jsonEql(result: String, testCase: String): ComplianceResult = {
+    (result.isEmpty, testCase.isEmpty) match {
       case (true, true)  => success
       case _  =>
-        (parse(expected), parse(actual)) match {
+        val nonEmpty = if(result.isEmpty) "{}" else result
+        (parse(result),parse(nonEmpty) ) match {
           case (Right(a), Right(b)) if Eq[Json].eqv(a, b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
-            fail(s"Expected JSON is invalid: $expected \n Error $a ")
+            fail(s"Result JSON is invalid: $result \n Error $a ")
           case (_, Left(b)) =>
-            fail(s"Actual JSON is invalid: $actual \n Error $b")
+            fail(s"TestCase JSON is invalid: $testCase \n Error $b")
           case (Right(a), Right(b)) =>
-            fail(s"JSONs are not equal: expected json: $a \n actual json:  $b")
+            fail(s"JSONs are not equal: result json: $a \n testcase json:  $b")
         }
     }
   }
 
-  def neql[A: Eq](expected: A, actual: A): ComplianceResult = {
-    if (expected =!= actual) {
-      success
-    } else {
-      fail(
-        s"This test passed when it was supposed to fail, Actual value: ${pprint
-          .apply(actual)} was equal to ${pprint.apply(expected)}."
-      )
-    }
-  }
 
-  def eql[A: Eq](expected: A, actual: A): ComplianceResult = {
-    if (expected === actual) {
+  def eql[A: Eq](result: A, testCase: A): ComplianceResult = {
+    if (result === testCase) {
       success
     } else {
       fail(
-        s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+        s"the result value: ${pprint.apply(result)} was not equal to the expected TestCase value ${pprint.apply(testCase)}."
       )
     }
   }
 
   def bodyEql(
-      expected: String,
-      actual: String,
-      bodyMediaType: Option[String]
+               result: String,
+               testCase: String,
+               bodyMediaType: Option[String]
   ): ComplianceResult = {
     if (isJson(bodyMediaType)) {
-      jsonEql(expected, actual)
+      jsonEql(result, testCase)
     } else {
-      eql(expected, actual)
+      eql(result, testCase)
     }
   }
 

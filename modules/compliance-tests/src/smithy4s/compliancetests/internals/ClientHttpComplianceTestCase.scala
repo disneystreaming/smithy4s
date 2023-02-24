@@ -57,14 +57,10 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): F[ComplianceResult] = {
 
-    val bodyAssert = testCase.body
-      .map { expectedBody =>
-        request.bodyText.compile.string.map { responseBody =>
-          assert.bodyEql(responseBody, expectedBody, testCase.bodyMediaType)
-
+    val bodyAssert = request.bodyText.compile.string.map { responseBody =>
+          assert.bodyEql(responseBody, testCase.body.getOrElse(""), testCase.bodyMediaType)
         }
-      }
-      .getOrElse(assert.success.pure[F])
+      
 
     val expectedUri = baseUri
       .withPath(

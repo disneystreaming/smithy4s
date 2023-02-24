@@ -53,7 +53,7 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
     val metadata = metadataEncoder.encode(input)
     val payload =
       if (inputHasBody) Some(codecAPI.writeToArray(inputCodec, input))
-      else None
+      else Some("{}".getBytes)
     signer
       .sign(endpoint.name, metadata, payload)
       .flatMap(awsEnv.httpClient.run)
