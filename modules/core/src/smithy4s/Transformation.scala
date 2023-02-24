@@ -123,15 +123,11 @@ object Transformation {
     (func: Hints => Hints, that: Service[Alg]) => new Service[Alg] {
       override type Operation[I, E, O, SI, SO] = that.Operation[I, E, O, SI, SO]
 
-      private val cache = that.endpoints.map{
-        endpoint => (endpoint.id, endpoint.mapHints(func))
-      }
-
-      override def endpoints: List[Endpoint[_, _, _, _, _]] = cache.map(_._2)
+      override val endpoints: List[Endpoint[_, _, _, _, _]] = that.endpoints.map(_.mapHints(func))
 
       override def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO]) = {
         that.endpoint(op) match {
-          case (i, endpoint) => (i, cache.find(_._1 == endpoint.id).get._2.asInstanceOf[Endpoint[I, E, O, SI, SO]])
+          case (i, endpoint) => (i, endpoints.find(_.id == endpoint.id).get.asInstanceOf[Endpoint[I, E, O, SI, SO]])
         }
       }
 
