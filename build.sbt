@@ -670,9 +670,6 @@ lazy val http4s = projectMatrix
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
         Dependencies.Http4s.emberServer.value % Test,
-        Dependencies.Circe.core.value % Test,
-        Dependencies.Circe.generic.value % Test,
-        Dependencies.Circe.fs2.value % Test,
         Dependencies.Alloy.`protocol-tests` % Test,
       )
     },
@@ -692,7 +689,7 @@ lazy val http4s = projectMatrix
     ),
     (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
-    (Test / envVars) ++= {
+    (Test / envVars) := {
       val files: Seq[File] =
         (Test / resourceGenerators) {
           _.join.map(_.flatten)
@@ -785,7 +782,10 @@ lazy val transformers = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.Smithy.model,
-      Dependencies.Smithy.build
+      Dependencies.Smithy.build,
+        Dependencies.Smithy.testTraits,
+      Dependencies.Smithy.awsTraits,
+        Dependencies.Alloy.core,
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -988,14 +988,14 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
 
    val args =  if(transforms.isEmpty) List.empty else List("--transformers", transforms.mkString(","))
     val cached =
-      Tracked.inputChanged[(List[String],String), Seq[File]](
+      Tracked.inputChanged[List[String], Seq[File]](
         s.cacheStoreFactory.make("input")
       ) {
         Function.untupled {
           Tracked
-            .lastOutput[(Boolean, (List[String],String)), Seq[File]](
+            .lastOutput[(Boolean, List[String]), Seq[File]](
               s.cacheStoreFactory.make("output")
-            ) { case ((changed, (deps,_ )), outputs) =>
+            ) { case ((changed, deps), outputs) =>
               if (changed || outputs.isEmpty) {
                 val res = ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
                 val file = (config / resourceManaged).value / "compliance-tests.json"
@@ -1019,7 +1019,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
         .mkString(",")
     )
 
-    cached(trackedFiles->(config / resourceManaged).value.getAbsolutePath)
+    cached(trackedFiles)
   }
 
 /**

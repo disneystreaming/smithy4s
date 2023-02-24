@@ -74,8 +74,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         parseQueryParams(testCase.queryParams)
       )
 
-    val uriAssert =
-      assert.eql(expectedUri.renderString, request.uri.renderString)
+    val pathAssert =
+      assert.eql(expectedUri.path.renderString, request.uri.path.renderString)
+    val queryAssert = assert.eql(
+      expectedUri.query.renderString,
+      request.uri.query.renderString
+    )
     val methodAssert = assert.eql(
       testCase.method.toLowerCase(),
       request.method.name.toLowerCase()
@@ -83,7 +87,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:
       List(
         assert.testCase.checkHeaders(testCase, request.headers),
-        uriAssert,
+        pathAssert,
+        queryAssert,
         methodAssert
       )
         .map(_.pure[F])

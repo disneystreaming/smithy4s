@@ -52,37 +52,29 @@ object Fixtures {
       smithy = Some("2.0"),
       shapes = Map(
         IdRef("foo#Service") -> Shape.ServiceCase(
-          ServiceShape(operations =
-            Some(List(MemberShape(IdRef("foo#Operation"))))
-          )
+          ServiceShape(operations = List(MemberShape(IdRef("foo#Operation"))))
         ),
         IdRef("foo#Operation") -> Shape.OperationCase(
           OperationShape(
             input = Some(MemberShape(IdRef("foo#Input"))),
             output = Some(MemberShape(IdRef("foo#Output"))),
-            traits = Some(
-              Map(
-                IdRef("smithy.api#http") -> Document.obj(
-                  "method" -> Document.fromString("GET"),
-                  "uri" -> Document.fromString("/{name}")
-                ),
-                IdRef("smithy.api#readonly") -> Document.obj()
-              )
+            traits = Map(
+              IdRef("smithy.api#http") -> Document.obj(
+                "method" -> Document.fromString("GET"),
+                "uri" -> Document.fromString("/{name}")
+              ),
+              IdRef("smithy.api#readonly") -> Document.obj()
             )
           )
         ),
         IdRef("foo#Input") -> Shape.StructureCase(
           StructureShape(
-            members = Some(
-              Map(
-                "name" -> MemberShape(
-                  IdRef("smithy.api#String"),
-                  traits = Some(
-                    Map(
-                      IdRef("smithy.api#httpLabel") -> Document.obj(),
-                      IdRef("smithy.api#required") -> Document.obj()
-                    )
-                  )
+            members = Map(
+              "name" -> MemberShape(
+                IdRef("smithy.api#String"),
+                traits = Map(
+                  IdRef("smithy.api#httpLabel") -> Document.obj(),
+                  IdRef("smithy.api#required") -> Document.obj()
                 )
               )
             )
@@ -90,14 +82,12 @@ object Fixtures {
         ),
         IdRef("foo#Output") -> Shape.StructureCase(
           StructureShape(
-            members = Some(
-              Map(
-                "someFloat" -> MemberShape(
-                  IdRef("smithy.api#Float")
-                ),
-                "greeting" -> MemberShape(
-                  IdRef("smithy.api#String")
-                )
+            members = Map(
+              "someFloat" -> MemberShape(
+                IdRef("smithy.api#Float")
+              ),
+              "greeting" -> MemberShape(
+                IdRef("smithy.api#String")
               )
             )
           )

@@ -28,27 +28,27 @@ class OperationSpec() extends DummyIO.Suite {
         expect(
           model.shapes(IdRef("smithy4s.example#Health")) == Shape.OperationCase(
             OperationShape(
-              Some(MemberShape(IdRef("smithy4s.example#HealthRequest"), None)),
-              Some(MemberShape(IdRef("smithy4s.example#HealthResponse"), None)),
-              Some(
-                List(
-                  MemberShape(
-                    IdRef("smithy4s.example#UnknownServerError"),
-                    None
-                  )
+              List(
+                MemberShape(
+                  IdRef("smithy4s.example#UnknownServerError"),
+                  Map.empty
                 )
               ),
+              Map(
+                IdRef(
+                  "smithy.api#http"
+                ) -> Document.obj(
+                  "code" -> Document.fromInt(200),
+                  "method" -> Document.fromString("GET"),
+                  "uri" -> Document.fromString("/health")
+                ),
+                IdRef("smithy.api#readonly") -> Document.obj()
+              ),
               Some(
-                Map(
-                  IdRef(
-                    "smithy.api#http"
-                  ) -> Document.obj(
-                    "code" -> Document.fromInt(200),
-                    "method" -> Document.fromString("GET"),
-                    "uri" -> Document.fromString("/health")
-                  ),
-                  IdRef("smithy.api#readonly") -> Document.obj()
-                )
+                MemberShape(IdRef("smithy4s.example#HealthRequest"), Map.empty)
+              ),
+              Some(
+                MemberShape(IdRef("smithy4s.example#HealthResponse"), Map.empty)
               )
             )
           )

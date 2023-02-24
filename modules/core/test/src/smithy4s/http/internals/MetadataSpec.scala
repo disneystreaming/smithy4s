@@ -60,6 +60,7 @@ class MetadataSpec() extends FunSuite {
       .flatMap { partial =>
         s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
+    println(s"decoded: $result")
     expect.same(encoded, expectedEncoding)
     expect(result == Right(a))
     checkRoundTripTotal(a, expectedEncoding)
@@ -160,7 +161,8 @@ class MetadataSpec() extends FunSuite {
   // QUERY PARAMETERS
   // ///////////////////////////////////////////////////////////
   test("String query parameter") {
-    val queries = Queries(str = Some("hello"))
+    val queries =
+      Queries(str = Some("hello"), slm = Some(Map("str" -> "hello")))
     val expected = Metadata(query = Map("str" -> List("hello")))
     checkRoundTrip(queries, expected)
   }
@@ -204,41 +206,45 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("Integer query parameter") {
-    val queries = Queries(int = Some(123))
+    val queries = Queries(int = Some(123), slm = Some(Map("int" -> "123")))
     val expected = Metadata(query = Map("int" -> List("123")))
     checkRoundTrip(queries, expected)
   }
 
   test("Boolean query parameter") {
-    val queries = Queries(b = Some(true))
+    val queries = Queries(b = Some(true), slm = Some(Map("b" -> "true")))
     val expected = Metadata(query = Map("b" -> List("true")))
     checkRoundTrip(queries, expected)
   }
 
   test("timestamp query parameters (no format)") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val queries = Queries(ts1 = Some(ts))
+    val queries = Queries(ts1 = Some(ts), slm = Some(Map("ts1" -> epochString)))
     val expected = Metadata(query = Map("ts1" -> List(epochString)))
     checkRoundTrip(queries, expected)
   }
 
   test("timestamp query parameters (date-time format)") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val queries = Queries(ts2 = Some(ts))
+    val queries = Queries(ts2 = Some(ts), slm = Some(Map("ts2" -> epochString)))
     val expected = Metadata(query = Map("ts2" -> List(epochString)))
     checkRoundTrip(queries, expected)
   }
 
   test("timestamp query parameters (epoch-seconds format)") {
     val ts = Timestamp(1234567890L, 0)
-    val queries = Queries(ts3 = Some(ts))
+    val queries =
+      Queries(ts3 = Some(ts), slm = Some(Map("ts3" -> "1234567890")))
     val expected = Metadata(query = Map("ts3" -> List("1234567890")))
     checkRoundTrip(queries, expected)
   }
 
   test("timestamp query parameters (http-date)") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val queries = Queries(ts4 = Some(ts))
+    val queries = Queries(
+      ts4 = Some(ts),
+      slm = Some(Map("ts4" -> "Thu, 01 Jan 1970 00:00:00 GMT"))
+    )
     val expected =
       Metadata(query = Map("ts4" -> List("Thu, 01 Jan 1970 00:00:00 GMT")))
     checkRoundTrip(queries, expected)
@@ -254,13 +260,16 @@ class MetadataSpec() extends FunSuite {
 
   test("list of strings query param") {
     val list = List("hello", "world")
-    val queries = Queries(sl = Some(list))
+    val queries = Queries(sl = Some(list), slm = Some(Map("sl" -> "hello")))
     val expected = Metadata(query = Map("sl" -> list))
     checkRoundTrip(queries, expected)
   }
 
   test("Int Enum query parameter") {
-    val queries = Queries(ie = Some(smithy4s.example.Numbers.ONE))
+    val queries = Queries(
+      ie = Some(smithy4s.example.Numbers.ONE),
+      slm = Some(Map("nums" -> "1"))
+    )
     val expected = Metadata(query = Map("nums" -> List("1")))
     checkRoundTrip(queries, expected)
   }

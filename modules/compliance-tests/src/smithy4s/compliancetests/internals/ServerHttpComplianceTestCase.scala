@@ -22,15 +22,11 @@ import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
-import smithy4s.Document
-import smithy4s.Service
+import smithy4s.{Document, Errorable, Hints, Service, ShapeId}
 import smithy4s.kinds._
 import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
-import smithy4s.ShapeId
-import smithy4s.Hints
-import smithy4s.Errorable
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.compliancetests.internals.TestConfig._
 private[compliancetests] class ServerHttpComplianceTestCase[

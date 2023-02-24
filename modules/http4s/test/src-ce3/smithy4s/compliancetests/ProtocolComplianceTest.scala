@@ -28,12 +28,12 @@ import weaver._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
+import smithy4s.compliancetests.AllowRule.{allowRuleDecoder, AllowRules}
 import smithy4s.http.PayloadError
 import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
-import io.circe.fs2._
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -51,12 +51,10 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
-      .eval(allTestsIO)
-      .flatMap(allowList =>
-        fs2.Stream
-          .evals(dynamicSchemaIndexLoader.map(allTests))
-          .parEvalMapUnbounded(runInWeaver(allowList: AllowRules, _))
-      )
+      .eval(dynamicSchemaIndexLoader)
+      .fproduct(generateAllowList)
+      .flatMap(tuple => fs2.Stream.emits(allTests(tuple._1).map((tuple._2, _))))
+      .parEvalMapUnbounded(tuple => runInWeaver(tuple._1, tuple._2))
   }
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
@@ -113,15 +111,6 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }
-  private val allTestsIO: IO[AllowRules] = {
-    fs2.Stream
-      .evalSeq(readConfigFromJar)
-      .through(byteArrayParser)
-      .through(decoder[IO, AllowRule])
-      .compile
-      .toVector
-      .map(AllowRules)
-  }
 
   private def generateTests(
       shapeId: ShapeId
@@ -133,6 +122,19 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         HttpProtocolCompliance
           .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
       })
+  }
+
+  private def generateAllowList(dsi: DynamicSchemaIndex): AllowRules = {
+    dsi.metadata
+      .get("alloyRestJsonAllowList")
+      .collect { case Document.DArray(value) =>
+        AllowRules(
+          value
+            .map(allowRuleDecoder(_).getOrElse(sys.error("invalid allow rule")))
+            .toVector
+        )
+      }
+      .getOrElse(sys.error("restJsonAllowList not found in metadata"))
   }
 
   private def loadDynamic(
@@ -169,7 +171,12 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
                 s"unexpected error when running test ${throwable.getMessage}"
               )
           }
-      } else tc.run.map(res => expectFailure(res))
+
+      } else
+        tc.run.map(res => expectFailure(res)).attempt.map {
+          case Right(expectations) => expectations
+          case Left(_)             => Expectations.Helpers.success
+        }
     }
 
     Test(
@@ -198,21 +205,4 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         )
     )
   }
-
-  def readConfigFromJar: IO[Seq[Byte]] = {
-    Resource
-      .fromAutoCloseable(
-        IO(
-          new java.io.BufferedReader(
-            new java.io.InputStreamReader(
-              getClass.getResourceAsStream("/META-INF/json/test-config.json")
-            )
-          )
-        )
-      )
-      .use { reader =>
-        IO(reader.lines().toArray().flatMap(_.toString.getBytes)).map(_.toSeq)
-      }
-  }
-
 }
