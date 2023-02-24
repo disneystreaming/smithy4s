@@ -232,7 +232,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
           }
           def id: smithy4s.ShapeId = ShapeId("custom", "endpoint")
           def input: smithy4s.Schema[Unit] = smithy4s.Schema.unit
-          def output: smithy4s.Schema[O] = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
+          def output: smithy4s.Schema[O] = endpoint.output
           def streamedInput: smithy4s.StreamingSchema[Nothing] =
             smithy4s.StreamingSchema.NoStream
           def streamedOutput: smithy4s.StreamingSchema[Nothing] =

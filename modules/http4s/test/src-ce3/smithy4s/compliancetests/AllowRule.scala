@@ -9,7 +9,6 @@ case class AllowRule(id: String, configs: TestConfig)
 object AllowRule {
 
   def allowRuleDecoder(document: Document): Option[AllowRule] = {
-    println(document)
     document match {
       case Document.DObject(values) =>
         (values.get("id"), values.get("appliesTo"), values.get("description"))
