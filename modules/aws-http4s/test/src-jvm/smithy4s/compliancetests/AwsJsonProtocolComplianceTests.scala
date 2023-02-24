@@ -12,7 +12,6 @@ import smithy4s.schema.Schema.document
 import smithy4s.{Document, Schema, ShapeId}
 import weaver._
 import cats.syntax.all._
-import org.http4s.Uri._
 import smithy4s.aws.AwsJson.impl
 import smithy4s.aws.json._
 import smithy4s.compliancetests._
@@ -76,10 +75,7 @@ object AwsJsonProtocolComplianceTest
         HttpProtocolCompliance
           .clientTests(
             reverseRouter,
-            wrapper.service,
-            unsafeFromString(
-              s"https://${shapeId.name}.ap-east-1.amazonaws.com/"
-            )
+            wrapper.service
           )
       })
   }

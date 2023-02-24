@@ -37,19 +37,18 @@ import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
 import org.http4s.Headers
 import smithy4s.schema.Alt
-import org.http4s.implicits._
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]
 ](
     reverseRouter: ReverseRouter[F],
-    serviceInstance: Service[Alg],
-    baseUri: Uri,
+    serviceInstance: Service[Alg]
 )(implicit ce: CompatEffect[F]) {
   import ce._
-
+  import org.http4s.implicits._
   import reverseRouter._
+  private val baseUri = uri"http://localhost/"
   private[compliancetests] implicit val service: Service[Alg] = serviceInstance
 
   private def matchRequest(
@@ -60,7 +59,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val bodyAssert = request.bodyText.compile.string.map { responseBody =>
           assert.bodyEql(responseBody, testCase.body.getOrElse(""), testCase.bodyMediaType)
         }
-      
+
 
     val expectedUri = baseUri
       .withPath(

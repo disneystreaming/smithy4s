@@ -17,8 +17,6 @@
 package smithy4s.compliancetests
 
 import smithy4s.Service
-import org.http4s.Uri
-import org.http4s.implicits._
 
 /**
   * A construct allowing for running http protocol compliance tests against the implementation of a given protocol.
@@ -33,13 +31,10 @@ object HttpProtocolCompliance {
   def clientTests[F[_], Alg[_[_, _, _, _, _]]](
       reverseRouter: ReverseRouter[F],
       service: Service[Alg],
-      baseUri: Uri = uri"http://localhost/"
   )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
     new internals.ClientHttpComplianceTestCase[F, Alg](
       reverseRouter,
-      service,
-      baseUri
-    ).allClientTests()
+      service).allClientTests()
 
   def serverTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F],

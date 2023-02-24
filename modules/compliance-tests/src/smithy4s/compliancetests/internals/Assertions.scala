@@ -35,10 +35,10 @@ private[internals] object assert {
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
-      case (true, true)  => success
-      case _  =>
-        val nonEmpty = if(result.isEmpty) "{}" else result
-        (parse(result),parse(nonEmpty) ) match {
+      case (true, true) => success
+      case _ =>
+        val nonEmpty = if (result.isEmpty) "{}" else result
+        (parse(result), parse(nonEmpty)) match {
           case (Right(a), Right(b)) if Eq[Json].eqv(a, b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
@@ -51,21 +51,21 @@ private[internals] object assert {
     }
   }
 
-
   def eql[A: Eq](result: A, testCase: A): ComplianceResult = {
     if (result === testCase) {
       success
     } else {
       fail(
-        s"the result value: ${pprint.apply(result)} was not equal to the expected TestCase value ${pprint.apply(testCase)}."
+        s"the result value: ${pprint.apply(result)} was not equal to the expected TestCase value ${pprint
+          .apply(testCase)}."
       )
     }
   }
 
   def bodyEql(
-               result: String,
-               testCase: String,
-               bodyMediaType: Option[String]
+      result: String,
+      testCase: String,
+      bodyMediaType: Option[String]
   ): ComplianceResult = {
     if (isJson(bodyMediaType)) {
       jsonEql(result, testCase)
