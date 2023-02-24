@@ -94,7 +94,7 @@ case class Metadata(
   def addMultipleQueryParams(key: String, value: List[String]): Metadata =
     query.get(key) match {
       case Some(existing) =>
-        copy(query = query + (key -> ( existing ++ value)))
+        copy(query = query + (key -> (existing ++ value)))
       case None => copy(query = query + (key -> value))
     }
 
