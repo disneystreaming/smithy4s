@@ -17,21 +17,16 @@
 package smithy4s
 package http4s
 
-import smithy4s.internals.InputOutput
-
-import smithy4s.json.codecs
 object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024)
 
-class SimpleRestJsonBuilder(maxArity: Int)
+class SimpleRestJsonBuilder private (codecsMake: internals.SimpleRestJsonCodecs)
     extends SimpleProtocolBuilder[alloy.SimpleRestJson](
-      smithy4s.http.json.codecs(
-        alloy.SimpleRestJson.protocol.hintMask ++ HintMask(
-          InputOutput,
-          IntEnum
-        ),
-        maxArity
-      )
+      codecsMake,
+      codecsMake
     ) {
+
+  def this(maxArity: Int) = this(new internals.SimpleRestJsonCodecs(maxArity))
+
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(maxArity)
 }

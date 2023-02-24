@@ -22,17 +22,18 @@ import cats.syntax.all._
 import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
-import smithy4s.http.CodecAPI
 import org.http4s.implicits._
 import smithy4s.kinds._
-import smithy4s.http4s.kernel._
 
 /**
   * Abstract construct helping the construction of routers and clients
   * for a given protocol. Upon constructing the routers/clients, it will
   * first check that they are indeed annotated with the protocol in question.
   */
-abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
+abstract class SimpleProtocolBuilder[P](
+    serverCodecsMake: ServerCodecs.Make,
+    clientCodecsMake: ClientCodecs.Make
+)(implicit
     protocolTag: ShapeTag[P]
 ) {
 
@@ -44,7 +45,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       impl: FunctorAlgebra[Alg, F]
   )(implicit
       service: smithy4s.Service[Alg],
-      F: Concurrent[F]
+      F: Async[F]
   ): RouterBuilder[Alg, F] = {
     new RouterBuilder[Alg, F](
       service,
@@ -58,10 +59,10 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       Alg[_[_, _, _, _, _]]
   ] private[http4s] (val service: smithy4s.Service[Alg]) { self =>
 
-    def client[F[_]: Concurrent](client: Client[F]) =
+    def client[F[_]: Async](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
 
-    def routes[F[_]: Concurrent](
+    def routes[F[_]: Async](
         impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder[Alg, F](
@@ -75,7 +76,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
   class ClientBuilder[
       Alg[_[_, _, _, _, _]],
-      F[_]: Concurrent
+      F[_]: Async
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
@@ -103,8 +104,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             uri,
             service,
             client,
-            EntityCompiler
-              .fromCodecAPI[F](codecs),
+            clientCodecsMake.makeClientCodecs[F],
             middleware
           )
         }
@@ -121,11 +121,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware[F]
   )(implicit
-      F: Concurrent[F]
+      F: Async[F]
   ) {
-
-    val entityCompiler =
-      EntityCompiler.fromCodecAPI(codecs)
 
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
@@ -151,7 +148,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
             errorTransformation,
-            entityCompiler,
+            serverCodecsMake.makeServerCodecs[F],
             middleware
           ).routes
         }

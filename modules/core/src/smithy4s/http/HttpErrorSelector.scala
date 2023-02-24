@@ -161,7 +161,7 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
   private[http] def getPreciseAlternative(
       discriminator: HttpDiscriminator
   ): Option[SchemaAlt[E, _]] = {
-    import HttpErrorDiscriminator._
+    import HttpDiscriminator._
     discriminator match {
       case FullId(shapeId) => byShapeId.get(shapeId)
       case NameOnly(name)  => byName.get(name)

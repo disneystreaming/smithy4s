@@ -21,14 +21,13 @@ package kernel
 import org.http4s.EntityEncoder
 import org.http4s.MediaType
 import org.http4s.headers.`Content-Type`
-import smithy4s.capability.Covariant
 import smithy4s.http.CodecAPI
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
 
 object EntityEncoders {
 
-  def fromCodecAPICompiler[F[_]: Covariant](
+  def fromCodecAPI[F[_]](
       codecAPI: CodecAPI
   ): CachedSchemaCompiler[EntityEncoder[F, *]] =
     new CachedSchemaCompiler[EntityEncoder[F, *]] {

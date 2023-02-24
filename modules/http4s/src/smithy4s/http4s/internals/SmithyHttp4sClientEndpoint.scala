@@ -19,15 +19,11 @@ package http4s
 package internals
 
 import cats.syntax.all._
-import org.http4s.EntityDecoder
-import org.http4s.EntityEncoder
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
-import scodec.bits.ByteVector
 import smithy4s.http._
-import smithy4s.schema.SchemaAlt
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
 
@@ -47,7 +43,7 @@ private[http4s] object SmithyHttp4sClientEndpoint {
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      compilerContext: CompilerContext[F],
+      compilerContext: ClientCodecs[F],
       middleware: Client[F] => Client[F]
   ): Either[
     HttpEndpoint.HttpEndpointError,
@@ -82,7 +78,7 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   method: org.http4s.Method,
   endpoint: Endpoint[Op, I, E, O, SI, SO],
   httpEndpoint: HttpEndpoint[I],
-  compilerContext: CompilerContext[F],
+  clientCodecs: ClientCodecs[F],
   middleware: Client[F] => Client[F]
 )(implicit effect: Concurrent[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
@@ -97,57 +93,32 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
       }
   }
 
-  import compilerContext._
-  private val inputSchema: Schema[I] = endpoint.input
-  private val outputSchema: Schema[O] = endpoint.output
+  // format: off
+  val inputEncoder: RequestEncoder[F, I] = clientCodecs.inputEncoder(endpoint.input)
+  val outputDecoder: ResponseDecoder[F, O] = clientCodecs.outputDecoder(endpoint.output)
+  val errorDecoder: ResponseDecoder[F, Throwable] = clientCodecs.errorDecoder(endpoint.errorable)
+  // format: on
 
-  private val inputMetadataEncoder =
-    Metadata.Encoder.fromSchema(inputSchema)
-  private val inputHasBody =
-    Metadata.TotalDecoder.fromSchema(inputSchema, metadataDecoderCache).isEmpty
-  private implicit val inputEntityEncoder: EntityEncoder[F, I] =
-    entityCompiler.compileEntityEncoder(inputSchema, entityCache)
-  private implicit val outputDecoder: EntityDecoder[F, O] =
-    entityCompiler.compileEntityDecoder(outputSchema, entityCache)
-  private val errorDecoder: ErrorDecoder[F, E] = {
-    val alts =
-      endpoint.errorable.map(_.error.alternatives).getOrElse(Vector.empty)
-    val errorAltPicker =
-      new ErrorAltPicker(alts, CaseInsensitive(errorTypeHeader))
-    def discriminate(response: Response[F]): F[Option[SchemaAlt[E, _]]] = {
-      val code = response.status.code
-      val headers = getHeaders(response)
-      effect.pure(errorAltPicker(code, headers))
-    }
-    ErrorResponseDecoder.compile(endpoint.errorable, entityCompiler, discriminate)
-  }
+  def discriminate(response: Response[F]): F[Option[HttpDiscriminator]] =
+    HttpDiscriminator
+      .fromMetadata(
+        smithy4s.errorTypeHeader,
+        getResponseMetadata(response)
+      )
+      .pure[F]
 
   def inputToRequest(input: I): Request[F] = {
-    val metadata = inputMetadataEncoder.encode(input)
     val path = httpEndpoint.path(input)
     val staticQueries = httpEndpoint.staticQueryParams
     val uri = baseUri
       .copy(path = baseUri.path.addSegments(path.map(Uri.Path.Segment(_))))
-      .withMultiValueQueryParams(staticQueries ++ metadata.query)
-    val headers = toHeaders(metadata.headers)
-    val baseRequest = Request[F](method, uri, headers = headers)
-    if (inputHasBody) {
-      baseRequest.withEntity(input)
-    } else baseRequest.withEntity(ByteVector.empty)
+      .withMultiValueQueryParams(staticQueries)
+    val baseRequest = Request[F](method, uri).withEmptyBody
+    inputEncoder.addToRequest(baseRequest, input)
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputFromSuccessResponse(response)
-    else outputFromErrorResponse(response)
-
-  private def outputFromSuccessResponse(response: Response[F]): F[O] = {
-    response.as[O]
-  }
-
-  private def outputFromErrorResponse(response: Response[F]): F[O] = {
-    errorDecoder
-      .decodeErrorAsThrowable(response)
-      .flatMap(effect.raiseError[O](_))
-  }
+    if (response.status.isSuccess) outputDecoder.decodeResponse(response)
+    else errorDecoder.decodeResponse(response).flatMap(effect.raiseError[O](_))
 
 }

@@ -18,7 +18,7 @@ package smithy4s
 package http4s
 package kernel
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.Concurrent
 import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.MediaType
@@ -29,9 +29,9 @@ import smithy4s.schema.Schema
 
 object EntityDecoders {
 
-  def fromCodecAPICompiler[F[_]](
+  def fromCodecAPI[F[_]](
       codecAPI: CodecAPI
-  )(implicit F: Async[F]): CachedSchemaCompiler[EntityDecoder[F, *]] =
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[EntityDecoder[F, *]] =
     new CachedSchemaCompiler[EntityDecoder[F, *]] {
       type Cache = codecAPI.Cache
       def createCache(): Cache = codecAPI.createCache()

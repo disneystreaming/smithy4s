@@ -4,7 +4,7 @@ import smithy4s.ShapeId
 
 sealed trait HttpDiscriminator extends Product with Serializable
 
-object HttpErrorDiscriminator {
+object HttpDiscriminator {
 
   // format: off
   final case class FullId(shapeId: ShapeId) extends HttpDiscriminator
@@ -13,30 +13,30 @@ object HttpErrorDiscriminator {
   // format: on
 
   def fromMetadata(
-      errorTypeHeader: CaseInsensitive,
+      discriminatingHeaderName: String,
       metadata: Metadata
   ): Option[HttpDiscriminator] = {
     metadata.statusCode.map(code =>
-      fromStatusOrHeader(errorTypeHeader, code, metadata.headers)
+      fromStatusOrHeader(discriminatingHeaderName, code, metadata.headers)
     )
   }
 
   def fromStatusOrHeader(
-      discriminatingHeaderName: CaseInsensitive,
+      discriminatingHeaderName: String,
       statusCode: Int,
       headers: Map[CaseInsensitive, Seq[String]]
   ): HttpDiscriminator = {
     headers
-      .get(discriminatingHeaderName)
+      .get(CaseInsensitive(discriminatingHeaderName))
       .flatMap(_.headOption)
       .map(errorType =>
         ShapeId
           .parse(errorType)
-          .map(HttpErrorDiscriminator.FullId(_))
-          .getOrElse(HttpErrorDiscriminator.NameOnly(errorType))
+          .map(FullId(_))
+          .getOrElse(NameOnly(errorType))
       )
       .getOrElse(
-        HttpErrorDiscriminator.StatusCode(statusCode)
+        StatusCode(statusCode)
       )
   }
 

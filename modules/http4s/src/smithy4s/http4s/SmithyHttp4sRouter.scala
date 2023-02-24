@@ -22,7 +22,6 @@ import cats.data.OptionT
 import cats.implicits._
 import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
-import smithy4s.http4s.kernel._
 import smithy4s.kinds._
 import org.typelevel.vault.Key
 import cats.effect.SyncIO
@@ -33,14 +32,12 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
-    entityCompiler: EntityCompiler[F],
+    serverCodecs: ServerCodecs[F],
     middleware: ServerEndpointMiddleware[F]
 )(implicit effect: Concurrent[F]) {
 
   private val pathParamsKey =
     Key.newKey[SyncIO, smithy4s.http.PathParams].unsafeRunSync()
-
-  private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
   val routes: HttpRoutes[F] = Kleisli { request =>
     for {
@@ -58,10 +55,9 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
         SmithyHttp4sServerEndpoint.make(
           impl,
           ep,
-          compilerContext,
+          serverCodecs,
           errorTransformation,
-          middleware.prepare(service) _,
-          pathParamsKey
+          middleware.prepare(service) _
         )
       }
       .collect { case Right(http4sEndpoint) =>

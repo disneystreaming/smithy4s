@@ -22,20 +22,17 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
 import cats.effect.Concurrent
-import smithy4s.http4s.kernel._
 
 // format: off
 class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     baseUri: Uri,
     service: smithy4s.Service.Aux[Alg, Op],
     client: Client[F],
-    entityCompiler: EntityCompiler[F],
+    compilerContext: ClientCodecs[F],
     middleware: ClientEndpointMiddleware[F]
 )(implicit effect: Concurrent[F])
     extends FunctorInterpreter[Op, F] {
 // format: on
-
-  private val compilerContext = internals.CompilerContext.make(entityCompiler)
 
   def apply[I, E, O, SI, SO](
       op: Op[I, E, O, SI, SO]

@@ -50,7 +50,7 @@ private[http4s] object SmithyHttp4sServerEndpoint {
   def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      compilerContext: ServerCompilerContext[F],
+      compilerContext: ServerCodecs[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
   ): Either[HttpEndpoint.HttpEndpointError,SmithyHttp4sServerEndpoint[F]] =
@@ -83,20 +83,15 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     val method: Method,
     httpEndpoint: HttpEndpoint[I],
-    compilerContext: ServerCompilerContext[F],
+    compilerContext: ServerCodecs[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
 )(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
-  import compilerContext._
 
-  val requestDecoder: RequestDecoder[F, I] =
-    requestDecoderCompiler.fromSchema(endpoint.input, requestDecoderCache)
-  val responseEncoder: ResponseEncoder[F, O] =
-    responseEncoderCompiler.fromSchema(endpoint.output, responseEncoderCache)
-  private val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] =
-    responseEncoderCompiler.fromSchema(HttpContractError.schema, responseEncoderCache)
-  private val errorResponseEncoder: ResponseEncoder[F, E] =
-    ResponseEncoder.forError(smithy4s.errorTypeHeader, endpoint.errorable, responseEncoderCompiler)
+  val inputDecoder: RequestDecoder[F, I] = compilerContext.inputDecoder(endpoint.input)
+  val outputEncoder: ResponseEncoder[F, O] = compilerContext.outputEncoder(endpoint.output)
+  val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = compilerContext.errorEncoder(HttpContractError.schema)
+  val errorResponseEncoder: ResponseEncoder[F, E] = compilerContext.errorEncoder(endpoint.errorable)
   // format: on
 
   def matches(path: Array[String]): Option[PathParams] = {
@@ -108,13 +103,13 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   override val httpApp: HttpApp[F] =
     applyMiddleware(HttpApp[F] { req =>
       val run: F[O] = for {
-        input <- requestDecoder.decodeRequest(req)
+        input <- inputDecoder.decodeRequest(req)
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
       run
         .recoverWith(transformError)
-        .map(responseEncoder.addToResponse(successResponseBase, _))
+        .map(outputEncoder.addToResponse(successResponseBase, _))
     }).handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
 
   private val transformError: PartialFunction[Throwable, F[O]] = {

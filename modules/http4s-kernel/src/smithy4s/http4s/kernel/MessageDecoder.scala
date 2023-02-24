@@ -111,6 +111,7 @@ object MessageDecoder {
             implicit val bodyDecoder: EntityDecoder[F, A] =
               entityDecoderCompiler.fromSchema(bodySchema, cache._1)
             MessageDecoder.fromEntityDecoder(F, bodyDecoder)
+
           case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
             val metadataDecoder =
               Metadata.Decoder.fromSchema(metadataSchema, cache._2)
