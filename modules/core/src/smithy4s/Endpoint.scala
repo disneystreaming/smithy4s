@@ -53,7 +53,9 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
 
   def errorable: Option[Errorable[E]] = None
 
-  private[smithy4s] def mapHints(f: Hints => Hints): Endpoint[Op, I, E, O, SI, SO] =
+  private[smithy4s] def mapHints(
+      f: Hints => Hints
+  ): Endpoint[Op, I, E, O, SI, SO] =
     new Endpoint[Op, I, E, O, SI, SO] {
       def id: ShapeId = outer.id
       def input: Schema[I] = outer.input.transformHintsTransitively(f)
