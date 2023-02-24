@@ -42,7 +42,7 @@ object HttpRequest {
       httpMethod: HttpMethod,
       uri: String,
       headers: List[(CaseInsensitive, String)] = Nil,
-      body: Option[Array[Byte]] = None
+      body: Option[Array[Byte]] = Some("{}".getBytes)
   ) extends HttpRequest
 }
 

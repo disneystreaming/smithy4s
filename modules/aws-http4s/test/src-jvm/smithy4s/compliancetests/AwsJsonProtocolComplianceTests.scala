@@ -1,25 +1,23 @@
 package smithy4s.aws
 
+import aws.protocols.AwsJson1_0
 import aws.protocols.AwsJson1_1
 import cats.effect.std.Env
-import cats.effect.{IO, Resource}
-import org.http4s.client.Client
-import org.http4s.HttpApp
+import cats.effect.IO
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.kinds.FunctorAlgebra
 import smithy4s.http.{CodecAPI, PayloadError}
 import smithy4s.schema.Schema.document
-import smithy4s.{Document, Schema, Service, ShapeId, ShapeTag}
+import smithy4s.{Document, Schema, ShapeId}
 import weaver._
 import cats.syntax.all._
-import org.http4s.implicits._
-import smithy4s.aws.http4s._
-import smithy4s.aws.json.AwsJsonCodecAPI
+import org.http4s.Uri._
+import smithy4s.aws.AwsJson.impl
+import smithy4s.aws.json._
 import smithy4s.compliancetests._
 
-object AWSJson1_1_ProtocolComplianceTest
+object AwsJsonProtocolComplianceTest
     extends EffectSuite[IO]
     with BaseCatsSuite {
 
@@ -27,28 +25,22 @@ object AWSJson1_1_ProtocolComplianceTest
   def getSuite: EffectSuite[IO] = this
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
+    val all: DynamicSchemaIndex => List[ComplianceTest[IO]] = dsi =>
+      awsJson1_1(dsi) ++ awsJson1_0(dsi)
     fs2.Stream
-      .evals(dynamicSchemaIndexLoader.map(awsJson1_1(_)))
+      .evals(dynamicSchemaIndexLoader.map(all(_)))
       .parEvalMapUnbounded(runInWeaver)
   }
-  object AwsJson1_1_Implementation extends ReverseRouter[IO] {
-    type Protocol = aws.protocols.AwsJson1_1
-    val protocolTag: ShapeTag[AwsJson1_1] = aws.protocols.AwsJson1_1
 
-    def codecs: smithy4s.http.CodecAPI = new AwsJsonCodecAPI()
+  private val codecs = new AwsJsonCodecAPI()
 
-    def reverseRoutes[Alg[_[_, _, _, _, _]]](app: HttpApp[IO])(implicit
-        service: Service[Alg]
-    ): Resource[IO, FunctorAlgebra[Alg, IO]] = {
-      service.simpleAwsClient(
-        Client.fromHttpApp(app),
-        smithy4s.aws.kernel.AwsRegion.AP_EAST_1
-      )
-    }
-  }
-
+  private val awsJson1_0 = generateTests(
+    ShapeId("aws.protocoltests.json10", "JsonRpc10"),
+    impl(AwsJson1_0, codecs)
+  )
   private val awsJson1_1 = generateTests(
-    ShapeId("aws.protocoltests.json", "JsonProtocol")
+    ShapeId("aws.protocoltests.json", "JsonProtocol"),
+    impl(AwsJson1_1, codecs)
   )
 
   private val path = Env
@@ -68,13 +60,14 @@ object AWSJson1_1_ProtocolComplianceTest
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, AwsJson1_1_Implementation.codecs))
+        .map(decodeDocument(_, codecs))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }
 
   private def generateTests(
-      shapeId: ShapeId
+      shapeId: ShapeId,
+      reverseRouter: ReverseRouter[IO]
   ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
     dynamicSchemaIndex
       .getService(shapeId)
@@ -82,9 +75,11 @@ object AWSJson1_1_ProtocolComplianceTest
       .flatMap(wrapper => {
         HttpProtocolCompliance
           .clientTests(
-            AwsJson1_1_Implementation,
+            reverseRouter,
             wrapper.service,
-            uri"https://JsonProtocol.ap-east-1.amazonaws.com/"
+            unsafeFromString(
+              s"https://${shapeId.name}.ap-east-1.amazonaws.com/"
+            )
           )
       })
   }

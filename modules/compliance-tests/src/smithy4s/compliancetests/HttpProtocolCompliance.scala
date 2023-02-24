@@ -38,7 +38,7 @@ object HttpProtocolCompliance {
     new internals.ClientHttpComplianceTestCase[F, Alg](
       reverseRouter,
       service,
-        baseUri
+      baseUri
     ).allClientTests()
 
   def serverTests[F[_], Alg[_[_, _, _, _, _]]](
