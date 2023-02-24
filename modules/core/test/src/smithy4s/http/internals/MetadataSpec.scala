@@ -60,7 +60,6 @@ class MetadataSpec() extends FunSuite {
       .flatMap { partial =>
         s.compile(FromMetadataSchemaVisitor).read(partial.decoded.toMap)
       }
-    println(s"decoded: $result")
     expect.same(encoded, expectedEncoding)
     expect(result == Right(a))
     checkRoundTripTotal(a, expectedEncoding)

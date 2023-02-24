@@ -97,7 +97,9 @@ private[http] sealed abstract class MetaDecode[+A] {
         (metadata, putField) =>
           val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
             .map { case (k, values) =>
-              k -> values.head
+              if (values.nonEmpty) {
+                k -> values.head
+              } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
             }
           if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
           else if (iter.isEmpty && optional) putField.putNone(fieldName)
