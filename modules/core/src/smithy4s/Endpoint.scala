@@ -53,6 +53,17 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
 
   def errorable: Option[Errorable[E]] = None
 
+  def mapHints(f: Hints => Hints): Endpoint[Op, I, E, O, SI, SO] =
+    new Endpoint[Op, I, E, O, SI, SO] {
+      def id: ShapeId = outer.id
+      def input: Schema[I] = outer.input.transformHintsTransitively(f)
+      def output: Schema[O] = outer.output.transformHintsTransitively(f)
+      def streamedInput: StreamingSchema[SI] = outer.streamedInput
+      def streamedOutput: StreamingSchema[SO] = outer.streamedOutput
+      def hints: Hints = f(outer.hints)
+      def wrap(input: I): Op[I, E, O, SI, SO] = outer.wrap(input)
+    }
+
   object Error {
     def unapply(throwable: Throwable): Option[(Errorable[E], E)] =
       errorable.flatMap { err =>

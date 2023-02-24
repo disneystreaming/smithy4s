@@ -119,4 +119,30 @@ object Transformation {
       }
     }
 
+  implicit def mappedHintsServiceTransform[Alg[_[_, _, _, _, _]]]: Transformation[Hints=>Hints, Service[Alg], Service[Alg]] =
+    (func: Hints => Hints, that: Service[Alg]) => new Service[Alg] {
+      override type Operation[I, E, O, SI, SO] = that.Operation[I, E, O, SI, SO]
+
+      override def endpoints: List[Endpoint[_, _, _, _, _]] = that.endpoints.map(_.mapHints(func))
+
+      override def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO]) = {
+        that.endpoint(op) match {
+          case (i, endpoint) => (i, endpoint.mapHints(func))
+        }
+      }
+
+      override def version: String = that.version
+
+      override def hints: Hints = func(that.hints)
+
+      override def reified: Alg[Operation] = that.reified
+
+      def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Operation, P]): Alg[P] = that.fromPolyFunction(function)
+
+      def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P] = that.toPolyFunction(algebra)
+
+      override def id: ShapeId = that.id
+
+      override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G] = that.mapK5(alg, function)
+    }
 }
