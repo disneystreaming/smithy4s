@@ -45,10 +45,10 @@ object ResponseEncoder {
             HttpStatusCode.fromSchema(errorSchema).code(err, 500)
           val status =
             Status.fromInt(errorCode).getOrElse(Status.InternalServerError)
-          errorEncoder
-            .addToResponse(response, err)
+          val encodedResponse = errorEncoder.addToResponse(response, err)
+          encodedResponse
             .withStatus(status)
-            .withHeaders(response.headers.put(errorTypeHeader -> label))
+            .withHeaders(encodedResponse.headers.put(errorTypeHeader -> label))
         }
       }
     }

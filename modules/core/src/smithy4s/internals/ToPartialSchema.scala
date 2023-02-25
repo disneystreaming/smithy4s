@@ -2,7 +2,7 @@ package smithy4s.internals
 
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
-import smithy4s.schema.Schema.StructSchema
+import smithy4s.schema.Schema._
 import ToPartialSchema._
 
 import smithy4s.PartialData
@@ -30,38 +30,46 @@ import smithy4s.Wedge
 case class ToPartialSchema(keep: SchemaField[_, _] => Boolean, payload: Boolean)
     extends PolyFunction[Schema, MaybePartialSchema] {
 
-  def apply[S](fa: Schema[S]): MaybePartialSchema[S] = fa match {
-    case StructSchema(shapeId, hints, fields, make) =>
-      if (payload) {
-        fields.zipWithIndex
-          .find { case (schemaField, _) =>
-            keep(schemaField)
-          }
-          .map { case (allowedField, index) =>
-            allowedField.fold(
-              bijectSingle(index, make, total = fields.size == 1)
-            )
-          }
-          .getOrElse {
-            Wedge.Empty
-          }
-      } else {
-        val allowedFields = fields.zipWithIndex.filter {
-          case (schemaField, _) => keep(schemaField)
-        }
-        if (allowedFields.size == fields.size) {
-          Wedge.Right(fa)
+  def apply[S](fa: Schema[S]): MaybePartialSchema[S] = {
+    fa match {
+      case StructSchema(shapeId, hints, fields, make) =>
+        if (payload) {
+          fields.zipWithIndex
+            .find { case (schemaField, _) =>
+              keep(schemaField)
+            }
+            .map { case (allowedField, index) =>
+              allowedField.fold(
+                bijectSingle(index, make, total = fields.size == 1)
+              )
+            }
+            .getOrElse {
+              Wedge.Empty
+            }
         } else {
-          val indexes = allowedFields.map(_._2)
-          val unsafeAccessFields = allowedFields.map { case (schemaField, _) =>
-            schemaField.foldK(fieldFolder[S])
+          val allowedFields = fields.zipWithIndex.filter {
+            case (schemaField, _) => keep(schemaField)
           }
-          def const(values: IndexedSeq[Any]): PartialData[S] =
-            PartialData.Partial(indexes, values, make)
-          Wedge.Left(StructSchema(shapeId, hints, unsafeAccessFields, const))
+          if (allowedFields.size == fields.size) {
+            Wedge.Right(fa)
+          } else {
+            val indexes = allowedFields.map(_._2)
+            val unsafeAccessFields = allowedFields.map {
+              case (schemaField, _) =>
+                schemaField.foldK(fieldFolder[S])
+            }
+            def const(values: IndexedSeq[Any]): PartialData[S] =
+              PartialData.Partial(indexes, values, make)
+            Wedge.Left(StructSchema(shapeId, hints, unsafeAccessFields, const))
+          }
         }
-      }
-    case _ => Wedge.Empty
+      case BijectionSchema(underlying, bijection) =>
+        apply(underlying).bimap(
+          _.biject(_.map(bijection.to), _.map(bijection.from)),
+          _.biject(bijection)
+        )
+      case _ => Wedge.Empty
+    }
   }
 
   private def bijectSingle[S](

@@ -71,7 +71,7 @@ abstract class PizzaSpec
                               |- no payload
                               |""".stripMargin.trim()
 
-  routerTest(positiveEmptyLabel) { (client, uri, log) =>
+  routerTest(positiveEmptyLabel.only) { (client, uri, log) =>
     for {
       res <- client.send[Json](GET(uri / "version"), log)
       (code, headers, body) = res

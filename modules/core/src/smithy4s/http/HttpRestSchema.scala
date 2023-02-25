@@ -22,6 +22,7 @@ object HttpRestSchema {
   // format: on
 
   def apply[A](fullSchema: Schema[A]): HttpRestSchema[A] = {
+
     def isMetadataField(field: SchemaField[_, _]): Boolean = HttpBinding
       .fromHints(field.label, field.instance.hints, fullSchema.hints)
       .isDefined
