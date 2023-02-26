@@ -25,7 +25,7 @@ sealed trait StreamingSchema[A] { self =>
           fieldName,
           schema.transformHintsTransitively(f)
         )
-      case _ => self
+      case _: StreamingSchema.NoStream.type => self
     }
 }
 
