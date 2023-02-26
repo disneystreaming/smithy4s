@@ -120,10 +120,12 @@ object Transformation {
     }
 
   implicit def mappedHintsServiceTransform[Alg[_[_, _, _, _, _]]]: Transformation[Hints=>Hints, Service[Alg], Service[Alg]] =
-    (func: Hints => Hints, that: Service[Alg]) => new Service[Alg] {
+    (mapper: Hints=>Hints, that: Service[Alg]) => new Service[Alg] {
       override type Operation[I, E, O, SI, SO] = that.Operation[I, E, O, SI, SO]
 
-      private val cache = that.endpoints.map(e => e.id -> e.mapHints(func)).toMap
+      private val cache = that.endpoints.foldLeft(Map.empty[ShapeId, Endpoint[I, E, O, SI, SO]]) {
+        case (map, endpoint) => map.+(endpoint.id -> endpoint.mapHints(mapper))
+      }
 
       override val endpoints: List[Endpoint[_, _, _, _, _]] = cache.values.toList
 
@@ -135,7 +137,7 @@ object Transformation {
 
       override def version: String = that.version
 
-      override def hints: Hints = func(that.hints)
+      override def hints: Hints = mapper(that.hints)
 
       override def reified: Alg[Operation] = that.reified
 
@@ -148,4 +150,6 @@ object Transformation {
 
       override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G] = that.mapK5(alg, function)
     }
+
+
 }
