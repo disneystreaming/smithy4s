@@ -16,7 +16,18 @@
 
 package smithy4s
 
-sealed trait StreamingSchema[A]
+sealed trait StreamingSchema[A] { self =>
+
+  def transformHintsTransitively(f: Hints => Hints): StreamingSchema[A] =
+    self match {
+      case StreamingSchema.Streamed(fieldName, schema) =>
+        StreamingSchema.Streamed(
+          fieldName,
+          schema.transformHintsTransitively(f)
+        )
+      case _ => self
+    }
+}
 
 object StreamingSchema {
   def apply[A](fieldName: String, schema: Schema[A]): StreamingSchema[A] =
@@ -26,4 +37,5 @@ object StreamingSchema {
   case class Streamed[A](fieldName: String, schema: Schema[A])
       extends StreamingSchema[A]
   case object NoStream extends StreamingSchema[Nothing]
+
 }

@@ -123,11 +123,13 @@ object Transformation {
     (func: Hints => Hints, that: Service[Alg]) => new Service[Alg] {
       override type Operation[I, E, O, SI, SO] = that.Operation[I, E, O, SI, SO]
 
-      override val endpoints: List[Endpoint[_, _, _, _, _]] = that.endpoints.map(_.mapHints(func))
+      private val cache = that.endpoints.map(e => e.id -> e.mapHints(func)).toMap
+
+      override val endpoints: List[Endpoint[_, _, _, _, _]] = cache.values.toList
 
       override def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO]) = {
         that.endpoint(op) match {
-          case (i, endpoint) => (i, endpoints.find(_.id == endpoint.id).get.asInstanceOf[Endpoint[I, E, O, SI, SO]])
+          case (i, endpoint) => (i, cache(endpoint.id).asInstanceOf[Endpoint[I, E, O, SI, SO]])
         }
       }
 
@@ -142,6 +144,7 @@ object Transformation {
       def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P] = that.toPolyFunction(algebra)
 
       override def id: ShapeId = that.id
+
 
       override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G] = that.mapK5(alg, function)
     }

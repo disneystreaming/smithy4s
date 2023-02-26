@@ -39,12 +39,18 @@ package smithy4s
   * datatypes that typically fit in memory with concerns of streaming (which can
   * be encoded a great many ways, using a greatt many libraries)
   */
-trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
+trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] {
+  outer =>
   def id: ShapeId
+
   final def name: String = id.name
+
   def input: Schema[I]
+
   def output: Schema[O]
+
   def streamedInput: StreamingSchema[SI]
+
   def streamedOutput: StreamingSchema[SO]
 
   def hints: Hints
@@ -58,12 +64,35 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
   ): Endpoint[Op, I, E, O, SI, SO] =
     new Endpoint[Op, I, E, O, SI, SO] {
       def id: ShapeId = outer.id
+
       def input: Schema[I] = outer.input.transformHintsTransitively(f)
+
       def output: Schema[O] = outer.output.transformHintsTransitively(f)
-      def streamedInput: StreamingSchema[SI] = outer.streamedInput
-      def streamedOutput: StreamingSchema[SO] = outer.streamedOutput
+
+      def streamedInput: StreamingSchema[SI] =
+        outer.streamedInput.transformHintsTransitively(f)
+
+      def streamedOutput: StreamingSchema[SO] =
+        outer.streamedOutput.transformHintsTransitively(f)
+
       def hints: Hints = f(outer.hints)
+
       def wrap(input: I): Op[I, E, O, SI, SO] = outer.wrap(input)
+
+      override def errorable: Option[Errorable[E]] = outer.errorable.map {
+        errorable =>
+          new Errorable[E] {
+            override def error: Schema.UnionSchema[E] =
+              error
+                .transformHintsTransitively(f)
+                .asInstanceOf[Schema.UnionSchema[E]]
+
+            override def liftError(throwable: Throwable): Option[E] =
+              errorable.liftError(throwable)
+
+            override def unliftError(e: E): Throwable = errorable.unliftError(e)
+          }
+      }
     }
 
   object Error {
