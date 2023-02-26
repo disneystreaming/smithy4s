@@ -123,7 +123,7 @@ object Transformation {
     (mapper: Hints=>Hints, that: Service[Alg]) => new Service[Alg] {
       override type Operation[I, E, O, SI, SO] = that.Operation[I, E, O, SI, SO]
 
-      private val cache = that.endpoints.foldLeft(Map.empty[ShapeId, Endpoint[I, E, O, SI, SO]]) {
+      private val cache = that.endpoints.foldLeft(Map.empty[ShapeId, Endpoint[_, _, _, _, _]]) {
         case (map, endpoint) => map.+(endpoint.id -> endpoint.mapHints(mapper))
       }
 
