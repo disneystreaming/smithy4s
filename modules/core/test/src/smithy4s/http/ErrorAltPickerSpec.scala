@@ -17,71 +17,67 @@
 package smithy4s
 package http
 
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.capability.Covariant
 import smithy4s.example._
 import ErrorHandlingServiceGen._
 
-final class ErrorAltPickerSpec extends munit.FunSuite {
+final class HttpErrorSelectorSpec extends munit.FunSuite {
+
+  type ConstId[A] = ShapeId
+  implicit val covariantConstId: Covariant[ConstId] = new Covariant[ConstId] {
+    def map[A, B](fa: ConstId[A])(f: A => B): ConstId[B] = fa
+    def emap[A, B](fa: ConstId[A])(
+        f: A => Either[ConstraintError, B]
+    ): ConstId[B] = fa
+  }
+  val compiler = new CachedSchemaCompiler[ConstId] {
+    type Cache = None.type
+    def createCache() = None
+    def fromSchema[A](schema: Schema[A], cache: Cache): ShapeId = fromSchema(
+      schema
+    )
+    def fromSchema[A](schema: Schema[A]): ShapeId = schema.shapeId
+
+  }
+  val selector = HttpErrorSelector(ErrorHandlingOperation.errorable, compiler)
 
   test("pick exact x-error-type - shapeId") {
-    val alts = ErrorHandlingOperation.error.alternatives
-    val errorAltPicker = new ErrorAltPicker(alts)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.FullId(
-      ShapeId("smithy4s.example", "EHNotFound")
-    )
-    val result = errorAltPicker.getPreciseAlternative(discriminator)
-    val expected = Some(ErrorHandlingOperationError.EHNotFoundCase.alt)
-
+    val result = selector(HttpDiscriminator.FullId(EHNotFound.id))
+    val expected = Some(EHNotFound.id)
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - name") {
-    val alts = ErrorHandlingOperation.error.alternatives
-    val errorAltPicker = new ErrorAltPicker(alts)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.NameOnly("EHNotFound")
-    val result = errorAltPicker.getPreciseAlternative(discriminator)
-    val expected = Some(ErrorHandlingOperationError.EHNotFoundCase.alt)
+    val result = selector(HttpDiscriminator.NameOnly(EHNotFound.id.name))
+    val expected = Some(EHNotFound.id)
 
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - name is case sensitive") {
-    val alts = ErrorHandlingOperation.error.alternatives
-    val errorAltPicker = new ErrorAltPicker(alts)
-    val discriminator =
-      ErrorAltPicker.ErrorDiscriminator.NameOnly("EHNotFound".toLowerCase())
-    val result = errorAltPicker.getPreciseAlternative(discriminator)
-
+    val result =
+      selector(HttpDiscriminator.NameOnly(EHNotFound.id.name.toLowerCase))
     assertEquals(result, None)
   }
 
   test("pick exact x-error-type - status code exact match") {
-    val alts = ErrorHandlingOperation.error.alternatives
-    val errorAltPicker = new ErrorAltPicker(alts)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(404)
-    val result = errorAltPicker.getPreciseAlternative(discriminator)
-    val expected = Some(ErrorHandlingOperationError.EHNotFoundCase.alt)
+    val result = selector(HttpDiscriminator.StatusCode(404))
+    val expected = Some(EHNotFound.id)
 
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - status code fallback") {
-    val alts = ErrorHandlingOperation.error.alternatives
-    val errorAltPicker = new ErrorAltPicker(alts)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(400)
-    val result = errorAltPicker.getPreciseAlternative(discriminator)
-    val expected =
-      Some(ErrorHandlingOperationError.EHFallbackClientErrorCase.alt)
+    val result = selector(HttpDiscriminator.StatusCode(400))
+    val expected = Some(EHFallbackClientError.id)
 
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - status code fallback to server-level error") {
-    val alts = ErrorHandlingOperation.error.alternatives
-    val errorAltPicker = new ErrorAltPicker(alts)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(500)
-    val result = errorAltPicker.getPreciseAlternative(discriminator)
-    val expected =
-      Some(ErrorHandlingOperationError.EHFallbackServerErrorCase.alt)
+    val result = selector(HttpDiscriminator.StatusCode(500))
+    val expected = Some(EHFallbackServerError.id)
 
     assertEquals(result, expected)
   }
@@ -93,47 +89,33 @@ final class ErrorAltPickerSpec extends munit.FunSuite {
     ErrorHandlingServiceExtraErrorsGen.ExtraErrorOperation.error.alternatives
       .asInstanceOf[Vector[GenericAlt]]
 
+  val amendedSelector = new HttpErrorSelector(alts ++ altsExtra, compiler)
+
   test(
     "pick exact x-error-type - status code fallback fail when multiple options - client"
   ) {
-    val errorAltPicker = new ErrorAltPicker(alts ++ altsExtra)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(460)
-    val result =
-      errorAltPicker.getPreciseAlternative(discriminator)
-
+    val result = amendedSelector(HttpDiscriminator.StatusCode(460))
     assertEquals(result, None)
   }
 
   test(
     "pick exact x-error-type - status code fallback fail when multiple options - server"
   ) {
-    val errorAltPicker = new ErrorAltPicker(alts ++ altsExtra)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(560)
-    val result =
-      errorAltPicker.getPreciseAlternative(discriminator)
-
+    val result = amendedSelector(HttpDiscriminator.StatusCode(560))
     assertEquals(result, None)
   }
 
   test(
     "pick exact x-error-type - status code exact fail when multiple options - client"
   ) {
-    val errorAltPicker = new ErrorAltPicker(alts ++ altsExtra)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(404)
-    val result =
-      errorAltPicker.getPreciseAlternative(discriminator)
-
+    val result = amendedSelector(HttpDiscriminator.StatusCode(404))
     assertEquals(result, None)
   }
 
   test(
     "pick exact x-error-type - status code exact fail when multiple options - server"
   ) {
-    val errorAltPicker = new ErrorAltPicker(alts ++ altsExtra)
-    val discriminator = ErrorAltPicker.ErrorDiscriminator.StatusCode(503)
-    val result =
-      errorAltPicker.getPreciseAlternative(discriminator)
-
+    val result = amendedSelector(HttpDiscriminator.StatusCode(503))
     assertEquals(result, None)
   }
 

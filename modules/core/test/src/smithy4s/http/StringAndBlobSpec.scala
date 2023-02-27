@@ -54,14 +54,34 @@ class StringAndBlobSpec() extends munit.FunSuite {
   val stringsAndBlobs =
     CodecAPI.nativeStringsAndBlob(dummy)
 
-  private def compilePartial[A](schema: Schema[A]) = {
+  private def compilePartial[A](
+      schema: Schema[A]
+  ): (HttpMediaType, A => Array[Byte], Array[Byte] => Either[Throwable, A]) = {
     val transform = smithy4s.internals.ToPartialSchema(
-      _.has(smithy.api.HttpPayload),
+      _.instance.hints.has(smithy.api.HttpPayload),
       payload = true
     )
-    stringsAndBlobs.compileCodec(
-      transform(schema).getOrElse(fail("Could not compile a partial schema"))
-    )
+    transform(schema) match {
+      case Wedge.Left(partialSchema) =>
+        val codec = stringsAndBlobs.compileCodec(partialSchema)
+        val write = (input: A) =>
+          stringsAndBlobs.writeToArray(codec, PartialData.Total(input))
+        val read = (array: Array[Byte]) =>
+          stringsAndBlobs
+            .decodeFromByteArray(codec, array)
+            .map(PartialData.unsafeReconcile(_))
+        val mediaType = stringsAndBlobs.mediaType(codec)
+        (mediaType, write, read)
+      case Wedge.Right(totalSchema) =>
+        val codec = stringsAndBlobs.compileCodec(totalSchema)
+        val write = (input: A) => stringsAndBlobs.writeToArray(codec, input)
+        val read = (array: Array[Byte]) =>
+          stringsAndBlobs
+            .decodeFromByteArray(codec, array)
+        val mediaType = stringsAndBlobs.mediaType(codec)
+        (mediaType, write, read)
+      case Wedge.Empty => fail("Could not compile a partial schema")
+    }
   }
 
   def check[A: Schema](
@@ -69,12 +89,9 @@ class StringAndBlobSpec() extends munit.FunSuite {
       expectedBodyString: String,
       expectedMediaType: String
   ): Unit = {
-    val codec = compilePartial(implicitly[Schema[A]])
-    val result = stringsAndBlobs.writeToArray(codec, PartialData.Total(input))
-    val roundTripped = stringsAndBlobs
-      .decodeFromByteArray(codec, result)
-      .map(PartialData.unsafeReconcile(_))
-    val mediaType = stringsAndBlobs.mediaType(codec)
+    val (mediaType, write, read) = compilePartial(implicitly[Schema[A]])
+    val result = write(input)
+    val roundTripped = read(result)
     expect(result.sameElements(expectedBodyString.getBytes()))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType(expectedMediaType), mediaType)

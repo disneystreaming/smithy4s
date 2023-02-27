@@ -68,7 +68,8 @@ case class ToPartialSchema(keep: SchemaField[_, _] => Boolean, payload: Boolean)
           _.biject(_.map(bijection.to), _.map(bijection.from)),
           _.biject(bijection)
         )
-      case _ => Wedge.Empty
+      case LazySchema(s) => apply(s.value)
+      case _             => Wedge.Empty
     }
   }
 
