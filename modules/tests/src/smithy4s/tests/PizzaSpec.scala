@@ -71,7 +71,7 @@ abstract class PizzaSpec
                               |- no payload
                               |""".stripMargin.trim()
 
-  routerTest(positiveEmptyLabel.only) { (client, uri, log) =>
+  routerTest(positiveEmptyLabel) { (client, uri, log) =>
     for {
       res <- client.send[Json](GET(uri / "version"), log)
       (code, headers, body) = res
@@ -551,7 +551,8 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case PayloadError(PayloadPath(List()), _, _) =>
+        case e @ PayloadError(PayloadPath(List()), _, _) =>
+          e.printStackTrace
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")

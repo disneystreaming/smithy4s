@@ -23,6 +23,11 @@ trait MessageEncoder[F[_], A]
 
 object MessageEncoder {
 
+  def empty[F[_], A]: MessageEncoder[F, A] = new MessageEncoder[F, A] {
+    def addToRequest(request: Request[F], a: A): Request[F] = request
+    def addToResponse(response: Response[F], a: A): Response[F] = response
+  }
+
   def combine[F[_], A](
       left: MessageEncoder[F, A],
       right: MessageEncoder[F, A]
@@ -120,6 +125,8 @@ object MessageEncoder {
               MessageEncoder
                 .fromEntityEncoder(F, bodyEncoder)
             MessageEncoder.combine(metadataMessageEncoder, bodyMessageEncoder)
+          case HttpRestSchema.Empty(_) =>
+            empty[F, A]
           // format: on
         }
       }

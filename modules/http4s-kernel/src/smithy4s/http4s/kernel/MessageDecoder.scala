@@ -135,6 +135,11 @@ object MessageDecoder {
                 bodyPartial <- response.as[PartialData[A]]
               } yield PartialData.unsafeReconcile(metadataPartial, bodyPartial)
             }
+          case HttpRestSchema.Empty(value) =>
+            new MessageDecoder[F, A] {
+              def decodeRequest(request: Request[F]): F[A] = F.pure(value)
+              def decodeResponse(response: Response[F]): F[A] = F.pure(value)
+            }
             //format: on
         }
       }

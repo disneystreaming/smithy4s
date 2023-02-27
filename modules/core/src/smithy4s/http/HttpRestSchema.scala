@@ -19,6 +19,7 @@ object HttpRestSchema {
   final case class OnlyMetadata[A](schema: Schema[A]) extends HttpRestSchema[A]
   final case class OnlyBody[A](schema: Schema[A]) extends HttpRestSchema[A]
   final case class MetadataAndBody[A](metadataSchema: Schema[PartialData[A]], body: Schema[PartialData[A]]) extends HttpRestSchema[A]
+  final case class Empty[A](value: A) extends HttpRestSchema[A]
   // format: on
 
   def apply[A](fullSchema: Schema[A]): HttpRestSchema[A] = {
@@ -45,7 +46,10 @@ object HttpRestSchema {
       case (Wedge.Left(metadataSchema), Wedge.Left(bodySchema)) =>
         MetadataAndBody(metadataSchema, bodySchema)
       case (_, _) =>
-        OnlyBody(fullSchema)
+        fullSchema match {
+          case Schema.PrimitiveSchema(_, _, Primitive.PUnit) => Empty(())
+          case _ => OnlyBody(fullSchema)
+        }
     }
   }
 
