@@ -35,10 +35,11 @@ private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
       tag: Primitive[P]
   ): JCodec[P] = {
     tag match {
-      case Primitive.PTimestamp => super.timestampJCodec(hints,TimestampFormat.EPOCH_SECONDS)
-      case Primitive.PDouble    => double
-      case Primitive.PFloat     => float
-      case _                    => super.primitive(shapeId, hints, tag)
+      case Primitive.PTimestamp =>
+        super.timestampJCodec(hints, TimestampFormat.EPOCH_SECONDS)
+      case Primitive.PDouble => double
+      case Primitive.PFloat  => float
+      case _                 => super.primitive(shapeId, hints, tag)
     }
   }
 

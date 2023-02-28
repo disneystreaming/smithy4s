@@ -30,11 +30,10 @@ object HttpProtocolCompliance {
 
   def clientTests[F[_], Alg[_[_, _, _, _, _]]](
       reverseRouter: ReverseRouter[F],
-      service: Service[Alg],
+      service: Service[Alg]
   )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
-    new internals.ClientHttpComplianceTestCase[F, Alg](
-      reverseRouter,
-      service).allClientTests()
+    new internals.ClientHttpComplianceTestCase[F, Alg](reverseRouter, service)
+      .allClientTests()
 
   def serverTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F],
