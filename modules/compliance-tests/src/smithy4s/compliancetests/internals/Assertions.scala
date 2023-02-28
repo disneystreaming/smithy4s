@@ -51,12 +51,16 @@ private[internals] object assert {
     }
   }
 
-  def eql[A: Eq](result: A, testCase: A): ComplianceResult = {
+  def eql[A: Eq](
+      result: A,
+      testCase: A,
+      prefix: String = ""
+  ): ComplianceResult = {
     if (result === testCase) {
       success
     } else {
       fail(
-        s"the result value: ${pprint.apply(result)} was not equal to the expected TestCase value ${pprint
+        s"$prefix the result value: ${pprint.apply(result)} was not equal to the expected TestCase value ${pprint
           .apply(testCase)}."
       )
     }
@@ -101,7 +105,7 @@ private[internals] object assert {
         headers
           .get(CIString(key))
           .map { v =>
-            assert.eql[String](expectedValue, v.head.value)
+            assert.eql[String](expectedValue, v.head.value, s"Header $key: ")
           }
           .getOrElse(
             assert.fail(s"'$key' header is missing")

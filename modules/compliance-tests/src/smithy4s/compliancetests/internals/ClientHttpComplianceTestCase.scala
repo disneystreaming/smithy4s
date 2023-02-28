@@ -73,14 +73,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
 
     val pathAssert =
-      assert.eql(expectedUri.path.renderString, request.uri.path.renderString)
+      assert.eql(
+        expectedUri.path.renderString,
+        request.uri.path.renderString,
+        "path test :"
+      )
     val queryAssert = assert.eql(
       expectedUri.query.renderString,
-      request.uri.query.renderString
+      request.uri.query.renderString,
+      "query test :"
     )
     val methodAssert = assert.eql(
       testCase.method.toLowerCase(),
-      request.method.name.toLowerCase()
+      request.method.name.toLowerCase(),
+      "method test :"
     )
     val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:
       List(
@@ -98,9 +104,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
     type R[I_, E_, O_, SE_, SO_] = F[O_]
-
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
-    val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
+    val inputFromDocument = Document.Decoder.fromSchema(
+      endpoint.input.transformHintsTransitively(awsMask)
+    )
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
@@ -156,13 +162,14 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       endpoint.id,
       clientRes,
       run = {
-        val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
         implicit val outputEq: Eq[O] =
-          smithy4s.compliancetests.internals.eq.EqSchemaVisitor(revisedSchema)
+          smithy4s.compliancetests.internals.eq.EqSchemaVisitor(endpoint.output)
         val buildResult = {
           errorSchema
             .toLeft {
-              val outputDecoder = Document.Decoder.fromSchema(revisedSchema)
+              val outputDecoder = Document.Decoder.fromSchema(
+                endpoint.output.transformHintsTransitively(awsMask)
+              )
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)
@@ -171,7 +178,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             .left
             .map(_.errorEq[F])
         }
-        val mediaType = aMediatype(endpoint.output, codecs)
+        val mediaType = aMediatype(
+          endpoint.output.transformHintsTransitively(
+            mapAllTimestampsToEpochDocument
+          ),
+          codecs
+        )
         val status = Status.fromInt(testCase.code).liftTo[F]
 
         status.flatMap { status =>
@@ -213,8 +225,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                     .apply(endpoint.wrap(dummyInput))
                   res.map { output =>
                     assert.eql(
-                      expectedOutput,
-                      output
+                      output,
+                      expectedOutput
                     )
                   }
                 }

@@ -20,6 +20,8 @@ package compliancetests
 import org.http4s.{Header, Headers, Uri}
 import cats.implicits._
 import cats.data.Chain
+import smithy4s.kinds.PolyFunction5
+
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
@@ -28,23 +30,120 @@ package object internals {
   // Due to AWS's usage of integer as the canonical representation of a Timestamp in smithy , we need to provide the decoder with instructions to use a Long instead.
   // therefore the timestamp type is switched to type epochSeconds: Long
   // This is just a workaround thats limited to testing scenarios
-  private[compliancetests] def mapAllTimestampsToEpoch[A](
-      schema: Schema[A]
-  ): Schema[A] = {
-    schema.transformHintsTransitively(h =>
-      h.++(Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen))
+
+  private[compliancetests] implicit class EndpointSchemaMapHints[Op[
+      _,
+      _,
+      _,
+      _,
+      _
+  ], I, E, O, SI, SO](endpoint: Endpoint[Op, I, E, O, SI, SO]) {
+
+    def mapHints(
+        func: MappedHintsSchemaVisitor
+    ): Endpoint[Op, I, E, O, SI, SO] = {
+      new Endpoint[Op, I, E, O, SI, SO] {
+        override def id: ShapeId = endpoint.id
+
+        override def input: Schema[I] = func(endpoint.input)
+
+        override def output: Schema[O] = func(endpoint.output)
+
+        override def streamedInput: StreamingSchema[SI] = endpoint.streamedInput
+
+        override def streamedOutput: StreamingSchema[SO] =
+          endpoint.streamedOutput
+
+        override def hints: Hints = endpoint.hints
+
+        def wrap(input: I) = endpoint.wrap(input)
+
+        override def errorable: Option[Errorable[E]] = endpoint.errorable.map {
+          errorable =>
+            new Errorable[E] {
+              def error: schema.Schema.UnionSchema[E] =
+                func(errorable.error).asInstanceOf[schema.Schema.UnionSchema[E]]
+
+              def liftError(throwable: Throwable): Option[E] =
+                errorable.liftError(throwable)
+
+              def unliftError(e: E): Throwable = errorable.unliftError(e)
+
+            }
+        }
+      }
+    }
+  }
+
+  private[compliancetests] def transformService[Alg[_[_, _, _, _, _]]](
+      that: Service[Alg]
+  )(func: Hints => Hints): Service[Alg] = {
+    val visitor = new MappedHintsSchemaVisitor(func)
+
+    new Service[Alg] {
+
+      override type Operation[I, E, O, SI, SO] = that.Operation[I, E, O, SI, SO]
+
+      val cache
+          : Map[ShapeId, smithy4s.Endpoint[that.Operation, _, _, _, _, _]] =
+        that.endpoints.map(_.mapHints(visitor)).map(e => e.id -> e).toMap
+
+      override def endpoints: List[Endpoint[_, _, _, _, _]] =
+        cache.values.toList
+
+      override def endpoint[I, E, O, SI, SO](
+          op: that.Operation[I, E, O, SI, SO]
+      ): (I, Endpoint[I, E, O, SI, SO]) =
+        that.endpoint(op) match {
+          case (i, e) =>
+            (i, cache(e.id).asInstanceOf[Endpoint[I, E, O, SI, SO]])
+        }
+
+      override def fromPolyFunction[P[_, _, _, _, _]](
+          function: PolyFunction5[that.Operation, P]
+      ): Alg[P] = that.fromPolyFunction(function)
+
+      override def version: String = that.version
+
+      override def hints: Hints = that.hints
+
+      override def reified: Alg[Operation] = that.reified
+
+      override def toPolyFunction[P[_, _, _, _, _]](
+          algebra: Alg[P]
+      ): PolyFunction5[Operation, P] = that.toPolyFunction(algebra)
+
+      override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
+          alg: Alg[F],
+          function: PolyFunction5[F, G]
+      ): Alg[G] = that.mapK5(alg, function)
+
+      override def id: ShapeId = that.id
+    }
+  }
+  type HintMapper = Hints => Hints
+  private[compliancetests] val awsMask: HintMapper = hints =>
+    mapAllTimestampsToEpochDocument(HintMask(IntEnum)(hints))
+
+  private[compliancetests] val mapAllTimestampsToEpoch: HintMapper = h => {
+    if (
+      h.get[smithy.api.TimestampFormat].isEmpty && h
+        .get[smithy.api.HttpHeader]
+        .isEmpty && h.get[smithy.api.HttpLabel].isEmpty && h
+        .get[smithy.api.HttpQuery]
+        .isEmpty
+      && h.get[smithy.api.HttpQueryParams].isEmpty
     )
+      h ++ Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen)
+    else {
+      h
+    }
   }
 
-  // a HintMask to hold onto hints that are necessary for correct document decoding
-  private val awsMask = HintMask(IntEnum)
-
-  private[compliancetests] implicit class SchemaOps[A](val schema: Schema[A])
-      extends AnyVal {
-
-    def awsHintMask: Schema[A] =
-      schema.transformHintsTransitively(awsMask.apply)
-  }
+  private[compliancetests] val mapAllTimestampsToEpochDocument: HintMapper =
+    h => {
+      h ++ Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen)
+    }
 
   private def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
@@ -91,8 +190,8 @@ package object internals {
   }
 
   /*
-   This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
-   what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
+       This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
+       what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
    */
   private[compliancetests] def parseList(s: String): List[String] = {
     s.foldLeft((Chain.empty[String], 0, 0, false)) {

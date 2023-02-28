@@ -449,7 +449,7 @@ class DocumentDecoderSchemaVisitor(
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(apply(instance)(label :: pp, doc))
         }
-        jsonLabel(alt) -> encoder
+        label -> encoder
       }.toMap
 
     hints match {
