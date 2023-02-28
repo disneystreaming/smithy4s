@@ -75,7 +75,7 @@ package object internals {
     }
   }
 
-  private[compliancetests] def transformService[Alg[_[_, _, _, _, _]]](
+  private[smithy4s] def transformService[Alg[_[_, _, _, _, _]]](
       that: Service[Alg]
   )(func: Hints => Hints): Service[Alg] = {
     val visitor = new MappedHintsSchemaVisitor(func)
@@ -122,10 +122,10 @@ package object internals {
     }
   }
   type HintMapper = Hints => Hints
-  private[compliancetests] val awsMask: HintMapper = hints =>
+  private[smithy4s] val awsMask: HintMapper = hints =>
     mapAllTimestampsToEpochDocument(HintMask(IntEnum)(hints))
 
-  private[compliancetests] val mapAllTimestampsToEpoch: HintMapper = h => {
+  private[smithy4s] val mapAllTimestampsToEpoch: HintMapper = h => {
     if (
       h.get[smithy.api.TimestampFormat].isEmpty && h
         .get[smithy.api.HttpHeader]

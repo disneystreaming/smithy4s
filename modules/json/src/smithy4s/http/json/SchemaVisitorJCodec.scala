@@ -434,15 +434,19 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PLong       => PrimitiveJCodecs.long
       case PShort      => PrimitiveJCodecs.short
       case PString     => PrimitiveJCodecs.string
-      case PTimestamp =>
-        hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME) match {
-          case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
-          case TimestampFormat.EPOCH_SECONDS =>
-            PrimitiveJCodecs.timestampEpochSeconds
-          case TimestampFormat.HTTP_DATE => PrimitiveJCodecs.timestampHttpDate
-        }
+      case PTimestamp => timestampJCodec(hints)
+
       case PUnit => PrimitiveJCodecs.unit
       case PUUID => PrimitiveJCodecs.uuid
+    }
+  }
+
+  def timestampJCodec(hints: Hints,defaultTimestamp: TimestampFormat= TimestampFormat.DATE_TIME): JCodec[Timestamp] = {
+    hints.get(TimestampFormat).getOrElse(defaultTimestamp) match {
+      case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
+      case TimestampFormat.EPOCH_SECONDS =>
+        PrimitiveJCodecs.timestampEpochSeconds
+      case TimestampFormat.HTTP_DATE => PrimitiveJCodecs.timestampHttpDate
     }
   }
 

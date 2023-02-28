@@ -75,7 +75,8 @@ object AwsJsonProtocolComplianceTest
         HttpProtocolCompliance
           .clientTests(
             reverseRouter,
-            wrapper.service
+            smithy4s.compliancetests.internals
+              .transformService(wrapper.service)(smithy4s.compliancetests.internals.mapAllTimestampsToEpoch)
           )
       })
   }
@@ -110,7 +111,7 @@ object AwsJsonProtocolComplianceTest
       .map {
         case Right(expectations) => expectations
         case Left(e) =>
-          weaver.Expectations.Helpers.failure(e.getStackTrace.mkString("\n"))
+          weaver.Expectations.Helpers.failure(e.getMessage + "\n" + e.getStackTrace.mkString("\n"))
       }
   )
 
