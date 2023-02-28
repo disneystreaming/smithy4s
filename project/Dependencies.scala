@@ -33,7 +33,7 @@ object Dependencies {
     val alloyVersion = "0.1.13"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
-    val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
+    val `protocol-tests` = org % "alloy-protocol-tests" % "0.1.11-8-00903b-DIRTY4e50f31f-SNAPSHOT"
   }
 
   val Cats = new {

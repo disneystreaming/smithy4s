@@ -25,6 +25,7 @@ import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
 import weaver._
+import smithy4s.compliancetests.internals._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
@@ -65,15 +66,15 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
     def routes[Alg[_[_, _, _, _, _]]](
         impl: FunctorAlgebra[Alg, IO]
-    )(implicit service: Service[Alg]): Resource[IO, HttpRoutes[IO]] =
+    )(implicit service: Service[Alg]): Resource[IO, HttpRoutes[IO]] = {
       SimpleRestJsonBuilder(service).routes(impl).resource
+    }
 
     def reverseRoutes[Alg[_[_, _, _, _, _]]](app: HttpApp[IO])(implicit
         service: Service[Alg]
     ): Resource[IO, FunctorAlgebra[Alg, IO]] = {
       import org.http4s.implicits._
       val baseUri = uri"http://localhost/"
-
       SimpleRestJsonBuilder(service)
         .client(Client.fromHttpApp(app))
         .uri(baseUri)
@@ -120,7 +121,11 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       .toList
       .flatMap(wrapper => {
         HttpProtocolCompliance
-          .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
+          .clientAndServerTests(
+            SimpleRestJsonIntegration,
+            smithy4s.compliancetests.internals
+              .transformService(wrapper.service)(mapAllTimestampsToEpoch)
+          )
       })
   }
 
@@ -168,7 +173,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
             case Right(expectations) => expectations
             case Left(throwable) =>
               Expectations.Helpers.failure(
-                s"unexpected error when running test ${throwable.getMessage}"
+                s"unexpected error when running test ${throwable.getMessage} \n ${throwable}"
               )
           }
 
