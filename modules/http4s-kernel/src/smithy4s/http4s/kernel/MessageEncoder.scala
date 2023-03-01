@@ -5,8 +5,10 @@ import org.http4s.EntityEncoder
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
+import org.http4s.Uri
 import smithy4s.PartialData
 import smithy4s.http.HttpRestSchema
+import smithy4s.http.HttpEndpoint
 import smithy4s.http.Metadata
 import smithy4s.schema._
 
@@ -70,6 +72,38 @@ object MessageEncoder {
       response.withEntity(a)
     }
   }
+
+  def fromHttpEndpoint[F[_]: Concurrent, I](
+      httpEndpoint: HttpEndpoint[I]
+  ): MessageEncoder[F, I] = new MessageEncoder[F, I] {
+    def addToRequest(request: Request[F], input: I): Request[F] = {
+      val path = httpEndpoint.path(input)
+      val staticQueries = httpEndpoint.staticQueryParams
+      val oldUri = request.uri
+      val newUri = oldUri
+        .copy(path = oldUri.path.addSegments(path.map(Uri.Path.Segment(_))))
+        .withMultiValueQueryParams(staticQueries)
+      request.withUri(newUri)
+    }
+
+    def addToResponse(response: Response[F], input: I): Response[F] = {
+      response
+    }
+  }
+
+  def rpcSchemaCompiler[F[_]](
+      entityDecoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[MessageEncoder[F, *]] =
+    new CachedSchemaCompiler[MessageEncoder[F, *]] {
+      type Cache = entityDecoderCompiler.Cache
+      def createCache(): Cache =
+        entityDecoderCompiler.createCache()
+
+      def fromSchema[A](schema: Schema[A], cache: Cache): MessageEncoder[F, A] =
+        fromEntityEncoder(F, entityDecoderCompiler.fromSchema(schema, cache))
+      def fromSchema[A](schema: Schema[A]): MessageEncoder[F, A] =
+        fromEntityEncoder(F, entityDecoderCompiler.fromSchema(schema))
+    }
 
   /**
     * A compiler for MessageEncoder that abides by REST-semantics :

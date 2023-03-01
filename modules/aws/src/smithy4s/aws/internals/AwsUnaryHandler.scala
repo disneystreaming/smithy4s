@@ -15,44 +15,36 @@
  */
 
 package smithy4s
-package http4s
+package aws
+package internals
 
-import org.http4s._
+import _root_.aws.api.{Service => AwsService}
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
-import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
 import cats.effect.Concurrent
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
-class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], F[_]](
-    baseUri:         Uri,
-    val service:     smithy4s.Service[Alg],
-    client:          Client[F],
-    compilerContext: ClientCodecs[F],
-    middleware:      ClientEndpointMiddleware[F]
-)(implicit effect:   Concurrent[F]) {
+class AwsInterpreter[Alg[_[_, _, _, _, _]], F[_]](
+    val service:   smithy4s.Service[Alg],
+    awsService:    AwsService,
+    client:        Client[F],
+    clientCodecs:  ClientCodecs[F],
+    awsEnv:        AwsEnvironment[F]
+)(implicit effect: Concurrent[F]) {
 // format: on
 
   val impl: service.Impl[F] = service.impl {
     new Endpoint.FunctorHandler[service.Operation, F] {
       def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] =
-        SmithyHttp4sClientEndpoint
-          .make(
-            baseUri,
-            client,
-            endpoint,
-            compilerContext,
-            middleware.prepare(service)(endpoint)
-          )
-          .left
-          .map { e =>
-            throw new Exception(
-              s"Operation ${endpoint.name} is not bound to http semantics",
-              e
-            )
-          }
-          .merge
+        new AwsUnaryEndpoint(
+          service.id,
+          service.hints,
+          awsService,
+          awsEnv,
+          endpoint,
+          clientCodecs
+        )
     }
   }
 

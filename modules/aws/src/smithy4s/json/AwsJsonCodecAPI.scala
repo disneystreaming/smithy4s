@@ -16,7 +16,6 @@
 
 package smithy4s.aws.json
 
-import smithy4s.json.JsonCodecAPI
 private[aws] class AwsJsonCodecAPI()
     extends smithy4s.http.json.JsonCodecAPI(
       new AwsSchemaVisitorJCodec(_),

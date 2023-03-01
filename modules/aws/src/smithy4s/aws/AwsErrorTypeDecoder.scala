@@ -19,22 +19,25 @@ package smithy4s.aws
 import cats.MonadThrow
 import cats.syntax.all._
 import smithy4s.aws.kernel.`X-Amzn-Errortype`
-import smithy4s.http.CaseInsensitive
-import smithy4s.http.CodecAPI
+import smithy4s.http.HttpDiscriminator
+import org.typelevel.ci.CIString
+import smithy4s.schema._
+import smithy4s.http4s.kernel._
+import org.http4s._
 
 object AwsErrorTypeDecoder {
 
-  private val errorTypeHeader = CaseInsensitive(`X-Amzn-Errortype`)
+  private val errorTypeHeader = CIString(`X-Amzn-Errortype`)
 
   private[aws] def fromResponse[F[_]](
-      codecApi: CodecAPI
-  )(implicit F: MonadThrow[F]): HttpResponse => F[Option[String]] = {
-    val codec = codecApi.compileCodec(AwsErrorType.schema)
-    (response: HttpResponse) =>
+      decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]]
+  )(implicit F: MonadThrow[F]): Response[F] => F[Option[HttpDiscriminator]] = {
+    val decoder = decoderCompiler.fromSchema(AwsErrorType.schema)
+    (response: Response[F]) =>
       val maybeTypeHeader =
-        response.metadata.headers
+        response.headers
           .get(errorTypeHeader)
-          .flatMap(_.headOption)
+          .map(_.head.value)
       val errorTypeF = maybeTypeHeader match {
         case Some(typeHeader) =>
           F.pure(
@@ -45,7 +48,7 @@ object AwsErrorTypeDecoder {
             )
           )
         case None =>
-          F.fromEither(codecApi.decodeFromByteArray(codec, response.body))
+          decoder.decodeResponse(response)
       }
       errorTypeF.map(_.discriminator)
   }
@@ -56,15 +59,19 @@ object AwsErrorTypeDecoder {
       code: Option[String],
       typeHeader: Option[String]
   ) {
-    def discriminator: Option[String] = {
-      __type.orElse(code).orElse(typeHeader).map { s =>
-        val columnIndex = s.indexOf(':')
-        val withoutColumn =
-          if (columnIndex >= 0) s.substring(0, columnIndex) else s
-        val hashIndex = withoutColumn.indexOf('#')
-        if (hashIndex >= 0) withoutColumn.substring(hashIndex + 1)
-        else withoutColumn
-      }
+    def discriminator: Option[HttpDiscriminator] = {
+      __type
+        .orElse(code)
+        .orElse(typeHeader)
+        .map { s =>
+          val columnIndex = s.indexOf(':')
+          val withoutColumn =
+            if (columnIndex >= 0) s.substring(0, columnIndex) else s
+          val hashIndex = withoutColumn.indexOf('#')
+          if (hashIndex >= 0) withoutColumn.substring(hashIndex + 1)
+          else withoutColumn
+        }
+        .map(HttpDiscriminator.NameOnly(_))
     }
   }
 

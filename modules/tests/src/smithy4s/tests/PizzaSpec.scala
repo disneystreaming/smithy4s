@@ -551,8 +551,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case e @ PayloadError(PayloadPath(List()), _, _) =>
-          e.printStackTrace
+        case PayloadError(PayloadPath(List()), _, _) =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")

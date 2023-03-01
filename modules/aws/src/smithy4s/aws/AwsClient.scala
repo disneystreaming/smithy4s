@@ -16,15 +16,18 @@
 
 package smithy4s.aws
 
-import cats.effect.Concurrent
+import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
-import internals.AwsJsonRPCInterpreter
-import internals.AwsQueryRPCInterpreter
+import smithy4s.http4s.kernel._
+import smithy4s.aws.internals._
+import smithy4s.Endpoint
+import smithy4s.kinds.Kind1
+import _root_.aws.api.{Service => AwsService}
 
 object AwsClient {
 
-  def apply[Alg[_[_, _, _, _, _]], F[_]: Concurrent](
+  def apply[Alg[_[_, _, _, _, _]], F[_]: Async](
       service: smithy4s.Service[Alg],
       awsEnv: AwsEnvironment[F]
   ): Resource[F, AwsClient[Alg, F]] =
@@ -38,58 +41,58 @@ object AwsClient {
   ): Either[AwsClientInitialisationError, AWSInterpreterBuilder[Alg]] =
     for {
       awsService <- service.hints
-        .get(_root_.aws.api.Service)
+        .get(AwsService)
         .toRight(AwsClientInitialisationError.NotAws(service.id))
-      endpointPrefix <- awsService.endpointPrefix.toRight(
-        AwsClientInitialisationError.NoEndpointPrefix(awsService)
-      )
       awsProtocol <- AwsProtocol(service.hints).toRight(
         AwsClientInitialisationError.UnsupportedProtocol(
           serviceId = service.id,
           knownProtocols = AwsProtocol.supportedProtocols
         )
       )
-    } yield new AWSInterpreterBuilder(awsProtocol, service, endpointPrefix)
+    } yield new AWSInterpreterBuilder(awsProtocol, awsService, service)
 
   final class AWSInterpreterBuilder[Alg[_[_, _, _, _, _]]](
       awsProtocol: AwsProtocol,
-      service: smithy4s.Service[Alg],
-      endpointPrefix: String
+      awsService: AwsService,
+      service: smithy4s.Service[Alg]
   ) {
 
-    private def interpreter[F[_]: Concurrent](
+    private def interpreter[F[_]: Async](
         awsEnv: AwsEnvironment[F]
-    ): service.Interpreter[AwsCall[F, *, *, *, *, *]] =
-      awsProtocol match {
+    ): service.FunctorInterpreter[F] = {
+      val clientCodecs: ClientCodecs[F] = awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
-          new AwsJsonRPCInterpreter[Alg, service.Operation, F](
-            service,
-            endpointPrefix,
-            awsEnv,
-            "application/x-amz-json-1.0",
-            new json.AwsJsonCodecAPI()
-          )
+          // TODO "application/x-amz-json-1.0"
+          AwsJsonCodecs.make[F]
 
         case AwsProtocol.AWS_JSON_1_1(_) =>
-          new AwsJsonRPCInterpreter[Alg, service.Operation, F](
-            service,
-            endpointPrefix,
-            awsEnv,
-            "application/x-amz-json-1.1",
-            new json.AwsJsonCodecAPI()
-          )
-        case AwsProtocol.AWS_QUERY(_) =>
-          new AwsQueryRPCInterpreter[Alg, service.Operation, F](
-            service,
-            endpointPrefix,
-            awsEnv,
-            "application/x-www-form-urlencoded"
-          )
+          // TODO "application/x-amz-json-1.1",
+          AwsJsonCodecs.make[F]
+        case AwsProtocol.AWS_QUERY(_) => ???
       }
+      service.interpreter[Kind1[F]#toKind5] {
+        new Endpoint.FunctorHandler[service.Operation, F] {
+          def apply[I, E, O, SI, SO](
+              endpoint: service.Endpoint[I, E, O, SI, SO]
+          ): I => F[O] =
+            new AwsUnaryEndpoint(
+              service.id,
+              service.hints,
+              awsService,
+              awsEnv,
+              endpoint,
+              clientCodecs
+            )
+        }
+      }
+    }
 
-    def build[F[_]: Concurrent](
+    def build[F[_]: Async](
         awsEnv: AwsEnvironment[F]
-    ): AwsClient[Alg, F] = service.fromPolyFunction(interpreter(awsEnv))
+    ): AwsClient[Alg, F] =
+      service.fromPolyFunction(
+        interpreter[F](awsEnv).andThen(AwsCall.liftEffect[F])
+      )
   }
 
 }

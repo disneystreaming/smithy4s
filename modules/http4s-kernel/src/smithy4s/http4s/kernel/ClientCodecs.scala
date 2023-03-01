@@ -14,10 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.http4s
+package smithy4s.http4s.kernel
 
-import smithy4s.http4s.kernel._
-// import smithy4s.http.Metadata
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
 import smithy4s.Errorable

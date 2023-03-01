@@ -16,6 +16,8 @@
 
 package smithy4s.aws
 
+import smithy4s.kinds._
+
 // format: off
 trait AwsCall[F[_], Input, Err, Output, StreamedInput, StreamedOutput] {
 
@@ -30,4 +32,14 @@ trait AwsCall[F[_], Input, Err, Output, StreamedInput, StreamedOutput] {
   //   * streamed input of type Byte, and no streamed output.
   //   */
   // def upload[P](payload: P)(implicit uploadable: AwsUploadable[F, P], ev: AwsOperationKind.ByteUpload[StreamedInput, StreamedOutput]): F[Output]
+}
+
+object AwsCall {
+
+  def liftEffect[F[_]] : PolyFunction5[Kind1[F]#toKind5, AwsCall[F, *, *, *, *, *]] = new PolyFunction5[Kind1[F]#toKind5, AwsCall[F, *, *, *, *, *]]{
+    def apply[I, E, O, SI, SO](fo: F[O]) : AwsCall[F, I, E, O, SI, SO] = new AwsCall[F, I, E, O, SI, SO]{
+      def run(implicit ev: AwsOperationKind.Unary[SI, SO]): F[O] = fo
+    }
+  }
+
 }

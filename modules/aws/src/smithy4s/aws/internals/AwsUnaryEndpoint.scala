@@ -18,111 +18,73 @@ package smithy4s
 package aws
 package internals
 
+import smithy4s.http4s.kernel._
 import cats.syntax.all._
 import smithy4s.http._
-import smithy4s.schema.SchemaAlt
-import smithy4s.http4s.kernel._
+import org.http4s.Request
+import org.http4s.Response
+import org.http4s.Uri
+import org.http4s.Method
+import _root_.aws.api.{Service => AwsService}
 import cats.effect.Concurrent
-import cats.effect.syntax.all._
-import org.http4s.EntityDecoder
+import cats.effect.Resource
 
-import smithy4s.http4s.kernel.EntityCompiler
 // format: off
 private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+  serviceId: ShapeId,
+  serviceHints: Hints,
+  awsService: AwsService,
   awsEnv: AwsEnvironment[F],
-  signer: AwsSigner[F],
   endpoint: Endpoint[Op, I, E, O, SI, SO],
-  codecAPI: CodecAPI
-)(implicit F: Concurrent[F]) { outer =>
+  clientCodecs: ClientCodecs[F],
+)(implicit effect: Concurrent[F]) extends (I => F[O]) {
 // format: on
 
-  private val entityCompiler = EntityCompiler.fromCodecAPI(codecAPI)
-  private val cache = entityCompiler.createCache()
-  private val metadataEncoder = Metadata.Encoder.fromSchema(endpoint.input)
-  private val inputHasBody =
-    Metadata.TotalDecoder.fromSchema(endpoint.input).isEmpty
-  private val inputCodec =
-    codecAPI.compileCodec(endpoint.input)
+  val signingClient = AwsSigningClient(
+    serviceId,
+    endpoint.id,
+    serviceHints,
+    endpoint.hints,
+    awsEnv
+  )
 
-  private implicit val outputEntityDecoder: EntityDecoder[F, O] =
-    entityCompiler.compileEntityDecoder(endpoint.output, cache)
-
-  private val getErrorType: HttpResponse => F[Option[String]] =
-    AwsErrorTypeDecoder.fromResponse[F](codecAPI)
-
-  private[aws] def toAwsCall(input: I): AwsCall[F, I, E, O, SI, SO] =
-    new AwsCall[F, I, E, O, SI, SO] {
-      def run(implicit ev: AwsOperationKind.Unary[SI, SO]): F[O] =
-        outer.run(input)
-    }
-
-  private def run(input: I): F[O] = {
-    val metadata = metadataEncoder.encode(input)
-    val payload =
-      if (inputHasBody)
-        AwsHttpBody.InMemory(codecAPI.writeToArray(inputCodec, input))
-      else AwsHttpBody.Empty
-    signer
-      .sign(endpoint.name, metadata, payload)
-      .toResource
-      .flatMap(awsEnv.httpClient.run(_))
-      .use { http4sResponse =>
-        if (http4sResponse.status.isSuccess) {
-          http4sResponse.as[O]
-        } else {
-          HttpResponse.fromHttp4s[F](http4sResponse).flatMap { response =>
-            getErrorType(response).flatMap[O] { maybeDiscriminator =>
-              val errAndAlt = for {
-                discriminator <- maybeDiscriminator
-                err <- endpoint.errorable
-                oneOf <- err.error.alternatives.find(_.label == discriminator)
-              } yield (err, oneOf)
-
-              errAndAlt match {
-                case Some((err, alt)) =>
-                  processError(err, alt, response)
-                case None =>
-                  F.raiseError(
-                    AwsClientError(response.statusCode, response.body)
-                  )
-              }
-            }
-          }
-        }
+  def apply(input: I): F[O] = {
+    Resource
+      .eval(inputToRequest(input))
+      .flatMap(signingClient.run)
+      .use { response =>
+        outputFromResponse(response)
       }
   }
 
-  private def processError[ErrorType](
-      errorable: Errorable[E],
-      oneOf: SchemaAlt[E, ErrorType],
-      response: HttpResponse
-  ): F[O] = {
-    val schema = oneOf.instance
-    val errorMetadataDecoder = Metadata.PartialDecoder.fromSchema(schema)
-    val errorCodec = codecAPI.compileCodec(schema)
-    decodeResponse(response, errorCodec, errorMetadataDecoder)
-      .map(oneOf.inject)
-      .map(errorable.unliftError)
-      .flatMap(F.raiseError)
-  }
-
-  private def decodeResponse[T](
-      response: HttpResponse,
-      codec: codecAPI.Codec[T],
-      metadataDecoder: Metadata.PartialDecoder[T]
-  ): F[T] = {
-    val metadata = response.metadata
-    metadataDecoder.total match {
-      case Some(totalDecoder) =>
-        F.fromEither(totalDecoder.decode(metadata))
-      case None =>
-        for {
-          metadataPartial <- metadataDecoder.decode(metadata).liftTo[F]
-          bodyPartial <-
-            codecAPI.decodeFromByteArrayPartial(codec, response.body).liftTo[F]
-          decoded <- metadataPartial.combineCatch(bodyPartial).liftTo[F]
-        } yield decoded
+  // format: off
+  val inputEncoder: RequestEncoder[F, I] = {
+    // Some AWS protocols abide by REST semantics, some don't
+    HttpEndpoint.unapply(endpoint) match {
+      case Some(httpEndpoint) => {
+        val httpEndpointEncoder = MessageEncoder.fromHttpEndpoint(httpEndpoint)
+        val codecsEncoder = clientCodecs.inputEncoder(endpoint.input)
+        RequestEncoder.combine(httpEndpointEncoder, codecsEncoder)
+      }
+      case None => clientCodecs.inputEncoder(endpoint.input)
     }
   }
+  val outputDecoder: ResponseDecoder[F, O] = clientCodecs.outputDecoder(endpoint.output)
+  val errorDecoder: ResponseDecoder[F, Throwable] = clientCodecs.errorDecoder(endpoint.errorable)
+  val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
+  // format: on
+
+  def inputToRequest(input: I): F[Request[F]] = {
+    awsEnv.region.map { region =>
+      val baseUri: Uri =
+        Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com")
+      val baseRequest = Request[F](Method.POST, baseUri).withEmptyBody
+      inputEncoder.addToRequest(baseRequest, input)
+    }
+  }
+
+  private def outputFromResponse(response: Response[F]): F[O] =
+    if (response.status.isSuccess) outputDecoder.decodeResponse(response)
+    else errorDecoder.decodeResponse(response).flatMap(effect.raiseError[O](_))
 
 }

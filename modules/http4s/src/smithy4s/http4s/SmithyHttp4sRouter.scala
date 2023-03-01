@@ -23,7 +23,7 @@ import cats.implicits._
 import org.http4s._
 import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 import smithy4s.kinds._
-import smithy4s.http4s.kernel.pathParamsKey
+import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
 
 // format: off

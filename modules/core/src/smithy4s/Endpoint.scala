@@ -16,6 +16,8 @@
 
 package smithy4s
 
+import kinds._
+
 /**
   * A representation of a smithy operation.
   *
@@ -59,4 +61,22 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
         err.liftError(throwable).map(err -> _)
       }
   }
+}
+
+object Endpoint {
+
+  type Interpreter[F[_, _, _, _, _], I, E, O, SI, SO] = I => F[I, E, O, SI, SO]
+  type Handler[Op[_, _, _, _, _], F[_, _, _, _, _]] =
+    PolyFunction5[Endpoint[Op, *, *, *, *, *], Interpreter[F, *, *, *, *, *]]
+
+  // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
+
+  trait FunctorHandler[Op[_, _, _, _, _], F[_]] extends Handler[Op, Kind1[F]#toKind5] {
+    override def apply[I, E, O, SI, SO](endpoint: Endpoint[Op, I, E, O, SI, SO]): I => F[O]
+  }
+
+  trait BiFunctorHandler[Op[_, _, _, _, _], F[_, _]] extends Handler[Op, Kind2[F]#toKind5] {
+    override def apply[I, E, O, SI, SO](endpoint: Endpoint[Op, I, E, O, SI, SO]): I => F[E, O]
+  }
+
 }

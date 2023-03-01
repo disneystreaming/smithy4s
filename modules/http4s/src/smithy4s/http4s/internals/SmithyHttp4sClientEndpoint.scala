@@ -27,16 +27,6 @@ import smithy4s.http._
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
 
-/**
-  * A construct that encapsulates interprets and a low-level
-  * client into a high-level, domain specific function.
-  */
-// format: off
-private[http4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO] {
-  def send(input: I): F[O]
-}
-// format: on
-
 private[http4s] object SmithyHttp4sClientEndpoint {
 
   def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
@@ -45,10 +35,7 @@ private[http4s] object SmithyHttp4sClientEndpoint {
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: ClientCodecs[F],
       middleware: Client[F] => Client[F]
-  ): Either[
-    HttpEndpoint.HttpEndpointError,
-    SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO]
-  ] =
+  ): Either[HttpEndpoint.HttpEndpointError, I => F[O]] =
     HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
       toHttp4sMethod(httpEndpoint.method)
         .leftMap { e =>
@@ -80,12 +67,12 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   httpEndpoint: HttpEndpoint[I],
   clientCodecs: ClientCodecs[F],
   middleware: Client[F] => Client[F]
-)(implicit effect: Concurrent[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
+)(implicit effect: Concurrent[F]) extends (I => F[O]) {
 // format: on
 
   private val transformedClient: Client[F] = middleware(client)
 
-  def send(input: I): F[O] = {
+  def apply(input: I): F[O] = {
     transformedClient
       .run(inputToRequest(input))
       .use { response =>
@@ -94,26 +81,17 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   }
 
   // format: off
-  val inputEncoder: RequestEncoder[F, I] = clientCodecs.inputEncoder(endpoint.input)
+  val inputEncoder: RequestEncoder[F, I] = {
+    val httpEndpointEncoder = MessageEncoder.fromHttpEndpoint(httpEndpoint)
+    val codecsEncoder = clientCodecs.inputEncoder(endpoint.input)
+    RequestEncoder.combine(httpEndpointEncoder, codecsEncoder)
+  }
   val outputDecoder: ResponseDecoder[F, O] = clientCodecs.outputDecoder(endpoint.output)
   val errorDecoder: ResponseDecoder[F, Throwable] = clientCodecs.errorDecoder(endpoint.errorable)
   // format: on
 
-  def discriminate(response: Response[F]): F[Option[HttpDiscriminator]] =
-    HttpDiscriminator
-      .fromMetadata(
-        smithy4s.errorTypeHeader,
-        getResponseMetadata(response)
-      )
-      .pure[F]
-
   def inputToRequest(input: I): Request[F] = {
-    val path = httpEndpoint.path(input)
-    val staticQueries = httpEndpoint.staticQueryParams
-    val uri = baseUri
-      .copy(path = baseUri.path.addSegments(path.map(Uri.Path.Segment(_))))
-      .withMultiValueQueryParams(staticQueries)
-    val baseRequest = Request[F](method, uri).withEmptyBody
+    val baseRequest = Request[F](method, baseUri).withEmptyBody
     inputEncoder.addToRequest(baseRequest, input)
   }
 

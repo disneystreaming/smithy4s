@@ -15,6 +15,18 @@ trait ResponseEncoder[F[_], A] {
 
 object ResponseEncoder {
 
+  def empty[F[_], A]: ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
+    def addToResponse(response: Response[F], a: A): Response[F] = response
+  }
+
+  def combine[F[_], A](
+      left: ResponseEncoder[F, A],
+      right: ResponseEncoder[F, A]
+  ): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
+    def addToResponse(response: Response[F], a: A): Response[F] =
+      right.addToResponse(left.addToResponse(response, a), a)
+  }
+
   def forError[F[_], E](
       errorTypeHeader: String,
       maybeErrorable: Option[Errorable[E]],

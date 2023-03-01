@@ -23,6 +23,7 @@ import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
+import smithy4s.http4s.kernel._
 import smithy4s.kinds._
 
 /**
@@ -100,15 +101,14 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sReverseRouter[Alg, service.Operation, F](
+          new SmithyHttp4sReverseRouter[Alg, F](
             uri,
             service,
             client,
             clientCodecsMake.makeClientCodecs[F],
             middleware
-          )
+          ).impl
         }
-        .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
     }
   }
 

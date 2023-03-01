@@ -40,6 +40,9 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   type Interpreter[F[_, _, _, _, _]] = PolyFunction5[Operation, F]
   type FunctorInterpreter[F[_]] = PolyFunction5[Operation, kinds.Kind1[F]#toKind5]
   type BiFunctorInterpreter[F[_, _]] = PolyFunction5[Operation, kinds.Kind2[F]#toKind5]
+  type Handler[F[_, _, _, _, _]] = Endpoint.Handler[Operation, F]
+  type FunctorHandler[F[_]] = Endpoint.Handler[Operation, kinds.Kind1[F]#toKind5]
+  type BiFunctorHandler[F[_, _]] = Endpoint.Handler[Operation, kinds.Kind2[F]#toKind5]
   type Impl[F[_]] = Alg[kinds.Kind1[F]#toKind5]
   type ErrorAware[F[_, _]] = Alg[kinds.Kind2[F]#toKind5]
 
@@ -49,12 +52,24 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   def version: String
   def hints: Hints
   def reified: Alg[Operation]
-  def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Operation, P]): Alg[P]
-  def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P]
+  def fromPolyFunction[F[_, _, _, _, _]](function: PolyFunction5[Operation, F]): Alg[F]
+  def toPolyFunction[F[_, _, _, _, _]](algebra: Alg[F]): PolyFunction5[Operation, F]
 
   final val opToEndpoint: PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
     def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] = endpoint(op)._2
   }
+
+  final def interpreter[F[_, _, _, _, _]](handler: Handler[F]) : Interpreter[F] = new Interpreter[F]{
+    val cached = handler.unsafeCacheBy(endpoints.map(Kind5.existential(_)), identity)
+    def apply[I, E, O, SI, SO](operation: Operation[I, E, O, SI, SO]): F[I, E, O, SI, SO] = {
+      val (input, ep) = endpoint(operation)
+      cached(ep).apply(input)
+    }
+  }
+
+  final def algebra[F[_, _, _, _, _]](handler: Handler[F]) : Alg[F] = fromPolyFunction(interpreter(handler))
+  final def impl[F[_]](handler: FunctorHandler[F]) : Impl[F] = algebra[Kind1[F]#toKind5](handler)
+  final def errorAware[F[_, _]](handler: BiFunctorHandler[F]) : ErrorAware[F] = algebra[Kind2[F]#toKind5](handler)
 
 }
 
@@ -79,4 +94,5 @@ object Service {
     final def toPolyFunction[P[_, _, _, _, _]](algebra: PolyFunction5[Op, P]): PolyFunction5[Op, P] = algebra
     final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]): PolyFunction5[Op, G] = algebra.andThen(function)
   }
+
 }
