@@ -122,8 +122,6 @@ package object internals {
     }
   }
   type HintMapper = Hints => Hints
-  private[smithy4s] val awsMask: HintMapper = hints =>
-    mapAllTimestampsToEpochDocument(HintMask(IntEnum)(hints))
 
   private[smithy4s] val mapAllTimestampsToEpoch: HintMapper = h => {
     if (
@@ -140,7 +138,7 @@ package object internals {
     }
   }
 
-  private[compliancetests] val mapAllTimestampsToEpochDocument: HintMapper =
+  private[smithy4s] val mapAllTimestampsToEpochDocument: HintMapper =
     h => {
       h ++ Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen)
     }
