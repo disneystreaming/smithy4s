@@ -85,9 +85,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
     implicit val inputEq: Eq[I] = EqSchemaVisitor(endpoint.input)
-    val inputFromDocument = Document.Decoder.fromSchema(
-      endpoint.input.transformHintsTransitively(awsMask)
-    )
+    val testModel =  AwsDecoder.fromSchema(endpoint.input)
+    .decode(testCase.params.getOrElse(Document.obj()))
+      .liftTo[F]
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
@@ -119,9 +119,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   case Left(_) =>
                     ce.timeout(inputDeferred.get, 1.second).flatMap {
                       foundInput =>
-                        inputFromDocument
-                          .decode(testCase.params.getOrElse(Document.obj()))
-                          .liftTo[F]
+                        testModel
                           .map { decodedInput =>
                             assert.eql(foundInput, decodedInput)
                           }
@@ -158,9 +156,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
             .toLeft {
-              val outputDecoder = Document.Decoder.fromSchema(
-                endpoint.output.transformHintsTransitively(awsMask)
-              )
+              val outputDecoder: Document.Decoder[O] = AwsDecoder.fromSchema(endpoint.output)
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)

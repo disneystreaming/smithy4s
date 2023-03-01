@@ -32,6 +32,7 @@ import smithy4s.http.PayloadError
 import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.internals.TestConfig._
+
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
@@ -104,9 +105,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
     type R[I_, E_, O_, SE_, SO_] = F[O_]
-    val inputFromDocument = Document.Decoder.fromSchema(
-      endpoint.input.transformHintsTransitively(awsMask)
-    )
+    val inputFromDocument = AwsDecoder.fromSchema(endpoint.input)
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
@@ -167,9 +166,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         val buildResult = {
           errorSchema
             .toLeft {
-              val outputDecoder = Document.Decoder.fromSchema(
-                endpoint.output.transformHintsTransitively(awsMask)
-              )
+              val outputDecoder: Document.Decoder[O] =
+                AwsDecoder.fromSchema(endpoint.output)
+
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)
