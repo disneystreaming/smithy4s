@@ -67,23 +67,20 @@ class MappedHintsSchemaVisitor(func: Hints => Hints)
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): Schema[S] = {
-    val nt = transform(hints)
+    val addHintsTransformation = transformK(hints)
     val mappedFields: Vector[SchemaField[S, _]] = fields.map { field =>
-      field.mapK(nt)
+      field.mapK(addHintsTransformation)
     }
 
     StructSchema(shapeId, func(hints), mappedFields, make)
   }
 
-  private def transform(hints: Hints) = {
-    val nt: kinds.PolyFunction[Schema, Schema] =
-      new kinds.PolyFunction[Schema, Schema] {
-        override def apply[A](fa: Schema[A]): Schema[A] = self(
-          fa.addHints(hintMask(hints))
-        )
-      }
-    nt
-  }
+  private def transformK(hints: Hints) =
+    new kinds.PolyFunction[Schema, Schema] {
+      override def apply[A](fa: Schema[A]): Schema[A] = self(
+        fa.addHints(hintMask(hints))
+      )
+    }
 
   override def union[U](
       shapeId: ShapeId,
@@ -91,22 +88,21 @@ class MappedHintsSchemaVisitor(func: Hints => Hints)
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): Schema[U] = {
-    val mappedAlts: Vector[SchemaAlt[U, _]] = alternatives.map { alt =>
-      alt.mapK(transform(hints))
+    val transformedAlts: Vector[SchemaAlt[U, _]] = alternatives.map { alt =>
+      alt.mapK(transformK(hints))
     }
     def project[A](
         alt: SchemaAlt[U, A]
-    ): U => Option[Alt.SchemaAndValue[U, A]] = {
-      val func: U => Option[A] = dispatch.projector(alt)
-      (u: U) => func(u).map(alt(_))
+    ): U => Option[Alt.SchemaAndValue[U, A]] = { (u: U) =>
+      dispatch.projector(alt)(u).map(alt(_))
     }
-    val x: Vector[U => Option[Alt.SchemaAndValue[U, _]]] =
-      mappedAlts.map(schemaAlt => project(schemaAlt))
+    val projectedAlts: Vector[U => Option[Alt.SchemaAndValue[U, _]]] =
+      transformedAlts.map(schemaAlt => project(schemaAlt))
 
     val reduced: U => Option[Alt.SchemaAndValue[U, _]] =
-      x.reduce((a, b) => u => a(u).orElse(b(u)))
+      projectedAlts.reduce((a, b) => u => a(u).orElse(b(u)))
 
-    UnionSchema(shapeId, func(hints), mappedAlts, reduced(_).get)
+    UnionSchema(shapeId, func(hints), transformedAlts, reduced(_).get)
   }
 
   override def biject[A, B](

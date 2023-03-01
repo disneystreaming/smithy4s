@@ -122,8 +122,6 @@ package object internals {
     }
   }
   type HintMapper = Hints => Hints
-  private[compliancetests] val awsMask: HintMapper = hints =>
-    mapAllTimestampsToEpochDocument(HintMask(IntEnum)(hints))
 
   private[compliancetests] val mapAllTimestampsToEpoch: HintMapper = h => {
     if (

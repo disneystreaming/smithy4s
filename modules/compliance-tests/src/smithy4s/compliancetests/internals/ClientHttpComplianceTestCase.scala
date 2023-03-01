@@ -178,9 +178,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             .map(_.errorEq[F])
         }
         val mediaType = aMediatype(
-          endpoint.output.transformHintsTransitively(
-            mapAllTimestampsToEpochDocument
-          ),
+          endpoint.output,
           codecs
         )
         val status = Status.fromInt(testCase.code).liftTo[F]

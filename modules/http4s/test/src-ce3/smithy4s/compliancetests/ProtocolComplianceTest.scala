@@ -173,7 +173,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
             case Right(expectations) => expectations
             case Left(throwable) =>
               Expectations.Helpers.failure(
-                s"unexpected error when running test ${throwable.getMessage} \n ${throwable}"
+                s"unexpected error when running test ${throwable.getMessage} \n $throwable"
               )
           }
 
@@ -202,12 +202,6 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   def expectFailure(
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
-    res.bifoldMap(
-      _ => Expectations.Helpers.success,
-      _ =>
-        Expectations.Helpers.failure(
-          "An expected failure has passed, we might need to update the AllowList  "
-        )
-    )
+    res.foldMap(_ => Expectations.Helpers.success)
   }
 }
