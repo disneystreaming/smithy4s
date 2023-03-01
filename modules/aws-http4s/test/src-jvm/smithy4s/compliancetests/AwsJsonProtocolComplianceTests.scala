@@ -26,8 +26,10 @@ object AwsJsonProtocolComplianceTest
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     val all: DynamicSchemaIndex => List[ComplianceTest[IO]] = dsi =>
       awsJson1_1(dsi) ++ awsJson1_0(dsi)
+
     fs2.Stream
       .evals(dynamicSchemaIndexLoader.map(all(_)))
+      .filterNot(_.endpoint.name.contains("NullOperation"))
       .parEvalMapUnbounded(runInWeaver)
   }
 

@@ -34,8 +34,10 @@ trait Smithy4sEqInstances {
     Eq[Array[Byte]].contramap[ByteArray](_.array).eqv(x, y)
   implicit val documentEq: Eq[Document] = Eq[String].contramap(_.show)
   implicit val timeStampEq: Eq[Timestamp] = Eq[Long].contramap(_.epochSecond)
-  implicit val floatEq: Eq[Float] = (x: Float, y: Float) => x == y || (x.isNaN && y.isNaN)
-    implicit val doubleEq: Eq[Double] = (x: Double, y: Double) => x == y || (x.isNaN && y.isNaN)
+  implicit val floatEq: Eq[Float] = (x: Float, y: Float) =>
+    x == y || (x.isNaN && y.isNaN)
+  implicit val doubleEq: Eq[Double] = (x: Double, y: Double) =>
+    x == y || (x.isNaN && y.isNaN)
 
 }
 object Smithy4sEqInstances extends Smithy4sEqInstances
