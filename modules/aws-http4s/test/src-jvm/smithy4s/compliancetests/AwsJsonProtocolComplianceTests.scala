@@ -27,6 +27,7 @@ object AwsJsonProtocolComplianceTest
     val all: DynamicSchemaIndex => List[ComplianceTest[IO]] = dsi =>
       awsJson1_1(dsi) ++ awsJson1_0(dsi)
 
+    // filtering out Null operation as we dont support sparse yet
     fs2.Stream
       .evals(dynamicSchemaIndexLoader.map(all(_)))
       .filterNot(_.endpoint.name.contains("NullOperation"))
