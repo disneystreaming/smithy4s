@@ -78,6 +78,34 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
     }
   }
 
+  property("Converts from DATE_TIME format with timezone offset") {
+    forAll { (i: Date, o: Int) =>
+      val totalOffset = Math.abs(o % 64800)
+      val offsetHours = totalOffset / 3600
+      val offsetMinutes = (totalOffset % 3600) / 60
+      val offsetSeconds = totalOffset % 60
+      val epochSecond = (i.valueOf() / 1000).toLong
+      val nano = (i.valueOf() % 1000).toInt * 1000000
+      val formatted = Timestamp(epochSecond, nano)
+        .format(TimestampFormat.DATE_TIME)
+        .dropRight(1) + {
+        if (offsetSeconds == 0)
+          f"${if (o >= 0) "+" else "-"}$offsetHours%02d:$offsetMinutes%02d"
+        else
+          f"${if (o >= 0) "+" else "-"}$offsetHours%02d:$offsetMinutes%02d:$offsetSeconds%02d"
+      }
+      val ts = Timestamp(
+        epochSecond + {
+          if (o >= 0) -totalOffset
+          else totalOffset
+        },
+        nano
+      )
+      val parsed = Timestamp.parse(formatted, TimestampFormat.DATE_TIME)
+      expect.same(parsed, Some(ts))
+    }
+  }
+
   property("Converts to/from HTTP_DATE format") {
     forAll { (i: Date) =>
       val epochSecond = (i.valueOf() / 1000).toLong
