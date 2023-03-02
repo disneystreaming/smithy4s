@@ -124,8 +124,7 @@ class SmithyNodeDocumentDecoderSchemaVisitor(
   ): DocumentDecoder[U] = {
 
     val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject) =>
-        val label = alt.label
+      alternatives.map { case  Alt(label, instance, inject) =>
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(apply(instance)(label :: pp, doc))
         }
