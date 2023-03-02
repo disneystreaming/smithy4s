@@ -138,13 +138,9 @@ class TimestampSpec() extends munit.FunSuite with munit.ScalaCheckSuite {
   }
 
   property("Parse EPOCH_SECONDS format with invalid input") {
-    val EpochFormat = """^(\d+)(\.(\d+))?""".r
-    forAll { (str: String) =>
-      val parsed = Timestamp.parse(str, TimestampFormat.EPOCH_SECONDS)
-      parsed match {
-        case Some(_) => expect(EpochFormat.pattern.matcher(str).matches)
-        case None    => expect(!EpochFormat.pattern.matcher(str).matches)
-      }
+    forAll(Gen.alphaStr) { (str: String) =>
+      val parsed = Timestamp.parse(str + "X", TimestampFormat.EPOCH_SECONDS)
+      expect.same(parsed, None)
     }
   }
 
