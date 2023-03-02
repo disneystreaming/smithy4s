@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -80,5 +79,5 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
 
 sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, smithy4s.Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

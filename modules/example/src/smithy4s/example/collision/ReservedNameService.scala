@@ -1,6 +1,5 @@
 package smithy4s.example.collision
 
-import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -135,5 +134,5 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
 
 sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ReservedNameServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, smithy4s.Endpoint[ReservedNameServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

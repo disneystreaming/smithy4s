@@ -433,7 +433,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(genServiceName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def endpoint: (${op.input}, $Endpoint_[${op
+        line"def endpoint: (${op.input}, $EndpointAlias_[${op
           .renderAlgParams(genServiceName)}]) = ($inputRef, $opNameRef)"
       ),
       obj(

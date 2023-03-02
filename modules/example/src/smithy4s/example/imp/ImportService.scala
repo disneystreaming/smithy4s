@@ -1,6 +1,5 @@
 package smithy4s.example.imp
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -116,5 +115,5 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, smithy4s.Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
