@@ -25,8 +25,6 @@ import software.amazon.smithy.build.ProjectionTransformer
 import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.loader.ModelAssembler
-import software.amazon.smithy.model.loader.ModelDiscovery
-import software.amazon.smithy.model.loader.ModelManifestException
 
 import java.io.File
 import java.net.URLClassLoader
@@ -45,22 +43,16 @@ private[codegen] object ModelLoader {
     val currentClassLoader = this.getClass().getClassLoader()
     val deps = resolveDependencies(dependencies, localJars, repositories)
 
-    val modelsInJars = deps.flatMap { files =>
-      val manifestUrl =
-        ModelDiscovery.createSmithyJarManifestUrl(files.getAbsolutePath())
-      try { ModelDiscovery.findModels(manifestUrl).asScala }
-      catch {
-        case _: ModelManifestException => Seq.empty
-      }
-    }
-
     // Loading the upstream model
     val upstreamModel = Model
       .assembler()
       // disabling cache to support snapshot-driven experimentation
       .putProperty(ModelAssembler.DISABLE_JAR_CACHE, true)
       .addClasspathModels(currentClassLoader, discoverModels)
-      .addImports(modelsInJars)
+      .discoverModels {
+        val jarUrls = deps.map(_.toURI().toURL()).toArray
+        new URLClassLoader(jarUrls, null)
+      }
       .assemble()
       .unwrap()
 
