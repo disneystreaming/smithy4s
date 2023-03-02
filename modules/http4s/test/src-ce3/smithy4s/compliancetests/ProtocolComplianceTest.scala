@@ -29,7 +29,7 @@ import smithy4s.compliancetests.internals._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
-import smithy4s.compliancetests.AllowRule.{allowRuleDecoder, AllowRules}
+import AllowRule.{allowRuleDecoder, AllowRules}
 import smithy4s.http.PayloadError
 import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
