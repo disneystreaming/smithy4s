@@ -329,6 +329,11 @@ object Timestamp extends TimestampCompanionPlatform {
       pos += 2
       ch0 * 10 + ch1 - 528 // 528 == '0' * 11
     }
+    var epochSecond = toEpochDay(
+      year,
+      month,
+      day
+    ) * 86400 + (hour * 3600 + minute * 60 + second)
     var nano = 0
     var ch = (0: Char)
     if (pos < len) {
@@ -349,15 +354,51 @@ object Timestamp extends TimestampCompanionPlatform {
         }
       }
     }
-    if (ch != 'Z' || pos != len) error()
-    new Timestamp(
-      toEpochDay(
-        year,
-        month,
-        day
-      ) * 86400 + (hour * 3600 + minute * 60 + second),
-      nano
-    )
+    if (ch != 'Z') {
+      val isNeg = ch == '-' || (ch != '+' && {
+        error()
+        true
+      })
+      if (pos + 2 > len) error()
+      var offsetTotal = {
+        val ch0 = s.charAt(pos)
+        val ch1 = s.charAt(pos + 1)
+        if (ch0 < '0' || ch0 > '1' || ch1 < '0' || ch1 > '9') error()
+        pos += 2
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      } * 3600
+      if (
+        pos + 3 <= len && {
+          ch = s.charAt(pos)
+          pos += 1
+          ch == ':'
+        } && {
+          offsetTotal += {
+            val ch0 = s.charAt(pos)
+            val ch1 = s.charAt(pos + 1)
+            if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+            pos += 2
+            ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+          } * 60
+          pos + 3 <= len
+        } && {
+          ch = s.charAt(pos)
+          pos += 1
+          ch == ':'
+        }
+      ) offsetTotal += {
+        val ch0 = s.charAt(pos)
+        val ch1 = s.charAt(pos + 1)
+        if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+        pos += 2
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      }
+      if (offsetTotal > 64800) error() // 64800 == 18 * 60 * 60
+      if (isNeg) offsetTotal = -offsetTotal
+      epochSecond -= offsetTotal
+    }
+    if (pos != len) error()
+    new Timestamp(epochSecond, nano)
   }
 
   private[this] def parseEpochSeconds(s: String): Timestamp = {
