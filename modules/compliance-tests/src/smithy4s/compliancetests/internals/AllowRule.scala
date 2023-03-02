@@ -13,13 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package smithy4s.compliancetests
 
-import smithy4s.compliancetests.internals.TestConfig
+package smithy4s.compliancetests
+package internals
+
+import cats.syntax.all._
 import smithy.test.AppliesTo
 import smithy4s.compliancetests.internals.TestConfig.TestType
 import smithy4s.Document
-import cats.syntax.all._
+
 case class AllowRule(id: String, configs: TestConfig)
 object AllowRule {
 
