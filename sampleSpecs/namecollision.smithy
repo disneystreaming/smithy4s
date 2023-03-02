@@ -15,6 +15,4 @@ errors: [MyOpError]
 @error("client")
 structure MyOpError {}
 
-structure Endpoint {
-
-}
+structure Endpoint {}
