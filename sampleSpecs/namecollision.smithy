@@ -8,11 +8,8 @@ operations: [MyOp]
 }
 
 operation MyOp {
-input: Endpoint
-errors: [MyOpError]
+    errors: [MyOpError]
 }
 
 @error("client")
 structure MyOpError {}
-
-structure Endpoint {}
