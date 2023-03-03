@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -91,5 +90,5 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
 
 sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[StreamedObjectsOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, smithy4s.Endpoint[StreamedObjectsOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
