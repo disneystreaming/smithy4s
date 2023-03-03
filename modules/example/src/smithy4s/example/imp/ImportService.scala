@@ -1,5 +1,6 @@
 package smithy4s.example.imp
 
+import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -67,7 +68,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   }
   case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
-    def endpoint: (Unit, Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
+    def endpoint: (Unit, ImportServiceGen.Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
   }
   object ImportOperation extends ImportServiceGen.Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
@@ -115,5 +116,5 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, smithy4s.Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
