@@ -45,9 +45,9 @@ private[codegen] object ModelLoader {
     val currentClassLoader = this.getClass().getClassLoader()
     val deps = resolveDependencies(dependencies, localJars, repositories)
 
-    val modelsInJars = deps.flatMap { files =>
+    val modelsInJars = deps.flatMap { file =>
       val manifestUrl =
-        ModelDiscovery.createSmithyJarManifestUrl(files.getAbsolutePath())
+        ModelDiscovery.createSmithyJarManifestUrl(file.toURI().toURL().getPath)
       try { ModelDiscovery.findModels(manifestUrl).asScala }
       catch {
         case _: ModelManifestException => Seq.empty
