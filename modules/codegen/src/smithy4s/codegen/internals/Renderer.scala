@@ -203,13 +203,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
         val shapeDocs: List[String] =
-          doc.docLines.map(_.replaceAll("@", "{@literal @}"))
+          doc.docLines.map(_.replace("@", "{@literal @}"))
         val memberDocs: List[String] =
           if (skipMemberDocs) List.empty
           else
             doc.memberDocLines.flatMap { case (memberName, text) =>
               s"@param $memberName" :: text
-                .map(_.replaceAll("@", "{@literal @}"))
+                .map(_.replace("@", "{@literal @}"))
                 .map("  " + _)
             }.toList
 
