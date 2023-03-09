@@ -81,8 +81,8 @@ private[internals] object Renderer {
       val renderResult = r.renderDecl(decl)
       val p = s"package ${unit.namespace}"
 
-      val nameCollisions: Set[String] = renderResult.list
-        .flatMap(_.segments.toList)
+      val segments = renderResult.list.flatMap(_.segments.toList)
+      val localCollisions: Set[String] = segments
         .groupBy {
           // we need to compare NameRefs as they would be imported in order to avoid unnecessarily qualifying types in the same package
           case ref: NameRef => ref.asImport
@@ -97,6 +97,19 @@ private[internals] object Renderer {
         .groupBy(identity)
         .filter(_._2.size > 1)
         .keySet
+
+      val otherDecls = unit.declarations.filterNot(_ == decl).map(_.name).toSet
+      def differentPackage(ref: NameRef): Boolean =
+        ref.pkg.mkString(".") != unit.namespace
+
+      // Collisions between references in the current file and declarations
+      // in the current package
+      val namespaceCollisions = segments.collect {
+        case ref: NameRef if otherDecls(ref.name) && differentPackage(ref) =>
+          ref.name
+      }.toSet
+
+      val nameCollisions = localCollisions ++ namespaceCollisions
 
       val allImports: List[String] = renderResult.list.flatMap { line =>
         line.segments.toList.collect {
