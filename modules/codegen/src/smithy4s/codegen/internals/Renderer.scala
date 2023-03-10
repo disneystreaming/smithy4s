@@ -98,7 +98,8 @@ private[internals] object Renderer {
         .filter(_._2.size > 1)
         .keySet
 
-      val otherDecls = unit.declarations.filterNot(_ == decl).map(_.nameRef).toSet
+      val otherDecls =
+        unit.declarations.filterNot(_ == decl).map(_.nameRef).toSet
 
       def differentPackage(ref: NameRef): Boolean =
         ref.pkg.mkString(".") != unit.namespace
