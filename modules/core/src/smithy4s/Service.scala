@@ -67,6 +67,9 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
     }
   }
 
+  final def functorInterpreter[F[_]](handler: FunctorHandler[F]): FunctorInterpreter[F] = interpreter[Kind1[F]#toKind5](handler)
+  final def bifunctorInterpreter[F[_, _]](handler: BiFunctorHandler[F]): BiFunctorInterpreter[F] = interpreter[Kind2[F]#toKind5](handler)
+
   final def algebra[F[_, _, _, _, _]](handler: Handler[F]) : Alg[F] = fromPolyFunction(interpreter(handler))
   final def impl[F[_]](handler: FunctorHandler[F]) : Impl[F] = algebra[Kind1[F]#toKind5](handler)
   final def errorAware[F[_, _]](handler: BiFunctorHandler[F]) : ErrorAware[F] = algebra[Kind2[F]#toKind5](handler)

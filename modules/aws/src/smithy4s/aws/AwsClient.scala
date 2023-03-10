@@ -21,8 +21,6 @@ import cats.effect.Resource
 import cats.syntax.all._
 import smithy4s.http4s.kernel._
 import smithy4s.aws.internals._
-import smithy4s.Endpoint
-import smithy4s.kinds.Kind1
 import _root_.aws.api.{Service => AwsService}
 
 object AwsClient {
@@ -68,10 +66,10 @@ object AwsClient {
         case AwsProtocol.AWS_JSON_1_1(_) =>
           // TODO "application/x-amz-json-1.1",
           AwsJsonCodecs.make[F]
-        case AwsProtocol.AWS_QUERY(_) => ???
+        case _ => ???
       }
-      service.interpreter[Kind1[F]#toKind5] {
-        new Endpoint.FunctorHandler[service.Operation, F] {
+      service.functorInterpreter {
+        new service.FunctorHandler[F] {
           def apply[I, E, O, SI, SO](
               endpoint: service.Endpoint[I, E, O, SI, SO]
           ): I => F[O] =
