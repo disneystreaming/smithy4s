@@ -98,14 +98,15 @@ private[internals] object Renderer {
         .filter(_._2.size > 1)
         .keySet
 
-      val otherDecls = unit.declarations.filterNot(_ == decl).map(_.name).toSet
+      val otherDecls = unit.declarations.filterNot(_ == decl).map(_.nameRef).toSet
+
       def differentPackage(ref: NameRef): Boolean =
         ref.pkg.mkString(".") != unit.namespace
 
       // Collisions between references in the current file and declarations
       // in the current package
       val namespaceCollisions = segments.collect {
-        case ref: NameRef if otherDecls(ref.name) && differentPackage(ref) =>
+        case ref: NameRef if otherDecls(ref) && differentPackage(ref) =>
           ref.name
       }.toSet
 
