@@ -77,15 +77,15 @@ object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     )(implicit service: Service[Alg]): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(service).routes(impl).resource
 
-    def reverseRoutes[Alg[_[_, _, _, _, _]]](app: HttpApp[IO])(implicit
+    def reverseRoutes[Alg[_[_, _, _, _, _]]](app: HttpApp[IO],testHost: Option[String] = None)(implicit
         service: Service[Alg]
     ): Resource[IO, FunctorAlgebra[Alg, IO]] = {
       import org.http4s.implicits._
       val baseUri = uri"http://localhost/"
-
+      val suppliedHost = testHost.map(host => Uri.unsafeFromString(s"http://$host"))
       SimpleRestJsonBuilder(service)
         .client(Client.fromHttpApp(app))
-        .uri(baseUri)
+        .uri(suppliedHost.getOrElse(baseUri))
         .resource
     }
   }
