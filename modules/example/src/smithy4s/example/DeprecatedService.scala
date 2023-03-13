@@ -36,7 +36,7 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
     smithy.api.Deprecated(message = None, since = None),
   )
 
-  val endpoints: List[DeprecatedServiceGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[DeprecatedServiceOperation,_, _, _, _, _]] = List(
     DeprecatedOperation,
   )
 
@@ -63,9 +63,9 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   }
   case class DeprecatedOperation() extends DeprecatedServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.deprecatedOperation()
-    def endpoint: (Unit, Endpoint[Unit, Nothing, Unit, Nothing, Nothing]) = ((), DeprecatedOperation)
+    def endpoint: (Unit, smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), DeprecatedOperation)
   }
-  object DeprecatedOperation extends DeprecatedServiceGen.Endpoint[Unit, Nothing, Unit, Nothing, Nothing] {
+  object DeprecatedOperation extends smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedOperation")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)

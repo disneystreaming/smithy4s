@@ -41,7 +41,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     alloy.SimpleRestJson(),
   )
 
-  val endpoints: List[ImportServiceGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[ImportServiceOperation,_, _, _, _, _]] = List(
     ImportOperation,
   )
 
@@ -68,9 +68,9 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   }
   case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
-    def endpoint: (Unit, Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
+    def endpoint: (Unit, smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
   }
-  object ImportOperation extends ImportServiceGen.Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
+  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)

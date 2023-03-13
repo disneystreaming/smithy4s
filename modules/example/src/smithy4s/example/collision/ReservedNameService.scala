@@ -37,7 +37,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     alloy.SimpleRestJson(),
   )
 
-  val endpoints: List[ReservedNameServiceGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[ReservedNameServiceOperation,_, _, _, _, _]] = List(
     _Set,
     _List,
     _Map,
@@ -73,9 +73,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[SetInput, Nothing, Unit, Nothing, Nothing] = impl.set(input.set)
-    def endpoint: (SetInput, Endpoint[SetInput, Nothing, Unit, Nothing, Nothing]) = (input, _Set)
+    def endpoint: (SetInput, smithy4s.Endpoint[ReservedNameServiceOperation,SetInput, Nothing, Unit, Nothing, Nothing]) = (input, _Set)
   }
-  object _Set extends ReservedNameServiceGen.Endpoint[SetInput, Nothing, Unit, Nothing, Nothing] {
+  object _Set extends smithy4s.Endpoint[ReservedNameServiceOperation,SetInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Set")
     val input: Schema[SetInput] = SetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -88,9 +88,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[ListInput, Nothing, Unit, Nothing, Nothing] = impl.list(input.list)
-    def endpoint: (ListInput, Endpoint[ListInput, Nothing, Unit, Nothing, Nothing]) = (input, _List)
+    def endpoint: (ListInput, smithy4s.Endpoint[ReservedNameServiceOperation,ListInput, Nothing, Unit, Nothing, Nothing]) = (input, _List)
   }
-  object _List extends ReservedNameServiceGen.Endpoint[ListInput, Nothing, Unit, Nothing, Nothing] {
+  object _List extends smithy4s.Endpoint[ReservedNameServiceOperation,ListInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "List")
     val input: Schema[ListInput] = ListInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -103,9 +103,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[MapInput, Nothing, Unit, Nothing, Nothing] = impl.map(input.value)
-    def endpoint: (MapInput, Endpoint[MapInput, Nothing, Unit, Nothing, Nothing]) = (input, _Map)
+    def endpoint: (MapInput, smithy4s.Endpoint[ReservedNameServiceOperation,MapInput, Nothing, Unit, Nothing, Nothing]) = (input, _Map)
   }
-  object _Map extends ReservedNameServiceGen.Endpoint[MapInput, Nothing, Unit, Nothing, Nothing] {
+  object _Map extends smithy4s.Endpoint[ReservedNameServiceOperation,MapInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Map")
     val input: Schema[MapInput] = MapInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -118,9 +118,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[OptionInput, Nothing, Unit, Nothing, Nothing] = impl.option(input.value)
-    def endpoint: (OptionInput, Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing]) = (input, _Option)
+    def endpoint: (OptionInput, smithy4s.Endpoint[ReservedNameServiceOperation,OptionInput, Nothing, Unit, Nothing, Nothing]) = (input, _Option)
   }
-  object _Option extends ReservedNameServiceGen.Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing] {
+  object _Option extends smithy4s.Endpoint[ReservedNameServiceOperation,OptionInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Option")
     val input: Schema[OptionInput] = OptionInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)

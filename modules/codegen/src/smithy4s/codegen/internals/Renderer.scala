@@ -310,7 +310,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints: $list[$genNameRef.Endpoint[$wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
+        line"val endpoints: $list[smithy4s.Endpoint[$opTraitName,$wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
           .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
@@ -433,13 +433,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(genServiceName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def endpoint: (${op.input}, $Endpoint_[${op
+        line"def endpoint: (${op.input}, smithy4s.Endpoint[$traitName,${op
           .renderAlgParams(genServiceName)}]) = ($inputRef, $opNameRef)"
       ),
       obj(
         opNameRef,
         ext =
-          line"$genServiceName.Endpoint[${op.renderAlgParams(genServiceName)}]$errorable"
+          line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(genServiceName)}]$errorable"
       )(
         renderId(op.shapeId),
         line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",

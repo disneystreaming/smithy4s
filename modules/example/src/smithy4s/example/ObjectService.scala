@@ -47,7 +47,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
     alloy.SimpleRestJson(),
   )
 
-  val endpoints: List[ObjectServiceGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[ObjectServiceOperation,_, _, _, _, _]] = List(
     PutObject,
     GetObject,
   )
@@ -77,9 +77,9 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   }
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] = impl.putObject(input.key, input.bucketName, input.data, input.foo, input.someValue)
-    def endpoint: (PutObjectInput, Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
+    def endpoint: (PutObjectInput, smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
   }
-  object PutObject extends ObjectServiceGen.Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
+  object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
     val input: Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -134,9 +134,9 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   }
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
-    def endpoint: (GetObjectInput, Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
+    def endpoint: (GetObjectInput, smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
   }
-  object GetObject extends ObjectServiceGen.Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
+  object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObject")
     val input: Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)

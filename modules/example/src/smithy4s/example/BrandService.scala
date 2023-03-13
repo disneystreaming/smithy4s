@@ -32,7 +32,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
 
   val hints: Hints = Hints.empty
 
-  val endpoints: List[BrandServiceGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[BrandServiceOperation,_, _, _, _, _]] = List(
     AddBrands,
   )
 
@@ -59,9 +59,9 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   }
   case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands(input.brands)
-    def endpoint: (AddBrandsInput, Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
+    def endpoint: (AddBrandsInput, smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
   }
-  object AddBrands extends BrandServiceGen.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
+  object AddBrands extends smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddBrands")
     val input: Schema[AddBrandsInput] = AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)

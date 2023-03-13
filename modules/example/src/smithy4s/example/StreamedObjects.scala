@@ -33,7 +33,7 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
 
   val hints: Hints = Hints.empty
 
-  val endpoints: List[StreamedObjectsGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[StreamedObjectsOperation,_, _, _, _, _]] = List(
     PutStreamedObject,
     GetStreamedObject,
   )
@@ -63,9 +63,9 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   }
   case class PutStreamedObject(input: PutStreamedObjectInput) extends StreamedObjectsOperation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = impl.putStreamedObject(input.key)
-    def endpoint: (PutStreamedObjectInput, Endpoint[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]) = (input, PutStreamedObject)
+    def endpoint: (PutStreamedObjectInput, smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]) = (input, PutStreamedObject)
   }
-  object PutStreamedObject extends StreamedObjectsGen.Endpoint[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
+  object PutStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutStreamedObject")
     val input: Schema[PutStreamedObjectInput] = PutStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -76,9 +76,9 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   }
   case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = impl.getStreamedObject(input.key)
-    def endpoint: (GetStreamedObjectInput, Endpoint[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]) = (input, GetStreamedObject)
+    def endpoint: (GetStreamedObjectInput, smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]) = (input, GetStreamedObject)
   }
-  object GetStreamedObject extends StreamedObjectsGen.Endpoint[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
+  object GetStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetStreamedObject")
     val input: Schema[GetStreamedObjectInput] = GetStreamedObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetStreamedObjectOutput] = GetStreamedObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)

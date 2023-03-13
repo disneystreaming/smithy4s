@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -20,6 +19,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
   self =>
 
   def myOp(): F[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]
+  def endpoint(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
 }
@@ -37,8 +37,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
 
   val hints: Hints = Hints.empty
 
-  val endpoints: List[NameCollisionGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[NameCollisionOperation,_, _, _, _, _]] = List(
     MyOp,
+    Endpoint,
   )
 
   val version: String = ""
@@ -47,6 +48,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
 
   object reified extends NameCollisionGen[NameCollisionOperation] {
     def myOp() = MyOp()
+    def endpoint() = Endpoint()
   }
 
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]): NameCollisionGen[P1] = new Transformed(alg, f)
@@ -54,6 +56,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[NameCollisionOperation, P]): NameCollisionGen[P] = new Transformed(reified, f)
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]) extends NameCollisionGen[P1] {
     def myOp() = f[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing](alg.myOp())
+    def endpoint() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint())
   }
 
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[NameCollisionOperation, P](reified, const5(value))
@@ -64,9 +67,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   }
   case class MyOp() extends NameCollisionOperation[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] = impl.myOp()
-    def endpoint: (Unit, Endpoint[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]) = ((), MyOp)
+    def endpoint: (Unit, smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]) = ((), MyOp)
   }
-  object MyOp extends NameCollisionGen.Endpoint[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
+  object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
     val id: ShapeId = ShapeId("smithy4s.example", "MyOp")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -106,9 +109,22 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
       case c: MyOpErrorCase => MyOpErrorCase.alt(c)
     }
   }
+  case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
+    def endpoint: (Unit, smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), Endpoint)
+  }
+  object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
+    val id: ShapeId = ShapeId("smithy4s.example", "Endpoint")
+    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints.empty
+    def wrap(input: Unit) = Endpoint()
+  }
 }
 
 sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, smithy4s.Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

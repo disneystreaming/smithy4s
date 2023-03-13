@@ -41,7 +41,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
   )
 
-  val endpoints: List[FooServiceGen.Endpoint[_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[FooServiceOperation,_, _, _, _, _]] = List(
     GetFoo,
   )
 
@@ -68,9 +68,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   }
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Unit, Nothing, GetFooOutput, Nothing, Nothing] = impl.getFoo()
-    def endpoint: (Unit, Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
+    def endpoint: (Unit, smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
   }
-  object GetFoo extends FooServiceGen.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
+  object GetFoo extends smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
