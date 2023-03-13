@@ -19,6 +19,7 @@ package smithy4s.aws
 import cats.MonadThrow
 import cats.effect.Resource
 import cats.syntax.all._
+import smithy4s.kinds._
 import internals.AwsJsonRPCInterpreter
 import internals.AwsQueryRPCInterpreter
 
@@ -31,6 +32,15 @@ object AwsClient {
     prepare(service)
       .leftWiden[Throwable]
       .map(_.build(awsEnv))
+      .liftTo[Resource[F, *]]
+
+  def simple[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
+      service: smithy4s.Service[Alg],
+      awsEnv: AwsEnvironment[F]
+  ): Resource[F, service.Impl[F]] =
+    prepare(service)
+      .leftWiden[Throwable]
+      .map(_.buildSimple(awsEnv))
       .liftTo[Resource[F, *]]
 
   def prepare[Alg[_[_, _, _, _, _]]](
@@ -90,6 +100,13 @@ object AwsClient {
     def build[F[_]: MonadThrow](
         awsEnv: AwsEnvironment[F]
     ): AwsClient[Alg, F] = service.fromPolyFunction(interpreter(awsEnv))
+
+    def buildSimple[F[_]: MonadThrow](
+        awsEnv: AwsEnvironment[F]
+    ): Alg[Kind1[F]#toKind5] = {
+      val interpreterTransformer = simplify[Alg, F](service)
+      service.fromPolyFunction(interpreterTransformer(interpreter(awsEnv)))
+    }
   }
 
 }

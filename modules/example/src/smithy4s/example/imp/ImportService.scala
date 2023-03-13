@@ -68,7 +68,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   }
   case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
-    def endpoint: (Unit, Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
+    def endpoint: (Unit, ImportServiceGen.Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
   }
   object ImportOperation extends ImportServiceGen.Endpoint[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")

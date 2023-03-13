@@ -26,7 +26,7 @@ import cats.syntax.all._
  * creates a dummy instance for it (that returns 0 values for all the fields of outputs),
  * and serves it over an example JSON-RPC-like protocol (returning a `Document => IO[Document]`)
  */
-class DynamicJsonProxySpec() extends munit.FunSuite {
+class DynamicJsonProxySpec() extends DummyIO.Suite {
 
   def kvStoreResource: IO[KVStore[IO]] = {
     IO(scala.collection.mutable.Map.empty[String, String])
@@ -57,7 +57,6 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
           v <- kvStore.get("key")
         } yield expect(v.value === "value")
       }
-      .check()
   }
 
   test("Dynamic service based proxy propagates errors correctly") {
@@ -76,7 +75,6 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
           attempt <- kvStore.get("sensitive").attempt
         } yield expect.same(attempt, Left(expectedError))
       }
-      .check()
 
   }
 
@@ -92,7 +90,6 @@ class DynamicJsonProxySpec() extends munit.FunSuite {
           expect.same(attempt, Left(expectedError))
         }
       }
-      .check()
   }
 
 }

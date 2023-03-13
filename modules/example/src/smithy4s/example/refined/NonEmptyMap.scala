@@ -1,6 +1,7 @@
 package smithy4s.example.refined
 
 import smithy4s._
+import smithy4s.example.NonEmptyMapFormat
 
 final case class NonEmptyMap[K, V] private (values: Map[K, V])
 
@@ -10,7 +11,7 @@ object NonEmptyMap {
     if (values.size > 0) Right(new NonEmptyMap(values))
     else Left("Map must not be empty.")
 
-  implicit def provider[K, V] = Refinement.drivenBy[smithy4s.example.NonEmptyMapFormat](
+  implicit def provider[K, V]: RefinementProvider[NonEmptyMapFormat, Map[K, V], NonEmptyMap[K, V]] = Refinement.drivenBy[smithy4s.example.NonEmptyMapFormat](
     NonEmptyMap.apply[K, V],
     (b: NonEmptyMap[K, V]) => b.values
   )

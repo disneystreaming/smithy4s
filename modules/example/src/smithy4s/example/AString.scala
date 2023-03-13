@@ -7,6 +7,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
+/** This is a simple example of a "quoted string" */
 object AString extends Newtype[String] {
   val id: ShapeId = ShapeId("smithy4s.example", "AString")
   val hints: Hints = Hints(

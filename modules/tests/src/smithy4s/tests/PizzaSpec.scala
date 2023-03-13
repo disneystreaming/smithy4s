@@ -20,26 +20,20 @@ import cats.data.NonEmptyList
 import cats.effect._
 import cats.syntax.all._
 import io.circe._
-import org.http4s.Header
-import org.http4s.Headers
 import org.http4s.Request
 import org.http4s.Uri
 import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
-import org.typelevel.ci.CIString
 import smithy4s.PayloadPath
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
 import smithy4s.http.PayloadError
 import weaver._
-
-import java.util.UUID
 import cats.Show
 import org.http4s.EntityDecoder
-import org.http4s.MalformedMessageBodyFailure
 
 abstract class PizzaSpec
     extends IOSuite
@@ -67,55 +61,6 @@ abstract class PizzaSpec
     "price" -> Json.fromFloatOrNull(9.0f)
   )
 
-  val positiveEmptyLabel = """|Happy path:
-                              |- no payload
-                              |""".stripMargin.trim()
-
-  routerTest(positiveEmptyLabel) { (client, uri, log) =>
-    for {
-      res <- client.send[Json](GET(uri / "version"), log)
-      (code, headers, body) = res
-      _ <- expect(code == 200).failFast
-      version <- body.expect[String]
-    } yield {
-      expect(version == "version")
-    }
-  }
-
-  val positiveLabel = """|Happy path:
-                         |- path parameters
-                         |- payload trait
-                         |- custom status code
-                         |- response header
-                         |""".stripMargin.trim()
-
-  routerTest(positiveLabel) { (client, uri, log) =>
-    def expectedMenu(id: UUID) = Json.obj(id.toString() -> menuItem)
-
-    val createPizza = POST(
-      menuItem,
-      uri / "restaurant" / "foo" / "menu" / "item"
-    )
-
-    for {
-      res <- client.send[Json](createPizza, log)
-      (code, headers, body) = res
-      _ <- expect(code == 201).failFast
-      addedAt = headers
-        .get("X-ADDED-AT")
-        .foldMap(identity)
-      pizzaId <- body.expect[UUID]
-      getMenu = GET(uri / "restaurant" / "foo" / "menu")
-      res <- client.send[Json](getMenu, log)
-      (code2, _, body2) = res
-      _ <- expect(code2 == 200).failFast
-      expected = expectedMenu(pizzaId)
-    } yield {
-      expect(body2 == expected) &&
-      expect(addedAt.head.toDouble != 0)
-    }
-  }
-
   routerTest("path that returns NotFound") { case (client, uri, log) =>
     val getPizza = GET(
       menuItem,
@@ -136,28 +81,6 @@ abstract class PizzaSpec
         )
       )
     }
-  }
-
-  routerTest("path with special characters in parameter") {
-    (client, uri, log) =>
-      val createPizza = GET(
-        menuItem,
-        uri / "restaurant" / "foo with spaces and % percentages" / "menu"
-      )
-
-      for {
-        res <- client.send[Json](createPizza, log)
-        (code, headers, body) = res
-      } yield {
-        expect(code == 404) &&
-        expect(
-          body == Json.obj(
-            "name" -> Json.fromString(
-              "foo with spaces and % percentages"
-            )
-          )
-        )
-      }
   }
 
   val customErrorLabel = """|Negative:
@@ -332,106 +255,6 @@ abstract class PizzaSpec
       }
   }
 
-  routerTest("Round trip") { (client, uri, log) =>
-    for {
-      res <- client.send[Json](
-        POST(
-          uri = (uri / "roundTrip" / "l").withQueryParam("query", "q"),
-          headers = Headers(Header.Raw(CIString("HEADER"), "h")),
-          body = Json.obj("body" -> Json.fromString("b"))
-        ),
-        log
-      )
-    } yield {
-      val (code, headers, body) = res
-      val expectedBody = Json.obj(
-        "body" -> Json.fromString("b"),
-        "label" -> Json.fromString("l"),
-        "query" -> Json.fromString("q")
-      )
-      val header = headers.get("HEADER").getOrElse(Nil)
-      val expectedHeader = List("h")
-      expect.all(code == 200, header == expectedHeader) &&
-      expect.same(body, expectedBody)
-    }
-  }
-
-  private def headerTest(name: String)(requestHeaderNames: String*) =
-    routerTest(name) { (client, uri, log) =>
-      for {
-        res <- client.send[String](
-          POST.apply(
-            (uri / "headers"),
-            requestHeaderNames.zipWithIndex
-              .map { case (name, i) =>
-                name -> s"header-${i + 1}"
-              }
-          ),
-          log
-        )
-      } yield {
-        val (code, headers, body) = res
-
-        expect(code == 200) &&
-        expect(body.isEmpty()) &&
-        expect(headers.get("x-uppercase-header") == Some(List("header-1"))) &&
-        expect(headers.get("x-capitalized-header") == Some(List("header-2"))) &&
-        expect(headers.get("x-lowercase-header") == Some(List("header-3"))) &&
-        expect(headers.get("x-mixed-header") == Some(List("header-4")))
-      }
-    }
-
-  headerTest("CI Headers - all lowercase")(
-    "x-uppercase-header",
-    "x-capitalized-header",
-    "x-lowercase-header",
-    "x-mixed-header"
-  )
-
-  headerTest("CI Headers - all uppercase")(
-    "X-UPPERCASE-HEADER",
-    "X-CAPITALIZED-HEADER",
-    "X-LOWERCASE-HEADER",
-    "X-MIXED-HEADER"
-  )
-
-  headerTest("CI Headers - all mixed")(
-    "X-upPerCaSE-heADeR",
-    "X-caPiTAlIZEd-HEadEr",
-    "x-loweRcase-hEADeR",
-    "X-mIxEd-HeAdEr"
-  )
-
-  routerTest("httpResponseCode") { (client, uri, log) =>
-    for {
-      res1 <- client.send[Unit](
-        GET(uri = uri / "custom-code" / "201"),
-        log
-      )
-      // on `0`, the mock returns None, so we should default to endpoint value
-      res2 <- client.send[Unit](
-        GET(uri = uri / "custom-code" / "0"),
-        log
-      )
-      caught <- client
-        .send[Json](
-          GET(uri = uri / "custom-code" / "201"),
-          log
-        )
-        .map(_ => false)
-        .handleError { case _: MalformedMessageBodyFailure =>
-          true
-        }
-    } yield {
-      expect.same(res1._1, 201) &&
-      expect.same(res2._1, 200) &&
-      expect(
-        caught,
-        "MalformedMessageBodyFailure is expected because body should be empty"
-      )
-    }
-  }
-
   routerTest("path param failing refinement results in a BadRequest") {
     (client, uri, log) =>
       client
@@ -505,41 +328,6 @@ abstract class PizzaSpec
       Vector("restaurant", "foo", "menu", "item")
     )
     expect(matchResult == None)
-  }
-
-  routerTest("Positive: can find enum endpoint by value") {
-    (client, uri, log) =>
-      for {
-        resValue <- client.send[Json](
-          GET(uri / "get-enum" / "v1"),
-          log
-        )
-      } yield {
-        expect(resValue._1 == 200)
-      }
-  }
-
-  routerTest("Positive: can find intEnum endpoint by int value value") {
-    (client, uri, log) =>
-      for {
-        goodRes <- client.send[Json](
-          GET(uri / "get-int-enum" / "1"),
-          log
-        )
-        stringValue <- client.send[Json](
-          GET(uri / "get-int-enum" / "FIRST"),
-          log
-        )
-        badValue <- client.send[Json](
-          GET(uri / "get-int-enum" / "3"),
-          log
-        )
-      } yield {
-        expect(goodRes._1 == 200) &&
-        expect(goodRes._3.noSpaces == """{"result":1}""") &&
-        expect(stringValue._1 == 400) &&
-        expect(badValue._1 == 400)
-      }
   }
 
   type Res = (Client[IO], Uri)

@@ -82,6 +82,7 @@ private[internals] case class Union(
     shapeId: ShapeId,
     name: String,
     alts: NonEmptyList[Alt],
+    mixins: List[Type],
     recursive: Boolean = false,
     hints: List[Hint] = Nil
 ) extends Decl
@@ -170,6 +171,11 @@ private[internals] sealed trait Type {
     case other                    => other
   }
 
+  def isExternal: Boolean = this.dealiased match {
+    case _: Type.ExternalType => true
+    case _                    => false
+  }
+
   def isResolved: Boolean = {
     val isUnwrapped = this match {
       case Type.Alias(_, _, _, unwrapped) => unwrapped
@@ -207,9 +213,17 @@ private[internals] object Primitive {
 private[internals] object Type {
   val unit = PrimitiveType(Primitive.Unit)
 
-  case class Collection(collectionType: CollectionType, member: Type)
-      extends Type
-  case class Map(key: Type, value: Type) extends Type
+  case class Collection(
+      collectionType: CollectionType,
+      member: Type,
+      memberHints: List[Hint]
+  ) extends Type
+  case class Map(
+      key: Type,
+      keyHints: List[Hint],
+      value: Type,
+      valueHints: List[Hint]
+  ) extends Type
   case class Ref(namespace: String, name: String) extends Type {
     def show = namespace + "." + name
   }
@@ -250,6 +264,10 @@ private[internals] object Hint {
   case class Constraint(tr: Type.Ref, native: Native) extends Hint
   case class Protocol(traits: List[Type.Ref]) extends Hint
   case class Default(typedNode: Fix[TypedNode]) extends Hint
+  case class Documentation(
+      docLines: List[String],
+      memberDocLines: Map[String, List[String]]
+  ) extends Hint
   case class Deprecated(message: Option[String], since: Option[String])
       extends Hint
   // traits that get rendered generically

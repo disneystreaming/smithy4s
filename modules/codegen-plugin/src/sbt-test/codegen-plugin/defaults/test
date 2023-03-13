@@ -1,6 +1,6 @@
 # check if smithy4sCodegen works
 > compile
-$ exists target/scala-2.13/src_managed/main/smithy4s/example/ObjectService.scala
+$ exists target/scala-2.13/src_managed/main/scala/smithy4s/example/ObjectService.scala
 $ exists target/scala-2.13/resource_managed/main/smithy4s.example.ObjectService.json
 
 # check if code can run, this can reveal runtime issues
@@ -8,7 +8,7 @@ $ exists target/scala-2.13/resource_managed/main/smithy4s.example.ObjectService.
 > run
 $ copy-file example-added.smithy src/main/smithy/example-added.smithy
 > compile
-$ exists target/scala-2.13/src_managed/main/smithy4s/example/Added.scala
+$ exists target/scala-2.13/src_managed/main/scala/smithy4s/example/Added.scala
 
 # ensuring that removing existing files removes their outputs
 $ delete src/main/smithy/example.smithy

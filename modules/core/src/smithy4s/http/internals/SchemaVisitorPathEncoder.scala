@@ -48,7 +48,7 @@ object SchemaVisitorPathEncoder
       case Primitive.PBoolean    => PathEncode.fromToString
       case Primitive.PString     => PathEncode.fromToString
       case Primitive.PUUID       => PathEncode.fromToString
-      case Primitive.PByte       => default
+      case Primitive.PByte       => PathEncode.fromToString
       case Primitive.PBlob       => default
       case Primitive.PDocument   => default
       case Primitive.PTimestamp =>

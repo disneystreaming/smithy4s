@@ -1,3 +1,5 @@
+$version: "2"
+
 metadata suppressions = [
     {
         id: "UnreferencedShape",
@@ -15,6 +17,7 @@ use alloy#discriminated
 /// to deserialise from Json.
 structure Model {
   smithy: String,
+  @default
   metadata: MetadataMap,
   @required
   shapes: ShapeMap
@@ -66,77 +69,97 @@ union Shape {
 }
 
 structure StringShape {
+  @default
   traits: TraitMap,
+  @default
   members: MemberMap
 }
 
 structure EnumShape {
+  @default
   traits: TraitMap,
+  @default
   members: MemberMap
 }
 
 structure IntEnumShape {
+  @default
   traits: TraitMap,
+  @default
   members: MemberMap
 }
 
 structure BlobShape {
+  @default
   traits: TraitMap
 }
 
 structure ByteShape {
+  @default
   traits: TraitMap
 }
 
 structure BooleanShape {
+  @default
   traits: TraitMap
 }
 
 structure IntegerShape {
+  @default
   traits: TraitMap
 }
 
 structure LongShape {
+  @default
   traits: TraitMap
 }
 
 structure ShortShape {
+  @default
   traits: TraitMap
 }
 
 structure FloatShape {
+  @default
   traits: TraitMap
 }
 
 structure DoubleShape {
+  @default
   traits: TraitMap
 }
 
 structure BigDecimalShape {
+  @default
   traits: TraitMap
 }
 
 structure BigIntegerShape {
+  @default
   traits: TraitMap
 }
 
 structure DocumentShape {
+  @default
   traits: TraitMap
 }
 
 structure TimestampShape {
+  @default
   traits: TraitMap
 }
 
 structure ListShape {
   @required
   member: MemberShape,
+  @default
   traits: TraitMap
 }
 
 structure SetShape {
   @required
   member: MemberShape,
+  @default
   traits: TraitMap
 }
 
@@ -145,12 +168,14 @@ structure MapShape {
   key: MemberShape,
   @required
   value: MemberShape,
+  @default
   traits: TraitMap
 }
 
 structure MemberShape {
   @required
   target: IdRef,
+  @default
   traits: TraitMap,
 }
 
@@ -164,31 +189,52 @@ map MemberMap {
 }
 
 structure StructureShape {
+  @default
   members: MemberMap,
+  @default
   traits: TraitMap
 }
 
 structure UnionShape {
+  @default
   members: MemberMap,
+  @default
   traits: TraitMap
 }
 
 structure OperationShape {
   input: MemberShape,
   output: MemberShape,
+  @default
   errors: MemberList,
+  @default
   traits: TraitMap
 }
 
 structure ServiceShape {
   version: String,
+  @default
   errors: MemberList,
+  @default
   operations: MemberList,
+  @default
+  resources: MemberList,
+  @default
   traits: TraitMap
 }
 
-/// TODO
 structure ResourceShape {
+  /// ignored: identifiers, properties, collectionOperations
+  create: MemberShape,
+  put: MemberShape,
+  read: MemberShape,
+  update: MemberShape,
+  delete: MemberShape,
+  list: MemberShape,
+  @default
+  operations: MemberList,
+  @default
+  resources: MemberList
 }
 
 

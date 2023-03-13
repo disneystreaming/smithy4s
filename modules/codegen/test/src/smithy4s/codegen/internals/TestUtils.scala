@@ -22,14 +22,20 @@ import software.amazon.smithy.model.Model
 
 object TestUtils {
 
-  def generateScalaCode(smithySpec: String): List[String] = {
+  /** Key is the name (like my.package.name.SomeFile) and the value is the contents of that file */
+  def generateScalaCode(smithySpec: String): Map[String, String] = {
     val model = Model
       .assembler()
       .discoverModels()
       .addUnparsedModel("foo.smithy", smithySpec)
       .assemble()
       .unwrap()
-    CodegenImpl.generate(model, None, None).map(_._2.content)
+    CodegenImpl
+      .generate(model, None, None)
+      .map { case (_, result) =>
+        s"${result.namespace}.${result.name}" -> result.content
+      }
+      .toMap
   }
 
   def runTest(
@@ -38,12 +44,12 @@ object TestUtils {
   )(implicit
       loc: Location
   ): Unit = {
-    val scalaResults = generateScalaCode(smithySpec)
+    val scalaResults = generateScalaCode(smithySpec).values.toList
     Assertions.assertEquals(scalaResults, List(expectedScalaCode))
   }
 
   /**
-    * Finds a section starting with a given string and extracts a code section from it (based on indents)
+    * Finds a section starting with a given string and extracts a code section from it (based on expected line count)
     * Removes empty lines too.
     * It then asserts on expected output
     */
@@ -58,13 +64,15 @@ object TestUtils {
     lineMatches match {
       case (line, index) :: Nil =>
         val indent = line.takeWhile(_ == ' ')
-        val validLineStartPatterns =
-          List(" ", ")", "}").map(s => s"$indent$s").toSet
-        val fromMatch = lines.drop(index + 1).map(_._1)
-        val sectionTail = fromMatch
-          .takeWhile(l => validLineStartPatterns.exists(l.startsWith))
-          .map(_.drop(indent.size))
-        val section = (line.drop(indent.size) :: sectionTail).mkString("\n")
+        val expectedLineCount =
+          expectedSection.split(System.lineSeparator()).size
+        val section = lines
+          .drop(index)
+          .take(expectedLineCount)
+          .collect { case (line, _) =>
+            line.drop(indent.size)
+          }
+          .mkString(System.lineSeparator())
         Assertions.assertEquals(section, expectedSection)
       case _ :: _ :: _ =>
         Assertions.fail("Multiple lines match the code section pattern")

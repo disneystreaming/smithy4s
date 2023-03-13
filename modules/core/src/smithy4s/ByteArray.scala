@@ -38,5 +38,7 @@ class ByteArray(val array: Array[Byte]) {
 }
 
 object ByteArray {
+  val empty = new ByteArray(Array.emptyByteArray)
+
   def apply(array: Array[Byte]) = new ByteArray(array)
 }

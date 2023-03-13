@@ -73,7 +73,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[SetInput, Nothing, Unit, Nothing, Nothing] = impl.set(input.set)
-    def endpoint: (SetInput, Endpoint[SetInput, Nothing, Unit, Nothing, Nothing]) = (input, _Set)
+    def endpoint: (SetInput, ReservedNameServiceGen.Endpoint[SetInput, Nothing, Unit, Nothing, Nothing]) = (input, _Set)
   }
   object _Set extends ReservedNameServiceGen.Endpoint[SetInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Set")
@@ -88,7 +88,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[ListInput, Nothing, Unit, Nothing, Nothing] = impl.list(input.list)
-    def endpoint: (ListInput, Endpoint[ListInput, Nothing, Unit, Nothing, Nothing]) = (input, _List)
+    def endpoint: (ListInput, ReservedNameServiceGen.Endpoint[ListInput, Nothing, Unit, Nothing, Nothing]) = (input, _List)
   }
   object _List extends ReservedNameServiceGen.Endpoint[ListInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "List")
@@ -103,7 +103,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[MapInput, Nothing, Unit, Nothing, Nothing] = impl.map(input.value)
-    def endpoint: (MapInput, Endpoint[MapInput, Nothing, Unit, Nothing, Nothing]) = (input, _Map)
+    def endpoint: (MapInput, ReservedNameServiceGen.Endpoint[MapInput, Nothing, Unit, Nothing, Nothing]) = (input, _Map)
   }
   object _Map extends ReservedNameServiceGen.Endpoint[MapInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Map")
@@ -118,7 +118,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   }
   case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[OptionInput, Nothing, Unit, Nothing, Nothing] = impl.option(input.value)
-    def endpoint: (OptionInput, Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing]) = (input, _Option)
+    def endpoint: (OptionInput, ReservedNameServiceGen.Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing]) = (input, _Option)
   }
   object _Option extends ReservedNameServiceGen.Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Option")

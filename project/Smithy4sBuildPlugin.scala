@@ -203,6 +203,13 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     )
   )
 
+  def scala3MigrationOption(scalaVersion: String) =
+    if (scalaVersion.startsWith("3."))
+      Seq("-source:3.0-migration")
+    else
+      Seq.empty
+
+
   def compilerOptions(scalaVersion: String) = {
     val base =
       if (scalaVersion.startsWith("3."))
@@ -396,7 +403,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       val flag =
         if (scalaVersion.value.startsWith("3")) "-scalajs-mapSourceURI"
         else "-P:scalajs:mapSourceURI"
-      val localSourcesPath = baseDirectory.value.toURI
+      val localSourcesPath = (LocalRootProject / baseDirectory).value.toURI
       val headCommit = git.gitHeadCommit.value.get
       scmInfo.value.map { info =>
         val remoteSourcesPath =

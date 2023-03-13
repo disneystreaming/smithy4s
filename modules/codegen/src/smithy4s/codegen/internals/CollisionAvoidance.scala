@@ -64,11 +64,12 @@ private[internals] object CollisionAvoidance {
         )
       case p: Product =>
         modProduct(p)
-      case Union(shapeId, name, alts, recursive, hints) =>
+      case Union(shapeId, name, alts, mixins, recursive, hints) =>
         Union(
           shapeId,
           protectType(name.capitalize),
           alts.map(modAlt),
+          mixins.map(modType),
           recursive,
           hints.map(modHint)
         )
@@ -100,9 +101,19 @@ private[internals] object CollisionAvoidance {
   }
 
   private def modType(tpe: Type): Type = tpe match {
-    case Type.Collection(collectionType, member) =>
-      Type.Collection(collectionType, modType(member))
-    case Type.Map(key, value) => Type.Map(modType(key), modType(value))
+    case Type.Collection(collectionType, member, memberHints) =>
+      Type.Collection(
+        collectionType = collectionType,
+        member = modType(member),
+        memberHints = memberHints.map(modHint(_))
+      )
+    case Type.Map(key, keyHints, value, valueHints) =>
+      Type.Map(
+        key = modType(key),
+        keyHints = keyHints.map(modHint(_)),
+        value = modType(value),
+        valueHints = valueHints.map(modHint(_))
+      )
     case Type.Ref(namespace, name) =>
       Type.Ref(namespace, protectType(name.capitalize))
     case Alias(namespace, name, tpe, isUnwrapped) =>
@@ -285,6 +296,12 @@ private[internals] object CollisionAvoidance {
     val struct_ = NameRef("smithy4s.schema.Schema", "struct")
     val bijection_ = NameRef("smithy4s.schema.Schema", "bijection")
     val Transformed_ = NameDef("Transformed")
+    val endpoint_ = NameDef("endpoint")
+    val mapK5_ = NameDef("mapK5")
+    val fromPolyFunction_ = NameDef("fromPolyFunction")
+    val toPolyFunction_ = NameDef("toPolyFunction")
+    val transform_ = NameDef("transform")
+    val apply_ = NameDef("apply")
     val Impl_ = NameDef("Impl")
     val ErrorAware_ = NameDef("ErrorAware")
     val Constant_ = NameDef("Constant")

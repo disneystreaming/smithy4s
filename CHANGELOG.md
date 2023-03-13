@@ -1,7 +1,138 @@
+# 0.17.4
+
+This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
+
+## Improvements
+
+### More efficient Json parsing of ArraySeq
+
+See https://github.com/disneystreaming/smithy4s/pull/806
+
+### Fix parsing logic of AWS credentials file to allow for comments
+
+See https://github.com/disneystreaming/smithy4s/pull/811
+
+### Add documentation on how to point AWS clients to local environments
+
+See https://github.com/disneystreaming/smithy4s/pull/812
+
+# 0.17.3
+
+This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
+
+## User-facing features
+
+### Addition of an new `@adt` trait to streamline the inlining of structures as sealed-trait members
+
+Under certain conditions, it is now possible to annotate union shapes with `@adt`, which has the effect of inlining
+all the structure shapes under it directly in the companion object of the union, as opposed to create `Case`-suffixed
+wrappers. Additionally, when a union is annotated with `@adt`, the intersection of mixin shapes that are applied to every member of the union is now used as Scala-level mixin traits. This facilitates object-oriented usage of Smithy4s.
+
+Read the new docs for more info.
+
+See https://github.com/disneystreaming/smithy4s/pull/787
+
+### Scaladoc now gets generated
+
+Smithy `@documentation` traits (which has syntactic sugar in the form of triple-slashes-prefixed comments) is now used to generate Scaladoc above the relevant data-types, interfaces and methods that get generated in Smithy4s.
+
+https://github.com/disneystreaming/smithy4s/pull/731
+
+Thank you @zetashift for this awesome contribution and @msosnicki for this valuable contribution !
+
+### Scala 3 wildcards now get generated when relevant.
+
+Under conditions which should automatically be propagated from the build-tool to the code-generation,
+Scala 3 wildcards now get generated instead of Scala 2 wildcards. This makes user experience better on
+Scala 3, as syntax deprecation warnings will no longer be issued.
+
+Thank you @albertpchen for this awesome contribution !
+
+See https://github.com/disneystreaming/smithy4s/pull/736
+
+### Simpler AWS clients
+
+It is now possible to directly instantiate AWS clients against a Monadic context, which makes for a better
+UX when calling unary request/response operations. When using that mode, stream operations being called
+such clients will fail with a raised exception.
+
+See https://github.com/disneystreaming/smithy4s/pull/744
+
+### AWS config file credentials providers
+
+It is now possible to load credentials from an AWS-compliant configuration file (typically found under ~/.aws/credentials).
+This is wired by default in the clients, and has lower precedence than the other providers.
+
+### Improve docs
+
+We've improved and added new sections to the documentation, in particular around AWS SDK usage and model pre-processing.
+## Bug fixes
+
+### Null default value traits are now correctly handled
+
+The default trait allows for not setting a value. Now, the absence of value (ie null) in the
+default trait at the smithy level translates to the correct "zero" value of the target type.
+
+See https://github.com/disneystreaming/smithy4s/pull/782
+
+### Decoding Document.DNull to Optional fields now works correctly
+
+Null documents were not being decoded as `None`, but rather were leading to decoding failures
+when decoding data types from `smithy4s.Document`
+
+See https://github.com/disneystreaming/smithy4s/pull/725
+
+### Fix the JS source-map URI
+
+The URI was previously using the wrong relative path
+
+See https://github.com/disneystreaming/smithy4s/pull/740
+
+### Traits applied on collection members now leads to hints being correctly generated
+
+See https://github.com/disneystreaming/smithy4s/pull/769
+
+### Defaults are not ignored in refinements
+
+Loading a smithy 1.0 model with smithy 2.0 tooling (which Smithy4s uses) leads to the automatic
+addition of "default" traits on some shapes and members. When combined with refinements, this had
+the side effect of treating the refined type as required when it should be in fact optional.
+It's all the more confusing that there is no mechanism in place to reconcile refinement logic,
+with default values, as refinement logic is expressed in run-time code whereas default value validation
+is expressed in build-time code.
+
+See https://github.com/disneystreaming/smithy4s/pull/795
+
+## Other notable changes
+
+### Performance improvements of the json parsing logic
+
+Yet another awesome contribution from @plokhotnyuk to shave allocations off the Json parsing logic, leading
+to performance improvements.
+
+See https://github.com/disneystreaming/smithy4s/pull/764
+
+### Compliance tests
+
+Our implementation of our `alloy#simpleRestJson` protocol is now derived automatically from test specifications
+written in [Smithy itself](https://github.com/disneystreaming/alloy/tree/main/modules/protocol-tests/resources/META-INF/smithy)
+
+See:
+* https://github.com/disneystreaming/smithy4s/pull/715
+* https://github.com/disneystreaming/smithy4s/pull/747
+
+This also paves the road for testing our implementation of the AWS protocols using official tests, which are located
+[there]
+
+### Generic logic against smithy4s-generated enumerations is now easier to write
+
+Some tweaks were made to the `smithy4s.Enumeration.Value` interface to allow for more generic logic using enumerations.
+
+See https://github.com/disneystreaming/smithy4s/pull/794
 
 # 0.17.2
 
-This release is backward binary-compatible with the previous releases from the the 0.17.x lineage.
+This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
 
 ## User-facing features
 
@@ -21,7 +152,7 @@ See https://github.com/disneystreaming/smithy4s/pull/706
 
 it's now possible to invoke transformations more conveniently in polymorhic code, via a method in the `Transformation` companion object
 
-See  https://github.com/disneystreaming/smithy4s/pull/681
+See https://github.com/disneystreaming/smithy4s/pull/681
 
 ## Bug fixes
 
