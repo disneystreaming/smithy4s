@@ -1,6 +1,7 @@
 package smithy4s.example.refined
 
 import smithy4s._
+import smithy4s.example.FancyListFormat
 
 final case class FancyList private (values: List[String])
 
@@ -10,7 +11,7 @@ object FancyList {
     if (values.size > 10) Right(new FancyList(values))
     else Left("FancyLists must have more than 10 items")
 
-  implicit val provider = Refinement.drivenBy[smithy4s.example.FancyListFormat](
+  implicit val provider: RefinementProvider[FancyListFormat, List[String], FancyList] = Refinement.drivenBy[smithy4s.example.FancyListFormat](
     FancyList.apply,
     (b: FancyList) => b.values
   )
