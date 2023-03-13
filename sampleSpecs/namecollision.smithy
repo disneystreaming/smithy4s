@@ -11,7 +11,7 @@ operation Endpoint {
 
 }
 operation MyOp {
-errors: [MyOpError]
+    errors: [MyOpError]
 }
 
 @error("client")

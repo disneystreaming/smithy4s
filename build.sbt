@@ -829,9 +829,10 @@ lazy val example = projectMatrix
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions += "-Wconf:cat=deprecation:silent"
+    scalacOptions ++= Seq ("-Wconf:cat=deprecation:silent") ++ scala3MigrationOption(scalaVersion.value),
+
   )
-  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 lazy val guides = projectMatrix

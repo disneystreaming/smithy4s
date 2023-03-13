@@ -44,12 +44,12 @@ sealed trait MetaEncode[-A] {
       case (QueryParamsBinding, StringMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
-            m.addQueryParam(k, v)
+            m.addQueryParamsIfNoExist(k, v)
           }
       case (QueryParamsBinding, StringListMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
           f(a).foldLeft(metadata) { case (m, (k, v)) =>
-            m.addMultipleQueryParams(k, v)
+            m.addQueryParamsIfNoExist(k, v: _*)
           }
       case (HeaderPrefixBinding(prefix), StringMapMetaEncode(f)) =>
         (metadata: Metadata, a: A) =>
