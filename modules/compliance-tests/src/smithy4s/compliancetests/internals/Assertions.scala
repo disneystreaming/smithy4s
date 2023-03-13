@@ -84,6 +84,19 @@ private[internals] object assert {
     }
   }
 
+  def regexEql(
+      expected: String,
+      actual: String
+  ): ComplianceResult = {
+      if (actual.matches(expected)) {
+        success
+      } else {
+        fail(
+          s"Actual value: ${pprint.apply(actual)} was not equal to ${pprint.apply(expected)}."
+        )
+      }
+    }
+
   private def headersExistenceCheck(
       headers: Headers,
       expected: Either[Option[List[String]], Option[List[String]]]
@@ -101,7 +114,7 @@ private[internals] object assert {
         }.combineAll
     }
   }
-  private def headersCheck(
+   def headersCheck(
       headers: Headers,
       expected: Option[Map[String, String]]
   ) = {
