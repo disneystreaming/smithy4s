@@ -268,12 +268,17 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       val name = stringValue
       val value = stringValue
       val hints = Hints.empty
+      type EnumType = FooBar
+      def enumeration = FooBar
     }
-    object FooBar {
+    object FooBar extends smithy4s.Enumeration[FooBar] {
       case object Foo extends FooBar("foo", 0)
       case object Bar extends FooBar("bar", 1)
+      def hints = Hints.empty
+      def id = smithy4s.ShapeId("test", "FooBar")
+      def values = List(Foo, Bar)
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](List(Foo, Bar))
+        enumeration[FooBar](values)
     }
     val expectedFoo = "foo"
     val expectedBar = "bar"
