@@ -71,7 +71,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       .withMultiValueQueryParams(
         parseQueryParams(testCase.queryParams)
       )
-
     val pathAssert =
       assert.eql(
         expectedUri.path.renderString,
@@ -122,7 +121,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .flatMap(requestDeferred.complete(_))
               .as(Response[F]())
           }
-          reverseRoutes[Alg](app).use { client =>
+          reverseRoutes[Alg](app, testCase.host).use { client =>
             input
               .flatMap { in =>
                 // avoid blocking the test forever...
