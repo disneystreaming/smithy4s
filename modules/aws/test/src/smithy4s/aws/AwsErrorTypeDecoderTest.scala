@@ -17,12 +17,13 @@
 package smithy4s.aws
 
 import cats.syntax.all._
-import smithy4s.http.CaseInsensitive
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http4s.kernel._
+import org.http4s._
+import cats.effect.IO
 import weaver._
 
-object AwsJsonErrorTypeDecoderTest extends FunSuite {
-
-  type Xor[A] = Either[Throwable, A]
+object AwsJsonErrorTypeDecoderTest extends SimpleIOSuite {
 
   val discriminators =
     List(
@@ -33,45 +34,51 @@ object AwsJsonErrorTypeDecoderTest extends FunSuite {
     )
 
   val fromJsonResponse =
-    AwsErrorTypeDecoder.fromResponse[Xor](new json.AwsJsonCodecAPI())
+    AwsErrorTypeDecoder.fromResponse[IO](
+      MessageDecoder.rpcSchemaCompiler(
+        EntityDecoders.fromCodecAPI[IO](new json.AwsJsonCodecAPI())
+      )
+    )
 
   test("Finds discriminator from header") {
     discriminators.foldMap { disc =>
       val httpResponse =
-        HttpResponse(
-          400,
-          List(CaseInsensitive("X-Amzn-Errortype") -> disc),
-          Array.emptyByteArray
-        )
-      val result = fromJsonResponse(httpResponse)
-      expect.same(result, Right(Some("FooError")))
+        Response[IO](Status.NotFound).withHeaders("X-Amzn-Errortype" -> disc)
+      fromJsonResponse(httpResponse).map { result =>
+        expect.same(result, Some(HttpDiscriminator.NameOnly("FooError")))
+      }
     }
   }
 
   test("Finds discriminator from code field") {
     discriminators.foldMap { disc =>
       val httpResponse =
-        HttpResponse(400, List.empty, s"""{"code":"$disc"}""".getBytes())
-      val result = fromJsonResponse(httpResponse)
-      expect.same(result, Right(Some("FooError")))
+        Response[IO](Status.NotFound)
+          .withEntity(s"""{"code":"$disc"}""".getBytes())
+      fromJsonResponse(httpResponse).map { result =>
+        expect.same(result, Some(HttpDiscriminator.NameOnly("FooError")))
+      }
     }
   }
 
   test("Finds discriminator from type field") {
     discriminators.foldMap { disc =>
       val httpResponse =
-        HttpResponse(400, List.empty, s"""{"__type":"$disc"}""".getBytes())
-      val result = fromJsonResponse(httpResponse)
-      expect.same(result, Right(Some("FooError")))
+        Response[IO](Status.NotFound)
+          .withEntity(s"""{"__type":"$disc"}""".getBytes())
+      fromJsonResponse(httpResponse).map { result =>
+        expect.same(result, Some(HttpDiscriminator.NameOnly("FooError")))
+      }
     }
   }
 
   test("Surface absence of discriminator") {
     discriminators.foldMap { disc =>
       val httpResponse =
-        HttpResponse(400, List.empty, "{}".getBytes())
-      val result = fromJsonResponse(httpResponse)
-      expect.same(result, Right(None))
+        Response[IO](Status.NotFound).withEntity(s"{}".getBytes())
+      fromJsonResponse(httpResponse).map { result =>
+        expect.same(result, None)
+      }
     }
   }
 
