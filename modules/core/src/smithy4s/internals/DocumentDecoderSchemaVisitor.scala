@@ -160,7 +160,7 @@ class DocumentDecoderSchemaVisitor(
               }
           }
 
-        case _ => forFormat(DATE_TIME)
+        case _ => forFormat(EPOCH_SECONDS)
 
       }
     case PBlob =>

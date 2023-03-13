@@ -81,7 +81,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       fieldName: CoreHints.FieldName,
       formatOpt: Option[TimestampFormat]
   ): Argument[Timestamp] = {
-    val format = formatOpt.getOrElse(TimestampFormat.DATE_TIME)
+    val format = formatOpt.getOrElse(TimestampFormat.EPOCH_SECONDS)
     Argument.from("timestamp") { s =>
       smithy4s.Timestamp
         .parse(s, format)
