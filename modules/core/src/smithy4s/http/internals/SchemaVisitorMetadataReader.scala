@@ -123,13 +123,6 @@ private[http] class SchemaVisitorMetadataReader(
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): MetaDecode[S] = {
-    val reservedQueries =
-      fields
-        .map(f => HttpBinding.fromHints(f.label, f.hints, hints))
-        .collect { case Some(HttpBinding.QueryBinding(query)) =>
-          query
-        }
-        .toSet
 
     def decodeField[A](
         field: SchemaField[S, A]
@@ -146,7 +139,6 @@ private[http] class SchemaVisitorMetadataReader(
             binding,
             label,
             field.isOptional,
-            reservedQueries,
             maybeDefault
           )
         FieldDecode(label, binding, update)
