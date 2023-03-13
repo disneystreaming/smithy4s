@@ -10,7 +10,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.17.0"
+ThisBuild / mimaBaseVersion := "0.18.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -829,8 +829,9 @@ lazy val example = projectMatrix
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions ++= Seq ("-Wconf:cat=deprecation:silent") ++ scala3MigrationOption(scalaVersion.value),
-
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ) ++ scala3MigrationOption(scalaVersion.value)
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
