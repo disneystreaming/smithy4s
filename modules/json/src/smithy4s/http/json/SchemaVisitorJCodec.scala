@@ -435,7 +435,9 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PShort      => PrimitiveJCodecs.short
       case PString     => PrimitiveJCodecs.string
       case PTimestamp =>
-        hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME) match {
+        hints
+          .get(TimestampFormat)
+          .getOrElse(TimestampFormat.EPOCH_SECONDS) match {
           case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
           case TimestampFormat.EPOCH_SECONDS =>
             PrimitiveJCodecs.timestampEpochSeconds

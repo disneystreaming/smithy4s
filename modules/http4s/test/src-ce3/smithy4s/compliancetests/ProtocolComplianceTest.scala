@@ -128,8 +128,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         HttpProtocolCompliance
           .clientAndServerTests(
             SimpleRestJsonIntegration,
-            smithy4s.compliancetests.internals
-              .transformService(wrapper.service)(mapAllTimestampsToEpoch)
+            wrapper.service
           )
       })
   }
