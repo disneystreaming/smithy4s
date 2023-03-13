@@ -11,7 +11,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.21.2"
+    val jsoniterScalaVersion = "2.21.3"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -42,7 +42,7 @@ object Dependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.4"
+    val circeVersion = "0.14.5"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
@@ -61,6 +61,11 @@ object Dependencies {
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
     val io: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
+  }
+
+  object Fs2Data {
+    val xml: Def.Initialize[ModuleID] =
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.5.1")
   }
 
   object Mill {
@@ -135,7 +140,7 @@ object Dependencies {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.16.1"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.1"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }

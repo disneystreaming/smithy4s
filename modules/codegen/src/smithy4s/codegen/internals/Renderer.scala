@@ -81,8 +81,8 @@ private[internals] object Renderer {
       val renderResult = r.renderDecl(decl)
       val p = s"package ${unit.namespace}"
 
-      val nameCollisions: Set[String] = renderResult.list
-        .flatMap(_.segments.toList)
+      val segments = renderResult.list.flatMap(_.segments.toList)
+      val localCollisions: Set[String] = segments
         .groupBy {
           // we need to compare NameRefs as they would be imported in order to avoid unnecessarily qualifying types in the same package
           case ref: NameRef => ref.asImport
@@ -97,6 +97,21 @@ private[internals] object Renderer {
         .groupBy(identity)
         .filter(_._2.size > 1)
         .keySet
+
+      val otherDecls =
+        unit.declarations.filterNot(_ == decl).map(_.name).toSet
+
+      def differentPackage(ref: NameRef): Boolean =
+        ref.pkg.mkString(".") != unit.namespace
+
+      // Collisions between references in the current file and declarations
+      // in the current package
+      val namespaceCollisions = segments.collect {
+        case ref: NameRef if otherDecls(ref.name) && differentPackage(ref) =>
+          ref.name
+      }.toSet
+
+      val nameCollisions = localCollisions ++ namespaceCollisions
 
       val allImports: List[String] = renderResult.list.flatMap { line =>
         line.segments.toList.collect {
@@ -202,12 +217,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
-        val shapeDocs: List[String] = doc.docLines
+        val shapeDocs: List[String] =
+          doc.docLines.map(_.replace("@", "{@literal @}"))
         val memberDocs: List[String] =
           if (skipMemberDocs) List.empty
           else
             doc.memberDocLines.flatMap { case (memberName, text) =>
-              s"@param $memberName" :: text.map("  " + _)
+              s"@param $memberName" :: text
+                .map(_.replace("@", "{@literal @}"))
+                .map("  " + _)
             }.toList
 
         val maybeNewline =
@@ -291,7 +309,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         },
         newline,
-        line"def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+        line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
       obj(
@@ -299,10 +317,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
       )(
         newline,
-        line"def apply[F[_]](implicit F: $Impl_[F]): F.type = F",
+        line"def $apply_[F[_]](implicit F: $Impl_[F]): F.type = F",
         newline,
         block(line"object $ErrorAware_")(
-          line"def apply[F[_, _]](implicit F: $ErrorAware_[F]): F.type = F",
+          line"def $apply_[F[_, _]](implicit F: $ErrorAware_[F]): F.type = F",
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
@@ -315,7 +333,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"""val version: String = "$version"""",
         newline,
-        line"def endpoint[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.endpoint",
+        line"def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
         newline,
         block(
           line"object ${NameRef("reified")} extends $genNameRef[$opTraitNameRef]"
@@ -330,9 +348,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, f)",
+        line"def $mapK5_[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, f)",
         newline,
-        line"def fromPolyFunction[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
+        line"def $fromPolyFunction_[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
         block(
           line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]) extends $genNameRef[P1]"
         ) {
@@ -347,12 +365,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         newline,
         block(
-          line"def toPolyFunction[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
+          line"def $toPolyFunction_[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
         )(
           if (ops.isEmpty) {
-            line"""def apply[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = sys.error("impossible")"""
+            line"""def $apply_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = sys.error("impossible")"""
           } else {
-            line"def apply[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
+            line"def $apply_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
           }
         ),
         ops.map(renderOperation(name, _))
@@ -433,7 +451,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(genServiceName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def endpoint: (${op.input}, $Endpoint_[${op
+        line"def endpoint: (${op.input}, $genServiceName.Endpoint[${op
           .renderAlgParams(genServiceName)}]) = ($inputRef, $opNameRef)"
       ),
       obj(

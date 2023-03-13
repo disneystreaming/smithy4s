@@ -68,7 +68,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   }
   case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Unit, Nothing, GetFooOutput, Nothing, Nothing] = impl.getFoo()
-    def endpoint: (Unit, Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
+    def endpoint: (Unit, FooServiceGen.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
   }
   object GetFoo extends FooServiceGen.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")

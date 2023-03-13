@@ -204,6 +204,13 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     )
   )
 
+  def scala3MigrationOption(scalaVersion: String) =
+    if (scalaVersion.startsWith("3."))
+      Seq("-source:3.0-migration")
+    else
+      Seq.empty
+
+
   def compilerOptions(scalaVersion: String) = {
     val base =
       if (scalaVersion.startsWith("3."))

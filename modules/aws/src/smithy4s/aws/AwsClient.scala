@@ -21,6 +21,7 @@ import cats.effect.Resource
 import cats.syntax.all._
 import smithy4s.kinds._
 import internals.AwsJsonRPCInterpreter
+import internals.AwsQueryRPCInterpreter
 
 object AwsClient {
 
@@ -75,7 +76,8 @@ object AwsClient {
             service,
             endpointPrefix,
             awsEnv,
-            "application/x-amz-json-1.0"
+            "application/x-amz-json-1.0",
+            new json.AwsJsonCodecAPI()
           )
 
         case AwsProtocol.AWS_JSON_1_1(_) =>
@@ -83,7 +85,15 @@ object AwsClient {
             service,
             endpointPrefix,
             awsEnv,
-            "application/x-amz-json-1.1"
+            "application/x-amz-json-1.1",
+            new json.AwsJsonCodecAPI()
+          )
+        case AwsProtocol.AWS_QUERY(_) =>
+          new AwsQueryRPCInterpreter[Alg, service.Operation, F](
+            service,
+            endpointPrefix,
+            awsEnv,
+            "application/x-www-form-urlencoded"
           )
       }
 

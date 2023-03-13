@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.example.refined.Name
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -17,7 +16,7 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
   val hints: Hints = Hints.empty
 
   case class AgeCase(age: Age) extends UnionWithRefinedTypes
-  case class DogNameCase(dogName: Name) extends UnionWithRefinedTypes
+  case class DogNameCase(dogName: smithy4s.example.refined.Name) extends UnionWithRefinedTypes
 
   object AgeCase {
     val hints: Hints = Hints.empty
