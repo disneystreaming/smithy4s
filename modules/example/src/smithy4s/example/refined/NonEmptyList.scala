@@ -1,6 +1,7 @@
 package smithy4s.example.refined
 
 import smithy4s._
+import smithy4s.example.NonEmptyListFormat
 
 final case class NonEmptyList[A] private (values: List[A])
 
@@ -10,7 +11,7 @@ object NonEmptyList {
     if (values.size > 0) Right(new NonEmptyList(values))
     else Left("List must not be empty.")
 
-  implicit def provider[A] = Refinement.drivenBy[smithy4s.example.NonEmptyListFormat](
+  implicit def provider[A]: RefinementProvider[NonEmptyListFormat, List[A], NonEmptyList[A]] = Refinement.drivenBy[smithy4s.example.NonEmptyListFormat](
     NonEmptyList.apply[A],
     (b: NonEmptyList[A]) => b.values
   )

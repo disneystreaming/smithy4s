@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -58,7 +59,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   }
   case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands(input.brands)
-    def endpoint: (AddBrandsInput, Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
+    def endpoint: (AddBrandsInput, BrandServiceGen.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
   }
   object AddBrands extends BrandServiceGen.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddBrands")
@@ -75,5 +76,5 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, smithy4s.Endpoint[BrandServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def endpoint: (Input, Endpoint[BrandServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

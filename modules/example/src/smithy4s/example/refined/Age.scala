@@ -1,6 +1,7 @@
 package smithy4s.example.refined
 
 import smithy4s._
+import smithy4s.example.AgeFormat
 
 final case class Age private (value: Int)
 
@@ -12,7 +13,7 @@ object Age {
 
   // Done like this just to test the import functionality. Not normally recommended.
   object provider {
-    implicit val provider = Refinement.drivenBy[smithy4s.example.AgeFormat](
+    implicit val provider: RefinementProvider[AgeFormat, Int, Age] = Refinement.drivenBy[smithy4s.example.AgeFormat](
       Age.apply,
       (b: Age) => b.value
     )
