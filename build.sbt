@@ -53,6 +53,7 @@ lazy val allModules = Seq(
   codegen,
   millCodegenPlugin,
   json,
+  xml,
   example,
   tests,
   http4s,
@@ -284,7 +285,7 @@ lazy val `aws-kernel` = projectMatrix
     genSmithy(Compile),
     Test / envVars ++= Map("TEST_VAR" -> "hello"),
     scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
       "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
@@ -306,7 +307,7 @@ lazy val `aws-kernel` = projectMatrix
  */
 lazy val aws = projectMatrix
   .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json)
+  .dependsOn(`aws-kernel`, json, xml)
   .settings(
     isCE3 := true,
     libraryDependencies ++= {
@@ -324,6 +325,9 @@ lazy val aws = projectMatrix
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithy4sDependencies ++= Seq(
       Dependencies.Smithy.awsTraits
+    ),
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
     )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -611,6 +615,30 @@ lazy val json = projectMatrix
       Dependencies.Jsoniter.core.value
     ),
     libraryDependencies ++= munitDeps.value
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains fs2-data-based XML encoders/decoders for the generated
+ * types.
+ */
+lazy val xml = projectMatrix
+  .in(file("modules/xml"))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isCE3 := true,
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2Data.xml.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)

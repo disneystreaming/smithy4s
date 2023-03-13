@@ -19,19 +19,18 @@ package internals
 
 import cats.MonadThrow
 import smithy4s.Endpoint
-import smithy4s.http.CodecAPI
 import smithy4s.kinds._
+import smithy4s.aws.query.AwsQueryCodecAPI
 
 // format: off
 /**
- * An interpreter for unary operations in the AWS_JSON_1.0/AWS_JSON_1.1 protocol
+ * An interpreter for unary operations in the AWS_QUERY protocol
  */
-private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F[_]](
+private[aws] class AwsQueryRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     endpointPrefix: String,
     awsEnv: AwsEnvironment[F],
-    contentType: String,
-    codecAPI: CodecAPI
+    contentType: String
 )(implicit F: MonadThrow[F])
     extends PolyFunction5[Op, AwsCall[F, *, *, *, *, *]] {
 // format: on
@@ -57,8 +56,10 @@ private[aws] class AwsJsonRPCInterpreter[Alg[_[_, _, _, _, _]], Op[_,_,_,_,_], F
     ] {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint[Op, I, E, O, SI, SO]
-      ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] =
+      ): AwsUnaryEndpoint[F, Op, I, E, O, SI, SO] = {
+        val codecAPI = new AwsQueryCodecAPI(endpoint.id.name, service.version)
         new AwsUnaryEndpoint(awsEnv, signer, endpoint, codecAPI)
+      }
     }.unsafeCacheBy(
       service.endpoints.map(Kind5.existential(_)),
       identity
