@@ -31,6 +31,9 @@ import software.amazon.smithy.model.loader.ModelManifestException
 import java.io.File
 import java.net.URLClassLoader
 import scala.jdk.CollectionConverters._
+import java.nio.file.FileSystems
+import scala.util.Using
+import java.nio.file.Files
 
 private[codegen] object ModelLoader {
 
@@ -46,11 +49,22 @@ private[codegen] object ModelLoader {
     val deps = resolveDependencies(dependencies, localJars, repositories)
 
     val modelsInJars = deps.flatMap { file =>
-      val manifestUrl =
-        ModelDiscovery.createSmithyJarManifestUrl(file.toURI().toURL().getPath)
-      try { ModelDiscovery.findModels(manifestUrl).asScala }
-      catch {
-        case _: ModelManifestException => Seq.empty
+      Using.resource(
+        // Note: On JDK13+, the second parameter is redundant.
+        FileSystems.newFileSystem(file.toPath(), null)
+      ) { jarFS =>
+        val p = jarFS.getPath("META-INF", "smithy", "manifest")
+
+        if (Files.exists(p)) {
+          try ModelDiscovery.findModels(p.toUri().toURL()).asScala.toList
+          catch {
+            case e: ModelManifestException =>
+              System.err.println(
+                s"Unexpected exception while loading model from $file, skipping: $e"
+              )
+              Nil
+          }
+        } else Nil
       }
     }
 
