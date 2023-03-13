@@ -55,7 +55,9 @@ private[codegen] object ModelLoader {
       ) { jarFS =>
         val p = jarFS.getPath("META-INF", "smithy", "manifest")
 
-        if (Files.exists(p)) {
+        // model discovery would throw if we tried to pass a non-existent path
+        if (!Files.exists(p)) Nil
+        else {
           try ModelDiscovery.findModels(p.toUri().toURL()).asScala.toList
           catch {
             case e: ModelManifestException =>
@@ -64,7 +66,7 @@ private[codegen] object ModelLoader {
               )
               Nil
           }
-        } else Nil
+        }
       }
     }
 
