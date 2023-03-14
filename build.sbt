@@ -396,7 +396,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.0-RC6"
+      "io.get-coursier" %% "coursier" % "2.1.0"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -829,8 +829,9 @@ lazy val example = projectMatrix
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions ++= Seq ("-Wconf:cat=deprecation:silent") ++ scala3MigrationOption(scalaVersion.value),
-
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ) ++ scala3MigrationOption(scalaVersion.value)
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
