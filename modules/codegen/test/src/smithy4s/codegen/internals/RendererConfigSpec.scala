@@ -183,8 +183,8 @@ final class RendererConfigSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
 
     assertContainsSection(serviceCode, "val endpoints")(
-      """val endpoints: List[ServiceGen.Endpoint[?, ?, ?, ?, ?]] = List(
-        |  Operation,
+      """val endpoints: List[smithy4s.Endpoint[ServiceOperation, ?, ?, ?, ?, ?]] = List(
+        |  ServiceOperation.Operation,
         |)""".stripMargin
     )
   }
@@ -210,8 +210,8 @@ final class RendererConfigSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
 
     assertContainsSection(serviceCode, "val endpoints")(
-      """val endpoints: List[ServiceGen.Endpoint[_, _, _, _, _]] = List(
-        |  Operation,
+      """val endpoints: List[smithy4s.Endpoint[ServiceOperation, _, _, _, _, _]] = List(
+        |  ServiceOperation.Operation,
         |)""".stripMargin
     )
   }

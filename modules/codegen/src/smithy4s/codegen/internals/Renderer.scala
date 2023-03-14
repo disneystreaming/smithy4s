@@ -329,7 +329,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
-        line"val endpoints: $list[smithy4s.Endpoint[$opTraitName,$wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
+        line"val endpoints: $list[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
           .args(ops.map(op => line"${opTraitNameRef}.${op.name}")),
         newline,
         line"def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
