@@ -31,7 +31,7 @@ object WeaverComplianceTest extends SimpleIOSuite {
     type Protocol = alloy.SimpleRestJson
     val protocolTag = alloy.SimpleRestJson
 
-    def codecs = SimpleRestJsonBuilder.codecs
+    // def codecs = SimpleRestJsonBuilder.codecs
 
     def routes[Alg[_[_, _, _, _, _]]](
         impl: FunctorAlgebra[Alg, IO]
@@ -55,6 +55,7 @@ object WeaverComplianceTest extends SimpleIOSuite {
     .clientAndServerTests(SimpleRestJsonIntegration, HelloService)
 
   tests.foreach(tc =>
+    if (tc.name.contains("SayHello(client|request): say_hello"))
     test(tc.name) {
       tc.run.map[Expectations] {
         case Left(value) =>

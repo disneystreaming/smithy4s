@@ -17,8 +17,6 @@
 package smithy4s.compliancetests
 package internals
 
-import cats.implicits._
-import org.http4s.headers.`Content-Type`
 import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
@@ -26,15 +24,13 @@ import org.http4s.Status
 import org.http4s.Uri
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
-import smithy4s.http.CodecAPI
 import smithy4s.Document
-import smithy4s.http.PayloadError
+import smithy4s.http.HttpContractError
 import smithy4s.Service
 
 import scala.concurrent.duration._
-import smithy4s.http.HttpMediaType
-import org.http4s.MediaType
-import org.http4s.Headers
+import cats.effect.Async
+import cats.implicits._
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -42,8 +38,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 ](
     reverseRouter: ReverseRouter[F],
     serviceInstance: Service[Alg]
-)(implicit ce: CompatEffect[F]) {
-  import ce._
+)(implicit F: Async[F]) {
   import org.http4s.implicits._
   import reverseRouter._
   private val baseUri = uri"http://localhost/"
@@ -84,7 +79,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         methodAssert
       )
         .map(_.pure[F])
-    ioAsserts.combineAll
+
+    ioAsserts.combineAll(cats.Applicative.monoid[F, ComplianceResult])
   }
 
   private[compliancetests] def clientRequestTest[I, E, O, SE, SO](
@@ -102,7 +98,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
           .decode(testCase.params.getOrElse(Document.obj()))
           .liftTo[F]
 
-        deferred[Request[F]].flatMap { requestDeferred =>
+        F.deferred[Request[F]].flatMap { requestDeferred =>
           val app = HttpApp[F] { req =>
             req.body.compile.toVector
               .map(fs2.Stream.emits(_))
@@ -115,11 +111,11 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             input
               .flatMap { in =>
                 // avoid blocking the test forever...
-                val request = ce.timeout(requestDeferred.get, 1.second)
+                val request = F.timeout(requestDeferred.get, 1.second)
                 val output: F[O] = service
                   .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
-                output.attemptNarrow[PayloadError].productR(request)
+                output.attemptNarrow[HttpContractError].productR(request)
               }
               .flatMap(req => matchRequest(req, testCase))
           }
@@ -133,12 +129,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpResponseTestCase,
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[F] = {
-    def aMediatype[A](
-        s: smithy4s.Schema[A],
-        cd: CodecAPI
-    ): HttpMediaType = {
-      cd.mediaType(cd.compileCodec(s))
-    }
 
     type R[I_, E_, O_, SE_, SO_] = F[O_]
 
@@ -169,7 +159,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   )
             }
         }
-        val mediaType = aMediatype(endpoint.output, codecs)
         val status = Status.fromInt(testCase.code).liftTo[F]
 
         status.flatMap { status =>
@@ -179,13 +168,11 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 .map { body =>
                   fs2.Stream
                     .emit(body)
-                    .through(utf8Encode)
+                    .through(fs2.text.utf8.encode[F])
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = Headers(
-              `Content-Type`(MediaType.unsafeParse(mediaType.value))
-            ) ++ parseHeaders(testCase.headers)
+            val headers = parseHeaders(testCase.headers)
 
             req.body.compile.drain.as(
               Response[F](status)

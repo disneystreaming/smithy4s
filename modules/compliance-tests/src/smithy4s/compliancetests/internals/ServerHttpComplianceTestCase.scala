@@ -29,6 +29,7 @@ import scala.concurrent.duration._
 import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.Errorable
+import cats.effect.Async
 
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
@@ -37,7 +38,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     router: Router[F],
     serviceInstance: Service[Alg]
 )(implicit
-    ce: CompatEffect[F]
+    ce: Async[F]
 ) {
 
   import ce._
@@ -70,7 +71,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 
     val body =
       testCase.body
-        .map(b => fs2.Stream.emit(b).through(ce.utf8Encode))
+        .map(b => fs2.Stream.emit(b).through(fs2.text.utf8.encode[F]))
         .getOrElse(fs2.Stream.empty)
 
     Request[F](
@@ -198,7 +199,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
               .run(syntheticRequest)
               .flatMap { resp =>
                 resp.body
-                  .through(utf8Decode)
+                  .through(fs2.text.utf8.decode[F])
                   .compile
                   .foldMonoid
                   .tupleRight(resp.status)
