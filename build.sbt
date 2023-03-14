@@ -312,10 +312,13 @@ lazy val aws = projectMatrix
       )
     },
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
     ),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithy4sDependencies ++= Seq(
+      Dependencies.Smithy.waiters,
       Dependencies.Smithy.awsTraits
     ),
     scalacOptions ++= Seq(
