@@ -17,9 +17,32 @@
 package smithy4s.compliancetests
 
 import ComplianceTest.ComplianceResult
+import smithy.test.NonEmptyString
+import smithy4s.ShapeId
 
-case class ComplianceTest[F[_]](name: String, run: F[ComplianceResult])
+case class ComplianceTest[F[_]](
+    id: String,
+    endpoint: ShapeId,
+    tags: List[String],
+    run: F[ComplianceResult]
+) {
+  private val showTags =
+    if (tags.isEmpty) "" else tags.mkString(" Tags[", ", ", "]")
+  def show = s"${endpoint.id}: $id $showTags"
+}
 
 object ComplianceTest {
   type ComplianceResult = Either[String, Unit]
+  def apply[F[_]](
+      id: String,
+      endpoint: ShapeId,
+      tags: Option[List[NonEmptyString]],
+      run: F[ComplianceResult]
+  ): ComplianceTest[F] =
+    ComplianceTest(
+      id,
+      endpoint,
+      tags.getOrElse(List.empty).map(_.value),
+      run
+    )
 }

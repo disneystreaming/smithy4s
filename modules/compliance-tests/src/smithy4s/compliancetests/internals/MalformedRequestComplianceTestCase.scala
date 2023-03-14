@@ -22,8 +22,7 @@ import org.http4s._
 import smithy.test._
 import smithy4s.Service
 import smithy4s.kinds._
-import software.amazon.smithy.utils._
-
+import software.amazon.smithy.utils.SimpleCodeWriter
 
 private[compliancetests] class MalformedRequestComplianceTestCase[
     F[_],
@@ -79,7 +78,7 @@ private[compliancetests] class MalformedRequestComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
-      TestConfig.clientReq,
+      testCase.tags,
       run = {
         val fakeImpl: FunctorAlgebra[Alg, F] =
           originalService.fromPolyFunction[Kind1[F]#toKind5](
@@ -111,25 +110,30 @@ private[compliancetests] class MalformedRequestComplianceTestCase[
                     .foldMonoid
                     .tupleRight(resp.status)
                     .tupleRight(resp.headers)
-                    .map {
-                      case ((actualBody, status), headers) => {
-                        val response = testCase.response
-                        val bodyAssert = response.body
-                          .map(malformedResponseBodyDefinition => {
-                             malformedResponseBodyDefinition.assertion match {
-                              case HttpMalformedResponseBodyAssertion
-                                    .ContentsCase(contents) =>    assert.bodyEql(contents, actualBody, Some(malformedResponseBodyDefinition.mediaType))
-                              case HttpMalformedResponseBodyAssertion
-                                    .MessageRegexCase(messageRegex) => assert.regexEql(messageRegex, actualBody)
-                            }
-
-                          })
-                        val assertions =
-                          bodyAssert.toList :+
-                            assert.headersCheck(headers, response.headers) :+
-                            assert.eql(status.code, response.code)
-                        assertions.combineAll
-                      }
+                    .map { case ((actualBody, status), headers) =>
+                      val response = testCase.response
+                      val bodyAssert = response.body
+                        .map(malformedResponseBodyDefinition => {
+                          malformedResponseBodyDefinition.assertion match {
+                            case HttpMalformedResponseBodyAssertion
+                                  .ContentsCase(contents) =>
+                              assert.bodyEql(
+                                contents,
+                                actualBody,
+                                Some(
+                                  malformedResponseBodyDefinition.mediaType
+                                )
+                              )
+                            case HttpMalformedResponseBodyAssertion
+                                  .MessageRegexCase(messageRegex) =>
+                              assert.regexEql(messageRegex, actualBody)
+                          }
+                        })
+                      val assertions =
+                        bodyAssert.toList :+
+                          assert.headersCheck(headers, response.headers) :+
+                          assert.eql(status.code, response.code)
+                      assertions.combineAll
                     }
               }
           }
@@ -144,36 +148,83 @@ private[compliancetests] class MalformedRequestComplianceTestCase[
     * For example, parameters with 5 values for each key will generate 5 tests in total.
     */
 
-  private def formatRequest(request:HttpMalformedRequestDefinition, arg:String):HttpMalformedRequestDefinition ={
-     val codeWriter = new SimpleCodeWriter()
-    import codeWriter._
-    val formatOnly:String => String = str =>if(str.contains("$value")) format(str, arg) else str
-    println(arg)
-    println(request)
-
-    val formattedMethod = formatOnly(request.method)
-    val formattedUri = formatOnly(request.uri)
-    val formattedHost = request.host.map(formatOnly(_))
-    val formattedQueryParams = request.queryParams.map(_.map(formatOnly(_)))
-    val formattedHeaders = request.headers.map(_.map{ case (key, value) => (formatOnly(key), formatOnly(value))})
-
+  private def interpolateRequest(
+      request: HttpMalformedRequestDefinition,
+      writer: SimpleCodeWriter
+  ): HttpMalformedRequestDefinition = {
     HttpMalformedRequestDefinition(
-      method = formattedMethod,
-      uri = formattedUri,
-      host = formattedHost,
-      queryParams = formattedQueryParams,
-      headers = formattedHeaders,
-      body = request.body
-      )
+      method = writer.format(request.method),
+      uri = writer.format(request.uri),
+      host = request.host.map(writer.format(_)),
+      queryParams = request.queryParams.map(_.map(writer.format(_))),
+      headers = interpolateHeaders(request.headers, writer),
+      body = request.body.map(writer.format(_))
+    )
   }
-  private def generateMalformedRequestTests(malformedRequestTestCase: HttpMalformedRequestTestCase):List[HttpMalformedRequestTestCase] = {
-    println(malformedRequestTestCase.testParameters)
-    malformedRequestTestCase.testParameters.flatMap(_.get("value")).fold(List(malformedRequestTestCase)) {
-      value =>
-        value.map(v => malformedRequestTestCase.copy(
-          request = formatRequest(malformedRequestTestCase.request, v)
-        ))
-    }
+
+  /**
+    * Interpolate the headers, but don't interpolate the error type as this is specific to Amazon
+    * @param headers
+    * @param writer
+    * @return
+    */
+  private def interpolateHeaders(
+      headers: Option[Map[String, String]],
+      writer: SimpleCodeWriter
+  ): Option[Map[String, String]] = {
+    headers.map(_.filterNot(_._1.equalsIgnoreCase("x-amzn-errortype")).map {
+      case (key, value) =>
+        (writer.format(key), writer.format(value))
+    })
+  }
+
+  private def interpolateResponse(
+      response: HttpMalformedResponseDefinition,
+      writer: SimpleCodeWriter
+  ): HttpMalformedResponseDefinition = {
+
+    HttpMalformedResponseDefinition(
+      code = response.code,
+      headers = interpolateHeaders(response.headers, writer),
+      body = response.body.map { body =>
+        body.copy(
+          mediaType = writer.format(body.mediaType),
+          assertion = body.assertion match {
+            case HttpMalformedResponseBodyAssertion.ContentsCase(contents) =>
+              HttpMalformedResponseBodyAssertion.ContentsCase(
+                writer.format(contents)
+              )
+            case HttpMalformedResponseBodyAssertion.MessageRegexCase(
+                  messageRegex
+                ) =>
+              HttpMalformedResponseBodyAssertion.MessageRegexCase(
+                writer.format(messageRegex)
+              )
+          }
+        )
+      }
+    )
+
+  }
+  private def generateMalformedRequestTests(
+      malformedRequestTestCase: HttpMalformedRequestTestCase
+  ): List[HttpMalformedRequestTestCase] = {
+    malformedRequestTestCase.testParameters
+      .flatMap(_.get("value"))
+      .fold(List(malformedRequestTestCase)) { value =>
+        value.map(arg => {
+          val writer = new SimpleCodeWriter()
+          writer.putContext("value", arg)
+          malformedRequestTestCase.copy(
+            request =
+              interpolateRequest(malformedRequestTestCase.request, writer),
+            response =
+              interpolateResponse(malformedRequestTestCase.response, writer),
+            protocol = protocolTag.id.toString(),
+            tags = Some(List(NonEmptyString(arg)))
+          )
+        })
+      }
   }
 
   def malformedRequestTests(): List[ComplianceTest[F]] = {
@@ -183,7 +234,7 @@ private[compliancetests] class MalformedRequestComplianceTestCase[
         .map(_.value)
         .getOrElse(Nil)
         .flatMap(generateMalformedRequestTests)
-       //  .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.id.toString())
         .map(tc => malformedRequestTest(endpoint, tc))
 
     }

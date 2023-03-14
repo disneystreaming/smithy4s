@@ -138,7 +138,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   }
 
   private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = Test(
-    tc.name,
+    tc.show,
     tc.run
       .map[Expectations] {
         case Left(value) =>

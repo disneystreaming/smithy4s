@@ -65,6 +65,9 @@ object HttpProtocolCompliance {
       router: Router[F] with ReverseRouter[F],
       service: Service[Alg]
   )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
-    clientAndServerTests(router, service) ++ malformedRequestTests (router, service)
+    clientAndServerTests(router, service) ++ malformedRequestTests(
+      router,
+      service
+    )
 
 }
