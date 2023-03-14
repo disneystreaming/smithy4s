@@ -38,7 +38,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[NameCollisionOperation,_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[NameCollisionOperation, _, _, _, _, _]] = List(
     NameCollisionOperation.MyOp,
     NameCollisionOperation.Endpoint,
   )

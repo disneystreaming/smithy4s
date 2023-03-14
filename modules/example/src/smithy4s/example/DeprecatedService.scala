@@ -37,7 +37,7 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[DeprecatedServiceOperation,_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[DeprecatedServiceOperation, _, _, _, _, _]] = List(
     DeprecatedServiceOperation.DeprecatedOperation,
   )
 

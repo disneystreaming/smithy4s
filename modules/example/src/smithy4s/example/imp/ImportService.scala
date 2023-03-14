@@ -42,7 +42,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ImportServiceOperation,_, _, _, _, _]] = List(
+  val endpoints: List[smithy4s.Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(
     ImportServiceOperation.ImportOperation,
   )
 
