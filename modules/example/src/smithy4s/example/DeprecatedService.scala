@@ -23,6 +23,13 @@ trait DeprecatedServiceGen[F[_, _, _, _, _]] {
 
 object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] {
 
+  val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
+  val version: String = ""
+
+  val hints: Hints = Hints(
+    smithy.api.Deprecated(message = None, since = None),
+  )
+
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
   object ErrorAware {
@@ -30,33 +37,32 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
-
-  val hints: Hints = Hints(
-    smithy.api.Deprecated(message = None, since = None),
-  )
-
   val endpoints: List[smithy4s.Endpoint[DeprecatedServiceOperation,_, _, _, _, _]] = List(
-    DeprecatedOperation,
+    DeprecatedServiceOperation.DeprecatedOperation,
   )
-
-  val version: String = ""
 
   def endpoint[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DeprecatedServiceOperation.Transformed[DeprecatedServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
+  def reified: DeprecatedServiceGen[DeprecatedServiceOperation] = DeprecatedServiceOperation.reified
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: DeprecatedServiceGen[P], f: PolyFunction5[P, P1]): DeprecatedServiceGen[P1] = new DeprecatedServiceOperation.Transformed(alg, f)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DeprecatedServiceOperation, P]): DeprecatedServiceGen[P] = new DeprecatedServiceOperation.Transformed(reified, f)
+  def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
+}
+
+sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
+
+object DeprecatedServiceOperation {
 
   object reified extends DeprecatedServiceGen[DeprecatedServiceOperation] {
     def deprecatedOperation() = DeprecatedOperation()
   }
-
-  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: DeprecatedServiceGen[P], f: PolyFunction5[P, P1]): DeprecatedServiceGen[P1] = new Transformed(alg, f)
-
-  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DeprecatedServiceOperation, P]): DeprecatedServiceGen[P] = new Transformed(reified, f)
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DeprecatedServiceGen[P], f: PolyFunction5[P, P1]) extends DeprecatedServiceGen[P1] {
     def deprecatedOperation() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.deprecatedOperation())
   }
-
-  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[DeprecatedServiceOperation, P](reified, const5(value))
-  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = new PolyFunction5[DeprecatedServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
@@ -76,9 +82,4 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
     )
     def wrap(input: Unit) = DeprecatedOperation()
   }
-}
-
-sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
-  def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

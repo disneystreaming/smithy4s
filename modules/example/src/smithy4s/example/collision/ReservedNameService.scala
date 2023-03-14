@@ -24,6 +24,13 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
 
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
+  val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
+  val version: String = "1.0.0"
+
+  val hints: Hints = Hints(
+    alloy.SimpleRestJson(),
+  )
+
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
   object ErrorAware {
@@ -31,22 +38,28 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
-
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  )
-
   val endpoints: List[smithy4s.Endpoint[ReservedNameServiceOperation,_, _, _, _, _]] = List(
-    _Set,
-    _List,
-    _Map,
-    _Option,
+    ReservedNameServiceOperation._Set,
+    ReservedNameServiceOperation._List,
+    ReservedNameServiceOperation._Map,
+    ReservedNameServiceOperation._Option,
   )
-
-  val version: String = "1.0.0"
 
   def endpoint[I, E, O, SI, SO](op: ReservedNameServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ReservedNameServiceOperation.Transformed[ReservedNameServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
+  def reified: ReservedNameServiceGen[ReservedNameServiceOperation] = ReservedNameServiceOperation.reified
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]): ReservedNameServiceGen[P1] = new ReservedNameServiceOperation.Transformed(alg, f)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new ReservedNameServiceOperation.Transformed(reified, f)
+  def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
+}
+
+sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[ReservedNameServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
+
+object ReservedNameServiceOperation {
 
   object reified extends ReservedNameServiceGen[ReservedNameServiceOperation] {
     def set(set: Set[String]) = _Set(SetInput(set))
@@ -54,19 +67,12 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     def map(value: Map[String, String]) = _Map(MapInput(value))
     def option(value: Option[String] = None) = _Option(OptionInput(value))
   }
-
-  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]): ReservedNameServiceGen[P1] = new Transformed(alg, f)
-
-  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new Transformed(reified, f)
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameServiceGen[P1] {
     def set(set: Set[String]) = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set(set))
     def list(list: List[String]) = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list(list))
     def map(value: Map[String, String]) = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map(value))
     def option(value: Option[String] = None) = f[OptionInput, Nothing, Unit, Nothing, Nothing](alg.option(value))
   }
-
-  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[ReservedNameServiceOperation, P](reified, const5(value))
-  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ReservedNameServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
@@ -131,9 +137,4 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     )
     def wrap(input: OptionInput) = _Option(input)
   }
-}
-
-sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
-  def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ReservedNameServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

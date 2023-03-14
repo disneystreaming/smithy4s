@@ -305,7 +305,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             ),
             deprecationAnnotation(op.hints),
             line"def ${op.methodName}(${op.renderArgs}): F[${op
-              .renderAlgParams(genNameRef.name)}]"
+              .renderAlgParams(opTraitNameRef.name)}]"
           )
         },
         newline,
@@ -317,6 +317,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
       )(
         newline,
+        renderId(shapeId),
+        line"""val version: String = "$version"""",
+        newline,
+        renderHintsVal(hints),
+        newline,
         line"def $apply_[F[_]](implicit F: $Impl_[F]): F.type = F",
         newline,
         block(line"object $ErrorAware_")(
@@ -324,19 +329,31 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
-        renderId(shapeId),
-        newline,
-        renderHintsVal(hints),
-        newline,
         line"val endpoints: $list[smithy4s.Endpoint[$opTraitName,$wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
-          .args(ops.map(_.name)),
-        newline,
-        line"""val version: String = "$version"""",
+          .args(ops.map(op => line"${opTraitNameRef}.${op.name}")),
         newline,
         line"def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
+        line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ${opTraitNameRef}.$Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
+        line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
+        line"def reified: $genNameRef[$opTraitNameRef] = ${opTraitNameRef}.${NameRef("reified")}",
+        line"def $mapK5_[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $opTraitNameRef.$Transformed_(alg, f)",
+        line"def $fromPolyFunction_[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $opTraitNameRef.$Transformed_(reified, f)",
+        line"def $toPolyFunction_[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = $opTraitNameRef.$toPolyFunction_(impl)"
+      ),
+      newline,
+      block(
+        line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
+      )(
+        line"def run[F[_, _, _, _, _]](impl: $genName[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]",
+        line"def endpoint: (Input, $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput])"
+      ),
+      newline,
+      block(
+        line"object $opTraitName"
+      )(
         newline,
         block(
-          line"object ${NameRef("reified")} extends $genNameRef[$opTraitNameRef]"
+          line"object ${NameDef("reified")} extends $genNameRef[$opTraitNameRef]"
         ) {
           ops.map {
             case op if op.input == Type.unit =>
@@ -347,22 +364,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"def ${op.methodName}(${op.renderArgs}) = ${op.name}(${op.input}(${op.renderParams}))"
           }
         },
-        newline,
-        line"def $mapK5_[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, f)",
-        newline,
-        line"def $fromPolyFunction_[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
         block(
           line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]) extends $genNameRef[P1]"
         ) {
           ops.map { op =>
             val opName = op.methodName
             line"def $opName(${op.renderArgs}) = f[${op
-              .renderAlgParams(genName.name)}](alg.$opName(${op.renderParams}))"
+              .renderAlgParams(opTraitNameRef.name)}](alg.$opName(${op.renderParams}))"
           }
         },
-        newline,
-        line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends $Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
-        line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         newline,
         block(
           line"def $toPolyFunction_[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
@@ -374,13 +384,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         ),
         ops.map(renderOperation(name, _))
-      ),
-      newline,
-      block(
-        line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
-      )(
-        line"def run[F[_, _, _, _, _]](impl: $genName[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]",
-        line"def endpoint: (Input, $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput])"
       ),
       newline
     )
@@ -397,6 +400,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"input"
     } else line"()"
     val genServiceName = serviceName + "Gen"
+    val opObjectName = serviceName + "Operation"
     val opName = op.name
     val opNameRef = NameRef(opName)
     val traitName = NameRef(s"${serviceName}Operation")
@@ -447,17 +451,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       block(
-        line"case class ${NameDef(opName)}($params) extends $traitName[${op.renderAlgParams(genServiceName)}]"
+        line"case class ${NameDef(opName)}($params) extends $traitName[${op.renderAlgParams(opObjectName)}]"
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
-          .renderAlgParams(genServiceName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
+          .renderAlgParams(opObjectName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
         line"def endpoint: (${op.input}, smithy4s.Endpoint[$traitName,${op
-          .renderAlgParams(genServiceName)}]) = ($inputRef, $opNameRef)"
+          .renderAlgParams(opObjectName)}]) = ($inputRef, $opNameRef)"
       ),
       obj(
         opNameRef,
         ext =
-          line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(genServiceName)}]$errorable"
+          line"smithy4s.Endpoint[$traitName,${op.renderAlgParams(opObjectName)}]$errorable"
       )(
         renderId(op.shapeId),
         line"val input: $Schema_[${op.input}] = ${op.input.schemaRef}.addHints(smithy4s.internals.InputOutput.Input.widen)",

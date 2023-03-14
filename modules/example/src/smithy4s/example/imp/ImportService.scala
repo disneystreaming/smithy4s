@@ -21,12 +21,19 @@ import smithy4s.schema.Schema.unit
 trait ImportServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def importOperation(): F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]
+  def importOperation(): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](this)
 }
 
 object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {
+
+  val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
+  val version: String = "1.0.0"
+
+  val hints: Hints = Hints(
+    alloy.SimpleRestJson(),
+  )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -35,42 +42,41 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
-
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-  )
-
   val endpoints: List[smithy4s.Endpoint[ImportServiceOperation,_, _, _, _, _]] = List(
-    ImportOperation,
+    ImportServiceOperation.ImportOperation,
   )
-
-  val version: String = "1.0.0"
 
   def endpoint[I, E, O, SI, SO](op: ImportServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ImportServiceOperation.Transformed[ImportServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
+  def reified: ImportServiceGen[ImportServiceOperation] = ImportServiceOperation.reified
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]): ImportServiceGen[P1] = new ImportServiceOperation.Transformed(alg, f)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ImportServiceOperation, P]): ImportServiceGen[P] = new ImportServiceOperation.Transformed(reified, f)
+  def toPolyFunction[P[_, _, _, _, _]](impl: ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = ImportServiceOperation.toPolyFunction(impl)
+}
+
+sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
+
+object ImportServiceOperation {
 
   object reified extends ImportServiceGen[ImportServiceOperation] {
     def importOperation() = ImportOperation()
   }
-
-  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]): ImportServiceGen[P1] = new Transformed(alg, f)
-
-  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ImportServiceOperation, P]): ImportServiceGen[P] = new Transformed(reified, f)
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]) extends ImportServiceGen[P1] {
-    def importOperation() = f[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation())
+    def importOperation() = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation())
   }
-
-  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[ImportServiceOperation, P](reified, const5(value))
-  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = new PolyFunction5[ImportServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ImportServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] {
-    def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
-    def endpoint: (Unit, smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
+  case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
+    def endpoint: (Unit, smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
   }
-  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceGen.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
+  object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -112,9 +118,4 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
       case c: NotFoundErrorCase => NotFoundErrorCase.alt(c)
     }
   }
-}
-
-sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
-  def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
