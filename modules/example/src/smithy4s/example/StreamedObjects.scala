@@ -46,6 +46,7 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: StreamedObjectsGen[P], f: PolyFunction5[P, P1]): StreamedObjectsGen[P1] = new StreamedObjectsOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[StreamedObjectsOperation, P]): StreamedObjectsGen[P] = new StreamedObjectsOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = StreamedObjectsOperation.toPolyFunction(impl)
+
 }
 
 sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

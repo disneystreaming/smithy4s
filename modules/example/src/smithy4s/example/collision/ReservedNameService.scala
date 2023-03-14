@@ -52,6 +52,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameServiceGen[P], f: PolyFunction5[P, P1]): ReservedNameServiceGen[P1] = new ReservedNameServiceOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new ReservedNameServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
+
 }
 
 sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

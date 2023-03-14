@@ -338,7 +338,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def reified: $genNameRef[$opTraitNameRef] = ${opTraitNameRef}.${NameRef("reified")}",
         line"def $mapK5_[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $opTraitNameRef.$Transformed_(alg, f)",
         line"def $fromPolyFunction_[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $opTraitNameRef.$Transformed_(reified, f)",
-        line"def $toPolyFunction_[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = $opTraitNameRef.$toPolyFunction_(impl)"
+        line"def $toPolyFunction_[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = $opTraitNameRef.$toPolyFunction_(impl)",
+        newline,
+        ops.map { op =>
+          if (op.errors.isEmpty) Lines.empty
+          else {
+            val errorName = NameRef(op.name + "Error")
+            lines(
+              line"type $errorName = $opTraitNameRef.$errorName",
+              line"val $errorName = $opTraitNameRef.$errorName"
+            )
+          }
+        }
       ),
       newline,
       block(

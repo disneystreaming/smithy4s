@@ -50,6 +50,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: NameCollisionGen[P], f: PolyFunction5[P, P1]): NameCollisionGen[P1] = new NameCollisionOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[NameCollisionOperation, P]): NameCollisionGen[P] = new NameCollisionOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = NameCollisionOperation.toPolyFunction(impl)
+
+  type MyOpError = NameCollisionOperation.MyOpError
+  val MyOpError = NameCollisionOperation.MyOpError
 }
 
 sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

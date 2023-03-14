@@ -60,6 +60,11 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ObjectServiceGen[P], f: PolyFunction5[P, P1]): ObjectServiceGen[P1] = new ObjectServiceOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ObjectServiceOperation, P]): ObjectServiceGen[P] = new ObjectServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = ObjectServiceOperation.toPolyFunction(impl)
+
+  type PutObjectError = ObjectServiceOperation.PutObjectError
+  val PutObjectError = ObjectServiceOperation.PutObjectError
+  type GetObjectError = ObjectServiceOperation.GetObjectError
+  val GetObjectError = ObjectServiceOperation.GetObjectError
 }
 
 sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

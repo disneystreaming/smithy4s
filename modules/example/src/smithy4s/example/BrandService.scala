@@ -44,6 +44,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: BrandServiceGen[P], f: PolyFunction5[P, P1]): BrandServiceGen[P1] = new BrandServiceOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BrandServiceOperation, P]): BrandServiceGen[P] = new BrandServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
+
 }
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

@@ -53,6 +53,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]): FooServiceGen[P1] = new FooServiceOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new FooServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
+
 }
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

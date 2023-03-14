@@ -48,6 +48,7 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: DeprecatedServiceGen[P], f: PolyFunction5[P, P1]): DeprecatedServiceGen[P1] = new DeprecatedServiceOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DeprecatedServiceOperation, P]): DeprecatedServiceGen[P] = new DeprecatedServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
+
 }
 
 sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

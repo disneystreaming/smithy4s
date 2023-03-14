@@ -53,6 +53,9 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ImportServiceGen[P], f: PolyFunction5[P, P1]): ImportServiceGen[P1] = new ImportServiceOperation.Transformed(alg, f)
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ImportServiceOperation, P]): ImportServiceGen[P] = new ImportServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = ImportServiceOperation.toPolyFunction(impl)
+
+  type ImportOperationError = ImportServiceOperation.ImportOperationError
+  val ImportOperationError = ImportServiceOperation.ImportOperationError
 }
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
