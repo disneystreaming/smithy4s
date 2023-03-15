@@ -1,3 +1,45 @@
+# 0.17.5
+
+This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
+
+## Improvements
+
+### Validate model for codegen after transformations
+
+See https://github.com/disneystreaming/smithy4s/pull/821
+
+### Fix codegen collisions
+
+See https://github.com/disneystreaming/smithy4s/pull/848, https://github.com/disneystreaming/smithy4s/pull/847
+
+### Adjust encoding/decoding HTTP query parameters
+
+See https://github.com/disneystreaming/smithy4s/pull/827
+
+### Dynamic: Add `metadata` method
+
+See https://github.com/disneystreaming/smithy4s/pull/823
+
+### Http4s client body improvements
+
+See https://github.com/disneystreaming/smithy4s/pull/826
+
+### Handle NaN and Infinity in JSON codecs
+
+See https://github.com/disneystreaming/smithy4s/pull/822
+
+### Support time zones in `DATE_TIME` parsing
+
+See https://github.com/disneystreaming/smithy4s/pull/844
+
+### Better handling of special characters when loading Smithy models from dependencies
+
+See https://github.com/disneystreaming/smithy4s/pull/850
+
+### Http4s client: Support `Byte` parameters in paths
+
+See https://github.com/disneystreaming/smithy4s/pull/819
+
 # 0.17.4
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
