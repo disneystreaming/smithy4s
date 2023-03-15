@@ -11,7 +11,7 @@ object AgeFormat extends ShapeTag.Companion[AgeFormat] {
   val id: ShapeId = ShapeId("smithy4s.example", "ageFormat")
 
   val hints: Hints = Hints(
-    smithy.api.Trait(selector = Some("integer"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    smithy.api.Trait(selector = Some(":test(integer, member > integer)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
   implicit val schema: Schema[AgeFormat] = constant(AgeFormat()).withId(id).addHints(hints)

@@ -45,7 +45,6 @@ private[http] sealed abstract class MetaDecode[+A] {
       binding: HttpBinding,
       fieldName: String,
       optional: Boolean,
-      reservedQueries: Set[String],
       maybeDefault: Option[Any]
   ): (Metadata, PutField) => Unit = {
     // format: off
@@ -92,14 +91,15 @@ private[http] sealed abstract class MetaDecode[+A] {
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
           putField(fieldName, f(values.iterator))
         }
+      // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait
+      // when targeting Map[String,String] we take the first value encountered
       case (QueryParamsBinding, StringMapMetaDecode(f)) => {
         (metadata, putField) =>
-          val iter = metadata.query.iterator
-            .filterNot { case (k, _) => reservedQueries(k) }
+          val iter: Iterator[(FieldName, FieldName)] = metadata.query.iterator
             .map { case (k, values) =>
-              if (values.size == 1) {
+              if (values.nonEmpty) {
                 k -> values.head
-              } else throw MetadataError.ArityError(fieldName, QueryBinding(k))
+              } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
             }
           if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
           else if (iter.isEmpty && optional) putField.putNone(fieldName)
@@ -108,7 +108,6 @@ private[http] sealed abstract class MetaDecode[+A] {
       case (QueryParamsBinding, StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
           val iter = metadata.query.iterator
-            .filterNot { case (k, _) => reservedQueries(k) }
             .map { case (k, values) =>
               k -> values.iterator
             }

@@ -64,7 +64,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   }
   case class MyOp() extends NameCollisionOperation[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] = impl.myOp()
-    def endpoint: (Unit, Endpoint[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]) = ((), MyOp)
+    def endpoint: (Unit, NameCollisionGen.Endpoint[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing]) = ((), MyOp)
   }
   object MyOp extends NameCollisionGen.Endpoint[Unit, NameCollisionGen.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
     val id: ShapeId = ShapeId("smithy4s.example", "MyOp")

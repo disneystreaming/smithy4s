@@ -154,13 +154,26 @@ class CachedSchemaVisitorSpec() extends FunSuite {
   test(header + "enum") {
     sealed abstract class FooBar(val stringValue: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
+      override type EnumType = FooBar
       val name = stringValue
       val value = stringValue
       val hints = Hints.empty
+      def enumeration: smithy4s.Enumeration[EnumType] = FooBar
     }
-    case object Foo extends FooBar("foo", 0)
-    case object Bar extends FooBar("bar", 1)
-    val schema: Schema[FooBar] = enumeration[FooBar](List(Foo, Bar))
+
+    object FooBar extends smithy4s.Enumeration[FooBar] {
+      def hints = Hints.empty
+      def id = ShapeId("", "FooBar")
+      def values: List[FooBar] = List(Foo, Bar)
+
+      case object Foo extends FooBar("foo", 0)
+      case object Bar extends FooBar("bar", 1)
+
+      implicit val schema: Schema[FooBar] =
+        enumeration[FooBar](List(Foo, Bar))
+    }
+
+    val schema: Schema[FooBar] = enumeration[FooBar](FooBar.values)
     checkSchema(schema)
   }
 

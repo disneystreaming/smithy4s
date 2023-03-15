@@ -24,13 +24,14 @@ import smithy4s.meta.IndexedSeqTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
+import smithy4s.meta.AdtTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
-import software.amazon.smithy.model.node.Node
+import software.amazon.smithy.model.node._
 import software.amazon.smithy.model.selector.PathFinder
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits.DefaultTrait
-import software.amazon.smithy.model.traits.RequiredTrait
+import software.amazon.smithy.model.traits.{RequiredTrait, TimestampFormatTrait}
 import software.amazon.smithy.model.traits._
 
 import scala.annotation.nowarn
@@ -105,7 +106,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     new ShapeVisitor[Option[Decl]] {
 
       private def getDefault(shape: Shape): Option[Decl] = {
-        val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val hints = SmithyToIR.this.hints(shape)
 
         val recursive = hints.exists {
           case Hint.Trait => true
@@ -218,7 +219,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       override def structureShape(shape: StructureShape): Option[Decl] = {
-        val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
           case Hint.Trait => true
           case _          => false
@@ -230,7 +231,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getMixins()
           .asScala
           .filter(mixinId => doFieldsMatch(mixinId, fields))
-        val mixins = filteredMixins.flatMap(_.tpe).toList
+        val mixins = filterMixinsExistOnParentAdt(filteredMixins.toSet, shape)
+          .flatMap(_.tpe)
+          .toList
         val isMixin = shape.hasTrait(classOf[MixinTrait])
 
         val p =
@@ -243,21 +246,64 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hints,
             isMixin
           ).some
-        if (shape.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+        if (isPartOfAdt(shape)) {
           if (renderAdtMemberStructures) p else None
         } else p
+      }
+
+      private def getMixins(shape: UnionShape): List[Type] = {
+        getMixinShapeIds(shape).flatMap(_.tpe)
+      }
+
+      private def getMixinShapeIds(shape: UnionShape): List[ShapeId] = {
+        val memberTargets = shape
+          .members()
+          .asScala
+          .toList
+          .map(mem => model.expectShape(mem.getTarget))
+        val mixins = memberTargets
+          .map(_.getMixins.asScala.toSet)
+
+        val union = mixins.foldLeft(Set.empty[ShapeId])(_ union _)
+
+        val result = mixins.foldLeft(union)(_ intersect _)
+
+        result.toList
+      }
+
+      // Filters out any mixins which exist on the parent ADT (if it is part of an ADT)
+      // This is so the case classes in the ADT won't also extend the same mixins
+      // as the parent sealed trait. This leads to cleaner generated code (no redundancy).
+      private def filterMixinsExistOnParentAdt(
+          mixinIds: Set[ShapeId],
+          shape: StructureShape
+      ): Set[ShapeId] = {
+        getAdtParent(shape) match {
+          case None => mixinIds
+          case Some(parentId) =>
+            model.expectShape(parentId).asUnionShape.asScala match {
+              case None => mixinIds
+              case Some(union) =>
+                val unionMixins = getMixinShapeIds(union)
+                mixinIds.filter(!unionMixins.contains(_))
+            }
+        }
       }
 
       override def unionShape(shape: UnionShape): Option[Decl] = {
         val rec = isRecursive(shape.getId())
 
-        val hints = traitsToHints(shape.getAllTraits().asScala.values.toList)
+        val mixins =
+          if (shape.hasTrait(classOf[AdtTrait])) getMixins(shape)
+          else List.empty
+
+        val hints = SmithyToIR.this.hints(shape)
         val isTrait = hints.exists {
           case Hint.Trait => true
           case _          => false
         }
         NonEmptyList.fromList(shape.alts).map { case alts =>
-          Union(shape.getId(), shape.name, alts, rec || isTrait, hints)
+          Union(shape.getId(), shape.name, alts, mixins, rec || isTrait, hints)
         }
       }
 
@@ -561,14 +607,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .accept(this)
           .map { tpe =>
             val _hints = hints(x)
+            val memberHints = hints(x.getMember())
             if (_hints.contains(Hint.UniqueItems)) {
-              Type.Collection(CollectionType.Set, tpe)
+              Type.Collection(CollectionType.Set, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.Vector)) {
-              Type.Collection(CollectionType.Vector, tpe)
+              Type.Collection(CollectionType.Vector, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.IndexedSeq)) {
-              Type.Collection(CollectionType.IndexedSeq, tpe)
+              Type.Collection(CollectionType.IndexedSeq, tpe, memberHints)
             } else {
-              Type.Collection(CollectionType.List, tpe)
+              Type.Collection(CollectionType.List, tpe, memberHints)
             }
           }
           .map { tpe =>
@@ -582,7 +629,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       override def setShape(x: SetShape): Option[Type] =
         x.getMember()
           .accept(this)
-          .map(Type.Collection(CollectionType.Set, _))
+          .map(Type.Collection(CollectionType.Set, _, hints(x.getMember())))
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
@@ -598,11 +645,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
         v <- x.getValue().accept(this)
-      } yield Type.Map(k, v)).map { tpe =>
-        val externalOrBase =
-          getExternalOrBase(x, tpe)
-        val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+      } yield Type.Map(k, hints(x.getKey()), v, hints(x.getValue()))).map {
+        tpe =>
+          val externalOrBase =
+            getExternalOrBase(x, tpe)
+          val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+          Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
       }
 
       def byteShape(x: ByteShape): Option[Type] =
@@ -681,9 +729,44 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
     }
 
-  private def hints(shape: Shape): List[Hint] = traitsToHints(
-    shape.getAllTraits().asScala.values.toList
-  )
+  private def imputeZeroValuesOnDefaultTraits(
+      shape: Shape
+  ): List[Trait] = shape.getAllTraits().asScala.values.toList.map {
+    case default: DefaultTrait if default.toNode == Node.nullNode =>
+      val tpe = shape.asMemberShape().asScala match {
+        case Some(memShape) => model.getShape(memShape.getTarget).get.getType
+        case None           => shape.getType
+      }
+      val newNode = tpe match {
+        case ShapeType.STRING      => Node.from("")
+        case ShapeType.MAP         => Node.objectNode()
+        case ShapeType.LIST        => Node.arrayNode()
+        case ShapeType.INTEGER     => Node.from(0)
+        case ShapeType.BIG_DECIMAL => Node.from(0)
+        case ShapeType.BIG_INTEGER => Node.from(0)
+        case ShapeType.LONG        => Node.from(0L)
+        case ShapeType.DOUBLE      => Node.from(0.0d)
+        case ShapeType.SHORT       => Node.from(0: Short)
+        case ShapeType.FLOAT       => Node.from(0.0f)
+        case ShapeType.BOOLEAN     => Node.from(false)
+        case ShapeType.BLOB        => Node.arrayNode()
+        case ShapeType.BYTE        => Node.from(0)
+        case ShapeType.TIMESTAMP =>
+          shape
+            .getTrait(classOf[TimestampFormatTrait])
+            .asScala
+            .map(_.getValue) match {
+            case Some(TimestampFormatTrait.DATE_TIME) =>
+              Node.from("1970-01-01T00:00:00.00Z")
+            case Some(TimestampFormatTrait.HTTP_DATE) =>
+              Node.from("Thu, 01 Jan 1970 00:00:00 GMT")
+            case _ => Node.from(0)
+          }
+        case _ => default.toNode
+      }
+      new DefaultTrait(newNode)
+    case other => other
+  }
 
   def toTypeRef(id: ToShapeId): Type.Ref = {
     val shapeId = id.toShapeId()
@@ -730,7 +813,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
-  private val traitToHint: PartialFunction[Trait, Hint] = {
+  private def traitToHint(shape: Shape): PartialFunction[Trait, Hint] = {
     case _: ErrorTrait => Hint.Error
     case t: ProtocolDefinitionTrait =>
       val shapeIds = t.getTraits()
@@ -755,7 +838,51 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
   }
 
-  private def traitsToHints(traits: List[Trait]): List[Hint] = {
+  private def documentationHint(shape: Shape): Option[Hint] = {
+    def split(s: String) =
+      s.replace("*/", "\\*\\/").linesIterator.toList
+    val shapeDocs = shape
+      .getTrait(classOf[DocumentationTrait])
+      .asScala
+      .foldMap(doc => split(doc.getValue()))
+    def getMemberDocs(shape: Shape): Map[String, List[String]] =
+      shape match {
+        case _: UnionShape => Map.empty
+        case op: OperationShape =>
+          op.getInput()
+            .asScala
+            .map(id => getMemberDocs(model.expectShape(id)))
+            .getOrElse(Map.empty)
+        case _ =>
+          shape
+            .members()
+            .asScala
+            .map { member =>
+              val memberDocs =
+                member.getTrait(classOf[DocumentationTrait]).asScala
+              def targetDocs = model
+                .expectShape(member.getTarget)
+                .getTrait(classOf[DocumentationTrait])
+                .asScala
+
+              (
+                member.getMemberName(),
+                memberDocs.orElse(targetDocs)
+              )
+            }
+            .collect { case (name, Some(v)) => (name, split(v.getValue())) }
+            .toMap
+
+      }
+
+    val memberDocs = getMemberDocs(shape)
+    if (shapeDocs.nonEmpty || memberDocs.nonEmpty) {
+      Some(Hint.Documentation(shapeDocs, memberDocs))
+    } else None
+  }
+
+  private def hints(shape: Shape): List[Hint] = {
+    val traits = imputeZeroValuesOnDefaultTraits(shape)
     val nonMetaTraits =
       traits
         .filterNot(_.toShapeId().getNamespace() == "smithy4s.meta")
@@ -768,7 +895,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
     }
-    traits.collect(traitToHint) ++ nonConstraintNonMetaTraits.map(unfoldTrait)
+    traits.collect(traitToHint(shape)) ++
+      documentationHint(shape) ++
+      nonConstraintNonMetaTraits.map(unfoldTrait)
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)
@@ -794,11 +923,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             if (defaultRenderMode == DefaultRenderMode.Full)
               maybeDefault(member)
             else List.empty
+          val defaultable = member.hasTrait(classOf[DefaultTrait]) &&
+            !member.tpe.exists(_.isExternal)
           (
             member.getMemberName(),
             member.tpe,
-            member.hasTrait(classOf[RequiredTrait]) ||
-              member.hasTrait(classOf[DefaultTrait]),
+            member.hasTrait(classOf[RequiredTrait]) || defaultable,
             hints(member) ++ default ++ noDefault
           )
         }
@@ -822,14 +952,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
     }
 
-    def alts =
+    def alts = {
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (isPartOfAdt(memberTarget)) {
             val s = memberTarget
               .accept(toIRVisitor(renderAdtMemberStructures = true))
               .map(Left(_))
@@ -847,15 +977,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             Alt(name, UnionMember.ProductCase(p), h)
         }
         .toList
+    }
 
-    def getAltTypes: List[AltInfo] =
+    def getAltTypes: List[AltInfo] = {
       shape
         .members()
         .asScala
         .map { member =>
           val memberTarget =
             model.expectShape(member.getTarget)
-          if (memberTarget.getTrait(classOf[AdtMemberTrait]).isPresent()) {
+          if (isPartOfAdt(memberTarget)) {
             (member.getMemberName(), member.tpe.map(Left(_)))
           } else {
             (member.getMemberName(), member.tpe.map(Right(_)))
@@ -868,6 +999,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             AltInfo(name, tpe, isAdtMember = false)
         }
         .toList
+    }
 
   }
 
@@ -904,6 +1036,24 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
   private case class NodeAndType(node: Node, tpe: Type)
 
+  private def isPartOfAdt(shape: Shape): Boolean = {
+    shape.hasTrait(classOf[AdtMemberTrait]) ||
+    getAdtParent(shape).isDefined
+  }
+
+  private def getAdtParent(shape: Shape): Option[ShapeId] = {
+    val result = model
+      .getMemberShapes()
+      .asScala
+      .toList
+      .filter(_.getTarget == shape.toShapeId)
+      .find(mem =>
+        model.expectShape(mem.getContainer).hasTrait(classOf[AdtTrait])
+      )
+
+    result.map(_.getContainer)
+  }
+
   private object UnRef {
     def unapply(tpe: Type): Option[Shape] = tpe match {
       case Type.Ref(ns, name) =>
@@ -911,11 +1061,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getShape(ShapeId.fromParts(ns, name))
           .asScala
         maybeShape.map { shape =>
-          shape.getTrait(classOf[AdtMemberTrait]).asScala match {
-            case Some(adtMemberTrait) =>
+          val fromAdtMember = shape
+            .getTrait(classOf[AdtMemberTrait])
+            .asScala
+            .map(_.getValue)
+          val adtParent: Option[ShapeId] =
+            fromAdtMember orElse getAdtParent(shape)
+          adtParent match {
+            case Some(parent) =>
               val cId = shape.getId
               val newNs =
-                cId.getNamespace + "." + adtMemberTrait.getValue.getName
+                cId.getNamespace + "." + parent.getName
               val error = new Exception(
                 s"Shapes annotated with the adtMemberTrait must be structures. $cId is not a structure."
               )
@@ -1021,17 +1177,22 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // List
       case (
             N.ArrayNode(list),
-            Type.Collection(collectionType, mem)
+            Type.Collection(collectionType, mem, _)
           ) =>
         TypedNode.CollectionTN(collectionType, list.map(NodeAndType(_, mem)))
       // Map
-      case (N.MapNode(map), Type.Map(keyType, valueType)) =>
+      case (N.MapNode(map), Type.Map(keyType, _, valueType, _)) =>
         TypedNode.MapTN(map.map { case (k, v) =>
           (NodeAndType(k, keyType) -> NodeAndType(v, valueType))
         })
       // Primitive
       case (node, Type.PrimitiveType(p)) =>
         unfoldNodeAndTypeP(node, p)
+      case (node, Type.Collection(collectionType, _, _))
+          if node == Node.nullNode =>
+        TypedNode.CollectionTN(collectionType, List.empty)
+      case (node, Type.Map(_, _, _, _)) if node == Node.nullNode =>
+        TypedNode.MapTN(List.empty)
       case (node, tpe) => throw UnhandledTraitBinding(node, tpe)
     }
 
@@ -1062,6 +1223,29 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       TypedNode.PrimitiveTN(Primitive.Bool, bool)
     case (node, Primitive.Document) =>
       TypedNode.PrimitiveTN(Primitive.Document, node)
+    case (node, Primitive.String) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.String, "")
+    case (node, Primitive.Int) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Int, 0)
+    case (node, Primitive.Long) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Long, 0L)
+    case (node, Primitive.Double) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Double, 0.0)
+    case (node, Primitive.Float) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Float, 0.0f)
+    case (node, Primitive.Short) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
+    case (node, Primitive.Byte) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
+    case (node, Primitive.ByteArray) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.ByteArray, Array.empty[Byte])
+    case (node, Primitive.Bool) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Bool, false)
+    case (node, Primitive.Timestamp) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(
+        Primitive.Timestamp,
+        java.time.Instant.ofEpochSecond(0)
+      )
     case other =>
       throw new NotImplementedError(s"Unsupported case: $other")
   }

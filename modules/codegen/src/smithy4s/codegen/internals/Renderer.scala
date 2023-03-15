@@ -37,7 +37,7 @@ private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
 
-  case class Config(errorsAsScala3Unions: Boolean)
+  case class Config(errorsAsScala3Unions: Boolean, wildcardArgument: String)
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
       val errorsAsScala3Unions = metadata
@@ -45,7 +45,22 @@ private[internals] object Renderer {
         .flatMap(_.asBooleanNode().asScala)
         .map(_.getValue())
         .getOrElse(false)
-      Renderer.Config(errorsAsScala3Unions = errorsAsScala3Unions)
+      val wildcardArgument = metadata
+        .get("smithy4sWildcardArgument")
+        .flatMap(_.asStringNode().asScala)
+        .map(_.getValue())
+        .getOrElse("_")
+
+      if (wildcardArgument != "?" && wildcardArgument != "_") {
+        throw new IllegalArgumentException(
+          s"`smithy4sWildcardArgument` possible values are: `?` or `_`. found `$wildcardArgument`."
+        )
+      }
+
+      Renderer.Config(
+        errorsAsScala3Unions = errorsAsScala3Unions,
+        wildcardArgument = wildcardArgument
+      )
     }
   }
 
@@ -66,11 +81,10 @@ private[internals] object Renderer {
       val renderResult = r.renderDecl(decl)
       val p = s"package ${unit.namespace}"
 
-      val nameCollisions: Set[String] = renderResult.list
-        .flatMap(_.segments.toList)
+      val segments = renderResult.list.flatMap(_.segments.toList)
+      val localCollisions: Set[String] = segments
         .groupBy {
           // we need to compare NameRefs as they would be imported in order to avoid unnecessarily qualifying types in the same package
-          //
           case ref: NameRef => ref.asImport
           case other        => other
         }
@@ -83,6 +97,21 @@ private[internals] object Renderer {
         .groupBy(identity)
         .filter(_._2.size > 1)
         .keySet
+
+      val otherDecls =
+        unit.declarations.filterNot(_ == decl).map(_.name).toSet
+
+      def differentPackage(ref: NameRef): Boolean =
+        ref.pkg.mkString(".") != unit.namespace
+
+      // Collisions between references in the current file and declarations
+      // in the current package
+      val namespaceCollisions = segments.collect {
+        case ref: NameRef if otherDecls(ref.name) && differentPackage(ref) =>
+          ref.name
+      }.toSet
+
+      val nameCollisions = localCollisions ++ namespaceCollisions
 
       val allImports: List[String] = renderResult.list.flatMap { line =>
         line.segments.toList.collect {
@@ -133,14 +162,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   val names = new CollisionAvoidance.Names()
   import compilationUnit.namespace
+  import compilationUnit.rendererConfig.wildcardArgument
   import names._
 
   def renderDecl(decl: Decl): Lines = decl match {
     case Service(shapeId, name, ops, hints, version) =>
       renderService(shapeId, name, ops, hints, version)
     case p: Product => renderProduct(p)
-    case union @ Union(shapeId, _, alts, recursive, hints) =>
-      renderUnion(shapeId, union.nameRef, alts, recursive, hints)
+    case union @ Union(shapeId, _, alts, mixins, recursive, hints) =>
+      renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
     case enumeration @ Enumeration(shapeId, _, values, hints) =>
@@ -164,10 +194,53 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
   }
 
+  /**
+    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
+    *
+    * @return formatted list of scaladoc lines
+    */
+  private def makeDocLines(
+      rawLines: List[String]
+  ): Lines = {
+    lines(
+      rawLines
+        .mkString_("/** ", "\n  * ", "\n  */")
+        .linesIterator
+        .toList
+    )
+  }
+
+  private def documentationAnnotation(
+      hints: List[Hint],
+      skipMemberDocs: Boolean = false
+  ): Lines = {
+    hints
+      .collectFirst { case h: Hint.Documentation => h }
+      .foldMap { doc =>
+        val shapeDocs: List[String] =
+          doc.docLines.map(_.replace("@", "{@literal @}"))
+        val memberDocs: List[String] =
+          if (skipMemberDocs) List.empty
+          else
+            doc.memberDocLines.flatMap { case (memberName, text) =>
+              s"@param $memberName" :: text
+                .map(_.replace("@", "{@literal @}"))
+                .map("  " + _)
+            }.toList
+
+        val maybeNewline =
+          if (shapeDocs.nonEmpty && memberDocs.nonEmpty) List("", "") else Nil
+        val allDocs = shapeDocs ++ maybeNewline ++ memberDocs
+        if (allDocs.size == 1) lines("/** " + allDocs.head + " */")
+        else makeDocLines(shapeDocs ++ memberDocs)
+      }
+  }
+
   def renderPackageContents: Lines = {
     val typeAliases = compilationUnit.declarations.collect {
       case TypeAlias(_, name, _, _, _, hints) =>
         lines(
+          documentationAnnotation(hints),
           deprecationAnnotation(hints),
           line"type $name = ${compilationUnit.namespace}.${name}.Type"
         )
@@ -219,19 +292,24 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val opTraitNameRef = opTraitName.toNameRef
 
     lines(
+      documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(line"trait $genName[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
           lines(
+            documentationAnnotation(
+              op.hints,
+              op.hints.contains(Hint.PackedInputs)
+            ),
             deprecationAnnotation(op.hints),
             line"def ${op.methodName}(${op.renderArgs}): F[${op
               .renderAlgParams(genNameRef.name)}]"
           )
         },
         newline,
-        line"def transform: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+        line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
       obj(
@@ -239,10 +317,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
       )(
         newline,
-        line"def apply[F[_]](implicit F: $Impl_[F]): F.type = F",
+        line"def $apply_[F[_]](implicit F: $Impl_[F]): F.type = F",
         newline,
         block(line"object $ErrorAware_")(
-          line"def apply[F[_, _]](implicit F: $ErrorAware_[F]): F.type = F",
+          line"def $apply_[F[_, _]](implicit F: $ErrorAware_[F]): F.type = F",
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
@@ -250,12 +328,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        line"val endpoints: $list[$genNameRef.Endpoint[_, _, _, _, _]] = $list"
+        line"val endpoints: $list[$genNameRef.Endpoint[$wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
           .args(ops.map(_.name)),
         newline,
         line"""val version: String = "$version"""",
         newline,
-        line"def endpoint[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.endpoint",
+        line"def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
         newline,
         block(
           line"object ${NameRef("reified")} extends $genNameRef[$opTraitNameRef]"
@@ -270,9 +348,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         newline,
-        line"def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, f)",
+        line"def $mapK5_[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]): $genNameRef[P1] = new $Transformed_(alg, f)",
         newline,
-        line"def fromPolyFunction[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
+        line"def $fromPolyFunction_[P[_, _, _, _, _]](f: $PolyFunction5_[$opTraitNameRef, P]): $genNameRef[P] = new $Transformed_(reified, f)",
         block(
           line"class $Transformed_[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: $genNameRef[P], f: $PolyFunction5_[P, P1]) extends $genNameRef[P1]"
         ) {
@@ -287,12 +365,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         newline,
         block(
-          line"def toPolyFunction[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
+          line"def $toPolyFunction_[P[_, _, _, _, _]](impl: $genNameRef[P]): $PolyFunction5_[$opTraitNameRef, P] = new $PolyFunction5_[$opTraitNameRef, P]"
         )(
           if (ops.isEmpty) {
-            line"""def apply[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = sys.error("impossible")"""
+            line"""def $apply_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = sys.error("impossible")"""
           } else {
-            line"def apply[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
+            line"def $apply_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
           }
         ),
         ops.map(renderOperation(name, _))
@@ -341,11 +419,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     } yield Union(
       ShapeId.fromParts(namespace, op.shapeId.getName() + "Error"),
       name,
-      alts
+      alts,
+      List.empty
     )
 
     val renderedErrorUnion = errorUnion.foldMap {
-      case union @ Union(shapeId, _, alts, recursive, hints) =>
+      case union @ Union(shapeId, _, alts, mixin, recursive, hints) =>
         if (compilationUnit.rendererConfig.errorsAsScala3Unions)
           renderErrorAsScala3Union(
             shapeId,
@@ -359,6 +438,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             shapeId,
             union.nameRef,
             alts,
+            mixin,
             recursive,
             hints,
             error = true
@@ -371,7 +451,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(genServiceName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def endpoint: (${op.input}, $Endpoint_[${op
+        line"def endpoint: (${op.input}, $genServiceName.Endpoint[${op
           .renderAlgParams(genServiceName)}]) = ($inputRef, $opNameRef)"
       ),
       obj(
@@ -554,6 +634,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         )
 
     lines(
+      documentationAnnotation(product.hints),
       deprecationAnnotation(product.hints),
       base
     )
@@ -617,6 +698,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
     def altVal(altName: String) = line"${uncapitalise(altName)}Alt"
     lines(
+      documentationAnnotation(hints),
       deprecationAnnotation(hints),
       line"type ${NameDef(name.name)} = ${members
         .map { case (_, tpe) => line"$tpe" }
@@ -650,6 +732,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       shapeId: ShapeId,
       name: NameRef,
       alts: NonEmptyList[Alt],
+      mixins: List[Type],
       recursive: Boolean,
       hints: List[Hint],
       error: Boolean = false
@@ -663,10 +746,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
+    val mixinLines = mixins.map(m => line"$m")
+    val mixinExtends = mixinLines.intercalate(line" with ")
+    val mixinExtendsStatement =
+      if (mixinExtends.segments.isEmpty) Line.empty
+      else line"$mixinExtends with "
     lines(
+      documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed trait ${NameDef(name.name)} extends scala.Product with scala.Serializable"
+        line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this"
       ),
@@ -680,6 +769,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             // format: off
             lines(
+              documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case object $cn extends $name",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
@@ -689,6 +779,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
             val cn = caseName(a)
             lines(
+              documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
             )
@@ -791,14 +882,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       values: List[EnumValue],
       hints: List[Hint]
   ): Lines = lines(
+    documentationAnnotation(hints),
     deprecationAnnotation(hints),
     block(
       line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
     )(
+      line"override type EnumType = $name",
       line"override val value: String = _value",
       line"override val name: String = _name",
       line"override val intValue: Int = _intValue",
       line"override val hints: $Hints_ = _hints",
+      line"override def enumeration: $Enumeration_[EnumType] = $name",
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
@@ -811,6 +905,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val valueHints = line"$Hints_(${memberHints(e.hints)})"
 
         lines(
+          documentationAnnotation(hints),
           deprecationAnnotation(hints),
           line"""case object $valueName extends $name("$value", "${e.name}", $intValue, $valueHints)"""
         )
@@ -837,6 +932,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
     val closing = if (recursive) ")" else ""
     lines(
+      documentationAnnotation(hints),
       deprecationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
         renderId(shapeId),
@@ -886,16 +982,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val schemaPkg_ = "smithy4s.schema.Schema"
     def schemaRef: Line = tpe match {
       case Type.PrimitiveType(p) => NameRef(schemaRefP(p)).toLine
-      case Type.Collection(collectionType, member) =>
+      case Type.Collection(collectionType, member, hints) =>
         val col = collectionType match {
           case CollectionType.List       => s"$schemaPkg_.list"
           case CollectionType.Set        => s"$schemaPkg_.set"
           case CollectionType.Vector     => s"$schemaPkg_.vector"
           case CollectionType.IndexedSeq => s"$schemaPkg_.indexedSeq"
         }
-        line"${NameRef(col)}(${member.schemaRef})"
-      case Type.Map(key, value) =>
-        line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}, ${value.schemaRef})"
+        val hintsLine =
+          if (hints.isEmpty) Line.empty
+          else line".addHints(${memberHints(hints)})"
+        line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
+      case Type.Map(key, keyHints, value, valueHints) =>
+        val keyHintsLine =
+          if (keyHints.isEmpty) Line.empty
+          else line".addHints(${memberHints(keyHints)})"
+        val valueHintsLine =
+          if (valueHints.isEmpty) Line.empty
+          else line".addHints(${memberHints(valueHints)})"
+        line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
             name,
@@ -969,11 +1074,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
   }
 
-  def renderHintsVal(hints: List[Hint]): Lines = if (hints.isEmpty) {
-    lines(line"val hints: $Hints_ = $Hints_.empty")
-  } else {
-    line"val hints: $Hints_ = $Hints_".args {
-      hints.flatMap(renderHint(_).toList)
+  def renderHintsVal(hints: List[Hint]): Lines = {
+    val base = line"val hints: $Hints_ = $Hints_"
+    hints.flatMap(renderHint) match {
+      case Nil  => lines(base + line".empty")
+      case args => base.args(args)
     }
   }
 
@@ -1064,6 +1169,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Bool       => t => line"${t.toString}"
       case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => renderStringLiteral
+      case Primitive.Byte   => b => line"${b.toString}"
+      case Primitive.ByteArray =>
+        ba =>
+          line"${NameRef("smithy4s", "ByteArray")}(Array(${ba.mkString(", ")}))"
+      case Primitive.Timestamp =>
+        ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>
         node.accept(new NodeVisitor[Line] {
           def arrayNode(x: ArrayNode): Line = {

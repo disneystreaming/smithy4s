@@ -1,7 +1,7 @@
 [![CI](https://github.com/disneystreaming/smithy4s/actions/workflows/ci.yml/badge.svg)](https://github.com/disneystreaming/smithy4s/actions/workflows/ci.yml)
 [![smithy4s-core Scala version support](https://index.scala-lang.org/disneystreaming/smithy4s/smithy4s-core/latest-by-scala-version.svg)](https://index.scala-lang.org/disneystreaming/smithy4s/smithy4s-core)
 [![CLA assistant](https://cla-assistant.io/readme/badge/disneystreaming/smithy4s)](https://cla-assistant.io/disneystreaming/smithy4s)
-
+[![Discord](https://img.shields.io/discord/1045676621761347615.svg?label=&logo=discord&logoColor=ffffff&color=404244&labelColor=6A7EC2)](https://discord.gg/wvVga94s8r)
 # smithy4s
 
 ## Usage

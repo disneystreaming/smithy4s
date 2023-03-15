@@ -8,7 +8,7 @@ operations: [MyOp]
 }
 
 operation MyOp {
-errors: [MyOpError]
+    errors: [MyOpError]
 }
 
 @error("client")

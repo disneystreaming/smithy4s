@@ -24,7 +24,9 @@ class ServiceWithResourcesSmokeSpec() extends FunSuite {
     "Services that have resources in their smithy spec have the operations held by the resources"
   ) {
     val library = new smithy4s.example.Library.Default[Option](None)
+    expect.same(library.listPublishers(), None)
     expect.eql(library.getBook(), None)
+    expect.eql(library.buyBook(), None)
   }
 
 }

@@ -16,7 +16,7 @@
 
 package smithy4s.aws
 
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.Resource
 import cats.implicits._
 
@@ -32,7 +32,7 @@ object AwsEnvironment {
   def default[F[_]](
       client: SimpleHttpClient[F],
       region: AwsRegion
-  )(implicit F: Temporal[F]): Resource[F, AwsEnvironment[F]] =
+  )(implicit F: Async[F]): Resource[F, AwsEnvironment[F]] =
     AwsCredentialsProvider.default[F](client).map { credentialsF =>
       make(
         client,

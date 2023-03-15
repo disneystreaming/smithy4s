@@ -175,6 +175,13 @@ class PathSpec() extends munit.FunSuite {
     )
   }
 
+  test("Write PathParams for a byte") {
+    expect.eql(
+      util.encodePathAs(byte).map(_.encode(42)),
+      Some(List("42"))
+    )
+  }
+
   test("Write PathParams for an int") {
     expect.eql(
       util.encodePathAs(int).map(_.encode(42)),

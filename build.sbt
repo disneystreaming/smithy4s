@@ -10,7 +10,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.17.0"
+ThisBuild / mimaBaseVersion := "0.18.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -53,6 +53,7 @@ lazy val allModules = Seq(
   codegen,
   millCodegenPlugin,
   json,
+  xml,
   example,
   tests,
   http4s,
@@ -109,14 +110,17 @@ lazy val docs =
           sha <- sys.env.get("GITHUB_SHA")
         } yield s"$serverUrl/$repo/blob/$sha/").getOrElse(
           "https://github.com/disneystreaming/smithy4s/tree/series/0.17/"
-        )
+        ),
+        "AWS_SPEC_VERSION" -> Dependencies.AwsSpecSummary.awsSpecSummaryVersion
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
       isCE3 := true,
       libraryDependencies ++= Seq(
+        Dependencies.Jsoniter.macros.value,
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value,
-        Dependencies.Decline.effect.value
+        Dependencies.Decline.effect.value,
+        Dependencies.AwsSpecSummary.value
       ),
       Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
@@ -204,24 +208,25 @@ lazy val core = projectMatrix
       "smithy4s.example.collision"
     ),
     Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "bodies.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "discriminated.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "adtMember.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enums.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "errorHandling.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "metadata.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "misc.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "namecollision.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "packedInputs.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "product.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "resources.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
     ),
     (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
     Compile / packageSrc / mappings ++= {
@@ -280,7 +285,7 @@ lazy val `aws-kernel` = projectMatrix
     genSmithy(Compile),
     Test / envVars ++= Map("TEST_VAR" -> "hello"),
     scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
       "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
@@ -302,13 +307,14 @@ lazy val `aws-kernel` = projectMatrix
  */
 lazy val aws = projectMatrix
   .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json)
+  .dependsOn(`aws-kernel`, json, xml)
   .settings(
     isCE3 := true,
     libraryDependencies ++= {
       // Only building this module against CE3
       Seq(
         Dependencies.Fs2.core.value,
+        Dependencies.Fs2.io.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Weaver.scalacheck.value % Test
       )
@@ -319,6 +325,9 @@ lazy val aws = projectMatrix
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     Test / smithy4sDependencies ++= Seq(
       Dependencies.Smithy.awsTraits
+    ),
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
     )
   )
   .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
@@ -391,7 +400,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.0.16"
+      "io.get-coursier" %% "coursier" % "2.1.0-RC6"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -443,6 +452,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
         // for the code being built
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
+        (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala3) / publishLocal).value,
@@ -483,6 +493,7 @@ lazy val millCodegenPlugin = projectMatrix
         // for the code being built
         (`aws-kernel`.jvm(Scala213) / publishLocal).value,
         (core.jvm(Scala213) / publishLocal).value,
+        (core.jvm(Scala3) / publishLocal).value,
         (dynamic.jvm(Scala213) / publishLocal).value,
         (codegen.jvm(Scala213) / publishLocal).value,
 
@@ -564,7 +575,8 @@ lazy val dynamic = projectMatrix
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
       Dependencies.Cats.core.value
     ),
-    libraryDependencies ++= munitDeps.value,
+    libraryDependencies ++= List
+      .concat(munitDeps.value, List(Dependencies.Alloy.core % Test)),
     Compile / allowedNamespaces := Seq("smithy4s.dynamic.model"),
     Compile / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "modules" / "dynamic" / "smithy" / "dynamic.smithy"
@@ -600,9 +612,33 @@ lazy val json = projectMatrix
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
-      Dependencies.Jsoniter.value
+      Dependencies.Jsoniter.core.value
     ),
     libraryDependencies ++= munitDeps.value
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains fs2-data-based XML encoders/decoders for the generated
+ * types.
+ */
+lazy val xml = projectMatrix
+  .in(file("modules/xml"))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isCE3 := true,
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2Data.xml.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -635,6 +671,7 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
         Dependencies.Alloy.core % Test,
+        Dependencies.Smithy.build % Test,
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
@@ -646,16 +683,27 @@ lazy val http4s = projectMatrix
         moduleName.value + "-ce2"
       else moduleName.value
     },
-    Test / allowedNamespaces := Seq(
-      "smithy4s.hello",
-      "alloy.test"
-    ),
+    Test / allowedNamespaces := Seq("smithy4s.hello"),
     Test / smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy"
     ),
     Test / smithy4sSkip := Seq("openapi"),
-    Test / smithy4sDependencies := Seq(Dependencies.Alloy.`protocol-tests`),
-    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue)
+    (Test / sourceGenerators) := Seq(genSmithyScala(Test).taskValue),
+    Test / complianceTestDependencies := Seq(
+      Dependencies.Alloy.`protocol-tests`
+    ),
+    (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
+    (Test / envVars) ++= {
+      val files: Seq[File] =
+        (Test / resourceGenerators) {
+          _.join.map(_.flatten)
+        }.value
+      files.headOption
+        .map { file =>
+          Map("MODEL_DUMP" -> file.getAbsolutePath)
+        }
+        .getOrElse(Map.empty)
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 
@@ -809,9 +857,11 @@ lazy val example = projectMatrix
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions += "-Wconf:cat=deprecation:silent"
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ) ++ scala3MigrationOption(scalaVersion.value)
   )
-  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 lazy val guides = projectMatrix
@@ -868,6 +918,92 @@ def genSmithy(config: Configuration) = Def.settings(
 )
 def genSmithyScala(config: Configuration) = genSmithyImpl(config).map(_._1)
 def genSmithyResources(config: Configuration) = genSmithyImpl(config).map(_._2)
+
+// SBT setting to specify artifacts to be included in the Smithy model for compliance testing
+val complianceTestDependencies =
+  SettingKey[Seq[ModuleID]]("complianceTestDependencies")
+
+// writes out a json representation of the smithy model pulled from Smithy4s dependencies config
+// result is cached using the dependency list as the cache key
+def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
+  Def.task {
+    val dumpModelCp = (`codegen-cli`.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / fullClasspath).value
+      .map(_.data)
+    val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
+    val mc = (`codegen-cli`.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / mainClass).value.getOrElse(
+      throw new Exception("No main class found")
+    )
+
+    import sjsonnew._
+    import BasicJsonProtocol._
+    import sbt.FileInfo
+    import sbt.HashFileInfo
+    import sbt.io.Hash
+    import scala.jdk.CollectionConverters._
+    implicit val pathFormat: JsonFormat[File] =
+      BasicJsonProtocol.projectFormat[File, HashFileInfo](
+        p => {
+          if (p.isFile()) FileInfo.hash(p)
+          else
+            // If the path is a directory, we get the hashes of all files
+            // then hash the concatenation of the hash's bytes.
+            FileInfo.hash(
+              p,
+              Hash(
+                Files
+                  .walk(p.toPath(), 2)
+                  .collect(Collectors.toList())
+                  .asScala
+                  .map(_.toFile())
+                  .map(Hash(_))
+                  .foldLeft(Array.emptyByteArray)(_ ++ _)
+              )
+            )
+        },
+        hash => hash.file
+      )
+    val s = (config / streams).value
+
+    val cached =
+      Tracked.inputChanged[List[String], Seq[File]](
+        s.cacheStoreFactory.make("input")
+      ) {
+        Function.untupled {
+          Tracked
+            .lastOutput[(Boolean, List[String]), Seq[File]](
+              s.cacheStoreFactory.make("output")
+            ) { case ((changed, deps), outputs) =>
+              if (changed || outputs.isEmpty) {
+                val res =
+                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps).!!
+                val file =
+                  (config / resourceManaged).value / "compliance-tests.json"
+                IO.write(file, res)
+                Seq(file)
+
+              } else {
+                outputs.getOrElse(Seq.empty)
+              }
+            }
+        }
+      }
+
+    val trackedFiles = List(
+      "--dependencies",
+      (config / complianceTestDependencies).?.value
+        .getOrElse(Seq.empty)
+        .map { moduleId =>
+          s"${moduleId.organization}:${moduleId.name}:${moduleId.revision}"
+        }
+        .mkString(",")
+    )
+
+    cached(trackedFiles)
+  }
 
 /**
  * Dogfooding task that calls the codegen module, to generate smithy standard

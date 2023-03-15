@@ -19,6 +19,8 @@ package smithy4s
 import smithy4s.schema.EnumValue
 
 trait Enumeration[E <: Enumeration.Value] extends ShapeTag.Companion[E] {
+  def id: ShapeId
+  def hints: Hints
   def values: List[E]
   lazy val valueMap = values.map(e => e.value -> e).toMap
   lazy val intValueMap = values.map(e => e.intValue -> e).toMap
@@ -29,10 +31,13 @@ trait Enumeration[E <: Enumeration.Value] extends ShapeTag.Companion[E] {
 object Enumeration {
 
   abstract class Value extends Product with Serializable {
+    type EnumType <: Value
+
     def value: String
     def name: String
     def intValue: Int
     def hints: Hints
+    def enumeration: Enumeration[EnumType]
   }
 
   object Value {

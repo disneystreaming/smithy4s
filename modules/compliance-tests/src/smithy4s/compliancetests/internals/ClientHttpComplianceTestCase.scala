@@ -30,11 +30,13 @@ import smithy4s.http.CodecAPI
 import smithy4s.Document
 import smithy4s.http.PayloadError
 import smithy4s.Service
+import cats.Eq
 
 import scala.concurrent.duration._
 import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
 import org.http4s.Headers
+import smithy4s.schema.Alt
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -71,8 +73,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         parseQueryParams(testCase.queryParams)
       )
 
-    val uriAssert =
-      assert.eql(expectedUri.renderString, request.uri.renderString)
+    val pathAssert =
+      assert.eql(expectedUri.path.renderString, request.uri.path.renderString)
+    val queryAssert = assert.eql(
+      expectedUri.query.renderString,
+      request.uri.query.renderString
+    )
     val methodAssert = assert.eql(
       testCase.method.toLowerCase(),
       request.method.name.toLowerCase()
@@ -80,7 +86,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:
       List(
         assert.testCase.checkHeaders(testCase, request.headers),
-        uriAssert,
+        pathAssert,
+        queryAssert,
         methodAssert
       )
         .map(_.pure[F])
@@ -148,7 +155,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       name = endpoint.id.toString + "(client|response): " + testCase.id,
       run = {
         val revisedSchema = mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
-        val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
+        implicit val outputEq: Eq[O] =
+          smithy4s.compliancetests.internals.eq.EqSchemaVisitor(revisedSchema)
+        val buildResult = {
           errorSchema
             .toLeft {
               val outputDecoder = Document.Decoder.fromSchema(revisedSchema)
@@ -158,16 +167,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   .liftTo[F]
             }
             .left
-            .map { errorInfo =>
-              val errorDecoder = Document.Decoder.fromSchema(errorInfo.schema)
-              (doc: Document) =>
-                errorDecoder
-                  .decode(doc)
-                  .liftTo[F]
-                  .map(errCase =>
-                    errorInfo.errorable.unliftError(errCase.asInstanceOf[E])
-                  )
-            }
+            .map(_.errorEq[F])
         }
         val mediaType = aMediatype(endpoint.output, codecs)
         val status = Status.fromInt(testCase.code).liftTo[F]
@@ -198,16 +198,12 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             val doc = testCase.params.getOrElse(Document.obj())
             buildResult match {
               case Left(onError) =>
-                onError(doc).flatMap { expectedErr =>
-                  val res: F[O] = service
-                    .toPolyFunction[R](client)
-                    .apply(endpoint.wrap(dummyInput))
-                  res
-                    .map { _ => assert.success }
-                    .recover { case ex: Throwable =>
-                      assert.eql(expectedErr, ex)
-                    }
-                }
+                val res: F[O] = service
+                  .toPolyFunction[R](client)
+                  .apply(endpoint.wrap(dummyInput))
+                res
+                  .map { _ => assert.success }
+                  .recoverWith { case ex: Throwable => onError(doc, ex) }
               case Right(onOutput) =>
                 onOutput(doc).flatMap { expectedOutput =>
                   val res: F[O] = service
@@ -244,6 +240,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         .filter(_.protocol == protocolTag.id.toString())
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientResponseTest(endpoint, tc))
+
       val errorResponseTests = endpoint.errorable.toList
         .flatMap { errorrable =>
           errorrable.error.alternatives.flatMap { errorAlt =>
@@ -257,8 +254,17 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 clientResponseTest(
                   endpoint,
                   tc,
-                  errorSchema =
-                    Some(ErrorResponseTest(errorAlt.instance, errorrable))
+                  errorSchema = Some(
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        Alt.Dispatcher(
+                          errorrable.error.alternatives,
+                          errorrable.error.dispatch(_)
+                        ),
+                        errorrable
+                      )
+                  )
                 )
               )
           }

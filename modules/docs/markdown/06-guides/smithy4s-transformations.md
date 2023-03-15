@@ -1,6 +1,6 @@
 ---
-sidebar_label: Transformations and generalisation
-title: Transformations and generalisation
+sidebar_label: Smithy4s Transformations
+title: Smithy4s Transformations and generalisation
 ---
 
 It is often the case that users may want to manipulate the generated interfaces in a generic way, be that to transform the context in which the interface operates, or to apply some generic behaviour when running methods.

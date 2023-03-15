@@ -7,6 +7,11 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
+/** @param foo
+  *   Helpful information for Foo
+  *   int, bigInt and bDec are useful number constructs
+  *   The string case is there because.
+  */
 case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
   override def getMessage(): String = message
 }

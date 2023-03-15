@@ -20,6 +20,13 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
 
   def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]
+  /** @param key
+    *   Sent in the URI label named "key".
+    *   Key can also be seen as the filename
+    *   It is always required for a GET operation
+    * @param bucketName
+    *   Sent in the URI label named "bucketName".
+    */
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)
@@ -70,7 +77,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   }
   case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] = impl.putObject(input.key, input.bucketName, input.data, input.foo, input.someValue)
-    def endpoint: (PutObjectInput, Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
+    def endpoint: (PutObjectInput, ObjectServiceGen.Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
   }
   object PutObject extends ObjectServiceGen.Endpoint[PutObjectInput, ObjectServiceGen.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
@@ -127,7 +134,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   }
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
-    def endpoint: (GetObjectInput, Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
+    def endpoint: (GetObjectInput, ObjectServiceGen.Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
   }
   object GetObject extends ObjectServiceGen.Endpoint[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObject")

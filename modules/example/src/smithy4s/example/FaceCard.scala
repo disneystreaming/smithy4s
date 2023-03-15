@@ -8,11 +8,14 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.enumeration
 
+/** FaceCard types */
 sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
+  override type EnumType = FaceCard
   override val value: String = _value
   override val name: String = _name
   override val intValue: Int = _intValue
   override val hints: Hints = _hints
+  override def enumeration: Enumeration[EnumType] = FaceCard
   @inline final def widen: FaceCard = this
 }
 object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {
