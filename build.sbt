@@ -103,7 +103,7 @@ lazy val docs =
             }
         },
         "SCALA_VERSION" -> scalaVersion.value,
-        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value,
+        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion,
         "GITHUB_BRANCH_URL" -> (for {
           serverUrl <- sys.env.get("GITHUB_SERVER_URL")
           repo <- sys.env.get("GITHUB_REPOSITORY")
@@ -755,14 +755,14 @@ lazy val complianceTests = projectMatrix
     Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     libraryDependencies ++= {
-    Seq(
+      Seq(
         Dependencies.Circe.parser.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Pprint.core.value
       )
-    },
+    }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
 

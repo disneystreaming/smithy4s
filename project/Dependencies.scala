@@ -93,32 +93,32 @@ object Dependencies {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.4.4")
 
   object Http4s {
-    val http4sVersion = Def.setting("0.23.17")
+    val http4sVersion = "0.23.17"
 
     val emberServer: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
     val emberClient: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-ember-client" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-ember-client" % http4sVersion)
     val circe: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-core" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-core" % http4sVersion)
     val dsl: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val client: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-client" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-client" % http4sVersion)
   }
 
   object Weaver {
 
-    val weaverVersion = Def.setting("0.8.1")
+    val weaverVersion = "0.8.1"
 
     val cats: Def.Initialize[ModuleID] =
-      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
+      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
 
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting(
-        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion.value
+        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion
       )
   }
 
