@@ -1,6 +1,5 @@
 import sbt._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
-import Smithy4sBuildPlugin.autoImport.isCE3
 
 object Dependencies {
 
@@ -55,11 +54,11 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.6.1"
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
+      Def.setting("co.fs2" %%% "fs2-core" % "3.4.0")
+
     val io: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
+      Def.setting("co.fs2" %%% "fs2-io" % "3.4.0")
   }
 
   object Fs2Data {
@@ -91,10 +90,10 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.8")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.4")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.18" else "0.22.15")
+    val http4sVersion = Def.setting("0.23.17")
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
@@ -112,7 +111,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.8.1" else "0.6.15")
+    val weaverVersion = Def.setting("0.8.1")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)

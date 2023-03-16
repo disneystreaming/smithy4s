@@ -16,6 +16,7 @@
 
 package smithy4s.compliancetests
 
+import cats.effect.Async
 import smithy4s.Service
 
 /**
@@ -31,7 +32,7 @@ object HttpProtocolCompliance {
   def clientTests[F[_], Alg[_[_, _, _, _, _]]](
       reverseRouter: ReverseRouter[F],
       service: Service[Alg]
-  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+  )(implicit ce: Async[F]): List[ComplianceTest[F]] =
     new internals.ClientHttpComplianceTestCase[F, Alg](
       reverseRouter,
       service
@@ -40,7 +41,7 @@ object HttpProtocolCompliance {
   def serverTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F],
       service: Service[Alg]
-  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+  )(implicit ce: Async[F]): List[ComplianceTest[F]] =
     new internals.ServerHttpComplianceTestCase[F, Alg](
       router,
       service
@@ -49,7 +50,7 @@ object HttpProtocolCompliance {
   def clientAndServerTests[F[_], Alg[_[_, _, _, _, _]]](
       router: Router[F] with ReverseRouter[F],
       service: Service[Alg]
-  )(implicit ce: CompatEffect[F]): List[ComplianceTest[F]] =
+  )(implicit ce: Async[F]): List[ComplianceTest[F]] =
     clientTests(router, service) ++ serverTests(router, service)
 
 }

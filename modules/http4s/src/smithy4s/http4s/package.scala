@@ -26,7 +26,7 @@ import smithy4s.http.{HttpMethod => SmithyMethod}
 import org.http4s.ParseFailure
 import cats.implicits._
 
-package object http4s extends Compat.Package {
+package object http4s {
 
   private[smithy4s] def toHttp4sMethod(
       method: SmithyMethod

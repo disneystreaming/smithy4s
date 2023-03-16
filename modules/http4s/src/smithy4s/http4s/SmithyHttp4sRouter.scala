@@ -17,6 +17,7 @@
 package smithy4s
 package http4s
 
+import cats.effect.Concurrent
 import cats.data.Kleisli
 import cats.data.OptionT
 import cats.implicits._
@@ -33,7 +34,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     entityCompiler: EntityCompiler[F],
     middleware: ServerEndpointMiddleware[F]
-)(implicit effect: EffectCompat[F]) {
+)(implicit effect: Concurrent[F]) {
 
   private val pathParamsKey =
     Key.newKey[SyncIO, smithy4s.http.PathParams].unsafeRunSync()

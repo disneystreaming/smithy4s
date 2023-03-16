@@ -23,7 +23,7 @@ import scala.io.Source
 import org.webjars.WebJarAssetLocator
 import cats.data.NonEmptyList
 
-object SwaggerInitSpec extends SimpleIOSuite with TestCompat {
+object SwaggerInitSpec extends SimpleIOSuite {
   private lazy val swaggerUiVersion =
     new WebJarAssetLocator().getWebJars.get("swagger-ui-dist")
 

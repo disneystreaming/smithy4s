@@ -19,6 +19,7 @@ package http4s
 package internals
 
 import cats.syntax.all._
+import cats.effect.Concurrent
 import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import org.http4s.Request
@@ -41,7 +42,7 @@ private[http4s] trait SmithyHttp4sClientEndpoint[F[_], Op[_, _, _, _, _], I, E, 
 
 private[http4s] object SmithyHttp4sClientEndpoint {
 
-  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+  def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       baseUri: Uri,
       client: Client[F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
@@ -82,7 +83,7 @@ private[http4s] class SmithyHttp4sClientEndpointImpl[F[_], Op[_, _, _, _, _], I,
   httpEndpoint: HttpEndpoint[I],
   compilerContext: CompilerContext[F],
   middleware: Client[F] => Client[F]
-)(implicit effect: EffectCompat[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
+)(implicit effect: Concurrent[F]) extends SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] {
 // format: on
 
   private val transformedClient: Client[F] = middleware(client)

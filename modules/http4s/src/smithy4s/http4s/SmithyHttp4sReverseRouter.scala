@@ -17,6 +17,7 @@
 package smithy4s
 package http4s
 
+import cats.effect.Concurrent
 import smithy4s.kinds._
 import org.http4s._
 import org.http4s.client.Client
@@ -29,7 +30,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     client: Client[F],
     entityCompiler: EntityCompiler[F],
     middleware: ClientEndpointMiddleware[F]
-)(implicit effect: EffectCompat[F])
+)(implicit effect: Concurrent[F])
     extends FunctorInterpreter[Op, F] {
 // format: on
 
