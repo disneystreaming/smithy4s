@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Async
+import cats.effect.Temporal
 import cats.effect.syntax.all._
 import cats.kernel.Eq
 import org.http4s._
@@ -42,7 +42,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     router: Router[F],
     serviceInstance: Service[Alg]
 )(implicit
-    ce: Async[F]
+    ce: Temporal[F]
 ) {
 
   import ce._

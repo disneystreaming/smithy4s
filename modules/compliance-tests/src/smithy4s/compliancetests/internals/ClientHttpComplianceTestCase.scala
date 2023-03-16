@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Async
+import cats.effect.Temporal
 import cats.effect.syntax.all._
 import org.http4s.headers.`Content-Type`
 import org.http4s.HttpApp
@@ -46,7 +46,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 ](
     reverseRouter: ReverseRouter[F],
     serviceInstance: Service[Alg]
-)(implicit ce: Async[F]) {
+)(implicit ce: Temporal[F]) {
   import ce._
   import org.http4s.implicits._
   import reverseRouter._
