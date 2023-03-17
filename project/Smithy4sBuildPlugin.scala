@@ -26,8 +26,6 @@ case class CatsEffectAxis(idSuffix: String, directorySuffix: String)
     extends VirtualAxis.WeakAxis
 
 object Smithy4sBuildPlugin extends AutoPlugin {
-  val CatsEffect3Axis = CatsEffectAxis("_CE3", "ce3")
-  val CatsEffect2Axis = CatsEffectAxis("_CE2", "ce2")
 
   val Scala212 = "2.12.17"
   val Scala213 = "2.13.10"
@@ -41,7 +39,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val allowedNamespaces        = SettingKey[Seq[String]]("allowedNamespaces")
     val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
     val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
-    val isCE3 = settingKey[Boolean]("Is the current build using CE3?")
     // format: on
   }
   import autoImport._
@@ -51,22 +48,14 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         scalaVersions: Seq[String],
         settings: Seq[Setting[_]]
     ) = {
-      pm
-        .defaultAxes(
-          VirtualAxis.jvm,
-          VirtualAxis.scalaPartialVersion(Scala213),
-          CatsEffect3Axis
-        )
-        .customRow(
-          scalaVersions = scalaVersions,
-          axisValues = Seq(VirtualAxis.jvm, CatsEffect3Axis),
-          settings = settings
-        )
-        .customRow(
-          scalaVersions = scalaVersions.filterNot(_.startsWith("3")),
-          axisValues = Seq(VirtualAxis.jvm, CatsEffect2Axis),
-          settings = settings
-        )
+      pm.defaultAxes(
+        VirtualAxis.jvm,
+        VirtualAxis.scalaPartialVersion(Scala213)
+      ).customRow(
+        scalaVersions = scalaVersions,
+        axisValues = Seq(VirtualAxis.jvm),
+        settings = settings
+      )
     }
 
     def http4sPlatform(
@@ -76,12 +65,12 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       http4sJvmPlatform(scalaVersions, settings)
         .customRow(
           scalaVersions = scalaVersions.filterNot(_.startsWith("2.12")),
-          axisValues = Seq(VirtualAxis.js, CatsEffect3Axis),
+          axisValues = Seq(VirtualAxis.js),
           configureScalaJSProject(_)
         )
         .customRow(
           scalaVersions = scalaVersions.filter(_.startsWith("3")),
-          axisValues = Seq(VirtualAxis.native, CatsEffect3Axis),
+          axisValues = Seq(VirtualAxis.native),
           _.enablePlugins(ScalaNativePlugin).settings(simpleNativeLayout)
         )
     }
@@ -357,18 +346,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         }
       }
 
-    val catsEffectSuffix = Def.setting {
-      val ce = virtualAxes.value.collectFirst { case ax: CatsEffectAxis =>
-        ax
-      }
-
-      ce match {
-        case Some(CatsEffect2Axis) => Seq("-ce2")
-        case Some(CatsEffect3Axis) => Seq("-ce3")
-        case _                     => Seq.empty
-      }
-    }
-
     val crossCompilationDirs = Def.setting {
       val empty = Seq("")
 
@@ -376,8 +353,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       val crissCross = for {
         platform <- platformSuffix.value ++ empty
         version <- scalaVersionSuffix.value ++ empty
-        ce <- catsEffectSuffix.value ++ empty
-      } yield s"src$platform$version$ce"
+      } yield s"src$platform$version"
       crissCross
     }
 
@@ -496,25 +472,21 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   )
 
   def createBuildCommands(projects: Seq[ProjectReference]) = {
-    case class Triplet(ce: String, scala: String, platform: String)
+    case class Doublet(scala: String, platform: String)
 
     val scala3Suffix = VirtualAxis.scalaABIVersion(Scala3).idSuffix
     val scala213Suffix = VirtualAxis.scalaABIVersion(Scala213).idSuffix
     val scala212Suffix = VirtualAxis.scalaABIVersion(Scala212).idSuffix
     val jsSuffix = VirtualAxis.js.idSuffix
     val nativeSuffix = VirtualAxis.native.idSuffix
-    val ce3Suffix = CatsEffect3Axis.idSuffix
-    val ce2Suffix = CatsEffect2Axis.idSuffix
 
-    val all: List[(Triplet, Seq[String])] =
+    val all: List[(Doublet, Seq[String])] =
       projects
         .collect { case lp: LocalProject =>
           var projectId = lp.project
 
           val scalaAxis =
-            if (
-              projectId.endsWith(scala3Suffix) && !projectId.endsWith(ce3Suffix)
-            ) {
+            if (projectId.endsWith(scala3Suffix)) {
               projectId = projectId.dropRight(scala3Suffix.length)
               "3_0"
             } else if (projectId.endsWith(scala212Suffix)) {
@@ -534,28 +506,20 @@ object Smithy4sBuildPlugin extends AutoPlugin {
               "jvm"
             }
 
-          val ceAxis =
-            if (projectId.endsWith(ce2Suffix)) {
-              projectId = projectId.dropRight(ce2Suffix.length)
-              "CE2"
-            } else {
-              "default"
-            }
-
-          Triplet(ceAxis, scalaAxis, platformAxis) -> lp.project
+          Doublet(scalaAxis, platformAxis) -> lp.project
         }
         .groupBy(_._1)
         .mapValues(_.map(_._2))
         .toList
 
     // some commands, like test and compile, are setup for all modules
-    val any = (t: Triplet) => true
+    val any = (t: Doublet) => true
     // things like scalafix and scalafmt are only enabled on jvm 2.13 projects
-    val jvm2_13 = (t: Triplet) => t.scala == "2_13" && t.platform == "jvm"
+    val jvm2_13 = (t: Doublet) => t.scala == "2_13" && t.platform == "jvm"
 
-    val jvm = (t: Triplet) => t.platform == "jvm"
+    val jvm = (t: Doublet) => t.platform == "jvm"
 
-    val desiredCommands: Map[String, (String, Triplet => Boolean)] = Map(
+    val desiredCommands: Map[String, (String, Doublet => Boolean)] = Map(
       "test" -> ("test", any),
       "compile" -> ("compile", any),
       "publishLocal" -> ("publishLocal", any),
@@ -566,10 +530,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
     )
 
-    val cmds = all.flatMap { case (triplet, projects) =>
-      desiredCommands.filter(_._2._2(triplet)).map { case (name, (cmd, _)) =>
+    val cmds = all.flatMap { case (doublet, projects) =>
+      desiredCommands.filter(_._2._2(doublet)).map { case (name, (cmd, _)) =>
         Command.command(
-          s"${name}_${triplet.ce}_${triplet.scala}_${triplet.platform}"
+          s"${name}_${doublet.scala}_${doublet.platform}"
         ) { state =>
           projects.foldLeft(state) { case (st, proj) =>
             s"$proj/$cmd" :: st

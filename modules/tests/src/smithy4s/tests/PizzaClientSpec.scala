@@ -213,7 +213,7 @@ abstract class PizzaClientSpec extends IOSuite {
   type Res = (PizzaAdminService[IO], Backend)
   def sharedResource: Resource[IO, (PizzaAdminService[IO], Backend)] =
     for {
-      ref <- Resource.eval(Compat.ref(State.empty))
+      ref <- Resource.eval(IO.ref(State.empty))
       app = router(ref)
       client <- makeClient match {
         case Left(fromHttpApp) => fromHttpApp(app)
@@ -225,7 +225,7 @@ abstract class PizzaClientSpec extends IOSuite {
       }
     } yield (client, Backend(ref))
 
-  case class Backend(ref: Compat.Ref[IO, State]) {
+  case class Backend(ref: Ref[IO, State]) {
     def prepResponse(key: String, response: Response[IO]): IO[Unit] =
       ref.update(_.prepResponse(key, response))
 
@@ -260,7 +260,7 @@ abstract class PizzaClientSpec extends IOSuite {
     val empty = State(Map.empty, Map.empty)
   }
 
-  def router(ref: Compat.Ref[IO, State]) = {
+  def router(ref: Ref[IO, State]) = {
     def storeAndReturn(key: String, request: Request[IO]): IO[Response[IO]] =
       // Collecting the whole body eagerly to make sure we don't consume it after closing the connection
       request.body.compile.toVector.flatMap { body =>

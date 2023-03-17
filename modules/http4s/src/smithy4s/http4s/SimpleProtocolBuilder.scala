@@ -43,7 +43,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       impl: FunctorAlgebra[Alg, F]
   )(implicit
       service: smithy4s.Service[Alg],
-      F: EffectCompat[F]
+      F: Concurrent[F]
   ): RouterBuilder[Alg, F] = {
     new RouterBuilder[Alg, F](
       service,
@@ -57,10 +57,10 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       Alg[_[_, _, _, _, _]]
   ] private[http4s] (val service: smithy4s.Service[Alg]) { self =>
 
-    def client[F[_]: EffectCompat](client: Client[F]) =
+    def client[F[_]: Concurrent](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
 
-    def routes[F[_]: EffectCompat](
+    def routes[F[_]: Concurrent](
         impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder[Alg, F](
@@ -74,7 +74,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
   class ClientBuilder[
       Alg[_[_, _, _, _, _]],
-      F[_]: EffectCompat
+      F[_]: Concurrent
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
@@ -120,7 +120,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware[F]
   )(implicit
-      F: EffectCompat[F]
+      F: Concurrent[F]
   ) {
 
     val entityCompiler =

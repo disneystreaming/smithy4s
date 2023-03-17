@@ -18,6 +18,8 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
+import cats.effect.Temporal
+import cats.effect.syntax.all._
 import org.http4s.headers.`Content-Type`
 import org.http4s.HttpApp
 import org.http4s.Request
@@ -44,7 +46,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 ](
     reverseRouter: ReverseRouter[F],
     serviceInstance: Service[Alg]
-)(implicit ce: CompatEffect[F]) {
+)(implicit ce: Temporal[F]) {
   import ce._
   import org.http4s.implicits._
   import reverseRouter._
@@ -91,7 +93,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         methodAssert
       )
         .map(_.pure[F])
-    ioAsserts.combineAll
+    ioAsserts.combineAll(cats.Applicative.monoid[F, ComplianceResult])
   }
 
   private[compliancetests] def clientRequestTest[I, E, O, SE, SO](
@@ -122,7 +124,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             input
               .flatMap { in =>
                 // avoid blocking the test forever...
-                val request = ce.timeout(requestDeferred.get, 1.second)
+                val request = requestDeferred.get.timeout(1.second)
                 val output: F[O] = service
                   .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
@@ -179,7 +181,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 .map { body =>
                   fs2.Stream
                     .emit(body)
-                    .through(utf8Encode)
+                    .through(fs2.text.utf8.encode)
                 }
                 .getOrElse(fs2.Stream.empty)
 
