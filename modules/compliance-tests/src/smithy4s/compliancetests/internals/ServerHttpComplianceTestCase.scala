@@ -129,15 +129,24 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                           }
                     }
                   case Right(response) =>
-                    response.body.compile.toVector.map(_.map(_.toChar).mkString).map { message => {
-                      if (message.toLowerCase().contains(IntendedShortCircuit.getClass.getName.toLowerCase)) assert.success
-                      else {
-                        assert.fail(
-                          s"Expected a IntendedShortCircuit error, but got a response with status ${response.status} and message $message"
-                        )
+                    response.body.compile.toVector
+                      .map(_.map(_.toChar).mkString)
+                      .map { message =>
+                        {
+                          if (
+                            message
+                              .toLowerCase()
+                              .contains(
+                                IntendedShortCircuit.getClass.getName.toLowerCase
+                              )
+                          ) assert.success
+                          else {
+                            assert.fail(
+                              s"Expected a IntendedShortCircuit error, but got a response with status ${response.status} and message $message"
+                            )
+                          }
+                        }
                       }
-                    }
-                    }
                 }
             }
         }

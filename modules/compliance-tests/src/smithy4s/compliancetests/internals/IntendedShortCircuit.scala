@@ -19,5 +19,5 @@ package internals
 
 private[compliancetests] case class IntendedShortCircuit()
     extends scala.util.control.NoStackTrace {
-    override def getMessage: String = toString
+  override def getMessage: String = toString
 }
