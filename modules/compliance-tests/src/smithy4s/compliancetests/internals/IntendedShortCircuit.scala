@@ -18,4 +18,6 @@ package smithy4s.compliancetests
 package internals
 
 private[compliancetests] case class IntendedShortCircuit()
-    extends scala.util.control.NoStackTrace
+    extends scala.util.control.NoStackTrace {
+    override def getMessage: String = toString
+}
