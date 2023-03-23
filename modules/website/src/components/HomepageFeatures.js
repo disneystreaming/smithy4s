@@ -1,49 +1,54 @@
 import React from 'react';
 import clsx from 'clsx';
 import styles from './HomepageFeatures.module.css';
+import CodeBlock from '@theme/CodeBlock';
 
 const FeatureList = [
   {
-    title: 'Contract First',
-    Svg: require('../../static/img/undraw_sync_files.svg').default,
+    title: '1. Define API Contract',
+    lang: "smithy",
+    content: "service AdminService {\n  operations: [GetAllUsers]\n}",
     description: (
       <>
-        Smithy4s generates protocol-agnostic Scala code from Smithy, a concise, readable, language-agnostic
+        Start by defining your API in Smithy, a concise, readable, language-agnostic
         format.
       </>
     ),
   },
   {
-    title: 'Pure Functional Scala',
-    Svg: require('../../static/img/undraw_programmer.svg').default,
+    title: '2. Implement Generated Interface',
+    lang: "scala",
+    content: "object AdminServiceImpl extends AdminService[IO] {\n  def getAllUsers(): IO[AllUsers] = ...\n}",
     description: (
       <>
-        Smithy4s allows for idiomatic integration with your favourite
-        libraries/frameworks.
+        Smithy4s will use the Smithy model you define to generate Scala code including an interface that represents the service. This interface will contain one function per operation in the service.
       </>
     ),
   },
   {
-    title: 'Seamless API Dev',
-    Svg: require('../../static/img/undraw_add_files.svg').default,
+    title: '3. Create HttpRoutes',
+    lang: "scala",
+    content: "val routes: Resource[IO, HttpRoutes[IO]] =\n  SimpleRestJsonBuilder.routes(AdminServiceImpl).resource",
     description: (
       <>
-        Smithy4s can translate your specs to OpenAPI files, and makes it trivial to serve them.
+        Passing your service implementation to the SimpleRestJsonBuilder will create an HttpRoutes instance that handles routing and JSON serialization/deserialization.
       </>
     ),
   },
 ];
 
-function Feature({ Svg, title, description }) {
+function Feature({ lang, content, title, description }) {
   return (
-    <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} alt={title} />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <h3>{title}</h3>
+    <div className={clsx(styles.doubleGrid)}>
+      <div className="">
+        <h2>{title}</h2>
         <p>{description}</p>
       </div>
+      <CodeBlock
+        className={clsx(styles.codeExample)}
+        language={lang}>
+        {content}
+      </CodeBlock>
     </div>
   );
 }
@@ -51,12 +56,10 @@ function Feature({ Svg, title, description }) {
 export default function HomepageFeatures() {
   return (
     <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
-        </div>
+      <div className="container" style={{marginTop: "28px"}}>
+        {FeatureList.map((props, idx) => (
+          <Feature key={idx} {...props} />
+        ))}
       </div>
     </section>
   );
