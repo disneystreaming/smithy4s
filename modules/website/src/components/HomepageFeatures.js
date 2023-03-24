@@ -7,7 +7,7 @@ const FeatureList = [
   {
     title: '1. Define API Contract',
     lang: "smithy",
-    content: "service AdminService {\n  operations: [GetAllUsers]\n}",
+    content: "service AdminService {\n  operations: [GetUser]\n}\n\noperation GetUser {\n  input := {\n    @required id: String\n  }\n  output := {\n    @required firstName: String\n    @required lastName: String\n  }\n}",
     description: (
       <>
         Start by defining your API in Smithy, a concise, readable, language-agnostic
@@ -18,7 +18,7 @@ const FeatureList = [
   {
     title: '2. Implement Generated Interface',
     lang: "scala",
-    content: "object AdminServiceImpl extends AdminService[IO] {\n  def getAllUsers(): IO[AllUsers] = ...\n}",
+    content: "object AdminServiceImpl extends AdminService[IO] {\n  def getUser(id: String): IO[GetUserOutput] = ...\n}",
     description: (
       <>
         Smithy4s will use the Smithy model you define to generate Scala code including an interface that represents the service. This interface will contain one function per operation in the service.
