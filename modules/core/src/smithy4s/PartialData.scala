@@ -16,7 +16,7 @@
 
 package smithy4s
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat.immutable.ArraySeq
 
 /**
   * Data structure that can hold either the totality or a subset of a larger piece of data.
