@@ -21,11 +21,11 @@ import smithy4s.kinds.PolyFunction
 import Schema._
 
 /**
-  * A structure indicating the match result of a schema against a predicate run against its
-  * fields :
+  * A structure indicating the match result of running `Schema#partial` against a given predicate
   *
   *   - if the schema is not of a structure, or if none of the fields matched, then `NoMatch` should be returned
-  *   - if the schema as
+  *   - if the schema is a structure and only a subset of its fields pass the predicate, then `PartialMatch` should be returned
+  *   - if the schema is a structure and all of its fields pass the predicate, then `TotalMatch` should be returned
   */
 sealed trait PartialSchema[A]
 
@@ -37,25 +37,6 @@ object PartialSchema {
   final case class NoMatch[A]()                                    extends PartialSchema[A]
   // format: on
 
-  /**
-  * When applied on a structure schema, creates a schema that, when compiled into
-  * a codec, will only encode/decode a subset of the data, based on the hints
-  * of each field.
-  *
-  * This can be used to only encode some fields of the data into the http body
-  *
-  * Returns a PartialSchema that indicates whether :
-  *   * no field match the condition
-  *   * some fields match the condition
-  *   * all fields match the condition
-  *
-  * @param payload : whether a single field is being looked for, in which case that
-  *                  the first field that matches the criteria is used, and a bijection
-  *                  is applied between the schema it holds and the partial data, ensuring
-  *                  which allows for the field's schema to be used as "top level" when
-  *                  decoding payloads.
-  *
-  */
   private[schema] def apply(
       keep: SchemaField[_, _] => Boolean,
       payload: Boolean
