@@ -21,77 +21,92 @@ import smithy4s.kinds.PolyFunction
 import Schema._
 
 /**
-  * A structure indicating the match result of running `Schema#partial` against a given predicate
+  * A structure indicating the match result of running `Schema#partition` against a given predicate
   *
   *   - if the schema is not of a structure, or if none of the fields matched, then `NoMatch` should be returned
   *   - if the schema is a structure and only a subset of its fields pass the predicate, then `PartialMatch` should be returned
   *   - if the schema is a structure and all of its fields pass the predicate, then `TotalMatch` should be returned
   */
-sealed trait PartialSchema[A]
+sealed trait SchemaPartition[A]
 
-object PartialSchema {
+object SchemaPartition {
 
   // format: off
-  final case class TotalMatch[A](schema: Schema[A])                extends PartialSchema[A]
-  final case class PartialMatch[A](schema: Schema[PartialData[A]]) extends PartialSchema[A]
-  final case class NoMatch[A]()                                    extends PartialSchema[A]
+  final case class TotalMatch[A](schema: Schema[A])                                                         extends SchemaPartition[A]
+  final case class SplittingMatch[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
+  final case class NoMatch[A]()                                                                             extends SchemaPartition[A]
   // format: on
 
   private[schema] def apply(
       keep: SchemaField[_, _] => Boolean,
       payload: Boolean
-  ): PolyFunction[Schema, PartialSchema] =
-    new PolyFunction[Schema, PartialSchema] {
+  ): PolyFunction[Schema, SchemaPartition] =
+    new PolyFunction[Schema, SchemaPartition] {
 
-      def apply[S](fa: Schema[S]): PartialSchema[S] = {
+      def apply[S](fa: Schema[S]): SchemaPartition[S] = {
         fa match {
           case StructSchema(shapeId, hints, fields, make) =>
+            def buildPartialDataSchema(
+                fieldsAndIndexes: Vector[(SchemaField[S, _], Int)]
+            ): Schema[PartialData[S]] = {
+              val indexes = fieldsAndIndexes.map(_._2)
+              val unsafeAccessField = fieldsAndIndexes.map {
+                case (schemaField, _) =>
+                  schemaField.foldK(fieldFolder[S])
+              }
+              def const(values: IndexedSeq[Any]): PartialData[S] =
+                PartialData.Partial(indexes, values, make)
+
+              StructSchema(shapeId, hints, unsafeAccessField, const)
+            }
+
             if (payload) {
               fields.zipWithIndex
                 .find { case (schemaField, _) =>
                   keep(schemaField)
                 }
                 .map { case (allowedField, index) =>
+                  val notMatchingFields =
+                    fields.zipWithIndex.filterNot(_._2 == index)
+                  val maybeNotMatchingSchema = if (notMatchingFields.size > 0) {
+                    Some(buildPartialDataSchema(notMatchingFields))
+                  } else None
                   allowedField.fold(
-                    bijectSingle(index, make, total = fields.size == 1)
+                    bijectSingle(index, make, maybeNotMatchingSchema)
                   )
                 }
                 .getOrElse {
-                  PartialSchema.NoMatch()
+                  SchemaPartition.NoMatch()
                 }
             } else {
-              val allowedFields = fields.zipWithIndex.filter {
-                case (schemaField, _) => keep(schemaField)
-              }
-              if (allowedFields.size == 0) {
-                PartialSchema.NoMatch()
-              } else if (allowedFields.size == fields.size) {
-                PartialSchema.TotalMatch(fa)
-              } else {
-                val indexes = allowedFields.map(_._2)
-                val unsafeAccessFields = allowedFields.map {
-                  case (schemaField, _) =>
-                    schemaField.foldK(fieldFolder[S])
+              val (matchingFields, notMatchingFields) =
+                fields.zipWithIndex.partition { case (schemaField, _) =>
+                  keep(schemaField)
                 }
-                def const(values: IndexedSeq[Any]): PartialData[S] =
-                  PartialData.Partial(indexes, values, make)
-                PartialSchema.PartialMatch(
-                  StructSchema(shapeId, hints, unsafeAccessFields, const)
+              if (matchingFields.size == 0) {
+                SchemaPartition.NoMatch()
+              } else if (matchingFields.size == fields.size) {
+                SchemaPartition.TotalMatch(fa)
+              } else {
+                SchemaPartition.SplittingMatch(
+                  buildPartialDataSchema(matchingFields),
+                  buildPartialDataSchema(notMatchingFields)
                 )
               }
             }
           case BijectionSchema(underlying, bijection) =>
             apply(underlying) match {
-              case PartialSchema.PartialMatch(partial) =>
-                PartialSchema.PartialMatch(
-                  partial.biject(_.map(bijection.to), _.map(bijection.from))
+              case SchemaPartition.SplittingMatch(matching, notMatching) =>
+                SchemaPartition.SplittingMatch(
+                  matching.biject(_.map(bijection.to), _.map(bijection.from)),
+                  notMatching.biject(_.map(bijection.to), _.map(bijection.from))
                 )
-              case PartialSchema.TotalMatch(total) =>
-                PartialSchema.TotalMatch(total.biject(bijection))
-              case PartialSchema.NoMatch() => PartialSchema.NoMatch()
+              case SchemaPartition.TotalMatch(total) =>
+                SchemaPartition.TotalMatch(total.biject(bijection))
+              case SchemaPartition.NoMatch() => SchemaPartition.NoMatch()
             }
           case LazySchema(s) => apply(s.value)
-          case _             => PartialSchema.NoMatch()
+          case _             => SchemaPartition.NoMatch()
         }
       }
     }
@@ -110,31 +125,39 @@ object PartialSchema {
   private def bijectSingle[S](
       index: Int,
       make: IndexedSeq[Any] => S,
-      total: Boolean
+      maybeNotMatching: Option[Schema[PartialData[S]]]
   ) =
-    new Field.Folder[Schema, S, PartialSchema[S]] {
+    new Field.Folder[Schema, S, SchemaPartition[S]] {
       def onRequired[A](
           label: String,
           instance: Schema[A],
           get: S => A
-      ): PartialSchema[S] = if (total) {
-        val to = (a: A) => make(IndexedSeq(a))
-        val from = get
-        PartialSchema.TotalMatch(instance.biject(to, from))
-      } else {
-        val indexes = IndexedSeq(index)
-        val to = (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
-        val from = (_: PartialData[S]) match {
-          case PartialData.Total(s) => get(s)
-          case _                    => codingError
+      ): SchemaPartition[S] =
+        maybeNotMatching match {
+          case None =>
+            // The payload field is the only field and we can create a total
+            // match from it, by bijecting from its result onto the structure
+            val to = (a: A) => make(IndexedSeq(a))
+            val from = get
+            SchemaPartition.TotalMatch(instance.biject(to, from))
+          case Some(notMachingSchema) =>
+            // There are other fields than the payload field.
+            val indexes = IndexedSeq(index)
+            val to = (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
+            val from = (_: PartialData[S]) match {
+              case PartialData.Total(s) => get(s)
+              case _                    => codingError
+            }
+            SchemaPartition.SplittingMatch(
+              instance.biject(to, from),
+              notMachingSchema
+            )
         }
-        PartialSchema.PartialMatch(instance.biject(to, from))
-      }
       def onOptional[A](
           label: String,
           instance: Schema[A],
           get: S => Option[A]
-      ): PartialSchema[S] = PartialSchema.NoMatch()
+      ): SchemaPartition[S] = SchemaPartition.NoMatch()
     }
 
   private def codingError: Nothing =

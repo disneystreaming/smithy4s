@@ -21,7 +21,7 @@ import cats.syntax.all._
 import Schema._
 import munit._
 
-final class PartialSchemaSpec extends FunSuite {
+final class SchemaPartitionSpec extends FunSuite {
 
   test("Structure schemas can be divided into partial components") {
     case class Foo(x: Int, y: Option[Int])
@@ -33,17 +33,16 @@ final class PartialSchemaSpec extends FunSuite {
     // We're splitting the schema into various components,
     // which we can use to decode bits of data from various locations
     // and reconcile later on.
-    val xPartialSchema = schema.partial(_.label == "x")
-    val yPartialSchema = schema.partial(_.label != "x")
+    val xPartialSchema = schema.partition(_.label == "x")
 
     // These are two separate documents that the whole data
     // can't possibly be decoded from.
     val documentX = Document.obj("x" -> Document.fromInt(1))
     val documentY = Document.obj("y" -> Document.fromInt(1))
 
-    import PartialSchema._
-    (xPartialSchema, yPartialSchema) match {
-      case (PartialMatch(xSchema), PartialMatch(ySchema)) =>
+    import SchemaPartition._
+    xPartialSchema match {
+      case SplittingMatch(xSchema, ySchema) =>
         val decoderX = Document.Decoder.fromSchema(xSchema)
         val decoderY = Document.Decoder.fromSchema(ySchema)
 
@@ -54,7 +53,7 @@ final class PartialSchemaSpec extends FunSuite {
 
         assertEquals(result, Right(Foo(1, Some(1))))
 
-      case (_, _) => fail("Expected partial matches")
+      case _ => fail("Expected partial matches")
     }
   }
 
@@ -68,17 +67,16 @@ final class PartialSchemaSpec extends FunSuite {
     // We're splitting the schema into various components,
     // which we can use to decode bits of data from various locations
     // and reconcile later on.
-    val xPartialSchema = schema.partial(_.label == "x")
-    val yPartialSchema = schema.partial(_.label != "x")
+    val xPartialSchema = schema.partition(_.label == "x")
 
     // These are two separate documents that the whole data
     // can't possibly be decoded from.
     val documentX = Document.obj("x" -> Document.fromInt(1))
     val documentY = Document.obj("y" -> Document.fromInt(1))
 
-    import PartialSchema._
-    (xPartialSchema, yPartialSchema) match {
-      case (PartialMatch(xSchema), PartialMatch(ySchema)) =>
+    import SchemaPartition._
+    xPartialSchema match {
+      case (SplittingMatch(xSchema, ySchema)) =>
         val encoderX = Document.Encoder.fromSchema(xSchema)
         val encoderY = Document.Encoder.fromSchema(ySchema)
 
@@ -86,7 +84,7 @@ final class PartialSchemaSpec extends FunSuite {
         assertEquals(encoderX.encode(input), documentX)
         assertEquals(encoderY.encode(input), documentY)
 
-      case (_, _) => fail("Expected partial matches")
+      case _ => fail("Expected partial matches")
     }
   }
 
@@ -100,17 +98,16 @@ final class PartialSchemaSpec extends FunSuite {
     // We're splitting the schema into various components,
     // which we can use to decode bits of data from various locations
     // and reconcile later on.
-    val xPartialSchema = schema.partial(_.label == "x")
-    val yPartialSchema = schema.partial(_.label != "x")
+    val xPartialSchema = schema.partition(_.label == "x")
 
     // These are two separate documents that the whole data
     // can't possibly be decoded from.
     val documentX = Document.obj("x" -> Document.fromInt(1))
     val documentY = Document.obj("y" -> Document.fromInt(1))
 
-    import PartialSchema._
-    (xPartialSchema, yPartialSchema) match {
-      case (PartialMatch(xSchema), PartialMatch(ySchema)) =>
+    import SchemaPartition._
+    (xPartialSchema) match {
+      case (SplittingMatch(xSchema, ySchema)) =>
         val decoderX = Document.Decoder.fromSchema(xSchema)
         val decoderY = Document.Decoder.fromSchema(ySchema)
 
@@ -121,7 +118,7 @@ final class PartialSchemaSpec extends FunSuite {
 
         assertEquals(result, Right(Foo(1, Some(1))))
 
-      case (_, _) => fail("Expected partial matches")
+      case _ => fail("Expected partial matches")
     }
   }
 
@@ -137,15 +134,14 @@ final class PartialSchemaSpec extends FunSuite {
     // We're splitting the schema into various components. The first one is extracted
     // as a "payload" partial, which means that schema held by the first field
     // matching the predicate will be used as if it was a top level schema
-    val xPartialSchema = schema.payloadPartial(_.label == "x")
-    val yPartialSchema = schema.partial(_.label != "x")
+    val xPartialSchema = schema.payloadPartition(_.label == "x")
 
     val documentX = Document.array(Document.fromInt(1), Document.fromInt(2))
     val documentY = Document.obj("y" -> Document.fromInt(1))
 
-    import PartialSchema._
-    (xPartialSchema, yPartialSchema) match {
-      case (PartialMatch(xSchema), PartialMatch(ySchema)) =>
+    import SchemaPartition._
+    xPartialSchema match {
+      case SplittingMatch(xSchema, ySchema) =>
         val decoderX = Document.Decoder.fromSchema(xSchema)
         val decoderY = Document.Decoder.fromSchema(ySchema)
 
@@ -156,7 +152,7 @@ final class PartialSchemaSpec extends FunSuite {
 
         assertEquals(result, Right(Foo(List(1, 2), 1)))
 
-      case (_, _) => fail("Expected partial matches")
+      case _ => fail("Expected partial matches")
     }
   }
 
@@ -169,8 +165,8 @@ final class PartialSchemaSpec extends FunSuite {
       int.optional[Foo]("y", _.y)
     )(Foo.apply)
 
-    val partialSchema = schema.partial(_ => true)
-    assert(partialSchema == PartialSchema.TotalMatch(schema))
+    val partialSchema = schema.partition(_ => true)
+    assert(partialSchema == SchemaPartition.TotalMatch(schema))
   }
 
   test(
@@ -182,8 +178,8 @@ final class PartialSchemaSpec extends FunSuite {
       int.optional[Foo]("y", _.y)
     )(Foo.apply)
 
-    val partialSchema = schema.partial(_.label.startsWith("z"))
-    assertEquals(partialSchema, PartialSchema.NoMatch[Foo]())
+    val partialSchema = schema.partition(_.label.startsWith("z"))
+    assertEquals(partialSchema, SchemaPartition.NoMatch[Foo]())
   }
 
   test(
@@ -191,8 +187,8 @@ final class PartialSchemaSpec extends FunSuite {
   ) {
     val schema = list(int)
 
-    val partialSchema = schema.partial(_.label.startsWith("z"))
-    assertEquals(partialSchema, PartialSchema.NoMatch[List[Int]]())
+    val partialSchema = schema.partition(_.label.startsWith("z"))
+    assertEquals(partialSchema, SchemaPartition.NoMatch[List[Int]]())
   }
 
   test(
@@ -206,11 +202,11 @@ final class PartialSchemaSpec extends FunSuite {
     // We're splitting the schema into various components. The first one is extracted
     // as a "payload" partial, which means that schema held by the first field
     // matching the predicate will be used as if it was a top level schema
-    val xPartialSchema = schema.payloadPartial(_.label == "x")
+    val xPartialSchema = schema.payloadPartition(_.label == "x")
 
     val documentX = Document.array(Document.fromInt(1), Document.fromInt(2))
 
-    import PartialSchema._
+    import SchemaPartition._
     xPartialSchema match {
       case (TotalMatch(xSchema)) =>
         val decoderX = Document.Decoder.fromSchema(xSchema)

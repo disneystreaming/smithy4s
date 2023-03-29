@@ -101,8 +101,8 @@ sealed trait Schema[A]{
     *   * some fields match the condition
     *   * all fields match the condition
     */
-  final def partial(filter: SchemaField[_, _] => Boolean): PartialSchema[A] =
-    PartialSchema(filter, payload = false)(this)
+  final def partition(filter: SchemaField[_, _] => Boolean): SchemaPartition[A] =
+    SchemaPartition(filter, payload = false)(this)
 
   /**
     * Finds the first field that matches the criteria is used, and applies a bijection
@@ -112,8 +112,8 @@ sealed trait Schema[A]{
     * NB : a "payload" is typically a whole set of data, without a typical field-based splitting
     * into subparts. This can be, for instance, an http body.
     */
-  final def payloadPartial(find: SchemaField[_, _] => Boolean): PartialSchema[A] =
-    PartialSchema(find, payload = true)(this)
+  final def payloadPartition(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
+    SchemaPartition(find, payload = true)(this)
 
 }
 

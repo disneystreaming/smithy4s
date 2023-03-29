@@ -47,11 +47,11 @@ import scala.collection.compat.immutable.ArraySeq
   * In order to solve for this, the [[PartialData]] type allows to momentarily store a subset of the fields of a case
   * class so that it can be reconciled with other pieces of [[PartialData]] later on.
   */
-private[smithy4s] sealed trait PartialData[A] {
+sealed trait PartialData[A] {
   def map[B](f: A => B): PartialData[B]
 }
 // format: off
-private[smithy4s] object PartialData {
+object PartialData {
   final case class Total[A](a: A) extends PartialData[A] {
     def map[B](f: A => B): PartialData[B] = Total(f(a))
   }
