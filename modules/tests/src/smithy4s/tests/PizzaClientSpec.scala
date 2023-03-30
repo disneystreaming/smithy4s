@@ -30,6 +30,8 @@ import org.typelevel.ci.CIString
 import smithy4s.example._
 import smithy4s.Timestamp
 import weaver._
+import smithy4s.http.CaseInsensitive
+import smithy4s.http.UnknownErrorResponse
 
 abstract class PizzaClientSpec extends IOSuite {
 
@@ -115,12 +117,23 @@ abstract class PizzaClientSpec extends IOSuite {
       .withEntity(
         Json.obj("message" -> Json.fromString("generic client error message"))
       ),
-    smithy4s.http.UnknownErrorResponse(
+    unknownResponse(
       407,
       Map("Content-Length" -> "42", "Content-Type" -> "application/json"),
       """{"message":"generic client error message"}"""
     )
   )
+
+  private def unknownResponse(
+      code: Int,
+      headers: Map[String, String],
+      body: String
+  ): UnknownErrorResponse =
+    UnknownErrorResponse(
+      code,
+      headers.map { case (k, v) => CaseInsensitive(k) -> List(v) },
+      body
+    )
 
   clientTest("Headers are case insensitive") { (client, backend, log) =>
     for {

@@ -17,59 +17,54 @@
 package smithy4s
 package http4s
 
-import cats.effect.Concurrent
-import smithy4s.kinds._
 import org.http4s._
 import org.http4s.client.Client
+import smithy4s.http4s.kernel._
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
+import smithy4s.kinds.Kind5
+import smithy4s.kinds.PolyFunction5
+import cats.effect.Concurrent
 
-// format: off
-class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
-    baseUri: Uri,
-    service: smithy4s.Service.Aux[Alg, Op],
-    client: Client[F],
-    entityCompiler: EntityCompiler[F],
-    middleware: ClientEndpointMiddleware[F]
-)(implicit effect: Concurrent[F])
-    extends FunctorInterpreter[Op, F] {
+// scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
+
+class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], F[_]](
+    baseUri:         Uri,
+    val service:     smithy4s.Service[Alg],
+    client:          Client[F],
+    compilerContext: UnaryClientCodecs[F],
+    middleware:      ClientEndpointMiddleware[F]
+)(implicit effect:   Concurrent[F]) {
 // format: on
 
-  private val compilerContext = internals.CompilerContext.make(entityCompiler)
-
-  def apply[I, E, O, SI, SO](
-      op: Op[I, E, O, SI, SO]
-  ): F[O] = {
-    val (input, endpoint) = service.endpoint(op)
-    val http4sEndpoint = clientEndpoints(endpoint)
-    http4sEndpoint.send(input)
+  type ClientEndpoint[I, E, O, SI, SO] = I => F[O]
+  val handler = new PolyFunction5[service.Endpoint, ClientEndpoint] {
+    def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] =
+      SmithyHttp4sClientEndpoint
+        .make(
+          baseUri,
+          client,
+          endpoint,
+          compilerContext,
+          middleware.prepare(service)(endpoint)
+        )
+        .left
+        .map { e =>
+          throw new Exception(
+            s"Operation ${endpoint.name} is not bound to http semantics",
+            e
+          )
+        }
+        .merge
   }
 
-  private val clientEndpoints =
-    new PolyFunction5[
-      Endpoint[Op, *, *, *, *, *],
-      SmithyHttp4sClientEndpoint[F, Op, *, *, *, *, *]
-    ] {
-      def apply[I, E, O, SI, SO](
-          endpoint: Endpoint[Op, I, E, O, SI, SO]
-      ): SmithyHttp4sClientEndpoint[F, Op, I, E, O, SI, SO] =
-        SmithyHttp4sClientEndpoint
-          .make(
-            baseUri,
-            client,
-            endpoint,
-            compilerContext,
-            middleware.prepare(service)(endpoint)
-          )
-          .left
-          .map { e =>
-            throw new Exception(
-              s"Operation ${endpoint.name} is not bound to http semantics: ${e.message}",
-              e
-            )
-          }
-          .merge
-    }.unsafeCacheBy(
-      service.endpoints.map(smithy4s.kinds.Kind5.existential(_)),
-      identity
-    )
+  val impl: service.Impl[F] = service.fromPolyFunction {
+    new service.FunctorInterpreter[F] {
+      val cached = handler.unsafeCacheBy(service.endpoints.map(Kind5.existential(_)), identity)
+      def apply[I, E, O, SI, SO](operation: service.Operation[I, E, O, SI, SO]): F[O] = {
+        val (input, ep) = service.endpoint(operation)
+        cached(ep).apply(input)
+      }
+    }
+  }
+
 }

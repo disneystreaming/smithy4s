@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   example,
   tests,
   http4s,
+  `http4s-kernel`,
   `http4s-swagger`,
   decline,
   codegenPlugin,
@@ -637,15 +638,31 @@ lazy val xml = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
+ * Module that contains an http4s-specific `EntityCompiler` construct
+ * that codifies the compilatin of smithy4s Schemas to EntityEncoders and
+ * EntityDecoders
+ */
+lazy val `http4s-kernel` = projectMatrix
+  .in(file("modules/http4s-kernel"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.core.value
+    )
+  )
+  .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+/**
  * Module that contains http4s-specific client/server bindings for the
  * custom protocols provided by smithy4s.
  */
 lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
   .dependsOn(
-    core,
-    complianceTests % "test->compile",
+    `http4s-kernel`,
     json,
+    complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
     testUtils % "test->compile"
