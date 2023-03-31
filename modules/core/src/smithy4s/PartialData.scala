@@ -74,6 +74,8 @@ object PartialData {
       val array = Array.fill[Any](totalSize)(null)
       var make : IndexedSeq[Any] => A = null
       allPieces.foreach { case PartialData.Partial(indexes, data, const) =>
+        // all the `const` values should be the same, therefore which one is called
+        // is an arbitrary choice.
         make = const
         var i = 0
         while(i < data.size) {
