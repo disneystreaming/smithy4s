@@ -74,14 +74,14 @@ object SchemaPartition {
                 fieldsAndIndexes: Vector[(SchemaField[S, _], Int)]
             ): Schema[PartialData[S]] = {
               val indexes = fieldsAndIndexes.map(_._2)
-              val unsafeAccessField = fieldsAndIndexes.map {
+              val unsafeAccessFields = fieldsAndIndexes.map {
                 case (schemaField, _) =>
                   schemaField.foldK(fieldFolder[S])
               }
               def const(values: IndexedSeq[Any]): PartialData[S] =
                 PartialData.Partial(indexes, values, make)
 
-              StructSchema(shapeId, hints, unsafeAccessField, const)
+              StructSchema(shapeId, hints, unsafeAccessFields, const)
             }
 
             if (payload) {
@@ -90,34 +90,41 @@ object SchemaPartition {
                   keep(schemaField)
                 }
                 .map { case (allowedField, index) =>
-                  val notMatchingFields =
+                  val remainingFields =
                     fields.zipWithIndex.filterNot(_._2 == index)
-                  val maybeNotMatchingSchema = if (notMatchingFields.size > 0) {
-                    Some(buildPartialDataSchema(notMatchingFields))
-                  } else None
+
+                  val maybeRemainingSchema =
+                    Option.when(remainingFields.nonEmpty)(
+                      buildPartialDataSchema(remainingFields)
+                    )
+
                   allowedField.fold(
-                    bijectSingle(index, make, maybeNotMatchingSchema)
+                    bijectSingle(index, make, maybeRemainingSchema)
                   )
                 }
                 .getOrElse {
                   SchemaPartition.NoMatch()
                 }
             } else {
-              val (matchingFields, notMatchingFields) =
-                fields.zipWithIndex.partition { case (schemaField, _) =>
-                  keep(schemaField)
-                }
-              if (matchingFields.size == 0) {
-                SchemaPartition.NoMatch()
-              } else if (matchingFields.size == fields.size) {
-                SchemaPartition.TotalMatch(fa)
-              } else {
-                SchemaPartition.SplittingMatch(
-                  buildPartialDataSchema(matchingFields),
-                  buildPartialDataSchema(notMatchingFields)
-                )
+              val partitioned = fields.zipWithIndex.partition {
+                case (schemaField, _) => keep(schemaField)
+              }
+
+              partitioned match {
+                case (matched, _) if matched.isEmpty =>
+                  SchemaPartition.NoMatch()
+
+                case (_, remaining) if remaining.isEmpty =>
+                  SchemaPartition.TotalMatch(fa)
+
+                case (matchingFields, remainingFields) =>
+                  SchemaPartition.SplittingMatch(
+                    buildPartialDataSchema(matchingFields),
+                    buildPartialDataSchema(remainingFields)
+                  )
               }
             }
+
           case BijectionSchema(underlying, bijection) =>
             apply(underlying) match {
               case SchemaPartition.SplittingMatch(matching, notMatching) =>
@@ -164,14 +171,22 @@ object SchemaPartition {
             val to = (a: A) => make(IndexedSeq(a))
             val from = get
             SchemaPartition.TotalMatch(instance.biject(to, from))
+
           case Some(notMachingSchema) =>
-            // There are other fields than the payload field.
-            val indexes = IndexedSeq(index)
-            val to = (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
-            val from = (_: PartialData[S]) match {
-              case PartialData.Total(s) => get(s)
-              case _                    => codingError
+            // There are other fields in the structure than the payload field.
+
+            val to = {
+              val indexes = IndexedSeq(index)
+              (a: A) => PartialData.Partial(indexes, IndexedSeq(a), make)
             }
+
+            val from = (_: PartialData[S]) match {
+              case PartialData.Total(s)      => get(s)
+              case _: PartialData.Partial[_] =>
+                // It's impossible to get the whole struct from a single field if it's not the only one
+                codingError
+            }
+
             SchemaPartition.SplittingMatch(
               instance.biject(to, from),
               notMachingSchema
@@ -181,11 +196,13 @@ object SchemaPartition {
           label: String,
           instance: Schema[A],
           get: S => Option[A]
-      ): SchemaPartition[S] = SchemaPartition.NoMatch()
+      ): SchemaPartition[S] =
+        // "single" only makes sense on required fields
+        SchemaPartition.NoMatch()
     }
 
   private def codingError: Nothing =
-    sys.error("Coding error: this should not happen on encoding side")
+    sys.error("Coding error: this should not happen on the encoding side")
 
   private def fieldFolder[S] =
     new Field.FolderK[Schema, S, SchemaField[PartialData[S], *]] {
