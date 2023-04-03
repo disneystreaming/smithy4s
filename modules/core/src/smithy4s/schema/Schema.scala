@@ -112,7 +112,7 @@ sealed trait Schema[A]{
     * NB : a "payload" is typically a whole set of data, without a typical field-based splitting
     * into subparts. This can be, for instance, an http body.
     */
-  final def payloadPartition(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
+  final def findPayload(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
     SchemaPartition(find, payload = true)(this)
 
 }

@@ -32,9 +32,33 @@ sealed trait SchemaPartition[A]
 object SchemaPartition {
 
   // format: off
-  final case class TotalMatch[A](schema: Schema[A])                                                         extends SchemaPartition[A]
+  /**
+    * Indicates that all fields of a schema matched a condition.
+    *
+    * @param schema The schema resulting from the total match might not be the same as the input-schema:
+    * if the partition aimed at finding a payload field, and if the whole data can be constructed from a
+    * single payload field, the resulting schema would be a bijection from that payload field to the larger
+    * datatype.
+    */
+  final case class TotalMatch[A](schema: Schema[A]) extends SchemaPartition[A]
+
+  /**
+    * Indicates that only a subset of fields matched the partitioning condition. This  datatype contains
+    * two schemas representing the partial data resulting from the partitioning. For instance :
+    * http-header fields and non-http-header fields.
+    *
+    * The schemas can be dispatched to the correct SchemaVisitors to produce the relevant codecs. The
+    * partial-data produced by either parts can be reconciled to create the total data.
+    *
+    * @param matching the partial schema resulting from the matching fields
+    * @param notMatching the partial schema resulting from the non-matching fields
+    */
   final case class SplittingMatch[A](matching: Schema[PartialData[A]], notMatching: Schema[PartialData[A]]) extends SchemaPartition[A]
-  final case class NoMatch[A]()                                                                             extends SchemaPartition[A]
+
+  /**
+    * Indicates that no field matched the condition.
+    */
+  final case class NoMatch[A]() extends SchemaPartition[A]
   // format: on
 
   private[schema] def apply(

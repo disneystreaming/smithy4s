@@ -165,7 +165,7 @@ final class SchemaPartitionSpec extends FunSuite {
     // We're splitting the schema into various components. The first one is extracted
     // as a "payload" partial, which means that schema held by the first field
     // matching the predicate will be used as if it was a top level schema
-    val xPartialSchema = schema.payloadPartition(_.label == "x")
+    val xPartialSchema = schema.findPayload(_.label == "x")
 
     // Note the absence of `x` document field below.
     val documentX = Document.array(Document.fromInt(1), Document.fromInt(2))
@@ -196,7 +196,7 @@ final class SchemaPartitionSpec extends FunSuite {
       list(int).required[Foo]("x", _.x)
     )(Foo.apply)
 
-    val xPartialSchema = schema.payloadPartition(_.label == "x")
+    val xPartialSchema = schema.findPayload(_.label == "x")
 
     val documentX = Document.array(Document.fromInt(1), Document.fromInt(2))
 
