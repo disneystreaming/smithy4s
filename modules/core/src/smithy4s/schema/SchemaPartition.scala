@@ -94,9 +94,8 @@ object SchemaPartition {
                     fields.zipWithIndex.filterNot(_._2 == index)
 
                   val maybeRemainingSchema =
-                    Option.when(remainingFields.nonEmpty)(
-                      buildPartialDataSchema(remainingFields)
-                    )
+                    if (remainingFields.isEmpty) None
+                    else Some(buildPartialDataSchema(remainingFields))
 
                   allowedField.fold(
                     bijectSingle(index, make, maybeRemainingSchema)
