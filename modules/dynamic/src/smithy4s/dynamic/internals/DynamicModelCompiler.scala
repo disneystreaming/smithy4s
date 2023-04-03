@@ -55,8 +55,21 @@ private[dynamic] object Compiler {
         document.decode[A].toOption
       }
 
-  private def toHint(id: ShapeId, tr: Document): Hint =
-    Hints.Binding.DynamicBinding(id, tr)
+  private def toHint(
+      id: ShapeId,
+      tr: Document,
+      schemaMap: MMap[ShapeId, Eval[Schema[DynData]]]
+  ): Hint = {
+    val schema = Eval.later(
+      schemaMap.get(id).getOrElse(sys.error("Schema not found in map")).value
+    )
+
+    Hints.Binding.DynamicBinding(
+      id,
+      tr,
+      () => schema.value
+    )
+  }
 
   /**
      * @param knownHints hints supported by the caller.
@@ -155,7 +168,7 @@ private[dynamic] object Compiler {
 
       Hints.fromSeq {
         (traits -- ignoredHints).collect { case (ValidIdRef(k), v) =>
-          toHint(k, v)
+          toHint(k, v, schemaMap)
         }.toSeq
       }
     }

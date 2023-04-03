@@ -25,6 +25,7 @@ import smithy4s.Hints
 import smithy4s.Document
 import smithy4s.schema.Schema
 import smithy4s.IntEnum
+import smithy.api
 
 class EnumSpec extends FunSuite {
   val model = """
@@ -68,7 +69,7 @@ class EnumSpec extends FunSuite {
 
   def assertEnum(
       shapeId: ShapeId,
-      expectedValues: List[EnumValue[_]]
+      expectedValues: DynamicSchemaIndex => List[EnumValue[_]]
   )(implicit
       loc: Location
   ) = {
@@ -84,95 +85,99 @@ class EnumSpec extends FunSuite {
           case unexpected => fail("Unexpected schema: " + unexpected)
         }
 
-        assertEquals(eValues, expectedValues)
+        assertEquals(eValues, expectedValues(index))
       }
   }
 
   test("dynamic enums have names if they're in the model") {
     assertEnum(
       ShapeId("example", "Element"),
-      expectedValues = List(
-        EnumValue(
-          stringValue = "Ice",
-          intValue = 0,
-          value = 0,
-          name = "ICE",
-          hints = Hints.empty
-        ),
-        EnumValue(
-          stringValue = "Fire",
-          intValue = 1,
-          value = 1,
-          name = "FIRE",
-          hints = Hints.empty
+      expectedValues = _ =>
+        List(
+          EnumValue(
+            stringValue = "Ice",
+            intValue = 0,
+            value = 0,
+            name = "ICE",
+            hints = Hints.empty
+          ),
+          EnumValue(
+            stringValue = "Fire",
+            intValue = 1,
+            value = 1,
+            name = "FIRE",
+            hints = Hints.empty
+          )
         )
-      )
     )
   }
 
   test("dynamic enum names are derived if not present in the model") {
     assertEnum(
       ShapeId("example", "AnonymousElement"),
-      expectedValues = List(
-        EnumValue(
-          stringValue = "Vanilla",
-          intValue = 0,
-          value = 0,
-          name = "VANILLA",
-          hints = Hints.empty
-        ),
-        EnumValue(
-          stringValue = "Ice",
-          intValue = 1,
-          value = 1,
-          name = "ICE",
-          hints = Hints.empty
+      expectedValues = _ =>
+        List(
+          EnumValue(
+            stringValue = "Vanilla",
+            intValue = 0,
+            value = 0,
+            name = "VANILLA",
+            hints = Hints.empty
+          ),
+          EnumValue(
+            stringValue = "Ice",
+            intValue = 1,
+            value = 1,
+            name = "ICE",
+            hints = Hints.empty
+          )
         )
-      )
     )
   }
 
   test("Smithy 2.0 enums are supported") {
     assertEnum(
       ShapeId("example", "Smithy20Enum"),
-      expectedValues = List(
-        EnumValue(
-          stringValue = "Fire",
-          intValue = 0,
-          value = 0,
-          name = "FIRE",
-          hints = Hints.empty
-        ),
-        EnumValue(
-          stringValue = "Ice",
-          intValue = 1,
-          value = 1,
-          name = "ICE",
-          hints = Hints.empty
+      expectedValues = _ =>
+        List(
+          EnumValue(
+            stringValue = "Fire",
+            intValue = 0,
+            value = 0,
+            name = "FIRE",
+            hints = Hints.empty
+          ),
+          EnumValue(
+            stringValue = "Ice",
+            intValue = 1,
+            value = 1,
+            name = "ICE",
+            hints = Hints.empty
+          )
         )
-      )
     )
   }
 
   test("Smithy 2.0 int enums are supported") {
     assertEnum(
       ShapeId("example", "MyIntEnum"),
-      expectedValues = List(
-        EnumValue(
-          stringValue = "FIRE",
-          intValue = 10,
-          value = 10,
-          name = "FIRE",
-          hints = Hints.empty
-        ),
-        EnumValue(
-          stringValue = "ICE",
-          intValue = 42,
-          value = 42,
-          name = "ICE",
-          hints = Hints.empty
+      expectedValues = _ =>
+        List(
+          EnumValue(
+            stringValue = "FIRE",
+            intValue = 10,
+            value = 10,
+            name = "FIRE",
+            hints = Hints.empty
+          ),
+          EnumValue(
+            stringValue = "ICE",
+            intValue = 42,
+            value = 42,
+            name = "ICE",
+            hints = Hints.empty
+          )
         )
-      )
     )
   }
 
@@ -223,24 +228,29 @@ class EnumSpec extends FunSuite {
   test("Smithy 2.0 enum members get their hints compiled") {
     assertEnum(
       ShapeId("example", "EnumWithTraits"),
-      expectedValues = List(
-        EnumValue(
-          stringValue = "FIRE",
-          intValue = 0,
-          value = 0,
-          name = "FIRE",
-          hints = Hints.empty
-        ),
-        EnumValue(
-          stringValue = "ICE",
-          intValue = 1,
-          value = 1,
-          name = "ICE",
-          hints = Hints(
-            ShapeId("smithy.api", "deprecated") -> Document.obj()
+      expectedValues = index =>
+        List(
+          EnumValue(
+            stringValue = "FIRE",
+            intValue = 0,
+            value = 0,
+            name = "FIRE",
+            hints = Hints.empty
+          ),
+          EnumValue(
+            stringValue = "ICE",
+            intValue = 1,
+            value = 1,
+            name = "ICE",
+            hints = Hints(
+              (
+                ShapeId("smithy.api", "deprecated"),
+                Document.obj(),
+                index.getSchema(api.Deprecated.id).get
+              )
+            )
           )
         )
-      )
     )
   }
 }

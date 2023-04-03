@@ -16,6 +16,8 @@
 
 package smithy4s
 
+import smithy4s.Schema
+
 /**
   * A hint is an arbitrary piece of data that can be added to a schema,
   * at the struct level, or at the field/member level.
@@ -45,8 +47,8 @@ object Hints {
 
   def fromSeq[S](bindings: Seq[Hint]): Hints = {
     new Impl(bindings.map {
-      case b @ Binding.StaticBinding(k, _)  => k.id -> b
-      case b @ Binding.DynamicBinding(k, _) => k -> b
+      case b @ Binding.StaticBinding(k, _)     => k.id -> b
+      case b @ Binding.DynamicBinding(k, _, _) => k -> b
     }.toMap)
   }
 
@@ -59,7 +61,7 @@ object Hints {
       toMap.get(key.id).flatMap {
         case Binding.StaticBinding(k, value) =>
           if (key.eq(k)) Some(value.asInstanceOf[A]) else None
-        case Binding.DynamicBinding(_, value) =>
+        case Binding.DynamicBinding(_, value, _) =>
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
       }
     def ++(other: Hints): Hints = {
@@ -76,6 +78,7 @@ object Hints {
 
   sealed trait Binding extends Product with Serializable {
     def keyId: ShapeId
+    def getSchema: Schema[_]
   }
 
   object Binding {
@@ -83,18 +86,31 @@ object Hints {
         extends Binding {
       override def keyId: ShapeId = key.id
       override def toString: String = value.toString()
+      def getSchema: Schema[_] = key.schema
     }
-    final case class DynamicBinding(keyId: ShapeId, value: Document)
-        extends Binding {
+    final case class DynamicBinding(
+        keyId: ShapeId,
+        value: Document,
+        schema: () => Schema[_]
+    ) extends Binding {
       override def toString = Document.obj(keyId.show -> value).toString()
+      def getSchema: Schema[_] = schema()
+
+      // todo: use the schema here somehow? is caching going to be affected?
+      private def forComparison = (keyId, value)
+      override def hashCode(): Int = forComparison.hashCode()
+      override def equals(obj: Any): Boolean =
+        obj.isInstanceOf[DynamicBinding] && obj
+          .asInstanceOf[DynamicBinding]
+          .forComparison == this.forComparison
     }
 
     implicit def fromValue[A, AA <: A](value: AA)(implicit
         key: ShapeTag[A]
     ): Binding = StaticBinding(key, value)
 
-    implicit def fromTuple(tup: (ShapeId, Document)): Binding =
-      DynamicBinding(tup._1, tup._2)
+    implicit def fromTuple(tup: (ShapeId, Document, Schema[_])): Binding =
+      DynamicBinding(tup._1, tup._2, () => tup._3)
   }
 
 }

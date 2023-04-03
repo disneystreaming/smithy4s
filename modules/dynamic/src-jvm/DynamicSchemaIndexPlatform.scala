@@ -30,9 +30,17 @@ private[dynamic] trait DynamicSchemaIndexPlatform {
       model: software.amazon.smithy.model.Model
   ): Either[PayloadError, DynamicSchemaIndex] = {
     val flattenedModel =
-      ModelTransformer.create().flattenAndRemoveMixins(model);
-    val node = ModelSerializer.builder().build.serialize(flattenedModel)
+      ModelTransformer.create().flattenAndRemoveMixins(model)
+
+    val node = ModelSerializer
+      .builder()
+      // Note: this needs to be discussed
+      .includePrelude(true)
+      .build
+      .serialize(flattenedModel)
+
     val document = NodeToDocument(node)
+
     smithy4s.Document
       .decode[smithy4s.dynamic.model.Model](document)
       .map(load(_))
