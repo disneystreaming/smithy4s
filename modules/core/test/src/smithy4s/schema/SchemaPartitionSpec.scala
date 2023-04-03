@@ -217,4 +217,54 @@ final class SchemaPartitionSpec extends FunSuite {
     }
   }
 
+  test(
+    "An arbitrary number of PartialData instances can be reconciled together"
+  ) {
+    case class Foo(a: Int, b: Int, c: Int, d: Int)
+    val schema = struct(
+      int.required[Foo]("a", _.a),
+      int.required[Foo]("b", _.b),
+      int.required[Foo]("c", _.c),
+      int.required[Foo]("d", _.d)
+    )(Foo.apply)
+
+    def multiPartitionedDecoder[A](schema: Schema[A])(
+        predicates: SchemaField[_, _] => Boolean*
+    ): List[Document] => Either[http.PayloadError, A] = {
+      val allDecoders: List[Document.Decoder[PartialData[A]]] =
+        predicates.toList.map(schema.partition(_)).collect {
+          case SchemaPartition.SplittingMatch(matching, _) =>
+            Document.Decoder.fromSchema(matching)
+        }
+      (documents: List[Document]) =>
+        allDecoders
+          .zip(documents)
+          .traverse { case (decoder, partialDocument) =>
+            decoder.decode(partialDocument)
+          }
+          .map(partialResults =>
+            PartialData.unsafeReconcile(partialResults: _*)
+          )
+
+    }
+
+    val multiDecoder = multiPartitionedDecoder(schema)(
+      _.label == "a",
+      _.label == "b",
+      _.label == "c",
+      _.label == "d"
+    )
+
+    val result = multiDecoder(
+      List(
+        Document.obj("a" -> Document.fromInt(1)),
+        Document.obj("b" -> Document.fromInt(2)),
+        Document.obj("c" -> Document.fromInt(3)),
+        Document.obj("d" -> Document.fromInt(4))
+      )
+    )
+
+    assertEquals(result, Right(Foo(1, 2, 3, 4)))
+  }
+
 }
