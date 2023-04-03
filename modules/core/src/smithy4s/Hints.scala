@@ -16,8 +16,6 @@
 
 package smithy4s
 
-import smithy4s.Schema
-
 /**
   * A hint is an arbitrary piece of data that can be added to a schema,
   * at the struct level, or at the field/member level.
