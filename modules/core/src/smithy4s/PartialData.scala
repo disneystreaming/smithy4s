@@ -64,7 +64,7 @@ object PartialData {
     * into a single piece of data. It is the responsibility of the caller to ensure that
     * the individual pieces can be reconciled into the full data.
     */
-  def unsafeReconcile[A](pieces: PartialData[A]*) : A = {
+  def unsafeReconcile[A](pieces: PartialData[A]*): A = {
     pieces.collectFirst {
       case Total(a) => a
     }.getOrElse {
