@@ -78,6 +78,9 @@ sealed trait Schema[A]{
 
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
+  final def biject[B](bijection: Bijection[A, B]) : Schema[B] = Schema.bijection(this, bijection)
+  final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
+
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 
@@ -86,6 +89,31 @@ sealed trait Schema[A]{
     case document => Document.Decoder.fromSchema(this).decode(document).toOption
   }
 
+  /**
+    * When applied on a structure schema, creates a schema that, when compiled into
+    * a codec, will only encode/decode a subset of the data, based on the hints
+    * of each field.
+    *
+    * This can be used to only encode some fields of the data into the http body
+    *
+    * Returns a SchemaPartition that indicates whether :
+    *   * no field match the condition
+    *   * some fields match the condition
+    *   * all fields match the condition
+    */
+  final def partition(filter: SchemaField[_, _] => Boolean): SchemaPartition[A] =
+    SchemaPartition(filter, payload = false)(this)
+
+  /**
+    * Finds the first field that matches the criteria used, and applies a bijection
+    * between the schema it holds and partial data, which ensures for the field's schema to
+    * be used as "top level" when decoding "payloads".
+    *
+    * NB : a "payload" is typically a whole set of data, without a typical field-based splitting
+    * into subparts. This can be, for instance, an http body.
+    */
+  final def findPayload(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
+    SchemaPartition(find, payload = true)(this)
 
 }
 
