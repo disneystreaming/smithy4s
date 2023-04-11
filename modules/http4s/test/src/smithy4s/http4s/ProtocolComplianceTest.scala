@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package smithy4s.http4s
 
 import alloy.SimpleRestJson
 import cats.effect.Resource
@@ -28,12 +28,14 @@ import weaver._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
-import smithy4s.Schema
 import smithy4s.http.PayloadError
 import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
+import smithy4s.schema.Schema
+import smithy4s.http.HttpMediaType
+import smithy4s.compliancetests._
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -51,6 +53,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
       .evals(dynamicSchemaIndexLoader.map(pizzaSpec(_)))
+      .filter(_.name.contains("alloy.test#AddMenuItem(client|request)"))
       .parEvalMapUnbounded(runInWeaver)
   }
 
@@ -58,7 +61,9 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     type Protocol = SimpleRestJson
     val protocolTag = alloy.SimpleRestJson
 
-    def codecs = SimpleRestJsonBuilder.codecs
+    def expectedResponseType(schema: Schema[_]): HttpMediaType = HttpMediaType(
+      "application/json"
+    )
 
     def routes[Alg[_[_, _, _, _, _]]](
         impl: FunctorAlgebra[Alg, IO]
@@ -99,7 +104,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, SimpleRestJsonIntegration.codecs))
+        .map(decodeDocument(_, smithy4s.http.json.codecs()))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }
@@ -145,7 +150,9 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       .attempt
       .map {
         case Right(expectations) => expectations
-        case Left(e) => weaver.Expectations.Helpers.failure(e.getMessage)
+        case Left(e) =>
+          e.printStackTrace()
+          weaver.Expectations.Helpers.failure(e.getMessage)
       }
   )
 

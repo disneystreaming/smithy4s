@@ -50,7 +50,7 @@ object HttpRestSchema {
     def isPayloadField(field: SchemaField[_, _]): Boolean =
       field.instance.hints.has[HttpPayload]
 
-    fullSchema.payloadPartition(isPayloadField) match {
+    fullSchema.findPayload(isPayloadField) match {
       case TotalMatch(schema) => OnlyBody(schema)
       case NoMatch() =>
         fullSchema.partition(isMetadataField) match {
