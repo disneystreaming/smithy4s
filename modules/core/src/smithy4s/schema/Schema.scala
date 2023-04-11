@@ -96,7 +96,7 @@ sealed trait Schema[A]{
     *
     * This can be used to only encode some fields of the data into the http body
     *
-    * Returns a PartialSchema that indicates whether :
+    * Returns a SchemaPartition that indicates whether :
     *   * no field match the condition
     *   * some fields match the condition
     *   * all fields match the condition
@@ -105,14 +105,14 @@ sealed trait Schema[A]{
     SchemaPartition(filter, payload = false)(this)
 
   /**
-    * Finds the first field that matches the criteria is used, and applies a bijection
+    * Finds the first field that matches the criteria used, and applies a bijection
     * between the schema it holds and partial data, which ensures for the field's schema to
     * be used as "top level" when decoding "payloads".
     *
     * NB : a "payload" is typically a whole set of data, without a typical field-based splitting
     * into subparts. This can be, for instance, an http body.
     */
-  final def payloadPartition(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
+  final def findPayload(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
     SchemaPartition(find, payload = true)(this)
 
 }

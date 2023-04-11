@@ -64,7 +64,7 @@ object PartialData {
     * into a single piece of data. It is the responsibility of the caller to ensure that
     * the individual pieces can be reconciled into the full data.
     */
-  def unsafeReconcile[A](pieces: PartialData[A]*) : A = {
+  def unsafeReconcile[A](pieces: PartialData[A]*): A = {
     pieces.collectFirst {
       case Total(a) => a
     }.getOrElse {
@@ -74,6 +74,8 @@ object PartialData {
       val array = Array.fill[Any](totalSize)(null)
       var make : IndexedSeq[Any] => A = null
       allPieces.foreach { case PartialData.Partial(indexes, data, const) =>
+        // all the `const` values should be the same, therefore which one is called
+        // is an arbitrary choice.
         make = const
         var i = 0
         while(i < data.size) {
