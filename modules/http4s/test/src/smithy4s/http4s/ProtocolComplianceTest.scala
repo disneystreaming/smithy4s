@@ -53,7 +53,6 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
       .evals(dynamicSchemaIndexLoader.map(pizzaSpec(_)))
-      .filter(_.name.contains("alloy.test#AddMenuItem(client|request)"))
       .parEvalMapUnbounded(runInWeaver)
   }
 
