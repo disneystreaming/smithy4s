@@ -279,7 +279,7 @@ object Timestamp {
 
   def showFormat(format: TimestampFormat): String = format match {
     case TimestampFormat.DATE_TIME =>
-      "date-time timestamp (YYYY-MM-DDThh:mm:ss.sssZ)"
+      "date-time timestamp (YYYY-MM-ddThh:mm:ss.sssZ)"
     case TimestampFormat.EPOCH_SECONDS => "epoch-second timestamp"
     case TimestampFormat.HTTP_DATE =>
       "http-date timestamp (EEE, dd MMM yyyy HH:mm:ss.sss z)"
