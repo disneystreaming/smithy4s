@@ -16,7 +16,7 @@
 
 package smithy4s.schema
 
-trait CachedSchemaCompiler[F[_]] {
+trait CachedSchemaCompiler[+F[_]] {
 
   type Cache
   def createCache(): Cache
