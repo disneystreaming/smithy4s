@@ -20,7 +20,7 @@ package internals
 
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http4s.kernel._
-import cats.effect.Async
+import cats.effect.Concurrent
 
 private[http4s] class SimpleRestJsonCodecs(maxArity: Int)
     extends SimpleProtocolCodecs {
@@ -28,7 +28,7 @@ private[http4s] class SimpleRestJsonCodecs(maxArity: Int)
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
   private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
 
-  def makeServerCodecs[F[_]: Async]: UnaryServerCodecs[F] = {
+  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs[F] = {
     val messageDecoderCompiler =
       MessageDecoder.restSchemaCompiler[F](
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
@@ -44,7 +44,7 @@ private[http4s] class SimpleRestJsonCodecs(maxArity: Int)
     )
   }
 
-  def makeClientCodecs[F[_]: Async]: UnaryClientCodecs[F] = {
+  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs[F] = {
     val messageDecoderCompiler =
       MessageDecoder.restSchemaCompiler[F](
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
@@ -58,7 +58,7 @@ private[http4s] class SimpleRestJsonCodecs(maxArity: Int)
       output = messageDecoderCompiler,
       error = messageDecoderCompiler,
       response =>
-        Async[F].pure(
+        Concurrent[F].pure(
           HttpDiscriminator.fromMetadata(
             smithy4s.errorTypeHeader,
             getResponseMetadata(response)

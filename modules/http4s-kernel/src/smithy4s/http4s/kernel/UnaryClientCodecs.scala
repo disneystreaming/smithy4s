@@ -21,7 +21,7 @@ import smithy4s.schema.Schema
 import smithy4s.Errorable
 import org.http4s.Response
 import smithy4s.http.HttpDiscriminator
-import cats.effect.Async
+import cats.effect.Concurrent
 
 trait UnaryClientCodecs[F[_]] {
 
@@ -34,7 +34,7 @@ trait UnaryClientCodecs[F[_]] {
 
 object UnaryClientCodecs {
 
-  def make[F[_]: Async](
+  def make[F[_]: Concurrent](
       input: CachedSchemaCompiler[RequestEncoder[F, *]],
       output: CachedSchemaCompiler[ResponseDecoder[F, *]],
       error: CachedSchemaCompiler[ResponseDecoder[F, *]],

@@ -44,7 +44,7 @@ abstract class SimpleProtocolBuilder[P](
       impl: FunctorAlgebra[Alg, F]
   )(implicit
       service: smithy4s.Service[Alg],
-      F: Async[F]
+      F: Concurrent[F]
   ): RouterBuilder[Alg, F] = {
     new RouterBuilder[Alg, F](
       service,
@@ -119,7 +119,7 @@ abstract class SimpleProtocolBuilder[P](
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware[F]
   )(implicit
-      F: Async[F]
+      F: Concurrent[F]
   ) {
 
     def mapErrors(

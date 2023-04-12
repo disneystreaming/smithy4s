@@ -16,12 +16,12 @@
 
 package smithy4s.http4s
 
-import cats.effect.Async
+import cats.effect.Concurrent
 import smithy4s.http4s.kernel._
 
 trait SimpleProtocolCodecs {
 
-  def makeServerCodecs[F[_]: Async]: UnaryServerCodecs[F]
-  def makeClientCodecs[F[_]: Async]: UnaryClientCodecs[F]
+  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs[F]
+  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs[F]
 
 }

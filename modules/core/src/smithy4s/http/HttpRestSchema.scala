@@ -28,7 +28,15 @@ import smithy4s.schema.SchemaPartition.TotalMatch
  * This construct indicates how a schema is split between http metadata
  * (ie headers, path parameters, query parameters, status code) and body.
  *
- * The schema is split between two different
+ * When the input or the output of an http operation has some elements that
+ * are coming from the body and some elements that are coming from the metadata,
+ * the schema is split in two schemas that each track the relevant subset.
+ *
+ * The partial data resulting from the successful decoding of both subsets can
+ * be reconciled to recover the total data.
+ *
+ * On the encoding side, the split allows to only encode the relevant subset of
+ * data as http headers, and the other subset as http body.
  */
 sealed trait HttpRestSchema[A]
 

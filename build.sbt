@@ -639,7 +639,7 @@ lazy val xml = projectMatrix
 
 /**
  * Module that contains an http4s-specific `EntityCompiler` construct
- * that codifies the compilatin of smithy4s Schemas to EntityEncoders and
+ * that codifies the compilation of smithy4s Schemas to EntityEncoders and
  * EntityDecoders
  */
 lazy val `http4s-kernel` = projectMatrix
