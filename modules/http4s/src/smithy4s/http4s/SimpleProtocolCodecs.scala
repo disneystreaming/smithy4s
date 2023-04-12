@@ -14,13 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s.http4s
 
-case class UnknownErrorResponse(
-    code: Int,
-    headers: Map[CaseInsensitive, List[String]],
-    body: String
-) extends Throwable {
-  override def getMessage(): String =
-    s"status $code, headers: $headers, body:\n$body"
+import cats.effect.Concurrent
+import smithy4s.http4s.kernel._
+
+trait SimpleProtocolCodecs {
+
+  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs[F]
+  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs[F]
+
 }

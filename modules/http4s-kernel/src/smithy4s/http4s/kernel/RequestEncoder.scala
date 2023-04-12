@@ -14,13 +14,26 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s.http4s.kernel
 
-case class UnknownErrorResponse(
-    code: Int,
-    headers: Map[CaseInsensitive, List[String]],
-    body: String
-) extends Throwable {
-  override def getMessage(): String =
-    s"status $code, headers: $headers, body:\n$body"
+import org.http4s.Request
+
+trait RequestEncoder[F[_], A] {
+  def addToRequest(request: Request[F], a: A): Request[F]
+}
+
+object RequestEncoder {
+
+  def empty[F[_], A]: RequestEncoder[F, A] = new RequestEncoder[F, A] {
+    def addToRequest(request: Request[F], a: A): Request[F] = request
+  }
+
+  def combine[F[_], A](
+      left: RequestEncoder[F, A],
+      right: RequestEncoder[F, A]
+  ): RequestEncoder[F, A] = new RequestEncoder[F, A] {
+    def addToRequest(request: Request[F], a: A): Request[F] =
+      right.addToRequest(left.addToRequest(request, a), a)
+  }
+
 }

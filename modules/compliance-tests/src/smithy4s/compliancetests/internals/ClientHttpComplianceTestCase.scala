@@ -28,14 +28,12 @@ import org.http4s.Status
 import org.http4s.Uri
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
-import smithy4s.http.CodecAPI
 import smithy4s.Document
-import smithy4s.http.PayloadError
+import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
 
 import scala.concurrent.duration._
-import smithy4s.http.HttpMediaType
 import org.http4s.MediaType
 import org.http4s.Headers
 import smithy4s.schema.Alt
@@ -128,9 +126,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 val output: F[O] = service
                   .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
-                output.attemptNarrow[PayloadError].productR(request)
+                output.attemptNarrow[HttpContractError].productR(request)
               }
-              .flatMap(req => matchRequest(req, testCase))
+              .flatMap { req => matchRequest(req, testCase) }
           }
         }
       }
@@ -142,12 +140,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpResponseTestCase,
       errorSchema: Option[ErrorResponseTest[_, E]] = None
   ): ComplianceTest[F] = {
-    def aMediatype[A](
-        s: smithy4s.Schema[A],
-        cd: CodecAPI
-    ): HttpMediaType = {
-      cd.mediaType(cd.compileCodec(s))
-    }
 
     type R[I_, E_, O_, SE_, SO_] = F[O_]
 
@@ -171,7 +163,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             .left
             .map(_.errorEq[F])
         }
-        val mediaType = aMediatype(endpoint.output, codecs)
+        val mt = expectedResponseType(endpoint.output)
         val status = Status.fromInt(testCase.code).liftTo[F]
 
         status.flatMap { status =>
@@ -186,7 +178,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 .getOrElse(fs2.Stream.empty)
 
             val headers = Headers(
-              `Content-Type`(MediaType.unsafeParse(mediaType.value))
+              `Content-Type`(MediaType.unsafeParse(mt.value))
             ) ++ parseHeaders(testCase.headers)
 
             req.body.compile.drain.as(
