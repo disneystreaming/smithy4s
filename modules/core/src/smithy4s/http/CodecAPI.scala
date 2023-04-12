@@ -74,7 +74,7 @@ trait CodecAPI {
       bytes: Array[Byte]
   ): Either[PayloadError, A] =
     decodeFromByteArrayPartial(codec, bytes).flatMap(
-      _.completeCatch(MMap.empty)
+      _.complete(MMap.empty)
     )
 
   /**
@@ -97,7 +97,7 @@ trait CodecAPI {
       bytes: ByteBuffer
   ): Either[PayloadError, A] =
     decodeFromByteBufferPartial(codec, bytes).flatMap(
-      _.completeCatch(MMap.empty)
+      _.complete(MMap.empty)
     )
 
   /**
