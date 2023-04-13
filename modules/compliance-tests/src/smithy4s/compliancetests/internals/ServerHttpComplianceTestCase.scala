@@ -292,10 +292,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                     ErrorResponseTest
                       .from(
                         errorAlt,
-                        Alt.Dispatcher(
-                          errorrable.error.alternatives,
-                          errorrable.error.dispatch(_)
-                        ),
+                        Alt.Dispatcher.fromUnion(errorrable.error),
                         errorrable
                       )
                   )
