@@ -114,4 +114,25 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
       )
     )
   }
+
+  test("redirect correctly with works with an empty path") {
+    val request =
+      Request[IO](
+        method = Method.GET,
+        uri = Uri.unsafeFromString("/")
+      )
+    val app = docs("").orNotFound
+    app.run(request).map { response =>
+      val redirectUri = response.headers
+        .get(CIString("Location"))
+        .map(_.head)
+        .map(_.value)
+
+      expect(response.status == Status.Found) and
+        expect.eql(
+          redirectUri,
+          Some(s"/index.html")
+        )
+    }
+  }
 }
