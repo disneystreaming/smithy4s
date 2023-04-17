@@ -115,7 +115,7 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
     )
   }
 
-  test("redirect correctly with works with an empty path") {
+  test("redirect works correctly with an empty path") {
     val request =
       Request[IO](
         method = Method.GET,
