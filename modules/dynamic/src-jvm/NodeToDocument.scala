@@ -18,6 +18,7 @@ package smithy4s.dynamic
 
 import smithy4s.Document
 import software.amazon.smithy.model.node._
+import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters._
 
 object NodeToDocument {
@@ -37,14 +38,14 @@ object NodeToDocument {
         Document.fromDouble(x.getValue().doubleValue())
 
       def objectNode(x: ObjectNode): Document =
-        Document.obj(
+        Document.DObject(ListMap.from {
           x.getMembers()
             .asScala
+            .iterator
             .map { case (key, value) =>
               key.getValue() -> value.accept(this)
             }
-            .toSeq: _*
-        )
+        })
 
       def stringNode(x: StringNode): Document =
         Document.fromString(x.getValue())
