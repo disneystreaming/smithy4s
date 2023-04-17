@@ -175,6 +175,42 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
+  trait Decoder[A] {
+    def decode(metadata: Metadata): Either[MetadataError, A]
+  }
+
+  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+    type Aux[A] = internals.MetaDecode[A]
+
+    def apply[A](implicit instance: Decoder[A]): Decoder[A] =
+      instance
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: CompilationCache[internals.MetaDecode]
+    ): Decoder[A] = {
+      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
+      metaDecode match {
+        case internals.MetaDecode.StructureMetaDecode(_, decodeFunction) =>
+          // TODO will be addressed in a later PR that removes the coupling of partial metadata decoding
+          decodeFunction.get(_: Metadata)
+        // case internals.MetaDecode.ImpossibleMetaDecode(message) =>
+        //   (_: Metadata) => Left(MetadataError.ImpossibleDecoding(message))
+        case _ =>
+          (_: Metadata) =>
+            Left(
+              MetadataError.ImpossibleDecoding(
+                "Impossible to formulate a decoder for the data"
+              )
+            )
+      }
+    }
+  }
+
+  /**
+    * Reads metadata and produces a map that contains values extracted from it, labelled
+    * by field names.
+    */
   trait PartialDecoder[A] {
     def decode(metadata: Metadata): Either[MetadataError, MetadataPartial[A]]
 

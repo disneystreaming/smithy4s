@@ -18,6 +18,8 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
+import cats.effect.Temporal
+import cats.effect.syntax.all._
 import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
@@ -36,7 +38,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     router: Router[F],
     serviceInstance: Service[Alg]
 )(implicit
-    ce: CompatEffect[F]
+    ce: Temporal[F]
 ) {
 
   import ce._
@@ -69,7 +71,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 
     val body =
       testCase.body
-        .map(b => fs2.Stream.emit(b).through(ce.utf8Encode))
+        .map(b => fs2.Stream.emit(b).through(fs2.text.utf8.encode))
         .getOrElse(fs2.Stream.empty)
 
     Request[F](
@@ -118,12 +120,11 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                 .attemptNarrow[IntendedShortCircuit]
                 .flatMap {
                   case Left(_) =>
-                    ce.timeout(inputDeferred.get, 1.second).flatMap {
-                      foundInput =>
-                        testModel
-                          .map { decodedInput =>
-                            assert.eql(foundInput, decodedInput)
-                          }
+                    inputDeferred.get.timeout(1.second).flatMap { foundInput =>
+                      testModel
+                        .map { decodedInput =>
+                          assert.eql(foundInput, decodedInput)
+                        }
                     }
                   case Right(response) =>
                     response.body.compile.toVector.map { message =>
@@ -191,7 +192,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
               .run(syntheticRequest)
               .flatMap { resp =>
                 resp.body
-                  .through(utf8Decode)
+                  .through(fs2.text.utf8.decode)
                   .compile
                   .foldMonoid
                   .tupleRight(resp.status)

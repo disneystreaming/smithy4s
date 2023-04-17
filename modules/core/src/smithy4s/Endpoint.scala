@@ -39,7 +39,8 @@ package smithy4s
   * datatypes that typically fit in memory with concerns of streaming (which can
   * be encoded a great many ways, using a greatt many libraries)
   */
-trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
+trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO]
+    extends Endpoint.Schemas[I, E, O, SI, SO] {
   def id: ShapeId
   final def name: String = id.name
   def input: Schema[I]
@@ -59,4 +60,16 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO] { outer =>
         err.liftError(throwable).map(err -> _)
       }
   }
+}
+
+object Endpoint {
+
+  trait Schemas[I, E, O, SI, SO] {
+    def input: Schema[I]
+    def output: Schema[O]
+    def errorable: Option[Errorable[E]]
+    def streamedInput: StreamingSchema[SI]
+    def streamedOutput: StreamingSchema[SO]
+  }
+
 }

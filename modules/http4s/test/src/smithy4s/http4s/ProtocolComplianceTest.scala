@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package smithy4s.http4s
 
 import alloy.SimpleRestJson
 import cats.effect.Resource
@@ -22,7 +22,6 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.{Document, Schema, Service, ShapeId}
 import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.http4s.SimpleRestJsonBuilder
 import smithy4s.kinds.FunctorAlgebra
 import weaver._
 import smithy4s.compliancetests.internals._
@@ -35,6 +34,8 @@ import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
+import smithy4s.http.HttpMediaType
+import smithy4s.compliancetests._
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -54,15 +55,21 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
       .fproduct(generateAllowList)
-      .flatMap(tuple => fs2.Stream.emits(allTests(tuple._1).map((tuple._2, _))))
-      .parEvalMapUnbounded(tuple => runInWeaver(tuple._1, tuple._2))
+      .flatMap { case (schemaIndex, allowRules) =>
+        fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
+      }
+      .parEvalMapUnbounded { case (allowRules, test) =>
+        runInWeaver(allowRules, test)
+      }
   }
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = SimpleRestJson
     val protocolTag = alloy.SimpleRestJson
 
-    def codecs = SimpleRestJsonBuilder.codecs
+    def expectedResponseType(schema: Schema[_]): HttpMediaType = HttpMediaType(
+      "application/json"
+    )
 
     def routes[Alg[_[_, _, _, _, _]]](
         impl: FunctorAlgebra[Alg, IO]
@@ -113,7 +120,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, SimpleRestJsonIntegration.codecs))
+        .map(decodeDocument(_, smithy4s.http.json.codecs()))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

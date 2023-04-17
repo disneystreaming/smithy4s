@@ -16,9 +16,12 @@
 
 package smithy4s.http4s
 
-private[smithy4s] object Compat {
-  trait Package {
-    private[smithy4s] type EffectCompat[F[_]] = cats.effect.Concurrent[F]
-    private[smithy4s] val EffectCompat = cats.effect.Concurrent
-  }
+import cats.effect.Concurrent
+import smithy4s.http4s.kernel._
+
+trait SimpleProtocolCodecs {
+
+  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs[F]
+  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs[F]
+
 }

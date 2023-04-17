@@ -58,9 +58,11 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.compliancetests._
 import smithy4s.example.test._
+import smithy4s.http.HttpMediaType
 import smithy4s.http4s._
 import smithy4s.kinds._
 import smithy4s.Service
+import smithy4s.schema.Schema
 ```
 
 Then, you can create and instance of `ClientHttpComplianceTestCase` and/or `ServerHttpComplianceTestCase` while selecting the protocol to use and the service to test:
@@ -70,7 +72,7 @@ object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = alloy.SimpleRestJson
     val protocolTag = alloy.SimpleRestJson
 
-    def codecs = SimpleRestJsonBuilder.codecs
+    def expectedResponseType(schema: Schema[_]) = HttpMediaType("application/json")
 
     def routes[Alg[_[_, _, _, _, _]]](
         impl: FunctorAlgebra[Alg, IO]

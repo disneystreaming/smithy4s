@@ -14,11 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.http4s
+package smithy4s.http4s.kernel
 
-private[smithy4s] object Compat {
-  trait Package {
-    private[smithy4s] type EffectCompat[F[_]] = cats.effect.Sync[F]
-    private[smithy4s] val EffectCompat = cats.effect.Sync
-  }
+import org.http4s.Request
+
+trait RequestDecoder[F[_], A] {
+  def decodeRequest(request: Request[F]): F[A]
 }
