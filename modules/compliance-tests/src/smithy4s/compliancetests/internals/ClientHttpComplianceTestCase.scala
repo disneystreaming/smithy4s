@@ -103,7 +103,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
     type R[I_, E_, O_, SE_, SO_] = F[O_]
-    val inputFromDocument = AwsDecoder.fromSchema(endpoint.input)
+    val inputFromDocument = CanonicalSmithyDecoder.fromSchema(endpoint.input)
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
@@ -159,7 +159,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
           errorSchema
             .toLeft {
               val outputDecoder: Document.Decoder[O] =
-                AwsDecoder.fromSchema(endpoint.output)
+                CanonicalSmithyDecoder.fromSchema(endpoint.output)
 
               (doc: Document) =>
                 outputDecoder

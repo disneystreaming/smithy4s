@@ -87,7 +87,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
     implicit val inputEq: Eq[I] = EqSchemaVisitor(endpoint.input)
-    val testModel = AwsDecoder
+    val testModel = CanonicalSmithyDecoder
       .fromSchema(endpoint.input)
       .decode(testCase.params.getOrElse(Document.obj()))
       .liftTo[F]
@@ -159,7 +159,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
           errorSchema
             .toLeft {
               val outputDecoder: Document.Decoder[O] =
-                AwsDecoder.fromSchema(endpoint.output)
+                CanonicalSmithyDecoder.fromSchema(endpoint.output)
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)
