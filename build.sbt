@@ -505,6 +505,7 @@ lazy val millCodegenPlugin = projectMatrix
 
 lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
+    isMimaEnabled := true,
     name := "decline",
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
