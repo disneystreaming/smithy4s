@@ -28,14 +28,13 @@ import smithy4s.compliancetests.internals._
 import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
-import AllowRule.{allowRuleDecoder, AllowRules}
-import smithy4s.http.PayloadError
 import smithy4s.http.CodecAPI
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.schema.Schema.document
 import smithy4s.http.HttpMediaType
 import smithy4s.compliancetests._
+import smithy4s.http.PayloadError
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -54,7 +53,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
-      .fproduct(generateAllowList)
+      .evalMap(index => decodeAllowRules(index).map(index -> _))
       .flatMap { case (schemaIndex, allowRules) =>
         fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
       }
@@ -107,7 +106,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     .make[IO]
     .get("MODEL_DUMP")
     .flatMap(
-      _.liftTo[IO](sys.error("MODEL_DUMP env var not set"))
+      _.liftTo[IO](new RuntimeException("MODEL_DUMP env var not set"))
         .map(fs2.io.file.Path(_))
     )
 
@@ -140,17 +139,8 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       })
   }
 
-  private def generateAllowList(dsi: DynamicSchemaIndex): AllowRules = {
-    dsi.metadata
-      .get("alloyRestJsonAllowList")
-      .collect { case Document.DArray(value) =>
-        AllowRules(
-          value
-            .map(allowRuleDecoder(_).getOrElse(sys.error("invalid allow rule")))
-            .toVector
-        )
-      }
-      .getOrElse(sys.error("restJsonAllowList not found in metadata"))
+  private def decodeAllowRules(dsi: DynamicSchemaIndex): IO[AllowRules] = {
+    Document.DObject(dsi.metadata).decode[AllowRules].liftTo[IO]
   }
 
   private def loadDynamic(

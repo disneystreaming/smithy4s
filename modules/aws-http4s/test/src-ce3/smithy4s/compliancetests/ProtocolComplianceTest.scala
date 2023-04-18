@@ -13,7 +13,15 @@ import smithy4s.kinds.FunctorAlgebra
 import smithy4s.http.{CodecAPI, PayloadError}
 import smithy4s.schema.Schema.document
 import smithy4s.{Document, Schema, Service, ShapeId}
-import weaver.{BaseCatsSuite, CatsUnsafeRun, EffectCompat, EffectSuite, Expectations, Test, TestOutcome}
+import weaver.{
+  BaseCatsSuite,
+  CatsUnsafeRun,
+  EffectCompat,
+  EffectSuite,
+  Expectations,
+  Test,
+  TestOutcome
+}
 
 object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
@@ -33,12 +41,12 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     def codecs = SimpleRestJsonBuilder.codecs
 
     def routes[Alg[_[_, _, _, _, _]]](
-                                       impl: FunctorAlgebra[Alg, IO]
-                                     )(implicit service: Service[Alg]): Resource[IO, HttpRoutes[IO]] =
+        impl: FunctorAlgebra[Alg, IO]
+    )(implicit service: Service[Alg]): Resource[IO, HttpRoutes[IO]] =
       SimpleRestJsonBuilder(service).routes(impl).resource
 
     def reverseRoutes[Alg[_[_, _, _, _, _]]](app: HttpApp[IO])(implicit
-                                                               service: Service[Alg]
+        service: Service[Alg]
     ): Resource[IO, FunctorAlgebra[Alg, IO]] = {
       import org.http4s.implicits._
       val baseUri = uri"http://localhost/"
@@ -77,8 +85,8 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   }
 
   private def generateTests(
-                             shapeId: ShapeId
-                           ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
+      shapeId: ShapeId
+  ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
     dynamicSchemaIndex
       .getService(shapeId)
       .toList
@@ -87,7 +95,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
           .clientAndServerTests(SimpleRestJsonIntegration, wrapper.service)
       })
   }
-  val whitelist = Set(
+  val allowList = Set(
     "TestBodyStructure",
     "NoInputAndNoOutput",
     "UnitInputAndOutput",
@@ -115,19 +123,19 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     "EndpointOperation",
     "EndpointWithHostLabelOperation",
     "TestBodyStructure",
-    "TestPayloadStructure",
+    "TestPayloadStructure"
   ).map(id => IdRef(s"aws.protocoltests.restjson#$id"))
 
   private def loadDynamic(
-                           doc: Document
-                         ): Either[PayloadError, DynamicSchemaIndex] = {
-    Document.decode[Model](doc).map(_.filter(whitelist)).map(load)
+      doc: Document
+  ): Either[PayloadError, DynamicSchemaIndex] = {
+    Document.decode[Model](doc).map(_.filter(allowList)).map(load)
   }
 
   private def decodeDocument(
-                              bytes: Array[Byte],
-                              codecApi: CodecAPI
-                            ): Document = {
+      bytes: Array[Byte],
+      codecApi: CodecAPI
+  ): Document = {
     val schema: Schema[Document] = document
     val codec: codecApi.Codec[Document] = codecApi.compileCodec(schema)
     codecApi
