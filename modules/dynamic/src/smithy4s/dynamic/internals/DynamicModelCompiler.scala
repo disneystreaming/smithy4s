@@ -476,7 +476,7 @@ private[dynamic] object Compiler {
         id,
         shape.traits, {
           val lFields = {
-            shape.members.toVector.zipWithIndex.map {
+            shape.members.toVector.zipWithIndex.traverse {
               case ((label, mShape), index) =>
                 val lMemberSchema = schema(mShape.target)
                 val lField =
@@ -495,7 +495,7 @@ private[dynamic] object Compiler {
                   }
                 val memberHints = allHints(mShape.traits)
                 lField.map(_.addHints(memberHints.all.toSeq: _*))
-            }.sequence
+            }
           }
           if (isRecursive(id)) {
             Eval.later(recursive(struct(lFields.value)(Constructor)))
@@ -508,13 +508,13 @@ private[dynamic] object Compiler {
         id,
         shape.traits, {
           val lAlts =
-            shape.members.toVector.zipWithIndex.map {
+            shape.members.toVector.zipWithIndex.traverse {
               case ((label, mShape), index) =>
                 val memberHints = allHints(mShape.traits)
                 schema(mShape.target)
                   .map(_.oneOf[DynAlt](label, Injector(index)))
                   .map(_.addHints(memberHints))
-            }.sequence
+            }
           if (isRecursive(id)) {
             Eval.later(recursive {
               val alts = lAlts.value
