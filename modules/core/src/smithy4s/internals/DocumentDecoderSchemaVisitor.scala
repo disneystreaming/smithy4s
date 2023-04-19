@@ -130,39 +130,9 @@ class DocumentDecoderSchemaVisitor(
         ()
       }
     case PTimestamp =>
-      def forFormat(format: TimestampFormat) = {
-        val formatRepr = Timestamp.showFormat(format)
-        DocumentDecoder.instance("Timestamp", "String") {
-          case (pp, DString(value)) =>
-            Timestamp
-              .parse(value, format)
-              .getOrElse(
-                throw new PayloadError(
-                  PayloadPath(pp.reverse),
-                  formatRepr,
-                  s"Wrong timestamp format"
-                )
-              )
-        }
-      }
-      hints match {
-        case TimestampFormat.hint(format) =>
-          format match {
-            case DATE_TIME | HTTP_DATE => forFormat(format)
-            case EPOCH_SECONDS =>
-              DocumentDecoder.instance("Timestamp", "Number") {
-                case (_, DNumber(value)) =>
-                  val epochSeconds = value.toLong
-                  Timestamp(
-                    epochSeconds,
-                    ((value - epochSeconds) * 1000000000).toInt
-                  )
-              }
-          }
-
-        case _ => forFormat(DATE_TIME)
-
-      }
+      forTimestampFormat(
+        hints.get(TimestampFormat).getOrElse(TimestampFormat.EPOCH_SECONDS)
+      )
     case PBlob =>
       fromUnsafe("Base64 binary blob") { case DString(string) =>
         ByteArray(Base64.getDecoder().decode(string))
@@ -197,6 +167,35 @@ class DocumentDecoderSchemaVisitor(
       from("Byte") {
         case FlexibleNumber(bd) if bd.isValidByte => bd.toByte
       }
+  }
+
+  def forTimestampFormat(format: TimestampFormat) = {
+    val formatRepr = Timestamp.showFormat(format)
+    format match {
+      case DATE_TIME | HTTP_DATE =>
+        DocumentDecoder.instance("Timestamp", "String") {
+          case (pp, DString(value)) =>
+            Timestamp
+              .parse(value, format)
+              .getOrElse(
+                throw new PayloadError(
+                  PayloadPath(pp.reverse),
+                  formatRepr,
+                  s"Wrong timestamp format"
+                )
+              )
+        }
+
+      case EPOCH_SECONDS =>
+        DocumentDecoder.instance("Timestamp", "Number") {
+          case (_, DNumber(value)) =>
+            val epochSeconds = value.toLong
+            Timestamp(
+              epochSeconds,
+              ((value - epochSeconds) * 1000000000).toInt
+            )
+        }
+    }
   }
 
   override def collection[C[_], A](

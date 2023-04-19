@@ -342,7 +342,7 @@ lazy val aws = projectMatrix
  */
 lazy val `aws-http4s` = projectMatrix
   .in(file("modules/aws-http4s"))
-  .dependsOn(aws)
+  .dependsOn(aws, complianceTests % "test->compile", dynamic % "test->compile")
   .settings(
     libraryDependencies ++= {
       Seq(
@@ -680,7 +680,8 @@ lazy val http4s = projectMatrix
         Dependencies.Http4s.circe.value % Test,
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
-        Dependencies.Http4s.emberServer.value % Test
+        Dependencies.Http4s.emberServer.value % Test,
+        Dependencies.Alloy.`protocol-tests` % Test
       )
     },
     Test / allowedNamespaces := Seq("smithy4s.hello"),
@@ -692,8 +693,9 @@ lazy val http4s = projectMatrix
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
+    (Test / smithy4sModelTransformers) := Seq("ProtocolTransformer"),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
-    (Test / envVars) ++= {
+    (Test / envVars) := {
       val files: Seq[File] =
         (Test / resourceGenerators) {
           _.join.map(_.flatten)
@@ -763,6 +765,22 @@ lazy val tests = projectMatrix
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val transformers = projectMatrix
+  .in(file("modules/transformers"))
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.Smithy.model,
+      Dependencies.Smithy.build,
+      Dependencies.Smithy.testTraits,
+      Dependencies.Smithy.awsTraits,
+      Dependencies.Alloy.core
+    )
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
@@ -904,7 +922,16 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
-    val cp = dumpModelCp.map(_.getAbsolutePath()).mkString(":")
+    val transforms = (config / smithy4sModelTransformers).value
+    val modelTransformersCp = (transformers.jvm(
+      Smithy4sBuildPlugin.Scala213
+    ) / Compile / fullClasspath).value
+      .map(_.data)
+
+    val cp = (if (transforms.isEmpty) dumpModelCp
+              else dumpModelCp ++ modelTransformersCp)
+      .map(_.getAbsolutePath())
+      .mkString(":")
     val mc = (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / mainClass).value.getOrElse(
@@ -941,6 +968,9 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       )
     val s = (config / streams).value
 
+    val args =
+      if (transforms.isEmpty) List.empty
+      else List("--transformers", transforms.mkString(","))
     val cached =
       Tracked.inputChanged[List[String], Seq[File]](
         s.cacheStoreFactory.make("input")
@@ -952,7 +982,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
             ) { case ((changed, deps), outputs) =>
               if (changed || outputs.isEmpty) {
                 val res =
-                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps).!!
+                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
                 val file =
                   (config / resourceManaged).value / "compliance-tests.json"
                 IO.write(file, res)
