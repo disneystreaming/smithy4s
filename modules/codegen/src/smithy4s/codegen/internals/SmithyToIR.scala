@@ -38,6 +38,7 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
+import smithy4s.meta.TypeclassTrait
 
 private[codegen] object SmithyToIR {
 
@@ -810,6 +811,29 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
   }
 
+  def maybeTypeclassesHint(shape: Shape): Option[Hint.Typeclasses] = {
+    val result =
+      shape
+        .getAllTraits()
+        .asScala
+        .flatMap { case (_, trt) =>
+          model
+            .getShape(trt.toShapeId)
+            .asScala
+            .flatMap(_.getTrait(classOf[TypeclassTrait]).asScala)
+            .map(trt -> _)
+        }
+        .map { case (typeclassName, typeclassInfo) =>
+          Hint.Typeclass(
+            typeclassName.toShapeId,
+            typeclassInfo.getTargetType,
+            typeclassInfo.getInterpreter
+          )
+        }
+        .toList
+    NonEmptyList.fromList(result).map(Hint.Typeclasses)
+  }
+
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
@@ -897,7 +921,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
-      nonConstraintNonMetaTraits.map(unfoldTrait)
+      nonConstraintNonMetaTraits.map(unfoldTrait) ++
+      maybeTypeclassesHint(shape)
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)

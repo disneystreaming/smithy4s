@@ -501,6 +501,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
+  private def renderTypeclass(hint: Hint.Typeclass, tpe: NameRef): Line = {
+    val target = NameRef(hint.targetType)
+    val interpreter = NameRef(hint.interpreter)
+    val lowerCasedName = s"${tpe.name.head.toLower.toString}${tpe.name.tail}"
+    line"implicit val $lowerCasedName${hint.id.getName.capitalize}: $target[$tpe] = $interpreter.fromSchema(schema)"
+  }
+
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
@@ -591,6 +598,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         } else {
           line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
+        (product.hints.collectFirst { case h: Hint.Typeclasses =>
+          newline ++ Lines(
+            h.values.map(renderTypeclass(_, product.nameRef)).toList
+          )
+        }),
         additionalLines
       )
     )

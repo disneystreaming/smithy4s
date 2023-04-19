@@ -117,3 +117,30 @@ string Import
 /// by default. Adding this trait will cause the collection to become unwrapped.
 @trait(selector: ":is(simpleType, list, map, set)")
 structure unwrap {}
+
+/// Placing this trait on another trait marks the target trait as a
+/// typeclass. This means that shapes which are marked with the target
+/// trait will have an instance of the typeclass made available in their
+/// companion object in the generated code.
+///
+/// For example,
+///
+/// @typeclass(targetType: "cats.Show", interpreter: "my.show.Interpreter")
+/// @trait
+/// structure show {}
+///
+/// @show
+/// structure Person {
+///   name: String   
+/// }
+///
+/// This example would lead to generated code where the Person
+/// case class has a `cats.Show` instance available in its companion
+/// object.
+@trait(selector: "* [trait|trait]")
+structure typeclass {
+    @required
+    targetType: Classpath,
+    @required
+    interpreter: Classpath
+}
