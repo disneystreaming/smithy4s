@@ -32,7 +32,8 @@ trait ReverseRouter[F[_]] {
   def protocolTag: ShapeTag[Protocol]
   def expectedResponseType(schema: Schema[_]): HttpMediaType
 
-  def reverseRoutes[Alg[_[_, _, _, _, _]]](routes: HttpApp[F])(implicit
-      service: Service[Alg]
-  ): Resource[F, FunctorAlgebra[Alg, F]]
+  def reverseRoutes[Alg[_[_, _, _, _, _]]](
+      routes: HttpApp[F],
+      host: Option[String] = None
+  )(implicit service: Service[Alg]): Resource[F, FunctorAlgebra[Alg, F]]
 }

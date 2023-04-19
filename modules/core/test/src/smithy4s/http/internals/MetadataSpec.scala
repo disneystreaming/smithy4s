@@ -316,6 +316,7 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("Int Enum query parameter") {
+
     val queries = Queries(ie = Some(smithy4s.example.Numbers.ONE))
     val finished = Queries(
       ie = Some(smithy4s.example.Numbers.ONE),

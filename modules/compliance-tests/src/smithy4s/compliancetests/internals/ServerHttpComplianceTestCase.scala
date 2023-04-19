@@ -24,17 +24,13 @@ import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
-import smithy4s.Document
-import smithy4s.Service
+import smithy4s.{Document, Errorable, Hints, Service, ShapeId}
 import smithy4s.kinds._
 import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
-import smithy4s.ShapeId
-import smithy4s.Hints
-import smithy4s.Errorable
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-
+import smithy4s.compliancetests.internals.TestConfig._
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]
@@ -90,12 +86,15 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
-
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
-    implicit val inputEq: Eq[I] = EqSchemaVisitor(revisedSchema)
-    val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
+    implicit val inputEq: Eq[I] = EqSchemaVisitor(endpoint.input)
+    val testModel = CanonicalSmithyDecoder
+      .fromSchema(endpoint.input)
+      .decode(testCase.params.getOrElse(Document.obj()))
+      .liftTo[F]
     ComplianceTest[F](
-      name = endpoint.id.toString + "(server|request): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      serverReq,
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
@@ -122,9 +121,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                 .flatMap {
                   case Left(_) =>
                     inputDeferred.get.timeout(1.second).flatMap { foundInput =>
-                      inputFromDocument
-                        .decode(testCase.params.getOrElse(Document.obj()))
-                        .liftTo[F]
+                      testModel
                         .map { decodedInput =>
                           assert.eql(foundInput, decodedInput)
                         }
@@ -152,16 +149,17 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   ): ComplianceTest[F] = {
 
     ComplianceTest[F](
-      name = endpoint.id.toString + "(server|response): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      serverRes,
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)
 
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
             .toLeft {
-              val outputDecoder = Document.Decoder.fromSchema(
-                mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
-              )
+              val outputDecoder: Document.Decoder[O] =
+                CanonicalSmithyDecoder.fromSchema(endpoint.output)
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)

@@ -44,9 +44,8 @@ final case class Entrypoint[Alg[_[_, _, _, _, _]], F[_]](
   *   The service to build a client call for
   */
 class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
-    mainOpts: Opts[Entrypoint[Alg, F]],
-    service: Service[Alg]
-) {
+    mainOpts: Opts[Entrypoint[Alg, F]]
+)(implicit service: Service[Alg]) {
 
   private def protocolSpecificHelp(
       endpoint: service.Endpoint[_, _, _, _, _]
@@ -140,8 +139,7 @@ object Smithy4sCli {
       (
         impl,
         PrinterApi.opts.default[F]()
-      ).mapN(Entrypoint.apply[Alg, F]),
-      service
+      ).mapN(Entrypoint.apply[Alg, F])
     )
   }
 }

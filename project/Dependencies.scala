@@ -32,7 +32,7 @@ object Dependencies {
     val alloyVersion = "0.1.16"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
-    val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
+    val `protocol-tests` = org % "alloy-protocol-tests" %  alloyVersion
   }
 
   val Cats = new {
@@ -42,6 +42,7 @@ object Dependencies {
 
   object Circe {
     val circeVersion = "0.14.5"
+    val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
   }

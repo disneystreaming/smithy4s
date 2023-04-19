@@ -14,21 +14,26 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests
+package smithy4s.compliancetests.internals
 
-import ComplianceTest.ComplianceResult
-import smithy4s.ShapeId
-import smithy4s.compliancetests.internals.TestConfig
+import smithy4s.schema._
+import smithy4s.IntEnum
+import smithy4s.Document
 
-case class ComplianceTest[F[_]](
-    id: String,
-    endpoint: ShapeId,
-    config: TestConfig,
-    run: F[ComplianceResult]
-) {
-  def show = s"${endpoint.id}${config.show}: $id"
-}
+object CanonicalSmithyDecoder {
 
-object ComplianceTest {
-  type ComplianceResult = Either[String, Unit]
+  /**
+    * Produces a document decoder that
+    *
+    * @param schema
+    * @return
+    */
+  def fromSchema[A](
+      schema: Schema[A]
+  ): Document.Decoder[A] = {
+    Document.Decoder.fromSchema(
+      schema.transformHintsTransitively(_.filter(_.keyId == IntEnum.id))
+    )
+  }
+
 }
