@@ -35,7 +35,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
       service: Service[Alg]
   ): Document => F[Document] = {
     implicit val S: Service[Alg] = service
-    toJsonF[Alg, S.Operation](DummyService[F].create[Alg])
+    toJsonF[Alg](DummyService[F].create[Alg])
   }
 
   def redactingProxy[Alg[_[_, _, _, _, _]]](
@@ -43,9 +43,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
       service: Service[Alg]
   ): Document => F[Document] = {
     implicit val S: Service[Alg] = service.service
-    toJsonF[Alg, S.Operation](
-      fromJsonF[Alg, S.Operation](jsonF)
-    ) andThen (_.map(redact))
+    toJsonF[Alg](fromJsonF[Alg](jsonF)) andThen (_.map(redact))
   }
 
   def redact(document: Document): Document = document match {
@@ -55,25 +53,11 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
     case other                => other
   }
 
-  def fromJsonF[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+  def fromJsonF[Alg[_[_, _, _, _, _]]](
       jsonF: Document => F[Document]
-  )(implicit S: Service[Alg]): FunctorAlgebra[Alg, F] = {
-    type Op[I, E, O, SI, SO] = S.Operation[I, E, O, SI, SO]
-    val kleisliCache =
-      fromLowLevel(jsonF).unsafeCacheBy(
-        S.endpoints.map(Kind5.existential(_)),
-        (ep: Kind5.Existential[Endpoint[Op, *, *, *, *, *]]) => ep
-      )
-    val transfo = new PolyFunction5[Op, Kind1[F]#toKind5] {
-      def apply[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): F[O] = {
-        val (input, ep) = S.endpoint(op)
-        kleisliCache(ep).apply(input)
-      }
-    }
-    S.fromPolyFunction[Kind1[F]#toKind5](transfo)
-  }
+  )(implicit S: Service[Alg]): S.Impl[F] = fromLowLevel(S)(jsonF)
 
-  def toJsonF[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
+  def toJsonF[Alg[_[_, _, _, _, _]]](
       alg: FunctorAlgebra[Alg, F]
   )(implicit S: Service[Alg]): Document => F[Document] = {
     val transformation = S.toPolyFunction[Kind1[F]#toKind5](alg)
@@ -92,15 +76,13 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
     }
   }
 
-  private type KL[I, E, O, SI, SO] = I => F[O]
-
-  private def fromLowLevel[Op[_, _, _, _, _]](
+  private def fromLowLevel[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
       jsonF: Document => F[Document]
-  ): PolyFunction5[Endpoint[Op, *, *, *, *, *], KL] =
-    new PolyFunction5[Endpoint[Op, *, *, *, *, *], KL] {
+  ): service.Impl[F] = service.impl {
+    new service.FunctorEndpointCompiler[F] {
       def apply[I, E, O, SI, SO](
-          ep: Endpoint[Op, I, E, O, SI, SO]
-      ): KL[I, E, O, SI, SO] = {
+          ep: service.Endpoint[I, E, O, SI, SO]
+      ): I => F[O] = {
         implicit val encoderI: Document.Encoder[I] =
           Document.Encoder.fromSchema(ep.input)
         val decoderO: Document.Decoder[O] =
@@ -142,6 +124,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
             .flatMap(_.decode[F[O]].liftTo[F].flatten)
       }
     }
+  }
 
   private def toLowLevel[Op[_, _, _, _, _], I, E, O, SI, SO](
       polyFunction: PolyFunction5[Op, Kind1[F]#toKind5],

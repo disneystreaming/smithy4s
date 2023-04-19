@@ -35,12 +35,71 @@ import kinds._
   *   metaprogramming.
   */
 trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
+  /**
+   * A datatype (typically a sealed trait) that reifies an operation call within
+   * a service. It essentially captures the input and type indexes that the operation
+   * deals with.
+   *
+   * @tparam I: the input of the operation
+   * @tparam E: the error type associated to the operation (typically represented as a sealed-trait)
+   * @tparam O: the output of the operation
+   * @tparam SI: the streamed input of an operation. Operations can have unary components and streamed components.
+   *         For instance, an http call can send headers (unary I) and a stream of bytes (streamed SI) to the server.
+   * @tparam SO: the streamed output of the operation.
+   */
   type Operation[I, E, O, SI, SO]
+
+  /**
+   * An endpoint is the set of schemas tied to types associated with an operation, but
+   * also has a method to wrap the input in an operation instance :
+   * I => Operation[I, E, O, SI, SO]
+   */
   type Endpoint[I, E, O, SI, SO] = smithy4s.Endpoint[Operation, I, E, O, SI, SO]
+
+  /**
+   * This is a polymorphic function that runs an instance of an operation and produces an effect F.
+   */
   type Interpreter[F[_, _, _, _, _]] = PolyFunction5[Operation, F]
+
+  /**
+   * An interpreter specialised for effects of kind `* -> *`, like Try or monofunctor IO.
+   */
   type FunctorInterpreter[F[_]] = PolyFunction5[Operation, kinds.Kind1[F]#toKind5]
+
+  /**
+   * An interpreter specialised for effects of kind `* -> (*, *)`, like Either or bifunctor IO.
+   */
   type BiFunctorInterpreter[F[_, _]] = PolyFunction5[Operation, kinds.Kind2[F]#toKind5]
+
+  /**
+   * A polymorphic function that can take an Endpoint (associated to this service) and
+   * produces an handler for it, namely a function that takes the input type of the
+   * operation, and produces an effect.
+   */
+  type EndpointCompiler[F[_, _, _, _, _]] = PolyFunction5[Endpoint, kinds.Kind5[F]#handler]
+
+  /**
+   * A handler compiler specialised for effects of kind `* -> *`, like Try or monofunctor IO
+   */
+  type FunctorEndpointCompiler[F[_]] = PolyFunction5[Endpoint, kinds.Kind1[F]#handler]
+
+  /**
+   * A handler compiler specialised for effects of kind `* -> (*, *)`, like Either bifunctor IO
+   */
+  type BiFunctorEndpointCompiler[F[_, _]] = PolyFunction5[Endpoint, kinds.Kind2[F]#handler]
+
+  /**
+   * A short-hand for algebras that are specialised for effects of kind `* -> *`.
+   *
+   * NB: this alias should be used in polymorphic implementations. When using the Smithy4s
+   * code generator, equivalent aliases that are named after the service are generated.
+   */
   type Impl[F[_]] = Alg[kinds.Kind1[F]#toKind5]
+
+  /**
+   * A short-hand for algebras that are specialised for effects of kind `* -> (*, *)`.
+   * This is meant to be used in userland, e.g :{{{ val myService = MyService.ErrorAware[Either] }}}
+   */
   type ErrorAware[F[_, _]] = Alg[kinds.Kind2[F]#toKind5]
 
   val service: Service[Alg] = this
@@ -56,6 +115,49 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
     def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] = endpoint(op)._2
   }
 
+  /**
+   * Given a generic way to turn an endpoint into some handling function (like `I => F[I, E, O, SI, SO]`), this method
+   * takes care of the logic necessary to produce an interpreter that takes an Operation associated
+   * to the service and routes it to the correct function, returning the result.
+   */
+  final def interpreter[F[_, _, _, _, _]](compiler: EndpointCompiler[F]) : Interpreter[F] = new Interpreter[F]{
+    val cached = compiler.unsafeCacheBy(endpoints.map(Kind5.existential(_)), identity)
+    def apply[I, E, O, SI, SO](operation: Operation[I, E, O, SI, SO]): F[I, E, O, SI, SO] = {
+      val (input, ep) = endpoint(operation)
+      cached(ep).apply(input)
+    }
+  }
+
+  /**
+   * A monofunctor-specialised version of `interpreter`
+   */
+  final def functorInterpreter[F[_]](compiler: FunctorEndpointCompiler[F]): FunctorInterpreter[F] = interpreter[Kind1[F]#toKind5](compiler)
+
+  /**
+   * A bifunctor-specialised version of `interpreter`
+   */
+  final def bifunctorInterpreter[F[_, _]](compiler: BiFunctorEndpointCompiler[F]): BiFunctorInterpreter[F] = interpreter[Kind2[F]#toKind5](compiler)
+
+
+  /**
+   * A function that takes an endpoint compiler and produces an Algebra (typically an instance of the generated interfaces),
+   * backed by an interpreter.
+   *
+   * This is useful for writing generic functions that result in the instantiation of a client instance that abides by
+   * the service interface.
+   */
+  final def algebra[F[_, _, _, _, _]](compiler: EndpointCompiler[F]) : Alg[F] = fromPolyFunction(interpreter(compiler))
+
+  /**
+   * A monofunctor-specialised version of `algebra`
+   */
+  final def impl[F[_]](compiler: FunctorEndpointCompiler[F]) : Impl[F] = algebra[Kind1[F]#toKind5](compiler)
+
+  /**
+   * A monofunctor-specialised version of `algebra`
+   */
+  final def errorAware[F[_, _]](compiler: BiFunctorEndpointCompiler[F]) : ErrorAware[F] = algebra[Kind2[F]#toKind5](compiler)
+
 }
 
 object Service {
@@ -70,7 +172,7 @@ object Service {
   }
 
   /**
-    * A Service the algebra of which is a PolyFunction
+    * A Service the algebra of which is a PolyFunction.
     */
   trait Reflective[Op[_, _, _, _, _]] extends Service[PolyFunction5.From[Op]#Algebra] {
     type Operation[I, E, O, SI, SO] = Op[I, E, O, SI, SO]
