@@ -84,7 +84,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   type FunctorEndpointCompiler[F[_]] = PolyFunction5[Endpoint, kinds.Kind1[F]#handler]
 
   /**
-   * A handler compiler specialised for effects of kind `* -> (*, *)`, like Either bifunctor IO
+   * A handler compiler specialised for effects of kind `* -> (*, *)`, like Either or bifunctor IO
    */
   type BiFunctorEndpointCompiler[F[_, _]] = PolyFunction5[Endpoint, kinds.Kind2[F]#handler]
 
