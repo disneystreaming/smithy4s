@@ -92,7 +92,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
    * A short-hand for algebras that are specialised for effects of kind `* -> *`.
    *
    * NB: this alias should be used in polymorphic implementations. When using the Smithy4s
-   * code generator, equivalent aliases that are named after the service are generated.
+   * code generator, equivalent aliases that are named after the service are generated (e.g. `Weather` corresponding to `WeatherGen`).
    */
   type Impl[F[_]] = Alg[kinds.Kind1[F]#toKind5]
 
