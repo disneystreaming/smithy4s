@@ -342,25 +342,32 @@ lazy val aws = projectMatrix
  */
 lazy val `aws-http4s` = projectMatrix
   .in(file("modules/aws-http4s"))
-  .dependsOn(aws, complianceTests % "test->compile", dynamic % "test->compile")
+  .dependsOn(`aws-kernel`, `http4s-kernel`, json, xml, complianceTests % "test->compile", dynamic % "test->compile")
   .settings(
     libraryDependencies ++= {
       Seq(
+        Dependencies.Fs2.io.value,
         Dependencies.Http4s.client.value,
-        Dependencies.Http4s.emberClient.value % Test
+        Dependencies.Http4s.emberClient.value % Test,
+        Dependencies.Weaver.cats.value % Test,
+        Dependencies.Weaver.scalacheck.value % Test
       )
     },
     Test / smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters,
       Dependencies.Smithy.awsTraits
     ),
-    Test / allowedNamespaces := Seq("com.amazonaws.dynamodb"),
+    Test / allowedNamespaces := Seq(
+      "com.amazonaws.dynamodb",
+      "smithy4s.example.aws"
+    ),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
   )
   .jvmPlatform(
     latest2ScalaVersions,
     jvmDimSettings ++ Seq(
       Test / smithySpecs ++= Seq(
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
       )
