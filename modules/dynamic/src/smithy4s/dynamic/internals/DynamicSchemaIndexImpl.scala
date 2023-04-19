@@ -26,6 +26,8 @@ private[internals] class DynamicSchemaIndexImpl(
 
   def allServices: List[DynamicSchemaIndex.ServiceWrapper] =
     serviceMap.values.toList
+  def allSchemas: Vector[Schema[_]] =
+    schemaMap.values.toVector
 
   def getSchema(
       shapeId: ShapeId

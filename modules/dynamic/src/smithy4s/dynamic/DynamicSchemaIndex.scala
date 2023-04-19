@@ -27,6 +27,7 @@ trait DynamicSchemaIndex {
   def getService(shapeId: ShapeId): Option[DynamicSchemaIndex.ServiceWrapper] =
     allServices.find(_.service.id == shapeId)
 
+  def allSchemas: Vector[Schema[_]]
   def getSchema(shapeId: ShapeId): Option[Schema[_]]
 
   def metadata: Map[String, Document]

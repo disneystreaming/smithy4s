@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.21.4"
+    val jsoniterScalaVersion = "2.22.2"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.29.0"
+    val smithyVersion = "1.30.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -29,10 +29,10 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.16"
+    val alloyVersion = "0.1.18"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
-    val `protocol-tests` = org % "alloy-protocol-tests" %  alloyVersion
+    val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
   }
 
   val Cats = new {
@@ -91,7 +91,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.4")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.9")
 
   object Http4s {
     val http4sVersion = "0.23.17"
@@ -112,7 +112,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = "0.8.1"
+    val weaverVersion = "0.8.3"
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
