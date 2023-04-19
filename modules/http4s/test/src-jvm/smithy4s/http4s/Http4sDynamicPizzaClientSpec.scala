@@ -53,7 +53,7 @@ class DynamicHttpProxy(client: Client[IO]) {
           .liftTo[IO]
           .map { dynamicClient =>
             JsonIOProtocol
-              .fromJsonF[PizzaAdminServiceGen, PizzaAdminServiceOperation](
+              .fromJsonF[PizzaAdminServiceGen](
                 JsonIOProtocol.toJsonF(dynamicClient)(dsi.service)
               )
 
