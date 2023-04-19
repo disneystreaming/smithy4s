@@ -282,7 +282,7 @@ object Timestamp {
       "date-time timestamp (YYYY-MM-ddThh:mm:ss.sssZ)"
     case TimestampFormat.EPOCH_SECONDS => "epoch-second timestamp"
     case TimestampFormat.HTTP_DATE =>
-      "http-date timestamp (EEE, dd MMM yyyy HH:mm:ss.sss z)"
+      "http-date timestamp (EEE, dd MMM yyyy hh:mm:ss.sss z)"
   }
 
   private[this] def parseDateTime(s: String): Timestamp = {
