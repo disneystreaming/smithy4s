@@ -16,7 +16,7 @@ object EqInterpreter extends CachedSchemaCompiler.Impl[Eq] {
       schema: Schema[A],
       cache: Cache
   ): Eq[A] = {
-      schema.compile(EqSchemaVisitor)
+    schema.compile(new EqSchemaVisitor(cache))
   }
 
 }
@@ -38,7 +38,7 @@ trait EqInstances {
 }
 object EqInstances extends EqInstances
 
-object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
+final class EqSchemaVisitor(val cache: CompilationCache[Eq]) extends SchemaVisitor.Cached[Eq] { self =>
   import EqInstances._
 
   override def primitive[P](

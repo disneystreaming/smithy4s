@@ -32,6 +32,7 @@ package object example {
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
+  type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type FancyList = smithy4s.example.FancyList.Type
   type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
   @deprecated
@@ -40,6 +41,7 @@ package object example {
   @deprecated
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
+  type PersonEmail = smithy4s.example.PersonEmail.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type StringList = smithy4s.example.StringList.Type
