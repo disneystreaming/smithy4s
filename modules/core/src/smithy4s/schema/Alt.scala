@@ -73,6 +73,12 @@ object Alt {
 
   object Dispatcher {
 
+    def fromUnion[U](union: Schema.UnionSchema[U]): Dispatcher[Schema, U] =
+      apply(
+        alts = union.alternatives,
+        dispatchF = union.dispatch
+      )
+
     private[smithy4s] def apply[F[_], U](
         alts: Vector[Alt[F, U, _]],
         dispatchF: U => Alt.WithValue[F, U, _]

@@ -16,7 +16,7 @@ The supported protocols are :
 ### Where to find the specs ?
 
 * SBT : `"com.disneystreaming.smithy" % s"aws-${service_name}-spec" % "@AWS_SPEC_VERSION@"`
-* Mill : `ivy"com.disneystreaming.smithy::aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
+* Mill : `ivy"com.disneystreaming.smithy:aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
 
 The version corresponds tho the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
 
@@ -40,7 +40,7 @@ import smithy4s.codegen.BuildInfo._
 
 libraryDependencies ++= Seq(
   // version sourced from the plugin
-  "com.disneystreaming.smithy4s"  %% "smithy4s-aws-http4s" % smithy4sVersion.value
+  "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
   "com.disneystreaming.smithy" % "aws-dynamodb-spec" % "@AWS_SPEC_VERSION@" % Smithy4s
 )
 ```

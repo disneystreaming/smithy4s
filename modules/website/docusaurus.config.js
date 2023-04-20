@@ -52,7 +52,7 @@ const config = {
             type: 'doc',
             docId: 'overview/intro',
             position: 'left',
-            label: 'Get Started',
+            label: 'Documentation',
           },
           {
             href: 'https://github.com/disneystreaming/smithy4s',
