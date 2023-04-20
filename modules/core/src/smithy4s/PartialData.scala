@@ -26,7 +26,7 @@ import scala.collection.compat.immutable.ArraySeq
   *
   * For instance :
   *
-  * ```
+  * {{{
   * structure AB {
   *   @httpPayload
   *   @required
@@ -36,7 +36,7 @@ import scala.collection.compat.immutable.ArraySeq
   *   @required
   *   b: String
   * }
-  * ```
+  * }}}
   *
   * translates to this case class {{{ case class AB(a: String, b: String) }}}.
   *
