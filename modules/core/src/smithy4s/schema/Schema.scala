@@ -78,6 +78,8 @@ sealed trait Schema[A]{
 
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
+  final def biject[B](from: A => B, to: B => A): Schema[B] = BijectionSchema(this, Bijection(from, to))
+
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 
