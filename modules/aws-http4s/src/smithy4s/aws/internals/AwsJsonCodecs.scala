@@ -29,7 +29,7 @@ private[aws] object AwsJsonCodecs {
 
   private val hintMask =
     aws.protocols.AwsJson1_0.protocol.hintMask ++
-      aws.protocols.AwsJson1_0.protocol.hintMask ++ HintMask(IntEnum)
+      aws.protocols.AwsJson1_1.protocol.hintMask ++ HintMask(IntEnum)
 
   def make[F[_]: Async]: UnaryClientCodecs[F] = {
     val underlyingCodecs = smithy4s.http.json.codecs(hintMask, 10000)
