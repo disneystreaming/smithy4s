@@ -65,8 +65,10 @@ This protocol and its interpreters, are aware of the following traits provided o
 * [operations and services](https://awslabs.github.io/smithy/1.0/spec/core/model.html#service)
 * [enumerations](https://awslabs.github.io/smithy/1.0/spec/core/constraint-traits.html#enum-trait)
 * [error trait](https://awslabs.github.io/smithy/1.0/spec/core/type-refinement-traits.html#error-trait)
-* [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html), including **http**, **httpError**, **httpLabel**, **httpHeader**, **httpPayload**, **httpQuery**, **httpPrefixHeaders**, **httpQueryParams**, **httpResponseCode**.
+* [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html)
 * [timestampFormat trait](https://awslabs.github.io/smithy/1.0/spec/core/protocol-traits.html?highlight=timestampformat#timestampformat-trait)
+
+For the full list, see below.
 
 ## Decoding and encoding unions
 
