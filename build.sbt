@@ -919,7 +919,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
     ) / Compile / fullClasspath).value
       .map(_.data)
     val transforms = (config / smithy4sModelTransformers).value
-    val modelTransformersCp = (transformers.jvm(
+   lazy val modelTransformersCp = (transformers.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)

@@ -16,7 +16,7 @@ import smithy4s.aws.AwsJson.impl
 import smithy4s.aws.json._
 import smithy4s.compliancetests._
 
-object AwsJsonProtocolComplianceTest
+object AwsJsonProtocolComplianceTests
     extends EffectSuite[IO]
     with BaseCatsSuite {
 
@@ -38,11 +38,11 @@ object AwsJsonProtocolComplianceTest
 
   private val awsJson1_0 = generateTests(
     ShapeId("aws.protocoltests.json10", "JsonRpc10"),
-    impl(AwsJson1_0, codecs)
+    impl(AwsJson1_0)
   )
   private val awsJson1_1 = generateTests(
     ShapeId("aws.protocoltests.json", "JsonProtocol"),
-    impl(AwsJson1_1, codecs)
+    impl(AwsJson1_1)
   )
 
   private val path = Env
@@ -78,10 +78,8 @@ object AwsJsonProtocolComplianceTest
         HttpProtocolCompliance
           .clientTests(
             reverseRouter,
-            smithy4s.compliancetests.internals
-              .transformService(wrapper.service)(
-                smithy4s.compliancetests.internals.mapAllTimestampsToEpoch
-              )
+            wrapper.service
+
           )
       })
   }
