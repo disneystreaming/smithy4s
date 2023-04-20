@@ -65,7 +65,6 @@ lazy val allModules = Seq(
   protocol,
   protocolTests,
   `aws-kernel`,
-  aws,
   `aws-http4s`,
   `codegen-cli`,
   dynamic,
@@ -302,37 +301,6 @@ lazy val `aws-kernel` = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
- * cats-effect specific abstractions of AWS protocol interpreters and constructs
- */
-lazy val aws = projectMatrix
-  .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json, xml)
-  .settings(
-    libraryDependencies ++= {
-      // Only building this module against CE3
-      Seq(
-        Dependencies.Fs2.core.value,
-        Dependencies.Fs2.io.value,
-        Dependencies.Weaver.cats.value % Test,
-        Dependencies.Weaver.scalacheck.value % Test
-      )
-    },
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
-    ),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
-    Test / smithy4sDependencies ++= Seq(
-      Dependencies.Smithy.awsTraits
-    ),
-    scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
-    )
-  )
-  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
-  .jsPlatform(latest2ScalaVersions, jsDimSettings)
-  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
-
-/**
  * http4s-specific implementation of aws protocols. This module exposes generic methods
  * to acquire instances of AWS clients.
  *
@@ -361,7 +329,10 @@ lazy val `aws-http4s` = projectMatrix
       "com.amazonaws.dynamodb",
       "smithy4s.example.aws"
     ),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue)
+    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
+    )
   )
   .jvmPlatform(
     latest2ScalaVersions,
