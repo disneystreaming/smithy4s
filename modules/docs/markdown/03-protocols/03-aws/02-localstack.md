@@ -20,7 +20,6 @@ import org.http4s.ember.client.EmberClientBuilder
 import org.http4s._
 import org.typelevel.ci._
 import smithy4s.aws._
-import smithy4s.aws.http4s._
 import smithy4s.aws.kernel.AwsRegion
 
 object LocalstackProxy {
@@ -45,14 +44,14 @@ object LocalstackDynamoDB {
   def env[F[_]](client: Client[F], region: AwsRegion)(implicit
       F: Async[F]
   ): AwsEnvironment[F] = AwsEnvironment.make[F](
-    AwsHttp4sBackend(client),
+    client,
     F.pure(region),
     F.pure(AwsCredentials.Default("mock-key-id", "mock-secret-key", None)),
     F.realTime.map(_.toSeconds).map(Timestamp(_, 0))
   )
 
   def client[F[_]: Async](client: Client[F], region: AwsRegion): Resource[F, DynamoDB.Impl[F]] =
-    AwsClient.simple(DynamoDB.service, env[F](LocalstackProxy[F](client), region))
+    AwsClient(DynamoDB.service, env[F](LocalstackProxy[F](client), region))
 }
 
 def myResource[F[_]](implicit F: Async[F]) = for {

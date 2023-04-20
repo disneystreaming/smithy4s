@@ -25,7 +25,7 @@ import cats.effect.Concurrent
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
-class AwsInterpreter[Alg[_[_, _, _, _, _]], F[_]](
+private[aws] class AwsInterpreter[Alg[_[_, _, _, _, _]], F[_]](
     val service:   smithy4s.Service[Alg],
     awsService:    AwsService,
     client:        Client[F],

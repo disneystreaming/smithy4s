@@ -28,7 +28,7 @@ object AwsClient {
   def apply[Alg[_[_, _, _, _, _]], F[_]: Async](
       service: smithy4s.Service[Alg],
       awsEnv: AwsEnvironment[F]
-  ): Resource[F, AwsClient[Alg, F]] =
+  ): Resource[F, service.Impl[F]] =
     prepare(service)
       .leftWiden[Throwable]
       .map(_.build(awsEnv))
@@ -52,7 +52,7 @@ object AwsClient {
   final class AWSInterpreterBuilder[Alg[_[_, _, _, _, _]]](
       awsProtocol: AwsProtocol,
       awsService: AwsService,
-      service: smithy4s.Service[Alg]
+      val service: smithy4s.Service[Alg]
   ) {
 
     private def interpreter[F[_]: Async](
@@ -86,6 +86,11 @@ object AwsClient {
     }
 
     def build[F[_]: Async](
+        awsEnv: AwsEnvironment[F]
+    ): service.Impl[F] =
+      service.fromPolyFunction(interpreter[F](awsEnv))
+
+    def buildFull[F[_]: Async](
         awsEnv: AwsEnvironment[F]
     ): AwsClient[Alg, F] =
       service.fromPolyFunction(

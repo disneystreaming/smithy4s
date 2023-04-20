@@ -17,7 +17,7 @@ import org.typelevel.ci.CIString
   * This works by compiling the body of the request in memory in a chunk before sending
   * it back, which means it is not proper to use it in the context of streaming.
   */
-object AwsSigningClient {
+private[aws] object AwsSigningClient {
   def apply[F[_]: Concurrent](
       serviceId: ShapeId,
       endpointId: ShapeId,
