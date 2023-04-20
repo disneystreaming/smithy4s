@@ -70,7 +70,7 @@ case class Metadata(
   def addQueryParam(key: String, value: String): Metadata =
     query.get(key) match {
       case Some(existing) =>
-        copy(query = query + (key -> (value +: existing)))
+        copy(query = query + (key -> (existing :+ value)))
       case None => copy(query = query + (key -> List(value)))
     }
   def addQueryParamsIfNoExist(key: String, values: String*): Metadata =
@@ -94,7 +94,7 @@ case class Metadata(
   def addMultipleQueryParams(key: String, value: List[String]): Metadata =
     query.get(key) match {
       case Some(existing) =>
-        copy(query = query + (key -> (value ++ existing)))
+        copy(query = query + (key -> (existing ++ value)))
       case None => copy(query = query + (key -> value))
     }
 
@@ -170,6 +170,42 @@ object Metadata {
       decoder: PartialDecoder[A]
   ): Option[Either[MetadataError, A]] =
     decoder.total.map(_.decode(metadata))
+
+  /**
+    * Reads metadata and produces a map that contains values extracted from it, labelled
+    * by field names.
+    */
+  trait Decoder[A] {
+    def decode(metadata: Metadata): Either[MetadataError, A]
+  }
+
+  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+    type Aux[A] = internals.MetaDecode[A]
+
+    def apply[A](implicit instance: Decoder[A]): Decoder[A] =
+      instance
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: CompilationCache[internals.MetaDecode]
+    ): Decoder[A] = {
+      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
+      metaDecode match {
+        case internals.MetaDecode.StructureMetaDecode(_, decodeFunction) =>
+          // TODO will be addressed in a later PR that removes the coupling of partial metadata decoding
+          decodeFunction.get(_: Metadata)
+        // case internals.MetaDecode.ImpossibleMetaDecode(message) =>
+        //   (_: Metadata) => Left(MetadataError.ImpossibleDecoding(message))
+        case _ =>
+          (_: Metadata) =>
+            Left(
+              MetadataError.ImpossibleDecoding(
+                "Impossible to formulate a decoder for the data"
+              )
+            )
+      }
+    }
+  }
 
   /**
     * Reads metadata and produces a map that contains values extracted from it, labelled

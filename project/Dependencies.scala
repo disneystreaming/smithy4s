@@ -1,6 +1,5 @@
 import sbt._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
-import Smithy4sBuildPlugin.autoImport.isCE3
 
 object Dependencies {
 
@@ -11,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.21.2"
+    val jsoniterScalaVersion = "2.22.2"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -20,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.28.0"
+    val smithyVersion = "1.30.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -30,10 +29,10 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.14"
+    val alloyVersion = "0.1.18"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
-    val `protocol-tests` = org % "alloy-protocol-tests" %  alloyVersion
+    val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
   }
 
   val Cats = new {
@@ -42,7 +41,7 @@ object Dependencies {
   }
 
   object Circe {
-    val circeVersion = "0.14.4"
+    val circeVersion = "0.14.5"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)
     val parser = Def.setting("io.circe" %%% "circe-parser" % circeVersion)
     val generic = Def.setting("io.circe" %%% "circe-generic" % circeVersion)
@@ -56,15 +55,20 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.6.1"
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
+      Def.setting("co.fs2" %%% "fs2-core" % "3.4.0")
+
     val io: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-io" % fs2Version)
+      Def.setting("co.fs2" %%% "fs2-io" % "3.4.0")
+  }
+
+  object Fs2Data {
+    val xml: Def.Initialize[ModuleID] =
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.5.1")
   }
 
   object Mill {
-    val millVersion = "0.10.11"
+    val millVersion = "0.10.12"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -87,35 +91,35 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.8")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.9")
 
   object Http4s {
-    val http4sVersion = Def.setting(if (isCE3.value) "0.23.18" else "0.22.15")
+    val http4sVersion = "0.23.17"
 
     val emberServer: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
     val emberClient: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-ember-client" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-ember-client" % http4sVersion)
     val circe: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-circe" % http4sVersion)
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-core" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-core" % http4sVersion)
     val dsl: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-dsl" % http4sVersion)
     val client: Def.Initialize[ModuleID] =
-      Def.setting("org.http4s" %%% "http4s-client" % http4sVersion.value)
+      Def.setting("org.http4s" %%% "http4s-client" % http4sVersion)
   }
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.8.1" else "0.6.15")
+    val weaverVersion = "0.8.3"
 
     val cats: Def.Initialize[ModuleID] =
-      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
+      Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion)
 
     val scalacheck: Def.Initialize[ModuleID] =
       Def.setting(
-        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion.value
+        "com.disneystreaming" %%% "weaver-scalacheck" % weaverVersion
       )
   }
 
@@ -135,7 +139,7 @@ object Dependencies {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.16.1"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.2"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }

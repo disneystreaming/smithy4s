@@ -16,4 +16,9 @@
 
 package smithy4s.http4s
 
-package object swagger extends Compat.Package {}
+package object swagger extends SwaggerUiInit {
+
+  def docs[F[_]]: PartiallyAppliedDocs[F] =
+    new PartiallyAppliedDocs[F]("docs", swaggerUiResourcePath)
+
+}

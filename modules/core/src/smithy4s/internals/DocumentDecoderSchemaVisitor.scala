@@ -31,6 +31,7 @@ import smithy4s.Document._
 import smithy4s.http.PayloadError
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
+import scala.collection.immutable.ListMap
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -130,39 +131,9 @@ class DocumentDecoderSchemaVisitor(
         ()
       }
     case PTimestamp =>
-      def forFormat(format: TimestampFormat) = {
-        val formatRepr = Timestamp.showFormat(format)
-        DocumentDecoder.instance("Timestamp", "String") {
-          case (pp, DString(value)) =>
-            Timestamp
-              .parse(value, format)
-              .getOrElse(
-                throw new PayloadError(
-                  PayloadPath(pp.reverse),
-                  formatRepr,
-                  s"Wrong timestamp format"
-                )
-              )
-        }
-      }
-      hints match {
-        case TimestampFormat.hint(format) =>
-          format match {
-            case DATE_TIME | HTTP_DATE => forFormat(format)
-            case EPOCH_SECONDS =>
-              DocumentDecoder.instance("Timestamp", "Number") {
-                case (_, DNumber(value)) =>
-                  val epochSeconds = value.toLong
-                  Timestamp(
-                    epochSeconds,
-                    ((value - epochSeconds) * 1000000000).toInt
-                  )
-              }
-          }
-
-        case _ => forFormat(DATE_TIME)
-
-      }
+      forTimestampFormat(
+        hints.get(TimestampFormat).getOrElse(TimestampFormat.EPOCH_SECONDS)
+      )
     case PBlob =>
       fromUnsafe("Base64 binary blob") { case DString(string) =>
         ByteArray(Base64.getDecoder().decode(string))
@@ -199,6 +170,35 @@ class DocumentDecoderSchemaVisitor(
       }
   }
 
+  def forTimestampFormat(format: TimestampFormat) = {
+    val formatRepr = Timestamp.showFormat(format)
+    format match {
+      case DATE_TIME | HTTP_DATE =>
+        DocumentDecoder.instance("Timestamp", "String") {
+          case (pp, DString(value)) =>
+            Timestamp
+              .parse(value, format)
+              .getOrElse(
+                throw new PayloadError(
+                  PayloadPath(pp.reverse),
+                  formatRepr,
+                  s"Wrong timestamp format"
+                )
+              )
+        }
+
+      case EPOCH_SECONDS =>
+        DocumentDecoder.instance("Timestamp", "Number") {
+          case (_, DNumber(value)) =>
+            val epochSeconds = value.toLong
+            Timestamp(
+              epochSeconds,
+              ((value - epochSeconds) * 1000000000).toInt
+            )
+        }
+    }
+  }
+
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
@@ -226,7 +226,7 @@ class DocumentDecoderSchemaVisitor(
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          val builder = Map.newBuilder[K, V]
+          val builder = ListMap.newBuilder[K, V]
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
@@ -449,7 +449,7 @@ class DocumentDecoderSchemaVisitor(
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(apply(instance)(label :: pp, doc))
         }
-        label -> encoder
+        jsonLabel(alt) -> encoder
       }.toMap
 
     hints match {

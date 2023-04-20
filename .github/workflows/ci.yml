@@ -11,7 +11,7 @@ on:
         required: false
         default: "false"
   push:
-    branches: ["main", "series/**"]
+    branches: ["main", "series/**", "feature/**"]
     tags: ["v*"]
   pull_request:
     branches: ["**"]
@@ -22,30 +22,22 @@ concurrency:
 
 jobs:
   build:
-    name: Test ${{matrix.ceVersion}} ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
+    name: Test ${{matrix.scalaVersion}} (${{matrix.scalaPlatform}})
     strategy:
       fail-fast: true
       matrix:
         scalaVersion: ["2_12", "2_13", "3_0"]
         scalaPlatform: ["jvm", "js"]
-        ceVersion: ["CE2", "default"]
         exclude:
-          # Do not build CE2 artifacts for Scala 3
-          - scalaVersion: "3_0"
-            ceVersion: "CE2"
-          # Do not build CE2 artifacts for Scalajs
-          - scalaPlatform: "js"
-            ceVersion: "CE2"
           # Do not build 2.12 artifacts for Scalajs
           - scalaVersion: "2_12"
             scalaPlatform: "js"
         include:
           - scalaVersion: "3_0"
             scalaPlatform: "native"
-            ceVersion: "default"
     runs-on: ubuntu-latest
     env:
-      BUILD_KEY: ${{matrix.ceVersion}}_${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
+      BUILD_KEY: ${{matrix.scalaVersion}}_${{matrix.scalaPlatform}}
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v3
@@ -69,12 +61,12 @@ jobs:
               -J-Xmx4G
 
       - name: Run plugin tests
-        if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'CE2'
+        if: matrix.scalaVersion == '2_12' && matrix.scalaPlatform == 'jvm'
         run: |
           sbt scripted
 
       - name: Run checks
-        if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm' && matrix.ceVersion == 'default'
+        if: matrix.scalaVersion == '2_13' && matrix.scalaPlatform == 'jvm'
         run: |
           sbt scalafmtCheckAll \
               headerCheck \

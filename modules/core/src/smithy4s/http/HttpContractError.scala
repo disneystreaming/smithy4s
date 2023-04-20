@@ -68,6 +68,8 @@ sealed trait MetadataError extends HttpContractError {
       s"Field $field expects a single value to be found at ${location.show}"
     case FailedConstraint(field, location, message) =>
       s"Field $field, found in ${location.show}, failed constraint checks with message: $message"
+    case ImpossibleDecoding(message) =>
+      message
   }
 }
 
@@ -125,17 +127,30 @@ object MetadataError {
     )(FailedConstraint.apply)
   }
 
+  case class ImpossibleDecoding(
+      message: String
+  ) extends MetadataError
+
+  object ImpossibleDecoding {
+    val schema = struct(
+      string.required[ImpossibleDecoding]("message", _.message)
+    )(ImpossibleDecoding.apply)
+  }
+
   val schema: Schema[MetadataError] = {
     val notFound = NotFound.schema.oneOf[MetadataError]("notFound")
     val wrongType = WrongType.schema.oneOf[MetadataError]("wrongType")
     val arityError = ArityError.schema.oneOf[MetadataError]("arity")
     val failedConstraint =
       FailedConstraint.schema.oneOf[MetadataError]("failedConstraint")
+    val impossibleDecoding =
+      ImpossibleDecoding.schema.oneOf[MetadataError]("impossibleDecoding")
     union(notFound, wrongType, arityError, failedConstraint) {
-      case n: NotFound         => notFound(n)
-      case w: WrongType        => wrongType(w)
-      case a: ArityError       => arityError(a)
-      case f: FailedConstraint => failedConstraint(f)
+      case n: NotFound           => notFound(n)
+      case w: WrongType          => wrongType(w)
+      case a: ArityError         => arityError(a)
+      case f: FailedConstraint   => failedConstraint(f)
+      case i: ImpossibleDecoding => impossibleDecoding(i)
     }
   }
 

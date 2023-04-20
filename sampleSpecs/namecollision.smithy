@@ -4,11 +4,14 @@ namespace smithy4s.example
 
 
 service NameCollision {
-operations: [MyOp]
+operations: [MyOp,Endpoint]
 }
 
+operation Endpoint {
+
+}
 operation MyOp {
-errors: [MyOpError]
+    errors: [MyOpError]
 }
 
 @error("client")

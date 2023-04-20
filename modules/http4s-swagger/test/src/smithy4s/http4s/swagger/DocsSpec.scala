@@ -24,7 +24,9 @@ import weaver._
 import smithy4s.HasId
 import smithy4s.ShapeId
 
-object DocsSpec extends SimpleIOSuite with TestCompat {
+object DocsSpec extends SimpleIOSuite {
+
+  def mkDocs = smithy4s.http4s.swagger.docs[IO]
 
   def service = new HasId {
     def id: ShapeId = ShapeId("foobar", "test-spec")
@@ -113,5 +115,26 @@ object DocsSpec extends SimpleIOSuite with TestCompat {
         "META-INF/resources/webjars/swagger-ui-dist/"
       )
     )
+  }
+
+  test("redirect works correctly with an empty path") {
+    val request =
+      Request[IO](
+        method = Method.GET,
+        uri = Uri.unsafeFromString("/")
+      )
+    val app = docs("").orNotFound
+    app.run(request).map { response =>
+      val redirectUri = response.headers
+        .get(CIString("Location"))
+        .map(_.head)
+        .map(_.value)
+
+      expect(response.status == Status.Found) and
+        expect.eql(
+          redirectUri,
+          Some(s"/index.html")
+        )
+    }
   }
 }

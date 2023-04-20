@@ -17,12 +17,12 @@
 import smithy4s.errors.*
 
 object Main extends App {
-  val service = ErrorServiceGen
+  val serviceOps = ErrorServiceOperation
   val knownError1 = BadRequest("foo")
   val knownError2 = InternalServerError("bar")
   val unknownError = new RuntimeException("baz")
-  assert(service.ErrorOp.liftError(unknownError) == None)
-  assert(service.ErrorOp.liftError(knownError1) == Some(knownError1))
-  assert(service.ErrorOp.liftError(knownError2) == Some(knownError2))
-  assert(service.ErrorOp.unliftError(knownError1) == knownError1)
+  assert(serviceOps.ErrorOp.liftError(unknownError) == None)
+  assert(serviceOps.ErrorOp.liftError(knownError1) == Some(knownError1))
+  assert(serviceOps.ErrorOp.liftError(knownError2) == Some(knownError2))
+  assert(serviceOps.ErrorOp.unliftError(knownError1) == knownError1)
 }

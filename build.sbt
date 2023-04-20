@@ -10,7 +10,7 @@ ThisBuild / commands ++= createBuildCommands(allModules)
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / dynverSeparator := "-"
 ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / mimaBaseVersion := "0.17.0"
+ThisBuild / mimaBaseVersion := "0.18.0"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -53,9 +53,11 @@ lazy val allModules = Seq(
   codegen,
   millCodegenPlugin,
   json,
+  xml,
   example,
   tests,
   http4s,
+  `http4s-kernel`,
   `http4s-swagger`,
   decline,
   codegenPlugin,
@@ -63,7 +65,6 @@ lazy val allModules = Seq(
   protocol,
   protocolTests,
   `aws-kernel`,
-  aws,
   `aws-http4s`,
   `codegen-cli`,
   dynamic,
@@ -102,7 +103,7 @@ lazy val docs =
             }
         },
         "SCALA_VERSION" -> scalaVersion.value,
-        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value,
+        "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion,
         "GITHUB_BRANCH_URL" -> (for {
           serverUrl <- sys.env.get("GITHUB_SERVER_URL")
           repo <- sys.env.get("GITHUB_REPOSITORY")
@@ -113,7 +114,6 @@ lazy val docs =
         "AWS_SPEC_VERSION" -> Dependencies.AwsSpecSummary.awsSpecSummaryVersion
       ),
       mdocExtraArguments := Seq("--check-link-hygiene"),
-      isCE3 := true,
       libraryDependencies ++= Seq(
         Dependencies.Jsoniter.macros.value,
         Dependencies.Http4s.emberClient.value,
@@ -269,7 +269,6 @@ lazy val `aws-kernel` = projectMatrix
   .in(file("modules/aws-kernel"))
   .dependsOn(core)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -284,7 +283,7 @@ lazy val `aws-kernel` = projectMatrix
     genSmithy(Compile),
     Test / envVars ++= Map("TEST_VAR" -> "hello"),
     scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package aws.protocols is deprecated:silent",
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
       "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
       "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
@@ -302,35 +301,6 @@ lazy val `aws-kernel` = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
- * cats-effect specific abstractions of AWS protocol interpreters and constructs
- */
-lazy val aws = projectMatrix
-  .in(file("modules/aws"))
-  .dependsOn(`aws-kernel`, json)
-  .settings(
-    isCE3 := true,
-    libraryDependencies ++= {
-      // Only building this module against CE3
-      Seq(
-        Dependencies.Fs2.core.value,
-        Dependencies.Fs2.io.value,
-        Dependencies.Weaver.cats.value % Test,
-        Dependencies.Weaver.scalacheck.value % Test
-      )
-    },
-    Test / smithySpecs := Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
-    ),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
-    Test / smithy4sDependencies ++= Seq(
-      Dependencies.Smithy.awsTraits
-    )
-  )
-  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
-  .jsPlatform(latest2ScalaVersions, jsDimSettings)
-  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
-
-/**
  * http4s-specific implementation of aws protocols. This module exposes generic methods
  * to acquire instances of AWS clients.
  *
@@ -340,26 +310,30 @@ lazy val aws = projectMatrix
  */
 lazy val `aws-http4s` = projectMatrix
   .in(file("modules/aws-http4s"))
-  .dependsOn(aws,
-    complianceTests % "test->compile",
-    json,
-    dynamic % "test->compile")
+  .dependsOn(`aws-kernel`, `http4s-kernel`, json, xml, complianceTests % "test->compile", dynamic % "test->compile")
   .settings(
-    isCE3 := true,
     libraryDependencies ++= {
       Seq(
+        Dependencies.Fs2.io.value,
         Dependencies.Http4s.client.value,
         Dependencies.Http4s.emberClient.value % Test,
-        Dependencies.Weaver.cats.value % Test
+        Dependencies.Weaver.cats.value % Test,
+        Dependencies.Weaver.scalacheck.value % Test
       )
     },
     Test / smithy4sDependencies ++= Seq(
       Dependencies.Smithy.waiters,
       Dependencies.Smithy.awsTraits
     ),
-    Test / allowedNamespaces := Seq("com.amazonaws.dynamodb"),
+    Test / allowedNamespaces := Seq(
+      "com.amazonaws.dynamodb",
+      "smithy4s.example.aws"
+    ),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
-    Test / complianceTestDependencies := Seq(
+    scalacOptions ++= Seq(
+      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
+    ),
+      Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
@@ -382,6 +356,7 @@ lazy val `aws-http4s` = projectMatrix
     latest2ScalaVersions,
     jvmDimSettings ++ Seq(
       Test / smithySpecs ++= Seq(
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
       )
@@ -418,7 +393,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.0-RC6"
+      "io.get-coursier" %% "coursier" % "2.1.2"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -435,7 +410,6 @@ lazy val `codegen-cli` = projectMatrix
   .dependsOn(codegen)
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
@@ -527,8 +501,8 @@ lazy val millCodegenPlugin = projectMatrix
 
 lazy val decline = (projectMatrix in file("modules/decline"))
   .settings(
+    isMimaEnabled := true,
     name := "decline",
-    isCE3 := true,
     libraryDependencies ++= List(
       Dependencies.Cats.core.value,
       Dependencies.CatsEffect3.value,
@@ -572,7 +546,6 @@ lazy val protocolTests = projectMatrix
   .jvmPlatform(Seq(Scala213), jvmDimSettings)
   .dependsOn(protocol)
   .settings(
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Weaver.scalacheck.value % Test
@@ -639,28 +612,62 @@ lazy val json = projectMatrix
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 /**
+ * Module that contains fs2-data-based XML encoders/decoders for the generated
+ * types.
+ */
+lazy val xml = projectMatrix
+  .in(file("modules/xml"))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    scalacheck % "test -> compile"
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2Data.xml.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains an http4s-specific `EntityCompiler` construct
+ * that codifies the compilation of smithy4s Schemas to EntityEncoders and
+ * EntityDecoders
+ */
+lazy val `http4s-kernel` = projectMatrix
+  .in(file("modules/http4s-kernel"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.core.value
+    )
+  )
+  .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+/**
  * Module that contains http4s-specific client/server bindings for the
  * custom protocols provided by smithy4s.
  */
 lazy val http4s = projectMatrix
   .in(file("modules/http4s"))
   .dependsOn(
-    core,
-    complianceTests % "test->compile",
+    `http4s-kernel`,
     json,
+    complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
     testUtils % "test->compile"
   )
   .settings(
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     isMimaEnabled := true,
     libraryDependencies ++= {
-      val ce3 =
-        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
-        else Seq.empty
-
-      ce3 ++ Seq(
+      Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
@@ -670,13 +677,8 @@ lazy val http4s = projectMatrix
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Http4s.emberClient.value % Test,
         Dependencies.Http4s.emberServer.value % Test,
-        Dependencies.Alloy.`protocol-tests` % Test,
+        Dependencies.Alloy.`protocol-tests` % Test
       )
-    },
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
     },
     Test / allowedNamespaces := Seq("smithy4s.hello"),
     Test / smithySpecs := Seq(
@@ -710,18 +712,12 @@ lazy val `http4s-swagger` = projectMatrix
   .in(file("modules/http4s-swagger"))
   .dependsOn(http4s)
   .settings(
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
       Seq(
         Dependencies.Weaver.cats.value % Test,
         Dependencies.Webjars.swaggerUi,
         Dependencies.Webjars.webjarsLocator
       )
-    },
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -745,16 +741,11 @@ lazy val tests = projectMatrix
   .in(file("modules/tests"))
   .dependsOn(core)
   .settings(
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     allowedNamespaces := Seq(
       "smithy4s.example"
     ),
     libraryDependencies ++= {
-      val ce3 =
-        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
-        else Seq.empty
-
-      ce3 ++ Seq(
+      Seq(
         Dependencies.Http4s.core.value,
         Dependencies.Http4s.dsl.value,
         Dependencies.Http4s.client.value,
@@ -767,11 +758,6 @@ lazy val tests = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursiveInput.smithy"
     ),
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
-    },
     (Compile / sourceGenerators) := Seq(genSmithyScala(Compile).taskValue)
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -783,9 +769,9 @@ lazy val transformers = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Smithy.model,
       Dependencies.Smithy.build,
-        Dependencies.Smithy.testTraits,
+      Dependencies.Smithy.testTraits,
       Dependencies.Smithy.awsTraits,
-        Dependencies.Alloy.core,
+      Dependencies.Alloy.core
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -800,23 +786,14 @@ lazy val complianceTests = projectMatrix
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
     Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
-    isCE3 := virtualAxes.value.contains(CatsEffect3Axis),
     libraryDependencies ++= {
-      val ce3 =
-        if (isCE3.value) Seq(Dependencies.CatsEffect3.value)
-        else Seq.empty
-      ce3 ++ Seq(
+      Seq(
         Dependencies.Circe.parser.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
-        Dependencies.Pprint.core.value,
+        Dependencies.Pprint.core.value
       )
-    },
-    moduleName := {
-      if (virtualAxes.value.contains(CatsEffect2Axis))
-        moduleName.value + "-ce2"
-      else moduleName.value
     }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -862,16 +839,17 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
-    isCE3 := true,
     libraryDependencies += Dependencies.Http4s.emberServer.value,
     genSmithy(Compile),
     genSmithyOutput := ((ThisBuild / baseDirectory).value / "modules" / "example" / "src"),
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
     smithy4sSkip := List("resource"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions += "-Wconf:cat=deprecation:silent"
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ) ++ scala3MigrationOption(scalaVersion.value)
   )
-  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 lazy val guides = projectMatrix
@@ -887,7 +865,6 @@ lazy val guides = projectMatrix
       (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy"
     ),
     genSmithy(Compile),
-    isCE3 := true,
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberServer.value,
       Dependencies.Http4s.emberClient.value,
@@ -947,8 +924,10 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
     ) / Compile / fullClasspath).value
       .map(_.data)
 
-
-    val cp =  (if(transforms.isEmpty)dumpModelCp else dumpModelCp ++ modelTransformersCp ).map(_.getAbsolutePath()).mkString(":")
+    val cp = (if (transforms.isEmpty) dumpModelCp
+              else dumpModelCp ++ modelTransformersCp)
+      .map(_.getAbsolutePath())
+      .mkString(":")
     val mc = (`codegen-cli`.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / mainClass).value.getOrElse(
@@ -985,8 +964,9 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
       )
     val s = (config / streams).value
 
-
-   val args =  if(transforms.isEmpty) List.empty else List("--transformers", transforms.mkString(","))
+    val args =
+      if (transforms.isEmpty) List.empty
+      else List("--transformers", transforms.mkString(","))
     val cached =
       Tracked.inputChanged[List[String], Seq[File]](
         s.cacheStoreFactory.make("input")
@@ -997,8 +977,10 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
               s.cacheStoreFactory.make("output")
             ) { case ((changed, deps), outputs) =>
               if (changed || outputs.isEmpty) {
-                val res = ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
-                val file = (config / resourceManaged).value / "compliance-tests.json"
+                val res =
+                  ("java" :: "-cp" :: cp :: mc :: "dump-model" :: deps ::: args).!!
+                val file =
+                  (config / resourceManaged).value / "compliance-tests.json"
                 IO.write(file, res)
                 Seq(file)
 

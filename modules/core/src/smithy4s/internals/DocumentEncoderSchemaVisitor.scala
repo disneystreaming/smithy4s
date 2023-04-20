@@ -98,7 +98,7 @@ class DocumentEncoderSchemaVisitor(
         def apply: Timestamp => Document =
           hints
             .get(TimestampFormat)
-            .getOrElse(TimestampFormat.DATE_TIME) match {
+            .getOrElse(TimestampFormat.EPOCH_SECONDS) match {
             case DATE_TIME     => ts => DString(ts.format(DATE_TIME))
             case HTTP_DATE     => ts => DString(ts.format(HTTP_DATE))
             case EPOCH_SECONDS => ts => DNumber(BigDecimal(ts.epochSecond))

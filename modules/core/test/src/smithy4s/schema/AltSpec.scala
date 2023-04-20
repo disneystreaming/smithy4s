@@ -31,7 +31,7 @@ final class AltSpec extends FunSuite {
       case Right(string) => right(string)
     }
 
-    val dispatcher = Alt.Dispatcher(schema.alternatives, schema.dispatch)
+    val dispatcher = Alt.Dispatcher.fromUnion(schema)
 
     val projectedLeft = dispatcher.projector[Int](left)
 

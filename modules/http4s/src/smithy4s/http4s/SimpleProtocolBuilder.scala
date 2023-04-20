@@ -22,7 +22,6 @@ import cats.syntax.all._
 import org.http4s.HttpRoutes
 import org.http4s.Uri
 import org.http4s.client.Client
-import smithy4s.http.CodecAPI
 import org.http4s.implicits._
 import smithy4s.kinds._
 
@@ -31,7 +30,9 @@ import smithy4s.kinds._
   * for a given protocol. Upon constructing the routers/clients, it will
   * first check that they are indeed annotated with the protocol in question.
   */
-abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
+abstract class SimpleProtocolBuilder[P](
+    simpleProtocolCodecs: SimpleProtocolCodecs
+)(implicit
     protocolTag: ShapeTag[P]
 ) {
 
@@ -43,7 +44,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       impl: FunctorAlgebra[Alg, F]
   )(implicit
       service: smithy4s.Service[Alg],
-      F: EffectCompat[F]
+      F: Concurrent[F]
   ): RouterBuilder[Alg, F] = {
     new RouterBuilder[Alg, F](
       service,
@@ -57,10 +58,10 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       Alg[_[_, _, _, _, _]]
   ] private[http4s] (val service: smithy4s.Service[Alg]) { self =>
 
-    def client[F[_]: EffectCompat](client: Client[F]) =
+    def client[F[_]: Async](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
 
-    def routes[F[_]: EffectCompat](
+    def routes[F[_]: Async](
         impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder[Alg, F](
@@ -74,7 +75,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
 
   class ClientBuilder[
       Alg[_[_, _, _, _, _]],
-      F[_]: EffectCompat
+      F[_]: Async
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
@@ -98,16 +99,14 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sReverseRouter[Alg, service.Operation, F](
+          new SmithyHttp4sReverseRouter[Alg, F](
             uri,
             service,
             client,
-            EntityCompiler
-              .fromCodecAPI[F](codecs),
+            simpleProtocolCodecs.makeClientCodecs[F],
             middleware
-          )
+          ).impl
         }
-        .map(service.fromPolyFunction[Kind1[F]#toKind5](_))
     }
   }
 
@@ -120,11 +119,8 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware[F]
   )(implicit
-      F: EffectCompat[F]
+      F: Concurrent[F]
   ) {
-
-    val entityCompiler =
-      EntityCompiler.fromCodecAPI(codecs)
 
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
@@ -150,7 +146,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
             errorTransformation,
-            entityCompiler,
+            simpleProtocolCodecs.makeServerCodecs[F],
             middleware
           ).routes
         }
