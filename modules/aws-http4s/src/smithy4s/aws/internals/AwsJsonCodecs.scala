@@ -20,7 +20,7 @@ package internals
 import smithy4s.HintMask
 import smithy4s.IntEnum
 import smithy4s.http4s.kernel._
-import cats.effect.Async
+import cats.effect.Concurrent
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -31,7 +31,7 @@ private[aws] object AwsJsonCodecs {
     aws.protocols.AwsJson1_0.protocol.hintMask ++
       aws.protocols.AwsJson1_0.protocol.hintMask ++ HintMask(IntEnum)
 
-  def make[F[_]: Async]: UnaryClientCodecs[F] = {
+  def make[F[_]: Concurrent]: UnaryClientCodecs[F] = {
     val underlyingCodecs = smithy4s.http.json.codecs(hintMask, 10000)
     val encoders = MessageEncoder.rpcSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)

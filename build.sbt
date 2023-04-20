@@ -310,7 +310,12 @@ lazy val `aws-kernel` = projectMatrix
  */
 lazy val `aws-http4s` = projectMatrix
   .in(file("modules/aws-http4s"))
-  .dependsOn(`aws-kernel`, `http4s-kernel`, json, xml, complianceTests % "test->compile", dynamic % "test->compile")
+  .dependsOn(
+    `aws-kernel`,
+    `http4s-kernel`,
+    json,
+    xml
+  )
   .settings(
     libraryDependencies ++= {
       Seq(
