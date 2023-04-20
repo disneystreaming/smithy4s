@@ -120,8 +120,8 @@ structure unwrap {}
 
 /// Placing this trait on another trait marks the target trait as a
 /// typeclass. This means that shapes which are marked with the target
-/// trait will have an instance of the typeclass made available in their
-/// companion object in the generated code.
+/// trait will have an instance of the typeclass made available in the
+/// generated object companion.
 ///
 /// For example,
 ///

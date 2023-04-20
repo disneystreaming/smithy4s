@@ -831,7 +831,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           )
         }
         .toList
-    NonEmptyList.fromList(result).map(Hint.Typeclasses)
+    result.toNel.map(Hint.Typeclasses)
   }
 
   @annotation.nowarn(
