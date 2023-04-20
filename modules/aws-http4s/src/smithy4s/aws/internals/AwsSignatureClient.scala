@@ -34,13 +34,35 @@ import org.typelevel.ci.CIString
   * it back, which means it is not proper to use it in the context of streaming.
   */
 private[aws] object AwsSigningClient {
+
   def apply[F[_]: Concurrent](
       serviceId: ShapeId,
       endpointId: ShapeId,
       serviceHints: Hints,
       endpointHints: Hints,
       awsEnvironment: AwsEnvironment[F]
-  ): Client[F] = Client {
+  ): Client[F] = {
+    val sign = signingFunction(
+      serviceId,
+      endpointId,
+      serviceHints,
+      endpointHints,
+      awsEnvironment
+    )
+    Client { request =>
+      Resource.eval(sign(request)).flatMap { request =>
+        awsEnvironment.httpClient.run(request)
+      }
+    }
+  }
+
+  private[internals] def signingFunction[F[_]: Concurrent](
+      serviceId: ShapeId,
+      endpointId: ShapeId,
+      serviceHints: Hints,
+      endpointHints: Hints,
+      awsEnvironment: AwsEnvironment[F]
+  ): Request[F] => F[Request[F]] = {
     import awsEnvironment._
 
     val endpointPrefix = serviceHints
@@ -139,11 +161,10 @@ private[aws] object AwsSigningClient {
         authHeader ++ baseHeaders
       }
 
-      Resource.eval(awsHeadersF).flatMap { headers =>
-        httpClient.run(request.transformHeaders(_ ++ headers))
+      awsHeadersF.map { headers =>
+        request.transformHeaders(_ ++ headers)
       }
     }
-
   }
 
 }
