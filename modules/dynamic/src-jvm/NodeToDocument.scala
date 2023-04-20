@@ -18,12 +18,14 @@ package smithy4s.dynamic
 
 import smithy4s.Document
 import software.amazon.smithy.model.node._
+import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters._
+import java.util.function.BiConsumer
 
 object NodeToDocument {
 
   def apply(node: Node): Document =
-    return node.accept(new NodeVisitor[Document] {
+    return node.accept(new NodeVisitor[Document] { self =>
       def arrayNode(x: ArrayNode): Document =
         Document.array(x.getElements().asScala.map(_.accept(this)))
 
@@ -37,14 +39,17 @@ object NodeToDocument {
         Document.fromDouble(x.getValue().doubleValue())
 
       def objectNode(x: ObjectNode): Document =
-        Document.obj(
+        Document.DObject {
+          val builder = ListMap.newBuilder[String, Document]
           x.getMembers()
-            .asScala
-            .map { case (key, value) =>
-              key.getValue() -> value.accept(this)
-            }
-            .toSeq: _*
-        )
+            .forEach(new BiConsumer[StringNode, Node] {
+              def accept(key: StringNode, value: Node): Unit = {
+                val kv = (key.getValue(), value.accept(self))
+                builder += kv
+              }
+            })
+          builder.result()
+        }
 
       def stringNode(x: StringNode): Document =
         Document.fromString(x.getValue())

@@ -31,6 +31,7 @@ import smithy4s.Document._
 import smithy4s.http.PayloadError
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
+import scala.collection.immutable.ListMap
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -225,7 +226,7 @@ class DocumentDecoderSchemaVisitor(
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          val builder = Map.newBuilder[K, V]
+          val builder = ListMap.newBuilder[K, V]
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
