@@ -22,4 +22,5 @@ object ServerError extends ShapeTag.Companion[ServerError] {
   ){
     ServerError.apply
   }.withId(id).addHints(hints)
+
 }

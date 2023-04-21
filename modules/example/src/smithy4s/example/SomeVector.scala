@@ -13,4 +13,5 @@ object SomeVector extends Newtype[Vector[String]] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[Vector[String]] = vector(string).withId(id).addHints(hints)
   implicit val schema: Schema[SomeVector] = bijection(underlyingSchema, asBijection)
+
 }

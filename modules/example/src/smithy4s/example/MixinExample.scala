@@ -24,4 +24,5 @@ object MixinExample extends ShapeTag.Companion[MixinExample] {
   ){
     MixinExample.apply
   }.withId(id).addHints(hints)
+
 }

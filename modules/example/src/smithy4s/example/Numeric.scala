@@ -30,4 +30,5 @@ object Numeric extends ShapeTag.Companion[Numeric] {
   ){
     Numeric.apply
   }.withId(id).addHints(hints)
+
 }

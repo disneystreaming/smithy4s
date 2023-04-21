@@ -18,4 +18,5 @@ object AnotherString extends Newtype[String] {
   )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[AnotherString] = bijection(underlyingSchema, asBijection)
+
 }

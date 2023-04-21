@@ -40,4 +40,5 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
     JOKER,
   )
   implicit val schema: Schema[FaceCard] = enumeration(values).withId(id).addHints(hints)
+
 }

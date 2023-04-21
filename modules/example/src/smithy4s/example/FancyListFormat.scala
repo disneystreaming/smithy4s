@@ -15,4 +15,5 @@ object FancyListFormat extends ShapeTag.Companion[FancyListFormat] {
   )
 
   implicit val schema: Schema[FancyListFormat] = constant(FancyListFormat()).withId(id).addHints(hints)
+
 }

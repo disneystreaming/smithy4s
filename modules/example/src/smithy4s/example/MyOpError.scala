@@ -16,4 +16,5 @@ object MyOpError extends ShapeTag.Companion[MyOpError] {
   )
 
   implicit val schema: Schema[MyOpError] = constant(MyOpError()).withId(id).addHints(hints)
+
 }

@@ -12,4 +12,5 @@ object SomeValue extends Newtype[String] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[SomeValue] = bijection(underlyingSchema, asBijection)
+
 }

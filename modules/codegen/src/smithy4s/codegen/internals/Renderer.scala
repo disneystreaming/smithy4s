@@ -504,19 +504,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderTypeclass(hint: Hint.Typeclass, tpe: NameRef): Line = {
     val target = NameRef(hint.targetType)
     val interpreter = NameRef(hint.interpreter)
-    val lowerCasedName = s"${tpe.name.head.toLower.toString}${tpe.name.tail}"
+    val lowerCasedName = uncapitalise(tpe.name)
     line"implicit val $lowerCasedName${hint.id.getName.capitalize}: $target[$tpe] = $interpreter.fromSchema(schema)"
   }
 
   private def renderTypeclasses(
       hints: List[Hint],
       tpe: NameRef
-  ): Option[Lines] = {
-    (hints.collectFirst { case h: Hint.Typeclasses =>
-      newline ++ Lines(
-        h.values.map(renderTypeclass(_, tpe)).toList
-      )
-    })
+  ): Lines = newline ++ Lines {
+    hints.collect { case h: Hint.Typeclass =>
+      renderTypeclass(h, tpe)
+    }
   }
 
   private def renderProductNonMixin(

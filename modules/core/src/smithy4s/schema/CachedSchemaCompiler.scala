@@ -27,7 +27,7 @@ trait CachedSchemaCompiler[+F[_]] {
 
 object CachedSchemaCompiler {
 
-  private[smithy4s] abstract class Impl[F[_]] extends CachedSchemaCompiler[F] {
+  abstract class Impl[F[_]] extends CachedSchemaCompiler[F] {
     protected type Aux[_]
     type Cache = CompilationCache[Aux]
 

@@ -19,4 +19,5 @@ object GetObjectOutput extends ShapeTag.Companion[GetObjectOutput] {
   ){
     GetObjectOutput.apply
   }.withId(id).addHints(hints)
+
 }

@@ -31,4 +31,5 @@ object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
     C,
   )
   implicit val schema: Schema[Letters] = enumeration(values).withId(id).addHints(hints)
+
 }

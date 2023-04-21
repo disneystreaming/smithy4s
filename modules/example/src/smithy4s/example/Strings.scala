@@ -16,4 +16,5 @@ object Strings extends Newtype[List[String]] {
   )
   val underlyingSchema: Schema[List[String]] = list(string).withId(id).addHints(hints)
   implicit val schema: Schema[Strings] = bijection(underlyingSchema, asBijection)
+
 }

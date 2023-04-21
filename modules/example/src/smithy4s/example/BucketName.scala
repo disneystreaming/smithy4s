@@ -12,4 +12,5 @@ object BucketName extends Newtype[String] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[BucketName] = bijection(underlyingSchema, asBijection)
+
 }

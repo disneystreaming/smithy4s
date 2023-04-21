@@ -13,4 +13,5 @@ object SomeIndexSeq extends Newtype[IndexedSeq[String]] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[IndexedSeq[String]] = indexedSeq(string).withId(id).addHints(hints)
   implicit val schema: Schema[SomeIndexSeq] = bijection(underlyingSchema, asBijection)
+
 }

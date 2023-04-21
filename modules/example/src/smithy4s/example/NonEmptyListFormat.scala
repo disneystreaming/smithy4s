@@ -15,4 +15,5 @@ object NonEmptyListFormat extends ShapeTag.Companion[NonEmptyListFormat] {
   )
 
   implicit val schema: Schema[NonEmptyListFormat] = constant(NonEmptyListFormat()).withId(id).addHints(hints)
+
 }

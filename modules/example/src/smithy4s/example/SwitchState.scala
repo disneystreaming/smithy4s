@@ -29,4 +29,5 @@ object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[Swit
     OFF,
   )
   implicit val schema: Schema[SwitchState] = enumeration(values).withId(id).addHints(hints)
+
 }

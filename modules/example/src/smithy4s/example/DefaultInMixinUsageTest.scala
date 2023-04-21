@@ -18,4 +18,5 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
   ){
     DefaultInMixinUsageTest.apply
   }.withId(id).addHints(hints)
+
 }

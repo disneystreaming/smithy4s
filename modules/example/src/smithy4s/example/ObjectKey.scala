@@ -15,4 +15,5 @@ object ObjectKey extends Newtype[UUID] {
   )
   val underlyingSchema: Schema[UUID] = uuid.withId(id).addHints(hints)
   implicit val schema: Schema[ObjectKey] = bijection(underlyingSchema, asBijection)
+
 }

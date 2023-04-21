@@ -281,7 +281,7 @@ private[internals] object Hint {
   }
   case object UniqueItems extends Hint
   case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
-  case class Typeclasses(values: NonEmptyList[Typeclass]) extends Hint
+      extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

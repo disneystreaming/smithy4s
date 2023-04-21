@@ -67,4 +67,5 @@ object Foo extends ShapeTag.Companion[Foo] {
     case c: BIntCase => BIntCase.alt(c)
     case c: BDecCase => BDecCase.alt(c)
   }.withId(id).addHints(hints)
+
 }

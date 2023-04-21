@@ -19,4 +19,5 @@ object MapInput extends ShapeTag.Companion[MapInput] {
   ){
     MapInput.apply
   }.withId(id).addHints(hints)
+
 }

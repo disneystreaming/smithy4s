@@ -105,6 +105,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
     ){
       case c: MyOpErrorCase => MyOpErrorCase.alt(c)
     }
+
   }
 }
 

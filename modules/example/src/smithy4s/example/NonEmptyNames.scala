@@ -13,4 +13,5 @@ object NonEmptyNames extends Newtype[NonEmptyList[Name]] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[NonEmptyList[Name]] = list(Name.schema).refined[NonEmptyList[Name]](smithy4s.example.NonEmptyListFormat()).withId(id).addHints(hints)
   implicit val schema: Schema[NonEmptyNames] = bijection(underlyingSchema, asBijection)
+
 }

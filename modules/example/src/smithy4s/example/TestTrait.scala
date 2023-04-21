@@ -24,4 +24,5 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
   ){
     TestTrait.apply
   }.withId(id).addHints(hints))
+
 }

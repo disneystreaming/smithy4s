@@ -36,4 +36,5 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
     case c: AgeCase => AgeCase.alt(c)
     case c: DogNameCase => DogNameCase.alt(c)
   }.withId(id).addHints(hints)
+
 }

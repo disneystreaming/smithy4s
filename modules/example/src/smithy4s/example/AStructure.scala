@@ -20,4 +20,5 @@ object AStructure extends ShapeTag.Companion[AStructure] {
   ){
     AStructure.apply
   }.withId(id).addHints(hints)
+
 }

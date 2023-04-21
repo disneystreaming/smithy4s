@@ -13,4 +13,5 @@ object GetStreamedObjectOutput extends ShapeTag.Companion[GetStreamedObjectOutpu
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[GetStreamedObjectOutput] = constant(GetStreamedObjectOutput()).withId(id).addHints(hints)
+
 }

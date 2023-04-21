@@ -22,4 +22,5 @@ object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
   ){
     GetFooOutput.apply
   }.withId(id).addHints(hints)
+
 }

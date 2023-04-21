@@ -19,4 +19,5 @@ object SetInput extends ShapeTag.Companion[SetInput] {
   ){
     SetInput.apply
   }.withId(id).addHints(hints)
+
 }

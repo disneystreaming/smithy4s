@@ -18,4 +18,5 @@ object MixinOptionalMemberDefaultAdded extends ShapeTag.Companion[MixinOptionalM
   ){
     MixinOptionalMemberDefaultAdded.apply
   }.withId(id).addHints(hints)
+
 }

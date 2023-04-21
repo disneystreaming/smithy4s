@@ -31,6 +31,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       Video.apply
     }.withId(id).addHints(hints)
 
+
     val alt = schema.oneOf[Podcast]("video")
   }
   case class Audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast
@@ -47,6 +48,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       Audio.apply
     }.withId(id).addHints(hints)
 
+
     val alt = schema.oneOf[Podcast]("audio")
   }
 
@@ -58,4 +60,5 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     case c: Video => Video.alt(c)
     case c: Audio => Audio.alt(c)
   }.withId(id).addHints(hints)
+
 }

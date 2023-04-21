@@ -15,4 +15,5 @@ object NonEmptyMapFormat extends ShapeTag.Companion[NonEmptyMapFormat] {
   )
 
   implicit val schema: Schema[NonEmptyMapFormat] = constant(NonEmptyMapFormat()).withId(id).addHints(hints)
+
 }

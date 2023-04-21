@@ -18,4 +18,5 @@ object PutStreamedObjectInput extends ShapeTag.Companion[PutStreamedObjectInput]
   ){
     PutStreamedObjectInput.apply
   }.withId(id).addHints(hints)
+
 }
