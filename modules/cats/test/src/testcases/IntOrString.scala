@@ -17,6 +17,6 @@ object IntOrString {
     union(intValue, stringValue) {
       case IntValue(int) => intValue(int)
       case StringValue(string) => stringValue(string)
-    }.withId(ShapeId("", "Foo"))
+    }.withId(ShapeId("", "IntOrString"))
   }
 }

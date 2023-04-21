@@ -1,25 +1,15 @@
 package smithy4s.interopcats
 
 import cats.Hash
-import cats.implicits.{
-  catsKernelStdHashForList,
-  catsKernelStdHashForOption,
-  toContravariantOps
-}
+import cats.implicits.{catsKernelStdHashForList, catsKernelStdHashForOption, toContravariantOps}
+
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
-import smithy4s.schema.{
-  Alt,
-  CollectionTag,
-  EnumValue,
-  Field,
-  Primitive,
-  Schema,
-  SchemaAlt,
-  SchemaField,
-  SchemaVisitor
-}
+import smithy4s.schema.{Alt, CollectionTag, EnumValue, Field, Primitive, Schema, SchemaAlt, SchemaField, SchemaVisitor}
+
+
+
 object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
 
   override def primitive[P](
@@ -132,6 +122,9 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
         // is lost in the precompiler.
         val altA =
         alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+
+        val labelHash = Hash[String].hash(label)
+
         // We're using it to get a function that lets us project the `U` against `A`.
         // `U` is not necessarily an `A, so this function returns an `Option`
         val projectA: U => Option[A] = dispatch.projector(altA)
@@ -142,7 +135,9 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
             case Some(a2) =>
               hashA.eqv(a, a2) // U is an A, we delegate the comparison
           }
-          override def hash(a:A): Int = hashA.hash(a)
+          override def hash(a:A): Int = {
+            combineHash(hashA.hash(a),labelHash)
+          }
         }
       }
     }
@@ -178,4 +173,5 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       override def eqv(x: A, y: A): Boolean = hashA.value.eqv(x, y)
     }
   }
+
 }
