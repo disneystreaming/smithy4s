@@ -726,6 +726,19 @@ lazy val `http4s-swagger` = projectMatrix
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
 
+lazy val cats = projectMatrix
+  .in(file("modules/cats"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Cats.core.value
+    )
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
 lazy val testUtils = projectMatrix
   .in(file("modules/test-utils"))
   .dependsOn(core)
