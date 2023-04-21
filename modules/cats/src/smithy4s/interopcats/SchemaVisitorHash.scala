@@ -60,8 +60,7 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Hash[E] = {
-    implicit val enumValueHash: Hash[EnumValue[E]] =
-      Hash[String].contramap(_.stringValue)
+    implicit val enumValueHash: Hash[EnumValue[E]] = Hash[String].contramap(_.stringValue)
     Hash[EnumValue[E]].contramap(total)
   }
 
