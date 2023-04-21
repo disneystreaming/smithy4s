@@ -71,8 +71,8 @@ private[aws] object AwsSigningClient {
       .getOrElse(serviceId.name)
       .toLowerCase()
     val newline = System.lineSeparator()
-    val `Content-Type` =
-      org.http4s.headers.`Content-Type`.headerInstance.name
+    val contentType = org.http4s.headers.`Content-Type`.headerInstance
+    val `Content-Type` = contentType.name
     val `Host` = CIString("host")
     val `X-Amz-Date` = CIString("X-Amz-Date")
     val `X-Amz-Security-Token` = CIString("X-Amz-Security-Token")
@@ -111,7 +111,7 @@ private[aws] object AwsSigningClient {
 
         // // !\ Important: these must remain in the same order
         val baseHeadersList = List(
-          `Content-Type` -> request.contentType.map(_.toString()).orNull,
+          `Content-Type` -> request.contentType.map(contentType.value(_)).orNull,
           `Host` -> request.uri.host.map(_.renderString).orNull,
           `X-Amz-Date` -> timestamp.conciseDateTime,
           `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
