@@ -1,11 +1,11 @@
 
-package smithy4s.cats
+package smithy4s.catz
 
 import cats.Hash
 import cats.implicits.{catsKernelStdHashForList, catsKernelStdHashForOption, toContravariantOps}
 import smithy4s.{ Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
-import smithy4s.cats.instances.HashInstances._
+import smithy4s.catz.instances.HashInstances._
 import smithy4s.schema.{Alt, CollectionTag, EnumValue, Field, Primitive, Schema, SchemaAlt, SchemaField, SchemaVisitor}
 import smithy4s.schema.Alt.Precompiler
 object SchemaVisitorHash  extends SchemaVisitor[Hash] {self =>

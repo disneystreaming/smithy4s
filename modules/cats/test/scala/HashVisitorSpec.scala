@@ -3,7 +3,7 @@ import cats.Hash
 import smithy4s.schema.Schema.{bigdecimal, bigint, boolean, byte, bytes, double, enumeration, float, indexedSeq, int, list, long, map, recursive, set, short, string, struct, timestamp, union, vector, StructSchema}
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
-import smithy4s.cats.SchemaVisitorHash
+import smithy4s.catz.SchemaVisitorHash
 import weaver.FunSuite
 
 object HashVisitorSpec extends FunSuite{

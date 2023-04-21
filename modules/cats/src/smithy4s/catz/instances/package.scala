@@ -1,4 +1,4 @@
-package smithy4s.cats
+package smithy4s.catz
 
 package object instances {
 

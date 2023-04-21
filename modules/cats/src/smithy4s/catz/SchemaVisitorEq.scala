@@ -1,9 +1,9 @@
-package smithy4s.cats
+package smithy4s.catz
 
 import cats.kernel.Eq
 import smithy4s.{Schema, _}
 import smithy4s.capability.EncoderK
-import smithy4s.cats.instances.EqInstances._
+import smithy4s.catz.instances.EqInstances._
 import smithy4s.schema._
 
 import java.util.UUID
@@ -13,7 +13,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): Eq[P] = primitiveEq(tag)
+  ): Eq[P] =  primitiveEq(tag)
 
   override def collection[C[_], A](
       shapeId: ShapeId,

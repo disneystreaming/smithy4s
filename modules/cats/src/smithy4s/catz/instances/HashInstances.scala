@@ -1,4 +1,4 @@
-package smithy4s.cats.instances
+package smithy4s.catz.instances
 
 import cats.{Eq, Hash}
 import cats.implicits.toContravariantOps

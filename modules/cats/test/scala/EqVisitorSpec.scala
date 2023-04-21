@@ -2,7 +2,7 @@ import cats.kernel.Eq
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
 import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
-import smithy4s.cats.EqSchemaVisitor
+import smithy4s.catz.EqSchemaVisitor
 import weaver.{Expect, Expectations, FunSuite}
 
 object EqVisitorSpec extends FunSuite {

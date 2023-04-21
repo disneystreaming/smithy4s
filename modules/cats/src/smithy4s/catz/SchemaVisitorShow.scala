@@ -1,10 +1,10 @@
-package smithy4s.cats
+package smithy4s.catz
 
 import cats.Show
 import cats.implicits.toContravariantOps
 import smithy4s._
 import smithy4s.capability.EncoderK
-import smithy4s.cats.instances.ShowInstances._
+import smithy4s.catz.instances.ShowInstances._
 import smithy4s.schema.{Alt, CollectionTag, EnumValue, Field, Primitive, Schema, SchemaAlt, SchemaField, SchemaVisitor}
 import smithy4s.schema.Alt.Precompiler
 

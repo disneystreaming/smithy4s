@@ -1,5 +1,5 @@
 
-package smithy4s.cats
+package smithy4s.catz
 
 import cats.effect.IO
 import cats.syntax.all._
