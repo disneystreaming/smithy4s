@@ -1,7 +1,6 @@
 package smithy4s.cats.instances
 
 import cats.Show
-import cats.implicits.toContravariantOps
 import smithy4s.schema.Primitive
 import smithy4s.{ByteArray, Document, ShapeId, Timestamp}
 import smithy4s.kinds.PolyFunction

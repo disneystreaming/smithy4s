@@ -732,6 +732,7 @@ lazy val cats = projectMatrix
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
+      Dependencies.Weaver.cats.value % Test,
       Dependencies.Cats.core.value
     )
   )

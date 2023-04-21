@@ -3,7 +3,6 @@ package smithy4s.cats.instances
 import cats.{Eq, Hash}
 import cats.implicits.toContravariantOps
 import smithy4s.{~>, ByteArray, ShapeId, Timestamp}
-import smithy4s.cats.instances.all.byteArrayEq
 import smithy4s.schema.Primitive
 
 trait HashInstances {
