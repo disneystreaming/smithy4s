@@ -31,6 +31,8 @@ import smithy4s.schema.Alt
 import scala.concurrent.duration._
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.compliancetests.internals.TestConfig._
+import cats.MonadThrow
+import java.util.concurrent.TimeoutException
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]
@@ -113,25 +115,43 @@ private[compliancetests] class ServerHttpComplianceTestCase[
               }
             )
 
+          object ServerError {
+            def unapply(response: Response[F]): Boolean =
+              response.status.responseClass match {
+                case Status.ServerError => true
+                case _                  => false
+              }
+          }
+
           routes(fakeImpl)(originalService)
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
-                .attemptNarrow[IntendedShortCircuit]
+                .attempt
                 .flatMap {
-                  case Left(_) =>
-                    inputDeferred.get.timeout(1.second).flatMap { foundInput =>
-                      testModel
-                        .map { decodedInput =>
-                          assert.eql(foundInput, decodedInput)
-                        }
-                    }
+                  case Left(_: IntendedShortCircuit) | Right(ServerError()) =>
+                    inputDeferred.get
+                      .timeout(1.second)
+                      .flatMap { foundInput =>
+                        testModel
+                          .map { decodedInput =>
+                            assert.eql(foundInput, decodedInput)
+                          }
+                      }
+                      .recover { case _: TimeoutException =>
+                        val message =
+                          """|Timed-out while waiting for an input.
+                             |
+                             |This probably means that the Router implementation either failed to decode the request
+                             |or failed to route the decoded input to the correct service method.
+                             |""".stripMargin
+                        assert.fail(message)
+                      }
+                  case Left(error) => MonadThrow[F].raiseError(error)
                   case Right(response) =>
-                    response.body.compile.toVector.map { message =>
+                    response.as[String].map { message =>
                       assert.fail(
-                        s"Expected a IntendedShortCircuit error, but got a response with status ${response.status} and message ${message
-                          .map(_.toChar)
-                          .mkString}"
+                        s"Expected either an IntendedShortCircuit error or a 5xx response, but got a response with status ${response.status} and message ${message}"
                       )
                     }
                 }
