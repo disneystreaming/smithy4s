@@ -20,7 +20,6 @@ import smithy4s.schema.{
   SchemaField,
   SchemaVisitor
 }
-import smithy4s.schema.Alt.Precompiler
 object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
 
   override def primitive[P](
@@ -109,21 +108,22 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       dispatch: Alt.Dispatcher[Schema, U]
   ): Hash[U] = {
 
-    // A version of `Eq` that assumes that the RHS is "up-casted" to U.
+    // A version of `Hash` that assumes for the eqv method that the RHS is "up-casted" to U.
     trait AltHash[A] {
       def eqv(a: A, u: U): Boolean
-      def hash(u:U):Int
+      def hash(a:A):Int
     }
 
     // The encoded form that Eq works against is a partially-applied curried function.
-    implicit val encoderKInstance = new EncoderK[AltHash, U => Boolean] {
-      def apply[A](fa: AltHash[A], a: A): U => Boolean = { (u: U) =>
-        fa.eqv(a, u)
+    implicit val encoderKInstance = new EncoderK[AltHash, (U => Boolean,Int)] {
+      def apply[A](fa: AltHash[A], a: A): (U => Boolean,Int) = {
+        ((u: U) =>
+        fa.eqv(a, u),fa.hash(a))
       }
 
-      def absorb[A](f: A => (U => Boolean)): AltHash[A] = new AltHash[A] {
-        def eqv(a: A, u: U): Boolean = f(a)(u)
-        override def hash(u: U): Int = ???
+      def absorb[A](f: A => (U => Boolean,Int)): AltHash[A] = new AltHash[A] {
+        def eqv(a: A, u: U): Boolean = f(a)._1(u)
+        override def hash(a:A): Int = f(a)._2
       }
     }
 
@@ -143,16 +143,15 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
             case Some(a2) =>
               hashA.eqv(a, a2) // U is an A, we delegate the comparison
           }
-
-          override def hash(u:U): Int = projectA(u)
+          override def hash(a:A): Int = hashA.hash(a)
         }
       }
     }
 
-    val altHashU = dispatch.compile(precompiler)
+    val altHashU: AltHash[U] = dispatch.compile(precompiler)
     new Hash[U] {
       def eqv(x: U, y: U): Boolean = altHashU.eqv(x, y)
-      override def hash(x: U): Int = altHashU.hash(x)
+      def hash(x: U): Int = altHashU.hash(x)
     }
   }
 

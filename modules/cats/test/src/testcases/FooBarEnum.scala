@@ -31,3 +31,4 @@ object FooBar extends smithy4s.Enumeration[FooBar] with smithy4s.ShapeTag.Compan
   implicit val schema: Schema[FooBar] =
     enumeration[FooBar](List(Foo, Bar))
 }
+
