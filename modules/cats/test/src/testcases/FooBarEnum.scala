@@ -1,4 +1,4 @@
-package smithy4s.catz.testcases
+package smithy4s.interopcats.testcases
 
 import smithy4s.schema.Schema
 import smithy4s.{Hints, ShapeId}

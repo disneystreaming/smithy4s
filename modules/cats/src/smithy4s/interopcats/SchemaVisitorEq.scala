@@ -1,9 +1,9 @@
-package smithy4s.catz
+package smithy4s.interopcats
 
 import cats.kernel.Eq
 import smithy4s.{Schema, _}
 import smithy4s.capability.EncoderK
-import smithy4s.catz.instances.EqInstances._
+import smithy4s.interopcats.instances.EqInstances._
 import smithy4s.schema._
 
 import java.util.UUID

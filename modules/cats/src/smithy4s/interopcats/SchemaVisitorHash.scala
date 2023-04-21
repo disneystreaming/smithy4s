@@ -1,4 +1,4 @@
-package smithy4s.catz
+package smithy4s.interopcats
 
 import cats.Hash
 import cats.implicits.{
@@ -8,7 +8,7 @@ import cats.implicits.{
 }
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
-import smithy4s.catz.instances.HashInstances._
+import smithy4s.interopcats.instances.HashInstances._
 import smithy4s.schema.{
   Alt,
   CollectionTag,
@@ -108,21 +108,54 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): Hash[U] = {
-    val precomputed: Precompiler[Schema, Hash] = new Precompiler[Schema, Hash] {
-      override def apply[A](label: String, instance: Schema[A]): Hash[A] =
-        self(instance)
-    }
-    implicit val encoderKHash: EncoderK[Hash, Int] = new EncoderK[Hash, Int] {
-      override def apply[A](fa: Hash[A], a: A): Int = fa.hash(a)
 
-      override def absorb[A](f: A => Int): Hash[A] = new Hash[A] {
-        override def hash(x: A): Int = f(x)
-        override def eqv(x: A, y: A): Boolean = f(x) == f(y)
+    // A version of `Eq` that assumes that the RHS is "up-casted" to U.
+    trait AltHash[A] {
+      def eqv(a: A, u: U): Boolean
+      def hash(u:U):Int
+    }
+
+    // The encoded form that Eq works against is a partially-applied curried function.
+    implicit val encoderKInstance = new EncoderK[AltHash, U => Boolean] {
+      def apply[A](fa: AltHash[A], a: A): U => Boolean = { (u: U) =>
+        fa.eqv(a, u)
+      }
+
+      def absorb[A](f: A => (U => Boolean)): AltHash[A] = new AltHash[A] {
+        def eqv(a: A, u: U): Boolean = f(a)(u)
+        override def hash(u: U): Int = ???
       }
     }
 
-    dispatch.compile(precomputed)
+    val precompiler = new Alt.Precompiler[Schema, AltHash] {
+      def apply[A](label: String, instance: Schema[A]): AltHash[A] = {
+        // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
+        // is lost in the precompiler.
+        val altA =
+        alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+        // We're using it to get a function that lets us project the `U` against `A`.
+        // `U` is not necessarily an `A, so this function returns an `Option`
+        val projectA: U => Option[A] = dispatch.projector(altA)
+        val hashA = instance.compile(self)
+        new AltHash[A] {
+          def eqv(a: A, u: U): Boolean = projectA(u) match {
+            case None => false // U is not an A.
+            case Some(a2) =>
+              hashA.eqv(a, a2) // U is an A, we delegate the comparison
+          }
+
+          override def hash(u:U): Int = projectA(u)
+        }
+      }
+    }
+
+    val altHashU = dispatch.compile(precompiler)
+    new Hash[U] {
+      def eqv(x: U, y: U): Boolean = altHashU.eqv(x, y)
+      override def hash(x: U): Int = altHashU.hash(x)
+    }
   }
+
 
   override def biject[A, B](
       schema: Schema[A],

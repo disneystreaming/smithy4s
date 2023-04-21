@@ -1,10 +1,10 @@
-package smithy4s.catz
+package smithy4s.interopcats
 
 import cats.Show
 import cats.implicits.toContravariantOps
 import smithy4s._
 import smithy4s.capability.EncoderK
-import smithy4s.catz.instances.ShowInstances._
+import smithy4s.interopcats.instances.ShowInstances._
 import smithy4s.schema.{
   Alt,
   CollectionTag,
