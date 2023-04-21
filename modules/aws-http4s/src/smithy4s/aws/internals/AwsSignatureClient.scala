@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.aws
 package internals
 
@@ -33,8 +49,8 @@ private[aws] object AwsSigningClient {
       .getOrElse(serviceId.name)
       .toLowerCase()
     val newline = System.lineSeparator()
-    val `Content-Type` =
-      org.http4s.headers.`Content-Type`.headerInstance.name
+    val contentType = org.http4s.headers.`Content-Type`.headerInstance
+    val `Content-Type` = contentType.name
     val `Host` = CIString("host")
     val `X-Amz-Date` = CIString("X-Amz-Date")
     val `X-Amz-Security-Token` = CIString("X-Amz-Security-Token")
@@ -73,7 +89,7 @@ private[aws] object AwsSigningClient {
 
         // // !\ Important: these must remain in the same order
         val baseHeadersList = List(
-          `Content-Type` -> request.contentType.map(_.toString()).orNull,
+          `Content-Type` -> request.contentType.map(contentType.value(_)).orNull,
           `Host` -> request.uri.host.map(_.renderString).orNull,
           `X-Amz-Date` -> timestamp.conciseDateTime,
           `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
