@@ -67,6 +67,7 @@ sealed abstract class Field[F[_], S, A] {
   final def foreachA(s: S)(f: A => Unit): Unit =
     f(this.get(s))
 
+  def contramap[B](f: B => S): Field[F, B, A]
 }
 
 object Field {
@@ -105,6 +106,9 @@ object Field {
     }
     override def isRequired: Boolean = true
     override def foreachT(s: S)(f: A => Unit): Unit = f(get(s))
+
+    override def contramap[B](f: B => S): Field[F, B, A] =
+      Required(label, instance, f.andThen(get))
   }
 
   private final case class Optional[F[_], S, A](
@@ -132,6 +136,9 @@ object Field {
     }
     override def isRequired: Boolean = false
     override def foreachT(s: S)(f: A => Unit): Unit = get(s).foreach(f)
+
+    override def contramap[B](f: B => S): Field[F, B, Option[A]] =
+      Optional(label, instance, f.andThen(get))
   }
 
 
