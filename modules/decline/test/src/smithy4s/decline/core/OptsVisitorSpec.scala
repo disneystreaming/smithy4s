@@ -372,7 +372,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("timestamp with no format hint") {
     timestampTest(
       timestamp,
-      "2020-01-01T00:00:00.000Z"
+      "1577836800"
     )
   }
 

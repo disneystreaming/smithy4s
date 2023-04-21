@@ -24,28 +24,6 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
 package object internals {
-
-  // Due to AWS's usage of integer as the canonical representation of a Timestamp in smithy , we need to provide the decoder with instructions to use a Long instead.
-  // therefore the timestamp type is switched to type epochSeconds: Long
-  // This is just a workaround thats limited to testing scenarios
-  private[compliancetests] def mapAllTimestampsToEpoch[A](
-      schema: Schema[A]
-  ): Schema[A] = {
-    schema.transformHintsTransitively(h =>
-      h.++(Hints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen))
-    )
-  }
-
-  // a HintMask to hold onto hints that are necessary for correct document decoding
-  private val awsMask = HintMask(IntEnum)
-
-  private[compliancetests] implicit class SchemaOps[A](val schema: Schema[A])
-      extends AnyVal {
-
-    def awsHintMask: Schema[A] =
-      schema.transformHintsTransitively(awsMask.apply)
-  }
-
   private def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
@@ -91,8 +69,8 @@ package object internals {
   }
 
   /*
-   This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
-   what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
+       This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
+       what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
    */
   private[compliancetests] def parseList(s: String): List[String] = {
     s.foldLeft((Chain.empty[String], 0, 0, false)) {

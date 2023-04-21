@@ -14,15 +14,26 @@
  *  limitations under the License.
  */
 
-import smithy4s.errors.*
+package smithy4s.compliancetests.internals
 
-object Main extends App {
-  val serviceOps = ErrorServiceOperation
-  val knownError1 = BadRequest("foo")
-  val knownError2 = InternalServerError("bar")
-  val unknownError = new RuntimeException("baz")
-  assert(serviceOps.ErrorOp.liftError(unknownError) == None)
-  assert(serviceOps.ErrorOp.liftError(knownError1) == Some(knownError1))
-  assert(serviceOps.ErrorOp.liftError(knownError2) == Some(knownError2))
-  assert(serviceOps.ErrorOp.unliftError(knownError1) == knownError1)
+import smithy4s.schema._
+import smithy4s.IntEnum
+import smithy4s.Document
+
+object CanonicalSmithyDecoder {
+
+  /**
+    * Produces a document decoder that
+    *
+    * @param schema
+    * @return
+    */
+  def fromSchema[A](
+      schema: Schema[A]
+  ): Document.Decoder[A] = {
+    Document.Decoder.fromSchema(
+      schema.transformHintsTransitively(_.filter(_.keyId == IntEnum.id))
+    )
+  }
+
 }

@@ -37,6 +37,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val genSmithyOutput          = SettingKey[File]("genSmithyOutput")
     val genSmithyResourcesOutput = SettingKey[File]("genSmithyResourcesOutput")
     val allowedNamespaces        = SettingKey[Seq[String]]("allowedNamespaces")
+    val smithy4sModelTransformers = SettingKey[Seq[String]]("smithy4sModelTransformers")
     val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
     val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
     // format: on

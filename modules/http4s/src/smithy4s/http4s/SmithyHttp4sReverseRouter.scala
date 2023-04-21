@@ -21,10 +21,7 @@ import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
-import smithy4s.kinds.Kind5
-import smithy4s.kinds.PolyFunction5
 import cats.effect.Concurrent
-import smithy4s.kinds.Kind1
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
@@ -37,8 +34,7 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], F[_]](
 )(implicit effect:   Concurrent[F]) {
 // format: on
 
-  type ClientEndpoint[I, E, O, SI, SO] = I => F[O]
-  val handler = new PolyFunction5[service.Endpoint, ClientEndpoint] {
+  private val compiler = new service.FunctorEndpointCompiler[F] {
     def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] =
       SmithyHttp4sClientEndpoint
         .make(
@@ -58,14 +54,6 @@ class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], F[_]](
         .merge
   }
 
-  val impl: service.Impl[F] = service.fromPolyFunction[Kind1[F]#toKind5] {
-    new service.FunctorInterpreter[F] {
-      val cached = handler.unsafeCacheBy(service.endpoints.map(Kind5.existential(_)), identity)
-      def apply[I, E, O, SI, SO](operation: service.Operation[I, E, O, SI, SO]): F[O] = {
-        val (input, ep) = service.endpoint(operation)
-        cached(ep).apply(input)
-      }
-    }
-  }
+  val impl: service.Impl[F] = service.impl(compiler)
 
 }
