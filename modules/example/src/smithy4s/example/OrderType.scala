@@ -39,7 +39,6 @@ object OrderType extends ShapeTag.Companion[OrderType] {
       InStoreOrder.apply
     }.withId(id).addHints(hints)
 
-
     val alt = schema.oneOf[OrderType]("inStore")
   }
   case object PreviewCase extends OrderType
@@ -61,5 +60,4 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     case c: InStoreOrder => InStoreOrder.alt(c)
     case PreviewCase => PreviewCaseAltWithValue
   }.withId(id).addHints(hints)
-
 }

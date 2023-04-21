@@ -12,5 +12,4 @@ object Name extends Newtype[smithy4s.example.refined.Name] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[smithy4s.example.refined.Name] = string.refined[smithy4s.example.refined.Name](smithy4s.example.NameFormat()).withId(id).addHints(hints)
   implicit val schema: Schema[Name] = bijection(underlyingSchema, asBijection)
-
 }

@@ -23,5 +23,4 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
   ){
     StructureWithRefinedTypes.apply
   }.withId(id).addHints(hints)
-
 }

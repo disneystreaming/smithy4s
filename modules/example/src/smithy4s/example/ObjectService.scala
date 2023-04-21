@@ -131,7 +131,6 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
       case c: ServerErrorCase => ServerErrorCase.alt(c)
       case c: NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
     }
-
   }
   case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceGen.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
@@ -179,7 +178,6 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
     ){
       case c: ServerErrorCase => ServerErrorCase.alt(c)
     }
-
   }
 }
 
@@ -187,3 +185,4 @@ sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedO
   def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[ObjectServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

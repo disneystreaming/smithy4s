@@ -25,5 +25,4 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
   ){
     PutObjectInput.apply
   }.withId(id).addHints(hints)
-
 }

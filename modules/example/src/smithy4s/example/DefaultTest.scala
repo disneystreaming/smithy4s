@@ -48,5 +48,4 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   ){
     DefaultTest.apply
   }.withId(id).addHints(hints)
-
 }

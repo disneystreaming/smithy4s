@@ -34,7 +34,6 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
     implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
 
-
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
   @deprecated
@@ -47,7 +46,6 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     )
 
     implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
-
 
     val alt = schema.oneOf[DeprecatedUnion]("p2")
   }
@@ -76,5 +74,4 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     case c: DeprecatedUnionProductCase => DeprecatedUnionProductCase.alt(c)
     case c: UnionProductCaseDeprecatedAtCallSite => UnionProductCaseDeprecatedAtCallSite.alt(c)
   }.withId(id).addHints(hints)
-
 }

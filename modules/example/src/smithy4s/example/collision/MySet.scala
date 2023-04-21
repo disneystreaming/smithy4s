@@ -15,5 +15,4 @@ object MySet extends Newtype[Set[String]] {
   )
   val underlyingSchema: Schema[Set[String]] = set(string).withId(id).addHints(hints)
   implicit val schema: Schema[MySet] = bijection(underlyingSchema, asBijection)
-
 }

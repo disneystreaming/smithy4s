@@ -78,7 +78,7 @@ private[internals] object Renderer {
     )
 
     val classes = unit.declarations.map { decl =>
-      val renderResult = r.renderDecl(decl)
+      val renderResult = r.renderDecl(decl) ++ newline
       val p = s"package ${unit.namespace}"
 
       val segments = renderResult.list.flatMap(_.segments.toList)
@@ -511,10 +511,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderTypeclasses(
       hints: List[Hint],
       tpe: NameRef
-  ): Lines = newline ++ Lines {
-    hints.collect { case h: Hint.Typeclass =>
+  ): Lines = {
+    val result = hints.collect { case h: Hint.Typeclass =>
       renderTypeclass(h, tpe)
     }
+    if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
   private def renderProductNonMixin(

@@ -30,7 +30,6 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
       TestAdtMemberWithMixin.apply
     }.withId(id).addHints(hints)
 
-
     val alt = schema.oneOf[TestMixinAdt]("test")
   }
 
@@ -40,5 +39,4 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   ){
     case c: TestAdtMemberWithMixin => TestAdtMemberWithMixin.alt(c)
   }.withId(id).addHints(hints)
-
 }

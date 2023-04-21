@@ -15,5 +15,4 @@ object NameFormat extends ShapeTag.Companion[NameFormat] {
   )
 
   implicit val schema: Schema[NameFormat] = constant(NameFormat()).withId(id).addHints(hints)
-
 }

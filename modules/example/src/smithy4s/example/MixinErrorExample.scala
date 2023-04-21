@@ -27,5 +27,4 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
   ){
     MixinErrorExample.apply
   }.withId(id).addHints(hints)
-
 }

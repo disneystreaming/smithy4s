@@ -18,5 +18,4 @@ object MixinOptionalMemberOverride extends ShapeTag.Companion[MixinOptionalMembe
   ){
     MixinOptionalMemberOverride.apply
   }.withId(id).addHints(hints)
-
 }

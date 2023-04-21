@@ -15,5 +15,4 @@ object DeprecatedString extends Newtype[String] {
   )
   val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
   implicit val schema: Schema[DeprecatedString] = bijection(underlyingSchema, asBijection)
-
 }

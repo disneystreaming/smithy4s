@@ -18,5 +18,4 @@ object OpOutput extends ShapeTag.Companion[OpOutput] {
   ){
     OpOutput.apply
   }.withId(id).addHints(hints)
-
 }

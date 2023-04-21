@@ -31,5 +31,4 @@ object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
   ){
     GetObjectInput.apply
   }.withId(id).addHints(hints)
-
 }

@@ -18,5 +18,4 @@ object Candy extends ShapeTag.Companion[Candy] {
   ){
     Candy.apply
   }.withId(id).addHints(hints)
-
 }

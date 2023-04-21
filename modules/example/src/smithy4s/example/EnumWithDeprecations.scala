@@ -35,5 +35,4 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     NEW,
   )
   implicit val schema: Schema[EnumWithDeprecations] = enumeration(values).withId(id).addHints(hints)
-
 }

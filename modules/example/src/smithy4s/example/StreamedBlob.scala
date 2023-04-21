@@ -14,5 +14,4 @@ object StreamedBlob extends Newtype[Byte] {
   )
   val underlyingSchema: Schema[Byte] = byte.withId(id).addHints(hints)
   implicit val schema: Schema[StreamedBlob] = bijection(underlyingSchema, asBijection)
-
 }

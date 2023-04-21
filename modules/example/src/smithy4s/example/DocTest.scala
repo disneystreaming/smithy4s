@@ -18,5 +18,4 @@ object DocTest extends ShapeTag.Companion[DocTest] {
   )
 
   implicit val schema: Schema[DocTest] = constant(DocTest()).withId(id).addHints(hints)
-
 }

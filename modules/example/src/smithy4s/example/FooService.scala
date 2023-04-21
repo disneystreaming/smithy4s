@@ -89,3 +89,4 @@ sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutp
   def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[FooServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

@@ -13,5 +13,4 @@ object FancyList extends Newtype[smithy4s.example.refined.FancyList] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[smithy4s.example.refined.FancyList] = list(string).refined[smithy4s.example.refined.FancyList](smithy4s.example.FancyListFormat()).withId(id).addHints(hints)
   implicit val schema: Schema[FancyList] = bijection(underlyingSchema, asBijection)
-
 }

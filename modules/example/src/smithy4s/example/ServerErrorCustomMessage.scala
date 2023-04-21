@@ -22,5 +22,4 @@ object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMess
   ){
     ServerErrorCustomMessage.apply
   }.withId(id).addHints(hints)
-
 }

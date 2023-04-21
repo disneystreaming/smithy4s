@@ -23,5 +23,4 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
   ){
     DeprecatedStructure.apply
   }.withId(id).addHints(hints)
-
 }

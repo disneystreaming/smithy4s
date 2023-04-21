@@ -137,3 +137,4 @@ sealed trait ReservedNameServiceOperation[Input, Err, Output, StreamedInput, Str
   def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[ReservedNameServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

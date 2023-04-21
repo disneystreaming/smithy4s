@@ -29,5 +29,4 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   ){
     NoMoreSpace.apply
   }.withId(id).addHints(hints)
-
 }

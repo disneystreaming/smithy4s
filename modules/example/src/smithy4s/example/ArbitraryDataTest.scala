@@ -15,5 +15,4 @@ object ArbitraryDataTest extends ShapeTag.Companion[ArbitraryDataTest] {
   )
 
   implicit val schema: Schema[ArbitraryDataTest] = constant(ArbitraryDataTest()).withId(id).addHints(hints)
-
 }

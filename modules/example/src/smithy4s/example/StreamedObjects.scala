@@ -93,3 +93,4 @@ sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, Streame
   def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[StreamedObjectsOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

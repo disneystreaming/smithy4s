@@ -15,5 +15,4 @@ object Eq extends ShapeTag.Companion[Eq] {
   )
 
   implicit val schema: Schema[Eq] = constant(Eq()).withId(id).addHints(hints)
-
 }

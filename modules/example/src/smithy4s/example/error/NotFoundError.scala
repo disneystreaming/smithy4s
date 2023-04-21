@@ -22,5 +22,4 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
   ){
     NotFoundError.apply
   }.withId(id).addHints(hints)
-
 }

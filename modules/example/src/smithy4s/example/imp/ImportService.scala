@@ -111,7 +111,6 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     ){
       case c: NotFoundErrorCase => NotFoundErrorCase.alt(c)
     }
-
   }
 }
 
@@ -119,3 +118,4 @@ sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedO
   def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

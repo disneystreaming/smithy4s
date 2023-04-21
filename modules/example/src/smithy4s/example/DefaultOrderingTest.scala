@@ -21,5 +21,4 @@ object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
   ){
     DefaultOrderingTest.apply
   }.withId(id).addHints(hints)
-
 }

@@ -15,5 +15,4 @@ object Age extends Newtype[smithy4s.example.refined.Age] {
   )
   val underlyingSchema: Schema[smithy4s.example.refined.Age] = int.refined[smithy4s.example.refined.Age](smithy4s.example.AgeFormat()).withId(id).addHints(hints)
   implicit val schema: Schema[Age] = bijection(underlyingSchema, asBijection)
-
 }

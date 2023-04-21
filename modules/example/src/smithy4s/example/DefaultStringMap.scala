@@ -13,5 +13,4 @@ object DefaultStringMap extends Newtype[Map[String, String]] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[Map[String, String]] = map(string, string).withId(id).addHints(hints)
   implicit val schema: Schema[DefaultStringMap] = bijection(underlyingSchema, asBijection)
-
 }

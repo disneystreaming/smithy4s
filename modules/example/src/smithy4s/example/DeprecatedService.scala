@@ -82,3 +82,4 @@ sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, Strea
   def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

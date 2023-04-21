@@ -19,5 +19,4 @@ object StructureWithRefinedMember extends ShapeTag.Companion[StructureWithRefine
   ){
     StructureWithRefinedMember.apply
   }.withId(id).addHints(hints)
-
 }

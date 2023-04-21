@@ -16,5 +16,4 @@ object ArbitraryData extends Newtype[Document] {
   )
   val underlyingSchema: Schema[Document] = document.withId(id).addHints(hints)
   implicit val schema: Schema[ArbitraryData] = recursive(bijection(underlyingSchema, asBijection))
-
 }

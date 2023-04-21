@@ -18,5 +18,4 @@ object TestEmptyMixin extends ShapeTag.Companion[TestEmptyMixin] {
   ){
     TestEmptyMixin.apply
   }.withId(id).addHints(hints)
-
 }

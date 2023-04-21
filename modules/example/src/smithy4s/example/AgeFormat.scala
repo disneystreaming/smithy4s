@@ -15,5 +15,4 @@ object AgeFormat extends ShapeTag.Companion[AgeFormat] {
   )
 
   implicit val schema: Schema[AgeFormat] = constant(AgeFormat()).withId(id).addHints(hints)
-
 }

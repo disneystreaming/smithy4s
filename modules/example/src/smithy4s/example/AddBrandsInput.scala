@@ -18,5 +18,4 @@ object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
   ){
     AddBrandsInput.apply
   }.withId(id).addHints(hints)
-
 }

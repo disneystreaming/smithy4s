@@ -78,3 +78,4 @@ sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
   def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[BrandServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

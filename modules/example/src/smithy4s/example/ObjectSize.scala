@@ -14,5 +14,4 @@ object ObjectSize extends Newtype[Int] {
   )
   val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)
   implicit val schema: Schema[ObjectSize] = bijection(underlyingSchema, asBijection)
-
 }

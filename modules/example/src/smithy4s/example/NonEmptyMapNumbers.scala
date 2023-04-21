@@ -15,5 +15,4 @@ object NonEmptyMapNumbers extends Newtype[NonEmptyMap[String, Int]] {
   val hints: Hints = Hints.empty
   val underlyingSchema: Schema[NonEmptyMap[String, Int]] = map(string, int).refined[NonEmptyMap[String, Int]](smithy4s.example.NonEmptyMapFormat()).withId(id).addHints(hints)
   implicit val schema: Schema[NonEmptyMapNumbers] = bijection(underlyingSchema, asBijection)
-
 }

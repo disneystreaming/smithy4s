@@ -18,5 +18,4 @@ object GetStreamedObjectInput extends ShapeTag.Companion[GetStreamedObjectInput]
   ){
     GetStreamedObjectInput.apply
   }.withId(id).addHints(hints)
-
 }

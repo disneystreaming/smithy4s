@@ -19,5 +19,4 @@ object ListInput extends ShapeTag.Companion[ListInput] {
   ){
     ListInput.apply
   }.withId(id).addHints(hints)
-
 }

@@ -105,7 +105,6 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
     ){
       case c: MyOpErrorCase => MyOpErrorCase.alt(c)
     }
-
   }
 }
 
@@ -113,3 +112,4 @@ sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedO
   def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
+

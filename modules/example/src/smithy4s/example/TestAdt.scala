@@ -36,7 +36,6 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       AdtOne.apply
     }.withId(id).addHints(hints)
 
-
     val alt = schema.oneOf[TestAdt]("one")
   }
   case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt
@@ -53,7 +52,6 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       AdtTwo.apply
     }.withId(id).addHints(hints)
 
-
     val alt = schema.oneOf[TestAdt]("two")
   }
 
@@ -65,5 +63,4 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     case c: AdtOne => AdtOne.alt(c)
     case c: AdtTwo => AdtTwo.alt(c)
   }.withId(id).addHints(hints)
-
 }
