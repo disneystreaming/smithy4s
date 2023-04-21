@@ -13,7 +13,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): Eq[P] =  primitiveEq(tag)
+  ): Eq[P] = primitiveEq(tag)
 
   override def collection[C[_], A](
       shapeId: ShapeId,

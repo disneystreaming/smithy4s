@@ -1,16 +1,27 @@
-
 package smithy4s.catz
 
 import cats.Hash
-import cats.implicits.{catsKernelStdHashForList, catsKernelStdHashForOption, toContravariantOps}
-import smithy4s.{ Bijection, Hints, Lazy, Refinement, ShapeId}
+import cats.implicits.{
+  catsKernelStdHashForList,
+  catsKernelStdHashForOption,
+  toContravariantOps
+}
+import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
 import smithy4s.catz.instances.HashInstances._
-import smithy4s.schema.{Alt, CollectionTag, EnumValue, Field, Primitive, Schema, SchemaAlt, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  Alt,
+  CollectionTag,
+  EnumValue,
+  Field,
+  Primitive,
+  Schema,
+  SchemaAlt,
+  SchemaField,
+  SchemaVisitor
+}
 import smithy4s.schema.Alt.Precompiler
-object SchemaVisitorHash  extends SchemaVisitor[Hash] {self =>
-
-
+object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -97,22 +108,21 @@ object SchemaVisitorHash  extends SchemaVisitor[Hash] {self =>
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): Hash[U] = {
-        val precomputed: Precompiler[Schema, Hash] = new Precompiler[Schema,Hash] {
-          override def apply[A](label: String, instance: Schema[A]): Hash[A] =
-            self(instance)
-        }
-        implicit val encoderKHash: EncoderK[Hash, Int] = new EncoderK[Hash,Int] {
-          override def apply[A](fa: Hash[A], a: A): Int = fa.hash(a)
+    val precomputed: Precompiler[Schema, Hash] = new Precompiler[Schema, Hash] {
+      override def apply[A](label: String, instance: Schema[A]): Hash[A] =
+        self(instance)
+    }
+    implicit val encoderKHash: EncoderK[Hash, Int] = new EncoderK[Hash, Int] {
+      override def apply[A](fa: Hash[A], a: A): Int = fa.hash(a)
 
-          override def absorb[A](f: A => Int): Hash[A] = new Hash[A] {
-            override def hash(x: A): Int = f(x)
-            override def eqv(x: A, y: A): Boolean = f(x) == f(y)
-          }
-        }
-
-        dispatch.compile(precomputed)
+      override def absorb[A](f: A => Int): Hash[A] = new Hash[A] {
+        override def hash(x: A): Int = f(x)
+        override def eqv(x: A, y: A): Boolean = f(x) == f(y)
       }
+    }
 
+    dispatch.compile(precomputed)
+  }
 
   override def biject[A, B](
       schema: Schema[A],

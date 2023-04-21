@@ -5,7 +5,17 @@ import cats.implicits.toContravariantOps
 import smithy4s._
 import smithy4s.capability.EncoderK
 import smithy4s.catz.instances.ShowInstances._
-import smithy4s.schema.{Alt, CollectionTag, EnumValue, Field, Primitive, Schema, SchemaAlt, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  Alt,
+  CollectionTag,
+  EnumValue,
+  Field,
+  Primitive,
+  Schema,
+  SchemaAlt,
+  SchemaField,
+  SchemaVisitor
+}
 import smithy4s.schema.Alt.Precompiler
 
 object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
@@ -40,7 +50,6 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
       alternatives: Vector[SchemaAlt[U, _]],
       dispatch: Alt.Dispatcher[Schema, U]
   ): Show[U] = {
-
 
     val precomputed: Precompiler[Schema, Show] = new Precompiler[Schema, Show] {
       override def apply[A](label: String, instance: Schema[A]): Show[A] = {
