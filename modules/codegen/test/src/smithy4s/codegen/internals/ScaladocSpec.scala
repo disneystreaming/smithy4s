@@ -33,9 +33,9 @@ final class ScaladocSpec extends munit.FunSuite {
         |  int: Integer
         |  /// struct docs
         |  struct: UndocumentedStruct
-        |  
+        |
         |  @required
-        |  /// required before comment  
+        |  /// required before comment
         |  string: String
         |}
         |
@@ -57,14 +57,14 @@ final class ScaladocSpec extends munit.FunSuite {
          |  * @param struct
          |  *   struct docs
          |  */
-         |case class DocumentedStruct(int: Int, string: String, struct: Option[UndocumentedStruct] = None)""".stripMargin
+         |final case class DocumentedStruct(int: Int, string: String, struct: Option[UndocumentedStruct] = None)""".stripMargin
     )
 
     assertContainsSection(undocumentedStructCode, "/** @param boolean")(
       """|/** @param boolean
          |  *   boolean field
          |  */
-         |case class UndocumentedStruct(boolean: Option[Boolean] = None)""".stripMargin
+         |final case class UndocumentedStruct(boolean: Option[Boolean] = None)""".stripMargin
     )
 
   }

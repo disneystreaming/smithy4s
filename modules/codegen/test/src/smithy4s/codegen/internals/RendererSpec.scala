@@ -85,4 +85,44 @@ final class RendererSpec extends munit.FunSuite {
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
   }
+
+  test("structure must generate final case class") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |structure GetObjectInput {
+        |  key: String
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+    val requiredString = "final case class GetObjectInput(key: Option[String] = None)"
+    val caseClass = contents.find(_.contains(requiredString))
+
+    assert(caseClass.isDefined)
+  }
+
+  test("union should generate final case classes") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |union Foo {
+        | int: Integer,
+        | str: String
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+    val requiredIntCase = "final case class IntCase(int: Int)"
+    val requiredStrCase = "final case class StrCase(str: String)"
+
+    assert(contents.exists(_.contains(requiredIntCase)))
+    assert(contents.exists(_.contains(requiredStrCase)))
+  }
 }
