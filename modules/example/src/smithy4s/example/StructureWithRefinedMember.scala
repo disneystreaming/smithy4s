@@ -8,7 +8,7 @@ import smithy4s.example.refined.Age.provider._
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
-case class StructureWithRefinedMember(otherAge: Option[smithy4s.example.refined.Age] = None)
+final case class StructureWithRefinedMember(otherAge: Option[smithy4s.example.refined.Age] = None)
 object StructureWithRefinedMember extends ShapeTag.Companion[StructureWithRefinedMember] {
   val id: ShapeId = ShapeId("smithy4s.example", "StructureWithRefinedMember")
 

@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.struct
   *   int, bigInt and bDec are useful number constructs
   *   The string case is there because.
   */
-case class GetFooOutput(foo: Option[Foo] = None)
+final case class GetFooOutput(foo: Option[Foo] = None)
 object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetFooOutput")
 

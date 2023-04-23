@@ -68,7 +68,7 @@ object StreamedObjectsOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = new PolyFunction5[StreamedObjectsOperation, P] {
     def apply[I, E, O, SI, SO](op: StreamedObjectsOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class PutStreamedObject(input: PutStreamedObjectInput) extends StreamedObjectsOperation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
+  final case class PutStreamedObject(input: PutStreamedObjectInput) extends StreamedObjectsOperation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = impl.putStreamedObject(input.key)
     def endpoint: (PutStreamedObjectInput, smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]) = (input, PutStreamedObject)
   }
@@ -81,7 +81,7 @@ object StreamedObjectsOperation {
     val hints: Hints = Hints.empty
     def wrap(input: PutStreamedObjectInput) = PutStreamedObject(input)
   }
-  case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
+  final case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = impl.getStreamedObject(input.key)
     def endpoint: (GetStreamedObjectInput, smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]) = (input, GetStreamedObject)
   }
