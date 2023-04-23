@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-case class NotFoundError(error: Option[String] = None) extends Throwable {
+final case class NotFoundError(error: Option[String] = None) extends Throwable {
 }
 object NotFoundError extends ShapeTag.Companion[NotFoundError] {
   val id: ShapeId = ShapeId("smithy4s.example.error", "NotFoundError")

@@ -22,9 +22,9 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"),
   )
 
-  case class OnlineCase(online: OrderNumber) extends OrderType
+  final case class OnlineCase(online: OrderNumber) extends OrderType
   /** For an InStoreOrder a location ID isn't needed */
-  case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
+  final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
