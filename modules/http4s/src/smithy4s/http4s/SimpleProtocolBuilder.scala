@@ -58,10 +58,10 @@ abstract class SimpleProtocolBuilder[P](
       Alg[_[_, _, _, _, _]]
   ] private[http4s] (val service: smithy4s.Service[Alg]) { self =>
 
-    def client[F[_]: Async](client: Client[F]) =
+    def client[F[_]: Concurrent](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
 
-    def routes[F[_]: Async](
+    def routes[F[_]: Concurrent](
         impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder[Alg, F](
@@ -75,7 +75,7 @@ abstract class SimpleProtocolBuilder[P](
 
   class ClientBuilder[
       Alg[_[_, _, _, _, _]],
-      F[_]: Async
+      F[_]: Concurrent
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
