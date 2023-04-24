@@ -313,6 +313,10 @@ lazy val `aws-http4s` = projectMatrix
   .dependsOn(
     `aws-kernel`,
     `http4s-kernel`,
+    complianceTests % "test->compile",
+    dynamic % "test->compile",
+    tests % "test->compile",
+    testUtils % "test->compile",
     json,
     xml
   )
