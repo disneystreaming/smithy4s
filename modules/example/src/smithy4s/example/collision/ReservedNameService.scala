@@ -78,7 +78,7 @@ object ReservedNameServiceOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = new PolyFunction5[ReservedNameServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ReservedNameServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing] {
+  final case class _Set(input: SetInput) extends ReservedNameServiceOperation[SetInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[SetInput, Nothing, Unit, Nothing, Nothing] = impl.set(input.set)
     def endpoint: (SetInput, smithy4s.Endpoint[ReservedNameServiceOperation,SetInput, Nothing, Unit, Nothing, Nothing]) = (input, _Set)
   }
@@ -93,7 +93,7 @@ object ReservedNameServiceOperation {
     )
     def wrap(input: SetInput) = _Set(input)
   }
-  case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
+  final case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[ListInput, Nothing, Unit, Nothing, Nothing] = impl.list(input.list)
     def endpoint: (ListInput, smithy4s.Endpoint[ReservedNameServiceOperation,ListInput, Nothing, Unit, Nothing, Nothing]) = (input, _List)
   }
@@ -108,7 +108,7 @@ object ReservedNameServiceOperation {
     )
     def wrap(input: ListInput) = _List(input)
   }
-  case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
+  final case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[MapInput, Nothing, Unit, Nothing, Nothing] = impl.map(input.value)
     def endpoint: (MapInput, smithy4s.Endpoint[ReservedNameServiceOperation,MapInput, Nothing, Unit, Nothing, Nothing]) = (input, _Map)
   }
@@ -123,7 +123,7 @@ object ReservedNameServiceOperation {
     )
     def wrap(input: MapInput) = _Map(input)
   }
-  case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
+  final case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[OptionInput, Nothing, Unit, Nothing, Nothing] = impl.option(input.value)
     def endpoint: (OptionInput, smithy4s.Endpoint[ReservedNameServiceOperation,OptionInput, Nothing, Unit, Nothing, Nothing]) = (input, _Option)
   }

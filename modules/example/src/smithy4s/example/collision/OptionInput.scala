@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-case class OptionInput(value: Option[String] = None)
+final case class OptionInput(value: Option[String] = None)
 object OptionInput extends ShapeTag.Companion[OptionInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "OptionInput")
 
