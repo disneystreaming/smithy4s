@@ -21,7 +21,7 @@ import smithy4s.schema.Primitive
 import smithy4s.{ByteArray, Document, ShapeId, Timestamp}
 import smithy4s.kinds.PolyFunction
 
-trait ShowInstances {
+private[interopcats] trait ShowInstances {
 
   implicit val sId: Show[ShapeId] = Show.fromToString
   implicit val byteArray: Show[ByteArray] = Show.fromToString

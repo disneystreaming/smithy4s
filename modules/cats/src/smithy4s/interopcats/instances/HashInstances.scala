@@ -21,7 +21,7 @@ import smithy4s.{ByteArray, ShapeId, Timestamp}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Primitive
 
-trait HashInstances {
+private[interopcats] trait HashInstances {
 
   implicit val byteArrayHash: Hash[ByteArray] =
     new Hash[ByteArray] {
