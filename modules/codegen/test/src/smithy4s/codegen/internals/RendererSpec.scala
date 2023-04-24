@@ -99,7 +99,8 @@ final class RendererSpec extends munit.FunSuite {
         |""".stripMargin
 
     val contents = generateScalaCode(smithy).values
-    val requiredString = "final case class GetObjectInput(key: Option[String] = None)"
+    val requiredString =
+      "final case class GetObjectInput(key: Option[String] = None)"
     val caseClass = contents.find(_.contains(requiredString))
 
     assert(caseClass.isDefined)
