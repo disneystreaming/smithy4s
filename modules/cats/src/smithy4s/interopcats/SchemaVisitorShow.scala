@@ -56,7 +56,10 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
 
       case CollectionTag.VectorTag => Show[Vector[A]]
 
-      case CollectionTag.IndexedSeqTag => Show[Seq[A]].contramap(_.toIndexedSeq)
+      case CollectionTag.IndexedSeqTag =>
+        Show.show { seq =>
+          seq.map(showSchemaA.show).mkString("IndexedSeq(", ", ", ")")
+        }
     }
   }
 
@@ -69,7 +72,8 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
 
     val precomputed: Precompiler[Schema, Show] = new Precompiler[Schema, Show] {
       override def apply[A](label: String, instance: Schema[A]): Show[A] = {
-        self(instance)
+        val showUnion = self(instance)
+        (t: A) => s"${shapeId.name}($label = ${showUnion.show(t)})"
       }
     }
     implicit val encoderKShow: EncoderK[Show, String] =
@@ -78,7 +82,6 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
 
         override def absorb[A](f: A => String): Show[A] = Show.show(f)
       }
-
     dispatch.compile(precomputed)
 
   }
@@ -139,19 +142,18 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
         ): Show[Option[AA]] = {
           implicit val showAA: Show[AA] = self(instance)
           Show[Option[AA]]
-
         }
       }
       val showField = schemaField.foldK(folder)
-      s => showField.show(schemaField.get(s))
+      s => s"${schemaField.label} = ${showField.show(schemaField.get(s))}"
     }
 
-    val functions = fields.map { f => compileField(f) }
+    val functions = fields.map(f => compileField(f))
     Show.show { s =>
       val values = functions
         .map(f => f(s))
         .map { case (value) => s"$value" }
-        .mkString("(", ",", ")")
+        .mkString("(", ", ", ")")
       s"${shapeId.name}$values"
     }
   }

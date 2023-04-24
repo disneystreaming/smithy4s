@@ -16,7 +16,7 @@
 
 package smithy4s.interopcats
 
-import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
+import smithy4s.{ByteArray, ShapeId, Timestamp}
 import smithy4s.interopcats.SchemaVisitorShow
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
@@ -122,50 +122,36 @@ object ShowVisitorSpec extends FunSuite {
     case class Foo(x: String, y: Option[String])
     object Foo {
       val schema: Schema[Foo] = {
-        StructSchema(
-          ShapeId("", "Foo"),
-          Hints.empty,
-          Vector(
+        struct
+          .apply(
             string.required[Foo]("x", _.x),
             string.optional[Foo]("y", _.y)
-          ),
-          arr =>
-            Foo.apply(
-              arr(0).asInstanceOf[String],
-              arr(1).asInstanceOf[Option[String]]
-            )
-        )
+          )(Foo.apply)
+          .withId(ShapeId("", "Foo"))
 
       }
     }
     val foo = Foo("foo", Some("bar"))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(x = foo, y = Some(bar))")
   }
   test("struct: empty optional") {
     case class Foo(x: String, y: Option[String])
     object Foo {
       val schema: Schema[Foo] = {
-        StructSchema(
-          ShapeId("", "Foo"),
-          Hints.empty,
-          Vector(
+        struct
+          .apply(
             string.required[Foo]("x", _.x),
             string.optional[Foo]("y", _.y)
-          ),
-          arr =>
-            Foo.apply(
-              arr(0).asInstanceOf[String],
-              arr(1).asInstanceOf[Option[String]]
-            )
-        )
+          )(Foo.apply)
+          .withId(ShapeId("", "Foo"))
 
       }
     }
 
     val foo = Foo("foo", None)
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(x = foo, y = None)")
   }
 
   test("list") {
@@ -179,7 +165,7 @@ object ShowVisitorSpec extends FunSuite {
     }
     val foo = Foo(List(1, 2, 3))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(foos = List(1, 2, 3))")
   }
 
   test("set") {
@@ -193,7 +179,7 @@ object ShowVisitorSpec extends FunSuite {
     }
     val foo = Foo(Set(1, 2, 3))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(foos = Set(1, 2, 3))")
   }
   test("vector") {
     case class Foo(foos: Vector[Int])
@@ -206,7 +192,7 @@ object ShowVisitorSpec extends FunSuite {
     }
     val foo = Foo(Vector(1, 2, 3))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(foos = Vector(1, 2, 3))")
   }
   test("indexedSeq") {
     case class Foo(foos: IndexedSeq[Int])
@@ -219,7 +205,7 @@ object ShowVisitorSpec extends FunSuite {
     }
     val foo = Foo(IndexedSeq(1, 2, 3))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(foos = IndexedSeq(1, 2, 3))")
   }
 
   test("map") {
@@ -233,7 +219,7 @@ object ShowVisitorSpec extends FunSuite {
     }
     val foo = Foo(Map("foo" -> 1, "bar" -> 2))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(foos = Map(foo -> 1, bar -> 2))")
   }
 
   test("recursion") {
@@ -248,7 +234,7 @@ object ShowVisitorSpec extends FunSuite {
 
     val foo = Foo(Some(Foo(None)))
     val showOutput = schemaVisitorShow(Foo.schema).show(foo)
-    expect.eql(showOutput, foo.toString)
+    expect.eql(showOutput, "Foo(foo = Some(Foo(foo = None)))")
 
   }
 
@@ -257,8 +243,8 @@ object ShowVisitorSpec extends FunSuite {
     val foo1 = StringValue("foo")
     val showOutput0 = schemaVisitorShow(schema).show(foo0)
     val showOutput1 = schemaVisitorShow(schema).show(foo1)
-    expect.eql(showOutput0, "1")
-    expect.eql(showOutput1, "foo")
+    expect.eql(showOutput0, "IntOrString(intValue = 1)")
+    expect.eql(showOutput1, "IntOrString(stringValue = foo)")
 
   }
 
