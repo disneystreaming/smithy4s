@@ -68,8 +68,6 @@ sealed abstract class Field[F[_], S, A] {
     f(this.get(s))
 
   def contramap[S0](f: S0 => S): Field[F, S0, A]
-
-  def map[A1](f: A => A1): Field[F, S, A1]
 }
 
 object Field {
@@ -111,9 +109,6 @@ object Field {
 
     override def contramap[S0](f: S0 => S): Field[F, S0, A] =
       Required(label, instance, f.andThen(get))
-
-    override def map[A1](f: A => A1): Field[F, S, A1] =
-      Required(label, instance, get.andThen(f))
   }
 
   private final case class Optional[F[_], S, A](
@@ -144,9 +139,6 @@ object Field {
 
     override def contramap[S0](f: S0 => S): Field[F, S0, Option[A]] =
       Optional(label, instance, f.andThen(get))
-
-    override def map[A1](f: Option[A] => A1): Field[F, S, A1] =
-      Optional(label, instance, get.andThen(f))
   }
 
 
