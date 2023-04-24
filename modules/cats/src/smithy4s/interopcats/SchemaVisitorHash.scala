@@ -142,7 +142,7 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
 
       def absorb[A](f: A => (U => Boolean, Int)): AltHash[A] = new AltHash[A] {
         def eqv(a: A, u: U): Boolean = f(a)._1(u)
-        override def hash(a: A): Int = f(a)._2
+        def hash(a: A): Int = f(a)._2
       }
     }
 

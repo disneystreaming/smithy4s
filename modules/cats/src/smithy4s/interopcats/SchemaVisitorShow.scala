@@ -42,7 +42,7 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
       tag: Primitive[P]
   ): Show[P] = primShowPf(tag)
 
-  override def collection[C[`2`], A](
+  override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
       tag: CollectionTag[C],
