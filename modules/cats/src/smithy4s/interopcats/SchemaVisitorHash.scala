@@ -1,14 +1,43 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package smithy4s.interopcats
 
 import cats.Hash
-import cats.implicits.{catsKernelStdHashForList, catsKernelStdHashForOption, toContravariantOps}
-
+import cats.implicits.{
+  catsKernelStdHashForList,
+  catsKernelStdHashForOption,
+  toContravariantOps
+}
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
-import smithy4s.schema.{Alt, CollectionTag, EnumValue, Field, Primitive, Schema, SchemaAlt, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  Alt,
+  CollectionTag,
+  EnumValue,
+  Field,
+  Primitive,
+  Schema,
+  SchemaAlt,
+  SchemaField,
+  SchemaVisitor
+}
 
-
+import scala.util.hashing.MurmurHash3.productSeed
 
 object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
 
@@ -50,7 +79,8 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Hash[E] = {
-    implicit val enumValueHash: Hash[EnumValue[E]] = Hash[String].contramap(_.stringValue)
+    implicit val enumValueHash: Hash[EnumValue[E]] =
+      Hash[String].contramap(_.stringValue)
     Hash[EnumValue[E]].contramap(total)
   }
 
@@ -60,33 +90,34 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): Hash[S] = {
+    def forField[A2](field: Field[Schema, S, A2]): Hash[S] = {
+      val hashField: Hash[A2] =
+        field.foldK(new Field.FolderK[Schema, S, Hash]() {
+          override def onRequired[A](
+              label: String,
+              instance: Schema[A],
+              get: S => A
+          ): Hash[A] = self(instance)
+
+          override def onOptional[A](
+              label: String,
+              instance: Schema[A],
+              get: S => Option[A]
+          ): Hash[Option[A]] = {
+            implicit val hashA: Hash[A] = self(instance)
+            Hash[Option[A]]
+          }
+        })
+      hashField.contramap(field.get)
+    }
+    val hashInstances: Vector[Hash[S]] = fields.map(field => forField(field))
     new Hash[S] {
       override def hash(x: S): Int = {
-        def forField[A2](field: Field[Schema, S, A2]): Hash[S] = {
-          val hashField: Hash[A2] =
-            field.foldK(new Field.FolderK[Schema, S, Hash]() {
-              override def onRequired[A](
-                  label: String,
-                  instance: Schema[A],
-                  get: S => A
-              ): Hash[A] = self(instance)
-
-              override def onOptional[A](
-                  label: String,
-                  instance: Schema[A],
-                  get: S => Option[A]
-              ): Hash[Option[A]] = {
-                implicit val hashA: Hash[A] = self(instance)
-                Hash[Option[A]]
-              }
-            })
-          hashField.contramap(field.get)
-        }
-        fields.map(field => forField(field)).map(hash => hash.hash(x)).sum
+        val hashCodes = hashInstances.map(_.hash(x))
+        combineHash(productSeed, hashCodes: _*)
       }
       override def eqv(x: S, y: S): Boolean =
-        self.struct(shapeId, hints, fields, make).eqv(x, y)
-
+        hashInstances.forall(_.eqv(x, y))
     }
   }
 
@@ -100,19 +131,18 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
     // A version of `Hash` that assumes for the eqv method that the RHS is "up-casted" to U.
     trait AltHash[A] {
       def eqv(a: A, u: U): Boolean
-      def hash(a:A):Int
+      def hash(a: A): Int
     }
 
     // The encoded form that Eq works against is a partially-applied curried function.
-    implicit val encoderKInstance = new EncoderK[AltHash, (U => Boolean,Int)] {
-      def apply[A](fa: AltHash[A], a: A): (U => Boolean,Int) = {
-        ((u: U) =>
-        fa.eqv(a, u),fa.hash(a))
+    implicit val encoderKInstance = new EncoderK[AltHash, (U => Boolean, Int)] {
+      def apply[A](fa: AltHash[A], a: A): (U => Boolean, Int) = {
+        ((u: U) => fa.eqv(a, u), fa.hash(a))
       }
 
-      def absorb[A](f: A => (U => Boolean,Int)): AltHash[A] = new AltHash[A] {
+      def absorb[A](f: A => (U => Boolean, Int)): AltHash[A] = new AltHash[A] {
         def eqv(a: A, u: U): Boolean = f(a)._1(u)
-        override def hash(a:A): Int = f(a)._2
+        override def hash(a: A): Int = f(a)._2
       }
     }
 
@@ -121,7 +151,7 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
         // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
         // is lost in the precompiler.
         val altA =
-        alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+          alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
 
         val labelHash = Hash[String].hash(label)
 
@@ -135,8 +165,8 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
             case Some(a2) =>
               hashA.eqv(a, a2) // U is an A, we delegate the comparison
           }
-          override def hash(a:A): Int = {
-            combineHash(hashA.hash(a),labelHash)
+          override def hash(a: A): Int = {
+            combineHash(hashA.hash(a), labelHash)
           }
         }
       }
@@ -148,7 +178,6 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       def hash(x: U): Int = altHashU.hash(x)
     }
   }
-
 
   override def biject[A, B](
       schema: Schema[A],
