@@ -27,7 +27,6 @@ import weaver.scalacheck.Checkers
 
 import java.io.InputStream
 import java.time.Clock
-import java.time.Instant
 import java.time.ZoneId
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters._
@@ -122,11 +121,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
   ): IO[Expectations] = {
     import testInput._
 
-    val hardClock = new java.time.Clock {
-      override def instant(): Instant = smithy4sTimestamp.toInstant
-      override def getZone(): ZoneId = ZoneId.of("UTC")
-      override def withZone(zone: ZoneId): Clock = this
-    }
+    val fixedClock = Clock.fixed(smithy4sTimestamp.toInstant, ZoneId.of("UTC"))
 
     val creds = smithy4sCredentials.sessionToken match {
       case None =>
@@ -148,7 +143,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       .builder()
       .awsCredentials(creds)
       .signingRegion(region)
-      .signingClockOverride(hardClock)
+      .signingClockOverride(fixedClock)
       .signingName(serviceName)
       .build()
 
