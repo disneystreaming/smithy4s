@@ -27,5 +27,5 @@ object RecursiveFoo {
     recursive {
       val foos = schema.optional[RecursiveFoo]("foo", _.foo)
       struct(foos)(RecursiveFoo.apply)
-    }.withId(ShapeId("", "Foo"))
+    }.withId(ShapeId("", "RecursiveFoo"))
 }

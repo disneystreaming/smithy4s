@@ -20,6 +20,7 @@ import smithy4s.schema._
 import smithy4s.IntEnum
 import smithy4s.Document
 
+
 object CanonicalSmithyDecoder {
 
   /**

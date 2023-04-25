@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   example,
   tests,
   http4s,
+  cats,
   `http4s-kernel`,
   `http4s-swagger`,
   decline,

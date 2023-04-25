@@ -111,10 +111,12 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       hashField.contramap(field.get)
     }
     val hashInstances: Vector[Hash[S]] = fields.map(field => forField(field))
+    // similar to how productPrefix is used
+    val nameHash = Hash[String].hash(shapeId.name)
     new Hash[S] {
       override def hash(x: S): Int = {
         val hashCodes = hashInstances.map(_.hash(x))
-        combineHash(productSeed, hashCodes: _*)
+        combineHash(productSeed, nameHash +: hashCodes: _*)
       }
       override def eqv(x: S, y: S): Boolean =
         hashInstances.forall(_.eqv(x, y))
@@ -134,7 +136,7 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       def hash(a: A): Int
     }
 
-    // The encoded form that Eq works against is a partially-applied curried function.
+    // The encoded form that Hash works against for the eqV method, is a partially-applied curried function.
     implicit val encoderKInstance = new EncoderK[AltHash, (U => Boolean, Int)] {
       def apply[A](fa: AltHash[A], a: A): (U => Boolean, Int) = {
         ((u: U) => fa.eqv(a, u), fa.hash(a))
