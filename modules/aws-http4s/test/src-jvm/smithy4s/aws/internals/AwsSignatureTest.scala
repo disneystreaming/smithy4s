@@ -102,6 +102,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       timestamp <- Gen.chooseNum(0L, 4102444800L).map(Timestamp.fromEpochSecond)
       accessKeyId <- Gen.identifier
       secretAccessKey <- Gen.identifier
+      accessToken <- Gen.option(Gen.identifier)
       region <- Gen.oneOf(Region.regions().asScala)
       awsRequest <- genAwsRequest
     } yield {
@@ -109,7 +110,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
         serviceName,
         endpointName,
         timestamp,
-        AwsCredentials.Default(accessKeyId, secretAccessKey, None),
+        AwsCredentials.Default(accessKeyId, secretAccessKey, accessToken),
         AwsRegion(region.id()),
         awsRequest
       )
