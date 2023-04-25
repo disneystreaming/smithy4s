@@ -1,37 +1,36 @@
 package smithy4s.aws.internals
 
-import weaver._
-import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters._
-
+import cats.Show
+import cats.effect.IO
+import cats.effect.kernel.Async
+import cats.implicits._
+import org.http4s.Method
+import org.http4s.Request
+import org.http4s.Uri
+import org.scalacheck.Gen
+import org.typelevel.ci.CIString
+import smithy4s.Timestamp
+import smithy4s.aws.kernel.AwsCredentials
+import smithy4s.aws.kernel.AwsRegion
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
 import software.amazon.awssdk.auth.signer.Aws4Signer
+import software.amazon.awssdk.auth.signer.params.Aws4SignerParams
+import software.amazon.awssdk.http.ContentStreamProvider
 import software.amazon.awssdk.http.SdkHttpFullRequest
 import software.amazon.awssdk.http.SdkHttpMethod
-import software.amazon.awssdk.http.ContentStreamProvider
-import java.io.InputStream
+import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.utils.StringInputStream
-import software.amazon.awssdk.auth.signer.params.Aws4SignerParams
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import cats.effect.kernel.Async
-import org.http4s.Request
-import org.http4s.Method
-import org.http4s.Uri
-import smithy4s.aws.kernel.AwsRegion
-import smithy4s.Timestamp
+import weaver._
+import weaver.scalacheck.CheckConfig
+import weaver.scalacheck.Checkers
+
+import java.io.InputStream
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
-import java.time.Clock
-import smithy4s.aws.kernel.AwsCredentials
-import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
-import software.amazon.awssdk.regions.Region
-import cats.effect.IO
-import org.typelevel.ci.CIString
-import weaver.scalacheck.Checkers
-import org.scalacheck.Gen
-import cats.Show
-
-import cats.implicits._
-import weaver.scalacheck.CheckConfig
+import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters._
 
 /**
  * This suite verifies our implementation of the AWS signature algorithm against
@@ -62,27 +61,6 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
         }.whenA(result.run.isInvalid)
       }
     }
-
-  // val awsRequest = SdkHttpFullRequest
-  //   .builder()
-  //   .appendRawQueryParameter("Baz", "Baz")
-  //   .method(SdkHttpMethod.POST)
-  //   .uri(java.net.URI.create("https://foobar"))
-  //   .contentStreamProvider(new ContentStreamProvider {
-  //     def newStream(): InputStream = new StringInputStream("hello")
-  //   })
-  //   .build()
-
-  // testSignature(
-  //   TestInput(
-  //     "service",
-  //     "endpoint",
-  //     Timestamp.nowUTC(),
-  //     AwsCredentials.Default("keyId", "accessKey", None),
-  //     AwsRegion.US_EAST_1,
-  //     awsRequest
-  //   )
-  // )
   }
 
   case class TestInput(
@@ -101,7 +79,7 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       host <- Gen.identifier
       path <- Gen.listOf(Gen.identifier).map(_.mkString("/"))
       content <- Gen.asciiStr
-      queryParams <- Gen.listOfN(3, Gen.zip(Gen.identifier, Gen.alphaNumStr))
+      queryParams <- Gen.listOf(Gen.zip(Gen.identifier, Gen.alphaNumStr))
     } yield {
       val builder = SdkHttpFullRequest
         .builder()
@@ -127,16 +105,6 @@ object AwsSignatureTest extends SimpleIOSuite with Checkers {
       region <- Gen.oneOf(Region.regions().asScala)
       awsRequest <- genAwsRequest
     } yield {
-      // val awsRequest = SdkHttpFullRequest
-      //   .builder()
-      //   .appendRawQueryParameter("Baz", "Baz")
-      //   .method(SdkHttpMethod.POST)
-      //   .uri(java.net.URI.create("https://foobar"))
-      //   .contentStreamProvider(new ContentStreamProvider {
-      //     def newStream(): InputStream = new StringInputStream("hello")
-      //   })
-      //   .build()
-
       TestInput(
         serviceName,
         endpointName,

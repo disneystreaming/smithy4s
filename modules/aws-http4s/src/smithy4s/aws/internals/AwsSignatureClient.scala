@@ -95,7 +95,7 @@ private[aws] object AwsSigningClient {
       val awsHeadersF = (bodyF, timestamp, credentials, region).mapN { case (body, timestamp, credentials, region) =>
         val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
         val queryParams: Vector[(String, String)] =
-          request.uri.query.toVector.sortBy(_._1).map { case (k, v) => k -> v.getOrElse("") }
+          request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
         val canonicalQueryString =
           if (queryParams.isEmpty) ""
           else
