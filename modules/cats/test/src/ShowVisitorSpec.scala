@@ -21,11 +21,10 @@ import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver.FunSuite
 import smithy4s.interopcats.testcases.FooBar
-
 import smithy4s.interopcats.testcases.IntOrString.schema
 import smithy4s.interopcats.testcases.IntOrString._
 
-object ShowVisitorSpec extends FunSuite {
+object ShowVisitorSpec extends FunSuite with CompatProvider {
 
   val schemaVisitorShow = SchemaVisitorShow
 
@@ -76,7 +75,7 @@ object ShowVisitorSpec extends FunSuite {
     val schema: Schema[Double] = double
     val foo = 1.0
     val showOutput = schemaVisitorShow(schema).show(foo)
-    expect.eql(showOutput, "1.0")
+    expect.eql(showOutput, foo.toString)
 
   }
 
@@ -84,7 +83,7 @@ object ShowVisitorSpec extends FunSuite {
     val schema: Schema[Float] = float
     val foo = 1.0f
     val showOutput = schemaVisitorShow(schema).show(foo)
-    expect.eql(showOutput, "1.0")
+    expect.eql(showOutput, foo.toString)
   }
 
   test("bigint") {
@@ -111,8 +110,7 @@ object ShowVisitorSpec extends FunSuite {
 
   test("smithy4s timestamp") {
     val schema: Schema[Timestamp] = timestamp
-    val now = java.time.Instant.now()
-    val foo = Timestamp.fromEpochSecond(now.getEpochSecond)
+    val foo = getTimestamp
     val showOutput = schemaVisitorShow(schema).show(foo)
     expect.eql(showOutput, foo.toString)
   }

@@ -28,7 +28,7 @@ import weaver.FunSuite
 import scala.util.hashing.MurmurHash3.productSeed
 import HashTestUtils._
 
-object HashVisitorSpec extends FunSuite {
+object HashVisitorSpec extends FunSuite with CompatProvider {
 
   val visitor: SchemaVisitor[Hash] = SchemaVisitorHash
 
@@ -114,8 +114,7 @@ object HashVisitorSpec extends FunSuite {
 
   test("smithy4s timestamp") {
     val schema: Schema[Timestamp] = timestamp
-    val now = java.time.Instant.now()
-    val foo = Timestamp.fromEpochSecond(now.getEpochSecond)
+    val foo = getTimestamp
     val hashOutput = visitor(schema).hash(foo)
     expect.eql(foo.hashCode(), hashOutput)
   }
