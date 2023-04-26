@@ -105,7 +105,7 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
   }
 
   test(
-    "applying HttpResponseCode works on an enumeration with an intENum hint"
+    "applying HttpResponseCode works on an enumeration with an intEnum hint"
   ) {
 
     val res: ResponseCodeExtractor[SampleResponse1] =
