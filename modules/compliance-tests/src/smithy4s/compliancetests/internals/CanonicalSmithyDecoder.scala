@@ -32,6 +32,7 @@ import alloy.Discriminated
 
 object CanonicalSmithyDecoder {
 
+  private val decoder = new AwsDecoder()
 
   /**
     * Produces a document decoder that
@@ -42,20 +43,42 @@ object CanonicalSmithyDecoder {
   def fromSchema[A](
       schema: Schema[A]
   ): Document.Decoder[A] = {
-    Document.Decoder.fromSchema(
+    decoder.fromSchema(
       schema.transformHintsTransitively(_.filter(_.keyId == IntEnum.id))
     )
   }
 
-  private class SmithyNodeDocumentDecoderSchemaVisitor()
-    extends DocumentDecoderSchemaVisitor(CompilationCache.nop[Aux]) {
+  class AwsDecoder() extends CachedSchemaCompiler.Impl[Decoder] {
+
+    protected type Aux[A] = smithy4s.internals.DocumentDecoder[A]
+
+    def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache
+    ): Decoder[A] = {
+      val decodeFunction =
+        schema.compile(new SmithyNodeDocumentDecoderSchemaVisitor(cache))
+      new Decoder[A] {
+        def decode(a: Document): Either[PayloadError, A] =
+          try {
+            Right(decodeFunction(Nil, a))
+          } catch {
+            case e: PayloadError => Left(e)
+          }
+      }
+    }
+
+  }
+  private class SmithyNodeDocumentDecoderSchemaVisitor(
+      override val cache: CompilationCache[DocumentDecoder]
+  ) extends DocumentDecoderSchemaVisitor(cache) {
     self =>
     override def primitive[P](
-                               shapeId: ShapeId,
-                               hints: Hints,
-                               tag: Primitive[P]
-                             ): DocumentDecoder[P] = tag match {
-      case PFloat => float
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: Primitive[P]
+    ): DocumentDecoder[P] = tag match {
+      case PFloat  => float
       case PDouble => double
       case PTimestamp =>
         DocumentDecoder.instance("Timestamp", "Number") {
@@ -88,26 +111,26 @@ object CanonicalSmithyDecoder {
     }
 
     override def struct[S](
-                            shapeId: ShapeId,
-                            hints: Hints,
-                            fields: Vector[SchemaField[S, _]],
-                            make: IndexedSeq[Any] => S
-                          ): DocumentDecoder[S] = {
+        shapeId: ShapeId,
+        hints: Hints,
+        fields: Vector[SchemaField[S, _]],
+        make: IndexedSeq[Any] => S
+    ): DocumentDecoder[S] = {
       def fieldDecoder[A](
-                           field: Field[Schema, S, A]
-                         ): (
-        List[PayloadPath.Segment],
+          field: Field[Schema, S, A]
+      ): (
+          List[PayloadPath.Segment],
           Any => Unit,
           Map[String, Document]
-        ) => Unit = {
+      ) => Unit = {
         val jLabel = field.label
         val maybeDefault = field.instance.getDefault
 
         if (field.isOptional) {
           (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
           ) =>
             val path = PayloadPath.Segment(jLabel) :: pp
             fields
@@ -119,9 +142,9 @@ object CanonicalSmithyDecoder {
             }
         } else {
           (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
           ) =>
             val path = PayloadPath.Segment(jLabel) :: pp
             fields
@@ -151,11 +174,11 @@ object CanonicalSmithyDecoder {
     }
 
     override def union[U](
-                           shapeId: ShapeId,
-                           hints: Hints,
-                           alternatives: Vector[SchemaAlt[U, _]],
-                           dispatch: Alt.Dispatcher[Schema, U]
-                         ): DocumentDecoder[U] = {
+        shapeId: ShapeId,
+        hints: Hints,
+        alternatives: Vector[SchemaAlt[U, _]],
+        dispatch: Alt.Dispatcher[Schema, U]
+    ): DocumentDecoder[U] = {
 
       val decoders: DecoderMap[U] =
         alternatives.map { case Alt(label, instance, inject) =>
@@ -174,8 +197,8 @@ object CanonicalSmithyDecoder {
     }
 
     private def handleUnion[S](
-                                f: (List[PayloadPath.Segment], Document) => S
-                              ): DocumentDecoder[S] =
+        f: (List[PayloadPath.Segment], Document) => S
+    ): DocumentDecoder[S] =
       new DocumentDecoder[S] {
         def expected: String = "Union"
 
@@ -187,9 +210,9 @@ object CanonicalSmithyDecoder {
       Map[String, (List[PayloadPath.Segment], Document) => S]
 
     private def discriminatedUnion[S](
-                                       discriminated: Discriminated,
-                                       decoders: DecoderMap[S]
-                                     ): DocumentDecoder[S] = handleUnion {
+        discriminated: Discriminated,
+        decoders: DecoderMap[S]
+    ): DocumentDecoder[S] = handleUnion {
       (pp: List[PayloadPath.Segment], document: Document) =>
         document match {
           case DObject(map) =>
@@ -223,8 +246,8 @@ object CanonicalSmithyDecoder {
     }
 
     private def taggedUnion[S](
-                                decoders: DecoderMap[S]
-                              ): DocumentDecoder[S] = handleUnion {
+        decoders: DecoderMap[S]
+    ): DocumentDecoder[S] = handleUnion {
       (pp: List[PayloadPath.Segment], document: Document) =>
         document match {
           case DObject(map) if (map.size == 1) =>

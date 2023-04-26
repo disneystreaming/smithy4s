@@ -105,7 +105,7 @@ private[internals] object assert {
         headers
           .get(CIString(key))
           .map { v =>
-            assert.eql[String](v.head.value,expectedValue, s"Header $key: ")
+            assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
           }
           .getOrElse(
             assert.fail(s"'$key' header is missing")

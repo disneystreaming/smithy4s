@@ -443,7 +443,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   def timestampJCodec(
       hints: Hints,
-      defaultTimestamp: TimestampFormat = TimestampFormat.DATE_TIME
+      defaultTimestamp: TimestampFormat = TimestampFormat.EPOCH_SECONDS
   ): JCodec[Timestamp] = {
     hints.get(TimestampFormat).getOrElse(defaultTimestamp) match {
       case TimestampFormat.DATE_TIME => PrimitiveJCodecs.timestampDateTime
