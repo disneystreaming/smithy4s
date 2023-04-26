@@ -41,7 +41,6 @@ object AwsClient {
       awsService <- service.hints
         .get(AwsService)
         .toRight(AwsClientInitialisationError.NotAws(service.id))
-      // endpointPrefix = awsService.endpointPrefix.getOrElse(service.id.name)
       awsProtocol <- AwsProtocol(service.hints).toRight(
         AwsClientInitialisationError.UnsupportedProtocol(
           serviceId = service.id,

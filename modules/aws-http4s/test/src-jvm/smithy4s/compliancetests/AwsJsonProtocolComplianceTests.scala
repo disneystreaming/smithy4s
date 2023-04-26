@@ -79,7 +79,6 @@ object AwsJsonProtocolComplianceTests
           .clientTests(
             reverseRouter,
             wrapper.service
-
           )
       })
   }
