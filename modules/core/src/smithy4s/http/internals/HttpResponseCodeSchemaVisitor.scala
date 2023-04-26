@@ -18,10 +18,22 @@ package smithy4s.http.internals
 
 import smithy4s.capability.Contravariant
 import smithy4s.Hints
-import smithy4s.schema.{EnumValue, Field, Primitive, Schema, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  EnumValue,
+  Field,
+  Primitive,
+  Schema,
+  SchemaField,
+  SchemaVisitor
+}
 import smithy4s.ShapeId
 import smithy4s.IntEnum
-import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{NoResponseCode, OptionalResponseCode, RequiredResponseCode, ResponseCodeExtractor}
+import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
+  NoResponseCode,
+  OptionalResponseCode,
+  RequiredResponseCode,
+  ResponseCodeExtractor
+}
 
 class HttpResponseCodeSchemaVisitor()
     extends SchemaVisitor.Default[ResponseCodeExtractor] {
@@ -40,14 +52,19 @@ class HttpResponseCodeSchemaVisitor()
     case _ => NoResponseCode
   }
 
-
-  override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): ResponseCodeExtractor[E] =
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): ResponseCodeExtractor[E] =
     if (hints.has[smithy.api.HttpResponseCode] && hints.has[IntEnum]) {
-      Contravariant[ResponseCodeExtractor].contramap(HttpResponseCodeSchemaVisitor.int)(e => total(e).intValue)
+      Contravariant[ResponseCodeExtractor].contramap(
+        HttpResponseCodeSchemaVisitor.int
+      )(e => total(e).intValue)
     } else {
       NoResponseCode
     }
-
 
   override def struct[S](
       shapeId: ShapeId,
