@@ -350,7 +350,7 @@ lazy val `aws-http4s` = projectMatrix
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
       ),
       libraryDependencies ++= Seq(
-        "software.amazon.awssdk" % "aws-core" % "2.20.49"
+        "software.amazon.awssdk" % "aws-core" % "2.20.49" % Test
       )
     )
   )
