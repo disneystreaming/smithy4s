@@ -282,13 +282,22 @@ object HashVisitorSpec extends FunSuite {
     expect.eql(expect2, hashOutput1)
   }
 
-  test("enumeration") {
+  test("default enum") {
     val foo = FooBar.Foo
     val hashOutput = visitor(FooBar.schema).hash(foo)
     val bar = FooBar.Bar
     val hashOutput1 = visitor(FooBar.schema).hash(bar)
     expect.eql(foo.stringValue.hashCode(), hashOutput)
     expect.eql(bar.stringValue.hashCode(), hashOutput1)
+  }
+
+  test("int enum") {
+    val foo = IntFooBar.Foo
+    val hashOutput = visitor(IntFooBar.schema).hash(foo)
+    val bar = IntFooBar.Bar
+    val hashOutput1 = visitor(IntFooBar.schema).hash(bar)
+    expect.eql(foo.intValue.hashCode(), hashOutput)
+    expect.eql(bar.intValue.hashCode(), hashOutput1)
   }
 
 }

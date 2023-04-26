@@ -81,7 +81,14 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
       total: E => EnumValue[E]
   ): Hash[E] = {
     implicit val enumValueHash: Hash[EnumValue[E]] =
-      Hash[String].contramap(_.stringValue)
+      if (
+        hints
+          .has(smithy4s.IntEnum)
+      )
+        Hash[Int].contramap(_.intValue)
+      else
+        Hash[String].contramap[EnumValue[E]](_.stringValue)
+
     Hash[EnumValue[E]].contramap(total)
   }
 
