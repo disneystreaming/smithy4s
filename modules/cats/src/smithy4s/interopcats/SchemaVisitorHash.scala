@@ -55,10 +55,11 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
   ): Hash[C[A]] = {
     implicit val memberHash: Hash[A] = self(member)
     tag match {
-      case CollectionTag.ListTag       => Hash[List[A]]
-      case CollectionTag.SetTag        => Hash[Set[A]]
-      case CollectionTag.VectorTag     => Hash[Vector[A]]
-      case CollectionTag.IndexedSeqTag => Hash[Seq[A]].contramap(_.toIndexedSeq)
+      case CollectionTag.ListTag   => Hash[List[A]]
+      case CollectionTag.SetTag    => Hash[Set[A]]
+      case CollectionTag.VectorTag => Hash[Vector[A]]
+      case CollectionTag.IndexedSeqTag =>
+        Hash[scala.collection.immutable.Seq[A]].contramap(_.toIndexedSeq)
     }
   }
 

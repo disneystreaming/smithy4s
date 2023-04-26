@@ -17,7 +17,6 @@
 package smithy4s.interopcats
 
 import smithy4s.{ByteArray, ShapeId, Timestamp}
-import smithy4s.interopcats.SchemaVisitorShow
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver.FunSuite

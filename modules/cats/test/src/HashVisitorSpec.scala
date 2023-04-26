@@ -20,7 +20,6 @@ import cats.Hash
 import smithy4s.schema.Schema._
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
-import smithy4s.interopcats.SchemaVisitorHash
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases._
 import smithy4s.interopcats.testcases.IntOrString._
