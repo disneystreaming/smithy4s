@@ -567,7 +567,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.10.0",
       Dependencies.Cats.core.value
     ),
     libraryDependencies ++= List
