@@ -57,7 +57,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       .flatMap { case (schemaIndex, allowRules) =>
         fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
       }
-      .parEvalMapUnbounded { case (allowRules, test) =>
+      .evalMap { case (allowRules, test) =>
         runInWeaver(allowRules, test)
       }
   }
@@ -179,10 +179,9 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
           }
 
       } else
-        tc.run.map(res => expectFailure(res)).attempt.map {
-          case Right(expectations) => expectations
-          case Left(_)             => Expectations.Helpers.success
-        }
+        tc.run.attempt
+          .map(_.fold(t => Left(t.toString), identity))
+          .map(res => expectFailure(res))
     }
 
     Test(
@@ -203,6 +202,16 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   def expectFailure(
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
-    res.foldMap(_ => Expectations.Helpers.success)
+    res.bifoldMap(
+      reason =>
+        throw new weaver.IgnoredException(
+          Some(reason),
+          weaver.SourceLocation.fromContext
+        ),
+      _ =>
+        Expectations.Helpers.failure(
+          "expected failure but got success, please update the Allow list"
+        )
+    )
   }
 }
