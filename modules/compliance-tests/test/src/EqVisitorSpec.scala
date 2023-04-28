@@ -21,7 +21,7 @@ import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
 import smithy4s.{ByteArray, Enumeration, Hints, ShapeId, Timestamp}
-import weaverimpl.{Expectations, FunSuite}
+import weaver.{Expectations, FunSuite}
 
 object EqVisitorSpec extends FunSuite {
 
