@@ -30,6 +30,8 @@ final case class AllowRules(allowList: Vector[AllowRule]) {
 }
 
 object AllowRules {
+
+  val empty: AllowRules = AllowRules(Vector.empty)
   implicit val schema: Schema[AllowRules] = {
     val allowListField = Schema
       .vector(AllowRule.schema)

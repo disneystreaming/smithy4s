@@ -17,7 +17,7 @@
 package smithy4s.compliancetests
 
 import smithy4s.compliancetests.internals.parseList
-import weaver._
+import weaverimpl._
 object ComplianceUtilsSpec extends FunSuite {
 
   test(

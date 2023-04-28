@@ -789,7 +789,7 @@ lazy val transformers = projectMatrix
 
 lazy val complianceTests = projectMatrix
   .in(file("modules/compliance-tests"))
-  .dependsOn(core)
+  .dependsOn(core,dynamic)
   .settings(
     name := "compliance-tests",
     Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
@@ -800,7 +800,7 @@ lazy val complianceTests = projectMatrix
         Dependencies.Circe.parser.value,
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
-        Dependencies.Weaver.cats.value % Test,
+        Dependencies.Weaver.cats.value ,
         Dependencies.Pprint.core.value
       )
     }
