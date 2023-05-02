@@ -338,6 +338,9 @@ lazy val `aws-http4s` = projectMatrix
       "com.amazonaws.dynamodb",
       "smithy4s.example.aws"
     ),
+    Test / smithySpecs ++= Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
+    ),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     scalacOptions ++= Seq(
       "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
@@ -365,9 +368,11 @@ lazy val `aws-http4s` = projectMatrix
     latest2ScalaVersions,
     jvmDimSettings ++ Seq(
       Test / smithySpecs ++= Seq(
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
+      ),
+      libraryDependencies ++= Seq(
+        "software.amazon.awssdk" % "aws-core" % "2.20.49" % Test
       )
     )
   )
