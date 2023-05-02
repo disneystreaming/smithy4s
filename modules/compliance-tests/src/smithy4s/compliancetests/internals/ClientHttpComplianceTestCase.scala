@@ -73,18 +73,18 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     val pathAssert =
       assert.eql(
-        expectedUri.path.renderString,
         request.uri.path.renderString,
+        expectedUri.path.renderString,
         "path test :"
       )
     val queryAssert = assert.eql(
-      expectedUri.query.renderString,
       request.uri.query.renderString,
+      expectedUri.query.renderString,
       "query test :"
     )
     val methodAssert = assert.eql(
-      testCase.method.toLowerCase(),
       request.method.name.toLowerCase(),
+      testCase.method.toLowerCase(),
       "method test :"
     )
     val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:

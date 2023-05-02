@@ -32,8 +32,6 @@ import alloy.Discriminated
 
 object CanonicalSmithyDecoder {
 
-  private val decoder = new AwsDecoder()
-
   /**
     * Produces a document decoder that
     *
@@ -48,7 +46,7 @@ object CanonicalSmithyDecoder {
     )
   }
 
-  class AwsDecoder() extends CachedSchemaCompiler.Impl[Decoder] {
+  private object decoder extends CachedSchemaCompiler.Impl[Decoder] {
 
     protected type Aux[A] = smithy4s.internals.DocumentDecoder[A]
 
