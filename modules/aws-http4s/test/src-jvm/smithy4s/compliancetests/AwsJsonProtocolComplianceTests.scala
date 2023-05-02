@@ -28,9 +28,11 @@ object AwsJsonProtocolComplianceTests
       awsJson1_1(dsi) ++ awsJson1_0(dsi)
 
     // filtering out Null operation as we dont support sparse yet
+    // filtering out HostWithPathOperation as this would be taken-care of by middleware.
     fs2.Stream
       .evals(dynamicSchemaIndexLoader.map(all(_)))
       .filterNot(_.endpoint.name.contains("NullOperation"))
+      .filterNot(_.endpoint.name.contains("HostWithPathOperation"))
       .parEvalMapUnbounded(runInWeaver)
   }
 
