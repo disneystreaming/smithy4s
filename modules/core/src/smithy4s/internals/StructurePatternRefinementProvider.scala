@@ -78,8 +78,15 @@ object StructurePatternRefinementProvider {
       )
     }
 
-  private def decode[A](c: StructurePattern): String => Either[String, A] =
-    _ => Left("")
+  private def decode[A](c: StructurePattern)(implicit
+      sch: Schema[A]
+  ): String => Either[String, A] = {
+    val segments = PatternSegment.segmentsFromString(c.pattern)
+    val decoder = new SchemaVisitorPatternDecoder(segments)(sch).getOrElse(
+      throw new Exception("Unable to decode") // TODO: Better error here
+    )
+    (input: String) => Right(decoder.decode(input))
+  }
 
   private def encode[A](c: StructurePattern)(implicit
       sch: Schema[A]
@@ -91,7 +98,7 @@ object StructurePatternRefinementProvider {
         .getOrElse(
           throw new Exception("Unable to encode") // TODO: Better error here
         )
-    input: A => {
+    (input: A) => {
       val result = encoder.encode(input)
       result.mkString
     }
