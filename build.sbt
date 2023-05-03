@@ -225,6 +225,7 @@ lazy val core = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "recursive.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservednames.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "resources.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "untagged.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather.smithy"
     ),
@@ -840,7 +841,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     libraryDependencies += Dependencies.Http4s.emberServer.value,

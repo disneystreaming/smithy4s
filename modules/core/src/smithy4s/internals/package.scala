@@ -22,4 +22,15 @@ package object internals {
     SchemaDescriptionDetailedImpl.andThen(
       SchemaDescriptionDetailedImpl.conversion
     )
+
+  private[internals] implicit class vectorOps[A](val vector: Vector[A])
+      extends AnyVal {
+    def traverse[B](f: A => Option[B]): Option[Vector[B]] =
+      vector.foldLeft[Option[Vector[B]]](Some(Vector.empty)) { (result, a) =>
+        for {
+          acc <- result
+          b <- f(a)
+        } yield (acc.:+(b))
+      }
+  }
 }

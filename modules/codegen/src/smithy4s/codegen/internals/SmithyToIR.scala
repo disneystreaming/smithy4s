@@ -25,6 +25,7 @@ import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
+import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
@@ -519,7 +520,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       private def getExternalTypeInfo(
           shape: Shape
-      ): Option[(Trait, RefinementTrait)] = {
+      ): Option[(Trait, Either[RefinementTrait, StructurePatternTrait])] = {
         shape
           .getAllTraits()
           .asScala
@@ -528,27 +529,42 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               .getShape(trt.toShapeId)
               .asScala
               .flatMap(_.getTrait(classOf[RefinementTrait]).asScala)
-              .map(trt -> _)
+              .map(rt => trt -> Left(rt))
           }
           .headOption // Shapes can have at most ONE trait that has the refined trait
+          .orElse {
+            shape.getTrait(classOf[StructurePatternTrait]).asScala.map { trt =>
+              trt -> Right(trt)
+            }
+          }
       }
 
       private def getExternalOrBase(shape: Shape, base: Type): Type = {
         getExternalTypeInfo(shape)
-          .map { case (trt, refined) =>
-            val baseTypeParams = base match {
-              case c: Type.Collection => List(c.member)
-              case m: Type.Map        => List(m.key, m.value)
-              case other              => List(other)
-            }
-            Type.ExternalType(
-              shape.name,
-              refined.getTargetType(),
-              if (refined.isParameterised) baseTypeParams else List.empty,
-              refined.getProviderImport().asScala,
-              base,
-              unfoldTrait(trt)
-            )
+          .map {
+            case (trt, Left(refined)) =>
+              val baseTypeParams = base match {
+                case c: Type.Collection => List(c.member)
+                case m: Type.Map        => List(m.key, m.value)
+                case other              => List(other)
+              }
+              Type.ExternalType(
+                shape.name,
+                refined.getTargetType(),
+                if (refined.isParameterised) baseTypeParams else List.empty,
+                refined.getProviderImport().asScala,
+                base,
+                unfoldTrait(trt)
+              )
+            case (trt, Right(pattern)) =>
+              Type.ExternalType(
+                shape.name,
+                s"${pattern.getTarget.namespace}.${pattern.getTarget.name}",
+                List.empty,
+                Some("smithy4s.internals.StructurePatternRefinementProvider._"),
+                base,
+                unfoldTrait(trt)
+              )
           }
           .getOrElse(base)
       }

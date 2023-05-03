@@ -29,6 +29,7 @@ package object example {
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
