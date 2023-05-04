@@ -3,6 +3,7 @@ package smithy4s.internals
 import munit._
 import smithy4s._
 import smithy4s.schema.Schema._
+import java.util.UUID
 
 final class StructurePatternRefinementProviderSpec extends FunSuite {
 
@@ -26,49 +27,163 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
 
   test("decoding") {
     val s = TestStruct("blah", 101)
-    runDecode("__{one}-{two}$$", "__blah-101$$", Right(s))
-    runDecode("{one}-{two}$$", "blah-101$$", Right(s))
-    runDecode("__{one}-{two}", "__blah-101", Right(s))
-    runDecode("{one}-++-{two}", "blah-++-101", Right(s))
-    runDecode("(({one}))(({two}))", "((blah))((101))", Right(s))
+    runDecode("__{one}-{two}$$", "__blah-101$$", s)
+    runDecode("{one}-{two}$$", "blah-101$$", s)
+    runDecode("__{one}-{two}", "__blah-101", s)
+    runDecode("{one}-++-{two}", "blah-++-101", s)
+    runDecode("(({one}))(({two}))", "((blah))((101))", s)
+    runDecode("{two}-{one}", "101-blah", s)
+    // negative number (-101)
+    runDecode("{one}-{two}", "blah--101", s.copy(two = -101))
+    runDecode("{one}${two}", "blah$$101", s, shouldFail = true)
+    runDecode("{one}-{two}", "bl-ah-101", s, shouldFail = true)
+    runDecode("{one}-{two}", "blah-", s, shouldFail = true)
+    runDecode("{one}-{two}", "blah", s, shouldFail = true)
+    runDecode("{one}-{two}", "-101", s, shouldFail = true)
+    runDecode("{one}-{two}", "101-blah", s, shouldFail = true)
   }
 
-  private def runEncode(pattern: String, input: TestStruct, expect: String)(
-      implicit loc: Location
+  sealed abstract class SomeEnum(
+      _value: String,
+      _name: String,
+      _intValue: Int,
+      _hints: Hints
+  ) extends Enumeration.Value {
+    override type EnumType = SomeEnum
+    override val value: String = _value
+    override val name: String = _name
+    override val intValue: Int = _intValue
+    override val hints: Hints = _hints
+
+    override def enumeration: Enumeration[EnumType] = SomeEnum
+
+    @inline final def widen: SomeEnum = this
+  }
+  object SomeEnum
+      extends Enumeration[SomeEnum]
+      with ShapeTag.Companion[SomeEnum] {
+    case object ONE extends SomeEnum("ONE", "ONE", 1, Hints())
+    case object TWO extends SomeEnum("TWO", "TWO", 2, Hints())
+
+    val id: ShapeId = ShapeId("test", "SomeEnum")
+
+    val hints: Hints = Hints()
+
+    val values = List(ONE, TWO)
+
+    implicit val schema: Schema[SomeEnum] =
+      enumeration(values).withId(id).addHints(hints)
+  }
+
+  case class Primitives(
+      a: Short,
+      b: Int,
+      c: Float,
+      d: Long,
+      e: Double,
+      f: BigInt,
+      g: BigDecimal,
+      h: Boolean,
+      i: String,
+      j: UUID,
+      k: Byte,
+      l: Timestamp,
+      m: SomeEnum
+  )
+
+  object Primitives {
+    implicit val schema: Schema[Primitives] =
+      struct(
+        short.required[Primitives]("a", _.a),
+        int.required[Primitives]("b", _.b),
+        float.required[Primitives]("c", _.c),
+        long.required[Primitives]("d", _.d),
+        double.required[Primitives]("e", _.e),
+        bigint.required[Primitives]("f", _.f),
+        bigdecimal.required[Primitives]("g", _.g),
+        boolean.required[Primitives]("h", _.h),
+        string.required[Primitives]("i", _.i),
+        uuid.required[Primitives]("j", _.j),
+        byte.required[Primitives]("k", _.k),
+        timestamp.required[Primitives]("l", _.l),
+        SomeEnum.schema.required[Primitives]("m", _.m)
+      )(Primitives.apply)
+  }
+
+  test("primitives") {
+    val in = Primitives(
+      1,
+      2,
+      3.0f,
+      4,
+      5.0,
+      BigInt(6),
+      BigDecimal(7),
+      true,
+      "something",
+      UUID.fromString("246365e6-1665-488a-9ec8-4cc916dc88f6"),
+      'a'.toByte,
+      Timestamp(0, 0),
+      SomeEnum.ONE
+    )
+    val pattern = "{a}_{b}_{c}_{d}_{e}_{f}_{g}_{h}_{i}_{j}_{k}_{l}_{m}"
+    val expect =
+      "1_2_3.0_4_5.0_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE"
+    runEncode(pattern, in, expect)
+  }
+
+  private def runEncode[A](pattern: String, input: A, expect: String)(implicit
+      sch: Schema[A],
+      loc: Location
   ): Unit = {
     val result = StructurePatternRefinementProvider
-      .provider[TestStruct]
+      .provider[A]
       .make(
         alloy
           .StructurePattern(
             pattern = pattern,
-            target = "test#TestStruct"
+            target = ""
           )
       )
       .from(input)
 
     assertEquals(expect, result)
+
+    val roundTrip = decode(pattern, result)
+
+    assertEquals(input, roundTrip)
   }
 
-  private def runDecode(
+  private def decode[A](
       pattern: String,
-      input: String,
-      expect: Either[String, TestStruct]
-  )(implicit
-      loc: Location
-  ): Unit = {
-    val result = StructurePatternRefinementProvider
-      .provider[TestStruct]
+      input: String
+  )(implicit sch: Schema[A]): A = {
+    StructurePatternRefinementProvider
+      .provider[A]
       .make(
         alloy
           .StructurePattern(
             pattern = pattern,
-            target = "test#TestStruct"
+            target = ""
           )
       )
       .apply(input)
+      .toOption
+      .get
+  }
 
-    assertEquals(expect, result)
+  private def runDecode[A](
+      pattern: String,
+      input: String,
+      expect: A,
+      shouldFail: Boolean = false
+  )(implicit sch: Schema[A], loc: Location): Unit = {
+    val result = util.Try {
+      decode(pattern, input)
+    }
+
+    if (shouldFail) assert(result.isFailure)
+    else assertEquals(expect, result.toOption.get)
   }
 
 }

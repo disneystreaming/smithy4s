@@ -2,68 +2,11 @@ package smithy4s.internals
 
 import alloy.StructurePattern
 import smithy4s._
-import annotation.tailrec
+import scala.util.control.NoStackTrace
 
-sealed abstract class PatternSegment(value: String)
-    extends Product
-    with Serializable {
-  def append(char: Char): PatternSegment
-}
-object PatternSegment {
-  final case class StaticSegment(val value: String)
-      extends PatternSegment(value) {
-    override def append(char: Char): PatternSegment =
-      this.copy(value = this.value + char)
-  }
-  final case class ParameterSegment(val value: String)
-      extends PatternSegment(value) {
-    override def append(char: Char): PatternSegment =
-      this.copy(value = this.value + char)
-  }
-
-  def segmentsFromString(str: String): List[PatternSegment] = {
-    @tailrec
-    def loop(
-        remainingStr: String,
-        currentSegment: Option[PatternSegment],
-        segmentsSoFar: List[PatternSegment]
-    ): List[PatternSegment] = remainingStr.headOption match {
-      case Some(nextChar) =>
-        currentSegment match {
-          case None =>
-            if (nextChar == '{')
-              loop(
-                remainingStr.tail,
-                Some(PatternSegment.ParameterSegment("")),
-                segmentsSoFar
-              )
-            else
-              loop(
-                remainingStr.tail,
-                Some(PatternSegment.StaticSegment(nextChar.toString)),
-                segmentsSoFar
-              )
-          case Some(s: PatternSegment.StaticSegment) =>
-            if (nextChar == '{')
-              loop(
-                remainingStr.tail,
-                Some(PatternSegment.ParameterSegment("")),
-                segmentsSoFar :+ s
-              )
-            else
-              loop(remainingStr.tail, Some(s.append(nextChar)), segmentsSoFar)
-          case Some(p: PatternSegment.ParameterSegment) =>
-            if (nextChar == '}')
-              loop(remainingStr.tail, None, segmentsSoFar :+ p)
-            else
-              loop(remainingStr.tail, Some(p.append(nextChar)), segmentsSoFar)
-        }
-      case None => segmentsSoFar ++ currentSegment
-    }
-    loop(str, None, List.empty)
-  }
-
-}
+final case class StructurePatternError(message: String)
+    extends RuntimeException(message)
+    with NoStackTrace
 
 object StructurePatternRefinementProvider {
   implicit def provider[A](implicit
@@ -83,7 +26,7 @@ object StructurePatternRefinementProvider {
   ): String => Either[String, A] = {
     val segments = PatternSegment.segmentsFromString(c.pattern)
     val decoder = new SchemaVisitorPatternDecoder(segments)(sch).getOrElse(
-      throw new Exception("Unable to decode") // TODO: Better error here
+      throw StructurePatternError("Unable to create decoder")
     )
     (input: String) => Right(decoder.decode(input))
   }
@@ -96,7 +39,7 @@ object StructurePatternRefinementProvider {
     val encoder =
       new SchemaVisitorPatternEncoder(segments)(sch)
         .getOrElse(
-          throw new Exception("Unable to encode") // TODO: Better error here
+          throw StructurePatternError("Unable to create encoder")
         )
     (input: A) => {
       val result = encoder.encode(input)

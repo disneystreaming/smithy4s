@@ -19,7 +19,8 @@ package smithy4s.internals
 import smithy4s.schema._
 import smithy4s.internals.PatternDecode.MaybePatternDecode
 import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
+import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum, Timestamp}
+import smithy.api.TimestampFormat
 
 final class SchemaVisitorPatternDecoder(segments: List[PatternSegment])
     extends SchemaVisitor[MaybePatternDecode]
@@ -46,11 +47,15 @@ final class SchemaVisitorPatternDecoder(segments: List[PatternSegment])
       case Primitive.PUUID => PatternDecode.from(java.util.UUID.fromString(_))
       case Primitive.PByte => PatternDecode.from(_.toByte)
       case Primitive.PBlob => default
-      case Primitive.PDocument  => default
-      case Primitive.PTimestamp => default // TODO: Implement
-      // val fmt =
-      //   hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
-      // Some(PatternDecode.raw(_.format(fmt)))
+      case Primitive.PDocument => default
+      case Primitive.PTimestamp =>
+        val fmt =
+          hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
+        PatternDecode.from(
+          Timestamp
+            .parse(_, fmt)
+            .getOrElse(throw StructurePatternError("unable to parse timestamp"))
+        )
       case Primitive.PUnit => default
     }
   }
@@ -68,13 +73,13 @@ final class SchemaVisitorPatternDecoder(segments: List[PatternSegment])
       PatternDecode.from(value =>
         if (fromOrdinal.contains(BigDecimal(value)))
           fromOrdinal(BigDecimal(value))
-        else throw new Exception("")
-      ) // TODO: Handle error
+        else throw StructurePatternError(s"Enum case for '$value' not found.")
+      )
     } else {
       PatternDecode.from(value =>
         if (fromName.contains(value)) fromName(value)
-        else throw new Exception("")
-      ) // TODO: Handle error
+        else throw StructurePatternError(s"Enum case for '$value' not found.")
+      )
     }
   }
 
@@ -84,23 +89,76 @@ final class SchemaVisitorPatternDecoder(segments: List[PatternSegment])
       fields: Vector[SchemaField[S, _]],
       make: IndexedSeq[Any] => S
   ): MaybePatternDecode[S] = {
-    None // TODO: Implement
+    val fieldDecoders = fields.map { field =>
+      field.label -> self(field.instance)
+        .getOrElse(
+          throw StructurePatternError(
+            s"Unable to create decoder for ${field.label}"
+          )
+        )
+    }
+    PatternDecode.from { input =>
+      val (fieldStrings, leftOverInput) =
+        segments.foldLeft((Map.empty[String, String], input)) {
+          case ((acc, remainingInput), segment) =>
+            segment match {
+              case PatternSegment.StaticSegment(value) =>
+                val length = value.length
+                val taken = remainingInput.take(length)
+                if (taken != value)
+                  throw StructurePatternError(
+                    s"Incorrect pattern, expected '$value' but found '$taken'"
+                  )
+                else (acc, remainingInput.drop(length))
+              case PatternSegment.ParameterSegment(
+                    paramName,
+                    terminationChar
+                  ) =>
+                val paramValue =
+                  remainingInput.takeWhile(i => !terminationChar.contains(i))
+                if (paramValue.isEmpty)
+                  throw StructurePatternError(
+                    "Empty parameter value encountered"
+                  )
+                (
+                  acc + (paramName -> paramValue),
+                  remainingInput.drop(paramValue.length)
+                )
+            }
+        }
+
+      if (leftOverInput.nonEmpty)
+        throw StructurePatternError(
+          s"Extra characters found in input string '$leftOverInput'"
+        )
+
+      val decodedFields = fieldDecoders.map { case (fieldLabel, fieldDecoder) =>
+        fieldStrings.get(fieldLabel) match {
+          case Some(fieldValue) => fieldDecoder.decode(fieldValue)
+          case None =>
+            throw StructurePatternError(s"No decoder found for '$fieldLabel'")
+        }
+      }
+
+      make(decodedFields)
+    }
   }
 
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
   ): MaybePatternDecode[B] = {
-    // self(schema).map(_.contramap(bijection.from))
-    None // TODO: Fix
+    self(schema).map(_.map(bijection.to))
   }
 
   override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): MaybePatternDecode[B] = {
-    // self(schema).map(_.contramap(refinement.from))
-    None // TODO: Fix
+    self(schema).map(_.map(refinement.apply(_) match {
+      case Left(error)  => throw new StructurePatternError(error)
+      case Right(value) => value
+    }))
   }
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MaybePatternDecode[A] = {

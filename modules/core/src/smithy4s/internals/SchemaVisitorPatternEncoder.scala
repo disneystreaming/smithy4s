@@ -100,7 +100,7 @@ final class SchemaVisitorPatternEncoder(segments: List[PatternSegment])
     def compile1(path: PatternSegment): Option[Writer] = path match {
       case PatternSegment.StaticSegment(value) =>
         Some(Function.const(List(value)))
-      case PatternSegment.ParameterSegment(value) =>
+      case PatternSegment.ParameterSegment(value, _) =>
         fields
           .find(_.label == value)
           .flatMap(field => toPathEncoder(field))
