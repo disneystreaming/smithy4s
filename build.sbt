@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   example,
   tests,
   http4s,
+  cats,
   `http4s-kernel`,
   `http4s-swagger`,
   decline,
@@ -741,6 +742,20 @@ lazy val `http4s-swagger` = projectMatrix
     }
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val cats = projectMatrix
+  .in(file("modules/cats"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Weaver.cats.value % Test,
+      Dependencies.Cats.core.value
+    )
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
 
 lazy val testUtils = projectMatrix
   .in(file("modules/test-utils"))
