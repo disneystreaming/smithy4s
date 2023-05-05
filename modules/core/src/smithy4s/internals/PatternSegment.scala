@@ -1,13 +1,14 @@
 package smithy4s.internals
 
-import annotation.tailrec
+import scala.collection.mutable.{ListBuffer, ArrayBuffer}
 
-sealed abstract class PatternSegment(value: String)
+private[internals] sealed abstract class PatternSegment(value: String)
     extends Product
     with Serializable {
   def append(char: Char): PatternSegment
 }
-object PatternSegment {
+
+private[internals] object PatternSegment {
   final case class StaticSegment(val value: String)
       extends PatternSegment(value) {
     override def append(char: Char): PatternSegment =
@@ -22,51 +23,46 @@ object PatternSegment {
   }
 
   def segmentsFromString(str: String): List[PatternSegment] = {
-    @tailrec
-    def loop(
-        remainingStr: String,
-        currentSegment: Option[PatternSegment],
-        segmentsSoFar: List[PatternSegment]
-    ): List[PatternSegment] = remainingStr.headOption match {
-      case Some(nextChar) =>
-        currentSegment match {
-          case None =>
-            if (nextChar == '{')
-              loop(
-                remainingStr.tail,
-                Some(PatternSegment.ParameterSegment("", None)),
-                segmentsSoFar
-              )
-            else
-              loop(
-                remainingStr.tail,
-                Some(PatternSegment.StaticSegment(nextChar.toString)),
-                segmentsSoFar
-              )
-          case Some(s: PatternSegment.StaticSegment) =>
-            if (nextChar == '{')
-              loop(
-                remainingStr.tail,
-                Some(PatternSegment.ParameterSegment("", None)),
-                segmentsSoFar :+ s
-              )
-            else
-              loop(remainingStr.tail, Some(s.append(nextChar)), segmentsSoFar)
-          case Some(p: PatternSegment.ParameterSegment) =>
-            if (nextChar == '}')
-              loop(
-                remainingStr.tail,
-                None,
-                segmentsSoFar :+ p.copy(terminationChar =
-                  remainingStr.tail.headOption
-                )
-              )
-            else
-              loop(remainingStr.tail, Some(p.append(nextChar)), segmentsSoFar)
+    val segmentsSoFar = ListBuffer.empty[PatternSegment]
+    val currentSegment = ArrayBuffer.empty[Char]
+    var isInsideParameterSegment = false
+    for ((nextChar, i) <- str.zipWithIndex) {
+      if (isInsideParameterSegment) {
+        if (nextChar == '}') {
+          isInsideParameterSegment = false
+          val terminationChar =
+            if (i + 1 < str.length) Some(str.charAt(i + 1)) else None
+          segmentsSoFar.append(
+            PatternSegment.ParameterSegment(
+              new String(currentSegment.toArray),
+              terminationChar
+            )
+          )
+          currentSegment.clear()
+
+        } else {
+          currentSegment.append(nextChar)
         }
-      case None => segmentsSoFar ++ currentSegment
+      } else {
+        if (nextChar == '{') {
+          isInsideParameterSegment = true
+          if (currentSegment.nonEmpty) {
+            segmentsSoFar.append(
+              PatternSegment.StaticSegment(new String(currentSegment.toArray))
+            )
+            currentSegment.clear()
+          }
+        } else {
+          currentSegment.append(nextChar)
+        }
+      }
     }
-    loop(str, None, List.empty)
+    if (!isInsideParameterSegment && currentSegment.nonEmpty) {
+      segmentsSoFar.append(
+        PatternSegment.StaticSegment(new String(currentSegment.toArray))
+      )
+    }
+    segmentsSoFar.toList
   }
 
 }

@@ -4,7 +4,7 @@ import alloy.StructurePattern
 import smithy4s._
 import scala.util.control.NoStackTrace
 
-final case class StructurePatternError(message: String)
+private[internals] final case class StructurePatternError(message: String)
     extends RuntimeException(message)
     with NoStackTrace
 

@@ -16,7 +16,7 @@
 
 package smithy4s.internals
 
-trait PatternDecode[A] { self =>
+private[internals] trait PatternDecode[A] { self =>
   def decode(in: String): A
 
   def map[B](from: A => B): PatternDecode[B] = new PatternDecode[B] {
@@ -24,7 +24,7 @@ trait PatternDecode[A] { self =>
   }
 }
 
-object PatternDecode {
+private[internals] object PatternDecode {
 
   type MaybePatternDecode[A] = Option[PatternDecode[A]]
 

@@ -23,8 +23,9 @@ import smithy.api.TimestampFormat
 import smithy4s.Bijection
 import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 
-final class SchemaVisitorPatternEncoder(segments: List[PatternSegment])
-    extends SchemaVisitor[MaybePathEncode]
+private[internals] final class SchemaVisitorPatternEncoder(
+    segments: List[PatternSegment]
+) extends SchemaVisitor[MaybePathEncode]
     with SchemaVisitor.Default[MaybePathEncode] {
   self =>
 
@@ -130,10 +131,6 @@ final class SchemaVisitorPatternEncoder(segments: List[PatternSegment])
     self(schema).map(_.contramap(refinement.from))
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = {
-    // "safe" because the `structure` implementation will not exercise any recursion
-    // due to the fact that httpLabel can only be applied on members targeting
-    // simple shapes.
-    suspend.map(this.apply(_)).value
-  }
+  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = None
+
 }
