@@ -83,7 +83,7 @@ lazy val docs =
       http4s,
       `http4s-swagger`,
       decline,
-      `aws-http4s` % "compile -> compile,test",
+      `aws-http4s` % "compile -> compile",
       complianceTests
     )
     .settings(
@@ -121,14 +121,23 @@ lazy val docs =
         Dependencies.Decline.effect.value,
         Dependencies.AwsSpecSummary.value
       ),
-      Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
+      Compile / smithy4sDependencies ++= Seq(
+        Dependencies.Smithy.testTraits,
+        Dependencies.Smithy.awsTraits,
+        Dependencies.Smithy.waiters
+      ),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
       Compile / smithySpecs := Seq(
         (Compile / sourceDirectory).value / "smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy",
         (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy",
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json"
+      ),
+      Test / allowedNamespaces := Seq(
+        "com.amazonaws.dynamodb",
+        "smithy4s.example"
       )
     )
     .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
@@ -335,7 +344,6 @@ lazy val `aws-http4s` = projectMatrix
       Dependencies.Smithy.awsTraits
     ),
     Test / allowedNamespaces := Seq(
-      "com.amazonaws.dynamodb",
       "smithy4s.example.aws"
     ),
     Test / smithySpecs ++= Seq(
@@ -345,7 +353,7 @@ lazy val `aws-http4s` = projectMatrix
     scalacOptions ++= Seq(
       "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
     ),
-      Test / complianceTestDependencies := Seq(
+    Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
@@ -357,9 +365,11 @@ lazy val `aws-http4s` = projectMatrix
         }.value
       files.headOption
         .map { file =>
-          Map("MODEL_DUMP" -> file.getAbsolutePath,
+          Map(
+            "MODEL_DUMP" -> file.getAbsolutePath,
             "AWS_ACCESS_KEY_ID" -> "TEST_KEY",
-            "AWS_SECRET_ACCESS_KEY" -> "TEST_SECRET")
+            "AWS_SECRET_ACCESS_KEY" -> "TEST_SECRET"
+          )
         }
         .getOrElse(Map.empty)
     }
@@ -367,10 +377,6 @@ lazy val `aws-http4s` = projectMatrix
   .jvmPlatform(
     latest2ScalaVersions,
     jvmDimSettings ++ Seq(
-      Test / smithySpecs ++= Seq(
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
-      ),
       libraryDependencies ++= Seq(
         "software.amazon.awssdk" % "aws-core" % "2.20.49" % Test
       )
@@ -933,7 +939,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
     ) / Compile / fullClasspath).value
       .map(_.data)
     val transforms = (config / smithy4sModelTransformers).value
-   lazy val modelTransformersCp = (transformers.jvm(
+    lazy val modelTransformersCp = (transformers.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)
