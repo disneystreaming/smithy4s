@@ -61,7 +61,7 @@ private[smithy4s] abstract class Docs[F[_]](
   }
   def routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case r @ GET -> DocPath() if r.uri.query.isEmpty =>
-      Found(Location(Uri.unsafeFromString(s"/$path/index.html")))
+      Found(Location(Uri(path = actualPath / "index.html")))
 
     case request @ GET -> `actualPath` / `specsPath` / jsonSpec
         if validSpecs.contains(jsonSpec) =>

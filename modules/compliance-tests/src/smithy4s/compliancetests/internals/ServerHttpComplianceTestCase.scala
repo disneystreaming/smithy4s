@@ -24,17 +24,15 @@ import cats.kernel.Eq
 import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy.test._
-import smithy4s.Document
-import smithy4s.Service
+import smithy4s.{Document, Errorable, Hints, Service, ShapeId}
 import smithy4s.kinds._
 import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
-import smithy4s.ShapeId
-import smithy4s.Hints
-import smithy4s.Errorable
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-
+import smithy4s.compliancetests.internals.TestConfig._
+import cats.MonadThrow
+import java.util.concurrent.TimeoutException
 private[compliancetests] class ServerHttpComplianceTestCase[
     F[_],
     Alg[_[_, _, _, _, _]]
@@ -90,12 +88,15 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint: originalService.Endpoint[I, E, O, SE, SO],
       testCase: HttpRequestTestCase
   ): ComplianceTest[F] = {
-
-    val revisedSchema = mapAllTimestampsToEpoch(endpoint.input.awsHintMask)
-    implicit val inputEq: Eq[I] = EqSchemaVisitor(revisedSchema)
-    val inputFromDocument = Document.Decoder.fromSchema(revisedSchema)
+    implicit val inputEq: Eq[I] = EqSchemaVisitor(endpoint.input)
+    val testModel = CanonicalSmithyDecoder
+      .fromSchema(endpoint.input)
+      .decode(testCase.params.getOrElse(Document.obj()))
+      .liftTo[F]
     ComplianceTest[F](
-      name = endpoint.id.toString + "(server|request): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      serverReq,
       run = {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
@@ -114,27 +115,43 @@ private[compliancetests] class ServerHttpComplianceTestCase[
               }
             )
 
+          object ServerError {
+            def unapply(response: Response[F]): Boolean =
+              response.status.responseClass match {
+                case Status.ServerError => true
+                case _                  => false
+              }
+          }
+
           routes(fakeImpl)(originalService)
             .use { server =>
               server.orNotFound
                 .run(makeRequest(baseUri, testCase))
-                .attemptNarrow[IntendedShortCircuit]
+                .attempt
                 .flatMap {
-                  case Left(_) =>
-                    inputDeferred.get.timeout(1.second).flatMap { foundInput =>
-                      inputFromDocument
-                        .decode(testCase.params.getOrElse(Document.obj()))
-                        .liftTo[F]
-                        .map { decodedInput =>
-                          assert.eql(foundInput, decodedInput)
-                        }
-                    }
+                  case Left(_: IntendedShortCircuit) | Right(ServerError()) =>
+                    inputDeferred.get
+                      .timeout(1.second)
+                      .flatMap { foundInput =>
+                        testModel
+                          .map { decodedInput =>
+                            assert.eql(foundInput, decodedInput)
+                          }
+                      }
+                      .recover { case _: TimeoutException =>
+                        val message =
+                          """|Timed-out while waiting for an input.
+                             |
+                             |This probably means that the Router implementation either failed to decode the request
+                             |or failed to route the decoded input to the correct service method.
+                             |""".stripMargin
+                        assert.fail(message)
+                      }
+                  case Left(error) => MonadThrow[F].raiseError(error)
                   case Right(response) =>
-                    response.body.compile.toVector.map { message =>
+                    response.as[String].map { message =>
                       assert.fail(
-                        s"Expected a IntendedShortCircuit error, but got a response with status ${response.status} and message ${message
-                          .map(_.toChar)
-                          .mkString}"
+                        s"Expected either an IntendedShortCircuit error or a 5xx response, but got a response with status ${response.status} and message ${message}"
                       )
                     }
                 }
@@ -152,16 +169,17 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   ): ComplianceTest[F] = {
 
     ComplianceTest[F](
-      name = endpoint.id.toString + "(server|response): " + testCase.id,
+      testCase.id,
+      endpoint.id,
+      serverRes,
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)
 
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
             .toLeft {
-              val outputDecoder = Document.Decoder.fromSchema(
-                mapAllTimestampsToEpoch(endpoint.output.awsHintMask)
-              )
+              val outputDecoder: Document.Decoder[O] =
+                CanonicalSmithyDecoder.fromSchema(endpoint.output)
               (doc: Document) =>
                 outputDecoder
                   .decode(doc)
@@ -293,10 +311,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                     ErrorResponseTest
                       .from(
                         errorAlt,
-                        Alt.Dispatcher(
-                          errorrable.error.alternatives,
-                          errorrable.error.dispatch(_)
-                        ),
+                        Alt.Dispatcher.fromUnion(errorrable.error),
                         errorrable
                       )
                   )

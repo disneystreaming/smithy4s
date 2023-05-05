@@ -28,6 +28,13 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 
 object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
+  val id: ShapeId = ShapeId("smithy4s.example", "FooService")
+  val version: String = "1.0.0"
+
+  val hints: Hints = Hints(
+    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
+  )
+
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
   object ErrorAware {
@@ -35,42 +42,42 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val id: ShapeId = ShapeId("smithy4s.example", "FooService")
-
-  val hints: Hints = Hints(
-    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
+  val endpoints: List[smithy4s.Endpoint[FooServiceOperation, _, _, _, _, _]] = List(
+    FooServiceOperation.GetFoo,
   )
-
-  val endpoints: List[FooServiceGen.Endpoint[_, _, _, _, _]] = List(
-    GetFoo,
-  )
-
-  val version: String = "1.0.0"
 
   def endpoint[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends FooServiceOperation.Transformed[FooServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
+  def reified: FooServiceGen[FooServiceOperation] = FooServiceOperation.reified
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]): FooServiceGen[P1] = new FooServiceOperation.Transformed(alg, f)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new FooServiceOperation.Transformed(reified, f)
+  def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
+
+}
+
+sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[FooServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
+
+object FooServiceOperation {
 
   object reified extends FooServiceGen[FooServiceOperation] {
     def getFoo() = GetFoo()
   }
-
-  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]): FooServiceGen[P1] = new Transformed(alg, f)
-
-  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new Transformed(reified, f)
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: FooServiceGen[P], f: PolyFunction5[P, P1]) extends FooServiceGen[P1] {
     def getFoo() = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](alg.getFoo())
   }
 
-  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends Transformed[FooServiceOperation, P](reified, const5(value))
-  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
-
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = new PolyFunction5[FooServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
+  final case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Unit, Nothing, GetFooOutput, Nothing, Nothing] = impl.getFoo()
-    def endpoint: (Unit, FooServiceGen.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
+    def endpoint: (Unit, smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
   }
-  object GetFoo extends FooServiceGen.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
+  object GetFoo extends smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
@@ -83,9 +90,4 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     )
     def wrap(input: Unit) = GetFoo()
   }
-}
-
-sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
-  def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[FooServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }

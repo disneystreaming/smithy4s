@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-case class Candy(name: Option[String] = None)
+final case class Candy(name: Option[String] = None)
 object Candy extends ShapeTag.Companion[Candy] {
   val id: ShapeId = ShapeId("smithy4s.example", "Candy")
 

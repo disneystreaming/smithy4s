@@ -183,8 +183,8 @@ final class RendererConfigSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
 
     assertContainsSection(serviceCode, "val endpoints")(
-      """val endpoints: List[ServiceGen.Endpoint[?, ?, ?, ?, ?]] = List(
-        |  Operation,
+      """val endpoints: List[smithy4s.Endpoint[ServiceOperation, ?, ?, ?, ?, ?]] = List(
+        |  ServiceOperation.Operation,
         |)""".stripMargin
     )
   }
@@ -210,8 +210,8 @@ final class RendererConfigSpec extends munit.FunSuite {
     val serviceCode = generateScalaCode(smithy)("smithy4s.Service")
 
     assertContainsSection(serviceCode, "val endpoints")(
-      """val endpoints: List[ServiceGen.Endpoint[_, _, _, _, _]] = List(
-        |  Operation,
+      """val endpoints: List[smithy4s.Endpoint[ServiceOperation, _, _, _, _, _]] = List(
+        |  ServiceOperation.Operation,
         |)""".stripMargin
     )
   }
@@ -252,8 +252,8 @@ final class RendererConfigSpec extends munit.FunSuite {
       """|object OperationError extends ShapeTag.Companion[OperationError] {
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
-         |  case class BadRequestCase(badRequest: BadRequest) extends OperationError
-         |  case class InternalServerErrorCase(internalServerError: InternalServerError) extends OperationError
+         |  final case class BadRequestCase(badRequest: BadRequest) extends OperationError
+         |  final case class InternalServerErrorCase(internalServerError: InternalServerError) extends OperationError
          |  object BadRequestCase {
          |    val hints: Hints = Hints.empty
          |    val schema: Schema[BadRequestCase] = bijection(BadRequest.schema.addHints(hints), BadRequestCase(_), _.badRequest)

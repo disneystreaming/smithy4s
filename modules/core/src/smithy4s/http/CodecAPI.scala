@@ -19,8 +19,8 @@ package http
 
 import java.nio.ByteBuffer
 import scala.collection.{Map => MMap}
-
 import internals.StringAndBlobCodecSchemaVisitor
+import smithy4s.~>
 
 /**
   * An abstraction exposing serialisation functions to decode from bytes /
@@ -45,6 +45,11 @@ trait CodecAPI {
     */
   final def compileCodec[A](schema: Schema[A]): Codec[A] =
     compileCodec(schema, createCache())
+
+  final def compileCodecK(cache: Cache): Schema ~> Codec =
+    new (Schema ~> Codec) {
+      def apply[A0](fa: Schema[A0]): Codec[A0] = compileCodec(fa, cache)
+    }
 
   /**
     * Turns a Schema into this API's preferred representation.

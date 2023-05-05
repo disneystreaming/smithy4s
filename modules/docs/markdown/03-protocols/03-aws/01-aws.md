@@ -16,7 +16,7 @@ The supported protocols are :
 ### Where to find the specs ?
 
 * SBT : `"com.disneystreaming.smithy" % s"aws-${service_name}-spec" % "@AWS_SPEC_VERSION@"`
-* Mill : `ivy"com.disneystreaming.smithy::aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
+* Mill : `ivy"com.disneystreaming.smithy:aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
 
 The version corresponds tho the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
 
@@ -40,7 +40,7 @@ import smithy4s.codegen.BuildInfo._
 
 libraryDependencies ++= Seq(
   // version sourced from the plugin
-  "com.disneystreaming.smithy4s"  %% "smithy4s-aws-http4s" % smithy4sVersion.value
+  "com.disneystreaming.smithy4s" %% "smithy4s-aws-http4s" % smithy4sVersion.value
   "com.disneystreaming.smithy" % "aws-dynamodb-spec" % "@AWS_SPEC_VERSION@" % Smithy4s
 )
 ```
@@ -53,22 +53,24 @@ In your Scala code:
 import cats.effect._
 import org.http4s.ember.client.EmberClientBuilder
 
-import smithy4s.aws._ // AWS models and cats-effect/fs2 specific functions
-import smithy4s.aws.http4s._ // AWS/http4s specific integration
+import smithy4s.aws._ // AWS specific interpreters
 import com.amazonaws.dynamodb._ // Generated code from specs.
 
 object Main extends IOApp.Simple {
 
-  def run = resource.use { dynamodb =>
+  def run = resource.use { case (dynamodb) =>
     dynamodb
-      .describeTable(TableName("omelois-test"))
+      .listTables(limit = Some(ListTablesInputLimit(10)))
       .flatMap(IO.println(_))
   }
 
-  val resource: Resource[IO, DynamoDB[IO]] = for {
-    httpClient <- EmberClientBuilder.default[IO].build
-    dynamodb <- DynamoDB.simpleAwsClient(httpClient, AwsRegion.US_EAST_1)
-  } yield dynamodb
+  val resource: Resource[IO, DynamoDB[IO]] =
+    for {
+      httpClient <- EmberClientBuilder.default[IO].build
+      awsEnv <- AwsEnvironment.default(httpClient, AwsRegion.US_EAST_1)
+      dynamodb <- AwsClient(DynamoDB, awsEnv)
+    } yield dynamodb
+
 }
 
 ```

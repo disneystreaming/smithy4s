@@ -20,8 +20,8 @@ package http
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.capability.Covariant
 import smithy4s.example._
-import ErrorHandlingServiceGen._
-
+import ErrorHandlingServiceOperation._
+import ErrorHandlingServiceExtraErrorsOperation._
 final class HttpErrorSelectorSpec extends munit.FunSuite {
 
   type ConstId[A] = ShapeId
@@ -86,7 +86,7 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
   private val alts =
     ErrorHandlingOperation.error.alternatives.asInstanceOf[Vector[GenericAlt]]
   private val altsExtra =
-    ErrorHandlingServiceExtraErrorsGen.ExtraErrorOperation.error.alternatives
+    ExtraErrorOperation.error.alternatives
       .asInstanceOf[Vector[GenericAlt]]
 
   val amendedSelector = new HttpErrorSelector(alts ++ altsExtra, compiler)
