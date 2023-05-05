@@ -96,3 +96,21 @@ alloy.SimpleRestJson.hints
 ```
 
 Currently, `@cors` is not supported. This is because the `@cors` annotation is too restrictive. You can still use it in your model and configure your API using the information found in the generated code. See the [`Cors.scala`](@GITHUB_BRANCH_URL@modules/guides/src/smithy4s/guides/Cors.scala) file in the `guides` module for an example.
+
+## Structured Strings
+
+As of smithy4s version `0.18.x`, you are able to create strings which are parsed directly into structures for you. This can be accomplished using the `alloy#structurePattern` trait. For example:
+
+```smithy
+@structurePattern(pattern: "{foo}_{bar}", target: FooBar)
+string FooBarString
+
+structure FooBar {
+  @required
+  foo: String
+  @required
+  bar: Integer
+}
+```
+
+Now wherever `FooBarString` is used, it will really be parsing the string into the structure `FooBar`. As such, the generated code will replace instances of `FooBarString` with `FooBar` such that the parsing logic is abstracted away from your implementation. See the [alloy documentation](https://github.com/disneystreaming/alloy#alloystructurepattern) for more information.
