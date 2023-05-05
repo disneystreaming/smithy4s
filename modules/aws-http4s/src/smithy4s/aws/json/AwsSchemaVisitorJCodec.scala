@@ -19,7 +19,7 @@ package aws.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
-import smithy4s.Timestamp
+import smithy.api.TimestampFormat
 import smithy4s.http.json.Cursor
 import smithy4s.http.json.JCodec
 import smithy4s.http.json.SchemaVisitorJCodec
@@ -35,10 +35,11 @@ private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
       tag: Primitive[P]
   ): JCodec[P] = {
     tag match {
-      case Primitive.PTimestamp => timestamp
-      case Primitive.PDouble    => double
-      case Primitive.PFloat     => float
-      case _                    => super.primitive(shapeId, hints, tag)
+      case Primitive.PTimestamp =>
+        super.timestampJCodec(hints, TimestampFormat.EPOCH_SECONDS)
+      case Primitive.PDouble => double
+      case Primitive.PFloat  => float
+      case _                 => super.primitive(shapeId, hints, tag)
     }
   }
 
@@ -102,21 +103,4 @@ private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
     def encodeKey(x: Float, out: JsonWriter): Unit = ???
 
   }
-
-  private val timestamp: JCodec[Timestamp] = new JCodec[Timestamp] {
-    val expecting: String = "instant (epoch second)"
-
-    def decodeValue(cursor: Cursor, in: JsonReader): Timestamp =
-      Timestamp(in.readDouble().toLong, 0)
-
-    def encodeValue(x: Timestamp, out: JsonWriter): Unit =
-      out.writeVal(x.epochSecond)
-
-    def decodeKey(in: JsonReader): Timestamp =
-      Timestamp(in.readKeyAsDouble().toLong, 0)
-
-    def encodeKey(x: Timestamp, out: JsonWriter): Unit =
-      out.writeKey(x.epochSecond)
-  }
-
 }

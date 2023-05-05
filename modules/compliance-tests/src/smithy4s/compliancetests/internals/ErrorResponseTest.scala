@@ -35,7 +35,7 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
 ) {
 
   lazy val errorDecoder: Document.Decoder[A] =
-    Document.Decoder.fromSchema(schema)
+    CanonicalSmithyDecoder.fromSchema(schema)
   implicit lazy val eq: Eq[A] = EqSchemaVisitor(schema)
 
   private def dispatchThrowable(t: Throwable): Option[A] = {
@@ -51,8 +51,9 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
         .map(inject)
         .map { e =>
           (dispatcher(e), dispatchThrowable(throwable)) match {
-            case (Some(a1), Some(a2)) => assert.eql(a1, a2)
-            case _                    => assert.fail("")
+            case (Some(expected), Some(result)) =>
+              assert.eql(result, expected)
+            case _ => assert.fail("")
           }
         }
         .liftTo[F]

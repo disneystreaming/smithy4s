@@ -17,10 +17,14 @@
 package smithy4s.aws
 package internals
 
+import cats.effect.Concurrent
 import smithy4s.HintMask
 import smithy4s.IntEnum
+import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
-import cats.effect.Concurrent
+import smithy4s.http.HttpMediaType
+import smithy4s.http.json.JCodec
+import smithy4s.http.PayloadError
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -31,8 +35,24 @@ private[aws] object AwsJsonCodecs {
     aws.protocols.AwsJson1_0.protocol.hintMask ++
       aws.protocols.AwsJson1_1.protocol.hintMask ++ HintMask(IntEnum)
 
-  def make[F[_]: Concurrent]: UnaryClientCodecs[F] = {
-    val underlyingCodecs = smithy4s.http.json.codecs(hintMask, 10000)
+  def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs[F] = {
+    val httpMediaType = HttpMediaType(contentType)
+    val underlyingCodecs = new smithy4s.http.json.JsonCodecAPI(
+      cache => new AwsSchemaVisitorJCodec(cache),
+      Some(hintMask)
+    ) {
+      override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
+        httpMediaType
+
+      private val emptyObj = "{}".getBytes()
+      override def decodeFromByteArray[A](
+          codec: JCodec[A],
+          bytes: Array[Byte]
+      ): Either[PayloadError, A] = {
+        if (bytes.isEmpty) super.decodeFromByteArray(codec, emptyObj)
+        else super.decodeFromByteArray(codec, bytes)
+      }
+    }
     val encoders = MessageEncoder.rpcSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)
     )

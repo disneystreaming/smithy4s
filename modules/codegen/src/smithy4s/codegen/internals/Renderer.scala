@@ -462,7 +462,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       block(
-        line"case class ${NameDef(opName)}($params) extends $traitName[${op.renderAlgParams(opObjectName)}]"
+        line"final case class ${NameDef(opName)}($params) extends $traitName[${op.renderAlgParams(opObjectName)}]"
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(opObjectName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
@@ -523,7 +523,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   ): Lines = {
     import product._
     val decl =
-      line"case class ${product.nameDef}(${renderArgs(fields)})"
+      line"final case class ${product.nameDef}(${renderArgs(fields)})"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -796,7 +796,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
             val additionalLines = lines(

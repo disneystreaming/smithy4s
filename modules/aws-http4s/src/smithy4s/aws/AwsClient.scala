@@ -60,12 +60,10 @@ object AwsClient {
     ): service.FunctorInterpreter[F] = {
       val clientCodecs: UnaryClientCodecs[F] = awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
-          // TODO "application/x-amz-json-1.0"
-          AwsJsonCodecs.make[F]
+          AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
 
         case AwsProtocol.AWS_JSON_1_1(_) =>
-          // TODO "application/x-amz-json-1.1",
-          AwsJsonCodecs.make[F]
+          AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
         case _ => ???
       }
       service.functorInterpreter {

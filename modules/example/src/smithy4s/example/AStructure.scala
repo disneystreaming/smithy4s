@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.struct
 /** @param astring
   *   This is a simple example of a "quoted string"
   */
-case class AStructure(astring: AString = smithy4s.example.AString("\"Hello World\" with \"quotes\""))
+final case class AStructure(astring: AString = smithy4s.example.AString("\"Hello World\" with \"quotes\""))
 object AStructure extends ShapeTag.Companion[AStructure] {
   val id: ShapeId = ShapeId("smithy4s.example", "AStructure")
 
