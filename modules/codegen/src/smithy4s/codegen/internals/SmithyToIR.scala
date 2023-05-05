@@ -518,9 +518,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shapeId.getName()
         )
 
+      private sealed trait ExternalTypeInfo
+      private object ExternalTypeInfo {
+        case class RefinementInfo(trt: RefinementTrait) extends ExternalTypeInfo
+        case class StructurePatternInfo(trt: StructurePatternTrait)
+            extends ExternalTypeInfo
+      }
+
       private def getExternalTypeInfo(
           shape: Shape
-      ): Option[(Trait, Either[RefinementTrait, StructurePatternTrait])] = {
+      ): Option[(Trait, ExternalTypeInfo)] = {
         shape
           .getAllTraits()
           .asScala
@@ -529,12 +536,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               .getShape(trt.toShapeId)
               .asScala
               .flatMap(_.getTrait(classOf[RefinementTrait]).asScala)
-              .map(rt => trt -> Left(rt))
+              .map(rt => trt -> ExternalTypeInfo.RefinementInfo(rt))
           }
           .headOption // Shapes can have at most ONE trait that has the refined trait
           .orElse {
             shape.getTrait(classOf[StructurePatternTrait]).asScala.map { trt =>
-              trt -> Right(trt)
+              trt -> ExternalTypeInfo.StructurePatternInfo(trt)
             }
           }
       }
@@ -542,7 +549,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       private def getExternalOrBase(shape: Shape, base: Type): Type = {
         getExternalTypeInfo(shape)
           .map {
-            case (trt, Left(refined)) =>
+            case (trt, ExternalTypeInfo.RefinementInfo(refined)) =>
               val baseTypeParams = base match {
                 case c: Type.Collection => List(c.member)
                 case m: Type.Map        => List(m.key, m.value)
@@ -556,7 +563,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 base,
                 unfoldTrait(trt)
               )
-            case (trt, Right(pattern)) =>
+            case (trt, ExternalTypeInfo.StructurePatternInfo(pattern)) =>
               Type.ExternalType(
                 shape.name,
                 s"${pattern.getTarget.namespace}.${pattern.getTarget.name}",

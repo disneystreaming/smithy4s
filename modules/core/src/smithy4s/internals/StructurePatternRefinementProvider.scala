@@ -3,6 +3,7 @@ package smithy4s.internals
 import alloy.StructurePattern
 import smithy4s._
 import scala.util.control.NoStackTrace
+import smithy4s.http.internals.PathEncode
 
 private[internals] final case class StructurePatternError(message: String)
     extends RuntimeException(message)
@@ -26,7 +27,11 @@ object StructurePatternRefinementProvider {
   ): String => Either[String, A] = {
     val segments = PatternSegment.segmentsFromString(c.pattern)
     val decoder = new SchemaVisitorPatternDecoder(segments)(sch).getOrElse(
-      throw StructurePatternError("Unable to create decoder")
+      PatternDecode.raw[A](_ =>
+        throw StructurePatternError(
+          s"Unable to create decoder for ${sch.shapeId}"
+        )
+      )
     )
     (input: String) => Right(decoder.decode(input))
   }
@@ -39,7 +44,11 @@ object StructurePatternRefinementProvider {
     val encoder =
       new SchemaVisitorPatternEncoder(segments)(sch)
         .getOrElse(
-          throw StructurePatternError("Unable to create encoder")
+          PathEncode.raw[A](_ =>
+            throw StructurePatternError(
+              s"Unable to create encoder for ${sch.shapeId}"
+            )
+          )
         )
     (input: A) => {
       val result = encoder.encode(input)
