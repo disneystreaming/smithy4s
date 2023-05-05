@@ -114,9 +114,9 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
     val in = Primitives(
       1,
       2,
-      3.0f,
+      3f,
       4,
-      5.0,
+      5,
       BigInt(6),
       BigDecimal(7),
       true,
@@ -128,7 +128,10 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
     )
     val pattern = "{a}_{b}_{c}_{d}_{e}_{f}_{g}_{h}_{i}_{j}_{k}_{l}_{m}"
     val expect =
-      "1_2_3.0_4_5.0_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE"
+      if (Platform.isJS)
+        "1_2_3_4_5_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE"
+      else
+        "1_2_3.0_4_5.0_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE"
     runEncode(pattern, in, expect)
   }
 
