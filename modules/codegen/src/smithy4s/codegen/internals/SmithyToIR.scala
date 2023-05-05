@@ -811,27 +811,25 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
   }
 
-  def maybeTypeclassesHint(shape: Shape): Option[Hint.Typeclasses] = {
-    val result =
-      shape
-        .getAllTraits()
-        .asScala
-        .flatMap { case (_, trt) =>
-          model
-            .getShape(trt.toShapeId)
-            .asScala
-            .flatMap(_.getTrait(classOf[TypeclassTrait]).asScala)
-            .map(trt -> _)
-        }
-        .map { case (typeclassName, typeclassInfo) =>
-          Hint.Typeclass(
-            typeclassName.toShapeId,
-            typeclassInfo.getTargetType,
-            typeclassInfo.getInterpreter
-          )
-        }
-        .toList
-    result.toNel.map(Hint.Typeclasses)
+  def maybeTypeclassesHint(shape: Shape): List[Hint.Typeclass] = {
+    shape
+      .getAllTraits()
+      .asScala
+      .flatMap { case (_, trt) =>
+        model
+          .getShape(trt.toShapeId)
+          .asScala
+          .flatMap(_.getTrait(classOf[TypeclassTrait]).asScala)
+          .map(trt -> _)
+      }
+      .map { case (typeclassName, typeclassInfo) =>
+        Hint.Typeclass(
+          typeclassName.toShapeId,
+          typeclassInfo.getTargetType,
+          typeclassInfo.getInterpreter
+        )
+      }
+      .toList
   }
 
   @annotation.nowarn(

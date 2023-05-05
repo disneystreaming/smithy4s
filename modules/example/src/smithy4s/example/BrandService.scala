@@ -80,3 +80,4 @@ object BrandServiceOperation {
     def wrap(input: AddBrandsInput) = AddBrands(input)
   }
 }
+

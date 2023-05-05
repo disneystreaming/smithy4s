@@ -142,7 +142,8 @@ final class DefaultRenderModeSpec extends munit.FunSuite {
          |  ){
          |    Test.apply
          |  }.withId(id).addHints(hints)
-         |}""".stripMargin
+         |}
+         |""".stripMargin
 
     TestUtils.runTest(smithy, scalaCode)
   }
