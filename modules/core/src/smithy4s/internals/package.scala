@@ -25,12 +25,16 @@ package object internals {
 
   private[internals] implicit class vectorOps[A](val vector: Vector[A])
       extends AnyVal {
-    def traverse[B](f: A => Option[B]): Option[Vector[B]] =
-      vector.foldLeft[Option[Vector[B]]](Some(Vector.empty)) { (result, a) =>
-        for {
-          acc <- result
-          b <- f(a)
-        } yield (acc.:+(b))
+    def traverse[B](f: A => Option[B]): Option[Vector[B]] = {
+      val vec = Vector.newBuilder[B]
+      var done = false
+      vector.takeWhile(_ => !done).foreach { a =>
+        f(a) match {
+          case Some(b) => vec += b
+          case None    => done = true
+        }
       }
+      if (done) None else Some(vec.result())
+    }
   }
 }
