@@ -4,7 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.example.typeclass.EqInterpreter
+import smithy4s.interopcats.SchemaVisitorHash
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -15,11 +15,11 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
   val id: ShapeId = ShapeId("smithy4s.example", "PersonContactInfo")
 
   val hints: Hints = Hints(
-    smithy4s.example.Eq(),
+    smithy4s.example.Hash(),
   )
 
-  case class EmailCase(email: PersonEmail) extends PersonContactInfo
-  case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo
+  final case class EmailCase(email: PersonEmail) extends PersonContactInfo
+  final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo
 
   object EmailCase {
     val hints: Hints = Hints.empty
@@ -40,5 +40,5 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     case c: PhoneCase => PhoneCase.alt(c)
   }.withId(id).addHints(hints)
 
-  implicit val personContactInfoEq: cats.Eq[PersonContactInfo] = EqInterpreter.fromSchema(schema)
+  implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema(schema)
 }

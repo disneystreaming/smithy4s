@@ -21,20 +21,23 @@ import cats.implicits.toContravariantOps
 import smithy4s._
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.ShowInstances._
-import smithy4s.schema.{
-  Alt,
-  CollectionTag,
-  EnumValue,
-  Field,
-  Primitive,
-  Schema,
-  SchemaAlt,
-  SchemaField,
-  SchemaVisitor
-}
+import smithy4s.schema.Schema
+import smithy4s.schema._
 import smithy4s.schema.Alt.Precompiler
 
-object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
+object SchemaVisitorShow extends CachedSchemaCompiler.Impl[Show] {
+  protected type Aux[A] = Show[A]
+  def fromSchema[A](
+      schema: Schema[A],
+      cache: Cache
+  ): Show[A] = {
+    schema.compile(new SchemaVisitorShow(cache))
+  }
+}
+
+final class SchemaVisitorShow(
+    val cache: CompilationCache[Show]
+) extends SchemaVisitor.Cached[Show] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,

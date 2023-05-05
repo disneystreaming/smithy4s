@@ -6,13 +6,13 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
-case class Eq()
-object Eq extends ShapeTag.Companion[Eq] {
-  val id: ShapeId = ShapeId("smithy4s.example", "eq")
+final case class Hash()
+object Hash extends ShapeTag.Companion[Hash] {
+  val id: ShapeId = ShapeId("smithy4s.example", "hash")
 
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
-  implicit val schema: Schema[Eq] = constant(Eq()).withId(id).addHints(hints)
+  implicit val schema: Schema[Hash] = constant(Hash()).withId(id).addHints(hints)
 }

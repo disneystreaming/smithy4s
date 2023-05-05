@@ -841,7 +841,7 @@ lazy val complianceTests = projectMatrix
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
-  .dependsOn(`http4s-swagger`)
+  .dependsOn(`http4s-swagger`, cats)
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(

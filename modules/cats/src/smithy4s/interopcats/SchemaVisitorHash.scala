@@ -25,21 +25,24 @@ import cats.implicits.{
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
-import smithy4s.schema.{
-  Alt,
-  CollectionTag,
-  EnumValue,
-  Field,
-  Primitive,
-  Schema,
-  SchemaAlt,
-  SchemaField,
-  SchemaVisitor
-}
+import smithy4s.schema.Schema
+import smithy4s.schema._
 
 import scala.util.hashing.MurmurHash3.productSeed
 
-object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
+object SchemaVisitorHash extends CachedSchemaCompiler.Impl[Hash] {
+  protected type Aux[A] = Hash[A]
+  def fromSchema[A](
+      schema: Schema[A],
+      cache: Cache
+  ): Hash[A] = {
+    schema.compile(new SchemaVisitorHash(cache))
+  }
+}
+
+final class SchemaVisitorHash(
+    val cache: CompilationCache[Hash]
+) extends SchemaVisitor.Cached[Hash] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
