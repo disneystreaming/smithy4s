@@ -19,7 +19,6 @@ package smithy4s.internals
 import smithy4s.schema._
 import smithy4s.http.internals.PathEncode
 import smithy4s.http.internals.PathEncode.MaybePathEncode
-import smithy.api.TimestampFormat
 import smithy4s.Bijection
 import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 
@@ -36,26 +35,9 @@ private[internals] final class SchemaVisitorPatternEncoder(
       hints: Hints,
       tag: Primitive[P]
   ): MaybePathEncode[P] = {
-    tag match {
-      case Primitive.PShort      => PathEncode.fromToString
-      case Primitive.PInt        => PathEncode.fromToString
-      case Primitive.PFloat      => PathEncode.fromToString
-      case Primitive.PLong       => PathEncode.fromToString
-      case Primitive.PDouble     => PathEncode.fromToString
-      case Primitive.PBigInt     => PathEncode.fromToString
-      case Primitive.PBigDecimal => PathEncode.fromToString
-      case Primitive.PBoolean    => PathEncode.fromToString
-      case Primitive.PString     => PathEncode.fromToString
-      case Primitive.PUUID       => PathEncode.fromToString
-      case Primitive.PByte       => PathEncode.fromToString
-      case Primitive.PBlob       => default
-      case Primitive.PDocument   => default
-      case Primitive.PTimestamp =>
-        val fmt =
-          hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
-        Some(PathEncode.raw(_.format(fmt)))
-      case Primitive.PUnit =>
-        struct(shapeId, hints, fields = Vector.empty, make = _ => ())
+    Primitive.stringWriter(tag, hints) match {
+      case Some(writer) => PathEncode.from(e => writer(e))
+      case None         => None
     }
   }
 

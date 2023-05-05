@@ -19,8 +19,7 @@ package smithy4s.internals
 import smithy4s.schema._
 import smithy4s.internals.PatternDecode.MaybePatternDecode
 import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum, Timestamp}
-import smithy.api.TimestampFormat
+import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
 
 private[internals] final class SchemaVisitorPatternDecoder(
     segments: List[PatternSegment]
@@ -35,29 +34,14 @@ private[internals] final class SchemaVisitorPatternDecoder(
       hints: Hints,
       tag: Primitive[P]
   ): MaybePatternDecode[P] = {
-    tag match {
-      case Primitive.PShort      => PatternDecode.from(_.toShort)
-      case Primitive.PInt        => PatternDecode.from(_.toInt)
-      case Primitive.PFloat      => PatternDecode.from(_.toFloat)
-      case Primitive.PLong       => PatternDecode.from(_.toLong)
-      case Primitive.PDouble     => PatternDecode.from(_.toDouble)
-      case Primitive.PBigInt     => PatternDecode.from(BigInt(_))
-      case Primitive.PBigDecimal => PatternDecode.from(BigDecimal(_))
-      case Primitive.PBoolean    => PatternDecode.from(_.toLowerCase == "true")
-      case Primitive.PString     => PatternDecode.from(identity)
-      case Primitive.PUUID => PatternDecode.from(java.util.UUID.fromString(_))
-      case Primitive.PByte => PatternDecode.from(_.toByte)
-      case Primitive.PBlob => default
-      case Primitive.PDocument => default
-      case Primitive.PTimestamp =>
-        val fmt =
-          hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
+    Primitive.stringParser(tag, hints) match {
+      case Some(parse) =>
         PatternDecode.from(
-          Timestamp
-            .parse(_, fmt)
-            .getOrElse(throw StructurePatternError("unable to parse timestamp"))
+          parse(_).getOrElse(
+            throw StructurePatternError(s"Unable to parse `$shapeId`")
+          )
         )
-      case Primitive.PUnit => default
+      case None => None
     }
   }
 
