@@ -181,7 +181,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       } else
         tc.run.attempt
           .map(_.fold(t => Left(t.toString), identity))
-          .map(res => expectFailure(res))
+          .map(res => expectFailure(tc, res))
     }
 
     Test(
@@ -200,6 +200,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   }
 
   def expectFailure(
+      test: ComplianceTest[IO],
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
     res.bifoldMap(
@@ -210,7 +211,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
         ),
       _ =>
         Expectations.Helpers.failure(
-          "expected failure but got success, please update the Allow list"
+          s"expected failure for but got success, please update the Allow list: ${test.show}"
         )
     )
   }

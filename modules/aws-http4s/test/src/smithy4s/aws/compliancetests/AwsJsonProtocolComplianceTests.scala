@@ -29,10 +29,12 @@ object AwsJsonProtocolComplianceTests
 
     // filtering out Null operation as we dont support sparse yet
     // filtering out HostWithPathOperation as this would be taken-care of by middleware.
+    // filtering PutWithContentEncoding until we implement compression
     fs2.Stream
       .evals(dynamicSchemaIndexLoader.map(all(_)))
       .filterNot(_.endpoint.name.contains("NullOperation"))
       .filterNot(_.endpoint.name.contains("HostWithPathOperation"))
+      .filterNot(_.endpoint.name.contains("PutWithContentEncoding"))
       .parEvalMapUnbounded(runInWeaver)
   }
 
