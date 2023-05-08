@@ -27,14 +27,13 @@ package object internals {
       extends AnyVal {
     def traverse[B](f: A => Option[B]): Option[Vector[B]] = {
       val vec = Vector.newBuilder[B]
-      var done = false
-      vector.takeWhile(_ => !done).foreach { a =>
+      vector.foreach { a =>
         f(a) match {
           case Some(b) => vec += b
-          case None    => done = true
+          case None    => return None
         }
       }
-      if (done) None else Some(vec.result())
+      Some(vec.result())
     }
   }
 }
