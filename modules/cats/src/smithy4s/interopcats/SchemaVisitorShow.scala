@@ -24,6 +24,7 @@ import smithy4s.interopcats.instances.ShowInstances._
 import smithy4s.schema.{
   Alt,
   CollectionTag,
+  EnumTag,
   EnumValue,
   Field,
   Primitive,
@@ -113,6 +114,7 @@ object SchemaVisitorShow extends SchemaVisitor[Show] { self =>
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      enumTag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Show[E] = Show.show { e =>

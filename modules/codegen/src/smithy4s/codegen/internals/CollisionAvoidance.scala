@@ -285,6 +285,7 @@ private[internals] object CollisionAvoidance {
     val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
+    val EnumTag_ = NameRef("smithy4s.schema", "EnumTag")
     val Newtype_ = NameRef("smithy4s", "Newtype")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")

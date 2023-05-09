@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
@@ -30,5 +31,6 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
     LOW,
     HIGH,
   )
-  implicit val schema: Schema[LowHigh] = enumeration(values).withId(id).addHints(hints)
+  val enumTag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[LowHigh] = enumeration(enumTag, values).withId(id).addHints(hints)
 }

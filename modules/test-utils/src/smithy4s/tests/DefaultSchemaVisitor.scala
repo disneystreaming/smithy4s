@@ -26,6 +26,7 @@ import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.SchemaAlt
 import smithy4s.schema.SchemaField
 import smithy4s.schema.Schema
+import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive.PBigInt
@@ -85,6 +86,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      enumTag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Id[E] = values.head.value

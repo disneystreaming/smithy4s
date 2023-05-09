@@ -32,6 +32,8 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
+import smithy4s.codegen.internals.EnumTag.IntEnum
+import smithy4s.codegen.internals.EnumTag.StringEnum
 
 private[internals] object Renderer {
 
@@ -930,7 +932,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"val values: $list[$name] = $list".args(
         values.map(_.name)
       ),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(values).withId(id).addHints(hints)"
+      renderEnumTag(enumTag),
+      line"implicit val schema: $Schema_[$name] = $enumeration_(enumTag, values).withId(id).addHints(hints)"
     )
   )
 
@@ -1088,6 +1091,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
+  }
+
+  def renderEnumTag(enumTag: EnumTag): Line = {
+    val enumTagStr = enumTag match {
+      case IntEnum    => "IntEnum"
+      case StringEnum => "StringEnum"
+    }
+    line"val enumTag: $EnumTag_ = $EnumTag_.$enumTagStr"
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {

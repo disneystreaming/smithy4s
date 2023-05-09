@@ -131,8 +131,8 @@ object DocumentKeyDecoder {
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
-          values: List[EnumValue[E]],
           tag: EnumTag,
+          values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyDecoder[E] = {
         val fromName = values.map(e => e.stringValue -> e.value).toMap

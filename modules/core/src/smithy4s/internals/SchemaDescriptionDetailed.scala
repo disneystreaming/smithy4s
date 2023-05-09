@@ -20,6 +20,7 @@ package internals
 import smithy4s.schema.{
   Primitive,
   EnumValue,
+  EnumTag,
   SchemaField,
   SchemaAlt,
   Alt,
@@ -81,6 +82,7 @@ private[internals] object SchemaDescriptionDetailedImpl
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      enumTag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): SchemaDescriptionDetailedImpl[E] = {

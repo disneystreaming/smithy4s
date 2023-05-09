@@ -93,8 +93,8 @@ object DocumentKeyEncoder {
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
-          values: List[EnumValue[E]],
           tag: EnumTag,
+          values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyEncoder[E] = Some { a => total(a).stringValue }
 

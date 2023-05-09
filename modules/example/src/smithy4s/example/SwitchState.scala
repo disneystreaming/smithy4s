@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 sealed abstract class SwitchState(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
@@ -28,5 +29,6 @@ object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[Swit
     ON,
     OFF,
   )
-  implicit val schema: Schema[SwitchState] = enumeration(values).withId(id).addHints(hints)
+  val enumTag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[SwitchState] = enumeration(enumTag, values).withId(id).addHints(hints)
 }

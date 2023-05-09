@@ -18,6 +18,7 @@ package smithy4s
 package internals
 
 import smithy4s.schema.{
+  EnumTag,
   Primitive,
   EnumValue,
   SchemaField,
@@ -46,7 +47,7 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
 
-  override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
+  override def enumeration[E](shapeId: ShapeId, hints: Hints, enumTag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
 
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =

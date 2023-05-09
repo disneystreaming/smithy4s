@@ -28,6 +28,7 @@ import smithy4s.interopcats.instances.HashInstances._
 import smithy4s.schema.{
   Alt,
   CollectionTag,
+  EnumTag,
   EnumValue,
   Field,
   Primitive,
@@ -77,17 +78,17 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      enumTag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Hash[E] = {
     implicit val enumValueHash: Hash[EnumValue[E]] =
-      if (
-        hints
-          .has(smithy4s.IntEnum)
-      )
-        Hash[Int].contramap(_.intValue)
-      else
-        Hash[String].contramap[EnumValue[E]](_.stringValue)
+      enumTag match {
+        case EnumTag.IntEnum =>
+          Hash[Int].contramap(_.intValue)
+        case EnumTag.StringEnum =>
+          Hash[String].contramap(_.stringValue)
+      }
 
     Hash[EnumValue[E]].contramap(total)
   }

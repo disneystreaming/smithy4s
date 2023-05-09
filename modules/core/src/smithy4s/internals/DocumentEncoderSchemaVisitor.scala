@@ -163,13 +163,16 @@ class DocumentEncoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      enumTag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): DocumentEncoder[E] = if (hints.has[IntEnum]) {
-    from(a => Document.fromInt(total(a).intValue))
-  } else {
-    from(a => DString(total(a).stringValue))
-  }
+  ): DocumentEncoder[E] =
+    enumTag match {
+      case EnumTag.IntEnum =>
+        from(e => Document.fromInt(total(e).intValue))
+      case EnumTag.StringEnum =>
+        from(e => DString(total(e).stringValue))
+    }
 
   override def struct[S](
       shapeId: ShapeId,
