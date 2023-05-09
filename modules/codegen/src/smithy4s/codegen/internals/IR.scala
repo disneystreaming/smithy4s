@@ -100,7 +100,8 @@ private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
     values: List[EnumValue],
-    hints: List[Hint]
+    hints: List[Hint],
+    enumTag: EnumTag
 ) extends Decl
 private[internals] case class EnumValue(
     value: String,
@@ -108,6 +109,13 @@ private[internals] case class EnumValue(
     name: String,
     hints: List[Hint]
 )
+
+private[internals] sealed trait EnumTag
+
+private[internals] object EnumTag {
+  case object StringEnum extends EnumTag
+  case object IntEnum extends EnumTag
+}
 
 private[internals] case class Field(
     name: String,

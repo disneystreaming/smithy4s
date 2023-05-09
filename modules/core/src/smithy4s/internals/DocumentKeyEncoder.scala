@@ -26,6 +26,7 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.Schema
+import smithy4s.schema.EnumTag
 
 trait DocumentKeyEncoder[A] { self =>
   def apply(a: A): String
@@ -93,6 +94,7 @@ object DocumentKeyEncoder {
           shapeId: ShapeId,
           hints: Hints,
           values: List[EnumValue[E]],
+          tag: EnumTag,
           total: E => EnumValue[E]
       ): OptDocumentKeyEncoder[E] = Some { a => total(a).stringValue }
 

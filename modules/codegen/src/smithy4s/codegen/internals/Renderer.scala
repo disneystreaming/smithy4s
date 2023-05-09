@@ -173,8 +173,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
-    case enumeration @ Enumeration(shapeId, _, values, hints) =>
-      renderEnum(shapeId, enumeration.nameRef, values, hints)
+    case enumeration @ Enumeration(shapeId, _, values, hints, tag) =>
+      renderEnum(shapeId, enumeration.nameRef, values, hints, tag)
   }
 
   private def deprecationAnnotation(hints: List[Hint]): Line = {
@@ -895,7 +895,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       shapeId: ShapeId,
       name: NameRef,
       values: List[EnumValue],
-      hints: List[Hint]
+      hints: List[Hint],
+      enumTag: EnumTag
   ): Lines = lines(
     documentationAnnotation(hints),
     deprecationAnnotation(hints),
