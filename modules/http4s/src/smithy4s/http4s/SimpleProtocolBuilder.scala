@@ -24,6 +24,8 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
 import smithy4s.kinds._
+import smithy4s.http4s.internals.SmithyHttp4sReverseRouter
+import smithy4s.http4s.internals.SmithyHttp4sRouter
 
 /**
   * Abstract construct helping the construction of routers and clients

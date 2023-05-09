@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package http4s
+package http4s.internals
 
 import cats.data.Kleisli
 import cats.data.OptionT
@@ -25,9 +25,10 @@ import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 import smithy4s.kinds._
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
+import smithy4s.http4s.ServerEndpointMiddleware
 
 // format: off
-class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
+private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],

@@ -15,17 +15,18 @@
  */
 
 package smithy4s
-package http4s
+package http4s.internals
 
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
 import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
+import smithy4s.http4s.ClientEndpointMiddleware
 import cats.effect.Concurrent
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
-object SmithyHttp4sReverseRouter {
+private[http4s] object SmithyHttp4sReverseRouter {
 
   def impl[Alg[_[_, _, _, _, _]], F[_]](
       baseUri:         Uri,
