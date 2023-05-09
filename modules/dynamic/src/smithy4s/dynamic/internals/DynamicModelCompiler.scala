@@ -252,7 +252,7 @@ private[dynamic] object Compiler {
             )
           }
 
-      val theEnum = enumeration(values, values)
+      val theEnum = stringEnumeration(values, values)
 
       update(id, shape.traits, theEnum)
     }
@@ -285,7 +285,7 @@ private[dynamic] object Compiler {
 
       val valueList = values.map(_._2).toList.sortBy(_.intValue)
 
-      val theEnum = enumeration(values.apply, valueList)
+      val theEnum = stringEnumeration(values.apply, valueList)
 
       updateWithHints(
         id, {

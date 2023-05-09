@@ -1009,7 +1009,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       case EnumTag.IntEnum =>
         handleIntEnum(shapeId, hints, values, total)
       case EnumTag.StringEnum =>
-        handleStringEnum(shapeId, hints, values, total)
+        handleEnum(shapeId, hints, values, total)
     }
 
   private def handleEnum[E](

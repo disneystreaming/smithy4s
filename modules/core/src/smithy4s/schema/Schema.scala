@@ -185,6 +185,9 @@ object Schema {
   def enumeration[E](total: E => EnumValue[E], tag: EnumTag, values: List[EnumValue[E]]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values, total)
 
+  def stringEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
+    enumeration(total, EnumTag.StringEnum, values)
+
   def enumeration[E <: Enumeration.Value](tag: EnumTag, values: List[E]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
 
