@@ -20,7 +20,6 @@ package internals
 
 import smithy4s.http4s.kernel._
 import cats.syntax.all._
-import smithy4s.http._
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
@@ -30,13 +29,13 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 
 // format: off
-private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   serviceId: ShapeId,
   serviceHints: Hints,
   awsService: AwsService,
   awsEnv: AwsEnvironment[F],
-  endpoint: Endpoint[Op, I, E, O, SI, SO],
-  clientCodecs: UnaryClientCodecs[F],
+  endpoint: Endpoint.Base[I, E, O, SI, SO],
+  makeClientCodecs: UnaryClientCodecs.Make[F],
 )(implicit effect: Concurrent[F]) extends (I => F[O]) {
 // format: on
 
@@ -58,19 +57,9 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   }
 
   // format: off
-  val inputEncoder: RequestEncoder[F, I] = {
-    // Some AWS protocols abide by REST semantics, some don't
-    HttpEndpoint.unapply(endpoint) match {
-      case Some(httpEndpoint) => {
-        val httpEndpointEncoder = MessageEncoder.fromHttpEndpoint(httpEndpoint)
-        val codecsEncoder = clientCodecs.inputEncoder(endpoint.input)
-        RequestEncoder.combine(httpEndpointEncoder, codecsEncoder)
-      }
-      case None => clientCodecs.inputEncoder(endpoint.input)
-    }
-  }
-  val outputDecoder: ResponseDecoder[F, O] = clientCodecs.outputDecoder(endpoint.output)
-  val errorDecoder: ResponseDecoder[F, Throwable] = clientCodecs.errorDecoder(endpoint.errorable)
+  val clientCodecs = makeClientCodecs(endpoint)
+  import clientCodecs._
+
   val endpointPrefix = awsService.endpointPrefix.getOrElse(endpoint.id.name)
   // format: on
 

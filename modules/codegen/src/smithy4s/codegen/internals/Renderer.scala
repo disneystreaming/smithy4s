@@ -669,7 +669,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderErrorable(op: Operation): Lines = {
     val errorName = NameRef(op.name + "Error")
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
-    if (op.errors.isEmpty) Lines.empty
+    if (op.errors.isEmpty)
+      lines(
+        line"override val errorable: $option[Nothing] = None"
+      )
     else
       lines(
         line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",

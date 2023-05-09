@@ -50,7 +50,7 @@ private[http4s] object SmithyHttp4sServerEndpoint {
   def make[F[_]: Concurrent, Op[_, _, _, _, _], I, E, O, SI, SO](
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
-      compilerContext: UnaryServerCodecs[F],
+      makeServerCodecs: UnaryServerCodecs.Make[F],
       errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
   ): Either[HttpEndpoint.HttpEndpointError,SmithyHttp4sServerEndpoint[F]] =
@@ -68,7 +68,7 @@ private[http4s] object SmithyHttp4sServerEndpoint {
             endpoint,
             method,
             httpEndpoint,
-            compilerContext,
+            makeServerCodecs,
             errorTransformation,
             middleware
           )
@@ -83,15 +83,14 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     endpoint: Endpoint[Op, I, E, O, SI, SO],
     val method: Method,
     httpEndpoint: HttpEndpoint[I],
-    compilerContext: UnaryServerCodecs[F],
+    makeServerCodecs: UnaryServerCodecs.Make[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
 )(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
 
-  val inputDecoder: RequestDecoder[F, I] = compilerContext.inputDecoder(endpoint.input)
-  val outputEncoder: ResponseEncoder[F, O] = compilerContext.outputEncoder(endpoint.output)
-  val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = compilerContext.errorEncoder(HttpContractError.schema)
-  val errorResponseEncoder: ResponseEncoder[F, E] = compilerContext.errorEncoder(endpoint.errorable)
+  val serverCodecs = makeServerCodecs(endpoint)
+  import serverCodecs._
+  val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
   // format: on
 
   def matches(path: Array[String]): Option[PathParams] = {
@@ -129,7 +128,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     case e: HttpContractError =>
       F.pure(contractErrorResponseEncoder.addToResponse(badRequestBase, e))
     case endpoint.Error((_, e)) =>
-      F.pure(errorResponseEncoder.addToResponse(internalErrorBase, e))
+      F.pure(errorEncoder.addToResponse(internalErrorBase, e))
     case e: Throwable =>
       F.raiseError(e)
   }

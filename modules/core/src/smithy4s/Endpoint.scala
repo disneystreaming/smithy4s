@@ -40,19 +40,9 @@ package smithy4s
   * be encoded a great many ways, using a greatt many libraries)
   */
 trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO]
-    extends Endpoint.Schemas[I, E, O, SI, SO] {
-  def id: ShapeId
-  final def name: String = id.name
-  def input: Schema[I]
-  def output: Schema[O]
-  def streamedInput: StreamingSchema[SI]
-  def streamedOutput: StreamingSchema[SO]
-
-  def hints: Hints
+    extends Endpoint.Base[I, E, O, SI, SO] {
 
   def wrap(input: I): Op[I, E, O, SI, SO]
-
-  def errorable: Option[Errorable[E]] = None
 
   object Error {
     def unapply(throwable: Throwable): Option[(Errorable[E], E)] =
@@ -64,12 +54,16 @@ trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO]
 
 object Endpoint {
 
-  trait Schemas[I, E, O, SI, SO] {
+  trait Base[I, E, O, SI, SO] {
+    def id: ShapeId
+    final def name: String = id.name
+    def hints: Hints
     def input: Schema[I]
     def output: Schema[O]
     def errorable: Option[Errorable[E]]
     def streamedInput: StreamingSchema[SI]
     def streamedOutput: StreamingSchema[SO]
+
   }
 
 }

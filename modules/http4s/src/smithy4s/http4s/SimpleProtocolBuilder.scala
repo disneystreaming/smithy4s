@@ -99,13 +99,13 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sReverseRouter[Alg, F](
+          SmithyHttp4sReverseRouter.impl[Alg, F](
             uri,
             service,
             client,
             simpleProtocolCodecs.makeClientCodecs[F],
             middleware
-          ).impl
+          )
         }
     }
   }
