@@ -32,16 +32,15 @@ package object internals {
     def traverse[B](f: A => Option[B]): Option[Vector[B]] = {
       val vec = Vector.newBuilder[B]
       var doneEarly = false
-      try {
-        vector.foreach { a =>
-          f(a) match {
-            case Some(b) => vec += b
-            case None    => throw DoneEarly
-          }
+      vector.foreach { a =>
+        f(a) match {
+          case Some(b) => vec += b
+          case None =>
+            doneEarly = true
+            scala.util.control.Breaks.break()
         }
-      } catch {
-        case DoneEarly => doneEarly = true
       }
+
       if (doneEarly) None else Some(vec.result())
     }
   }
