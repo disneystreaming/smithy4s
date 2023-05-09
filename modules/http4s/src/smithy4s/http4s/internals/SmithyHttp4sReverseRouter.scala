@@ -20,7 +20,6 @@ package http4s.internals
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
-import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
 import smithy4s.http4s.ClientEndpointMiddleware
 import cats.effect.Concurrent
 
