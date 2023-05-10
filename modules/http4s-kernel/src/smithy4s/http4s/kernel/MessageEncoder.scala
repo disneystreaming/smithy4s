@@ -22,6 +22,7 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.Uri
+import org.http4s.Method
 import smithy4s.PartialData
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpEndpoint
@@ -95,11 +96,16 @@ object MessageEncoder {
     def addToRequest(request: Request[F], input: I): Request[F] = {
       val path = httpEndpoint.path(input)
       val staticQueries = httpEndpoint.staticQueryParams
+      val method = httpEndpoint.method
       val oldUri = request.uri
       val newUri = oldUri
         .copy(path = oldUri.path.addSegments(path.map(Uri.Path.Segment(_))))
         .withMultiValueQueryParams(staticQueries)
-      request.withUri(newUri)
+      request
+        .withUri(newUri)
+        .withMethod(
+          Method.fromString(method.toString).getOrElse(request.method)
+        )
     }
 
     def addToResponse(response: Response[F], input: I): Response[F] = {
