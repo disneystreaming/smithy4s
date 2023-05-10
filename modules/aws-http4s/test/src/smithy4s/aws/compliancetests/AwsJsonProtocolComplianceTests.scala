@@ -16,8 +16,7 @@
 
 package smithy4s.aws
 
-import aws.protocols.AwsJson1_0
-import aws.protocols.AwsJson1_1
+import aws.protocols.{AwsJson1_0, AwsJson1_1, RestJson1}
 import cats.effect.std.Env
 import cats.effect.IO
 import smithy4s.dynamic.DynamicSchemaIndex.load
@@ -41,7 +40,7 @@ object AwsJsonProtocolComplianceTests
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     val all: DynamicSchemaIndex => List[ComplianceTest[IO]] = dsi =>
-      awsJson1_1(dsi) ++ awsJson1_0(dsi)
+      awsJson1_1(dsi) ++ awsJson1_0(dsi) ++ restJson1(dsi)
 
     // filtering out Null operation as we dont support sparse yet
     // filtering out HostWithPathOperation as this would be taken-care of by middleware.
@@ -63,6 +62,10 @@ object AwsJsonProtocolComplianceTests
   private val awsJson1_1 = generateTests(
     ShapeId("aws.protocoltests.json", "JsonProtocol"),
     impl(AwsJson1_1)
+  )
+  private val restJson1 = generateTests(
+    ShapeId("aws.protocoltests.restjson", "RestJson"),
+    impl(RestJson1)
   )
 
   private val path = Env
