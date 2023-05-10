@@ -194,6 +194,9 @@ object Schema {
   def stringEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
     enumeration(EnumTag.StringEnum, values)
 
+  def intEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
+    enumeration(EnumTag.IntEnum, values)
+
   def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]): Schema[B] =
     Schema.BijectionSchema(a, bijection)
 

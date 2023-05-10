@@ -20,6 +20,7 @@ package http.internals
 import smithy4s.Schema._
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.ResponseCodeExtractor
 import munit._
+import smithy4s.schema.Schema
 
 class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
 
@@ -72,9 +73,7 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       with ShapeTag.Companion[StatusCode] {
     val id: ShapeId = ShapeId("smithy4s.example", "StatusCode")
 
-    val hints: Hints = Hints(
-      IntEnum()
-    )
+    val hints: Hints = Hints.empty
 
     case object OK extends StatusCode("TWOHUNDRED", "TWOHUNDRED", 200, Hints())
 
@@ -86,7 +85,7 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       REDIRECT
     )
     implicit val schema: Schema[StatusCode] =
-      stringEnumeration(values).withId(id).addHints(hints)
+      Schema.intEnumeration(values).withId(id).addHints(hints)
   }
 
   case class SampleResponse1(code: StatusCode)
@@ -105,7 +104,7 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
   }
 
   test(
-    "applying HttpResponseCode works on an enumeration with an intEnum hint"
+    "applying HttpResponseCode works on an int enumeration"
   ) {
 
     val res: ResponseCodeExtractor[SampleResponse1] =
