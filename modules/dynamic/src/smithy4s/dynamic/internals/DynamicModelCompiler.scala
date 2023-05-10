@@ -284,7 +284,7 @@ private[dynamic] object Compiler {
 
       val valueList = values.map(_._2).toList.sortBy(_.intValue)
 
-      val theEnum = stringEnumeration(values.apply, valueList)
+      val theEnum = intEnumeration(values.apply, valueList)
 
       updateWithHints(
         id, {
