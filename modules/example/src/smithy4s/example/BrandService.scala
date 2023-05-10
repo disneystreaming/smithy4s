@@ -78,5 +78,6 @@ object BrandServiceOperation {
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/brands"), code = 200),
     )
     def wrap(input: AddBrandsInput) = AddBrands(input)
+    override val errorable: Option[Nothing] = None
   }
 }

@@ -89,5 +89,6 @@ object FooServiceOperation {
       smithy.api.Readonly(),
     )
     def wrap(input: Unit) = GetFoo()
+    override val errorable: Option[Nothing] = None
   }
 }

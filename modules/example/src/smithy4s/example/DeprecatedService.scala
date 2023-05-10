@@ -82,5 +82,6 @@ object DeprecatedServiceOperation {
       smithy.api.Deprecated(message = None, since = None),
     )
     def wrap(input: Unit) = DeprecatedOperation()
+    override val errorable: Option[Nothing] = None
   }
 }

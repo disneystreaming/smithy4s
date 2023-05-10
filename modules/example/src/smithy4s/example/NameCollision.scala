@@ -130,5 +130,6 @@ object NameCollisionOperation {
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints: Hints = Hints.empty
     def wrap(input: Unit) = Endpoint()
+    override val errorable: Option[Nothing] = None
   }
 }
