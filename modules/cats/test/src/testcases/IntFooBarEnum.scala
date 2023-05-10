@@ -18,7 +18,6 @@ package smithy4s.interopcats.testcases
 
 import smithy4s.schema.Schema
 import smithy4s.{Hints, ShapeId}
-import smithy4s.schema.Schema.enumeration
 
 sealed abstract class IntFooBar(val stringValue: String, val intValue: Int)
     extends smithy4s.Enumeration.Value {
@@ -44,7 +43,7 @@ object IntFooBar
   override def values: List[IntFooBar] = List(Foo, Bar)
 
   implicit val schema: Schema[IntFooBar] =
-    enumeration[IntFooBar](List(Foo, Bar)).addHints(Hints(smithy4s.IntEnum()))
+    Schema.intEnumeration[IntFooBar](List(Foo, Bar))
 
   override def hints: Hints = Hints.empty
 }
