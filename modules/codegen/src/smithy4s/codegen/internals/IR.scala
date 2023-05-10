@@ -99,9 +99,9 @@ private[internals] case class TypeAlias(
 private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
+    enumTag: EnumTag,
     values: List[EnumValue],
-    hints: List[Hint],
-    enumTag: EnumTag
+    hints: List[Hint]
 ) extends Decl
 private[internals] case class EnumValue(
     value: String,
