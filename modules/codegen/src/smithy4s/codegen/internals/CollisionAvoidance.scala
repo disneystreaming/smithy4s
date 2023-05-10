@@ -85,7 +85,7 @@ private[internals] object CollisionAvoidance {
           rec,
           hints.map(modHint)
         )
-      case Enumeration(shapeId, name, values, hints, tag) =>
+      case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, intValue, name, hints) =>
             EnumValue(value, intValue, protectKeyword(name), hints.map(modHint))
@@ -93,9 +93,9 @@ private[internals] object CollisionAvoidance {
         Enumeration(
           shapeId,
           protectKeyword(name.capitalize),
+          tag,
           newValues,
-          hints.map(modHint),
-          tag
+          hints.map(modHint)
         )
     }
     compilationUnit.copy(declarations = declarations)
