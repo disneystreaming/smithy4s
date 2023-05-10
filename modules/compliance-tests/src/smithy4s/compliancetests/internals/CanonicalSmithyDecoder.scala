@@ -16,7 +16,6 @@
 
 package smithy4s.compliancetests.internals
 
-import smithy4s.IntEnum
 import smithy4s.internals._
 import smithy4s.{Hints, ShapeId}
 import smithy4s.schema.Primitive
@@ -40,7 +39,7 @@ object CanonicalSmithyDecoder {
       schema: Schema[A]
   ): Document.Decoder[A] = {
     decoder.fromSchema(
-      schema.transformHintsTransitively(_.filter(_.keyId == IntEnum.id))
+      schema
     )
   }
 

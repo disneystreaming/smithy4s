@@ -27,7 +27,7 @@ sealed abstract class IntFooBar(val stringValue: String, val intValue: Int)
 
   val name = stringValue
   val value = stringValue
-  val hints = Hints(smithy4s.IntEnum())
+  val hints = Hints()
 
 }
 
