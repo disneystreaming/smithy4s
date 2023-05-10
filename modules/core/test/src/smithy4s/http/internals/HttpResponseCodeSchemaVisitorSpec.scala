@@ -86,7 +86,7 @@ class HttpResponseCodeSchemaVisitorSpec() extends FunSuite {
       REDIRECT
     )
     implicit val schema: Schema[StatusCode] =
-      enumeration(values).withId(id).addHints(hints)
+      stringEnumeration(values).withId(id).addHints(hints)
   }
 
   case class SampleResponse1(code: StatusCode)

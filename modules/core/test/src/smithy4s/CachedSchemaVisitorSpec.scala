@@ -68,6 +68,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     def enumeration[E](
         shapeId: ShapeId,
         hints: Hints,
+        enumTag: EnumTag,
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): Unit = discard {
@@ -170,10 +171,10 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       case object Bar extends FooBar("bar", 1)
 
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](List(Foo, Bar))
+        stringEnumeration[FooBar](List(Foo, Bar))
     }
 
-    val schema: Schema[FooBar] = enumeration[FooBar](FooBar.values)
+    val schema: Schema[FooBar] = stringEnumeration[FooBar](FooBar.values)
     checkSchema(schema)
   }
 
