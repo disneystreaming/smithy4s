@@ -84,3 +84,4 @@ object DeprecatedServiceOperation {
     def wrap(input: Unit) = DeprecatedOperation()
   }
 }
+

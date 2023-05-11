@@ -6,3 +6,4 @@ smithy4s.meta.ErrorMessageTrait$Provider
 smithy4s.meta.RefinementTrait$Provider
 smithy4s.meta.UnwrapTrait$Provider
 smithy4s.meta.AdtTrait$Provider
+smithy4s.meta.TypeclassTrait$Provider
