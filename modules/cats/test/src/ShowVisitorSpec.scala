@@ -16,6 +16,7 @@
 
 package smithy4s.interopcats
 
+import cats.Show
 import smithy4s.{ByteArray, ShapeId, Timestamp}
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
@@ -26,7 +27,8 @@ import smithy4s.interopcats.testcases.IntOrString._
 
 object ShowVisitorSpec extends FunSuite with CompatProvider {
 
-  val schemaVisitorShow = SchemaVisitorShow
+  def schemaVisitorShow[A]: Schema[A] => Show[A] =
+    SchemaVisitorShow.fromSchema(_)
 
   test("int") {
     val schema: Schema[Int] = int

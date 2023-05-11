@@ -78,7 +78,7 @@ private[internals] object Renderer {
     )
 
     val classes = unit.declarations.map { decl =>
-      val renderResult = r.renderDecl(decl)
+      val renderResult = r.renderDecl(decl) ++ newline
       val p = s"package ${unit.namespace}"
 
       val segments = renderResult.list.flatMap(_.segments.toList)
@@ -516,6 +516,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
+  private def renderTypeclass(hint: Hint.Typeclass, tpe: NameRef): Line = {
+    val target = NameRef(hint.targetType)
+    val interpreter = NameRef(hint.interpreter)
+    val lowerCasedName = uncapitalise(tpe.name)
+    line"implicit val $lowerCasedName${hint.id.getName.capitalize}: $target[$tpe] = $interpreter.fromSchema(schema)"
+  }
+
+  private def renderTypeclasses(
+      hints: List[Hint],
+      tpe: NameRef
+  ): Lines = {
+    val result = hints.collect { case h: Hint.Typeclass =>
+      renderTypeclass(h, tpe)
+    }
+    if (result.isEmpty) Lines.empty else newline ++ Lines(result)
+  }
+
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
@@ -606,6 +623,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         } else {
           line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
         },
+        renderTypeclasses(product.hints, product.nameRef),
         additionalLines
       )
     )
@@ -857,7 +875,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               if (error) "" else ".withId(id).addHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
-        }
+        },
+        renderTypeclasses(hints, name)
       )
     )
   }
@@ -929,7 +948,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"val values: $list[$name] = $list".args(
         values.map(_.name)
       ),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(values).withId(id).addHints(hints)"
+      line"implicit val schema: $Schema_[$name] = $enumeration_(values).withId(id).addHints(hints)",
+      renderTypeclasses(hints, name)
     )
   )
 
@@ -955,7 +975,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
           line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
-        )
+        ),
+        renderTypeclasses(hints, name)
       )
     )
   }
