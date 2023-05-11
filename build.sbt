@@ -841,7 +841,7 @@ lazy val complianceTests = projectMatrix
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
-  .dependsOn(`http4s-swagger`)
+  .dependsOn(`http4s-swagger`, cats)
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
@@ -872,7 +872,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "typeclass.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     libraryDependencies += Dependencies.Http4s.emberServer.value,
