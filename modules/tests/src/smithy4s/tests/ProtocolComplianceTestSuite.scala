@@ -14,22 +14,20 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests.weaverimpl
+package smithy4s.tests
 
-import smithy4s.compliancetests.{ComplianceTest, ReverseRouter}
-import smithy4s.compliancetests.internals.AllowRules
-import smithy4s.{Document, Schema, ShapeId}
-import smithy4s.dynamic.DynamicSchemaIndex
-import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.std.Env
+import cats.syntax.all._
 import fs2.io.file.Path
-import smithy4s.http.CodecAPI
+import smithy4s.{Document, Schema, ShapeId}
+import smithy4s.compliancetests._
+import smithy4s.compliancetests.internals.AllowRules
+import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
+import smithy4s.http.{CodecAPI, PayloadError}
 import smithy4s.schema.Schema.document
-import smithy4s.compliancetests._
-import smithy4s.http.PayloadError
 import weaver._
 
 abstract class ProtocolComplianceTestSuite
@@ -40,9 +38,9 @@ abstract class ProtocolComplianceTestSuite
 
   def getSuite: EffectSuite[IO] = this
 
-  def allowAll: Boolean = true
+  def isAllowed(complianceTest: ComplianceTest[IO]): Boolean = false
 
-  def allTests: DynamicSchemaIndex => List[ComplianceTest[IO]]
+  def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]]
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
@@ -52,7 +50,7 @@ abstract class ProtocolComplianceTestSuite
         fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
       }
       .evalMap { case (allowRules, test) =>
-        runInWeaver(allowAll, allowRules, test)
+        runInWeaver(allowRules, test)
       }
   }
 
@@ -61,9 +59,9 @@ abstract class ProtocolComplianceTestSuite
   def genClientTests(
       impl: ReverseRouter[IO],
       shapeIds: ShapeId*
-  ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
+  )(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
     shapeIds.toList.flatMap(shapeId =>
-      dynamicSchemaIndex
+      dsi
         .getService(shapeId)
         .toList
         .flatMap(wrapper => {
@@ -74,14 +72,13 @@ abstract class ProtocolComplianceTestSuite
             )
         })
     )
-  }
 
   def genServerTests(
       impl: Router[IO],
       shapeIds: ShapeId*
-  ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
+  )(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
     shapeIds.toList.flatMap(shapeId =>
-      dynamicSchemaIndex
+      dsi
         .getService(shapeId)
         .toList
         .flatMap(wrapper => {
@@ -92,14 +89,13 @@ abstract class ProtocolComplianceTestSuite
             )
         })
     )
-  }
 
   def genClientAndServerTests(
       impl: ReverseRouter[IO] with Router[IO],
       shapeIds: ShapeId*
-  ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
+  )(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
     shapeIds.toList.flatMap(shapeId =>
-      dynamicSchemaIndex
+      dsi
         .getService(shapeId)
         .toList
         .flatMap(wrapper => {
@@ -110,7 +106,6 @@ abstract class ProtocolComplianceTestSuite
             )
         })
     )
-  }
 
   private def decodeAllowRules(dsi: DynamicSchemaIndex): IO[AllowRules] = {
     Document.DObject(dsi.metadata).decode[AllowRules].liftTo[IO]
@@ -142,14 +137,12 @@ abstract class ProtocolComplianceTestSuite
   }
 
   private def runInWeaver(
-      allowAll: Boolean,
       allowList: AllowRules,
-      tc: ComplianceTest[IO]
+      ct: ComplianceTest[IO]
   ): IO[TestOutcome] = {
     val runner: IO[Expectations] = {
-      // TODO add more robust filtering system and remove any specific mention of a domain such as Alloy
-      if (allowAll || allowList.isAllowed(tc) || tc.show.contains("alloy")) {
-        tc.run
+      if (isAllowed(ct) || allowList.isAllowed(ct)) {
+        ct.run
           .map(res => expectSuccess(res))
           .attempt
           .map {
@@ -161,13 +154,13 @@ abstract class ProtocolComplianceTestSuite
           }
 
       } else
-        tc.run.attempt
+        ct.run.attempt
           .map(_.fold(t => Left(t.toString), identity))
           .map(res => expectFailure(res))
     }
 
     Test(
-      tc.show,
+      ct.show,
       runner
     )
   }
