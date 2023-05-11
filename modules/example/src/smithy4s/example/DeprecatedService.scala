@@ -68,7 +68,7 @@ object DeprecatedServiceOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = new PolyFunction5[DeprecatedServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class DeprecatedOperation() extends DeprecatedServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
+  final case class DeprecatedOperation() extends DeprecatedServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.deprecatedOperation()
     def endpoint: (Unit, smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), DeprecatedOperation)
   }
@@ -84,3 +84,4 @@ object DeprecatedServiceOperation {
     def wrap(input: Unit) = DeprecatedOperation()
   }
 }
+

@@ -177,7 +177,7 @@ object Boilerplate {
         .mkString(", ")
 
       val smartCtsr =
-        s"""def apply[${`A..N`}]($schemaParams)(const: (${`A..N`}) => S): Schema[S] =  Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
+        s"""def apply[${`A..N`}]($schemaParams)(const: (${`A..N`}) => S): Schema.StructSchema[S] = Schema.StructSchema[S](placeholder, Hints.empty, Vector($args), arr => const($casts))"""
 
       block"""
       |package smithy4s

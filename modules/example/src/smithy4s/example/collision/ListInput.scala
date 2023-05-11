@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
 
-case class ListInput(list: List[String])
+final case class ListInput(list: List[String])
 object ListInput extends ShapeTag.Companion[ListInput] {
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ListInput")
 

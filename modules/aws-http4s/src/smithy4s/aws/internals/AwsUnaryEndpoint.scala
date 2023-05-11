@@ -77,7 +77,7 @@ private[aws] class AwsUnaryEndpoint[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
   def inputToRequest(input: I): F[Request[F]] = {
     awsEnv.region.map { region =>
       val baseUri: Uri =
-        Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com")
+        Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
       val baseRequest = Request[F](Method.POST, baseUri).withEmptyBody
       inputEncoder.addToRequest(baseRequest, input)
     }

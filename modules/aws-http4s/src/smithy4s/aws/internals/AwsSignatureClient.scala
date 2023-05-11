@@ -42,12 +42,19 @@ private[aws] object AwsSigningClient {
       endpointHints: Hints,
       awsEnvironment: AwsEnvironment[F]
   ): Client[F] = {
+    val endpointPrefix = serviceHints
+      .get(_root_.aws.api.Service)
+      .flatMap(_.endpointPrefix)
+      .getOrElse(serviceId.name)
+      .toLowerCase()
+
     val sign = signingFunction(
-      serviceId,
-      endpointId,
-      serviceHints,
-      endpointHints,
-      awsEnvironment
+      serviceId.name,
+      endpointId.name,
+      endpointPrefix,
+      awsEnvironment.timestamp,
+      awsEnvironment.credentials,
+      awsEnvironment.region
     )
     Client { request =>
       Resource.eval(sign(request)).flatMap { request =>
@@ -57,27 +64,16 @@ private[aws] object AwsSigningClient {
   }
 
   private[internals] def signingFunction[F[_]: Concurrent](
-      serviceId: ShapeId,
-      endpointId: ShapeId,
-      serviceHints: Hints,
-      endpointHints: Hints,
-      awsEnvironment: AwsEnvironment[F]
+      serviceName: String,
+      endpointName: String,
+      endpointPrefix: String,
+      timestamp: F[Timestamp],
+      credentials: F[AwsCredentials],
+      region: F[AwsRegion]
   ): Request[F] => F[Request[F]] = {
-    import awsEnvironment._
-
-    val endpointPrefix = serviceHints
-      .get(_root_.aws.api.Service)
-      .flatMap(_.endpointPrefix)
-      .getOrElse(serviceId.name)
-      .toLowerCase()
-    val newline = System.lineSeparator()
     val contentType = org.http4s.headers.`Content-Type`.headerInstance
     val `Content-Type` = contentType.name
-    val `Host` = CIString("host")
-    val `X-Amz-Date` = CIString("X-Amz-Date")
-    val `X-Amz-Security-Token` = CIString("X-Amz-Security-Token")
-    val `X-Amz-Target` = CIString("X-Amz-Target")
-    val algorithm = "AWS4-HMAC-SHA256"
+
     def getSignatureKey(
         key: String,
         dateStamp: String,
@@ -98,8 +94,8 @@ private[aws] object AwsSigningClient {
       val bodyF = request.body.chunks.compile.to(Chunk).map(_.flatten)
       val awsHeadersF = (bodyF, timestamp, credentials, region).mapN { case (body, timestamp, credentials, region) =>
         val credentialsScope = s"${timestamp.conciseDate}/$region/$endpointPrefix/aws4_request"
-        val queryParams: List[(String, String)] =
-          request.uri.query.toList.sortBy(_._1).map { case (k, v) => k -> v.getOrElse("") }
+        val queryParams: Vector[(String, String)] =
+          request.uri.query.toVector.sorted.map { case (k, v) => k -> v.getOrElse("") }
         val canonicalQueryString =
           if (queryParams.isEmpty) ""
           else
@@ -115,7 +111,7 @@ private[aws] object AwsSigningClient {
           `Host` -> request.uri.host.map(_.renderString).orNull,
           `X-Amz-Date` -> timestamp.conciseDateTime,
           `X-Amz-Security-Token` -> credentials.sessionToken.orNull,
-          `X-Amz-Target` -> (serviceId.name + "." + endpointId.name)
+          `X-Amz-Target` -> (serviceName + "." + endpointName)
         ).filterNot(_._2 == null)
 
         val canonicalHeadersString = baseHeadersList
@@ -126,10 +122,11 @@ private[aws] object AwsSigningClient {
         lazy val signedHeadersString = baseHeadersList.map(_._1).map(_.toString.toLowerCase()).mkString(";")
 
         val payloadHash = sha256HexDigest(body.toArray)
+        val pathString = request.uri.path.toAbsolute.renderString
         val canonicalRequest = new StringBuilder()
           .append(request.method.name.toUpperCase())
           .append(newline)
-          .append(request.uri.path.renderString)
+          .append(pathString)
           .append(newline)
           .append(canonicalQueryString)
           .append(newline)
@@ -166,5 +163,12 @@ private[aws] object AwsSigningClient {
       }
     }
   }
+
+  private val newline = System.lineSeparator()
+  private val `Host` = CIString("host")
+  private val `X-Amz-Date` = CIString("X-Amz-Date")
+  private val `X-Amz-Security-Token` = CIString("X-Amz-Security-Token")
+  private val `X-Amz-Target` = CIString("X-Amz-Target")
+  private val algorithm = "AWS4-HMAC-SHA256"
 
 }

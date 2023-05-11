@@ -74,7 +74,7 @@ object NameCollisionOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: NameCollisionGen[P]): PolyFunction5[NameCollisionOperation, P] = new PolyFunction5[NameCollisionOperation, P] {
     def apply[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class MyOp() extends NameCollisionOperation[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
+  final case class MyOp() extends NameCollisionOperation[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = impl.myOp()
     def endpoint: (Unit, smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]) = ((), MyOp)
   }
@@ -104,7 +104,7 @@ object NameCollisionOperation {
 
     val hints: Hints = Hints.empty
 
-    case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError
+    final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError
 
     object MyOpErrorCase {
       val hints: Hints = Hints.empty
@@ -118,7 +118,7 @@ object NameCollisionOperation {
       case c: MyOpErrorCase => MyOpErrorCase.alt(c)
     }
   }
-  case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
+  final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
     def endpoint: (Unit, smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), Endpoint)
   }
@@ -132,3 +132,4 @@ object NameCollisionOperation {
     def wrap(input: Unit) = Endpoint()
   }
 }
+

@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.constant
 /** Test if an at-sign is rendered appropriately
   * {@literal @}test
   */
-case class DocTest()
+final case class DocTest()
 object DocTest extends ShapeTag.Companion[DocTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DocTest")
 

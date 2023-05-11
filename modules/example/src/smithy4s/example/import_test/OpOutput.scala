@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-case class OpOutput(output: String)
+final case class OpOutput(output: String)
 object OpOutput extends ShapeTag.Companion[OpOutput] {
   val id: ShapeId = ShapeId("smithy4s.example.import_test", "OpOutput")
 

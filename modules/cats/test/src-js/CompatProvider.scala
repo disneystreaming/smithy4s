@@ -14,26 +14,14 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws
+package smithy4s.interopcats
 
-import cats.effect._
-import com.amazonaws.dynamodb._
-import org.http4s.ember.client.EmberClientBuilder
-import smithy4s.aws._
+import scalajs.js.Date
+import smithy4s.Timestamp
 
-object Main extends IOApp.Simple {
-
-  def run = resource.use { case (dynamodb) =>
-    dynamodb
-      .listTables(limit = Some(ListTablesInputLimit(10)))
-      .flatMap(IO.println(_))
+trait CompatProvider {
+  def getTimestamp: Timestamp = {
+    val d = new Date()
+    Timestamp.fromDate(d)
   }
-
-  val resource: Resource[IO, DynamoDB[IO]] =
-    for {
-      httpClient <- EmberClientBuilder.default[IO].build
-      awsEnv <- AwsEnvironment.default(httpClient, AwsRegion.US_EAST_1)
-      dynamodb <- AwsClient(DynamoDB, awsEnv)
-    } yield dynamodb
-
 }

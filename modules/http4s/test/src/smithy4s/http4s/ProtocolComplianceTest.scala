@@ -20,14 +20,21 @@ import alloy.SimpleRestJson
 import cats.effect.Resource
 import org.http4s._
 import org.http4s.client.Client
-import smithy4s.{Schema, Service, ShapeId}
+import smithy4s.{Document, Schema, Service, ShapeId}
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.kinds.FunctorAlgebra
+import weaver._
+import smithy4s.compliancetests.internals._
 import cats.syntax.all._
 import cats.effect.IO
+import cats.effect.std.Env
+import smithy4s.http.CodecAPI
+import smithy4s.dynamic.model.Model
+import smithy4s.dynamic.DynamicSchemaIndex.load
+import smithy4s.schema.Schema.document
 import smithy4s.http.HttpMediaType
 import smithy4s.compliancetests._
-import smithy4s.compliancetests.weaverimpl._
+import smithy4s.http.PayloadError
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -37,9 +44,23 @@ import smithy4s.compliancetests.weaverimpl._
   * are dynamically created via effects, which makes it impossible to implement `RunnableSuite`,
   * which is required to run tests via IntelliJ.
   */
-object ProtocolComplianceTest extends ProtocolComplianceTestSuite {
+object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
-  override def allowAll: Boolean = false
+  implicit protected def effectCompat: EffectCompat[IO] = CatsUnsafeRun
+
+  def getSuite: EffectSuite[IO] = this
+
+  def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
+    fs2.Stream
+      .eval(dynamicSchemaIndexLoader)
+      .evalMap(index => decodeAllowRules(index).map(index -> _))
+      .flatMap { case (schemaIndex, allowRules) =>
+        fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
+      }
+      .evalMap { case (allowRules, test) =>
+        runInWeaver(allowRules, test)
+      }
+  }
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = SimpleRestJson
@@ -72,21 +93,26 @@ object ProtocolComplianceTest extends ProtocolComplianceTestSuite {
     }
   }
 
-  private val simpleRestJsonSpec =
+  private val simpleRestJsonSpec = generateTests(
     ShapeId("aws.protocoltests.restjson", "RestJson")
-
-  private val pizzaSpec = ShapeId("alloy.test", "PizzaAdminService")
-
-  override def allTests = genClientAndServerTests(
-    SimpleRestJsonIntegration,
-    simpleRestJsonSpec,
-    pizzaSpec
+  )
+  private val pizzaSpec = generateTests(
+    ShapeId("alloy.test", "PizzaAdminService")
   )
 
-  private val modelDump = fileFromEnv("MODEL_DUMP")
-  override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
+  private val allTests = List(simpleRestJsonSpec, pizzaSpec).combineAll
+
+  private val path = Env
+    .make[IO]
+    .get("MODEL_DUMP")
+    .flatMap(
+      _.liftTo[IO](new RuntimeException("MODEL_DUMP env var not set"))
+        .map(fs2.io.file.Path(_))
+    )
+
+  private val dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
-      p <- modelDump
+      p <- path
       dsi <- fs2.io.file
         .Files[IO]
         .readAll(p)
@@ -98,4 +124,95 @@ object ProtocolComplianceTest extends ProtocolComplianceTestSuite {
     } yield dsi
   }
 
+  private def generateTests(
+      shapeId: ShapeId
+  ): DynamicSchemaIndex => List[ComplianceTest[IO]] = { dynamicSchemaIndex =>
+    dynamicSchemaIndex
+      .getService(shapeId)
+      .toList
+      .flatMap(wrapper => {
+        HttpProtocolCompliance
+          .clientAndServerTests(
+            SimpleRestJsonIntegration,
+            wrapper.service
+          )
+      })
+  }
+
+  private def decodeAllowRules(dsi: DynamicSchemaIndex): IO[AllowRules] = {
+    Document.DObject(dsi.metadata).decode[AllowRules].liftTo[IO]
+  }
+
+  private def loadDynamic(
+      doc: Document
+  ): Either[PayloadError, DynamicSchemaIndex] = {
+    Document.decode[Model](doc).map(load)
+  }
+
+  private def decodeDocument(
+      bytes: Array[Byte],
+      codecApi: CodecAPI
+  ): Document = {
+    val schema: Schema[Document] = document
+    val codec: codecApi.Codec[Document] = codecApi.compileCodec(schema)
+    codecApi
+      .decodeFromByteArray[Document](codec, bytes)
+      .getOrElse(sys.error("unable to decode smithy model into document"))
+
+  }
+
+  private def runInWeaver(
+      allowList: AllowRules,
+      tc: ComplianceTest[IO]
+  ): IO[TestOutcome] = {
+    val runner: IO[Expectations] = {
+      if (allowList.isAllowed(tc) || tc.show.contains("alloy")) {
+        tc.run
+          .map(res => expectSuccess(res))
+          .attempt
+          .map {
+            case Right(expectations) => expectations
+            case Left(throwable) =>
+              Expectations.Helpers.failure(
+                s"unexpected error when running test ${throwable.getMessage} \n $throwable"
+              )
+          }
+
+      } else
+        tc.run.attempt
+          .map(_.fold(t => Left(t.toString), identity))
+          .map(res => expectFailure(tc, res))
+    }
+
+    Test(
+      tc.show,
+      runner
+    )
+  }
+
+  def expectSuccess(
+      res: ComplianceTest.ComplianceResult
+  ): Expectations = {
+    res.bifoldMap(
+      Expectations.Helpers.failure(_),
+      _ => Expectations.Helpers.success
+    )
+  }
+
+  def expectFailure(
+      test: ComplianceTest[IO],
+      res: ComplianceTest.ComplianceResult
+  ): Expectations = {
+    res.bifoldMap(
+      reason =>
+        throw new weaver.IgnoredException(
+          Some(reason),
+          weaver.SourceLocation.fromContext
+        ),
+      _ =>
+        Expectations.Helpers.failure(
+          s"expected failure for but got success, please update the Allow list: ${test.show}"
+        )
+    )
+  }
 }

@@ -17,7 +17,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
 
   val hints: Hints = Hints.empty
 
-  case class Video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast
+  final case class Video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast
   object Video extends ShapeTag.Companion[Video] {
     val id: ShapeId = ShapeId("smithy4s.example", "Video")
 
@@ -33,7 +33,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
 
     val alt = schema.oneOf[Podcast]("video")
   }
-  case class Audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast
+  final case class Audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast
   object Audio extends ShapeTag.Companion[Audio] {
     val id: ShapeId = ShapeId("smithy4s.example", "Audio")
 

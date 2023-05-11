@@ -25,13 +25,13 @@ object Foo extends ShapeTag.Companion[Foo] {
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
 
-  case class IntCase(int: Int) extends Foo
+  final case class IntCase(int: Int) extends Foo
   /** this is a comment saying you should be careful for this case
     * you never know what lies ahead with Strings like this
     */
-  case class StrCase(str: String) extends Foo
-  case class BIntCase(bInt: BigInt) extends Foo
-  case class BDecCase(bDec: BigDecimal) extends Foo
+  final case class StrCase(str: String) extends Foo
+  final case class BIntCase(bInt: BigInt) extends Foo
+  final case class BDecCase(bDec: BigDecimal) extends Foo
 
   object IntCase {
     val hints: Hints = Hints.empty

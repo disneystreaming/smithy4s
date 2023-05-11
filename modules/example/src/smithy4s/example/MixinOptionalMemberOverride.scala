@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-case class MixinOptionalMemberOverride(a: String)
+final case class MixinOptionalMemberOverride(a: String)
 object MixinOptionalMemberOverride extends ShapeTag.Companion[MixinOptionalMemberOverride] {
   val id: ShapeId = ShapeId("smithy4s.example", "MixinOptionalMemberOverride")
 

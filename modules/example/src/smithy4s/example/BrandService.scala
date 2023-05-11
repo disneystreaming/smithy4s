@@ -64,7 +64,7 @@ object BrandServiceOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = new PolyFunction5[BrandServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: BrandServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
+  final case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands(input.brands)
     def endpoint: (AddBrandsInput, smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
   }
@@ -80,3 +80,4 @@ object BrandServiceOperation {
     def wrap(input: AddBrandsInput) = AddBrands(input)
   }
 }
+

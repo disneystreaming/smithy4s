@@ -17,7 +17,7 @@ import smithy4s.schema.Schema.struct
   * @param bucketName
   *   Sent in the URI label named "bucketName".
   */
-case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
+final case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetObjectInput")
 

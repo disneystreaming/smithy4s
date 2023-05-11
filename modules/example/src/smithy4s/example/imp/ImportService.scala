@@ -75,7 +75,7 @@ object ImportServiceOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: ImportServiceGen[P]): PolyFunction5[ImportServiceOperation, P] = new PolyFunction5[ImportServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ImportServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
+  final case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
     def endpoint: (Unit, smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
   }
@@ -107,7 +107,7 @@ object ImportServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
@@ -122,3 +122,4 @@ object ImportServiceOperation {
     }
   }
 }
+

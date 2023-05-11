@@ -6,7 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.constant
 
-case class ArbitraryDataTest()
+final case class ArbitraryDataTest()
 object ArbitraryDataTest extends ShapeTag.Companion[ArbitraryDataTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "ArbitraryDataTest")
 

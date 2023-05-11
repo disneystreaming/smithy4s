@@ -12,7 +12,7 @@ import smithy4s.schema.Schema.struct
   *   int, bigInt and bDec are useful number constructs
   *   The string case is there because.
   */
-case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
+final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
   override def getMessage(): String = message
 }
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {

@@ -86,7 +86,7 @@ object ObjectServiceOperation {
   def toPolyFunction[P[_, _, _, _, _]](impl: ObjectServiceGen[P]): PolyFunction5[ObjectServiceOperation, P] = new PolyFunction5[ObjectServiceOperation, P] {
     def apply[I, E, O, SI, SO](op: ObjectServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
   }
-  case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
+  final case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = impl.putObject(input.key, input.bucketName, input.data, input.foo, input.someValue)
     def endpoint: (PutObjectInput, smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
   }
@@ -121,8 +121,8 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    case class ServerErrorCase(serverError: ServerError) extends PutObjectError
-    case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
+    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError
+    final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -143,7 +143,7 @@ object ObjectServiceOperation {
       case c: NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
     }
   }
-  case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
+  final case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
     def endpoint: (GetObjectInput, smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
   }
@@ -176,7 +176,7 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    case class ServerErrorCase(serverError: ServerError) extends GetObjectError
+    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -191,3 +191,4 @@ object ObjectServiceOperation {
     }
   }
 }
+

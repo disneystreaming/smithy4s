@@ -57,6 +57,7 @@ lazy val allModules = Seq(
   example,
   tests,
   http4s,
+  cats,
   `http4s-kernel`,
   `http4s-swagger`,
   decline,
@@ -83,7 +84,7 @@ lazy val docs =
       http4s,
       `http4s-swagger`,
       decline,
-      `aws-http4s` % "compile -> compile,test",
+      `aws-http4s` % "compile -> compile",
       complianceTests
     )
     .settings(
@@ -121,14 +122,23 @@ lazy val docs =
         Dependencies.Decline.effect.value,
         Dependencies.AwsSpecSummary.value
       ),
-      Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
+      Compile / smithy4sDependencies ++= Seq(
+        Dependencies.Smithy.testTraits,
+        Dependencies.Smithy.awsTraits,
+        Dependencies.Smithy.waiters
+      ),
       Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
       Compile / smithySpecs := Seq(
         (Compile / sourceDirectory).value / "smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "test.smithy",
         (ThisBuild / baseDirectory).value / "modules" / "guides" / "smithy" / "auth.smithy",
         (ThisBuild / baseDirectory).value / "sampleSpecs" / "hello.smithy",
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy"
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "kvstore.smithy",
+        (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json"
+      ),
+      Test / allowedNamespaces := Seq(
+        "com.amazonaws.dynamodb",
+        "smithy4s.example"
       )
     )
     .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
@@ -335,14 +345,16 @@ lazy val `aws-http4s` = projectMatrix
       Dependencies.Smithy.awsTraits
     ),
     Test / allowedNamespaces := Seq(
-      "com.amazonaws.dynamodb",
       "smithy4s.example.aws"
+    ),
+    Test / smithySpecs ++= Seq(
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
     ),
     Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     scalacOptions ++= Seq(
       "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
     ),
-      Test / complianceTestDependencies := Seq(
+    Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
     (Test / resourceGenerators) := Seq(dumpModel(Test).taskValue),
@@ -354,9 +366,11 @@ lazy val `aws-http4s` = projectMatrix
         }.value
       files.headOption
         .map { file =>
-          Map("MODEL_DUMP" -> file.getAbsolutePath,
+          Map(
+            "MODEL_DUMP" -> file.getAbsolutePath,
             "AWS_ACCESS_KEY_ID" -> "TEST_KEY",
-            "AWS_SECRET_ACCESS_KEY" -> "TEST_SECRET")
+            "AWS_SECRET_ACCESS_KEY" -> "TEST_SECRET"
+          )
         }
         .getOrElse(Map.empty)
     }
@@ -364,10 +378,8 @@ lazy val `aws-http4s` = projectMatrix
   .jvmPlatform(
     latest2ScalaVersions,
     jvmDimSettings ++ Seq(
-      Test / smithySpecs ++= Seq(
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy",
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "dynamodb.2012-08-10.json",
-        (ThisBuild / baseDirectory).value / "sampleSpecs" / "lambda.json"
+      libraryDependencies ++= Seq(
+        "software.amazon.awssdk" % "aws-core" % "2.20.49" % Test
       )
     )
   )
@@ -402,7 +414,7 @@ lazy val codegen = projectMatrix
       "com.lihaoyi" %% "os-lib" % "0.8.1",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.2"
+      "io.get-coursier" %% "coursier" % "2.1.3"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -731,6 +743,20 @@ lazy val `http4s-swagger` = projectMatrix
   )
   .http4sJvmPlatform(allJvmScalaVersions, jvmDimSettings)
 
+lazy val cats = projectMatrix
+  .in(file("modules/cats"))
+  .dependsOn(core)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Weaver.cats.value % Test,
+      Dependencies.Cats.core.value
+    )
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
 lazy val testUtils = projectMatrix
   .in(file("modules/test-utils"))
   .dependsOn(core)
@@ -815,7 +841,7 @@ lazy val complianceTests = projectMatrix
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
-  .dependsOn(`http4s-swagger`)
+  .dependsOn(`http4s-swagger`, cats)
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
@@ -845,7 +871,9 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "typeclass.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     libraryDependencies += Dependencies.Http4s.emberServer.value,
@@ -928,7 +956,7 @@ def dumpModel(config: Configuration): Def.Initialize[Task[Seq[File]]] =
     ) / Compile / fullClasspath).value
       .map(_.data)
     val transforms = (config / smithy4sModelTransformers).value
-   lazy val modelTransformersCp = (transformers.jvm(
+    lazy val modelTransformersCp = (transformers.jvm(
       Smithy4sBuildPlugin.Scala213
     ) / Compile / fullClasspath).value
       .map(_.data)

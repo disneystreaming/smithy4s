@@ -21,7 +21,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
   val hints: Hints = Hints.empty
 
-  case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree
+  final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree
   object AdtOne extends ShapeTag.Companion[AdtOne] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
 
@@ -38,7 +38,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
     val alt = schema.oneOf[TestAdt]("one")
   }
-  case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt
+  final case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt
   object AdtTwo extends ShapeTag.Companion[AdtTwo] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
 
