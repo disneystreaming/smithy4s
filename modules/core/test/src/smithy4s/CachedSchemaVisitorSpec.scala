@@ -68,7 +68,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     def enumeration[E](
         shapeId: ShapeId,
         hints: Hints,
-        enumTag: EnumTag,
+        tag: EnumTag,
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): Unit = discard {

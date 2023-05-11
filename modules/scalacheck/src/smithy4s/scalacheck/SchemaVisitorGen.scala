@@ -85,7 +85,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Gen[E] =

@@ -163,11 +163,11 @@ class DocumentEncoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): DocumentEncoder[E] =
-    enumTag match {
+    tag match {
       case EnumTag.IntEnum =>
         from(e => Document.fromInt(total(e).intValue))
       case EnumTag.StringEnum =>

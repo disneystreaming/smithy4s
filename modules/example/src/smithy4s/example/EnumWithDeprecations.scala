@@ -35,6 +35,6 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     OLD,
     NEW,
   )
-  val enumTag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[EnumWithDeprecations] = enumeration(enumTag, values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values).withId(id).addHints(hints)
 }

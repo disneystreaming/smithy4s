@@ -99,7 +99,7 @@ private[internals] case class TypeAlias(
 private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
-    enumTag: EnumTag,
+    tag: EnumTag,
     values: List[EnumValue],
     hints: List[Hint]
 ) extends Decl

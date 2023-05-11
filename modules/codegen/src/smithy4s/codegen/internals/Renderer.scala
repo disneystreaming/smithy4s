@@ -896,7 +896,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderEnum(
       shapeId: ShapeId,
       name: NameRef,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue],
       hints: List[Hint]
   ): Lines = lines(
@@ -932,8 +932,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"val values: $list[$name] = $list".args(
         values.map(_.name)
       ),
-      renderEnumTag(enumTag),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(enumTag, values).withId(id).addHints(hints)"
+      renderEnumTag(tag),
+      line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)"
     )
   )
 
@@ -1093,12 +1093,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
   }
 
-  def renderEnumTag(enumTag: EnumTag): Line = {
-    val enumTagStr = enumTag match {
+  def renderEnumTag(tag: EnumTag): Line = {
+    val tagStr = tag match {
       case IntEnum    => "IntEnum"
       case StringEnum => "StringEnum"
     }
-    line"val enumTag: $EnumTag_ = $EnumTag_.$enumTagStr"
+    line"val tag: $EnumTag_ = $EnumTag_.$tagStr"
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {

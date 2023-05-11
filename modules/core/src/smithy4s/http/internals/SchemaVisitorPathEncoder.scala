@@ -63,11 +63,11 @@ object SchemaVisitorPathEncoder
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePathEncode[E] =
-    enumTag match {
+    tag match {
       case EnumTag.IntEnum =>
         PathEncode.from(e => total(e).intValue.toString)
       case EnumTag.StringEnum =>

@@ -18,7 +18,6 @@ package smithy4s.aws
 package internals
 
 import cats.effect.Concurrent
-import smithy4s.HintMask
 import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType

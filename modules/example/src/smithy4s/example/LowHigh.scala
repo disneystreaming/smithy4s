@@ -31,6 +31,6 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
     LOW,
     HIGH,
   )
-  val enumTag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[LowHigh] = enumeration(enumTag, values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[LowHigh] = enumeration(tag, values).withId(id).addHints(hints)
 }

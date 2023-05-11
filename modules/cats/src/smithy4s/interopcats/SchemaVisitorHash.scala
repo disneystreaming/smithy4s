@@ -78,12 +78,12 @@ object SchemaVisitorHash extends SchemaVisitor[Hash] { self =>
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Hash[E] = {
     implicit val enumValueHash: Hash[EnumValue[E]] =
-      enumTag match {
+      tag match {
         case EnumTag.IntEnum =>
           Hash[Int].contramap(_.intValue)
         case EnumTag.StringEnum =>

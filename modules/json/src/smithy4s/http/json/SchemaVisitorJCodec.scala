@@ -1001,11 +1001,11 @@ private[smithy4s] class SchemaVisitorJCodec(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): JCodec[E] =
-    enumTag match {
+    tag match {
       case EnumTag.IntEnum =>
         handleIntEnum(shapeId, hints, values, total)
       case EnumTag.StringEnum =>

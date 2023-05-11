@@ -55,11 +55,11 @@ class HttpResponseCodeSchemaVisitor()
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      enumTag: EnumTag,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): ResponseCodeExtractor[E] =
-    enumTag match {
+    tag match {
       case EnumTag.IntEnum if hints.has[smithy.api.HttpResponseCode] =>
         Contravariant[ResponseCodeExtractor].contramap(
           HttpResponseCodeSchemaVisitor.int
