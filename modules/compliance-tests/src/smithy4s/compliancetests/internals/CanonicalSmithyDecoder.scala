@@ -39,7 +39,7 @@ object CanonicalSmithyDecoder {
       schema: Schema[A]
   ): Document.Decoder[A] = {
     decoder.fromSchema(
-      schema
+      schema.transformHintsTransitively(_ => Hints.empty)
     )
   }
 
