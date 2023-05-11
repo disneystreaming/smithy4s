@@ -21,12 +21,10 @@ import smithy4s.schema.Schema
 import smithy4s.Endpoint
 
 trait UnaryServerCodecs[F[_], I, E, O] {
-  // format: off
-  val inputDecoder : RequestDecoder[F, I]
-  val outputEncoder : ResponseEncoder[F, O]
-  def errorEncoder[EE](schema: Schema[EE]) : ResponseEncoder[F, EE]
-  val errorEncoder : ResponseEncoder[F, E]
-  // format: on
+  val inputDecoder: RequestDecoder[F, I]
+  val outputEncoder: ResponseEncoder[F, O]
+  def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE]
+  val errorEncoder: ResponseEncoder[F, E]
 }
 
 object UnaryServerCodecs {
@@ -50,17 +48,19 @@ object UnaryServerCodecs {
     def apply[I, E, O, SI, SO](
         endpoint: Endpoint.Base[I, E, O, SI, SO]
     ): UnaryServerCodecs[F, I, E, O] = new UnaryServerCodecs[F, I, E, O] {
-      //format: off
-      val inputDecoder: RequestDecoder[F,I] =
+      val inputDecoder: RequestDecoder[F, I] =
         input.fromSchema(endpoint.input, requestDecoderCache)
-      val outputEncoder: ResponseEncoder[F,O] =
+      val outputEncoder: ResponseEncoder[F, O] =
         output.fromSchema(endpoint.output, responseEncoderCache)
-      val errorEncoder: ResponseEncoder[F,E] =
-          ResponseEncoder.forError(smithy4s.errorTypeHeader, endpoint.errorable, error)
-      def errorEncoder[EE](schema: Schema[EE]) : ResponseEncoder[F, EE] =
+      val errorEncoder: ResponseEncoder[F, E] =
+        ResponseEncoder.forError(
+          smithy4s.errorTypeHeader,
+          endpoint.errorable,
+          error
+        )
+      def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE] =
         error.fromSchema(schema, errorResponseEncoderCache)
     }
   }
-
 
 }

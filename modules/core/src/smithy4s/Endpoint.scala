@@ -37,7 +37,7 @@ package smithy4s
   * If this trait is present in one on one of the members of Input/Output, the
   * member is removed from the Scala representation, in order to avoid polluting
   * datatypes that typically fit in memory with concerns of streaming (which can
-  * be encoded a great many ways, using a greatt many libraries)
+  * be encoded a great many ways, using a great many libraries)
   */
 trait Endpoint[Op[_, _, _, _, _], I, E, O, SI, SO]
     extends Endpoint.Base[I, E, O, SI, SO] {
