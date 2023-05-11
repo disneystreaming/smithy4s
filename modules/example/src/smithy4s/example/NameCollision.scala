@@ -132,3 +132,4 @@ object NameCollisionOperation {
     def wrap(input: Unit) = Endpoint()
   }
 }
+

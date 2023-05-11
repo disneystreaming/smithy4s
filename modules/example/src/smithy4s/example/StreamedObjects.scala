@@ -95,3 +95,4 @@ object StreamedObjectsOperation {
     def wrap(input: GetStreamedObjectInput) = GetStreamedObject(input)
   }
 }
+

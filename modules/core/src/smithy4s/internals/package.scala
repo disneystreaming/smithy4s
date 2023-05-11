@@ -16,10 +16,32 @@
 
 package smithy4s
 
+import scala.util.control.NoStackTrace
+
 package object internals {
   type SchemaDescription[A] = String
   val SchemaDescriptionDetailed: Schema ~> SchemaDescription =
     SchemaDescriptionDetailedImpl.andThen(
       SchemaDescriptionDetailedImpl.conversion
     )
+
+  private object DoneEarly extends Exception with NoStackTrace
+
+  private[internals] implicit class vectorOps[A](val vector: Vector[A])
+      extends AnyVal {
+    def traverse[B](f: A => Option[B]): Option[Vector[B]] = {
+      val vec = Vector.newBuilder[B]
+      var doneEarly = false
+      vector.foreach { a =>
+        f(a) match {
+          case Some(b) => vec += b
+          case None =>
+            doneEarly = true
+            scala.util.control.Breaks.break()
+        }
+      }
+
+      if (doneEarly) None else Some(vec.result())
+    }
+  }
 }

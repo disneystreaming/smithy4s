@@ -91,3 +91,4 @@ object FooServiceOperation {
     def wrap(input: Unit) = GetFoo()
   }
 }
+

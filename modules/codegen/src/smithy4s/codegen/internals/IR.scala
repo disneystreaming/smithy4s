@@ -288,6 +288,8 @@ private[internals] object Hint {
     case object IndexedSeq extends SpecializedList
   }
   case object UniqueItems extends Hint
+  case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
+      extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

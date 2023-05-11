@@ -45,7 +45,10 @@ object TestUtils {
       loc: Location
   ): Unit = {
     val scalaResults = generateScalaCode(smithySpec).values.toList
-    Assertions.assertEquals(scalaResults, List(expectedScalaCode))
+    Assertions.assertEquals(
+      scalaResults.map(_.trim()),
+      List(expectedScalaCode.trim())
+    )
   }
 
   /**
