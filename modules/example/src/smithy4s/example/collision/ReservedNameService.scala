@@ -92,6 +92,7 @@ object ReservedNameServiceOperation {
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204),
     )
     def wrap(input: SetInput) = _Set(input)
+    override val errorable: Option[Nothing] = None
   }
   final case class _List(input: ListInput) extends ReservedNameServiceOperation[ListInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[ListInput, Nothing, Unit, Nothing, Nothing] = impl.list(input.list)
@@ -107,6 +108,7 @@ object ReservedNameServiceOperation {
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/"), code = 204),
     )
     def wrap(input: ListInput) = _List(input)
+    override val errorable: Option[Nothing] = None
   }
   final case class _Map(input: MapInput) extends ReservedNameServiceOperation[MapInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[MapInput, Nothing, Unit, Nothing, Nothing] = impl.map(input.value)
@@ -122,6 +124,7 @@ object ReservedNameServiceOperation {
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/map/"), code = 204),
     )
     def wrap(input: MapInput) = _Map(input)
+    override val errorable: Option[Nothing] = None
   }
   final case class _Option(input: OptionInput) extends ReservedNameServiceOperation[OptionInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ReservedNameServiceGen[F]): F[OptionInput, Nothing, Unit, Nothing, Nothing] = impl.option(input.value)
@@ -137,6 +140,7 @@ object ReservedNameServiceOperation {
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/"), code = 204),
     )
     def wrap(input: OptionInput) = _Option(input)
+    override val errorable: Option[Nothing] = None
   }
 }
 

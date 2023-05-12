@@ -26,12 +26,12 @@ import cats.effect.Concurrent
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
 private[aws] class AwsInterpreter[Alg[_[_, _, _, _, _]], F[_]](
-    val service:   smithy4s.Service[Alg],
-    awsService:    AwsService,
-    client:        Client[F],
-    clientCodecs:  UnaryClientCodecs[F],
-    awsEnv:        AwsEnvironment[F]
-)(implicit effect: Concurrent[F]) {
+    val service:      smithy4s.Service[Alg],
+    awsService:       AwsService,
+    client:           Client[F],
+    makeClientCodecs: UnaryClientCodecs.Make[F],
+    awsEnv:           AwsEnvironment[F]
+)(implicit effect:    Concurrent[F]) {
 // format: on
 
   val impl: service.Impl[F] = service.impl {
@@ -43,7 +43,7 @@ private[aws] class AwsInterpreter[Alg[_[_, _, _, _, _]], F[_]](
           awsService,
           awsEnv,
           endpoint,
-          clientCodecs
+          makeClientCodecs
         )
     }
   }

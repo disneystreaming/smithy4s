@@ -15,23 +15,23 @@
  */
 
 package smithy4s
-package http4s
+package http4s.internals
 
 import cats.data.Kleisli
 import cats.data.OptionT
 import cats.implicits._
 import org.http4s._
-import smithy4s.http4s.internals.SmithyHttp4sServerEndpoint
 import smithy4s.kinds._
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
+import smithy4s.http4s.ServerEndpointMiddleware
 
 // format: off
-class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
+private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
-    serverCodecs: UnaryServerCodecs[F],
+    makeServerCodecs: UnaryServerCodecs.Make[F],
     middleware: ServerEndpointMiddleware[F]
 )(implicit effect: Concurrent[F]) {
 
@@ -51,7 +51,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
         SmithyHttp4sServerEndpoint.make(
           impl,
           ep,
-          serverCodecs,
+          makeServerCodecs,
           errorTransformation,
           middleware.prepare(service) _
         )
