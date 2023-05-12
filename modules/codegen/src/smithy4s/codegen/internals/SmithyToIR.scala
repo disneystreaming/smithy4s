@@ -329,7 +329,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 )
               }
               .toList
-            Enumeration(shape.getId(), shape.name, values, hints(shape)).some
+            Enumeration(
+              shape.getId(),
+              shape.name,
+              EnumTag.StringEnum,
+              values,
+              hints(shape)
+            ).some
           case _ => this.getDefault(shape)
         })
 
@@ -348,6 +354,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Enumeration(
           shape.getId(),
           shape.name,
+          EnumTag.StringEnum,
           values,
           hints = hints(shape)
         ).some
@@ -366,6 +373,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Enumeration(
           shape.getId(),
           shape.name,
+          EnumTag.IntEnum,
           values,
           hints(shape) :+ Hint.IntEnum
         ).some

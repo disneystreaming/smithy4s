@@ -80,17 +80,17 @@ final class SchemaVisitorHash(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Hash[E] = {
     implicit val enumValueHash: Hash[EnumValue[E]] =
-      if (
-        hints
-          .has(smithy4s.IntEnum)
-      )
-        Hash[Int].contramap(_.intValue)
-      else
-        Hash[String].contramap[EnumValue[E]](_.stringValue)
+      tag match {
+        case EnumTag.IntEnum =>
+          Hash[Int].contramap(_.intValue)
+        case EnumTag.StringEnum =>
+          Hash[String].contramap(_.stringValue)
+      }
 
     Hash[EnumValue[E]].contramap(total)
   }

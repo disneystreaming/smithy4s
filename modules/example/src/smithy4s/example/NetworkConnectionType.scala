@@ -6,6 +6,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.interopcats.SchemaVisitorHash
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 sealed abstract class NetworkConnectionType(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
@@ -31,7 +32,8 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
     ETHERNET,
     WIFI,
   )
-  implicit val schema: Schema[NetworkConnectionType] = enumeration(values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[NetworkConnectionType] = enumeration(tag, values).withId(id).addHints(hints)
 
   implicit val networkConnectionTypeHash: cats.Hash[NetworkConnectionType] = SchemaVisitorHash.fromSchema(schema)
 }

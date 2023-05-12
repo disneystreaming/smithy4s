@@ -18,8 +18,6 @@ package smithy4s.aws
 package internals
 
 import cats.effect.Concurrent
-import smithy4s.HintMask
-import smithy4s.IntEnum
 import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
@@ -33,7 +31,7 @@ private[aws] object AwsJsonCodecs {
 
   private val hintMask =
     aws.protocols.AwsJson1_0.protocol.hintMask ++
-      aws.protocols.AwsJson1_1.protocol.hintMask ++ HintMask(IntEnum)
+      aws.protocols.AwsJson1_1.protocol.hintMask
 
   def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs[F] = {
     val httpMediaType = HttpMediaType(contentType)

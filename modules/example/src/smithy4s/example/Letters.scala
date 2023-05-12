@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 sealed abstract class Letters(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
@@ -30,5 +31,6 @@ object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
     B,
     C,
   )
-  implicit val schema: Schema[Letters] = enumeration(values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[Letters] = enumeration(tag, values).withId(id).addHints(hints)
 }
