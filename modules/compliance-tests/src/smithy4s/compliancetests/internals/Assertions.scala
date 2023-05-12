@@ -116,11 +116,11 @@ private[internals] object assert {
       testCase: Option[List[String]]
   ) = {
     testCase.toList.flatten
-      .map(_.split("=", 2))
+      .map(splitQuery)
       .collect {
-        case Array(key, _) if !queryParameters.contains(key) =>
+        case (key, _) if !queryParameters.contains(key) =>
           fail(s"missing query parameter $key")
-        case Array(key, expectedValue)
+        case (key, expectedValue)
             if !queryParameters
               .get(key)
               .toList

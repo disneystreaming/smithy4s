@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
 package object internals {
-  private def splitQuery(queryString: String): (String, String) = {
+  def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
         (
