@@ -77,10 +77,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         expectedUri.path.renderString,
         "path test :"
       )
-    val queryAssert = assert.eql(
-      request.uri.query.renderString,
-      expectedUri.query.renderString,
-      "query test :"
+    val queryAssert = assert.testCase.checkQueryParameters(
+      testCase,
+      expectedUri.query.multiParams
     )
     val methodAssert = assert.eql(
       request.method.name.toLowerCase(),
