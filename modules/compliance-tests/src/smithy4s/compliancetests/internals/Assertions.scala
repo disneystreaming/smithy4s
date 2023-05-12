@@ -27,6 +27,7 @@ import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
 
 private[internals] object assert {
+
   def success: ComplianceResult = Right(())
   def fail(msg: String): ComplianceResult = Left(msg)
 
@@ -78,6 +79,61 @@ private[internals] object assert {
     }
   }
 
+  private def queryParamsExistenceCheck(
+      queryParameters: Map[String, Seq[String]],
+      expected: Either[Option[List[String]], Option[List[String]]]
+  ) = {
+    expected match {
+      case Left(Some(forbidQueryParams)) =>
+        val queryKeys = queryParameters.toList.map(_._1)
+        if (forbidQueryParams.intersect(queryKeys).nonEmpty) {
+          fail(
+            s"Query parameters ${forbidQueryParams.intersect(queryKeys)} are forbidden in the request."
+          )
+        } else {
+          success
+        }
+      case Right(Some(requiredQueryParams)) =>
+        val queryKeys = queryParameters.toList.map(_._1)
+        if (
+          requiredQueryParams
+            .intersect(queryKeys)
+            .size != requiredQueryParams.size
+        ) {
+          fail(
+            s"Query parameters ${requiredQueryParams.diff(queryKeys)} are required in the request."
+          )
+        } else {
+          success
+        }
+      case _ => success
+    }
+
+  }
+
+  private def queryParamsCheck(
+      queryParameters: Map[String, Seq[String]],
+      testCase: Option[List[String]]
+  ) = {
+    testCase.toList.flatten
+      .map(_.split("=", 2))
+      .collect {
+        case Array(key, _) if !queryParameters.contains(key) =>
+          fail(s"missing query parameter $key")
+        case Array(key, expectedValue)
+            if !queryParameters
+              .get(key)
+              .toList
+              .flatten
+              .contains(expectedValue) =>
+          fail(
+            s"query parameter $key has value ${queryParameters.get(key).toList.flatten} but expected $expectedValue"
+          )
+        case _ => success
+      }
+      .combineAll
+  }
+
   private def headersExistenceCheck(
       headers: Headers,
       expected: Either[Option[List[String]], Option[List[String]]]
@@ -115,6 +171,22 @@ private[internals] object assert {
   }
 
   object testCase {
+
+    def checkQueryParameters(
+        tc: HttpRequestTestCase,
+        queryParameters: Map[String, Seq[String]]
+    ): ComplianceResult = {
+      assert.queryParamsExistenceCheck(
+        queryParameters,
+        Left(tc.forbidQueryParams)
+      ) *>
+        assert.queryParamsExistenceCheck(
+          queryParameters,
+          Right(tc.requireQueryParams)
+        ) *>
+        assert.queryParamsCheck(queryParameters, tc.queryParams)
+
+    }
     def checkHeaders(
         tc: HttpRequestTestCase,
         headers: Headers
