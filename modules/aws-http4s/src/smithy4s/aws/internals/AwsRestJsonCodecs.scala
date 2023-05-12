@@ -30,23 +30,25 @@ private[aws] object AwsRestJsonCodecs {
 
   def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val underlyingCodecs = new smithy4s.http.json.JsonCodecAPI(
-      cache => new AwsSchemaVisitorJCodec(cache),
-      Some(hintMask)
-    ) {
-      override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
-        httpMediaType
+    val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
+      new smithy4s.http.json.JsonCodecAPI(
+        cache => new AwsSchemaVisitorJCodec(cache),
+        Some(hintMask)
+      ) {
+        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
+          httpMediaType
 
-      private val emptyObj = "{}".getBytes()
+        private val emptyObj = "{}".getBytes()
 
-      override def decodeFromByteArray[A](
-          codec: JCodec[A],
-          bytes: Array[Byte]
-      ): Either[PayloadError, A] = {
-        if (bytes.isEmpty) super.decodeFromByteArray(codec, emptyObj)
-        else super.decodeFromByteArray(codec, bytes)
+        override def decodeFromByteArray[A](
+            codec: JCodec[A],
+            bytes: Array[Byte]
+        ): Either[PayloadError, A] = {
+          if (bytes.isEmpty) super.decodeFromByteArray(codec, emptyObj)
+          else super.decodeFromByteArray(codec, bytes)
+        }
       }
-    }
+    )
     val encoders = MessageEncoder.restSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)
     )
