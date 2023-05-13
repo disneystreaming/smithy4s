@@ -297,8 +297,6 @@ Again, this is equivalent to the following call in the static approach:
 clientInterpreter.getWeather(city = "London").unsafeRunSync()
 ```
 
-
-
 ## The dynamic nature of the dynamic world
 
 <!-- todo: talk about how everything is an array and why it's complicated, maybe mention semantics of hint bindings? -->
