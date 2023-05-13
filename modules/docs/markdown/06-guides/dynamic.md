@@ -13,7 +13,7 @@ and the Scala compiler will ensure you're in sync with the Smithy model in its p
 
 These cases, and possibly others, are why Smithy4s has the `dynamic` module.
 
-## The static world, the dynamic world
+## (Why) do we need codegen?
 
 As you know by now, Smithy4s's codegen is static - it requires the model to be available at build-time, so that code can be generated and made available to you at compile-time.
 
@@ -48,3 +48,16 @@ Turns out that interpreters like this **aren't _actually_ aware** of the fact th
 you can use any interpreter that requires one: code generation is just **a means to derive** such a data structure automatically from your Smithy model.
 
 This all is why **you don't _need_ code generation** to benefit from the interpreters - you just need a way to instantiate a Smithy4s Service (or Schema, if that's what your interpreter operates on).
+And providing instances of Services and Schemas is exactly what the Dynamic module of smithy4s does.
+
+## The Dynamic way
+
+In the previous section, we looked at the steps performed at build time to generate code:
+
+- Read Smithy files
+- Build a Smithy model
+- Generate Scala files with Smithy4s schemas.
+
+Don't be fooled - although we had Smithy files as the input and Scala files as the output, the really important part was getting from the Smithy model to the **Service and Schema instances** representing it. The Dynamic module of smithy4s provides a way to **do this at runtime**.
+
+And the runtime part? It's the same as before! The Service and Schema interfaces are identical regardless of the static/dynamic usecase, and so are the interpreters (that is, assuming they're written correctly).
