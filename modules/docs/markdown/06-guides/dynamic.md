@@ -3,6 +3,8 @@ sidebar_label: Dynamic module
 title: Dynamic module
 ---
 
+## Introduction
+
 <!-- todo: remove this if we move this page to 05-design/ -->
 It is highly recommended to learn about [the library's design](../05-design/01-design.md) before going into this section.
 
@@ -58,6 +60,247 @@ In the previous section, we looked at the steps performed at build time to gener
 - Build a Smithy model
 - Generate Scala files with Smithy4s schemas.
 
-Don't be fooled - although we had Smithy files as the input and Scala files as the output, the really important part was getting from the Smithy model to the **Service and Schema instances** representing it. The Dynamic module of smithy4s provides a way to **do this at runtime**.
+Don't be fooled - although we had Smithy files as the input and Scala files as the output, the really important part was getting from the Smithy model to the **Service and Schema instances** representing it.
+The Dynamic module of smithy4s provides a way to **do this at runtime**.
 
-And the runtime part? It's the same as before! The Service and Schema interfaces are identical regardless of the static/dynamic usecase, and so are the interpreters (that is, assuming they're written correctly).
+And the runtime part? **It's the same as before!** The Service and Schema interfaces are identical regardless of the static/dynamic usecase, and so are the interpreters[^1].
+
+## Loading a dynamic model
+
+First of all, you need the dependency:
+
+```scala
+libraryDependencies ++= Seq(
+  // version sourced from the plugin
+  "com.disneystreaming.smithy4s"  %% "smithy4s-dynamic" % smithy4sVersion.value
+)
+```
+
+Now, you need a Smithy model. There are roughly three ways to get one:
+
+1. Load a model using the [awslabs/smithy](https://github.com/awslabs/smithy) library's `ModelAssembler`
+2. Load a serialized model from a JSON file ([example](https://github.com/disneystreaming/smithy4s/blob/4e678c5f89599f962dc18fb7dcdf3d5d6c0a402b/sampleSpecs/lambda.json)), or
+3. Deserialize or generate the `smithy4s.dynamic.model.Model` data structure in any way you want, on your own.
+
+The `ModelAssembler` way only works on the JVM, because Smithy's reference implementation is a Java library. We'll use that way for this guide:
+
+```scala mdoc:silent
+import software.amazon.smithy.model.Model
+
+val s = """
+@WEATHER_SERVICE_SPEC@
+"""
+
+val model = Model
+  .assembler()
+  .addUnparsedModel(
+    "weather.smithy",
+    s,
+  )
+  .discoverModels()
+  .assemble()
+  .unwrap()
+```
+
+The entrypoint to loading models is `DynamicSchemaIndex`.
+
+```scala mdoc
+import smithy4s.dynamic.DynamicSchemaIndex
+val dsi = DynamicSchemaIndex.loadModel(model).toTry.get
+```
+
+For alternative ways to load a DSI, see `DynamicSchemaIndex.load`.
+
+## Using the DSI
+
+Having a DynamicSchemaIndex, we can iterate over all the services available to it:
+
+```scala mdoc
+dsi.allServices.map(_.service.id)
+```
+
+as well as the schemas:
+
+```scala mdoc
+dsi.allSchemas.map(_.shapeId).filter(_.namespace == "weather")
+```
+
+You can also access a service or schema by ID:
+
+```scala mdoc
+import smithy4s.ShapeId
+
+dsi.getService(ShapeId("weather", "WeatherService")).get.service.id
+dsi.getSchema(ShapeId("weather", "Dog")).get.shapeId
+```
+
+Note that you don't know the exact type of a schema:
+
+```scala mdoc:compile-only
+import smithy4s.Schema
+
+dsi.getSchema(ShapeId("demo", "Dog")).get: Schema[_]
+```
+
+It is very similar for services. This is simply due to the fact that at compile-time (which is where typechecking happens) we have no clue what the possible type of the schema could be.
+After all, the String representing the model doesn't have to be constant - it could be fetched from the network, and even vary throughout the lifetime of our application!
+
+This doesn't forbid us from using these dynamic goodies in interpreters, though.
+
+## Case study: dynamic HTTP client
+
+Let's make a REST client for a dynamic service. We'll start by writing an interpreter.
+
+_"But wait, weren't we supposed to be able to use the existing interpreters?"_
+
+That's true - the underlying implementation will use the interpreters made for the static world as well.
+However, due to the strangely-typed nature of the dynamic world, we have to deal with some complexity that's normally invisible to the user.
+
+For example, you can write this in the static world:
+
+```scala mdoc:compile-only
+import cats.effect.IO
+import weather._
+
+// imagine this comes from an interpreter
+val client: WeatherService[IO] = ??? : WeatherService[IO]
+
+client.getWeather(city = "hello")
+```
+
+but you can't do it if your model gets loaded dynamically! You wouldn't be able to compile that code, because there's no way to tell what services you'll load at runtime.
+
+This means that we'll need a different way to pass the following pieces to an interpreter at runtime:
+
+- the service being used (`HelloWorldService`)
+- the operation being called (`Hello`)
+- the operation input (a single parameter: `name` = `"Hello"`)
+
+Let's get to work - we'll need a function that takes a service and its interpreter, the operation name, and some representation of its input. For that input, we'll use smithy4s's `Document` type.
+
+```scala mdoc
+import smithy4s.Document
+import smithy4s.Endpoint
+import smithy4s.Service
+import smithy4s.kinds.FunctorAlgebra
+import smithy4s.kinds.FunctorInterpreter
+import cats.effect.IO
+
+def run[Alg[_[_, _, _, _, _]]](
+  service: Service[Alg],
+  operationName: String,
+  input: Document,
+  alg: FunctorAlgebra[Alg, IO]
+): IO[Document] = {
+  val endpoint = service.endpoints.find(_.id.name == operationName).get
+
+  runEndpoint(endpoint, input, service.toPolyFunction(alg))
+}
+
+def runEndpoint[Op[_, _, _, _, _], I, O](
+  endpoint: Endpoint[Op, I, _, O, _, _],
+  input: Document,
+  interp: FunctorInterpreter[Op, IO],
+): IO[Document] = {
+  // Deriving these codecs is a costly operation, so we don't recommend doing it for every call.
+  // We do it here for simplicity.
+  val inputDecoder = Document.Decoder.fromSchema(endpoint.input)
+  val outputEncoder = Document.Encoder.fromSchema(endpoint.output)
+
+  val decoded: I = inputDecoder.decode(input).toTry.get
+
+  val result: IO[O] = interp(endpoint.wrap(decoded))
+
+  result.map(outputEncoder.encode(_))
+}
+```
+
+That code is a little heavy and abstract, but there's really no way to avoid abstraction - after all, we need to be prepared for any and all models that our users might give us, so we need to be very abstract!
+
+To explain a little bit:
+
+`FunctorAlgebra[Alg, IO]` is `Alg[IO]` (for a specific shape of `Alg`). This could be `HelloWorldService[IO]`, if we knew the types (which we don't, because we're in the dynamic, runtime world).
+Similarly, a `FunctorInterpreter[Alg, IO]` might be `HelloWorldOperation[IO]` - a representation of an arbitrary operation within the service.
+
+The steps we're taking are:
+
+1. Find the endpoint within the service, using its operation name
+2. In `runEndpoint`, decode the input `Document` to the type the endpoint expects
+3. Run the interpreter using the decoded input
+4. Encode the output to a `Document`.
+
+Let's see this in action with our actual service! But first, just for this guide, we'll define the routes for a fake instance of the server we're going to call:
+
+```scala mdoc
+import org.http4s.HttpApp
+import org.http4s.MediaType
+import org.http4s.headers.`Content-Type`
+import org.http4s.dsl.io._
+
+val routes = HttpApp[IO] { case GET -> Root / "weather" / city =>
+  Ok(s"""{"weather": "sunny in $city"}""").map(
+    _.withContentType(`Content-Type`(MediaType.application.json))
+  )
+}
+```
+
+Now we'll build a client based on the service we loaded earlier, using that route as a fake server:
+
+```scala mdoc:silent
+import org.http4s.client.Client
+import smithy4s.http4s.SimpleRestJsonBuilder
+
+// first, we need some Service instance - we get one from the DynamicSchemaIndex we made earlier
+val service = dsi.getService(ShapeId("weather", "WeatherService")).get
+
+val client =
+  SimpleRestJsonBuilder(service.service)
+    .client(Client.fromHttpApp(routes))
+    .use
+    .toTry
+    .get
+```
+
+And finally, what we've been working towards all this time - we'll select the `GetWeather` operation, pass a `Document` representing our input, and the client we've just built.
+
+```scala mdoc
+
+import cats.effect.unsafe.implicits._
+
+run(
+  service = service.service,
+  operationName = "GetWeather",
+  input = Document.obj("city" -> Document.fromString("London")),
+  alg = SimpleRestJsonBuilder(service.service).client(Client.fromHttpApp(routes)).use.toTry.get,
+).unsafeRunSync().show
+```
+
+Enjoy the view! As an added bonus, because we happen to have this service at build-time, we can use the same method with a static, compile-time service:
+
+```scala mdoc
+import weather._
+
+val clientInterpreter =
+  SimpleRestJsonBuilder(WeatherService).client(Client.fromHttpApp(routes)).use.toTry.get
+
+run(
+  service = WeatherService,
+  operationName = "GetWeather",
+  input = Document.obj("city" -> Document.fromString("London")),
+  alg = clientInterpreter,
+).unsafeRunSync().show
+```
+
+Again, this is equivalent to the following call in the static approach:
+
+```scala mdoc
+clientInterpreter.getWeather(city = "London").unsafeRunSync()
+```
+
+
+
+## The dynamic nature of the dynamic world
+
+<!-- todo: talk about how everything is an array and why it's complicated, maybe mention semantics of hint bindings? -->
+
+[^1]: That is, assuming they're written correctly to make no assumptions about the usecase.

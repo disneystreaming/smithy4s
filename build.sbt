@@ -83,7 +83,8 @@ lazy val docs =
       `http4s-swagger`,
       decline,
       `aws-http4s` % "compile -> compile,test",
-      complianceTests
+      complianceTests,
+      dynamic
     )
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
@@ -101,6 +102,11 @@ lazy val docs =
               else version.value
             }
         },
+        "WEATHER_SERVICE_SPEC" -> IO
+          .read(
+            (Compile / sourceDirectory).value / "smithy" / "weather.smithy"
+          )
+          .trim,
         "SCALA_VERSION" -> scalaVersion.value,
         "HTTP4S_VERSION" -> Dependencies.Http4s.http4sVersion.value,
         "GITHUB_BRANCH_URL" -> (for {
