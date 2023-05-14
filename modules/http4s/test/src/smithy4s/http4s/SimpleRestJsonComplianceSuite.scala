@@ -27,7 +27,7 @@ import cats.syntax.all._
 import cats.effect.IO
 import smithy4s.http.HttpMediaType
 import smithy4s.compliancetests._
-import smithy4s.tests.ProtocolComplianceTestSuite
+import smithy4s.tests.ProtocolComplianceSuite
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -37,7 +37,7 @@ import smithy4s.tests.ProtocolComplianceTestSuite
   * are dynamically created via effects, which makes it impossible to implement `RunnableSuite`,
   * which is required to run tests via IntelliJ.
   */
-object ProtocolComplianceTest extends ProtocolComplianceTestSuite {
+object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
 
   override def isAllowed(complianceTest: ComplianceTest[IO]): Boolean =
     complianceTest.show.contains("alloy")

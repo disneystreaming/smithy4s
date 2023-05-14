@@ -30,7 +30,7 @@ import smithy4s.http.{CodecAPI, PayloadError}
 import smithy4s.schema.Schema.document
 import weaver._
 
-abstract class ProtocolComplianceTestSuite
+abstract class ProtocolComplianceSuite
     extends EffectSuite[IO]
     with BaseCatsSuite {
 

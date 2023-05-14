@@ -24,9 +24,9 @@ import smithy4s.ShapeId
 import cats.syntax.all._
 import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
-import smithy4s.tests.ProtocolComplianceTestSuite
+import smithy4s.tests.ProtocolComplianceSuite
 
-object AwsJsonProtocolComplianceTests extends ProtocolComplianceTestSuite {
+object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
   // filtering out Null operation as we dont support sparse yet
   // filtering out HostWithPathOperation as this would be taken-care of by middleware.
