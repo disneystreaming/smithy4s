@@ -6,6 +6,7 @@ import smithy4s.IntEnum
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 /** FaceCard types */
@@ -39,5 +40,6 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
     ACE,
     JOKER,
   )
-  implicit val schema: Schema[FaceCard] = enumeration(values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.IntEnum
+  implicit val schema: Schema[FaceCard] = enumeration(tag, values).withId(id).addHints(hints)
 }

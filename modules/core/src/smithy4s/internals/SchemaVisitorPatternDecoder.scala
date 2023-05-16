@@ -19,7 +19,8 @@ package smithy4s.internals
 import smithy4s.schema._
 import smithy4s.internals.PatternDecode.MaybePatternDecode
 import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
+import smithy4s.{Hints, Lazy, Refinement, ShapeId}
+import smithy4s.schema.EnumTag.StringEnum
 
 private[internals] final class SchemaVisitorPatternDecoder(
     segments: List[PatternSegment]
@@ -48,23 +49,25 @@ private[internals] final class SchemaVisitorPatternDecoder(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePatternDecode[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
-    if (hints.has[IntEnum]) {
-      val fromOrdinal =
-        values.map(e => BigDecimal(e.intValue) -> e.value).toMap
-      PatternDecode.from(value =>
-        if (fromOrdinal.contains(BigDecimal(value)))
-          fromOrdinal(BigDecimal(value))
-        else throw StructurePatternError(s"Enum case for '$value' not found.")
-      )
-    } else {
-      PatternDecode.from(value =>
-        if (fromName.contains(value)) fromName(value)
-        else throw StructurePatternError(s"Enum case for '$value' not found.")
-      )
+    tag match {
+      case EnumTag.IntEnum =>
+        val fromOrdinal =
+          values.map(e => BigDecimal(e.intValue) -> e.value).toMap
+        PatternDecode.from(value =>
+          if (fromOrdinal.contains(BigDecimal(value)))
+            fromOrdinal(BigDecimal(value))
+          else throw StructurePatternError(s"Enum case for '$value' not found.")
+        )
+      case StringEnum =>
+        PatternDecode.from(value =>
+          if (fromName.contains(value)) fromName(value)
+          else throw StructurePatternError(s"Enum case for '$value' not found.")
+        )
     }
   }
 

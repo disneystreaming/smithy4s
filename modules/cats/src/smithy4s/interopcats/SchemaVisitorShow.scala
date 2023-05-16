@@ -116,6 +116,7 @@ final class SchemaVisitorShow(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Show[E] = Show.show { e =>

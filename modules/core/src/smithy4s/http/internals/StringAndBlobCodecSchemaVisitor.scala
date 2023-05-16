@@ -19,13 +19,13 @@ package http
 package internals
 
 import smithy4s.http.HttpMediaType
-
 import schema._
 import smithy4s.schema.Primitive._
-import java.nio.charset.StandardCharsets
 
+import java.nio.charset.StandardCharsets
 import StringAndBlobCodecSchemaVisitor._
 import smithy.api.HttpPayload
+
 import java.nio.ByteBuffer
 
 private[http] object StringAndBlobCodecSchemaVisitor {
@@ -100,22 +100,9 @@ private[http] class StringAndBlobCodecSchemaVisitor
       tag: Primitive[P]
   ): CodecResult[P] = tag match {
     case PString =>
-      val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
       SimpleCodecResult {
-        new SimpleCodec[String] {
-          val mediaType: HttpMediaType = HttpMediaType(
-            maybeMediaTypeHint
-              .map(_.value)
-              .getOrElse("text/plain")
-          )
-
-          def fromBytes(bytes: Array[Byte]): String =
-            new String(bytes, StandardCharsets.UTF_8)
-
-          def toBytes(a: String): Array[Byte] = a.getBytes()
-        }
+        plainStringCodec(hints)
       }
-
     case PBlob =>
       val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
       SimpleCodecResult {
@@ -134,6 +121,47 @@ private[http] class StringAndBlobCodecSchemaVisitor
     case PTimestamp | PUUID | PBigInt | PUnit | PBoolean | PLong | PShort |
         PDocument | PByte | PDouble | PFloat | PBigDecimal | PInt =>
       noop
+  }
+
+  private def plainStringCodec[P](hints: Hints) = {
+    val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
+    val mt: HttpMediaType = HttpMediaType(
+      maybeMediaTypeHint
+        .map(_.value)
+        .getOrElse("text/plain")
+    )
+    new SimpleCodec[String] {
+      def mediaType: HttpMediaType = mt
+      def fromBytes(bytes: Array[Byte]): String =
+        new String(bytes, StandardCharsets.UTF_8)
+
+      def toBytes(a: String): Array[Byte] = a.getBytes()
+    }
+  }
+
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: EnumTag,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): CodecResult[E] = {
+    tag match {
+      case EnumTag.StringEnum =>
+        SimpleCodecResult {
+          plainStringCodec(hints).imap(
+            s =>
+              values
+                .find(_.stringValue == s)
+                .map(_.value)
+                .getOrElse(
+                  throw new IllegalArgumentException(s"Invalid enum value $s")
+                ),
+            e => total(e).stringValue
+          )
+        }
+      case EnumTag.IntEnum => noop
+    }
   }
 
   override def struct[S](

@@ -123,7 +123,7 @@ final class DefaultValueSpec extends FunSuite {
       def id: ShapeId = ShapeId("test", "FooBar")
       val hints = Hints.empty
       def values: List[FooBar] = List(Foo)
-      val schema: Schema[FooBar] = Schema.enumeration[FooBar](values)
+      val schema: Schema[FooBar] = Schema.stringEnumeration[FooBar](values)
     }
 
     testCaseOpt(FooBar.schema, None)

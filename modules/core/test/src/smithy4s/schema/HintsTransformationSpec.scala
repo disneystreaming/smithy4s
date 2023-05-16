@@ -68,7 +68,7 @@ class HintsTransformationSpec() extends FunSuite {
       case object Foo extends FooBar("foo", 0)
 
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](List(Foo))
+        stringEnumeration[FooBar](List(Foo))
     }
     // 1 for the enum, 1 for the enum value
     checkSchema(FooBar.Foo: FooBar, 2)
@@ -205,6 +205,7 @@ class HintsTransformationSpec() extends FunSuite {
     def enumeration[E](
         shapeId: ShapeId,
         hints: Hints,
+        tag: EnumTag,
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): Count[E] = { e =>

@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 /** some docs here */
@@ -34,5 +35,6 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     OLD,
     NEW,
   )
-  implicit val schema: Schema[EnumWithDeprecations] = enumeration(values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values).withId(id).addHints(hints)
 }

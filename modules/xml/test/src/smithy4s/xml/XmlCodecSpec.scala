@@ -372,7 +372,7 @@ object XmlCodecSpec extends SimpleIOSuite {
       def id = smithy4s.ShapeId("test", "FooBar")
       def values = List(Foo, Bar)
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](values).x
+        Schema.stringEnumeration[FooBar](values).x
     }
     val xmlFoo = "<x>foo</x>"
     val xmlBar = "<x>bar</x>"

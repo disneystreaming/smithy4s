@@ -14,14 +14,11 @@
  *  limitations under the License.
  */
 
-package smithy4s.http4s
+package smithy4s.schema
 
-import cats.effect.Concurrent
-import smithy4s.http4s.kernel._
+sealed trait EnumTag
 
-trait SimpleProtocolCodecs {
-
-  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F]
-  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F]
-
+object EnumTag {
+  case object StringEnum extends EnumTag
+  case object IntEnum extends EnumTag
 }

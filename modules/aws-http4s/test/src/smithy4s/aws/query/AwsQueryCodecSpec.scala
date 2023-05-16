@@ -277,7 +277,7 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       case object Bar extends FooBar("bar", 1)
       def values = List(Foo, Bar)
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](List(Foo, Bar))
+        Schema.stringEnumeration[FooBar](List(Foo, Bar))
     }
     val expectedFoo = "foo"
     val expectedBar = "bar"

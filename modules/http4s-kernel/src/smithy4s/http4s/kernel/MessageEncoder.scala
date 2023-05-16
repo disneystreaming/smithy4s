@@ -22,12 +22,12 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.Uri
-import org.http4s.Method
 import smithy4s.PartialData
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.Metadata
 import smithy4s.schema._
+import org.http4s.Method
 
 trait MessageEncoder[F[_], A]
     extends RequestEncoder[F, A]
@@ -96,16 +96,12 @@ object MessageEncoder {
     def addToRequest(request: Request[F], input: I): Request[F] = {
       val path = httpEndpoint.path(input)
       val staticQueries = httpEndpoint.staticQueryParams
-      val method = httpEndpoint.method
       val oldUri = request.uri
       val newUri = oldUri
         .copy(path = oldUri.path.addSegments(path.map(Uri.Path.Segment(_))))
         .withMultiValueQueryParams(staticQueries)
-      request
-        .withUri(newUri)
-        .withMethod(
-          Method.fromString(method.toString).getOrElse(request.method)
-        )
+      val method = toHttp4sMethod(httpEndpoint.method).getOrElse(Method.POST)
+      request.withUri(newUri).withMethod(method)
     }
 
     def addToResponse(response: Response[F], input: I): Response[F] = {

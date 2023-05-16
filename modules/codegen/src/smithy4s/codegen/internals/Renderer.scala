@@ -32,6 +32,8 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
+import smithy4s.codegen.internals.EnumTag.IntEnum
+import smithy4s.codegen.internals.EnumTag.StringEnum
 
 private[internals] object Renderer {
 
@@ -173,8 +175,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       renderUnion(shapeId, union.nameRef, alts, mixins, recursive, hints)
     case ta @ TypeAlias(shapeId, _, tpe, _, recursive, hints) =>
       renderNewtype(shapeId, ta.nameRef, tpe, recursive, hints)
-    case enumeration @ Enumeration(shapeId, _, values, hints) =>
-      renderEnum(shapeId, enumeration.nameRef, values, hints)
+    case enumeration @ Enumeration(shapeId, _, tag, values, hints) =>
+      renderEnum(shapeId, enumeration.nameRef, tag, values, hints)
   }
 
   private def deprecationAnnotation(hints: List[Hint]): Line = {
@@ -687,7 +689,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderErrorable(op: Operation): Lines = {
     val errorName = NameRef(op.name + "Error")
     val scala3Unions = compilationUnit.rendererConfig.errorsAsScala3Unions
-    if (op.errors.isEmpty) Lines.empty
+    if (op.errors.isEmpty)
+      lines(
+        line"override val errorable: $option[Nothing] = None"
+      )
     else
       lines(
         line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",
@@ -913,6 +918,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderEnum(
       shapeId: ShapeId,
       name: NameRef,
+      tag: EnumTag,
       values: List[EnumValue],
       hints: List[Hint]
   ): Lines = lines(
@@ -948,7 +954,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"val values: $list[$name] = $list".args(
         values.map(_.name)
       ),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(values).withId(id).addHints(hints)",
+      renderEnumTag(tag),
+      line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
       renderTypeclasses(hints, name)
     )
   )
@@ -1108,6 +1115,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
     line"""val id: $ShapeId_ = $ShapeId_("$ns", "$name")"""
+  }
+
+  def renderEnumTag(tag: EnumTag): Line = {
+    val tagStr = tag match {
+      case IntEnum    => "IntEnum"
+      case StringEnum => "StringEnum"
+    }
+    line"val tag: $EnumTag_ = $EnumTag_.$tagStr"
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
