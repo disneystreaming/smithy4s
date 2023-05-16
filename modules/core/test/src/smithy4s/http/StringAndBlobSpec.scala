@@ -75,6 +75,27 @@ class StringAndBlobSpec() extends munit.FunSuite {
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/csv"), mediaType)
   }
+  test("String Enum  ") {
+    val input = StringEnumBody(StringEnum.INTERESTING)
+    val codec = stringsAndBlobs.compileCodec(StringEnumBody.schema)
+    val result = stringsAndBlobs.writeToArray(codec, input)
+    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val mediaType = stringsAndBlobs.mediaType(codec)
+    expect(result.sameElements("interesting".getBytes()))
+    expect.same(Right(input), roundTripped)
+    expect.same(HttpMediaType("text/plain"), mediaType)
+  }
+
+  test("String Enum (custom media-type)") {
+    val input = AudioEnumBody(AudioEnum.BASS)
+    val codec = stringsAndBlobs.compileCodec(AudioEnumBody.schema)
+    val result = stringsAndBlobs.writeToArray(codec, input)
+    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val mediaType = stringsAndBlobs.mediaType(codec)
+    expect(result.sameElements("bass".getBytes()))
+    expect.same(Right(input), roundTripped)
+    expect.same(HttpMediaType("audio/mpeg3"), mediaType)
+  }
 
   test("Blobs") {
     val input = BlobBody(ByteArray("hello".getBytes()))
