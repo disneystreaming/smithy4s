@@ -100,20 +100,8 @@ private[http] class StringAndBlobCodecSchemaVisitor
       tag: Primitive[P]
   ): CodecResult[P] = tag match {
     case PString =>
-      val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
       SimpleCodecResult {
-        new SimpleCodec[String] {
-          val mediaType: HttpMediaType = HttpMediaType(
-            maybeMediaTypeHint
-              .map(_.value)
-              .getOrElse("text/plain")
-          )
-
-          def fromBytes(bytes: Array[Byte]): String =
-            new String(bytes, StandardCharsets.UTF_8)
-
-          def toBytes(a: String): Array[Byte] = a.getBytes()
-        }
+        stringCodec(hints)
       }
 
     case PBlob =>
@@ -134,6 +122,52 @@ private[http] class StringAndBlobCodecSchemaVisitor
     case PTimestamp | PUUID | PBigInt | PUnit | PBoolean | PLong | PShort |
         PDocument | PByte | PDouble | PFloat | PBigDecimal | PInt =>
       noop
+  }
+
+  private[internals] def stringCodec(hints: Hints): SimpleCodec[String] = {
+    val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
+    new SimpleCodec[String] {
+      val mediaType: HttpMediaType = HttpMediaType(
+        maybeMediaTypeHint
+          .map(_.value)
+          .getOrElse("text/plain")
+      )
+
+      def fromBytes(bytes: Array[Byte]): String =
+        new String(bytes, StandardCharsets.UTF_8)
+
+      def toBytes(a: String): Array[Byte] = a.getBytes()
+    }
+  }
+
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: EnumTag,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): CodecResult[E] = {
+    tag match {
+      case EnumTag.StringEnum =>
+        SimpleCodecResult {
+          stringCodec(hints).imap(
+            str =>
+              values
+                .find(_.stringValue == str)
+                .getOrElse(
+                  throw new PayloadError(
+                    PayloadPath.root,
+                    s"expected one of ${values.mkString(",")}",
+                    s"Unknown enum value $str"
+                  )
+                )
+                .value,
+            e => total(e).stringValue
+          )
+        }
+
+      case EnumTag.IntEnum => noop
+    }
   }
 
   override def struct[S](
