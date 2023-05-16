@@ -28,7 +28,7 @@ private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs[F] = {
+  def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
     val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
       new smithy4s.http.json.JsonCodecAPI(
@@ -56,7 +56,7 @@ private[aws] object AwsRestJsonCodecs {
       EntityDecoders.fromCodecAPI[F](underlyingCodecs)
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
-    UnaryClientCodecs.make[F](encoders, decoders, decoders, discriminator)
+    UnaryClientCodecs.Make[F](encoders, decoders, decoders, discriminator)
   }
 
 }

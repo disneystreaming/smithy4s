@@ -32,14 +32,14 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = Left(msg)
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
+    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
       case (true, true) => success
       case _ =>
         val nonEmpty = if (result.isEmpty) "{}" else result
-        (parse(result), parse(nonEmpty)) match {
+        (parse(nonEmpty), parse(testCase)) match {
           case (Right(a), Right(b)) if Eq[Json].eqv(a, b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
@@ -69,13 +69,13 @@ private[internals] object assert {
 
   def bodyEql(
       result: String,
-      testCase: String,
+      testCase: Option[String],
       bodyMediaType: Option[String]
   ): ComplianceResult = {
     if (isJson(bodyMediaType)) {
-      jsonEql(result, testCase)
+      jsonEql(result, testCase.getOrElse("{}"))
     } else {
-      eql(result, testCase)
+      eql(result, testCase.getOrElse(""))
     }
   }
 

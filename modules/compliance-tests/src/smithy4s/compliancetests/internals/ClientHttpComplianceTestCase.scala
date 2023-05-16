@@ -20,7 +20,6 @@ package internals
 import cats.implicits._
 import cats.effect.Temporal
 import cats.effect.syntax.all._
-import org.http4s.headers.`Content-Type`
 import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
@@ -34,8 +33,6 @@ import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.internals.TestConfig._
 import scala.concurrent.duration._
-import org.http4s.MediaType
-import org.http4s.Headers
 import smithy4s.schema.Alt
 
 private[compliancetests] class ClientHttpComplianceTestCase[
@@ -59,7 +56,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val bodyAssert = request.bodyText.compile.string.map { responseBody =>
       assert.bodyEql(
         responseBody,
-        testCase.body.getOrElse(""),
+        testCase.body,
         testCase.bodyMediaType
       )
     }
@@ -73,8 +70,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     val pathAssert =
       assert.eql(
-        request.uri.path.renderString,
-        expectedUri.path.renderString,
+        decodeUri(request.uri.path.renderString),
+        decodeUri(expectedUri.path.renderString),
         "path test :"
       )
     val queryAssert = assert.testCase.checkQueryParameters(
@@ -168,7 +165,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             .left
             .map(_.errorEq[F])
         }
-        val mediaType = expectedResponseType(endpoint.output)
         val status = Status.fromInt(testCase.code).liftTo[F]
 
         status.flatMap { status =>
@@ -182,9 +178,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = Headers(
-              `Content-Type`(MediaType.unsafeParse(mediaType.value))
-            ) ++ parseHeaders(testCase.headers)
+            val headers = parseHeaders(testCase.headers)
 
             req.body.compile.drain.as(
               Response[F](status)

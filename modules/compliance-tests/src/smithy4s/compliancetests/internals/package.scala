@@ -29,14 +29,17 @@ package object internals {
       case Array(k, v) =>
         (
           k,
-          Uri.decode(
-            toDecode = v,
-            charset = StandardCharsets.UTF_8,
-            plusIsSpace = true
-          )
+          decodeUri(v)
         )
       case Array(k) => (k, "")
     }
+  }
+
+   def decodeUri(v: String) = {
+    Uri.decode(
+      toDecode = v,
+      charset = StandardCharsets.UTF_8
+    )
   }
 
   private[compliancetests] def parseQueryParams(
