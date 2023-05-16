@@ -75,7 +75,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/csv"), mediaType)
   }
-  test("String Enum  ") {
+  test("String Enum") {
     val input = StringEnumBody(StringEnum.INTERESTING)
     val codec = stringsAndBlobs.compileCodec(StringEnumBody.schema)
     val result = stringsAndBlobs.writeToArray(codec, input)
