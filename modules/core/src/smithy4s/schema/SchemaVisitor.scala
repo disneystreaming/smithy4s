@@ -21,26 +21,26 @@ import Schema._
 
 // format: off
 trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
-  def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P]
-  def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]]
-  def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K, V]]
-  def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E]
-  def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S]
-  def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U]
-  def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B]
-  def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B]
-  def lazily[A](suspend: Lazy[Schema[A]]): F[A]
+  def primitive[P](schema: Schema[P], shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P]
+  def collection[C[_], A](schema: Schema[C[A]], shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]]
+  def map[K, V](schema: Schema[Map[K,V]], shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K, V]]
+  def enumeration[E](schema: Schema[E], shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E]
+  def struct[S](schema: Schema[S], shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S]
+  def union[U](schema: Schema[U], shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U]
+  def biject[A, B](schema: Schema[A], bijectionSchema: Schema[B], bijection: Bijection[B, A]): F[A]
+  def refine[A, B](schema: Schema[A], refinementSchema: Schema[B], refinement: Refinement[B, A]): F[A]
+  def lazily[A](schema: Schema[A], suspend: Lazy[Schema[A]]): F[A]
 
   def apply[A](schema: Schema[A]): F[A] = schema match {
-    case PrimitiveSchema(shapeId, hints, tag) => primitive(shapeId, hints, tag)
-    case s: CollectionSchema[c, a] => collection[c,a](s.shapeId, s.hints, s.tag, s.member)
-    case MapSchema(shapeId, hints, key, value) => map(shapeId, hints, key, value)
-    case EnumerationSchema(shapeId, hints, tag, values, total) => enumeration(shapeId, hints, tag, values, total)
-    case StructSchema(shapeId, hints, fields, make) => struct(shapeId, hints, fields, make)
-    case u@UnionSchema(shapeId, hints, alts, _) => union(shapeId, hints, alts, Alt.Dispatcher.fromUnion(u))
-    case BijectionSchema(schema, bijection) => biject(schema, bijection)
-    case RefinementSchema(schema, refinement) => refine(schema, refinement)
-    case LazySchema(make) => lazily(make)
+    case PrimitiveSchema(shapeId, hints, tag) => primitive(schema, shapeId, hints, tag)
+    case s: CollectionSchema[c, a] => collection[c,a](schema, s.shapeId, s.hints, s.tag, s.member)
+    case schema @ MapSchema(shapeId, hints, key, value) => map(schema, shapeId, hints, key, value)
+    case EnumerationSchema(shapeId, hints, tag, values, total) => enumeration(schema, shapeId, hints, tag, values, total)
+    case StructSchema(shapeId, hints, fields, make) => struct(schema, shapeId, hints, fields, make)
+    case u@UnionSchema(shapeId, hints, alts, _) => union(schema, shapeId, hints, alts, Alt.Dispatcher.fromUnion(u))
+    case BijectionSchema(bijectionSchema, bijection) => biject(schema, bijectionSchema, bijection)
+    case RefinementSchema(refinementSchema, refinement) => refine(schema, refinementSchema, refinement)
+    case LazySchema(make) => lazily(schema, make)
   }
 
 }
@@ -50,16 +50,17 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
 object SchemaVisitor {
 
   trait Default[F[_]] extends SchemaVisitor[F]{
-    def default[A]: F[A]
-    override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P] = default
-    override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]] = default
-    override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K,V]] = default
-    override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default
-    override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S] = default
-    override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U] = default
-    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default
-    override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
-    override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
+    def default[A](schema: Schema[A]): F[A]
+    override def primitive[P](schema: Schema[P], shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P] = default(schema)    
+    override def collection[C[_], M](schema: Schema[C[M]], shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[M]): F[C[M]] =
+      default(schema)
+    override def map[K, V](schema: Schema[Map[K,V]], shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K,V]] = default(schema)
+    override def enumeration[E](schema: Schema[E], shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default(schema)
+    override def struct[S](schema: Schema[S], shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S] = default(schema)
+    override def union[U](schema: Schema[U], shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U] = default(schema)
+    override def biject[A, B](schema: Schema[A], bijectionSchema: Schema[B], bijection: Bijection[B, A]): F[A] = default(schema)
+    override def refine[A, B](schema: Schema[A], refinementSchema: Schema[B], refinement: Refinement[B, A]): F[A] = default(schema)
+    override def lazily[A](schema: Schema[A], suspend: Lazy[Schema[A]]): F[A] = default(schema)
   }
 
   abstract class Cached[F[_]] extends SchemaVisitor[F] {
