@@ -18,7 +18,7 @@ package smithy4s
 package http
 
 import smithy4s.example._
-import ErrorHandlingServiceGen._
+import ErrorHandlingServiceOperation._
 
 final class ErrorAltPickerSpec extends munit.FunSuite {
 
@@ -90,7 +90,7 @@ final class ErrorAltPickerSpec extends munit.FunSuite {
   private val alts =
     ErrorHandlingOperation.error.alternatives.asInstanceOf[Vector[GenericAlt]]
   private val altsExtra =
-    ErrorHandlingServiceExtraErrorsGen.ExtraErrorOperation.error.alternatives
+    ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperation.error.alternatives
       .asInstanceOf[Vector[GenericAlt]]
 
   test(

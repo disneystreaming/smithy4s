@@ -207,7 +207,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       toHeaders(metadata.headers).put(errorTypeHeader -> errorLabel)
     val errorUnionSchema = errorable.error
     val dispatcher =
-      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.dispatch)
+      Alt.Dispatcher.fromUnion(errorUnionSchema)
     type ErrorEncoder[Err] = Err => Response[F]
     val precompiler = new Alt.Precompiler[Schema, ErrorEncoder] {
       def apply[Err](

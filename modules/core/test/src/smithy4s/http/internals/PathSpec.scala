@@ -21,7 +21,7 @@ import smithy.api.Http
 import smithy.api.NonEmptyString
 import smithy4s.Schema
 import smithy4s.Timestamp
-import smithy4s.example.DummyServiceGen.DummyPath
+import smithy4s.example.DummyServiceOperation.DummyPath
 import smithy4s.example.PathParams
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment

@@ -11,7 +11,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.21.3"
+    val jsoniterScalaVersion = "2.22.2"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -20,7 +20,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.28.1"
+    val smithyVersion = "1.30.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -30,7 +30,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.15"
+    val alloyVersion = "0.1.18"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -63,7 +63,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.10.11"
+    val millVersion = "0.10.12"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -86,7 +86,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.8")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.9")
 
   object Http4s {
     val http4sVersion = Def.setting(if (isCE3.value) "0.23.18" else "0.22.15")
@@ -107,7 +107,7 @@ object Dependencies {
 
   object Weaver {
 
-    val weaverVersion = Def.setting(if (isCE3.value) "0.8.1" else "0.6.15")
+    val weaverVersion = Def.setting(if (isCE3.value) "0.8.3" else "0.6.15")
 
     val cats: Def.Initialize[ModuleID] =
       Def.setting("com.disneystreaming" %%% "weaver-cats" % weaverVersion.value)
@@ -134,7 +134,7 @@ object Dependencies {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.1"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.2"
 
     val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
   }
