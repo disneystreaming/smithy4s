@@ -34,6 +34,37 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
   private implicit val greetingEq: Eq[Greeting] = Eq.fromUniversalEquals
   private implicit val throwableEq: Eq[Throwable] = Eq.fromUniversalEquals
 
+  final class MiddlewareException
+      extends RuntimeException(
+        "Expected to recover via flatmapError or mapError"
+      )
+  test("server - middleware can throw and mapped / flatmapped") {
+    val middleware = new ServerEndpointMiddleware.Simple[IO]() {
+      def prepareWithHints(
+          serviceHints: Hints,
+          endpointHints: Hints
+      ): HttpApp[IO] => HttpApp[IO] = { inputApp =>
+        HttpApp[IO] { _ => IO.raiseError(new MiddlewareException) }
+      }
+    }
+    val service =
+      SimpleRestJsonBuilder
+        .routes(HelloImpl)
+        .middleware(middleware)
+        .flatMapErrors { case _: MiddlewareException =>
+          IO.raiseError(SpecificServerError())
+        }
+        .make
+        .toOption
+        .get
+
+    service(Request[IO](Method.POST, Uri.unsafeFromString("/bob")))
+      .flatMap(res => OptionT.pure(expect.eql(res.status.code, 599)))
+      .getOrElse(
+        failure("unable to run request")
+      )
+  }
+
   test("server - middleware is applied") {
     serverMiddlewareTest(
       shouldFailInMiddleware = true,
