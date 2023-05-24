@@ -52,7 +52,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
         .routes(HelloImpl)
         .middleware(middleware)
         .flatMapErrors { case _: MiddlewareException =>
-          IO.raiseError(SpecificServerError())
+          IO.pure(SpecificServerError())
         }
         .make
         .toOption

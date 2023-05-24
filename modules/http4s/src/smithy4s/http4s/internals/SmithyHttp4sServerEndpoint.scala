@@ -126,7 +126,12 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     }))
 
   private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
-    app.handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
+    app
+      .handleErrorWith {
+        case error if errorTransformation.isDefinedAt(error) =>
+          Kleisli.liftF(errorTransformation.apply(error).flatMap(errorResponse))
+        case error => Kleisli.liftF(errorResponse(error))
+      }
   }
 
   private val inputSchema: Schema[I] = endpoint.input
