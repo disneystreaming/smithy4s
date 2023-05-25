@@ -2,22 +2,19 @@ package smithy4s.caliban
 
 import caliban.Value.NullValue
 import caliban._
-import caliban.interop.cats.implicits._
 import caliban.schema._
-import cats.effect.kernel.Async
-import cats.effect.std.Dispatcher
 import cats.implicits._
 import smithy4s.Bijection
 import smithy4s.ByteArray
 import smithy4s.Document
 import smithy4s.Hints
-import smithy4s.Service
-import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.Field
-import smithy4s.schema.Primitive
-import smithy4s.schema.Field.Wrapped
+import smithy4s.Refinement
 import smithy4s.ShapeId
 import smithy4s.Timestamp
+import smithy4s.schema.Field
+import smithy4s.schema.Field.Wrapped
+import smithy4s.schema.Primitive
+import smithy4s.schema.SchemaVisitor
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor
@@ -29,6 +26,13 @@ private[caliban] object ArgBuilderVisitor
       schema: smithy4s.Schema[A],
       bijection: Bijection[A, B]
   ): ArgBuilder[B] = schema.compile(this).map(bijection.to)
+
+  override def refine[A, B](
+      schema: smithy4s.schema.Schema[A],
+      refinement: Refinement[A, B]
+  ): ArgBuilder[B] = schema
+    .compile(this)
+    .flatMap(refinement(_).leftMap(e => CalibanError.ExecutionError(e)))
 
   override def struct[S](
       shapeId: ShapeId,
@@ -64,12 +68,11 @@ private[caliban] object ArgBuilderVisitor
       hints: Hints,
       tag: Primitive[P]
   ): ArgBuilder[P] = {
-    implicit val shortArgBuilder: ArgBuilder[Short] = null // todo
-    implicit val byteArgBuilder: ArgBuilder[Byte] = null // todo
-    implicit val byteArrayArgBuilder: ArgBuilder[ByteArray] = null // todo
-    implicit val documentArgBuilder: ArgBuilder[Document] = null // todo
-    implicit val timestampArgBuilder: ArgBuilder[Timestamp] =
-      null // todo
+    implicit val shortArgBuilder: ArgBuilder[Short] = _ => ??? // todo
+    implicit val byteArgBuilder: ArgBuilder[Byte] = _ => ??? // todo
+    implicit val byteArrayArgBuilder: ArgBuilder[ByteArray] = _ => ??? // todo
+    implicit val documentArgBuilder: ArgBuilder[Document] = _ => ??? // todo
+    implicit val timestampArgBuilder: ArgBuilder[Timestamp] = _ => ??? // todo
 
     Primitive.deriving[ArgBuilder].apply(tag)
   }

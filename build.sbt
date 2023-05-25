@@ -730,12 +730,14 @@ lazy val http4s = projectMatrix
 lazy val caliban = projectMatrix
   .in(file("modules/caliban"))
   .dependsOn(
-    core
+    core,
+    tests % Test
   )
   .settings(
     isMimaEnabled := false,
     libraryDependencies ++= Seq(
-      Dependencies.Caliban.cats.value
+      Dependencies.Caliban.cats.value,
+      Dependencies.Weaver.cats.value % Test
     ),
     scalacOptions -= "-Werror",
     scalacOptions -= "-Xfatal-warnings"

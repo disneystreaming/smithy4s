@@ -11,6 +11,12 @@ import smithy4s.schema.Primitive
 import smithy4s.schema.Field.Wrapped
 import smithy4s.ShapeId
 import smithy4s.Timestamp
+import smithy4s.{Refinement}
+import smithy4s.schema.SchemaAlt
+import smithy4s.schema.Alt
+import caliban.introspection.adt.__Type
+import smithy4s.schema
+import smithy4s.schema.CollectionTag
 
 // todo: caching
 private object CalibanSchemaVisitor
@@ -28,10 +34,14 @@ private object CalibanSchemaVisitor
       hints: Hints,
       tag: Primitive[P]
   ): Schema[Any, P] = {
-    implicit val byteSchema: Schema[Any, Byte] = null // TODO
-    implicit val blobSchema: Schema[Any, ByteArray] = null // TODO
-    implicit val documentSchema: Schema[Any, Document] = null // TODO
-    implicit val timestampSchema: Schema[Any, Timestamp] = null // TODO
+    implicit val byteSchema: Schema[Any, Byte] =
+      Schema.unitSchema.asInstanceOf[Schema[Any, Byte]] // TODO
+    implicit val blobSchema: Schema[Any, ByteArray] =
+      Schema.unitSchema.asInstanceOf[Schema[Any, ByteArray]] // TODO
+    implicit val documentSchema: Schema[Any, Document] =
+      Schema.unitSchema.asInstanceOf[Schema[Any, Document]] // TODO
+    implicit val timestampSchema: Schema[Any, Timestamp] =
+      Schema.unitSchema.asInstanceOf[Schema[Any, Timestamp]] // TODO
 
     Primitive.deriving[Schema[Any, *]].apply(tag)
   }
@@ -53,6 +63,13 @@ private object CalibanSchemaVisitor
       fa
     )
   }
+
+  override def refine[A, B](
+      schema: smithy4s.Schema[A],
+      refinement: Refinement[A, B]
+  ): Schema[Any, B] =
+    schema.compile(this).contramap(refinement.from)
+
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
@@ -65,5 +82,54 @@ private object CalibanSchemaVisitor
         .map(field(_))
         .toList
     }
+  override def collection[C[_], A](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: CollectionTag[C],
+      member: schema.Schema[A]
+  ): Schema[Any, C[A]] = tag match {
+    case CollectionTag.ListTag => Schema.listSchema(member.compile(this))
+  }
 
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[smithy4s.Schema, U]
+  ): Schema[Any, U] = {
+    val self = this
+
+    type Resolve[A] = A => Step[Any]
+
+    val resolve0 =
+      dispatch.compile(new Alt.Precompiler[smithy4s.Schema, Resolve] {
+        override def apply[A](
+            label: String,
+            instance: smithy4s.Schema[A]
+        ): Resolve[A] = instance.compile(self).resolve
+      })
+
+    new Schema[Any, U] {
+      override def resolve(value: U): Step[Any] = resolve0(value)
+
+      override def toType(isInput: Boolean, isSubscription: Boolean): __Type =
+        Types.makeUnion(
+          name = Some(shapeId.name),
+          description = None,
+          subTypes = alternatives
+            .map(handleAlt(shapeId, _))
+            .map(_.toType_(isInput, isSubscription))
+            .toList
+        )
+    }
+  }
+  private def handleAlt[U, A](parent: ShapeId, alt: SchemaAlt[U, A]) =
+    Schema.obj(
+      parent.name + alt.label + "Case"
+    )(fa =>
+      List(
+        Schema
+          .field[A](alt.label)(a => a)(alt.instance.compile(this), fa)
+      )
+    )
 }
