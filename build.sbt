@@ -71,7 +71,8 @@ lazy val allModules = Seq(
   dynamic,
   testUtils,
   guides,
-  complianceTests
+  complianceTests,
+  caliban
 ).flatMap(_.projectRefs)
 
 lazy val docs =
@@ -725,6 +726,21 @@ lazy val http4s = projectMatrix
     }
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)
+
+lazy val caliban = projectMatrix
+  .in(file("modules/caliban"))
+  .dependsOn(
+    core
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Caliban.cats.value
+    ),
+    scalacOptions -= "-Werror",
+    scalacOptions -= "-Xfatal-warnings"
+  )
+  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
 
 /**
  * Module that contains a function to derive a documentation endpoint

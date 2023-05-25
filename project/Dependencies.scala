@@ -150,4 +150,10 @@ object Dependencies {
       "com.disneystreaming.smithy" % "aws-spec-summary" % awsSpecSummaryVersion
   }
 
+  object Caliban {
+    val version = "2.2.1"
+    val cats: Def.Initialize[ModuleID] =
+      Def.setting("com.github.ghostdogpr" %%% "caliban-cats" % version)
+  }
+
 }
