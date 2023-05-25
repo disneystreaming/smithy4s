@@ -29,14 +29,17 @@ package object internals {
       case Array(k, v) =>
         (
           k,
-          Uri.decode(
-            toDecode = v,
-            charset = StandardCharsets.UTF_8,
-            plusIsSpace = true
-          )
+          decodeUri(v)
         )
       case Array(k) => (k, "")
     }
+  }
+
+  def decodeUri(v: String) = {
+    Uri.decode(
+      toDecode = v,
+      charset = StandardCharsets.UTF_8
+    )
   }
 
   private[compliancetests] def parseQueryParams(
@@ -69,33 +72,68 @@ package object internals {
   }
 
   /*
-       This function takes a string and splits it on a comma delimiter and prunes extra whitespace which
+       This function takes a string that is encoded like source code and splits it on a comma delimiter and prunes extra whitespace which
        what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
    */
-  private[compliancetests] def parseList(s: String): List[String] = {
-    s.foldLeft((Chain.empty[String], 0, 0, false)) {
-      case ((acc, begin, end, quote), elem) =>
-        elem match {
-          // we are in a quote so we negate the quote state and move on
-          case '"' => (acc, begin, end + 1, !quote)
-          // we see a comma, we are not in a quote if we actually have some data,  we add the current string to the accumulator and move both beginning and end pointers to the next character otherwise we move along
-          case ',' if !quote =>
-            if (begin < end)
-              (acc :+ s.substring(begin, end), end + 1, end + 1, quote)
-            else (acc, end + 1, end + 1, quote)
-          // we see a whitespace character and we have not captured any data yet so we move the beginning pointer and end pointer to the next character
-          case c if c.isWhitespace && begin == end =>
-            (acc, begin + 1, begin + 1, quote)
-          // default case if we have reached the end of the string , we must have some data we add it to the accumulator else we just increment the end pointer
-          case _ =>
-            if (s.length == end + 1)
-              (acc :+ s.substring(begin, end + 1), end + 1, end + 1, quote)
-            else {
-              (acc, begin, end + 1, quote)
-            }
-        }
-    }._1
-      .toList
+
+  private[compliancetests] def parseList(input: String): List[String] = {
+    @scala.annotation.tailrec
+    def loop(
+        chars: List[Char],
+        result: Chain[String],
+        inString: Boolean,
+        escapeNext: Boolean,
+        betweenItems: Boolean,
+        currentString: String
+    ): Chain[String] = {
+      chars match {
+        case Nil =>
+          if (currentString.nonEmpty)
+            result :+ currentString
+          else
+            result
+
+        case '"' :: tail if !escapeNext =>
+          loop(tail, result, !inString, false, betweenItems, currentString)
+
+        case '"' :: tail if escapeNext =>
+          loop(tail, result, inString, false, betweenItems, currentString + '"')
+
+        case ',' :: tail if !inString =>
+          if (currentString.nonEmpty)
+            loop(tail, result :+ currentString, false, false, true, "")
+          else {
+            loop(tail, result, inString, false, betweenItems, "")
+          }
+        case '\\' :: tail if !escapeNext =>
+          loop(tail, result, inString, true, betweenItems, currentString)
+
+        case char :: tail if char.isWhitespace =>
+          if (!inString && !betweenItems)
+            loop(
+              tail,
+              result,
+              inString,
+              false,
+              betweenItems,
+              currentString + char
+            )
+          else
+            loop(tail, result, inString, false, betweenItems, currentString)
+
+        case char :: tail =>
+          loop(
+            tail,
+            result,
+            inString,
+            false,
+            betweenItems,
+            currentString + char
+          )
+      }
+    }
+    loop(input.toList, Chain.empty[String], false, false, false, "").toList
+
   }
 
 }

@@ -22,6 +22,7 @@ import ComplianceTest._
 import cats.Eq
 import io.circe.Json
 import org.http4s.Headers
+import org.http4s.Header
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
@@ -49,6 +50,23 @@ private[internals] object assert {
             fail(s"JSONs are not equal: result json: $a \n testcase json:  $b")
         }
     }
+  }
+
+  def contains[A: Eq](
+      a: A,
+      seq: Seq[A],
+      prefix: String = ""
+  ): ComplianceResult = {
+    seq
+      .map(eql(a, _, prefix))
+      .find(_.isRight)
+      .getOrElse(
+        fail(
+          s"$prefix the result value: ${pprint.apply(a)} was not contained in the expected TestCase value ${pprint
+            .apply(seq)}."
+        )
+      )
+
   }
 
   def eql[A: Eq](
@@ -95,23 +113,21 @@ private[internals] object assert {
         }.combineAll
     }
   }
+
   private def headersCheck(
       headers: Headers,
-      expected: Option[Map[String, String]]
+      expected: Headers
   ) = {
-    expected.toList
-      .flatMap(_.toList)
-      .map { case (key, expectedValue) =>
-        headers
-          .get(CIString(key))
-          .map { v =>
-            assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
-          }
-          .getOrElse(
-            assert.fail(s"'$key' header is missing")
-          )
-      }
-      .combineAll
+    expected.headers.map { case Header.Raw(key, expectedValue) =>
+      headers
+        .get(key)
+        .map { v =>
+          contains(expectedValue, v.toList.map(_.value), "Header: ")
+        }
+        .getOrElse(
+          assert.fail(s"'$key' header is missing")
+        )
+    }.combineAll
   }
 
   object testCase {
@@ -121,7 +137,7 @@ private[internals] object assert {
     ): ComplianceResult = {
       assert.headersExistenceCheck(headers, Left(tc.forbidHeaders)) *>
         assert.headersExistenceCheck(headers, Right(tc.requireHeaders)) *>
-        assert.headersCheck(headers, tc.headers)
+        assert.headersCheck(headers, parseHeaders(tc.headers))
     }
 
     def checkHeaders(
@@ -130,7 +146,7 @@ private[internals] object assert {
     ): ComplianceResult = {
       assert.headersExistenceCheck(headers, Left(tc.forbidHeaders)) *>
         assert.headersExistenceCheck(headers, Right(tc.requireHeaders)) *>
-        assert.headersCheck(headers, tc.headers)
+        assert.headersCheck(headers, parseHeaders(tc.headers))
     }
   }
 }
