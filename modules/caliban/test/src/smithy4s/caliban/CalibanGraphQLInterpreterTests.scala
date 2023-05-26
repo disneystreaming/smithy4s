@@ -2,9 +2,7 @@ package smithy4s.caliban
 
 import caliban.CalibanError
 import caliban.GraphQLInterpreter
-import caliban.ResponseValue
 import caliban.RootResolver
-import caliban.Value
 import caliban.interop.cats.implicits._
 import caliban.schema.Schema
 import cats.effect.IO
@@ -15,6 +13,7 @@ import smithy4s.example.CitySummary
 import smithy4s.example.ListCitiesOutput
 import smithy4s.example.Weather
 import smithy4s.example.WeatherGen
+import io.circe.syntax._
 
 object CalibanGraphQLInterpreterTests extends weaver.IOSuite {
   private implicit val rt: zio.Runtime[Any] = zio.Runtime.default
@@ -67,34 +66,22 @@ object CalibanGraphQLInterpreterTests extends weaver.IOSuite {
     interp
       .executeAsync[IO](query)
       .map { resp =>
-        val expected =
-          ResponseValue.ObjectValue(
-            List(
-              "ListCities" -> ResponseValue.ObjectValue(
-                List(
-                  "items" ->
-                    ResponseValue.ListValue(
-                      List(
-                        ResponseValue.ObjectValue(
-                          List(
-                            "cityId" -> Value.StringValue("1"),
-                            "name" -> Value.StringValue("London")
-                          )
-                        ),
-                        ResponseValue.ObjectValue(
-                          List(
-                            "cityId" -> Value.StringValue("2"),
-                            "name" -> Value.StringValue("NYC")
-                          )
-                        )
-                      )
-                    )
-                )
+        val expected = Map(
+          "ListCities" := Map(
+            "items" := List(
+              Map(
+                "cityId" := "1",
+                "name" := "London"
+              ),
+              Map(
+                "cityId" := "2",
+                "name" := "NYC"
               )
             )
           )
+        ).asJson
 
-        assert.same(resp.data, expected)
+        assert.same(resp.data.asJson, expected)
       }
   }
 
