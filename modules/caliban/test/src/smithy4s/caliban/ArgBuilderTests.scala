@@ -25,6 +25,8 @@ import caliban.InputValue
 import smithy4s.example.CityCoordinates
 import smithy4s.example.MovieTheater
 import smithy4s.example.Foo
+import smithy4s.example.Ingredient
+import smithy4s.example.EnumResult
 
 object ArgBuilderTests extends FunSuite {
 
@@ -117,7 +119,21 @@ object ArgBuilderTests extends FunSuite {
           "str" -> Value.StringValue("test")
         )
       ),
-      Foo.StrCase("test"): Foo
+      Foo.StrCase("test").widen
+    )
+  }
+
+  test("enum schema") {
+    decodeArgSuccess(
+      Value.StringValue("Tomato"),
+      Ingredient.Tomato.widen
+    )
+  }
+
+  test("int enum schema") {
+    decodeArgSuccess(
+      Value.IntValue(2),
+      EnumResult.SECOND.widen
     )
   }
 }

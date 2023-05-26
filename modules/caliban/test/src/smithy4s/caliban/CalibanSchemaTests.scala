@@ -26,6 +26,8 @@ import smithy4s.example.Foo
 import smithy4s.Schema
 import smithy.api.Length
 import smithy4s.Bijection
+import smithy4s.example.Ingredient
+import smithy4s.example.EnumResult
 
 object CalibanSchemaTests extends SimpleIOSuite {
   test("structure schema - all fields required") {
@@ -80,49 +82,49 @@ object CalibanSchemaTests extends SimpleIOSuite {
 
   test("list schema") {
 
-    val schema = Schema.struct[List[String]](
-      Schema.list(Schema.string).required[List[String]]("items", identity)
-    )(identity(_))
-
     testQueryResultWithSchema(
       List("a", "b", "c"),
-      """query {
-        |  items
-        |}""".stripMargin
-    )(schema)
-      .map(assert.eql(_, Json.obj("items" := List("a", "b", "c").asJson)))
+      "query {}"
+    )(Schema.list(Schema.string))
+      .map(assert.eql(_, List("a", "b", "c").asJson))
   }
 
   test("refinement schema") {
-    val schema = Schema.struct[String](
-      Schema.string
-        .refined(Length(min = Some(1)))
-        .required[String]("item", identity)
-    )(identity(_))
 
     testQueryResultWithSchema(
       "test",
-      """query {
-        |  item
-        |}""".stripMargin
-    )(schema)
-      .map(assert.eql(_, Json.obj("item" := "test")))
+      "query {}"
+    )(
+      Schema.string
+        .refined(Length(min = Some(1)))
+    ).map(assert.eql(_, "test".asJson))
   }
 
   test("bijection schema") {
-    val schema = Schema.struct[String](
-      Schema.string
-        .biject(Bijection[String, String](identity, _.toUpperCase()))
-        .required[String]("item", identity(_))
-    )(identity(_))
-
     testQueryResultWithSchema(
       "test",
-      """query {
-        |  item
-        |}""".stripMargin
-    )(schema)
-      .map(assert.eql(_, Json.obj("item" := "TEST")))
+      "query {}"
+    )(
+      Schema.string
+        .biject(Bijection[String, String](identity, _.toUpperCase()))
+    )
+      .map(assert.eql(_, "TEST".asJson))
+  }
+
+  test("enum schema") {
+    testQueryResultWithSchema(
+      Ingredient.Tomato.widen,
+      """query { }""".stripMargin
+    )
+      .map(assert.eql(_, "Tomato".asJson))
+  }
+
+  test("int enum schema") {
+    testQueryResultWithSchema(
+      EnumResult.SECOND.widen,
+      """query { }""".stripMargin
+    )
+      .map(assert.eql(_, 2.asJson))
   }
 
 }

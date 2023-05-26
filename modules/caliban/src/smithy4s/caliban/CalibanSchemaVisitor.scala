@@ -33,6 +33,8 @@ import smithy4s.schema.Alt
 import caliban.introspection.adt.__Type
 import smithy4s.schema
 import smithy4s.schema.CollectionTag
+import smithy4s.schema.EnumTag.StringEnum
+import smithy4s.schema.EnumTag.IntEnum
 
 // todo: caching
 private object CalibanSchemaVisitor
@@ -155,4 +157,17 @@ private object CalibanSchemaVisitor
           .field[A](alt.label)(a => a)(alt.instance.compile(this), fa)
       )
     )
+
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: schema.EnumTag,
+      values: List[schema.EnumValue[E]],
+      total: E => schema.EnumValue[E]
+  ): Schema[Any, E] = tag match {
+    case StringEnum =>
+      Schema.stringSchema.contramap(total(_).stringValue)
+    case IntEnum =>
+      Schema.intSchema.contramap(total(_).intValue)
+  }
 }

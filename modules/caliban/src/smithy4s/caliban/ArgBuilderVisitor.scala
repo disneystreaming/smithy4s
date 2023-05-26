@@ -35,6 +35,9 @@ import smithy4s.schema.SchemaAlt
 import caliban.schema.ArgBuilder
 import caliban.InputValue
 import caliban.CalibanError
+import smithy4s.schema.{EnumTag, EnumValue}
+import smithy4s.schema.EnumTag.StringEnum
+import smithy4s.schema.EnumTag.IntEnum
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor
@@ -106,6 +109,34 @@ private[caliban] object ArgBuilderVisitor
   }
   private def handleAlt[U, A](alt: Alt[Schema, U, A]): ArgBuilder[U] =
     alt.instance.compile(this).map(alt.inject)
+
+  override def enumeration[E](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: EnumTag,
+      values: List[EnumValue[E]],
+      total: E => EnumValue[E]
+  ): ArgBuilder[E] = tag match {
+    case StringEnum =>
+      val valuesByString = values.map(v => v.stringValue -> v).toMap
+
+      ArgBuilder.string.flatMap { v =>
+        valuesByString
+          .get(v)
+          .toRight(CalibanError.ExecutionError("Unknown enum case: " + v))
+          .map(_.value)
+      }
+
+    case IntEnum =>
+      val valuesByInt = values.map(v => v.intValue -> v).toMap
+      ArgBuilder.int.flatMap { v =>
+        valuesByInt
+          .get(v)
+          .toRight(CalibanError.ExecutionError("Unknown enum case: " + v))
+          .map(_.value)
+      }
+
+  }
 
   override def primitive[P](
       shapeId: ShapeId,
