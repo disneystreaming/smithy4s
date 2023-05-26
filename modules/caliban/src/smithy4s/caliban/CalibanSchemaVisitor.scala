@@ -40,11 +40,6 @@ import smithy4s.Lazy
 // todo: caching
 private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
 
-  override def biject[A, B](
-      schema: smithy4s.Schema[A],
-      bijection: Bijection[A, B]
-  ): Schema[Any, B] = schema.compile(this).contramap(bijection.from)
-
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -59,7 +54,10 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
     implicit val timestampSchema: Schema[Any, Timestamp] =
       Schema.unitSchema.asInstanceOf[Schema[Any, Timestamp]] // TODO
 
-    Primitive.deriving[Schema[Any, *]].apply(tag)
+    Primitive
+      .deriving[Schema[Any, *]]
+      .apply(tag)
+      .withName(shapeId)
   }
 
   private def field[S, A](
@@ -80,6 +78,11 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
     )
   }
 
+  override def biject[A, B](
+      schema: smithy4s.Schema[A],
+      bijection: Bijection[A, B]
+  ): Schema[Any, B] = schema.compile(this).contramap(bijection.from)
+
   override def refine[A, B](
       schema: smithy4s.Schema[A],
       refinement: Refinement[A, B]
@@ -92,23 +95,41 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
       fields: Vector[Field[smithy4s.Schema, S, ?]],
       make: IndexedSeq[Any] => S
   ): Schema[Any, S] =
-    Schema.obj(shapeId.name, None) { implicit fa =>
-      fields
-        .map(_.mapK(this))
-        .map(field(_))
-        .toList
-    }
+    Schema
+      .obj(shapeId.name, None) { implicit fa =>
+        fields
+          .map(_.mapK(this))
+          .map(field(_))
+          .toList
+      }
+      .withName(shapeId)
+
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
       tag: CollectionTag[C],
       member: schema.Schema[A]
   ): Schema[Any, C[A]] = tag match {
-    case CollectionTag.ListTag => Schema.listSchema(member.compile(this))
+    case CollectionTag.ListTag =>
+      Schema
+        .listSchema(member.compile(this))
+        .withName(shapeId)
+
     case CollectionTag.IndexedSeqTag =>
-      Schema.seqSchema(member.compile(this)).contramap(identity(_))
-    case CollectionTag.VectorTag => Schema.vectorSchema(member.compile(this))
-    case CollectionTag.SetTag    => Schema.setSchema(member.compile(this))
+      Schema
+        .seqSchema(member.compile(this))
+        .contramap[C[A]](identity(_))
+        .withName(shapeId)
+
+    case CollectionTag.VectorTag =>
+      Schema
+        .vectorSchema(member.compile(this))
+        .withName(shapeId)
+
+    case CollectionTag.SetTag =>
+      Schema
+        .setSchema(member.compile(this))
+        .withName(shapeId)
   }
 
   override def union[U](
@@ -149,7 +170,8 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
             .toList
         )
     }
-  }
+  }.withName(shapeId)
+
   private def handleAlt[U, A](parent: ShapeId, alt: SchemaAlt[U, A]) =
     Schema.obj(
       parent.name + alt.label + "Case"
@@ -166,12 +188,14 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
       tag: schema.EnumTag,
       values: List[schema.EnumValue[E]],
       total: E => schema.EnumValue[E]
-  ): Schema[Any, E] = tag match {
-    case StringEnum =>
-      Schema.stringSchema.contramap(total(_).stringValue)
-    case IntEnum =>
-      Schema.intSchema.contramap(total(_).intValue)
-  }
+  ): Schema[Any, E] = {
+    tag match {
+      case StringEnum =>
+        Schema.stringSchema.contramap(total(_: E).stringValue)
+      case IntEnum =>
+        Schema.intSchema.contramap(total(_: E).intValue)
+    }
+  }.withName(shapeId)
 
   override def map[K, V](
       shapeId: ShapeId,
@@ -179,7 +203,9 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
       key: schema.Schema[K],
       value: schema.Schema[V]
   ): Schema[Any, Map[K, V]] =
-    Schema.mapSchema(key.compile(this), value.compile(this))
+    Schema
+      .mapSchema(key.compile(this), value.compile(this))
+      .withName(shapeId)
 
   override def lazily[A](suspend: Lazy[schema.Schema[A]]): Schema[Any, A] = {
     val underlying = suspend.map(_.compile(this))
@@ -191,4 +217,26 @@ private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
 
     }
   }
+
+  private case class SchemaWithOrigin[A](
+      underlying: Schema[Any, A],
+      shapeId: ShapeId
+  ) extends Schema[Any, A] {
+    override def toType(isInput: Boolean, isSubscription: Boolean): __Type =
+      underlying
+        .toType_(isInput, isSubscription)
+        .copy(
+          name = Some(shapeId.name),
+          origin = Some(shapeId.namespace)
+        )
+
+    override def resolve(value: A): Step[Any] = underlying.resolve(value)
+  }
+
+  final implicit class AnySchemaOps[A](private val schema: Schema[Any, A])
+      extends AnyVal {
+    def withName(shapeId: ShapeId): Schema[Any, A] =
+      SchemaWithOrigin(schema, shapeId)
+  }
+
 }
