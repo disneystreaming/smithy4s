@@ -38,10 +38,7 @@ import smithy4s.schema.EnumTag.IntEnum
 import smithy4s.Lazy
 
 // todo: caching
-private object CalibanSchemaVisitor
-    extends SchemaVisitor.Default[Schema[Any, *]] {
-  // todo: remaining cases
-  override def default[A]: Schema[Any, A] = sys.error("unsupported schema")
+private object CalibanSchemaVisitor extends SchemaVisitor[Schema[Any, *]] {
 
   override def biject[A, B](
       schema: smithy4s.Schema[A],

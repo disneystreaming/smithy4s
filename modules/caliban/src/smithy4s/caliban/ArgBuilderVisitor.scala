@@ -43,10 +43,7 @@ import caliban.Value
 import smithy4s.Lazy
 
 // todo: caching
-private[caliban] object ArgBuilderVisitor
-    extends SchemaVisitor.Default[ArgBuilder] {
-  // todo: remaining cases
-  override def default[A]: ArgBuilder[A] = sys.error("unsupported schema")
+private[caliban] object ArgBuilderVisitor extends SchemaVisitor[ArgBuilder] {
 
   override def biject[A, B](
       schema: smithy4s.Schema[A],
