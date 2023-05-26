@@ -118,23 +118,24 @@ private[caliban] object ArgBuilderVisitor extends SchemaVisitor[ArgBuilder] {
       total: E => EnumValue[E]
   ): ArgBuilder[E] = tag match {
     case StringEnum =>
-      val valuesByString = values.map(v => v.stringValue -> v).toMap
+      val valuesByString = values.map(v => v.stringValue -> v.value).toMap
 
-      ArgBuilder.string.flatMap { v =>
-        valuesByString
-          .get(v)
-          .toRight(CalibanError.ExecutionError("Unknown enum case: " + v))
-          .map(_.value)
-      }
+      ArgBuilder.string
+        .flatMap { v =>
+          valuesByString
+            .get(v)
+            .toRight(CalibanError.ExecutionError("Unknown enum case: " + v))
+        }
 
     case IntEnum =>
-      val valuesByInt = values.map(v => v.intValue -> v).toMap
-      ArgBuilder.int.flatMap { v =>
-        valuesByInt
-          .get(v)
-          .toRight(CalibanError.ExecutionError("Unknown enum case: " + v))
-          .map(_.value)
-      }
+      val valuesByInt = values.map(v => v.intValue -> v.value).toMap
+
+      ArgBuilder.int
+        .flatMap { v =>
+          valuesByInt
+            .get(v)
+            .toRight(CalibanError.ExecutionError("Unknown int enum case: " + v))
+        }
 
   }
 
