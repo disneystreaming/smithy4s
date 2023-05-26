@@ -28,6 +28,8 @@ import smithy.api.Length
 import smithy4s.Bijection
 import smithy4s.example.Ingredient
 import smithy4s.example.EnumResult
+import smithy4s.example.RecursiveInput
+import smithy4s.example.Rec
 
 object CalibanSchemaTests extends SimpleIOSuite {
   test("structure schema - all fields required") {
@@ -175,6 +177,54 @@ object CalibanSchemaTests extends SimpleIOSuite {
               Json.obj(
                 "key" := "c",
                 "value" := "d"
+              )
+            )
+          )
+        )
+      )
+  }
+
+  test("recursive struct") {
+    testQueryResultWithSchema(
+      Rec(
+        name = "level1",
+        next = Some(
+          Rec(
+            name = "level2",
+            next = Some(
+              Rec(
+                name = "level3",
+                next = None
+              )
+            )
+          )
+        )
+      ),
+      """query {
+        |  item {
+        |    name
+        |    next {
+        |      name
+        |      next {
+        |        name
+        |        next { name }
+        |      }
+        |    }
+        |  }
+        |}""".stripMargin
+    )(Rec.schema.nested("item"))
+      .map(
+        assert.eql(
+          _,
+          Json.obj(
+            "item" := Json.obj(
+              "name" := "level1",
+              "next" := Json.obj(
+                "name" := "level2",
+                "next" := Json.obj(
+                  "name" := "level3",
+                  "next" := Json.Null
+                )
               )
             )
           )

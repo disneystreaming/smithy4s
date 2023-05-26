@@ -35,6 +35,7 @@ import smithy4s.schema
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.EnumTag.StringEnum
 import smithy4s.schema.EnumTag.IntEnum
+import smithy4s.Lazy
 
 // todo: caching
 private object CalibanSchemaVisitor
@@ -182,4 +183,15 @@ private object CalibanSchemaVisitor
       value: schema.Schema[V]
   ): Schema[Any, Map[K, V]] =
     Schema.mapSchema(key.compile(this), value.compile(this))
+
+  override def lazily[A](suspend: Lazy[schema.Schema[A]]): Schema[Any, A] = {
+    val underlying = suspend.map(_.compile(this))
+    new Schema[Any, A] {
+      def toType(isInput: Boolean, isSubscription: Boolean): __Type =
+        underlying.value.toType_(isInput, isSubscription)
+
+      def resolve(value: A): Step[Any] = underlying.value.resolve(value)
+
+    }
+  }
 }

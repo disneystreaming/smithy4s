@@ -159,3 +159,9 @@ list SomeVector {
 /// Test if an at-sign is rendered appropriately
 /// @test
 structure DocTest {}
+
+structure Rec {
+  next: Rec
+  @required
+  name: String
+}
