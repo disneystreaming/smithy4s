@@ -17,8 +17,6 @@
 package smithy4s.caliban
 
 import caliban.Value.NullValue
-import caliban._
-import caliban.schema._
 import cats.implicits._
 import smithy4s.Bijection
 import smithy4s.ByteArray
@@ -27,10 +25,16 @@ import smithy4s.Hints
 import smithy4s.Refinement
 import smithy4s.ShapeId
 import smithy4s.Timestamp
+import smithy4s.Schema
 import smithy4s.schema.Field
 import smithy4s.schema.Field.Wrapped
 import smithy4s.schema.Primitive
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.Alt
+import smithy4s.schema.SchemaAlt
+import caliban.schema.ArgBuilder
+import caliban.InputValue
+import caliban.CalibanError
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor
@@ -78,6 +82,30 @@ private[caliban] object ArgBuilderVisitor
     // todo other cases
     }
   }
+
+  override def union[U](
+      shapeId: ShapeId,
+      hints: Hints,
+      alternatives: Vector[SchemaAlt[U, _]],
+      dispatch: Alt.Dispatcher[smithy4s.schema.Schema, U]
+  ): ArgBuilder[U] = {
+    val instancesByKey =
+      alternatives.map(alt => (alt.label -> handleAlt(alt))).toMap
+
+    {
+      case InputValue.ObjectValue(in) if in.sizeIs == 1 =>
+        val (k, v) = in.head
+        instancesByKey
+          .get(k)
+          .toRight(
+            CalibanError.ExecutionError(msg = "Invalid union case: " + k)
+          )
+          .flatMap(_.build(v))
+      // todo other cases
+    }
+  }
+  private def handleAlt[U, A](alt: Alt[Schema, U, A]): ArgBuilder[U] =
+    alt.instance.compile(this).map(alt.inject)
 
   override def primitive[P](
       shapeId: ShapeId,

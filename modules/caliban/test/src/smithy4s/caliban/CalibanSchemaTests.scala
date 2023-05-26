@@ -56,6 +56,16 @@ object CalibanSchemaTests extends SimpleIOSuite {
       .map(assert.eql(_, Json.obj("name" := Json.Null)))
   }
 
+  test("structure schema - present optional field") {
+    testQueryResultWithSchema(
+      MovieTheater(name = Some("cinema")),
+      """query {
+        |  name
+        |}""".stripMargin
+    )
+      .map(assert.eql(_, Json.obj("name" := "cinema")))
+  }
+
   test("union schema") {
     testQueryResultWithSchema(
       Foo.StrCase("myString"): Foo,
