@@ -27,6 +27,7 @@ import smithy4s.example.MovieTheater
 import smithy4s.example.Foo
 import smithy4s.example.Ingredient
 import smithy4s.example.EnumResult
+import smithy4s.example.Rec
 
 object ArgBuilderTests extends FunSuite {
 
@@ -195,5 +196,31 @@ object ArgBuilderTests extends FunSuite {
       ),
       Map("test" -> "test", "test2" -> "test2")
     )(Schema.map(Schema.string, Schema.string))
+  }
+
+  test("recursive struct") {
+    decodeArgSuccess(
+      InputValue.ObjectValue(
+        Map(
+          "name" -> Value.StringValue("level1"),
+          "next" -> InputValue.ObjectValue(
+            Map(
+              "name" -> Value.StringValue("level2"),
+              "next" -> InputValue.ObjectValue(
+                Map(
+                  "name" -> Value.StringValue("level3")
+                )
+              )
+            )
+          )
+        )
+      ),
+      Rec(
+        name = "level1",
+        next = Some(
+          Rec(name = "level2", next = Some(Rec(name = "level3", next = None)))
+        )
+      )
+    )
   }
 }

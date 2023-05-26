@@ -40,6 +40,7 @@ import smithy4s.schema.EnumTag.StringEnum
 import smithy4s.schema.EnumTag.IntEnum
 import smithy4s.schema.CollectionTag
 import caliban.Value
+import smithy4s.Lazy
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor
@@ -193,5 +194,11 @@ private[caliban] object ArgBuilderVisitor
         .map(_.toMap)
     // todo other cases
     }
+  }
+
+  override def lazily[A](suspend: Lazy[Schema[A]]): ArgBuilder[A] = {
+    val underlying = suspend.map(_.compile(this))
+
+    underlying.value.build(_)
   }
 }
