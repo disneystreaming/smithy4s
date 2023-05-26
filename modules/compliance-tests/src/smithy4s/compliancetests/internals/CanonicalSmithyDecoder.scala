@@ -85,6 +85,7 @@ object CanonicalSmithyDecoder {
             )
         }
       case PBlob =>
+        // todo: I'm not sure that's right
         from("Base64 binary blob") { case DString(string) =>
           ByteArray(string.getBytes)
         }

@@ -28,8 +28,14 @@ import smithy4s.example.Foo
 import smithy4s.example.Ingredient
 import smithy4s.example.EnumResult
 import smithy4s.example.Rec
+import smithy4s.Document
+import java.time.Instant
+import smithy4s.Timestamp
+import smithy.api.TimestampFormat
+import smithy4s.ByteArray
 
 object ArgBuilderTests extends FunSuite {
+  // todo: tests for negative paths
 
   private def decodeArgSuccess[A](
       value: InputValue,
@@ -222,5 +228,99 @@ object ArgBuilderTests extends FunSuite {
         )
       )
     )
+  }
+
+  test("timestamp (default: epoch second)") {
+    decodeArgSuccess(
+      Value.IntValue(100L),
+      Timestamp.fromEpochSecond(100L)
+    )(Schema.timestamp)
+  }
+
+  test("timestamp (DATE_TIME)") {
+    decodeArgSuccess(
+      Value.StringValue(Instant.EPOCH.toString()),
+      Timestamp.fromInstant(Instant.EPOCH)
+    )(Schema.timestamp.addHints(TimestampFormat.DATE_TIME.widen))
+  }
+
+  test("timestamp (HTTP_DATE)") {
+    decodeArgSuccess(
+      Value.StringValue("Tue, 29 Apr 2014 18:30:38 GMT"),
+      Timestamp(
+        year = 2014,
+        month = 4,
+        day = 29,
+        hour = 18,
+        minute = 30,
+        second = 38
+      )
+    )(Schema.timestamp.addHints(TimestampFormat.HTTP_DATE.widen))
+  }
+
+  test("short") {
+    decodeArgSuccess(
+      Value.IntValue(Short.MaxValue),
+      Short.MaxValue
+    )(Schema.short)
+  }
+
+  test("byte") {
+    decodeArgSuccess(
+      Value.IntValue(Byte.MaxValue),
+      Byte.MaxValue
+    )(Schema.byte)
+  }
+
+  test("bytes") {
+    decodeArgSuccess(
+      Value.StringValue(ByteArray(Array(1, 2, 3)).toString),
+      ByteArray(Array(1, 2, 3))
+    )(Schema.bytes)
+  }
+
+  test("document") {
+    decodeArgSuccess(
+      InputValue.ObjectValue(
+        Map(
+          "str" -> Value.StringValue("test"),
+          "int" -> Value.IntValue(42),
+          "long" -> Value.IntValue.LongNumber(42L),
+          "float" -> Value.FloatValue(42.0f),
+          "double" -> Value.FloatValue.DoubleNumber(42.0d),
+          "bigint" -> Value.IntValue.BigIntNumber(BigInt(10)),
+          "bigdecimal" -> Value.FloatValue.BigDecimalNumber(BigDecimal(10)),
+          "arr" -> InputValue.ListValue(
+            List(
+              Value.StringValue("string in list"),
+              InputValue.ObjectValue(
+                Map("k1" -> Value.StringValue("in array object"))
+              )
+            )
+          ),
+          "obj" -> InputValue.ObjectValue(
+            Map(
+              "k2" -> Value.StringValue("in object")
+            )
+          )
+        )
+      ),
+      Document.obj(
+        "str" -> Document.fromString("test"),
+        "int" -> Document.fromInt(42),
+        "long" -> Document.fromLong(42L),
+        "float" -> Document.fromDouble(42.0d),
+        "double" -> Document.fromDouble(42.0d),
+        "bigint" -> Document.fromBigDecimal(BigDecimal(10)),
+        "bigdecimal" -> Document.fromBigDecimal(BigDecimal(10)),
+        "arr" -> Document.array(
+          Document.fromString("string in list"),
+          Document.obj(
+            "k1" -> Document.fromString("in array object")
+          )
+        ),
+        "obj" -> Document.obj("k2" -> Document.fromString("in object"))
+      )
+    )(Schema.document)
   }
 }

@@ -41,6 +41,19 @@ import smithy4s.schema.EnumTag.IntEnum
 import smithy4s.schema.CollectionTag
 import caliban.Value
 import smithy4s.Lazy
+import java.util.Base64
+import caliban.Value.StringValue
+import caliban.Value.IntValue.IntNumber
+import caliban.Value.FloatValue.BigDecimalNumber
+import caliban.Value.IntValue.BigIntNumber
+import caliban.Value.BooleanValue
+import caliban.Value.FloatValue.FloatNumber
+import caliban.Value.FloatValue.DoubleNumber
+import caliban.Value.IntValue.LongNumber
+import caliban.InputValue.ObjectValue
+import caliban.InputValue.ListValue
+import caliban.InputValue.VariableValue
+import smithy.api.TimestampFormat
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor extends SchemaVisitor[ArgBuilder] {
@@ -139,16 +152,68 @@ private[caliban] object ArgBuilderVisitor extends SchemaVisitor[ArgBuilder] {
 
   }
 
+  private val inputValueToDoc: PartialFunction[InputValue, Document] = {
+    case StringValue(value)      => Document.fromString(value)
+    case IntNumber(value)        => Document.fromInt(value)
+    case BigDecimalNumber(value) => Document.fromBigDecimal(value)
+    case BigIntNumber(value)     => Document.fromBigDecimal(BigDecimal(value))
+    case BooleanValue(value)     => Document.fromBoolean(value)
+    case FloatNumber(value)      => Document.fromDouble(value.toDouble)
+    case DoubleNumber(value)     => Document.fromDouble(value)
+    case LongNumber(value)       => Document.fromLong(value)
+    case ObjectValue(fields) => Document.DObject(fields.fmap(inputValueToDoc))
+    case ListValue(values)   => Document.array(values.map(inputValueToDoc))
+  }
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
   ): ArgBuilder[P] = {
-    implicit val shortArgBuilder: ArgBuilder[Short] = _ => ??? // todo
-    implicit val byteArgBuilder: ArgBuilder[Byte] = _ => ??? // todo
-    implicit val byteArrayArgBuilder: ArgBuilder[ByteArray] = _ => ??? // todo
-    implicit val documentArgBuilder: ArgBuilder[Document] = _ => ??? // todo
-    implicit val timestampArgBuilder: ArgBuilder[Timestamp] = _ => ??? // todo
+    // todo: these would probably benefit from a direct implementation
+    implicit val shortArgBuilder: ArgBuilder[Short] =
+      ArgBuilder.int.flatMap {
+        case i if i.isValidShort => Right(i.toShort)
+        case i =>
+          Left(CalibanError.ExecutionError("Integer too large for short: " + i))
+      }
+
+    implicit val byteArgBuilder: ArgBuilder[Byte] = ArgBuilder.int.flatMap {
+      case i if i.isValidByte => Right(i.toByte)
+      case i =>
+        Left(CalibanError.ExecutionError("Integer too large for byte: " + i))
+    }
+
+    implicit val byteArrayArgBuilder: ArgBuilder[ByteArray] =
+      ArgBuilder.string.map { str =>
+        ByteArray(Base64.getDecoder().decode(str))
+      }
+
+    implicit val documentArgBuilder: ArgBuilder[Document] = v =>
+      inputValueToDoc
+        .lift(v)
+        .toRight(
+          CalibanError.ExecutionError(
+            s"Unsupported input value for Document: $v"
+          )
+        )
+
+    implicit val timestampArgBuilder: ArgBuilder[Timestamp] = {
+      hints.get(TimestampFormat) match {
+        case Some(TimestampFormat.EPOCH_SECONDS) | None =>
+          ArgBuilder.long.map(Timestamp.fromEpochSecond(_))
+
+        case Some(format) =>
+          ArgBuilder.string.flatMap(s =>
+            Timestamp
+              .parse(s, format)
+              .toRight(
+                CalibanError.ExecutionError(
+                  s"Invalid timestamp for format $format: $s"
+                )
+              )
+          )
+      }
+    }
 
     Primitive.deriving[ArgBuilder].apply(tag)
   }
