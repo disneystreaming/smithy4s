@@ -84,71 +84,101 @@ object CalibanSchemaTests extends SimpleIOSuite {
 
     testQueryResultWithSchema(
       List("a", "b", "c"),
-      "query {}"
-    )(Schema.list(Schema.string))
-      .map(assert.eql(_, List("a", "b", "c").asJson))
+      "query { items }"
+    )(Schema.list(Schema.string).nested("items"))
+      .map(assert.eql(_, Json.obj("items" := List("a", "b", "c"))))
   }
 
   test("indexedSeq schema") {
     testQueryResultWithSchema(
       IndexedSeq("a", "b", "c"),
-      "query {}"
-    )(Schema.indexedSeq(Schema.string))
-      .map(assert.eql(_, List("a", "b", "c").asJson))
+      "query { items }"
+    )(Schema.indexedSeq(Schema.string).nested("items"))
+      .map(assert.eql(_, Json.obj("items" := List("a", "b", "c"))))
   }
 
   test("vector schema") {
     testQueryResultWithSchema(
       Vector("a", "b", "c"),
-      "query {}"
-    )(Schema.vector(Schema.string))
-      .map(assert.eql(_, List("a", "b", "c").asJson))
+      "query { items }"
+    )(Schema.vector(Schema.string).nested("items"))
+      .map(assert.eql(_, Json.obj("items" := List("a", "b", "c"))))
   }
 
   test("set schema") {
     testQueryResultWithSchema(
       Set("a", "b", "c"),
-      "query {}"
-    )(Schema.set(Schema.string))
-      .map(assert.eql(_, List("a", "b", "c").asJson))
+      "query { items }"
+    )(Schema.set(Schema.string).nested("items"))
+      .map(assert.eql(_, Json.obj("items" := List("a", "b", "c"))))
   }
 
   test("refinement schema") {
 
     testQueryResultWithSchema(
       "test",
-      "query {}"
+      "query { item }"
     )(
       Schema.string
         .refined(Length(min = Some(1)))
-    ).map(assert.eql(_, "test".asJson))
+        .nested("item")
+    ).map(assert.eql(_, Json.obj("item" := "test")))
   }
 
   test("bijection schema") {
     testQueryResultWithSchema(
       "test",
-      "query {}"
+      "query { item }"
     )(
       Schema.string
         .biject(Bijection[String, String](identity, _.toUpperCase()))
+        .nested("item")
     )
-      .map(assert.eql(_, "TEST".asJson))
+      .map(assert.eql(_, Json.obj("item" := "TEST")))
   }
 
   test("enum schema") {
     testQueryResultWithSchema(
       Ingredient.Tomato.widen,
-      """query { }""".stripMargin
-    )
-      .map(assert.eql(_, "Tomato".asJson))
+      """query { item }""".stripMargin
+    )(Ingredient.schema.nested("item"))
+      .map(assert.eql(_, Json.obj("item" := "Tomato")))
   }
 
   test("int enum schema") {
     testQueryResultWithSchema(
       EnumResult.SECOND.widen,
-      """query { }""".stripMargin
-    )
-      .map(assert.eql(_, 2.asJson))
+      """query { item }""".stripMargin
+    )(EnumResult.schema.nested("item"))
+      .map(assert.eql(_, Json.obj("item" := 2)))
   }
 
+  test("map schema") {
+    testQueryResultWithSchema(
+      Map("a" -> "b", "c" -> "d"),
+      """query {
+        | items {
+        |   key
+        |   value
+        |  }
+        |}""".stripMargin
+    )(Schema.map(Schema.string, Schema.string).nested("items"))
+      .map(
+        assert.eql(
+          _,
+          Json.obj(
+            "items" := Json.arr(
+              Json.obj(
+                "key" := "a",
+                "value" := "b"
+              ),
+              Json.obj(
+                "key" := "c",
+                "value" := "d"
+              )
+            )
+          )
+        )
+      )
+  }
 }

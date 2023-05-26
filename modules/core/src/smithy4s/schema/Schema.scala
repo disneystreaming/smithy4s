@@ -81,6 +81,11 @@ sealed trait Schema[A]{
   final def biject[B](bijection: Bijection[A, B]) : Schema[B] = Schema.bijection(this, bijection)
   final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
 
+  /**
+   * Wraps this schema in a single-field struct. Mostly useful for making test schemas.
+   */
+  final def nested(key: String): Schema[A] = Schema.struct[A](this.required[A](key, identity(_)))(identity(_))
+
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 

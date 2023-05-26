@@ -184,4 +184,16 @@ object ArgBuilderTests extends FunSuite {
       Set("test")
     )(Schema.set(Schema.string))
   }
+
+  test("map") {
+    decodeArgSuccess(
+      InputValue.ObjectValue(
+        Map(
+          "test" -> Value.StringValue("test"),
+          "test2" -> Value.StringValue("test2")
+        )
+      ),
+      Map("test" -> "test", "test2" -> "test2")
+    )(Schema.map(Schema.string, Schema.string))
+  }
 }

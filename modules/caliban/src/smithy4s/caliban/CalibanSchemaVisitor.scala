@@ -174,4 +174,12 @@ private object CalibanSchemaVisitor
     case IntEnum =>
       Schema.intSchema.contramap(total(_).intValue)
   }
+
+  override def map[K, V](
+      shapeId: ShapeId,
+      hints: Hints,
+      key: schema.Schema[K],
+      value: schema.Schema[V]
+  ): Schema[Any, Map[K, V]] =
+    Schema.mapSchema(key.compile(this), value.compile(this))
 }

@@ -39,6 +39,7 @@ import smithy4s.schema.{EnumTag, EnumValue}
 import smithy4s.schema.EnumTag.StringEnum
 import smithy4s.schema.EnumTag.IntEnum
 import smithy4s.schema.CollectionTag
+import caliban.Value
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor
@@ -170,5 +171,27 @@ private[caliban] object ArgBuilderVisitor
 
     case CollectionTag.SetTag =>
       ArgBuilder.set(member.compile(this))
+  }
+
+  override def map[K, V](
+      shapeId: ShapeId,
+      hints: Hints,
+      key: Schema[K],
+      value: Schema[V]
+  ): ArgBuilder[Map[K, V]] = {
+    val keyBuilder = key.compile(this)
+    val valueBuilder = value.compile(this)
+
+    { case InputValue.ObjectValue(keys) =>
+      keys.toList
+        .traverse { case (k, v) =>
+          (
+            keyBuilder.build(Value.StringValue(k)),
+            valueBuilder.build(v)
+          ).tupled
+        }
+        .map(_.toMap)
+    // todo other cases
+    }
   }
 }
