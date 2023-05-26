@@ -106,7 +106,14 @@ private object CalibanSchemaVisitor
         override def apply[A](
             label: String,
             instance: smithy4s.Schema[A]
-        ): Resolve[A] = instance.compile(self).resolve
+        ): Resolve[A] = {
+          val underlying = instance.compile(self)
+          a =>
+            Step.ObjectStep(
+              shapeId.name + label + "Case",
+              Map(label -> underlying.resolve(a))
+            )
+        }
       })
 
     new Schema[Any, U] {

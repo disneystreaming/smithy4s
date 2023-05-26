@@ -731,7 +731,8 @@ lazy val caliban = projectMatrix
   .in(file("modules/caliban"))
   .dependsOn(
     core,
-    tests % Test
+    tests % Test,
+    example % Test
   )
   .settings(
     isMimaEnabled := false,

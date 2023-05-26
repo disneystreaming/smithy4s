@@ -47,7 +47,8 @@ trait Bijection[A, B] extends Function[A, B] { outer =>
 }
 
 object Bijection {
-  def identity[A]: Bijection[A, A] = apply(identity[A], identity[A])
+  def identity[A]: Bijection[A, A] =
+    apply(Predef.identity[A], Predef.identity[A])
 
   def apply[A, B](to: A => B, from: B => A): Bijection[A, B] =
     new Impl[A, B](to, from)
