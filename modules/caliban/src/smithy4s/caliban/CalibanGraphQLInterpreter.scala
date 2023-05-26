@@ -16,6 +16,7 @@
 
 package smithy4s.caliban
 
+import caliban.interop.cats.FromEffect
 import caliban.interop.cats.implicits._
 import caliban.schema._
 import cats.effect.kernel.Async
@@ -27,17 +28,10 @@ object CalibanGraphQLInterpreter {
       service: Service[Alg]
   ): Schema[Any, service.Impl[F]] =
     // todo: renaming to account for graphql conventions (camelCase ops etc.)?
+    // todo: splitting into queries/mutations?
     Schema.obj(name = service.id.name, description = None)(implicit fa =>
       service.endpoints.map { endpointToSchema[F].apply(service)(_) }
     )
-
-  private def fToSchema[F[_]: Async: Dispatcher, O](
-      schema: smithy4s.Schema[O]
-  ): Schema[Any, F[O]] = {
-    implicit val underlying: Schema[Any, O] =
-      schema.compile(CalibanSchemaVisitor)
-    implicitly
-  }
 
   private def endpointToSchema[
       F[_]: Async: Dispatcher
@@ -67,7 +61,10 @@ object CalibanGraphQLInterpreter {
         Schema.functionSchema[Any, Any, I, F[O]](
           e.input.compile(ArgBuilderVisitor),
           e.input.compile(CalibanSchemaVisitor),
-          fToSchema(e.output)
+          catsEffectSchema(
+            FromEffect.forDispatcher,
+            e.output.compile(CalibanSchemaVisitor)
+          )
         ),
         fa
       )
