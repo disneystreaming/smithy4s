@@ -89,6 +89,30 @@ object CalibanSchemaTests extends SimpleIOSuite {
       .map(assert.eql(_, List("a", "b", "c").asJson))
   }
 
+  test("indexedSeq schema") {
+    testQueryResultWithSchema(
+      IndexedSeq("a", "b", "c"),
+      "query {}"
+    )(Schema.indexedSeq(Schema.string))
+      .map(assert.eql(_, List("a", "b", "c").asJson))
+  }
+
+  test("vector schema") {
+    testQueryResultWithSchema(
+      Vector("a", "b", "c"),
+      "query {}"
+    )(Schema.vector(Schema.string))
+      .map(assert.eql(_, List("a", "b", "c").asJson))
+  }
+
+  test("set schema") {
+    testQueryResultWithSchema(
+      Set("a", "b", "c"),
+      "query {}"
+    )(Schema.set(Schema.string))
+      .map(assert.eql(_, List("a", "b", "c").asJson))
+  }
+
   test("refinement schema") {
 
     testQueryResultWithSchema(

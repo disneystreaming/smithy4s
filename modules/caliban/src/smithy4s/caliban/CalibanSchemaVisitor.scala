@@ -107,6 +107,10 @@ private object CalibanSchemaVisitor
       member: schema.Schema[A]
   ): Schema[Any, C[A]] = tag match {
     case CollectionTag.ListTag => Schema.listSchema(member.compile(this))
+    case CollectionTag.IndexedSeqTag =>
+      Schema.seqSchema(member.compile(this)).contramap(identity(_))
+    case CollectionTag.VectorTag => Schema.vectorSchema(member.compile(this))
+    case CollectionTag.SetTag    => Schema.setSchema(member.compile(this))
   }
 
   override def union[U](

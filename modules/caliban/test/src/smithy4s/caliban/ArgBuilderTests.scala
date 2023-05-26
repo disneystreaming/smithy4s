@@ -136,4 +136,52 @@ object ArgBuilderTests extends FunSuite {
       EnumResult.SECOND.widen
     )
   }
+
+  test("list") {
+    decodeArgSuccess(
+      InputValue.ListValue(
+        List(
+          Value.StringValue("test"),
+          Value.StringValue("test2")
+        )
+      ),
+      List("test", "test2")
+    )(Schema.list(Schema.string))
+  }
+
+  test("vector") {
+    decodeArgSuccess(
+      InputValue.ListValue(
+        List(
+          Value.StringValue("test"),
+          Value.StringValue("test2")
+        )
+      ),
+      Vector("test", "test2")
+    )(Schema.vector(Schema.string))
+  }
+
+  test("indexedSeq") {
+    decodeArgSuccess(
+      InputValue.ListValue(
+        List(
+          Value.StringValue("test"),
+          Value.StringValue("test2")
+        )
+      ),
+      IndexedSeq("test", "test2")
+    )(Schema.indexedSeq(Schema.string))
+  }
+
+  test("set") {
+    decodeArgSuccess(
+      InputValue.ListValue(
+        List(
+          Value.StringValue("test"),
+          Value.StringValue("test")
+        )
+      ),
+      Set("test")
+    )(Schema.set(Schema.string))
+  }
 }

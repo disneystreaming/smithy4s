@@ -38,6 +38,7 @@ import caliban.CalibanError
 import smithy4s.schema.{EnumTag, EnumValue}
 import smithy4s.schema.EnumTag.StringEnum
 import smithy4s.schema.EnumTag.IntEnum
+import smithy4s.schema.CollectionTag
 
 // todo: caching
 private[caliban] object ArgBuilderVisitor
@@ -150,5 +151,24 @@ private[caliban] object ArgBuilderVisitor
     implicit val timestampArgBuilder: ArgBuilder[Timestamp] = _ => ??? // todo
 
     Primitive.deriving[ArgBuilder].apply(tag)
+  }
+
+  override def collection[C[_], A](
+      shapeId: ShapeId,
+      hints: Hints,
+      tag: CollectionTag[C],
+      member: Schema[A]
+  ): ArgBuilder[C[A]] = tag match {
+    case CollectionTag.ListTag =>
+      ArgBuilder.list(member.compile(this))
+
+    case CollectionTag.IndexedSeqTag =>
+      ArgBuilder.seq(member.compile(this)).map(_.toIndexedSeq)
+
+    case CollectionTag.VectorTag =>
+      ArgBuilder.seq(member.compile(this)).map(_.toVector)
+
+    case CollectionTag.SetTag =>
+      ArgBuilder.set(member.compile(this))
   }
 }
