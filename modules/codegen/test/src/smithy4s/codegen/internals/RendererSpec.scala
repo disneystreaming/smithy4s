@@ -160,7 +160,6 @@ final class RendererSpec extends munit.FunSuite {
       definition.contains(haertWithDeprecationAndDocRendered),
       "variants generated from `@enum` trait must hold hints, but deprecation hint cannot support message and since properties."
     )
-    println(definition)
   }
   test("enum hints should be preserved") {
     val smithy = """
@@ -221,7 +220,6 @@ final class RendererSpec extends munit.FunSuite {
       definition.contains(haertWithDeprecationAndDocRendered),
       "variants generated from enum shape must hold hints and deprecation hint must keep message and since properties."
     )
-    println(definition)
   }
 
   test("structure must generate final case class") {
