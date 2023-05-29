@@ -8,6 +8,11 @@ import smithy4s.ShapeTag
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
+/** @param LOW
+  *   low
+  * @param HIGH
+  *   high
+  */
 sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = LowHigh
   override val value: String = _value
@@ -22,8 +27,10 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
 
   val hints: Hints = Hints.empty
 
-  case object LOW extends LowHigh("Low", "LOW", 0, Hints())
-  case object HIGH extends LowHigh("High", "HIGH", 1, Hints())
+  /** low */
+  case object LOW extends LowHigh("Low", "LOW", 0, Hints(smithy.api.Documentation("low")))
+  /** high */
+  case object HIGH extends LowHigh("High", "HIGH", 1, Hints(smithy.api.Documentation("high")))
 
   val values: List[LowHigh] = List(
     LOW,
