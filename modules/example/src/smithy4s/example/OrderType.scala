@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
 /** Our order types have different ways to identify a product
-  * Except for preview orders, these don't have an ID
+  * Except for preview orders, these don't have an ID 
   */
 sealed trait OrderType extends scala.Product with scala.Serializable {
   @inline final def widen: OrderType = this
@@ -19,7 +19,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
   val hints: Hints = Hints(
-    smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"),
+    smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
   )
 
   case class OnlineCase(online: OrderNumber) extends OrderType
