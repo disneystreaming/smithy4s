@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.30.0"
+    val smithyVersion = "1.31.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -91,7 +91,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.10")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.11")
 
   object Http4s {
     val http4sVersion = "0.23.19"
