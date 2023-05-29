@@ -311,31 +311,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       override def stringShape(shape: StringShape): Option[Decl] =
         (shape match {
-          case T.enumeration(e) =>
-            val values = e
-              .getValues()
-              .asScala
-              .zipWithIndex
-              .map { case (value, index) =>
-                EnumValue(
-                  value.getValue(),
-                  index,
-                  EnumUtil.enumValueClassName(
-                    value.getName().asScala,
-                    value.getValue,
-                    index
-                  ),
-                  hints = Nil
-                )
-              }
-              .toList
-            Enumeration(
-              shape.getId(),
-              shape.name,
-              EnumTag.StringEnum,
-              values,
-              hints(shape)
-            ).some
+          case T.enumeration(e) => {
+            val pseudoEnumShape = EnumShape
+              .builder()
+              .source(shape.getSourceLocation())
+              .addTraits(
+                shape.getAllTraits().values()
+              )
+              .asInstanceOf[EnumShape.Builder]
+              .id(shape.getId())
+              .setMembersFromEnumTrait(e)
+              .build()
+            enumShape(pseudoEnumShape)
+          }
           case _ => this.getDefault(shape)
         })
 
@@ -944,6 +932,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
+        .filterNot(
+          _.toShapeId() == ShapeId.from("smithy.api#enum")
+        ) // filter out enum trait using literal to avoid deprecation warning from `EnumTrait.ID`
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
