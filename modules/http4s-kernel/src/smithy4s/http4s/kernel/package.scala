@@ -65,7 +65,7 @@ package object kernel {
 
   private[smithy4s] def toHeaders(mp: Map[CaseInsensitive, Seq[String]]) =
     Headers(mp.flatMap { case (k, v) =>
-      v.filterNot(_.isEmpty).map(Header.Raw(CIString(k.toString), _))
+      v.map(Header.Raw(CIString(k.toString), _))
     }.toList)
 
   private[smithy4s] def getFirstHeader[F[_]](
