@@ -312,9 +312,22 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       override def stringShape(shape: StringShape): Option[Decl] =
         (shape match {
           case T.enumeration(e) => {
+            val enumTrait = shape
+              .findTrait(ShapeId.from("smithy.api#enum"))
+              .asScala
+              .getOrElse(
+                throw new Exception(
+                  "smithy.api#enum shape is missing for enum trait"
+                )
+              )
             val pseudoEnumShape =
               EnumShape.fromStringShape(shape, true).asScala match {
-                case Some(shape) => shape
+                case Some(shape) =>
+                  shape
+                    .toBuilder()
+                    .addTrait(enumTrait)
+                    .asInstanceOf[EnumShape.Builder]
+                    .build()
                 case None => {
                   val namedEnumTrait = {
                     val defs = e.getValues().asScala.zipWithIndex.map {
@@ -341,6 +354,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                   }
                   EnumShape
                     .builder()
+                    .addTrait(enumTrait)
                     .id(shape.getId())
                     .source(shape.getSourceLocation())
                     .addTraits(

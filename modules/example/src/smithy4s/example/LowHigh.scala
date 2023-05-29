@@ -25,7 +25,9 @@ sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hi
 object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
   val id: ShapeId = ShapeId("smithy4s.example", "LowHigh")
 
-  val hints: Hints = Hints.empty
+  val hints: Hints = Hints(
+    smithy.api.Enum(List(smithy.api.EnumDefinition(value = smithy.api.NonEmptyString("Low"), name = Some(smithy.api.EnumConstantBodyName("LOW")), documentation = Some("low"), tags = None, deprecated = None), smithy.api.EnumDefinition(value = smithy.api.NonEmptyString("High"), name = Some(smithy.api.EnumConstantBodyName("HIGH")), documentation = Some("high"), tags = None, deprecated = None))),
+  )
 
   /** low */
   case object LOW extends LowHigh("Low", "LOW", 0, Hints(smithy.api.Documentation("low")))
