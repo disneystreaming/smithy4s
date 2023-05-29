@@ -166,6 +166,49 @@ final class RendererSpec extends munit.FunSuite {
     )
 
   }
+  test("unnamed enum trait can be rendered as enum") {
+    val smithy = """
+                   |
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |@enum([
+                   |{
+                   |  value: "HEAD"  
+                   |},
+                   |{
+                   |  value: "t:a$i\\l"
+                   |}
+                   |])
+                   |string Coin
+                   |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    val definition =
+      contents.find(content =>
+        content.contains("sealed abstract class Coin") && content.contains(
+          "object Coin extends Enumeration[Coin]"
+        )
+      ) match {
+        case None =>
+          fail(
+            "enum must be rendered as a sealed abstract class and its companion object"
+          )
+        case Some(code) => code
+      }
+    assert(
+      definition.contains(
+        """case object HEAD extends Coin("HEAD", "HEAD", 0, Hints())"""
+      ),
+      "enum trait value without name must be rendered as enum variant"
+    )
+    assert(
+      definition.contains(
+        """case object TAIL extends Coin("t:a$i\l", "TAIL", 1, Hints())"""
+      ),
+      "enum trait value without name but with non alphanumeric value must be rendered as enum variant"
+    )
+  }
   test("enum hints should be preserved") {
     val smithy = """
                    |$version: "2.0"

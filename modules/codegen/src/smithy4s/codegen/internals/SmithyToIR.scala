@@ -313,7 +313,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         (shape match {
           case T.enumeration(e) => {
             val pseudoEnumShape =
-              EnumShape.fromStringShape(shape).asScala match {
+              EnumShape.fromStringShape(shape, true).asScala match {
                 case Some(shape) => shape
                 case None => {
                   val namedEnumTrait = {
@@ -348,9 +348,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                         .getAllTraits()
                         .values()
                         .asScala
-                        .filterNot(
-                          _.toShapeId() == ShapeId.from("smithy.api#enum")
-                        )
                         .asJavaCollection
                     )
                     .asInstanceOf[EnumShape.Builder]
