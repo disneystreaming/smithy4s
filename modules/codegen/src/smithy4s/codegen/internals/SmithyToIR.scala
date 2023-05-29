@@ -341,12 +341,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                   }
                   EnumShape
                     .builder()
+                    .id(shape.getId())
                     .source(shape.getSourceLocation())
                     .addTraits(
-                      shape.getAllTraits().values()
+                      shape
+                        .getAllTraits()
+                        .values()
+                        .asScala
+                        .filterNot(
+                          _.toShapeId() == ShapeId.from("smithy.api#enum")
+                        )
+                        .asJavaCollection
                     )
                     .asInstanceOf[EnumShape.Builder]
-                    .id(shape.getId())
                     .setMembersFromEnumTrait(namedEnumTrait)
                     .build()
                 }
@@ -961,9 +968,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .filterNot(_.toShapeId().getNamespace() == "smithy.synthetic")
         // enumValue can be derived from enum schemas anyway, so we're removing it from hints
         .filterNot(_.toShapeId() == EnumValueTrait.ID)
-        .filterNot(
-          _.toShapeId() == ShapeId.from("smithy.api#enum")
-        ) // filter out enum trait using literal to avoid deprecation warning from `EnumTrait.ID`
 
     val nonConstraintNonMetaTraits = nonMetaTraits.collect {
       case t if ConstraintTrait.unapply(t).isEmpty => t
