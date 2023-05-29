@@ -235,7 +235,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .toList
               .flatMap(_.value)
               .filter(_.protocol == protocolTag.id.toString())
-              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
+              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
               .map(tc =>
                 clientResponseTest(
                   endpoint,
