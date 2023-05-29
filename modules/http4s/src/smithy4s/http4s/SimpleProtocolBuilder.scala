@@ -24,6 +24,8 @@ import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.implicits._
 import smithy4s.kinds._
+import smithy4s.http4s.internals.SmithyHttp4sReverseRouter
+import smithy4s.http4s.internals.SmithyHttp4sRouter
 
 /**
   * Abstract construct helping the construction of routers and clients
@@ -58,10 +60,10 @@ abstract class SimpleProtocolBuilder[P](
       Alg[_[_, _, _, _, _]]
   ] private[http4s] (val service: smithy4s.Service[Alg]) { self =>
 
-    def client[F[_]: Async](client: Client[F]) =
+    def client[F[_]: Concurrent](client: Client[F]) =
       new ClientBuilder[Alg, F](client, service)
 
-    def routes[F[_]: Async](
+    def routes[F[_]: Concurrent](
         impl: FunctorAlgebra[Alg, F]
     ): RouterBuilder[Alg, F] =
       new RouterBuilder[Alg, F](
@@ -75,7 +77,7 @@ abstract class SimpleProtocolBuilder[P](
 
   class ClientBuilder[
       Alg[_[_, _, _, _, _]],
-      F[_]: Async
+      F[_]: Concurrent
   ] private[http4s] (
       client: Client[F],
       val service: smithy4s.Service[Alg],
@@ -99,13 +101,13 @@ abstract class SimpleProtocolBuilder[P](
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
         .map { _ =>
-          new SmithyHttp4sReverseRouter[Alg, F](
+          SmithyHttp4sReverseRouter.impl[Alg, F](
             uri,
             service,
             client,
             simpleProtocolCodecs.makeClientCodecs[F],
             middleware
-          ).impl
+          )
         }
     }
   }

@@ -19,14 +19,13 @@ package dynamic
 package internals
 
 import smithy4s.dynamic.model._
+
 import scala.collection.mutable.{Map => MMap}
 import smithy4s.schema.Schema._
 import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
-import smithy4s.schema.EnumValue
-import smithy4s.schema.SchemaField
-import smithy4s.schema.Alt
+import smithy4s.schema.{Alt, EnumTag, EnumValue, SchemaField}
 import DynamicLambdas._
 
 private[dynamic] object Compiler {
@@ -252,7 +251,7 @@ private[dynamic] object Compiler {
             )
           }
 
-      val theEnum = enumeration(values, values)
+      val theEnum = stringEnumeration(values, values)
 
       update(id, shape.traits, theEnum)
     }
@@ -285,7 +284,7 @@ private[dynamic] object Compiler {
 
       val valueList = values.map(_._2).toList.sortBy(_.intValue)
 
-      val theEnum = enumeration(values.apply, valueList)
+      val theEnum = intEnumeration(values.apply, valueList)
 
       updateWithHints(
         id, {
@@ -325,7 +324,7 @@ private[dynamic] object Compiler {
           update(
             id,
             shape.traits,
-            enumeration(fromOrdinal, values)
+            enumeration(fromOrdinal, EnumTag.StringEnum, values)
           )
         }
         case _ => update(id, shape.traits, string)

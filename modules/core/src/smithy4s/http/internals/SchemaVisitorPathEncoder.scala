@@ -22,7 +22,7 @@ import smithy.api.TimestampFormat
 import smithy4s.Bijection
 import smithy4s.http.PathSegment
 import smithy4s.http.PathSegment.{GreedySegment, LabelSegment, StaticSegment}
-import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
+import smithy4s.{Hints, Lazy, Refinement, ShapeId}
 import smithy.api.Http
 
 object SchemaVisitorPathEncoder
@@ -63,15 +63,16 @@ object SchemaVisitorPathEncoder
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): MaybePathEncode[E] = {
-    if (hints.has[IntEnum]) {
-      PathEncode.from(e => total(e).intValue.toString)
-    } else {
-      PathEncode.from(e => total(e).stringValue)
+  ): MaybePathEncode[E] =
+    tag match {
+      case EnumTag.IntEnum =>
+        PathEncode.from(e => total(e).intValue.toString)
+      case EnumTag.StringEnum =>
+        PathEncode.from(e => total(e).stringValue)
     }
-  }
 
   override def struct[S](
       shapeId: ShapeId,

@@ -59,6 +59,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Eq[E] =
@@ -177,9 +178,9 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     primitive match {
       case Primitive.PShort      => Eq[Short]
       case Primitive.PInt        => Eq[Int]
-      case Primitive.PFloat      => Eq[Float]
+      case Primitive.PFloat      => floatEq
       case Primitive.PLong       => Eq[Long]
-      case Primitive.PDouble     => Eq[Double]
+      case Primitive.PDouble     => doubleEq
       case Primitive.PBigInt     => Eq[BigInt]
       case Primitive.PBigDecimal => Eq[BigDecimal]
       case Primitive.PBoolean    => Eq[Boolean]

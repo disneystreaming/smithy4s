@@ -68,6 +68,7 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Id[E] = values.head.value
@@ -109,6 +110,8 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       refinement: Refinement[A, B]
   ): Id[B] = refinement.unsafe(apply(schema))
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
+  override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = {
+    suspend.map(apply).value
+  }
 
 }

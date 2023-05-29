@@ -24,7 +24,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P]
   def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]]
   def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K, V]]
-  def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E]
+  def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E]
   def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S]
   def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U]
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B]
@@ -35,7 +35,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case PrimitiveSchema(shapeId, hints, tag) => primitive(shapeId, hints, tag)
     case s: CollectionSchema[c, a] => collection[c,a](s.shapeId, s.hints, s.tag, s.member)
     case MapSchema(shapeId, hints, key, value) => map(shapeId, hints, key, value)
-    case EnumerationSchema(shapeId, hints, values, total) => enumeration(shapeId, hints, values, total)
+    case EnumerationSchema(shapeId, hints, tag, values, total) => enumeration(shapeId, hints, tag, values, total)
     case StructSchema(shapeId, hints, fields, make) => struct(shapeId, hints, fields, make)
     case u@UnionSchema(shapeId, hints, alts, _) => union(shapeId, hints, alts, Alt.Dispatcher.fromUnion(u))
     case BijectionSchema(schema, bijection) => biject(schema, bijection)
@@ -54,7 +54,7 @@ object SchemaVisitor {
     override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P] = default
     override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]] = default
     override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K,V]] = default
-    override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default
+    override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default
     override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S] = default
     override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U] = default
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default

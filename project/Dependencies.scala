@@ -5,7 +5,7 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.10.0"
     )
 
   val Jsoniter = new {
@@ -29,7 +29,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.18"
+    val alloyVersion = "0.1.20"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -64,7 +64,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.7.0")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.7.1")
   }
 
   object Mill {
@@ -91,7 +91,7 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.9")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.10")
 
   object Http4s {
     val http4sVersion = "0.23.18"
