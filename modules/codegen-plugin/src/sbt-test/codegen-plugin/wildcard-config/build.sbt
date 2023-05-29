@@ -1,5 +1,5 @@
 val scala213 = "2.13.10"
-val scala3 = "3.2.1"
+val scala3 = "3.3.0"
 
 val expectedWildcardArgument = settingKey[String]("The expected value of smithy4sWildcardArgument")
 
