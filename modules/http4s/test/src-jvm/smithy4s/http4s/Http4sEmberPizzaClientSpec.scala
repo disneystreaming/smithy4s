@@ -18,7 +18,6 @@ package smithy4s.http4s
 
 import cats.effect.IO
 import cats.effect.Resource
-import cats.effect.syntax.resource._
 import cats.implicits._
 import com.comcast.ip4s._
 import com.comcast.ip4s.Port
