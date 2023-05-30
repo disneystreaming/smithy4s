@@ -29,7 +29,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
   val Scala212 = "2.12.17"
   val Scala213 = "2.13.10"
-  val Scala3 = "3.2.1"
+  val Scala3 = "3.3.0"
 
   object autoImport {
     // format: off
@@ -198,7 +198,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       Seq("-source:3.0-migration")
     else
       Seq.empty
-
 
   def compilerOptions(scalaVersion: String) = {
     val base =

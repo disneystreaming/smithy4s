@@ -15,6 +15,7 @@ In order to target an Smithy4s-built AWS client to a local environment, you need
 import cats.effect._
 import cats.syntax.all._
 import com.amazonaws.dynamodb._
+import fs2.io.net.Network
 import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s._
@@ -50,11 +51,11 @@ object LocalstackDynamoDB {
     F.realTime.map(_.toSeconds).map(Timestamp(_, 0))
   )
 
-  def client[F[_]: Async](client: Client[F], region: AwsRegion): Resource[F, DynamoDB.Impl[F]] =
+  def client[F[_]: Async: Network](client: Client[F], region: AwsRegion): Resource[F, DynamoDB.Impl[F]] =
     AwsClient(DynamoDB.service, env[F](LocalstackProxy[F](client), region))
 }
 
-def myResource[F[_]](implicit F: Async[F]) = for {
+def myResource[F[_]](implicit F: Async[F], N: Network[F]) = for {
   underlying <- EmberClientBuilder
     .default[F]
     .withoutCheckEndpointAuthentication

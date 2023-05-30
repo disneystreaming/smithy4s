@@ -21,11 +21,9 @@ package internals
 import smithy4s.http.HttpMediaType
 import schema._
 import smithy4s.schema.Primitive._
-
 import java.nio.charset.StandardCharsets
 import StringAndBlobCodecSchemaVisitor._
 import smithy.api.HttpPayload
-
 import java.nio.ByteBuffer
 
 private[http] object StringAndBlobCodecSchemaVisitor {

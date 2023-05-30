@@ -41,13 +41,17 @@ object ComplianceUtilsSpec extends FunSuite {
   test(
     "comma between quotes is not used as delimiter and comma is included to the entry"
   ) {
-    val s = "a,\",b\" ,c"
-    expect(parseList(s) == List("a", "\",b\" ", "c"))
+    val s = "a, \"\\\",b\\\"\" ,c"
+    val expected = List("a", "\",b\"", "c")
+    val result = parseList(s)
+    expect(result == expected) && expect(result.size == expected.size)
   }
 
   test("more complex scenario with quotes and commas") {
-    val s = "a,\",b\",c,,,\"d,e,f\",g"
-    expect(parseList(s) == List("a", "\",b\"", "c", "\"d,e,f\"", "g"))
+    val s = "a,\"\\\",b\\\"\",c,,,\"\\\"d,e,f\\\"\",g"
+    val expected = List("a", "\",b\"", "c", "\"d,e,f\"", "g")
+    val result = parseList(s)
+    expect(result == expected) && expect(result.size == expected.size)
   }
 
 }
