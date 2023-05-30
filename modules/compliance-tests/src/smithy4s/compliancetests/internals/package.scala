@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
 package object internals {
-  private def splitQuery(queryString: String): (String, String) = {
+  def splitQuery(queryString: String): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
         (
@@ -43,8 +43,8 @@ package object internals {
   }
 
   private[compliancetests] def parseQueryParams(
-      queryParams: Option[List[String]]
-  ): ListMap[String, List[String]] = {
+                                                 queryParams: Option[List[String]]
+                                               ): ListMap[String, List[String]] = {
     queryParams.combineAll
       .map(splitQuery)
       .foldLeft[ListMap[String, List[String]]](ListMap.empty) {
@@ -57,59 +57,72 @@ package object internals {
   }
 
   private[compliancetests] def parseHeaders(
-      maybeHeaders: Option[Map[String, String]]
-  ): Headers =
+                                             maybeHeaders: Option[Map[String, String]]
+                                           ): Headers =
     maybeHeaders.fold(Headers.empty)(h =>
       Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
     )
 
   private def parseSingleHeader(
-      kv: (String, String)
-  ): List[(String, String)] = {
+                                 kv: (String, String)
+                               ): List[(String, String)] = {
     kv match {
       case (k, v) => parseList(v).map((k, _))
     }
   }
 
-  /*
-       This function takes a string that is encoded like source code and splits it on a comma delimiter and prunes extra whitespace which
-       what makes it a bit more complicated is we need to keep track of if we are in an open quote or not
+
+  /**
+   * The idea behind this parser is to be able to take a string that is formatted as a comma delimited list literal and parse it into a list of strings
+   * The parser is designed to handle the following cases
+   * - escaped characters
+   * - whitespace between list items are removed
+   * - commas between list items are removed
+   * - quotes are removed when used to escape a comma
+   * @param input
+   * @return
    */
 
   private[compliancetests] def parseList(input: String): List[String] = {
     @scala.annotation.tailrec
     def loop(
-        chars: List[Char],
-        result: Chain[String],
-        inString: Boolean,
-        escapeNext: Boolean,
-        betweenItems: Boolean,
-        currentString: String
-    ): Chain[String] = {
+              chars: List[Char],
+              result: Chain[String],
+              inString: Boolean,
+              escapeNext: Boolean,
+              betweenItems: Boolean,
+              currentString: String
+            ): Chain[String] = {
       chars match {
+        // We are at the end of the string, if we are in a string we need to add the current string to the result otherwise we are done
         case Nil =>
           if (currentString.nonEmpty)
             result :+ currentString
           else
             result
-
-        case '"' :: tail if !escapeNext =>
-          loop(tail, result, !inString, false, betweenItems, currentString)
-
-        case '"' :: tail if escapeNext =>
-          loop(tail, result, inString, false, betweenItems, currentString + '"')
-
+        // If we see a quote we need to check if it is escaped or not, if it is espaced we need to add it to the current string and maintain inString state otherwise we need to toggle inString state and skip appending the quote to the current string
+        case '"' :: tail  =>
+          if(escapeNext)
+            loop(tail, result, inString, false, betweenItems, currentString + '"')
+          else
+            loop(tail, result, !inString, false, betweenItems, currentString)
+        // If we see a comma and we are not in a string , this signals a separate key value pair for the header
+        // if the current string is not empty we need to add it to the result otherwise skip it
+        // we also set the state to be between items in a list
         case ',' :: tail if !inString =>
           if (currentString.nonEmpty)
             loop(tail, result :+ currentString, false, false, true, "")
           else {
             loop(tail, result, inString, false, betweenItems, "")
           }
+        // If we see a backslash and we are not in an escaped state , we need to set the escapeNext flag to true and skip appending the backslash to the current string
         case '\\' :: tail if !escapeNext =>
           loop(tail, result, inString, true, betweenItems, currentString)
 
+        // this case handles all whitespace characters,
+        // if we are  not between items in a list we need to add the current string to the result and reset the current string
         case char :: tail if char.isWhitespace =>
-          if (!inString && !betweenItems)
+          if (!betweenItems)
             loop(
               tail,
               result,
@@ -121,6 +134,7 @@ package object internals {
           else
             loop(tail, result, inString, false, betweenItems, currentString)
 
+        // default case is we just append the current character to the current string
         case char :: tail =>
           loop(
             tail,
