@@ -17,22 +17,68 @@
 package smithy4s
 package http4s
 
-import weaver._
-import smithy4s.hello._
-import org.http4s.HttpApp
-import cats.effect.IO
 import cats.data.OptionT
-import org.http4s.Uri
-import org.http4s._
-import fs2.Collector
-import org.http4s.client.Client
-import cats.Eq
+import cats.effect.IO
 import cats.effect.Resource
+import cats.Eq
+import cats.implicits._
+import fs2.Collector
+import org.http4s._
+import org.http4s.client.Client
+import org.http4s.HttpApp
+import org.http4s.Uri
+import smithy4s.hello._
+import weaver._
 
 object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
 
   private implicit val greetingEq: Eq[Greeting] = Eq.fromUniversalEquals
   private implicit val throwableEq: Eq[Throwable] = Eq.fromUniversalEquals
+
+  final class MiddlewareException
+      extends RuntimeException(
+        "Expected to recover via flatmapError or mapError"
+      )
+  test("server - middleware can throw and mapped / flatmapped") {
+    val middleware = new ServerEndpointMiddleware.Simple[IO]() {
+      def prepareWithHints(
+          serviceHints: Hints,
+          endpointHints: Hints
+      ): HttpApp[IO] => HttpApp[IO] = { inputApp =>
+        HttpApp[IO] { _ => IO.raiseError(new MiddlewareException) }
+      }
+    }
+    def runOnService(service: HttpRoutes[IO]): IO[Expectations] =
+      service(Request[IO](Method.POST, Uri.unsafeFromString("/bob")))
+        .flatMap(res => OptionT.pure(expect.eql(res.status.code, 599)))
+        .getOrElse(
+          failure("unable to run request")
+        )
+
+    val pureCheck = runOnService(
+      SimpleRestJsonBuilder
+        .routes(HelloImpl)
+        .middleware(middleware)
+        .flatMapErrors { case _: MiddlewareException =>
+          IO.pure(SpecificServerError())
+        }
+        .make
+        .toOption
+        .get
+    )
+    val throwCheck = runOnService(
+      SimpleRestJsonBuilder
+        .routes(HelloImpl)
+        .middleware(middleware)
+        .mapErrors { case _: MiddlewareException =>
+          throw SpecificServerError()
+        }
+        .make
+        .toOption
+        .get
+    )
+    List(throwCheck, pureCheck).combineAll
+  }
 
   test("server - middleware is applied") {
     serverMiddlewareTest(
