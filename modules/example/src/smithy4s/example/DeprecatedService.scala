@@ -11,11 +11,11 @@ import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
 import smithy4s.schema.Schema.unit
 
-@deprecated
+@deprecated(message = "N/A", since = "N/A")
 trait DeprecatedServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   def deprecatedOperation(): F[Unit, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](this)

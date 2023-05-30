@@ -181,12 +181,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     hints
       .collectFirst { case h: Hint.Deprecated => h }
       .foldMap { dep =>
-        val messagePart = dep.message
-          .map(msg => line"message = ${renderStringLiteral(msg)}")
-        val versionPart =
-          dep.since.map(v => line"since = ${renderStringLiteral(v)}")
+        val messagePart =
+          line"message = ${renderStringLiteral(dep.message.getOrElse("N/A"))}"
 
-        val args = List(messagePart, versionPart).flatten.intercalate(comma)
+        val versionPart =
+          line"since = ${renderStringLiteral(dep.since.getOrElse("N/A"))}"
+
+        val args = List(messagePart, versionPart).intercalate(comma)
 
         val argListOrEmpty = if (args.nonEmpty) line"($args)" else line""
 

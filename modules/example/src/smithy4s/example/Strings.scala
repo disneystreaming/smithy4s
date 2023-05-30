@@ -8,7 +8,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 import smithy4s.schema.Schema.string
 
-@deprecated
+@deprecated(message = "N/A", since = "N/A")
 object Strings extends Newtype[List[String]] {
   val id: ShapeId = ShapeId("smithy4s.example", "Strings")
   val hints: Hints = Hints(

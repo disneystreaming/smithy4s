@@ -20,10 +20,10 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   case class SCase(s: String) extends DeprecatedUnion
   case class S_V2Case(s_V2: String) extends DeprecatedUnion
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   case class DeprecatedUnionProductCase() extends DeprecatedUnion
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
@@ -36,7 +36,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   case class UnionProductCaseDeprecatedAtCallSite() extends DeprecatedUnion
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
