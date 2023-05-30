@@ -51,16 +51,4 @@ object ServerEndpointMiddleware {
       ): HttpApp[F] => HttpApp[F] = identity
     }
 
-  def fromPartial[F[_]](
-      pf: PartialFunction[(Hints, Hints), HttpApp[F] => HttpApp[F]]
-  ): ServerEndpointMiddleware[F] = {
-    new ServerEndpointMiddleware[F] {
-      override def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
-          endpoint: Endpoint[service.Operation, _, _, _, _, _]
-      ): HttpApp[F] => HttpApp[F] =
-        if (pf.isDefinedAt((endpoint.hints, service.hints)))
-          pf((endpoint.hints, service.hints))
-        else identity
-    }
-  }
 }
