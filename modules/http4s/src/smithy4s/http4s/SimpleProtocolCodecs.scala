@@ -21,7 +21,7 @@ import smithy4s.http4s.kernel._
 
 trait SimpleProtocolCodecs {
 
-  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs[F]
-  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs[F]
+  def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F]
+  def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F]
 
 }

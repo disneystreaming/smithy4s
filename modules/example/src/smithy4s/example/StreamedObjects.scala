@@ -80,6 +80,7 @@ object StreamedObjectsOperation {
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints: Hints = Hints.empty
     def wrap(input: PutStreamedObjectInput) = PutStreamedObject(input)
+    override val errorable: Option[Nothing] = None
   }
   final case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = impl.getStreamedObject(input.key)
@@ -93,5 +94,7 @@ object StreamedObjectsOperation {
     val streamedOutput: StreamingSchema[StreamedBlob] = StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString(""))))
     val hints: Hints = Hints.empty
     def wrap(input: GetStreamedObjectInput) = GetStreamedObject(input)
+    override val errorable: Option[Nothing] = None
   }
 }
+

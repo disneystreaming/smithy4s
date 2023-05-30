@@ -311,7 +311,7 @@ object EqVisitorSpec extends FunSuite {
       case object Bar extends FooBar("neq", 1)
 
       implicit val schema: Schema[FooBar] =
-        enumeration[FooBar](List(Foo, Bar))
+        Schema.stringEnumeration[FooBar](List(Foo, Bar))
     }
     val foo: FooBar = FooBar.Foo
     val foo1: FooBar = FooBar.Foo

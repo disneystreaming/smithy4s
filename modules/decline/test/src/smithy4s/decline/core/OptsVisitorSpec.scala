@@ -76,7 +76,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
       sampleStruct(
         "superpower",
-        enumeration[Superpower](
+        stringEnumeration[Superpower](
           {
             case Fire  => fire
             case Ice   => ice

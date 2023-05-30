@@ -93,23 +93,26 @@ private[http] class SchemaVisitorMetadataReader(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): MetaDecode[E] = {
-    if (hints.has[IntEnum]) {
-      MetaDecode
-        .from(
-          s"Enum[${values.map(_.stringValue).mkString(",")}]"
-        )(string =>
-          values.find(v => string.toIntOption.contains(v.intValue)).map(_.value)
-        )
-    } else {
-      MetaDecode
-        .from(
-          s"Enum[${values.map(_.stringValue).mkString(",")}]"
-        )(string => values.find(_.stringValue == string).map(_.value))
+  ): MetaDecode[E] =
+    tag match {
+      case EnumTag.IntEnum =>
+        MetaDecode
+          .from(
+            s"Enum[${values.map(_.stringValue).mkString(",")}]"
+          )(string =>
+            values
+              .find(v => string.toIntOption.contains(v.intValue))
+              .map(_.value)
+          )
+      case EnumTag.StringEnum =>
+        MetaDecode
+          .from(
+            s"Enum[${values.map(_.stringValue).mkString(",")}]"
+          )(string => values.find(_.stringValue == string).map(_.value))
     }
-  }
 
   private case class FieldDecode(
       fieldName: String,
