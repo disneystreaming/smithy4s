@@ -164,7 +164,7 @@ object Primitive extends smithy4s.ScalaCompat {
       case QueryType      => Some(TimestampFormat.DATE_TIME)
       case StatusCodeType => None
     }
-    tsFormat.orElse(bindingFormat).getOrElse(TimestampFormat.DATE_TIME)
+    tsFormat.orElse(bindingFormat).getOrElse(TimestampFormat.HTTP_DATE)
   }
 
   private def timestampParser(hints: Hints): String => Option[Timestamp] = {

@@ -18,20 +18,10 @@ package smithy4s
 package http
 package internals
 
-import smithy.api.HttpQueryParams
+import smithy.api.{HttpQueryParams, MediaType}
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.schema.{
-  CollectionTag,
-  EnumTag,
-  EnumValue,
-  Field,
-  Primitive,
-  SchemaAlt,
-  SchemaField,
-  SchemaVisitor
-}
-
+import smithy4s.schema.{CollectionTag, EnumTag, EnumValue, Field, Primitive, SchemaAlt, SchemaField, SchemaVisitor}
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 
@@ -57,9 +47,14 @@ class SchemaVisitorMetadataWriter(
       hints: Hints,
       tag: Primitive[P]
   ): MetaEncode[P] = {
-    Primitive.stringWriter(tag, hints) match {
-      case None        => MetaEncode.empty[P]
-      case Some(write) => StringValueMetaEncode(write)
+    tag match {
+      case Primitive.PString =>
+        StringValueMetaEncode(str => if (hints.has[MediaType]) java.util.Base64.getEncoder().encodeToString(str.getBytes) else str)
+      case _ =>
+        Primitive.stringWriter(tag, hints) match {
+          case None => MetaEncode.empty[P]
+          case Some(write) => StringValueMetaEncode(write)
+        }
     }
   }
 
