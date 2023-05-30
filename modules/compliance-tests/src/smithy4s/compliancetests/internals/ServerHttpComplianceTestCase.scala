@@ -277,6 +277,35 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   }
 
   def allServerTests(): List[ComplianceTest[F]] = {
+    def toResponse[I, E, O, SE, SO](
+        endpoint: originalService.Endpoint[I, E, O, SE, SO]
+    ) = {
+      endpoint.errorable.toList
+        .flatMap { errorable =>
+          errorable.error.alternatives.flatMap { errorAlt =>
+            errorAlt.instance.hints
+              .get(HttpResponseTests)
+              .toList
+              .flatMap(_.value)
+              .filter(_.protocol == protocolTag.id.toString())
+              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
+              .map(tc =>
+                serverResponseTest(
+                  endpoint,
+                  tc,
+                  errorSchema = Some(
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        Alt.Dispatcher.fromUnion(errorable.error),
+                        errorable
+                      )
+                  )
+                )
+              )
+          }
+        }
+    }
     originalService.endpoints.flatMap { case endpoint =>
       val requestsTests = endpoint.hints
         .get(HttpRequestTests)
@@ -294,32 +323,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
         .map(tc => serverResponseTest(endpoint, tc))
 
-      val errorResponseTests = endpoint.errorable.toList
-        .flatMap { errorrable =>
-          errorrable.error.alternatives.flatMap { errorAlt =>
-            errorAlt.instance.hints
-              .get(HttpResponseTests)
-              .toList
-              .flatMap(_.value)
-              .filter(_.protocol == protocolTag.id.toString())
-              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
-              .map(tc =>
-                serverResponseTest(
-                  endpoint,
-                  tc,
-                  errorSchema = Some(
-                    ErrorResponseTest
-                      .from(
-                        errorAlt,
-                        Alt.Dispatcher.fromUnion(errorrable.error),
-                        errorrable
-                      )
-                  )
-                )
-              )
-          }
-        }
-
+      val errorResponseTests = toResponse(endpoint)
       requestsTests ++ opResponseTests ++ errorResponseTests
     }
   }
