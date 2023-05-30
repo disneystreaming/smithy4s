@@ -74,6 +74,8 @@ object MessageEncoder {
       val status = metadata.statusCode
         .flatMap(Status.fromInt(_).toOption)
         .filter(_.responseClass match {
+          // This allows only Successful(2xx) and Redirection(3xx) values for response status code.
+          // see https://github.com/disneystreaming/smithy4s/issues/916#issuecomment-1516512415 for reference.
           case Status.Successful | Status.Redirection =>
             true
           case _ => false
