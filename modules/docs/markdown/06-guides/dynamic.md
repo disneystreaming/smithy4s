@@ -5,7 +5,6 @@ title: Dynamic module
 
 ## Introduction
 
-<!-- todo: remove this if we move this page to 05-design/ -->
 It is highly recommended to learn about [the library's design](../05-design/01-design.md) before going into this section.
 
 Smithy4s is first and foremost a code generation tool for the Smithy language in Scala. Although it does provide interpreters for the Smithy services, which can be used to derive e.g. HTTP clients and servers, the codegen way can only get you so far - there are some situations when it's **not sufficient for the job**.
@@ -25,7 +24,7 @@ In short, what happens at **build-time** are the following steps:
 2. **Build** a [semantic Smithy model](https://smithy.io/2.0/spec/model.html), which is roughly a graph of shapes that refer to each other
 3. **Generate** files for each relevant shape in the model (e.g. a service, a structure, an enum...), including metadata ([services](../05-design/03-services.md) and [schemas](../05-design/02-schemas.md)).
 
-Then, there's the **runtime** part. Let's say you're building a HTTP client - in that case, what you see as a Smithy4s user is:
+Then, there's the **runtime** part. Let's say you're building an HTTP client - in that case, what you see as a Smithy4s user is:
 
 
 ```scala
@@ -50,7 +49,8 @@ Turns out that interpreters like this **aren't _actually_ aware** of the fact th
 you can use any interpreter that requires one: code generation is just **a means to derive** such a data structure automatically from your Smithy model.
 
 This all is why **you don't _need_ code generation** to benefit from the interpreters - you just need a way to instantiate a Smithy4s Service (or Schema, if that's what your interpreter operates on).
-And providing instances of Services and Schemas is exactly what the Dynamic module of smithy4s does.
+
+The Dynamic module of smithy4s was made exactly for that purpose.
 
 ## The Dynamic way
 
@@ -63,7 +63,7 @@ In the previous section, we looked at the steps performed at build time to gener
 Don't be fooled - although we had Smithy files as the input and Scala files as the output, the really important part was getting from the Smithy model to the **Service and Schema instances** representing it.
 The Dynamic module of smithy4s provides a way to **do this at runtime**.
 
-And the runtime part? **It's the same as before!** The Service and Schema interfaces are identical regardless of the static/dynamic usecase, and so are the interpreters[^1].
+And the runtime part, where the interpreter runs? **It's the same as before!** The Service and Schema interfaces are identical regardless of the static/dynamic usecase, and so are the interpreters[^1].
 
 ## Loading a dynamic model
 
@@ -76,7 +76,7 @@ libraryDependencies ++= Seq(
 )
 ```
 
-Now, you need a Smithy model. There are roughly three ways to get one:
+Now, you need a Smithy model. There are essentially three ways to get one:
 
 1. Load a model using the [awslabs/smithy](https://github.com/awslabs/smithy) library's `ModelAssembler`
 2. Load a serialized model from a JSON file ([example](https://github.com/disneystreaming/smithy4s/blob/4e678c5f89599f962dc18fb7dcdf3d5d6c0a402b/sampleSpecs/lambda.json)), or
@@ -113,7 +113,7 @@ For alternative ways to load a DSI, see `DynamicSchemaIndex.load`.
 
 ## Using the DSI
 
-Having a DynamicSchemaIndex, we can iterate over all the services available to it:
+Having a `DynamicSchemaIndex`, we can iterate over all the services available to it:
 
 ```scala mdoc
 dsi.allServices.map(_.service.id)
@@ -134,12 +134,12 @@ dsi.getService(ShapeId("weather", "WeatherService")).get.service.id
 dsi.getSchema(ShapeId("weather", "Dog")).get.shapeId
 ```
 
-Note that you don't know the exact type of a schema:
+Note that you don't know the exact type of a schema at compile-time:
 
-```scala mdoc:compile-only
+```scala mdoc
 import smithy4s.Schema
 
-dsi.getSchema(ShapeId("demo", "Dog")).get: Schema[_]
+dsi.getSchema(ShapeId("weather", "Dog")).get
 ```
 
 It is very similar for services. This is simply due to the fact that at compile-time (which is where typechecking happens) we have no clue what the possible type of the schema could be.
@@ -220,7 +220,7 @@ That code is a little heavy and abstract, but there's really no way to avoid abs
 To explain a little bit:
 
 `FunctorAlgebra[Alg, IO]` is `Alg[IO]` (for a specific shape of `Alg`). This could be `HelloWorldService[IO]`, if we knew the types (which we don't, because we're in the dynamic, runtime world).
-Similarly, a `FunctorInterpreter[Alg, IO]` might be `HelloWorldOperation[IO]` - a representation of an arbitrary operation within the service.
+Related to that, `FunctorInterpreter[Op, IO]` is a different way to view an `Alg[IO]`, which is as a higher-kinded function. See [this document](../05-design/03-services.md#codifying-the-duality-between-initial-and-final-algebras) for more explanation.
 
 The steps we're taking are:
 
@@ -296,9 +296,5 @@ Again, this is equivalent to the following call in the static approach:
 ```scala mdoc
 clientInterpreter.getWeather(city = "London").unsafeRunSync()
 ```
-
-## The dynamic nature of the dynamic world
-
-<!-- todo: talk about how everything is an array and why it's complicated, maybe mention semantics of hint bindings? -->
 
 [^1]: That is, assuming they're written correctly to make no assumptions about the usecase.
