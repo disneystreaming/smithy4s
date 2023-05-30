@@ -73,6 +73,11 @@ object MessageEncoder {
       val headers = toHeaders(metadata.headers)
       val status = metadata.statusCode
         .flatMap(Status.fromInt(_).toOption)
+        .filter(_.responseClass match {
+          case Status.Successful | Status.Redirection =>
+            true
+          case _ => false
+        })
         .getOrElse(response.status)
       response.withHeaders(response.headers ++ headers).withStatus(status)
     }
