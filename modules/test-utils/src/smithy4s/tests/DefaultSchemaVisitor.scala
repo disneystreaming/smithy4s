@@ -130,4 +130,5 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
+  override def sparse[A](schema: Schema[A]): Id[Option[A]] = None
 }

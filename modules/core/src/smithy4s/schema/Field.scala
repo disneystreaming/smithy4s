@@ -17,8 +17,6 @@
 package smithy4s
 package schema
 
-import smithy4s.kinds.PolyFunction
-
 /**
   * Represents a member of product type (case class)
   */
@@ -36,7 +34,7 @@ sealed abstract class Field[F[_], S, A] {
     * Grabs the instance associated to this field, applying a polymorphic
     * function when the field is optional
     */
-  def instanceA(onOptional: Field.ToOptional[F]): F[A]
+  def instanceA(onOptional: ToOptional[F]): F[A]
 
   /**
     * Fold a field into a value independant of the type indexed by the field.
@@ -149,9 +147,6 @@ object Field {
   trait LeftFolder[F[_], B] {
     def compile[T](label: String, instance: F[T]): (B, T) => B
   }
-
-  type Wrapped[F[_], G[_], A] = F[G[A]]
-  type ToOptional[F[_]] = PolyFunction[F, Wrapped[F, Option, *]]
 
   // format: on
 

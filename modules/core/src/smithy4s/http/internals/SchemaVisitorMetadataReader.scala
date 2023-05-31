@@ -19,11 +19,19 @@ package http
 package internals
 
 import smithy.api.MediaType
-import smithy4s.http.internals.MetaDecode.{EmptyMetaDecode, PutField, StringCollectionMetaDecode, StringListMapMetaDecode, StringMapMetaDecode, StringValueMetaDecode, StructureMetaDecode}
+import smithy4s.http.internals.MetaDecode.{
+  EmptyMetaDecode,
+  PutField,
+  StringCollectionMetaDecode,
+  StringListMapMetaDecode,
+  StringMapMetaDecode,
+  StringValueMetaDecode,
+  StructureMetaDecode
+}
 import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
-import scala.collection.mutable.{Map=> MMap}
+import scala.collection.mutable.{Map => MMap}
 private[http] class SchemaVisitorMetadataReader(
     val cache: CompilationCache[MetaDecode]
 ) extends SchemaVisitor.Cached[MetaDecode]
@@ -41,7 +49,14 @@ private[http] class SchemaVisitorMetadataReader(
           _ => Right(MMap.empty[String, Any]),
           Some(_ => Right(()))
         )
-      case Primitive.PString => MetaDecode.from[String](desc)(str => Some(if(hints.has[MediaType]) new String(java.util.Base64.getDecoder().decode(str)) else str))
+      case Primitive.PString =>
+        MetaDecode.from[String](desc)(str =>
+          Some(
+            if (hints.has[MediaType])
+              new String(java.util.Base64.getDecoder().decode(str))
+            else str
+          )
+        )
 
       case other =>
         Primitive.stringParser(other, hints) match {
@@ -241,5 +256,8 @@ private[http] class SchemaVisitorMetadataReader(
   ): MetaDecode[B] = self(schema).map(refinement.asThrowingFunction)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
+    EmptyMetaDecode
+
+  override def sparse[A](schema: Schema[A]): MetaDecode[Option[A]] =
     EmptyMetaDecode
 }

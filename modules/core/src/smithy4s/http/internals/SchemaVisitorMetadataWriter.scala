@@ -21,7 +21,16 @@ package internals
 import smithy.api.{HttpQueryParams, MediaType}
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.schema.{CollectionTag, EnumTag, EnumValue, Field, Primitive, SchemaAlt, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  CollectionTag,
+  EnumTag,
+  EnumValue,
+  Field,
+  Primitive,
+  SchemaAlt,
+  SchemaField,
+  SchemaVisitor
+}
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 
@@ -49,10 +58,14 @@ class SchemaVisitorMetadataWriter(
   ): MetaEncode[P] = {
     tag match {
       case Primitive.PString =>
-        StringValueMetaEncode(str => if (hints.has[MediaType]) java.util.Base64.getEncoder().encodeToString(str.getBytes) else str)
+        StringValueMetaEncode(str =>
+          if (hints.has[MediaType])
+            java.util.Base64.getEncoder().encodeToString(str.getBytes)
+          else str
+        )
       case _ =>
         Primitive.stringWriter(tag, hints) match {
-          case None => MetaEncode.empty[P]
+          case None        => MetaEncode.empty[P]
           case Some(write) => StringValueMetaEncode(write)
         }
     }
@@ -70,6 +83,9 @@ class SchemaVisitorMetadataWriter(
       case _ => MetaEncode.empty
     }
   }
+
+  override def sparse[A](schema: Schema[A]): MetaEncode[Option[A]] =
+    EmptyMetaEncode
 
   override def map[K, V](
       shapeId: ShapeId,
