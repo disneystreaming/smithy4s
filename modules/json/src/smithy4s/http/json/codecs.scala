@@ -36,7 +36,6 @@ final class JsonCodecs(
       Some(hintMask)
     )
 
-@deprecated("Use smithy4s.http.json.JsonCodecs instead")
 final case class codecs(
     hintMask: HintMask = codecs.defaultHintMask,
     maxArity: Int = codecs.defaultMaxArity

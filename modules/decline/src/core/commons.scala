@@ -40,7 +40,7 @@ object commons {
     }
 
   def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val capi = new smithy4s.http.json.JsonCodecs()
+    val capi = codecs()
     val codec = capi.compileCodec(schema)
 
     s =>
