@@ -634,9 +634,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def booleanShape(x: BooleanShape): Option[Type] =
         primitive(x, "smithy.api#Boolean", Primitive.Bool)
 
-      def listShape(x: ListShape): Option[Type] =
+      def listShape(x: ListShape): Option[Type] = {
         x.getMember()
           .accept(this)
+          .map { tpe =>
+            if (x.hasTrait(classOf[SparseTrait])) {
+              Type.Sparse(tpe)
+            } else tpe
+          }
           .map { tpe =>
             val _hints = hints(x)
             val memberHints = hints(x.getMember())
@@ -656,6 +661,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
             Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
           }
+      }
 
       @nowarn("msg=class SetShape in package shapes is deprecated")
       override def setShape(x: SetShape): Option[Type] =

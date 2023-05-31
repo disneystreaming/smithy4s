@@ -216,4 +216,7 @@ final class SchemaVisitorHash(
     }
   }
 
+  override def sparse[A](schema: Schema[A]): Hash[Option[A]] =
+    cats.instances.option.catsKernelStdHashForOption(self(schema))
+
 }

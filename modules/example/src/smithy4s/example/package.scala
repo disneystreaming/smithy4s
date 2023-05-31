@@ -31,6 +31,7 @@ package object example {
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
   type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
+  type SparseStrings = smithy4s.example.SparseStrings.Type
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
   type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
