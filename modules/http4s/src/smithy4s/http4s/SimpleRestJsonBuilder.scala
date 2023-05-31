@@ -19,18 +19,30 @@ package http4s
 
 import smithy4s.internals.InputOutput
 
-object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024)
+object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024, false)
 
-class SimpleRestJsonBuilder(maxArity: Int)
-    extends SimpleProtocolBuilder[alloy.SimpleRestJson](
-      smithy4s.http.json.codecs(
+class SimpleRestJsonBuilder private (
+    maxArity: Int,
+    explicitNullEncoding: Boolean
+) extends SimpleProtocolBuilder[alloy.SimpleRestJson](
+      new smithy4s.http.json.JsonCodecs(
         alloy.SimpleRestJson.protocol.hintMask ++ HintMask(
           InputOutput,
           IntEnum
         ),
-        maxArity
+        maxArity,
+        explicitNullEncoding
       )
     ) {
+
+  @deprecated("Use builder pattern instead of directly instantiating")
+  def this(maxArity: Int) = this(maxArity, explicitNullEncoding = false)
+
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
-    new SimpleRestJsonBuilder(maxArity)
+    new SimpleRestJsonBuilder(maxArity, explicitNullEncoding)
+
+  def withExplicitNullEncoding(
+      explicitNullEncoding: Boolean
+  ): SimpleRestJsonBuilder =
+    new SimpleRestJsonBuilder(maxArity, explicitNullEncoding)
 }

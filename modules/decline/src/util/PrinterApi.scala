@@ -58,7 +58,7 @@ object PrinterApi {
   }
 
   def json[F[_]: Console: Applicative]: PrinterApi[F] = useCodec(
-    smithy4s.http.json.codecs()
+    new smithy4s.http.json.JsonCodecs()
   )
 
   def useCodec[F[_]: Console: Applicative](codec: CodecAPI): PrinterApi[F] =

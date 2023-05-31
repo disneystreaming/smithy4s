@@ -34,7 +34,7 @@ class JsonCodecApiTests extends FunSuite {
           .required[String]("a", identity)
       )(identity)
 
-    val capi = codecs(HintMask.empty)
+    val capi = new JsonCodecs(HintMask.empty)
 
     val codec = capi.compileCodec(schemaWithJsonName)
     val encodedString = new String(capi.writeToArray(codec, "test"))
@@ -53,12 +53,30 @@ class JsonCodecApiTests extends FunSuite {
             .required[String]("a", identity)
         )(identity)
 
-    val capi = codecs(HintMask.empty)
+    val capi = new JsonCodecs(HintMask.empty)
 
     val codec = capi.compileCodec(schemaWithRequiredField)
 
     val decoded = capi.decodeFromByteArray(codec, """{}""".getBytes())
 
     assert(decoded.isLeft)
+  }
+
+  test(
+    "explicit nulls should be used when set"
+  ) {
+    val schemaWithJsonName = Schema
+      .struct[Option[String]]
+      .apply(
+        Schema.string
+          .optional[Option[String]]("a", identity)
+      )(identity)
+
+    val capi = new JsonCodecs(HintMask.empty, explicitNullEncoding = true)
+
+    val codec = capi.compileCodec(schemaWithJsonName)
+    val encodedString = new String(capi.writeToArray(codec, null))
+
+    assertEquals(encodedString, """{"a":null}""")
   }
 }
