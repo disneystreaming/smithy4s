@@ -682,7 +682,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
-        v <- x.getValue().accept(this)
+        v <- x.getValue().accept(this).map { tpe =>
+          if (x.hasTrait(classOf[SparseTrait])) Type.Sparse(tpe) else tpe
+        }
       } yield Type.Map(k, hints(x.getKey()), v, hints(x.getValue()))).map {
         tpe =>
           val externalOrBase =
