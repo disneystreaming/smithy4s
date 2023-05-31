@@ -144,6 +144,7 @@ object CollectionTag {
     }
     def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
     def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
+    def sparse[A](schema: Schema[A]) = Some(implicitly[ClassTag[Option[A]]])
   }
   // format: off
 }

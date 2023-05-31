@@ -43,6 +43,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.withId(newId), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
+    case s: SparseSchema[a] => SparseSchema(s.underlying.withId(newId)).asInstanceOf[Schema[A]]
   }
 
   final def withId(namespace: String, name: String): Schema[A] = withId(ShapeId(namespace, name))
@@ -57,6 +58,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsLocally(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
+    case s: SparseSchema[a] => SparseSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
   final def transformHintsTransitively(f: Hints => Hints): Schema[A] = this match {
@@ -69,6 +71,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsTransitively(f), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsTransitively(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
+    case s: SparseSchema[a] => SparseSchema(s.underlying.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
   }
 
   final def validated[C](c: C)(implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
@@ -124,6 +127,10 @@ object Schema {
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: U => Alt.SchemaAndValue[U, _]) extends Schema[U]
+  final case class SparseSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
+    def hints: Hints = underlying.hints
+    def shapeId: ShapeId = underlying.shapeId
+  }
   final case class BijectionSchema[A, B](underlying: Schema[A], bijection: Bijection[A, B]) extends Schema[B]{
     def shapeId = underlying.shapeId
     def hints = underlying.hints
@@ -173,8 +180,16 @@ object Schema {
   def vector[A](a: Schema[A]): Schema[Vector[A]] = Schema.CollectionSchema[Vector, A](placeholder, Hints.empty, CollectionTag.VectorTag, a)
   def indexedSeq[A](a: Schema[A]): Schema[IndexedSeq[A]] = Schema.CollectionSchema[IndexedSeq, A](placeholder, Hints.empty, CollectionTag.IndexedSeqTag, a)
 
+  def sparseList[A](a: Schema[A]): Schema[List[Option[A]]] = list(sparse(a))
+  def sparseSet[A](a: Schema[A]): Schema[Set[Option[A]]] = set(sparse(a))
+  def sparseVector[A](a: Schema[A]): Schema[Vector[Option[A]]] = vector(sparse(a))
+  def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(sparse(a))
+
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
+  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, k, sparse(v))
+
   def recursive[A](s: => Schema[A]): Schema[A] = Schema.LazySchema(Lazy(s))
+  def sparse[A](s: Schema[A]): Schema[Option[A]] = Schema.SparseSchema(s)
 
   def union[U](alts: SchemaAlt[U, _]*)(dispatch: U => Alt.SchemaAndValue[U, _]): Schema.UnionSchema[U] =
     Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
