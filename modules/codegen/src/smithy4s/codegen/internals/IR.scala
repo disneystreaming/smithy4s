@@ -226,6 +226,11 @@ private[internals] object Type {
       member: Type,
       memberHints: List[Hint]
   ) extends Type
+
+  case class Sparse(
+      underlying: Type
+  ) extends Type
+
   case class Map(
       key: Type,
       keyHints: List[Hint],

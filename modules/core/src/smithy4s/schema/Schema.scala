@@ -83,6 +83,7 @@ sealed trait Schema[A]{
 
   final def biject[B](bijection: Bijection[A, B]) : Schema[B] = Schema.bijection(this, bijection)
   final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
+  final def sparse: Schema[Option[A]] = Schema.sparse(this)
 
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
