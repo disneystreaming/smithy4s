@@ -19,9 +19,11 @@ package http
 package internals
 
 import smithy4s.http.HttpMediaType
+
 import schema._
 import smithy4s.schema.Primitive._
 import java.nio.charset.StandardCharsets
+
 import StringAndBlobCodecSchemaVisitor._
 import smithy.api.HttpPayload
 import java.nio.ByteBuffer
@@ -99,8 +101,9 @@ private[http] class StringAndBlobCodecSchemaVisitor
   ): CodecResult[P] = tag match {
     case PString =>
       SimpleCodecResult {
-        plainStringCodec(hints)
+        stringCodec(hints)
       }
+
     case PBlob =>
       val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
       SimpleCodecResult {
@@ -121,15 +124,15 @@ private[http] class StringAndBlobCodecSchemaVisitor
       noop
   }
 
-  private def plainStringCodec[P](hints: Hints) = {
+  private[internals] def stringCodec(hints: Hints): SimpleCodec[String] = {
     val maybeMediaTypeHint = smithy.api.MediaType.hint.unapply(hints)
-    val mt: HttpMediaType = HttpMediaType(
-      maybeMediaTypeHint
-        .map(_.value)
-        .getOrElse("text/plain")
-    )
     new SimpleCodec[String] {
-      def mediaType: HttpMediaType = mt
+      val mediaType: HttpMediaType = HttpMediaType(
+        maybeMediaTypeHint
+          .map(_.value)
+          .getOrElse("text/plain")
+      )
+
       def fromBytes(bytes: Array[Byte]): String =
         new String(bytes, StandardCharsets.UTF_8)
 
@@ -147,17 +150,22 @@ private[http] class StringAndBlobCodecSchemaVisitor
     tag match {
       case EnumTag.StringEnum =>
         SimpleCodecResult {
-          plainStringCodec(hints).imap(
-            s =>
+          stringCodec(hints).imap(
+            str =>
               values
-                .find(_.stringValue == s)
-                .map(_.value)
+                .find(_.stringValue == str)
                 .getOrElse(
-                  throw new IllegalArgumentException(s"Invalid enum value $s")
-                ),
+                  throw new PayloadError(
+                    PayloadPath.root,
+                    s"expected one of ${values.mkString(",")}",
+                    s"Unknown enum value $str"
+                  )
+                )
+                .value,
             e => total(e).stringValue
           )
         }
+
       case EnumTag.IntEnum => noop
     }
   }
