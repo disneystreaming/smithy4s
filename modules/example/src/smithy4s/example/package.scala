@@ -11,7 +11,7 @@ package object example {
   val ObjectService = ObjectServiceGen
   type NameCollision[F[_]] = smithy4s.kinds.FunctorAlgebra[NameCollisionGen, F]
   val NameCollision = NameCollisionGen
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   type DeprecatedService[F[_]] = smithy4s.kinds.FunctorAlgebra[DeprecatedServiceGen, F]
   val DeprecatedService = DeprecatedServiceGen
 
@@ -29,17 +29,20 @@ package object example {
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type DogName = smithy4s.example.DogName.Type
   type SomeVector = smithy4s.example.SomeVector.Type
+  type PersonPhoneNumber = smithy4s.example.PersonPhoneNumber.Type
   type FancyList = smithy4s.example.FancyList.Type
   type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   type Strings = smithy4s.example.Strings.Type
   type PersonAge = smithy4s.example.PersonAge.Type
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   type DeprecatedString = smithy4s.example.DeprecatedString.Type
   type ObjectSize = smithy4s.example.ObjectSize.Type
+  type PersonEmail = smithy4s.example.PersonEmail.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
   type StringList = smithy4s.example.StringList.Type

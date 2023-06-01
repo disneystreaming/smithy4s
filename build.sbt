@@ -412,9 +412,9 @@ lazy val codegen = projectMatrix
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
       "com.lihaoyi" %% "os-lib" % "0.8.1",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
+      Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "io.get-coursier" %% "coursier" % "2.1.3"
+      "io.get-coursier" %% "coursier" % "2.1.4"
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
@@ -584,7 +584,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(core % "test->test;compile->compile", testUtils % "test->compile")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
+      Dependencies.collectionsCompat.value,
       Dependencies.Cats.core.value
     ),
     libraryDependencies ++= List
@@ -841,7 +841,7 @@ lazy val complianceTests = projectMatrix
  */
 lazy val example = projectMatrix
   .in(file("modules/example"))
-  .dependsOn(`http4s-swagger`)
+  .dependsOn(`http4s-swagger`, cats)
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
@@ -871,7 +871,9 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "mixins.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "defaults.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "typeclass.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     libraryDependencies += Dependencies.Http4s.emberServer.value,

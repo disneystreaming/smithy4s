@@ -123,9 +123,10 @@ object AwsJsonProtocolComplianceTests
   private def runInWeaver(tc: ComplianceTest[IO]): IO[TestOutcome] = Test(
     tc.show,
     tc.run
+      .map(_.toEither)
       .map[Expectations] {
-        case Left(value) =>
-          Expectations.Helpers.failure(value)
+        case Left(failures) =>
+          failures.foldMap(Expectations.Helpers.failure)
         case Right(_) =>
           Expectations.Helpers.success
       }

@@ -17,40 +17,66 @@
 package smithy4s.http4s.kernel
 
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.Schema
-import smithy4s.Errorable
 import org.http4s.Response
 import smithy4s.http.HttpDiscriminator
 import cats.effect.Concurrent
+import smithy4s.Endpoint
+import smithy4s.http.HttpEndpoint
 
-trait UnaryClientCodecs[F[_]] {
+trait UnaryClientCodecs[F[_], I, E, O] {
 
-  // format: off
-  def inputEncoder[I](schema: Schema[I]) : RequestEncoder[F, I]
-  def outputDecoder[O](schema: Schema[O]) : ResponseDecoder[F, O]
-  def errorDecoder[E](errorable: Option[Errorable[E]]) : ResponseDecoder[F, Throwable]
-  // format: on
+  // MUST return fixed values
+  val inputEncoder: RequestEncoder[F, I]
+  val outputDecoder: ResponseDecoder[F, O]
+  val errorDecoder: ResponseDecoder[F, Throwable]
 }
 
 object UnaryClientCodecs {
 
-  def make[F[_]: Concurrent](
-      input: CachedSchemaCompiler[RequestEncoder[F, *]],
-      output: CachedSchemaCompiler[ResponseDecoder[F, *]],
-      error: CachedSchemaCompiler[ResponseDecoder[F, *]],
-      errorDiscriminator: Response[F] => F[Option[HttpDiscriminator]]
-  ): UnaryClientCodecs[F] =
-    new UnaryClientCodecs[F] {
-      //format: off
-      def inputEncoder[I](schema: Schema[I]): RequestEncoder[F,I] = input.fromSchema(schema, requestEncoderCache)
+  type For[F[_]] = {
+    type toKind5[I, E, O, SI, SO] = UnaryClientCodecs[F, I, E, O]
+  }
 
-      def outputDecoder[O](schema: Schema[O]): ResponseDecoder[F,O] = output.fromSchema(schema, responseDecoderCache)
+  type Make[F[_]] =
+    smithy4s.kinds.PolyFunction5[Endpoint.Base, For[F]#toKind5]
 
-      def errorDecoder[E](errorable: Option[Errorable[E]]): ResponseDecoder[F,Throwable] =
-        ResponseDecoder.forErrorAsThrowable(errorable, error, errorDiscriminator)
+  object Make {
+    def apply[F[_]: Concurrent](
+        input: CachedSchemaCompiler[RequestEncoder[F, *]],
+        output: CachedSchemaCompiler[ResponseDecoder[F, *]],
+        error: CachedSchemaCompiler[ResponseDecoder[F, *]],
+        errorDiscriminator: Response[F] => F[Option[HttpDiscriminator]]
+    ): Make[F] = new Make[F] {
 
-      val requestEncoderCache: input.Cache = input.createCache()
-      val responseDecoderCache: output.Cache = output.createCache()
+      private val requestEncoderCache: input.Cache = input.createCache()
+      private val responseDecoderCache: output.Cache = output.createCache()
+
+      def apply[I, E, O, SI, SO](
+          endpoint: Endpoint.Base[I, E, O, SI, SO]
+      ): UnaryClientCodecs[F, I, E, O] = new UnaryClientCodecs[F, I, E, O] {
+
+        val inputEncoder: RequestEncoder[F, I] =
+          HttpEndpoint.cast(endpoint).toOption match {
+            case Some(httpEndpoint) => {
+              val httpInputEncoder =
+                MessageEncoder.fromHttpEndpoint[F, I](httpEndpoint)
+              val requestEncoder =
+                input.fromSchema(endpoint.input, requestEncoderCache)
+              RequestEncoder.combine(httpInputEncoder, requestEncoder)
+            }
+            case None => input.fromSchema(endpoint.input, requestEncoderCache)
+          }
+
+        val outputDecoder: ResponseDecoder[F, O] =
+          output.fromSchema(endpoint.output, responseDecoderCache)
+        val errorDecoder: ResponseDecoder[F, Throwable] =
+          ResponseDecoder.forErrorAsThrowable(
+            endpoint.errorable,
+            error,
+            errorDiscriminator
+          )
+      }
     }
+  }
 
 }

@@ -15,45 +15,35 @@
  */
 
 package smithy4s
-package http4s
+package http4s.internals
 
 import org.http4s._
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
-import smithy4s.http4s.internals.SmithyHttp4sClientEndpoint
+import smithy4s.http4s.ClientEndpointMiddleware
 import cats.effect.Concurrent
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
-class SmithyHttp4sReverseRouter[Alg[_[_, _, _, _, _]], F[_]](
-    baseUri:         Uri,
-    val service:     smithy4s.Service[Alg],
-    client:          Client[F],
-    compilerContext: UnaryClientCodecs[F],
-    middleware:      ClientEndpointMiddleware[F]
-)(implicit effect:   Concurrent[F]) {
-// format: on
+private[http4s] object SmithyHttp4sReverseRouter {
 
-  private val compiler = new service.FunctorEndpointCompiler[F] {
-    def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] =
-      SmithyHttp4sClientEndpoint
-        .make(
+  def impl[Alg[_[_, _, _, _, _]], F[_]](
+      baseUri:         Uri,
+      service:         smithy4s.Service[Alg],
+      client:          Client[F],
+      compilerContext: UnaryClientCodecs.Make[F],
+      middleware:      ClientEndpointMiddleware[F]
+  )(implicit effect:   Concurrent[F]): service.Impl[F] = service.impl {
+    new service.FunctorEndpointCompiler[F] {
+      def apply[I, E, O, SI, SO](endpoint: service.Endpoint[I, E, O, SI, SO]): I => F[O] =
+        new SmithyHttp4sClientEndpoint(
           baseUri,
           client,
           endpoint,
           compilerContext,
           middleware.prepare(service)(endpoint)
         )
-        .left
-        .map { e =>
-          throw new Exception(
-            s"Operation ${endpoint.name} is not bound to http semantics",
-            e
-          )
-        }
-        .merge
+    }
   }
-
-  val impl: service.Impl[F] = service.impl(compiler)
 
 }

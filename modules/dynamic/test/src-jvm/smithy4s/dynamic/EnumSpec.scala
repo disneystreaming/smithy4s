@@ -24,7 +24,6 @@ import smithy4s.schema.EnumValue
 import smithy4s.Hints
 import smithy4s.Document
 import smithy4s.schema.Schema
-import smithy4s.IntEnum
 
 class EnumSpec extends FunSuite {
   val model = """
@@ -188,18 +187,6 @@ class EnumSpec extends FunSuite {
         .encode(1)
 
       assertEquals(actual, Document.DString("Ice"))
-    }
-  }
-
-  test("Smithy 2.0 int enums have the IntEnum trait") {
-    compiled.map { index =>
-      val hint = index
-        .getSchema(ShapeId("example", "MyIntEnum"))
-        .getOrElse(fail("Error: shape missing"))
-        .hints
-        .get(IntEnum)
-
-      assertEquals(hint, Some(IntEnum()))
     }
   }
 

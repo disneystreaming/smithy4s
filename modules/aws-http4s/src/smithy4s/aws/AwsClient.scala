@@ -58,7 +58,7 @@ object AwsClient {
     private def interpreter[F[_]: Concurrent](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorInterpreter[F] = {
-      val clientCodecs: UnaryClientCodecs[F] = awsProtocol match {
+      val clientCodecs: UnaryClientCodecs.Make[F] = awsProtocol match {
         case AwsProtocol.AWS_JSON_1_0(_) =>
           AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
 

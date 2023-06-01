@@ -50,7 +50,7 @@ object TestConfig {
     case object Request extends TestType("request", 0)
     case object Response extends TestType("response", 0)
 
-    val schema: Schema[TestType] = Schema.enumeration(values)
+    val schema: Schema[TestType] = Schema.stringEnumeration(values)
 
   }
 }

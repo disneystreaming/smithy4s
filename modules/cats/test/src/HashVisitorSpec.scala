@@ -18,7 +18,7 @@ package smithy4s.interopcats
 
 import cats.Hash
 import smithy4s.schema.Schema._
-import smithy4s.schema.{Schema, SchemaVisitor}
+import smithy4s.schema.Schema
 import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases._
@@ -30,7 +30,7 @@ import HashTestUtils._
 
 object HashVisitorSpec extends FunSuite with CompatProvider {
 
-  val visitor: SchemaVisitor[Hash] = SchemaVisitorHash
+  def visitor[A]: Schema[A] => Hash[A] = SchemaVisitorHash.fromSchema(_)
 
   test("int") {
     val schema: Schema[Int] = int

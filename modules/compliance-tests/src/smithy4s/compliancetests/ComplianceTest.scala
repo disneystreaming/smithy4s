@@ -30,5 +30,5 @@ case class ComplianceTest[F[_]](
 }
 
 object ComplianceTest {
-  type ComplianceResult = Either[String, Unit]
+  type ComplianceResult = cats.data.ValidatedNel[String, Unit]
 }

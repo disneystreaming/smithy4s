@@ -25,6 +25,7 @@ import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
+import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.node._
@@ -38,6 +39,7 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 import Type.Alias
+import smithy4s.meta.TypeclassTrait
 
 private[codegen] object SmithyToIR {
 
@@ -327,7 +329,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 )
               }
               .toList
-            Enumeration(shape.getId(), shape.name, values, hints(shape)).some
+            Enumeration(
+              shape.getId(),
+              shape.name,
+              EnumTag.StringEnum,
+              values,
+              hints(shape)
+            ).some
           case _ => this.getDefault(shape)
         })
 
@@ -346,6 +354,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Enumeration(
           shape.getId(),
           shape.name,
+          EnumTag.StringEnum,
           values,
           hints = hints(shape)
         ).some
@@ -364,6 +373,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         Enumeration(
           shape.getId(),
           shape.name,
+          EnumTag.IntEnum,
           values,
           hints(shape) :+ Hint.IntEnum
         ).some
@@ -517,9 +527,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shapeId.getName()
         )
 
+      private sealed trait ExternalTypeInfo
+      private object ExternalTypeInfo {
+        case class RefinementInfo(trt: RefinementTrait) extends ExternalTypeInfo
+        case class StructurePatternInfo(trt: StructurePatternTrait)
+            extends ExternalTypeInfo
+      }
+
       private def getExternalTypeInfo(
           shape: Shape
-      ): Option[(Trait, RefinementTrait)] = {
+      ): Option[(Trait, ExternalTypeInfo)] = {
         shape
           .getAllTraits()
           .asScala
@@ -528,27 +545,42 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               .getShape(trt.toShapeId)
               .asScala
               .flatMap(_.getTrait(classOf[RefinementTrait]).asScala)
-              .map(trt -> _)
+              .map(rt => trt -> ExternalTypeInfo.RefinementInfo(rt))
           }
           .headOption // Shapes can have at most ONE trait that has the refined trait
+          .orElse {
+            shape.getTrait(classOf[StructurePatternTrait]).asScala.map { trt =>
+              trt -> ExternalTypeInfo.StructurePatternInfo(trt)
+            }
+          }
       }
 
       private def getExternalOrBase(shape: Shape, base: Type): Type = {
         getExternalTypeInfo(shape)
-          .map { case (trt, refined) =>
-            val baseTypeParams = base match {
-              case c: Type.Collection => List(c.member)
-              case m: Type.Map        => List(m.key, m.value)
-              case other              => List(other)
-            }
-            Type.ExternalType(
-              shape.name,
-              refined.getTargetType(),
-              if (refined.isParameterised) baseTypeParams else List.empty,
-              refined.getProviderImport().asScala,
-              base,
-              unfoldTrait(trt)
-            )
+          .map {
+            case (trt, ExternalTypeInfo.RefinementInfo(refined)) =>
+              val baseTypeParams = base match {
+                case c: Type.Collection => List(c.member)
+                case m: Type.Map        => List(m.key, m.value)
+                case other              => List(other)
+              }
+              Type.ExternalType(
+                shape.name,
+                refined.getTargetType(),
+                if (refined.isParameterised) baseTypeParams else List.empty,
+                refined.getProviderImport().asScala,
+                base,
+                unfoldTrait(trt)
+              )
+            case (trt, ExternalTypeInfo.StructurePatternInfo(pattern)) =>
+              Type.ExternalType(
+                shape.name,
+                s"${pattern.getTarget.namespace}.${pattern.getTarget.name}",
+                List.empty,
+                Some("smithy4s.internals.StructurePatternRefinementProvider._"),
+                base,
+                unfoldTrait(trt)
+              )
           }
           .getOrElse(base)
       }
@@ -810,6 +842,27 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
   }
 
+  def maybeTypeclassesHint(shape: Shape): List[Hint.Typeclass] = {
+    shape
+      .getAllTraits()
+      .asScala
+      .flatMap { case (_, trt) =>
+        model
+          .getShape(trt.toShapeId)
+          .asScala
+          .flatMap(_.getTrait(classOf[TypeclassTrait]).asScala)
+          .map(trt -> _)
+      }
+      .map { case (typeclassName, typeclassInfo) =>
+        Hint.Typeclass(
+          typeclassName.toShapeId,
+          typeclassInfo.getTargetType,
+          typeclassInfo.getInterpreter
+        )
+      }
+      .toList
+  }
+
   @annotation.nowarn(
     "msg=class UniqueItemsTrait in package traits is deprecated"
   )
@@ -897,7 +950,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
     }
     traits.collect(traitToHint(shape)) ++
       documentationHint(shape) ++
-      nonConstraintNonMetaTraits.map(unfoldTrait)
+      nonConstraintNonMetaTraits.map(unfoldTrait) ++
+      maybeTypeclassesHint(shape)
   }
 
   case class AltInfo(name: String, tpe: Type, isAdtMember: Boolean)

@@ -1,3 +1,27 @@
+# 0.18.0 (in progress)
+
+## Behavioural changes
+
+### Cats Module
+
+Addition of a cats module to contain `SchemaVisitor` implementations of commonly-used cats typeclasses. Currently included are `cats.Show` and `cats.Hash` (note that `cats.Eq` is provided by the `cats.Hash` implementation).
+
+See https://github.com/disneystreaming/smithy4s/pull/921
+
+### Structure Patterns
+
+Allows for marking string types with the `alloy#structurePattern` trait. This trait indicates that a given pattern, with parameters, applies to a given string and that this string should
+actually be parsed into a structure where the members of the structure are derived from the parameters in the string pattern. 
+
+See https://github.com/disneystreaming/smithy4s/pull/942
+
+### Non-Orphan Typeclass Instances
+
+Allows creating implicit typeclass instances in the companion objects in the smithy4s-generated code. This is useful for creating instances of
+typeclasses such as `cats.Show`, `cats.Eq` or any others you may be using.
+
+See https://github.com/disneystreaming/smithy4s/pull/912
+
 # 0.17.5
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.

@@ -5,10 +5,11 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
 /** some docs here */
-@deprecated
+@deprecated(message = "N/A", since = "N/A")
 sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intValue: Int, _hints: Hints) extends Enumeration.Value {
   override type EnumType = EnumWithDeprecations
   override val value: String = _value
@@ -26,7 +27,7 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     smithy.api.Deprecated(message = None, since = None),
   )
 
-  @deprecated
+  @deprecated(message = "N/A", since = "N/A")
   case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints(smithy.api.Deprecated(message = None, since = None)))
   case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints())
 
@@ -34,5 +35,6 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     OLD,
     NEW,
   )
-  implicit val schema: Schema[EnumWithDeprecations] = enumeration(values).withId(id).addHints(hints)
+  val tag: EnumTag = EnumTag.StringEnum
+  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values).withId(id).addHints(hints)
 }
