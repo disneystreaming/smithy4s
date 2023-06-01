@@ -349,7 +349,11 @@ private[dynamic] object Compiler {
         for {
           k <- schema(shape.key.target)
           v <- schema(shape.value.target)
-        } yield map(k, v)
+        } yield {
+          if (shape.traits.contains(IdRef("smithy.api#sparse"))) {
+            sparseMap(k, v).asInstanceOf[Schema[Map[Any, Any]]]
+          } else map(k, v)
+        }
       )
 
     override def operationShape(id: ShapeId, x: OperationShape): Unit = {}

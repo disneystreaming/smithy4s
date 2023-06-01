@@ -124,6 +124,11 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         lazyTracker.remove(shapeId)
       }
     }
+
+    def sparse[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
+      self(schema)
+      counter.incrementAndGet()
+    }
   }
 
   def checkSchema[A](schema: Schema[A]): Unit = {
