@@ -180,7 +180,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
       } else
         tc.run.attempt
-          .map(_.fold(t => Left(t.toString), identity))
+          .map(_.fold(t => t.toString.invalidNel[Unit], identity))
           .map(res => expectFailure(tc, res))
     }
 
@@ -193,26 +193,26 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   def expectSuccess(
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
-    res.bifoldMap(
-      Expectations.Helpers.failure(_),
-      _ => Expectations.Helpers.success
-    )
+    res.toEither match {
+      case Left(failures) => failures.foldMap(Expectations.Helpers.failure(_))
+      case Right(_)       => Expectations.Helpers.success
+    }
   }
 
   def expectFailure(
       test: ComplianceTest[IO],
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
-    res.bifoldMap(
-      reason =>
+    res.toEither match {
+      case Left(failures) =>
         throw new weaver.IgnoredException(
-          Some(reason),
+          Some(failures.head),
           weaver.SourceLocation.fromContext
-        ),
-      _ =>
+        )
+      case Right(_) =>
         Expectations.Helpers.failure(
           s"expected failure for but got success, please update the Allow list: ${test.show}"
         )
-    )
+    }
   }
 }
