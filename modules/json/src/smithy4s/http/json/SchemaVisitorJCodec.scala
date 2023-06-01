@@ -1080,7 +1080,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.writeKey(total(x).intValue)
   }
 
-  override def sparse[A](schema: Schema[A]): JCodec[Option[A]] =
+  override def nullable[A](schema: Schema[A]): JCodec[Option[A]] =
     new JCodec[Option[A]] {
       val underlying: JCodec[A] = self(schema)
       def expecting: String = s"JsNull or ${underlying.expecting}"

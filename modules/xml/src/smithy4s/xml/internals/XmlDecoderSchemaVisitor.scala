@@ -197,7 +197,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     }
   }
 
-  def sparse[A](schema: Schema[A]): XmlDecoder[Option[A]] =
+  def nullable[A](schema: Schema[A]): XmlDecoder[Option[A]] =
     new XmlDecoder[Option[A]] {
       val decoder = compile(schema)
       def decode(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] =

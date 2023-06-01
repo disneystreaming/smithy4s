@@ -271,7 +271,7 @@ class HintsTransformationSpec() extends FunSuite {
       a => underlying(a)
     }
 
-    def sparse[A](schema: Schema[A]): Count[Option[A]] = {
+    def nullable[A](schema: Schema[A]): Count[Option[A]] = {
       val count = compile(schema)
       locally {
         case Some(a) => count(a)

@@ -13,6 +13,6 @@ object SparseStringMap extends Newtype[Map[String, Option[String]]] {
   val hints: Hints = Hints(
     smithy.api.Sparse(),
   )
-  val underlyingSchema: Schema[Map[String, Option[String]]] = map(string, string.sparse).withId(id).addHints(hints)
+  val underlyingSchema: Schema[Map[String, Option[String]]] = map(string, string.nullable).withId(id).addHints(hints)
   implicit val schema: Schema[SparseStringMap] = bijection(underlyingSchema, asBijection)
 }

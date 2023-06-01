@@ -70,7 +70,7 @@ private[internals] object ToLine {
       case Type.PrimitiveType(prim)  => primitiveLine(prim)
       case e: Type.ExternalType =>
         NameRef(e.fullyQualifiedName, e.typeParameters.map(typeToNameRef))
-      case Type.Sparse(underlying) =>
+      case Type.Nullable(underlying) =>
         NameRef("scala", "Option").copy(typeParams =
           List(typeToNameRef(underlying))
         )

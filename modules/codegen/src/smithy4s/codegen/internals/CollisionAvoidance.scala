@@ -23,7 +23,7 @@ import Type.PrimitiveType
 import TypedNode._
 import Type.ExternalType
 import LineSegment._
-import smithy4s.codegen.internals.Type.Sparse
+import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -132,7 +132,7 @@ private[internals] object CollisionAvoidance {
         modType(under),
         modNativeHint(refinementHint)
       )
-    case Sparse(underlying) => Sparse(modType(underlying))
+    case Nullable(underlying) => Nullable(modType(underlying))
   }
 
   private def modField(field: Field): Field = {

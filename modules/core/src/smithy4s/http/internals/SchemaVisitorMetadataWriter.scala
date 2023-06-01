@@ -75,7 +75,7 @@ class SchemaVisitorMetadataWriter(
     }
   }
 
-  override def sparse[A](schema: Schema[A]): MetaEncode[Option[A]] =
+  override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
     EmptyMetaEncode
 
   override def map[K, V](

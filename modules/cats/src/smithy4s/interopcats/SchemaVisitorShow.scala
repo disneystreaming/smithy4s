@@ -169,7 +169,7 @@ final class SchemaVisitorShow(
     a => ss.value.show(a)
   }
 
-  override def sparse[A](schema: Schema[A]): Show[Option[A]] = {
+  override def nullable[A](schema: Schema[A]): Show[Option[A]] = {
     val showA = self(schema)
     locally {
       case None        => "N/A"

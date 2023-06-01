@@ -151,7 +151,7 @@ private[internals] object SchemaDescriptionDetailedImpl
     }
   }
 
-  override def sparse[A](
+  override def nullable[A](
       schema: Schema[A]
   ): SchemaDescriptionDetailedImpl[Option[A]] =
     apply(schema).mapResult { desc => s"Sparse[$desc]" }

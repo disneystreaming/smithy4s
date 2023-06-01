@@ -114,6 +114,6 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     suspend.map(apply).value
   }
 
-  override def sparse[A](schema: Schema[A]): Id[Option[A]] = None
+  override def nullable[A](schema: Schema[A]): Id[Option[A]] = None
 
 }

@@ -215,7 +215,7 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
-  def sparse[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
+  def nullable[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
     new DocumentDecoder[Option[A]] {
       val decoder = schema.compile(self)
       def expected = decoder.expected

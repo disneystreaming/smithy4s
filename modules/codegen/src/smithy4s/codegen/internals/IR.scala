@@ -227,7 +227,7 @@ private[internals] object Type {
       memberHints: List[Hint]
   ) extends Type
 
-  case class Sparse(
+  case class Nullable(
       underlying: Type
   ) extends Type
 

@@ -198,7 +198,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       override def apply(a: A): FormData = { underlying(a) }
     }
 
-  override def sparse[A](schema: Schema[A]): AwsQueryCodec[Option[A]] =
+  override def nullable[A](schema: Schema[A]): AwsQueryCodec[Option[A]] =
     new AwsQueryCodec[Option[A]] {
       val encoder = compile(schema)
       def apply(a: Option[A]): FormData = a match {

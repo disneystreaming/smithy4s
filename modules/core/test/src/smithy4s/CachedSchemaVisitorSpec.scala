@@ -125,7 +125,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       }
     }
 
-    def sparse[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
+    def nullable[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
       self(schema)
       counter.incrementAndGet()
     }

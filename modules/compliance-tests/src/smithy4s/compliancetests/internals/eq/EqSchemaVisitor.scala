@@ -174,7 +174,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     (x: A, y: A) => eq.value.eqv(x, y)
   }
 
-  override def sparse[A](schema: Schema[A]): Eq[Option[A]] = {
+  override def nullable[A](schema: Schema[A]): Eq[Option[A]] = {
     Eq.catsKernelEqForOption(self(schema))
   }
 
