@@ -51,4 +51,19 @@ object ServerEndpointMiddleware {
       ): HttpApp[F] => HttpApp[F] = identity
     }
 
+  implicit def semigroupServerEndpointMiddleware[F[_]]
+      : Semigroup[ServerEndpointMiddleware[F]] =
+    new Semigroup[ServerEndpointMiddleware[F]] {
+      def combine(
+          a: ServerEndpointMiddleware[F],
+          b: ServerEndpointMiddleware[F]
+      ): ServerEndpointMiddleware[F] =
+        new ServerEndpointMiddleware[F] {
+          def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+              endpoint: Endpoint[service.Operation, _, _, _, _, _]
+          ): HttpApp[F] => HttpApp[F] =
+            a.prepare(service)(endpoint).andThen(b.prepare(service)(endpoint))
+        }
+    }
+
 }

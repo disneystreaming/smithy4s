@@ -48,4 +48,18 @@ object ClientEndpointMiddleware {
       ): Client[F] => Client[F] = identity
     }
 
+  implicit def semigroupClientEndpointMiddleware[F[_]]
+      : Semigroup[ClientEndpointMiddleware[F]] =
+    new Semigroup[ClientEndpointMiddleware[F]] {
+      def combine(
+          a: ClientEndpointMiddleware[F],
+          b: ClientEndpointMiddleware[F]
+      ): ClientEndpointMiddleware[F] =
+        new ClientEndpointMiddleware[F] {
+          def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+              endpoint: Endpoint[service.Operation, _, _, _, _, _]
+          ): HttpApp[F] => HttpApp[F] =
+            a.prepare(service)(endpoint).andThen(b.prepare(service)(endpoint))
+        }
+    }
 }
