@@ -60,7 +60,7 @@ object ClientEndpointMiddleware {
         new ClientEndpointMiddleware[F] {
           def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
               endpoint: Endpoint[service.Operation, _, _, _, _, _]
-          ): HttpApp[F] => HttpApp[F] =
+          ): Client[F] => Client[F] =
             a.prepare(service)(endpoint).andThen(b.prepare(service)(endpoint))
         }
 
@@ -68,7 +68,7 @@ object ClientEndpointMiddleware {
         new ClientEndpointMiddleware[F] {
           def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
               endpoint: Endpoint[service.Operation, _, _, _, _, _]
-          ): HttpApp[F] => HttpApp[F] =
+          ): Client[F] => Client[F] =
             identity
         }
     }
