@@ -75,7 +75,7 @@ class JsonCodecApiTests extends FunSuite {
     val capi = new JsonCodecs(HintMask.empty, explicitNullEncoding = true)
 
     val codec = capi.compileCodec(schemaWithJsonName)
-    val encodedString = new String(capi.writeToArray(codec, null))
+    val encodedString = new String(capi.writeToArray(codec, None))
 
     assertEquals(encodedString, """{"a":null}""")
   }
