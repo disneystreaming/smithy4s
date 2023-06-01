@@ -26,18 +26,18 @@ import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
 
 abstract class JsonCodecAPI(
-                             makeVisitor: CompilationCache[JCodec] => SchemaVisitor[JCodec],
-                             hintMask: Option[HintMask],
-                             readerConfig: ReaderConfig = JsonCodecAPI.defaultReaderConfig,
-                             writerConfig: WriterConfig = WriterConfig
-                           ) extends CodecAPI {
+    makeVisitor: CompilationCache[JCodec] => SchemaVisitor[JCodec],
+    hintMask: Option[HintMask],
+    readerConfig: ReaderConfig = JsonCodecAPI.defaultReaderConfig,
+    writerConfig: WriterConfig = WriterConfig
+) extends CodecAPI {
 
   def this(
-            schemaVisitorJCodec: SchemaVisitor[JCodec],
-            hintMask: Option[HintMask],
-            readerConfig: ReaderConfig,
-            writerConfig: WriterConfig
-          ) = this(_ => schemaVisitorJCodec, hintMask, readerConfig, writerConfig)
+      schemaVisitorJCodec: SchemaVisitor[JCodec],
+      hintMask: Option[HintMask],
+      readerConfig: ReaderConfig,
+      writerConfig: WriterConfig
+  ) = this(_ => schemaVisitorJCodec, hintMask, readerConfig, writerConfig)
 
   type Cache = CompilationCache[JCodec]
   type Codec[A] = JCodec[A]
@@ -56,9 +56,9 @@ abstract class JsonCodecAPI(
     HttpMediaType("application/json")
 
   override def decodeFromByteArrayPartial[A](
-                                              codec: Codec[A],
-                                              bytes: Array[Byte]
-                                            ): Either[PayloadError, BodyPartial[A]] = {
+      codec: Codec[A],
+      bytes: Array[Byte]
+  ): Either[PayloadError, BodyPartial[A]] = {
     val nonEmpty = if (bytes.isEmpty) "{}".getBytes else bytes
     try {
       Right {
@@ -73,10 +73,11 @@ abstract class JsonCodecAPI(
   }
 
   override def decodeFromByteBufferPartial[A](
-                                               codec: Codec[A],
-                                               bytes: ByteBuffer
-                                             ): Either[PayloadError, BodyPartial[A]] = {
-    val nonEmpty = if(bytes.remaining() == 0) bytes.put("{}".getBytes) else bytes
+      codec: Codec[A],
+      bytes: ByteBuffer
+  ): Either[PayloadError, BodyPartial[A]] = {
+    val nonEmpty =
+      if (bytes.remaining() == 0) bytes.put("{}".getBytes) else bytes
     try {
       Right {
         BodyPartial(
