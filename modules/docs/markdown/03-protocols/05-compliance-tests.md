@@ -104,7 +104,7 @@ import cats.effect.unsafe.implicits.global
 
 val runTests: IO[List[String]] = tests
   .map { tc =>
-    tc.run.map {
+    tc.run.map(_.toEither).map {
       case Left(value) =>
         s"Failed ${tc.show} with the following message: $value"
       case Right(_) => s"Success ${tc.show}"
