@@ -16,14 +16,10 @@
 
 package smithy4s
 
-import smithy4s.kinds.PolyFunction
-
 package object schema {
 
   type SchemaField[S, A] = Field[Schema, S, A]
   type SchemaAlt[U, A] = Alt[Schema, U, A]
   type Repr[A] = String
-  type Wrapped[F[_], G[_], A] = F[G[A]]
-  type ToOptional[F[_]] = PolyFunction[F, Wrapped[F, Option, *]]
 
 }
