@@ -34,7 +34,7 @@ import kinds._
   *   around makes it drastically easier to implement logic generically, without involving
   *   metaprogramming.
   */
-trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
+trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId with Mirror[Alg] {
   /**
    * A datatype (typically a sealed trait) that reifies an operation call within
    * a service. It essentially captures the input and type indexes that the operation
