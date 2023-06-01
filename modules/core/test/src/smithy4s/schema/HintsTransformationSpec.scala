@@ -136,8 +136,8 @@ class HintsTransformationSpec() extends FunSuite {
     checkSchema(Foo(Some(Foo(Some(Foo(None))))), 3)
   }
 
-  test(header("sparse")) {
-    implicit val schema: Schema[Option[Int]] = int.sparse
+  test(header("nullable")) {
+    implicit val schema: Schema[Option[Int]] = int.nullable
     checkSchema(1.some, 1)
     checkSchema(none[Int], expectedTransitive = 0, expectedLocal = 0)
   }
