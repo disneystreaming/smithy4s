@@ -19,7 +19,6 @@ package http4s
 
 import cats.Monoid
 import org.http4s.client.Client
-import org.http4s.HttpApp
 
 // format: off
 trait ClientEndpointMiddleware[F[_]] {
