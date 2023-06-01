@@ -17,6 +17,7 @@
 package smithy4s
 package http4s
 
+import cats.Monoid
 import org.http4s.HttpApp
 
 // format: off
@@ -51,9 +52,9 @@ object ServerEndpointMiddleware {
       ): HttpApp[F] => HttpApp[F] = identity
     }
 
-  implicit def semigroupServerEndpointMiddleware[F[_]]
-      : Semigroup[ServerEndpointMiddleware[F]] =
-    new Semigroup[ServerEndpointMiddleware[F]] {
+  implicit def monoidServerEndpointMiddleware[F[_]]
+      : Monoid[ServerEndpointMiddleware[F]] =
+    new Monoid[ServerEndpointMiddleware[F]] {
       def combine(
           a: ServerEndpointMiddleware[F],
           b: ServerEndpointMiddleware[F]
@@ -63,6 +64,14 @@ object ServerEndpointMiddleware {
               endpoint: Endpoint[service.Operation, _, _, _, _, _]
           ): HttpApp[F] => HttpApp[F] =
             a.prepare(service)(endpoint).andThen(b.prepare(service)(endpoint))
+        }
+
+      val empty: ServerEndpointMiddleware[F] =
+        new ServerEndpointMiddleware[F] {
+          def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+              endpoint: Endpoint[service.Operation, _, _, _, _, _]
+          ): HttpApp[F] => HttpApp[F] =
+            identity
         }
     }
 
