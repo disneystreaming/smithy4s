@@ -32,7 +32,12 @@ final class JsonCodecs(
     maxArity: Int = codecs.defaultMaxArity,
     explicitNullEncoding: Boolean = false
 ) extends JsonCodecAPI(
-      codecs.schemaVisitorJCodec(_, maxArity, explicitNullEncoding),
+      cache =>
+        new SchemaVisitorJCodec(
+          maxArity = maxArity,
+          explicitNullEncoding = explicitNullEncoding,
+          cache = cache
+        ),
       Some(hintMask)
     )
 
@@ -58,10 +63,9 @@ object codecs {
 
   private[smithy4s] def schemaVisitorJCodec(
       cache: CompilationCache[JCodec],
-      maxArity: Int = defaultMaxArity,
-      explicitNullEncoding: Boolean = false
+      maxArity: Int = defaultMaxArity
   ): SchemaVisitor[JCodec] =
-    new SchemaVisitorJCodec(maxArity, explicitNullEncoding, cache)
+    new SchemaVisitorJCodec(maxArity, false, cache)
 
   private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
     new SchemaVisitorJCodec(

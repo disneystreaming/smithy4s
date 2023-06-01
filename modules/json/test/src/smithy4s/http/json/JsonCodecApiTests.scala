@@ -79,4 +79,25 @@ class JsonCodecApiTests extends FunSuite {
 
     assertEquals(encodedString, """{"a":null}""")
   }
+
+  test(
+    "explicit nulls should be parsable regardless of explicitNullEncoding setting"
+  ) {
+    List(true, false).foreach { nullEncoding =>
+      val schemaWithJsonName = Schema
+        .struct[Option[String]]
+        .apply(
+          Schema.string
+            .optional[Option[String]]("a", identity)
+        )(identity)
+
+      val capi =
+        new JsonCodecs(HintMask.empty, explicitNullEncoding = nullEncoding)
+
+      val codec = capi.compileCodec(schemaWithJsonName)
+      val decoded = capi.decodeFromByteArray(codec, """{"a":null}""".getBytes())
+
+      assertEquals(decoded, Right(None))
+    }
+  }
 }
