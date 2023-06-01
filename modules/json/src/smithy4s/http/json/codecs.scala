@@ -32,7 +32,12 @@ final case class codecs(
     maxArity: Int = codecs.defaultMaxArity,
     explicitNullEncoding: Boolean = false
 ) extends JsonCodecAPI(
-      codecs.schemaVisitorJCodec(_, maxArity, explicitNullEncoding),
+      cache =>
+        codecs.schemaVisitorJCodec(
+          cache = cache,
+          maxArity = maxArity,
+          explicitNullEncoding = explicitNullEncoding
+        ),
       Some(hintMask)
     )
 
