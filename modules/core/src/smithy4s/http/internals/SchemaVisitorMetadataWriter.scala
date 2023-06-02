@@ -31,7 +31,6 @@ import smithy4s.schema.{
   SchemaField,
   SchemaVisitor
 }
-
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 
@@ -75,6 +74,9 @@ class SchemaVisitorMetadataWriter(
       case _ => MetaEncode.empty
     }
   }
+
+  override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
+    EmptyMetaEncode
 
   override def map[K, V](
       shapeId: ShapeId,

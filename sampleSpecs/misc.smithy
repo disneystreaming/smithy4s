@@ -112,4 +112,3 @@ structure RangeCheck {
 // face with sunglasses emoji
 @pattern("^\\uD83D\\uDE0E$")
 string UnicodeRegexString
-

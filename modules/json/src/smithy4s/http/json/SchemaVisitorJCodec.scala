@@ -1081,6 +1081,26 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.writeKey(total(x).intValue)
   }
 
+  override def nullable[A](schema: Schema[A]): JCodec[Option[A]] =
+    new JCodec[Option[A]] {
+      val underlying: JCodec[A] = self(schema)
+      def expecting: String = s"JsNull or ${underlying.expecting}"
+      def decodeKey(in: JsonReader): Option[A] = ???
+      def encodeKey(x: Option[A], out: JsonWriter): Unit = ???
+      def encodeValue(x: Option[A], out: JsonWriter): Unit = x match {
+        case None        => out.writeNull()
+        case Some(value) => underlying.encodeValue(value, out)
+      }
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Option[A] =
+        if (in.isNextToken('n'))
+          in.readNullOrError[Option[A]](None, "Expected null")
+        else {
+          in.rollbackToken()
+          Some(underlying.decodeValue(cursor, in))
+        }
+    }
+
   private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =
     field.hints.get(JsonName) match {
       case None    => field.label

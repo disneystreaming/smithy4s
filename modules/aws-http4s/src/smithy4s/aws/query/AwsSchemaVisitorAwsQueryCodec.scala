@@ -198,6 +198,15 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       override def apply(a: A): FormData = { underlying(a) }
     }
 
+  override def nullable[A](schema: Schema[A]): AwsQueryCodec[Option[A]] =
+    new AwsQueryCodec[Option[A]] {
+      val encoder = compile(schema)
+      def apply(a: Option[A]): FormData = a match {
+        case None        => FormData.Empty
+        case Some(value) => encoder(value)
+      }
+    }
+
   /**
     * @todo Pay more attention to the AWS Query annotations
    */
