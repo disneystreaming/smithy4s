@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
+import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -24,6 +25,16 @@ trait FooServiceGen[F[_, _, _, _, _]] {
   def getFoo(): F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
+}
+
+trait FooServiceStaticGen[F[_, _, _, _, _]] {
+  self =>
+
+  /** Returns a useful Foo
+    * No input necessary to find our Foo
+    * The path for this operation is "/foo"
+    */
+  def getFoo: F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 }
 
 object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
@@ -54,6 +65,30 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new FooServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
+  type StaticAlg[F[_, _, _, _, _]] = FooServiceStaticGen[F]
+  val static: StaticService.Aux[FooServiceStaticGen, FooServiceGen] = FooServiceStaticGen
+}
+
+object FooServiceStaticGen extends StaticService[FooServiceStaticGen] {
+  type Alg[F[_, _, _, _, _]] = FooServiceGen[F]
+  val service: FooServiceGen.type = FooServiceGen
+
+  def endpoints: FooServiceStaticGen[service.Endpoint] = new FooServiceStaticGen[service.Endpoint] {
+    def getFoo: service.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing] = FooServiceOperation.GetFoo
+  }
+
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: FooServiceStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+    def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
+    fa match {
+      case FooServiceOperation.GetFoo => algebra.getFoo
+    }
+  }
+
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: FooServiceStaticGen[F], f: PolyFunction5[F, G]): FooServiceStaticGen[G] = {
+    new FooServiceStaticGen[G] {
+      def getFoo: G[Unit, Nothing, GetFooOutput, Nothing, Nothing] = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](alg.getFoo)
+    }
+  }
 }
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

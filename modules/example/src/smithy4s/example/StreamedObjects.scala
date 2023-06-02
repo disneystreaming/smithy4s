@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
+import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -18,6 +19,13 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
   def getStreamedObject(key: String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
   def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](this)
+}
+
+trait StreamedObjectsStaticGen[F[_, _, _, _, _]] {
+  self =>
+
+  def putStreamedObject: F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
+  def getStreamedObject: F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 }
 
 object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObjectsOperation] {
@@ -47,6 +55,33 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[StreamedObjectsOperation, P]): StreamedObjectsGen[P] = new StreamedObjectsOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = StreamedObjectsOperation.toPolyFunction(impl)
 
+  type StaticAlg[F[_, _, _, _, _]] = StreamedObjectsStaticGen[F]
+  val static: StaticService.Aux[StreamedObjectsStaticGen, StreamedObjectsGen] = StreamedObjectsStaticGen
+}
+
+object StreamedObjectsStaticGen extends StaticService[StreamedObjectsStaticGen] {
+  type Alg[F[_, _, _, _, _]] = StreamedObjectsGen[F]
+  val service: StreamedObjectsGen.type = StreamedObjectsGen
+
+  def endpoints: StreamedObjectsStaticGen[service.Endpoint] = new StreamedObjectsStaticGen[service.Endpoint] {
+    def putStreamedObject: service.Endpoint[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = StreamedObjectsOperation.PutStreamedObject
+    def getStreamedObject: service.Endpoint[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = StreamedObjectsOperation.GetStreamedObject
+  }
+
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: StreamedObjectsStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+    def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
+    fa match {
+      case StreamedObjectsOperation.PutStreamedObject => algebra.putStreamedObject
+      case StreamedObjectsOperation.GetStreamedObject => algebra.getStreamedObject
+    }
+  }
+
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: StreamedObjectsStaticGen[F], f: PolyFunction5[F, G]): StreamedObjectsStaticGen[G] = {
+    new StreamedObjectsStaticGen[G] {
+      def putStreamedObject: G[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](alg.putStreamedObject)
+      def getStreamedObject: G[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](alg.getStreamedObject)
+    }
+  }
 }
 
 sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

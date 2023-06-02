@@ -7,6 +7,7 @@ import smithy4s.Schema
 import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -30,6 +31,20 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
   def getObject(key: ObjectKey, bucketName: BucketName): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ObjectServiceGen[F]] = Transformation.of[ObjectServiceGen[F]](this)
+}
+
+trait ObjectServiceStaticGen[F[_, _, _, _, _]] {
+  self =>
+
+  def putObject: F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
+  /** @param key
+    *   Sent in the URI label named "key".
+    *   Key can also be seen as the filename
+    *   It is always required for a GET operation
+    * @param bucketName
+    *   Sent in the URI label named "bucketName".
+    */
+  def getObject: F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
 }
 
 object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {
@@ -65,6 +80,33 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   val PutObjectError = ObjectServiceOperation.PutObjectError
   type GetObjectError = ObjectServiceOperation.GetObjectError
   val GetObjectError = ObjectServiceOperation.GetObjectError
+  type StaticAlg[F[_, _, _, _, _]] = ObjectServiceStaticGen[F]
+  val static: StaticService.Aux[ObjectServiceStaticGen, ObjectServiceGen] = ObjectServiceStaticGen
+}
+
+object ObjectServiceStaticGen extends StaticService[ObjectServiceStaticGen] {
+  type Alg[F[_, _, _, _, _]] = ObjectServiceGen[F]
+  val service: ObjectServiceGen.type = ObjectServiceGen
+
+  def endpoints: ObjectServiceStaticGen[service.Endpoint] = new ObjectServiceStaticGen[service.Endpoint] {
+    def putObject: service.Endpoint[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = ObjectServiceOperation.PutObject
+    def getObject: service.Endpoint[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = ObjectServiceOperation.GetObject
+  }
+
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: ObjectServiceStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+    def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
+    fa match {
+      case ObjectServiceOperation.PutObject => algebra.putObject
+      case ObjectServiceOperation.GetObject => algebra.getObject
+    }
+  }
+
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ObjectServiceStaticGen[F], f: PolyFunction5[F, G]): ObjectServiceStaticGen[G] = {
+    new ObjectServiceStaticGen[G] {
+      def putObject: G[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](alg.putObject)
+      def getObject: G[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = f[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing](alg.getObject)
+    }
+  }
 }
 
 sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
