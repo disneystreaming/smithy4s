@@ -21,6 +21,7 @@ import smithy.test.AppliesTo
 import smithy4s.compliancetests.internals.TestConfig.TestType
 import smithy4s.schema.Schema
 import smithy4s.ShapeId
+import java.util.regex.Pattern
 
 final case class AlloyBorrowedTests(
     simpleRestJsonBorrowedTests: Map[ShapeId, AllowRules]
@@ -57,23 +58,39 @@ object AllowRules {
     val allowListField = Schema
       .vector(AllowRule.schema)
       .required[AllowRules]("allowList", _.allowList)
-      .addHints(smithy.api.Default(smithy4s.Document.array()))
 
     val disallowListField = Schema
       .vector(AllowRule.schema)
       .required[AllowRules]("disallowList", _.disallowList)
-      .addHints(smithy.api.Default(smithy4s.Document.array()))
     Schema.struct(allowListField, disallowListField)(AllowRules(_, _))
   }
 }
 
+case class Glob(glob: String) {
+  private lazy val pattern: Pattern = {
+    val parts = glob
+      .split("\\*", -1)
+      .map { // Don't discard trailing empty string, if any.
+        case ""  => ""
+        case str => Pattern.quote(str)
+      }
+    Pattern.compile(parts.mkString(".*"))
+  }
+
+  def matches(str: String): Boolean = pattern.matcher(str).matches()
+}
+
+object Glob {
+  val schema = Schema.string.biject[Glob](Glob(_), (_: Glob).glob)
+}
+
 case class AllowRule(
-    id: String,
+    id: Glob,
     appliesTo: Option[AppliesTo],
     testType: Option[TestType]
 ) {
   def matches[F[_]](complianceTest: ComplianceTest[F]): Boolean = {
-    complianceTest.id == id &&
+    id.matches(complianceTest.id) &&
     appliesTo.forall(_ == complianceTest.config.appliesTo) &&
     testType.forall(_ == complianceTest.config.testType)
   }
@@ -81,7 +98,7 @@ case class AllowRule(
 object AllowRule {
 
   val schema: Schema[AllowRule] = {
-    val idField = Schema.string.required[AllowRule]("id", _.id)
+    val idField = Glob.schema.required[AllowRule]("id", _.id)
     val appliesToField =
       AppliesTo.schema.optional[AllowRule]("appliesTo", _.appliesTo)
     val testTypeField =

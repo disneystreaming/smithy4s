@@ -35,6 +35,7 @@ import smithy4s.schema.Schema.document
 import smithy4s.http.HttpMediaType
 import smithy4s.compliancetests._
 import smithy4s.http.PayloadError
+import fs2.Stream
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -63,7 +64,7 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
           allTests(schemaIndex).map((allowRulesFromRestJson1, _))
         )
       }
-      .evalMap { case (allowRules, test) =>
+      .flatMap { case (allowRules, test) =>
         runInWeaver(allowRules, test)
       }
   }
@@ -172,32 +173,37 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   private def runInWeaver(
       allowRules: AllowRules,
       tc: ComplianceTest[IO]
-  ): IO[TestOutcome] = {
-    val runner: IO[Expectations] = {
-      if (
-        (allowRules.shouldRun(tc) == ShouldRun.Yes) || tc.show.contains("alloy")
-      ) {
-        tc.run
-          .map(res => expectSuccess(res))
-          .attempt
-          .map {
-            case Right(expectations) => expectations
-            case Left(throwable) =>
-              Expectations.Helpers.failure(
-                s"unexpected error when running test ${throwable.getMessage} \n $throwable"
-              )
-          }
-
-      } else
-        tc.run.attempt
-          .map(_.fold(t => t.toString.invalidNel[Unit], identity))
-          .map(res => unsureWhetherShouldSucceed(tc, res))
+  ): Stream[IO, TestOutcome] = {
+    val shouldRun = allowRules.shouldRun(tc)
+    val runner: fs2.Stream[IO, IO[Expectations]] = {
+      if ((shouldRun == ShouldRun.Yes) || tc.show.contains("alloy")) {
+        Stream {
+          tc.run
+            .map(res => expectSuccess(res))
+            .attempt
+            .map {
+              case Right(expectations) => expectations
+              case Left(throwable) =>
+                Expectations.Helpers.failure(
+                  s"unexpected error when running test ${throwable.getMessage} \n $throwable"
+                )
+            }
+        }
+      } else if (shouldRun == ShouldRun.No) { Stream.empty }
+      else
+        Stream {
+          tc.run.attempt
+            .map(_.fold(t => t.toString.invalidNel[Unit], identity))
+            .map(res => unsureWhetherShouldSucceed(tc, res))
+        }
     }
 
-    Test(
-      tc.show,
-      (log: Log[IO]) => tc.documentation.foldMap(log.info(_)) *> runner
-    )
+    runner.evalMap { runTest =>
+      Test(
+        tc.show,
+        (log: Log[IO]) => tc.documentation.foldMap(log.info(_)) *> runTest
+      )
+    }
   }
 
   def expectSuccess(
@@ -215,12 +221,15 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   ): Expectations = {
     res.toEither match {
       case Left(failures) =>
-        throw new weaver.IgnoredException(
+        throw new weaver.CanceledException(
           Some(failures.head),
           weaver.SourceLocation.fromContext
         )
       case Right(_) =>
-        Expectations.Helpers.success
+        throw new weaver.IgnoredException(
+          Some("Passing unknown spec"),
+          weaver.SourceLocation.fromContext
+        )
     }
   }
 }
