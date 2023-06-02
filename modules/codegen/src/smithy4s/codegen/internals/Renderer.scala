@@ -291,6 +291,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val genName: NameDef = NameDef(name + "Gen")
     val genNameRef: NameRef = genName.toNameRef
+    val genNameStatic: NameDef = NameDef(name + "StaticGen")
+    val genNameStaticRef: NameRef = genNameStatic.toNameRef
     val opTraitName = NameDef(name + "Operation")
     val opTraitNameRef = opTraitName.toNameRef
 
@@ -313,6 +315,22 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         },
         newline,
         line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
+      ),
+      newline,
+      block(line"trait $genNameStatic[F[_, _, _, _, _]]")(
+        line"self =>",
+        newline,
+        ops.map { op =>
+          lines(
+            documentationAnnotation(
+              op.hints,
+              op.hints.contains(Hint.PackedInputs)
+            ),
+            deprecationAnnotation(op.hints),
+            line"def ${op.methodName}: F[${op
+              .renderAlgParams(opTraitNameRef.name)}]"
+          )
+        },
       ),
       newline,
       obj(
@@ -352,7 +370,47 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"val $errorName = $opTraitNameRef.$errorName"
             )
           }
-        }
+        },
+        line"type StaticAlg[F[_, _, _, _, _]] = ${genNameStatic}[F]",
+        line"val static: ${StaticService_}.Aux[${genNameStatic}, ${genName}] = ${genNameStatic}",
+      ),
+      newline,
+      obj(
+        genNameStaticRef,
+        ext = line"$StaticService_[$genNameStaticRef]"
+      )(
+        line"type Alg[F[_, _, _, _, _]] = ${genNameRef}[F]",
+        line"val service: $genName.type = $genName",
+        newline,
+        block(line"def endpoints: ${genNameStaticRef}[service.Endpoint] = new ${genNameStaticRef}[service.Endpoint]")(
+          ops.map { op =>
+            line"def ${op.methodName}: service.Endpoint[${op.renderAlgParams(opTraitNameRef.name)}] = ${opTraitNameRef}.${op.name}"
+          }
+        ),
+        newline,
+        block(
+        line"def toPolyFunction[P2[_, _, _, _, _]](algebra: ${genNameStaticRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
+        )(
+          line"def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =",
+          block(line"fa match")(
+            ops.map { op =>
+              line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}"
+            }
+          )
+        ),
+        newline,
+        block(
+          line"def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ${genNameStaticRef}[F], f: $PolyFunction5_[F, G]): ${genNameStaticRef}[G] ="
+        )(
+          block(
+            line"new ${genNameStaticRef}[G]"
+          )(
+            ops.map { op =>
+              val argsTypes = op.renderAlgParams(opTraitNameRef.name)
+              line"def ${op.methodName}: G[${argsTypes}] = f[${argsTypes}](alg.${op.methodName})"
+            }
+          )
+        ),
       ),
       newline,
       block(
