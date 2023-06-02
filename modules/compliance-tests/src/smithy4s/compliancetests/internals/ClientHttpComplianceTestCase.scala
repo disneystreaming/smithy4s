@@ -61,17 +61,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     }
 
+    val receivedPathSegments =
+      request.uri.path.segments.map(_.decoded())
+    val expectedPathSegments =
+      Uri.Path.unsafeFromString(testCase.uri).segments.map(_.decoded())
+
     val expectedUri = baseUri
-      .withPath(
-        Uri.Path.unsafeFromString(testCase.uri)
-      )
+      .withPath(Uri.Path.unsafeFromString(testCase.uri))
       .withMultiValueQueryParams(
         parseQueryParams(testCase.queryParams)
       )
     val pathAssert =
       assert.eql(
-        request.uri.path.renderString,
-        expectedUri.path.renderString,
+        receivedPathSegments,
+        expectedPathSegments,
         "path test :"
       )
     val queryAssert = assert.testCase.checkQueryParameters(
