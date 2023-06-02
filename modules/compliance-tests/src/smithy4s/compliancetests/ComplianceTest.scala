@@ -23,6 +23,7 @@ import smithy4s.compliancetests.internals.TestConfig
 case class ComplianceTest[F[_]](
     id: String,
     endpoint: ShapeId,
+    documentation: Option[String],
     config: TestConfig,
     run: F[ComplianceResult]
 ) {

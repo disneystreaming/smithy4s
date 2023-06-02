@@ -16,6 +16,8 @@
 
 package smithy4s
 
+import smithy.api.IdRef
+
 final case class ShapeId(namespace: String, name: String) extends HasId {
   def show = s"$namespace#$name"
   def withMember(member: String): ShapeId.Member = ShapeId.Member(this, member)
@@ -23,7 +25,7 @@ final case class ShapeId(namespace: String, name: String) extends HasId {
   override def id: ShapeId = this
 }
 
-object ShapeId extends ShapeTag.Has[ShapeId] {
+object ShapeId extends ShapeTag.Has[ShapeId] { self =>
   def parse(string: String): Option[ShapeId] = {
     if (!string.contains('#')) None
     else {
@@ -40,16 +42,23 @@ object ShapeId extends ShapeTag.Has[ShapeId] {
 
   final case class Member(shapeId: ShapeId, member: String)
 
+  private val idRefRefinement = Refinement.drivenBy[smithy.api.IdRef](
+    parse(_: String) match {
+      case None        => Left("Invalid ShapeId")
+      case Some(value) => Right(value)
+    },
+    (_: ShapeId).show
+  )
+
+  val id: ShapeId = ShapeId("smithy4s", "ShapeId")
+  val schema =
+    Schema.string.refined[ShapeId](IdRef())(idRefRefinement).withId(id)
+
   // Not relying on ShapeTag.Companion here, as it seems to trigger a Scala 3
   // only bug that we have yet to minify.
   implicit val shapeIdTag: ShapeTag[ShapeId] = new ShapeTag[ShapeId] {
-    def id: ShapeId = ShapeId("smithy4s", "ShapeId")
-    def schema: Schema[ShapeId] = Schema
-      .struct(
-        Schema.string.required[ShapeId]("namespace", _.namespace),
-        Schema.string.required[ShapeId]("name", _.name)
-      )(ShapeId.apply)
-      .withId(id)
+    def id: ShapeId = self.id
+    def schema: Schema[ShapeId] = self.schema
   }
 
   def getTag: ShapeTag[ShapeId] = shapeIdTag

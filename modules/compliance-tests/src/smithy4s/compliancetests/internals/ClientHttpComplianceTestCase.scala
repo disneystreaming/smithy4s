@@ -103,6 +103,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       clientReq,
       run = {
         val input = inputFromDocument
@@ -147,6 +148,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       clientRes,
       run = {
         implicit val outputEq: Eq[O] =

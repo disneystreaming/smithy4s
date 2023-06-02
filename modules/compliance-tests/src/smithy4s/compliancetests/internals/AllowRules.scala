@@ -20,36 +20,75 @@ package internals
 import smithy.test.AppliesTo
 import smithy4s.compliancetests.internals.TestConfig.TestType
 import smithy4s.schema.Schema
+import smithy4s.ShapeId
 
-final case class AllowRules(allowList: Vector[AllowRule]) {
-  def isAllowed[F[_]](complianceTest: ComplianceTest[F]): Boolean =
-    allowList.exists { case AllowRule(testId, config) =>
-      complianceTest.id == testId && config == complianceTest.config
-    }
+final case class AlloyBorrowedTests(
+    simpleRestJsonBorrowedTests: Map[ShapeId, AllowRules]
+)
+
+object AlloyBorrowedTests {
+  implicit val schema: Schema[AlloyBorrowedTests] = {
+    val borrowedTestsField = Schema
+      .map(ShapeId.schema, AllowRules.schema)
+      .required[AlloyBorrowedTests](
+        "alloySimpleRestJsonBorrowedTests",
+        _.simpleRestJsonBorrowedTests
+      )
+    Schema.struct(borrowedTestsField)(AlloyBorrowedTests(_))
+  }
+}
+
+final case class AllowRules(
+    allowList: Vector[AllowRule],
+    disallowList: Vector[AllowRule]
+) {
+  def shouldRun[F[_]](complianceTest: ComplianceTest[F]): ShouldRun = {
+    if (disallowList.exists(_.matches(complianceTest))) ShouldRun.No
+    else if (allowList.exists(_.matches(complianceTest))) ShouldRun.Yes
+    else ShouldRun.NotSure
+  }
 
 }
 
 object AllowRules {
+  val empty = AllowRules(Vector.empty, Vector.empty)
+
   implicit val schema: Schema[AllowRules] = {
     val allowListField = Schema
       .vector(AllowRule.schema)
-      .required[AllowRules]("alloyRestJsonAllowList", _.allowList)
-    Schema.struct(allowListField)(AllowRules(_))
+      .required[AllowRules]("allowList", _.allowList)
+      .addHints(smithy.api.Default(smithy4s.Document.array()))
+
+    val disallowListField = Schema
+      .vector(AllowRule.schema)
+      .required[AllowRules]("disallowList", _.disallowList)
+      .addHints(smithy.api.Default(smithy4s.Document.array()))
+    Schema.struct(allowListField, disallowListField)(AllowRules(_, _))
   }
 }
 
-case class AllowRule(id: String, config: TestConfig)
+case class AllowRule(
+    id: String,
+    appliesTo: Option[AppliesTo],
+    testType: Option[TestType]
+) {
+  def matches[F[_]](complianceTest: ComplianceTest[F]): Boolean = {
+    complianceTest.id == id &&
+    appliesTo.forall(_ == complianceTest.config.appliesTo) &&
+    testType.forall(_ == complianceTest.config.testType)
+  }
+}
 object AllowRule {
 
   val schema: Schema[AllowRule] = {
     val idField = Schema.string.required[AllowRule]("id", _.id)
     val appliesToField =
-      AppliesTo.schema.required[AllowRule]("appliesTo", _.config.appliesTo)
-    val descriptionField =
-      TestType.schema.required[AllowRule]("description", _.config.testType)
-    Schema.struct(idField, appliesToField, descriptionField) {
-      case (id, appliesTo, description) =>
-        AllowRule(id, TestConfig(appliesTo, description))
+      AppliesTo.schema.optional[AllowRule]("appliesTo", _.appliesTo)
+    val testTypeField =
+      TestType.schema.optional[AllowRule]("testType", _.testType)
+    Schema.struct(idField, appliesToField, testTypeField) {
+      case (id, appliesTo, testType) =>
+        AllowRule(id, appliesTo, testType)
     }
   }
 
