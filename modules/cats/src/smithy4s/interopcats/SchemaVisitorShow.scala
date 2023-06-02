@@ -162,7 +162,11 @@ final class SchemaVisitorShow(
     }
   }
 
-  override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Show[A] = Show.show[A] {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): Show[A] = Show.show[A] {
     val ss = suspend.map {
       self(_)
     }

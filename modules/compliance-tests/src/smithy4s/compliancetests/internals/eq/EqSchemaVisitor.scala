@@ -169,7 +169,11 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     (x: B, y: B) => eqA.eqv(refinement.from(x), refinement.from(y))
   }
 
-  override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Eq[A] = {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): Eq[A] = {
     val eq = suspend.map(self(_))
     (x: A, y: A) => eq.value.eqv(x, y)
   }

@@ -767,7 +767,11 @@ private[smithy4s] class SchemaVisitorJCodec(
     JCodec.jcodecInvariant
       .xmap(apply(schema))(refinement.asFunction, refinement.from)
 
-  override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): JCodec[A] = new JCodec[A] {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): JCodec[A] = new JCodec[A] {
     lazy val underlying = apply(suspend.value)
 
     def expecting: String = underlying.expecting

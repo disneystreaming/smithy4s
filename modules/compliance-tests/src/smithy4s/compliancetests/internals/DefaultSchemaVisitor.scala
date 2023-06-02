@@ -110,7 +110,11 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       refinement: Refinement[A, B]
   ): Id[B] = refinement.unsafe(apply(schema))
 
-  override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Id[A] = {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): Id[A] = {
     suspend.map(apply).value
   }
 
