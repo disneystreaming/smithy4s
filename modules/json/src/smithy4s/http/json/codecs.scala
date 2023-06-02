@@ -27,6 +27,20 @@ import smithy4s.internals.InputOutput
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.SchemaVisitor
 
+final class JsonCodecs(
+    hintMask: HintMask = codecs.defaultHintMask,
+    maxArity: Int = codecs.defaultMaxArity,
+    explicitNullEncoding: Boolean = false
+) extends JsonCodecAPI(
+      cache =>
+        new SchemaVisitorJCodec(
+          maxArity = maxArity,
+          explicitNullEncoding = explicitNullEncoding,
+          cache = cache
+        ),
+      Some(hintMask)
+    )
+
 final case class codecs(
     hintMask: HintMask = codecs.defaultHintMask,
     maxArity: Int = codecs.defaultMaxArity
@@ -51,11 +65,12 @@ object codecs {
       cache: CompilationCache[JCodec],
       maxArity: Int = defaultMaxArity
   ): SchemaVisitor[JCodec] =
-    new SchemaVisitorJCodec(maxArity, cache)
+    new SchemaVisitorJCodec(maxArity, false, cache)
 
   private[smithy4s] val schemaVisitorJCodec: SchemaVisitor[JCodec] =
     new SchemaVisitorJCodec(
       maxArity = defaultMaxArity,
+      explicitNullEncoding = false,
       CompilationCache.nop[JCodec]
     )
 
