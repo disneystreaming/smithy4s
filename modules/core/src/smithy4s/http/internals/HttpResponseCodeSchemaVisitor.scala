@@ -36,7 +36,7 @@ import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
 }
 
 class HttpResponseCodeSchemaVisitor()
-    extends SchemaVisitor.Default[ResponseCodeExtractor] {
+    extends SchemaVisitor.DefaultIgnoringInput[ResponseCodeExtractor] {
   def default[A]: ResponseCodeExtractor[A] = NoResponseCode
   override def primitive[P](
       shapeId: ShapeId,

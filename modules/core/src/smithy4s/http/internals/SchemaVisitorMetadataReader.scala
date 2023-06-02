@@ -245,6 +245,10 @@ private[http] class SchemaVisitorMetadataReader(
       refinement: Refinement[A, B]
   ): MetaDecode[B] = self(schema).map(refinement.asThrowingFunction)
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): MetaDecode[A] =
     EmptyMetaDecode
 }

@@ -248,7 +248,11 @@ class DocumentEncoderSchemaVisitor(
       refinement: Refinement[A, B]
   ): DocumentEncoder[B] = apply(schema).contramap(refinement.from)
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): DocumentEncoder[A] = {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): DocumentEncoder[A] = {
     lazy val underlying = apply(suspend.value)
     new DocumentEncoder[A] {
       def apply: A => Document = underlying.apply

@@ -27,7 +27,7 @@ import smithy.api.Http
 
 object SchemaVisitorPathEncoder
     extends SchemaVisitor[MaybePathEncode]
-    with SchemaVisitor.Default[MaybePathEncode] {
+    with SchemaVisitor.DefaultIgnoringInput[MaybePathEncode] {
   self =>
 
   def default[A]: MaybePathEncode[A] = None
@@ -143,7 +143,11 @@ object SchemaVisitorPathEncoder
     self(schema).map(_.contramap(refinement.from))
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): MaybePathEncode[A] = {
     // "safe" because the `structure` implementation will not exercise any recursion
     // due to the fact that httpLabel can only be applied on members targeting
     // simple shapes.

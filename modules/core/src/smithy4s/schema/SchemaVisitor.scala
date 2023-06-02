@@ -29,7 +29,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U]
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B]
   def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B]
-  def lazily[A](suspend: Lazy[Schema[A]]): F[A]
+  def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): F[A]
 
   def apply[A](schema: Schema[A]): F[A] = schema match {
     case PrimitiveSchema(shapeId, hints, tag) => primitive(shapeId, hints, tag)
@@ -40,7 +40,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case u@UnionSchema(shapeId, hints, alts, _) => union(shapeId, hints, alts, Alt.Dispatcher.fromUnion(u))
     case BijectionSchema(schema, bijection) => biject(schema, bijection)
     case RefinementSchema(schema, refinement) => refine(schema, refinement)
-    case LazySchema(make) => lazily(make)
+    case lazySchema @ LazySchema(make) => lazily(lazySchema.shapeId, lazySchema.hints, make)
   }
 
 }
@@ -49,17 +49,23 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
 
 object SchemaVisitor {
 
-  trait Default[F[_]] extends SchemaVisitor[F]{
+  trait DefaultIgnoringInput[F[_]] extends Default[F] {
     def default[A]: F[A]
-    override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P] = default
-    override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]] = default
-    override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K,V]] = default
-    override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default
-    override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S] = default
-    override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U] = default
-    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default
-    override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default
-    override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
+
+    override def default[A](id: ShapeId, hints: Hints, schemaType: SchemaType): F[A] = default[A]
+  }
+
+  trait Default[F[_]] extends SchemaVisitor[F]{
+    def default[A](id: ShapeId, hints: Hints, schemaType: SchemaType): F[A]
+    override def primitive[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]): F[P] = default(shapeId, hints, SchemaType.Primitive)
+    override def collection[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]): F[C[A]] = default(shapeId, hints, SchemaType.Collection)
+    override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): F[Map[K,V]] = default(shapeId, hints, SchemaType.Map)
+    override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): F[E] = default(shapeId, hints, SchemaType.Enumeration)
+    override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): F[S] = default(shapeId, hints, SchemaType.Struct)
+    override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): F[U] = default(shapeId, hints, SchemaType.Union)
+    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default(schema.shapeId, schema.hints, SchemaType.Bijection)
+    override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default(schema.shapeId, schema.hints, SchemaType.Refinement)
+    override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): F[A] = default(suspend.value.shapeId, suspend.value.hints, SchemaType.Lazily)
   }
 
   abstract class Cached[F[_]] extends SchemaVisitor[F] {

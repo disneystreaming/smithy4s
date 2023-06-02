@@ -121,7 +121,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): Gen[B] = schema.compile(this).map(refinement.unsafe)
-  def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
+  def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 
   // //////////////////////////////////////////////////////////////////////////////////////

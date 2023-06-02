@@ -115,7 +115,11 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       counter.incrementAndGet()
     }
 
-    def lazily[A](suspend: Lazy[Schema[A]]): Unit = discard {
+    def lazily[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        suspend: Lazy[Schema[A]]
+    ): Unit = discard {
       val shapeId = suspend.value.shapeId
       if (!lazyTracker.contains(suspend.value.shapeId)) {
         lazyTracker.add(shapeId)

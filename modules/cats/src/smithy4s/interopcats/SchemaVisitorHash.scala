@@ -208,7 +208,7 @@ final class SchemaVisitorHash(
     Hash[A].contramap(refinement.from)
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): Hash[A] = {
+  override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Hash[A] = {
     implicit val hashA: Lazy[Hash[A]] = suspend.map(self(_))
     new Hash[A] {
       override def hash(x: A): Int = hashA.value.hash(x)

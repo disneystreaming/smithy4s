@@ -27,7 +27,8 @@ trait FromMetadata[+A] {
   def read(metadata: Map[String, Any]): Either[String, A]
 }
 
-object FromMetadataSchemaVisitor extends SchemaVisitor.Default[FromMetadata] {
+object FromMetadataSchemaVisitor
+    extends SchemaVisitor.DefaultIgnoringInput[FromMetadata] {
   def default[A]: FromMetadata[A] = (_: Map[String, Any]) =>
     Left("Only structs are supported")
 

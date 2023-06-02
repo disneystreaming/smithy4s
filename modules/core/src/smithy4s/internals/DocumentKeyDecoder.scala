@@ -45,7 +45,7 @@ object DocumentKeyDecoder {
 
   type OptDocumentKeyDecoder[A] = Option[DocumentKeyDecoder[A]]
   val trySchemaVisitor: SchemaVisitor[OptDocumentKeyDecoder] =
-    new SchemaVisitor.Default[OptDocumentKeyDecoder] {
+    new SchemaVisitor.DefaultIgnoringInput[OptDocumentKeyDecoder] {
       def default[A]: OptDocumentKeyDecoder[A] = None
 
       def from[A](

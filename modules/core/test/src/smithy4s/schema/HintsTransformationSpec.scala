@@ -256,7 +256,11 @@ class HintsTransformationSpec() extends FunSuite {
         refinement: Refinement[A, B]
     ): Count[B] = compile(schema).compose(refinement.from)
 
-    def lazily[A](suspend: Lazy[Schema[A]]): Count[A] = {
+    def lazily[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        suspend: Lazy[Schema[A]]
+    ): Count[A] = {
       lazy val underlying = compile(suspend.value)
       a => underlying(a)
     }

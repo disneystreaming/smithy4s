@@ -40,7 +40,7 @@ trait DocumentKeyEncoder[A] { self =>
 object DocumentKeyEncoder {
   type OptDocumentKeyEncoder[A] = Option[DocumentKeyEncoder[A]]
   val trySchemaVisitor: SchemaVisitor[OptDocumentKeyEncoder] =
-    new SchemaVisitor.Default[OptDocumentKeyEncoder] {
+    new SchemaVisitor.DefaultIgnoringInput[OptDocumentKeyEncoder] {
       private def instance[A](f: A => String): OptDocumentKeyEncoder[A] = Some {
         a =>
           a.toString()

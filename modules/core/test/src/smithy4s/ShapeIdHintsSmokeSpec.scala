@@ -22,7 +22,7 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
 
   type ToShapeIds[A] = List[ShapeId]
 
-  object TestCompiler extends SchemaVisitor.Default[ToShapeIds] {
+  object TestCompiler extends SchemaVisitor.DefaultIgnoringInput[ToShapeIds] {
     def default[A]: List[ShapeId] = Nil
 
     override def primitive[P](

@@ -191,7 +191,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
     def apply(b: B): FormData = compile(schema)(refinement.from(b))
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): AwsQueryCodec[A] =
+  override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): AwsQueryCodec[A] =
     new AwsQueryCodec[A] {
       lazy val underlying: AwsQueryCodec[A] =
         suspend.map(schema => compile(schema)).value

@@ -90,7 +90,7 @@ private[http] object StringAndBlobCodecSchemaVisitor {
 }
 
 private[http] class StringAndBlobCodecSchemaVisitor
-    extends SchemaVisitor.Default[CodecResult] {
+    extends SchemaVisitor.DefaultIgnoringInput[CodecResult] {
 
   override def default[A]: CodecResult[A] = noop
 

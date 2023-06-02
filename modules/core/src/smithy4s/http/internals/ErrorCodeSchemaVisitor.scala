@@ -23,7 +23,7 @@ import smithy4s.schema._
 private[http] class ErrorCodeSchemaVisitor(
     val cache: CompilationCache[HttpCode]
 ) extends SchemaVisitor.Cached[HttpCode]
-    with SchemaVisitor.Default[HttpCode] { compile =>
+    with SchemaVisitor.DefaultIgnoringInput[HttpCode] { compile =>
   def default[A]: A => Option[Int] = _ => None
 
   override def union[U](
@@ -38,7 +38,11 @@ private[http] class ErrorCodeSchemaVisitor(
     })
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): HttpCode[A] =
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): HttpCode[A] =
     apply(suspend.value)
 
   override def biject[A, B](

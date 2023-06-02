@@ -146,6 +146,8 @@ private[internals] object SchemaDescriptionDetailedImpl
     apply(schema).mapResult { desc => s"Refinement[$desc]" }
   }
   override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
       suspend: Lazy[Schema[A]]
   ): SchemaDescriptionDetailedImpl[A] = {
     new SchemaDescriptionDetailedImpl[A] {

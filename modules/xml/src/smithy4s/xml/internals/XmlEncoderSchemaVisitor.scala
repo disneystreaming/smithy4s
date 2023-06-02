@@ -174,7 +174,7 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       refinement: Refinement[A, B]
   ): XmlEncoder[B] = compile(schema).contramap(refinement.from)
 
-  def lazily[A](suspend: Lazy[Schema[A]]): XmlEncoder[A] = new XmlEncoder[A] {
+  def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): XmlEncoder[A] = new XmlEncoder[A] {
     lazy val underlying = suspend.map(compile(_)).value
     def encode(value: A): List[XmlContent] = underlying.encode(value)
   }

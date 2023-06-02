@@ -176,6 +176,10 @@ class SchemaVisitorMetadataWriter(
       refinement: Refinement[A, B]
   ): MetaEncode[B] = self(schema).contramap(refinement.from)
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MetaEncode[A] =
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): MetaEncode[A] =
     MetaEncode.empty
 }

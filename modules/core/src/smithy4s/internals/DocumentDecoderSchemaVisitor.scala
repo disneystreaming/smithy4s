@@ -473,7 +473,11 @@ class DocumentDecoderSchemaVisitor(
       refinement: Refinement[A, B]
   ): DocumentDecoder[B] = apply(schema).emap(refinement.asFunction)
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): DocumentDecoder[A] = {
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): DocumentDecoder[A] = {
     lazy val underlying = apply(suspend.value)
     new DocumentDecoder[A] {
 

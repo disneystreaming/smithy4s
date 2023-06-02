@@ -25,7 +25,7 @@ import smithy4s.schema.EnumTag.StringEnum
 private[internals] final class SchemaVisitorPatternDecoder(
     segments: List[PatternSegment]
 ) extends SchemaVisitor[MaybePatternDecode]
-    with SchemaVisitor.Default[MaybePatternDecode] {
+    with SchemaVisitor.DefaultIgnoringInput[MaybePatternDecode] {
   self =>
 
   def default[A]: MaybePatternDecode[A] = None
@@ -149,6 +149,10 @@ private[internals] final class SchemaVisitorPatternDecoder(
     }))
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePatternDecode[A] = None
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): MaybePatternDecode[A] = None
 
 }

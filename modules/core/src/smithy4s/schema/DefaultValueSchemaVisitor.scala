@@ -92,6 +92,10 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       refinement: Refinement[A, B]
   ): Option[B] = None
 
-  def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
+  def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): Option[A] =
     suspend.map(_.compile(this)).value
 }

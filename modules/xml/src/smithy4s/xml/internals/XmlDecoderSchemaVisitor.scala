@@ -190,7 +190,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   ): XmlDecoder[B] =
     schema.compile(this).emap(refinement.asFunction)
 
-  def lazily[A](suspend: Lazy[Schema[A]]): XmlDecoder[A] = new XmlDecoder[A] {
+  def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): XmlDecoder[A] = new XmlDecoder[A] {
     lazy val underlying: XmlDecoder[A] = suspend.map(compile(_)).value
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = {
       underlying.decode(cursor)

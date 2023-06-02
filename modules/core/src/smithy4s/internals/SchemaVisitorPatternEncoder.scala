@@ -25,7 +25,7 @@ import smithy4s.{Hints, Lazy, Refinement, ShapeId}
 private[internals] final class SchemaVisitorPatternEncoder(
     segments: List[PatternSegment]
 ) extends SchemaVisitor[MaybePathEncode]
-    with SchemaVisitor.Default[MaybePathEncode] {
+    with SchemaVisitor.DefaultIgnoringInput[MaybePathEncode] {
   self =>
 
   def default[A]: MaybePathEncode[A] = None
@@ -114,6 +114,10 @@ private[internals] final class SchemaVisitorPatternEncoder(
     self(schema).map(_.contramap(refinement.from))
   }
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): MaybePathEncode[A] = None
+  override def lazily[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      suspend: Lazy[Schema[A]]
+  ): MaybePathEncode[A] = None
 
 }

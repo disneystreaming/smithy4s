@@ -143,7 +143,7 @@ object CollectionTag {
       else None
     }
     def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
-    def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
+    def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): MaybeCT[A] = None
   }
   // format: off
 }

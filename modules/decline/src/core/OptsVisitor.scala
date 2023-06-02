@@ -330,7 +330,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
     }
   }
 
-  def lazily[A](suspend: Lazy[Schema[A]]): Opts[A] = jsonField(
+  def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Opts[A] = jsonField(
     Schema.LazySchema(suspend)
   )
 
