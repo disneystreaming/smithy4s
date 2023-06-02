@@ -25,11 +25,7 @@ trait BrandServiceGenStatic[F[_, _, _, _, _]] {
   def addBrands: F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 }
 
-object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
-
-  type StaticAlg[F[_, _, _, _, _]] = BrandServiceGenStatic[F]
-
-  override val static: StaticService.Aux[BrandServiceGenStatic, BrandServiceGen] = new StaticService[BrandServiceGenStatic] {
+object BrandServiceGenStatic extends StaticService[BrandServiceGenStatic] {
 
     type Alg[F[_, _, _, _, _]] = BrandServiceGen[F]
     val service: BrandServiceGen.type = BrandServiceGen
@@ -55,6 +51,12 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
       }
 
   }
+
+object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
+
+  type StaticAlg[F[_, _, _, _, _]] = BrandServiceGenStatic[F]
+
+  override val static: StaticService.Aux[BrandServiceGenStatic, BrandServiceGen] = BrandServiceGenStatic
 
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
   val version: String = "1"
