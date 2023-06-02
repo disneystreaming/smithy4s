@@ -6,7 +6,7 @@ import smithy4s.kinds.PolyFunction5
 trait StaticService[P[_[_, _, _, _, _]]] extends FunctorK5[P] {
   type Alg[_[_, _, _, _, _]]
   val service: Service[Alg]
-  def endpoints: List[service.Endpoint[_, _, _, _, _]]
+  def endpoints: P[service.Endpoint]
 
   def toPolyFunction[P2[_, _, _, _, _]](algebra: P[P2]): PolyFunction5[service.Endpoint, P2]
 }

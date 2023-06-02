@@ -40,16 +40,32 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
 
   type StaticAlg[F[_, _, _, _, _]] = BrandServiceStaticGen[F]
 
-  override val static: StaticService.Aux[BrandServiceStaticGen,BrandServiceGen] = new StaticService[BrandServiceStaticGen] {
-  type Alg[F[_, _, _, _, _]] = BrandServiceStaticGen[F]
-  val service: Service[BrandServiceStaticGen] = ???
-  def endpoints: List[smithy4s.Endpoint[BrandServiceOperation, _, _, _, _, _]] = List(
-    BrandServiceOperation.AddBrands,
-  )
+  override val static: StaticService.Aux[BrandServiceStaticGen, BrandServiceGen] = new StaticService[BrandServiceStaticGen] {
 
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: BrandServiceStaticGen[P2]): PolyFunction5[service.Endpoint, P2] = ???
-}
+    type Alg[F[_, _, _, _, _]] = BrandServiceGen[F]
+    val service: BrandServiceGen.type = BrandServiceGen
 
+    def endpoints: BrandServiceStaticGen[service.Endpoint] = {
+      new BrandServiceStaticGen[service.Endpoint] {
+        def addBrands: service.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = BrandServiceOperation.AddBrands
+      }
+    }
+
+    def toPolyFunction[P2[_, _, _, _, _]](algebra: BrandServiceStaticGen[P2]): PolyFunction5[service.Endpoint, P2] =
+      new PolyFunction5[service.Endpoint, P2] {
+        def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
+         fa match {
+           case BrandServiceOperation.AddBrands => algebra.addBrands
+         }
+      }
+
+    override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: BrandServiceStaticGen[F], function: PolyFunction5[F,G]): BrandServiceStaticGen[G] =
+      new BrandServiceStaticGen[G] {
+        def addBrands: G[AddBrandsInput, Nothing, Unit, Nothing, Nothing] =
+          function[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands)
+      }
+
+  }
 
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
   val version: String = "1"
@@ -77,23 +93,24 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
 
 }
 
-sealed trait BrandServiceStaticOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
-  // def run[F[_, _, _, _, _]](impl: BrandServiceStaticGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: Endpoint[BrandServiceStaticOperation, Input, Err, Output, StreamedInput, StreamedOutput]
-}
-case object AddBrandsStatic extends BrandServiceStaticOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
-    // def run[F[_, _, _, _, _]](impl: BrandServiceStaticGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands //(input.brands)
-    def endpoint: smithy4s.Endpoint[BrandServiceStaticOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] = AddBrandsStatic
-  }
+// sealed trait BrandServiceStaticOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+//   // def run[F[_, _, _, _, _]](impl: BrandServiceStaticGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+//   def endpoint: Endpoint[BrandServiceStaticOperation, Input, Err, Output, StreamedInput, StreamedOutput]
+// }
+// case object AddBrandsStatic extends BrandServiceStaticOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
+//     // def run[F[_, _, _, _, _]](impl: BrandServiceStaticGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands //(input.brands)
+//     def endpoint: smithy4s.Endpoint[BrandServiceStaticOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] = AddBrandsStatic
+//   }
 
-object BrandServiceStaticOperation {
-  object reified extends BrandServiceStaticGen[BrandServiceStaticOperation] {
-    def addBrands: BrandServiceStaticOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = AddBrandsStatic
-  }
-}
+// object BrandServiceStaticOperation {
+//   object reified extends BrandServiceStaticGen[BrandServiceStaticOperation] {
+//     def addBrands: BrandServiceStaticOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = AddBrandsStatic
+//   }
+// }
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def runStatic[F[_, _, _, _, _]](impl: BrandServiceStaticGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def endpoint: (Input, Endpoint[BrandServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
 }
 
@@ -111,6 +128,7 @@ object BrandServiceOperation {
   }
   final case class AddBrands(input: AddBrandsInput) extends BrandServiceOperation[AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BrandServiceGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands(input.brands)
+    def runStatic[F[_, _, _, _, _]](impl: BrandServiceStaticGen[F]): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = impl.addBrands // input not used?
     def endpoint: (AddBrandsInput, smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing]) = (input, AddBrands)
   }
   object AddBrands extends smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
