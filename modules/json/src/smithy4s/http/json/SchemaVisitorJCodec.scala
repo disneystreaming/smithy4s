@@ -40,6 +40,7 @@ import scala.collection.mutable.{Map => MMap}
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
+    explicitNullEncoding: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -1147,6 +1148,11 @@ private[smithy4s] class SchemaVisitorJCodec(
       ): (Z, JsonWriter) => Unit = {
         val codec = apply(instance)
         val jLabel = jsonLabel(field)
+        val encodeOptionNone: JsonWriter => Unit =
+          if (explicitNullEncoding) { (out: JsonWriter) =>
+            out.writeNonEscapedAsciiKey(jLabel)
+            out.writeNull()
+          } else (out: JsonWriter) => ()
         if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
           (z: Z, out: JsonWriter) =>
             {
@@ -1154,7 +1160,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                 case Some(aa) =>
                   out.writeNonEscapedAsciiKey(jLabel)
                   codec.encodeValue(aa, out)
-                case _ =>
+                case _ => encodeOptionNone(out)
               }
             }
         } else { (z: Z, out: JsonWriter) =>
