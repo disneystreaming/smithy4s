@@ -169,4 +169,12 @@ final class SchemaVisitorShow(
     a => ss.value.show(a)
   }
 
+  override def nullable[A](schema: Schema[A]): Show[Option[A]] = {
+    val showA = self(schema)
+    locally {
+      case None        => "None"
+      case Some(value) => s"Some(${showA.show(value)})"
+    }
+  }
+
 }

@@ -253,7 +253,7 @@ object Middleware {
   private def middleware(bearerToken: String): Client[IO] => Client[IO] = { // 1
     inputClient =>
       Client[IO] { request =>
-        val newRequest = request.withHeaders( // 2
+        val newRequest = request.putHeaders( // 2
           Authorization(Credentials.Token(AuthScheme.Bearer, bearerToken))
         )
 
