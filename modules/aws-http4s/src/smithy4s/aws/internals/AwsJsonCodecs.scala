@@ -22,7 +22,6 @@ import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
 import smithy4s.http.json.JCodec
-import smithy4s.http.PayloadError
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -41,15 +40,6 @@ private[aws] object AwsJsonCodecs {
     ) {
       override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
         httpMediaType
-
-      private val emptyObj = "{}".getBytes()
-      override def decodeFromByteArray[A](
-          codec: JCodec[A],
-          bytes: Array[Byte]
-      ): Either[PayloadError, A] = {
-        if (bytes.isEmpty) super.decodeFromByteArray(codec, emptyObj)
-        else super.decodeFromByteArray(codec, bytes)
-      }
     }
     val encoders = MessageEncoder.rpcSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)

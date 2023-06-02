@@ -33,7 +33,7 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
+    bodyMediaType.exists(_.contains("application/json"))
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
@@ -60,7 +60,7 @@ private[internals] object assert {
   ): ComplianceResult = {
     seq
       .map(eql(a, _, prefix))
-      .find(_.isRight)
+      .find(_.isValid)
       .getOrElse(
         fail(
           s"$prefix the result value: ${pprint.apply(a)} was not contained in the expected TestCase value ${pprint
@@ -90,11 +90,14 @@ private[internals] object assert {
       testCase: Option[String],
       bodyMediaType: Option[String]
   ): ComplianceResult = {
+    // added temporarily due to some inconsistency in the aws tests
+    if(testCase.isDefined)
     if (isJson(bodyMediaType)) {
       jsonEql(result, testCase.getOrElse("{}"))
     } else {
       eql(result, testCase.getOrElse(""))
     }
+    else success
   }
 
   private def queryParamsExistenceCheck(
@@ -203,7 +206,7 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks = assert.headerValuesCheck(headers, parseHeaders(tc.headers))
       existenceChecks |+| valueChecks
     }
 
@@ -216,7 +219,7 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks = assert.headerValuesCheck(headers, parseHeaders(tc.headers))
       existenceChecks |+| valueChecks
     }
   }

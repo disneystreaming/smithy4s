@@ -59,27 +59,30 @@ abstract class JsonCodecAPI(
   override def decodeFromByteArrayPartial[A](
       codec: Codec[A],
       bytes: Array[Byte]
-  ): Either[PayloadError, BodyPartial[A]] =
+  ): Either[PayloadError, BodyPartial[A]] = {
+    val nonEmpty = if(bytes.nonEmpty) bytes else "{}".getBytes
     try {
       Right {
         BodyPartial(
           com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromArray(bytes, readerConfig)(codec.messageCodec)
+            .readFromArray(nonEmpty, readerConfig)(codec.messageCodec)
         )
       }
     } catch {
       case e: PayloadError => Left(e)
     }
+  }
 
   override def decodeFromByteBufferPartial[A](
       codec: Codec[A],
       bytes: ByteBuffer
   ): Either[PayloadError, BodyPartial[A]] = {
+    val nonEmpty = if(bytes.hasRemaining) bytes else bytes.put("{}".getBytes)
     try {
       Right {
         BodyPartial(
           com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromByteBuffer(bytes, readerConfig)(codec.messageCodec)
+            .readFromByteBuffer(nonEmpty, readerConfig)(codec.messageCodec)
         )
       }
     } catch {
