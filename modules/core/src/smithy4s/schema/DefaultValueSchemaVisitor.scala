@@ -94,4 +94,6 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
   def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
     suspend.map(_.compile(this)).value
+
+  def nullable[A](schema: Schema[A]): Option[Option[A]] = Some(None)
 }

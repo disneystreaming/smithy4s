@@ -136,6 +136,12 @@ class HintsTransformationSpec() extends FunSuite {
     checkSchema(Foo(Some(Foo(Some(Foo(None))))), 3)
   }
 
+  test(header("nullable")) {
+    implicit val schema: Schema[Option[Int]] = int.nullable
+    checkSchema(1.some, 1)
+    checkSchema(none[Int], expectedTransitive = 0, expectedLocal = 0)
+  }
+
   case class Mark()
   object Mark extends ShapeTag.Companion[Mark] {
     implicit val schema: Schema[Mark] =
@@ -148,7 +154,11 @@ class HintsTransformationSpec() extends FunSuite {
   //
   // It is important that we test against runtime values, to ensure that
   // the transformation works correctly with unions (which is the trickiest)
-  def checkSchema[A: Schema](value: A, expected: Int)(implicit
+  def checkSchema[A: Schema](
+      value: A,
+      expectedTransitive: Int,
+      expectedLocal: Int = 1
+  )(implicit
       loc: Location
   ): Unit = {
     val countLocal = implicitly[Schema[A]]
@@ -160,10 +170,10 @@ class HintsTransformationSpec() extends FunSuite {
       .compile(CountVisitor)
 
     val localMsg = "Unexpected count of marks after local transformation"
-    assertEquals(countLocal(value), 1, localMsg)
+    assertEquals(countLocal(value), expectedLocal, localMsg)
     val transitiveMsg =
       "Unexpected count of marks after transitive transformation"
-    assertEquals(countTransitive(value), expected, transitiveMsg)
+    assertEquals(countTransitive(value), expectedTransitive, transitiveMsg)
   }
 
   private def count(hints: Hints): Int = if (hints.has[Mark]) 1 else 0
@@ -259,6 +269,14 @@ class HintsTransformationSpec() extends FunSuite {
     def lazily[A](suspend: Lazy[Schema[A]]): Count[A] = {
       lazy val underlying = compile(suspend.value)
       a => underlying(a)
+    }
+
+    def nullable[A](schema: Schema[A]): Count[Option[A]] = {
+      val count = compile(schema)
+      locally {
+        case Some(a) => count(a)
+        case None    => 0
+      }
     }
 
   }
