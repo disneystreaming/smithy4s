@@ -144,10 +144,12 @@ final class RendererSpec extends munit.FunSuite {
     val diamondWithDocRendered =
       """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints(smithy.api.Documentation("this is a DIAMOND")))"""
     // NOTE: enum trait and enum shape are not 100% compatible. For example, enum trait doesn't support deprecated$since and deprecated$message.
-    val haertWithDeprecationAndDocRendered =
-      """|  /** this is a HAERT */
-         |  @deprecated
-         |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None))""".stripMargin
+    val haertWithDeprecationAndDocRendered = List(
+      "/** this is a HAERT */",
+      "@deprecated",
+      """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None))"""
+    )
+
     assert(
       definition.contains(classDoc),
       "generated class must hold documentation"
@@ -157,7 +159,7 @@ final class RendererSpec extends munit.FunSuite {
       "DIAMOND variant must hold hints from `@enum` trait"
     )
     assert(
-      definition.contains(haertWithDeprecationAndDocRendered),
+      haertWithDeprecationAndDocRendered.forall(definition.contains),
       "variants generated from `@enum` trait must hold hints, but deprecation hint cannot support message and since properties."
     )
     assert(
