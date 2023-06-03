@@ -352,6 +352,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                         .getAllTraits()
                         .values()
                         .asScala
+                        .filterNot(
+                          _.toShapeId() == ShapeId.from("smithy.api#enum")
+                        )
                         .asJavaCollection
                     )
                     .asInstanceOf[EnumShape.Builder]
