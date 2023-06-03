@@ -161,8 +161,8 @@ final class RendererSpec extends munit.FunSuite {
       "variants generated from `@enum` trait must hold hints, but deprecation hint cannot support message and since properties."
     )
     assert(
-      definition.contains("smithy.api.Enum"),
-      "smithy.api.Enum must be preserved"
+      !definition.contains("smithy.api.Enum"),
+      "smithy.api.Enum must be discarded"
     )
 
   }
