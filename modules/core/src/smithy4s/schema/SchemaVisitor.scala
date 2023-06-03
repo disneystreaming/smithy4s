@@ -30,6 +30,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
   def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B]
   def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B]
   def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): F[A]
+  def nullable[A](shapeId: ShapeId, hints: Hints, schema: Schema[A]): F[Option[A]]
 
   def apply[A](schema: Schema[A]): F[A] = schema match {
     case PrimitiveSchema(shapeId, hints, tag) => primitive(shapeId, hints, tag)
@@ -40,7 +41,8 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
     case u@UnionSchema(shapeId, hints, alts, _) => union(shapeId, hints, alts, Alt.Dispatcher.fromUnion(u))
     case BijectionSchema(schema, bijection) => biject(schema, bijection)
     case RefinementSchema(schema, refinement) => refine(schema, refinement)
-    case lazySchema @ LazySchema(make) => lazily(lazySchema.shapeId, lazySchema.hints, make)
+    case l@LazySchema(make) => lazily(l.shapeId, l.hints, make)
+    case NullableSchema(underlying) => nullable(underlying.shapeId, underlying.hints, underlying)
   }
 
 }
@@ -66,7 +68,8 @@ object SchemaVisitor {
     override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): F[B] = default(schema.shapeId, schema.hints, SchemaType.Bijection)
     override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): F[B] = default(schema.shapeId, schema.hints, SchemaType.Refinement)
     override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): F[A] = default(suspend.value.shapeId, suspend.value.hints, SchemaType.Lazily)
-  }
+    override def nullable[A](shapeId: ShapeId, hints: Hints, schema: Schema[A]): F[Option[A]] = default(shapeId, hints, SchemaType.Nullable)
+}
 
   abstract class Cached[F[_]] extends SchemaVisitor[F] {
     protected val cache: CompilationCache[F]

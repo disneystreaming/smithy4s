@@ -220,4 +220,11 @@ final class SchemaVisitorHash(
     }
   }
 
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): Hash[Option[A]] =
+    cats.instances.option.catsKernelStdHashForOption(self(schema))
+
 }

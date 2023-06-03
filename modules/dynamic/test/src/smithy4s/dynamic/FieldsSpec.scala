@@ -40,7 +40,8 @@ class FieldsSpec() extends munit.FunSuite {
   object Interpreter {
     type ToFieldNames[A] = () => List[String]
 
-    object GetFieldNames extends SchemaVisitor.DefaultIgnoringInput[ToFieldNames] {
+    object GetFieldNames
+        extends SchemaVisitor.DefaultIgnoringInput[ToFieldNames] {
       def default[A]: ToFieldNames[A] = () => Nil
 
       override def struct[S](
@@ -54,7 +55,11 @@ class FieldsSpec() extends munit.FunSuite {
         }.toList
       }
 
-      override def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): ToFieldNames[A] =
+      override def lazily[A](
+          shapeId: ShapeId,
+          hints: Hints,
+          suspend: Lazy[Schema[A]]
+      ): ToFieldNames[A] =
         () => apply(suspend.value)()
 
       // these will be needed later but are irrelevant for now

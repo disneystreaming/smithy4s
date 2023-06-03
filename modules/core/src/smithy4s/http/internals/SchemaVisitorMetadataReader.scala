@@ -251,4 +251,11 @@ private[http] class SchemaVisitorMetadataReader(
       suspend: Lazy[Schema[A]]
   ): MetaDecode[A] =
     EmptyMetaDecode
+
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): MetaDecode[Option[A]] =
+    EmptyMetaDecode
 }

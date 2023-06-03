@@ -118,4 +118,10 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     suspend.map(apply).value
   }
 
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): Id[Option[A]] = None
+
 }

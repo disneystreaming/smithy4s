@@ -221,12 +221,24 @@ class DynamicStabilitySpec extends FunSuite {
       self(schema)
     }
 
-    def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): ConstUnit[A] = {
+    def lazily[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        suspend: Lazy[Schema[A]]
+    ): ConstUnit[A] = {
       val underlying = suspend.value
       if (!visitedLazies.contains(underlying.shapeId)) {
         visitedLazies.add(underlying.shapeId)
         self(underlying)
       }
+    }
+
+    def nullable[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        schema: Schema[A]
+    ): ConstUnit[Option[A]] = {
+      self(schema)
     }
   }
 

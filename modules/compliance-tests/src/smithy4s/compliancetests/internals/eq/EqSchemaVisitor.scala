@@ -178,6 +178,14 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
     (x: A, y: A) => eq.value.eqv(x, y)
   }
 
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): Eq[Option[A]] = {
+    Eq.catsKernelEqForOption(self(schema))
+  }
+
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
     primitive match {
       case Primitive.PShort      => Eq[Short]

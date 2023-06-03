@@ -134,4 +134,9 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       suspend: Lazy[Schema[A]]
   ): Id[A] = ???
 
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): Id[Option[A]] = None
 }

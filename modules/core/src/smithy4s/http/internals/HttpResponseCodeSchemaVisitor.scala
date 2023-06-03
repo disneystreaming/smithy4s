@@ -112,6 +112,7 @@ class HttpResponseCodeSchemaVisitor()
     }
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
+
 }
 
 object HttpResponseCodeSchemaVisitor {

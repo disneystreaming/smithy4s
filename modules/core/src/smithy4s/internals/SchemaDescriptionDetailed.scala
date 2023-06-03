@@ -17,17 +17,7 @@
 package smithy4s
 package internals
 
-import smithy4s.schema.{
-  Primitive,
-  EnumValue,
-  EnumTag,
-  SchemaField,
-  SchemaAlt,
-  Alt,
-  SchemaVisitor,
-  CollectionTag
-}
-
+import smithy4s.schema._
 private[internals] trait SchemaDescriptionDetailedImpl[A]
     extends (Set[ShapeId] => (Set[ShapeId], String)) {
   def mapResult[B](f: String => String): SchemaDescriptionDetailedImpl[B] = {
@@ -163,10 +153,18 @@ private[internals] object SchemaDescriptionDetailedImpl
     }
   }
 
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): SchemaDescriptionDetailedImpl[Option[A]] =
+    apply(schema).mapResult { desc => s"Sparse[$desc]" }
+
   val conversion: SchemaDescriptionDetailedImpl ~> SchemaDescription =
     new (SchemaDescriptionDetailedImpl ~> SchemaDescription) {
       def apply[A](
           fa: SchemaDescriptionDetailedImpl[A]
       ): SchemaDescription[A] = fa(Set.empty)._2
     }
+
 }

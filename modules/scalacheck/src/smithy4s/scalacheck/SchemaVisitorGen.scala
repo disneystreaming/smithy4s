@@ -124,6 +124,9 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def lazily[A](shapeId: ShapeId, hints: Hints, suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 
+  def nullable[A](shapeId: ShapeId,
+      hints: Hints,schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
+
   // //////////////////////////////////////////////////////////////////////////////////////
   // // HELPER FUNCTIONS
   // //////////////////////////////////////////////////////////////////////////////////////

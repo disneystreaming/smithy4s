@@ -73,6 +73,7 @@ object MessageEncoder {
       val headers = toHeaders(metadata.headers)
       val status = metadata.statusCode
         .flatMap(Status.fromInt(_).toOption)
+        .filter(_.responseClass.isSuccess)
         .getOrElse(response.status)
       response.withHeaders(response.headers ++ headers).withStatus(status)
     }

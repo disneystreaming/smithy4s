@@ -31,9 +31,9 @@ import smithy4s.schema.{
   SchemaField,
   SchemaVisitor
 }
-
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
+import smithy4s.schema.Schema
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -75,6 +75,13 @@ class SchemaVisitorMetadataWriter(
       case _ => MetaEncode.empty
     }
   }
+
+  override def nullable[A](
+      shapeId: ShapeId,
+      hints: Hints,
+      schema: Schema[A]
+  ): MetaEncode[Option[A]] =
+    EmptyMetaEncode
 
   override def map[K, V](
       shapeId: ShapeId,

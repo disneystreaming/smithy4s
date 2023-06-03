@@ -128,6 +128,15 @@ class CachedSchemaVisitorSpec() extends FunSuite {
         lazyTracker.remove(shapeId)
       }
     }
+
+    def nullable[A](
+        shapeId: ShapeId,
+        hints: Hints,
+        schema: Schema[A]
+    ): ConstUnit[Option[A]] = discard {
+      self(schema)
+      counter.incrementAndGet()
+    }
   }
 
   def checkSchema[A](schema: Schema[A]): Unit = {

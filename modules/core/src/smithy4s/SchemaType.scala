@@ -17,4 +17,5 @@ object SchemaType {
   case object Bijection extends SchemaType
   case object Refinement extends SchemaType
   case object Lazily extends SchemaType
+  case object Nullable extends SchemaType
 }
