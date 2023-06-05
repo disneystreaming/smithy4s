@@ -22,7 +22,6 @@ import ComplianceTest._
 import cats.Eq
 import io.circe.Json
 import org.http4s.Headers
-import org.http4s.Header
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
@@ -161,20 +160,21 @@ private[internals] object assert {
     }.combineAll
     checkRequired |+| checkForbidden
   }
+
+  private def headersCheck(
+      headers: Map[String,String],
+      expected: Option[Map[String,String]]
   private def headerValuesCheck(
       headers: Headers,
       expected: Option[Map[String, String]]
   ) = {
-    expected.headers.map { case Header.Raw(key, expectedValue) =>
-      headers
-        .get(key)
-        .map { v =>
-          contains(expectedValue, v.toList.map(_.value), "Header: ")
+    expected match {
+      case Some(expectedHeaders) =>
+        expectedHeaders.toList.map{
+          case (key,value) => if(headers.get(key).contains(value)) success else fail(s"Header $key is not equal to $value")
         }
-        .getOrElse(
-          assert.fail(s"'$key' header is missing")
-        )
-    }.combineAll
+      case None => success
+    }
   }
 
   object testCase {

@@ -17,7 +17,7 @@
 package smithy4s
 package compliancetests
 
-import org.http4s.{Header, Headers, Uri}
+import org.http4s.{Header, Headers, Uri,HttpDate}
 import cats.implicits._
 import cats.data.Chain
 import java.nio.charset.StandardCharsets
@@ -150,4 +150,25 @@ package object internals {
 
   }
 
+  /**
+   * if a String in the List happens to be a valid http-date timestamp, then concatenate as is
+   * else if String has commas in it, escape the quotes inside the String and add quotes before concatenating
+   * else escape quotes inside the String concatenate it
+   *
+   * @param headers
+   * @return
+   */
+  private [compliancetests] def collapseHeaders(headers: Headers): Map[String, String] = {
+    headers.headers.foldLeft(Map.empty[String, String]) {
+      case (acc, Header.Raw(key, expectedValue)) if HttpDate.fromString(expectedValue).isRight => acc + (key.toString -> expectedValue)
+      case (acc, Header.Raw(key, expectedValue)) =>
+        val escapeQuotes = expectedValue.replaceAll("\"", "\\\\\"")
+        if (expectedValue.contains(","))
+
+          acc + (key.toString -> s"""\"$escapeQuotes\"""")
+        else {
+          acc + (key.toString -> escapeQuotes)
+        }
+    }
+  }
 }
