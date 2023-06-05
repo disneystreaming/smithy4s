@@ -331,8 +331,13 @@ private[dynamic] object Compiler {
       }
     }
 
-    override def listShape(id: ShapeId, shape: ListShape): Unit =
-      update(id, shape.traits, schema(shape.member.target).map(s => list(s)))
+    override def listShape(id: ShapeId, shape: ListShape): Unit = {
+      if (shape.traits.contains(IdRef("smithy.api#sparse"))) {
+        update(id, shape.traits, schema(shape.member.target).map(sparseList))
+      } else {
+        update(id, shape.traits, schema(shape.member.target).map(list))
+      }
+    }
 
     override def setShape(id: ShapeId, shape: SetShape): Unit =
       update(id, shape.traits, schema(shape.member.target).map(s => set(s)))
@@ -344,7 +349,11 @@ private[dynamic] object Compiler {
         for {
           k <- schema(shape.key.target)
           v <- schema(shape.value.target)
-        } yield map(k, v)
+        } yield {
+          if (shape.traits.contains(IdRef("smithy.api#sparse"))) {
+            sparseMap(k, v).asInstanceOf[Schema[Map[Any, Any]]]
+          } else map(k, v)
+        }
       )
 
     override def operationShape(id: ShapeId, x: OperationShape): Unit = {}

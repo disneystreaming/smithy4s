@@ -71,7 +71,7 @@ object Http4sEmberPizzaClientSpec extends IOSuite {
       }
 
   test("empty body") { client =>
-    (client.book("name") *> client.book("name2")).as(success)
+    (client.reservation("name") *> client.reservation("name2")).as(success)
   }
 
   private val dummyImpl: PizzaAdminService[IO] =
@@ -79,7 +79,7 @@ object Http4sEmberPizzaClientSpec extends IOSuite {
     // format: off
     override def health(query: Option[String]): IO[HealthResponse] = IO.pure(HealthResponse("good"))
     override def roundTrip(label: String, header: Option[String], query: Option[String], body: Option[String]): IO[RoundTripData] = IO.stub
-    override def book(name: String, town: Option[String]): IO[BookOutput] = IO.pure(BookOutput("name"))
+    override def reservation(name: String, town: Option[String]): IO[ReservationOutput] = IO.pure(ReservationOutput("name"))
     // format: on
     }
 

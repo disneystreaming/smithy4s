@@ -49,15 +49,15 @@ import alloy.Untagged
 
 trait DocumentEncoder[A] { self =>
 
-  def apply: A => Document
+  def apply(a: A): Document
   final def contramap[B](f: B => A): DocumentEncoder[B] =
     new DocumentEncoder[B] {
-      def apply: B => Document = f andThen self.apply
+      def apply(b: B): Document = self.apply(f(b))
     }
 
   final def mapDocument(f: Document => Document): DocumentEncoder[A] =
     new DocumentEncoder[A] {
-      def apply: A => Document = self.apply andThen f
+      def apply(a: A): Document = f(self(a))
     }
 
 }
@@ -69,7 +69,7 @@ object DocumentEncoder {
       def apply[A](fa: DocumentEncoder[A], a: A): Document = fa.apply(a)
       def absorb[A](f: A => Document): DocumentEncoder[A] =
         new DocumentEncoder[A] {
-          def apply: A => Document = f
+          def apply(a: A): Document = f(a)
         }
     }
 
@@ -94,15 +94,12 @@ class DocumentEncoderSchemaVisitor(
       from(bytes => DString(Base64.getEncoder().encodeToString(bytes.array)))
     case PUnit => from(_ => DObject(Map.empty))
     case PTimestamp =>
-      new DocumentEncoder[Timestamp] {
-        def apply: Timestamp => Document =
-          hints
-            .get(TimestampFormat)
-            .getOrElse(TimestampFormat.EPOCH_SECONDS) match {
-            case DATE_TIME     => ts => DString(ts.format(DATE_TIME))
-            case HTTP_DATE     => ts => DString(ts.format(HTTP_DATE))
-            case EPOCH_SECONDS => ts => DNumber(BigDecimal(ts.epochSecond))
-          }
+      hints
+        .get(TimestampFormat)
+        .getOrElse(TimestampFormat.EPOCH_SECONDS) match {
+        case DATE_TIME     => ts => DString(ts.format(DATE_TIME))
+        case HTTP_DATE     => ts => DString(ts.format(HTTP_DATE))
+        case EPOCH_SECONDS => ts => DNumber(BigDecimal(ts.epochSecond))
       }
     case PDocument => from(identity)
     case PFloat    => from(float => DNumber(BigDecimal(float.toDouble)))
@@ -118,8 +115,16 @@ class DocumentEncoderSchemaVisitor(
       tag: CollectionTag[C],
       member: Schema[A]
   ): DocumentEncoder[C[A]] = {
-    val encoderS = apply(member)
+    val encoderS = self(member)
     from[C[A]](c => DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq))
+  }
+
+  override def nullable[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
+    val encoder = self(schema)
+    locally {
+      case Some(a) => encoder.apply(a)
+      case None    => Document.DNull
+    }
   }
 
   override def map[K, V](
@@ -129,7 +134,7 @@ class DocumentEncoderSchemaVisitor(
       value: Schema[V]
   ): DocumentEncoder[Map[K, V]] = {
     val maybeKeyEncoder = DocumentKeyEncoder.trySchemaVisitor(key)
-    val valueEncoder = apply(value)
+    val valueEncoder = self(value)
     maybeKeyEncoder match {
       case Some(keyEncoder) =>
         from[Map[K, V]] { map =>
@@ -203,7 +208,7 @@ class DocumentEncoderSchemaVisitor(
 
     val encoders = fields.map(field => fieldEncoder(field))
     new DocumentEncoder[S] {
-      def apply: S => Document = { s =>
+      def apply(s: S): Document = {
         val builder = Map.newBuilder[String, Document]
         encoders.foreach(_(s, builder))
         DObject(builder.result() ++ discriminator)
@@ -251,12 +256,12 @@ class DocumentEncoderSchemaVisitor(
   override def lazily[A](suspend: Lazy[Schema[A]]): DocumentEncoder[A] = {
     lazy val underlying = apply(suspend.value)
     new DocumentEncoder[A] {
-      def apply: A => Document = underlying.apply
+      def apply(a: A): Document = underlying(a)
     }
   }
 
   def from[A](f: A => Document): DocumentEncoder[A] =
     new DocumentEncoder[A] {
-      def apply: A => Document = f
+      def apply(a: A): Document = f(a)
     }
 }
