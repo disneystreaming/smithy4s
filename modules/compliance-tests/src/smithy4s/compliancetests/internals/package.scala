@@ -24,22 +24,22 @@ import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
 package object internals {
-  def splitQuery(queryString: String): (String, String) = {
+
+  private[compliancetests] def splitQuery(
+      queryString: String
+  ): (String, String) = {
     queryString.split("=", 2) match {
       case Array(k, v) =>
         (
           k,
-          decodeUri(v)
+          Uri.decode(
+            toDecode = v,
+            charset = StandardCharsets.UTF_8,
+            plusIsSpace = true
+          )
         )
       case Array(k) => (k, "")
     }
-  }
-
-  def decodeUri(v: String) = {
-    Uri.decode(
-      toDecode = v,
-      charset = StandardCharsets.UTF_8
-    )
   }
 
   private[compliancetests] def parseQueryParams(
