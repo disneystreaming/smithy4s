@@ -17,7 +17,7 @@
 package smithy4s
 package compliancetests
 
-import org.http4s.{Header, Headers, Uri,HttpDate}
+import org.http4s.{Header, Headers, Uri, HttpDate}
 import cats.implicits._
 import cats.data.Chain
 import java.nio.charset.StandardCharsets
@@ -43,8 +43,8 @@ package object internals {
   }
 
   private[compliancetests] def parseQueryParams(
-                                                 queryParams: Option[List[String]]
-                                               ): ListMap[String, List[String]] = {
+      queryParams: Option[List[String]]
+  ): ListMap[String, List[String]] = {
     queryParams.combineAll
       .map(splitQuery)
       .foldLeft[ListMap[String, List[String]]](ListMap.empty) {
@@ -57,20 +57,19 @@ package object internals {
   }
 
   private[compliancetests] def parseHeaders(
-                                             maybeHeaders: Option[Map[String, String]]
-                                           ): Headers =
+      maybeHeaders: Option[Map[String, String]]
+  ): Headers =
     maybeHeaders.fold(Headers.empty)(h =>
       Headers(h.toList.flatMap(parseSingleHeader).map(a => a: Header.ToRaw): _*)
     )
 
   private def parseSingleHeader(
-                                 kv: (String, String)
-                               ): List[(String, String)] = {
+      kv: (String, String)
+  ): List[(String, String)] = {
     kv match {
       case (k, v) => parseList(v).map((k, _))
     }
   }
-
 
   /**
    * The idea behind this parser is to be able to take a string that is formatted as a comma delimited list literal and parse it into a list of strings
@@ -86,13 +85,13 @@ package object internals {
   private[compliancetests] def parseList(input: String): List[String] = {
     @scala.annotation.tailrec
     def loop(
-              chars: List[Char],
-              result: Chain[String],
-              inString: Boolean,
-              escapeNext: Boolean,
-              betweenItems: Boolean,
-              currentString: String
-            ): Chain[String] = {
+        chars: List[Char],
+        result: Chain[String],
+        inString: Boolean,
+        escapeNext: Boolean,
+        betweenItems: Boolean,
+        currentString: String
+    ): Chain[String] = {
       chars match {
         // We are at the end of the string, if we are in a string we need to add the current string to the result otherwise we are done
         case Nil =>
@@ -101,9 +100,16 @@ package object internals {
           else
             result
         // If we see a quote we need to check if it is escaped or not, if it is espaced we need to add it to the current string and maintain inString state otherwise we need to toggle inString state and skip appending the quote to the current string
-        case '"' :: tail  =>
-          if(escapeNext)
-            loop(tail, result, inString, false, betweenItems, currentString + '"')
+        case '"' :: tail =>
+          if (escapeNext)
+            loop(
+              tail,
+              result,
+              inString,
+              false,
+              betweenItems,
+              currentString + '"'
+            )
           else
             loop(tail, result, !inString, false, betweenItems, currentString)
         // If we see a comma and we are not in a string , this signals a separate key value pair for the header
@@ -158,13 +164,16 @@ package object internals {
    * @param headers
    * @return
    */
-  private [compliancetests] def collapseHeaders(headers: Headers): Map[String, String] = {
+  private[compliancetests] def collapseHeaders(
+      headers: Headers
+  ): Map[String, String] = {
     headers.headers.foldLeft(Map.empty[String, String]) {
-      case (acc, Header.Raw(key, expectedValue)) if HttpDate.fromString(expectedValue).isRight => acc + (key.toString -> expectedValue)
+      case (acc, Header.Raw(key, expectedValue))
+          if HttpDate.fromString(expectedValue).isRight =>
+        acc + (key.toString -> expectedValue)
       case (acc, Header.Raw(key, expectedValue)) =>
         val escapeQuotes = expectedValue.replaceAll("\"", "\\\\\"")
         if (expectedValue.contains(","))
-
           acc + (key.toString -> s"""\"$escapeQuotes\"""")
         else {
           acc + (key.toString -> escapeQuotes)

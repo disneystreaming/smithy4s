@@ -161,18 +161,18 @@ private[internals] object assert {
     checkRequired |+| checkForbidden
   }
 
-  private def headersCheck(
-      headers: Map[String,String],
-      expected: Option[Map[String,String]]
   private def headerValuesCheck(
-      headers: Headers,
+      headers: Map[String, String],
       expected: Option[Map[String, String]]
   ) = {
     expected match {
       case Some(expectedHeaders) =>
-        expectedHeaders.toList.map{
-          case (key,value) => if(headers.get(key).contains(value)) success else fail(s"Header $key is not equal to $value")
-        }
+        expectedHeaders.toList.map { case (key, testValue) =>
+          headers.get(key) match {
+            case Some(realizedValue) => assert.eql(realizedValue, testValue)
+            case None => fail(s"Header $key is not present in the request")
+          }
+        }.combineAll
       case None => success
     }
   }
@@ -203,7 +203,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks =
+        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -216,7 +217,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(collaheaders, tc.headers)
+      val valueChecks =
+        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
   }
