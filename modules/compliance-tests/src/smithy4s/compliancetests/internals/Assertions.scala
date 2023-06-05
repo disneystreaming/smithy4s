@@ -22,7 +22,6 @@ import ComplianceTest._
 import cats.Eq
 import io.circe.Json
 import org.http4s.Headers
-import org.http4s.Header
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
@@ -164,20 +163,23 @@ private[internals] object assert {
     }.combineAll
     checkRequired |+| checkForbidden
   }
+
   private def headerValuesCheck(
       headers: Headers,
       expected: Headers
+      headers: Map[String, String],
+      expected: Option[Map[String, String]]
   ) = {
-    expected.headers.map { case Header.Raw(key, expectedValue) =>
-      headers
-        .get(key)
-        .map { v =>
-          contains(expectedValue, v.toList.map(_.value), "Header: ")
-        }
-        .getOrElse(
-          assert.fail(s"'$key' header is missing")
-        )
-    }.combineAll
+    expected match {
+      case Some(expectedHeaders) =>
+        expectedHeaders.toList.map { case (key, testValue) =>
+          headers.get(key) match {
+            case Some(realizedValue) => assert.eql(realizedValue, testValue)
+            case None => fail(s"Header $key is not present in the request")
+          }
+        }.combineAll
+      case None => success
+    }
   }
 
   object testCase {
@@ -207,6 +209,8 @@ private[internals] object assert {
         forbiddenHeaders = tc.forbidHeaders
       )
       val valueChecks = assert.headerValuesCheck(headers, parseHeaders(tc.headers))
+      val valueChecks =
+        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -219,7 +223,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, parseHeaders(tc.headers))
+      val valueChecks =
+        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
   }
