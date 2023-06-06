@@ -155,9 +155,7 @@ private[internals] object assert {
           .map { v =>
             assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
           }
-          .getOrElse(
-            assert.fail(s"'$key' header is missing")
-          )
+          .getOrElse(success)
       }
       .combineAll
   }

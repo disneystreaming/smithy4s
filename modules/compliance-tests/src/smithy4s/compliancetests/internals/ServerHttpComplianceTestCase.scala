@@ -96,6 +96,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       serverReq,
       run = {
         deferred[I].flatMap { inputDeferred =>
@@ -171,6 +172,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       serverRes,
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)

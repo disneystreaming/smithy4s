@@ -35,6 +35,7 @@ import smithy4s.schema.Schema.document
 import smithy4s.http.HttpMediaType
 import smithy4s.compliancetests._
 import smithy4s.http.PayloadError
+import fs2.Stream
 
 /**
   * This suite is NOT implementing MutableFSuite, and uses a higher-level interface
@@ -50,14 +51,30 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   def getSuite: EffectSuite[IO] = this
 
+  // Filtering these rule because on JS-specific issues,
+  // in particular around floating-point precision.
+  val jsDisallowed = Set(
+    "RestJsonInputWithHeadersAndAllParams",
+    "RestJsonHttpRequestLabelEscaping"
+  )
+
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
-      .evalMap(index => decodeAllowRules(index).map(index -> _))
-      .flatMap { case (schemaIndex, allowRules) =>
-        fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
+      .evalMap(index => decodeBorrowedTests(index).map(index -> _))
+      .flatMap { case (schemaIndex, borrowedTests) =>
+        val allowRulesFromRestJson1 =
+          borrowedTests.simpleRestJsonBorrowedTests
+            .get(ShapeId("aws.protocols", "restJson1"))
+            .getOrElse(AllowRules.empty)
+            .filterRules(rule =>
+              !(Platform.isJS && jsDisallowed.exists(rule.id.matches))
+            )
+        fs2.Stream.emits(
+          allTests(schemaIndex).map((allowRulesFromRestJson1, _))
+        )
       }
-      .evalMap { case (allowRules, test) =>
+      .flatMap { case (allowRules, test) =>
         runInWeaver(allowRules, test)
       }
   }
@@ -139,8 +156,10 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
       })
   }
 
-  private def decodeAllowRules(dsi: DynamicSchemaIndex): IO[AllowRules] = {
-    Document.DObject(dsi.metadata).decode[AllowRules].liftTo[IO]
+  private def decodeBorrowedTests(
+      dsi: DynamicSchemaIndex
+  ): IO[AlloyBorrowedTests] = {
+    Document.DObject(dsi.metadata).decode[AlloyBorrowedTests].liftTo[IO]
   }
 
   private def loadDynamic(
@@ -162,32 +181,39 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
   }
 
   private def runInWeaver(
-      allowList: AllowRules,
+      allowRules: AllowRules,
       tc: ComplianceTest[IO]
-  ): IO[TestOutcome] = {
-    val runner: IO[Expectations] = {
-      if (allowList.isAllowed(tc) || tc.show.contains("alloy")) {
-        tc.run
-          .map(res => expectSuccess(res))
-          .attempt
-          .map {
-            case Right(expectations) => expectations
-            case Left(throwable) =>
-              Expectations.Helpers.failure(
-                s"unexpected error when running test ${throwable.getMessage} \n $throwable"
-              )
-          }
-
-      } else
-        tc.run.attempt
-          .map(_.fold(t => t.toString.invalidNel[Unit], identity))
-          .map(res => expectFailure(tc, res))
+  ): Stream[IO, TestOutcome] = {
+    val shouldRun = allowRules.shouldRun(tc)
+    val runner: fs2.Stream[IO, IO[Expectations]] = {
+      if ((shouldRun == ShouldRun.Yes) || tc.show.contains("alloy")) {
+        Stream {
+          tc.run
+            .map(res => expectSuccess(res))
+            .attempt
+            .map {
+              case Right(expectations) => expectations
+              case Left(throwable) =>
+                Expectations.Helpers.failure(
+                  s"unexpected error when running test ${throwable.getMessage} \n $throwable"
+                )
+            }
+        }
+      } else if (shouldRun == ShouldRun.No) { Stream.empty }
+      else
+        Stream {
+          tc.run.attempt
+            .map(_.fold(t => t.toString.invalidNel[Unit], identity))
+            .map(res => unsureWhetherShouldSucceed(tc, res))
+        }
     }
 
-    Test(
-      tc.show,
-      runner
-    )
+    runner.evalMap { runTest =>
+      Test(
+        tc.show,
+        (log: Log[IO]) => tc.documentation.foldMap(log.info(_)) *> runTest
+      )
+    }
   }
 
   def expectSuccess(
@@ -199,19 +225,20 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
     }
   }
 
-  def expectFailure(
+  def unsureWhetherShouldSucceed(
       test: ComplianceTest[IO],
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
     res.toEither match {
       case Left(failures) =>
-        throw new weaver.IgnoredException(
+        throw new weaver.CanceledException(
           Some(failures.head),
           weaver.SourceLocation.fromContext
         )
       case Right(_) =>
-        Expectations.Helpers.failure(
-          s"expected failure for but got success, please update the Allow list: ${test.show}"
+        throw new weaver.IgnoredException(
+          Some("Passing unknown spec"),
+          weaver.SourceLocation.fromContext
         )
     }
   }

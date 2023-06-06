@@ -23,7 +23,10 @@ import smithy4s.Enumeration
 import smithy4s.ShapeId
 import smithy4s.Schema
 
-case class TestConfig(appliesTo: AppliesTo, testType: TestType) {
+case class TestConfig(
+    appliesTo: AppliesTo,
+    testType: TestType
+) {
   def show: String = s"(${appliesTo.name.toLowerCase}|$testType)"
 }
 
