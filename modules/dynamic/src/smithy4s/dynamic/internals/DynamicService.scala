@@ -20,6 +20,45 @@ package internals
 
 import smithy4s.kinds.PolyFunction5
 
+private[internals] case class DynamicService(
+    id: ShapeId,
+    version: String,
+    endpoints: List[DynamicEndpoint],
+    hints: Hints
+) extends Service.Reflective[DynamicOp]
+    with DynamicSchemaIndex.ServiceWrapper {
+
+  private lazy val endpointMap: Map[ShapeId, Endpoint[_, _, _, _, _]] =
+    endpoints.map(ep => ep.id -> ep).toMap
+
+  private[internals] def getEndpoint[I, E, O, SI, SO](
+      id: ShapeId
+  ): Endpoint[I, E, O, SI, SO] =
+    endpointMap
+      .getOrElse(id, sys.error("Unknown endpoint: " + id))
+      .asInstanceOf[Endpoint[I, E, O, SI, SO]]
+
+  def endpoint[I, E, O, SI, SO](
+      op: DynamicOp[I, E, O, SI, SO]
+  ): (I, Endpoint[I, E, O, SI, SO]) = {
+    val endpoint = getEndpoint[I, E, O, SI, SO](op.id)
+    val input = op.data
+    (input, endpoint)
+  }
+
+  type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[StaticOp, P]
+  override val static
+      : StaticService.Aux[StaticAlg, PolyFunction5.From[DynamicOp]#Algebra] =
+    new StDynamicService(
+      this
+    )
+
+  type Alg[P[_, _, _, _, _]] = PolyFunction5[DynamicOp, P]
+
+  override val service: Service[Alg] = this
+
+}
+
 // TODO: better name
 private[internals] class StDynamicService(
     override val service: DynamicService
@@ -37,9 +76,8 @@ private[internals] class StDynamicService(
     new PolyFunction5[StaticOp, service.Endpoint] {
       override def apply[I, E, O, SI, SO](
           op: StaticOp[I, E, O, SI, SO]
-      ): smithy4s.Endpoint[DynamicOp, I, E, O, SI, SO] = {
-        ???
-      }
+      ): Endpoint[DynamicOp, I, E, O, SI, SO] =
+        service.getEndpoint(op.id)
     }
 
   override def toPolyFunction[P2[_, _, _, _, _]](
@@ -54,36 +92,3 @@ private[internals] class StDynamicService(
     }
 
 }
-
-private[internals] case class DynamicService(
-    id: ShapeId,
-    version: String,
-    endpoints: List[DynamicEndpoint],
-    hints: Hints
-) extends Service.Reflective[DynamicOp]
-    with DynamicSchemaIndex.ServiceWrapper {
-
-  type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[StaticOp, P]
-  override val static: StaticService.Aux[StaticAlg, Alg] = new StDynamicService(
-    this
-  )
-
-  type Alg[P[_, _, _, _, _]] = PolyFunction5.From[DynamicOp]#Algebra[P]
-  override val service: Service[Alg] = this
-
-  private lazy val endpointMap: Map[ShapeId, Endpoint[_, _, _, _, _]] =
-    endpoints.map(ep => ep.id -> ep).toMap
-
-  def endpoint[I, E, O, SI, SO](
-      op: DynamicOp[I, E, O, SI, SO]
-  ): (I, Endpoint[I, E, O, SI, SO]) = {
-    val endpoint = endpointMap
-      .getOrElse(op.id, sys.error("Unknown endpoint: " + op.id))
-      .asInstanceOf[Endpoint[I, E, O, SI, SO]]
-    val input = op.data
-    (input, endpoint)
-  }
-
-}
-
-object DynamicService {}
