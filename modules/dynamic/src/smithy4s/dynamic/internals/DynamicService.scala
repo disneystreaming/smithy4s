@@ -20,6 +20,41 @@ package internals
 
 import smithy4s.kinds.PolyFunction5
 
+// TODO: better name
+private[internals] class StDynamicService(
+    override val service: DynamicService
+) extends StaticService[PolyFunction5.From[StaticOp]#Algebra] {
+
+  type Alg[F[_, _, _, _, _]] = PolyFunction5[DynamicOp, F]
+
+  override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
+      alg: PolyFunction5[StaticOp, F],
+      function: PolyFunction5[F, G]
+  ): PolyFunction5[StaticOp, G] =
+    alg.andThen(function)
+
+  override def endpoints: PolyFunction5[StaticOp, service.Endpoint] =
+    new PolyFunction5[StaticOp, service.Endpoint] {
+      override def apply[I, E, O, SI, SO](
+          op: StaticOp[I, E, O, SI, SO]
+      ): smithy4s.Endpoint[DynamicOp, I, E, O, SI, SO] = {
+        ???
+      }
+    }
+
+  override def toPolyFunction[P2[_, _, _, _, _]](
+      algebra: PolyFunction5[StaticOp, P2]
+  ): PolyFunction5[service.Endpoint, P2] =
+    new PolyFunction5[service.Endpoint, P2] {
+      override def apply[I, E, O, SI, SO](
+          endpoint: smithy4s.Endpoint[DynamicOp, I, E, O, SI, SO]
+      ): P2[I, E, O, SI, SO] = {
+        algebra.apply(StaticOp(endpoint.id))
+      }
+    }
+
+}
+
 private[internals] case class DynamicService(
     id: ShapeId,
     version: String,
@@ -27,6 +62,11 @@ private[internals] case class DynamicService(
     hints: Hints
 ) extends Service.Reflective[DynamicOp]
     with DynamicSchemaIndex.ServiceWrapper {
+
+  type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[StaticOp, P]
+  override val static: StaticService.Aux[StaticAlg, Alg] = new StDynamicService(
+    this
+  )
 
   type Alg[P[_, _, _, _, _]] = PolyFunction5.From[DynamicOp]#Algebra[P]
   override val service: Service[Alg] = this
@@ -45,3 +85,5 @@ private[internals] case class DynamicService(
   }
 
 }
+
+object DynamicService {}

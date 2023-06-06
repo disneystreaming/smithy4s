@@ -22,3 +22,8 @@ private[internals] case class DynamicOp[I, E, O, SI, SO](
     id: ShapeId,
     data: I
 )
+
+// better name???
+private case class StaticOp[I, E, O, SI, SO](
+    id: ShapeId
+)
