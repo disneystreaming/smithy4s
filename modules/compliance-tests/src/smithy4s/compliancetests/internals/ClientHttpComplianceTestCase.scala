@@ -31,7 +31,7 @@ import smithy4s.Document
 import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
 import smithy4s.schema.Alt
 

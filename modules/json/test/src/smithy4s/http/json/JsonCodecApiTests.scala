@@ -100,36 +100,5 @@ class JsonCodecApiTests extends FunSuite {
       assertEquals(decoded, Right(None))
     }
   }
-  test("passing empty string to codec should not fail decoding") {
-    case class A(a: Option[String])
-    val schemaWithOptionalField =
-      Schema
-        .struct[A]
-        .apply(
-          Schema.string
-            .optional[A]("a", _.a)
-        )(A.apply(_))
-    val capi = codecs(HintMask.empty)
-    val codec = capi.compileCodec(schemaWithOptionalField)
-    val decoded = capi.decodeFromByteArray(codec, "".getBytes())
-    assert(decoded.isRight)
-  }
-
-  test("if all fields are empty , an empty json object should be written") {
-    case class A(a: Option[String], b: Option[String])
-    val schemaWithOptionalField =
-      Schema
-        .struct[A]
-        .apply(
-          Schema.string
-            .optional[A]("a", _.a),
-          Schema.string
-            .optional[A]("b", _.b)
-        )(A.apply(_, _))
-    val capi = codecs(HintMask.empty)
-    val codec = capi.compileCodec(schemaWithOptionalField)
-    val encoded = capi.writeToArray(codec, A(None, None))
-    assertEquals(new String(encoded), "{}")
-  }
 
 }

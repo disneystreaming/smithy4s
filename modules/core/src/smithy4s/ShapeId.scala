@@ -42,17 +42,9 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
 
   final case class Member(shapeId: ShapeId, member: String)
 
-  private val idRefRefinement = Refinement.drivenBy[smithy.api.IdRef](
-    parse(_: String) match {
-      case None        => Left("Invalid ShapeId")
-      case Some(value) => Right(value)
-    },
-    (_: ShapeId).show
-  )
-
   val id: ShapeId = ShapeId("smithy4s", "ShapeId")
-  val schema =
-    Schema.string.refined[ShapeId](IdRef())(idRefRefinement).withId(id)
+  lazy val schema =
+    Schema.string.refined[ShapeId](IdRef()).withId(id)
 
   // Not relying on ShapeTag.Companion here, as it seems to trigger a Scala 3
   // only bug that we have yet to minify.

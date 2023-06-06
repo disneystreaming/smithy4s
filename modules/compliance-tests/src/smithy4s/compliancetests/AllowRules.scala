@@ -15,10 +15,9 @@
  */
 
 package smithy4s.compliancetests
-package internals
 
 import smithy.test.AppliesTo
-import smithy4s.compliancetests.internals.TestConfig.TestType
+import smithy4s.compliancetests.TestConfig.TestType
 import smithy4s.schema.Schema
 import smithy4s.ShapeId
 import java.util.regex.Pattern
@@ -43,10 +42,16 @@ final case class AllowRules(
     allowList: Vector[AllowRule],
     disallowList: Vector[AllowRule]
 ) {
+
   def shouldRun[F[_]](complianceTest: ComplianceTest[F]): ShouldRun = {
     if (disallowList.exists(_.matches(complianceTest))) ShouldRun.No
     else if (allowList.exists(_.matches(complianceTest))) ShouldRun.Yes
     else ShouldRun.NotSure
+  }
+
+  def filterRules(predicate: AllowRule => Boolean): AllowRules = {
+    val filteredAllowList = allowList.filter(predicate)
+    AllowRules(filteredAllowList, disallowList)
   }
 
 }
