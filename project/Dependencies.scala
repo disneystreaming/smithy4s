@@ -5,12 +5,12 @@ object Dependencies {
 
   val collectionsCompat =
     Def.setting(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0"
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.10.0"
     )
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.23.0"
+    val jsoniterScalaVersion = "2.23.1"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.30.0"
+    val smithyVersion = "1.31.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -29,7 +29,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.1.20"
+    val alloyVersion = "0.2.1"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -59,7 +59,7 @@ object Dependencies {
       Def.setting("co.fs2" %%% "fs2-core" % "3.6.1")
 
     val io: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-io" % "3.6.1")
+      Def.setting("co.fs2" %%% "fs2-io" % "3.7.0")
   }
 
   object Fs2Data {
@@ -91,10 +91,10 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.4.10")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.0")
 
   object Http4s {
-    val http4sVersion = "0.23.18"
+    val http4sVersion = "0.23.19"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)

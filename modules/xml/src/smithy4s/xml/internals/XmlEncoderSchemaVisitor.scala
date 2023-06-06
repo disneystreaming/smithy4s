@@ -131,6 +131,7 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): XmlEncoder[E] = if (hints.has(IntEnum)) {
@@ -177,6 +178,15 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     lazy val underlying = suspend.map(compile(_)).value
     def encode(value: A): List[XmlContent] = underlying.encode(value)
   }
+
+  def nullable[A](schema: Schema[A]): XmlEncoder[Option[A]] =
+    new XmlEncoder[Option[A]] {
+      val encoder = compile(schema)
+      def encode(value: Option[A]): List[XmlContent] = value match {
+        case None        => List.empty
+        case Some(value) => encoder.encode(value)
+      }
+    }
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
     hints

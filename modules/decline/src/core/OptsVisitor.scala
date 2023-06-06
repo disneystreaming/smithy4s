@@ -243,7 +243,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _] =>
+          _: Schema.MapSchema[_, _] | _: Schema.NullableSchema[_] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
@@ -260,6 +260,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Opts[E] = {
@@ -342,4 +343,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       .mapValidated(a =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
+
+  override def nullable[A](schema: Schema[A]): Opts[Option[A]] =
+    schema.compile(this).orNone
 }

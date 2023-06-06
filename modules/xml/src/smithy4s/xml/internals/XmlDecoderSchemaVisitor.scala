@@ -97,6 +97,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): XmlDecoder[E] = {
@@ -195,6 +196,15 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       underlying.decode(cursor)
     }
   }
+
+  def nullable[A](schema: Schema[A]): XmlDecoder[Option[A]] =
+    new XmlDecoder[Option[A]] {
+      val decoder = compile(schema)
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] =
+        // not taking sparse into account for xml : we're just attempting to decode
+        // the value, mapping to Some in case of success.
+        decoder.decode(cursor).map(Some(_))
+    }
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
     hints

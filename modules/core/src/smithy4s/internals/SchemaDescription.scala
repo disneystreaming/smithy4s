@@ -17,15 +17,7 @@
 package smithy4s
 package internals
 
-import smithy4s.schema.{
-  Primitive,
-  EnumValue,
-  SchemaField,
-  SchemaAlt,
-  Alt,
-  SchemaVisitor,
-  CollectionTag
-}
+import smithy4s.schema._
 import smithy4s.schema.Primitive.PTimestamp
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
@@ -46,7 +38,7 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
 
-  override def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
+  override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
 
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =
@@ -59,6 +51,10 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     SchemaDescription.of(apply(schema))
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
+
+  override def nullable[A](schema: Schema[A]): SchemaDescription[Option[A]] =
+    SchemaDescription.of("Nullable")
+
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
     suspend.map(s => SchemaDescription.of(apply(s))).value
   // format: on

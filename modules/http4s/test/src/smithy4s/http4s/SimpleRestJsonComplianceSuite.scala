@@ -39,8 +39,35 @@ import smithy4s.tests.ProtocolComplianceSuite
   */
 object SimpleRestJsonComplianceSuite extends ProtocolComplianceSuite {
 
-  override def isAllowed(complianceTest: ComplianceTest[IO]): Boolean =
-    complianceTest.show.contains("alloy")
+  // Filtering these rule because on JS-specific issues,
+  // in particular around floating-point precision.
+  private val jsDisallowed = Set(
+    "RestJsonInputWithHeadersAndAllParams",
+    "RestJsonHttpRequestLabelEscaping"
+  )
+
+  override def allRules(
+      dsi: DynamicSchemaIndex
+  ): IO[ComplianceTest[IO] => ShouldRun] = {
+    // Decoding borrowed tests
+    smithy4s.Document
+      .DObject(dsi.metadata)
+      .decode[AlloyBorrowedTests]
+      .liftTo[IO]
+      .map { borrowedTests =>
+        borrowedTests.simpleRestJsonBorrowedTests
+          .get(ShapeId("aws.protocols", "restJson1"))
+          .getOrElse(AllowRules.empty)
+          .filterRules(rule =>
+            !(weaver.Platform.isJS && jsDisallowed.exists(rule.id.matches))
+          )
+      }
+      .map { decodedRules => (c: ComplianceTest[IO]) =>
+        if (c.show.contains("alloy")) ShouldRun.Yes
+        else decodedRules.shouldRun(c)
+      }
+
+  }
 
   object SimpleRestJsonIntegration extends Router[IO] with ReverseRouter[IO] {
     type Protocol = SimpleRestJson

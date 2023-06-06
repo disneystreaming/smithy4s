@@ -19,6 +19,7 @@ package smithy4s.http.internals
 import smithy4s.capability.Contravariant
 import smithy4s.Hints
 import smithy4s.schema.{
+  EnumTag,
   EnumValue,
   Field,
   Primitive,
@@ -27,7 +28,6 @@ import smithy4s.schema.{
   SchemaVisitor
 }
 import smithy4s.ShapeId
-import smithy4s.IntEnum
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor.{
   NoResponseCode,
   OptionalResponseCode,
@@ -55,15 +55,17 @@ class HttpResponseCodeSchemaVisitor()
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): ResponseCodeExtractor[E] =
-    if (hints.has[smithy.api.HttpResponseCode] && hints.has[IntEnum]) {
-      Contravariant[ResponseCodeExtractor].contramap(
-        HttpResponseCodeSchemaVisitor.int
-      )(e => total(e).intValue)
-    } else {
-      NoResponseCode
+    tag match {
+      case EnumTag.IntEnum if hints.has[smithy.api.HttpResponseCode] =>
+        Contravariant[ResponseCodeExtractor].contramap(
+          HttpResponseCodeSchemaVisitor.int
+        )(e => total(e).intValue)
+      case _ =>
+        NoResponseCode
     }
 
   override def struct[S](
@@ -110,6 +112,7 @@ class HttpResponseCodeSchemaVisitor()
     }
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
+
 }
 
 object HttpResponseCodeSchemaVisitor {

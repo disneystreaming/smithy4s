@@ -178,6 +178,7 @@ class DynamicStabilitySpec extends FunSuite {
     def enumeration[E](
         shapeId: ShapeId,
         hints: Hints,
+        tag: EnumTag,
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): ConstUnit[E] = {
@@ -226,6 +227,10 @@ class DynamicStabilitySpec extends FunSuite {
         visitedLazies.add(underlying.shapeId)
         self(underlying)
       }
+    }
+
+    def nullable[A](schema: Schema[A]): ConstUnit[Option[A]] = {
+      self(schema)
     }
   }
 

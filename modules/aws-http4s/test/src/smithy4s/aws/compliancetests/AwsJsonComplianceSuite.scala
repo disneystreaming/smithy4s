@@ -32,8 +32,9 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
   // filtering out HostWithPathOperation as this would be taken-care of by middleware.
   // filtering PutWithContentEncoding until we implement compression
 
-  override def isAllowed(complianceTest: ComplianceTest[IO]): Boolean = {
-    val show = complianceTest.show
+  override def allRules(
+      dsi: DynamicSchemaIndex
+  ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
       "AwsJson11MapsSerializeNullValues",
       "AwsJson11ListsSerializeNull",
@@ -42,7 +43,9 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
       "HostWithPathOperation",
       "PutWithContentEncoding"
     )
-    disallow.forall(show.doesNotContain)
+    (complianceTest: ComplianceTest[IO]) =>
+      if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No
+      else ShouldRun.Yes
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
@@ -70,7 +73,4 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
     } yield dsi
   }
 
-  implicit class StringOps(val str: String) extends AnyVal {
-    def doesNotContain(s: String): Boolean = !str.contains(s)
-  }
 }

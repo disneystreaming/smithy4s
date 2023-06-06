@@ -108,7 +108,7 @@ class Smithy4sModuleSpec extends munit.FunSuite {
 
   test("codegen with wildcards") {
     object foo extends testKit.BaseModule with Smithy4sModule {
-      override def scalaVersion = "3.2.1"
+      override def scalaVersion = "3.3.0"
       override def ivyDeps = Agg(coreDep)
       override def scalacOptions = Seq("-Xfatal-warnings", "-source", "future")
       override def millSourcePath = resourcePath / "service"

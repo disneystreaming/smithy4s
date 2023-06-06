@@ -18,11 +18,12 @@ package smithy4s.compliancetests
 
 import ComplianceTest.ComplianceResult
 import smithy4s.ShapeId
-import smithy4s.compliancetests.internals.TestConfig
+import smithy4s.compliancetests.TestConfig
 
 case class ComplianceTest[F[_]](
     id: String,
     endpoint: ShapeId,
+    documentation: Option[String],
     config: TestConfig,
     run: F[ComplianceResult]
 ) {
@@ -30,5 +31,5 @@ case class ComplianceTest[F[_]](
 }
 
 object ComplianceTest {
-  type ComplianceResult = Either[String, Unit]
+  type ComplianceResult = cats.data.ValidatedNel[String, Unit]
 }

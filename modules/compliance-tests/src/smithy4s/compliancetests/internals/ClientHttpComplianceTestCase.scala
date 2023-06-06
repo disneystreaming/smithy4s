@@ -20,7 +20,6 @@ package internals
 import cats.implicits._
 import cats.effect.Temporal
 import cats.effect.syntax.all._
-import org.http4s.headers.`Content-Type`
 import org.http4s.HttpApp
 import org.http4s.Request
 import org.http4s.Response
@@ -32,10 +31,8 @@ import smithy4s.Document
 import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
-import org.http4s.MediaType
-import org.http4s.Headers
 import smithy4s.schema.Alt
 
 private[compliancetests] class ClientHttpComplianceTestCase[
@@ -64,23 +61,25 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     }
 
+    val receivedPathSegments =
+      request.uri.path.segments.map(_.decoded())
+    val expectedPathSegments =
+      Uri.Path.unsafeFromString(testCase.uri).segments.map(_.decoded())
+
     val expectedUri = baseUri
-      .withPath(
-        Uri.Path.unsafeFromString(testCase.uri)
-      )
+      .withPath(Uri.Path.unsafeFromString(testCase.uri))
       .withMultiValueQueryParams(
         parseQueryParams(testCase.queryParams)
       )
     val pathAssert =
       assert.eql(
-        request.uri.path.renderString,
-        expectedUri.path.renderString,
+        receivedPathSegments,
+        expectedPathSegments,
         "path test :"
       )
-    val queryAssert = assert.eql(
-      request.uri.query.renderString,
-      expectedUri.query.renderString,
-      "query test :"
+    val queryAssert = assert.testCase.checkQueryParameters(
+      testCase,
+      expectedUri.query.multiParams
     )
     val methodAssert = assert.eql(
       request.method.name.toLowerCase(),
@@ -107,6 +106,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       clientReq,
       run = {
         val input = inputFromDocument
@@ -151,6 +151,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       clientRes,
       run = {
         implicit val outputEq: Eq[O] =
@@ -169,7 +170,6 @@ private[compliancetests] class ClientHttpComplianceTestCase[
             .left
             .map(_.errorEq[F])
         }
-        val mediaType = expectedResponseType(endpoint.output)
         val status = Status.fromInt(testCase.code).liftTo[F]
 
         status.flatMap { status =>
@@ -183,9 +183,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = Headers(
-              `Content-Type`(MediaType.unsafeParse(mediaType.value))
-            ) ++ parseHeaders(testCase.headers)
+            val headers = parseHeaders(testCase.headers)
 
             req.body.compile.drain.as(
               Response[F](status)
@@ -224,6 +222,37 @@ private[compliancetests] class ClientHttpComplianceTestCase[
   }
 
   def allClientTests(): List[ComplianceTest[F]] = {
+    def toResponse[I, E, O, SE, SO, A](
+        endpoint: service.Endpoint[I, E, O, SE, SO]
+    ) = {
+      endpoint.errorable.toList
+        .flatMap { errorable =>
+          errorable.error.alternatives.flatMap { errorAlt =>
+            errorAlt.instance.hints
+              .get(HttpResponseTests)
+              .toList
+              .flatMap(_.value)
+              .filter(_.protocol == protocolTag.id.toString())
+              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
+              .map(tc =>
+                clientResponseTest(
+                  endpoint,
+                  tc,
+                  errorSchema = Some(
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        Alt.Dispatcher.fromUnion(
+                          errorable.error
+                        ),
+                        errorable
+                      )
+                  )
+                )
+              )
+          }
+        }
+    }
     service.endpoints.flatMap { case endpoint =>
       val requestTests = endpoint.hints
         .get(HttpRequestTests)
@@ -241,33 +270,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientResponseTest(endpoint, tc))
 
-      val errorResponseTests = endpoint.errorable.toList
-        .flatMap { errorrable =>
-          errorrable.error.alternatives.flatMap { errorAlt =>
-            errorAlt.instance.hints
-              .get(HttpResponseTests)
-              .toList
-              .flatMap(_.value)
-              .filter(_.protocol == protocolTag.id.toString())
-              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
-              .map(tc =>
-                clientResponseTest(
-                  endpoint,
-                  tc,
-                  errorSchema = Some(
-                    ErrorResponseTest
-                      .from(
-                        errorAlt,
-                        Alt.Dispatcher.fromUnion(
-                          errorrable.error
-                        ),
-                        errorrable
-                      )
-                  )
-                )
-              )
-          }
-        }
+      val errorResponseTests = toResponse(endpoint)
 
       requestTests ++ opResponseTests ++ errorResponseTests
     }

@@ -14,19 +14,11 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.schema
 
-import munit._
+sealed trait EnumTag
 
-class ProductSerialSmokeSpec() extends FunSuite {
-
-  test(
-    "Enumeration compiles when shapes called Product or Serializable exist"
-  ) {
-    val product = smithy4s.example.Product
-    val serial = smithy4s.example.Serializable
-    val foo = smithy4s.example.FooEnum.FOO
-    List(product, serial, foo).foreach(_ => assert(true))
-  }
-
+object EnumTag {
+  case object StringEnum extends EnumTag
+  case object IntEnum extends EnumTag
 }

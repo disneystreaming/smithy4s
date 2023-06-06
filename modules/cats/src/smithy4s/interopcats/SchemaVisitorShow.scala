@@ -116,6 +116,7 @@ final class SchemaVisitorShow(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Show[E] = Show.show { e =>
@@ -166,6 +167,14 @@ final class SchemaVisitorShow(
       self(_)
     }
     a => ss.value.show(a)
+  }
+
+  override def nullable[A](schema: Schema[A]): Show[Option[A]] = {
+    val showA = self(schema)
+    locally {
+      case None        => "None"
+      case Some(value) => s"Some(${showA.show(value)})"
+    }
   }
 
 }

@@ -14,16 +14,19 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests.internals
+package smithy4s.compliancetests
 
 import smithy.test.AppliesTo
-import smithy4s.compliancetests.internals.TestConfig.TestType
+import smithy4s.compliancetests.TestConfig.TestType
 import smithy4s.Hints
 import smithy4s.Enumeration
 import smithy4s.ShapeId
 import smithy4s.Schema
 
-case class TestConfig(appliesTo: AppliesTo, testType: TestType) {
+case class TestConfig(
+    appliesTo: AppliesTo,
+    testType: TestType
+) {
   def show: String = s"(${appliesTo.name.toLowerCase}|$testType)"
 }
 
@@ -50,7 +53,7 @@ object TestConfig {
     case object Request extends TestType("request", 0)
     case object Response extends TestType("response", 0)
 
-    val schema: Schema[TestType] = Schema.enumeration(values)
+    val schema: Schema[TestType] = Schema.stringEnumeration(values)
 
   }
 }

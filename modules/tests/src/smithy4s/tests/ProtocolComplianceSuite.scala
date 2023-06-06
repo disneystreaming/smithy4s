@@ -22,13 +22,13 @@ import cats.syntax.all._
 import fs2.io.file.Path
 import smithy4s.{Document, Schema, ShapeId}
 import smithy4s.compliancetests._
-import smithy4s.compliancetests.internals.AllowRules
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.http.{CodecAPI, PayloadError}
 import smithy4s.schema.Schema.document
 import weaver._
+import fs2.Stream
 
 abstract class ProtocolComplianceSuite
     extends EffectSuite[IO]
@@ -38,19 +38,16 @@ abstract class ProtocolComplianceSuite
 
   def getSuite: EffectSuite[IO] = this
 
-  def isAllowed(complianceTest: ComplianceTest[IO]): Boolean = false
-
+  def allRules(dsi: DynamicSchemaIndex): IO[ComplianceTest[IO] => ShouldRun]
   def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]]
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
-      .evalMap(index => decodeAllowRules(index).map(index -> _))
-      .flatMap { case (schemaIndex, allowRules) =>
-        fs2.Stream.emits(allTests(schemaIndex).map((allowRules, _)))
-      }
-      .evalMap { case (allowRules, test) =>
-        runInWeaver(allowRules, test)
+      .evalMap(index => allRules(index).map(_ -> allTests(index)))
+      .flatMap { case (rules, tests) => Stream(tests: _*).map(rules -> _) }
+      .flatMap { case (rules, test) =>
+        runInWeaver(rules, test)
       }
   }
 
@@ -107,10 +104,6 @@ abstract class ProtocolComplianceSuite
         })
     )
 
-  private def decodeAllowRules(dsi: DynamicSchemaIndex): IO[AllowRules] = {
-    Document.DObject(dsi.metadata).decode[AllowRules].liftTo[IO]
-  }
-
   def loadDynamic(
       doc: Document
   ): Either[PayloadError, DynamicSchemaIndex] = {
@@ -137,57 +130,66 @@ abstract class ProtocolComplianceSuite
   }
 
   private def runInWeaver(
-      allowList: AllowRules,
-      ct: ComplianceTest[IO]
-  ): IO[TestOutcome] = {
-    val runner: IO[Expectations] = {
-      if (isAllowed(ct) || allowList.isAllowed(ct)) {
-        ct.run
-          .map(res => expectSuccess(res))
-          .attempt
-          .map {
-            case Right(expectations) => expectations
-            case Left(throwable) =>
-              Expectations.Helpers.failure(
-                s"unexpected error when running test ${throwable.getMessage} \n $throwable"
-              )
-          }
-
-      } else
-        ct.run.attempt
-          .map(_.fold(t => Left(t.toString), identity))
-          .map(res => expectFailure(res))
+      rule: ComplianceTest[IO] => ShouldRun,
+      tc: ComplianceTest[IO]
+  ): Stream[IO, TestOutcome] = {
+    val shouldRun = rule(tc)
+    val runner: fs2.Stream[IO, IO[Expectations]] = {
+      if (shouldRun == ShouldRun.Yes) {
+        Stream {
+          tc.run
+            .map(res => expectSuccess(res))
+            .attempt
+            .map {
+              case Right(expectations) => expectations
+              case Left(throwable) =>
+                Expectations.Helpers.failure(
+                  s"unexpected error when running test ${throwable.getMessage} \n $throwable"
+                )
+            }
+        }
+      } else if (shouldRun == ShouldRun.No) { Stream.empty }
+      else
+        Stream {
+          tc.run.attempt
+            .map(_.fold(t => t.toString.invalidNel[Unit], identity))
+            .map(res => unsureWhetherShouldSucceed(tc, res))
+        }
     }
 
-    Test(
-      ct.show,
-      runner
-    )
+    runner.evalMap { runTest =>
+      Test(
+        tc.show,
+        (log: Log[IO]) => tc.documentation.foldMap(log.info(_)) *> runTest
+      )
+    }
   }
 
   def expectSuccess(
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
-    res.bifoldMap(
-      Expectations.Helpers.failure(_),
-      _ => Expectations.Helpers.success
-    )
+    res.toEither match {
+      case Left(failures) => failures.foldMap(Expectations.Helpers.failure(_))
+      case Right(_)       => Expectations.Helpers.success
+    }
   }
 
-  def expectFailure(
+  def unsureWhetherShouldSucceed(
+      test: ComplianceTest[IO],
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
-    res.bifoldMap(
-      reason =>
-        throw new weaver.IgnoredException(
-          Some(reason),
+    res.toEither match {
+      case Left(failures) =>
+        throw new weaver.CanceledException(
+          Some(failures.head),
           weaver.SourceLocation.fromContext
-        ),
-      _ =>
-        Expectations.Helpers.failure(
-          "expected failure but got success, please update the Allow list"
         )
-    )
+      case Right(_) =>
+        throw new weaver.IgnoredException(
+          Some("Passing unknown spec"),
+          weaver.SourceLocation.fromContext
+        )
+    }
   }
 
 }

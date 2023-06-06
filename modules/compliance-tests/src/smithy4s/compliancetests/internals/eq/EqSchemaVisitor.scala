@@ -59,6 +59,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Eq[E] =
@@ -171,6 +172,10 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def lazily[A](suspend: Lazy[Schema[A]]): Eq[A] = {
     val eq = suspend.map(self(_))
     (x: A, y: A) => eq.value.eqv(x, y)
+  }
+
+  override def nullable[A](schema: Schema[A]): Eq[Option[A]] = {
+    Eq.catsKernelEqForOption(self(schema))
   }
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {

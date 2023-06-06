@@ -14,19 +14,12 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.compliancetests
 
-import munit._
+sealed trait ShouldRun
 
-class ProductSerialSmokeSpec() extends FunSuite {
-
-  test(
-    "Enumeration compiles when shapes called Product or Serializable exist"
-  ) {
-    val product = smithy4s.example.Product
-    val serial = smithy4s.example.Serializable
-    val foo = smithy4s.example.FooEnum.FOO
-    List(product, serial, foo).foreach(_ => assert(true))
-  }
-
+object ShouldRun {
+  case object Yes extends ShouldRun
+  case object No extends ShouldRun
+  case object NotSure extends ShouldRun
 }

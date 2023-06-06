@@ -61,6 +61,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Option[E] = None
@@ -93,4 +94,6 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
   def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
     suspend.map(_.compile(this)).value
+
+  def nullable[A](schema: Schema[A]): Option[Option[A]] = Some(None)
 }

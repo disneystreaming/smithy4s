@@ -39,12 +39,12 @@ trait HttpEndpoint[I] {
 
 object HttpEndpoint {
 
-  def unapply[Op[_, _, _, _, _], I, E, O, SI, SO](
-      endpoint: Endpoint[Op, I, E, O, SI, SO]
+  def unapply[I, E, O, SI, SO](
+      endpoint: Endpoint.Base[I, E, O, SI, SO]
   ): Option[HttpEndpoint[I]] = cast(endpoint).toOption
 
-  def cast[Op[_, _, _, _, _], I, E, O, SI, SO](
-      endpoint: Endpoint[Op, I, E, O, SI, SO]
+  def cast[I, E, O, SI, SO](
+      endpoint: Endpoint.Base[I, E, O, SI, SO]
   ): Either[HttpEndpointError, HttpEndpoint[I]] = {
     for {
       http <- endpoint.hints

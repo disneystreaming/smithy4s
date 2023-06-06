@@ -126,4 +126,38 @@ final class RendererSpec extends munit.FunSuite {
     assert(contents.exists(_.contains(requiredIntCase)))
     assert(contents.exists(_.contains(requiredStrCase)))
   }
+  test("unspecified members of deprecated trait are rendered as N/A") {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |@deprecated
+        |integer MyInt
+        |
+        |@deprecated(message: "msg")
+        |string MyString
+        |
+        |@deprecated(since: "0.0.0")
+        |boolean MyBool
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+    assert(
+      contents.exists(
+        _.contains("""@deprecated(message = "N/A", since = "N/A")""")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains("""@deprecated(message = "msg", since = "N/A")""")
+      )
+    )
+    assert(
+      contents.exists(
+        _.contains("""@deprecated(message = "N/A", since = "0.0.0")""")
+      )
+    )
+  }
 }

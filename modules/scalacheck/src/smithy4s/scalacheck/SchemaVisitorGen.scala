@@ -85,6 +85,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Gen[E] =
@@ -122,6 +123,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   ): Gen[B] = schema.compile(this).map(refinement.unsafe)
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
+
+  def nullable[A](schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
 
   // //////////////////////////////////////////////////////////////////////////////////////
   // // HELPER FUNCTIONS

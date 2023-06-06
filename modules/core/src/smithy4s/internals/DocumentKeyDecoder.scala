@@ -25,6 +25,7 @@ import smithy4s.schema.EnumValue
 import smithy4s.schema.Primitive
 import smithy4s.schema.Primitive._
 import smithy4s.schema.SchemaVisitor
+import smithy4s.schema.EnumTag
 
 trait DocumentKeyDecoder[A] { self =>
   def apply(v: Document): Either[DocumentKeyDecoder.DecodeError, A] =
@@ -130,6 +131,7 @@ object DocumentKeyDecoder {
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
+          tag: EnumTag,
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyDecoder[E] = {

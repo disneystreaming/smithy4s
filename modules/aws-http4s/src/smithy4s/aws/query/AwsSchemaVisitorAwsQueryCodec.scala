@@ -89,6 +89,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): AwsQueryCodec[E] = {
@@ -195,6 +196,15 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       lazy val underlying: AwsQueryCodec[A] =
         suspend.map(schema => compile(schema)).value
       override def apply(a: A): FormData = { underlying(a) }
+    }
+
+  override def nullable[A](schema: Schema[A]): AwsQueryCodec[Option[A]] =
+    new AwsQueryCodec[Option[A]] {
+      val encoder = compile(schema)
+      def apply(a: Option[A]): FormData = a match {
+        case None        => FormData.Empty
+        case Some(value) => encoder(value)
+      }
     }
 
   /**

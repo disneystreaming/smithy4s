@@ -97,7 +97,7 @@ object DocumentDecoder {
 
 class DocumentDecoderSchemaVisitor(
     val cache: CompilationCache[DocumentDecoder]
-) extends SchemaVisitor.Cached[DocumentDecoder] {
+) extends SchemaVisitor.Cached[DocumentDecoder] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -205,7 +205,7 @@ class DocumentDecoderSchemaVisitor(
       tag: CollectionTag[C],
       member: Schema[A]
   ): DocumentDecoder[C[A]] = {
-    val fa = apply(member)
+    val fa = self(member)
     DocumentDecoder.instance(tag.name, "Array") { case (pp, DArray(value)) =>
       tag.fromIterator(value.iterator.zipWithIndex.map {
         case (document, index) =>
@@ -215,6 +215,18 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
+  def nullable[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
+    new DocumentDecoder[Option[A]] {
+      val decoder = schema.compile(self)
+      def expected = decoder.expected
+
+      def apply(
+          history: List[smithy4s.PayloadPath.Segment],
+          document: smithy4s.Document
+      ): Option[A] = if (document == Document.DNull) None
+      else Some(decoder(history, document))
+    }
+
   override def map[K, V](
       shapeId: ShapeId,
       hints: Hints,
@@ -222,7 +234,7 @@ class DocumentDecoderSchemaVisitor(
       value: Schema[V]
   ): DocumentDecoder[Map[K, V]] = {
     val maybeKeyDecoder = DocumentKeyDecoder.trySchemaVisitor(key)
-    val valueDecoder = apply(value)
+    val valueDecoder = self(value)
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
@@ -273,24 +285,27 @@ class DocumentDecoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): DocumentDecoder[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
-    if (hints.has[IntEnum]) {
-      val fromOrdinal =
-        values.map(e => BigDecimal(e.intValue) -> e.value).toMap
-      from(
-        s"value in [${fromName.keySet.mkString(", ")}]"
-      ) {
-        case DNumber(value) if fromOrdinal.contains(value) => fromOrdinal(value)
-      }
-    } else {
-      from(
-        s"value in [${fromName.keySet.mkString(", ")}]"
-      ) {
-        case DString(value) if fromName.contains(value) => fromName(value)
-      }
+    tag match {
+      case EnumTag.IntEnum =>
+        val fromOrdinal =
+          values.map(e => BigDecimal(e.intValue) -> e.value).toMap
+        from(
+          s"value in [${fromName.keySet.mkString(", ")}]"
+        ) {
+          case DNumber(value) if fromOrdinal.contains(value) =>
+            fromOrdinal(value)
+        }
+      case EnumTag.StringEnum =>
+        from(
+          s"value in [${fromName.keySet.mkString(", ")}]"
+        ) {
+          case DString(value) if fromName.contains(value) => fromName(value)
+        }
     }
   }
 

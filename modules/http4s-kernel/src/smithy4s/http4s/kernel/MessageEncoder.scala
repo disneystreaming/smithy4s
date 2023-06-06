@@ -27,6 +27,7 @@ import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.Metadata
 import smithy4s.schema._
+import org.http4s.Method
 
 trait MessageEncoder[F[_], A]
     extends RequestEncoder[F, A]
@@ -72,6 +73,7 @@ object MessageEncoder {
       val headers = toHeaders(metadata.headers)
       val status = metadata.statusCode
         .flatMap(Status.fromInt(_).toOption)
+        .filter(_.responseClass.isSuccess)
         .getOrElse(response.status)
       response.withHeaders(response.headers ++ headers).withStatus(status)
     }
@@ -99,7 +101,8 @@ object MessageEncoder {
       val newUri = oldUri
         .copy(path = oldUri.path.addSegments(path.map(Uri.Path.Segment(_))))
         .withMultiValueQueryParams(staticQueries)
-      request.withUri(newUri)
+      val method = toHttp4sMethod(httpEndpoint.method).getOrElse(Method.POST)
+      request.withUri(newUri).withMethod(method)
     }
 
     def addToResponse(response: Response[F], input: I): Response[F] = {

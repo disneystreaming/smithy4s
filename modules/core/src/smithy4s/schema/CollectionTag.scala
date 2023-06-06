@@ -135,7 +135,7 @@ object CollectionTag {
       case IndexedSeqTag => Some(implicitly[ClassTag[IndexedSeq[A]]])
     }
     def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): MaybeCT[Map[K,V]] = Some(implicitly[ClassTag[Map[K, V]]])
-    def enumeration[E](shapeId: ShapeId, hints: Hints, values: List[EnumValue[E]], total: E => EnumValue[E]): MaybeCT[E] = None
+    def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): MaybeCT[E] = None
     def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
     def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): MaybeCT[U] = None
     def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): MaybeCT[B] = {
@@ -144,6 +144,7 @@ object CollectionTag {
     }
     def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
     def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
+    def nullable[A](schema: Schema[A]) = Some(implicitly[ClassTag[Option[A]]])
   }
   // format: off
 }

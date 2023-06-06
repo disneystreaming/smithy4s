@@ -23,6 +23,7 @@ import Type.PrimitiveType
 import TypedNode._
 import Type.ExternalType
 import LineSegment._
+import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -85,7 +86,7 @@ private[internals] object CollisionAvoidance {
           rec,
           hints.map(modHint)
         )
-      case Enumeration(shapeId, name, values, hints) =>
+      case Enumeration(shapeId, name, tag, values, hints) =>
         val newValues = values.map {
           case EnumValue(value, intValue, name, hints) =>
             EnumValue(value, intValue, protectKeyword(name), hints.map(modHint))
@@ -93,6 +94,7 @@ private[internals] object CollisionAvoidance {
         Enumeration(
           shapeId,
           protectKeyword(name.capitalize),
+          tag,
           newValues,
           hints.map(modHint)
         )
@@ -130,6 +132,7 @@ private[internals] object CollisionAvoidance {
         modType(under),
         modNativeHint(refinementHint)
       )
+    case Nullable(underlying) => Nullable(modType(underlying))
   }
 
   private def modField(field: Field): Field = {
@@ -284,6 +287,7 @@ private[internals] object CollisionAvoidance {
     val StreamingSchema_ = NameRef("smithy4s", "StreamingSchema")
     val Enumeration_ = NameRef("smithy4s", "Enumeration")
     val EnumValue_ = NameRef("smithy4s.schema", "EnumValue")
+    val EnumTag_ = NameRef("smithy4s.schema", "EnumTag")
     val Newtype_ = NameRef("smithy4s", "Newtype")
     val Hints_ = NameRef("smithy4s", "Hints")
     val ShapeTag_ = NameRef("smithy4s", "ShapeTag")

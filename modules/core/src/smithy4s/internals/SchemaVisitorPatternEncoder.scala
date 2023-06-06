@@ -20,7 +20,7 @@ import smithy4s.schema._
 import smithy4s.http.internals.PathEncode
 import smithy4s.http.internals.PathEncode.MaybePathEncode
 import smithy4s.Bijection
-import smithy4s.{Hints, Lazy, Refinement, ShapeId, IntEnum}
+import smithy4s.{Hints, Lazy, Refinement, ShapeId}
 
 private[internals] final class SchemaVisitorPatternEncoder(
     segments: List[PatternSegment]
@@ -44,15 +44,16 @@ private[internals] final class SchemaVisitorPatternEncoder(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): MaybePathEncode[E] = {
-    if (hints.has[IntEnum]) {
-      PathEncode.from(e => total(e).intValue.toString)
-    } else {
-      PathEncode.from(e => total(e).stringValue)
+  ): MaybePathEncode[E] =
+    tag match {
+      case EnumTag.IntEnum =>
+        PathEncode.from(e => total(e).intValue.toString)
+      case EnumTag.StringEnum =>
+        PathEncode.from(e => total(e).stringValue)
     }
-  }
 
   override def struct[S](
       shapeId: ShapeId,

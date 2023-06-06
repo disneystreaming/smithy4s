@@ -27,7 +27,11 @@ import smithy4s.schema.CompilationCache
 import smithy4s.schema.Primitive
 
 private[aws] class AwsSchemaVisitorJCodec(cache: CompilationCache[JCodec])
-    extends SchemaVisitorJCodec(maxArity = 1024, cache) {
+    extends SchemaVisitorJCodec(
+      maxArity = 1024,
+      explicitNullEncoding = false,
+      cache
+    ) {
 
   override def primitive[P](
       shapeId: ShapeId,

@@ -23,6 +23,7 @@ import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.schema.{
   CollectionTag,
+  EnumTag,
   EnumValue,
   Field,
   Primitive,
@@ -30,7 +31,6 @@ import smithy4s.schema.{
   SchemaField,
   SchemaVisitor
 }
-
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 
@@ -75,6 +75,9 @@ class SchemaVisitorMetadataWriter(
     }
   }
 
+  override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
+    EmptyMetaEncode
+
   override def map[K, V](
       shapeId: ShapeId,
       hints: Hints,
@@ -101,15 +104,16 @@ class SchemaVisitorMetadataWriter(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
+      tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): MetaEncode[E] = {
-    if (hints.has[IntEnum]) {
-      StringValueMetaEncode(e => total(e).intValue.toString())
-    } else {
-      StringValueMetaEncode(e => total(e).stringValue)
+  ): MetaEncode[E] =
+    tag match {
+      case EnumTag.IntEnum =>
+        StringValueMetaEncode(e => total(e).intValue.toString())
+      case EnumTag.StringEnum =>
+        StringValueMetaEncode(e => total(e).stringValue)
     }
-  }
 
   override def struct[S](
       shapeId: ShapeId,

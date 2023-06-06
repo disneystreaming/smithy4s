@@ -99,6 +99,7 @@ private[internals] case class TypeAlias(
 private[internals] case class Enumeration(
     shapeId: ShapeId,
     name: String,
+    tag: EnumTag,
     values: List[EnumValue],
     hints: List[Hint]
 ) extends Decl
@@ -108,6 +109,13 @@ private[internals] case class EnumValue(
     name: String,
     hints: List[Hint]
 )
+
+private[internals] sealed trait EnumTag
+
+private[internals] object EnumTag {
+  case object StringEnum extends EnumTag
+  case object IntEnum extends EnumTag
+}
 
 private[internals] case class Field(
     name: String,
@@ -218,6 +226,11 @@ private[internals] object Type {
       member: Type,
       memberHints: List[Hint]
   ) extends Type
+
+  case class Nullable(
+      underlying: Type
+  ) extends Type
+
   case class Map(
       key: Type,
       keyHints: List[Hint],
