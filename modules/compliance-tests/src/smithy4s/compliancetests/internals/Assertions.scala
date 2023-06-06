@@ -32,14 +32,14 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.exists(_.contains("application/json"))
+    bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
       case (true, true) => success
       case _ =>
         val nonEmpty = if (result.isEmpty) "{}" else result
-        (parse(nonEmpty), parse(testCase)) match {
+        (parse(result), parse(nonEmpty)) match {
           case (Right(a), Right(b)) if Eq[Json].eqv(a, b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
@@ -50,23 +50,6 @@ private[internals] object assert {
             fail(s"JSONs are not equal: result json: $a \n testcase json:  $b")
         }
     }
-  }
-
-  def contains[A: Eq](
-      a: A,
-      seq: Seq[A],
-      prefix: String = ""
-  ): ComplianceResult = {
-    seq
-      .map(eql(a, _, prefix))
-      .find(_.isValid)
-      .getOrElse(
-        fail(
-          s"$prefix the result value: ${pprint.apply(a)} was not contained in the expected TestCase value ${pprint
-            .apply(seq)}."
-        )
-      )
-
   }
 
   def eql[A: Eq](
@@ -86,17 +69,14 @@ private[internals] object assert {
 
   def bodyEql(
       result: String,
-      testCase: Option[String],
+      testCase: String,
       bodyMediaType: Option[String]
   ): ComplianceResult = {
-    // added temporarily due to some inconsistency in the aws tests
-    if(testCase.isDefined)
     if (isJson(bodyMediaType)) {
-      jsonEql(result, testCase.getOrElse("{}"))
+      jsonEql(result, testCase)
     } else {
-      eql(result, testCase.getOrElse(""))
+      eql(result, testCase)
     }
-    else success
   }
 
   private def queryParamsExistenceCheck(
@@ -163,21 +143,21 @@ private[internals] object assert {
     }.combineAll
     checkRequired |+| checkForbidden
   }
-
   private def headerValuesCheck(
-      headers: Map[String, String],
+      headers: Headers,
       expected: Option[Map[String, String]]
   ) = {
-    expected match {
-      case Some(expectedHeaders) =>
-        expectedHeaders.toList.map { case (key, testValue) =>
-          headers.get(key) match {
-            case Some(realizedValue) => assert.eql(realizedValue, testValue)
-            case None => fail(s"Header $key is not present in the request")
+    expected.toList
+      .flatMap(_.toList)
+      .map { case (key, expectedValue) =>
+        headers
+          .get(CIString(key))
+          .map { v =>
+            assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
           }
-        }.combineAll
-      case None => success
-    }
+          .getOrElse(success)
+      }
+      .combineAll
   }
 
   object testCase {
@@ -206,8 +186,7 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks =
-        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
+      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -220,8 +199,7 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks =
-        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
+      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
       existenceChecks |+| valueChecks
     }
   }

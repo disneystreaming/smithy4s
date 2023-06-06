@@ -22,7 +22,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
 import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
 
 import java.nio.ByteBuffer
-
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
 
@@ -60,7 +59,7 @@ abstract class JsonCodecAPI(
       codec: Codec[A],
       bytes: Array[Byte]
   ): Either[PayloadError, BodyPartial[A]] = {
-    val nonEmpty = if(bytes.nonEmpty) bytes else "{}".getBytes
+    val nonEmpty = if (bytes.isEmpty) "{}".getBytes else bytes
     try {
       Right {
         BodyPartial(
@@ -77,7 +76,8 @@ abstract class JsonCodecAPI(
       codec: Codec[A],
       bytes: ByteBuffer
   ): Either[PayloadError, BodyPartial[A]] = {
-    val nonEmpty = if(bytes.hasRemaining) bytes else bytes.put("{}".getBytes)
+    val nonEmpty =
+      if (bytes.remaining() == 0) bytes.put("{}".getBytes) else bytes
     try {
       Right {
         BodyPartial(

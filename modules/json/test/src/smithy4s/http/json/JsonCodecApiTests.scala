@@ -100,4 +100,5 @@ class JsonCodecApiTests extends FunSuite {
       assertEquals(decoded, Right(None))
     }
   }
+
 }
