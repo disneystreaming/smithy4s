@@ -42,7 +42,6 @@ final case class AllowRules(
     allowList: Vector[AllowRule],
     disallowList: Vector[AllowRule]
 ) {
-  def asFunction[F[_]]: ComplianceTest[F] => ShouldRun = shouldRun[F](_)
 
   def shouldRun[F[_]](complianceTest: ComplianceTest[F]): ShouldRun = {
     if (disallowList.exists(_.matches(complianceTest))) ShouldRun.No

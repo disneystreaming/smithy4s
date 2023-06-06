@@ -774,7 +774,7 @@ lazy val testUtils = projectMatrix
  */
 lazy val tests = projectMatrix
   .in(file("modules/tests"))
-  .dependsOn(core,complianceTests,dynamic)
+  .dependsOn(core, complianceTests, dynamic)
   .settings(
     allowedNamespaces := Seq(
       "smithy4s.example"
