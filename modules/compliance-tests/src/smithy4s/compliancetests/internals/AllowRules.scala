@@ -49,6 +49,11 @@ final case class AllowRules(
     else ShouldRun.NotSure
   }
 
+  def filterRules(predicate: AllowRule => Boolean): AllowRules = {
+    val filteredAllowList = allowList.filter(predicate)
+    AllowRules(filteredAllowList, disallowList)
+  }
+
 }
 
 object AllowRules {

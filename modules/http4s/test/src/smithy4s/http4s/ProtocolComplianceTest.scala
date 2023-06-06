@@ -51,6 +51,13 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
 
   def getSuite: EffectSuite[IO] = this
 
+  // Filtering these rule because on JS-specific issues,
+  // in particular around floating-point precision.
+  val jsDisallowed = Set(
+    "RestJsonInputWithHeadersAndAllParams",
+    "RestJsonHttpRequestLabelEscaping"
+  )
+
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
@@ -60,6 +67,9 @@ object ProtocolComplianceTest extends EffectSuite[IO] with BaseCatsSuite {
           borrowedTests.simpleRestJsonBorrowedTests
             .get(ShapeId("aws.protocols", "restJson1"))
             .getOrElse(AllowRules.empty)
+            .filterRules(rule =>
+              !(Platform.isJS && jsDisallowed.exists(rule.id.matches))
+            )
         fs2.Stream.emits(
           allTests(schemaIndex).map((allowRulesFromRestJson1, _))
         )
