@@ -46,20 +46,21 @@ private[internals] case class DynamicService(
     (input, endpoint)
   }
 
+  type Alg[P[_, _, _, _, _]] = PolyFunction5[DynamicOp, P]
+
+  override val service: Service[Alg] = this
+
   type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[StaticOp, P]
+
   override val static
       : StaticService.Aux[StaticAlg, PolyFunction5.From[DynamicOp]#Algebra] =
     new StDynamicService(
       this
     )
 
-  type Alg[P[_, _, _, _, _]] = PolyFunction5[DynamicOp, P]
-
-  override val service: Service[Alg] = this
-
 }
 
-// TODO: better name
+// TODO: better name? different notions of static vs dynamic here
 private[internals] class StDynamicService(
     override val service: DynamicService
 ) extends StaticService[PolyFunction5.From[StaticOp]#Algebra] {
