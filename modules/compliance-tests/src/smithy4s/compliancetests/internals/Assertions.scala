@@ -165,8 +165,6 @@ private[internals] object assert {
   }
 
   private def headerValuesCheck(
-      headers: Headers,
-      expected: Headers
       headers: Map[String, String],
       expected: Option[Map[String, String]]
   ) = {
@@ -208,7 +206,6 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, parseHeaders(tc.headers))
       val valueChecks =
         assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks

@@ -25,6 +25,10 @@ import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
 import org.http4s.Uri
+import org.http4s.{Header}
+
+import org.http4s.Headers
+import org.typelevel.ci.CIString
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.Document
@@ -178,7 +182,16 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = parseHeaders(testCase.headers)
+            def addHeaders(maybe: Option[Map[String, String]]): Headers = {
+              maybe.fold(Headers.empty) {
+                map =>
+                  Headers(map.toList.map {
+                    case (k, v) => Header.Raw(CIString(k), v)
+                  })
+              }
+            }
+
+            val headers = addHeaders(testCase.headers)
 
             req.body.compile.drain.as(
               Response[F](status)
