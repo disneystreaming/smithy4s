@@ -17,16 +17,7 @@
 package smithy4s
 package internals
 
-import smithy4s.schema.{
-  EnumTag,
-  Primitive,
-  EnumValue,
-  SchemaField,
-  SchemaAlt,
-  Alt,
-  SchemaVisitor,
-  CollectionTag
-}
+import smithy4s.schema._
 import smithy4s.schema.Primitive.PTimestamp
 
 object SchemaDescription extends SchemaVisitor[SchemaDescription] {
@@ -60,6 +51,10 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
     SchemaDescription.of(apply(schema))
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
+
+  override def nullable[A](schema: Schema[A]): SchemaDescription[Option[A]] =
+    SchemaDescription.of("Nullable")
+
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
     suspend.map(s => SchemaDescription.of(apply(s))).value
   // format: on

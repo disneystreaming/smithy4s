@@ -30,7 +30,7 @@ import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import cats.MonadThrow
 import java.util.concurrent.TimeoutException
 private[compliancetests] class ServerHttpComplianceTestCase[
@@ -96,6 +96,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       serverReq,
       run = {
         deferred[I].flatMap { inputDeferred =>
@@ -171,6 +172,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       serverRes,
       run = {
         val (ammendedService, syntheticRequest) = prepareService(endpoint)

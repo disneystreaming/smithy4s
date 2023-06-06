@@ -21,7 +21,16 @@ package internals
 import smithy.api.{HttpQueryParams, MediaType}
 import smithy4s.http.HttpBinding
 import smithy4s.http.internals.MetaEncode._
-import smithy4s.schema.{CollectionTag, EnumTag, EnumValue, Field, Primitive, SchemaAlt, SchemaField, SchemaVisitor}
+import smithy4s.schema.{
+  CollectionTag,
+  EnumTag,
+  EnumValue,
+  Field,
+  Primitive,
+  SchemaAlt,
+  SchemaField,
+  SchemaVisitor
+}
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
 
@@ -70,6 +79,9 @@ class SchemaVisitorMetadataWriter(
       case _ => MetaEncode.empty
     }
   }
+
+  override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
+    EmptyMetaEncode
 
   override def map[K, V](
       shapeId: ShapeId,

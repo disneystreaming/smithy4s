@@ -25,7 +25,7 @@ import smithy4s.compliancetests._
 import smithy4s.http.HttpMediaType
 import smithy4s.schema.Schema
 
-object AwsJson {
+object AwsReverseRouter {
   def impl[A](
       protocol: smithy4s.ShapeTag.Companion[A]
   ): ReverseRouter[IO] = new ReverseRouter[IO] {

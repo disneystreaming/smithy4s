@@ -31,7 +31,7 @@ import smithy4s.Document
 import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
 import smithy4s.schema.Alt
 
@@ -61,17 +61,20 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       )
     }
 
+    val receivedPathSegments =
+      request.uri.path.segments.map(_.decoded())
+    val expectedPathSegments =
+      Uri.Path.unsafeFromString(testCase.uri).segments.map(_.decoded())
+
     val expectedUri = baseUri
-      .withPath(
-        Uri.Path.unsafeFromString(testCase.uri)
-      )
+      .withPath(Uri.Path.unsafeFromString(testCase.uri))
       .withMultiValueQueryParams(
         parseQueryParams(testCase.queryParams)
       )
     val pathAssert =
       assert.eql(
-        decodeUri(request.uri.path.renderString),
-        decodeUri(expectedUri.path.renderString),
+        receivedPathSegments,
+        expectedPathSegments,
         "path test :"
       )
     val queryAssert = assert.testCase.checkQueryParameters(
@@ -103,6 +106,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       clientReq,
       run = {
         val input = inputFromDocument
@@ -147,6 +151,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     ComplianceTest[F](
       testCase.id,
       endpoint.id,
+      testCase.documentation,
       clientRes,
       run = {
         implicit val outputEq: Eq[O] =

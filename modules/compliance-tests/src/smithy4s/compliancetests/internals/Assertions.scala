@@ -22,15 +22,14 @@ import ComplianceTest._
 import cats.Eq
 import io.circe.Json
 import org.http4s.Headers
-import org.http4s.Header
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
 
 private[internals] object assert {
 
-  def success: ComplianceResult = Right(())
-  def fail(msg: String): ComplianceResult = Left(msg)
+  def success: ComplianceResult = ().validNel
+  def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
 
   private def isJson(bodyMediaType: Option[String]) =
     bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
@@ -60,7 +59,7 @@ private[internals] object assert {
   ): ComplianceResult = {
     seq
       .map(eql(a, _, prefix))
-      .find(_.isRight)
+      .find(_.isValid)
       .getOrElse(
         fail(
           s"$prefix the result value: ${pprint.apply(a)} was not contained in the expected TestCase value ${pprint
@@ -99,37 +98,31 @@ private[internals] object assert {
 
   private def queryParamsExistenceCheck(
       queryParameters: Map[String, Seq[String]],
-      expected: Either[Option[List[String]], Option[List[String]]]
+      requiredParameters: Option[List[String]],
+      forbiddenParameters: Option[List[String]]
   ) = {
-    expected match {
-      case Left(Some(forbidQueryParams)) =>
-        val queryKeys = queryParameters.toList.map(_._1)
-        if (forbidQueryParams.intersect(queryKeys).nonEmpty) {
-          fail(
-            s"Query parameters ${forbidQueryParams.intersect(queryKeys)} are forbidden in the request."
-          )
-        } else {
-          success
-        }
-      case Right(Some(requiredQueryParams)) =>
-        val queryKeys = queryParameters.toList.map(_._1)
-        if (
-          requiredQueryParams
-            .intersect(queryKeys)
-            .size != requiredQueryParams.size
-        ) {
-          fail(
-            s"Query parameters ${requiredQueryParams.diff(queryKeys)} are required in the request."
-          )
-        } else {
-          success
-        }
-      case _ => success
-    }
+    val receivedParams = queryParameters.keySet
+    val checkRequired = requiredParameters.foldMap { requiredParams =>
+      requiredParams.traverse_ { param =>
+        val errorMessage =
+          s"Required query parameter $param was not present in the request"
 
+        if (receivedParams.contains(param)) success
+        else fail(errorMessage)
+      }
+    }
+    val checkForbidden = forbiddenParameters.foldMap { forbiddenParams =>
+      forbiddenParams.traverse_ { param =>
+        val errorMessage =
+          s"Forbidden query parameter $param was present in the request"
+        if (receivedParams.contains(param)) fail(errorMessage)
+        else success
+      }
+    }
+    checkRequired |+| checkForbidden
   }
 
-  private def queryParamsCheck(
+  private def queryParamValuesCheck(
       queryParameters: Map[String, Seq[String]],
       testCase: Option[List[String]]
   ) = {
@@ -154,36 +147,35 @@ private[internals] object assert {
 
   private def headersExistenceCheck(
       headers: Headers,
-      expected: Either[Option[List[String]], Option[List[String]]]
+      requiredHeaders: Option[List[String]],
+      forbiddenHeaders: Option[List[String]]
   ) = {
-    expected match {
-      case Left(forbidHeaders) =>
-        forbidHeaders.toList.flatten.collect {
-          case key if headers.get(CIString(key)).isDefined =>
-            assert.fail(s"Header $key is forbidden in the request.")
-        }.combineAll
-      case Right(requireHeaders) =>
-        requireHeaders.toList.flatten.collect {
-          case key if headers.get(CIString(key)).isEmpty =>
-            assert.fail(s"Header $key is required request.")
-        }.combineAll
-    }
+    val checkRequired = requiredHeaders.toList.flatten.collect {
+      case key if headers.get(CIString(key)).isEmpty =>
+        assert.fail(s"Header $key is required request.")
+    }.combineAll
+    val checkForbidden = forbiddenHeaders.toList.flatten.collect {
+      case key if headers.get(CIString(key)).isDefined =>
+        assert.fail(s"Header $key is forbidden in the request.")
+    }.combineAll
+    checkRequired |+| checkForbidden
   }
 
-  private def headersCheck(
+  private def headerValuesCheck(
       headers: Headers,
-      expected: Headers
+      expected: Option[Map[String, String]]
   ) = {
-    expected.headers.map { case Header.Raw(key, expectedValue) =>
-      headers
-        .get(key)
-        .map { v =>
-          contains(expectedValue, v.toList.map(_.value), "Header: ")
-        }
-        .getOrElse(
-          assert.fail(s"'$key' header is missing")
-        )
-    }.combineAll
+    expected.toList
+      .flatMap(_.toList)
+      .map { case (key, expectedValue) =>
+        headers
+          .get(CIString(key))
+          .map { v =>
+            assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
+          }
+          .getOrElse(success)
+      }
+      .combineAll
   }
 
   object testCase {
@@ -192,33 +184,41 @@ private[internals] object assert {
         tc: HttpRequestTestCase,
         queryParameters: Map[String, Seq[String]]
     ): ComplianceResult = {
-      assert.queryParamsExistenceCheck(
-        queryParameters,
-        Left(tc.forbidQueryParams)
-      ) *>
-        assert.queryParamsExistenceCheck(
-          queryParameters,
-          Right(tc.requireQueryParams)
-        ) *>
-        assert.queryParamsCheck(queryParameters, tc.queryParams)
+      val existenceChecks = assert.queryParamsExistenceCheck(
+        queryParameters = queryParameters,
+        requiredParameters = tc.requireQueryParams,
+        forbiddenParameters = tc.forbidQueryParams
+      )
+      val valueChecks =
+        assert.queryParamValuesCheck(queryParameters, tc.queryParams)
 
+      existenceChecks |+| valueChecks
     }
+
     def checkHeaders(
         tc: HttpRequestTestCase,
         headers: Headers
     ): ComplianceResult = {
-      assert.headersExistenceCheck(headers, Left(tc.forbidHeaders)) *>
-        assert.headersExistenceCheck(headers, Right(tc.requireHeaders)) *>
-        assert.headersCheck(headers, parseHeaders(tc.headers))
+      val existenceChecks = assert.headersExistenceCheck(
+        headers,
+        requiredHeaders = tc.requireHeaders,
+        forbiddenHeaders = tc.forbidHeaders
+      )
+      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      existenceChecks |+| valueChecks
     }
 
     def checkHeaders(
         tc: HttpResponseTestCase,
         headers: Headers
     ): ComplianceResult = {
-      assert.headersExistenceCheck(headers, Left(tc.forbidHeaders)) *>
-        assert.headersExistenceCheck(headers, Right(tc.requireHeaders)) *>
-        assert.headersCheck(headers, parseHeaders(tc.headers))
+      val existenceChecks = assert.headersExistenceCheck(
+        headers,
+        requiredHeaders = tc.requireHeaders,
+        forbiddenHeaders = tc.forbidHeaders
+      )
+      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      existenceChecks |+| valueChecks
     }
   }
 }

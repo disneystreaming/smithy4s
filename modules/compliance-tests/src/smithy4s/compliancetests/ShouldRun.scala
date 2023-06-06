@@ -16,19 +16,10 @@
 
 package smithy4s.compliancetests
 
-import ComplianceTest.ComplianceResult
-import smithy4s.ShapeId
+sealed trait ShouldRun
 
-case class ComplianceTest[F[_]](
-    id: String,
-    endpoint: ShapeId,
-    documentation: Option[String],
-    config: TestConfig,
-    run: F[ComplianceResult]
-) {
-  def show = s"${endpoint.id}${config.show}: $id"
-}
-
-object ComplianceTest {
-  type ComplianceResult = cats.data.ValidatedNel[String, Unit]
+object ShouldRun {
+  case object Yes extends ShouldRun
+  case object No extends ShouldRun
+  case object NotSure extends ShouldRun
 }

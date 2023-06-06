@@ -29,6 +29,7 @@ package object example {
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type OrderNumber = smithy4s.example.OrderNumber.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
+  type SparseStringList = smithy4s.example.SparseStringList.Type
   type TestStructurePattern = smithy4s.example.TestStructurePattern.Type
   type ArbitraryData = smithy4s.example.ArbitraryData.Type
   type DogName = smithy4s.example.DogName.Type
@@ -38,6 +39,7 @@ package object example {
   type DefaultStringMap = smithy4s.example.DefaultStringMap.Type
   @deprecated(message = "N/A", since = "N/A")
   type Strings = smithy4s.example.Strings.Type
+  type SparseStringMap = smithy4s.example.SparseStringMap.Type
   type PersonAge = smithy4s.example.PersonAge.Type
   @deprecated(message = "N/A", since = "N/A")
   type DeprecatedString = smithy4s.example.DeprecatedString.Type

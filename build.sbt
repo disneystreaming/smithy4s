@@ -774,7 +774,7 @@ lazy val testUtils = projectMatrix
  */
 lazy val tests = projectMatrix
   .in(file("modules/tests"))
-  .dependsOn(core)
+  .dependsOn(core, complianceTests, dynamic)
   .settings(
     allowedNamespaces := Seq(
       "smithy4s.example"
@@ -873,7 +873,8 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "structure_pattern.smithy",
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "typeclass.smithy"
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "typeclass.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "sparse.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     libraryDependencies += Dependencies.Http4s.emberServer.value,
