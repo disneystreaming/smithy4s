@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests.internals
+package smithy4s.compliancetests
 
 import smithy.test.AppliesTo
-import smithy4s.compliancetests.internals.TestConfig.TestType
+import smithy4s.compliancetests.TestConfig.TestType
 import smithy4s.Hints
 import smithy4s.Enumeration
 import smithy4s.ShapeId

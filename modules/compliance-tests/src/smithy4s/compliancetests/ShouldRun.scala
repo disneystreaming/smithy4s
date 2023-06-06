@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s.compliancetests.internals
+package smithy4s.compliancetests
 
-private[compliancetests] sealed trait ShouldRun
+sealed trait ShouldRun
 
 object ShouldRun {
   case object Yes extends ShouldRun
