@@ -47,7 +47,8 @@ import smithy4s.schema.CompilationCache
  *
  */
 class SchemaVisitorMetadataWriter(
-    val cache: CompilationCache[MetaEncode]
+    val cache: CompilationCache[MetaEncode],
+    commaDelimitedEncoding: Boolean
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
 
@@ -68,11 +69,19 @@ class SchemaVisitorMetadataWriter(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaEncode[C[A]] = {
-    self(member) match {
-      case StringValueMetaEncode(f) =>
-        StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
-      case _ => MetaEncode.empty
+    SchemaVisitorHeaderMerge(member) match {
+      case Some(toMergeableValue) if commaDelimitedEncoding =>
+        StringValueMetaEncode[C[A]](c =>
+          tag.iterator(c).map(toMergeableValue).mkString(", ")
+        )
+      case _ =>
+        self(member) match {
+          case StringValueMetaEncode(f) =>
+            StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
+          case _ => MetaEncode.empty
+        }
     }
+
   }
 
   override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =

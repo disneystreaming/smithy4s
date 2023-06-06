@@ -305,7 +305,9 @@ object Metadata {
             ext(a)
         }
       }
-      schema.compile(new SchemaVisitorMetadataWriter(cache)) match {
+      schema.compile(
+        new SchemaVisitorMetadataWriter(cache, commaDelimitedEncoding = false)
+      ) match {
         case StructureMetaEncode(f) => { (a: A) =>
           val struct = f(a)
           struct.copy(statusCode = toStatusCode(a))

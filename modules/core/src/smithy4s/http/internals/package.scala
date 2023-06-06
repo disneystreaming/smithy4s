@@ -19,6 +19,8 @@ package http
 
 package object internals {
 
+  private[internals] type AwsMergeableHeader[A] = Option[A => String]
+  private[internals] type AwsHeaderSplitter[A] = Option[String => Seq[String]]
   private[http] type HttpCode[A] = A => Option[Int]
 
   private[internals] implicit class vectorOps[A](val vector: Vector[A])
