@@ -93,17 +93,18 @@ object MessageDecoder {
     * The rest is decoded from the body.
     */
   def restSchemaCompiler[F[_]](
-      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
+      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]],
+      metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder]
   )(implicit
       F: Concurrent[F]
   ): CachedSchemaCompiler[MessageDecoder[F, *]] =
     new CachedSchemaCompiler[MessageDecoder[F, *]] {
-      type MetadataCache = Metadata.Decoder.Cache
+      type MetadataCache = metadataDecoderCompiler.Cache
       type EntityCache = entityDecoderCompiler.Cache
       type Cache = (EntityCache, MetadataCache)
       def createCache(): Cache = {
         val eCache = entityDecoderCompiler.createCache()
-        val mCache = Metadata.Decoder.createCache()
+        val mCache = metadataDecoderCompiler.createCache()
         (eCache, mCache)
       }
       def fromSchema[A](schema: Schema[A]): MessageDecoder[F, A] =
@@ -117,7 +118,7 @@ object MessageDecoder {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
             val metadataDecoder =
-              Metadata.Decoder.fromSchema(metadataSchema, cache._2)
+              metadataDecoderCompiler.fromSchema(metadataSchema, cache._2)
             MessageDecoder.fromMetadataDecoder(
               metadataDecoder,
               drainMessage = true
@@ -130,7 +131,7 @@ object MessageDecoder {
 
           case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
             val metadataDecoder =
-              Metadata.Decoder.fromSchema(metadataSchema, cache._2)
+              metadataDecoderCompiler.fromSchema(metadataSchema, cache._2)
             val metadataMessageDecoder =
               MessageDecoder.fromMetadataDecoder[F, PartialData[A]](
                 metadataDecoder,
