@@ -31,7 +31,7 @@ private[internals] case class DynamicService(
   private lazy val endpointMap: Map[ShapeId, Endpoint[_, _, _, _, _]] =
     endpoints.map(ep => ep.id -> ep).toMap
 
-  private[internals] def getEndpoint[I, E, O, SI, SO](
+  def getEndpoint[I, E, O, SI, SO](
       id: ShapeId
   ): Endpoint[I, E, O, SI, SO] =
     endpointMap
@@ -73,7 +73,7 @@ private[internals] class StDynamicService(
   ): PolyFunction5[StaticOp, G] =
     alg.andThen(function)
 
-  override def endpoints: PolyFunction5[StaticOp, service.Endpoint] =
+  override val endpoints: PolyFunction5[StaticOp, service.Endpoint] =
     new PolyFunction5[StaticOp, service.Endpoint] {
       override def apply[I, E, O, SI, SO](
           op: StaticOp[I, E, O, SI, SO]
