@@ -19,11 +19,20 @@ package http
 package internals
 
 import smithy.api.MediaType
-import smithy4s.http.internals.MetaDecode.{EmptyMetaDecode, PutField, StringCollectionMetaDecode, StringListMapMetaDecode, StringMapMetaDecode, StringValueMetaDecode, StructureMetaDecode}
+import smithy4s.http.internals.MetaDecode.{
+  EmptyMetaDecode,
+  PutField,
+  StringCollectionMetaDecode,
+  StringListMapMetaDecode,
+  StringMapMetaDecode,
+  StringValueMetaDecode,
+  StructureMetaDecode
+}
 import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
-import scala.collection.mutable.{Map=> MMap}
+import scala.collection.mutable.{Map => MMap}
+import java.util.Base64
 private[http] class SchemaVisitorMetadataReader(
     val cache: CompilationCache[MetaDecode]
 ) extends SchemaVisitor.Cached[MetaDecode]
@@ -41,8 +50,15 @@ private[http] class SchemaVisitorMetadataReader(
           _ => Right(MMap.empty[String, Any]),
           Some(_ => Right(()))
         )
-      case Primitive.PString => MetaDecode.from[String](desc)(str => Some(if(hints.has[MediaType]) new String(java.util.Base64.getDecoder().decode(str)) else str))
 
+      case other if hints.has[MediaType] =>
+        Primitive.stringParser(other, hints) match {
+          case Some(parse) =>
+            MetaDecode.from(desc)(
+              parse.compose(str => new String(Base64.getDecoder().decode(str.getBytes())))
+            )
+          case None => MetaDecode.EmptyMetaDecode
+        }
       case other =>
         Primitive.stringParser(other, hints) match {
           case Some(parse) => MetaDecode.from(desc)(parse)

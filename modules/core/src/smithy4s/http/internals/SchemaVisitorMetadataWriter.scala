@@ -33,6 +33,7 @@ import smithy4s.schema.{
 }
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
+import java.util.Base64
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -56,14 +57,16 @@ class SchemaVisitorMetadataWriter(
       hints: Hints,
       tag: Primitive[P]
   ): MetaEncode[P] = {
-    tag match {
-      case Primitive.PString =>
-        StringValueMetaEncode(str => if (hints.has[MediaType]) java.util.Base64.getEncoder().encodeToString(str.getBytes) else str)
-      case _ =>
-        Primitive.stringWriter(tag, hints) match {
-          case None => MetaEncode.empty[P]
-          case Some(write) => StringValueMetaEncode(write)
-        }
+    Primitive.stringWriter(tag, hints) match {
+      case None => MetaEncode.empty[P]
+      case Some(write) if (hints.has[MediaType]) =>
+        StringValueMetaEncode(
+          write andThen (str =>
+            Base64.getEncoder().encodeToString(str.getBytes())
+          )
+        )
+      case Some(write) =>
+        StringValueMetaEncode(write)
     }
   }
 
