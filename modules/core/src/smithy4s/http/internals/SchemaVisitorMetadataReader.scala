@@ -57,7 +57,7 @@ private[http] class SchemaVisitorMetadataReader(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaDecode[C[A]] = {
-    self(member) match {
+    self(member.addHints(hints)) match {
       case MetaDecode.StringValueMetaDecode(f) =>
         MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
           tag.fromIterator(it.map(f))

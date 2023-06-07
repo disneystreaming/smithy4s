@@ -224,7 +224,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                 val bodyAssert = testCase.body
                   .map(body =>
                     assert
-                      .bodyEql(body, Some(actualBody), testCase.bodyMediaType)
+                      .bodyEql(body, actualBody, testCase.bodyMediaType)
                   )
                 val assertions =
                   bodyAssert.toList :+
