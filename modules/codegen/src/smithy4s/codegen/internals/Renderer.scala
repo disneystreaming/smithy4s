@@ -330,7 +330,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"def ${op.methodName}: F[${op
               .renderAlgParams(opTraitNameRef.name)}]"
           )
-        },
+        }
       ),
       newline,
       obj(
@@ -372,7 +372,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
         },
         line"type StaticAlg[F[_, _, _, _, _]] = ${genNameStatic}[F]",
-        line"val static: ${StaticService_}.Aux[${genNameStatic}, ${genName}] = ${genNameStatic}",
+        line"val static: ${StaticService_}.Aux[${genNameStatic}, ${genName}] = ${genNameStatic}"
       ),
       newline,
       obj(
@@ -382,21 +382,26 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"type Alg[F[_, _, _, _, _]] = ${genNameRef}[F]",
         line"val service: $genName.type = $genName",
         newline,
-        block(line"def endpoints: ${genNameStaticRef}[service.Endpoint] = new ${genNameStaticRef}[service.Endpoint]")(
+        block(
+          line"def endpoints: ${genNameStaticRef}[service.Endpoint] = new ${genNameStaticRef}[service.Endpoint]"
+        )(
           ops.map { op =>
-            line"def ${op.methodName}: service.Endpoint[${op.renderAlgParams(opTraitNameRef.name)}] = ${opTraitNameRef}.${op.name}"
+            line"def ${op.methodName}: service.Endpoint[${op
+              .renderAlgParams(opTraitNameRef.name)}] = ${opTraitNameRef}.${op.name}"
           }
         ),
         newline,
         block(
-        line"def toPolyFunction[P2[_, _, _, _, _]](algebra: ${genNameStaticRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
+          line"def toPolyFunction[P2[_, _, _, _, _]](algebra: ${genNameStaticRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
         )(
           line"def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =",
-          block(line"fa match")(
-            ops.map { op =>
-              line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}"
-            }
-          )
+          if (ops.isEmpty) line"""sys.error("impossible")"""
+          else
+            block(line"fa match")(
+              ops.map { op =>
+                line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}"
+              }
+            )
         ),
         newline,
         block(
@@ -410,7 +415,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"def ${op.methodName}: G[${argsTypes}] = f[${argsTypes}](alg.${op.methodName})"
             }
           )
-        ),
+        )
       ),
       newline,
       block(
