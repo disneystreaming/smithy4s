@@ -50,7 +50,7 @@ private[internals] case class DynamicService(
 
   override val service: Service[Alg] = this
 
-  type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[StaticOp, P]
+  type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[NoInputOp, P]
 
   override val static
       : StaticService.Aux[StaticAlg, PolyFunction5.From[DynamicOp]#Algebra] =
@@ -63,32 +63,32 @@ private[internals] case class DynamicService(
 // TODO: better name? different notions of static vs dynamic here
 private[internals] class StDynamicService(
     override val service: DynamicService
-) extends StaticService[PolyFunction5.From[StaticOp]#Algebra] {
+) extends StaticService[PolyFunction5.From[NoInputOp]#Algebra] {
 
   type Alg[F[_, _, _, _, _]] = PolyFunction5[DynamicOp, F]
 
   override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
-      alg: PolyFunction5[StaticOp, F],
+      alg: PolyFunction5[NoInputOp, F],
       function: PolyFunction5[F, G]
-  ): PolyFunction5[StaticOp, G] =
+  ): PolyFunction5[NoInputOp, G] =
     alg.andThen(function)
 
-  override val endpoints: PolyFunction5[StaticOp, service.Endpoint] =
-    new PolyFunction5[StaticOp, service.Endpoint] {
+  override val endpoints: PolyFunction5[NoInputOp, service.Endpoint] =
+    new PolyFunction5[NoInputOp, service.Endpoint] {
       override def apply[I, E, O, SI, SO](
-          op: StaticOp[I, E, O, SI, SO]
+          op: NoInputOp[I, E, O, SI, SO]
       ): Endpoint[DynamicOp, I, E, O, SI, SO] =
         service.getEndpoint(op.id)
     }
 
   override def toPolyFunction[P2[_, _, _, _, _]](
-      algebra: PolyFunction5[StaticOp, P2]
+      algebra: PolyFunction5[NoInputOp, P2]
   ): PolyFunction5[service.Endpoint, P2] =
     new PolyFunction5[service.Endpoint, P2] {
       override def apply[I, E, O, SI, SO](
           endpoint: smithy4s.Endpoint[DynamicOp, I, E, O, SI, SO]
       ): P2[I, E, O, SI, SO] = {
-        algebra.apply(StaticOp(endpoint.id))
+        algebra.apply(NoInputOp(endpoint.id))
       }
     }
 
