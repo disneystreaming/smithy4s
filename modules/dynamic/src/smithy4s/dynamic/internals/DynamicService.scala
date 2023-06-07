@@ -52,7 +52,7 @@ private[internals] case class DynamicService(
 
   type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[NoInputOp, P]
 
-  override val static
+  val static
       : StaticService.Aux[StaticAlg, PolyFunction5.From[DynamicOp]#Algebra] =
     new StDynamicService(
       this
