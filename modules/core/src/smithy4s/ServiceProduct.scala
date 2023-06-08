@@ -18,9 +18,9 @@ trait ServiceProduct[Prod[_[_, _, _, _, _]]] extends FunctorK5[Prod] {
   val service: Service[Alg]
   def endpointsProduct: Prod[service.Endpoint]
 
-  def toPolyFunction[Prod2[_, _, _, _, _]](
-      algebra: Prod[Prod2]
-  ): PolyFunction5[service.Endpoint, Prod2]
+  def toPolyFunction[Func[_, _, _, _, _]](
+      algebra: Prod[Func]
+  ): PolyFunction5[service.Endpoint, Func]
 }
 
 object ServiceProduct {
