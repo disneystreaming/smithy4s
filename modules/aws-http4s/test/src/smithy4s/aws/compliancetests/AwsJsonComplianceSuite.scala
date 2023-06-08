@@ -35,10 +35,6 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
-      "AwsJson11MapsSerializeNullValues",
-      "AwsJson11ListsSerializeNull",
-      "AwsJson11MapsDeserializeNullValues",
-      "AwsJson11ListsDeserializeNull",
       "HostWithPathOperation",
       "PutWithContentEncoding"
     )
