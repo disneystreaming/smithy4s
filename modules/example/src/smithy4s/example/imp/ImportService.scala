@@ -5,9 +5,9 @@ import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
+import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.example.error.NotFoundError
@@ -27,7 +27,7 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](this)
 }
 
-trait ImportServiceStaticGen[F[_, _, _, _, _]] {
+trait ImportServiceProductGen[F[_, _, _, _, _]] {
   self =>
 
   def importOperation: F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]
@@ -63,27 +63,27 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
-  type StaticAlg[F[_, _, _, _, _]] = ImportServiceStaticGen[F]
-  val static: StaticService.Aux[ImportServiceStaticGen, ImportServiceGen] = ImportServiceStaticGen
+  type Prod[F[_, _, _, _, _]] = ImportServiceProductGen[F]
+  val serviceProduct: ServiceProduct.Aux[ImportServiceProductGen, ImportServiceGen] = ImportServiceProductGen
 }
 
-object ImportServiceStaticGen extends StaticService[ImportServiceStaticGen] {
+object ImportServiceProductGen extends ServiceProduct[ImportServiceProductGen] {
   type Alg[F[_, _, _, _, _]] = ImportServiceGen[F]
   val service: ImportServiceGen.type = ImportServiceGen
 
-  def endpoints: ImportServiceStaticGen[service.Endpoint] = new ImportServiceStaticGen[service.Endpoint] {
+  def endpointsProduct: ImportServiceProductGen[service.Endpoint] = new ImportServiceProductGen[service.Endpoint] {
     def importOperation: service.Endpoint[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = ImportServiceOperation.ImportOperation
   }
 
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: ImportServiceStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: ImportServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
     fa match {
       case ImportServiceOperation.ImportOperation => algebra.importOperation
     }
   }
 
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ImportServiceStaticGen[F], f: PolyFunction5[F, G]): ImportServiceStaticGen[G] = {
-    new ImportServiceStaticGen[G] {
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ImportServiceProductGen[F], f: PolyFunction5[F, G]): ImportServiceProductGen[G] = {
+    new ImportServiceProductGen[G] {
       def importOperation: G[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation)
     }
   }

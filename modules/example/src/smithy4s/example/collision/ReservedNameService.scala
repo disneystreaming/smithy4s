@@ -4,8 +4,8 @@ import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
+import smithy4s.ServiceProduct
 import smithy4s.ShapeId
-import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -23,7 +23,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[ReservedNameServiceGen[F]] = Transformation.of[ReservedNameServiceGen[F]](this)
 }
 
-trait ReservedNameServiceStaticGen[F[_, _, _, _, _]] {
+trait ReservedNameServiceProductGen[F[_, _, _, _, _]] {
   self =>
 
   def set: F[SetInput, Nothing, Unit, Nothing, Nothing]
@@ -63,22 +63,22 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameServiceOperation, P]): ReservedNameServiceGen[P] = new ReservedNameServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameServiceGen[P]): PolyFunction5[ReservedNameServiceOperation, P] = ReservedNameServiceOperation.toPolyFunction(impl)
 
-  type StaticAlg[F[_, _, _, _, _]] = ReservedNameServiceStaticGen[F]
-  val static: StaticService.Aux[ReservedNameServiceStaticGen, ReservedNameServiceGen] = ReservedNameServiceStaticGen
+  type Prod[F[_, _, _, _, _]] = ReservedNameServiceProductGen[F]
+  val serviceProduct: ServiceProduct.Aux[ReservedNameServiceProductGen, ReservedNameServiceGen] = ReservedNameServiceProductGen
 }
 
-object ReservedNameServiceStaticGen extends StaticService[ReservedNameServiceStaticGen] {
+object ReservedNameServiceProductGen extends ServiceProduct[ReservedNameServiceProductGen] {
   type Alg[F[_, _, _, _, _]] = ReservedNameServiceGen[F]
   val service: ReservedNameServiceGen.type = ReservedNameServiceGen
 
-  def endpoints: ReservedNameServiceStaticGen[service.Endpoint] = new ReservedNameServiceStaticGen[service.Endpoint] {
+  def endpointsProduct: ReservedNameServiceProductGen[service.Endpoint] = new ReservedNameServiceProductGen[service.Endpoint] {
     def set: service.Endpoint[SetInput, Nothing, Unit, Nothing, Nothing] = ReservedNameServiceOperation._Set
     def list: service.Endpoint[ListInput, Nothing, Unit, Nothing, Nothing] = ReservedNameServiceOperation._List
     def map: service.Endpoint[MapInput, Nothing, Unit, Nothing, Nothing] = ReservedNameServiceOperation._Map
     def option: service.Endpoint[OptionInput, Nothing, Unit, Nothing, Nothing] = ReservedNameServiceOperation._Option
   }
 
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: ReservedNameServiceStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: ReservedNameServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
     fa match {
       case ReservedNameServiceOperation._Set => algebra.set
@@ -88,8 +88,8 @@ object ReservedNameServiceStaticGen extends StaticService[ReservedNameServiceSta
     }
   }
 
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ReservedNameServiceStaticGen[F], f: PolyFunction5[F, G]): ReservedNameServiceStaticGen[G] = {
-    new ReservedNameServiceStaticGen[G] {
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ReservedNameServiceProductGen[F], f: PolyFunction5[F, G]): ReservedNameServiceProductGen[G] = {
+    new ReservedNameServiceProductGen[G] {
       def set: G[SetInput, Nothing, Unit, Nothing, Nothing] = f[SetInput, Nothing, Unit, Nothing, Nothing](alg.set)
       def list: G[ListInput, Nothing, Unit, Nothing, Nothing] = f[ListInput, Nothing, Unit, Nothing, Nothing](alg.list)
       def map: G[MapInput, Nothing, Unit, Nothing, Nothing] = f[MapInput, Nothing, Unit, Nothing, Nothing](alg.map)

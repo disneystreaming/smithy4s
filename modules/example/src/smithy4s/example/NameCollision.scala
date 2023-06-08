@@ -4,9 +4,9 @@ import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
+import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -25,7 +25,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
 }
 
-trait NameCollisionStaticGen[F[_, _, _, _, _]] {
+trait NameCollisionProductGen[F[_, _, _, _, _]] {
   self =>
 
   def myOp: F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]
@@ -61,20 +61,20 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
 
   type MyOpError = NameCollisionOperation.MyOpError
   val MyOpError = NameCollisionOperation.MyOpError
-  type StaticAlg[F[_, _, _, _, _]] = NameCollisionStaticGen[F]
-  val static: StaticService.Aux[NameCollisionStaticGen, NameCollisionGen] = NameCollisionStaticGen
+  type Prod[F[_, _, _, _, _]] = NameCollisionProductGen[F]
+  val serviceProduct: ServiceProduct.Aux[NameCollisionProductGen, NameCollisionGen] = NameCollisionProductGen
 }
 
-object NameCollisionStaticGen extends StaticService[NameCollisionStaticGen] {
+object NameCollisionProductGen extends ServiceProduct[NameCollisionProductGen] {
   type Alg[F[_, _, _, _, _]] = NameCollisionGen[F]
   val service: NameCollisionGen.type = NameCollisionGen
 
-  def endpoints: NameCollisionStaticGen[service.Endpoint] = new NameCollisionStaticGen[service.Endpoint] {
+  def endpointsProduct: NameCollisionProductGen[service.Endpoint] = new NameCollisionProductGen[service.Endpoint] {
     def myOp: service.Endpoint[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = NameCollisionOperation.MyOp
     def endpoint: service.Endpoint[Unit, Nothing, Unit, Nothing, Nothing] = NameCollisionOperation.Endpoint
   }
 
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: NameCollisionStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: NameCollisionProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
     fa match {
       case NameCollisionOperation.MyOp => algebra.myOp
@@ -82,8 +82,8 @@ object NameCollisionStaticGen extends StaticService[NameCollisionStaticGen] {
     }
   }
 
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: NameCollisionStaticGen[F], f: PolyFunction5[F, G]): NameCollisionStaticGen[G] = {
-    new NameCollisionStaticGen[G] {
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: NameCollisionProductGen[F], f: PolyFunction5[F, G]): NameCollisionProductGen[G] = {
+    new NameCollisionProductGen[G] {
       def myOp: G[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp)
       def endpoint: G[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint)
     }

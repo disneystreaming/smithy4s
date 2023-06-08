@@ -276,7 +276,7 @@ private[internals] object CollisionAvoidance {
     val Transformation = NameRef("smithy4s", "Transformation")
     val PolyFunction5_ = NameRef("smithy4s.kinds", "PolyFunction5")
     val Service_ = NameRef("smithy4s", "Service")
-    val StaticService_ = NameRef("smithy4s", "StaticService")
+    val ServiceProduct = NameRef("smithy4s", "ServiceProduct")
     val Endpoint_ = NameRef("smithy4s", "Endpoint")
     val NoInput_ = NameRef("smithy4s", "NoInput")
     val ShapeId_ = NameRef("smithy4s", "ShapeId")

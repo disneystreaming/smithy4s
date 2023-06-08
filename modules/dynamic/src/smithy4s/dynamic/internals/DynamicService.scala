@@ -19,6 +19,7 @@ package dynamic
 package internals
 
 import smithy4s.kinds.PolyFunction5
+import smithy4s.ServiceProduct
 
 private[internals] case class DynamicService(
     id: ShapeId,
@@ -50,20 +51,19 @@ private[internals] case class DynamicService(
 
   override val service: Service[Alg] = this
 
-  type StaticAlg[P[_, _, _, _, _]] = PolyFunction5[NoInputOp, P]
+  type Prod[P[_, _, _, _, _]] = PolyFunction5[NoInputOp, P]
 
-  val static
-      : StaticService.Aux[StaticAlg, PolyFunction5.From[DynamicOp]#Algebra] =
-    new StDynamicService(
+  val serviceProduct
+      : ServiceProduct.Aux[Prod, PolyFunction5.From[DynamicOp]#Algebra] =
+    new DynamicServiceProduct(
       this
     )
 
 }
 
-// TODO: better name? different notions of static vs dynamic here
-private[internals] class StDynamicService(
+private[internals] class DynamicServiceProduct(
     override val service: DynamicService
-) extends StaticService[PolyFunction5.From[NoInputOp]#Algebra] {
+) extends ServiceProduct[PolyFunction5.From[NoInputOp]#Algebra] {
 
   type Alg[F[_, _, _, _, _]] = PolyFunction5[DynamicOp, F]
 
@@ -73,7 +73,7 @@ private[internals] class StDynamicService(
   ): PolyFunction5[NoInputOp, G] =
     alg.andThen(function)
 
-  override val endpoints: PolyFunction5[NoInputOp, service.Endpoint] =
+  override val endpointsProduct: PolyFunction5[NoInputOp, service.Endpoint] =
     new PolyFunction5[NoInputOp, service.Endpoint] {
       override def apply[I, E, O, SI, SO](
           op: NoInputOp[I, E, O, SI, SO]

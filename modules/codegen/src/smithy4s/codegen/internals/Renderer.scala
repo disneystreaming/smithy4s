@@ -291,8 +291,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val genName: NameDef = NameDef(name + "Gen")
     val genNameRef: NameRef = genName.toNameRef
-    val genNameStatic: NameDef = NameDef(name + "StaticGen")
-    val genNameStaticRef: NameRef = genNameStatic.toNameRef
+    val genNameProduct: NameDef = NameDef(name + "ProductGen")
+    val genNameProductRef: NameRef = genNameProduct.toNameRef
     val opTraitName = NameDef(name + "Operation")
     val opTraitNameRef = opTraitName.toNameRef
 
@@ -317,7 +317,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
-      block(line"trait $genNameStatic[F[_, _, _, _, _]]")(
+      block(line"trait $genNameProduct[F[_, _, _, _, _]]")(
         line"self =>",
         newline,
         ops.map { op =>
@@ -371,19 +371,19 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
           }
         },
-        line"type StaticAlg[F[_, _, _, _, _]] = ${genNameStatic}[F]",
-        line"val static: ${StaticService_}.Aux[${genNameStatic}, ${genName}] = ${genNameStatic}"
+        line"type Prod[F[_, _, _, _, _]] = ${genNameProduct}[F]",
+        line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
       ),
       newline,
       obj(
-        genNameStaticRef,
-        ext = line"$StaticService_[$genNameStaticRef]"
+        genNameProductRef,
+        ext = line"$ServiceProduct[$genNameProductRef]"
       )(
         line"type Alg[F[_, _, _, _, _]] = ${genNameRef}[F]",
         line"val service: $genName.type = $genName",
         newline,
         block(
-          line"def endpoints: ${genNameStaticRef}[service.Endpoint] = new ${genNameStaticRef}[service.Endpoint]"
+          line"def endpointsProduct: ${genNameProductRef}[service.Endpoint] = new ${genNameProductRef}[service.Endpoint]"
         )(
           ops.map { op =>
             line"def ${op.methodName}: service.Endpoint[${op
@@ -392,7 +392,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ),
         newline,
         block(
-          line"def toPolyFunction[P2[_, _, _, _, _]](algebra: ${genNameStaticRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
+          line"def toPolyFunction[P2[_, _, _, _, _]](algebra: ${genNameProductRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
         )(
           line"def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =",
           if (ops.isEmpty) line"""sys.error("impossible")"""
@@ -405,10 +405,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         ),
         newline,
         block(
-          line"def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ${genNameStaticRef}[F], f: $PolyFunction5_[F, G]): ${genNameStaticRef}[G] ="
+          line"def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ${genNameProductRef}[F], f: $PolyFunction5_[F, G]): ${genNameProductRef}[G] ="
         )(
           block(
-            line"new ${genNameStaticRef}[G]"
+            line"new ${genNameProductRef}[G]"
           )(
             ops.map { op =>
               val argsTypes = op.renderAlgParams(opTraitNameRef.name)

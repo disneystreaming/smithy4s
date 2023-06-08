@@ -4,8 +4,8 @@ import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
+import smithy4s.ServiceProduct
 import smithy4s.ShapeId
-import smithy4s.StaticService
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -20,7 +20,7 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)
 }
 
-trait BrandServiceStaticGen[F[_, _, _, _, _]] {
+trait BrandServiceProductGen[F[_, _, _, _, _]] {
   self =>
 
   def addBrands: F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
@@ -52,27 +52,27 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BrandServiceOperation, P]): BrandServiceGen[P] = new BrandServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
 
-  type StaticAlg[F[_, _, _, _, _]] = BrandServiceStaticGen[F]
-  val static: StaticService.Aux[BrandServiceStaticGen, BrandServiceGen] = BrandServiceStaticGen
+  type Prod[F[_, _, _, _, _]] = BrandServiceProductGen[F]
+  val serviceProduct: ServiceProduct.Aux[BrandServiceProductGen, BrandServiceGen] = BrandServiceProductGen
 }
 
-object BrandServiceStaticGen extends StaticService[BrandServiceStaticGen] {
+object BrandServiceProductGen extends ServiceProduct[BrandServiceProductGen] {
   type Alg[F[_, _, _, _, _]] = BrandServiceGen[F]
   val service: BrandServiceGen.type = BrandServiceGen
 
-  def endpoints: BrandServiceStaticGen[service.Endpoint] = new BrandServiceStaticGen[service.Endpoint] {
+  def endpointsProduct: BrandServiceProductGen[service.Endpoint] = new BrandServiceProductGen[service.Endpoint] {
     def addBrands: service.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = BrandServiceOperation.AddBrands
   }
 
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: BrandServiceStaticGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
+  def toPolyFunction[P2[_, _, _, _, _]](algebra: BrandServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
     fa match {
       case BrandServiceOperation.AddBrands => algebra.addBrands
     }
   }
 
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: BrandServiceStaticGen[F], f: PolyFunction5[F, G]): BrandServiceStaticGen[G] = {
-    new BrandServiceStaticGen[G] {
+  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: BrandServiceProductGen[F], f: PolyFunction5[F, G]): BrandServiceProductGen[G] = {
+    new BrandServiceProductGen[G] {
       def addBrands: G[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands)
     }
   }
