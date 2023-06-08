@@ -173,7 +173,7 @@ package object internals {
       case (acc, Header.Raw(key, expectedValue))
         if HttpDate.fromString(expectedValue).isRight =>
         acc + append(acc, key, expectedValue)
-      case (acc, Header.Raw(key, expectedValue)) => println(pprint.apply(expectedValue))
+      case (acc, Header.Raw(key, expectedValue)) =>
         val escapeQuotes = expectedValue.replaceAll("\"", "\\\\\"")
         val replaceEscapes = escapeQuotes.replaceAll("\\\\", "\\\\\\\\")
         if (expectedValue.contains(","))
