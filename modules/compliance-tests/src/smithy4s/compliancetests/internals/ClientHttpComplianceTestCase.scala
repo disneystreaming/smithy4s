@@ -56,7 +56,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val bodyAssert = request.bodyText.compile.string.map { responseBody =>
       assert.bodyEql(
         responseBody,
-        testCase.body.getOrElse(""),
+        testCase.body,
         testCase.bodyMediaType
       )
     }

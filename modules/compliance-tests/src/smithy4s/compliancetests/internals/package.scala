@@ -20,6 +20,7 @@ package compliancetests
 import org.http4s.{Header, Headers, Uri, HttpDate}
 import cats.implicits._
 import cats.data.Chain
+import org.typelevel.ci.CIString
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable.ListMap
 
@@ -162,18 +163,23 @@ package object internals {
    * @return
    */
   private[compliancetests] def collapseHeaders(
-      headers: Headers
-  ): Map[String, String] = {
+                                                headers: Headers
+                                              ): Map[String, String] = {
+    def append(acc: Map[String, String], key: CIString, expectedValue: String) = {
+      (key.toString -> acc.get(key.toString).map(e => s"$e, $expectedValue").getOrElse(expectedValue))
+    }
+
     headers.headers.foldLeft(Map.empty[String, String]) {
       case (acc, Header.Raw(key, expectedValue))
-          if HttpDate.fromString(expectedValue).isRight =>
-        acc + (key.toString -> expectedValue)
-      case (acc, Header.Raw(key, expectedValue)) =>
+        if HttpDate.fromString(expectedValue).isRight =>
+        acc + append(acc, key, expectedValue)
+      case (acc, Header.Raw(key, expectedValue)) => println(pprint.apply(expectedValue))
         val escapeQuotes = expectedValue.replaceAll("\"", "\\\\\"")
+        val replaceEscapes = escapeQuotes.replaceAll("\\\\", "\\\\\\\\")
         if (expectedValue.contains(","))
-          acc + (key.toString -> s"""\"$escapeQuotes\"""")
+          acc + append(acc, key, s"""\"$replaceEscapes\"""")
         else {
-          acc + (key.toString -> escapeQuotes)
+          acc + append(acc, key, escapeQuotes)
         }
     }
   }
