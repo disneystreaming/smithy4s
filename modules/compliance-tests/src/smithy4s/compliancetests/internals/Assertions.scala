@@ -152,8 +152,12 @@ private[internals] object assert {
 
     expected.map{
         _.toList.collect{
-            case (key, value) if headers.get(key).fold(false)(_ != value) =>
-            assert.fail(s"Header $key has value ${headers.getOrElse(key, "")} but expected $value")
+            case (key, value) =>
+              headers.get(key) match {
+                case Some(v) if v == value => success
+                case Some(v) => assert.fail(s"Header $key has value $v but expected $value")
+                case None => assert.fail(s"Header $key is missing but expected $value")
+              }
         }.combineAll
         }.getOrElse{
         success
