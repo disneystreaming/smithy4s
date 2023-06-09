@@ -59,11 +59,11 @@ object GzipRequestCodecSpec extends SimpleIOSuite {
             val checkResponse = fa
               .as[String]
               .map { payload => expect(payload == "data") }
-            // echo "data" | gzip | base64
-            // H4sIAAAAAAAAA0tJLEnkAgCCxcHmBQAAAA==
-            // trailing equals are padding
+            // local:   "H4sIAAAAAAAAB0tJLEkEAGPz860EAAAA"
+            // ci:      "H4sIAAAAAAAAA0tJLEkEAGPz860EAAAA"
+            val check = "^H4sIAAAAAAAA[AB]0tJLEkEAGPz860EAAAA=*$".r
             val checkRecordedBody = received.get.map { payload =>
-              expect(payload == "H4sIAAAAAAAAB0tJLEkEAGPz860EAAAA")
+              expect(check.findFirstIn(payload) == Some(payload))
             }
             List(checkRecordedBody, checkResponse).combineAll
         }
@@ -98,10 +98,11 @@ object GzipRequestCodecSpec extends SimpleIOSuite {
             val checkResponse = fa
               .as[String]
               .map { payload => expect(payload == "") }
-            // echo "" | gzip | base64
-            // H4sIAAAAAAAAA+MCAJMG1zIBAAAA
+            // local:   "H4sIAAAAAAAABwMAAAAAAAAAAAA"
+            // ci:      "H4sIAAAAAAAAAwMAAAAAAAAAAAA="
+            val check = "^H4sIAAAAAAAA[AB]wMAAAAAAAAAAAA=*$".r
             val checkRecordedBody = received.get.map { payload =>
-              expect(payload == "H4sIAAAAAAAABwMAAAAAAAAAAAA=")
+              expect(check.findFirstIn(payload) == Some(payload))
             }
             List(checkRecordedBody, checkResponse).combineAll
         }
