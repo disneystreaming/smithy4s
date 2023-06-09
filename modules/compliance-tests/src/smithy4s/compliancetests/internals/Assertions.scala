@@ -32,14 +32,13 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
+    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
       case (true, true) => success
       case _ =>
-        val nonEmpty = if (result.isEmpty) "{}" else result
-        (parse(result), parse(nonEmpty)) match {
+        (parse(result), parse(testCase)) match {
           case (Right(a), Right(b)) if Eq[Json].eqv(a, b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
@@ -69,14 +68,16 @@ private[internals] object assert {
 
   def bodyEql(
       result: String,
-      testCase: String,
+      testCase: Option[String],
       bodyMediaType: Option[String]
   ): ComplianceResult = {
-    if (isJson(bodyMediaType)) {
-      jsonEql(result, testCase)
-    } else {
-      eql(result, testCase)
-    }
+    if (testCase.isDefined)
+      if (isJson(bodyMediaType)) {
+        jsonEql(result, testCase.getOrElse(""))
+      } else {
+        eql(result, testCase.getOrElse(""))
+      }
+    else success
   }
 
   private def queryParamsExistenceCheck(
@@ -144,20 +145,26 @@ private[internals] object assert {
     checkRequired |+| checkForbidden
   }
   private def headerValuesCheck(
-      headers: Headers,
+      headers: Map[String, String],
       expected: Option[Map[String, String]]
   ) = {
-    expected.toList
-      .flatMap(_.toList)
-      .map { case (key, expectedValue) =>
-        headers
-          .get(CIString(key))
-          .map { v =>
-            assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
+
+    expected
+      .map {
+        _.toList.collect { case (key, value) =>
+          headers.get(key) match {
+            case Some(v) if v == value => success
+            case Some(v) =>
+              assert.fail(s"Header $key has value $v but expected $value")
+            case None =>
+              success // the presence of the value is checked in `headersExistenceCheck`
           }
-          .getOrElse(success)
+        }.combineAll
       }
-      .combineAll
+      .getOrElse {
+        success
+      }
+
   }
 
   object testCase {
@@ -186,7 +193,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks =
+        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -199,7 +207,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks =
+        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
   }

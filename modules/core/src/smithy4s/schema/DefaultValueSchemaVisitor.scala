@@ -41,7 +41,6 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PDocument   => Some(Document.DNull)
       case PUUID       => None
       case PByte       => None
-      case PUnit       => None
     }
 
   def collection[C[_], A](

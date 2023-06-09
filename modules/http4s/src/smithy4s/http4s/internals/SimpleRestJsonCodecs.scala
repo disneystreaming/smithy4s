@@ -20,6 +20,8 @@ package internals
 
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http4s.kernel._
+import smithy4s.schema.CachedSchemaCompiler
+import org.http4s.Response
 import cats.effect.Concurrent
 
 private[http4s] class SimpleRestJsonCodecs(
@@ -30,19 +32,47 @@ private[http4s] class SimpleRestJsonCodecs(
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
   private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
 
+  private def addEmptyJsonToResponse[F[_]](response: Response[F]): Response[F] =
+    response.withBodyStream(
+      response.body.ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))
+    )
+
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
       MessageDecoder.restSchemaCompiler[F](
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
       )
-    val messageEncoderCompiler =
-      MessageEncoder.restSchemaCompiler[F](
+    val responseEncoderCompiler = {
+      val restSchemaCompiler = MessageEncoder.restSchemaCompiler[F](
         EntityEncoders.fromCodecAPI[F](underlyingCodecs)
       )
+      new CachedSchemaCompiler[ResponseEncoder[F, *]] {
+        type Cache = restSchemaCompiler.Cache
+        def createCache(): Cache = restSchemaCompiler.createCache()
+        def fromSchema[A](schema: Schema[A]) = if (schema.isUnit) {
+          restSchemaCompiler.fromSchema(schema)
+        } else {
+          restSchemaCompiler
+            .fromSchema(schema)
+            .mapResponse(addEmptyJsonToResponse(_))
+        }
+
+        def fromSchema[A](schema: Schema[A], cache: Cache) = if (
+          schema.isUnit
+        ) {
+          restSchemaCompiler.fromSchema(schema, cache)
+        } else {
+          restSchemaCompiler
+            .fromSchema(schema, cache)
+            .mapResponse(addEmptyJsonToResponse(_))
+        }
+      }
+    }
+
     UnaryServerCodecs.make[F](
       input = messageDecoderCompiler,
-      output = messageEncoderCompiler,
-      error = messageEncoderCompiler
+      output = responseEncoderCompiler,
+      error = responseEncoderCompiler
     )
   }
 

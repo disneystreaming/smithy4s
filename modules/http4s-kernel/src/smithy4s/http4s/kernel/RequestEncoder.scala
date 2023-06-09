@@ -17,9 +17,16 @@
 package smithy4s.http4s.kernel
 
 import org.http4s.Request
+import smithy4s.kinds._
 
-trait RequestEncoder[F[_], A] {
+trait RequestEncoder[F[_], A] { self =>
   def addToRequest(request: Request[F], a: A): Request[F]
+  def mapRequest(f: Request[F] => Request[F]): RequestEncoder[F, A] =
+    new RequestEncoder[F, A] {
+      def addToRequest(request: Request[F], a: A): Request[F] = f(
+        self.addToRequest(request, a)
+      )
+    }
 }
 
 object RequestEncoder {
@@ -27,6 +34,18 @@ object RequestEncoder {
   def empty[F[_], A]: RequestEncoder[F, A] = new RequestEncoder[F, A] {
     def addToRequest(request: Request[F], a: A): Request[F] = request
   }
+
+  def mapRequestK[F[_]](
+      f: Request[F] => Request[F]
+  ): PolyFunction[RequestEncoder[F, *], RequestEncoder[F, *]] =
+    new PolyFunction[RequestEncoder[F, *], RequestEncoder[F, *]] {
+      def apply[A](fa: RequestEncoder[F, A]): RequestEncoder[F, A] =
+        new RequestEncoder[F, A] {
+          def addToRequest(request: Request[F], a: A): Request[F] = f(
+            fa.addToRequest(request, a)
+          )
+        }
+    }
 
   def combine[F[_], A](
       left: RequestEncoder[F, A],

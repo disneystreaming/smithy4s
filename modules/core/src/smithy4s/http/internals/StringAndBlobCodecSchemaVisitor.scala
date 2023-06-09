@@ -119,8 +119,8 @@ private[http] class StringAndBlobCodecSchemaVisitor
           def toBytes(a: ByteArray): Array[Byte] = a.array
         }
       }
-    case PTimestamp | PUUID | PBigInt | PUnit | PBoolean | PLong | PShort |
-        PDocument | PByte | PDouble | PFloat | PBigDecimal | PInt =>
+    case PTimestamp | PUUID | PBigInt | PBoolean | PLong | PShort | PDocument |
+        PByte | PDouble | PFloat | PBigDecimal | PInt =>
       noop
   }
 

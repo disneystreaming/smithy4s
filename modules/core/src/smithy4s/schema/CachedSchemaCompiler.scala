@@ -16,6 +16,8 @@
 
 package smithy4s.schema
 
+import smithy4s.kinds._
+
 trait CachedSchemaCompiler[+F[_]] {
 
   type Cache
@@ -26,6 +28,24 @@ trait CachedSchemaCompiler[+F[_]] {
 }
 
 object CachedSchemaCompiler {
+
+  implicit val cachedSchemaCompilerFunctorK =
+    new FunctorK[CachedSchemaCompiler] {
+      def mapK[F[_], G[_]](
+          self: CachedSchemaCompiler[F],
+          fk: PolyFunction[F, G]
+      ): CachedSchemaCompiler[G] =
+        new CachedSchemaCompiler[G] {
+          type Cache = self.Cache
+          def createCache(): self.Cache = self.createCache()
+          def fromSchema[A](schema: Schema[A]): G[A] = fk(
+            self.fromSchema(schema)
+          )
+          def fromSchema[A](schema: Schema[A], cache: Cache): G[A] = fk(
+            self.fromSchema(schema, cache)
+          )
+        }
+    }
 
   abstract class Impl[F[_]] extends CachedSchemaCompiler[F] {
     protected type Aux[_]

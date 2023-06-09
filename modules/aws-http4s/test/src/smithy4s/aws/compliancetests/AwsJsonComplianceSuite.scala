@@ -18,6 +18,7 @@ package smithy4s.aws
 
 import aws.protocols.AwsJson1_0
 import aws.protocols.AwsJson1_1
+import aws.protocols.RestJson1
 import cats.effect.IO
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.ShapeId
@@ -36,10 +37,6 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
-      "AwsJson11MapsSerializeNullValues",
-      "AwsJson11ListsSerializeNull",
-      "AwsJson11MapsDeserializeNullValues",
-      "AwsJson11ListsDeserializeNull",
       "HostWithPathOperation",
       "PutWithContentEncoding"
     )
@@ -49,13 +46,13 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
-    genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++ genClientTests(
-      impl(AwsJson1_1),
-      awsJson1_1
-    )(dsi)
+    genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
+      genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
+      genClientTests(impl(RestJson1), restJson1)(dsi)
 
   private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
   private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
+  private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 

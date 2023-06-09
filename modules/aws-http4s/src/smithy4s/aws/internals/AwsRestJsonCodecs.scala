@@ -1,3 +1,4 @@
+
 /*
  *  Copyright 2021-2022 Disney Streaming
  *
@@ -23,28 +24,24 @@ import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
 import smithy4s.http.json.JCodec
 
-/**
- * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
- */
-private[aws] object AwsJsonCodecs {
+private[aws] object AwsRestJsonCodecs {
 
-  private val hintMask =
-    aws.protocols.AwsJson1_0.protocol.hintMask ++
-      aws.protocols.AwsJson1_1.protocol.hintMask
+  private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
   def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val underlyingCodecs = new smithy4s.http.json.JsonCodecAPI(
-      cache => new AwsSchemaVisitorJCodec(cache),
-      Some(hintMask)
-    ) {
-      override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
-        httpMediaType
-    }
-    val encoders = MessageEncoder.rpcSchemaCompiler[F](
+    val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
+      new smithy4s.http.json.JsonCodecAPI(
+        cache => new AwsSchemaVisitorJCodec(cache),
+        Some(hintMask)
+      ) {
+        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type = httpMediaType
+      })
+
+    val encoders = MessageEncoder.restSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)
     )
-    val decoders = MessageDecoder.rpcSchemaCompiler[F](
+    val decoders = MessageDecoder.restSchemaCompiler[F](
       EntityDecoders.fromCodecAPI[F](underlyingCodecs)
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)

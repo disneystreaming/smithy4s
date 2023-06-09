@@ -24,9 +24,16 @@ import smithy4s.http.HttpStatusCode
 import smithy4s.schema.Alt
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+import smithy4s.kinds._
 
-trait ResponseEncoder[F[_], A] {
+trait ResponseEncoder[F[_], A] { self =>
   def addToResponse(response: Response[F], a: A): Response[F]
+  def mapResponse(f: Response[F] => Response[F]): ResponseEncoder[F, A] =
+    new ResponseEncoder[F, A] {
+      def addToResponse(response: Response[F], a: A): Response[F] = f(
+        self.addToResponse(response, a)
+      )
+    }
 }
 
 object ResponseEncoder {
@@ -34,6 +41,14 @@ object ResponseEncoder {
   def empty[F[_], A]: ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
     def addToResponse(response: Response[F], a: A): Response[F] = response
   }
+
+  def mapResponseK[F[_]](
+      f: Response[F] => Response[F]
+  ): PolyFunction[ResponseEncoder[F, *], ResponseEncoder[F, *]] =
+    new PolyFunction[ResponseEncoder[F, *], ResponseEncoder[F, *]] {
+      def apply[A](fa: ResponseEncoder[F, A]): ResponseEncoder[F, A] =
+        fa.mapResponse(f)
+    }
 
   def combine[F[_], A](
       left: ResponseEncoder[F, A],
