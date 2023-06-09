@@ -19,6 +19,7 @@ package http4s
 package internals
 
 import smithy4s.http.HttpDiscriminator
+import smithy4s.http.Metadata
 import smithy4s.http4s.kernel._
 import cats.effect.Concurrent
 
@@ -33,7 +34,8 @@ private[http4s] class SimpleRestJsonCodecs(
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
       MessageDecoder.restSchemaCompiler[F](
-        EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+        EntityDecoders.fromCodecAPI[F](underlyingCodecs),
+        Metadata.Decoder
       )
     val messageEncoderCompiler =
       MessageEncoder.restSchemaCompiler[F](
@@ -49,7 +51,8 @@ private[http4s] class SimpleRestJsonCodecs(
   def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F] = {
     val messageDecoderCompiler =
       MessageDecoder.restSchemaCompiler[F](
-        EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+        EntityDecoders.fromCodecAPI[F](underlyingCodecs),
+        Metadata.Decoder
       )
     val messageEncoderCompiler =
       MessageEncoder.restSchemaCompiler[F](

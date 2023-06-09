@@ -119,6 +119,12 @@ sealed trait Schema[A]{
   final def findPayload(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
     SchemaPartition(find, payload = true)(this)
 
+  /**
+    * Finds whether a schema (or the underlying schema in the case of bijections/surjections, etc)
+    * is a primitive of a certain type.
+    */
+  final def isPrimitive[P](prim: Primitive[P]) : Boolean = IsPrimitive(this, prim)
+
 }
 
 object Schema {

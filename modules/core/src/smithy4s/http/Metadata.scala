@@ -23,7 +23,6 @@ import smithy4s.http.internals.SchemaVisitorMetadataReader
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.CachedSchemaCompiler
-import scala.collection.mutable.{Map => MMap}
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -151,25 +150,12 @@ object Metadata {
     encoder.encode(a)
 
   /**
-    * Decodes all the fields that are bound to http metadata,
-    * shoving values in a map.
+    * If possible, decode the data from fields that are bound to http metadata.
     */
-  def decodePartial[A](metadata: Metadata)(implicit
-      decoder: PartialDecoder[A]
-  ): Either[MetadataError, MetadataPartial[A]] =
+  def decode[A](metadata: Metadata)(implicit
+      decoder: Decoder[A]
+  ): Either[MetadataError, A] =
     decoder.decode(metadata)
-
-  /**
-    * If possible, attempts to decode the whole data from http metadata.
-    * This will only return a non-empty value when all fields of the datatype
-    * are bound to http metadata (ie path parameters, headers, query, status code)
-    *
-    * @return None when the value cannot be decoded just from metadata
-    */
-  def decodeTotal[A](metadata: Metadata)(implicit
-      decoder: PartialDecoder[A]
-  ): Option[Either[MetadataError, A]] =
-    decoder.total.map(_.decode(metadata))
 
   /**
     * Reads metadata and produces a map that contains values extracted from it, labelled
@@ -179,7 +165,12 @@ object Metadata {
     def decode(metadata: Metadata): Either[MetadataError, A]
   }
 
-  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+  private[smithy4s] object AwsDecoder
+      extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+
+  private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
+      extends CachedSchemaCompiler.Impl[Decoder] {
     type Aux[A] = internals.MetaDecode[A]
 
     def apply[A](implicit instance: Decoder[A]): Decoder[A] =
@@ -189,7 +180,8 @@ object Metadata {
         schema: Schema[A],
         cache: CompilationCache[internals.MetaDecode]
     ): Decoder[A] = {
-      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
+      val metaDecode =
+        new SchemaVisitorMetadataReader(cache, awsHeaderEncoding)(schema)
       metaDecode match {
         case internals.MetaDecode.StructureMetaDecode(_, decodeFunction) =>
           // TODO will be addressed in a later PR that removes the coupling of partial metadata decoding
@@ -211,76 +203,6 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait PartialDecoder[A] {
-    def decode(metadata: Metadata): Either[MetadataError, MetadataPartial[A]]
-
-    def total: Option[TotalDecoder[A]]
-  }
-
-  object PartialDecoder extends CachedSchemaCompiler.Impl[PartialDecoder] {
-    type Aux[A] = internals.MetaDecode[A]
-
-    def apply[A](implicit instance: PartialDecoder[A]): PartialDecoder[A] =
-      instance
-
-    def fromSchema[A](
-        schema: Schema[A],
-        cache: CompilationCache[internals.MetaDecode]
-    ): PartialDecoder[A] = {
-      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
-      val (partial, maybeTotal) =
-        metaDecode match {
-          case internals.MetaDecode.StructureMetaDecode(partial, maybeTotal) =>
-            (partial, maybeTotal)
-          case _ => ((_: Metadata) => Right(MMap.empty[String, Any]), None)
-        }
-
-      new PartialDecoder[A] {
-        def decode(
-            metadata: Metadata
-        ): Either[MetadataError, MetadataPartial[A]] =
-          partial(metadata).map(MetadataPartial(_))
-
-        def total: Option[TotalDecoder[A]] =
-          maybeTotal.map(total =>
-            new TotalDecoder[A] {
-              def decode(metadata: Metadata): Either[MetadataError, A] =
-                total(metadata)
-            }
-          )
-      }
-    }
-
-  }
-
-  /**
-    * Reads metadata and produces a value. Cannot be produced implicitly from a schema,
-    * as the required information is not available at the typelevel.
-    */
-  trait TotalDecoder[A] {
-    def decode(metadata: Metadata): Either[MetadataError, A]
-  }
-
-  object TotalDecoder {
-    def apply[A](implicit instance: TotalDecoder[A]): TotalDecoder[A] =
-      instance
-
-    def fromSchema[A](schema: Schema[A]): Option[TotalDecoder[A]] =
-      fromSchema(schema, CompilationCache.nop)
-
-    def fromSchema[A](
-        schema: Schema[A],
-        cache: CompilationCache[internals.MetaDecode]
-    ): Option[TotalDecoder[A]] = {
-      val metaDecode = new SchemaVisitorMetadataReader(cache)(schema)
-      metaDecode match {
-        case internals.MetaDecode.StructureMetaDecode(_, maybeTotal) =>
-          maybeTotal.map { total => (metadata: Metadata) => total(metadata) }
-        case _ => None
-      }
-    }
-  }
-
   trait Encoder[A] {
     def encode(a: A): Metadata
   }

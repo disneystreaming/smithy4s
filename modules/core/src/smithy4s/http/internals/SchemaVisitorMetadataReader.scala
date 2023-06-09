@@ -34,8 +34,16 @@ import scala.collection.mutable.{Map => MMap}
 import smithy.api.HttpHeader
 import smithy.api.HttpPrefixHeaders
 import smithy4s.http.internals.SchemaVisitorHeaderSplit
+
+/**
+  * SchemaVisitor that implements the decoding of smithy4s.http.Metadata, which
+  * contains values such as path-parameters, query-parameters, headers, and status code.
+  *
+  * @param awsHeaderEncoding defines whether the AWS encoding of headers should be expected.
+  */
 private[http] class SchemaVisitorMetadataReader(
-    val cache: CompilationCache[MetaDecode]
+    val cache: CompilationCache[MetaDecode],
+    awsHeaderEncoding: Boolean
 ) extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
@@ -67,8 +75,8 @@ private[http] class SchemaVisitorMetadataReader(
   ): MetaDecode[C[A]] = {
     self(member) match {
       case MetaDecode.StringValueMetaDecode(f) =>
-        val isHeader = hints.has(HttpHeader) || hints.has(HttpPrefixHeaders)
-        (SchemaVisitorHeaderSplit(member), isHeader) match {
+        val isAwsHeader = hints.has(HttpHeader) || hints.has(HttpPrefixHeaders)
+        (SchemaVisitorHeaderSplit(member), isAwsHeader) match {
           case (Some(splitFunction), true) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
               tag.fromIterator(it.flatMap(splitFunction).map(f))
