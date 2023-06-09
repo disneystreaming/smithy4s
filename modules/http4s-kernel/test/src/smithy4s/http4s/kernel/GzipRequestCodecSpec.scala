@@ -1,16 +1,31 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package smithy4s.http4s.kernel
 
-import weaver._
-import cats.implicits._
-import org.http4s.HttpRoutes
 import cats.effect.IO
 import cats.effect.kernel.Deferred
-import org.http4s.Response
+import cats.implicits._
 import fs2.compression.DeflateParams
+import org.http4s.HttpRoutes
 import org.http4s.Method
 import org.http4s.Request
+import org.http4s.Response
+import weaver._
 
-object GzipRequestCodecSpec extends SimpleIOSuite {
+object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
   private val stringCodecs = {
     val encoder =
       GzipRequestEncoder.make[IO, String](
@@ -61,7 +76,8 @@ object GzipRequestCodecSpec extends SimpleIOSuite {
               .map { payload => expect(payload == "data") }
             // local:   "H4sIAAAAAAAAB0tJLEkEAGPz860EAAAA"
             // ci:      "H4sIAAAAAAAAA0tJLEkEAGPz860EAAAA"
-            val check = "^H4sIAAAAAAAA[AB]0tJLEkEAGPz860EAAAA=*$".r
+            // js:      "H4sIAAAAAAAAE0tJLEkEAGPz860EAAAA"
+            val check = "^H4sIAAAAAAAA[ABE]0tJLEkEAGPz860EAAAA=*$".r
             val checkRecordedBody = received.get.map { payload =>
               expect(check.findFirstIn(payload) == Some(payload))
             }
@@ -100,7 +116,8 @@ object GzipRequestCodecSpec extends SimpleIOSuite {
               .map { payload => expect(payload == "") }
             // local:   "H4sIAAAAAAAABwMAAAAAAAAAAAA"
             // ci:      "H4sIAAAAAAAAAwMAAAAAAAAAAAA="
-            val check = "^H4sIAAAAAAAA[AB]wMAAAAAAAAAAAA=*$".r
+            // js:      "H4sIAAAAAAAAEwMAAAAAAAAAAAA="
+            val check = "^H4sIAAAAAAAA[ABE]wMAAAAAAAAAAAA=*$".r
             val checkRecordedBody = received.get.map { payload =>
               expect(check.findFirstIn(payload) == Some(payload))
             }
