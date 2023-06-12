@@ -29,7 +29,7 @@ trait CachedSchemaCompiler[+F[_]] {
 
 object CachedSchemaCompiler {
 
-  implicit val cachedSchemaCompilerFunctorK =
+  implicit val cachedSchemaCompilerFunctorK: FunctorK[CachedSchemaCompiler] =
     new FunctorK[CachedSchemaCompiler] {
       def mapK[F[_], G[_]](
           self: CachedSchemaCompiler[F],
