@@ -155,7 +155,7 @@ private[internals] object assert {
           headers.get(key) match {
             case Some(v) if v == value => success
             case Some(v) =>
-              assert.fail(s"Header $key has value $v but expected $value")
+              assert.fail(s"Header $key has value `$v` but expected `$value`")
             case None =>
               success // the presence of the value is checked in `headersExistenceCheck`
           }
