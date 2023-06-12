@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2021-2022 Disney Streaming
  *
@@ -19,6 +18,7 @@ package smithy4s.aws
 package internals
 
 import cats.effect.Concurrent
+import fs2.compression.Compression
 import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
@@ -28,15 +28,25 @@ private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs.Make[F] = {
+  def make[F[_]: Concurrent: Compression](
+      contentType: String,
+      requestCompressionEncoder: RequestEncoder.MiddlewareK[F]
+  ): UnaryClientCodecs.Make[F] =
+    CompressingClientCodecs[F](requestCompressionEncoder, inner(contentType))
+
+  def inner[F[_]: Concurrent](
+      contentType: String
+  ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
     val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
       new smithy4s.http.json.JsonCodecAPI(
         cache => new AwsSchemaVisitorJCodec(cache),
         Some(hintMask)
       ) {
-        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type = httpMediaType
-      })
+        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
+          httpMediaType
+      }
+    )
 
     val encoders = MessageEncoder.restSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)

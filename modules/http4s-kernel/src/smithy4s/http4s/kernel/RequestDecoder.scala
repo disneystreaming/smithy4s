@@ -16,8 +16,30 @@
 
 package smithy4s.http4s.kernel
 
+import cats.~>
 import org.http4s.Request
 
 trait RequestDecoder[F[_], A] {
   def decodeRequest(request: Request[F]): F[A]
+}
+object RequestDecoder {
+  type Middleware[F[_], A] = RequestDecoder[F, A] => RequestDecoder[F, A]
+  type MiddlewareK[F[_]] = RequestDecoder[F, *] ~> RequestDecoder[F, *]
+
+  def noop[F[_]]: RequestDecoder.MiddlewareK[F] =
+    new (RequestDecoder[F, *] ~> RequestDecoder[F, *]) {
+      def apply[A](
+          fa: RequestDecoder[F, A]
+      ): RequestDecoder[F, A] = fa
+    }
+
+  def combine[F[_]](
+      a: RequestDecoder.MiddlewareK[F],
+      b: RequestDecoder.MiddlewareK[F]
+  ): RequestDecoder.MiddlewareK[F] =
+    new (RequestDecoder[F, *] ~> RequestDecoder[F, *]) {
+      def apply[A](
+          fa: RequestDecoder[F, A]
+      ): RequestDecoder[F, A] = a(b(fa))
+    }
 }

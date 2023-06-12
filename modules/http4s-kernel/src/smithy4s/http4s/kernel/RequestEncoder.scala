@@ -16,6 +16,7 @@
 
 package smithy4s.http4s.kernel
 
+import cats.~>
 import org.http4s.Request
 import smithy4s.kinds._
 
@@ -30,6 +31,8 @@ trait RequestEncoder[F[_], A] { self =>
 }
 
 object RequestEncoder {
+  type Middleware[F[_], A] = RequestEncoder[F, A] => RequestEncoder[F, A]
+  type MiddlewareK[F[_]] = RequestEncoder[F, *] ~> RequestEncoder[F, *]
 
   def empty[F[_], A]: RequestEncoder[F, A] = new RequestEncoder[F, A] {
     def addToRequest(request: Request[F], a: A): Request[F] = request

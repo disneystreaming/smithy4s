@@ -16,6 +16,7 @@
 
 package smithy4s.http4s.kernel
 
+import cats.~>
 import cats.effect.Concurrent
 import org.http4s.EntityEncoder
 import org.http4s.Request
@@ -41,6 +42,31 @@ trait MessageEncoder[F[_], A]
 }
 
 object MessageEncoder {
+  type Middleware[F[_], A] = MessageEncoder[F, A] => MessageEncoder[F, A]
+  type MiddlewareK[F[_]] = MessageEncoder[F, *] ~> MessageEncoder[F, *]
+
+  def noop[F[_]]: MessageEncoder.MiddlewareK[F] =
+    new (MessageEncoder[F, *] ~> MessageEncoder[F, *]) {
+      def apply[A](
+          fa: MessageEncoder[F, A]
+      ): MessageEncoder[F, A] = fa
+    }
+
+  def fromRequestEncoder[F[_]](
+      rdm: RequestEncoder.MiddlewareK[F]
+  ): MessageEncoder.MiddlewareK[F] =
+    new (MessageEncoder[F, *] ~> MessageEncoder[F, *]) {
+      def apply[A](
+          fa: MessageEncoder[F, A]
+      ): MessageEncoder[F, A] =
+        new MessageEncoder[F, A] { // Members declared in smithy4s.http4s.kernel.RequestEncoder
+          def addToRequest(request: Request[F], a: A): Request[F] =
+            rdm(fa).addToRequest(request, a)
+
+          def addToResponse(response: Response[F], a: A): Response[F] =
+            fa.addToResponse(response, a)
+        }
+    }
 
   def empty[F[_], A]: MessageEncoder[F, A] = new MessageEncoder[F, A] {
     def addToRequest(request: Request[F], a: A): Request[F] = request

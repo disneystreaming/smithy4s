@@ -16,6 +16,7 @@
 
 package smithy4s.http4s.kernel
 
+import cats.~>
 import org.http4s.Request
 import org.http4s.ContentCoding
 import org.http4s.headers.`Content-Encoding`
@@ -28,6 +29,17 @@ import fs2.compression.ZLibParams
 // https://github.com/http4s/http4s/blob/v0.23.19/client/shared/src/main/scala/org/http4s/client/middleware/GZip.scala
 object GzipRequestEncoder {
   val DefaultBufferSize = 32 * 1024
+
+  def apply[F[_]: Compression](
+      bufferSize: Int = DefaultBufferSize,
+      level: DeflateParams.Level = DeflateParams.Level.DEFAULT
+  ): RequestEncoder.MiddlewareK[F] =
+    new (RequestEncoder[F, *] ~> RequestEncoder[F, *]) {
+      def apply[A](fa: RequestEncoder[F, A]): RequestEncoder[F, A] = {
+        val a = make[F, A](bufferSize, level)
+        RequestEncoder.combine(a, fa)
+      }
+    }
 
   def make[F[_]: Compression, A](
       bufferSize: Int,

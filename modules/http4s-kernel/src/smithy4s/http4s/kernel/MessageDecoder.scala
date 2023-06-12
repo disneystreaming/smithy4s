@@ -16,6 +16,7 @@
 
 package smithy4s.http4s.kernel
 
+import cats.~>
 import org.http4s.Request
 import org.http4s.Response
 import cats.MonadThrow
@@ -32,6 +33,26 @@ trait MessageDecoder[F[_], A]
     with ResponseDecoder[F, A]
 
 object MessageDecoder {
+  type Middleware[F[_], A] = MessageDecoder[F, A] => MessageDecoder[F, A]
+  type MiddlewareK[F[_]] = MessageDecoder[F, *] ~> MessageDecoder[F, *]
+
+  def noop[F[_]]: MessageDecoder.MiddlewareK[F] =
+    new (MessageDecoder[F, *] ~> MessageDecoder[F, *]) {
+      def apply[A](fa: MessageDecoder[F, A]): MessageDecoder[F, A] = fa
+    }
+
+  def fromRequestDecoder[F[_]](
+      rdm: RequestDecoder.MiddlewareK[F]
+  ): MessageDecoder.MiddlewareK[F] =
+    new (MessageDecoder[F, *] ~> MessageDecoder[F, *]) {
+      def apply[A](fa: MessageDecoder[F, A]): MessageDecoder[F, A] =
+        new MessageDecoder[F, A] {
+          def decodeRequest(request: Request[F]): F[A] =
+            rdm(fa).decodeRequest(request)
+          def decodeResponse(response: Response[F]): F[A] =
+            fa.decodeResponse(response)
+        }
+    }
 
   def fromEntityDecoder[F[_], A](implicit
       F: MonadThrow[F],

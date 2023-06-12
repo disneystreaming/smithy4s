@@ -16,6 +16,7 @@
 
 package smithy4s.http4s.kernel
 
+import cats.~>
 import cats.effect.MonadCancelThrow
 import fs2.Pipe
 import fs2.Pull
@@ -33,6 +34,14 @@ import scala.util.control.NoStackTrace
 // https://github.com/http4s/http4s/blob/v0.23.19/server/shared/src/main/scala/org/http4s/server/middleware/GZip.scala
 object GzipRequestDecoder {
   val DefaultBufferSize = 32 * 1024
+
+  def apply[F[_]: MonadCancelThrow: Compression](
+      bufferSize: Int = DefaultBufferSize
+  ): RequestDecoder.MiddlewareK[F] =
+    new (RequestDecoder[F, *] ~> RequestDecoder[F, *]) {
+      def apply[A](fa: RequestDecoder[F, A]): RequestDecoder[F, A] =
+        make[F, A](bufferSize)(fa)
+    }
 
   def make[F[_]: MonadCancelThrow: Compression, A](bufferSize: Int)(
       nextDecoder: RequestDecoder[F, A]
