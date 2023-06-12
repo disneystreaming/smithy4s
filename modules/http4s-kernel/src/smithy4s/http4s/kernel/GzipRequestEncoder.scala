@@ -18,7 +18,7 @@ package smithy4s.http4s.kernel
 
 import cats.~>
 import org.http4s.Request
-import org.http4s.ContentCoding
+import org.http4s.Header
 import org.http4s.headers.`Content-Encoding`
 import org.http4s.headers.`Content-Length`
 import fs2.compression.Compression
@@ -37,7 +37,7 @@ object GzipRequestEncoder {
     new (RequestEncoder[F, *] ~> RequestEncoder[F, *]) {
       def apply[A](fa: RequestEncoder[F, A]): RequestEncoder[F, A] = {
         val a = make[F, A](bufferSize, level)
-        RequestEncoder.combine(a, fa)
+        RequestEncoder.combine(fa, a)
       }
     }
 
@@ -46,25 +46,35 @@ object GzipRequestEncoder {
       level: DeflateParams.Level
   ): RequestEncoder[F, A] =
     new RequestEncoder[F, A] {
-      def addToRequest(request: Request[F], a: A): Request[F] =
-        request.headers.get[`Content-Encoding`] match {
-          case None =>
-            val compressPipe =
-              Compression[F].gzip(
-                fileName = None,
-                modificationTime = None,
-                comment = None,
-                DeflateParams(
-                  bufferSize = bufferSize,
-                  level = level,
-                  header = ZLibParams.Header.GZIP
-                )
+      def addToRequest(request: Request[F], a: A): Request[F] = {
+        val updateContentTypeEncoding =
+          request.headers.get[`Content-Encoding`] match {
+            case None =>
+              Header.Raw(
+                `Content-Encoding`.headerInstance.name,
+                "gzip"
               )
-            request
-              .removeHeader[`Content-Length`]
-              .putHeaders(`Content-Encoding`(ContentCoding.gzip))
-              .withBodyStream(request.body.through(compressPipe))
-          case Some(_) => request
-        }
+            case Some(`Content-Encoding`(cc)) =>
+              Header.Raw(
+                `Content-Encoding`.headerInstance.name,
+                s"${cc.coding}, gzip"
+              )
+          }
+        val compressPipe =
+          Compression[F].gzip(
+            fileName = None,
+            modificationTime = None,
+            comment = None,
+            DeflateParams(
+              bufferSize = bufferSize,
+              level = level,
+              header = ZLibParams.Header.GZIP
+            )
+          )
+        request
+          .removeHeader[`Content-Length`]
+          .putHeaders(updateContentTypeEncoding)
+          .withBodyStream(request.body.through(compressPipe))
+      }
     }
 }
