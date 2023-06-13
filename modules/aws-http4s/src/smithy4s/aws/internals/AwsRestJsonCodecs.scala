@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2021-2022 Disney Streaming
  *
@@ -35,8 +34,10 @@ private[aws] object AwsRestJsonCodecs {
         cache => new AwsSchemaVisitorJCodec(cache),
         Some(hintMask)
       ) {
-        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type = httpMediaType
-      })
+        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
+          httpMediaType
+      }
+    )
 
     val encoders = MessageEncoder.restSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)

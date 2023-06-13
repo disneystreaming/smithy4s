@@ -37,7 +37,6 @@ class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
       Schema.boolean,
       Schema.byte,
       Schema.bytes,
-      Schema.unit,
       Schema.timestamp,
       Schema.document,
       Schema.uuid
