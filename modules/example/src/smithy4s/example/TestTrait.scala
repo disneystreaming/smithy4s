@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.struct
 
 /** @param orderType
   *   Our order types have different ways to identify a product
-  *   Except for preview orders, these don't have an ID
+  *   Except for preview orders, these don't have an ID 
   */
 case class TestTrait(orderType: Option[OrderType] = None)
 object TestTrait extends ShapeTag.Companion[TestTrait] {

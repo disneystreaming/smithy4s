@@ -121,7 +121,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
       run
         .recoverWith(transformError)
-        .flatMap(successResponse)
+        .map(successResponse)
         .handleErrorWith(errorResponse)
     }))
 
@@ -196,7 +196,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
         .map { case (k, v) => k -> v.map(_._2).toList }
     ).pure[F]
 
-  private def successResponse(output: O): F[Response[F]] = {
+  private def successResponse(output: O): Response[F] = {
     val outputMetadata = outputMetadataEncoder.encode(output)
     val outputHeaders = toHeaders(outputMetadata.headers)
     val statusCode = outputMetadata.statusCode.getOrElse(httpEndpoint.code)
@@ -204,10 +204,9 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
     putHeaders(Response[F](httpStatus), outputHeaders)
       .withEntity(output)
-      .pure[F]
   }
 
-  def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
+  private def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
     def errorHeaders(errorLabel: String, metadata: Metadata): Headers =
       toHeaders(metadata.headers).put(errorTypeHeader -> errorLabel)
     val errorUnionSchema = errorable.error
