@@ -66,17 +66,17 @@ object RequestEncoder {
   }
 
   def rpcSchemaCompiler[F[_]](
-      entityDecoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] =
     new CachedSchemaCompiler[RequestEncoder[F, *]] {
-      type Cache = entityDecoderCompiler.Cache
+      type Cache = entityEncoderCompiler.Cache
       def createCache(): Cache =
-        entityDecoderCompiler.createCache()
+        entityEncoderCompiler.createCache()
 
       def fromSchema[A](schema: Schema[A], cache: Cache): RequestEncoder[F, A] =
-        fromEntityEncoder(F, entityDecoderCompiler.fromSchema(schema, cache))
+        fromEntityEncoder(F, entityEncoderCompiler.fromSchema(schema, cache))
       def fromSchema[A](schema: Schema[A]): RequestEncoder[F, A] =
-        fromEntityEncoder(F, entityDecoderCompiler.fromSchema(schema))
+        fromEntityEncoder(F, entityEncoderCompiler.fromSchema(schema))
     }
 
   /**
@@ -113,9 +113,9 @@ object RequestEncoder {
             RequestEncoder.fromMetadataEncoder(metadataEncoder)
           case HttpRestSchema.OnlyBody(bodySchema) =>
             // The data can be fully decoded from the body
-            implicit val bodyDecoder: EntityEncoder[F, A] =
+            implicit val bodyEncoder: EntityEncoder[F, A] =
               entityEncoderCompiler.fromSchema(bodySchema, cache._1)
-            RequestEncoder.fromEntityEncoder(F, bodyDecoder)
+            RequestEncoder.fromEntityEncoder(F, bodyEncoder)
           case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
             val metadataEncoder =
               Metadata.Encoder.fromSchema(metadataSchema, cache._2)
