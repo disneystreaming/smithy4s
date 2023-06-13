@@ -53,8 +53,6 @@ private[aws] object AwsRestJsonCodecs {
       EntityDecoders.fromCodecAPI[F](underlyingCodecs)
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
-    val beforeCompression = UnaryClientCodecs
-      .Make[F](encoders, decoders, decoders, discriminator)
 
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](
@@ -71,9 +69,9 @@ private[aws] object AwsRestJsonCodecs {
               )
             case _ => encoders
           }
-        beforeCompression(endpoint).copy(inputEncoder =
-          maybeCompressingEncoders.fromSchema(endpoint.input)
-        )
+        val make = UnaryClientCodecs
+          .Make[F](maybeCompressingEncoders, decoders, decoders, discriminator)
+        make.apply(endpoint)
       }
     }
 
