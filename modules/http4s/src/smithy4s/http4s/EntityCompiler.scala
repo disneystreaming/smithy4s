@@ -25,6 +25,7 @@ import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy4s.http.BodyPartial
 import smithy4s.http.CodecAPI
+import smithy4s.schema.Primitive
 
 trait EntityCompiler[F[_]] {
 
@@ -86,13 +87,21 @@ object EntityCompiler {
       ): EntityEncoder[F, A] = {
         val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
+        val isEmpty = schema match {
+          case Schema.PrimitiveSchema(_, _, Primitive.PUnit) => true
+          case _                                             => false
+        }
 
-        EntityEncoder
-          .byteArrayEncoder[F]
-          .withContentType(
-            `Content-Type`(mediaType)
-          )
-          .contramap[A]((a: A) => codecAPI.writeToArray(codecA, a))
+        if (isEmpty) {
+          EntityEncoder.emptyEncoder
+        } else {
+          EntityEncoder
+            .byteArrayEncoder[F]
+            .withContentType(
+              `Content-Type`(mediaType)
+            )
+            .contramap[A]((a: A) => codecAPI.writeToArray(codecA, a))
+        }
       }
 
       def compileEntityDecoder[A](

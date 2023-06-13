@@ -33,8 +33,6 @@ import smithy4s.schema.Alt
 import smithy4s.kinds._
 import org.http4s.HttpApp
 import org.typelevel.vault.Key
-import smithy4s.schema.Schema
-import smithy4s.schema.Primitive
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -204,14 +202,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     val statusCode = outputMetadata.statusCode.getOrElse(httpEndpoint.code)
     val httpStatus = status(statusCode)
 
-    val baseResponse = putHeaders(Response[F](httpStatus), outputHeaders)
-    if (isEmpty(outputSchema)) baseResponse.withEmptyBody
-    else baseResponse.withEntity(output)
-  }
-
-  private def isEmpty[A](schema: Schema[A]): Boolean = schema match {
-    case Schema.PrimitiveSchema(_, _, Primitive.PUnit) => true
-    case _                                             => false
+    putHeaders(Response[F](httpStatus), outputHeaders)
+      .withEntity(output)
   }
 
   private def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
