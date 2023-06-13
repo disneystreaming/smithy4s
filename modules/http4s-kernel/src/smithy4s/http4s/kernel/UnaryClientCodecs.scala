@@ -16,20 +16,18 @@
 
 package smithy4s.http4s.kernel
 
-import smithy4s.schema.CachedSchemaCompiler
-import org.http4s.Response
-import smithy4s.http.HttpDiscriminator
 import cats.effect.Concurrent
+import org.http4s.Response
 import smithy4s.Endpoint
+import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpEndpoint
+import smithy4s.schema.CachedSchemaCompiler
 
-trait UnaryClientCodecs[F[_], I, E, O] {
-
-  // MUST return fixed values
-  val inputEncoder: RequestEncoder[F, I]
-  val outputDecoder: ResponseDecoder[F, O]
-  val errorDecoder: ResponseDecoder[F, Throwable]
-}
+case class UnaryClientCodecs[F[_], I, E, O](
+    inputEncoder: RequestEncoder[F, I],
+    outputDecoder: ResponseDecoder[F, O],
+    errorDecoder: ResponseDecoder[F, Throwable]
+)
 
 object UnaryClientCodecs {
 
@@ -53,16 +51,16 @@ object UnaryClientCodecs {
 
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] = new UnaryClientCodecs[F, I, E, O] {
+      ): UnaryClientCodecs[F, I, E, O] = {
 
         val inputEncoder: RequestEncoder[F, I] =
           HttpEndpoint.cast(endpoint).toOption match {
             case Some(httpEndpoint) => {
               val httpInputEncoder =
-                MessageEncoder.fromHttpEndpoint[F, I](httpEndpoint)
+                RequestEncoder.fromHttpEndpoint[F, I](httpEndpoint)
               val requestEncoder =
                 input.fromSchema(endpoint.input, requestEncoderCache)
-              RequestEncoder.combine(httpInputEncoder, requestEncoder)
+              httpInputEncoder.combine(requestEncoder)
             }
             case None => input.fromSchema(endpoint.input, requestEncoderCache)
           }
@@ -75,6 +73,7 @@ object UnaryClientCodecs {
             error,
             errorDiscriminator
           )
+        UnaryClientCodecs(inputEncoder, outputDecoder, errorDecoder)
       }
     }
   }

@@ -67,7 +67,7 @@ object AwsClient {
           AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
 
         case AwsProtocol.AWS_REST_JSON_1(_) =>
-          AwsRestJsonCodecs.make[F]("application/json", GzipRequestEncoder[F]())
+          AwsRestJsonCodecs.make[F]("application/json")
         case _ => ???
       }
       service.functorInterpreter {

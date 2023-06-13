@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package smithy4s.http4s.kernel
 
 import cats.effect.IO
@@ -24,29 +25,21 @@ import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Response
 import weaver._
+import smithy4s.http4s.kernel.GzipRequestDecompression
+import smithy4s.http4s.kernel.GzipRequestCompression
 
-object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
-  private val stringCodecs = {
-    val encoder =
-      GzipRequestEncoder.make[IO, String](
-        GzipRequestEncoder.DefaultBufferSize,
-        DeflateParams.Level.DEFAULT
-      )
-    val internal: RequestDecoder[IO, String] =
-      new RequestDecoder[IO, String]() {
-        def decodeRequest(request: Request[IO]): IO[String] = {
-          request.as[String]
-        }
-      }
-    val decoder =
-      GzipRequestDecoder.make[IO, String](
-        GzipRequestDecoder.DefaultBufferSize
-      )(internal)
-    (encoder, decoder)
-  }
+object GzipRequestSpec extends SimpleIOSuite with Compat {
+  val compressor =
+    GzipRequestCompression[IO](
+      GzipRequestCompression.DefaultBufferSize,
+      DeflateParams.Level.DEFAULT
+    )
+  val decompressor =
+    GzipRequestDecompression[IO](
+      GzipRequestDecompression.DefaultBufferSize
+    )
 
-  test("codecs roundtrip - encoder compress and decoder decompress") {
-    val (encoder, decoder) = stringCodecs
+  test("codecs roundtrip - compressor compress and decompressor decompress") {
     Deferred[IO, String].flatMap { received =>
       val routes = HttpRoutes.of[IO] { case req =>
         req.toStrict(None).flatMap { strict =>
@@ -56,7 +49,7 @@ object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
               .compile
               .foldMonoid
               .flatMap { received.complete(_).void }
-          val answer = decoder.decodeRequest(strict).map { payload =>
+          val answer = decompressor(strict).as[String].map { payload =>
             Response[IO]().withEntity(payload)
           }
           record *> answer
@@ -66,7 +59,7 @@ object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
       val request =
         Request[IO](method = Method.POST).withEntity(originalPayload)
       routes
-        .run(encoder.addToRequest(request, ""))
+        .run(compressor(request))
         .value
         .flatMap {
           case None => IO.pure(failure("expected a response"))
@@ -87,7 +80,6 @@ object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
   }
 
   test("codecs roundtrip - works on empty body") {
-    val (encoder, decoder) = stringCodecs
     Deferred[IO, String].flatMap { received =>
       val routes = HttpRoutes.of[IO] { case req =>
         req.toStrict(None).flatMap { strict =>
@@ -97,7 +89,7 @@ object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
               .compile
               .foldMonoid
               .flatMap { received.complete(_).void }
-          val answer = decoder.decodeRequest(strict).map { payload =>
+          val answer = decompressor(strict).as[String].map { payload =>
             Response[IO]().withEntity(payload)
           }
           record *> answer
@@ -106,7 +98,7 @@ object GzipRequestCodecSpec extends SimpleIOSuite with Compat {
       val request =
         Request[IO](method = Method.POST)
       routes
-        .run(encoder.addToRequest(request, ""))
+        .run(compressor(request))
         .value
         .flatMap {
           case None => IO.pure(failure("expected a response"))

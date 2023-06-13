@@ -16,7 +16,6 @@
 
 package smithy4s.http4s.kernel
 
-import cats.~>
 import cats.effect.MonadCancelThrow
 import fs2.Pipe
 import fs2.Pull
@@ -32,21 +31,12 @@ import scala.util.control.NoStackTrace
 
 // inspired from:
 // https://github.com/http4s/http4s/blob/v0.23.19/server/shared/src/main/scala/org/http4s/server/middleware/GZip.scala
-object GzipRequestDecoder {
+object GzipRequestDecompression {
   val DefaultBufferSize = 32 * 1024
 
   def apply[F[_]: MonadCancelThrow: Compression](
       bufferSize: Int = DefaultBufferSize
-  ): RequestDecoder.MiddlewareK[F] =
-    new (RequestDecoder[F, *] ~> RequestDecoder[F, *]) {
-      def apply[A](fa: RequestDecoder[F, A]): RequestDecoder[F, A] =
-        make[F, A](bufferSize)(fa)
-    }
-
-  def make[F[_]: MonadCancelThrow: Compression, A](bufferSize: Int)(
-      nextDecoder: RequestDecoder[F, A]
-  ): RequestDecoder[F, A] = {
-
+  ): Request[F] => Request[F] = {
     def decompressWith(bufferSize: Int): Pipe[F, Byte, Byte] =
       _.pull.peek1
         .flatMap {
@@ -62,21 +52,19 @@ object GzipRequestDecoder {
           case error              => Stream.raiseError(error)
         }
 
-    new RequestDecoder[F, A] {
-      def decodeRequest(request: Request[F]): F[A] =
-        request.headers.get[`Content-Encoding`] match {
-          case Some(`Content-Encoding`(ContentCoding.gzip)) =>
-            val updatedRequest =
-              request
-                .filterHeaders(nonCompressionHeader)
-                .withBodyStream(
-                  request.body.through(decompressWith(bufferSize))
-                )
-            nextDecoder.decodeRequest(updatedRequest)
-          case Some(_) | None =>
-            nextDecoder.decodeRequest(request)
-        }
-    }
+    (request: Request[F]) =>
+      request.headers.get[`Content-Encoding`] match {
+        case Some(`Content-Encoding`(ContentCoding.gzip)) =>
+          val updatedRequest =
+            request
+              .filterHeaders(nonCompressionHeader)
+              .withBodyStream(
+                request.body.through(decompressWith(bufferSize))
+              )
+          updatedRequest
+        case Some(_) | None =>
+          request
+      }
   }
 
   private def nonCompressionHeader(header: Header.Raw): Boolean =

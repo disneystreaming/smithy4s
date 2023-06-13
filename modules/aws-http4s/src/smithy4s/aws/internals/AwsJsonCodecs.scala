@@ -41,10 +41,10 @@ private[aws] object AwsJsonCodecs {
       override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
         httpMediaType
     }
-    val encoders = MessageEncoder.rpcSchemaCompiler[F](
+    val encoders = RequestEncoder.rpcSchemaCompiler[F](
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)
     )
-    val decoders = MessageDecoder.rpcSchemaCompiler[F](
+    val decoders = ResponseDecoder.rpcSchemaCompiler[F](
       EntityDecoders.fromCodecAPI[F](underlyingCodecs)
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
