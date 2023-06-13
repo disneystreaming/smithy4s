@@ -68,7 +68,7 @@ class SchemaVisitorMetadataWriter(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaEncode[C[A]] = {
-    self(member) match {
+    self(member.addHints(hints)) match {
       case StringValueMetaEncode(f) =>
         StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
       case _ => MetaEncode.empty
