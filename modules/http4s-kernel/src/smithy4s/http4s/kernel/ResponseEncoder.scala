@@ -94,14 +94,6 @@ object ResponseEncoder {
     }
   }
 
-  def fromHttpEndpoint[F[_]: Concurrent, I](
-      httpEndpoint: HttpEndpoint[I]
-  ): ResponseEncoder[F, I] = new ResponseEncoder[F, I] {
-    def encode(response: Response[F], input: I): Response[F] = {
-      response
-    }
-  }
-
   def rpcSchemaCompiler[F[_]](
       entityDecoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] =
