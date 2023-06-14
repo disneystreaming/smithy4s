@@ -28,7 +28,7 @@ trait StreamedObjectsProductGen[F[_, _, _, _, _]] {
   def getStreamedObject: F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 }
 
-object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObjectsOperation] {
+object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObjectsOperation] with ServiceProduct.Mirror[StreamedObjectsGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedObjects")
   val version: String = "1.0.0"

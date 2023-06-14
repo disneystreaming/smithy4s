@@ -33,7 +33,7 @@ trait ImportServiceProductGen[F[_, _, _, _, _]] {
   def importOperation: F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]
 }
 
-object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {
+object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] with ServiceProduct.Mirror[ImportServiceGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
   val version: String = "1.0.0"

@@ -32,7 +32,7 @@ trait ReservedNameServiceProductGen[F[_, _, _, _, _]] {
   def option: F[OptionInput, Nothing, Unit, Nothing, Nothing]
 }
 
-object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
+object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] with ServiceProduct.Mirror[ReservedNameServiceGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
   val version: String = "1.0.0"

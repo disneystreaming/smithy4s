@@ -26,7 +26,7 @@ trait BrandServiceProductGen[F[_, _, _, _, _]] {
   def addBrands: F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 }
 
-object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
+object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] with ServiceProduct.Mirror[BrandServiceGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
   val version: String = "1"

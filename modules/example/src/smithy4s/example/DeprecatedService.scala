@@ -29,7 +29,7 @@ trait DeprecatedServiceProductGen[F[_, _, _, _, _]] {
   def deprecatedOperation: F[Unit, Nothing, Unit, Nothing, Nothing]
 }
 
-object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] {
+object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] with ServiceProduct.Mirror[DeprecatedServiceGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
   val version: String = ""

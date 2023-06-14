@@ -32,7 +32,7 @@ trait NameCollisionProductGen[F[_, _, _, _, _]] {
   def endpoint: F[Unit, Nothing, Unit, Nothing, Nothing]
 }
 
-object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] {
+object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] with ServiceProduct.Mirror[NameCollisionGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
   val version: String = ""

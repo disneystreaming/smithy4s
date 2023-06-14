@@ -335,7 +335,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       obj(
         genNameRef,
-        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
+        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]",
+        w = line"${ServiceProductMirror}[${genNameRef}]"
       )(
         newline,
         renderId(shapeId),

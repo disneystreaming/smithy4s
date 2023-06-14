@@ -37,7 +37,7 @@ trait FooServiceProductGen[F[_, _, _, _, _]] {
   def getFoo: F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 }
 
-object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
+object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] with ServiceProduct.Mirror[FooServiceGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
   val version: String = "1.0.0"
