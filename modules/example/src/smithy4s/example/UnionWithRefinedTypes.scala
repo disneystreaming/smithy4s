@@ -6,6 +6,7 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
+import main.refined.Name
 
 sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
   @inline final def widen: UnionWithRefinedTypes = this
@@ -16,7 +17,7 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
   val hints: Hints = Hints.empty
 
   final case class AgeCase(age: Age) extends UnionWithRefinedTypes
-  final case class DogNameCase(dogName: smithy4s.example.refined.Name) extends UnionWithRefinedTypes
+  final case class DogNameCase(dogName: smithy4s.refined.Name) extends UnionWithRefinedTypes
 
   object AgeCase {
     val hints: Hints = Hints.empty

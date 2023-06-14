@@ -1,4 +1,4 @@
-namespace smithy4s.hello
+namespace smithy4s.example.hello
 
 use alloy#simpleRestJson
 

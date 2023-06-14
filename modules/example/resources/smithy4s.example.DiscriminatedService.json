@@ -1,0 +1,114 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "DiscriminatedService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/test/{key}": {
+            "get": {
+                "operationId": "TestDiscriminated",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "TestDiscriminated 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PayloadData"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "One": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PayloadData": {
+                "type": "object",
+                "properties": {
+                    "testBiggerUnion": {
+                        "$ref": "#/components/schemas/TestBiggerUnion"
+                    }
+                }
+            },
+            "TestBiggerUnion": {
+                "oneOf": [
+                    {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/One"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "tpe": {
+                                        "type": "string",
+                                        "enum": [
+                                            "one"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "tpe"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Two"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "tpe": {
+                                        "type": "string",
+                                        "enum": [
+                                            "two"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "tpe"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "discriminator": {
+                    "propertyName": "tpe"
+                }
+            },
+            "Two": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            }
+        }
+    }
+}
