@@ -30,24 +30,24 @@ object ServiceProduct {
       type Alg[Op[_, _, _, _, _]] = Prod[Op]
     }
 
-}
-
-/**
+  /**
   * Provides a way to get the product version for a service.
   * For info about the `Prod` type parameter, see [[ServiceProduct]].
   * 
   * @tparam Alg the algebra type parameter.
   */
-trait Mirror[Alg[_[_, _, _, _, _]]] {
-  type Prod[_[_, _, _, _, _]]
-  val serviceProduct: ServiceProduct.Aux[Prod, Alg]
-}
+  trait Mirror[Alg[_[_, _, _, _, _]]] {
+    type Prod[_[_, _, _, _, _]]
+    val serviceProduct: ServiceProduct.Aux[Prod, Alg]
+  }
 
-object Mirror {
+  object Mirror {
 
-  type Aux[Alg[_[_, _, _, _, _]], ProdAlg[_[_, _, _, _, _]]] =
-    Mirror[Alg] {
-      type Prod[Op[_, _, _, _, _]] = ProdAlg[Op]
-    }
+    type Aux[Alg[_[_, _, _, _, _]], ProdAlg[_[_, _, _, _, _]]] =
+      Mirror[Alg] {
+        type Prod[Op[_, _, _, _, _]] = ProdAlg[Op]
+      }
+
+  }
 
 }
