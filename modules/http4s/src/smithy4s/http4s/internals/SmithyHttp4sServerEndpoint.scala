@@ -123,14 +123,14 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       } yield output
 
       run
-        .recoverWith(transformError)
+        .recoverWith(transformError(FunctionK.id))
         .map(successResponse)
     }))
 
   private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
     app
       .recoverWith(
-        transformErrorF(Kleisli.liftK[F, Request[F]])
+        transformError(Kleisli.liftK[F, Request[F]])
       )
       .handleErrorWith { error => Kleisli.liftF(errorResponse(error)) }
   }
@@ -150,10 +150,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       : EntityEncoder[F, HttpContractError] =
     entityCompiler.compileEntityEncoder(HttpContractError.schema, entityCache)
 
-  private val transformError: PartialFunction[Throwable, F[O]] =
-    transformErrorF[F, O](FunctionK.id[F])
-
-  private def transformErrorF[G[_], A](
+  private def transformError[G[_], A](
       f: F ~> G
   )(implicit G: MonadThrow[G]): PartialFunction[Throwable, G[A]] = {
     case e @ endpoint.Error(_, _) => G.raiseError(e)
