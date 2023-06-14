@@ -131,6 +131,11 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     ): RouterBuilder[Alg, F] =
       new RouterBuilder(service, impl, fe andThen (e => F.pure(e)), middleware)
 
+    /**
+      * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
+      * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
+      * Errors raised in the [[middleware]] will be transformed too. 
+      */
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
     ): RouterBuilder[Alg, F] =
