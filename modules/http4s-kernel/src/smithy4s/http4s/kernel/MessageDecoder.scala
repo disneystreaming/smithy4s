@@ -110,7 +110,7 @@ object MessageDecoder {
     * The rest is decoded from the body.
     */
   // scalafmt: {maxColumn = 120}
-  private[kernel] def restCombinedSchemaCompiler[F[_]: Monad, Message <: Media[F]](
+  private[kernel] def restCombinedSchemaCompiler[F[_]: Monad, Message](
       metadataDecoderCompiler: CachedCompiler[F, Message],
       bodyDecoderCompiler: CachedCompiler[F, Message]
   ): CachedSchemaCompiler[MessageDecoder[F, Message, *]] =
