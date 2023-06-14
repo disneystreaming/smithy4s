@@ -19,6 +19,7 @@ package http4s
 package internals
 
 import cats.data.Kleisli
+import cats.~>
 import cats.syntax.all._
 import org.http4s.EntityEncoder
 import org.http4s.Headers
@@ -33,6 +34,8 @@ import smithy4s.schema.Alt
 import smithy4s.kinds._
 import org.http4s.HttpApp
 import org.typelevel.vault.Key
+import cats.arrow.FunctionK
+import cats.MonadThrow
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -122,15 +125,13 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       run
         .recoverWith(transformError)
         .map(successResponse)
-        .handleErrorWith(errorResponse)
     }))
 
   private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
     app
-      .recoverWith {
-        case error if errorTransformation.isDefinedAt(error) =>
-          Kleisli.liftF(errorTransformation.apply(error).flatMap(errorResponse))
-      }
+      .recoverWith(
+        transformErrorF(Kleisli.liftK[F, Request[F]])
+      )
       .handleErrorWith { error => Kleisli.liftF(errorResponse(error)) }
   }
 
@@ -149,11 +150,16 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       : EntityEncoder[F, HttpContractError] =
     entityCompiler.compileEntityEncoder(HttpContractError.schema, entityCache)
 
-  private val transformError: PartialFunction[Throwable, F[O]] = {
-    case e @ endpoint.Error(_, _) => F.raiseError(e)
+  private val transformError: PartialFunction[Throwable, F[O]] =
+    transformErrorF[F, O](FunctionK.id[F])
+
+  private def transformErrorF[G[_], A](
+      f: F ~> G
+  )(implicit G: MonadThrow[G]): PartialFunction[Throwable, G[A]] = {
+    case e @ endpoint.Error(_, _) => G.raiseError(e)
     case scala.util.control.NonFatal(other)
         if errorTransformation.isDefinedAt(other) =>
-      errorTransformation(other).flatMap(F.raiseError)
+      f(errorTransformation(other)).flatMap(G.raiseError)
   }
 
   private val extractInput: (Metadata, Request[F]) => F[I] = {
