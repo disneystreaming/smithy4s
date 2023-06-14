@@ -50,7 +50,6 @@ class SchemaVisitorMetadataWriter(
     val cache: CompilationCache[MetaEncode]
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
-
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -68,7 +67,7 @@ class SchemaVisitorMetadataWriter(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaEncode[C[A]] = {
-    self(member.addHints(hints)) match {
+    self(member.addHints(httpHints(hints))) match {
       case StringValueMetaEncode(f) =>
         StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
       case _ => MetaEncode.empty
@@ -84,7 +83,7 @@ class SchemaVisitorMetadataWriter(
       key: Schema[K],
       value: Schema[V]
   ): MetaEncode[Map[K, V]] = {
-    (self(key), self(value)) match {
+    (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaEncode(keyF), StringValueMetaEncode(valueF)) =>
         StringMapMetaEncode(map =>
           map.map { case (k, v) =>

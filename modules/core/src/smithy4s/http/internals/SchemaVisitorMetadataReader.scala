@@ -54,7 +54,7 @@ private[http] class SchemaVisitorMetadataReader(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaDecode[C[A]] = {
-    self(member.addHints(hints)) match {
+    self(member.addHints(httpHints(hints))) match {
       case MetaDecode.StringValueMetaDecode(f) =>
         MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
           tag.fromIterator(it.map(f))
@@ -69,7 +69,7 @@ private[http] class SchemaVisitorMetadataReader(
       key: Schema[K],
       value: Schema[V]
   ): MetaDecode[Map[K, V]] = {
-    (self(key.addHints(hints)), self(value.addHints(hints))) match {
+    (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
         StringMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap

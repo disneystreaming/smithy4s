@@ -20,6 +20,7 @@ package http
 package object internals {
 
   private[http] type HttpCode[A] = A => Option[Int]
+  private[http] val httpHints = HintMask(HttpBinding)
 
   private[internals] implicit class vectorOps[A](val vector: Vector[A])
       extends AnyVal {
@@ -90,4 +91,5 @@ package object internals {
       Some(PathSegment.label(str.substring(1, str.length() - 1)))
     else Some(PathSegment.static(str))
   }
+
 }
