@@ -107,7 +107,11 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint.matches(path)
   }
 
-  private val applyMiddleware: HttpApp[F] => HttpApp[F] = middleware(endpoint)
+  private val applyMiddleware: HttpApp[F] => HttpApp[F] = { app =>
+    middleware(endpoint)(app).handleErrorWith(error =>
+      Kleisli.liftF(errorResponse(error))
+    )
+  }
 
   override val httpApp: HttpApp[F] =
     httpAppErrorHandle(applyMiddleware(HttpApp[F] { req =>
@@ -122,7 +126,6 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       run
         .recoverWith(transformError)
         .map(successResponse)
-        .handleErrorWith(errorResponse)
     }))
 
   private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
