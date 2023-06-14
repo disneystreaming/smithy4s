@@ -41,9 +41,9 @@ trait ServiceProduct[Prod[_[_, _, _, _, _]]] extends FunctorK5[Prod] {
 
 object ServiceProduct {
 
-  type Aux[Alg[_[_, _, _, _, _]], Prod[_[_, _, _, _, _]]] =
-    ServiceProduct[Alg] {
-      type Alg[Op[_, _, _, _, _]] = Prod[Op]
+  type Aux[Prod[_[_, _, _, _, _]], Algebra[_[_, _, _, _, _]]] =
+    ServiceProduct[Prod] {
+      type Alg[Op[_, _, _, _, _]] = Algebra[Op]
     }
 
   /**
