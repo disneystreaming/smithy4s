@@ -22,6 +22,7 @@ import fs2.compression.Compression
 import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
+import smithy4s.http.Metadata
 import smithy4s.http.json.JCodec
 import smithy4s.kinds.FunctorK
 import smithy4s.schema.CachedSchemaCompiler
@@ -51,6 +52,7 @@ private[aws] object AwsRestJsonCodecs {
     )
 
     val decoders = ResponseDecoder.restSchemaCompiler[F](
+      Metadata.Decoder,
       EntityDecoders.fromCodecAPI[F](underlyingCodecs)
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)

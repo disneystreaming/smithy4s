@@ -73,7 +73,7 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputDecoder.decodeResponse(response)
-    else errorDecoder.decodeResponse(response).flatMap(effect.raiseError[O](_))
+    if (response.status.isSuccess) outputDecoder.decode(response)
+    else errorDecoder.decode(response).flatMap(effect.raiseError[O](_))
 
 }

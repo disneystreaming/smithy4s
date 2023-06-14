@@ -111,7 +111,7 @@ object RequestEncoder {
       metadataEncoderCompiler,
       fromMetadataEncoderK
     )
-    restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
+    MessageEncoder.restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
   }
 
 }

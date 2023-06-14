@@ -41,6 +41,7 @@ private[http4s] class SimpleRestJsonCodecs(
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
       RequestDecoder.restSchemaCompiler[F](
+        Metadata.Decoder,
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
       )
     val responseEncoderCompiler = {
@@ -81,6 +82,7 @@ private[http4s] class SimpleRestJsonCodecs(
   def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F] = {
     val messageDecoderCompiler =
       ResponseDecoder.restSchemaCompiler[F](
+        Metadata.Decoder,
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
       )
     val messageEncoderCompiler =

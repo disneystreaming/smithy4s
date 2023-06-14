@@ -142,7 +142,7 @@ object ResponseEncoder {
       metadataEncoderCompiler,
       fromMetadataEncoderK
     )
-    restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
+    MessageEncoder.restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
   }
 
 }
