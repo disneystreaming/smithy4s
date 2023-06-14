@@ -46,6 +46,7 @@ private[aws] object AwsRestJsonCodecs {
     )
 
     val encoders = RequestEncoder.restSchemaCompiler[F](
+      smithy4s.http.Metadata.Encoder,
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)
     )
 

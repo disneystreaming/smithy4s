@@ -32,11 +32,16 @@ import org.http4s.{Method => Http4sMethod}
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
 import smithy4s.ConstraintError
+import smithy4s.PartialData
 import smithy4s.capability.Covariant
+import smithy4s.capability.Encoder
 import smithy4s.http.CaseInsensitive
+import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
 import smithy4s.http.PathParams
 import smithy4s.http.{HttpMethod => SmithyMethod}
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.Schema
 
 package object kernel {
 
@@ -133,4 +138,54 @@ package object kernel {
         }
       )
   }
+
+  /**
+    * A compiler for that takes care of delegating to the encoders
+    * derived from partial schemas.
+    */
+  private[kernel] def restCombinedSchemaCompiler[F[_], Message](
+      metadataEncoderCompiler: CachedSchemaCompiler[Encoder[Message, *]],
+      bodyEncoderCompiler: CachedSchemaCompiler[Encoder[Message, *]]
+  ): CachedSchemaCompiler[Encoder[Message, *]] =
+    new CachedSchemaCompiler[Encoder[Message, *]] {
+
+      type MetadataCache = metadataEncoderCompiler.Cache
+      type BodyCache = bodyEncoderCompiler.Cache
+      type Cache = (MetadataCache, BodyCache)
+      def createCache(): Cache = {
+        val mCache = metadataEncoderCompiler.createCache()
+        val bCache = bodyEncoderCompiler.createCache()
+        (mCache, bCache)
+      }
+      def fromSchema[A](schema: Schema[A]): Encoder[Message, A] =
+        fromSchema(schema, createCache())
+
+      def fromSchema[A](
+          fullSchema: Schema[A],
+          cache: Cache
+      ): Encoder[Message, A] = {
+        HttpRestSchema(fullSchema) match {
+          case HttpRestSchema.OnlyMetadata(metadataSchema) =>
+            // The data can be fully decoded from the metadata.
+            metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
+          case HttpRestSchema.OnlyBody(bodySchema) =>
+            // The data can be fully decoded from the body
+            bodyEncoderCompiler.fromSchema(bodySchema, cache._2)
+          case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
+            val metadataEncoder =
+              metadataEncoderCompiler
+                .fromSchema(metadataSchema, cache._1)
+                .contramap[A](PartialData.Total(_))
+            val bodyEncoder =
+              bodyEncoderCompiler
+                .fromSchema(bodySchema, cache._2)
+                .contramap[A](PartialData.Total(_))
+            metadataEncoder.combine(bodyEncoder)
+          case HttpRestSchema.Empty(_) =>
+            Encoder.noop
+          // format: on
+        }
+      }
+    }
+
 }

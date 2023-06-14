@@ -23,6 +23,7 @@ import smithy4s.http4s.kernel._
 import smithy4s.schema.CachedSchemaCompiler
 import org.http4s.Response
 import cats.effect.Concurrent
+import smithy4s.http.Metadata
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -44,6 +45,7 @@ private[http4s] class SimpleRestJsonCodecs(
       )
     val responseEncoderCompiler = {
       val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
+        Metadata.Encoder,
         EntityEncoders.fromCodecAPI[F](underlyingCodecs)
       )
       new CachedSchemaCompiler[ResponseEncoder[F, *]] {
@@ -83,6 +85,7 @@ private[http4s] class SimpleRestJsonCodecs(
       )
     val messageEncoderCompiler =
       RequestEncoder.restSchemaCompiler[F](
+        Metadata.Encoder,
         EntityEncoders.fromCodecAPI[F](underlyingCodecs)
       )
     UnaryClientCodecs.Make[F](

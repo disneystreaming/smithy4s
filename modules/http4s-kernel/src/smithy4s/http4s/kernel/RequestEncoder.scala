@@ -21,26 +21,34 @@ import org.http4s.EntityEncoder
 import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
-import smithy4s.PartialData
-import smithy4s.capability.Encoder
 import smithy4s.http.HttpEndpoint
-import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
+import smithy4s.kinds.FunctorK
+import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
 
 object RequestEncoder {
 
+  def metadataRequestEncoder[F[_]: Concurrent]: RequestEncoder[F, Metadata] =
+    new RequestEncoder[F, Metadata] {
+      def encode(request: Request[F], metadata: Metadata): Request[F] = {
+        val uri = request.uri.withMultiValueQueryParams(metadata.query)
+        val headers = toHeaders(metadata.headers)
+        request.withUri(uri).withHeaders(request.headers ++ headers)
+      }
+    }
+
   def fromMetadataEncoder[F[_]: Concurrent, A](
       metadataEncoder: Metadata.Encoder[A]
-  ): RequestEncoder[F, A] = new RequestEncoder[F, A] {
-    def encode(request: Request[F], a: A): Request[F] = {
-      val metadata = metadataEncoder.encode(a)
-      val uri = request.uri
-        .withMultiValueQueryParams(metadata.query)
-      val headers = toHeaders(metadata.headers)
-      request.withUri(uri).withHeaders(request.headers ++ headers)
+  ): RequestEncoder[F, A] =
+    metadataRequestEncoder[F].contramap(metadataEncoder.encode)
+
+  def fromMetadataEncoderK[F[_]: Concurrent]
+      : PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] =
+    new PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] {
+      def apply[A](fa: Metadata.Encoder[A]): RequestEncoder[F, A] =
+        fromMetadataEncoder[F, A](fa)
     }
-  }
 
   def fromEntityEncoder[F[_]: Concurrent, A](implicit
       entityEncoder: EntityEncoder[F, A]
@@ -49,6 +57,13 @@ object RequestEncoder {
       request.withEntity(a)
     }
   }
+
+  def fromEntityEncoderK[F[_]: Concurrent]
+      : PolyFunction[EntityEncoder[F, *], RequestEncoder[F, *]] =
+    new PolyFunction[EntityEncoder[F, *], RequestEncoder[F, *]] {
+      def apply[A](fa: EntityEncoder[F, A]): RequestEncoder[F, A] =
+        fromEntityEncoder[F, A](Concurrent[F], fa)
+    }
 
   def fromHttpEndpoint[F[_]: Concurrent, I](
       httpEndpoint: HttpEndpoint[I]
@@ -65,77 +80,38 @@ object RequestEncoder {
     }
   }
 
+  /**
+    * A compiler for RequestEncoder that encodes the whole data in the body
+    * of the request
+    */
   def rpcSchemaCompiler[F[_]](
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] =
-    new CachedSchemaCompiler[RequestEncoder[F, *]] {
-      type Cache = entityEncoderCompiler.Cache
-      def createCache(): Cache =
-        entityEncoderCompiler.createCache()
-
-      def fromSchema[A](schema: Schema[A], cache: Cache): RequestEncoder[F, A] =
-        fromEntityEncoder(F, entityEncoderCompiler.fromSchema(schema, cache))
-      def fromSchema[A](schema: Schema[A]): RequestEncoder[F, A] =
-        fromEntityEncoder(F, entityEncoderCompiler.fromSchema(schema))
-    }
+    FunctorK[CachedSchemaCompiler].mapK(
+      entityEncoderCompiler,
+      fromEntityEncoderK[F]
+    )
 
   /**
     * A compiler for RequestEncoder that abides by REST-semantics :
-    * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`,
-    * `httpStatusCode` ... are encoded as the corresponding metadata.
+    * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`
+    * ... are encoded as the corresponding metadata.
     *
     * The rest is used to formulate the body of the message.
     */
   def restSchemaCompiler[F[_]](
+      metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
-  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] =
-    new CachedSchemaCompiler[RequestEncoder[F, *]] {
-      type MetadataCache = Metadata.Encoder.Cache
-      type EntityCache = entityEncoderCompiler.Cache
-      type Cache = (EntityCache, MetadataCache)
-      def createCache(): Cache = {
-        val eCache = entityEncoderCompiler.createCache()
-        val mCache = Metadata.Encoder.createCache()
-        (eCache, mCache)
-      }
-      def fromSchema[A](schema: Schema[A]): RequestEncoder[F, A] =
-        fromSchema(schema, createCache())
-
-      def fromSchema[A](
-          fullSchema: Schema[A],
-          cache: Cache
-      ): RequestEncoder[F, A] = {
-        HttpRestSchema(fullSchema) match {
-          case HttpRestSchema.OnlyMetadata(metadataSchema) =>
-            // The data can be fully decoded from the metadata.
-            val metadataEncoder =
-              Metadata.Encoder.fromSchema(metadataSchema, cache._2)
-            RequestEncoder.fromMetadataEncoder(metadataEncoder)
-          case HttpRestSchema.OnlyBody(bodySchema) =>
-            // The data can be fully decoded from the body
-            implicit val bodyEncoder: EntityEncoder[F, A] =
-              entityEncoderCompiler.fromSchema(bodySchema, cache._1)
-            RequestEncoder.fromEntityEncoder(F, bodyEncoder)
-          case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
-            val metadataEncoder =
-              Metadata.Encoder.fromSchema(metadataSchema, cache._2)
-            val metadataRequestEncoder =
-              RequestEncoder
-                .fromMetadataEncoder(metadataEncoder)
-                .contramap[A](PartialData.Total(_))
-            implicit val bodyEncoder: EntityEncoder[F, A] =
-              entityEncoderCompiler
-                .fromSchema(bodySchema, cache._1)
-                .contramap[A](PartialData.Total(_))
-            val bodyRequestEncoder =
-              RequestEncoder
-                .fromEntityEncoder(F, bodyEncoder)
-            metadataRequestEncoder.combine(bodyRequestEncoder)
-          case HttpRestSchema.Empty(_) =>
-            Encoder.noop
-          // format: on
-        }
-      }
-    }
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+    val bodyCompiler = FunctorK[CachedSchemaCompiler].mapK(
+      entityEncoderCompiler,
+      fromEntityEncoderK
+    )
+    val metadataCompiler = FunctorK[CachedSchemaCompiler].mapK(
+      metadataEncoderCompiler,
+      fromMetadataEncoderK
+    )
+    restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
+  }
 
 }
