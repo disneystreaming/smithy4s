@@ -20,7 +20,7 @@ package http.internals
 import cats.syntax.all._
 import smithy4s.Schema
 import smithy4s.Timestamp
-import smithy4s.example.Headers
+import smithy4s.example.HeadersStruct
 import smithy4s.example.HeadersWithDefaults
 import smithy4s.example.PathParams
 import smithy4s.example.Queries
@@ -37,8 +37,8 @@ class MetadataSpec() extends FunSuite {
 
   implicit val queriesSchema: Schema[Queries] =
     Queries.schema.addHints(InputOutput.Input.widen)
-  implicit val headersSchema: Schema[Headers] =
-    Headers.schema.addHints(InputOutput.Input.widen)
+  implicit val headersSchema: Schema[HeadersStruct] =
+    HeadersStruct.schema.addHints(InputOutput.Input.widen)
   implicit val queriesDefaultSchema: Schema[QueriesWithDefaults] =
     QueriesWithDefaults.schema.addHints(InputOutput.Input.widen)
   implicit val headersDefaultSchema: Schema[HeadersWithDefaults] =
@@ -245,7 +245,7 @@ class MetadataSpec() extends FunSuite {
   // HEADERS
   // ///////////////////////////////////////////////////////////
   test("String header") {
-    val headers = Headers(str = Some("hello"))
+    val headers = HeadersStruct(str = Some("hello"))
     val expected = Metadata.empty.addHeader("str", "hello")
     checkRoundTrip(headers, expected)
   }
@@ -256,20 +256,20 @@ class MetadataSpec() extends FunSuite {
   }
 
   test("Integer header") {
-    val headers = Headers(int = Some(123))
+    val headers = HeadersStruct(int = Some(123))
     val expected = Metadata.empty.addHeader("int", "123")
     checkRoundTrip(headers, expected)
   }
 
   test("Boolean header") {
-    val headers = Headers(b = Some(true))
+    val headers = HeadersStruct(b = Some(true))
     val expected = Metadata.empty.addHeader("b", "true")
     checkRoundTrip(headers, expected)
   }
 
   test("timestamp header (not format)") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val headers = Headers(ts1 = Some(ts))
+    val headers = HeadersStruct(ts1 = Some(ts))
     val expected =
       Metadata.empty.addHeader("ts1", "Thu, 01 Jan 1970 00:00:00 GMT")
     checkRoundTrip(headers, expected)
@@ -277,21 +277,21 @@ class MetadataSpec() extends FunSuite {
 
   test("timestamp header (date-time format)") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val headers = Headers(ts2 = Some(ts))
+    val headers = HeadersStruct(ts2 = Some(ts))
     val expected = Metadata.empty.addHeader("ts2", epochString)
     checkRoundTrip(headers, expected)
   }
 
   test("timestamp header (epoch-seconds format)") {
     val ts = Timestamp(1234567890L, 0)
-    val headers = Headers(ts3 = Some(ts))
+    val headers = HeadersStruct(ts3 = Some(ts))
     val expected = Metadata.empty.addHeader("ts3", "1234567890")
     checkRoundTrip(headers, expected)
   }
 
   test("timestamp header (http-date)") {
     val ts = Timestamp(1970, 1, 1, 0, 0, 0)
-    val headers = Headers(ts4 = Some(ts))
+    val headers = HeadersStruct(ts4 = Some(ts))
     val expected =
       Metadata.empty.addHeader("ts4", "Thu, 01 Jan 1970 00:00:00 GMT")
     checkRoundTrip(headers, expected)
@@ -309,19 +309,19 @@ class MetadataSpec() extends FunSuite {
         CaseInsensitive("foo-world") -> List("b")
       )
     val expected = Metadata(headers = expectedHeaders)
-    val headers = Headers(slm = Some(map))
+    val headers = HeadersStruct(slm = Some(map))
     checkRoundTrip(headers, expected)
   }
 
   test("list of strings header") {
     val list = List("hello", "world")
-    val headers = Headers(sl = Some(list))
+    val headers = HeadersStruct(sl = Some(list))
     val expected = Metadata.empty.addMultipleHeaders("sl", list)
     checkRoundTrip(headers, expected)
   }
 
   test("Int enum header") {
-    val headers = Headers(ie = Some(smithy4s.example.Numbers.ONE))
+    val headers = HeadersStruct(ie = Some(smithy4s.example.Numbers.ONE))
     val expected = Metadata.empty.addHeader("nums", "1")
     checkRoundTrip(headers, expected)
   }

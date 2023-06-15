@@ -18,8 +18,9 @@ package smithy4s
 package http4s
 
 import cats.Eq
-import cats.data.OptionT
+import smithy4s.example.hello._
 import cats.effect.IO
+import cats.data.OptionT
 import cats.effect.Resource
 import cats.implicits._
 import fs2.Collector
@@ -27,7 +28,6 @@ import org.http4s.HttpApp
 import org.http4s.Uri
 import org.http4s._
 import org.http4s.client.Client
-import smithy4s.hello._
 import weaver._
 
 object ServerEndpointMiddlewareSpec extends SimpleIOSuite {

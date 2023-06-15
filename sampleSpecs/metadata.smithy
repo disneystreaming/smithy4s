@@ -52,7 +52,7 @@ structure QueriesWithDefaults {
   dflt: String = "test"
 }
 
-structure Headers {
+structure HeadersStruct {
   @httpHeader("str")
   str: String,
   @httpHeader("int")
