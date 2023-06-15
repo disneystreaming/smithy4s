@@ -7,7 +7,6 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 import smithy4s.schema.Schema.string
-import main.refined.FancyList
 
 object FancyList extends Newtype[smithy4s.refined.FancyList] {
   val id: ShapeId = ShapeId("smithy4s.example", "FancyList")

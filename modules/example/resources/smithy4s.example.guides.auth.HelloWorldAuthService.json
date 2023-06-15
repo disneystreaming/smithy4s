@@ -1,0 +1,111 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "HelloWorldAuthService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "operationId": "HealthCheck",
+                "responses": {
+                    "200": {
+                        "description": "HealthCheck 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthCheckResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "NotAuthorizedError 401 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotAuthorizedErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/hello": {
+            "get": {
+                "operationId": "SayWorld",
+                "responses": {
+                    "200": {
+                        "description": "SayWorld 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SayWorldResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "NotAuthorizedError 401 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotAuthorizedErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HealthCheckResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "NotAuthorizedErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "SayWorldResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "default": "World !"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "smithy.api.httpBearerAuth": {
+                "type": "http",
+                "description": "HTTP Bearer authentication",
+                "scheme": "Bearer"
+            }
+        }
+    },
+    "security": [
+        {
+            "smithy.api.httpBearerAuth": []
+        }
+    ]
+}

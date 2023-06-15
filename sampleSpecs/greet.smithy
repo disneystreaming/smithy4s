@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace foo
+namespace smithy4s.example.greet
 
 service GreetService {
   operations: [Greet]

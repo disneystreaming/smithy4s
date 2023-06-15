@@ -106,7 +106,7 @@ lazy val docs =
         },
         "WEATHER_SERVICE_SPEC" -> IO
           .read(
-            (Compile / sourceDirectory).value / "smithy" / "weather.smithy"
+            (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather-docs.smithy"
           )
           .trim,
         "SCALA_VERSION" -> scalaVersion.value,

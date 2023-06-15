@@ -6,7 +6,6 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
-import main.refined.Name
 
 object Name extends Newtype[smithy4s.refined.Name] {
   val id: ShapeId = ShapeId("smithy4s.example", "Name")

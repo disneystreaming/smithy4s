@@ -9,14 +9,14 @@ The generated code provided by Smithy4s contains the required methods and instan
 operates over higher-kinded types with 5 type parameters. Yes, this is scary, but indirections are present to make it easier for the end user.
 
 ```scala mdoc:passthrough
-docs.InlineSmithyFile("greet.smithy")
+docs.InlineSmithyFile.fromSample("greet.smithy")
 ```
 
 
 ```scala mdoc
 import smithy4s._
 import smithy4s.kinds.PolyFunction
-import foo._
+import smithy4s.example.greet._
 
 type Result[A] = Either[String, A]
 

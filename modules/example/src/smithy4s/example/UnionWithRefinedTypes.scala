@@ -6,7 +6,6 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
-import main.refined.Name
 
 sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
   @inline final def widen: UnionWithRefinedTypes = this

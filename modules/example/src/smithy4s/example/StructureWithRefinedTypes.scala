@@ -5,8 +5,6 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.struct
-import main.refined.Name
-import main.refined.FancyList
 
 final case class StructureWithRefinedTypes(requiredAge: Age, age: Option[Age] = None, personAge: Option[PersonAge] = None, fancyList: Option[smithy4s.example.FancyList] = None, unwrappedFancyList: Option[smithy4s.refined.FancyList] = None, name: Option[smithy4s.example.Name] = None, dogName: Option[smithy4s.refined.Name] = None)
 object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefinedTypes] {

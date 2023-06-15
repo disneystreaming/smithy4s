@@ -4,7 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import main.refined.Age.provider._
+import smithy4s.refined.Age.provider._
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
