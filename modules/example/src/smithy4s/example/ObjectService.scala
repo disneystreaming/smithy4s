@@ -37,13 +37,6 @@ trait ObjectServiceProductGen[F[_, _, _, _, _]] {
   self =>
 
   def putObject: F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
-  /** @param key
-    *   Sent in the URI label named "key".
-    *   Key can also be seen as the filename
-    *   It is always required for a GET operation
-    * @param bucketName
-    *   Sent in the URI label named "bucketName".
-    */
   def getObject: F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]
 }
 

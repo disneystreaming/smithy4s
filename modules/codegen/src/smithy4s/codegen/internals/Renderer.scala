@@ -322,10 +322,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         ops.map { op =>
           lines(
-            documentationAnnotation(
-              op.hints,
-              op.hints.contains(Hint.PackedInputs)
-            ),
             deprecationAnnotation(op.hints),
             line"def ${op.methodName}: F[${op
               .renderAlgParams(opTraitNameRef.name)}]"

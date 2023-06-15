@@ -30,10 +30,6 @@ trait FooServiceGen[F[_, _, _, _, _]] {
 trait FooServiceProductGen[F[_, _, _, _, _]] {
   self =>
 
-  /** Returns a useful Foo
-    * No input necessary to find our Foo
-    * The path for this operation is "/foo"
-    */
   def getFoo: F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
 }
 
