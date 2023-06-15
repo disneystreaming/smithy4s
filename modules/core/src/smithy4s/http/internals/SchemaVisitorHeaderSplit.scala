@@ -19,13 +19,18 @@ object SchemaVisitorHeaderSplit
 
   def default[A]: AwsHeaderSplitter[A] = None
 
+  private def isHttpDate(hints: Hints): Boolean = {
+    // Using forall because http headers assume HTTP_DATE format by default.
+    // If the Hint isn't there, we're defaulting to HTTP_DATE
+    hints.get(TimestampFormat).forall(_ == TimestampFormat.HTTP_DATE)
+  }
+
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
   ): AwsHeaderSplitter[P] = tag match {
-    case PTimestamp
-        if hints.get(TimestampFormat).contains(TimestampFormat.HTTP_DATE) =>
+    case PTimestamp if isHttpDate(hints) =>
       Some(splitHeaderValue(_, isHttpDate = true))
     case _ => Some(splitHeaderValue(_, isHttpDate = false))
   }
@@ -52,6 +57,7 @@ object SchemaVisitorHeaderSplit
       headerValue: String,
       isHttpDate: Boolean
   ): Seq[String] = {
+
     val totalLength = headerValue.length()
     val entries = Seq.newBuilder[String]
     var i = 0

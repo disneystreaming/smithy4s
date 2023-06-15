@@ -31,8 +31,6 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
-import smithy.api.HttpHeader
-import smithy.api.HttpPrefixHeaders
 import smithy4s.http.internals.SchemaVisitorHeaderSplit
 
 /**
@@ -65,10 +63,13 @@ private[http] class SchemaVisitorMetadataReader(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaDecode[C[A]] = {
-    self(member) match {
+    val amendedMember = member.addHints(httpHints(hints))
+    self(amendedMember) match {
       case MetaDecode.StringValueMetaDecode(f) =>
-        val isAwsHeader = hints.has(HttpHeader) || hints.has(HttpPrefixHeaders)
-        (SchemaVisitorHeaderSplit(member), isAwsHeader) match {
+        val isAwsHeader = hints
+          .get(HttpBinding)
+          .exists(_.tpe == HttpBinding.Type.HeaderType) && awsHeaderEncoding
+        (SchemaVisitorHeaderSplit(amendedMember), isAwsHeader) match {
           case (Some(splitFunction), true) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
               tag.fromIterator(it.flatMap(splitFunction).map(f))
@@ -88,7 +89,7 @@ private[http] class SchemaVisitorMetadataReader(
       key: Schema[K],
       value: Schema[V]
   ): MetaDecode[Map[K, V]] = {
-    (self(key), self(value)) match {
+    (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
         StringMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap

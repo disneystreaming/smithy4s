@@ -31,17 +31,18 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
   // filtering out Null operation as we dont support sparse yet
   // filtering out HostWithPathOperation as this would be taken-care of by middleware.
+  // filtering PutWithContentEncoding until we implement compression
 
   override def allRules(
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
-      "HostWithPathOperation"
+      "HostWithPathOperation",
+      "PutWithContentEncoding"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No
-      else if (complianceTest.show.contains("RestJsonInputAndOutputWithTimestampHeaders")) ShouldRun.Yes
-      else ShouldRun.No
+      else ShouldRun.Yes
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
