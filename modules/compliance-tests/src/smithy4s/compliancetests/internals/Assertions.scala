@@ -150,7 +150,7 @@ private[internals] object assert {
     checkRequired |+| checkForbidden
   }
 
-  private def headerValuesCheck(
+  private def headerKeyValueCheck(
       headers: Map[String, String],
       expected: Option[Map[String, String]]
   ) = {
@@ -200,7 +200,7 @@ private[internals] object assert {
         forbiddenHeaders = tc.forbidHeaders
       )
       val valueChecks =
-        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
+        assert.headerKeyValueCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -214,7 +214,7 @@ private[internals] object assert {
         forbiddenHeaders = tc.forbidHeaders
       )
       val valueChecks =
-        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
+        assert.headerKeyValueCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
   }
