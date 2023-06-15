@@ -16,9 +16,9 @@
 
 package smithy4s.http4s.kernel
 
+import smithy4s.Endpoint
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
-import smithy4s.Endpoint
 
 trait UnaryServerCodecs[F[_], I, E, O] {
   val inputDecoder: RequestDecoder[F, I]

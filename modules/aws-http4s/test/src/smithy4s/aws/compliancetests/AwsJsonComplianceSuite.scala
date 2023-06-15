@@ -31,14 +31,12 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
   // filtering out Null operation as we dont support sparse yet
   // filtering out HostWithPathOperation as this would be taken-care of by middleware.
-  // filtering PutWithContentEncoding until we implement compression
 
   override def allRules(
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
-      "HostWithPathOperation",
-      "PutWithContentEncoding"
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No

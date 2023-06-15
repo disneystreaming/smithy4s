@@ -18,16 +18,23 @@ package smithy4s.aws
 package internals
 
 import cats.effect.Concurrent
+import fs2.compression.Compression
 import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
+import smithy4s.http.Metadata
 import smithy4s.http.json.JCodec
+import smithy4s.kinds.FunctorK
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.Endpoint
 
 private[aws] object AwsRestJsonCodecs {
 
   private val hintMask = aws.protocols.RestJson1.protocol.hintMask
 
-  def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs.Make[F] = {
+  def make[F[_]: Concurrent: Compression](
+      contentType: String
+  ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
     val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
       new smithy4s.http.json.JsonCodecAPI(
@@ -39,14 +46,38 @@ private[aws] object AwsRestJsonCodecs {
       }
     )
 
-    val encoders = MessageEncoder.restSchemaCompiler[F](
+    val encoders = RequestEncoder.restSchemaCompiler[F](
+      smithy4s.http.Metadata.Encoder,
       EntityEncoders.fromCodecAPI[F](underlyingCodecs)
     )
-    val decoders = MessageDecoder.restSchemaCompiler[F](
+
+    val decoders = ResponseDecoder.restSchemaCompiler[F](
+      Metadata.Decoder,
       EntityDecoders.fromCodecAPI[F](underlyingCodecs)
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
-    UnaryClientCodecs.Make[F](encoders, decoders, decoders, discriminator)
+
+    new UnaryClientCodecs.Make[F] {
+      def apply[I, E, O, SI, SO](
+          endpoint: Endpoint.Base[I, E, O, SI, SO]
+      ): UnaryClientCodecs[F, I, E, O] = {
+        import smithy4s.capability.Encoder
+        val compression = smithy4s.http4s.kernel.GzipRequestCompression[F]()
+        val maybeCompressingEncoders =
+          endpoint.hints.get(smithy.api.RequestCompression) match {
+            case Some(rc) if rc.encodings.contains("gzip") =>
+              FunctorK[CachedSchemaCompiler].mapK(
+                encoders,
+                Encoder.andThenK(compression)
+              )
+            case _ => encoders
+          }
+        val make = UnaryClientCodecs
+          .Make[F](maybeCompressingEncoders, decoders, decoders, discriminator)
+        make.apply(endpoint)
+      }
+    }
+
   }
 
 }

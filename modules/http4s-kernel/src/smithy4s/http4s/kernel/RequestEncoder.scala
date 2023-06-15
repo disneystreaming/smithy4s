@@ -16,43 +16,102 @@
 
 package smithy4s.http4s.kernel
 
+import cats.effect.Concurrent
+import org.http4s.EntityEncoder
+import org.http4s.Method
 import org.http4s.Request
-import smithy4s.kinds._
-
-trait RequestEncoder[F[_], A] { self =>
-  def addToRequest(request: Request[F], a: A): Request[F]
-  def mapRequest(f: Request[F] => Request[F]): RequestEncoder[F, A] =
-    new RequestEncoder[F, A] {
-      def addToRequest(request: Request[F], a: A): Request[F] = f(
-        self.addToRequest(request, a)
-      )
-    }
-}
+import org.http4s.Uri
+import smithy4s.http.HttpEndpoint
+import smithy4s.http.Metadata
+import smithy4s.kinds.FunctorK
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema._
 
 object RequestEncoder {
 
-  def empty[F[_], A]: RequestEncoder[F, A] = new RequestEncoder[F, A] {
-    def addToRequest(request: Request[F], a: A): Request[F] = request
-  }
-
-  def mapRequestK[F[_]](
-      f: Request[F] => Request[F]
-  ): PolyFunction[RequestEncoder[F, *], RequestEncoder[F, *]] =
-    new PolyFunction[RequestEncoder[F, *], RequestEncoder[F, *]] {
-      def apply[A](fa: RequestEncoder[F, A]): RequestEncoder[F, A] =
-        new RequestEncoder[F, A] {
-          def addToRequest(request: Request[F], a: A): Request[F] = f(
-            fa.addToRequest(request, a)
-          )
-        }
+  def metadataRequestEncoder[F[_]: Concurrent]: RequestEncoder[F, Metadata] =
+    new RequestEncoder[F, Metadata] {
+      def encode(request: Request[F], metadata: Metadata): Request[F] = {
+        val uri = request.uri.withMultiValueQueryParams(metadata.query)
+        val headers = toHeaders(metadata.headers)
+        request.withUri(uri).withHeaders(request.headers ++ headers)
+      }
     }
 
-  def combine[F[_], A](
-      left: RequestEncoder[F, A],
-      right: RequestEncoder[F, A]
+  def fromMetadataEncoder[F[_]: Concurrent, A](
+      metadataEncoder: Metadata.Encoder[A]
+  ): RequestEncoder[F, A] =
+    metadataRequestEncoder[F].contramap(metadataEncoder.encode)
+
+  def fromMetadataEncoderK[F[_]: Concurrent]
+      : PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] =
+    new PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] {
+      def apply[A](fa: Metadata.Encoder[A]): RequestEncoder[F, A] =
+        fromMetadataEncoder[F, A](fa)
+    }
+
+  def fromEntityEncoder[F[_]: Concurrent, A](implicit
+      entityEncoder: EntityEncoder[F, A]
   ): RequestEncoder[F, A] = new RequestEncoder[F, A] {
-    def addToRequest(request: Request[F], a: A): Request[F] =
-      right.addToRequest(left.addToRequest(request, a), a)
+    def encode(request: Request[F], a: A): Request[F] = {
+      request.withEntity(a)
+    }
+  }
+
+  def fromEntityEncoderK[F[_]: Concurrent]
+      : PolyFunction[EntityEncoder[F, *], RequestEncoder[F, *]] =
+    new PolyFunction[EntityEncoder[F, *], RequestEncoder[F, *]] {
+      def apply[A](fa: EntityEncoder[F, A]): RequestEncoder[F, A] =
+        fromEntityEncoder[F, A](Concurrent[F], fa)
+    }
+
+  def fromHttpEndpoint[F[_]: Concurrent, I](
+      httpEndpoint: HttpEndpoint[I]
+  ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
+    def encode(request: Request[F], input: I): Request[F] = {
+      val path = httpEndpoint.path(input)
+      val staticQueries = httpEndpoint.staticQueryParams
+      val oldUri = request.uri
+      val newUri = oldUri
+        .copy(path = oldUri.path.addSegments(path.map(Uri.Path.Segment(_))))
+        .withMultiValueQueryParams(staticQueries)
+      val method = toHttp4sMethod(httpEndpoint.method).getOrElse(Method.POST)
+      request.withUri(newUri).withMethod(method)
+    }
+  }
+
+  /**
+    * A compiler for RequestEncoder that encodes the whole data in the body
+    * of the request
+    */
+  def rpcSchemaCompiler[F[_]](
+      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] =
+    FunctorK[CachedSchemaCompiler].mapK(
+      entityEncoderCompiler,
+      fromEntityEncoderK[F]
+    )
+
+  /**
+    * A compiler for RequestEncoder that abides by REST-semantics :
+    * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`
+    * ... are encoded as the corresponding metadata.
+    *
+    * The rest is used to formulate the body of the message.
+    */
+  def restSchemaCompiler[F[_]](
+      metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+    val bodyCompiler = FunctorK[CachedSchemaCompiler].mapK(
+      entityEncoderCompiler,
+      fromEntityEncoderK
+    )
+    val metadataCompiler = FunctorK[CachedSchemaCompiler].mapK(
+      metadataEncoderCompiler,
+      fromMetadataEncoderK
+    )
+    MessageEncoder.restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
   }
 
 }

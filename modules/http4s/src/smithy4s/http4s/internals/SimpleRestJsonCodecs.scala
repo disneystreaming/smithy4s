@@ -23,6 +23,7 @@ import smithy4s.http4s.kernel._
 import smithy4s.schema.CachedSchemaCompiler
 import org.http4s.Response
 import cats.effect.Concurrent
+import smithy4s.http.Metadata
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -39,11 +40,13 @@ private[http4s] class SimpleRestJsonCodecs(
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
-      MessageDecoder.restSchemaCompiler[F](
+      RequestDecoder.restSchemaCompiler[F](
+        Metadata.Decoder,
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
       )
     val responseEncoderCompiler = {
-      val restSchemaCompiler = MessageEncoder.restSchemaCompiler[F](
+      val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
+        Metadata.Encoder,
         EntityEncoders.fromCodecAPI[F](underlyingCodecs)
       )
       new CachedSchemaCompiler[ResponseEncoder[F, *]] {
@@ -54,7 +57,7 @@ private[http4s] class SimpleRestJsonCodecs(
         } else {
           restSchemaCompiler
             .fromSchema(schema)
-            .mapResponse(addEmptyJsonToResponse(_))
+            .andThen(addEmptyJsonToResponse(_))
         }
 
         def fromSchema[A](schema: Schema[A], cache: Cache) = if (
@@ -64,7 +67,7 @@ private[http4s] class SimpleRestJsonCodecs(
         } else {
           restSchemaCompiler
             .fromSchema(schema, cache)
-            .mapResponse(addEmptyJsonToResponse(_))
+            .andThen(addEmptyJsonToResponse(_))
         }
       }
     }
@@ -78,11 +81,13 @@ private[http4s] class SimpleRestJsonCodecs(
 
   def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F] = {
     val messageDecoderCompiler =
-      MessageDecoder.restSchemaCompiler[F](
+      ResponseDecoder.restSchemaCompiler[F](
+        Metadata.Decoder,
         EntityDecoders.fromCodecAPI[F](underlyingCodecs)
       )
     val messageEncoderCompiler =
-      MessageEncoder.restSchemaCompiler[F](
+      RequestEncoder.restSchemaCompiler[F](
+        Metadata.Encoder,
         EntityEncoders.fromCodecAPI[F](underlyingCodecs)
       )
     UnaryClientCodecs.Make[F](
