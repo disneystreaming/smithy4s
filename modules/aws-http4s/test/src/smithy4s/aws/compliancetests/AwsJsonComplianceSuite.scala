@@ -29,9 +29,7 @@ import smithy4s.tests.ProtocolComplianceSuite
 
 object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
-  // filtering out Null operation as we dont support sparse yet
   // filtering out HostWithPathOperation as this would be taken-care of by middleware.
-
   override def allRules(
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {

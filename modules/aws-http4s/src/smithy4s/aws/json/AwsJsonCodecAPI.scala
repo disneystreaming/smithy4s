@@ -16,8 +16,24 @@
 
 package smithy4s.aws.json
 
-private[aws] class AwsJsonCodecAPI()
-    extends smithy4s.http.json.JsonCodecAPI(
+import smithy4s.HintMask
+import smithy4s.http.json.JCodec
+import smithy4s.http.HttpMediaType
+
+private[aws] class AwsJsonCodecAPI(
+    httpMediaType: HttpMediaType.Type = HttpMediaType("application/json"),
+    hintMask: Option[HintMask] = None
+) extends smithy4s.http.json.JsonCodecAPI(
       new AwsSchemaVisitorJCodec(_),
-      None
-    ) {}
+      hintMask
+    ) {
+
+  override def writeToArray[A](codec: Codec[A], value: A): Array[Byte] = {
+    val result = super.writeToArray(codec, value)
+    if (result.isEmpty) "{}".getBytes() else result
+  }
+
+  override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
+    httpMediaType
+
+}
