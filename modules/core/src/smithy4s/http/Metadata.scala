@@ -237,6 +237,15 @@ object Metadata {
         commaDelimitedEncoding = awsHeaderEncoding
       )
       schemaVisitor(schema) match {
+        case StructureMetaEncode(f) if awsHeaderEncoding => { (a: A) =>
+          val metadata = f(a)
+          // AWS does not want to receive empty header values.
+          val trimmedHeaders = metadata.headers
+            .map { case (key, values) => (key, values.filterNot(_.isEmpty)) }
+            .filterNot(_._2.isEmpty)
+            .toMap
+          metadata.copy(statusCode = toStatusCode(a), headers = trimmedHeaders)
+        }
         case StructureMetaEncode(f) => { (a: A) =>
           val struct = f(a)
           struct.copy(statusCode = toStatusCode(a))

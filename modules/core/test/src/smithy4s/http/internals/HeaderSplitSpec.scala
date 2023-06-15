@@ -1,7 +1,6 @@
 package smithy4s.http.internals
 
 import munit._
-import smithy4s.http.internals.SchemaVisitorHeaderSplit
 
 class HeaderSplitSpec extends FunSuite {
 

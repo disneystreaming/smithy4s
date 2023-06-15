@@ -31,7 +31,6 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
-import smithy4s.http.internals.SchemaVisitorHeaderSplit
 
 /**
   * SchemaVisitor that implements the decoding of smithy4s.http.Metadata, which

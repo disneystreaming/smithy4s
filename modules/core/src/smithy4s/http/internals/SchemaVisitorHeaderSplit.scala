@@ -87,8 +87,7 @@ object SchemaVisitorHeaderSplit
         skipUntilUnescapedDQuote()
         i += 1
         val entry = headerValue.substring(start, i - 1).replace("\\\"", "\"")
-        println(entry)
-        entries.addOne(entry)
+        entries += entry
         skipUntilCommaOrEnd()
         i += 1
       } else {
@@ -99,7 +98,7 @@ object SchemaVisitorHeaderSplit
           skipUntilCommaOrEnd()
         }
         val entry = headerValue.substring(start, i).trim()
-        entries.addOne(entry)
+        entries += entry
         i += 1
       }
     }
