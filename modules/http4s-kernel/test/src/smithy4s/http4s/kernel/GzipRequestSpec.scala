@@ -25,8 +25,6 @@ import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Response
 import weaver._
-import smithy4s.http4s.kernel.GzipRequestDecompression
-import smithy4s.http4s.kernel.GzipRequestCompression
 
 object GzipRequestSpec extends SimpleIOSuite with Compat {
   val compressor =
