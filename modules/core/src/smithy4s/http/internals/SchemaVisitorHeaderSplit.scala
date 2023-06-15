@@ -37,13 +37,15 @@ object SchemaVisitorHeaderSplit
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): AwsHeaderSplitter[B] = schema.compile(self)
+  ): AwsHeaderSplitter[B] = schema.compile(self): Option[String => Seq[String]]
+
   override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): AwsHeaderSplitter[B] = schema.compile(self)
+  ): AwsHeaderSplitter[B] = schema.compile(self): Option[String => Seq[String]]
+
   override def nullable[A](schema: Schema[A]): AwsHeaderSplitter[Option[A]] =
-    schema.compile(self)
+    schema.compile(self): Option[String => Seq[String]]
 
   override def enumeration[E](
       shapeId: ShapeId,

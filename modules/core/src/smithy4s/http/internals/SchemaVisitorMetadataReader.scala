@@ -31,6 +31,7 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
+import smithy4s.http.internals.SchemaVisitorHeaderSplit
 
 /**
   * SchemaVisitor that implements the decoding of smithy4s.http.Metadata, which
@@ -68,7 +69,7 @@ private[http] class SchemaVisitorMetadataReader(
         val isAwsHeader = hints
           .get(HttpBinding)
           .exists(_.tpe == HttpBinding.Type.HeaderType) && awsHeaderEncoding
-        (SchemaVisitorHeaderSplit(amendedMember), isAwsHeader) match {
+        (SchemaVisitorHeaderSplit(member), isAwsHeader) match {
           case (Some(splitFunction), true) =>
             MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
               tag.fromIterator(it.flatMap(splitFunction).map(f))
