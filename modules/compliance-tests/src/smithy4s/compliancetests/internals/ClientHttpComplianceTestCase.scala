@@ -21,6 +21,7 @@ import cats.implicits._
 import cats.effect.Temporal
 import cats.effect.syntax.all._
 import org.http4s.HttpApp
+import org.http4s.Headers
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
@@ -56,7 +57,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val bodyAssert = request.bodyText.compile.string.map { responseBody =>
       assert.bodyEql(
         responseBody,
-        testCase.body.getOrElse(""),
+        testCase.body,
         testCase.bodyMediaType
       )
     }
@@ -183,7 +184,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = parseHeaders(testCase.headers)
+            val headers =
+              testCase.headers.map(_.toList).foldMap(Headers(_))
 
             req.body.compile.drain.as(
               Response[F](status)

@@ -71,9 +71,9 @@ class SchemaVisitorMetadataWriter(
   ): MetaEncode[C[A]] = {
     SchemaVisitorHeaderMerge(member) match {
       case Some(toMergeableValue) if commaDelimitedEncoding =>
-        StringValueMetaEncode[C[A]](c =>
+        StringValueMetaEncode[C[A]] { c =>
           tag.iterator(c).map(toMergeableValue).mkString(", ")
-        )
+        }
       case _ =>
         self(member) match {
           case StringValueMetaEncode(f) =>

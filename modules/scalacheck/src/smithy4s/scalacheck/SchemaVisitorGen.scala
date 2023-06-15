@@ -44,7 +44,6 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
         chooseNumAux(hints, Long.MinValue, Long.MaxValue).map(BigDecimal.apply)
       case PBigInt =>
         chooseNumAux(hints, Long.MinValue, Long.MaxValue).map(BigInt.apply)
-      case PUnit     => ()
       case PUUID     => Gen.uuid
       case PByte     => Gen.oneOf(Range(1, 0xff)).map(_.toByte)
       case PDocument => Smithy4sGen.genDocument(1)

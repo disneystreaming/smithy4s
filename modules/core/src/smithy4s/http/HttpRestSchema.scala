@@ -68,7 +68,6 @@ object HttpRestSchema {
             OnlyMetadata(schema)
           case NoMatch() =>
             fullSchema match {
-              case Schema.PrimitiveSchema(_, _, Primitive.PUnit) => Empty(())
               case Schema.StructSchema(_, _, fields, make)
                   if (fields.isEmpty) =>
                 Empty(make(IndexedSeq.empty))

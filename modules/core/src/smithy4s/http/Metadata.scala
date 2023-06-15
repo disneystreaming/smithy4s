@@ -165,7 +165,7 @@ object Metadata {
     def decode(metadata: Metadata): Either[MetadataError, A]
   }
 
-  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false)
   private[smithy4s] object AwsDecoder
       extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
 
@@ -207,7 +207,12 @@ object Metadata {
     def encode(a: A): Metadata
   }
 
-  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+  object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false)
+  private[smithy4s] object AwsEncoder
+      extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
+
+  private[http] class CachedEncoderCompilerImpl(awsHeaderEncoding: Boolean)
+      extends CachedSchemaCompiler.Impl[Encoder] {
 
     type Aux[A] = internals.MetaEncode[A]
 
@@ -227,9 +232,11 @@ object Metadata {
             ext(a)
         }
       }
-      schema.compile(
-        new SchemaVisitorMetadataWriter(cache, commaDelimitedEncoding = false)
-      ) match {
+      val schemaVisitor = new SchemaVisitorMetadataWriter(
+        cache,
+        commaDelimitedEncoding = awsHeaderEncoding
+      )
+      schemaVisitor(schema) match {
         case StructureMetaEncode(f) => { (a: A) =>
           val struct = f(a)
           struct.copy(statusCode = toStatusCode(a))
@@ -237,7 +244,6 @@ object Metadata {
         case _ => (_: A) => Metadata.empty
       }
     }
-
   }
 
 }

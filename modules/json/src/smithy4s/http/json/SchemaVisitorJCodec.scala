@@ -437,7 +437,6 @@ private[smithy4s] class SchemaVisitorJCodec(
       case PString     => PrimitiveJCodecs.string
       case PTimestamp  => timestampJCodec(hints)
 
-      case PUnit => PrimitiveJCodecs.unit
       case PUUID => PrimitiveJCodecs.uuid
     }
   }

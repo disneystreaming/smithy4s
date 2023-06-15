@@ -19,17 +19,15 @@ package smithy4s.http4s.kernel
 import cats.MonadThrow
 import cats.effect.Concurrent
 import cats.syntax.all._
+import org.http4s.EntityDecoder
 import org.http4s.Response
-import smithy4s.ConstraintError
 import smithy4s.Errorable
-import smithy4s.capability.Covariant
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpErrorSelector
+import smithy4s.http.Metadata
 import smithy4s.schema.CachedSchemaCompiler
-
-trait ResponseDecoder[F[_], A] {
-  def decodeResponse(response: Response[F]): F[A]
-}
+import smithy4s.kinds.PolyFunction
+import smithy4s.kinds.FunctorK
 
 object ResponseDecoder {
 
@@ -71,10 +69,10 @@ object ResponseDecoder {
       select: Discriminator => Option[ResponseDecoder[F, E]]
   ): ResponseDecoder[F, E] = {
     new ResponseDecoder[F, E] {
-      def decodeResponse(response: Response[F]): F[E] =
+      def decode(response: Response[F]): F[E] =
         response.toStrict(None).flatMap { strictResponse =>
           discriminate(strictResponse).map(_.flatMap(select)).flatMap {
-            case Some(decoder) => decoder.decodeResponse(strictResponse)
+            case Some(decoder) => decoder.decode(strictResponse)
             case None =>
               val code = strictResponse.status.code
               val headers = getHeaders(strictResponse)
@@ -88,22 +86,65 @@ object ResponseDecoder {
     }
   }
 
-  implicit def covariantResponseDecoder[F[_]: MonadThrow]
-      : Covariant[ResponseDecoder[F, *]] =
-    new Covariant[ResponseDecoder[F, *]] {
-      def map[A, B](fa: ResponseDecoder[F, A])(
-          f: A => B
-      ): ResponseDecoder[F, B] = new ResponseDecoder[F, B] {
-        def decodeResponse(response: Response[F]): F[B] =
-          fa.decodeResponse(response).map(f)
-      }
+  def fromEntityDecoder[F[_], A](implicit
+      F: MonadThrow[F],
+      entityDecoder: EntityDecoder[F, A]
+  ): ResponseDecoder[F, A] = new ResponseDecoder[F, A] {
+    def decode(response: Response[F]): F[A] = response.as[A]
+  }
 
-      def emap[A, B](fa: ResponseDecoder[F, A])(
-          f: A => Either[ConstraintError, B]
-      ): ResponseDecoder[F, B] = new ResponseDecoder[F, B] {
-        def decodeResponse(response: Response[F]): F[B] =
-          fa.decodeResponse(response).map(f).flatMap(_.liftTo[F])
-      }
+  /**
+    * Creates a ResponseDecoder that decodes an HTTP message by looking at the
+    * metadata.
+    *
+    * NB: This decoder assumes that incoming requests have been enriched with pre-extracted
+    * path-parameters in the vault.
+    */
+  def fromMetadataDecoder[F[_]: MonadThrow, A](
+      metadataDecoder: Metadata.Decoder[A]
+  ): ResponseDecoder[F, A] = new ResponseDecoder[F, A] {
 
+    def decode(response: Response[F]): F[A] = {
+      val metadata = getResponseMetadata(response)
+      MonadThrow[F].fromEither(metadataDecoder.decode(metadata))
     }
+  }
+
+  def fromMetadataDecoderK[F[_]: MonadThrow]
+      : PolyFunction[Metadata.Decoder, ResponseDecoder[F, *]] =
+    new PolyFunction[Metadata.Decoder, ResponseDecoder[F, *]] {
+      def apply[A](fa: Metadata.Decoder[A]): ResponseDecoder[F, A] =
+        fromMetadataDecoder(fa)
+    }
+
+  def rpcSchemaCompiler[F[_]: Concurrent](
+      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
+  ): CachedSchemaCompiler[ResponseDecoder[F, *]] =
+    MessageDecoder.rpcSchemaCompiler(entityDecoderCompiler)
+
+  /**
+    * A compiler for ResponseDecoder that abides by REST-semantics :
+    * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`,
+    * `httpStatusCode` ... are decoded from the corresponding metadata.
+    *
+    * The rest is decoded from the body.
+    */
+  def restSchemaCompiler[F[_]](
+      metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
+      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
+  )(implicit
+      F: Concurrent[F]
+  ): CachedSchemaCompiler[ResponseDecoder[F, *]] = {
+    val metadataCompiler = FunctorK[CachedSchemaCompiler]
+      .mapK(metadataDecoderCompiler, fromMetadataDecoderK[F])
+    val bodyCompiler = FunctorK[CachedSchemaCompiler].mapK(
+      entityDecoderCompiler,
+      MessageDecoder.fromEntityDecoderK
+    )
+    MessageDecoder.restCombinedSchemaCompiler[F, Response[F]](
+      metadataCompiler,
+      bodyCompiler
+    )
+  }
+
 }

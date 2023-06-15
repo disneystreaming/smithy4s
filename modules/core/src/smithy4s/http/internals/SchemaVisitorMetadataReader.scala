@@ -53,17 +53,9 @@ private[http] class SchemaVisitorMetadataReader(
       tag: Primitive[P]
   ): MetaDecode[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
-    tag match {
-      case Primitive.PUnit =>
-        MetaDecode.StructureMetaDecode(
-          _ => Right(MMap.empty[String, Any]),
-          Some(_ => Right(()))
-        )
-      case other =>
-        Primitive.stringParser(other, hints) match {
-          case Some(parse) => MetaDecode.from(desc)(parse)
-          case None        => MetaDecode.EmptyMetaDecode
-        }
+    Primitive.stringParser(tag, hints) match {
+      case Some(parse) => MetaDecode.from(desc)(parse)
+      case None        => MetaDecode.EmptyMetaDecode
     }
   }
 

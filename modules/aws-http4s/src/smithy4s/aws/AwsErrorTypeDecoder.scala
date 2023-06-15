@@ -48,7 +48,7 @@ object AwsErrorTypeDecoder {
             )
           )
         case None =>
-          decoder.decodeResponse(response)
+          decoder.decode(response)
       }
       errorTypeF.map(_.discriminator)
   }

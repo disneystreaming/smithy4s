@@ -37,7 +37,6 @@ import smithy4s.schema.Primitive.PByte
 import smithy4s.schema.Primitive.PBigDecimal
 import smithy4s.schema.Primitive.PInt
 import smithy4s.schema.Primitive.PBlob
-import smithy4s.schema.Primitive.PUnit
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema.Primitive.PDocument
 import smithy4s.schema.Primitive.PFloat
@@ -92,7 +91,6 @@ class DocumentEncoderSchemaVisitor(
     case PInt        => from(int => DNumber(BigDecimal(int)))
     case PBlob =>
       from(bytes => DString(Base64.getEncoder().encodeToString(bytes.array)))
-    case PUnit => from(_ => DObject(Map.empty))
     case PTimestamp =>
       hints
         .get(TimestampFormat)

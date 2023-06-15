@@ -311,31 +311,59 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       override def stringShape(shape: StringShape): Option[Decl] =
         (shape match {
-          case T.enumeration(e) =>
-            val values = e
-              .getValues()
-              .asScala
-              .zipWithIndex
-              .map { case (value, index) =>
-                EnumValue(
-                  value.getValue(),
-                  index,
-                  EnumUtil.enumValueClassName(
-                    value.getName().asScala,
-                    value.getValue,
-                    index
-                  ),
-                  hints = Nil
-                )
+          case T.enumeration(e) => {
+            val pseudoEnumShape =
+              EnumShape.fromStringShape(shape, true).asScala match {
+                case Some(shape) =>
+                  shape
+                    .toBuilder()
+                    .asInstanceOf[EnumShape.Builder]
+                    .build()
+                case None => {
+                  val namedEnumTrait = {
+                    val defs = e.getValues().asScala.zipWithIndex.map {
+                      case (enumDef, idx) =>
+                        enumDef.getName().asScala match {
+                          case Some(_) => enumDef
+                          case None =>
+                            enumDef
+                              .toBuilder()
+                              .name(
+                                EnumUtil
+                                  .enumValueClassName(
+                                    None,
+                                    enumDef.getValue,
+                                    idx
+                                  )
+                              )
+                              .build()
+                        }
+                    }
+                    val builder = e.toBuilder().clearEnums()
+                    defs.foreach(builder.addEnum)
+                    builder.build()
+                  }
+                  EnumShape
+                    .builder()
+                    .id(shape.getId())
+                    .source(shape.getSourceLocation())
+                    .addTraits(
+                      shape
+                        .getAllTraits()
+                        .values()
+                        .asScala
+                        .filterNot(
+                          _.toShapeId() == ShapeId.from("smithy.api#enum")
+                        )
+                        .asJavaCollection
+                    )
+                    .asInstanceOf[EnumShape.Builder]
+                    .setMembersFromEnumTrait(namedEnumTrait)
+                    .build()
+                }
               }
-              .toList
-            Enumeration(
-              shape.getId(),
-              shape.name,
-              EnumTag.StringEnum,
-              values,
-              hints(shape)
-            ).some
+            enumShape(pseudoEnumShape)
+          }
           case _ => this.getDefault(shape)
         })
 

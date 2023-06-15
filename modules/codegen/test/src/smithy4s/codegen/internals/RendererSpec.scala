@@ -85,6 +85,192 @@ final class RendererSpec extends munit.FunSuite {
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
   }
+  test("enum trait hints should be preserved") {
+    val smithy = s"""
+                    |$$version: "2.0"
+                    |namespace smithy4s
+                    |
+                    |@documentation("this is an enum Suit")
+                    |@enum([
+                    |{
+                    |  value: "DIAMOND",
+                    |  name: "DIAMOND",
+                    |  documentation: "this is a DIAMOND"
+                    |},
+                    |{
+                    |  value: "HAERT",
+                    |  name: "HAERT",
+                    |  documentation: "this is a HAERT",
+                    |  deprecated: true
+                    |},
+                    |{
+                    |  value: "HEART",
+                    |  name: "HEART",
+                    |  documentation: "this is a HEART"
+                    |},
+                    |{
+                    |  value: "CLUB",
+                    |  name: "CLUB"
+                    |},
+                    |{
+                    |  value: "SPADE"
+                    |  name: "SPADE"
+                    |}
+                    |])
+                    |string Suit
+                    |
+                    |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    val definition =
+      contents.find(content =>
+        content.contains("sealed abstract class Suit") && content.contains(
+          "object Suit extends Enumeration[Suit]"
+        )
+      ) match {
+        case None =>
+          fail(
+            "enum must be rendered as a sealed abstract class and its companion object"
+          )
+        case Some(code) => code
+      }
+    val classDoc = """/** this is an enum Suit
+                     |  * @param DIAMOND
+                     |  *   this is a DIAMOND
+                     |  * @param HAERT
+                     |  *   this is a HAERT
+                     |  * @param HEART
+                     |  *   this is a HEART
+                     |  */""".stripMargin
+    val diamondWithDocRendered =
+      """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints(smithy.api.Documentation("this is a DIAMOND")))"""
+    // NOTE: enum trait and enum shape are not 100% compatible. For example, enum trait doesn't support deprecated$since and deprecated$message.
+    val haertWithDeprecationAndDocRendered = List(
+      "/** this is a HAERT */",
+      "@deprecated",
+      """case object HAERT extends Suit("HAERT", "HAERT", 1, Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = None, since = None))"""
+    )
+
+    assert(
+      definition.contains(classDoc),
+      "generated class must hold documentation"
+    )
+    assert(
+      definition.contains(diamondWithDocRendered),
+      "DIAMOND variant must hold hints from `@enum` trait"
+    )
+    assert(
+      haertWithDeprecationAndDocRendered.forall(definition.contains),
+      "variants generated from `@enum` trait must hold hints, but deprecation hint cannot support message and since properties."
+    )
+    assert(
+      !definition.contains("smithy.api.Enum"),
+      "smithy.api.Enum must be discarded"
+    )
+
+  }
+  test("unnamed enum trait can be rendered as enum") {
+    val smithy = """
+                   |
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |@enum([
+                   |{
+                   |  value: "HEAD"  
+                   |},
+                   |{
+                   |  value: "t:a$i\\l"
+                   |}
+                   |])
+                   |string Coin
+                   |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    val definition =
+      contents.find(content =>
+        content.contains("sealed abstract class Coin") && content.contains(
+          "object Coin extends Enumeration[Coin]"
+        )
+      ) match {
+        case None =>
+          fail(
+            "enum must be rendered as a sealed abstract class and its companion object"
+          )
+        case Some(code) => code
+      }
+    assert(
+      definition.contains(
+        """case object HEAD extends Coin("HEAD", "HEAD", 0, Hints())"""
+      ),
+      "enum trait value without name must be rendered as enum variant"
+    )
+    assert(
+      definition.contains(
+        """case object TAIL extends Coin("t:a$i\l", "TAIL", 1, Hints())"""
+      ),
+      "enum trait value without name but with non alphanumeric value must be rendered as enum variant"
+    )
+  }
+  test("enum hints should be preserved") {
+    val smithy = """
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |@documentation("this is an enum Suit")
+                   |enum Suit {
+                   |  @documentation("this is a DIAMOND")
+                   |  DIAMOND
+                   |  /// this is a HAERT
+                   |  @deprecated(since:"0.0.0", message: "typo")
+                   |  HAERT
+                   |  /// this is a HEART
+                   |  HEART
+                   |  CLUB
+                   |  SPADE
+                   |}
+                   |
+                   |""".stripMargin
+    val contents = generateScalaCode(smithy).values
+    val definition =
+      contents.find(content =>
+        content.contains("sealed abstract class Suit") && content.contains(
+          "object Suit extends Enumeration[Suit]"
+        )
+      ) match {
+        case None =>
+          fail(
+            "enum must be rendered as a sealed abstract class and its companion object"
+          )
+        case Some(code) => code
+      }
+    val classDoc = """/** this is an enum Suit
+                     |  * @param DIAMOND
+                     |  *   this is a DIAMOND
+                     |  * @param HAERT
+                     |  *   this is a HAERT
+                     |  * @param HEART
+                     |  *   this is a HEART
+                     |  */""".stripMargin
+    val diamondWithDocRendered =
+      """case object DIAMOND extends Suit("DIAMOND", "DIAMOND", 0, Hints(smithy.api.Documentation("this is a DIAMOND")))"""
+    val haertWithDeprecationAndDocRendered =
+      """|  /** this is a HAERT */
+         |  @deprecated(message = "typo", since = "0.0.0")
+         |  case object HAERT extends Suit("HAERT", "HAERT", 1, Hints(smithy.api.Documentation("this is a HAERT"), smithy.api.Deprecated(message = Some("typo"), since = Some("0.0.0")))""".stripMargin
+    assert(
+      definition.contains(classDoc),
+      "generated class must hold documentation for itself and variants with doc hint."
+    )
+    assert(
+      definition.contains(diamondWithDocRendered),
+      "DIAMOND variant must hold hints from `@enum` trait"
+    )
+    assert(
+      definition.contains(haertWithDeprecationAndDocRendered),
+      "variants generated from enum shape must hold hints and deprecation hint must keep message and since properties."
+    )
+  }
 
   test("structure must generate final case class") {
     val smithy =

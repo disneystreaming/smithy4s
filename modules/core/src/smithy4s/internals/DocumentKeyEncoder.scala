@@ -75,7 +75,6 @@ object DocumentKeyEncoder {
           case PFloat      => forBigDecimal { a => BigDecimal(a.toDouble) }
           case PBlob =>
             instance(bytes => Base64.getEncoder().encodeToString(bytes.array))
-          case PUnit => None
           case PTimestamp =>
             hints
               .get(TimestampFormat)
