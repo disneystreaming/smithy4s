@@ -121,7 +121,9 @@ private[aws] class AwsSchemaVisitorJCodec(
     }
   }
 
-  // Overriding to be more flexible with null values.
+  // Overriding to be more flexible with null values : AWS
+  // expects clients to be able to process and discard null values
+  // in maps.
   private def flexibleNullParsingMap[K, V](
       shapeId: ShapeId,
       hints: Hints,

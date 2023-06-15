@@ -29,6 +29,9 @@ private[aws] class AwsJsonCodecAPI(
     ) {
 
   override def writeToArray[A](codec: Codec[A], value: A): Array[Byte] = {
+    // AWS expects an empty object to be sent by clients even when the data
+    // that is meant to be a payload is empty (for instance, in case of an optional
+    // `@httpPayload` member)
     val result = super.writeToArray(codec, value)
     if (result.isEmpty) "{}".getBytes() else result
   }
