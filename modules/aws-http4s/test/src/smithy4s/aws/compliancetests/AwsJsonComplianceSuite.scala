@@ -37,8 +37,7 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
-      "HostWithPathOperation",
-      "PutWithContentEncoding"
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No
