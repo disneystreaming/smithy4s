@@ -31,6 +31,7 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
+import java.util.Base64
 
 /**
   * SchemaVisitor that implements the decoding of smithy4s.http.Metadata, which
@@ -50,7 +51,14 @@ private[http] class SchemaVisitorMetadataReader(
       tag: Primitive[P]
   ): MetaDecode[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
+    val hasMedia = hints.has(smithy.api.MediaType)
     Primitive.stringParser(tag, hints) match {
+      case Some(parse) if hasMedia =>
+        MetaDecode.from(desc)(
+          parse.compose[String](str =>
+            new String(Base64.getDecoder().decode(str))
+          )
+        )
       case Some(parse) => MetaDecode.from(desc)(parse)
       case None        => MetaDecode.EmptyMetaDecode
     }
