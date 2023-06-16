@@ -1180,12 +1180,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                 case Some(aa) =>
                   out.writeNonEscapedAsciiKey(jLabel)
                   codec.encodeValue(aa, out)
-<<<<<<< HEAD
                 case _ => encodeOptionNone(out)
-=======
-                case _ =>
-                  encodeOptionNone(out)
->>>>>>> series/0.17
               }
             }
         } else { (z: Z, out: JsonWriter) =>
