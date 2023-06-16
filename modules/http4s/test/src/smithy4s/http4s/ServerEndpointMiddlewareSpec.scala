@@ -39,6 +39,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
       extends RuntimeException(
         "Expected to recover via flatmapError or mapError"
       )
+
   test("server - middleware can throw and mapped / flatmapped") {
     val middleware = new ServerEndpointMiddleware.Simple[IO]() {
       def prepareWithHints(
@@ -66,6 +67,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
         .toOption
         .get
     )
+
     val throwCheck = runOnService(
       SimpleRestJsonBuilder
         .routes(HelloImpl)
@@ -77,6 +79,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
         .toOption
         .get
     )
+
     List(throwCheck, pureCheck).combineAll
   }
 

@@ -104,7 +104,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   }
 
   override val httpApp: HttpApp[F] =
-    applyMiddleware(HttpApp[F] { req =>
+    httpAppErrorHandle(applyMiddleware(HttpApp[F] { req =>
       val run: F[O] = for {
         input <- inputDecoder.decodeRequest(req)
         output <- (impl(endpoint.wrap(input)): F[O])
@@ -113,7 +113,16 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       run
         .recoverWith(transformError)
         .map(outputEncoder.addToResponse(successResponseBase, _))
-    }).handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
+    }))
+
+  private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
+    app
+      .recoverWith {
+        case error if errorTransformation.isDefinedAt(error) =>
+          Kleisli.liftF(errorTransformation.apply(error).flatMap(errorResponse))
+      }
+      .handleErrorWith { error => Kleisli.liftF(errorResponse(error)) }
+  }
 
   private val transformError: PartialFunction[Throwable, F[O]] = {
     case e @ endpoint.Error(_, _) => F.raiseError(e)
