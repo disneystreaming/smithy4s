@@ -54,7 +54,12 @@ object UnaryServerCodecs {
         output.fromSchema(endpoint.output, responseEncoderCache)
       val errorEncoder: ResponseEncoder[F, E] =
         ResponseEncoder.forError(
-          smithy4s.errorTypeHeader,
+          // Adding X-Amzn-Errortype as well to facilitate interop
+          // with Amazon-issued code-generators.
+          List(
+            smithy4s.http.errorTypeHeader,
+            smithy4s.http.amazonErrorTypeHeader
+          ),
           endpoint.errorable,
           error
         )

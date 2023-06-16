@@ -22,8 +22,10 @@ import smithy4s.http.HttpDiscriminator
 import smithy4s.http4s.kernel._
 import smithy4s.schema.CachedSchemaCompiler
 import org.http4s.Response
+import org.http4s.headers.`Content-Type`
 import cats.effect.Concurrent
 import smithy4s.http.Metadata
+import org.http4s.syntax.all._
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -33,10 +35,16 @@ private[http4s] class SimpleRestJsonCodecs(
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
   private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
 
-  private def addEmptyJsonToResponse[F[_]](response: Response[F]): Response[F] =
-    response.withBodyStream(
-      response.body.ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))
-    )
+  private def addEmptyJsonToResponse[F[_]](
+      response: Response[F]
+  ): Response[F] = {
+    response
+      .withBodyStream(
+        response.body
+          .ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))
+      )
+      .withContentType(`Content-Type`(mediaType"application/json"))
+  }
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
@@ -52,13 +60,7 @@ private[http4s] class SimpleRestJsonCodecs(
       new CachedSchemaCompiler[ResponseEncoder[F, *]] {
         type Cache = restSchemaCompiler.Cache
         def createCache(): Cache = restSchemaCompiler.createCache()
-        def fromSchema[A](schema: Schema[A]) = if (schema.isUnit) {
-          restSchemaCompiler.fromSchema(schema)
-        } else {
-          restSchemaCompiler
-            .fromSchema(schema)
-            .andThen(addEmptyJsonToResponse(_))
-        }
+        def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
         def fromSchema[A](schema: Schema[A], cache: Cache) = if (
           schema.isUnit
@@ -97,7 +99,10 @@ private[http4s] class SimpleRestJsonCodecs(
       response =>
         Concurrent[F].pure(
           HttpDiscriminator.fromMetadata(
-            smithy4s.errorTypeHeader,
+            List(
+              smithy4s.http.errorTypeHeader,
+              smithy4s.http.amazonErrorTypeHeader
+            ),
             getResponseMetadata(response)
           )
         )

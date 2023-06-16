@@ -33,17 +33,17 @@ import smithy4s.schema.Schema
 object ResponseEncoder {
 
   def forError[F[_], E](
-      errorTypeHeader: String,
+      errorTypeHeaders: List[String],
       maybeErrorable: Option[Errorable[E]],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
   ): ResponseEncoder[F, E] = maybeErrorable match {
     case Some(errorable) =>
-      forErrorAux(errorTypeHeader, errorable, encoderCompiler)
+      forErrorAux(errorTypeHeaders, errorable, encoderCompiler)
     case None => Encoder.noop
   }
 
   private def forErrorAux[F[_], E](
-      errorTypeHeader: String,
+      errorTypeHeaders: List[String],
       errorable: Errorable[E],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
   ): ResponseEncoder[F, E] = {
@@ -65,7 +65,7 @@ object ResponseEncoder {
           val encodedResponse = errorEncoder.encode(response, err)
           encodedResponse
             .withStatus(status)
-            .withHeaders(encodedResponse.headers.put(errorTypeHeader -> label))
+            .putHeaders(errorTypeHeaders.map(_ -> label))
         }
       }
     }
