@@ -53,7 +53,7 @@ class JsonCodecApiTests extends FunSuite {
             .required[String]("a", identity)
         )(identity)
 
-    val capi = codecs(HintMask.empty)
+    val capi = new JsonCodecs(HintMask.empty)
 
     val codec = capi.compileCodec(schemaWithRequiredField)
 
