@@ -79,7 +79,7 @@ object ReservedNameServiceProductGen extends ServiceProduct[ReservedNameServiceP
   }
 
   def toPolyFunction[P2[_, _, _, _, _]](algebra: ReservedNameServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
-    def apply[A0, A1, A2, A3, A4](fa: service.Endpoint[A0, A1, A2, A3, A4]): P2[A0, A1, A2, A3, A4] =
+    def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
     fa match {
       case ReservedNameServiceOperation._Set => algebra.set
       case ReservedNameServiceOperation._List => algebra.list
