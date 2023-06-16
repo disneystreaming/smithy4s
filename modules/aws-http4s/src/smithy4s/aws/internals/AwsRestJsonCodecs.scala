@@ -19,11 +19,9 @@ package internals
 
 import cats.effect.Concurrent
 import fs2.compression.Compression
-import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
 import smithy4s.http.Metadata
-import smithy4s.http.json.JCodec
 import smithy4s.Endpoint
 
 private[aws] object AwsRestJsonCodecs {
@@ -35,13 +33,10 @@ private[aws] object AwsRestJsonCodecs {
   ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
     val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
-      new smithy4s.http.json.JsonCodecAPI(
-        cache => new AwsSchemaVisitorJCodec(cache),
+      new smithy4s.aws.json.AwsJsonCodecAPI(
+        httpMediaType,
         Some(hintMask)
-      ) {
-        override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
-          httpMediaType
-      }
+      )
     )
 
     val encoders = RequestEncoder.restSchemaCompiler[F](

@@ -65,7 +65,10 @@ private[kernel] object MessageEncoder {
               bodyEncoderCompiler
                 .fromSchema(bodySchema, cache._2)
                 .contramap[A](PartialData.Total(_))
-            metadataEncoder.combine(bodyEncoder)
+            // The order matters here, as the metadata encoder might override headers
+            // that would be set with body encoders (if a smithy member is annotated with
+            // `@httpHeader("Content-Type")` for instance)
+            bodyEncoder.combine(metadataEncoder)
           case HttpRestSchema.Empty(_) =>
             Encoder.noop
           // format: on
