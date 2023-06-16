@@ -120,6 +120,12 @@ sealed trait Schema[A]{
     SchemaPartition(find, payload = true)(this)
 
   /**
+    * Finds whether a schema (or the underlying schema in the case of bijections/surjections, etc)
+    * is a primitive of a certain type.
+    */
+  final def isPrimitive[P](prim: Primitive[P]) : Boolean = IsPrimitive(this, prim)
+
+  /**
     * Checks whether a schema is Unit or an empty structure
     */
   final def isUnit: Boolean = this.shapeId == ShapeId("smithy.api", "Unit")

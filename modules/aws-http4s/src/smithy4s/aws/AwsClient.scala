@@ -68,6 +68,7 @@ object AwsClient {
 
         case AwsProtocol.AWS_REST_JSON_1(_) =>
           AwsRestJsonCodecs.make[F]("application/json")
+
         case _ => ???
       }
       service.functorInterpreter {
