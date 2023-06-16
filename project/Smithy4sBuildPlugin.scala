@@ -552,7 +552,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
   }
 
   def millPlatform(millVersion: String): String = millVersion match {
-    case mv if mv.startsWith("0.10") => "0.10"
+    case mv if mv.startsWith("0.11") => "0.11"
     case _                           => sys.error("Unsupported mill platform.")
   }
 

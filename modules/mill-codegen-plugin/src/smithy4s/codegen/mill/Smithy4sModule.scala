@@ -20,7 +20,7 @@ import coursier.maven.MavenRepository
 import scala.util.{Success, Try}
 import mill._
 import mill.api.PathRef
-import mill.define.Sources
+import mill.define.Target
 import mill.scalalib._
 import smithy4s.codegen.{
   CodegenArgs,
@@ -30,7 +30,7 @@ import smithy4s.codegen.{
   JarUtils,
   SMITHY4S_DEPENDENCIES
 }
-import mill.modules.Jvm
+import mill.api.JarManifest
 import mill.scalalib.CrossVersion.Binary
 import mill.scalalib.CrossVersion.Constant
 import mill.scalalib.CrossVersion.Full
@@ -38,7 +38,7 @@ import mill.scalalib.CrossVersion.Full
 trait Smithy4sModule extends ScalaModule {
 
   /** Input directory for .smithy files */
-  protected def smithy4sInputDirs: Sources = T.sources {
+  protected def smithy4sInputDirs: Target[Seq[PathRef]] = T.sources {
     Seq(PathRef(millSourcePath / "smithy"))
   }
 
@@ -70,7 +70,7 @@ trait Smithy4sModule extends ScalaModule {
     smithy4sDefaultIvyDeps() ++ smithy4sIvyDeps()
   }
 
-  override def manifest: T[Jvm.JarManifest] = T {
+  override def manifest: T[JarManifest] = T {
     val m = super.manifest()
     val deps = smithy4sIvyDeps().iterator.toList.flatMap { d =>
       val mod = d.dep.module
@@ -122,14 +122,17 @@ trait Smithy4sModule extends ScalaModule {
     }
   }
 
-  def smithy4sAllExternalDependencies: T[Agg[Dep]] = T {
+  def smithy4sAllExternalDependencies: T[Agg[BoundDep]] = T {
+    val bind = bindDependency()
     transitiveIvyDeps() ++
-      smithy4sTransitiveIvyDeps() ++
-      smithy4sExternallyTrackedIvyDeps()
+      smithy4sTransitiveIvyDeps().map(bind) ++
+      smithy4sExternallyTrackedIvyDeps().map(bind)
   }
 
   def smithy4sResolvedAllExternalDependencies: T[Agg[PathRef]] = T {
-    resolveDeps(smithy4sAllExternalDependencies)()
+    resolveDeps(T.task {
+      smithy4sAllExternalDependencies()
+    })()
   }
 
   def smithy4sAllDependenciesAsJars: T[Agg[PathRef]] = T {
