@@ -98,6 +98,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       .liftTo[F]
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
       testCase.documentation,
       serverReq,
@@ -174,6 +175,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
       testCase.documentation,
       serverRes,

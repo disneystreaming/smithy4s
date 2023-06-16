@@ -59,14 +59,10 @@ private[aws] object AwsRestJsonCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val maybeCompressingEncoders =
-          GzipRequestCompression.applyIfRequired[F](
-            endpoint.hints,
-            smithy4s.http4s.kernel.GzipRequestCompression[F](),
-            encoders
-          )
+        val transformEncoders = applyCompression[F](endpoint.hints)
+        val finalEncoders = transformEncoders(encoders)
         val make = UnaryClientCodecs
-          .Make[F](maybeCompressingEncoders, decoders, decoders, discriminator)
+          .Make[F](finalEncoders, decoders, decoders, discriminator)
         make.apply(endpoint)
       }
     }
