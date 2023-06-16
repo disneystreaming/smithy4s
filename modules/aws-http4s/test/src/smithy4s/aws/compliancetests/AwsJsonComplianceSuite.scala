@@ -32,7 +32,16 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
   override def allRules(
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
-    val disallow = Set(
+
+    // Filtering these rule because on JS-specific issues,
+    // in particular around floating-point precision.
+    val jsDisallowed = Set(
+      "RestJsonHttpRequestLabelEscaping",
+      "RestJsonInputAndOutputWithNumericHeaders",
+      "RestJsonInputWithHeadersAndAllParams"
+    )
+
+    val disallowed = Set(
       // this would be taken-care of by middleware
       "HostWithPathOperation",
       // tests inconsistent with specification : https://github.com/awslabs/smithy/issues/1827
@@ -40,7 +49,9 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
       "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1"
     )
     (complianceTest: ComplianceTest[IO]) =>
-      if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No
+      if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
+      else if (jsDisallowed.contains(complianceTest.id) && weaver.Platform.isJS)
+        ShouldRun.No
       else ShouldRun.Yes
   }
 
