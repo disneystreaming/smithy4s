@@ -50,7 +50,6 @@ lazy val root = project
 
 lazy val allModules = Seq(
   core,
-  `core-test`,
   codegen,
   millCodegenPlugin,
   json,
@@ -206,19 +205,6 @@ lazy val core = projectMatrix
         // this excludes modules/core/src/generated/PartiallyAppliedStruct.scala
         .collect { case (f, Some(relF)) => f -> relF.getPath() }
     }
-  )
-  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
-  .jsPlatform(allJsScalaVersions, jsDimSettings)
-  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
-
-lazy val `core-test` = projectMatrix
-  .in(file("modules/core-test"))
-  .dependsOn(core, example)
-  .settings(
-    libraryDependencies ++=
-      munitDeps.value ++ Seq(
-        Dependencies.Cats.core.value % Test
-      )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
@@ -557,9 +543,8 @@ lazy val dynamic = projectMatrix
   .in(file("modules/dynamic"))
   .dependsOn(
     core,
-    `core-test` % "test->test",
     testUtils % "test->compile",
-    example % "test->compile"
+    example % "test->test;test->compile"
   )
   .settings(
     libraryDependencies ++= munitDeps.value ++ Seq(
@@ -597,7 +582,7 @@ lazy val json = projectMatrix
   .in(file("modules/json"))
   .dependsOn(
     core,
-    `core-test` % "test->test",
+    example % "test->test",
     scalacheck % "test -> compile"
   )
   .settings(
@@ -619,7 +604,7 @@ lazy val xml = projectMatrix
   .in(file("modules/xml"))
   .dependsOn(
     core,
-    `core-test` % "test->test",
+    example % "test->test",
     scalacheck % "test -> compile"
   )
   .settings(
@@ -846,7 +831,11 @@ lazy val example = projectMatrix
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
-    ) ++ scala3MigrationOption(scalaVersion.value)
+    ) ++ scala3MigrationOption(scalaVersion.value),
+    libraryDependencies ++=
+      munitDeps.value ++ Seq(
+        Dependencies.Cats.core.value % Test
+      )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
