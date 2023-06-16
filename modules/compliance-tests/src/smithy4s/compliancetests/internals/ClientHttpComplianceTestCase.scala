@@ -106,6 +106,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val inputFromDocument = CanonicalSmithyDecoder.fromSchema(endpoint.input)
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
       testCase.documentation,
       clientReq,
@@ -151,6 +152,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
       testCase.documentation,
       clientRes,

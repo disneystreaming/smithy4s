@@ -62,4 +62,5 @@ object GzipRequestCompression {
       .putHeaders(updateContentTypeEncoding)
       .withBodyStream(request.body.through(compressPipe))
   }
+
 }

@@ -29,12 +29,15 @@ import smithy4s.tests.ProtocolComplianceSuite
 
 object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
-  // filtering out HostWithPathOperation as this would be taken-care of by middleware.
   override def allRules(
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
     val disallow = Set(
-      "HostWithPathOperation"
+      // this would be taken-care of by middleware
+      "HostWithPathOperation",
+      // tests inconsistent with specification : https://github.com/awslabs/smithy/issues/1827
+      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_0",
+      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No

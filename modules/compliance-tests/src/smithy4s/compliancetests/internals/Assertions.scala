@@ -129,6 +129,11 @@ private[internals] object assert {
       .combineAll
   }
 
+  /**
+   * A list of header field names that must appear in the serialized HTTP message, but no assertion is made on the value.
+   * Headers listed in headers do not need to appear in this list.
+    */
+
   private def headersExistenceCheck(
       headers: Headers,
       requiredHeaders: Option[List[String]],
@@ -144,7 +149,8 @@ private[internals] object assert {
     }.combineAll
     checkRequired |+| checkForbidden
   }
-  private def headerValuesCheck(
+
+  private def headerKeyValueCheck(
       headers: Map[String, String],
       expected: Option[Map[String, String]]
   ) = {
@@ -157,7 +163,7 @@ private[internals] object assert {
             case Some(v) =>
               assert.fail(s"Header $key has value `$v` but expected `$value`")
             case None =>
-              success // the presence of the value is checked in `headersExistenceCheck`
+              fail(s"Header $key is missing in the request.")
           }
         }.combineAll
       }
@@ -194,7 +200,7 @@ private[internals] object assert {
         forbiddenHeaders = tc.forbidHeaders
       )
       val valueChecks =
-        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
+        assert.headerKeyValueCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -208,7 +214,7 @@ private[internals] object assert {
         forbiddenHeaders = tc.forbidHeaders
       )
       val valueChecks =
-        assert.headerValuesCheck(collapseHeaders(headers), tc.headers)
+        assert.headerKeyValueCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
   }
