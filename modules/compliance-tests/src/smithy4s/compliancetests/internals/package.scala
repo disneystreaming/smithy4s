@@ -69,20 +69,20 @@ package object internals {
    */
   private[compliancetests] def collapseHeaders(
       headers: Headers
-  ): Map[String, String] = {
+  ): Map[CIString, String] = {
     def append(
-        acc: Map[String, List[String]],
+        acc: Map[CIString, List[String]],
         key: CIString,
         newValue: String
     ) = {
 
-      (key.toString -> acc
-        .get(key.toString)
+      (key -> acc
+        .get(key)
         .map(existing => existing :+ newValue)
         .getOrElse(List(newValue)))
     }
 
-    val multimap = headers.headers.foldLeft(Map.empty[String, List[String]]) {
+    val multimap = headers.headers.foldLeft(Map.empty[CIString, List[String]]) {
       case (acc, Header.Raw(key, newValue)) =>
         acc + append(acc, key, newValue)
     }

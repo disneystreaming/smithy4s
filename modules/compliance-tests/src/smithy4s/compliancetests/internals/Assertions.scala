@@ -151,14 +151,14 @@ private[internals] object assert {
   }
 
   private def headerKeyValueCheck(
-      headers: Map[String, String],
+      headers: Map[CIString, String],
       expected: Option[Map[String, String]]
   ) = {
 
     expected
       .map {
         _.toList.collect { case (key, value) =>
-          headers.get(key) match {
+          headers.get(CIString(key)) match {
             case Some(v) if v == value => success
             case Some(v) =>
               assert.fail(s"Header $key has value `$v` but expected `$value`")
