@@ -24,8 +24,6 @@ import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
 import smithy4s.http.Metadata
 import smithy4s.http.json.JCodec
-import smithy4s.kinds.FunctorK
-import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.Endpoint
 
 private[aws] object AwsRestJsonCodecs {
@@ -61,17 +59,12 @@ private[aws] object AwsRestJsonCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        import smithy4s.capability.Encoder
-        val compression = smithy4s.http4s.kernel.GzipRequestCompression[F]()
         val maybeCompressingEncoders =
-          endpoint.hints.get(smithy.api.RequestCompression) match {
-            case Some(rc) if rc.encodings.contains("gzip") =>
-              FunctorK[CachedSchemaCompiler].mapK(
-                encoders,
-                Encoder.andThenK(compression)
-              )
-            case _ => encoders
-          }
+          GzipRequestCompression.applyIfRequired[F](
+            endpoint.hints,
+            smithy4s.http4s.kernel.GzipRequestCompression[F](),
+            encoders
+          )
         val make = UnaryClientCodecs
           .Make[F](maybeCompressingEncoders, decoders, decoders, discriminator)
         make.apply(endpoint)

@@ -23,6 +23,9 @@ import org.http4s.Header
 import org.http4s.Request
 import org.http4s.headers.`Content-Encoding`
 import org.http4s.headers.`Content-Length`
+import smithy4s.kinds.FunctorK
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.Hints
 
 // inspired from:
 // https://github.com/http4s/http4s/blob/v0.23.19/client/shared/src/main/scala/org/http4s/client/middleware/GZip.scala
@@ -61,5 +64,21 @@ object GzipRequestCompression {
       .removeHeader[`Content-Length`]
       .putHeaders(updateContentTypeEncoding)
       .withBodyStream(request.body.through(compressPipe))
+  }
+
+  def applyIfRequired[F[_]](
+      hints: Hints,
+      compression: Request[F] => Request[F],
+      encoder: CachedSchemaCompiler[RequestEncoder[F, *]]
+  ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+    import smithy4s.capability.Encoder
+    hints.get(smithy.api.RequestCompression) match {
+      case Some(rc) if rc.encodings.contains("gzip") =>
+        FunctorK[CachedSchemaCompiler].mapK(
+          encoder,
+          Encoder.andThenK(compression)
+        )
+      case _ => encoder
+    }
   }
 }
