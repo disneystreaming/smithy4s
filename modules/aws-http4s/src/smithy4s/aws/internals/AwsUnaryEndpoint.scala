@@ -47,10 +47,14 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
     awsEnv
   )
 
+  private val withCheckSumClient = Md5CheckSumClient[F](endpoint.hints)
+
+  private val transformedClient = withCheckSumClient(signingClient)
+
   def apply(input: I): F[O] = {
     Resource
       .eval(inputToRequest(input))
-      .flatMap(signingClient.run)
+      .flatMap(transformedClient.run)
       .use { response =>
         outputFromResponse(response)
       }

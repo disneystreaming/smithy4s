@@ -36,7 +36,12 @@ private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
 )(implicit effect: Concurrent[F]) extends (I => F[O]) {
 // format: on
 
-  private val transformedClient: Client[F] = middleware(client)
+  private val md5CheckSumClient =
+    Md5CheckSumClient[F](endpoint.hints)
+
+  private val transformedClient: Client[F] = md5CheckSumClient(
+    middleware(client)
+  )
 
   def apply(input: I): F[O] = {
     transformedClient
