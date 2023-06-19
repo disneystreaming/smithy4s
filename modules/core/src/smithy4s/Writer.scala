@@ -23,7 +23,7 @@ import smithy4s.capability.EncoderK
   * An abstraction that codifies the notion of writing a piece of data into a message.
   *
   * This is particularly useful for http requests/responses, where different subsets of data
-  * have different impacts different locations of the http message : some fields may
+  * have a different impact on different locations of the http message : some fields may
   * impact headers, some fields may impact the http body, other things that are driven from
   * static information (smithy traits) may lead to a transformation of the message ...
   *

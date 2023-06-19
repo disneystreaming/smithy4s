@@ -23,6 +23,7 @@ import smithy4s.schema._
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
 import smithy4s.schema.SchemaPartition.TotalMatch
+import smithy4s.Writer
 
 /**
  * This construct indicates how a schema is split between http metadata
