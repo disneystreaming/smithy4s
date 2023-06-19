@@ -85,6 +85,7 @@ final class RendererSpec extends munit.FunSuite {
       s"""val underlyingSchema: Schema[Map[String, Int]] = map($keySchemaString, $valueSchemaString)"""
     assert(definition.contains(requiredString))
   }
+
   test("enum trait hints should be preserved") {
     val smithy = s"""
                     |$$version: "2.0"
@@ -168,6 +169,7 @@ final class RendererSpec extends munit.FunSuite {
     )
 
   }
+
   test("unnamed enum trait can be rendered as enum") {
     val smithy = """
                    |
@@ -177,7 +179,7 @@ final class RendererSpec extends munit.FunSuite {
                    |
                    |@enum([
                    |{
-                   |  value: "HEAD"  
+                   |  value: "HEAD"
                    |},
                    |{
                    |  value: "t:a$i\\l"
@@ -211,6 +213,7 @@ final class RendererSpec extends munit.FunSuite {
       "enum trait value without name but with non alphanumeric value must be rendered as enum variant"
     )
   }
+
   test("enum hints should be preserved") {
     val smithy = """
                    |$version: "2.0"
@@ -312,6 +315,7 @@ final class RendererSpec extends munit.FunSuite {
     assert(contents.exists(_.contains(requiredIntCase)))
     assert(contents.exists(_.contains(requiredStrCase)))
   }
+
   test("unspecified members of deprecated trait are rendered as N/A") {
     val smithy =
       """

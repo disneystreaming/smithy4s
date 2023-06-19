@@ -17,16 +17,18 @@
 package smithy4s.http4s
 
 import alloy.SimpleRestJson
+import cats.effect.IO
 import cats.effect.Resource
+import cats.syntax.all._
 import org.http4s._
 import org.http4s.client.Client
-import smithy4s.{Schema, Service, ShapeId}
-import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.kinds.FunctorAlgebra
-import cats.syntax.all._
-import cats.effect.IO
-import smithy4s.http.HttpMediaType
+import smithy4s.Schema
+import smithy4s.Service
+import smithy4s.ShapeId
 import smithy4s.compliancetests._
+import smithy4s.dynamic.DynamicSchemaIndex
+import smithy4s.http.HttpMediaType
+import smithy4s.kinds.FunctorAlgebra
 import smithy4s.tests.ProtocolComplianceSuite
 
 /**
