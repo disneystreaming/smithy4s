@@ -43,7 +43,6 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PInt        => 0
     case PShort      => 0: Short
     case PString     => ""
-    case PUnit       => ()
     case PLong       => 0: Long
     case PDouble     => 0: Double
     case PBoolean    => true

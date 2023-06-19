@@ -16,29 +16,34 @@
 
 package smithy4s.http4s
 
+import cats.Monad
+import cats.effect.SyncIO
+import cats.syntax.all._
+import org.http4s.DecodeResult
+import org.http4s.EntityDecoder
 import org.http4s.Header
 import org.http4s.Headers
+import org.http4s.InvalidMessageBodyFailure
 import org.http4s.Media
-import org.http4s.{Method => Http4sMethod}
-import org.typelevel.ci.CIString
-import smithy4s.http.CaseInsensitive
-import smithy4s.http.PathParams
-import smithy4s.http.{HttpMethod => SmithyMethod}
 import org.http4s.ParseFailure
-import cats.syntax.all._
-import smithy4s.http.Metadata
 import org.http4s.Request
 import org.http4s.Response
-import smithy4s.capability.Covariant
-import smithy4s.ConstraintError
-import org.http4s.EntityDecoder
-import cats.Monad
-import org.http4s.DecodeResult
-import org.http4s.InvalidMessageBodyFailure
+import org.http4s.{Method => Http4sMethod}
+import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
-import cats.effect.SyncIO
+import smithy4s.ConstraintError
+import smithy4s.capability.Covariant
+import smithy4s.http.CaseInsensitive
+import smithy4s.http.Metadata
+import smithy4s.http.PathParams
+import smithy4s.http.{HttpMethod => SmithyMethod}
 
 package object kernel {
+
+  type ResponseEncoder[F[_], A] = smithy4s.Writer[Response[F], A]
+  type RequestEncoder[F[_], A] = smithy4s.Writer[Request[F], A]
+  type RequestDecoder[F[_], A] = MessageDecoder[F, Request[F], A]
+  type ResponseDecoder[F[_], A] = MessageDecoder[F, Response[F], A]
 
   /**
     * A vault key that is used to store extracted path-parameters into request during
@@ -130,4 +135,5 @@ package object kernel {
         }
       )
   }
+
 }

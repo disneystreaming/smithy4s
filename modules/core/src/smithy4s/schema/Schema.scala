@@ -119,6 +119,17 @@ sealed trait Schema[A]{
   final def findPayload(find: SchemaField[_, _] => Boolean): SchemaPartition[A] =
     SchemaPartition(find, payload = true)(this)
 
+  /**
+    * Finds whether a schema (or the underlying schema in the case of bijections/surjections, etc)
+    * is a primitive of a certain type.
+    */
+  final def isPrimitive[P](prim: Primitive[P]) : Boolean = IsPrimitive(this, prim)
+
+  /**
+    * Checks whether a schema is Unit or an empty structure
+    */
+  final def isUnit: Boolean = this.shapeId == ShapeId("smithy.api", "Unit")
+
 }
 
 object Schema {
@@ -169,10 +180,11 @@ object Schema {
   val boolean: Schema[Boolean] = Primitive.PBoolean.schema(prelude, "Boolean")
   val byte: Schema[Byte] = Primitive.PByte.schema(prelude, "Byte")
   val bytes: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
-  val unit: Schema[Unit] = Primitive.PUnit.schema(prelude, "Unit")
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
+
+  val unit: Schema[Unit] = Schema.StructSchema(ShapeId("smithy.api", "Unit"), Hints.empty, Vector.empty, _ => ())
 
   private val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
 

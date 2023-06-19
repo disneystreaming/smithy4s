@@ -18,6 +18,7 @@ package smithy4s.aws
 
 import aws.protocols.AwsJson1_0
 import aws.protocols.AwsJson1_1
+import aws.protocols.RestJson1
 import cats.effect.IO
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.ShapeId
@@ -28,34 +29,42 @@ import smithy4s.tests.ProtocolComplianceSuite
 
 object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
-  // filtering out Null operation as we dont support sparse yet
-  // filtering out HostWithPathOperation as this would be taken-care of by middleware.
-  // filtering PutWithContentEncoding until we implement compression
-
   override def allRules(
       dsi: DynamicSchemaIndex
   ): IO[ComplianceTest[IO] => ShouldRun] = IO.pure {
-    val disallow = Set(
-      "AwsJson11MapsSerializeNullValues",
-      "AwsJson11ListsSerializeNull",
-      "AwsJson11MapsDeserializeNullValues",
-      "AwsJson11ListsDeserializeNull",
+
+    // Filtering these rule because on JS-specific issues,
+    // in particular around floating-point precision.
+    val jsDisallowed = Set(
+      "RestJsonHttpRequestLabelEscaping",
+      "RestJsonInputAndOutputWithNumericHeaders",
+      "RestJsonInputWithHeadersAndAllParams"
+    )
+
+    val disallowed = Set(
+      // this would be taken-care of by middleware
       "HostWithPathOperation",
-      "PutWithContentEncoding"
+      // tests inconsistent with specification : https://github.com/awslabs/smithy/issues/1827
+      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_0",
+      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1",
+      // TODO: implement support for the httpChecksum trait : https://smithy.io/2.0/aws/aws-core.html?highlight=checksum#aws-protocols-httpchecksum-trait
+      "RestJsonHttpChecksumRequired"
     )
     (complianceTest: ComplianceTest[IO]) =>
-      if (disallow.exists(complianceTest.show.contains(_))) ShouldRun.No
+      if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
+      else if (jsDisallowed.contains(complianceTest.id) && weaver.Platform.isJS)
+        ShouldRun.No
       else ShouldRun.Yes
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
-    genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++ genClientTests(
-      impl(AwsJson1_1),
-      awsJson1_1
-    )(dsi)
+    genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
+      genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
+      genClientTests(impl(RestJson1), restJson1)(dsi)
 
   private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
   private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
+  private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 

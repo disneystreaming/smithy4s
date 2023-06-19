@@ -23,6 +23,7 @@ import smithy4s.schema._
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
 import smithy4s.schema.SchemaPartition.TotalMatch
+import smithy4s.Writer
 
 /**
  * This construct indicates how a schema is split between http metadata
@@ -68,7 +69,6 @@ object HttpRestSchema {
             OnlyMetadata(schema)
           case NoMatch() =>
             fullSchema match {
-              case Schema.PrimitiveSchema(_, _, Primitive.PUnit) => Empty(())
               case Schema.StructSchema(_, _, fields, make)
                   if (fields.isEmpty) =>
                 Empty(make(IndexedSeq.empty))
@@ -79,5 +79,63 @@ object HttpRestSchema {
         MetadataAndBody(metadataSchema, bodySchema)
     }
   }
+
+  /**
+    * Combines separate compilers :
+    *  - one specific to http metadata
+    *  - one specific to http bodies
+    *
+    * the result is a compiler that knows how to split schemas so that upon
+    * encoding a piece of data, the relevant subset of the data is encoded as
+    * http metadata (headers, query parameters, etc) and the relevant subset
+    * of the data is encoded as http body.
+    */
+  def combineWriterCompilers[F[_], Message](
+      metadataEncoderCompiler: CachedSchemaCompiler[Writer[Message, *]],
+      bodyEncoderCompiler: CachedSchemaCompiler[Writer[Message, *]]
+  ): CachedSchemaCompiler[Writer[Message, *]] =
+    new CachedSchemaCompiler[Writer[Message, *]] {
+
+      type MetadataCache = metadataEncoderCompiler.Cache
+      type BodyCache = bodyEncoderCompiler.Cache
+      type Cache = (MetadataCache, BodyCache)
+      def createCache(): Cache = {
+        val mCache = metadataEncoderCompiler.createCache()
+        val bCache = bodyEncoderCompiler.createCache()
+        (mCache, bCache)
+      }
+      def fromSchema[A](schema: Schema[A]): Writer[Message, A] =
+        fromSchema(schema, createCache())
+
+      def fromSchema[A](
+          fullSchema: Schema[A],
+          cache: Cache
+      ): Writer[Message, A] = {
+        HttpRestSchema(fullSchema) match {
+          case HttpRestSchema.OnlyMetadata(metadataSchema) =>
+            // The data can be fully decoded from the metadata.
+            metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
+          case HttpRestSchema.OnlyBody(bodySchema) =>
+            // The data can be fully decoded from the body
+            bodyEncoderCompiler.fromSchema(bodySchema, cache._2)
+          case HttpRestSchema.MetadataAndBody(metadataSchema, bodySchema) =>
+            val metadataEncoder =
+              metadataEncoderCompiler
+                .fromSchema(metadataSchema, cache._1)
+                .contramap[A](PartialData.Total(_))
+            val bodyEncoder =
+              bodyEncoderCompiler
+                .fromSchema(bodySchema, cache._2)
+                .contramap[A](PartialData.Total(_))
+            // The order matters here, as the metadata encoder might override headers
+            // that would be set with body encoders (if a smithy member is annotated with
+            // `@httpHeader("Content-Type")` for instance)
+            bodyEncoder.combine(metadataEncoder)
+          case HttpRestSchema.Empty(_) =>
+            Writer.noop
+          // format: on
+        }
+      }
+    }
 
 }

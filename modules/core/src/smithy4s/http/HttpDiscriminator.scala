@@ -29,21 +29,23 @@ object HttpDiscriminator {
   // format: on
 
   def fromMetadata(
-      discriminatingHeaderName: String,
+      discriminatingHeaderNames: List[String],
       metadata: Metadata
   ): Option[HttpDiscriminator] = {
     metadata.statusCode.map(code =>
-      fromStatusOrHeader(discriminatingHeaderName, code, metadata.headers)
+      fromStatusOrHeader(discriminatingHeaderNames, code, metadata.headers)
     )
   }
 
   def fromStatusOrHeader(
-      discriminatingHeaderName: String,
+      discriminatingHeaderNames: List[String],
       statusCode: Int,
       headers: Map[CaseInsensitive, Seq[String]]
   ): HttpDiscriminator = {
-    headers
-      .get(CaseInsensitive(discriminatingHeaderName))
+    discriminatingHeaderNames.iterator
+      .map(CaseInsensitive(_))
+      .map(headers.get)
+      .collectFirst { case Some(h) => h }
       .flatMap(_.headOption)
       .map(errorType =>
         ShapeId

@@ -35,7 +35,7 @@ object AwsJsonErrorTypeDecoderTest extends SimpleIOSuite {
 
   val fromJsonResponse =
     AwsErrorTypeDecoder.fromResponse[IO](
-      MessageDecoder.rpcSchemaCompiler(
+      ResponseDecoder.rpcSchemaCompiler(
         EntityDecoders.fromCodecAPI[IO](new json.AwsJsonCodecAPI())
       )
     )

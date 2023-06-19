@@ -16,9 +16,9 @@
 
 package smithy4s.http4s.kernel
 
+import smithy4s.Endpoint
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
-import smithy4s.Endpoint
 
 trait UnaryServerCodecs[F[_], I, E, O] {
   val inputDecoder: RequestDecoder[F, I]
@@ -39,7 +39,8 @@ object UnaryServerCodecs {
   def make[F[_]](
       input: CachedSchemaCompiler[RequestDecoder[F, *]],
       output: CachedSchemaCompiler[ResponseEncoder[F, *]],
-      error: CachedSchemaCompiler[ResponseEncoder[F, *]]
+      error: CachedSchemaCompiler[ResponseEncoder[F, *]],
+      errorHeaders: List[String]
   ): Make[F] = new Make[F] {
     val requestDecoderCache: input.Cache = input.createCache()
     val responseEncoderCache: output.Cache = output.createCache()
@@ -54,7 +55,7 @@ object UnaryServerCodecs {
         output.fromSchema(endpoint.output, responseEncoderCache)
       val errorEncoder: ResponseEncoder[F, E] =
         ResponseEncoder.forError(
-          smithy4s.errorTypeHeader,
+          errorHeaders,
           endpoint.errorable,
           error
         )

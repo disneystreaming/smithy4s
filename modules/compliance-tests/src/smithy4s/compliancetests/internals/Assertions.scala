@@ -32,14 +32,13 @@ private[internals] object assert {
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
 
   private def isJson(bodyMediaType: Option[String]) =
-    bodyMediaType.forall(_.equalsIgnoreCase("application/json"))
+    bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
       case (true, true) => success
       case _ =>
-        val nonEmpty = if (result.isEmpty) "{}" else result
-        (parse(result), parse(nonEmpty)) match {
+        (parse(result), parse(testCase)) match {
           case (Right(a), Right(b)) if Eq[Json].eqv(a, b) => success
           case (Left(a), Left(b)) => fail(s"Both JSONs are invalid: $a, $b")
           case (Left(a), _) =>
@@ -69,14 +68,16 @@ private[internals] object assert {
 
   def bodyEql(
       result: String,
-      testCase: String,
+      testCase: Option[String],
       bodyMediaType: Option[String]
   ): ComplianceResult = {
-    if (isJson(bodyMediaType)) {
-      jsonEql(result, testCase)
-    } else {
-      eql(result, testCase)
-    }
+    if (testCase.isDefined)
+      if (isJson(bodyMediaType)) {
+        jsonEql(result, testCase.getOrElse(""))
+      } else {
+        eql(result, testCase.getOrElse(""))
+      }
+    else success
   }
 
   private def queryParamsExistenceCheck(
@@ -128,6 +129,11 @@ private[internals] object assert {
       .combineAll
   }
 
+  /**
+   * A list of header field names that must appear in the serialized HTTP message, but no assertion is made on the value.
+   * Headers listed in headers do not need to appear in this list.
+    */
+
   private def headersExistenceCheck(
       headers: Headers,
       requiredHeaders: Option[List[String]],
@@ -143,21 +149,28 @@ private[internals] object assert {
     }.combineAll
     checkRequired |+| checkForbidden
   }
-  private def headerValuesCheck(
-      headers: Headers,
+
+  private def headerKeyValueCheck(
+      headers: Map[CIString, String],
       expected: Option[Map[String, String]]
   ) = {
-    expected.toList
-      .flatMap(_.toList)
-      .map { case (key, expectedValue) =>
-        headers
-          .get(CIString(key))
-          .map { v =>
-            assert.eql[String](v.head.value, expectedValue, s"Header $key: ")
+
+    expected
+      .map {
+        _.toList.collect { case (key, value) =>
+          headers.get(CIString(key)) match {
+            case Some(v) if v == value => success
+            case Some(v) =>
+              assert.fail(s"Header $key has value `$v` but expected `$value`")
+            case None =>
+              fail(s"Header $key is missing in the request.")
           }
-          .getOrElse(success)
+        }.combineAll
       }
-      .combineAll
+      .getOrElse {
+        success
+      }
+
   }
 
   object testCase {
@@ -186,7 +199,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks =
+        assert.headerKeyValueCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
 
@@ -199,7 +213,8 @@ private[internals] object assert {
         requiredHeaders = tc.requireHeaders,
         forbiddenHeaders = tc.forbidHeaders
       )
-      val valueChecks = assert.headerValuesCheck(headers, tc.headers)
+      val valueChecks =
+        assert.headerKeyValueCheck(collapseHeaders(headers), tc.headers)
       existenceChecks |+| valueChecks
     }
   }
