@@ -26,6 +26,7 @@ import smithy4s.http.Metadata
 import smithy4s.kinds.FunctorK
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
+import smithy4s.http.HttpRestSchema
 
 object RequestEncoder {
 
@@ -111,7 +112,7 @@ object RequestEncoder {
       metadataEncoderCompiler,
       fromMetadataEncoderK
     )
-    MessageEncoder.restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
+    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 
 }

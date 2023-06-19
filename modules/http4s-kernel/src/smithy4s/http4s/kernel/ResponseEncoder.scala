@@ -29,6 +29,7 @@ import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Alt
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+import smithy4s.http.HttpRestSchema
 
 object ResponseEncoder {
 
@@ -142,7 +143,7 @@ object ResponseEncoder {
       metadataEncoderCompiler,
       fromMetadataEncoderK
     )
-    MessageEncoder.restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
+    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 
 }
