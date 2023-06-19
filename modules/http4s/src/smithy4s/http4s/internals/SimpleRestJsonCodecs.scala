@@ -34,6 +34,12 @@ private[http4s] class SimpleRestJsonCodecs(
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
   private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
+  private val errorHeaders = List(
+    smithy4s.http.errorTypeHeader,
+    // Adding X-Amzn-Errortype as well to facilitate interop
+    // with Amazon-issued code-generators.
+    smithy4s.http.amazonErrorTypeHeader
+  )
 
   private def addEmptyJsonToResponse[F[_]](
       response: Response[F]
@@ -77,7 +83,8 @@ private[http4s] class SimpleRestJsonCodecs(
     UnaryServerCodecs.make[F](
       input = messageDecoderCompiler,
       output = responseEncoderCompiler,
-      error = responseEncoderCompiler
+      error = responseEncoderCompiler,
+      errorHeaders = errorHeaders
     )
   }
 
@@ -99,10 +106,7 @@ private[http4s] class SimpleRestJsonCodecs(
       response =>
         Concurrent[F].pure(
           HttpDiscriminator.fromMetadata(
-            List(
-              smithy4s.http.errorTypeHeader,
-              smithy4s.http.amazonErrorTypeHeader
-            ),
+            errorHeaders,
             getResponseMetadata(response)
           )
         )

@@ -39,7 +39,8 @@ object UnaryServerCodecs {
   def make[F[_]](
       input: CachedSchemaCompiler[RequestDecoder[F, *]],
       output: CachedSchemaCompiler[ResponseEncoder[F, *]],
-      error: CachedSchemaCompiler[ResponseEncoder[F, *]]
+      error: CachedSchemaCompiler[ResponseEncoder[F, *]],
+      errorHeaders: List[String]
   ): Make[F] = new Make[F] {
     val requestDecoderCache: input.Cache = input.createCache()
     val responseEncoderCache: output.Cache = output.createCache()
@@ -54,12 +55,7 @@ object UnaryServerCodecs {
         output.fromSchema(endpoint.output, responseEncoderCache)
       val errorEncoder: ResponseEncoder[F, E] =
         ResponseEncoder.forError(
-          // Adding X-Amzn-Errortype as well to facilitate interop
-          // with Amazon-issued code-generators.
-          List(
-            smithy4s.http.errorTypeHeader,
-            smithy4s.http.amazonErrorTypeHeader
-          ),
+          errorHeaders,
           endpoint.errorable,
           error
         )
