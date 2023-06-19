@@ -40,8 +40,8 @@ import smithy4s.http.{HttpMethod => SmithyMethod}
 
 package object kernel {
 
-  type ResponseEncoder[F[_], A] = smithy4s.capability.Encoder[Response[F], A]
-  type RequestEncoder[F[_], A] = smithy4s.capability.Encoder[Request[F], A]
+  type ResponseEncoder[F[_], A] = smithy4s.Writer[Response[F], A]
+  type RequestEncoder[F[_], A] = smithy4s.Writer[Request[F], A]
   type RequestDecoder[F[_], A] = MessageDecoder[F, Request[F], A]
   type ResponseDecoder[F[_], A] = MessageDecoder[F, Response[F], A]
 

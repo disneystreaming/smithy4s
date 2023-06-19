@@ -26,12 +26,13 @@ import smithy4s.http.Metadata
 import smithy4s.kinds.FunctorK
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
+import smithy4s.http.HttpRestSchema
 
 object RequestEncoder {
 
   def metadataRequestEncoder[F[_]: Concurrent]: RequestEncoder[F, Metadata] =
     new RequestEncoder[F, Metadata] {
-      def encode(request: Request[F], metadata: Metadata): Request[F] = {
+      def write(request: Request[F], metadata: Metadata): Request[F] = {
         val uri = request.uri.withMultiValueQueryParams(metadata.query)
         val headers = toHeaders(metadata.headers)
         request.withUri(uri).withHeaders(request.headers ++ headers)
@@ -53,7 +54,7 @@ object RequestEncoder {
   def fromEntityEncoder[F[_]: Concurrent, A](implicit
       entityEncoder: EntityEncoder[F, A]
   ): RequestEncoder[F, A] = new RequestEncoder[F, A] {
-    def encode(request: Request[F], a: A): Request[F] = {
+    def write(request: Request[F], a: A): Request[F] = {
       request.withEntity(a)
     }
   }
@@ -68,7 +69,7 @@ object RequestEncoder {
   def fromHttpEndpoint[F[_]: Concurrent, I](
       httpEndpoint: HttpEndpoint[I]
   ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
-    def encode(request: Request[F], input: I): Request[F] = {
+    def write(request: Request[F], input: I): Request[F] = {
       val path = httpEndpoint.path(input)
       val staticQueries = httpEndpoint.staticQueryParams
       val oldUri = request.uri
@@ -111,7 +112,7 @@ object RequestEncoder {
       metadataEncoderCompiler,
       fromMetadataEncoderK
     )
-    MessageEncoder.restCombinedSchemaCompiler(metadataCompiler, bodyCompiler)
+    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 
 }

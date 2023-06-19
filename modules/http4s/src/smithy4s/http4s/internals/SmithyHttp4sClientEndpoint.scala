@@ -55,7 +55,7 @@ private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
   val baseRequest = Request[F](org.http4s.Method.POST, baseUri).withEmptyBody
 
   def inputToRequest(input: I): Request[F] = {
-    inputEncoder.encode(baseRequest, input)
+    inputEncoder.write(baseRequest, input)
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
