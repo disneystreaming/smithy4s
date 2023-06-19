@@ -21,7 +21,7 @@ import org.http4s.EntityEncoder
 import org.http4s.Response
 import org.http4s.Status
 import smithy4s.Errorable
-import smithy4s.capability.Encoder
+import smithy4s.Writer
 import smithy4s.http.HttpStatusCode
 import smithy4s.http._
 import smithy4s.kinds.FunctorK
@@ -39,7 +39,7 @@ object ResponseEncoder {
   ): ResponseEncoder[F, E] = maybeErrorable match {
     case Some(errorable) =>
       forErrorAux(errorTypeHeaders, errorable, encoderCompiler)
-    case None => Encoder.noop
+    case None => Writer.noop
   }
 
   private def forErrorAux[F[_], E](
@@ -57,12 +57,12 @@ object ResponseEncoder {
       ): ResponseEncoder[F, Err] = new ResponseEncoder[F, Err] {
         val errorEncoder =
           encoderCompiler.fromSchema(errorSchema, encoderCompiler.createCache())
-        def encode(response: Response[F], err: Err): Response[F] = {
+        def write(response: Response[F], err: Err): Response[F] = {
           val errorCode =
             HttpStatusCode.fromSchema(errorSchema).code(err, 500)
           val status =
             Status.fromInt(errorCode).getOrElse(Status.InternalServerError)
-          val encodedResponse = errorEncoder.encode(response, err)
+          val encodedResponse = errorEncoder.write(response, err)
           encodedResponse
             .withStatus(status)
             .putHeaders(errorTypeHeaders.map(_ -> label))
@@ -74,7 +74,7 @@ object ResponseEncoder {
 
   def metadataResponseEncoder[F[_]: Concurrent]: ResponseEncoder[F, Metadata] =
     new ResponseEncoder[F, Metadata] {
-      def encode(response: Response[F], metadata: Metadata): Response[F] = {
+      def write(response: Response[F], metadata: Metadata): Response[F] = {
         val headers = toHeaders(metadata.headers)
         val status = metadata.statusCode
           .flatMap(Status.fromInt(_).toOption)
@@ -99,7 +99,7 @@ object ResponseEncoder {
   def fromEntityEncoder[F[_]: Concurrent, A](implicit
       entityEncoder: EntityEncoder[F, A]
   ): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
-    def encode(response: Response[F], a: A): Response[F] = {
+    def write(response: Response[F], a: A): Response[F] = {
       response.withEntity(a)
     }
   }

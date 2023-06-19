@@ -68,7 +68,7 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
       val baseUri: Uri =
         Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
       val baseRequest = Request[F](Method.POST, baseUri).withEmptyBody
-      inputEncoder.encode(baseRequest, input)
+      inputEncoder.write(baseRequest, input)
     }
   }
 

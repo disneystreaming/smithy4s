@@ -108,7 +108,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
       run
         .recoverWith(transformError)
-        .map(outputEncoder.encode(successResponseBase, _))
+        .map(outputEncoder.write(successResponseBase, _))
     }).handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
 
   private val transformError: PartialFunction[Throwable, F[O]] = {
@@ -126,9 +126,9 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   def errorResponse(throwable: Throwable): F[Response[F]] = throwable match {
     case e: HttpContractError =>
-      F.pure(contractErrorResponseEncoder.encode(badRequestBase, e))
+      F.pure(contractErrorResponseEncoder.write(badRequestBase, e))
     case endpoint.Error((_, e)) =>
-      F.pure(errorEncoder.encode(internalErrorBase, e))
+      F.pure(errorEncoder.write(internalErrorBase, e))
     case e: Throwable =>
       F.raiseError(e)
   }
