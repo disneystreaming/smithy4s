@@ -126,10 +126,6 @@ class DocumentDecoderSchemaVisitor(
       from("Double") {
         case FlexibleNumber(bd) if bd.isDecimalDouble => bd.toDouble
       }
-    case PUnit =>
-      DocumentDecoder.instance("Unit", "Object") { case (_, DObject(_)) =>
-        ()
-      }
     case PTimestamp =>
       forTimestampFormat(
         hints.get(TimestampFormat).getOrElse(TimestampFormat.EPOCH_SECONDS)

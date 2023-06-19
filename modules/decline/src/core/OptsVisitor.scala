@@ -149,7 +149,6 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       case PInt        => field[Int](hints)
       case PUUID       => field[UUID](hints)
       case PLong       => field[Long](hints)
-      case PUnit       => Opts.unit
       case PTimestamp =>
         implicit val arg: Argument[Timestamp] =
           timestampArg(FieldName.require(hints), hints.get(TimestampFormat))
@@ -199,7 +198,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         implicit val byteArrayArgument = commons.byteArrayArgument
         fieldPlural[ByteArray](member.hints)
 
-      case PUnit | PBoolean | PDocument => jsonFieldPlural(member)
+      case PBoolean | PDocument => jsonFieldPlural(member)
     }
 
   def collection[C[_], A](

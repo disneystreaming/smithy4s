@@ -31,8 +31,17 @@ import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
 import scala.collection.mutable.{Map => MMap}
+import java.util.Base64
+
+/**
+  * SchemaVisitor that implements the decoding of smithy4s.http.Metadata, which
+  * contains values such as path-parameters, query-parameters, headers, and status code.
+  *
+  * @param awsHeaderEncoding defines whether the AWS encoding of headers should be expected.
+  */
 private[http] class SchemaVisitorMetadataReader(
-    val cache: CompilationCache[MetaDecode]
+    val cache: CompilationCache[MetaDecode],
+    awsHeaderEncoding: Boolean
 ) extends SchemaVisitor.Cached[MetaDecode]
     with ScalaCompat { self =>
 
@@ -42,17 +51,16 @@ private[http] class SchemaVisitorMetadataReader(
       tag: Primitive[P]
   ): MetaDecode[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
-    tag match {
-      case Primitive.PUnit =>
-        MetaDecode.StructureMetaDecode(
-          _ => Right(MMap.empty[String, Any]),
-          Some(_ => Right(()))
+    val hasMedia = hints.has(smithy.api.MediaType)
+    Primitive.stringParser(tag, hints) match {
+      case Some(parse) if hasMedia =>
+        MetaDecode.from(desc)(
+          parse.compose[String](str =>
+            new String(Base64.getDecoder().decode(str))
+          )
         )
-      case other =>
-        Primitive.stringParser(other, hints) match {
-          case Some(parse) => MetaDecode.from(desc)(parse)
-          case None        => MetaDecode.EmptyMetaDecode
-        }
+      case Some(parse) => MetaDecode.from(desc)(parse)
+      case None        => MetaDecode.EmptyMetaDecode
     }
   }
 
@@ -62,10 +70,21 @@ private[http] class SchemaVisitorMetadataReader(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaDecode[C[A]] = {
-    self(member) match {
+    val amendedMember = member.addHints(httpHints(hints))
+    self(amendedMember) match {
       case MetaDecode.StringValueMetaDecode(f) =>
-        MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
-          tag.fromIterator(it.map(f))
+        val isAwsHeader = hints
+          .get(HttpBinding)
+          .exists(_.tpe == HttpBinding.Type.HeaderType) && awsHeaderEncoding
+        (SchemaVisitorHeaderSplit(member), isAwsHeader) match {
+          case (Some(splitFunction), true) =>
+            MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
+              tag.fromIterator(it.flatMap(splitFunction).map(f))
+            }
+          case (_, _) =>
+            MetaDecode.StringCollectionMetaDecode[C[A]] { it =>
+              tag.fromIterator(it.map(f))
+            }
         }
       case _ => EmptyMetaDecode
     }
@@ -77,7 +96,7 @@ private[http] class SchemaVisitorMetadataReader(
       key: Schema[K],
       value: Schema[V]
   ): MetaDecode[Map[K, V]] = {
-    (self(key), self(value)) match {
+    (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaDecode(readK), StringValueMetaDecode(readV)) =>
         StringMapMetaDecode[Map[K, V]](map =>
           map.map { case (k, v) => (readK(k), readV(v)) }.toMap

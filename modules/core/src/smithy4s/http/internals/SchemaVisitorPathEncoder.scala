@@ -55,8 +55,6 @@ object SchemaVisitorPathEncoder
         val fmt =
           hints.get(TimestampFormat).getOrElse(TimestampFormat.DATE_TIME)
         Some(PathEncode.raw(_.format(fmt)))
-      case Primitive.PUnit =>
-        struct(shapeId, hints, fields = Vector.empty, make = _ => ())
     }
   }
 

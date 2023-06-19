@@ -106,14 +106,14 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   override val httpApp: HttpApp[F] =
     httpAppErrorHandle(applyMiddleware(HttpApp[F] { req =>
       val run: F[O] = for {
-        input <- inputDecoder.decodeRequest(req)
+        input <- inputDecoder.decode(req)
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
       run
         .recoverWith(transformError)
-        .map(outputEncoder.addToResponse(successResponseBase, _))
-    }))
+        .map(outputEncoder.write(successResponseBase, _))
+    }).handleErrorWith(error => Kleisli.liftF(errorResponse(error))))
 
   private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
     app
@@ -139,9 +139,9 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   def errorResponse(throwable: Throwable): F[Response[F]] = throwable match {
     case e: HttpContractError =>
-      F.pure(contractErrorResponseEncoder.addToResponse(badRequestBase, e))
+      F.pure(contractErrorResponseEncoder.write(badRequestBase, e))
     case endpoint.Error((_, e)) =>
-      F.pure(errorEncoder.addToResponse(internalErrorBase, e))
+      F.pure(errorEncoder.write(internalErrorBase, e))
     case e: Throwable =>
       F.raiseError(e)
   }

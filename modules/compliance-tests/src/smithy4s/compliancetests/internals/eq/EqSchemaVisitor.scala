@@ -194,7 +194,6 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case Primitive.PBlob       => Eq[ByteArray]
       case Primitive.PDocument   => Eq[Document]
       case Primitive.PTimestamp  => Eq[Timestamp]
-      case Primitive.PUnit       => Eq[Unit]
     }
   }
 

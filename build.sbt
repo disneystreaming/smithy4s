@@ -673,7 +673,8 @@ lazy val `http4s-kernel` = projectMatrix
   .settings(
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
-      Dependencies.Http4s.core.value
+      Dependencies.Http4s.core.value,
+      Dependencies.Weaver.cats.value % Test
     )
   )
   .http4sPlatform(allJvmScalaVersions, jvmDimSettings)

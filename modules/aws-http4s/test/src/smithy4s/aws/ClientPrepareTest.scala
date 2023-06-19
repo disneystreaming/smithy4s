@@ -32,7 +32,8 @@ object ClientPrepareTest extends FunSuite {
             List(
               aws.protocols.AwsJson1_0.getTag,
               aws.protocols.AwsJson1_1.getTag,
-              aws.protocols.AwsQuery.getTag
+              aws.protocols.AwsQuery.getTag,
+              aws.protocols.RestJson1.getTag
             )
           )
         )
