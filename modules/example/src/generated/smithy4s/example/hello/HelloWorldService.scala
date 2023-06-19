@@ -92,10 +92,12 @@ object HelloWorldServiceOperation {
     val error: UnionSchema[HelloError] = HelloError.schema
     def liftError(throwable: Throwable): Option[HelloError] = throwable match {
       case e: GenericServerError => Some(HelloError.GenericServerErrorCase(e))
+      case e: SpecificServerError => Some(HelloError.SpecificServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: HelloError): Throwable = e match {
       case HelloError.GenericServerErrorCase(e) => e
+      case HelloError.SpecificServerErrorCase(e) => e
     }
   }
   sealed trait HelloError extends scala.Product with scala.Serializable {
@@ -107,17 +109,25 @@ object HelloWorldServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError
+    final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError
 
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
       val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), GenericServerErrorCase(_), _.genericServerError)
       val alt = schema.oneOf[HelloError]("GenericServerError")
     }
+    object SpecificServerErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[SpecificServerErrorCase] = bijection(SpecificServerError.schema.addHints(hints), SpecificServerErrorCase(_), _.specificServerError)
+      val alt = schema.oneOf[HelloError]("SpecificServerError")
+    }
 
     implicit val schema: UnionSchema[HelloError] = union(
       GenericServerErrorCase.alt,
+      SpecificServerErrorCase.alt,
     ){
       case c: GenericServerErrorCase => GenericServerErrorCase.alt(c)
+      case c: SpecificServerErrorCase => SpecificServerErrorCase.alt(c)
     }
   }
 }

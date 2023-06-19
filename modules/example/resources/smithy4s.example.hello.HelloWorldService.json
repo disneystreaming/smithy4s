@@ -45,6 +45,16 @@
                                 }
                             }
                         }
+                    },
+                    "599": {
+                        "description": "SpecificServerError 599 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecificServerErrorResponseContent"
+                                }
+                            }
+                        }
                     }
                 },
                 "tags": [
@@ -73,6 +83,14 @@
                 "required": [
                     "message"
                 ]
+            },
+            "SpecificServerErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                }
             }
         }
     }
