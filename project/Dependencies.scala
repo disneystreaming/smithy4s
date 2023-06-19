@@ -10,7 +10,7 @@ object Dependencies {
 
   val Jsoniter = new {
     val org = "com.github.plokhotnyuk.jsoniter-scala"
-    val jsoniterScalaVersion = "2.23.1"
+    val jsoniterScalaVersion = "2.23.2"
     val core = Def.setting(org %%% "jsoniter-scala-core" % jsoniterScalaVersion)
     val macros = Def.setting(
       org %%% "jsoniter-scala-macros" % jsoniterScalaVersion % "compile-internal"
@@ -68,7 +68,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.10.12"
+    val millVersion = "0.11.0"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -94,7 +94,7 @@ object Dependencies {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.5.0")
 
   object Http4s {
-    val http4sVersion = "0.23.19"
+    val http4sVersion = "0.23.21"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)

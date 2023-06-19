@@ -411,7 +411,7 @@ lazy val codegen = projectMatrix
       Dependencies.Smithy.build,
       Dependencies.Alloy.core,
       Dependencies.Alloy.openapi,
-      "com.lihaoyi" %% "os-lib" % "0.8.1",
+      "com.lihaoyi" %% "os-lib" % "0.9.1",
       Dependencies.collectionsCompat.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "io.get-coursier" %% "coursier" % "2.1.4"
@@ -498,6 +498,7 @@ lazy val millCodegenPlugin = projectMatrix
       Dependencies.Mill.scalalib,
       Dependencies.Mill.mainTestkit
     ),
+    libraryDependencySchemes += "com.lihaoyi" %% "geny" % VersionScheme.Always,
     publishLocal := {
       // make sure that core and codegen are published before the
       // plugin is published
