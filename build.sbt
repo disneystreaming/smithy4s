@@ -282,12 +282,13 @@ lazy val `aws-http4s` = projectMatrix
   .dependsOn(
     `aws-kernel`,
     `http4s-kernel`,
+    json,
+    xml,
     complianceTests % "test->compile",
     dynamic % "test->compile",
     tests % "test->compile",
     testUtils % "test->compile",
-    json,
-    xml
+    example % "test->compile"
   )
   .settings(
     libraryDependencies ++= {
@@ -299,17 +300,6 @@ lazy val `aws-http4s` = projectMatrix
         Dependencies.Weaver.scalacheck.value % Test
       )
     },
-    Test / smithy4sDependencies ++= Seq(
-      Dependencies.Smithy.waiters,
-      Dependencies.Smithy.awsTraits
-    ),
-    Test / allowedNamespaces := Seq(
-      "smithy4s.example.aws"
-    ),
-    Test / smithySpecs ++= Seq(
-      (ThisBuild / baseDirectory).value / "sampleSpecs" / "aws_example.smithy"
-    ),
-    Test / sourceGenerators := Seq(genSmithyScala(Test).taskValue),
     scalacOptions ++= Seq(
       "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent"
     ),
@@ -808,6 +798,7 @@ lazy val example = projectMatrix
       "smithy4s.benchmark",
       "smithy.test",
       "smithy4s.example",
+      "smithy4s.example.aws",
       "smithy4s.example.import_test",
       "smithy4s.example.imp",
       "smithy4s.example.error",
