@@ -60,7 +60,7 @@ abstract class PizzaClientSpec extends IOSuite {
       _ <- backend.prepResponse("foo", response)
       menuItem = MenuItem(
         Food.PizzaCase(
-          Pizza("margharita", PizzaBase.TOMATO, List(Ingredient.Mushroom))
+          Pizza("margharita", PizzaBase.TOMATO, List(Ingredient.MUSHROOM))
         ),
         price = 9.5f
       )

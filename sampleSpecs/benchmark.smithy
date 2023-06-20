@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.benchmark
 
 service BenchmarkService {

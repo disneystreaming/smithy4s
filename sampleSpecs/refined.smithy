@@ -5,33 +5,33 @@ use smithy4s.meta#unwrap
 
 @trait(selector: ":test(integer, member > integer)")
 @refinement(
-  targetType: "smithy4s.example.refined.Age",
-  providerImport: "smithy4s.example.refined.Age.provider._"
+  targetType: "smithy4s.refined.Age",
+  providerImport: "smithy4s.refined.Age.provider._"
 )
 structure ageFormat {}
 
 @trait(selector: "list:test(> member > string)") // lists with string members
 @refinement(
-  targetType: "smithy4s.example.refined.FancyList"
+  targetType: "smithy4s.refined.FancyList"
 )
 structure fancyListFormat {}
 
 @trait(selector: "string")
 @refinement(
-  targetType: "smithy4s.example.refined.Name"
+  targetType: "smithy4s.refined.Name"
 )
 structure nameFormat {}
 
 @trait(selector: "list")
 @refinement(
-  targetType: "smithy4s.example.refined.NonEmptyList",
+  targetType: "smithy4s.refined.NonEmptyList",
   parameterised: true
 )
 structure nonEmptyListFormat {}
 
 @trait(selector: "map")
 @refinement(
-  targetType: "smithy4s.example.refined.NonEmptyMap",
+  targetType: "smithy4s.refined.NonEmptyMap",
   parameterised: true
 )
 structure nonEmptyMapFormat {}

@@ -114,7 +114,7 @@ Now, let's use the generated code by the service. You need to create a scala fil
 Implement your service by extending the generated Service trait. Wire up routes into server.
 
 ```scala mdoc:silent
-import smithy4s.hello._
+import smithy4s.example.hello._
 import cats.effect._
 import cats.implicits._
 import org.http4s.implicits._

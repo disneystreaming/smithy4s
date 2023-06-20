@@ -38,7 +38,7 @@ Let's look at the smithy specification that we will use for this guide. First, l
 ```kotlin
 $version: "2"
 
-namespace smithy4s.guides.auth
+namespace smithy4s.example.guides.auth
 
 use alloy#simpleRestJson
 
@@ -105,7 +105,7 @@ To see the **full code** example of what we walk through below, go [here](@GITHU
 We will create a server-side middleware that implements the authentication as defined in the smithy spec above. Let's start by creating a few classes that we will use in our middleware.
 
 ```scala mdoc:invisible
-import smithy4s.guides.auth._
+import smithy4s.example.guides.auth._
 import cats.effect._
 import cats.implicits._
 import org.http4s.implicits._

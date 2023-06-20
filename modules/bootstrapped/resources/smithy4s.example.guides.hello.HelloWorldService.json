@@ -1,0 +1,39 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "HelloWorldService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/hello": {
+            "get": {
+                "operationId": "SayWorld",
+                "responses": {
+                    "200": {
+                        "description": "SayWorld 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SayWorldResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "SayWorldResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "default": "World !"
+                    }
+                }
+            }
+        }
+    }
+}

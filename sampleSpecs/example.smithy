@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example
 
 use alloy#simpleRestJson
@@ -131,13 +133,6 @@ integer ObjectSize
 @error("server")
 structure ServerError {
   message: String
-}
-
-
-@error("server")
-structure ServerErrorCustomMessage {
-  @errorMessage
-  messageField: String
 }
 
 @trait
