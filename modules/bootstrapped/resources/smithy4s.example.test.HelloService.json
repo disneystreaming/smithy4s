@@ -1,0 +1,178 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "HelloService",
+        "version": ""
+    },
+    "paths": {
+        "/": {
+            "post": {
+                "operationId": "SayHello",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SayHelloRequestContent"
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "Hi",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Greeting",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SayHello 200 response",
+                        "headers": {
+                            "X-H1": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "required": true
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SayHelloPayload"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "SimpleError 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SimpleErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "504": {
+                        "description": "ComplexError 504 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ComplexErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/listen": {
+            "get": {
+                "operationId": "Listen",
+                "responses": {
+                    "200": {
+                        "description": "Listen 200 response"
+                    }
+                }
+            }
+        },
+        "/test-path/{path}": {
+            "get": {
+                "operationId": "TestPath",
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "TestPath 200 response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ComplexErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "details": {
+                        "$ref": "#/components/schemas/ErrorDetails"
+                    }
+                },
+                "required": [
+                    "message",
+                    "value"
+                ]
+            },
+            "ErrorDetails": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "number"
+                    },
+                    "location": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "date",
+                    "location"
+                ]
+            },
+            "SayHelloPayload": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            },
+            "SayHelloRequestContent": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SimpleErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "expected": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "required": [
+                    "expected"
+                ]
+            }
+        }
+    }
+}
