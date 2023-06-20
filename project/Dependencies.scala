@@ -56,7 +56,7 @@ object Dependencies {
   }
   object Fs2 {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("co.fs2" %%% "fs2-core" % "3.6.1")
+      Def.setting("co.fs2" %%% "fs2-core" % "3.7.0")
 
     val io: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-io" % "3.7.0")

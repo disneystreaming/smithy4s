@@ -21,7 +21,7 @@ package internals
 import _root_.aws.api.{Service => AwsService}
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
-import cats.effect.Concurrent
+import cats.effect.Sync
 
 // scalafmt: { align.preset = most, danglingParentheses.preset = false, maxColumn = 240, align.tokens = [{code = ":"}]}
 
@@ -31,7 +31,7 @@ private[aws] class AwsInterpreter[Alg[_[_, _, _, _, _]], F[_]](
     client:           Client[F],
     makeClientCodecs: UnaryClientCodecs.Make[F],
     awsEnv:           AwsEnvironment[F]
-)(implicit effect:    Concurrent[F]) {
+)(implicit effect:    Sync[F]) {
 // format: on
 
   val impl: service.Impl[F] = service.impl {
