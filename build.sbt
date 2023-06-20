@@ -258,9 +258,9 @@ lazy val `aws-kernel` = projectMatrix
       "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
     )
   )
-  .jvmPlatform(latest2ScalaVersions, jvmDimSettings)
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(
-    latest2ScalaVersions,
+    allJsScalaVersions,
     jsDimSettings ++ Seq(
       Test / jsEnv := new NodeJSEnv(
         NodeJSEnv.Config().withEnv(Map("TEST_VAR" -> "hello"))
@@ -657,7 +657,6 @@ lazy val http4s = projectMatrix
         Dependencies.Alloy.`protocol-tests` % Test
       )
     },
-    Test / allowedNamespaces := Seq("smithy4s.hello"),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`
     ),
@@ -783,7 +782,7 @@ lazy val exampleGeneratedOutput =
   */
 lazy val bootstrapped = projectMatrix
   .in(file("modules/bootstrapped"))
-  .dependsOn(cats)
+  .dependsOn(cats, `aws-kernel`, complianceTests)
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
@@ -795,12 +794,8 @@ lazy val bootstrapped = projectMatrix
       Dependencies.Smithy.waiters
     ),
     Compile / allowedNamespaces := Seq(
-      "aws.api",
-      "aws.auth",
-      "aws.protocols",
       "com.amazonaws.dynamodb",
       "smithy4s.benchmark",
-      "smithy.test",
       "smithy4s.example",
       "smithy4s.example.aws",
       "smithy4s.example.import_test",
