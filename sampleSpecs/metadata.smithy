@@ -114,15 +114,6 @@ structure PathParams {
   ie: Numbers
 }
 
-list StringList {
-  member: String
-}
-
-map StringMap {
-  key: String,
-  value: String
-}
-
 structure ValidationChecks {
   @httpQuery("str")
   @length(min: 1, max: 10)

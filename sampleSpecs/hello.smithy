@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example.hello
 
 use alloy#simpleRestJson
@@ -45,4 +47,3 @@ structure Greeting {
   @required
   message: String
 }
-

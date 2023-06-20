@@ -22,16 +22,16 @@ object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingred
 
   val hints: Hints = Hints.empty
 
-  case object Mushroom extends Ingredient("Mushroom", "Mushroom", 0, Hints())
-  case object Cheese extends Ingredient("Cheese", "Cheese", 1, Hints())
-  case object Salad extends Ingredient("Salad", "Salad", 2, Hints())
-  case object Tomato extends Ingredient("Tomato", "Tomato", 3, Hints())
+  case object MUSHROOM extends Ingredient("Mushroom", "MUSHROOM", 0, Hints())
+  case object CHEESE extends Ingredient("Cheese", "CHEESE", 1, Hints())
+  case object SALAD extends Ingredient("Salad", "SALAD", 2, Hints())
+  case object TOMATO extends Ingredient("Tomato", "TOMATO", 3, Hints())
 
   val values: List[Ingredient] = List(
-    Mushroom,
-    Cheese,
-    Salad,
-    Tomato,
+    MUSHROOM,
+    CHEESE,
+    SALAD,
+    TOMATO,
   )
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[Ingredient] = enumeration(tag, values).withId(id).addHints(hints)

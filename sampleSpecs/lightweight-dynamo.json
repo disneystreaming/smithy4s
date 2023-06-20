@@ -92,43 +92,10 @@
         "target": "com.amazonaws.dynamodb#Endpoint"
       }
     },
-    "com.amazonaws.dynamodb#InvalidEndpointException": {
-      "type": "structure",
-      "members": {
-        "Message": {
-          "target": "com.amazonaws.dynamodb#String"
-        }
-      },
-      "traits": {
-        "smithy.api#error": "client",
-        "smithy.api#httpError": 421
-      }
-    },
     "com.amazonaws.dynamodb#Long": {
       "type": "long",
       "traits": {
         "smithy.api#default": 0
-      }
-    },
-    "com.amazonaws.dynamodb#String": {
-      "type": "string"
-    },
-    "aws.api#clientDiscoveredEndpoint": {
-      "type": "structure",
-      "members": {
-        "required": {
-          "target": "smithy.api#Boolean",
-          "traits": {
-            "smithy.api#documentation": "This field denotes whether or not this operation requires the use of a\nspecific endpoint. If this field is false, the standard regional\nendpoint for a service can handle this request. The client will start\nsending requests to the standard regional endpoint while working to\ndiscover a more specific endpoint.",
-            "smithy.api#required": {}
-          }
-        }
-      },
-      "traits": {
-        "smithy.api#documentation": "Indicates that the target operation should use the client's endpoint\ndiscovery logic.",
-        "smithy.api#trait": {
-          "selector": "operation"
-        }
       }
     },
     "com.amazonaws.dynamodb#ErrorMessage": {

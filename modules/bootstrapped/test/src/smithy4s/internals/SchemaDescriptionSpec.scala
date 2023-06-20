@@ -51,9 +51,9 @@ class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
 
   val testCases = Seq(
     TestCase(SomeInt.schema, "Int", "Int"),
-    TestCase(SomeSet.schema, "Set", "Set[String]"),
-    TestCase(SomeList.schema, "List", "List[String]"),
-    TestCase(SomeMap.schema, "Map", "Map[String, String]"),
+    TestCase(StringSet.schema, "Set", "Set[String]"),
+    TestCase(StringList.schema, "List", "List[String]"),
+    TestCase(StringMap.schema, "Map", "Map[String, String]"),
     TestCase(
       UntaggedUnion.schema,
       "Union",

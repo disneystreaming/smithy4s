@@ -201,6 +201,7 @@ object PizzaAdminServiceOperation {
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/restaurant/{restaurant}/menu"), code = 200),
+      smithy.api.Readonly(),
     )
     def wrap(input: GetMenuRequest) = GetMenu(input)
     override val errorable: Option[Errorable[GetMenuError]] = Some(this)

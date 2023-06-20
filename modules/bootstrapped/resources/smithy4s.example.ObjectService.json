@@ -37,7 +37,6 @@
                             "X-Size": {
                                 "schema": {
                                     "type": "integer",
-                                    "default": 0,
                                     "format": "int32"
                                 },
                                 "required": true

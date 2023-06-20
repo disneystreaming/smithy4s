@@ -54,7 +54,7 @@ lazy val allModules = Seq(
   millCodegenPlugin,
   json,
   xml,
-  example,
+  bootstrapped,
   tests,
   http4s,
   cats,
@@ -87,7 +87,7 @@ lazy val docs =
       `aws-http4s` % "compile -> compile",
       complianceTests,
       dynamic,
-      example
+      bootstrapped
     )
     .settings(
       mdocIn := (ThisBuild / baseDirectory).value / "modules" / "docs" / "markdown",
@@ -288,7 +288,7 @@ lazy val `aws-http4s` = projectMatrix
     dynamic % "test->compile",
     tests % "test->compile",
     testUtils % "test->compile",
-    example % "test->compile"
+    bootstrapped % "test->compile"
   )
   .settings(
     libraryDependencies ++= {
@@ -534,7 +534,7 @@ lazy val dynamic = projectMatrix
   .dependsOn(
     core,
     testUtils % "test->compile",
-    example % "test->test;test->compile"
+    bootstrapped % "test->test;test->compile"
   )
   .settings(
     libraryDependencies ++= munitDeps.value ++ Seq(
@@ -572,7 +572,7 @@ lazy val json = projectMatrix
   .in(file("modules/json"))
   .dependsOn(
     core,
-    example % "test->test",
+    bootstrapped % "test->test",
     scalacheck % "test -> compile"
   )
   .settings(
@@ -594,7 +594,7 @@ lazy val xml = projectMatrix
   .in(file("modules/xml"))
   .dependsOn(
     core,
-    example % "test->test",
+    bootstrapped % "test->test",
     scalacheck % "test -> compile"
   )
   .settings(
@@ -725,7 +725,7 @@ lazy val testUtils = projectMatrix
  */
 lazy val tests = projectMatrix
   .in(file("modules/tests"))
-  .dependsOn(core, complianceTests, dynamic, example)
+  .dependsOn(core, complianceTests, dynamic, bootstrapped)
   .settings(
     libraryDependencies ++= {
       Seq(
@@ -760,7 +760,7 @@ lazy val complianceTests = projectMatrix
   .dependsOn(core)
   .settings(
     name := "compliance-tests",
-    Compile / allowedNamespaces := Seq("smithy.test", "smithy4s.example.test"),
+    Compile / allowedNamespaces := Seq("smithy.test"),
     Compile / smithy4sDependencies ++= Seq(Dependencies.Smithy.testTraits),
     Compile / sourceGenerators := Seq(genSmithyScala(Compile).taskValue),
     libraryDependencies ++= {
@@ -777,13 +777,17 @@ lazy val complianceTests = projectMatrix
 
 lazy val exampleGeneratedOutput =
   settingKey[File]("Output directory where the generated code is going to be.")
-lazy val example = projectMatrix
-  .in(file("modules/example"))
+
+/**
+  * A project that contains generated code, which can serve as a basis for tests.
+  */
+lazy val bootstrapped = projectMatrix
+  .in(file("modules/bootstrapped"))
   .dependsOn(cats)
   .disablePlugins(ScalafixPlugin)
   .disablePlugins(HeaderPlugin)
   .settings(
-    exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "example" / "src" / "generated",
+    exampleGeneratedOutput := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "src" / "generated",
     cleanFiles += exampleGeneratedOutput.value,
     smithy4sDependencies ++= Seq(
       Dependencies.Smithy.testTraits,
@@ -814,7 +818,7 @@ lazy val example = projectMatrix
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"
     ),
-    Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
+    Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "bootstrapped" / "resources",
     libraryDependencies += Dependencies.Http4s.emberServer.value,
     genSmithy(Compile),
     genSmithyOutput := exampleGeneratedOutput.value,
@@ -837,7 +841,7 @@ lazy val example = projectMatrix
 lazy val guides = projectMatrix
   .in(file("modules/guides"))
   .dependsOn(http4s)
-  .dependsOn(example)
+  .dependsOn(bootstrapped)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberServer.value,
@@ -858,7 +862,7 @@ lazy val benchmark = projectMatrix
   .dependsOn(
     http4s % "compile -> compile,test",
     `scalacheck`,
-    example
+    bootstrapped
   )
   .settings(
     libraryDependencies ++= Seq(

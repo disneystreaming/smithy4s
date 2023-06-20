@@ -16,9 +16,9 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
   )
 
   implicit val schema: Schema[SomeCollections] = recursive(struct(
-    SomeList.underlyingSchema.required[SomeCollections]("someList", _.someList).addHints(smithy.api.Required()),
-    SomeSet.underlyingSchema.required[SomeCollections]("someSet", _.someSet).addHints(smithy.api.Required()),
-    SomeMap.underlyingSchema.required[SomeCollections]("someMap", _.someMap).addHints(smithy.api.Required()),
+    StringList.underlyingSchema.required[SomeCollections]("someList", _.someList).addHints(smithy.api.Required()),
+    StringSet.underlyingSchema.required[SomeCollections]("someSet", _.someSet).addHints(smithy.api.Required()),
+    StringMap.underlyingSchema.required[SomeCollections]("someMap", _.someMap).addHints(smithy.api.Required()),
   ){
     SomeCollections.apply
   }.withId(id).addHints(hints))
