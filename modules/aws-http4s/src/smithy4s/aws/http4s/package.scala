@@ -17,22 +17,31 @@
 package smithy4s
 package aws
 
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.Resource
 import org.http4s.client.Client
+import smithy4s.kinds.FunctorAlgebra
 
 package object http4s {
 
-  implicit final class ServiceOps[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]](
-      private[this] val serviceProvider: smithy4s.Service.Provider[Alg, Op]
+  implicit final class ServiceOps[Alg[_[_, _, _, _, _]]](
+      private[this] val service: smithy4s.Service[Alg]
   ) {
 
-    def awsClient[F[_]: Temporal](
+    def awsClient[F[_]: Async](
         client: Client[F],
         awsRegion: AwsRegion
     ): Resource[F, AwsClient[Alg, F]] = for {
       env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
-      awsClient <- AwsClient(serviceProvider.service, env)
+      awsClient <- AwsClient(service, env)
+    } yield awsClient
+
+    def simpleAwsClient[F[_]: Async](
+        client: Client[F],
+        awsRegion: AwsRegion
+    ): Resource[F, FunctorAlgebra[Alg, F]] = for {
+      env <- AwsEnvironment.default(AwsHttp4sBackend(client), awsRegion)
+      awsClient <- AwsClient.simple(service, env)
     } yield awsClient
 
   }

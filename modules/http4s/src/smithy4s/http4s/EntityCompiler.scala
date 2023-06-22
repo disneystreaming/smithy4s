@@ -25,7 +25,7 @@ import org.http4s._
 import org.http4s.headers.`Content-Type`
 import smithy4s.http.BodyPartial
 import smithy4s.http.CodecAPI
-import smithy4s.http.Metadata
+import smithy4s.schema.Primitive
 
 trait EntityCompiler[F[_]] {
 
@@ -45,10 +45,6 @@ trait EntityCompiler[F[_]] {
       cache: Cache
   ): EntityEncoder[F, A]
 
-  @deprecated("use compileEntityEncoder(schema, cache) instead")
-  final def compileEntityEncoder[A](schema: Schema[A]): EntityEncoder[F, A] =
-    compileEntityEncoder(schema, createCache())
-
   /**
     * Turns a Schema into an http4s EntityDecoder
     *
@@ -60,10 +56,6 @@ trait EntityCompiler[F[_]] {
       schema: Schema[A],
       cache: Cache
   ): EntityDecoder[F, A]
-
-  @deprecated("use compileEntityDecoder(schema, cache) instead")
-  final def compileEntityDecoder[A](schema: Schema[A]): EntityDecoder[F, A] =
-    compileEntityDecoder(schema, createCache())
 
   /**
     * Turns a Schema into an http4s EntityDecoder that only partially
@@ -77,12 +69,6 @@ trait EntityCompiler[F[_]] {
       schema: Schema[A],
       cache: Cache
   ): EntityDecoder[F, BodyPartial[A]]
-
-  @deprecated("use compilePartialEntityDecoder(schema, cache) instead")
-  final def compilePartialEntityDecoder[A](
-      schema: Schema[A]
-  ): EntityDecoder[F, BodyPartial[A]] =
-    compilePartialEntityDecoder(schema, createCache())
 
 }
 
@@ -101,19 +87,20 @@ object EntityCompiler {
       ): EntityEncoder[F, A] = {
         val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
         val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
-        val expectBody = Metadata.PartialDecoder
-          .fromSchema(schema)
-          .total
-          .isEmpty // expect body if metadata decoder is not total
-        if (expectBody) {
+        val isEmpty = schema match {
+          case Schema.PrimitiveSchema(_, _, Primitive.PUnit) => true
+          case _                                             => false
+        }
+
+        if (isEmpty) {
+          EntityEncoder.emptyEncoder
+        } else {
           EntityEncoder
             .byteArrayEncoder[F]
             .withContentType(
               `Content-Type`(mediaType)
             )
             .contramap[A]((a: A) => codecAPI.writeToArray(codecA, a))
-        } else {
-          EntityEncoder.emptyEncoder
         }
       }
 

@@ -16,6 +16,7 @@
 
 package smithy4s.dynamic
 import smithy4s.tests._
+import scala.concurrent.Future
 
 object DummyIO {
   type IO[A] = Either[Throwable, A]
@@ -25,15 +26,20 @@ object DummyIO {
     def pure[A](a: A): IO[A] = Right(a)
     def raiseError[A](e: Throwable): IO[A] = Left(e)
   }
-  implicit class IOOps[A](private val io: IO[A]) extends AnyVal {
-    def mapRun[B](f: A => B): B = io match {
-      case Left(e)  => throw e
-      case Right(a) => f(a)
-    }
-    def check(): Unit = io match {
-      case Left(e)  => throw e
-      case Right(_) => ()
-    }
+
+  trait Suite extends munit.FunSuite {
+    override def munitValueTransforms: List[ValueTransform] =
+      ioValueTransform :: super.munitValueTransforms
+
+    private val ioValueTransform: ValueTransform =
+      new ValueTransform(
+        "DummyIO",
+        {
+          case Left(ex: Throwable) => Future.failed(ex)
+          case Right(v)            => Future.successful(v)
+        }
+      )
   }
+
   object JsonIOProtocol extends JsonProtocolF[IO]
 }

@@ -18,7 +18,7 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
-import scala.annotation.nowarn
+import kinds._
 
 /**
   * Represents a member of coproduct type (sealed trait)
@@ -37,12 +37,8 @@ final case class Alt[F[_], U, A](
 }
 object Alt {
 
-  @nowarn
   final case class WithValue[F[_], U, A](
-      @deprecated(
-        "Should not be accessed directly, use Dispatcher instead when compiling union schemas",
-        since = "0.16.5"
-      ) alt: Alt[F, U, A],
+      private[Alt] val alt: Alt[F, U, A],
       value: A
   ) {
     def mapK[G[_]](fk: PolyFunction[F, G]): WithValue[G, U, A] =
@@ -67,21 +63,27 @@ object Alt {
     * function into an encoder that works on the union.
     */
   trait Dispatcher[F[_], U] {
-    def underlying: U => Alt.WithValue[F, U, _]
 
     def compile[G[_], Result](precompile: Precompiler[F, G])(implicit
         encoderK: EncoderK[G, Result]
     ): G[U]
+
+    def projector[A](alt: Alt[F, U, A]): U => Option[A]
   }
 
   object Dispatcher {
+
+    def fromUnion[U](union: Schema.UnionSchema[U]): Dispatcher[Schema, U] =
+      apply(
+        alts = union.alternatives,
+        dispatchF = union.dispatch
+      )
 
     private[smithy4s] def apply[F[_], U](
         alts: Vector[Alt[F, U, _]],
         dispatchF: U => Alt.WithValue[F, U, _]
     ): Dispatcher[F, U] = new Impl[F, U](alts, dispatchF)
 
-    @nowarn("msg=Should not be accessed")
     private[smithy4s] case class Impl[F[_], U](
         alts: Vector[Alt[F, U, _]],
         underlying: U => Alt.WithValue[F, U, _]
@@ -92,8 +94,8 @@ object Alt {
         val precompiledAlts =
           precompile.toPolyFunction
             .unsafeCacheBy[String](
-              alts.map(smithy4s.Existential.wrap(_)),
-              (alt: Existential[Alt[F, U, *]]) =>
+              alts.map(Kind1.existential(_)),
+              (alt: Kind1.Existential[Alt[F, U, *]]) =>
                 alt.asInstanceOf[Alt[F, U, _]].label
             )
 
@@ -103,6 +105,13 @@ object Alt {
               encoderK(precompiledAlts(awv.alt), awv.value)
           }
         }
+      }
+
+      def projector[A](alt: Alt[F, U, A]): U => Option[A] = { u =>
+        val under = underlying(u)
+        if (under.alt.label == alt.label)
+          Some(under.value.asInstanceOf[A])
+        else None
       }
     }
   }

@@ -3,18 +3,18 @@ on:
   workflow_dispatch:
     inputs:
       publishSnapshot:
-        description: 'Publish Snapshot'
+        description: "Publish Snapshot"
         required: false
-        default: 'false'
+        default: "false"
       publishMicrosite:
-        description: 'Publish Microsite'
+        description: "Publish Microsite"
         required: false
-        default: 'false'
+        default: "false"
   push:
-    branches: ["main"]
+    branches: ["main", "series/**"]
     tags: ["v*"]
   pull_request:
-    branches: ["*"]
+    branches: ["**"]
 
 concurrency:
   group: ci-${{ github.ref }}

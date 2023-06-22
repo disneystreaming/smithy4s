@@ -1,6 +1,6 @@
 namespace smithy4s.example.imp
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 use smithy4s.example.import_test#ImportOperation
 use smithy4s.example.error#NotFoundError
 

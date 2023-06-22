@@ -23,17 +23,17 @@ import Schema._
 sealed trait Schema[A]{
   def shapeId: ShapeId
   def hints: Hints
-  final def required[Struct] : PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
-  final def optional[Struct] : PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
+  final def required[Struct]: PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
+  final def optional[Struct]: PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
 
-  final def oneOf[Union] : PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
+  final def oneOf[Union]: PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
 
-  final def compile[F[_]](fk : Schema ~> F) : F[A] = fk(this)
+  final def compile[F[_]](fk: Schema ~> F): F[A] = fk(this)
 
-  final def addHints(hints: Hint*) : Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
-  final def addHints(hints: Hints) : Schema[A] = transformHintsLocally(_ ++ hints)
+  final def addHints(hints: Hint*): Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
+  final def addHints(hints: Hints): Schema[A] = transformHintsLocally(_ ++ hints)
 
-  final def withId(newId: ShapeId) : Schema[A] = this match {
+  final def withId(newId: ShapeId): Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
     case s: CollectionSchema[c, a] => CollectionSchema(newId, s.hints, s.tag, s.member).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(newId, s.hints, s.key, s.value).asInstanceOf[Schema[A]]
@@ -45,9 +45,9 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
   }
 
-  final def withId(namespace: String, name: String) : Schema[A] = withId(ShapeId(namespace, name))
+  final def withId(namespace: String, name: String): Schema[A] = withId(ShapeId(namespace, name))
 
-  final def transformHintsLocally(f: Hints => Hints) : Schema[A] = this match {
+  final def transformHintsLocally(f: Hints => Hints): Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: CollectionSchema[c, a] => CollectionSchema(s.shapeId, f(s.hints), s.tag, s.member).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key, s.value).asInstanceOf[Schema[A]]
@@ -59,7 +59,7 @@ sealed trait Schema[A]{
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
   }
 
-  final def transformHintsTransitively(f: Hints => Hints) : Schema[A] = this match {
+  final def transformHintsTransitively(f: Hints => Hints): Schema[A] = this match {
     case PrimitiveSchema(shapeId, hints, tag) => PrimitiveSchema(shapeId, f(hints), tag)
     case s: CollectionSchema[c, a] => CollectionSchema[c, a](s.shapeId, f(s.hints), s.tag, s.member.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
     case s: MapSchema[k, v] => MapSchema(s.shapeId, f(s.hints), s.key.transformHintsTransitively(f), s.value.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
@@ -78,6 +78,15 @@ sealed trait Schema[A]{
 
   final def refined[B]: PartiallyAppliedRefinement[A, B] = new PartiallyAppliedRefinement[A, B](this)
 
+  final def getDefault: Option[Document] =
+    this.hints.get(smithy.api.Default).map(_.value)
+
+  final def getDefaultValue: Option[A] = getDefault.flatMap {
+    case Document.DNull => this.compile(DefaultValueSchemaVisitor)
+    case document => Document.Decoder.fromSchema(this).decode(document).toOption
+  }
+
+
 }
 
 object Schema {
@@ -95,17 +104,17 @@ object Schema {
     def shapeId = underlying.shapeId
     def hints = underlying.hints
   }
-  final case class LazySchema[A](suspend : Lazy[Schema[A]]) extends Schema[A]{
+  final case class LazySchema[A](suspend: Lazy[Schema[A]]) extends Schema[A]{
     def shapeId: ShapeId = suspend.value.shapeId
     def hints: Hints = suspend.value.hints
   }
 
-  def transformHintsLocallyK(f: Hints => Hints) : Schema ~> Schema = new (Schema ~> Schema){
-    def apply[A](fa: Schema[A]) : Schema[A] = fa.transformHintsLocally(f)
+  def transformHintsLocallyK(f: Hints => Hints): Schema ~> Schema = new (Schema ~> Schema){
+    def apply[A](fa: Schema[A]): Schema[A] = fa.transformHintsLocally(f)
   }
 
-  def transformHintsTransitivelyK(f: Hints => Hints) : Schema ~> Schema = new (Schema ~> Schema){
-    def apply[A](fa: Schema[A]) : Schema[A] = fa.transformHintsTransitively(f)
+  def transformHintsTransitivelyK(f: Hints => Hints): Schema ~> Schema = new (Schema ~> Schema){
+    def apply[A](fa: Schema[A]): Schema[A] = fa.transformHintsTransitively(f)
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +136,7 @@ object Schema {
   val unit: Schema[Unit] = Primitive.PUnit.schema(prelude, "Unit")
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
-  val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("smithy4s.api", "UUID")
+  val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
 
   private val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
 
@@ -137,7 +146,7 @@ object Schema {
   def indexedSeq[A](a: Schema[A]): Schema[IndexedSeq[A]] = Schema.CollectionSchema[IndexedSeq, A](placeholder, Hints.empty, CollectionTag.IndexedSeqTag, a)
 
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
-  def recursive[A](s : => Schema[A]) : Schema[A] = Schema.LazySchema(Lazy(s))
+  def recursive[A](s: => Schema[A]): Schema[A] = Schema.LazySchema(Lazy(s))
 
   def union[U](alts: SchemaAlt[U, _]*)(dispatch: U => Alt.SchemaAndValue[U, _]): Schema.UnionSchema[U] =
     Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
@@ -145,21 +154,21 @@ object Schema {
   def union[U](alts: Vector[SchemaAlt[U, _]])(dispatch: U => Alt.SchemaAndValue[U, _]): Schema.UnionSchema[U] =
     Schema.UnionSchema(placeholder, Hints.empty, alts, dispatch)
 
-  def enumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]) : Schema[E] =
+  def enumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, values, total)
 
-  def enumeration[E <: Enumeration.Value](values: List[E]) : Schema[E] =
+  def enumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
 
-  def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]) : Schema[B] =
+  def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]): Schema[B] =
     Schema.BijectionSchema(a, bijection)
 
-  def bijection[A, B](a: Schema[A], to: A => B, from: B => A) : Schema[B] =
+  def bijection[A, B](a: Schema[A], to: A => B, from: B => A): Schema[B] =
     Schema.BijectionSchema(a, Bijection(to, from))
 
-  def constant[A](a : A) : Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
+  def constant[A](a: A): Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 
-  def struct[S] : PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
+  def struct[S]: PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
 
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String, get: S => A): SchemaField[S, A] = Field.required(label, schema, get)
@@ -175,7 +184,7 @@ object Schema {
   }
 
   private [smithy4s] class PartiallyAppliedRefinement[A, B](private val schema: Schema[A]) extends AnyVal {
-    def apply[C](c: C)(implicit refinementProvider: RefinementProvider[C, A, B]) : Schema[B] = {
+    def apply[C](c: C)(implicit refinementProvider: RefinementProvider[C, A, B]): Schema[B] = {
       val hint = Hints.Binding.fromValue(c)(refinementProvider.tag)
       RefinementSchema(schema.addHints(hint), refinementProvider.make(c))
     }

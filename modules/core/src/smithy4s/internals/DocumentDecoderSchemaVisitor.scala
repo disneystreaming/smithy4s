@@ -21,17 +21,17 @@ import java.util.Base64
 import java.util.UUID
 
 import smithy.api.JsonName
-import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 import smithy4s.capability.Covariant
 import smithy4s.Document._
 import smithy4s.http.PayloadError
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
+import scala.collection.immutable.ListMap
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -227,7 +227,7 @@ class DocumentDecoderSchemaVisitor(
     maybeKeyDecoder match {
       case Some(keyDecoder) =>
         DocumentDecoder.instance("Map", "Object") { case (pp, DObject(map)) =>
-          val builder = Map.newBuilder[K, V]
+          val builder = ListMap.newBuilder[K, V]
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
@@ -303,8 +303,6 @@ class DocumentDecoderSchemaVisitor(
   ): DocumentDecoder[S] = {
     def jsonLabel[A](field: Field[Schema, S, A]): String =
       field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
-    def getDefault[A](field: Field[Schema, S, A]): Option[Document] =
-      field.instance.hints.get(Default).map(_.value)
 
     def fieldDecoder[A](
         field: Field[Schema, S, A]
@@ -314,8 +312,7 @@ class DocumentDecoderSchemaVisitor(
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
-
-      val maybeDefault = getDefault(field)
+      val maybeDefault = field.instance.getDefault
 
       if (field.isOptional) {
         (
@@ -326,6 +323,7 @@ class DocumentDecoderSchemaVisitor(
           val path = PayloadPath.Segment(jLabel) :: pp
           fields
             .get(jLabel) match {
+            case Some(DNull) => buffer(None)
             case Some(document) =>
               buffer(Some(apply(field.instance)(path, document)))
             case None => buffer(None)

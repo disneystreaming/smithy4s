@@ -1,10 +1,10 @@
 $version: "2"
 
-namespace smithy4s.example
+namespace smithy4s.example.test
 
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service HelloService {
@@ -106,7 +106,7 @@ operation TestPath {
     }
 }
 
-// The following shapes are used
+// The following shapes are used by the documentation
 @simpleRestJson
 service HelloWorldService {
   version: "1.0.0",

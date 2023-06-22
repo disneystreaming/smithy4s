@@ -70,8 +70,13 @@ case class Metadata(
   def addQueryParam(key: String, value: String): Metadata =
     query.get(key) match {
       case Some(existing) =>
-        copy(query = query + (key -> (value +: existing)))
+        copy(query = query + (key -> (existing :+ value)))
       case None => copy(query = query + (key -> List(value)))
+    }
+  def addQueryParamsIfNoExist(key: String, values: String*): Metadata =
+    query.get(key) match {
+      case Some(_) => self
+      case None    => copy(query = query + (key -> values.toList))
     }
   def addMultipleHeaders(
       ciKey: CaseInsensitive,
@@ -89,7 +94,7 @@ case class Metadata(
   def addMultipleQueryParams(key: String, value: List[String]): Metadata =
     query.get(key) match {
       case Some(existing) =>
-        copy(query = query + (key -> (value ++ existing)))
+        copy(query = query + (key -> (existing ++ value)))
       case None => copy(query = query + (key -> value))
     }
 
@@ -210,11 +215,6 @@ object Metadata {
       }
     }
 
-    @deprecated("kept for bincompat in 0.16.x")
-    def derivedDecoderFromStaticSchema[A](
-        schema: Schema[A]
-    ): PartialDecoder[A] =
-      fromSchema(schema)
   }
 
   /**
@@ -277,16 +277,6 @@ object Metadata {
         case _ => (_: A) => Metadata.empty
       }
     }
-
-    @deprecated("kept for bincompat in 0.16.x")
-    def deriveEncoderFromStaticSchema[A](implicit
-        schema: Schema[A]
-    ): Encoder[A] = encoderCache(schema)
-
-    private val encoderCache =
-      new PolyFunction[smithy4s.Schema, Encoder] {
-        def apply[A](fa: smithy4s.Schema[A]): Encoder[A] = fromSchema(fa)
-      }.unsafeMemoise
 
   }
 

@@ -1,6 +1,6 @@
 namespace smithy4s.example
 
-use smithy4s.api#untagged
+use alloy#untagged
 
 service EmptyService {
   version: "1.0"
@@ -83,7 +83,7 @@ structure SomeCollections {
   @required
   someSet: SomeSet,
   @required
-  someMap : SomeMap
+  someMap: SomeMap
 }
 
 list SomeList {
@@ -99,7 +99,7 @@ map SomeMap {
   value: String
 }
 
-@SomeCollections(someList: ["a"], someSet: ["b"], someMap: {"a" : "b"})
+@SomeCollections(someList: ["a"], someSet: ["b"], someMap: {"a": "b"})
 integer SomeInt
 
 @suppress(["UnreferencedShape"])
@@ -112,3 +112,4 @@ structure RangeCheck {
 // face with sunglasses emoji
 @pattern("^\\uD83D\\uDE0E$")
 string UnicodeRegexString
+

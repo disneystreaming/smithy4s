@@ -2,12 +2,12 @@ $version: "2"
 
 namespace smithy4s.example
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Echo]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book, Echo]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
@@ -86,7 +86,7 @@ structure PriceError {
 @http(method: "GET", uri: "/restaurant/{restaurant}/menu", code: 200)
 operation GetMenu {
   input: GetMenuRequest,
-  errors: [NotFoundError, FallbackError, GenericClientError],
+  errors: [NotFoundError, FallbackError, FallbackError2, GenericClientError],
   output: GetMenuResult
 }
 
@@ -111,6 +111,13 @@ structure NotFoundError {
 
 @error("client")
 structure FallbackError {
+  @required
+  error: String
+}
+
+// added to test error handling scenarios in `operation GetMenu`
+@error("client")
+structure FallbackError2 {
   @required
   error: String
 }
@@ -195,7 +202,7 @@ structure HealthRequest {
   query: String
 }
 
-@freeForm(i : 1, a: 2)
+@freeForm(i: 1, a: 2)
 structure HealthResponse {
   @required
   status: String
@@ -289,6 +296,21 @@ structure CustomCodeOutput {
   code: Integer
 }
 
+@http(method: "POST", uri: "/book/{name}", code: 200)
+operation Book {
+  input := {
+    @httpLabel
+    @required
+    name: String,
+
+    @httpQuery("town")
+    town: String
+  },
+  output := {
+    @required
+    message: String
+  }
+}
 
 @http(method: "POST", uri: "/echo/{pathParam}")
 operation Echo {

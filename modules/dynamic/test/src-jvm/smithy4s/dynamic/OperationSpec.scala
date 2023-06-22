@@ -18,59 +18,37 @@ package smithy4s
 package dynamic
 
 import model._
-import software.amazon.smithy.model.{Model => SModel}
-import software.amazon.smithy.model.shapes.ModelSerializer
-import java.nio.file.Paths
-import cats.syntax.all._
 import http.HttpEndpoint
-import DummyIO._
 
-class OperationSpec() extends munit.FunSuite {
-
-  // This is not ideal, but it does the job.
-  val cwd = System.getProperty("user.dir");
-  val pizzaSpec = Paths.get(cwd + "/sampleSpecs/pizza.smithy").toAbsolutePath()
-  val smithy4sPrelude = Paths
-    .get(cwd + "/modules/protocol/resources/META-INF/smithy/smithy4s.smithy")
-    .toAbsolutePath()
+class OperationSpec() extends DummyIO.Suite {
 
   test("Decode operation") {
-    IO(
-      SModel
-        .assembler()
-        .addImport(smithy4sPrelude)
-        .addImport(pizzaSpec)
-        .assemble()
-        .unwrap()
-    ).map(ModelSerializer.builder().build.serialize(_))
-      .map(NodeToDocument(_))
-      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
-      .flatMap(_.liftTo[IO])
+    loadDynamicModel("pizza.smithy")
       .map { model =>
         expect(
           model.shapes(IdRef("smithy4s.example#Health")) == Shape.OperationCase(
             OperationShape(
-              Some(MemberShape(IdRef("smithy4s.example#HealthRequest"), None)),
-              Some(MemberShape(IdRef("smithy4s.example#HealthResponse"), None)),
-              Some(
-                List(
-                  MemberShape(
-                    IdRef("smithy4s.example#UnknownServerError"),
-                    None
-                  )
+              List(
+                MemberShape(
+                  IdRef("smithy4s.example#UnknownServerError"),
+                  Map.empty
                 )
               ),
+              Map(
+                IdRef(
+                  "smithy.api#http"
+                ) -> Document.obj(
+                  "code" -> Document.fromInt(200),
+                  "method" -> Document.fromString("GET"),
+                  "uri" -> Document.fromString("/health")
+                ),
+                IdRef("smithy.api#readonly") -> Document.obj()
+              ),
               Some(
-                Map(
-                  IdRef(
-                    "smithy.api#http"
-                  ) -> Document.obj(
-                    "code" -> Document.fromInt(200),
-                    "method" -> Document.fromString("GET"),
-                    "uri" -> Document.fromString("/health")
-                  ),
-                  IdRef("smithy.api#readonly") -> Document.obj()
-                )
+                MemberShape(IdRef("smithy4s.example#HealthRequest"), Map.empty)
+              ),
+              Some(
+                MemberShape(IdRef("smithy4s.example#HealthResponse"), Map.empty)
               )
             )
           )
@@ -79,17 +57,7 @@ class OperationSpec() extends munit.FunSuite {
   }
 
   test("Compile HTTP operation") {
-    IO(
-      SModel
-        .assembler()
-        .addImport(smithy4sPrelude)
-        .addImport(pizzaSpec)
-        .assemble()
-        .unwrap()
-    ).map(ModelSerializer.builder().build.serialize(_))
-      .map(NodeToDocument(_))
-      .map(smithy4s.Document.decode[smithy4s.dynamic.model.Model](_))
-      .flatMap(_.liftTo[IO])
+    loadDynamicModel("pizza.smithy")
       .map { model =>
         val compiled = DynamicSchemaIndex.load(model)
 
@@ -97,7 +65,7 @@ class OperationSpec() extends munit.FunSuite {
         val httpEndpoints = endpoints.map(HttpEndpoint.cast(_))
 
         expect(
-          httpEndpoints.forall(_.isDefined)
+          httpEndpoints.forall(_.isRight)
         )
       }
   }

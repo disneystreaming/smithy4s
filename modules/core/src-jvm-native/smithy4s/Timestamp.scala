@@ -169,6 +169,9 @@ case class Timestamp private (epochSecond: Long, nano: Int)
 }
 
 object Timestamp extends TimestampCompanionPlatform {
+
+  val epoch = Timestamp(0, 0)
+
   private val digits: Array[Short] = Array(
     0x3030, 0x3130, 0x3230, 0x3330, 0x3430, 0x3530, 0x3630, 0x3730, 0x3830,
     0x3930, 0x3031, 0x3131, 0x3231, 0x3331, 0x3431, 0x3531, 0x3631, 0x3731,
@@ -253,10 +256,10 @@ object Timestamp extends TimestampCompanionPlatform {
 
   def showFormat(format: TimestampFormat): String = format match {
     case TimestampFormat.DATE_TIME =>
-      "date-time timestamp (YYYY-MM-DDThh:mm:ss.sssZ)"
+      "date-time timestamp (YYYY-MM-ddThh:mm:ss.sssZ)"
     case TimestampFormat.EPOCH_SECONDS => "epoch-second timestamp"
     case TimestampFormat.HTTP_DATE =>
-      "http-date timestamp (EEE, dd MMM yyyy HH:mm:ss.sss z)"
+      "http-date timestamp (EEE, dd MMM yyyy hh:mm:ss.sss z)"
   }
 
   private[this] def parseDateTime(s: String): Timestamp = {
@@ -326,6 +329,11 @@ object Timestamp extends TimestampCompanionPlatform {
       pos += 2
       ch0 * 10 + ch1 - 528 // 528 == '0' * 11
     }
+    var epochSecond = toEpochDay(
+      year,
+      month,
+      day
+    ) * 86400 + (hour * 3600 + minute * 60 + second)
     var nano = 0
     var ch = (0: Char)
     if (pos < len) {
@@ -346,15 +354,51 @@ object Timestamp extends TimestampCompanionPlatform {
         }
       }
     }
-    if (ch != 'Z' || pos != len) error()
-    new Timestamp(
-      toEpochDay(
-        year,
-        month,
-        day
-      ) * 86400 + (hour * 3600 + minute * 60 + second),
-      nano
-    )
+    if (ch != 'Z') {
+      val isNeg = ch == '-' || (ch != '+' && {
+        error()
+        true
+      })
+      if (pos + 2 > len) error()
+      var offsetTotal = {
+        val ch0 = s.charAt(pos)
+        val ch1 = s.charAt(pos + 1)
+        if (ch0 < '0' || ch0 > '1' || ch1 < '0' || ch1 > '9') error()
+        pos += 2
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      } * 3600
+      if (
+        pos + 3 <= len && {
+          ch = s.charAt(pos)
+          pos += 1
+          ch == ':'
+        } && {
+          offsetTotal += {
+            val ch0 = s.charAt(pos)
+            val ch1 = s.charAt(pos + 1)
+            if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+            pos += 2
+            ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+          } * 60
+          pos + 3 <= len
+        } && {
+          ch = s.charAt(pos)
+          pos += 1
+          ch == ':'
+        }
+      ) offsetTotal += {
+        val ch0 = s.charAt(pos)
+        val ch1 = s.charAt(pos + 1)
+        if (ch0 < '0' || ch0 > '5' || ch1 < '0' || ch1 > '9') error()
+        pos += 2
+        ch0 * 10 + ch1 - 528 // 528 == '0' * 11
+      }
+      if (offsetTotal > 64800) error() // 64800 == 18 * 60 * 60
+      if (isNeg) offsetTotal = -offsetTotal
+      epochSecond -= offsetTotal
+    }
+    if (pos != len) error()
+    new Timestamp(epochSecond, nano)
   }
 
   private[this] def parseEpochSeconds(s: String): Timestamp = {

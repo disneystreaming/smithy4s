@@ -19,16 +19,20 @@ package dynamic
 package internals
 
 private[internals] class DynamicSchemaIndexImpl(
+    metadataMap: Map[String, Document],
     serviceMap: Map[ShapeId, DynamicService],
     schemaMap: Map[ShapeId, Schema[DynData]]
 ) extends DynamicSchemaIndex {
 
   def allServices: List[DynamicSchemaIndex.ServiceWrapper] =
     serviceMap.values.toList
+  def allSchemas: Vector[Schema[_]] =
+    schemaMap.values.toVector
 
   def getSchema(
       shapeId: ShapeId
   ): Option[Schema[_]] =
     schemaMap.get(shapeId)
 
+  override def metadata: Map[String, Document] = metadataMap
 }

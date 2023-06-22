@@ -9,3 +9,20 @@
   height: 200px;
   width: 200px;
 }
+
+.codeExample {
+  border-radius: 10px;
+  width: 100%;
+  border: 3px solid var(--ifm-color-secondary);
+  border-bottom: 2px solid var(--ifm-color-secondary);
+}
+
+@media screen and (min-width: 900px) {
+  .doubleGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 50px;
+    padding-bottom: 30px;
+  }
+}
+

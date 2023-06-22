@@ -30,15 +30,18 @@ import org.http4s.Status
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.schema.Alt
+import smithy4s.kinds._
+import org.http4s.HttpApp
+import org.typelevel.vault.Key
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
   * http4s specific semantics.
   */
-private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
+private[http4s] trait SmithyHttp4sServerEndpoint[F[_]] {
   def method: org.http4s.Method
   def matches(path: Array[String]): Option[PathParams]
-  def run(pathParams: PathParams, request: Request[F]): F[Response[F]]
+  def httpApp: HttpApp[F]
 
   def matchTap(
       path: Array[String]
@@ -46,56 +49,92 @@ private[smithy4s] trait SmithyHttp4sServerEndpoint[F[_]] {
     matches(path).map(this -> _)
 }
 
-private[smithy4s] object SmithyHttp4sServerEndpoint {
+private[http4s] object SmithyHttp4sServerEndpoint {
 
-  def apply[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
-      impl: Interpreter[Op, F],
+  // format: off
+  def make[F[_]: EffectCompat, Op[_, _, _, _, _], I, E, O, SI, SO](
+      impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]]
-  ): Option[SmithyHttp4sServerEndpoint[F]] =
-    HttpEndpoint.cast(endpoint).map { httpEndpoint =>
-      new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
-        impl,
-        endpoint,
-        httpEndpoint,
-        compilerContext,
-        errorTransformation
-      )
+      errorTransformation: PartialFunction[Throwable, F[Throwable]],
+      middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
+      pathParamsKey: Key[PathParams]
+  ): Either[
+    HttpEndpoint.HttpEndpointError,
+    SmithyHttp4sServerEndpoint[F]
+  ] =
+  // format: on
+    HttpEndpoint.cast(endpoint).flatMap { httpEndpoint =>
+      toHttp4sMethod(httpEndpoint.method)
+        .leftMap { e =>
+          HttpEndpoint.HttpEndpointError(
+            "Couldn't parse HTTP method: " + e
+          )
+        }
+        .map { method =>
+          new SmithyHttp4sServerEndpointImpl[F, Op, I, E, O, SI, SO](
+            impl,
+            endpoint,
+            method,
+            httpEndpoint,
+            compilerContext,
+            errorTransformation,
+            middleware,
+            pathParamsKey
+          )
+        }
     }
 
 }
 
 // format: off
-private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
-    impl: Interpreter[Op, F],
+private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I, E, O, SI, SO](
+    impl: FunctorInterpreter[Op, F],
     endpoint: Endpoint[Op, I, E, O, SI, SO],
+    val method: Method,
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],
     errorTransformation: PartialFunction[Throwable, F[Throwable]],
+    middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
+    pathParamsKey: Key[PathParams]
 )(implicit F: EffectCompat[F]) extends SmithyHttp4sServerEndpoint[F] {
 // format: on
   import compilerContext._
 
   type ==>[A, B] = Kleisli[F, A, B]
 
-  val method: Method = toHttp4sMethod(httpEndpoint.method)
-
   def matches(path: Array[String]): Option[PathParams] = {
     httpEndpoint.matches(path)
   }
 
-  def run(pathParams: PathParams, request: Request[F]): F[Response[F]] = {
-    val run: F[O] = for {
-      metadata <- getMetadata(pathParams, request)
-      input <- extractInput.run((metadata, request))
-      output <- (impl(endpoint.wrap(input)): F[O])
-    } yield output
+  private val applyMiddleware: HttpApp[F] => HttpApp[F] = { app =>
+    middleware(endpoint)(app).handleErrorWith(error =>
+      Kleisli.liftF(errorResponse(error))
+    )
+  }
 
-    run.recoverWith(transformError).attempt.flatMap {
-      case Left(error)   => errorResponse(error)
-      case Right(output) => successResponse(output)
-    }
+  override val httpApp: HttpApp[F] =
+    httpAppErrorHandle(applyMiddleware(HttpApp[F] { req =>
+      val pathParams = req.attributes.lookup(pathParamsKey).getOrElse(Map.empty)
+
+      val run: F[O] = for {
+        metadata <- getMetadata(pathParams, req)
+        input <- extractInput(metadata, req)
+        output <- (impl(endpoint.wrap(input)): F[O])
+      } yield output
+
+      run
+        .recoverWith(transformError)
+        .map(successResponse)
+    }))
+
+  private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
+    app
+      .recoverWith {
+        case error if errorTransformation.isDefinedAt(error) =>
+          Kleisli.liftF(errorTransformation.apply(error).flatMap(errorResponse))
+      }
+      .handleErrorWith { error => Kleisli.liftF(errorResponse(error)) }
   }
 
   private val inputSchema: Schema[I] = endpoint.input
@@ -120,27 +159,25 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
       errorTransformation(other).flatMap(F.raiseError)
   }
 
-
-
-  // format: off
-  private val extractInput: (Metadata, Request[F]) ==> I = {
+  private val extractInput: (Metadata, Request[F]) => F[I] = {
     inputMetadataDecoder.total match {
       case Some(totalDecoder) =>
-        Kleisli(totalDecoder.decode(_: Metadata).liftTo[F]).local(_._1)
+        (metadata, request) =>
+          request.body.compile.drain *>
+            totalDecoder.decode(metadata).liftTo[F]
       case None =>
-        // NB : only compiling the input codec if the data cannot be
+        // NB: only compiling the input codec if the data cannot be
         // totally extracted from the metadata.
-        implicit val inputCodec = entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
-        Kleisli { case (metadata, request) =>
+        implicit val inputCodec =
+          entityCompiler.compilePartialEntityDecoder(inputSchema, entityCache)
+        (metadata, request) =>
           for {
             metadataPartial <- inputMetadataDecoder.decode(metadata).liftTo[F]
             bodyPartial <- request.as[BodyPartial[I]]
             decoded <- metadataPartial.combineCatch(bodyPartial).liftTo[F]
           } yield decoded
-        }
     }
   }
-  // format: on
 
   private def putHeaders(m: Message[F], headers: Headers) =
     m.putHeaders(headers.headers)
@@ -162,7 +199,7 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
         .map { case (k, v) => k -> v.map(_._2).toList }
     ).pure[F]
 
-  private def successResponse(output: O): F[Response[F]] = {
+  private def successResponse(output: O): Response[F] = {
     val outputMetadata = outputMetadataEncoder.encode(output)
     val outputHeaders = toHeaders(outputMetadata.headers)
     val statusCode = outputMetadata.statusCode.getOrElse(httpEndpoint.code)
@@ -170,15 +207,14 @@ private[smithy4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], 
 
     putHeaders(Response[F](httpStatus), outputHeaders)
       .withEntity(output)
-      .pure[F]
   }
 
-  def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
+  private def compileErrorable(errorable: Errorable[E]): E => Response[F] = {
     def errorHeaders(errorLabel: String, metadata: Metadata): Headers =
       toHeaders(metadata.headers).put(errorTypeHeader -> errorLabel)
     val errorUnionSchema = errorable.error
     val dispatcher =
-      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.dispatch)
+      Alt.Dispatcher.fromUnion(errorUnionSchema)
     type ErrorEncoder[Err] = Err => Response[F]
     val precompiler = new Alt.Precompiler[Schema, ErrorEncoder] {
       def apply[Err](

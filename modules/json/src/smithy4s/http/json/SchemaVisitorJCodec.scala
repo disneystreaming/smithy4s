@@ -26,8 +26,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
-import smithy4s.api.Discriminated
-import smithy4s.api.Untagged
+import alloy.Discriminated
+import alloy.Untagged
 import smithy4s.internals.DiscriminatedUnionMember
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
@@ -40,6 +40,7 @@ import scala.collection.mutable.{Map => MMap}
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
+    explicitNullEncoding: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -462,7 +463,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)
-            builder += cursor.under(i)(cursor.decode(a, in))
+            cursor.push(i)
+            builder += cursor.decode(a, in)
+            cursor.pop()
             i += 1
             in.isNextToken(',')
           }) ()
@@ -512,7 +515,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)
-            builder += cursor.under(i)(cursor.decode(a, in))
+            cursor.push(i)
+            builder += cursor.decode(a, in)
+            cursor.pop()
             i += 1
             in.isNextToken(',')
           }) ()
@@ -559,7 +564,9 @@ private[smithy4s] class SchemaVisitorJCodec(
             var i = 0
             while ({
               if (i >= maxArity) maxArityError(cursor)
-              put(cursor.under(i)(cursor.decode(a, in)))
+              cursor.push(i)
+              put(cursor.decode(a, in))
+              cursor.pop()
               i += 1
               in.isNextToken(',')
             }) ()
@@ -616,7 +623,9 @@ private[smithy4s] class SchemaVisitorJCodec(
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)
-            builder += cursor.under(i)(cursor.decode(a, in))
+            cursor.push(i)
+            builder += cursor.decode(a, in)
+            cursor.pop()
             i += 1
             in.isNextToken(',')
           }) ()
@@ -663,8 +672,12 @@ private[smithy4s] class SchemaVisitorJCodec(
             if (i >= maxArity) maxArityError(cursor)
             builder += (
               (
-                jk.decodeKey(in),
-                cursor.under(i)(cursor.decode(jv, in))
+                jk.decodeKey(in), {
+                  cursor.push(i)
+                  val result = cursor.decode(jv, in)
+                  cursor.pop()
+                  result
+                }
               )
             )
             i += 1
@@ -798,11 +811,11 @@ private[smithy4s] class SchemaVisitorJCodec(
           else {
             in.rollbackToken()
             val key = in.readKeyAsString()
-            val result = cursor.under(key) {
-              val handler = handlerMap.get(key)
-              if (handler eq null) in.discriminatorValueError(key)
-              handler(cursor, in)
-            }
+            cursor.push(key)
+            val handler = handlerMap.get(key)
+            if (handler eq null) in.discriminatorValueError(key)
+            val result = handler(cursor, in)
+            cursor.pop()
             if (in.isNextToken('}')) result
             else {
               in.rollbackToken()
@@ -931,11 +944,12 @@ private[smithy4s] class SchemaVisitorJCodec(
             val key = in.readString("")
             in.rollbackToMark()
             in.rollbackToken()
-            cursor.under(key) {
-              val handler = handlerMap.get(key)
-              if (handler eq null) in.discriminatorValueError(key)
-              handler(cursor, in)
-            }
+            cursor.push(key)
+            val handler = handlerMap.get(key)
+            if (handler eq null) in.discriminatorValueError(key)
+            val result = handler(cursor, in)
+            cursor.pop()
+            result
           } else
             in.decodeError(
               s"Unable to find discriminator ${discriminated.value}"
@@ -1071,14 +1085,23 @@ private[smithy4s] class SchemaVisitorJCodec(
     val codec = apply(field.instance)
     val label = field.label
     if (field.isRequired) { (cursor, in, mmap) =>
-      val _ = mmap.put(label, cursor.under(label)(cursor.decode(codec, in)))
+      val _ = mmap.put(
+        label, {
+          cursor.push(label)
+          val result = cursor.decode(codec, in)
+          cursor.pop()
+          result
+        }
+      )
     } else { (cursor, in, mmap) =>
-      cursor.under[Unit](label) {
+      {
+        cursor.push(label)
         if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
         else {
           in.rollbackToken()
           val _ = mmap.put(label, cursor.decode(codec, in))
         }
+        cursor.pop()
       }
     }
   }
@@ -1115,6 +1138,11 @@ private[smithy4s] class SchemaVisitorJCodec(
       ): (Z, JsonWriter) => Unit = {
         val codec = apply(instance)
         val jLabel = jsonLabel(field)
+        val encodeOptionNone: JsonWriter => Unit =
+          if (explicitNullEncoding) { (out: JsonWriter) =>
+            out.writeNonEscapedAsciiKey(jLabel)
+            out.writeNull()
+          } else (out: JsonWriter) => ()
         if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
           (z: Z, out: JsonWriter) =>
             {
@@ -1123,6 +1151,7 @@ private[smithy4s] class SchemaVisitorJCodec(
                   out.writeNonEscapedAsciiKey(jLabel)
                   codec.encodeValue(aa, out)
                 case _ =>
+                  encodeOptionNone(out)
               }
             }
         } else { (z: Z, out: JsonWriter) =>
@@ -1144,9 +1173,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
       val jLabel = jsonLabel(field)
-      val decode: Document => Option[Any] =
-        Document.Decoder.fromSchema(field.instance).decode(_).toOption
-      val decoded = field.getDefault.flatMap(decode)
+      val decoded: Option[Any] = field.instance.getDefaultValue
       val default = decoded.orNull
       (field, jLabel, default)
     }

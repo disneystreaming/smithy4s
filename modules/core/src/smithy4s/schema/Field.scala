@@ -17,6 +17,8 @@
 package smithy4s
 package schema
 
+import smithy4s.kinds.PolyFunction
+
 /**
   * Represents a member of product type (case class)
   */
@@ -65,6 +67,7 @@ sealed abstract class Field[F[_], S, A] {
   final def foreachA(s: S)(f: A => Unit): Unit =
     f(this.get(s))
 
+  def contramap[S0](f: S0 => S): Field[F, S0, A]
 }
 
 object Field {
@@ -103,6 +106,9 @@ object Field {
     }
     override def isRequired: Boolean = true
     override def foreachT(s: S)(f: A => Unit): Unit = f(get(s))
+
+    override def contramap[S0](f: S0 => S): Field[F, S0, A] =
+      Required(label, instance, f.andThen(get))
   }
 
   private final case class Optional[F[_], S, A](
@@ -130,6 +136,9 @@ object Field {
     }
     override def isRequired: Boolean = false
     override def foreachT(s: S)(f: A => Unit): Unit = get(s).foreach(f)
+
+    override def contramap[S0](f: S0 => S): Field[F, S0, Option[A]] =
+      Optional(label, instance, f.andThen(get))
   }
 
 
@@ -145,7 +154,7 @@ object Field {
   }
 
   trait LeftFolder[F[_], B] {
-    def compile[T](label: String, instance: F[T]) : (B, T) => B
+    def compile[T](label: String, instance: F[T]): (B, T) => B
   }
 
   type Wrapped[F[_], G[_], A] = F[G[A]]
@@ -166,7 +175,7 @@ object Field {
     }
 
     def getDefault: Option[Document] =
-      field.instance.hints.get(smithy.api.Default).map(_.value)
+      field.instance.getDefault
 
   }
 

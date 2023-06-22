@@ -21,9 +21,9 @@ import cats.syntax.all._
 import com.monovore.decline.Command
 import com.monovore.decline.Opts
 import smithy4s.codegen.CodegenArgs
+import smithy4s.codegen.FileType
 
 import Options._
-import smithy4s.codegen.FileType
 
 object CodegenCommand {
 
@@ -111,6 +111,10 @@ object CodegenCommand {
         // format: off
         case (output, resourseOutput, skip, discoverModels, allowedNS, excludedNS, repositories, dependencies, transformers, localJars, specsArgs) =>
         // format: on
+          val dependenciesWithDefaults = {
+            import Defaults._
+            defaultDependencies ++ dependencies.getOrElse(List.empty)
+          }
           CodegenArgs(
             specsArgs,
             output.getOrElse(os.pwd),
@@ -120,7 +124,7 @@ object CodegenCommand {
             allowedNS,
             excludedNS,
             repositories.getOrElse(List.empty),
-            dependencies.getOrElse(List.empty),
+            dependenciesWithDefaults,
             transformers.getOrElse(List.empty),
             localJars.getOrElse(List.empty)
           )

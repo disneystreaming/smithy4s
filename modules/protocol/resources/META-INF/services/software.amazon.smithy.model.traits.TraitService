@@ -1,7 +1,3 @@
-smithy4s.api.SimpleRestJsonTrait$Provider
-smithy4s.api.UncheckedExamplesTrait$Provider
-smithy4s.api.UuidFormatTrait$Provider
-smithy4s.api.DiscriminatedUnionTrait$Provider
 smithy4s.meta.PackedInputsTrait$Provider
 smithy4s.meta.AdtMemberTrait$Provider
 smithy4s.meta.VectorTrait$Provider
@@ -9,3 +5,4 @@ smithy4s.meta.IndexedSeqTrait$Provider
 smithy4s.meta.ErrorMessageTrait$Provider
 smithy4s.meta.RefinementTrait$Provider
 smithy4s.meta.UnwrapTrait$Provider
+smithy4s.meta.AdtTrait$Provider

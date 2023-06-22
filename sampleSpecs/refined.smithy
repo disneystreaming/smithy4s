@@ -3,7 +3,7 @@ namespace smithy4s.example
 use smithy4s.meta#refinement
 use smithy4s.meta#unwrap
 
-@trait(selector: "integer")
+@trait(selector: ":test(integer, member > integer)")
 @refinement(
   targetType: "smithy4s.example.refined.Age",
   providerImport: "smithy4s.example.refined.Age.provider._"
@@ -21,6 +21,45 @@ structure fancyListFormat {}
   targetType: "smithy4s.example.refined.Name"
 )
 structure nameFormat {}
+
+@trait(selector: "list")
+@refinement(
+  targetType: "smithy4s.example.refined.NonEmptyList",
+  parameterised: true
+)
+structure nonEmptyListFormat {}
+
+@trait(selector: "map")
+@refinement(
+  targetType: "smithy4s.example.refined.NonEmptyMap",
+  parameterised: true
+)
+structure nonEmptyMapFormat {}
+
+@nonEmptyListFormat
+list NonEmptyStrings {
+  member: String
+}
+
+@nonEmptyListFormat
+list NonEmptyNames {
+  member: Name
+}
+
+structure Candy {
+  name: String
+}
+
+@nonEmptyListFormat
+list NonEmptyCandies {
+  member: Candy
+}
+
+@nonEmptyMapFormat
+map NonEmptyMapNumbers {
+  key: String
+  value: Integer
+}
 
 @ageFormat
 integer Age
@@ -49,6 +88,8 @@ string DogName
 structure StructureWithRefinedTypes {
   age: Age,
   personAge: PersonAge,
+  @required
+  requiredAge: Age,
   fancyList: FancyList,
   unwrappedFancyList: UnwrappedFancyList,
   name: Name,
@@ -58,4 +99,9 @@ structure StructureWithRefinedTypes {
 union UnionWithRefinedTypes {
   age: Age,
   dogName: DogName
+}
+
+structure StructureWithRefinedMember {
+  @ageFormat
+  otherAge: Integer,
 }

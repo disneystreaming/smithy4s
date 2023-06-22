@@ -18,7 +18,7 @@ package smithy4s
 
 import smithy.api.JsonName
 import smithy.api.Default
-import smithy4s.api.Discriminated
+import alloy.Discriminated
 import smithy4s.example.IntList
 import munit._
 
@@ -284,4 +284,20 @@ class DocumentSpec() extends FunSuite {
     expect.same(roundTripped, Right(mapTest))
   }
 
+  test(
+    "optional fields for structs should decode Document.DNull"
+  ) {
+    val optionalFieldSchema =
+      Schema
+        .struct[Option[String]](
+          Schema.string.optional[Option[String]]("test", identity)
+        )(identity)
+
+    val decoded = Document.Decoder
+      .fromSchema(optionalFieldSchema)
+      .decode(Document.obj("test" -> Document.DNull))
+
+    expect.same(decoded, Right(None))
+
+  }
 }

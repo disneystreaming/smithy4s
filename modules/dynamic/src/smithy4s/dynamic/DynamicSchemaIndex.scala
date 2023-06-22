@@ -27,7 +27,10 @@ trait DynamicSchemaIndex {
   def getService(shapeId: ShapeId): Option[DynamicSchemaIndex.ServiceWrapper] =
     allServices.find(_.service.id == shapeId)
 
+  def allSchemas: Vector[Schema[_]]
   def getSchema(shapeId: ShapeId): Option[Schema[_]]
+
+  def metadata: Map[String, Document]
 }
 
 object DynamicSchemaIndex extends DynamicSchemaIndexPlatform {
@@ -53,9 +56,8 @@ object DynamicSchemaIndex extends DynamicSchemaIndexPlatform {
     */
   trait ServiceWrapper {
     type Alg[P[_, _, _, _, _]]
-    type Op[I, E, O, SI, SO]
 
-    def service: Service[Alg, Op]
+    def service: Service[Alg]
   }
 
 }

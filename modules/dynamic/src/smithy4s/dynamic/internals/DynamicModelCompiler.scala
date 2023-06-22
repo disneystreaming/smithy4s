@@ -47,15 +47,13 @@ private[dynamic] object Compiler {
   )
 
   private def getTrait[A: ShapeTag: Document.Decoder](
-      traits: Option[Map[IdRef, Document]]
+      traits: Map[IdRef, Document]
   ): Option[A] =
-    traits.flatMap(dynamicTraits =>
-      dynamicTraits
-        .get(toIdRef(implicitly[ShapeTag[A]].id))
-        .flatMap { document =>
-          document.decode[A].toOption
-        }
-    )
+    traits
+      .get(toIdRef(implicitly[ShapeTag[A]].id))
+      .flatMap { document =>
+        document.decode[A].toOption
+      }
 
   private def toHint(id: ShapeId, tr: Document): Hint =
     Hints.Binding.DynamicBinding(id, tr)
@@ -109,6 +107,7 @@ private[dynamic] object Compiler {
       case _                       => ()
     }
     new DynamicSchemaIndexImpl(
+      model.metadata,
       serviceMap.toMap.fmap(_.value),
       schemaMap.toMap.fmap(_.value)
     )
@@ -151,19 +150,19 @@ private[dynamic] object Compiler {
       )
     }
 
-    private def allHints(traits: Option[Map[IdRef, Document]]): Hints =
+    private def allHints(traits: Map[IdRef, Document]): Hints = {
+      val ignoredHints = List(IdRef("smithy.api#enumValue"))
+
       Hints.fromSeq {
-        traits
-          .getOrElse(Map.empty)
-          .collect { case (ValidIdRef(k), v) =>
-            toHint(k, v)
-          }
-          .toSeq
+        (traits -- ignoredHints).collect { case (ValidIdRef(k), v) =>
+          toHint(k, v)
+        }.toSeq
       }
+    }
 
     private def update[A](
         shapeId: ShapeId,
-        traits: Option[Map[IdRef, Document]],
+        traits: Map[IdRef, Document],
         lSchema: Eval[Schema[A]]
     ): Unit =
       updateWithHints(shapeId, allHints(traits), lSchema)
@@ -183,7 +182,7 @@ private[dynamic] object Compiler {
 
     private def update[A](
         shapeId: ShapeId,
-        traits: Option[Map[IdRef, Document]],
+        traits: Map[IdRef, Document],
         schema: Schema[A]
     ): Unit = update(shapeId, traits, Eval.now(schema))
 
@@ -227,16 +226,14 @@ private[dynamic] object Compiler {
 
     override def enumShape(id: ShapeId, shape: EnumShape): Unit = {
       val values: List[EnumValue[Int]] =
-        shape.members
-          .getOrElse(Map.empty)
-          .toList
+        shape.members.toList
           // Introducing arbitrary ordering for reproducible rendering.
           // Needs to happen before zipWithIndex so that intValue is also predictable.
           .sortBy(_._1)
           .flatMap { case (k, m) =>
             getTrait[smithy.api.EnumValue](m.traits).toList.map {
               _.value match {
-                case Document.DString(s) => (k, s)
+                case Document.DString(s) => (k, s, m.traits)
                 case v =>
                   throw new IllegalArgumentException(
                     s"enum value $k has a non-string value: $v"
@@ -245,13 +242,13 @@ private[dynamic] object Compiler {
             }
           }
           .zipWithIndex
-          .map { case ((name, stringValue), i) =>
+          .map { case ((name, stringValue, traits), i) =>
             EnumValue(
               stringValue = stringValue,
               intValue = i,
               value = i,
               name = name,
-              hints = Hints.empty
+              hints = allHints(traits)
             )
           }
 
@@ -261,15 +258,13 @@ private[dynamic] object Compiler {
     }
 
     override def intEnumShape(id: ShapeId, shape: IntEnumShape): Unit = {
-      val values: Map[Int, EnumValue[Int]] = shape.members
-        .getOrElse(Map.empty)
-        .toList
+      val values: Map[Int, EnumValue[Int]] = shape.members.toList
         .flatMap { case (k, m) =>
           getTrait[smithy.api.EnumValue](m.traits).toList.map {
             _.value match {
               case Document.DNumber(num) =>
                 // toInt is safe because Smithy validates the model at loading time
-                (k, num.toInt)
+                (k, num.toInt, m.traits)
               case v =>
                 throw new IllegalArgumentException(
                   s"intEnum value $k has a non-numeric value: $v"
@@ -277,13 +272,13 @@ private[dynamic] object Compiler {
             }
           }
         }
-        .map { case (name, intValue) =>
+        .map { case (name, intValue, traits) =>
           intValue -> EnumValue(
             stringValue = name,
             intValue = intValue,
             value = intValue,
             name = name,
-            hints = Hints.empty
+            hints = allHints(traits)
           )
         }
         .toMap
@@ -307,7 +302,7 @@ private[dynamic] object Compiler {
       update(id, shape.traits, document)
 
     override def stringShape(id: ShapeId, shape: StringShape): Unit = {
-      val maybeUuid = getTrait[smithy4s.api.UuidFormat](shape.traits)
+      val maybeUuid = getTrait[alloy.UuidFormat](shape.traits)
       val maybeEnum = getTrait[smithy.api.Enum](shape.traits)
       (maybeUuid, maybeEnum) match {
         case (Some(_), _) => update(id, shape.traits, uuid)
@@ -385,7 +380,7 @@ private[dynamic] object Compiler {
       val output = shape.output.map(_.target)
 
       val errorId = id.copy(name = id.name + "Error")
-      val allOperationErrors = (serviceErrors ++ shape.errors.combineAll).toNel
+      val allOperationErrors = (serviceErrors ++ shape.errors).toNel
 
       val errorUnionLazy = allOperationErrors.traverse { err =>
         err
@@ -425,12 +420,40 @@ private[dynamic] object Compiler {
     }
 
     override def serviceShape(id: ShapeId, shape: ServiceShape): Unit = {
-      val serviceErrors: List[MemberShape] =
-        shape.errors.toList.flatten
+      def resourceOperations(resource: MemberShape): List[MemberShape] = {
+        model.shapes
+          .get(resource.target)
+          .map(resource.target -> _)
+          .collect { case (ValidIdRef(_), Shape.ResourceCase(resource)) =>
+            resource
+          }
+          .toList
+          .flatMap { resource =>
+            val lifecycle = List(
+              resource.create,
+              resource.put,
+              resource.read,
+              resource.update,
+              resource.delete,
+              resource.list
+            ).flatten
+            val operations = resource.operations
+            val recursive =
+              resource.resources.flatMap(resourceOperations)
+            List.concat(lifecycle, operations, recursive)
+          }
+
+      }
+      val serviceErrors: List[MemberShape] = shape.errors
+
+      val operations = List
+        .concat(
+          shape.operations,
+          shape.resources.flatMap(resourceOperations)
+        )
       val lEndpoints =
-        shape.operations.toList
-          .flatMap(_.map(_.target))
-          .flatMap(id => model.shapes.get(id).map(id -> _))
+        operations
+          .flatMap(op => model.shapes.get(op.target).map(op.target -> _))
           .collect { case (ValidIdRef(id), Shape.OperationCase(op)) =>
             compileOperation(id, serviceErrors, op)
           }
@@ -452,15 +475,13 @@ private[dynamic] object Compiler {
       update(
         id,
         shape.traits, {
-          val members = shape.members.getOrElse(Map.empty)
           val lFields = {
-            members.zipWithIndex
-              .map { case ((label, mShape), index) =>
+            shape.members.toVector.zipWithIndex.map {
+              case ((label, mShape), index) =>
                 val lMemberSchema = schema(mShape.target)
                 val lField =
                   if (
                     mShape.traits
-                      .getOrElse(Map.empty)
                       .contains(IdRef("smithy.api#required"))
                   ) {
                     lMemberSchema.map(
@@ -474,9 +495,7 @@ private[dynamic] object Compiler {
                   }
                 val memberHints = allHints(mShape.traits)
                 lField.map(_.addHints(memberHints.all.toSeq: _*))
-              }
-              .toVector
-              .sequence
+            }.sequence
           }
           if (isRecursive(id)) {
             Eval.later(recursive(struct(lFields.value)(Constructor)))
@@ -485,32 +504,28 @@ private[dynamic] object Compiler {
       )
 
     override def unionShape(id: ShapeId, shape: UnionShape): Unit = {
-      shape.members.filter(_.nonEmpty).foreach { members =>
-        update(
-          id,
-          shape.traits, {
-            val lAlts =
-              members.zipWithIndex
-                .map { case ((label, mShape), index) =>
-                  val memberHints = allHints(mShape.traits)
-                  schema(mShape.target)
-                    .map(_.oneOf[DynAlt](label, Injector(index)))
-                    .map(_.addHints(memberHints))
-                }
-                .toVector
-                .sequence
-            if (isRecursive(id)) {
-              Eval.later(recursive {
-                val alts = lAlts.value
-                union(alts)(Dispatcher(alts))
-              })
-            } else
-              lAlts.map { alts =>
-                union(alts)(Dispatcher(alts))
-              }
-          }
-        )
-      }
+      update(
+        id,
+        shape.traits, {
+          val lAlts =
+            shape.members.toVector.zipWithIndex.map {
+              case ((label, mShape), index) =>
+                val memberHints = allHints(mShape.traits)
+                schema(mShape.target)
+                  .map(_.oneOf[DynAlt](label, Injector(index)))
+                  .map(_.addHints(memberHints))
+            }.sequence
+          if (isRecursive(id)) {
+            Eval.later(recursive {
+              val alts = lAlts.value
+              union(alts)(Dispatcher(alts))
+            })
+          } else
+            lAlts.map { alts =>
+              union(alts)(Dispatcher(alts))
+            }
+        }
+      )
     }
   }
 
@@ -525,13 +540,13 @@ private[dynamic] object Compiler {
         id: ShapeId,
         shape: StructureShape
     ): Set[ShapeId] =
-      fromMembers(shape.members.foldMap(_.values.toSet))
+      fromMembers(shape.members.values.toSet)
 
     override def unionShape(
         id: ShapeId,
         shape: UnionShape
     ): Set[ShapeId] =
-      fromMembers(shape.members.foldMap(_.values.toSet))
+      fromMembers(shape.members.values.toSet)
 
     override def listShape(
         id: ShapeId,
@@ -555,13 +570,13 @@ private[dynamic] object Compiler {
         id: ShapeId,
         shape: EnumShape
     ): Set[ShapeId] =
-      fromMembers(shape.members.foldMap(_.values.toSet))
+      fromMembers(shape.members.values.toSet)
 
     override def intEnumShape(
         id: ShapeId,
         shape: IntEnumShape
     ): Set[ShapeId] =
-      fromMembers(shape.members.foldMap(_.values.toSet))
+      fromMembers(shape.members.values.toSet)
   }
 
 }

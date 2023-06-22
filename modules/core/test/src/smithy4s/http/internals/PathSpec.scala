@@ -21,7 +21,7 @@ import smithy.api.Http
 import smithy.api.NonEmptyString
 import smithy4s.Schema
 import smithy4s.Timestamp
-import smithy4s.example.DummyServiceGen.DummyPath
+import smithy4s.example.DummyServiceOperation.DummyPath
 import smithy4s.example.PathParams
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.PathSegment
@@ -57,12 +57,53 @@ class PathSpec() extends munit.FunSuite {
       )
     )
   }
+  test("Parse path pattern from path that has query param into path segments") {
+    val result = pathSegments("/{head}/foo/{tail+}?hello=world&hi")
+    expect(
+      result == Option(
+        Vector(
+          PathSegment.label("head"),
+          PathSegment.static("foo"),
+          PathSegment.greedy("tail")
+        )
+      )
+    )
+  }
+  test("parse static query params from DummyPath") {
+    val httpEndpoint = HttpEndpoint
+      .cast(
+        DummyPath
+      )
+      .toOption
+      .get
+
+    val sqp = httpEndpoint.staticQueryParams
+    val path = httpEndpoint.path
+
+    val expectedQueryMap = Map("value" -> Seq("foo"), "baz" -> Seq("bar"))
+    expect(sqp == expectedQueryMap)
+    expect(
+      path ==
+        List(
+          PathSegment.static("dummy-path"),
+          PathSegment.label("str"),
+          PathSegment.label("int"),
+          PathSegment.label("ts1"),
+          PathSegment.label("ts2"),
+          PathSegment.label("ts3"),
+          PathSegment.label("ts4"),
+          PathSegment.label("b"),
+          PathSegment.label("ie")
+        )
+    )
+  }
 
   test("Write PathParams for DummyPath") {
     val result = HttpEndpoint
       .cast(
         DummyPath
       )
+      .toTry
       .get
       .path(
         PathParams(
@@ -131,6 +172,13 @@ class PathSpec() extends munit.FunSuite {
     expect.eql(
       util.simpleString.map(_.encode("example")),
       Some(List("example"))
+    )
+  }
+
+  test("Write PathParams for a byte") {
+    expect.eql(
+      util.encodePathAs(byte).map(_.encode(42)),
+      Some(List("42"))
     )
   }
 

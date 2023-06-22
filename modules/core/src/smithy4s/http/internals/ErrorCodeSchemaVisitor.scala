@@ -20,7 +20,7 @@ package internals
 
 import smithy4s.schema._
 
-private[smithy4s] class ErrorCodeSchemaVisitor(
+private[http] class ErrorCodeSchemaVisitor(
     val cache: CompilationCache[HttpCode]
 ) extends SchemaVisitor.Cached[HttpCode]
     with SchemaVisitor.Default[HttpCode] { compile =>

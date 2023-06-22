@@ -1,13 +1,14 @@
 namespace smithy4s.hello
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
+@tags(["testServiceTag"])
 service HelloWorldService {
   version: "1.0.0",
   // Indicates that all operations in `HelloWorldService`,
   // here limited to Hello, can return `GenericServerError`.
-  errors: [GenericServerError],
+  errors: [GenericServerError, SpecificServerError],
   operations: [Hello]
 }
 
@@ -17,7 +18,14 @@ structure GenericServerError {
   message: String
 }
 
+@error("server")
+@httpError(599)
+structure SpecificServerError {
+  message: String
+}
+
 @http(method: "POST", uri: "/{name}", code: 200)
+@tags(["testOperationTag"])
 operation Hello {
   input: Person,
   output: Greeting
