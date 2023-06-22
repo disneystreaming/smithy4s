@@ -1,71 +1,84 @@
 package smithy4s.example.reservedNameOverride
 
-import smithy4s.Schema
-import smithy4s.schema.Schema.unit
-import smithy4s.Transformation
-import smithy4s.Monadic
-import smithy4s.Service
-import smithy4s.Hints
-import smithy4s.StreamingSchema
-import smithy4s.ShapeId
 import smithy4s.Endpoint
+import smithy4s.Hints
+import smithy4s.Schema
+import smithy4s.Service
+import smithy4s.ShapeId
+import smithy4s.StreamingSchema
+import smithy4s.Transformation
+import smithy4s.kinds.PolyFunction5
+import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.schema.Schema.unit
 
 trait ReservedNameOverrideServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def setOp(set: _Set) : F[SetOpInput, Nothing, Unit, Nothing, Nothing]
+  def setOp(set: _Set): F[SetOpInput, Nothing, Unit, Nothing, Nothing]
 
-  def transform[G[_, _, _, _, _]](transformation : Transformation[F, G]) : ReservedNameOverrideServiceGen[G] = new Transformed(transformation)
-  class Transformed[G[_, _, _, _, _]](transformation : Transformation[F, G]) extends ReservedNameOverrideServiceGen[G] {
-    def setOp(set: _Set) = transformation[SetOpInput, Nothing, Unit, Nothing, Nothing](self.setOp(set))
-  }
+  def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](this)
 }
 
-object ReservedNameOverrideServiceGen extends Service[ReservedNameOverrideServiceGen, ReservedNameOverrideServiceOperation] {
-
-  def apply[F[_]](implicit F: Monadic[ReservedNameOverrideServiceGen, F]): F.type = F
+object ReservedNameOverrideServiceGen extends Service.Mixin[ReservedNameOverrideServiceGen, ReservedNameOverrideServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.reservedNameOverride", "ReservedNameOverrideService")
-
-  val hints : Hints = Hints(
-    smithy4s.api.SimpleRestJson(),
-  )
-
-  val endpoints: List[Endpoint[ReservedNameOverrideServiceOperation, _, _, _, _, _]] = List(
-    SetOp,
-  )
-
   val version: String = "1.0.0"
 
-  def endpoint[I, E, O, SI, SO](op : ReservedNameOverrideServiceOperation[I, E, O, SI, SO]) = op match {
-    case SetOp(input) => (input, SetOp)
+  val hints: Hints = Hints(
+    alloy.SimpleRestJson(),
+  )
+
+  def apply[F[_]](implicit F: Impl[F]): F.type = F
+
+  object ErrorAware {
+    def apply[F[_, _]](implicit F: ErrorAware[F]): F.type = F
+    type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
+
+  val endpoints: List[smithy4s.Endpoint[ReservedNameOverrideServiceOperation, _, _, _, _, _]] = List(
+    ReservedNameOverrideServiceOperation.SetOp,
+  )
+
+  def endpoint[I, E, O, SI, SO](op: ReservedNameOverrideServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ReservedNameOverrideServiceOperation.Transformed[ReservedNameOverrideServiceOperation, P](reified, const5(value))
+  type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
+  def reified: ReservedNameOverrideServiceGen[ReservedNameOverrideServiceOperation] = ReservedNameOverrideServiceOperation.reified
+  def mapK5[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameOverrideServiceGen[P], f: PolyFunction5[P, P1]): ReservedNameOverrideServiceGen[P1] = new ReservedNameOverrideServiceOperation.Transformed(alg, f)
+  def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[ReservedNameOverrideServiceOperation, P]): ReservedNameOverrideServiceGen[P] = new ReservedNameOverrideServiceOperation.Transformed(reified, f)
+  def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[P]): PolyFunction5[ReservedNameOverrideServiceOperation, P] = ReservedNameOverrideServiceOperation.toPolyFunction(impl)
+
+}
+
+sealed trait ReservedNameOverrideServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
+  def run[F[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
+  def endpoint: (Input, Endpoint[ReservedNameOverrideServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+}
+
+object ReservedNameOverrideServiceOperation {
 
   object reified extends ReservedNameOverrideServiceGen[ReservedNameOverrideServiceOperation] {
     def setOp(set: _Set) = SetOp(SetOpInput(set))
   }
-
-  def transform[P[_, _, _, _, _]](transformation: Transformation[ReservedNameOverrideServiceOperation, P]): ReservedNameOverrideServiceGen[P] = reified.transform(transformation)
-
-  def transform[P[_, _, _, _, _], P1[_, _, _, _, _]](alg: ReservedNameOverrideServiceGen[P], transformation: Transformation[P, P1]): ReservedNameOverrideServiceGen[P1] = alg.transform(transformation)
-
-  def asTransformation[P[_, _, _, _, _]](impl : ReservedNameOverrideServiceGen[P]): Transformation[ReservedNameOverrideServiceOperation, P] = new Transformation[ReservedNameOverrideServiceOperation, P] {
-    def apply[I, E, O, SI, SO](op : ReservedNameOverrideServiceOperation[I, E, O, SI, SO]) : P[I, E, O, SI, SO] = op match  {
-      case SetOp(SetOpInput(set)) => impl.setOp(set)
-    }
+  class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameOverrideServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameOverrideServiceGen[P1] {
+    def setOp(set: _Set) = f[SetOpInput, Nothing, Unit, Nothing, Nothing](alg.setOp(set))
   }
-  case class SetOp(input: SetOpInput) extends ReservedNameOverrideServiceOperation[SetOpInput, Nothing, Unit, Nothing, Nothing]
-  object SetOp extends Endpoint[ReservedNameOverrideServiceOperation, SetOpInput, Nothing, Unit, Nothing, Nothing] {
+
+  def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[P]): PolyFunction5[ReservedNameOverrideServiceOperation, P] = new PolyFunction5[ReservedNameOverrideServiceOperation, P] {
+    def apply[I, E, O, SI, SO](op: ReservedNameOverrideServiceOperation[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) 
+  }
+  case class SetOp(input: SetOpInput) extends ReservedNameOverrideServiceOperation[SetOpInput, Nothing, Unit, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[F]): F[SetOpInput, Nothing, Unit, Nothing, Nothing] = impl.setOp(input.set)
+    def endpoint: (SetOpInput, smithy4s.Endpoint[ReservedNameOverrideServiceOperation,SetOpInput, Nothing, Unit, Nothing, Nothing]) = (input, SetOp)
+  }
+  object SetOp extends smithy4s.Endpoint[ReservedNameOverrideServiceOperation,SetOpInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.reservedNameOverride", "SetOp")
     val input: Schema[SetOpInput] = SetOpInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
-    val streamedInput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val streamedOutput : StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints : Hints = Hints(
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204),
     )
     def wrap(input: SetOpInput) = SetOp(input)
   }
 }
-
-sealed trait ReservedNameOverrideServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput]

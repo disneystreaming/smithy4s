@@ -2,7 +2,7 @@ $version: "2.0"
 
 namespace smithy4s.example.reservedNameOverride
 
-use smithy4s.api#simpleRestJson
+use alloy#simpleRestJson
 
 @simpleRestJson
 service ReservedNameOverrideService {
