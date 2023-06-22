@@ -46,9 +46,7 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
       "HostWithPathOperation",
       // tests inconsistent with specification : https://github.com/awslabs/smithy/issues/1827
       "SDKAppendedGzipAfterProvidedEncoding_awsJson1_0",
-      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1",
-      // TODO: implement support for the httpChecksum trait : https://smithy.io/2.0/aws/aws-core.html?highlight=checksum#aws-protocols-httpchecksum-trait
-      "RestJsonHttpChecksumRequired"
+      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No

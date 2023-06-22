@@ -22,7 +22,7 @@ import org.http4s._
 import org.http4s.client.Client
 import cats.effect.Sync
 import cats.effect.Resource
-import fs2.{Chunk, Pipe}
+import fs2.{Chunk, Pipe, Stream}
 import cats.syntax.all._
 import org.typelevel.ci.CIString
 
@@ -35,18 +35,25 @@ object Md5CheckSumClient {
     }
   }
 
-  private def reqWithChecksum[F[_]: Sync](
-      client: Client[F]
-  ): Client[F] = {
+  private def reqWithChecksum[F[_]: Sync](client: Client[F]): Client[F] = {
     val md5HeaderPipe: Pipe[F, Byte, String] =
       fs2.hash.md5[F] andThen fs2.text.base64.encode[F]
     Client { request =>
-      val bodyF = request.body.through(md5HeaderPipe).compile.to(Chunk)
-      val md5HeaderF =
-        bodyF.map(md5 => Header.Raw(CIString("Content-MD5"), md5.mkString_("")))
-      val withChecksum = md5HeaderF.map { header =>
-        request.putHeaders(header)
-      }
+      val withChecksum =
+        for {
+          body <- request.body.compile.to(Chunk)
+          bodyHash <- fs2.Stream
+            .emits(body.toList)
+            .through(md5HeaderPipe)
+            .compile
+            .to(Chunk)
+          md5Header = Header.Raw(
+            CIString("Content-MD5"),
+            bodyHash.mkString_("")
+          )
+          res = request.putHeaders(md5Header).withBodyStream(Stream.chunk(body))
+        } yield res
+
       Resource.eval(withChecksum).flatMap { request =>
         client.run(request)
       }
