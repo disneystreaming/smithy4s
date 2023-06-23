@@ -329,7 +329,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 .renderAlgParams(opTraitNameRef.name)}]"
             )
           }
-        ),
+        )
       ).when(generateServiceProduct),
       obj(
         genNameRef,
@@ -374,8 +374,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         },
         lines(
           line"type Prod[F[_, _, _, _, _]] = ${genNameProduct}[F]",
-          line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}",
-        ).when(generateServiceProduct),
+          line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
+        ).when(generateServiceProduct)
       ),
       newline,
       lines(
@@ -423,7 +423,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
           )
         ),
-        newline,
+        newline
       ).when(generateServiceProduct),
       block(
         line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
