@@ -34,6 +34,7 @@ import LineSyntax.LineInterpolator
 import ToLines.lineToLines
 import smithy4s.codegen.internals.EnumTag.IntEnum
 import smithy4s.codegen.internals.EnumTag.StringEnum
+import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object Renderer {
 
@@ -1137,6 +1138,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
+      case Nullable(underlying) => line"${underlying.schemaRef}.nullable"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {

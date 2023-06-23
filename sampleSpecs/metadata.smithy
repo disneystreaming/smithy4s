@@ -52,7 +52,7 @@ structure QueriesWithDefaults {
   dflt: String = "test"
 }
 
-structure Headers {
+structure HeadersStruct {
   @httpHeader("str")
   str: String,
   @httpHeader("int")
@@ -112,15 +112,6 @@ structure PathParams {
   @httpLabel
   @required
   ie: Numbers
-}
-
-list StringList {
-  member: String
-}
-
-map StringMap {
-  key: String,
-  value: String
 }
 
 structure ValidationChecks {

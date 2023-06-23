@@ -21,6 +21,7 @@ import cats.implicits._
 import cats.effect.Temporal
 import cats.effect.syntax.all._
 import org.http4s.HttpApp
+import org.http4s.Headers
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Status
@@ -31,7 +32,7 @@ import smithy4s.Document
 import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
 import smithy4s.schema.Alt
 
@@ -56,22 +57,25 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val bodyAssert = request.bodyText.compile.string.map { responseBody =>
       assert.bodyEql(
         responseBody,
-        testCase.body.getOrElse(""),
+        testCase.body,
         testCase.bodyMediaType
       )
     }
 
+    val receivedPathSegments =
+      request.uri.path.segments.map(_.decoded())
+    val expectedPathSegments =
+      Uri.Path.unsafeFromString(testCase.uri).segments.map(_.decoded())
+
     val expectedUri = baseUri
-      .withPath(
-        Uri.Path.unsafeFromString(testCase.uri)
-      )
+      .withPath(Uri.Path.unsafeFromString(testCase.uri))
       .withMultiValueQueryParams(
         parseQueryParams(testCase.queryParams)
       )
     val pathAssert =
       assert.eql(
-        request.uri.path.renderString,
-        expectedUri.path.renderString,
+        receivedPathSegments,
+        expectedPathSegments,
         "path test :"
       )
     val queryAssert = assert.testCase.checkQueryParameters(
@@ -102,7 +106,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
     val inputFromDocument = CanonicalSmithyDecoder.fromSchema(endpoint.input)
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
+      testCase.documentation,
       clientReq,
       run = {
         val input = inputFromDocument
@@ -146,7 +152,9 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
+      testCase.documentation,
       clientRes,
       run = {
         implicit val outputEq: Eq[O] =
@@ -178,7 +186,8 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 }
                 .getOrElse(fs2.Stream.empty)
 
-            val headers = parseHeaders(testCase.headers)
+            val headers =
+              testCase.headers.map(_.toList).foldMap(Headers(_))
 
             req.body.compile.drain.as(
               Response[F](status)

@@ -30,7 +30,7 @@ import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import cats.MonadThrow
 import java.util.concurrent.TimeoutException
 private[compliancetests] class ServerHttpComplianceTestCase[
@@ -55,9 +55,12 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): Request[F] = {
     val expectedHeaders =
-      testCase.bodyMediaType
-        .map(mt => Headers(`Content-Type`(MediaType.unsafeParse(mt))))
-        .getOrElse(Headers.empty) ++ parseHeaders(testCase.headers)
+      testCase.headers.foldMap[Headers](headers => Headers(headers.toList))
+
+    val expectedContentType = testCase.bodyMediaType
+      .foldMap(mt => Headers(`Content-Type`(MediaType.unsafeParse(mt))))
+
+    val allExpectedHeaders = expectedHeaders ++ expectedContentType
 
     val expectedMethod = Method
       .fromString(testCase.method)
@@ -79,7 +82,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     Request[F](
       method = expectedMethod,
       uri = expectedUri,
-      headers = expectedHeaders,
+      headers = allExpectedHeaders,
       body = body
     )
   }
@@ -95,7 +98,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       .liftTo[F]
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
+      testCase.documentation,
       serverReq,
       run = {
         deferred[I].flatMap { inputDeferred =>
@@ -170,10 +175,12 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
+      testCase.documentation,
       serverRes,
       run = {
-        val (ammendedService, syntheticRequest) = prepareService(endpoint)
+        val (amendedService, syntheticRequest) = prepareService(endpoint)
 
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
@@ -206,7 +213,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
             }
           }
 
-        routes(fakeImpl)(ammendedService)
+        routes(fakeImpl)(amendedService)
           .use { server =>
             server.orNotFound
               .run(syntheticRequest)
@@ -219,15 +226,11 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   .tupleRight(resp.headers)
               }
               .map { case ((actualBody, status), headers) =>
-                val bodyAssert = testCase.body
-                  .map(body =>
-                    assert.bodyEql(body, actualBody, testCase.bodyMediaType)
-                  )
-                val assertions =
-                  bodyAssert.toList :+
-                    assert.testCase.checkHeaders(testCase, headers) :+
-                    assert.eql(status.code, testCase.code)
-                assertions.combineAll
+                val bodyAssert = assert
+                  .bodyEql(actualBody, testCase.body, testCase.bodyMediaType)
+                bodyAssert |+|
+                  assert.testCase.checkHeaders(testCase, headers) |+|
+                  assert.eql(status.code, testCase.code)
               }
           }
       }

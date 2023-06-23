@@ -44,7 +44,6 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
         chooseNumAux(hints, Long.MinValue, Long.MaxValue).map(BigDecimal.apply)
       case PBigInt =>
         chooseNumAux(hints, Long.MinValue, Long.MaxValue).map(BigInt.apply)
-      case PUnit     => ()
       case PUUID     => Gen.uuid
       case PByte     => Gen.oneOf(Range(1, 0xff)).map(_.toByte)
       case PDocument => Smithy4sGen.genDocument(1)
@@ -123,6 +122,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   ): Gen[B] = schema.compile(this).map(refinement.unsafe)
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
+
+  def nullable[A](schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
 
   // //////////////////////////////////////////////////////////////////////////////////////
   // // HELPER FUNCTIONS

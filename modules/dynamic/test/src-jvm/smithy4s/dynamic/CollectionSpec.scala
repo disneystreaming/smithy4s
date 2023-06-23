@@ -22,7 +22,7 @@ import model._
 class CollectionSpec() extends DummyIO.Suite {
 
   test("Decode collections with member hints") {
-    loadDynamicModel("collection.smithy")
+    loadDynamicModel("collections.smithy")
       .map { model =>
         expect(
           model.shapes(IdRef("smithy4s.example#ListWithMemberHints")) == Shape

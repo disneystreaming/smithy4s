@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example
 
 use smithy4s.example.common#BrandList

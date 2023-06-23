@@ -36,8 +36,8 @@ object PizzaAdminServiceImpl {
 
 class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
 
-  def book(name: String, town: Option[String]): IO[BookOutput] =
-    IO.pure(BookOutput(message = s"Booked for $name"))
+  def reservation(name: String, town: Option[String]): IO[ReservationOutput] =
+    IO.pure(ReservationOutput(message = s"Booked for $name"))
 
   def getEnum(theEnum: TheEnum): IO[GetEnumOutput] =
     IO.pure(GetEnumOutput(result = Some(theEnum.value)))

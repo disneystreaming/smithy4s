@@ -41,7 +41,6 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PDocument   => Some(Document.DNull)
       case PUUID       => None
       case PByte       => None
-      case PUnit       => None
     }
 
   def collection[C[_], A](
@@ -94,4 +93,6 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
 
   def lazily[A](suspend: Lazy[Schema[A]]): Option[A] =
     suspend.map(_.compile(this)).value
+
+  def nullable[A](schema: Schema[A]): Option[Option[A]] = Some(None)
 }

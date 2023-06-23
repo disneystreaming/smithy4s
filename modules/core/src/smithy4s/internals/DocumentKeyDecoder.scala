@@ -124,7 +124,6 @@ object DocumentKeyDecoder {
               case FlexibleNumber(bd) if bd.isValidByte => bd.toByte
             }
 
-          case PUnit     => None
           case PDocument => None
         }
       }

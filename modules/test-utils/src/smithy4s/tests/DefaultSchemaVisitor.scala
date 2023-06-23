@@ -38,7 +38,6 @@ import smithy4s.schema.Primitive.PFloat
 import smithy4s.schema.Primitive.PInt
 import smithy4s.schema.Primitive.PShort
 import smithy4s.schema.Primitive.PString
-import smithy4s.schema.Primitive.PUnit
 import smithy4s.schema.Primitive.PLong
 import smithy4s.schema.Primitive.PDouble
 import smithy4s.schema.Primitive.PBoolean
@@ -61,7 +60,6 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PInt        => 0
     case PShort      => 0: Short
     case PString     => ""
-    case PUnit       => ()
     case PLong       => 0: Long
     case PDouble     => 0: Double
     case PBoolean    => true
@@ -130,4 +128,5 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
+  override def nullable[A](schema: Schema[A]): Id[Option[A]] = None
 }

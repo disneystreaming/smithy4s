@@ -18,11 +18,12 @@ package smithy4s.compliancetests
 
 import ComplianceTest.ComplianceResult
 import smithy4s.ShapeId
-import smithy4s.compliancetests.internals.TestConfig
 
 case class ComplianceTest[F[_]](
     id: String,
+    protocol: String,
     endpoint: ShapeId,
+    documentation: Option[String],
     config: TestConfig,
     run: F[ComplianceResult]
 ) {

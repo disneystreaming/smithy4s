@@ -47,7 +47,7 @@ as an example. We could instead pass any other header or part of the request.
 From here, we can implement the `HelloWorldService` interface that smithy4s generated from the specification above.
 
 ```scala mdoc:silent
-import smithy4s.hello._
+import smithy4s.example.hello._
 import cats.effect.IO
 import cats.effect.IOLocal
 
@@ -105,7 +105,7 @@ import cats.effect.kernel.Resource
 
 object Routes {
   private val docs =
-    smithy4s.http4s.swagger.docs[IO](smithy4s.hello.HelloWorldService)
+    smithy4s.http4s.swagger.docs[IO](smithy4s.example.hello.HelloWorldService)
   def getAll(local: IOLocal[Option[RequestInfo]]): Resource[IO, HttpRoutes[IO]] = {
     val getRequestInfo: IO[RequestInfo] = local.get.flatMap {
       case Some(value) => IO.pure(value)

@@ -124,7 +124,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   }
 
   private def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val capi = smithy4s.http.json.codecs()
+    val capi = new smithy4s.http.json.JsonCodecs()
     val codec = capi.compileCodec(schema)
 
     s =>
@@ -149,7 +149,6 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       case PInt        => field[Int](hints)
       case PUUID       => field[UUID](hints)
       case PLong       => field[Long](hints)
-      case PUnit       => Opts.unit
       case PTimestamp =>
         implicit val arg: Argument[Timestamp] =
           timestampArg(FieldName.require(hints), hints.get(TimestampFormat))
@@ -199,7 +198,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         implicit val byteArrayArgument = commons.byteArrayArgument
         fieldPlural[ByteArray](member.hints)
 
-      case PUnit | PBoolean | PDocument => jsonFieldPlural(member)
+      case PBoolean | PDocument => jsonFieldPlural(member)
     }
 
   def collection[C[_], A](
@@ -243,7 +242,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _] =>
+          _: Schema.MapSchema[_, _] | _: Schema.NullableSchema[_] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
@@ -343,4 +342,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       .mapValidated(a =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
+
+  override def nullable[A](schema: Schema[A]): Opts[Option[A]] =
+    schema.compile(this).orNone
 }

@@ -43,7 +43,6 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PInt        => 0
     case PShort      => 0: Short
     case PString     => ""
-    case PUnit       => ()
     case PLong       => 0: Long
     case PDouble     => 0: Double
     case PBoolean    => true
@@ -113,5 +112,7 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = {
     suspend.map(apply).value
   }
+
+  override def nullable[A](schema: Schema[A]): Id[Option[A]] = None
 
 }

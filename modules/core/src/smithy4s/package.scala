@@ -22,8 +22,6 @@ package object smithy4s {
 
   type ~>[F[_], G[_]] = kinds.PolyFunction[F, G]
 
-  val errorTypeHeader = "X-Error-Type"
-
   def checkProtocol[Alg[_[_, _, _, _, _]]](
       service: Service[Alg],
       protocolTag: ShapeTag[_]

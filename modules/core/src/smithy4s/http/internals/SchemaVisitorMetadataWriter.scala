@@ -31,9 +31,9 @@ import smithy4s.schema.{
   SchemaField,
   SchemaVisitor
 }
-
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
+import java.util.Base64
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -48,18 +48,25 @@ import smithy4s.schema.CompilationCache
  *
  */
 class SchemaVisitorMetadataWriter(
-    val cache: CompilationCache[MetaEncode]
+    val cache: CompilationCache[MetaEncode],
+    commaDelimitedEncoding: Boolean
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
-
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
   ): MetaEncode[P] = {
+    val hasMedia = hints.has(smithy.api.MediaType)
     Primitive.stringWriter(tag, hints) match {
-      case None        => MetaEncode.empty[P]
+      case Some(write) if hasMedia =>
+        StringValueMetaEncode(
+          write andThen (str =>
+            Base64.getEncoder().encodeToString(str.getBytes())
+          )
+        )
       case Some(write) => StringValueMetaEncode(write)
+      case None        => MetaEncode.empty[P]
     }
   }
 
@@ -69,12 +76,24 @@ class SchemaVisitorMetadataWriter(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaEncode[C[A]] = {
-    self(member) match {
-      case StringValueMetaEncode(f) =>
-        StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
-      case _ => MetaEncode.empty
+    val amendedMember = member.addHints(httpHints(hints))
+    SchemaVisitorHeaderMerge(amendedMember) match {
+      case Some(toMergeableValue) if commaDelimitedEncoding =>
+        StringValueMetaEncode[C[A]] { c =>
+          tag.iterator(c).map(toMergeableValue).mkString(", ")
+        }
+      case _ =>
+        self(amendedMember) match {
+          case StringValueMetaEncode(f) =>
+            StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
+          case _ => MetaEncode.empty
+        }
     }
+
   }
+
+  override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
+    EmptyMetaEncode
 
   override def map[K, V](
       shapeId: ShapeId,
@@ -82,7 +101,7 @@ class SchemaVisitorMetadataWriter(
       key: Schema[K],
       value: Schema[V]
   ): MetaEncode[Map[K, V]] = {
-    (self(key), self(value)) match {
+    (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaEncode(keyF), StringValueMetaEncode(valueF)) =>
         StringMapMetaEncode(map =>
           map.map { case (k, v) =>

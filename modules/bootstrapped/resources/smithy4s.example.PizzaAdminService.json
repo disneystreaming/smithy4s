@@ -1,0 +1,780 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "PizzaAdminService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/book/{name}": {
+            "post": {
+                "operationId": "Reservation",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "town",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reservation 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/custom-code/{code}": {
+            "get": {
+                "operationId": "CustomCode",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CustomCode 200 response"
+                    },
+                    "500": {
+                        "description": "UnknownServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnknownServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/echo/{pathParam}": {
+            "post": {
+                "operationId": "Echo",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EchoBody"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "pathParam",
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "minLength": 10
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "queryParam",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "minLength": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Echo 200 response"
+                    }
+                }
+            }
+        },
+        "/get-enum/{aa}": {
+            "get": {
+                "operationId": "GetEnum",
+                "parameters": [
+                    {
+                        "name": "aa",
+                        "in": "path",
+                        "schema": {
+                            "$ref": "#/components/schemas/TheEnum"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetEnum 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetEnumResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "UnknownServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnknownServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get-int-enum/{aa}": {
+            "get": {
+                "operationId": "GetIntEnum",
+                "parameters": [
+                    {
+                        "name": "aa",
+                        "in": "path",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetIntEnum 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetIntEnumResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "UnknownServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnknownServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/headers/": {
+            "post": {
+                "operationId": "HeaderEndpoint",
+                "parameters": [
+                    {
+                        "name": "X-UPPERCASE-HEADER",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Capitalized-Header",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "x-lowercase-header",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "x-MiXeD-hEaDEr",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "HeaderEndpoint 200 response",
+                        "headers": {
+                            "X-Capitalized-Header": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "X-UPPERCASE-HEADER": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "x-MiXeD-hEaDEr": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "x-lowercase-header": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "operationId": "Health",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 5,
+                            "minLength": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Health 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "UnknownServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnknownServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/restaurant/{restaurant}/menu": {
+            "get": {
+                "operationId": "GetMenu",
+                "parameters": [
+                    {
+                        "name": "restaurant",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetMenu 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Menu"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "FallbackError2 400 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FallbackError2ResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NotFoundError 404 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "418": {
+                        "description": "GenericClientError 418 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericClientErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/restaurant/{restaurant}/menu/item": {
+            "post": {
+                "operationId": "AddMenuItem",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuItem"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "restaurant",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "AddMenuItem 201 response",
+                        "headers": {
+                            "X-ADDED-AT": {
+                                "schema": {
+                                    "type": "number"
+                                },
+                                "required": true
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddMenuItemOutputPayload"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "PriceError 400 response",
+                        "headers": {
+                            "X-CODE": {
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                },
+                                "required": true
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PriceErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "418": {
+                        "description": "GenericClientError 418 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericClientErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "GenericServerError 502 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/roundTrip/{label}": {
+            "post": {
+                "operationId": "RoundTrip",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoundTripRequestContent"
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "label",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "HEADER",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RoundTrip 200 response",
+                        "headers": {
+                            "HEADER": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoundTripResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/version": {
+            "get": {
+                "operationId": "Version",
+                "responses": {
+                    "200": {
+                        "description": "Version 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VersionOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AddMenuItemOutputPayload": {
+                "type": "string"
+            },
+            "EchoBody": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "string",
+                        "minLength": 10
+                    }
+                }
+            },
+            "FallbackError2ResponseContent": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error"
+                ]
+            },
+            "Food": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "title": "pizza",
+                        "properties": {
+                            "pizza": {
+                                "$ref": "#/components/schemas/Pizza"
+                            }
+                        },
+                        "required": [
+                            "pizza"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "salad",
+                        "properties": {
+                            "salad": {
+                                "$ref": "#/components/schemas/Salad"
+                            }
+                        },
+                        "required": [
+                            "salad"
+                        ]
+                    }
+                ]
+            },
+            "GenericClientErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "GenericServerErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "GetEnumResponseContent": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "string"
+                    }
+                }
+            },
+            "GetIntEnumResponseContent": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            },
+            "HealthResponseContent": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "Ingredient": {
+                "type": "string",
+                "enum": [
+                    "Mushroom",
+                    "Cheese",
+                    "Salad",
+                    "Tomato"
+                ]
+            },
+            "Menu": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/MenuItem"
+                }
+            },
+            "MenuItem": {
+                "type": "object",
+                "properties": {
+                    "food": {
+                        "$ref": "#/components/schemas/Food"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float"
+                    }
+                },
+                "required": [
+                    "food",
+                    "price"
+                ]
+            },
+            "NotFoundErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "Pizza": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "base": {
+                        "$ref": "#/components/schemas/PizzaBase"
+                    },
+                    "toppings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Ingredient"
+                        }
+                    }
+                },
+                "required": [
+                    "base",
+                    "name",
+                    "toppings"
+                ]
+            },
+            "PizzaBase": {
+                "type": "string",
+                "enum": [
+                    "C",
+                    "T"
+                ]
+            },
+            "PriceErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "ReservationResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "RoundTripRequestContent": {
+                "type": "object",
+                "properties": {
+                    "body": {
+                        "type": "string"
+                    }
+                }
+            },
+            "RoundTripResponseContent": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "query": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "label"
+                ]
+            },
+            "Salad": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "ingredients": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Ingredient"
+                        }
+                    }
+                },
+                "required": [
+                    "ingredients",
+                    "name"
+                ]
+            },
+            "TheEnum": {
+                "type": "string",
+                "enum": [
+                    "v1",
+                    "v2"
+                ]
+            },
+            "UnknownServerErrorCode": {
+                "type": "string",
+                "enum": [
+                    "server.error"
+                ]
+            },
+            "UnknownServerErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "errorCode": {
+                        "$ref": "#/components/schemas/UnknownServerErrorCode"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "stateHash": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "errorCode"
+                ]
+            },
+            "VersionOutputPayload": {
+                "type": "string"
+            }
+        }
+    }
+}
