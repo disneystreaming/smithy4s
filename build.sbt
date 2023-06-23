@@ -865,7 +865,6 @@ lazy val benchmark = projectMatrix
       Dependencies.Circe.generic.value
     ),
   )
-  )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
