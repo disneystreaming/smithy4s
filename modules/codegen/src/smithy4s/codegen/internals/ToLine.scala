@@ -127,6 +127,8 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
 
   def appendIf(condition: this.type => Boolean)(other: Line): Line =
     if (condition(this)) this + other else this
+
+  def when(condition: => Boolean): Line = if (condition) this else Line.empty
 }
 
 private[internals] object Line {

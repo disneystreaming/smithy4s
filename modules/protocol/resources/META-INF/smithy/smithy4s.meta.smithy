@@ -144,3 +144,8 @@ structure typeclass {
     @required
     interpreter: Classpath
 }
+
+/// Placing this trait on a service will cause the generated code to
+/// include a Service Product version of the service.
+@trait(selector: ":is(service)")
+structure generateServiceProduct {}

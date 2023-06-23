@@ -25,6 +25,7 @@ import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
+import smithy4s.meta.GenerateServiceProductTrait
 import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -886,6 +887,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.SpecializedList.IndexedSeq
     case _: UniqueItemsTrait =>
       Hint.UniqueItems
+    case _: GenerateServiceProductTrait =>
+      Hint.GenerateServiceProduct
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))

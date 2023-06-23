@@ -4,7 +4,6 @@ import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
-import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
@@ -20,13 +19,7 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)
 }
 
-trait BrandServiceProductGen[F[_, _, _, _, _]] {
-  self =>
-
-  def addBrands: F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
-}
-
-object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] with ServiceProduct.Mirror[BrandServiceGen] {
+object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
   val version: String = "1"
@@ -52,30 +45,6 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[BrandServiceOperation, P]): BrandServiceGen[P] = new BrandServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = BrandServiceOperation.toPolyFunction(impl)
 
-  type Prod[F[_, _, _, _, _]] = BrandServiceProductGen[F]
-  val serviceProduct: ServiceProduct.Aux[BrandServiceProductGen, BrandServiceGen] = BrandServiceProductGen
-}
-
-object BrandServiceProductGen extends ServiceProduct[BrandServiceProductGen] {
-  type Alg[F[_, _, _, _, _]] = BrandServiceGen[F]
-  val service: BrandServiceGen.type = BrandServiceGen
-
-  def endpointsProduct: BrandServiceProductGen[service.Endpoint] = new BrandServiceProductGen[service.Endpoint] {
-    def addBrands: service.Endpoint[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = BrandServiceOperation.AddBrands
-  }
-
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: BrandServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
-    def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
-    fa match {
-      case BrandServiceOperation.AddBrands => algebra.addBrands.asInstanceOf[P2[I, E, O, SI, SO]]
-    }
-  }
-
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: BrandServiceProductGen[F], f: PolyFunction5[F, G]): BrandServiceProductGen[G] = {
-    new BrandServiceProductGen[G] {
-      def addBrands: G[AddBrandsInput, Nothing, Unit, Nothing, Nothing] = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands)
-    }
-  }
 }
 
 sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

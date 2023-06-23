@@ -4,7 +4,6 @@ import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
-import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.StreamingSchema
@@ -25,14 +24,7 @@ trait NameCollisionGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[NameCollisionGen[F]] = Transformation.of[NameCollisionGen[F]](this)
 }
 
-trait NameCollisionProductGen[F[_, _, _, _, _]] {
-  self =>
-
-  def myOp: F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]
-  def endpoint: F[Unit, Nothing, Unit, Nothing, Nothing]
-}
-
-object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] with ServiceProduct.Mirror[NameCollisionGen] {
+object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
   val version: String = ""
@@ -61,33 +53,6 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
 
   type MyOpError = NameCollisionOperation.MyOpError
   val MyOpError = NameCollisionOperation.MyOpError
-  type Prod[F[_, _, _, _, _]] = NameCollisionProductGen[F]
-  val serviceProduct: ServiceProduct.Aux[NameCollisionProductGen, NameCollisionGen] = NameCollisionProductGen
-}
-
-object NameCollisionProductGen extends ServiceProduct[NameCollisionProductGen] {
-  type Alg[F[_, _, _, _, _]] = NameCollisionGen[F]
-  val service: NameCollisionGen.type = NameCollisionGen
-
-  def endpointsProduct: NameCollisionProductGen[service.Endpoint] = new NameCollisionProductGen[service.Endpoint] {
-    def myOp: service.Endpoint[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = NameCollisionOperation.MyOp
-    def endpoint: service.Endpoint[Unit, Nothing, Unit, Nothing, Nothing] = NameCollisionOperation.Endpoint
-  }
-
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: NameCollisionProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
-    def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
-    fa match {
-      case NameCollisionOperation.MyOp => algebra.myOp.asInstanceOf[P2[I, E, O, SI, SO]]
-      case NameCollisionOperation.Endpoint => algebra.endpoint.asInstanceOf[P2[I, E, O, SI, SO]]
-    }
-  }
-
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: NameCollisionProductGen[F], f: PolyFunction5[F, G]): NameCollisionProductGen[G] = {
-    new NameCollisionProductGen[G] {
-      def myOp: G[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = f[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing](alg.myOp)
-      def endpoint: G[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.endpoint)
-    }
-  }
 }
 
 sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

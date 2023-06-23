@@ -4,7 +4,6 @@ import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
-import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
@@ -22,14 +21,7 @@ trait DeprecatedServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[DeprecatedServiceGen[F]] = Transformation.of[DeprecatedServiceGen[F]](this)
 }
 
-trait DeprecatedServiceProductGen[F[_, _, _, _, _]] {
-  self =>
-
-  @deprecated(message = "N/A", since = "N/A")
-  def deprecatedOperation: F[Unit, Nothing, Unit, Nothing, Nothing]
-}
-
-object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] with ServiceProduct.Mirror[DeprecatedServiceGen] {
+object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, DeprecatedServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
   val version: String = ""
@@ -57,30 +49,6 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[DeprecatedServiceOperation, P]): DeprecatedServiceGen[P] = new DeprecatedServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: DeprecatedServiceGen[P]): PolyFunction5[DeprecatedServiceOperation, P] = DeprecatedServiceOperation.toPolyFunction(impl)
 
-  type Prod[F[_, _, _, _, _]] = DeprecatedServiceProductGen[F]
-  val serviceProduct: ServiceProduct.Aux[DeprecatedServiceProductGen, DeprecatedServiceGen] = DeprecatedServiceProductGen
-}
-
-object DeprecatedServiceProductGen extends ServiceProduct[DeprecatedServiceProductGen] {
-  type Alg[F[_, _, _, _, _]] = DeprecatedServiceGen[F]
-  val service: DeprecatedServiceGen.type = DeprecatedServiceGen
-
-  def endpointsProduct: DeprecatedServiceProductGen[service.Endpoint] = new DeprecatedServiceProductGen[service.Endpoint] {
-    def deprecatedOperation: service.Endpoint[Unit, Nothing, Unit, Nothing, Nothing] = DeprecatedServiceOperation.DeprecatedOperation
-  }
-
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: DeprecatedServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
-    def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
-    fa match {
-      case DeprecatedServiceOperation.DeprecatedOperation => algebra.deprecatedOperation.asInstanceOf[P2[I, E, O, SI, SO]]
-    }
-  }
-
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: DeprecatedServiceProductGen[F], f: PolyFunction5[F, G]): DeprecatedServiceProductGen[G] = {
-    new DeprecatedServiceProductGen[G] {
-      def deprecatedOperation: G[Unit, Nothing, Unit, Nothing, Nothing] = f[Unit, Nothing, Unit, Nothing, Nothing](alg.deprecatedOperation)
-    }
-  }
 }
 
 sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

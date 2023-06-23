@@ -4,7 +4,6 @@ import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
-import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
@@ -27,13 +26,7 @@ trait FooServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[FooServiceGen[F]] = Transformation.of[FooServiceGen[F]](this)
 }
 
-trait FooServiceProductGen[F[_, _, _, _, _]] {
-  self =>
-
-  def getFoo: F[Unit, Nothing, GetFooOutput, Nothing, Nothing]
-}
-
-object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] with ServiceProduct.Mirror[FooServiceGen] {
+object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
   val version: String = "1.0.0"
@@ -61,30 +54,6 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] w
   def fromPolyFunction[P[_, _, _, _, _]](f: PolyFunction5[FooServiceOperation, P]): FooServiceGen[P] = new FooServiceOperation.Transformed(reified, f)
   def toPolyFunction[P[_, _, _, _, _]](impl: FooServiceGen[P]): PolyFunction5[FooServiceOperation, P] = FooServiceOperation.toPolyFunction(impl)
 
-  type Prod[F[_, _, _, _, _]] = FooServiceProductGen[F]
-  val serviceProduct: ServiceProduct.Aux[FooServiceProductGen, FooServiceGen] = FooServiceProductGen
-}
-
-object FooServiceProductGen extends ServiceProduct[FooServiceProductGen] {
-  type Alg[F[_, _, _, _, _]] = FooServiceGen[F]
-  val service: FooServiceGen.type = FooServiceGen
-
-  def endpointsProduct: FooServiceProductGen[service.Endpoint] = new FooServiceProductGen[service.Endpoint] {
-    def getFoo: service.Endpoint[Unit, Nothing, GetFooOutput, Nothing, Nothing] = FooServiceOperation.GetFoo
-  }
-
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: FooServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
-    def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
-    fa match {
-      case FooServiceOperation.GetFoo => algebra.getFoo.asInstanceOf[P2[I, E, O, SI, SO]]
-    }
-  }
-
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: FooServiceProductGen[F], f: PolyFunction5[F, G]): FooServiceProductGen[G] = {
-    new FooServiceProductGen[G] {
-      def getFoo: G[Unit, Nothing, GetFooOutput, Nothing, Nothing] = f[Unit, Nothing, GetFooOutput, Nothing, Nothing](alg.getFoo)
-    }
-  }
 }
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {

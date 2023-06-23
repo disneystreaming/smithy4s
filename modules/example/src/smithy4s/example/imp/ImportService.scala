@@ -5,7 +5,6 @@ import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
-import smithy4s.ServiceProduct
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.StreamingSchema
@@ -27,13 +26,7 @@ trait ImportServiceGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[ImportServiceGen[F]] = Transformation.of[ImportServiceGen[F]](this)
 }
 
-trait ImportServiceProductGen[F[_, _, _, _, _]] {
-  self =>
-
-  def importOperation: F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]
-}
-
-object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] with ServiceProduct.Mirror[ImportServiceGen] {
+object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
   val version: String = "1.0.0"
@@ -63,30 +56,6 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
   type ImportOperationError = ImportServiceOperation.ImportOperationError
   val ImportOperationError = ImportServiceOperation.ImportOperationError
-  type Prod[F[_, _, _, _, _]] = ImportServiceProductGen[F]
-  val serviceProduct: ServiceProduct.Aux[ImportServiceProductGen, ImportServiceGen] = ImportServiceProductGen
-}
-
-object ImportServiceProductGen extends ServiceProduct[ImportServiceProductGen] {
-  type Alg[F[_, _, _, _, _]] = ImportServiceGen[F]
-  val service: ImportServiceGen.type = ImportServiceGen
-
-  def endpointsProduct: ImportServiceProductGen[service.Endpoint] = new ImportServiceProductGen[service.Endpoint] {
-    def importOperation: service.Endpoint[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = ImportServiceOperation.ImportOperation
-  }
-
-  def toPolyFunction[P2[_, _, _, _, _]](algebra: ImportServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
-    def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
-    fa match {
-      case ImportServiceOperation.ImportOperation => algebra.importOperation.asInstanceOf[P2[I, E, O, SI, SO]]
-    }
-  }
-
-  def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ImportServiceProductGen[F], f: PolyFunction5[F, G]): ImportServiceProductGen[G] = {
-    new ImportServiceProductGen[G] {
-      def importOperation: G[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = f[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing](alg.importOperation)
-    }
-  }
 }
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
