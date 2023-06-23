@@ -331,7 +331,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             )
           }
         ),
-        newline,
+        newline
       ).when(generateServiceProduct),
       obj(
         genNameRef,
