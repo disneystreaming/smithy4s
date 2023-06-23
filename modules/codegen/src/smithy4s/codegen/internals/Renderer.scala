@@ -396,7 +396,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else
             block(line"fa match")(
               ops.map { op =>
-                line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}"
+                // This normally compiles, but Scala 3 seems to have an issue with
+                // it so we have to cast it.
+                line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}.asInstanceOf[P2[I, E, O, SI, SO]]"
               }
             )
         ),

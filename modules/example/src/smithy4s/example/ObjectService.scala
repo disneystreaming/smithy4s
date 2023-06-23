@@ -89,8 +89,8 @@ object ObjectServiceProductGen extends ServiceProduct[ObjectServiceProductGen] {
   def toPolyFunction[P2[_, _, _, _, _]](algebra: ObjectServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
     fa match {
-      case ObjectServiceOperation.PutObject => algebra.putObject
-      case ObjectServiceOperation.GetObject => algebra.getObject
+      case ObjectServiceOperation.PutObject => algebra.putObject.asInstanceOf[P2[I, E, O, SI, SO]]
+      case ObjectServiceOperation.GetObject => algebra.getObject.asInstanceOf[P2[I, E, O, SI, SO]]
     }
   }
 

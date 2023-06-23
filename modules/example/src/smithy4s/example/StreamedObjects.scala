@@ -71,8 +71,8 @@ object StreamedObjectsProductGen extends ServiceProduct[StreamedObjectsProductGe
   def toPolyFunction[P2[_, _, _, _, _]](algebra: StreamedObjectsProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
     fa match {
-      case StreamedObjectsOperation.PutStreamedObject => algebra.putStreamedObject
-      case StreamedObjectsOperation.GetStreamedObject => algebra.getStreamedObject
+      case StreamedObjectsOperation.PutStreamedObject => algebra.putStreamedObject.asInstanceOf[P2[I, E, O, SI, SO]]
+      case StreamedObjectsOperation.GetStreamedObject => algebra.getStreamedObject.asInstanceOf[P2[I, E, O, SI, SO]]
     }
   }
 

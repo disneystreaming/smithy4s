@@ -72,7 +72,7 @@ object DeprecatedServiceProductGen extends ServiceProduct[DeprecatedServiceProdu
   def toPolyFunction[P2[_, _, _, _, _]](algebra: DeprecatedServiceProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
     fa match {
-      case DeprecatedServiceOperation.DeprecatedOperation => algebra.deprecatedOperation
+      case DeprecatedServiceOperation.DeprecatedOperation => algebra.deprecatedOperation.asInstanceOf[P2[I, E, O, SI, SO]]
     }
   }
 

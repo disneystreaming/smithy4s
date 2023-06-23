@@ -77,8 +77,8 @@ object NameCollisionProductGen extends ServiceProduct[NameCollisionProductGen] {
   def toPolyFunction[P2[_, _, _, _, _]](algebra: NameCollisionProductGen[P2]) = new PolyFunction5[service.Endpoint, P2] {
     def apply[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =
     fa match {
-      case NameCollisionOperation.MyOp => algebra.myOp
-      case NameCollisionOperation.Endpoint => algebra.endpoint
+      case NameCollisionOperation.MyOp => algebra.myOp.asInstanceOf[P2[I, E, O, SI, SO]]
+      case NameCollisionOperation.Endpoint => algebra.endpoint.asInstanceOf[P2[I, E, O, SI, SO]]
     }
   }
 
