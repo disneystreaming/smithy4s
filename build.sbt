@@ -851,10 +851,12 @@ lazy val example = projectMatrix
       "smithy4s.example.imp",
       "smithy4s.example.error",
       "smithy4s.example.common",
-      "smithy4s.example.collision"
+      "smithy4s.example.collision",
+      "smithy4s.example.product"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "exampleServiceProduct.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "deprecations.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "errors.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "streaming.smithy",

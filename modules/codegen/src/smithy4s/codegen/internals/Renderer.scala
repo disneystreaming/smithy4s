@@ -329,7 +329,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 .renderAlgParams(opTraitNameRef.name)}]"
             )
           }
-        )
+        ),
+        newline,
       ).when(generateServiceProduct),
       obj(
         genNameRef,
