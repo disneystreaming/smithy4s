@@ -808,7 +808,8 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.guides.hello",
       "smithy4s.example.hello",
       "smithy4s.example.test",
-      "weather"
+      "weather",
+      "smithy4s.example.product"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"

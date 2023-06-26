@@ -350,4 +350,48 @@ final class RendererSpec extends munit.FunSuite {
       )
     )
   }
+  test(
+    "service annotated with @generateServiceProduct also generates a service product"
+  ) {
+    val smithy =
+      """
+        |$version: "2.0"
+        |
+        |namespace smithy4s
+        |
+        |use smithy4s.meta#generateServiceProduct
+        |
+        |@generateServiceProduct
+        |service MyService {
+        |  version: "1.0.0"
+        |}
+        |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    List(
+      "trait MyServiceProductGen",
+      "object MyServiceProductGen extends ServiceProduct[MyServiceProductGen]",
+      "object MyServiceGen extends Service.Mixin[MyServiceGen, MyServiceOperation] with ServiceProduct.Mirror[MyServiceGen]",
+      "  type Prod[F[_, _, _, _, _]] = MyServiceProductGen[F]\n" +
+        "  val serviceProduct: ServiceProduct.Aux[MyServiceProductGen, MyServiceGen] = MyServiceProductGen"
+    ).foreach(str => assert(contents.exists(_.contains(str))))
+  }
+  test(
+    "service not annotated with @generateServiceProduct doesn't generate any extra code"
+  ) {
+    val smithy = """
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |service MyService {
+                   |  version: "1.0.0"
+                   |}
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(!contents.exists(_.contains("ServiceProduct")))
+  }
 }
