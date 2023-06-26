@@ -496,7 +496,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       //format: on
     }
 
-
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
       // See https://awslabs.github.io/smithy/1.0/spec/core/prelude-model.html?highlight=primitiveboolean#prelude-shapes
