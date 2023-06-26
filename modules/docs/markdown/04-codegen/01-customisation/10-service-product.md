@@ -21,7 +21,7 @@ This will generate the following interface:
 
 ```scala
 trait ExampleServiceProductGen[F[_, _, _, _, _]] {
-  def exampleOperation: F[ExampleInput, ExampleServiceOperation.ExampleOperationError, ExampleOutput, Nothing, Nothing]
+  def exampleOperation: F[ExampleInput, Nothing, ExampleOutput, Nothing, Nothing]
 }
 ```
 
