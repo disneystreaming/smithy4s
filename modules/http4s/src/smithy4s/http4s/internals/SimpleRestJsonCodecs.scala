@@ -68,14 +68,10 @@ private[http4s] class SimpleRestJsonCodecs(
         def createCache(): Cache = restSchemaCompiler.createCache()
         def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
-        def fromSchema[A](schema: Schema[A], cache: Cache) = if (
-          schema.isUnit
-        ) {
-          restSchemaCompiler.fromSchema(schema, cache)
-        } else {
-          restSchemaCompiler
-            .fromSchema(schema, cache)
-            .andThen(addEmptyJsonToResponse(_))
+        def fromSchema[A](schema: Schema[A], cache: Cache) = {
+          val encoder = restSchemaCompiler.fromSchema(schema, cache)
+          if (schema.isUnit) encoder
+          else encoder.andThen(addEmptyJsonToResponse(_))
         }
       }
     }
