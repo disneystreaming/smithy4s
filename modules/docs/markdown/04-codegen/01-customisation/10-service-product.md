@@ -21,7 +21,7 @@ This will generate the following interface:
 
 ```scala
 trait ExampleServiceProductGen[F[_, _, _, _, _]] {
-  def exampleOperation: F[ExampleInput, Nothing, ExampleOutput, Nothing, Nothing]
+  def exampleOperation: F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing]
 }
 ```
 
@@ -56,6 +56,9 @@ Here are a couple ways you can use this as a library author:
 
 ### Static description of services
 
+<details>
+<summary>Implementation</summary>
+
 ```scala mdoc
 import smithy4s.kinds.PolyFunction5
 
@@ -75,13 +78,20 @@ def descriptor[Alg[_[_, _, _, _, _]]](mirror: ServiceProduct.Mirror[Alg]): mirro
 
       },
     )
+```
 
+</details>
+
+```scala mdoc
 // Usage
 
 val desc: String = descriptor(ExampleService).exampleOperation
 ```
 
 ### Non-linear input of operation
+
+<details>
+<summary>Implementation</summary>
 
 ```scala mdoc
 import smithy4s.ShapeId
@@ -91,7 +101,7 @@ type Id[A] = A
 val impl: ExampleService[Id] =
   new ExampleService[Id] {
 
-    override def exampleOperation(input: String): ExampleOutput = ExampleOutput(
+    override def exampleOperation(input: String): ExampleOperationOutput = ExampleOperationOutput(
       s"Output for $input!"
     )
 
@@ -116,17 +126,21 @@ def listClient[Alg[_[_, _, _, _, _]], Prod[_[_, _, _, _, _]]](
 
     },
   )
+```
 
-// Usage
+</details>
 
+```scala mdoc
 listClient(impl)( /* implicit scope problem here - TODO */ ExampleService.serviceProduct)
   .exampleOperation(
-    List("a", "b", "c").map(ExampleInput(_))
+    List("a", "b", "c").map(ExampleOperationInput(_))
   )
-  .mkString("\n")
 ```
 
 ### Fluent service builder
+
+<details>
+<summary>Implementation</summary>
 
 ```scala mdoc
 
@@ -200,18 +214,20 @@ case class PartialBuilder[Alg[_[_, _, _, _, _]], Prod[_[_, _, _, _, _]]](
 def partialBuilder[Alg[_[_, _, _, _, _]]](
   mirror: ServiceProduct.Mirror[Alg]
 ): PartialBuilder[Alg, mirror.Prod] = new PartialBuilder[Alg, mirror.Prod](mirror, handlers = Nil)
+```
 
-// Usage
+</details>
 
+```scala mdoc
 val listService: ExampleServiceGen[ToList] =
   partialBuilder(ExampleService)
-    .withHandler(_.exampleOperation { (in: ExampleInput) =>
-      ExampleOutput(s"First output for ${in.a}!")
+    .withHandler(_.exampleOperation { (in: ExampleOperationInput) =>
+      ExampleOperationOutput(s"First output for ${in.a}!")
     })
-    .withHandler(_.exampleOperation { (in: ExampleInput) =>
-      ExampleOutput(s"Another output for ${in.a}!")
+    .withHandler(_.exampleOperation { (in: ExampleOperationInput) =>
+      ExampleOperationOutput(s"Another output for ${in.a}!")
     })
     .build
 
-listService.exampleOperation("hello").mkString("\n")
+listService.exampleOperation("hello")
 ```
