@@ -14,7 +14,7 @@ import smithy4s.schema.Schema.unit
 trait ReservedNameOverrideServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def setOp(set: _Set): F[SetOpInput, Nothing, Unit, Nothing, Nothing]
+  def setOp(set: Set): F[SetOpInput, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ReservedNameOverrideServiceGen[F]] = Transformation.of[ReservedNameOverrideServiceGen[F]](this)
 }
@@ -57,10 +57,10 @@ sealed trait ReservedNameOverrideServiceOperation[Input, Err, Output, StreamedIn
 object ReservedNameOverrideServiceOperation {
 
   object reified extends ReservedNameOverrideServiceGen[ReservedNameOverrideServiceOperation] {
-    def setOp(set: _Set) = SetOp(SetOpInput(set))
+    def setOp(set: Set) = SetOp(SetOpInput(set))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ReservedNameOverrideServiceGen[P], f: PolyFunction5[P, P1]) extends ReservedNameOverrideServiceGen[P1] {
-    def setOp(set: _Set) = f[SetOpInput, Nothing, Unit, Nothing, Nothing](alg.setOp(set))
+    def setOp(set: Set) = f[SetOpInput, Nothing, Unit, Nothing, Nothing](alg.setOp(set))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ReservedNameOverrideServiceGen[P]): PolyFunction5[ReservedNameOverrideServiceOperation, P] = new PolyFunction5[ReservedNameOverrideServiceOperation, P] {

@@ -319,7 +319,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         newline,
         renderId(shapeId),
-        line"""val version: String = "$version"""",
+        line"""val version: $string_ = "$version"""",
         newline,
         renderHintsVal(hints),
         newline,

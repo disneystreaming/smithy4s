@@ -496,8 +496,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       //format: on
     }
 
-  private val reservedNames = new CollisionAvoidance.Names().getReservedNames
-  private def isReservedName(str: String): Boolean = reservedNames(str)
 
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
@@ -571,8 +569,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           getExternalOrBase(shape, Type.PrimitiveType(primitive))
         if (
           shape.getId() != ShapeId.from(primitiveId) &&
-          !isUnboxedPrimitive(shape.getId()) &&
-          !isReservedName(shape.getId().getName())
+          !isUnboxedPrimitive(shape.getId())
         ) {
           Type
             .Alias(

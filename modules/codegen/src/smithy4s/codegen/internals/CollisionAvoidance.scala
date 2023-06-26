@@ -44,7 +44,7 @@ private[internals] object CollisionAvoidance {
               ) =>
             Operation(
               opId,
-              protectType(name.capitalize),
+              protectKeyword(name.capitalize),
               protectKeyword(methodName),
               params.map(modField),
               modType(input),
@@ -57,7 +57,7 @@ private[internals] object CollisionAvoidance {
         }
         Service(
           serviceId,
-          protectType(name.capitalize),
+          protectKeyword(name.capitalize),
           newOps,
           hints.map(modHint),
           version
@@ -67,19 +67,19 @@ private[internals] object CollisionAvoidance {
       case Union(shapeId, name, alts, mixins, recursive, hints) =>
         Union(
           shapeId,
-          protectType(name.capitalize),
+          protectKeyword(name.capitalize),
           alts.map(modAlt),
           mixins.map(modType),
           recursive,
           hints.map(modHint)
         )
       case TypeAlias(shapeId, name, tpe, isUnwrapped, rec, hints) =>
-        val protectedName = protectType(name.capitalize)
+        val protectedName = protectKeyword(name.capitalize)
         // If we had to amend the type
         val unwrapped = isUnwrapped | (protectedName != name.capitalize)
         TypeAlias(
           shapeId,
-          protectType(name.capitalize),
+          protectKeyword(name.capitalize),
           modType(tpe),
           unwrapped,
           rec,
@@ -115,15 +115,15 @@ private[internals] object CollisionAvoidance {
         valueHints = valueHints.map(modHint(_))
       )
     case Type.Ref(namespace, name) =>
-      Type.Ref(namespace, protectType(name.capitalize))
+      Type.Ref(namespace, protectKeyword(name.capitalize))
     case Alias(namespace, name, tpe, isUnwrapped) =>
-      val protectedName = protectType(name.capitalize)
+      val protectedName = protectKeyword(name.capitalize)
       val unwrapped = isUnwrapped | (protectedName != name.capitalize)
-      Alias(namespace, protectType(name.capitalize), modType(tpe), unwrapped)
+      Alias(namespace, protectKeyword(name.capitalize), modType(tpe), unwrapped)
     case PrimitiveType(prim) => PrimitiveType(prim)
     case ExternalType(name, fqn, typeParams, pFqn, under, refinementHint) =>
       ExternalType(
-        protectType(name.capitalize),
+        protectKeyword(name.capitalize),
         fqn,
         typeParams,
         pFqn,
@@ -162,7 +162,7 @@ private[internals] object CollisionAvoidance {
   }
 
   private def modRef(ref: Type.Ref): Type.Ref =
-    Type.Ref(ref.namespace, protectType(ref.name.capitalize))
+    Type.Ref(ref.namespace, protectKeyword(ref.name.capitalize))
 
   private def modNativeHint(hint: Hint.Native): Hint.Native =
     Hint.Native(recursion.preprocess(modTypedNode)(hint.typedNode))
@@ -215,10 +215,6 @@ private[internals] object CollisionAvoidance {
   private def protectKeyword(str: String): String =
     if (reservedKeywords(str)) s"_$str" else str
 
-  private val names = new Names()
-  private def protectType(str: String): String =
-    if (names.getReservedNames(str)) "_" + str else protectKeyword(str)
-
   private val reservedKeywords: Set[String] = Set(
     "abstract",
     "case",
@@ -263,15 +259,6 @@ private[internals] object CollisionAvoidance {
 
   class Names() {
 
-    // Using mutation to avoid repetition.
-    private var reservedNames: Set[String] = Set.empty
-    private def reserved(pkg: String, name: String) = {
-      reservedNames = reservedNames + name
-      NameRef(pkg, name)
-    }
-
-    def getReservedNames: Set[String] = reservedNames
-
     val Transformation = NameRef("smithy4s", "Transformation")
     val PolyFunction5_ = NameRef("smithy4s.kinds", "PolyFunction5")
     val Service_ = NameRef("smithy4s", "Service")
@@ -310,27 +297,27 @@ private[internals] object CollisionAvoidance {
 
     // We reserve these keywords as they collide with types that the
     // users are bound to manipulate when using Smithy4s .
-    val short_ = reserved("scala", "Short")
-    val int_ = reserved("scala", "Int")
-    val javaInt_ = reserved("java.lang", "Integer")
-    val long_ = reserved("scala", "Long")
-    val double_ = reserved("scala", "Double")
-    val float_ = reserved("scala", "Float")
-    val bigint_ = reserved("scala.math", "BigInteger")
-    val bigdecimal_ = reserved("scala.math", "BigDecimal")
-    val string_ = reserved("scala.Predef", "String")
-    val boolean_ = reserved("scala", "Boolean")
-    val byte_ = reserved("scala", "Byte")
-    val unit_ = reserved("scala", "Unit")
-    val timestamp_ = reserved("smithy4s", "Timestamp")
-    val document_ = reserved("smithy4s", "Document")
-    val uuid_ = reserved("smithy4s", "UUID")
-    val list = reserved("scala", "List")
-    val set = reserved("scala.collection.immutable", "Set")
-    val map = reserved("scala.collection.immutable", "Map")
-    val option = reserved("scala", "Option")
-    val none = reserved("scala", "None")
-    val some = reserved("scala", "Some")
+    val short_ = NameRef("scala", "Short")
+    val int_ = NameRef("scala", "Int")
+    val javaInt_ = NameRef("java.lang", "Integer")
+    val long_ = NameRef("scala", "Long")
+    val double_ = NameRef("scala", "Double")
+    val float_ = NameRef("scala", "Float")
+    val bigint_ = NameRef("scala.math", "BigInteger")
+    val bigdecimal_ = NameRef("scala.math", "BigDecimal")
+    val string_ = NameRef("scala.Predef", "String")
+    val boolean_ = NameRef("scala", "Boolean")
+    val byte_ = NameRef("scala", "Byte")
+    val unit_ = NameRef("scala", "Unit")
+    val timestamp_ = NameRef("smithy4s", "Timestamp")
+    val document_ = NameRef("smithy4s", "Document")
+    val uuid_ = NameRef("smithy4s", "UUID")
+    val list = NameRef("scala", "List")
+    val set = NameRef("scala.collection.immutable", "Set")
+    val map = NameRef("scala.collection.immutable", "Map")
+    val option = NameRef("scala", "Option")
+    val none = NameRef("scala", "None")
+    val some = NameRef("scala", "Some")
 
   }
 

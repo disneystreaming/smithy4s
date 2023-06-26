@@ -19,7 +19,7 @@ import smithy4s.schema.Schema.unit
 trait ObjectServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
+  def putObject(key: ObjectKey, bucketName: BucketName, data: java.lang.String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]
   /** @param key
     *   Sent in the URI label named "key".
     *   Key can also be seen as the filename
@@ -35,7 +35,7 @@ trait ObjectServiceGen[F[_, _, _, _, _]] {
 object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
-  val version: String = "1.0.0"
+  val version: scala.Predef.String = "1.0.0"
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -75,11 +75,11 @@ sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedO
 object ObjectServiceOperation {
 
   object reified extends ObjectServiceGen[ObjectServiceOperation] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: java.lang.String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = PutObject(PutObjectInput(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName) = GetObject(GetObjectInput(key, bucketName))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ObjectServiceGen[P], f: PolyFunction5[P, P1]) extends ObjectServiceGen[P1] {
-    def putObject(key: ObjectKey, bucketName: BucketName, data: String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](alg.putObject(key, bucketName, data, foo, someValue))
+    def putObject(key: ObjectKey, bucketName: BucketName, data: java.lang.String, foo: Option[LowHigh] = None, someValue: Option[SomeValue] = None) = f[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing](alg.putObject(key, bucketName, data, foo, someValue))
     def getObject(key: ObjectKey, bucketName: BucketName) = f[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing](alg.getObject(key, bucketName))
   }
 
