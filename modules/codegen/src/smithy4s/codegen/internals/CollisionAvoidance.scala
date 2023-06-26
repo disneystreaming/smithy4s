@@ -305,7 +305,7 @@ private[internals] object CollisionAvoidance {
     val float_ = NameRef("scala", "Float")
     val bigint_ = NameRef("scala.math", "BigInteger")
     val bigdecimal_ = NameRef("scala.math", "BigDecimal")
-    val string_ = NameRef("scala.Predef", "String")
+    val string_ = NameRef("java.lang", "String")
     val boolean_ = NameRef("scala", "Boolean")
     val byte_ = NameRef("scala", "Byte")
     val unit_ = NameRef("scala", "Unit")

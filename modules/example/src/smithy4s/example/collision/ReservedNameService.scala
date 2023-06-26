@@ -25,7 +25,7 @@ trait ReservedNameServiceGen[F[_, _, _, _, _]] {
 object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, ReservedNameServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
-  val version: scala.Predef.String = "1.0.0"
+  val version: java.lang.String = "1.0.0"
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
