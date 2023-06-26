@@ -24,7 +24,7 @@ import smithy4s.kinds.PolyFunction5
   * Contains the same information as a service, with the difference that the
   * algebra (the product type parameter) can be be an interface with methods
   * without inputs.
-  * 
+  *
   * @tparam Prod the product type parameter. For code generation this is also
   * generated as an interface with methods without inputs (one for each
   * endpoint). This has suffix `ProductGen`.
@@ -49,7 +49,7 @@ object ServiceProduct {
   /**
   * Provides a way to get the product version for a service.
   * For info about the `Prod` type parameter, see [[ServiceProduct]].
-  * 
+  *
   * @tparam Alg the algebra type parameter.
   */
   trait Mirror[Alg[_[_, _, _, _, _]]] {
