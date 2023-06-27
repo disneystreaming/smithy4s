@@ -8,7 +8,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 case class ServerError(message: Option[String] = None) extends Throwable {
-  override def getMessage(): String  = message.orNull
+  override def getMessage(): String = message.orNull
 }
 object ServerError extends ShapeTag.Companion[ServerError] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerError")

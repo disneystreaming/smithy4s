@@ -660,11 +660,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case field if field.tpe.isResolved && field.required =>
       line"override def getMessage(): $string_ = ${field.name}"
     case field if field.tpe.isResolved =>
-      line"override def getMessage(): $string_  = ${field.name}.orNull"
+      line"override def getMessage(): $string_ = ${field.name}.orNull"
     case field if field.required =>
-      line"override def getMessage(): $string_  = ${field.name}.value"
+      line"override def getMessage(): $string_ = ${field.name}.value"
     case field =>
-      line"override def getMessage(): $string_  = ${field.name}.map(_.value).orNull"
+      line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {
