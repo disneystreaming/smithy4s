@@ -99,7 +99,7 @@ package object kernel {
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2).toList }
 
-  private[smithy4s] def getRequestMetadata[F[_]](
+  def getRequestMetadata[F[_]](
       pathParams: PathParams,
       request: Request[F]
   ): Metadata =
@@ -110,7 +110,7 @@ package object kernel {
       statusCode = None
     )
 
-  private[smithy4s] def getResponseMetadata[F[_]](
+  def getResponseMetadata[F[_]](
       response: Response[F]
   ): Metadata =
     Metadata(
