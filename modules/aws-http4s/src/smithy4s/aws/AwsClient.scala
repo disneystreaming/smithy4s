@@ -16,7 +16,6 @@
 
 package smithy4s.aws
 
-import cats.effect.Concurrent
 import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
