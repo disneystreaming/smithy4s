@@ -25,7 +25,7 @@ import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.Method
 import _root_.aws.api.{Service => AwsService}
-import cats.effect.Sync
+import cats.effect.Async
 import cats.effect.Resource
 
 // format: off
@@ -36,7 +36,7 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
   awsEnv: AwsEnvironment[F],
   endpoint: Endpoint.Base[I, E, O, SI, SO],
   makeClientCodecs: UnaryClientCodecs.Make[F],
-)(implicit effect: Sync[F]) extends (I => F[O]) {
+)(implicit effect: Async[F]) extends (I => F[O]) {
 // format: on
 
   val signingClient = AwsSigningClient(

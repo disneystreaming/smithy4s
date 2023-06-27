@@ -23,7 +23,7 @@ import org.http4s.client.Client
 import cats.effect.Resource
 import smithy4s.aws.kernel.AwsCrypto._
 import smithy4s.http.internals.URIEncoderDecoder.{encode => uriEncode}
-import cats.effect.Sync
+import cats.effect.Concurrent
 import fs2.Chunk
 import cats.syntax.all._
 import org.typelevel.ci.CIString
@@ -35,7 +35,7 @@ import org.typelevel.ci.CIString
   */
 private[aws] object AwsSigningClient {
 
-  def apply[F[_]: Sync](
+  def apply[F[_]: Concurrent](
       serviceId: ShapeId,
       endpointId: ShapeId,
       serviceHints: Hints,
@@ -63,7 +63,7 @@ private[aws] object AwsSigningClient {
     }
   }
 
-  private[internals] def signingFunction[F[_]: Sync](
+  private[internals] def signingFunction[F[_]: Concurrent](
       serviceName: String,
       endpointName: String,
       endpointPrefix: String,

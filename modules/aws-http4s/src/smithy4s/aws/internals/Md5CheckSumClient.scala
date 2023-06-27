@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.http4s.kernel
+package smithy4s.aws.internals
 
 import smithy4s._
 
@@ -26,7 +26,7 @@ import fs2.{Chunk, Pipe, Stream}
 import cats.syntax.all._
 import org.typelevel.ci.CIString
 
-object Md5CheckSumClient {
+private[internals] object Md5CheckSumClient {
   def apply[F[_]: Sync](hints: Hints): Client[F] => Client[F] = { client =>
     hints.get(smithy.api.HttpChecksumRequired) match {
       case Some(_) =>

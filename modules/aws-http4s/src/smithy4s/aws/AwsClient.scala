@@ -17,7 +17,7 @@
 package smithy4s.aws
 
 import cats.effect.Concurrent
-import cats.effect.Sync
+import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
@@ -27,7 +27,7 @@ import _root_.aws.api.{Service => AwsService}
 
 object AwsClient {
 
-  def apply[Alg[_[_, _, _, _, _]], F[_]: Concurrent: Sync: Compression](
+  def apply[Alg[_[_, _, _, _, _]], F[_]: Async: Compression](
       service: smithy4s.Service[Alg],
       awsEnv: AwsEnvironment[F]
   ): Resource[F, service.Impl[F]] =
@@ -57,7 +57,7 @@ object AwsClient {
       val service: smithy4s.Service[Alg]
   ) {
 
-    private def interpreter[F[_]: Concurrent: Sync: Compression](
+    private def interpreter[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.FunctorInterpreter[F] = {
       val clientCodecs: UnaryClientCodecs.Make[F] = awsProtocol match {
@@ -89,12 +89,12 @@ object AwsClient {
       }
     }
 
-    def build[F[_]: Concurrent: Sync: Compression](
+    def build[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): service.Impl[F] =
       service.fromPolyFunction(interpreter[F](awsEnv))
 
-    def buildFull[F[_]: Concurrent: Sync: Compression](
+    def buildFull[F[_]: Async: Compression](
         awsEnv: AwsEnvironment[F]
     ): AwsClient[Alg, F] =
       service.fromPolyFunction(

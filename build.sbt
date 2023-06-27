@@ -622,7 +622,6 @@ lazy val `http4s-kernel` = projectMatrix
     isMimaEnabled := true,
     libraryDependencies ++= Seq(
       Dependencies.Http4s.core.value,
-      Dependencies.Http4s.client.value,
       Dependencies.Weaver.cats.value % Test
     )
   )
