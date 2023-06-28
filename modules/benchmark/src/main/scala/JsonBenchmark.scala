@@ -22,7 +22,7 @@ import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
 import java.util.concurrent.TimeUnit
-import smithy4s.HintMask
+import smithy4s.{Blob, HintMask}
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -57,10 +57,11 @@ class JsonBenchmark {
     val bytes =
       smithy4s.http.json
         .codecs(hintMask = HintMask.allAllowed)
-        .writeToArray[S3Object](jsonCodec, original)
+        .encode[S3Object](jsonCodec, original)
+        .toArray
     val _ =
       smithy4s.http.json
         .codecs(hintMask = HintMask.allAllowed)
-        .decodeFromByteArray(jsonCodec, bytes)
+        .decode(jsonCodec, Blob(bytes))
   }
 }

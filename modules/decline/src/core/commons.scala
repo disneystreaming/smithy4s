@@ -21,7 +21,7 @@ import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
 import cats.data.Validated.Valid
-import smithy4s.{ByteArray, ConstraintError, Document, Schema}
+import smithy4s.{Blob, ByteArray, ConstraintError, Document, Schema}
 import cats.implicits._
 import cats.MonadError
 

@@ -22,6 +22,7 @@ import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
 import smithy4s.{
+  Blob,
   Bijection,
   ByteArray,
   Hints,
