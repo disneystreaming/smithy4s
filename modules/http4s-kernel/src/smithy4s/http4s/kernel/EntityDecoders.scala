@@ -48,7 +48,7 @@ object EntityDecoders {
           .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
           .flatMapR(chunk =>
             codecAPI
-              .decodeFromByteArray(codecA, chunk.toArray)
+              .decode(codecA, Blob(chunk.toArray))
               .leftWiden[Throwable]
               .liftTo[DecodeResult[F, *]]
           )

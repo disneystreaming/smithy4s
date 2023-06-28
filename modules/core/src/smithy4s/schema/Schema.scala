@@ -180,6 +180,7 @@ object Schema {
   val boolean: Schema[Boolean] = Primitive.PBoolean.schema(prelude, "Boolean")
   val byte: Schema[Byte] = Primitive.PByte.schema(prelude, "Byte")
   val bytes: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
+  val blob: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")

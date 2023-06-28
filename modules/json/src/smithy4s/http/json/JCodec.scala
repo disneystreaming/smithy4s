@@ -47,21 +47,6 @@ trait JCodec[A] extends JsonCodec[A] {
     */
   def expectBody: Boolean = true
 
-  final val messageCodec: MessageCodec[A] =
-    new MessageCodec[A] {
-
-      def decodeValue(
-          in: JsonReader,
-          default: MMap[String, Any] => A
-      ): MMap[String, Any] => A = self.decodeMessage(in)
-
-      def encodeValue(x: MMap[String, Any] => A, out: JsonWriter): Unit =
-        out.encodeError("Cannot encode as message codec")
-
-      def nullValue: MMap[String, Any] => A =
-        null.asInstanceOf[MMap[String, Any] => A]
-    }
-
   def decodeMessage(in: JsonReader): MMap[String, Any] => A =
     Cursor.withCursor(expecting) { cursor =>
       val result = decodeValue(cursor, in)
