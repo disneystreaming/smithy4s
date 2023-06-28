@@ -21,7 +21,6 @@ package json
 import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
 import com.github.plokhotnyuk.jsoniter_scala.core.WriterConfig
 
-import java.nio.ByteBuffer
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.CompilationCache
 
@@ -55,43 +54,23 @@ abstract class JsonCodecAPI(
   def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
     HttpMediaType("application/json")
 
-  override def decodeFromByteArrayPartial[A](
+  override def decode[A](
       codec: Codec[A],
-      bytes: Array[Byte]
-  ): Either[PayloadError, BodyPartial[A]] = {
-    val nonEmpty = if (bytes.isEmpty) "{}".getBytes else bytes
+      blob: Blob
+  ): Either[PayloadError, A] = {
+    val nonEmpty = if (blob.isEmpty) "{}".getBytes else blob.toArray
     try {
       Right {
-        BodyPartial(
-          com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromArray(nonEmpty, readerConfig)(codec.messageCodec)
-        )
+        com.github.plokhotnyuk.jsoniter_scala.core
+          .readFromArray(nonEmpty, readerConfig)(codec)
       }
     } catch {
       case e: PayloadError => Left(e)
     }
   }
 
-  override def decodeFromByteBufferPartial[A](
-      codec: Codec[A],
-      bytes: ByteBuffer
-  ): Either[PayloadError, BodyPartial[A]] = {
-    val nonEmpty =
-      if (bytes.remaining() == 0) bytes.put("{}".getBytes) else bytes
-    try {
-      Right {
-        BodyPartial(
-          com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromByteBuffer(nonEmpty, readerConfig)(codec.messageCodec)
-        )
-      }
-    } catch {
-      case e: PayloadError => Left(e)
-    }
-  }
-
-  override def writeToArray[A](codec: Codec[A], value: A): Array[Byte] =
-    com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(value)(codec)
+  override def encode[A](codec: Codec[A], value: A): Blob =
+    Blob(com.github.plokhotnyuk.jsoniter_scala.core.writeToArray(value)(codec))
 
 }
 

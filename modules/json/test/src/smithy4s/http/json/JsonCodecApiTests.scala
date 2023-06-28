@@ -18,6 +18,7 @@ package smithy4s.http.json
 
 import munit.FunSuite
 import smithy.api.JsonName
+import smithy4s.Blob
 import smithy4s.schema.Schema
 import smithy4s.HintMask
 
@@ -37,9 +38,9 @@ class JsonCodecApiTests extends FunSuite {
     val capi = codecs(HintMask.empty)
 
     val codec = capi.compileCodec(schemaWithJsonName)
-    val encodedString = new String(capi.writeToArray(codec, "test"))
+    val encoded = capi.encode(codec, "test")
 
-    assertEquals(encodedString, """{"a":"test"}""")
+    assertEquals(encoded, Blob("""{"a":"test"}"""))
   }
 
   test(
@@ -57,7 +58,7 @@ class JsonCodecApiTests extends FunSuite {
 
     val codec = capi.compileCodec(schemaWithRequiredField)
 
-    val decoded = capi.decodeFromByteArray(codec, """{}""".getBytes())
+    val decoded = capi.decode(codec, Blob("{}"))
 
     assert(decoded.isLeft)
   }
@@ -75,9 +76,9 @@ class JsonCodecApiTests extends FunSuite {
     val capi = codecs(HintMask.empty, explicitNullEncoding = true)
 
     val codec = capi.compileCodec(schemaWithJsonName)
-    val encodedString = new String(capi.writeToArray(codec, None))
+    val encoded = capi.encode(codec, None)
 
-    assertEquals(encodedString, """{"a":null}""")
+    assertEquals(encoded, Blob("""{"a":null}"""))
   }
 
   test(
@@ -95,7 +96,7 @@ class JsonCodecApiTests extends FunSuite {
         codecs(HintMask.empty, explicitNullEncoding = nullEncoding)
 
       val codec = capi.compileCodec(schemaWithJsonName)
-      val decoded = capi.decodeFromByteArray(codec, """{"a":null}""".getBytes())
+      val decoded = capi.decode(codec, Blob("""{"a":null}"""))
 
       assertEquals(decoded, Right(None))
     }

@@ -22,8 +22,6 @@ import smithy4s.PayloadPath
 import smithy4s.Schema
 import smithy4s.example._
 
-import java.nio.ByteBuffer
-
 class StringAndBlobSpec() extends munit.FunSuite {
 
   object Dummy
@@ -36,85 +34,79 @@ class StringAndBlobSpec() extends munit.FunSuite {
         schema: Schema[A],
         cache: Cache
     ): Codec[A] = Dummy
-    def decodeFromByteArrayPartial[A](
+    def decode[A](
         codec: Codec[A],
-        bytes: Array[Byte]
-    ): Either[PayloadError, BodyPartial[A]] = Left(
+        blob: Blob
+    ): Either[PayloadError, A] = Left(
       PayloadError(PayloadPath.root, "error", "error")
     )
-    def decodeFromByteBufferPartial[A](
-        codec: Codec[A],
-        bytes: ByteBuffer
-    ): Either[PayloadError, BodyPartial[A]] = Left(
-      PayloadError(PayloadPath.root, "error", "error")
-    )
-    def writeToArray[A](codec: Codec[A], value: A): Array[Byte] = Array.empty
+    def encode[A](codec: Codec[A], value: A): Blob = Blob.empty
   }
 
   val stringsAndBlobs =
     CodecAPI.nativeStringsAndBlob(dummy)
 
   test("Strings") {
-    val input = StringBody("hello")
-    val codec = stringsAndBlobs.compileCodec(StringBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val input = "hello"
+    val codec = stringsAndBlobs.compileCodec(Schema.string)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
+    expect.same(result, Blob("hello"))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/plain"), mediaType)
   }
 
   test("Strings (custom media-type)") {
-    val input = CSVBody(CSV("hello"))
-    val codec = stringsAndBlobs.compileCodec(CSVBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val input = CSV("hello")
+    val codec = stringsAndBlobs.compileCodec(CSV.schema)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
+    expect.same(result, Blob("hello"))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/csv"), mediaType)
   }
   test("String Enum") {
-    val input = StringEnumBody(StringEnum.INTERESTING)
-    val codec = stringsAndBlobs.compileCodec(StringEnumBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val input = StringEnum.INTERESTING
+    val codec = stringsAndBlobs.compileCodec(StringEnum.schema)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("interesting".getBytes()))
+    expect.same(result, Blob("interesting"))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("text/plain"), mediaType)
   }
 
   test("String Enum (custom media-type)") {
-    val input = AudioEnumBody(AudioEnum.BASS)
-    val codec = stringsAndBlobs.compileCodec(AudioEnumBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val input = AudioEnum.BASS
+    val codec = stringsAndBlobs.compileCodec(AudioEnum.schema)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("bass".getBytes()))
+    expect(result == Blob("bass"))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("audio/mpeg3"), mediaType)
   }
 
   test("Blobs") {
-    val input = BlobBody(ByteArray("hello".getBytes()))
-    val codec = stringsAndBlobs.compileCodec(BlobBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val input = ByteArray("hello".getBytes())
+    val codec = stringsAndBlobs.compileCodec(Schema.blob)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
+    expect.same(result, Blob("hello"))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("application/octet-stream"), mediaType)
   }
 
   test("Blobs (custom media-type)") {
-    val input = PNGBody(PNG(ByteArray("hello".getBytes())))
-    val codec = stringsAndBlobs.compileCodec(PNGBody.schema)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val input = PNG(ByteArray("hello".getBytes()))
+    val codec = stringsAndBlobs.compileCodec(PNG.schema)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
-    expect(result.sameElements("hello".getBytes()))
+    expect(result == Blob("hello"))
     expect.same(Right(input), roundTripped)
     expect.same(HttpMediaType("image/png"), mediaType)
   }
@@ -123,8 +115,8 @@ class StringAndBlobSpec() extends munit.FunSuite {
     val input = 1
     val codec =
       stringsAndBlobs.compileCodec(Schema.int)
-    val result = stringsAndBlobs.writeToArray(codec, input)
-    val roundTripped = stringsAndBlobs.decodeFromByteArray(codec, result)
+    val result = stringsAndBlobs.encode(codec, input)
+    val roundTripped = stringsAndBlobs.decode(codec, result)
     val mediaType = stringsAndBlobs.mediaType(codec)
     expect(result.isEmpty)
     expect.same(

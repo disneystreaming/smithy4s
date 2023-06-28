@@ -45,7 +45,7 @@ object EntityEncoders {
         EntityEncoder
           .byteArrayEncoder[F]
           .withContentType(`Content-Type`(mediaType))
-          .contramap[A]((a: A) => codecAPI.writeToArray(codecA, a))
+          .contramap[A]((a: A) => codecAPI.encode(codecA, a).toArray)
       }
     }
 

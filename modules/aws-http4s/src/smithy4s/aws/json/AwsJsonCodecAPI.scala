@@ -16,6 +16,7 @@
 
 package smithy4s.aws.json
 
+import smithy4s.Blob
 import smithy4s.HintMask
 import smithy4s.http.json.JCodec
 import smithy4s.http.HttpMediaType
@@ -28,12 +29,12 @@ private[aws] class AwsJsonCodecAPI(
       hintMask
     ) {
 
-  override def writeToArray[A](codec: Codec[A], value: A): Array[Byte] = {
+  override def encode[A](codec: Codec[A], value: A): Blob = {
     // AWS expects an empty object to be sent by clients even when the data
     // that is meant to be a payload is empty (for instance, in case of an optional
     // `@httpPayload` member)
-    val result = super.writeToArray(codec, value)
-    if (result.isEmpty) "{}".getBytes() else result
+    val result = super.encode(codec, value)
+    if (result.isEmpty || result == Blob("null")) Blob("{}") else result
   }
 
   override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =

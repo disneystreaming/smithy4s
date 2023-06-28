@@ -20,7 +20,7 @@ import cats.effect.IO
 import cats.effect.std.Env
 import cats.syntax.all._
 import fs2.io.file.Path
-import smithy4s.{Document, Schema, ShapeId}
+import smithy4s.{Blob, Document, Schema, ShapeId}
 import smithy4s.compliancetests._
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.dynamic.model.Model
@@ -124,7 +124,7 @@ abstract class ProtocolComplianceSuite
     val schema: Schema[Document] = document
     val codec: codecApi.Codec[Document] = codecApi.compileCodec(schema)
     codecApi
-      .decodeFromByteArray[Document](codec, bytes)
+      .decode[Document](codec, Blob(bytes))
       .getOrElse(sys.error("unable to decode smithy model into document"))
 
   }
