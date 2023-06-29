@@ -22,11 +22,12 @@ import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
 import smithy4s.http.HttpEndpoint
+import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
+import smithy4s.http.uri.HostEndpoint
 import smithy4s.kinds.FunctorK
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
-import smithy4s.http.HttpRestSchema
 
 object RequestEncoder {
 
@@ -65,6 +66,18 @@ object RequestEncoder {
       def apply[A](fa: EntityEncoder[F, A]): RequestEncoder[F, A] =
         fromEntityEncoder[F, A](Concurrent[F], fa)
     }
+
+  def fromHostEndpoint[F[_]: Concurrent, I](
+      hostEndpoint: HostEndpoint[I]
+  ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
+    def write(request: Request[F], input: I): Request[F] = {
+      val hostPrefix = hostEndpoint.hostPrefix(input)
+      val oldUri = request.uri
+      val newAuth = prefixHost(oldUri, hostPrefix)
+      val newUri = oldUri.copy(authority = newAuth)
+      request.withUri(newUri)
+    }
+  }
 
   def fromHttpEndpoint[F[_]: Concurrent, I](
       httpEndpoint: HttpEndpoint[I]
@@ -114,5 +127,16 @@ object RequestEncoder {
     )
     HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
+
+  def prefixHost(u: Uri, prefix: List[String]): Option[Authority] =
+    u.authority.map {
+      case auth @ Authority(_, Uri.RegName(hostName), _) =>
+        auth.copy(host =
+          Uri.RegName(
+            hostName.transform(value => s"${prefix.mkString(".")}.$value")
+          )
+        )
+      case other => other
+    }
 
 }

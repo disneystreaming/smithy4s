@@ -24,7 +24,7 @@ package object internals {
   private[http] type HttpCode[A] = A => Option[Int]
   private[http] val httpHints = HintMask(HttpBinding)
 
-  private[internals] implicit class vectorOps[A](val vector: Vector[A])
+  private[http] implicit class vectorOps[A](val vector: Vector[A])
       extends AnyVal {
     def traverse[B](f: A => Option[B]): Option[Vector[B]] =
       vector.foldLeft[Option[Vector[B]]](Some(Vector.empty)) { (result, a) =>
