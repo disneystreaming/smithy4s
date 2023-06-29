@@ -51,6 +51,21 @@ private[internals] object assert {
     }
   }
 
+  def contains(
+      result: String,
+      expected: String,
+      prefix: String = ""
+  ): ComplianceResult = {
+    if (result.contains(expected)) {
+      success
+    } else {
+      fail(
+        s"$prefix the result value: ${pprint.apply(result)} did not contain the expected TestCase value ${pprint
+          .apply(expected)}."
+      )
+    }
+  }
+
   def eql[A: Eq](
       result: A,
       testCase: A,
