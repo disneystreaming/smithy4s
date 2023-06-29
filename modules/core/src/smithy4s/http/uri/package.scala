@@ -16,24 +16,30 @@
 
 package smithy4s.http
 
-import smithy4s.http.internals.vectorOps
-
 package object uri {
-  private def extractHostLabels(str: String): Option[HostPrefixSegment] = {
+  /*  private def extractHostLabels(str: String): Option[HostPrefixSegment] = {
     if (str == null || str.isEmpty) None
     else if (str.startsWith("{") && str.endsWith("}"))
       Some(HostPrefixSegment.label(str.substring(1, str.length() - 1)))
     else Some(HostPrefixSegment.static(str))
-  }
+  }*/
 
   private[smithy4s] def hostPrefixSegments(
       str: String
   ): Vector[HostPrefixSegment] = {
+    // example input: "foo.{bar}--{baz}abcd{test}.com" produces the following
+    // output: Vector(static(foo.), label(bar), static(--), label(baz), static(abcd), label(test), static(.com))
     str
-      .split('.')
+      .split('{')
+      .toList
+      .flatMap(_.split("}", 2).toList match {
+        case static :: Nil => HostPrefixSegment.static(static) :: Nil
+        case label :: static :: Nil =>
+          HostPrefixSegment
+            .label(label) :: HostPrefixSegment.static(static) :: Nil
+        case _ => Nil
+      })
       .toVector
-      .filterNot(_.isEmpty())
-      .traverse(extractHostLabels(_))
-      .getOrElse(Vector.empty)
+
   }
 }

@@ -87,9 +87,9 @@ object HostPrefixSchemaVisitor
     }
 
     def compileHostPrefix(
-        path: Vector[HostPrefixSegment]
+        hostPrefixSegments: Vector[HostPrefixSegment]
     ): Option[Vector[Writer]] =
-      path.traverse(compile1(_))
+      hostPrefixSegments.traverse(compile1(_))
 
     for {
       endpointHint <- hints.get[smithy.api.Endpoint]

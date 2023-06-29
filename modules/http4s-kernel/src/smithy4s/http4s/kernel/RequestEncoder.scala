@@ -134,7 +134,7 @@ object RequestEncoder {
       case auth @ Authority(_, Uri.RegName(hostName), _) =>
         auth.copy(host =
           Uri.RegName(
-            hostName.transform(value => s"${prefix.mkString(".")}.$value")
+            hostName.transform(value => s"${prefix.mkString("")}.$value")
           )
         )
       case other => other
