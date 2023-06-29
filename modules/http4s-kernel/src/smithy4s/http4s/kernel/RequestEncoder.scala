@@ -21,6 +21,7 @@ import org.http4s.EntityEncoder
 import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
+import org.http4s.Uri.Authority
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
@@ -128,7 +129,7 @@ object RequestEncoder {
     HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 
-  def prefixHost(u: Uri, prefix: List[String]): Option[Authority] =
+  private def prefixHost(u: Uri, prefix: List[String]): Option[Authority] =
     u.authority.map {
       case auth @ Authority(_, Uri.RegName(hostName), _) =>
         auth.copy(host =
