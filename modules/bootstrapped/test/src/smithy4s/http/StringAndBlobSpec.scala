@@ -21,6 +21,7 @@ import smithy4s.codecs._
 import smithy4s.Schema
 import smithy4s.example._
 import smithy4s.schema.CachedSchemaCompiler
+import java.nio.ByteBuffer
 
 class StringAndBlobSpec() extends munit.FunSuite {
 
@@ -69,6 +70,13 @@ class StringAndBlobSpec() extends munit.FunSuite {
 
   test("Strings") {
     check(Schema.string, "hello", Blob("hello"), "text/plain")
+  }
+
+  test("works with bytebuffer") {
+    expect.same(
+      new String("hello"),
+      new String(Blob(ByteBuffer.wrap("hello".getBytes)).toArray)
+    )
   }
 
   test("Strings (custom media-type)") {
