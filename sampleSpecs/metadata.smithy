@@ -6,7 +6,7 @@ namespace smithy4s.example
 /// when testing core
 service DummyService {
   version: "0.0",
-  operations: [Dummy, DummyPath]
+  operations: [Dummy,DummyHostPrefix,  DummyPath]
 }
 
 @http(method: "GET", uri: "/dummy")
@@ -19,6 +19,29 @@ operation Dummy {
 @readonly
 operation DummyPath {
   input: PathParams
+}
+
+@http(method: "GET", uri: "/dummy")
+@endpoint(hostPrefix:"foo.{label1}--abc{label2}.{label3}.secure.")
+operation DummyHostPrefix{
+input: HostLabelInput
+}
+
+structure HostLabelInput {
+  @required
+  @hostLabel
+  label1: String,
+  @required
+  @hostLabel
+  label2: String,
+  @required
+  @hostLabel
+  label3:HostLabelEnum
+}
+
+enum HostLabelEnum {
+  THING1
+  THING2
 }
 
 structure Queries {
