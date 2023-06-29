@@ -60,6 +60,8 @@ trait Writer[Message, A] { self =>
       def write(message: Message, a: A): Message =
         other.write(self.write(message, a), a)
     }
+  def combineOpt(other: Option[Writer[Message, A]]): Writer[Message, A] =
+    other.fold(this)(combine(_))
 
 }
 
