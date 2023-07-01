@@ -29,7 +29,8 @@ object Main {
       NonEmptyList
         .of(
           CodegenCommand.command,
-          DumpModelCommand.command
+          DumpModelCommand.command,
+          VersionCommand.command
         )
         .reduceMapK(Opts.subcommand(_))
     )
@@ -58,6 +59,9 @@ object Main {
 
           case Smithy4sCommand.DumpModel(args) =>
             out.println(Codegen.dumpModel(args))
+
+          case Smithy4sCommand.Version =>
+            out.println(BuildInfo.version)
         }
         .leftMap { help =>
           System.err.println(help.show)

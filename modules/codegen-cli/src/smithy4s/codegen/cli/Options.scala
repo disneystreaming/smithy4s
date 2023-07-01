@@ -15,6 +15,7 @@
  */
 
 package smithy4s.codegen.cli
+
 import cats.data.Validated
 import cats.data.ValidatedNel
 import cats.syntax.all._
