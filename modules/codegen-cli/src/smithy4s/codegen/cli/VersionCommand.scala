@@ -16,12 +16,12 @@
 
 package smithy4s.codegen.cli
 
-import smithy4s.codegen.CodegenArgs
-import smithy4s.codegen.DumpModelArgs
+import com.monovore.decline.Command
+import com.monovore.decline.Opts
 
-sealed trait Smithy4sCommand extends Product with Serializable
-object Smithy4sCommand {
-  final case class Generate(args: CodegenArgs) extends Smithy4sCommand
-  final case class DumpModel(args: DumpModelArgs) extends Smithy4sCommand
-  final case object Version extends Smithy4sCommand
+object VersionCommand {
+  val command: Command[Smithy4sCommand.Version.type] =
+    Command("version", "Output the version of the CLI.")(
+      Opts(Smithy4sCommand.Version)
+    )
 }

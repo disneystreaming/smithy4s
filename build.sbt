@@ -377,9 +377,11 @@ lazy val codegen = projectMatrix
  */
 lazy val `codegen-cli` = projectMatrix
   .in(file("modules/codegen-cli"))
+  .enablePlugins(BuildInfoPlugin)
   .dependsOn(codegen)
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
+    buildInfoPackage := "smithy4s.codegen.cli",
     libraryDependencies ++= Seq(
       Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
