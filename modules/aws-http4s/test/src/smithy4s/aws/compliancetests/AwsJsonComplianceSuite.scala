@@ -43,10 +43,7 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
     val disallowed = Set(
       // this would be taken-care of by middleware
-      "HostWithPathOperation",
-      // tests inconsistent with specification : https://github.com/awslabs/smithy/issues/1827
-      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_0",
-      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1"
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
