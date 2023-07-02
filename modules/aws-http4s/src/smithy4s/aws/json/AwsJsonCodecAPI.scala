@@ -34,7 +34,8 @@ private[aws] class AwsJsonCodecAPI(
     // that is meant to be a payload is empty (for instance, in case of an optional
     // `@httpPayload` member)
     val result = super.encode(codec, value)
-    if (result.isEmpty || result == Blob("null")) Blob("{}") else result
+    if (result.isEmpty || result.sameBytesAs(Blob("null"))) Blob("{}")
+    else result
   }
 
   override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =

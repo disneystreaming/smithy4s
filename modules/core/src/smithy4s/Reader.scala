@@ -1,0 +1,87 @@
+/*
+ *  Copyright 2021-2022 Disney Streaming
+ *
+ *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     https://disneystreaming.github.io/TOST-1.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package smithy4s
+
+import smithy4s.kinds._
+import smithy4s.capability.Covariant
+import smithy4s.capability.Zipper
+
+trait Reader[F[_], -Message, A] { self =>
+
+  def read(message: Message): F[A]
+
+  final def mapK[G[_]](fk: PolyFunction[F, G]): Reader[G, Message, A] =
+    new Reader[G, Message, A] {
+      def read(message: Message): G[A] = fk(self.read(message))
+    }
+
+  final def zoomOut[Message2](
+      f: Message2 => Message
+  ): Reader[F, Message2, A] =
+    new Reader[F, Message2, A] {
+      def read(message: Message2): F[A] = self.read(f(message))
+    }
+
+  final def map[B](f: A => B)(implicit C: Covariant[F]): Reader[F, Message, B] =
+    new Reader[F, Message, B] {
+      def read(message: Message): F[B] = C.map(self.read(message))(f)
+    }
+
+  final def narrow[M2 <: Message]: Reader[F, M2, A] =
+    self.asInstanceOf[Reader[F, M2, A]]
+
+}
+
+object Reader {
+
+  implicit def readerZipper[F[_]: Zipper, Message]
+      : Zipper[Reader[F, Message, *]] = new Zipper[Reader[F, Message, *]] {
+    def pure[A](a: A): Reader[F, Message, A] = new Reader[F, Message, A] {
+      def read(message: Message): F[A] = Zipper[F].pure(a)
+    }
+
+    def zipMapAll[A](seq: IndexedSeq[Kind1.Existential[Reader[F, Message, *]]])(
+        f: IndexedSeq[Any] => A
+    ): Reader[F, Message, A] = new Reader[F, Message, A] {
+      def read(message: Message): F[A] =
+        Zipper[F].zipMapAll(
+          seq.map(r =>
+            Kind1.existential(
+              r.asInstanceOf[Reader[F, Message, Any]].read(message)
+            )
+          )
+        )(f)
+    }
+  }
+
+  def zoomOutK[F[_], Message, Message2](
+      f: Message2 => Message
+  ): PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] =
+    new PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] {
+      def apply[A](fa: Reader[F, Message, A]): Reader[F, Message2, A] =
+        fa.zoomOut(f)
+    }
+
+  def liftPolyFunction[Message, F[_], G[_]](
+      fk: PolyFunction[F, G]
+  ): PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] =
+    new PolyFunction[Reader[F, Message, *], Reader[G, Message, *]] {
+      def apply[A](fa: Reader[F, Message, A]): Reader[G, Message, A] =
+        fa.mapK(fk)
+    }
+
+}

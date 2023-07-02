@@ -67,11 +67,6 @@ object DocumentDecoder {
     new Covariant[DocumentDecoder] {
       def map[A, B](fa: DocumentDecoder[A])(f: A => B): DocumentDecoder[B] =
         fa.map(f)
-
-      def emap[A, B](fa: DocumentDecoder[A])(
-          f: A => Either[ConstraintError, B]
-      ): DocumentDecoder[B] =
-        fa.emap(f)
     }
 
   def instance[A](

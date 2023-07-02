@@ -25,9 +25,9 @@ import smithy4s.Errorable
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpErrorSelector
 import smithy4s.http.Metadata
+import smithy4s.http.HttpRestSchema
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.kinds.PolyFunction
-import smithy4s.kinds.FunctorK
 
 object ResponseDecoder {
 
@@ -69,10 +69,10 @@ object ResponseDecoder {
       select: Discriminator => Option[ResponseDecoder[F, E]]
   ): ResponseDecoder[F, E] = {
     new ResponseDecoder[F, E] {
-      def decode(response: Response[F]): F[E] =
+      def read(response: Response[F]): F[E] =
         response.toStrict(None).flatMap { strictResponse =>
           discriminate(strictResponse).map(_.flatMap(select)).flatMap {
-            case Some(decoder) => decoder.decode(strictResponse)
+            case Some(decoder) => decoder.read(strictResponse)
             case None =>
               val code = strictResponse.status.code
               val headers = getHeaders(strictResponse)
@@ -90,7 +90,7 @@ object ResponseDecoder {
       F: MonadThrow[F],
       entityDecoder: EntityDecoder[F, A]
   ): ResponseDecoder[F, A] = new ResponseDecoder[F, A] {
-    def decode(response: Response[F]): F[A] = response.as[A]
+    def read(response: Response[F]): F[A] = response.as[A]
   }
 
   /**
@@ -104,7 +104,7 @@ object ResponseDecoder {
       metadataDecoder: Metadata.Decoder[A]
   ): ResponseDecoder[F, A] = new ResponseDecoder[F, A] {
 
-    def decode(response: Response[F]): F[A] = {
+    def read(response: Response[F]): F[A] = {
       val metadata = getResponseMetadata(response)
       MonadThrow[F].fromEither(metadataDecoder.decode(metadata))
     }
@@ -120,7 +120,7 @@ object ResponseDecoder {
   def rpcSchemaCompiler[F[_]: Concurrent](
       entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
   ): CachedSchemaCompiler[ResponseDecoder[F, *]] =
-    MessageDecoder.rpcSchemaCompiler(entityDecoderCompiler)
+    MediaDecoder.rpcSchemaCompiler(entityDecoderCompiler)
 
   /**
     * A compiler for ResponseDecoder that abides by REST-semantics :
@@ -135,13 +135,10 @@ object ResponseDecoder {
   )(implicit
       F: Concurrent[F]
   ): CachedSchemaCompiler[ResponseDecoder[F, *]] = {
-    val metadataCompiler = FunctorK[CachedSchemaCompiler]
-      .mapK(metadataDecoderCompiler, fromMetadataDecoderK[F])
-    val bodyCompiler = FunctorK[CachedSchemaCompiler].mapK(
-      entityDecoderCompiler,
-      MessageDecoder.fromEntityDecoderK
-    )
-    MessageDecoder.restCombinedSchemaCompiler[F, Response[F]](
+    val metadataCompiler = metadataDecoderCompiler.mapK(fromMetadataDecoderK[F])
+    val bodyCompiler =
+      entityDecoderCompiler.mapK(MediaDecoder.fromEntityDecoderK)
+    HttpRestSchema.combineReaderCompilers[F, Response[F]](
       metadataCompiler,
       bodyCompiler
     )
