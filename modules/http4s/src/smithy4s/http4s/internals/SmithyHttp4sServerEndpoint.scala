@@ -106,7 +106,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   override val httpApp: HttpApp[F] =
     httpAppErrorHandle(applyMiddleware(HttpApp[F] { req =>
       val run: F[O] = for {
-        input <- inputDecoder.decode(req)
+        input <- inputDecoder.read(req)
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 

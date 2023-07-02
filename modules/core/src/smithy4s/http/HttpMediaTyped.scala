@@ -14,14 +14,22 @@
  *  limitations under the License.
  */
 
-package smithy4s.capability
+package smithy4s.http
 
-trait Covariant[F[_]] {
-  def map[A, B](fa: F[A])(f: A => B): F[B]
-}
+import smithy4s.capability._
+import smithy4s.kinds._
 
-object Covariant {
+/**
+  * A class representing some kind of codec accompanied with a media type.
+  */
+case class HttpMediaTyped[F[_], A](mediaType: HttpMediaType, instance: F[A]) {
+  def map[B](f: A => B)(implicit C: Covariant[F]): HttpMediaTyped[F, B] =
+    HttpMediaTyped(mediaType, C.map(instance)(f))
 
-  def apply[F[_]](implicit instance: Covariant[F]): Covariant[F] = instance
+  def contramap[B](f: B => A)(implicit
+      C: Contravariant[F]
+  ): HttpMediaTyped[F, B] = HttpMediaTyped(mediaType, C.contramap(instance)(f))
 
+  def mapK[G[_]](fk: PolyFunction[F, G]): HttpMediaTyped[G, A] =
+    HttpMediaTyped(mediaType, fk(instance))
 }

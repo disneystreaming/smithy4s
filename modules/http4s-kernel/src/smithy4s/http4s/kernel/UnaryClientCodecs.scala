@@ -60,7 +60,7 @@ object UnaryClientCodecs {
                 RequestEncoder.fromHttpEndpoint[F, I](httpEndpoint)
               val requestEncoder =
                 input.fromSchema(endpoint.input, requestEncoderCache)
-              httpInputEncoder.combine(requestEncoder)
+              httpInputEncoder.pipe(requestEncoder)
             }
             case None => input.fromSchema(endpoint.input, requestEncoderCache)
           }

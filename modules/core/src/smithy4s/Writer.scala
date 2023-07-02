@@ -31,33 +31,40 @@ import smithy4s.capability.EncoderK
   * writers that can be composed together is powerful and helps centralising some complexity
   * in third-party agnostic code.
   */
-trait Writer[Message, A] { self =>
+trait Writer[-In, +Out, A] { self =>
 
   /**
-    * Symbolises the action of writing some content A into a message, which returns
-    * an update message.
+    * Symbolises the action of writing some content A into an input message, which returns
+    * an output message.
     */
-  def write(message: Message, a: A): Message
+  def write(message: In, a: A): Out
 
-  final def contramap[B](f: B => A): Writer[Message, B] =
-    new Writer[Message, B] {
-      def write(message: Message, b: B): Message =
-        self.write(message: Message, f(b))
+  def encode[In0 <: In](a: A)(implicit ev: Unit =:= In0): Out =
+    write(ev.apply(()), a)
+
+  final def contramap[B](f: B => A): Writer[In, Out, B] =
+    new Writer[In, Out, B] {
+      def write(message: In, b: B): Out =
+        self.write(message: In, f(b))
     }
 
-  final def andThen(f: Message => Message): Writer[Message, A] =
-    new Writer[Message, A] {
-      def write(message: Message, a: A): Message = f(self.write(message, a))
+  final def andThen[Out0](
+      f: Out => Out0
+  ): Writer[In, Out0, A] =
+    new Writer[In, Out0, A] {
+      def write(message: In, a: A): Out0 = f(self.write(message, a))
     }
 
-  final def compose(f: Message => Message): Writer[Message, A] =
-    new Writer[Message, A] {
-      def write(message: Message, a: A): Message = self.write(f(message), a)
+  final def compose[In0](
+      f: In0 => In
+  ): Writer[In0, Out, A] =
+    new Writer[In0, Out, A] {
+      def write(message: In0, a: A): Out = self.write(f(message), a)
     }
 
-  def combine(other: Writer[Message, A]): Writer[Message, A] =
-    new Writer[Message, A] {
-      def write(message: Message, a: A): Message =
+  def pipe[Out0](other: Writer[Out, Out0, A]): Writer[In, Out0, A] =
+    new Writer[In, Out0, A] {
+      def write(message: In, a: A): Out0 =
         other.write(self.write(message, a), a)
     }
 
@@ -65,32 +72,45 @@ trait Writer[Message, A] { self =>
 
 object Writer {
 
-  def noop[Message, A]: Writer[Message, A] = new Writer[Message, A] {
-    def write(message: Message, a: A): Message = message
-  }
+  type CachedCompiler[In, Out] = schema.CachedSchemaCompiler[Writer[In, Out, *]]
 
-  def andThenK[Message](
-      f: Message => Message
-  ): PolyFunction[Writer[Message, *], Writer[Message, *]] =
-    new PolyFunction[Writer[Message, *], Writer[Message, *]] {
-      def apply[A](fa: Writer[Message, A]): Writer[Message, A] =
+  def noop[Message, A]: Writer[Message, Message, A] =
+    new Writer[Message, Message, A] {
+      def write(message: Message, a: A): Message = message
+    }
+
+  def andThenK[In, Out, Out0](
+      f: Out => Out0
+  ): PolyFunction[Writer[In, Out, *], Writer[In, Out0, *]] =
+    new PolyFunction[Writer[In, Out, *], Writer[In, Out0, *]] {
+      def apply[A](fa: Writer[In, Out, A]): Writer[In, Out0, A] =
         fa.andThen(f)
     }
 
-  def composeK[Message](
+  def andThenK_[Message](
       f: Message => Message
-  ): PolyFunction[Writer[Message, *], Writer[Message, *]] =
-    new PolyFunction[Writer[Message, *], Writer[Message, *]] {
-      def apply[A](fa: Writer[Message, A]): Writer[Message, A] =
+  ): PolyFunction[Writer[Message, Message, *], Writer[Message, Message, *]] =
+    andThenK(f)
+
+  def composeK[In0, In, Out](
+      f: In0 => In
+  ): PolyFunction[Writer[In, Out, *], Writer[In0, Out, *]] =
+    new PolyFunction[Writer[In, Out, *], Writer[In0, Out, *]] {
+      def apply[A](fa: Writer[In, Out, A]): Writer[In0, Out, A] =
         fa.compose(f)
     }
 
+  def composeK_[Message](
+      f: Message => Message
+  ): PolyFunction[Writer[Message, Message, *], Writer[Message, Message, *]] =
+    composeK(f)
+
   // format: off
-  implicit def writerEncoderK[Message]: EncoderK[Writer[Message, *], Message => Message] =
-    new EncoderK[Writer[Message, *], Message => Message] {
-      def apply[A](fa: Writer[Message, A], a: A): Message => Message = fa.write(_, a)
-      def absorb[A](f: A => (Message => Message)): Writer[Message, A] = new Writer[Message, A] {
-        def write(message: Message, a: A): Message = f(a)(message)
+  implicit def writerEncoderK[In, Out]: EncoderK[Writer[In, Out, *], In => Out] =
+    new EncoderK[Writer[In, Out, *], In => Out] {
+      def apply[A](fa: Writer[In, Out, A], a: A): In => Out = fa.write(_, a)
+      def absorb[A](f: A => (In => Out)): Writer[In, Out, A] = new Writer[In, Out, A] {
+        def write(message: In, a: A): Out = f(a)(message)
       }
     }
   // format: on
