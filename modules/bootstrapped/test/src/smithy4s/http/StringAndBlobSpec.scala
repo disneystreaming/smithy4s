@@ -25,14 +25,15 @@ import smithy4s.schema.CachedSchemaCompiler
 
 class StringAndBlobSpec() extends munit.FunSuite {
 
-  val error =
+  val error = HttpPayloadError(
     PayloadError(PayloadPath.root, "error", "error")
+  )
   object DummyReaderCompiler
       extends CachedSchemaCompiler.Impl[HttpMediaReader] {
     def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaReader[A] =
       HttpMediaTyped(
         HttpMediaType("foo/bar"),
-        Reader.decodeStatic(Left(error): Either[PayloadError, A])
+        Reader.decodeStatic(Left(error): Either[HttpPayloadError, A])
       )
   }
 
