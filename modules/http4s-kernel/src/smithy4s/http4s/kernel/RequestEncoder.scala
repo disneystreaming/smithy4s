@@ -22,10 +22,10 @@ import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
 import smithy4s.http.HttpEndpoint
+import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
-import smithy4s.http.HttpRestSchema
 
 object RequestEncoder {
 

@@ -16,8 +16,10 @@
 
 package smithy4s.http4s
 
+import cats.Applicative
 import cats.Monad
 import cats.effect.SyncIO
+import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.Header
 import org.http4s.Headers
@@ -29,13 +31,11 @@ import org.http4s.{Method => Http4sMethod}
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
 import smithy4s.capability.Covariant
+import smithy4s.capability.Zipper
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.Metadata
 import smithy4s.http.PathParams
 import smithy4s.http.{HttpMethod => SmithyMethod}
-import smithy4s.capability.Zipper
-import cats.Applicative
-import cats.syntax.all._
 
 package object kernel {
 

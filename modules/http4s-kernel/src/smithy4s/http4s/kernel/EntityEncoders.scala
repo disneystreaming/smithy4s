@@ -18,10 +18,11 @@ package smithy4s
 package http4s
 package kernel
 
-import smithy4s.http.HttpMediaWriter
 import org.http4s.EntityEncoder
 import org.http4s.MediaType
 import org.http4s.headers.`Content-Type`
+import smithy4s.codecs._
+import smithy4s.http._
 import smithy4s.kinds.PolyFunction
 
 object EntityEncoders {
@@ -42,5 +43,13 @@ object EntityEncoders {
       def apply[A](httpBodyWriter: HttpMediaWriter[A]): EntityEncoder[F, A] =
         fromHttpMediaWriter[F, A](httpBodyWriter)
     }
+
+  def fromPayloadCodecK[F[_]](
+      mediaType: HttpMediaType
+  ): PolyFunction[PayloadCodec, EntityEncoder[F, *]] = {
+    PayloadCodec.writerK
+      .andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
+      .andThen[EntityEncoder[F, *]](EntityEncoders.fromHttpMediaWriterK)
+  }
 
 }

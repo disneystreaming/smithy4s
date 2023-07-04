@@ -17,7 +17,6 @@
 package smithy4s
 package http
 
-import smithy4s.http.HttpMediaType
 import smithy4s.codecs.ReaderWriter
 
 import schema._
