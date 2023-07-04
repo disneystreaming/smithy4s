@@ -18,7 +18,7 @@ package smithy4s
 package http4s
 package kernel
 
-import smithy4s.http.HttpBodyWriter
+import smithy4s.http.HttpMediaWriter
 import org.http4s.EntityEncoder
 import org.http4s.MediaType
 import org.http4s.headers.`Content-Type`
@@ -26,8 +26,8 @@ import smithy4s.kinds.PolyFunction
 
 object EntityEncoders {
 
-  def fromHttpBodyWriter[F[_], A](
-      httpBodyWriter: HttpBodyWriter[A]
+  def fromHttpMediaWriter[F[_], A](
+      httpBodyWriter: HttpMediaWriter[A]
   ): EntityEncoder[F, A] = {
     val mediaType = MediaType.unsafeParse(httpBodyWriter.mediaType.value)
     EntityEncoder
@@ -36,11 +36,11 @@ object EntityEncoders {
       .contramap[A]((a: A) => httpBodyWriter.instance.encode(a).toArray)
   }
 
-  def fromHttpBodyWriterK[F[_]]
-      : PolyFunction[HttpBodyWriter, EntityEncoder[F, *]] =
-    new PolyFunction[HttpBodyWriter, EntityEncoder[F, *]] {
-      def apply[A](httpBodyWriter: HttpBodyWriter[A]): EntityEncoder[F, A] =
-        fromHttpBodyWriter[F, A](httpBodyWriter)
+  def fromHttpMediaWriterK[F[_]]
+      : PolyFunction[HttpMediaWriter, EntityEncoder[F, *]] =
+    new PolyFunction[HttpMediaWriter, EntityEncoder[F, *]] {
+      def apply[A](httpBodyWriter: HttpMediaWriter[A]): EntityEncoder[F, A] =
+        fromHttpMediaWriter[F, A](httpBodyWriter)
     }
 
 }

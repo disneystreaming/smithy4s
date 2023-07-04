@@ -26,6 +26,7 @@ import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
+import smithy4s.http.HttpPayloadError
 import smithy4s.codecs._
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
@@ -338,7 +339,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case PayloadError(PayloadPath(List()), _, _) =>
+        case HttpPayloadError(PayloadError(PayloadPath(List()), _, _)) =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")
@@ -348,6 +349,7 @@ abstract class PizzaSpec
           // If it was the case, these errors would be turned into a GenericServerError
           // and would fail.
           smithy4s.example.GenericServerError("CatchAll: " + t.getMessage())
+        case other => other.printStackTrace(); other
       }
     )
   } yield res

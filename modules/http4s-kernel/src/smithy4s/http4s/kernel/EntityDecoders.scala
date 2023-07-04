@@ -18,7 +18,7 @@ package smithy4s
 package http4s
 package kernel
 
-import smithy4s.http.HttpBodyReader
+import smithy4s.http.HttpMediaReader
 import cats.effect.kernel.Concurrent
 import cats.syntax.all._
 import org.http4s.EntityDecoder
@@ -28,8 +28,8 @@ import smithy4s.kinds.PolyFunction
 
 object EntityDecoders {
 
-  def fromHttpBodyReader[F[_]: Concurrent, A](
-      httpBodyReader: HttpBodyReader[A]
+  def fromHttpMediaReader[F[_]: Concurrent, A](
+      httpBodyReader: HttpMediaReader[A]
   ): EntityDecoder[F, A] = {
     val mediaType = MediaType.unsafeParse(httpBodyReader.mediaType.value)
     EntityDecoder
@@ -42,11 +42,11 @@ object EntityDecoders {
       )
   }
 
-  def fromHttpBodyReaderK[F[_]: Concurrent]
-      : PolyFunction[HttpBodyReader, EntityDecoder[F, *]] =
-    new PolyFunction[HttpBodyReader, EntityDecoder[F, *]] {
-      def apply[A](httpBodyReader: HttpBodyReader[A]): EntityDecoder[F, A] =
-        fromHttpBodyReader[F, A](httpBodyReader)
+  def fromHttpMediaReaderK[F[_]: Concurrent]
+      : PolyFunction[HttpMediaReader, EntityDecoder[F, *]] =
+    new PolyFunction[HttpMediaReader, EntityDecoder[F, *]] {
+      def apply[A](httpBodyReader: HttpMediaReader[A]): EntityDecoder[F, A] =
+        fromHttpMediaReader[F, A](httpBodyReader)
     }
 
 }

@@ -27,34 +27,34 @@ import smithy4s.codecs._
 object StringAndBlobCodecs {
 
   def readerOr(
-      other: CachedSchemaCompiler[HttpBodyReader]
-  ): CachedSchemaCompiler[HttpBodyReader] =
+      other: CachedSchemaCompiler[HttpMediaReader]
+  ): CachedSchemaCompiler[HttpMediaReader] =
     CachedSchemaCompiler.getOrElse(ReaderCompiler, other)
 
   def writerOr(
-      other: CachedSchemaCompiler[HttpBodyWriter]
-  ): CachedSchemaCompiler[HttpBodyWriter] =
+      other: CachedSchemaCompiler[HttpMediaWriter]
+  ): CachedSchemaCompiler[HttpMediaWriter] =
     CachedSchemaCompiler.getOrElse(WriterCompiler, other)
 
   private object ReaderCompiler
-      extends CachedSchemaCompiler.Possible.Impl[HttpBodyReader] {
+      extends CachedSchemaCompiler.Possible.Impl[HttpMediaReader] {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
-    ): Option[HttpBodyReader[A]] =
+    ): Option[HttpMediaReader[A]] =
       StringAndBlobReaderVisitor(schema).map(_.mapInstance(_.reader))
   }
 
   private object WriterCompiler
-      extends CachedSchemaCompiler.Possible.Impl[HttpBodyWriter] {
+      extends CachedSchemaCompiler.Possible.Impl[HttpMediaWriter] {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
-    ): Option[HttpBodyWriter[A]] =
+    ): Option[HttpMediaWriter[A]] =
       StringAndBlobReaderVisitor(schema).map(_.mapInstance(_.writer))
   }
 
-  private type CodecResult[A] = Option[HttpBodyCodec[A]]
+  private type CodecResult[A] = Option[HttpMediaCodec[A]]
 
   private object StringAndBlobReaderVisitor
       extends SchemaVisitor.Default[CodecResult] {
@@ -98,9 +98,9 @@ object StringAndBlobCodecs {
       )
     }
 
-    private val stringReader: PayloadReader[String] = {
-      new PayloadReader[String] {
-        def read(blob: Blob): Either[PayloadError, String] = Right(
+    private val stringReader: HttpPayloadReader[String] = {
+      new HttpPayloadReader[String] {
+        def read(blob: Blob): Either[HttpPayloadError, String] = Right(
           blob.toUTF8String
         )
       }
@@ -109,9 +109,9 @@ object StringAndBlobCodecs {
     private val stringWriter: PayloadWriter[String] =
       Writer.encodeBy(Blob(_))
 
-    private val blobReader: PayloadReader[ByteArray] = {
-      new PayloadReader[ByteArray] {
-        def read(blob: Blob): Either[PayloadError, ByteArray] = Right(
+    private val blobReader: HttpPayloadReader[ByteArray] = {
+      new HttpPayloadReader[ByteArray] {
+        def read(blob: Blob): Either[HttpPayloadError, ByteArray] = Right(
           ByteArray(blob.toArray)
         )
       }
@@ -130,18 +130,20 @@ object StringAndBlobCodecs {
       val mediaType = stringMediaType(hints)
       tag match {
         case EnumTag.StringEnum =>
-          val reader = new PayloadReader[E] {
-            def read(blob: Blob): Either[PayloadError, E] = {
+          val reader = new HttpPayloadReader[E] {
+            def read(blob: Blob): Either[HttpPayloadError, E] = {
               val str = blob.toUTF8String
               values
                 .find(_.stringValue == str) match {
                 case Some(enumValue) => Right(enumValue.value)
                 case None =>
                   Left(
-                    new PayloadError(
-                      PayloadPath.root,
-                      s"expected one of ${values.mkString(",")}",
-                      s"Unknown enum value $str"
+                    HttpPayloadError(
+                      PayloadError(
+                        PayloadPath.root,
+                        s"expected one of ${values.mkString(",")}",
+                        s"Unknown enum value $str"
+                      )
                     )
                   )
               }
@@ -167,15 +169,17 @@ object StringAndBlobCodecs {
         refinement: Refinement[A, B]
     ): CodecResult[B] =
       self(schema).map(_.mapInstance { case ReaderWriter(readerA, writerA) =>
-        val readerB = new PayloadReader[B] {
-          def read(blob: Blob): Either[PayloadError, B] =
+        val readerB = new HttpPayloadReader[B] {
+          def read(blob: Blob): Either[HttpContractError, B] =
             readerA
               .read(blob)
               .flatMap(refinement.asFunction(_).left.map { error =>
-                PayloadError(
-                  PayloadPath.root,
-                  refinement.tag.id.show,
-                  error.getMessage
+                HttpPayloadError(
+                  PayloadError(
+                    PayloadPath.root,
+                    refinement.tag.id.show,
+                    error.getMessage
+                  )
                 )
               })
         }
@@ -188,8 +192,8 @@ object StringAndBlobCodecs {
         schema: Schema[A]
     ): CodecResult[Option[A]] =
       self(schema).map(_.mapInstance { case ReaderWriter(readerA, writerA) =>
-        val readerOptionA = new PayloadReader[Option[A]] {
-          def read(blob: Blob): Either[PayloadError, Option[A]] =
+        val readerOptionA = new HttpPayloadReader[Option[A]] {
+          def read(blob: Blob): Either[HttpContractError, Option[A]] =
             if (blob.isEmpty) Right(None)
             else readerA.read(blob).map(a => Some(a))
         }
