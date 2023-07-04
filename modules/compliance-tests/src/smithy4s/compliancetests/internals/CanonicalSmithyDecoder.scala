@@ -25,7 +25,7 @@ import smithy4s.schema._
 import smithy4s.schema.Primitive._
 import smithy4s.Timestamp
 import smithy4s.ByteArray
-import smithy4s.http.PayloadError
+import smithy4s.codecs.PayloadError
 
 object CanonicalSmithyDecoder {
 

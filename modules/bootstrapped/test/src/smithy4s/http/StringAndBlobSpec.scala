@@ -17,7 +17,7 @@
 package smithy4s
 package http
 
-import smithy4s.PayloadPath
+import smithy4s.codecs._
 import smithy4s.Schema
 import smithy4s.example._
 import smithy4s.http.StringAndBlobCodecs

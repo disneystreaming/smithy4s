@@ -1,6 +1,7 @@
-package smithy4s
+package smithy4s.codecs
 
-import smithy4s.Schema._
+import smithy4s.schema._
+import smithy4s.schema.Schema._
 
 case class PayloadError(
     path: PayloadPath,

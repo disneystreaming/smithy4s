@@ -26,6 +26,7 @@ import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
 import alloy.Discriminated
+import smithy4s.codecs._
 import smithy4s.capability.Covariant
 import smithy4s.Document._
 import smithy4s.schema._
@@ -211,7 +212,7 @@ class DocumentDecoderSchemaVisitor(
       def expected = decoder.expected
 
       def apply(
-          history: List[smithy4s.PayloadPath.Segment],
+          history: List[PayloadPath.Segment],
           document: smithy4s.Document
       ): Option[A] = if (document == Document.DNull) None
       else Some(decoder(history, document))

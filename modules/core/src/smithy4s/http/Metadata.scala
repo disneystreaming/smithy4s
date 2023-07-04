@@ -170,7 +170,7 @@ object Metadata {
       extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
-      extends CachedSchemaCompiler.Impl[Decoder] {
+      extends CachedSchemaCompiler.DerivingImpl[Decoder] {
     type Aux[A] = internals.MetaDecode[A]
 
     def apply[A](implicit instance: Decoder[A]): Decoder[A] =
@@ -212,7 +212,7 @@ object Metadata {
       extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedEncoderCompilerImpl(awsHeaderEncoding: Boolean)
-      extends CachedSchemaCompiler.Impl[Encoder] {
+      extends CachedSchemaCompiler.DerivingImpl[Encoder] {
 
     type Aux[A] = internals.MetaEncode[A]
 

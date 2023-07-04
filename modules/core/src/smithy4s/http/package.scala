@@ -16,6 +16,9 @@
 
 package smithy4s
 
+import smithy4s.codecs.PayloadReader
+import smithy4s.codecs.PayloadWriter
+import smithy4s.codecs.PayloadCodec
 
 package object http {
 

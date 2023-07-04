@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.codecs
 
 import smithy4s.kinds._
 import smithy4s.capability.Covariant
@@ -23,6 +23,7 @@ import smithy4s.capability.Zipper
 trait Reader[F[_], -Message, A] { self =>
 
   def read(message: Message): F[A]
+  final def decode(message: Message): F[A] = read(message)
 
   final def mapK[G[_]](fk: PolyFunction[F, G]): Reader[G, Message, A] =
     new Reader[G, Message, A] {

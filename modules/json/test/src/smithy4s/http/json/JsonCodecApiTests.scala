@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.json
+package smithy4s.json
 
 import munit.FunSuite
 import smithy.api.JsonName
@@ -35,10 +35,12 @@ class JsonCodecApiTests extends FunSuite {
           .required[String]("a", identity)
       )(identity)
 
-    val capi = codecs(HintMask.empty)
+    val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
+      Json.jsoniter.withHintMask(HintMask.empty)
+    )
 
-    val codec = capi.compileCodec(schemaWithJsonName)
-    val encoded = capi.encode(codec, "test")
+    val codec = capi.fromSchema(schemaWithJsonName)
+    val encoded = codec.writer.encode("test")
 
     assertEquals(encoded, Blob("""{"a":"test"}"""))
   }
@@ -54,11 +56,8 @@ class JsonCodecApiTests extends FunSuite {
             .required[String]("a", identity)
         )(identity)
 
-    val capi = new JsonCodecs(HintMask.empty)
-
-    val codec = capi.compileCodec(schemaWithRequiredField)
-
-    val decoded = capi.decode(codec, Blob("{}"))
+    val codec = Json.payloadCodecs.fromSchema(schemaWithRequiredField)
+    val decoded = codec.reader.decode(Blob("{}"))
 
     assert(decoded.isLeft)
   }
@@ -73,10 +72,12 @@ class JsonCodecApiTests extends FunSuite {
           .optional[Option[String]]("a", identity)
       )(identity)
 
-    val capi = codecs(HintMask.empty, explicitNullEncoding = true)
+    val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
+      Json.jsoniter.withExplicitNullEncoding(true)
+    )
 
-    val codec = capi.compileCodec(schemaWithJsonName)
-    val encoded = capi.encode(codec, None)
+    val codec = capi.fromSchema(schemaWithJsonName)
+    val encoded = codec.writer.encode(None)
 
     assertEquals(encoded, Blob("""{"a":null}"""))
   }
@@ -84,7 +85,12 @@ class JsonCodecApiTests extends FunSuite {
   test(
     "explicit nulls should be parsable regardless of explicitNullEncoding setting"
   ) {
-    List(true, false).foreach { nullEncoding =>
+    val withoutNulls = Json.payloadCodecs
+    val withNulls = Json.payloadCodecs.withJsoniterCodecCompiler(
+      Json.jsoniter.withExplicitNullEncoding(true)
+    )
+
+    List(withoutNulls, withNulls).foreach { capi =>
       val schemaWithJsonName = Schema
         .struct[Option[String]]
         .apply(
@@ -92,11 +98,8 @@ class JsonCodecApiTests extends FunSuite {
             .optional[Option[String]]("a", identity)
         )(identity)
 
-      val capi =
-        codecs(HintMask.empty, explicitNullEncoding = nullEncoding)
-
-      val codec = capi.compileCodec(schemaWithJsonName)
-      val decoded = capi.decode(codec, Blob("""{"a":null}"""))
+      val codec = capi.fromSchema(schemaWithJsonName)
+      val decoded = codec.reader.decode(Blob("""{"a":null}"""))
 
       assertEquals(decoded, Right(None))
     }
