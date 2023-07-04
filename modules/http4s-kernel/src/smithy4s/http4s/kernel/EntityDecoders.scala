@@ -18,13 +18,15 @@ package smithy4s
 package http4s
 package kernel
 
-import smithy4s.http.HttpMediaReader
 import cats.effect.kernel.Concurrent
 import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.MediaType
 import org.http4s._
+import smithy4s.codecs._
+import smithy4s.http._
 import smithy4s.kinds.PolyFunction
+import smithy4s.kinds.PolyFunctions
 
 object EntityDecoders {
 
@@ -48,5 +50,15 @@ object EntityDecoders {
       def apply[A](httpBodyReader: HttpMediaReader[A]): EntityDecoder[F, A] =
         fromHttpMediaReader[F, A](httpBodyReader)
     }
+
+  def fromPayloadCodecK[F[_]: Concurrent](
+      mediaType: HttpMediaType
+  ): PolyFunction[PayloadCodec, EntityDecoder[F, *]] = {
+    // scalafmt: {maxColumn = 120}
+    PayloadCodec.readerK
+      .andThen[HttpPayloadReader](Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpPayloadError(_))))
+      .andThen[HttpMediaReader](HttpMediaTyped.mediaTypeK(mediaType))
+      .andThen[EntityDecoder[F, *]](EntityDecoders.fromHttpMediaReaderK)
+  }
 
 }

@@ -24,10 +24,10 @@ import org.http4s.Response
 import smithy4s.Errorable
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpErrorSelector
-import smithy4s.http.Metadata
 import smithy4s.http.HttpRestSchema
-import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
 
 object ResponseDecoder {
 

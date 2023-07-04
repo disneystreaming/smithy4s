@@ -18,13 +18,13 @@ package smithy4s
 package http4s
 package internals
 
+import cats.effect.Concurrent
 import cats.syntax.all._
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
-import cats.effect.Concurrent
 
 // format: off
 private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](

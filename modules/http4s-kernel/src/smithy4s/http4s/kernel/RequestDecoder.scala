@@ -20,10 +20,10 @@ import cats.MonadThrow
 import cats.effect.Concurrent
 import org.http4s.EntityDecoder
 import org.http4s.Request
-import smithy4s.http.Metadata
 import smithy4s.http.HttpRestSchema
-import smithy4s.schema._
+import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
+import smithy4s.schema._
 
 object RequestDecoder {
 

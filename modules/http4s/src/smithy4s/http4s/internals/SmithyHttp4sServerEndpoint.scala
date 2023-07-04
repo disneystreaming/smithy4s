@@ -19,15 +19,15 @@ package http4s
 package internals
 
 import cats.data.Kleisli
+import cats.effect.Concurrent
 import cats.syntax.all._
+import org.http4s.HttpApp
 import org.http4s.Method
 import org.http4s.Response
 import org.http4s.Status
 import smithy4s.http._
-import smithy4s.kinds._
-import org.http4s.HttpApp
 import smithy4s.http4s.kernel._
-import cats.effect.Concurrent
+import smithy4s.kinds._
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes

@@ -22,13 +22,13 @@ import org.http4s.Response
 import org.http4s.Status
 import smithy4s.Errorable
 import smithy4s.codecs.Writer
+import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpStatusCode
 import smithy4s.http._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Alt
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
-import smithy4s.http.HttpRestSchema
 
 object ResponseEncoder {
 

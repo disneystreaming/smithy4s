@@ -17,11 +17,11 @@
 package smithy4s.http4s.kernel
 
 import cats.MonadThrow
+import cats.effect.Concurrent
+import org.http4s.EntityDecoder
 import org.http4s.Media
 import smithy4s.kinds.PolyFunction
-import org.http4s.EntityDecoder
 import smithy4s.schema.CachedSchemaCompiler
-import cats.effect.Concurrent
 
 object MediaDecoder {
 

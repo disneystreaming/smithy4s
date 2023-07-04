@@ -50,7 +50,7 @@ object Zipper {
       }
 
       override def zipMapAll[A](
-          seq: IndexedSeq[Either[E, _]]
+          seq: IndexedSeq[Either[E, Any]]
       )(f: IndexedSeq[Any] => A): Either[E, A] = {
         val builder = IndexedSeq.newBuilder[Any]
         var i = 0

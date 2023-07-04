@@ -18,20 +18,17 @@ package smithy4s
 package http4s
 package internals
 
-import smithy4s.http.HttpDiscriminator
-import smithy4s.http4s.kernel._
+import cats.effect.Concurrent
 import org.http4s.EntityDecoder
-import smithy4s.schema.CachedSchemaCompiler
 import org.http4s.Response
 import org.http4s.headers.`Content-Type`
-import cats.effect.Concurrent
-import smithy4s.http.Metadata
 import org.http4s.syntax.all._
-import smithy4s.json.Json
-import smithy4s.codecs._
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http.Metadata
 import smithy4s.http._
-import smithy4s.kinds.PolyFunctions
-import org.http4s.EntityEncoder
+import smithy4s.http4s.kernel._
+import smithy4s.json.Json
+import smithy4s.schema.CachedSchemaCompiler
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -47,19 +44,14 @@ private[http4s] class SimpleRestJsonCodecs(
         .withExplicitNullEncoding(explicitNullEncoding)
     )
 
-  val mediaType = HttpMediaType("application/json")¨
+  val mediaType = HttpMediaType("application/json")
   def entityEncoders[F[_]] = underlyingCodecs.mapK {
-    PayloadCodec.writerK
-      .andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
-      .andThen[EntityEncoder[F, *]](EntityEncoders.fromHttpMediaWriterK)
+    EntityEncoders.fromPayloadCodecK[F](mediaType)
   }
 
   // scalafmt: {maxColumn = 120}
   def entityDecoders[F[_]: Concurrent]: CachedSchemaCompiler[EntityDecoder[F, *]] = underlyingCodecs.mapK {
-    PayloadCodec.readerK
-      .andThen[HttpPayloadReader](Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpPayloadError(_))))
-      .andThen[HttpMediaReader](HttpMediaTyped.mediaTypeK(mediaType))
-      .andThen[EntityDecoder[F, *]](EntityDecoders.fromHttpMediaReaderK)
+    EntityDecoders.fromPayloadCodecK[F](mediaType)
   }
 
   private val errorHeaders = List(
