@@ -20,7 +20,6 @@ package http
 import smithy4s.codecs._
 import smithy4s.Schema
 import smithy4s.example._
-import smithy4s.http.StringAndBlobCodecs
 import smithy4s.schema.CachedSchemaCompiler
 
 class StringAndBlobSpec() extends munit.FunSuite {
@@ -120,7 +119,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     val readerMediaType = reader.mediaType
     val writerMediaType = writer.mediaType
     val expectedRoundTripped =
-      Left(PayloadError(PayloadPath.root, "error", "error"))
+      Left(HttpPayloadError(PayloadError(PayloadPath.root, "error", "error")))
     expect.same(result, Blob.empty)
     expect.same(roundTripped, expectedRoundTripped)
     expect.same(writerMediaType, HttpMediaType("foo/bar"))
