@@ -25,7 +25,7 @@ import org.http4s.Uri.Authority
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
-import smithy4s.http.uri.HostEndpoint
+import smithy4s.http.uri.HostPrefixInjector
 import smithy4s.kinds.FunctorK
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
@@ -69,10 +69,10 @@ object RequestEncoder {
     }
 
   def fromHostEndpoint[F[_]: Concurrent, I](
-      hostEndpoint: HostEndpoint[I]
+      hostEndpoint: HostPrefixInjector[I]
   ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
     def write(request: Request[F], input: I): Request[F] = {
-      val hostPrefix = hostEndpoint.hostPrefix(input)
+      val hostPrefix = hostEndpoint.inject(input)
       val oldUri = request.uri
       val newAuth = prefixHost(oldUri, hostPrefix)
       val newUri = oldUri.copy(authority = newAuth)

@@ -29,7 +29,8 @@ import org.http4s.syntax.all._
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
-    val explicitNullEncoding: Boolean
+    val explicitNullEncoding: Boolean,
+    val hostPrefixInjectionEnabled: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
@@ -109,7 +110,8 @@ private[http4s] class SimpleRestJsonCodecs(
             errorHeaders,
             getResponseMetadata(response)
           )
-        )
+        ),
+      hostPrefixInjectionEnabled
     )
   }
 

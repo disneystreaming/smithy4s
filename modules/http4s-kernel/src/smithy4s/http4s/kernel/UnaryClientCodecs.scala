@@ -21,7 +21,7 @@ import org.http4s.Response
 import smithy4s.Endpoint
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.HttpEndpoint
-import smithy4s.http.uri.HostEndpoint
+import smithy4s.http.uri.HostPrefixInjector
 import smithy4s.http4s.kernel.RequestEncoder.fromHostEndpoint
 import smithy4s.schema.CachedSchemaCompiler
 
@@ -45,7 +45,8 @@ object UnaryClientCodecs {
         input: CachedSchemaCompiler[RequestEncoder[F, *]],
         output: CachedSchemaCompiler[ResponseDecoder[F, *]],
         error: CachedSchemaCompiler[ResponseDecoder[F, *]],
-        errorDiscriminator: Response[F] => F[Option[HttpDiscriminator]]
+        errorDiscriminator: Response[F] => F[Option[HttpDiscriminator]],
+        hostPrefixInjection: Boolean = true
     ): Make[F] = new Make[F] {
 
       private val requestEncoderCache: input.Cache = input.createCache()
@@ -55,18 +56,23 @@ object UnaryClientCodecs {
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] =
         new UnaryClientCodecs[F, I, E, O] {
+          private val requestEncoder =
+            input.fromSchema(endpoint.input, requestEncoderCache)
+          private val hostEncoder =
+            if (hostPrefixInjection)
+              HostPrefixInjector(endpoint).map(fromHostEndpoint(_))
+            else None
+          private val baseEncoder = requestEncoder.combineOpt(hostEncoder)
           val inputEncoder: RequestEncoder[F, I] = {
             HttpEndpoint.cast(endpoint).toOption match {
               case Some(httpEndpoint) => {
                 val httpInputEncoder =
                   RequestEncoder.fromHttpEndpoint[F, I](httpEndpoint)
-                val requestEncoder =
-                  input.fromSchema(endpoint.input, requestEncoderCache)
-                httpInputEncoder.combine(requestEncoder)
+                httpInputEncoder.combine(baseEncoder)
               }
-              case None => input.fromSchema(endpoint.input, requestEncoderCache)
+              case None => baseEncoder
             }
-          }.combineOpt(HostEndpoint(endpoint).map(fromHostEndpoint[F, I](_)))
+          }
 
           val outputDecoder: ResponseDecoder[F, O] =
             output.fromSchema(endpoint.output, responseDecoderCache)

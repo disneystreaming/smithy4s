@@ -17,7 +17,7 @@
 package smithy4s
 package http4s
 
-object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024, false)
+object SimpleRestJsonBuilder extends SimpleRestJsonBuilder(1024, false, true)
 
 class SimpleRestJsonBuilder private (
     simpleRestJsonCodecs: internals.SimpleRestJsonCodecs
@@ -25,13 +25,24 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs
     ) {
 
-  def this(maxArity: Int, explicitNullEncoding: Boolean) =
-    this(new internals.SimpleRestJsonCodecs(maxArity, explicitNullEncoding))
+  def this(
+      maxArity: Int,
+      explicitNullEncoding: Boolean,
+      hostPrefixInjection: Boolean
+  ) =
+    this(
+      new internals.SimpleRestJsonCodecs(
+        maxArity,
+        explicitNullEncoding,
+        hostPrefixInjection
+      )
+    )
 
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       maxArity,
-      simpleRestJsonCodecs.explicitNullEncoding
+      simpleRestJsonCodecs.explicitNullEncoding,
+      simpleRestJsonCodecs.hostPrefixInjectionEnabled
     )
 
   def withExplicitNullEncoding(
@@ -39,6 +50,13 @@ class SimpleRestJsonBuilder private (
   ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.maxArity,
-      explicitNullEncoding
+      explicitNullEncoding,
+      simpleRestJsonCodecs.hostPrefixInjectionEnabled
+    )
+  def disableHostPrefixInjection(): SimpleRestJsonBuilder =
+    new SimpleRestJsonBuilder(
+      simpleRestJsonCodecs.maxArity,
+      simpleRestJsonCodecs.explicitNullEncoding,
+      false
     )
 }

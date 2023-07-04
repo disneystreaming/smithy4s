@@ -18,14 +18,14 @@ package smithy4s.http.uri
 
 import smithy4s.Endpoint
 
-trait HostEndpoint[I] {
-  def hostPrefix(input: I): List[String]
+trait HostPrefixInjector[I] {
+  def inject(input: I): List[String]
 }
 
-object HostEndpoint {
+object HostPrefixInjector {
   def apply[I, E, O, SI, SO](
       endpoint: Endpoint.Base[I, E, O, SI, SO]
-  ): Option[HostEndpoint[I]] = {
+  ): Option[HostPrefixInjector[I]] = {
     for {
       endpointHint <- endpoint.hints.get(smithy.api.Endpoint)
       hostPrefixEncoder = HostPrefixSchemaVisitor(
@@ -33,8 +33,8 @@ object HostEndpoint {
       )
 
     } yield {
-      new HostEndpoint[I] {
-        def hostPrefix(input: I): List[String] =
+      new HostPrefixInjector[I] {
+        def inject(input: I): List[String] =
           hostPrefixEncoder.map(_.encode(input)).getOrElse(List.empty)
       }
     }

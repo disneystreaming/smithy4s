@@ -36,7 +36,7 @@ class HostPrefixSpec() extends munit.FunSuite {
 
   // "foo.{label1}--abc{label2}.{label3}.secure
   test("Write a valid Host Prefix    for DummyHostPrefix") {
-    val result = HostEndpoint(DummyHostPrefix).get
+    val result = HostPrefixInjector(DummyHostPrefix).get
     HostLabelInput(
       "mabeline",
       "virgo",
