@@ -31,7 +31,7 @@ import smithy4s.capability.EncoderK
   * writers that can be composed together is powerful and helps centralising some complexity
   * in third-party agnostic code.
   */
-trait Writer[-In, +Out, A] { self =>
+trait Writer[-In, +Out, -A] { self =>
 
   /**
     * Symbolises the action of writing some content A into an input message, which returns
@@ -62,9 +62,9 @@ trait Writer[-In, +Out, A] { self =>
       def write(message: In0, a: A): Out = self.write(f(message), a)
     }
 
-  def pipe[Out0](other: Writer[Out, Out0, A]): Writer[In, Out0, A] =
-    new Writer[In, Out0, A] {
-      def write(message: In, a: A): Out0 =
+  def pipe[Out0, A0 <: A](other: Writer[Out, Out0, A0]): Writer[In, Out0, A0] =
+    new Writer[In, Out0, A0] {
+      def write(message: In, a: A0): Out0 =
         other.write(self.write(message, a), a)
     }
 
@@ -73,6 +73,16 @@ trait Writer[-In, +Out, A] { self =>
 object Writer {
 
   type CachedCompiler[In, Out] = schema.CachedSchemaCompiler[Writer[In, Out, *]]
+
+  def encodeBy[A, Message](f: A => Message): Writer[Unit, Message, A] =
+    new Writer[Unit, Message, A] {
+      def write(message: Unit, a: A): Message = f(a)
+    }
+
+  def encodeStatic[Message, A](message: Message): Writer[Unit, Message, A] =
+    new Writer[Unit, Message, A] {
+      def write(unit: Unit, a: A): Message = message
+    }
 
   def noop[Message, A]: Writer[Message, Message, A] =
     new Writer[Message, Message, A] {

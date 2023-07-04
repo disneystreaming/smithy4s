@@ -22,7 +22,13 @@ import smithy4s.kinds._
 /**
   * A class representing some kind of codec accompanied with a media type.
   */
-case class HttpMediaTyped[F[_], A](mediaType: HttpMediaType, instance: F[A]) {
+final case class HttpMediaTyped[F[_], A](
+    mediaType: HttpMediaType,
+    instance: F[A]
+) {
+  def mapInstance[G[_], B](f: F[A] => G[B]): HttpMediaTyped[G, B] =
+    HttpMediaTyped(mediaType, f(instance))
+
   def map[B](f: A => B)(implicit C: Covariant[F]): HttpMediaTyped[F, B] =
     HttpMediaTyped(mediaType, C.map(instance)(f))
 

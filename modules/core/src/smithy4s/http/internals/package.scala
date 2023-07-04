@@ -19,9 +19,6 @@ package http
 
 package object internals {
 
-  type HttpBodyReader[A] = smithy4s.Reader[Either[PayloadError, *], Blob, A]
-  type HttpBodyWriter[A] = smithy4s.Writer[Unit, Blob, A]
-
   private[internals] type AwsMergeableHeader[A] = Option[A => String]
   private[internals] type AwsHeaderSplitter[A] = Option[String => Seq[String]]
   private[http] type HttpCode[A] = A => Option[Int]

@@ -16,10 +16,15 @@
 
 package smithy4s
 
+
 package object http {
 
   val errorTypeHeader = "X-Error-Type"
   val amazonErrorTypeHeader = "X-Amzn-Errortype"
+
+  type HttpBodyReader[A] = HttpMediaTyped[PayloadReader, A]
+  type HttpBodyWriter[A] = HttpMediaTyped[PayloadWriter, A]
+  type HttpBodyCodec[A] = HttpMediaTyped[PayloadCodec, A]
 
   type PathParams = Map[String, String]
   type HttpMediaType = HttpMediaType.Type

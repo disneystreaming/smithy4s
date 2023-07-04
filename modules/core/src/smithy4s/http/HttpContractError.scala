@@ -27,33 +27,31 @@ sealed trait HttpContractError
 object HttpContractError {
 
   val schema: Schema[HttpContractError] = {
-    val payload = PayloadError.schema.oneOf[HttpContractError]("payload")
+    val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")
     val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
     union(payload, metadata) {
-      case n: PayloadError  => payload(n)
-      case w: MetadataError => metadata(w)
+      case n: HttpPayloadError => payload(n)
+      case w: MetadataError    => metadata(w)
     }
   }
 
 }
 
-case class PayloadError(
-    path: PayloadPath,
-    expected: String,
-    message: String
+case class HttpPayloadError(
+    payloadError: PayloadError
 ) extends HttpContractError {
+  import payloadError._
   override def toString(): String =
-    s"PayloadError($path, expected = $expected, message=$message)"
+    s"HttpPayloadError($path, expected = $expected, message=$message)"
   override def getMessage(): String = s"$message (path: $path)"
 }
 
-object PayloadError {
-  val schema: Schema[PayloadError] = {
-    val path = PayloadPath.schema.required[PayloadError]("path", _.path)
-    val expected = string.required[PayloadError]("expected", _.expected)
-    val message = string.required[PayloadError]("message", _.message)
-    struct(path, expected, message)(PayloadError.apply)
-  }
+object HttpPayloadError {
+  val schema: Schema[HttpPayloadError] = PayloadError.schema
+    .biject(
+      HttpPayloadError(_),
+      (_: HttpPayloadError).payloadError
+    )
 }
 
 sealed trait MetadataError extends HttpContractError {

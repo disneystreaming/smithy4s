@@ -49,9 +49,8 @@ package object kernel {
   private[kernel] implicit def applicativeZipper[F[_]: Applicative]: Zipper[F] =
     new Zipper[F] {
       def pure[A](a: A): F[A] = Applicative[F].pure(a)
-      def zipMapAll[A](seq: IndexedSeq[Kind1.Existential[F]])(
-          f: IndexedSeq[Any] => A
-      ): F[A] = seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
+      def zipMapAll[A](seq: IndexedSeq[F[_]])(f: IndexedSeq[Any] => A): F[A] =
+        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
     }
 
   /**

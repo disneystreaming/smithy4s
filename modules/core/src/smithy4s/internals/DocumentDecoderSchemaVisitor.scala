@@ -28,7 +28,6 @@ import smithy.api.TimestampFormat.HTTP_DATE
 import alloy.Discriminated
 import smithy4s.capability.Covariant
 import smithy4s.Document._
-import smithy4s.http.PayloadError
 import smithy4s.schema._
 import smithy4s.schema.Primitive._
 import scala.collection.immutable.ListMap

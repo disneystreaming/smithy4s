@@ -29,7 +29,7 @@ trait Reader[F[_], -Message, A] { self =>
       def read(message: Message): G[A] = fk(self.read(message))
     }
 
-  final def zoomOut[Message2](
+  final def compose[Message2](
       f: Message2 => Message
   ): Reader[F, Message2, A] =
     new Reader[F, Message2, A] {
@@ -54,26 +54,34 @@ object Reader {
       def read(message: Message): F[A] = Zipper[F].pure(a)
     }
 
-    def zipMapAll[A](seq: IndexedSeq[Kind1.Existential[Reader[F, Message, *]]])(
+    def zipMapAll[A](seq: IndexedSeq[Reader[F, Message, Any]])(
         f: IndexedSeq[Any] => A
     ): Reader[F, Message, A] = new Reader[F, Message, A] {
-      def read(message: Message): F[A] =
+      def read(message: Message): F[A] = {
         Zipper[F].zipMapAll(
-          seq.map(r =>
-            Kind1.existential(
-              r.asInstanceOf[Reader[F, Message, Any]].read(message)
-            )
-          )
+          seq
+            .asInstanceOf[IndexedSeq[Reader[F, Message, Any]]]
+            .map(_.read(message))
         )(f)
+      }
     }
   }
 
-  def zoomOutK[F[_], Message, Message2](
+  def identity[F[_]: Zipper, A]: Reader[F, A, A] = new Reader[F, A, A] {
+    def read(message: A): F[A] = Zipper[F].pure(message)
+  }
+
+  def decodeStatic[F[_], A](fa: F[A]): Reader[F, Any, A] =
+    new Reader[F, Any, A] {
+      def read(message: Any): F[A] = fa
+    }
+
+  def composeK[F[_], Message, Message2](
       f: Message2 => Message
   ): PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] =
     new PolyFunction[Reader[F, Message, *], Reader[F, Message2, *]] {
       def apply[A](fa: Reader[F, Message, A]): Reader[F, Message2, A] =
-        fa.zoomOut(f)
+        fa.compose(f)
     }
 
   def liftPolyFunction[Message, F[_], G[_]](
