@@ -22,6 +22,10 @@ package object smithy4s {
 
   type ~>[F[_], G[_]] = kinds.PolyFunction[F, G]
 
+  type PayloadReader[A] = Reader[Either[PayloadError, *], Blob, A]
+  type PayloadWriter[A] = Writer[Unit, Blob, A]
+  type PayloadCodec[A] = kinds.TupleK[PayloadReader, PayloadWriter, A]
+
   def checkProtocol[Alg[_[_, _, _, _, _]]](
       service: Service[Alg],
       protocolTag: ShapeTag[_]

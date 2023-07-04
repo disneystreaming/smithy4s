@@ -16,22 +16,18 @@
 
 package smithy4s.capability
 
-import smithy4s.kinds._
-
 trait Zipper[F[_]] extends Covariant[F] {
   def pure[A](a: A): F[A]
 
-  def zipMapAll[A](seq: IndexedSeq[Kind1.Existential[F]])(
-      f: IndexedSeq[Any] => A
-  ): F[A]
+  def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A]
 
   def zipMap[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C] =
-    zipMapAll(IndexedSeq(Kind1.existential(fa), Kind1.existential(fb)))(seq =>
+    zipMapAll(IndexedSeq(fa, fb).asInstanceOf[IndexedSeq[F[Any]]])(seq =>
       f(seq(0).asInstanceOf[A], seq(1).asInstanceOf[B])
     )
 
   override def map[A, B](fa: F[A])(f: A => B): F[B] =
-    zipMapAll(IndexedSeq(Kind1.existential(fa)))(seq =>
+    zipMapAll(IndexedSeq(fa.asInstanceOf[F[Any]]))(seq =>
       f(seq(0).asInstanceOf[A])
     )
 
@@ -53,8 +49,8 @@ object Zipper {
         case (Right(a), Right(b)) => Right(f(a, b))
       }
 
-      def zipMapAll[A](
-          seq: IndexedSeq[Kind1.Existential[Either[E, *]]]
+      override def zipMapAll[A](
+          seq: IndexedSeq[Either[E, _]]
       )(f: IndexedSeq[Any] => A): Either[E, A] = {
         val builder = IndexedSeq.newBuilder[Any]
         var i = 0
