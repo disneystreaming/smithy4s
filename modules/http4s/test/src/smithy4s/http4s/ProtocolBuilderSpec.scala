@@ -32,7 +32,7 @@ object ProtocolBuilderSpec extends FunSuite {
   ) {
     val result = SimpleRestJsonBuilder(WeatherGen)
       .client(fakeClient)
-      .use
+      .make
 
     assert(result.isLeft)
   }
@@ -42,7 +42,7 @@ object ProtocolBuilderSpec extends FunSuite {
   ) {
     val result = SimpleRestJsonBuilder(PizzaAdminServiceGen)
       .client(fakeClient)
-      .use
+      .make
 
     assert(result.isRight)
   }
