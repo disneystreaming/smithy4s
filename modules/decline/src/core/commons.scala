@@ -16,6 +16,7 @@
 
 package smithy4s.decline.core
 
+import smithy4s.Blob
 import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
@@ -35,17 +36,13 @@ object commons {
   ): Covariant[F] =
     new Covariant[F] {
       def map[A, B](fa: F[A])(f: A => B): F[B] = Functor[F].map(fa)(f)
-      def emap[A, B](fa: F[A])(f: A => Either[ConstraintError, B]): F[B] =
-        fa.map(f).rethrow
     }
 
   def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val capi = smithy4s.http.json.codecs()
-    val codec = capi.compileCodec(schema)
-
+    val reader = smithy4s.json.Json.payloadCodecs.fromSchema(schema).reader
     s =>
-      capi
-        .decodeFromByteArray(codec, s.getBytes())
+      reader
+        .decode(Blob(s))
         .leftMap(pe => pe.toString)
   }
 
