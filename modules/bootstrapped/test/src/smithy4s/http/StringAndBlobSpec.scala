@@ -30,7 +30,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
   object DummyReaderCompiler extends CachedSchemaCompiler.Impl[HttpBodyReader] {
     def fromSchema[A](schema: Schema[A], cache: Cache): HttpBodyReader[A] =
       HttpMediaTyped(
-        HttpMediaType("application/binary"),
+        HttpMediaType("foo/bar"),
         Reader.decodeStatic(Left(error): Either[PayloadError, A])
       )
   }
@@ -38,7 +38,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
   object DummyWriterCompiler extends CachedSchemaCompiler.Impl[HttpBodyWriter] {
     def fromSchema[A](schema: Schema[A], cache: Cache): HttpBodyWriter[A] =
       HttpMediaTyped(
-        HttpMediaType("application/binary"),
+        HttpMediaType("foo/bar"),
         Writer.encodeStatic(Blob.empty)
       )
 
@@ -58,7 +58,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     val result = writer.instance.encode(data)
     val roundTripped = reader.instance.read(result)
     val writerMediaType = writer.mediaType
-    val readerMediaType = writer.mediaType
+    val readerMediaType = reader.mediaType
     expect.same(result, expectedEncoded)
     expect.same(Right(data), roundTripped)
     expect.same(writerMediaType, HttpMediaType(expectedMediaType))
@@ -82,52 +82,46 @@ class StringAndBlobSpec() extends munit.FunSuite {
     )
   }
 
-  // test("String Enum (custom media-type)") {
-  //   val input = AudioEnum.BASS
-  //   val codec = stringsAndBlobs.compileCodec(AudioEnum.schema)
-  //   val result = stringsAndBlobs.encode(codec, input)
-  //   val roundTripped = stringsAndBlobs.decode(codec, result)
-  //   val mediaType = stringsAndBlobs.mediaType(codec)
-  //   expect(result == Blob("bass"))
-  //   expect.same(Right(input), roundTripped)
-  //   expect.same(HttpMediaType("audio/mpeg3"), mediaType)
-  // }
+  test("String Enum (custom media-type)") {
+    check(
+      AudioEnum.schema,
+      AudioEnum.BASS,
+      Blob("bass"),
+      "audio/mpeg3"
+    )
+  }
 
-  // test("Blobs") {
-  //   val input = ByteArray("hello".getBytes())
-  //   val codec = stringsAndBlobs.compileCodec(Schema.blob)
-  //   val result = stringsAndBlobs.encode(codec, input)
-  //   val roundTripped = stringsAndBlobs.decode(codec, result)
-  //   val mediaType = stringsAndBlobs.mediaType(codec)
-  //   expect.same(result, Blob("hello"))
-  //   expect.same(Right(input), roundTripped)
-  //   expect.same(HttpMediaType("application/octet-stream"), mediaType)
-  // }
+  test("Blobs") {
+    check(
+      Schema.bytes,
+      ByteArray("hello".getBytes()),
+      Blob("hello"),
+      "application/octet-stream"
+    )
+  }
 
-  // test("Blobs (custom media-type)") {
-  //   val input = PNG(ByteArray("hello".getBytes()))
-  //   val codec = stringsAndBlobs.compileCodec(PNG.schema)
-  //   val result = stringsAndBlobs.encode(codec, input)
-  //   val roundTripped = stringsAndBlobs.decode(codec, result)
-  //   val mediaType = stringsAndBlobs.mediaType(codec)
-  //   expect(result == Blob("hello"))
-  //   expect.same(Right(input), roundTripped)
-  //   expect.same(HttpMediaType("image/png"), mediaType)
-  // }
+  test("Blobs (custom media-type)") {
+    check(
+      PNG.schema,
+      PNG(ByteArray("hello".getBytes())),
+      Blob("hello"),
+      "image/png"
+    )
+  }
 
-  // test("Delegates to some other codec when neither strings not bytes") {
-  //   val input = 1
-  //   val codec =
-  //     stringsAndBlobs.compileCodec(Schema.int)
-  //   val result = stringsAndBlobs.encode(codec, input)
-  //   val roundTripped = stringsAndBlobs.decode(codec, result)
-  //   val mediaType = stringsAndBlobs.mediaType(codec)
-  //   expect(result.isEmpty)
-  //   expect.same(
-  //     Left(PayloadError(PayloadPath.root, "error", "error")),
-  //     roundTripped
-  //   )
-  //   expect.same(HttpMediaType("foo/bar"), mediaType)
-  // }
+  test("Delegates to some other codec when neither strings not bytes") {
+    val writer = stringsAndBlobsWriters.fromSchema(Schema.int)
+    val reader = stringsAndBlobsReaders.fromSchema(Schema.int)
+    val result = writer.instance.encode(1)
+    val roundTripped = reader.instance.read(result)
+    val readerMediaType = reader.mediaType
+    val writerMediaType = writer.mediaType
+    val expectedRoundTripped =
+      Left(PayloadError(PayloadPath.root, "error", "error"))
+    expect.same(result, Blob.empty)
+    expect.same(roundTripped, expectedRoundTripped)
+    expect.same(writerMediaType, HttpMediaType("foo/bar"))
+    expect.same(readerMediaType, HttpMediaType("foo/bar"))
+  }
 
 }
