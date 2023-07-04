@@ -85,6 +85,11 @@ sealed trait Schema[A]{
   final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
   final def nullable: Schema[Option[A]] = Schema.nullable(this)
 
+  final def isNullable: Boolean = this match {
+    case _: NullableSchema[_] => true
+    case _ => false
+  }
+
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 

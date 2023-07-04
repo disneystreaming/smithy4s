@@ -54,7 +54,13 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
     copy(infinitySupport = infinitySupport)
 
   def fromSchema[A](schema: Schema[A], cache: Cache): JCodec[A] = {
-    val visitor = new SchemaVisitorJCodec(maxArity, explicitNullEncoding, cache)
+    val visitor = new SchemaVisitorJCodec(
+      maxArity,
+      explicitNullEncoding,
+      infinitySupport,
+      sparseCollectionsSupport,
+      cache
+    )
     val amendedSchema =
       hintMask
         .map(mask => schema.transformHintsTransitively(mask.apply))
