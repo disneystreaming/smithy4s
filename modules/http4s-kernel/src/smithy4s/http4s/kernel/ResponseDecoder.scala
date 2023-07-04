@@ -31,6 +31,8 @@ import smithy4s.kinds.PolyFunction
 
 object ResponseDecoder {
 
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[ResponseDecoder[F, *]]
+
   /**
     * Creates a response decoder that dispatches the response to
     * the correct alternative, based on some discriminator.

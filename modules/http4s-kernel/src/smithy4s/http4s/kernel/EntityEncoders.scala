@@ -18,35 +18,29 @@ package smithy4s
 package http4s
 package kernel
 
+import smithy4s.http.HttpBodyWriter
 import org.http4s.EntityEncoder
 import org.http4s.MediaType
 import org.http4s.headers.`Content-Type`
-import smithy4s.http.CodecAPI
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.Schema
+import smithy4s.kinds.PolyFunction
 
 object EntityEncoders {
 
-  def fromCodecAPI[F[_]](
-      codecAPI: CodecAPI
-  ): CachedSchemaCompiler[EntityEncoder[F, *]] =
-    new CachedSchemaCompiler[EntityEncoder[F, *]] {
-      type Cache = codecAPI.Cache
-      def createCache(): Cache = codecAPI.createCache()
-      def fromSchema[A](schema: Schema[A]): EntityEncoder[F, A] =
-        fromSchema(schema, createCache())
+  def fromHttpBodyWriter[F[_], A](
+      httpBodyWriter: HttpBodyWriter[A]
+  ): EntityEncoder[F, A] = {
+    val mediaType = MediaType.unsafeParse(httpBodyWriter.mediaType.value)
+    EntityEncoder
+      .byteArrayEncoder[F]
+      .withContentType(`Content-Type`(mediaType))
+      .contramap[A]((a: A) => httpBodyWriter.instance.encode(a).toArray)
+  }
 
-      def fromSchema[A](
-          schema: Schema[A],
-          cache: Cache
-      ): EntityEncoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
-        val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
-        EntityEncoder
-          .byteArrayEncoder[F]
-          .withContentType(`Content-Type`(mediaType))
-          .contramap[A]((a: A) => codecAPI.encode(codecA, a).toArray)
-      }
+  def fromHttpBodyWriterK[F[_]]
+      : PolyFunction[HttpBodyWriter, EntityEncoder[F, *]] =
+    new PolyFunction[HttpBodyWriter, EntityEncoder[F, *]] {
+      def apply[A](httpBodyWriter: HttpBodyWriter[A]): EntityEncoder[F, A] =
+        fromHttpBodyWriter[F, A](httpBodyWriter)
     }
 
 }

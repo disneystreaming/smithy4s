@@ -29,6 +29,8 @@ import smithy4s.http.HttpRestSchema
 
 object RequestEncoder {
 
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[RequestEncoder[F, *]]
+
   def metadataRequestEncoder[F[_]]: RequestEncoder[F, Metadata] =
     new RequestEncoder[F, Metadata] {
       def write(request: Request[F], metadata: Metadata): Request[F] = {
