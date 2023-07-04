@@ -69,7 +69,7 @@ private[json] case class JsonPayloadCodecCompilerImpl(
       extends PayloadReader[A] {
     def read(blob: Blob): Either[PayloadError, A] = {
       val nonEmpty =
-        if (blob.isEmpty || blob.sameBytesAs(Blob("null"))) "{}".getBytes
+        if (blob.isEmpty) "{}".getBytes
         else blob.toArray
       try {
         Right {

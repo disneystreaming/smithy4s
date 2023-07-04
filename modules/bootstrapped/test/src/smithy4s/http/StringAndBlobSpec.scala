@@ -27,16 +27,18 @@ class StringAndBlobSpec() extends munit.FunSuite {
 
   val error =
     PayloadError(PayloadPath.root, "error", "error")
-  object DummyReaderCompiler extends CachedSchemaCompiler.Impl[HttpBodyReader] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): HttpBodyReader[A] =
+  object DummyReaderCompiler
+      extends CachedSchemaCompiler.Impl[HttpMediaReader] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaReader[A] =
       HttpMediaTyped(
         HttpMediaType("foo/bar"),
         Reader.decodeStatic(Left(error): Either[PayloadError, A])
       )
   }
 
-  object DummyWriterCompiler extends CachedSchemaCompiler.Impl[HttpBodyWriter] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): HttpBodyWriter[A] =
+  object DummyWriterCompiler
+      extends CachedSchemaCompiler.Impl[HttpMediaWriter] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaWriter[A] =
       HttpMediaTyped(
         HttpMediaType("foo/bar"),
         Writer.encodeStatic(Blob.empty)
