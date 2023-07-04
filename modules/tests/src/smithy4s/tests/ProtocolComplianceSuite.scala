@@ -25,8 +25,7 @@ import smithy4s.compliancetests._
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
-import smithy4s.http.{CodecAPI, PayloadError}
-import smithy4s.schema.Schema.document
+import smithy4s.codecs._
 import weaver._
 import fs2.Stream
 
@@ -119,12 +118,11 @@ abstract class ProtocolComplianceSuite
 
   def decodeDocument(
       bytes: Array[Byte],
-      codecApi: CodecAPI
+      codecApi: PayloadCodec.CachedCompiler
   ): Document = {
-    val schema: Schema[Document] = document
-    val codec: codecApi.Codec[Document] = codecApi.compileCodec(schema)
-    codecApi
-      .decode[Document](codec, Blob(bytes))
+    val codec: PayloadCodec[Document] = codecApi.fromSchema(Schema.document)
+    codec.reader
+      .decode(Blob(bytes))
       .getOrElse(sys.error("unable to decode smithy model into document"))
 
   }

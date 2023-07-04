@@ -26,11 +26,10 @@ import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.Http4sDsl
-import smithy4s.PayloadPath
+import smithy4s.codecs._
 import smithy4s.example.PizzaAdminService
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.HttpContractError
-import smithy4s.http.PayloadError
 import weaver._
 import cats.Show
 import org.http4s.EntityDecoder
