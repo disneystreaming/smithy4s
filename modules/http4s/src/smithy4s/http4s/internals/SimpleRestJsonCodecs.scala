@@ -47,7 +47,7 @@ private[http4s] class SimpleRestJsonCodecs(
         .withExplicitNullEncoding(explicitNullEncoding)
     )
 
-  val mediaType = "application/json"
+  val mediaType = HttpMediaType("application/json")
   def entityEncoders[F[_]] = underlyingCodecs.mapK {
     PayloadCodec.writerK
       .andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
