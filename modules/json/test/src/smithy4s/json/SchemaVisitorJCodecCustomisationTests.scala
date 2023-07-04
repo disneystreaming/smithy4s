@@ -42,7 +42,7 @@ class SchemaVisitorJCodecCustomisationTests extends FunSuite {
 
   val customJsonCodecs = Json.jsoniter
     .withInfinitySupport(true)
-    .withSparseCollectionsSupport(true)
+    .withFlexibleCollectionsSupport(true)
 
   implicit def jsonCodec[A: Schema]: JsonCodec[A] =
     customJsonCodecs.fromSchema(implicitly[Schema[A]])
