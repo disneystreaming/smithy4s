@@ -65,7 +65,6 @@ object codecs {
       Untagged,
       InputOutput,
       DiscriminatedUnionMember,
-      IntEnum,
       Default
     )
   val defaultMaxArity: Int = 1024

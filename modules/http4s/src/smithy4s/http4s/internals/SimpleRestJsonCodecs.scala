@@ -32,7 +32,7 @@ private[http4s] class SimpleRestJsonCodecs(
     val explicitNullEncoding: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
-    alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
+    alloy.SimpleRestJson.protocol.hintMask
   private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
   private val errorHeaders = List(
     smithy4s.http.errorTypeHeader,

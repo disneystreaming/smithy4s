@@ -101,15 +101,16 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): XmlDecoder[E] = {
-    val isIntEnum = hints.has(IntEnum)
-    if (isIntEnum) {
-      val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
-      val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
-      XmlDecoder.fromStringParser(desc)(_.toIntOption.flatMap(valueMap.get))
-    } else {
-      val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
-      val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
-      XmlDecoder.fromStringParser(desc)(valueMap.get)
+    tag match {
+      case EnumTag.IntEnum =>
+        val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
+        val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
+        XmlDecoder.fromStringParser(desc)(_.toIntOption.flatMap(valueMap.get))
+
+      case EnumTag.StringEnum =>
+        val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
+        val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
+        XmlDecoder.fromStringParser(desc)(valueMap.get)
     }
   }
 
