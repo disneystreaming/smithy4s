@@ -24,7 +24,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{
 import com.github.plokhotnyuk.jsoniter_scala.core.{
   WriterConfig => JsoniterWriterConfig
 }
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
+import com.github.plokhotnyuk.jsoniter_scala.core._
 
 import smithy4s.codecs._
 
@@ -54,10 +54,11 @@ private[json] case class JsonPayloadCodecCompilerImpl(
     val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
     val reader: PayloadReader[A] = new JsonPayloadReader(jcodec)
     val writer: PayloadWriter[A] = Writer.encodeBy { (value: A) =>
-      Blob(
-        com.github.plokhotnyuk.jsoniter_scala.core
-          .writeToArray(value, jsoniterWriterConfig)(jcodec)
+      val intermediate = Blob(
+        writeToArray(value, jsoniterWriterConfig)(jcodec)
       )
+      if (intermediate.sameBytesAs(Blob("null"))) Blob("{}")
+      else intermediate
     }
     ReaderWriter(reader, writer)
   }
@@ -73,8 +74,7 @@ private[json] case class JsonPayloadCodecCompilerImpl(
         else blob.toArray
       try {
         Right {
-          com.github.plokhotnyuk.jsoniter_scala.core
-            .readFromArray(nonEmpty, jsoniterReaderConfig)(jcodec)
+          readFromArray(nonEmpty, jsoniterReaderConfig)(jcodec)
         }
       } catch {
         case e: PayloadError => Left(e)

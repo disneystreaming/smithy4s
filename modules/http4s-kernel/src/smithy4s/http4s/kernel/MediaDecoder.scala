@@ -17,7 +17,6 @@
 package smithy4s.http4s.kernel
 
 import cats.MonadThrow
-import cats.effect.Concurrent
 import org.http4s.EntityDecoder
 import org.http4s.Media
 import smithy4s.kinds.PolyFunction
@@ -41,14 +40,5 @@ object MediaDecoder {
 
   type CachedCompiler[F[_], Message] =
     CachedSchemaCompiler[MediaDecoder[F, *]]
-
-  /**
-    * A compiler for MediaDecoder that encodes the whole data in the body
-    * of the request
-    */
-  def rpcSchemaCompiler[F[_]: Concurrent](
-      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
-  ): CachedCompiler[F, Media[F]] =
-    entityDecoderCompiler.mapK(fromEntityDecoderK[F])
 
 }

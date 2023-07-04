@@ -22,6 +22,7 @@ import smithy4s.http4s.kernel._
 import org.http4s._
 import cats.effect.IO
 import weaver._
+import smithy4s.http.HttpMediaType
 
 object AwsJsonErrorTypeDecoderTest extends SimpleIOSuite {
 
@@ -35,8 +36,10 @@ object AwsJsonErrorTypeDecoderTest extends SimpleIOSuite {
 
   val fromJsonResponse =
     AwsErrorTypeDecoder.fromResponse[IO](
-      ResponseDecoder.rpcSchemaCompiler(
-        EntityDecoders.fromCodecAPI[IO](new json.AwsJsonCodecAPI())
+      smithy4s.aws.internals.AwsJsonCodecs.jsonPayloadCodecs.mapK(
+        EntityDecoders
+          .fromPayloadCodecK[IO](HttpMediaType("application/json"))
+          .andThen(MediaDecoder.fromEntityDecoderK)
       )
     )
 

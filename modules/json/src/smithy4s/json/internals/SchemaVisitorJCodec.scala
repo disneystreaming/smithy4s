@@ -42,7 +42,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
     explicitNullEncoding: Boolean,
     infinitySupport: Boolean,
-    sparseCollectionsSupport: Boolean,
+    flexibleCollectionsSupport: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -881,7 +881,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     val jk = apply(key)
     val jv = apply(value)
     if (jk.canBeKey) {
-      if (sparseCollectionsSupport && value.isNullable)
+      if (flexibleCollectionsSupport && !value.isNullable)
         flexibleNullParsingMap(jk, jv)
       else objectMap(jk, jv)
     } else arrayMap(key, value)
