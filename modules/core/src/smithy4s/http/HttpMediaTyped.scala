@@ -39,3 +39,15 @@ final case class HttpMediaTyped[F[_], A](
   def mapK[G[_]](fk: PolyFunction[F, G]): HttpMediaTyped[G, A] =
     HttpMediaTyped(mediaType, fk(instance))
 }
+
+object HttpMediaTyped {
+
+  def mediaTypeK[F[_]](
+      mediaType: HttpMediaType
+  ): PolyFunction[F, HttpMediaTyped[F, *]] =
+    new PolyFunction[F, HttpMediaTyped[F, *]] {
+      def apply[A](fa: F[A]): HttpMediaTyped[F, A] =
+        HttpMediaTyped(mediaType, fa)
+    }
+
+}

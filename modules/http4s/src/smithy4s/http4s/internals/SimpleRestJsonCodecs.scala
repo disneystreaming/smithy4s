@@ -26,6 +26,9 @@ import org.http4s.headers.`Content-Type`
 import cats.effect.Concurrent
 import smithy4s.http.Metadata
 import org.http4s.syntax.all._
+import smithy4s.json.Json
+import smithy4s.codecs._
+import smithy4s.http._
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -33,7 +36,23 @@ private[http4s] class SimpleRestJsonCodecs(
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
-  private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
+  private val underlyingCodecs = Json.payloadCodecs
+    .withJsoniterCodecCompiler(
+      Json.jsoniter
+        .withHintMask(hintMask)
+        .withMaxArity(maxArity)
+        .withExplicitNullEncoding(explicitNullEncoding)
+    )
+
+  val mediaType = "application/json"
+  val httpBodyWriters = underlyingCodecs
+    .mapK(PayloadCodec.writerK)
+    .mapK(HttpMediaTyped.mediaTypeK[PayloadWriter](mediaType))
+
+  val httpBodyReaders = underlyingCodecs
+    .mapK(PayloadCodec.readerK)
+    .mapK(HttpMediaTyped.mediaTypeK[PayloadReader](mediaType))
+
   private val errorHeaders = List(
     smithy4s.http.errorTypeHeader,
     // Adding X-Amzn-Errortype as well to facilitate interop
@@ -56,12 +75,12 @@ private[http4s] class SimpleRestJsonCodecs(
     val messageDecoderCompiler =
       RequestDecoder.restSchemaCompiler[F](
         Metadata.Decoder,
-        EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+        httpBodyReaders.mapK(EntityDecoders.fromHttpBodyReaderK[F])
       )
     val responseEncoderCompiler = {
       val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
         Metadata.Encoder,
-        EntityEncoders.fromCodecAPI[F](underlyingCodecs)
+        httpBodyWriters.mapK(EntityEncoders.fromHttpBodyWriterK[F])
       )
       new CachedSchemaCompiler[ResponseEncoder[F, *]] {
         type Cache = restSchemaCompiler.Cache
@@ -92,12 +111,12 @@ private[http4s] class SimpleRestJsonCodecs(
     val messageDecoderCompiler =
       ResponseDecoder.restSchemaCompiler[F](
         Metadata.Decoder,
-        EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+        httpBodyReaders.mapK(EntityDecoders.fromHttpBodyReaderK[F])
       )
     val messageEncoderCompiler =
       RequestEncoder.restSchemaCompiler[F](
         Metadata.Encoder,
-        EntityEncoders.fromCodecAPI[F](underlyingCodecs)
+        httpBodyWriters.mapK(EntityEncoders.fromHttpBodyWriterK[F])
       )
     UnaryClientCodecs.Make[F](
       input = messageEncoderCompiler,

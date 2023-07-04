@@ -18,42 +18,35 @@ package smithy4s
 package http4s
 package kernel
 
+import smithy4s.http.HttpBodyReader
 import cats.effect.kernel.Concurrent
 import cats.syntax.all._
 import org.http4s.EntityDecoder
 import org.http4s.MediaType
 import org.http4s._
-import smithy4s.http.CodecAPI
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.Schema
+import smithy4s.kinds.PolyFunction
 
 object EntityDecoders {
 
-  def fromCodecAPI[F[_]](
-      codecAPI: CodecAPI
-  )(implicit F: Concurrent[F]): CachedSchemaCompiler[EntityDecoder[F, *]] =
-    new CachedSchemaCompiler[EntityDecoder[F, *]] {
-      type Cache = codecAPI.Cache
-      def createCache(): Cache = codecAPI.createCache()
-      def fromSchema[A](schema: Schema[A]): EntityDecoder[F, A] =
-        fromSchema(schema, createCache())
+  def fromHttpBodyReader[F[_]: Concurrent, A](
+      httpBodyReader: HttpBodyReader[A]
+  ): EntityDecoder[F, A] = {
+    val mediaType = MediaType.unsafeParse(httpBodyReader.mediaType.value)
+    EntityDecoder
+      .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
+      .flatMapR(chunk =>
+        httpBodyReader.instance
+          .read(Blob(chunk.toArray))
+          .leftWiden[Throwable]
+          .liftTo[DecodeResult[F, *]]
+      )
+  }
 
-      def fromSchema[A](
-          schema: Schema[A],
-          cache: Cache
-      ): EntityDecoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
-        val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
-        EntityDecoder
-          .decodeBy(mediaType)(EntityDecoder.collectBinary[F])
-          .flatMapR(chunk =>
-            codecAPI
-              .decode(codecA, Blob(chunk.toArray))
-              .leftWiden[Throwable]
-              .liftTo[DecodeResult[F, *]]
-          )
-      }
-
+  def fromHttpBodyReaderK[F[_]: Concurrent]
+      : PolyFunction[HttpBodyReader, EntityDecoder[F, *]] =
+    new PolyFunction[HttpBodyReader, EntityDecoder[F, *]] {
+      def apply[A](httpBodyReader: HttpBodyReader[A]): EntityDecoder[F, A] =
+        fromHttpBodyReader[F, A](httpBodyReader)
     }
 
 }

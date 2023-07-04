@@ -21,7 +21,7 @@ import org.http4s.EntityEncoder
 import org.http4s.Response
 import org.http4s.Status
 import smithy4s.Errorable
-import smithy4s.Writer
+import smithy4s.codecs.Writer
 import smithy4s.http.HttpStatusCode
 import smithy4s.http._
 import smithy4s.kinds.PolyFunction
@@ -31,6 +31,8 @@ import smithy4s.schema.Schema
 import smithy4s.http.HttpRestSchema
 
 object ResponseEncoder {
+
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[ResponseEncoder[F, *]]
 
   def forError[F[_], E](
       errorTypeHeaders: List[String],

@@ -27,6 +27,8 @@ import smithy4s.kinds.PolyFunction
 
 object RequestDecoder {
 
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[RequestDecoder[F, *]]
+
   def fromEntityDecoder[F[_], A](implicit
       F: MonadThrow[F],
       entityDecoder: EntityDecoder[F, A]
