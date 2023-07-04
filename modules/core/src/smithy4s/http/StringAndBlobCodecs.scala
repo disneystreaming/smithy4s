@@ -18,10 +18,11 @@ package smithy4s
 package http
 
 import smithy4s.http.HttpMediaType
-import smithy4s.kinds.TupleK
+import smithy4s.codecs.ReaderWriter
 
 import schema._
 import smithy4s.schema.Primitive._
+import smithy4s.codecs._
 
 object StringAndBlobCodecs {
 
@@ -41,7 +42,7 @@ object StringAndBlobCodecs {
         schema: Schema[A],
         cache: Cache
     ): Option[HttpBodyReader[A]] =
-      StringAndBlobReaderVisitor(schema).map(_.mapInstance(_.left))
+      StringAndBlobReaderVisitor(schema).map(_.mapInstance(_.reader))
   }
 
   private object WriterCompiler
@@ -50,7 +51,7 @@ object StringAndBlobCodecs {
         schema: Schema[A],
         cache: Cache
     ): Option[HttpBodyWriter[A]] =
-      StringAndBlobReaderVisitor(schema).map(_.mapInstance(_.right))
+      StringAndBlobReaderVisitor(schema).map(_.mapInstance(_.writer))
   }
 
   private type CodecResult[A] = Option[HttpBodyCodec[A]]
@@ -70,7 +71,7 @@ object StringAndBlobCodecs {
         Some(
           HttpMediaTyped(
             stringMediaType(hints),
-            TupleK(stringReader, stringWriter)
+            ReaderWriter(stringReader, stringWriter)
           )
         )
 
@@ -81,7 +82,7 @@ object StringAndBlobCodecs {
             .map(_.value)
             .getOrElse("application/octet-stream")
         )
-        Some { HttpMediaTyped(mediaType, TupleK(blobReader, blobWriter)) }
+        Some { HttpMediaTyped(mediaType, ReaderWriter(blobReader, blobWriter)) }
 
       case PTimestamp | PUUID | PBigInt | PBoolean | PLong | PShort |
           PDocument | PByte | PDouble | PFloat | PBigDecimal | PInt =>
@@ -149,7 +150,7 @@ object StringAndBlobCodecs {
           val writer = new PayloadWriter[E] {
             def write(unit: Unit, e: E): Blob = Blob(total(e).stringValue)
           }
-          Some(HttpMediaTyped(mediaType, TupleK(reader, writer)))
+          Some(HttpMediaTyped(mediaType, ReaderWriter(reader, writer)))
 
         case EnumTag.IntEnum => None
       }
@@ -165,7 +166,7 @@ object StringAndBlobCodecs {
         schema: Schema[A],
         refinement: Refinement[A, B]
     ): CodecResult[B] =
-      self(schema).map(_.mapInstance { case TupleK(readerA, writerA) =>
+      self(schema).map(_.mapInstance { case ReaderWriter(readerA, writerA) =>
         val readerB = new PayloadReader[B] {
           def read(blob: Blob): Either[PayloadError, B] =
             readerA
@@ -180,13 +181,13 @@ object StringAndBlobCodecs {
         }
         val writerB =
           Writer.encodeBy((b: B) => writerA.encode(refinement.from(b)))
-        TupleK(readerB, writerB)
+        ReaderWriter(readerB, writerB)
       })
 
     override def nullable[A](
         schema: Schema[A]
     ): CodecResult[Option[A]] =
-      self(schema).map(_.mapInstance { case TupleK(readerA, writerA) =>
+      self(schema).map(_.mapInstance { case ReaderWriter(readerA, writerA) =>
         val readerOptionA = new PayloadReader[Option[A]] {
           def read(blob: Blob): Either[PayloadError, Option[A]] =
             if (blob.isEmpty) Right(None)
@@ -196,7 +197,7 @@ object StringAndBlobCodecs {
           case Some(a) => writerA.encode(a)
           case None    => Blob.empty
         }
-        TupleK(readerOptionA, writerOptionA)
+        ReaderWriter(readerOptionA, writerOptionA)
       })
   }
 }

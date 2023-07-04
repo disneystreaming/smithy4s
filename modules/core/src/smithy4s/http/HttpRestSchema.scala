@@ -23,7 +23,8 @@ import smithy4s.schema._
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
 import smithy4s.schema.SchemaPartition.TotalMatch
-import smithy4s.Writer
+import smithy4s.codecs.Writer
+import smithy4s.codecs.Reader
 import smithy4s.capability.Zipper
 
 /**

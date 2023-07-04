@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.codecs
 
+import smithy4s.schema._
 import smithy4s.kinds.PolyFunction
 import smithy4s.capability.EncoderK
 
@@ -72,7 +73,7 @@ trait Writer[-In, +Out, -A] { self =>
 
 object Writer {
 
-  type CachedCompiler[In, Out] = schema.CachedSchemaCompiler[Writer[In, Out, *]]
+  type CachedCompiler[In, Out] = CachedSchemaCompiler[Writer[In, Out, *]]
 
   def encodeBy[A, Message](f: A => Message): Writer[Unit, Message, A] =
     new Writer[Unit, Message, A] {

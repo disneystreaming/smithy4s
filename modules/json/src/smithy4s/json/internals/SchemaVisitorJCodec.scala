@@ -15,8 +15,8 @@
  */
 
 package smithy4s
-package http
 package json
+package internals
 
 import java.util.UUID
 import java.util
@@ -764,8 +764,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): JCodec[B] =
-    JCodec.jcodecInvariant
-      .xmap(apply(schema))(refinement.asFunction, refinement.from)
+    apply(schema).biject(refinement.asThrowingFunction, refinement.from)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): JCodec[A] = new JCodec[A] {
     lazy val underlying = apply(suspend.value)
@@ -1215,22 +1214,15 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      private[this] val documentFields =
-        fields.filter { case (field, _, _) =>
-          HttpBinding
-            .fromHints(field.label, field.hints, structHints)
-            .isEmpty
-        }
-
       private[this] val handlers =
-        new util.HashMap[String, Handler](documentFields.length << 1, 0.5f) {
-          documentFields.foreach { case (field, jLabel, _) =>
+        new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
+          fields.foreach { case (field, jLabel, _) =>
             put(jLabel, fieldHandler(field))
           }
         }
 
       private[this] val documentEncoders =
-        documentFields.map(labelledField => fieldEncoder(labelledField._1))
+        fields.map(labelledField => fieldEncoder(labelledField._1))
 
       def expecting: String = "object"
 
@@ -1238,11 +1230,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
         decodeValue_(cursor, in)(emptyMetadata)
-
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
-        Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,
@@ -1312,11 +1299,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
         decodeValue_(cursor, in)(emptyMetadata)
-
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
-        Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,

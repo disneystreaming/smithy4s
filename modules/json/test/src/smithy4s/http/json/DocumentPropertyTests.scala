@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.json
+package smithy4s.json
 
 import cats.Show
 import com.github.plokhotnyuk.jsoniter_scala.core._
@@ -38,8 +38,8 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
   implicit val schemaAndDataShow: Show[(Schema[DynData], Any)] =
     Show.fromToString
 
-  implicit val documentCodec: JCodec[Document] =
-    JCodec.fromSchema(Schema.document)
+  implicit val documentCodec: JsonCodec[Document] =
+    Json.jsoniter.fromSchema(Schema.document)
 
   property(
     "Going through json directly or via the adt give the same results"
@@ -49,7 +49,7 @@ class DocumentPropertyTests() extends FunSuite with ScalaCheckSuite {
     // asserting roundtrip there.
     forAll(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
-      implicit val codec: JCodec[Any] = JCodec.fromSchema(schema)
+      implicit val codec: JsonCodec[Any] = Json.jsoniter.fromSchema(schema)
       val decoder = Document.Decoder.fromSchema(schema)
       val encoder = Document.Encoder.fromSchema(schema)
       val schemaStr =

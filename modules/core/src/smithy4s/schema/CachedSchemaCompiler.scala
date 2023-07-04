@@ -82,7 +82,9 @@ object CachedSchemaCompiler { outer =>
       fromSchema(schema, CompilationCache.nop[Aux])
 
     def createCache(): Cache = CompilationCache.make[Aux]
+  }
 
+  abstract class DerivingImpl[F[_]] extends Impl[F] {
     private val globalCache: Cache = createCache()
     implicit def derivedImplicitInstance[A](implicit
         schema: Schema[A]

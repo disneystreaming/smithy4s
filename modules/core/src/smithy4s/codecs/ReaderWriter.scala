@@ -14,29 +14,33 @@
  *  limitations under the License.
  */
 
-package smithy4s.kinds
+package smithy4s.codecs
 
-import smithy4s.Bijection
 import smithy4s.capability._
+import smithy4s.kinds.PolyFunction
+import smithy4s.Bijection
 
-final case class TupleK[F[_], G[_], A](left: F[A], right: G[A]) {
+final case class ReaderWriter[F[_], G[_], A](reader: F[A], writer: G[A]) {
   def biject[B](bijection: Bijection[A, B])(implicit
       F: Covariant[F],
       G: Contravariant[G]
-  ): TupleK[F, G, B] =
-    TupleK(F.map(left)(bijection.to), G.contramap(right)(bijection.from))
+  ): ReaderWriter[F, G, B] =
+    ReaderWriter(
+      F.map(reader)(bijection.to),
+      G.contramap(writer)(bijection.from)
+    )
 }
 
-object TupleK {
+object ReaderWriter {
 
-  def leftK[F[_], G[_]]: PolyFunction[TupleK[F, G, *], F] =
-    new PolyFunction[TupleK[F, G, *], F] {
-      def apply[A](tuple: TupleK[F, G, A]): F[A] = tuple.left
+  def readerK[F[_], G[_]]: PolyFunction[ReaderWriter[F, G, *], F] =
+    new PolyFunction[ReaderWriter[F, G, *], F] {
+      def apply[A](tuple: ReaderWriter[F, G, A]): F[A] = tuple.reader
     }
 
-  def rightK[F[_], G[_]]: PolyFunction[TupleK[F, G, *], G] =
-    new PolyFunction[TupleK[F, G, *], G] {
-      def apply[A](tuple: TupleK[F, G, A]): G[A] = tuple.right
+  def writerK[F[_], G[_]]: PolyFunction[ReaderWriter[F, G, *], G] =
+    new PolyFunction[ReaderWriter[F, G, *], G] {
+      def apply[A](tuple: ReaderWriter[F, G, A]): G[A] = tuple.writer
     }
 
 }

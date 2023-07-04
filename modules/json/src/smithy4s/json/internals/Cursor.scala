@@ -15,13 +15,14 @@
  */
 
 package smithy4s
-package http.json
+package json
+package internals
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException
-import smithy4s.http.PayloadError
+import smithy4s.codecs._
 
-class Cursor private () {
+private[internals] class Cursor private () {
   private[this] var indexStack: Array[Int] = new Array[Int](8)
   private[this] var labelStack: Array[String] = new Array[String](8)
   private[this] var top: Int = _

@@ -15,14 +15,10 @@
  */
 
 package smithy4s
-package http
 package json
+package internals
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
-import smithy4s.capability.Invariant
-
-import scala.collection.{Map => MMap}
-import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * Construct that expresses the ability to decode an http message,
@@ -32,7 +28,7 @@ import smithy4s.schema.CachedSchemaCompiler
   * On the encoding side, the fields that should be stored in metadata
   * are eluded.
   */
-trait JCodec[A] extends JsonCodec[A] {
+private[internals] trait JCodec[A] extends JsonCodec[A] {
   self =>
 
   def canBeKey: Boolean = true
@@ -47,11 +43,6 @@ trait JCodec[A] extends JsonCodec[A] {
     */
   def expectBody: Boolean = true
 
-  def decodeMessage(in: JsonReader): MMap[String, Any] => A =
-    Cursor.withCursor(expecting) { cursor =>
-      val result = decodeValue(cursor, in)
-      (_: MMap[String, Any]) => result
-    }
   def decodeValue(cursor: Cursor, in: JsonReader): A
 
   override final def decodeValue(in: JsonReader, default: A): A =
@@ -66,9 +57,6 @@ trait JCodec[A] extends JsonCodec[A] {
       override def expecting: String = self.expecting
       override def canBeKey: Boolean = self.canBeKey
 
-      override def decodeMessage(in: JsonReader): MMap[String, Any] => B =
-        self.decodeMessage(in) andThen to
-
       def decodeValue(cursor: Cursor, in: JsonReader): B =
         to(self.decodeValue(cursor, in))
 
@@ -81,34 +69,5 @@ trait JCodec[A] extends JsonCodec[A] {
       def encodeKey(value: B, out: JsonWriter): Unit =
         self.encodeKey(from(value), out)
     }
-
-  def widen[B >: A]: JCodec[B] = this.asInstanceOf[JCodec[B]]
-
-}
-
-object JCodec extends CachedSchemaCompiler.Impl[JCodec] {
-
-  implicit val jcodecInvariant: Invariant[JCodec] = new Invariant[JCodec] {
-    def imap[A, B](fa: JCodec[A])(to: A => B, from: B => A): JCodec[B] =
-      fa.biject(to, from)
-
-    def xmap[A, B](fa: JCodec[A])(
-        to: A => Either[smithy4s.ConstraintError, B],
-        from: B => A
-    ): JCodec[B] = {
-      val throwingTo: A => B = to(_) match {
-        case Left(error)  => throw error
-        case Right(value) => value
-      }
-      imap(fa)(throwingTo, from)
-    }
-  }
-
-  type Aux[A] = JCodec[A]
-
-  def fromSchema[A](
-      schema: Schema[A],
-      cache: Cache
-  ): JCodec[A] = schema.compile(codecs.schemaVisitorJCodec(cache))
 
 }
