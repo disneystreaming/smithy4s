@@ -22,7 +22,9 @@ import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
 import java.util.concurrent.TimeUnit
-import smithy4s.{Blob, HintMask}
+import smithy4s.HintMask
+import smithy4s.json.Json
+import smithy4s.Blob
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -37,11 +39,10 @@ class JsonBenchmark {
   val s3objectGen =
     S3Object.schema.compile(smithy4s.scalacheck.SchemaVisitorGen)
   val schema = S3Object.schema
-  val jsonCodecs = smithy4s.http.json.codecs
-  val jsonCodec =
-    smithy4s.http.json
-      .codecs(hintMask = HintMask.allAllowed)
-      .compileCodec(schema)
+  val codecs =
+    Json.payloadCodecs
+      .withJsoniterCodecCompiler(Json.jsoniter.withHintMask(HintMask.empty))
+  val jsonCodec = codecs.fromSchema(schema)
 
   val original = s3objectGen(Gen.Parameters.default, Seed(2048)).get
 
@@ -55,13 +56,10 @@ class JsonBenchmark {
   @Benchmark
   def measureSmithy4sJson(): Unit = {
     val bytes =
-      smithy4s.http.json
-        .codecs(hintMask = HintMask.allAllowed)
-        .encode[S3Object](jsonCodec, original)
+      jsonCodec.writer
+        .encode(original)
         .toArray
     val _ =
-      smithy4s.http.json
-        .codecs(hintMask = HintMask.allAllowed)
-        .decode(jsonCodec, Blob(bytes))
+      jsonCodec.reader.decode(Blob(bytes))
   }
 }

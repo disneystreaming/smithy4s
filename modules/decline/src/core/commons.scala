@@ -16,7 +16,6 @@
 
 package smithy4s.decline.core
 
-import smithy4s.Blob
 import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
