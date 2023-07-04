@@ -93,7 +93,7 @@ abstract class SimpleProtocolBuilder[P](val codecs: CodecAPI)(implicit
     def resource: Resource[F, service.Impl[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    @deprecated("0.17.x", "Use make instead")
+    @deprecated("0.17.11", "Use make instead")
     def use: Either[UnsupportedProtocolError, service.Impl[F]] = make
 
     def make: Either[UnsupportedProtocolError, service.Impl[F]] = {
