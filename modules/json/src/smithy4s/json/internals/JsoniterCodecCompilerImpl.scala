@@ -27,7 +27,7 @@ import alloy._
 private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,
     explicitNullEncoding: Boolean,
-    sparseCollectionsSupport: Boolean,
+    flexibleCollectionsSupport: Boolean,
     infinitySupport: Boolean,
     hintMask: Option[HintMask]
 ) extends CachedSchemaCompiler.Impl[JCodec]
@@ -45,10 +45,10 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler =
     copy(hintMask = Some(hintMask))
 
-  def withSparseCollectionsSupport(
-      sparseCollectionsSupport: Boolean
+  def withFlexibleCollectionsSupport(
+      flexibleCollectionsSupport: Boolean
   ): JsoniterCodecCompiler =
-    copy(sparseCollectionsSupport = sparseCollectionsSupport)
+    copy(flexibleCollectionsSupport = flexibleCollectionsSupport)
 
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler =
     copy(infinitySupport = infinitySupport)
@@ -58,7 +58,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
       maxArity,
       explicitNullEncoding,
       infinitySupport,
-      sparseCollectionsSupport,
+      flexibleCollectionsSupport,
       cache
     )
     val amendedSchema =
@@ -90,7 +90,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
       maxArity = defaultMaxArity,
       explicitNullEncoding = false,
       infinitySupport = false,
-      sparseCollectionsSupport = false,
+      flexibleCollectionsSupport = false,
       hintMask = Some(defaultHintMask)
     )
 

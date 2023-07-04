@@ -46,10 +46,11 @@ object AwsCredentialsProvider {
 
 class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
 
+  private val httpMediaType = smithy4s.http.HttpMediaType("application/json")
   implicit val awsInstanceMetadataDecoder
       : EntityDecoder[F, AwsInstanceMetadata] =
-    EntityDecoders
-      .fromCodecAPI[F](new json.AwsJsonCodecAPI())
+    internals.AwsJsonCodecs.jsonPayloadCodecs
+      .mapK(EntityDecoders.fromPayloadCodecK[F](httpMediaType))
       .fromSchema(AwsInstanceMetadata.schema)
 
   def default(

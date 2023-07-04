@@ -30,7 +30,7 @@ package object internals {
       hints: Hints
   ): RequestEncoderCompiler[F] => RequestEncoderCompiler[F] = {
     val compression = smithy4s.http4s.kernel.GzipRequestCompression[F]()
-    import smithy4s.Writer
+    import smithy4s.codecs.Writer
     hints.get(smithy.api.RequestCompression) match {
       case Some(rc) if rc.encodings.contains("gzip") =>
         (encoder: RequestEncoderCompiler[F]) =>

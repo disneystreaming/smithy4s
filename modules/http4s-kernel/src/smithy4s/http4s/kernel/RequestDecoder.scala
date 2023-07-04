@@ -29,13 +29,6 @@ object RequestDecoder {
 
   type CachedCompiler[F[_]] = CachedSchemaCompiler[RequestDecoder[F, *]]
 
-  def fromEntityDecoder[F[_], A](implicit
-      F: MonadThrow[F],
-      entityDecoder: EntityDecoder[F, A]
-  ): RequestDecoder[F, A] = new RequestDecoder[F, A] {
-    def read(request: Request[F]): F[A] = request.as[A]
-  }
-
   /**
     * Creates a RequestDecoder that decodes an HTTP message by looking at the
     * metadata.
@@ -60,20 +53,6 @@ object RequestDecoder {
     new PolyFunction[Metadata.Decoder, RequestDecoder[F, *]] {
       def apply[A](fa: Metadata.Decoder[A]): RequestDecoder[F, A] =
         fromMetadataDecoder(fa)
-    }
-
-  def rpcSchemaCompiler[F[_]](
-      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
-  )(implicit F: MonadThrow[F]): CachedSchemaCompiler[RequestDecoder[F, *]] =
-    new CachedSchemaCompiler[RequestDecoder[F, *]] {
-      type Cache = entityDecoderCompiler.Cache
-      def createCache(): Cache =
-        entityDecoderCompiler.createCache()
-
-      def fromSchema[A](schema: Schema[A], cache: Cache): RequestDecoder[F, A] =
-        fromEntityDecoder(F, entityDecoderCompiler.fromSchema(schema, cache))
-      def fromSchema[A](schema: Schema[A]): RequestDecoder[F, A] =
-        fromEntityDecoder(F, entityDecoderCompiler.fromSchema(schema))
     }
 
   /**

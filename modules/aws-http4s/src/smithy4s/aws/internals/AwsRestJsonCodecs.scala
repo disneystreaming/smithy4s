@@ -17,11 +17,13 @@
 package smithy4s.aws
 package internals
 
+import smithy4s.codecs._
+import smithy4s.http._
+import smithy4s.json.Json
 import cats.effect.Concurrent
 import fs2.compression.Compression
 import smithy4s.http4s.kernel._
-import smithy4s.http.HttpMediaType
-import smithy4s.http.Metadata
+import smithy4s.kinds.PolyFunctions
 import smithy4s.Endpoint
 
 private[aws] object AwsRestJsonCodecs {
@@ -31,22 +33,41 @@ private[aws] object AwsRestJsonCodecs {
   def make[F[_]: Concurrent: Compression](
       contentType: String
   ): UnaryClientCodecs.Make[F] = {
-    val httpMediaType = HttpMediaType(contentType)
-    val underlyingCodecs = smithy4s.http.CodecAPI.nativeStringsAndBlob(
-      new smithy4s.aws.json.AwsJsonCodecAPI(
-        httpMediaType,
-        Some(hintMask)
+    val mediaType = HttpMediaType(contentType)
+    val jsonPayloadCodecs =
+      Json.payloadCodecs.withJsoniterCodecCompiler(
+        Json.jsoniter
+          .withInfinitySupport(true)
+          .withFlexibleCollectionsSupport(true)
+          .withHintMask(hintMask)
       )
-    )
+
+    // scalafmt: {maxColumn = 120}
+    val jsonMediaReaders =
+      jsonPayloadCodecs.mapK {
+        PayloadCodec.readerK
+          .andThen[HttpPayloadReader](Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpPayloadError(_))))
+          .andThen[HttpMediaReader](HttpMediaTyped.mediaTypeK(mediaType))
+      }
+
+    val jsonMediaWriters = jsonPayloadCodecs.mapK {
+      PayloadCodec.writerK.andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
+    }
+
+    val mediaReaders =
+      smithy4s.http.StringAndBlobCodecs.readerOr(jsonMediaReaders)
+
+    val mediaWriters =
+      smithy4s.http.StringAndBlobCodecs.writerOr(jsonMediaWriters)
 
     val encoders = RequestEncoder.restSchemaCompiler[F](
       Metadata.AwsEncoder,
-      EntityEncoders.fromCodecAPI[F](underlyingCodecs)
+      mediaWriters.mapK(EntityEncoders.fromHttpMediaWriterK[F])
     )
 
     val decoders = ResponseDecoder.restSchemaCompiler[F](
       Metadata.AwsDecoder,
-      EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+      mediaReaders.mapK(EntityDecoders.fromHttpMediaReaderK[F])
     )
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
 

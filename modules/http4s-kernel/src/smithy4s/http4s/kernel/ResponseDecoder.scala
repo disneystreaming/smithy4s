@@ -88,13 +88,6 @@ object ResponseDecoder {
     }
   }
 
-  def fromEntityDecoder[F[_], A](implicit
-      F: MonadThrow[F],
-      entityDecoder: EntityDecoder[F, A]
-  ): ResponseDecoder[F, A] = new ResponseDecoder[F, A] {
-    def read(response: Response[F]): F[A] = response.as[A]
-  }
-
   /**
     * Creates a ResponseDecoder that decodes an HTTP message by looking at the
     * metadata.
@@ -118,11 +111,6 @@ object ResponseDecoder {
       def apply[A](fa: Metadata.Decoder[A]): ResponseDecoder[F, A] =
         fromMetadataDecoder(fa)
     }
-
-  def rpcSchemaCompiler[F[_]: Concurrent](
-      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
-  ): CachedSchemaCompiler[ResponseDecoder[F, *]] =
-    MediaDecoder.rpcSchemaCompiler(entityDecoderCompiler)
 
   /**
     * A compiler for ResponseDecoder that abides by REST-semantics :

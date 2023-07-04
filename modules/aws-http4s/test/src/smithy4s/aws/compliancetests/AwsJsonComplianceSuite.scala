@@ -63,6 +63,9 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 
+  val jsonPayloadCodecs =
+    smithy4s.aws.internals.AwsJsonCodecs.jsonPayloadCodecs
+
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
       p <- modelDump
@@ -72,7 +75,7 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, smithy4s.http.json.codecs()))
+        .map(decodeDocument(_, jsonPayloadCodecs))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

@@ -29,7 +29,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
 
   def withMaxArity(max: Int): JsoniterCodecCompiler
   def withExplicitNullEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
-  def withSparseCollectionsSupport(sparseCollectionSupport: Boolean): JsoniterCodecCompiler
+  def withFlexibleCollectionsSupport(flexibleCollectionsSupport: Boolean): JsoniterCodecCompiler
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler
 
