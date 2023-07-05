@@ -201,7 +201,7 @@ object ServerEndpointMiddlewareSpec extends SimpleIOSuite {
         .middleware(
           new TestClientMiddleware(shouldFail = shouldFailInMiddleware)
         )
-        .use
+        .make
         .toOption
         .get
     }

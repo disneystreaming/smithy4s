@@ -29,7 +29,7 @@ object RecursiveInputSpec extends FunSuite {
     val result =
       SimpleRestJsonBuilder(smithy4s.example.RecursiveInputService)
         .client(Client.fromHttpApp(HttpApp.notFound[IO]))
-        .use
+        .make
 
     expect(result.isRight)
   }
