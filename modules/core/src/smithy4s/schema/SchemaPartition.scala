@@ -195,9 +195,39 @@ object SchemaPartition {
           label: String,
           instance: Schema[A],
           get: S => Option[A]
-      ): SchemaPartition[S] =
-        // "single" only makes sense on required fields
-        SchemaPartition.NoMatch()
+      ): SchemaPartition[S] = {
+        maybeNotMatching match {
+          case None =>
+            // The payload field is the only field and we can create a total
+            // match from it, by bijecting from its result onto the structure
+            val to = (a: Option[A]) => make(IndexedSeq(a))
+            val from = get
+            SchemaPartition.TotalMatch(
+              Schema.nullable[A](instance).biject[S](to, from)
+            )
+
+          case Some(notMachingSchema) =>
+            // There are other fields in the structure than the payload field.
+
+            val to = {
+              val indexes = IndexedSeq(index)
+              (a: Option[A]) =>
+                PartialData.Partial(indexes, IndexedSeq(a), make)
+            }
+
+            val from = (_: PartialData[S]) match {
+              case PartialData.Total(s)      => get(s)
+              case _: PartialData.Partial[_] =>
+                // It's impossible to get the whole struct from a single field if it's not the only one
+                codingError
+            }
+
+            SchemaPartition.SplittingMatch(
+              Schema.nullable[A](instance).biject(to, from),
+              notMachingSchema
+            )
+        }
+      }
     }
 
   private def codingError: Nothing =

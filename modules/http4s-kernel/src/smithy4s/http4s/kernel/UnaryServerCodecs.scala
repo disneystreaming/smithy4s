@@ -19,12 +19,13 @@ package smithy4s.http4s.kernel
 import smithy4s.Endpoint
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+import fs2.Pure
 
 trait UnaryServerCodecs[F[_], I, E, O] {
   val inputDecoder: RequestDecoder[F, I]
-  val outputEncoder: ResponseEncoder[F, O]
-  def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE]
-  val errorEncoder: ResponseEncoder[F, E]
+  val outputEncoder: ResponseWriter[Pure, F, O]
+  def errorEncoder[EE](schema: Schema[EE]): ResponseWriter[Pure, F, EE]
+  val errorEncoder: ResponseWriter[Pure, F, E]
 }
 
 object UnaryServerCodecs {
@@ -38,8 +39,8 @@ object UnaryServerCodecs {
 
   def make[F[_]](
       input: CachedSchemaCompiler[RequestDecoder[F, *]],
-      output: CachedSchemaCompiler[ResponseEncoder[F, *]],
-      error: CachedSchemaCompiler[ResponseEncoder[F, *]],
+      output: CachedSchemaCompiler[ResponseWriter[Pure, F, *]],
+      error: CachedSchemaCompiler[ResponseWriter[Pure, F, *]],
       errorHeaders: List[String]
   ): Make[F] = new Make[F] {
     val requestDecoderCache: input.Cache = input.createCache()
@@ -51,15 +52,15 @@ object UnaryServerCodecs {
     ): UnaryServerCodecs[F, I, E, O] = new UnaryServerCodecs[F, I, E, O] {
       val inputDecoder: RequestDecoder[F, I] =
         input.fromSchema(endpoint.input, requestDecoderCache)
-      val outputEncoder: ResponseEncoder[F, O] =
+      val outputEncoder: ResponseWriter[Pure, F, O] =
         output.fromSchema(endpoint.output, responseEncoderCache)
-      val errorEncoder: ResponseEncoder[F, E] =
+      val errorEncoder: ResponseWriter[Pure, F, E] =
         ResponseEncoder.forError(
           errorHeaders,
           endpoint.errorable,
           error
         )
-      def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE] =
+      def errorEncoder[EE](schema: Schema[EE]): ResponseWriter[Pure, F, EE] =
         error.fromSchema(schema, errorResponseEncoderCache)
     }
   }

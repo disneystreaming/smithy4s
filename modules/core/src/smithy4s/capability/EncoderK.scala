@@ -18,8 +18,11 @@ package smithy4s.capability
 
 /**
   * A typeclass abstracting over the notion of encoder.
+  * It offers way to go from an encoder type to a function, and vice-versa.
   *
-  * Useful in particular when encoding unions
+  * This abstraction is particularly useful when encoding unions : as we need
+  * to pre-compile codecs for each union member, and dispatch union instances
+  * to a specific codec.
   */
 trait EncoderK[F[_], Result] extends Contravariant[F] {
   def apply[A](fa: F[A], a: A): Result

@@ -23,4 +23,5 @@ sealed trait Smithy4sCommand extends Product with Serializable
 object Smithy4sCommand {
   final case class Generate(args: CodegenArgs) extends Smithy4sCommand
   final case class DumpModel(args: DumpModelArgs) extends Smithy4sCommand
+  final case object Version extends Smithy4sCommand
 }

@@ -20,19 +20,12 @@ import cats.MonadThrow
 import cats.effect.Concurrent
 import org.http4s.EntityDecoder
 import org.http4s.Request
+import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
-import smithy4s.schema._
-import smithy4s.kinds.FunctorK
 import smithy4s.kinds.PolyFunction
+import smithy4s.schema._
 
 object RequestDecoder {
-
-  def fromEntityDecoder[F[_], A](implicit
-      F: MonadThrow[F],
-      entityDecoder: EntityDecoder[F, A]
-  ): RequestDecoder[F, A] = new RequestDecoder[F, A] {
-    def decode(request: Request[F]): F[A] = request.as[A]
-  }
 
   /**
     * Creates a RequestDecoder that decodes an HTTP message by looking at the
@@ -44,7 +37,7 @@ object RequestDecoder {
   def fromMetadataDecoder[F[_]: MonadThrow, A](
       metadataDecoder: Metadata.Decoder[A]
   ): RequestDecoder[F, A] = new RequestDecoder[F, A] {
-    def decode(request: Request[F]): F[A] = {
+    def read(request: Request[F]): F[A] = {
       // TODO better recovery when the pathParams cannot be retrieved from the vault
       val queryParams =
         request.attributes.lookup(pathParamsKey).getOrElse(Map.empty)
@@ -60,20 +53,6 @@ object RequestDecoder {
         fromMetadataDecoder(fa)
     }
 
-  def rpcSchemaCompiler[F[_]](
-      entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
-  )(implicit F: MonadThrow[F]): CachedSchemaCompiler[RequestDecoder[F, *]] =
-    new CachedSchemaCompiler[RequestDecoder[F, *]] {
-      type Cache = entityDecoderCompiler.Cache
-      def createCache(): Cache =
-        entityDecoderCompiler.createCache()
-
-      def fromSchema[A](schema: Schema[A], cache: Cache): RequestDecoder[F, A] =
-        fromEntityDecoder(F, entityDecoderCompiler.fromSchema(schema, cache))
-      def fromSchema[A](schema: Schema[A]): RequestDecoder[F, A] =
-        fromEntityDecoder(F, entityDecoderCompiler.fromSchema(schema))
-    }
-
   /**
     * A compiler for RequestDecoder that abides by REST-semantics :
     * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`,
@@ -87,13 +66,11 @@ object RequestDecoder {
   )(implicit
       F: Concurrent[F]
   ): CachedSchemaCompiler[RequestDecoder[F, *]] = {
-    val metadataCompiler = FunctorK[CachedSchemaCompiler]
-      .mapK(metadataDecoderCompiler, fromMetadataDecoderK[F])
-    val bodyCompiler = FunctorK[CachedSchemaCompiler].mapK(
-      entityDecoderCompiler,
-      MessageDecoder.fromEntityDecoderK
-    )
-    MessageDecoder.restCombinedSchemaCompiler[F, Request[F]](
+    val metadataCompiler =
+      metadataDecoderCompiler.mapK(fromMetadataDecoderK[F])
+    val bodyCompiler =
+      entityDecoderCompiler.mapK(MediaDecoder.fromEntityDecoderK)
+    HttpRestSchema.combineReaderCompilers[F, Request[F]](
       metadataCompiler,
       bodyCompiler
     )

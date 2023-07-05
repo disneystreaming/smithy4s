@@ -20,13 +20,11 @@ import cats.effect.Concurrent
 import org.http4s.Response
 import smithy4s.Endpoint
 import smithy4s.http.HttpDiscriminator
-import smithy4s.http.HttpEndpoint
-import smithy4s.http.uri.HostPrefixInjector
-import smithy4s.http4s.kernel.RequestEncoder.fromHostEndpoint
 import smithy4s.schema.CachedSchemaCompiler
+import fs2.Pure
 
 trait UnaryClientCodecs[F[_], I, E, O] {
-  val inputEncoder: RequestEncoder[F, I]
+  val inputEncoder: RequestWriter[Pure, F, I]
   val outputDecoder: ResponseDecoder[F, O]
   val errorDecoder: ResponseDecoder[F, Throwable]
 }
@@ -54,35 +52,30 @@ object UnaryClientCodecs {
 
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
-      ): UnaryClientCodecs[F, I, E, O] =
-        new UnaryClientCodecs[F, I, E, O] {
-          private val requestEncoder =
-            input.fromSchema(endpoint.input, requestEncoderCache)
-          private val hostEncoder =
-            if (hostPrefixInjection)
-              HostPrefixInjector(endpoint).map(fromHostEndpoint(_))
-            else None
-          private val baseEncoder = requestEncoder.combineOpt(hostEncoder)
-          val inputEncoder: RequestEncoder[F, I] = {
-            HttpEndpoint.cast(endpoint).toOption match {
-              case Some(httpEndpoint) => {
-                val httpInputEncoder =
-                  RequestEncoder.fromHttpEndpoint[F, I](httpEndpoint)
-                httpInputEncoder.combine(baseEncoder)
-              }
-              case None => baseEncoder
-            }
-          }
+      ): UnaryClientCodecs[F, I, E, O] = new UnaryClientCodecs[F, I, E, O] {
 
-          val outputDecoder: ResponseDecoder[F, O] =
-            output.fromSchema(endpoint.output, responseDecoderCache)
-          val errorDecoder: ResponseDecoder[F, Throwable] =
-            ResponseDecoder.forErrorAsThrowable(
-              endpoint.errorable,
-              error,
-              errorDiscriminator
-            )
-        }
+        private val hostEncoder =
+          RequestEncoder.hostPrefix(endpoint).when(hostPrefixInjection)
+        private val httpEndpointEncoder =
+          RequestEncoder.httpEndpoint(endpoint)
+        private val requestEncoder =
+          input.fromSchema(endpoint.input, requestEncoderCache)
+
+        val inputEncoder =
+          hostEncoder
+            .pipe(httpEndpointEncoder)
+            .andThen(_.covary[F])
+            .pipe(requestEncoder)
+
+        val outputDecoder: ResponseDecoder[F, O] =
+          output.fromSchema(endpoint.output, responseDecoderCache)
+        val errorDecoder: ResponseDecoder[F, Throwable] =
+          ResponseDecoder.forErrorAsThrowable(
+            endpoint.errorable,
+            error,
+            errorDiscriminator
+          )
+      }
     }
   }
 

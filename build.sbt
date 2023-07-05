@@ -377,9 +377,11 @@ lazy val codegen = projectMatrix
  */
 lazy val `codegen-cli` = projectMatrix
   .in(file("modules/codegen-cli"))
+  .enablePlugins(BuildInfoPlugin)
   .dependsOn(codegen)
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(
+    buildInfoPackage := "smithy4s.codegen.cli",
     libraryDependencies ++= Seq(
       Dependencies.Decline.core.value,
       Dependencies.Weaver.cats.value % Test
@@ -819,7 +821,7 @@ lazy val bootstrapped = projectMatrix
     genSmithy(Compile),
     genSmithyOutput := exampleGeneratedOutput.value,
     genSmithyResourcesOutput := (Compile / resourceDirectory).value,
-    smithy4sSkip := List("resource"),
+    smithy4sSkip := List("resource", "openapi"),
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"

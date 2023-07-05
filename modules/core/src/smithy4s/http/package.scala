@@ -16,10 +16,20 @@
 
 package smithy4s
 
+import smithy4s.codecs.Reader
+import smithy4s.codecs.ReaderWriter
+import smithy4s.codecs.PayloadWriter
+
 package object http {
 
   val errorTypeHeader = "X-Error-Type"
   val amazonErrorTypeHeader = "X-Amzn-Errortype"
+
+  type HttpPayloadReader[A] = Reader[Either[HttpContractError, *], Blob, A]
+  type HttpPayloadCodec[A] = ReaderWriter[HttpPayloadReader, PayloadWriter, A]
+  type HttpMediaReader[A] = HttpMediaTyped[HttpPayloadReader, A]
+  type HttpMediaWriter[A] = HttpMediaTyped[PayloadWriter, A]
+  type HttpMediaCodec[A] = HttpMediaTyped[HttpPayloadCodec, A]
 
   type PathParams = Map[String, String]
   type HttpMediaType = HttpMediaType.Type

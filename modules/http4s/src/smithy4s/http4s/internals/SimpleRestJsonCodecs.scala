@@ -18,14 +18,17 @@ package smithy4s
 package http4s
 package internals
 
-import smithy4s.http.HttpDiscriminator
-import smithy4s.http4s.kernel._
-import smithy4s.schema.CachedSchemaCompiler
+import cats.effect.Concurrent
+import org.http4s.EntityDecoder
 import org.http4s.Response
 import org.http4s.headers.`Content-Type`
-import cats.effect.Concurrent
-import smithy4s.http.Metadata
 import org.http4s.syntax.all._
+import smithy4s.http.HttpDiscriminator
+import smithy4s.http.Metadata
+import smithy4s.http._
+import smithy4s.http4s.kernel._
+import smithy4s.json.Json
+import smithy4s.schema.CachedSchemaCompiler
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -34,7 +37,24 @@ private[http4s] class SimpleRestJsonCodecs(
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
-  private val underlyingCodecs = smithy4s.http.json.codecs(hintMask, maxArity)
+  private val underlyingCodecs = Json.payloadCodecs
+    .withJsoniterCodecCompiler(
+      Json.jsoniter
+        .withHintMask(hintMask)
+        .withMaxArity(maxArity)
+        .withExplicitNullEncoding(explicitNullEncoding)
+    )
+
+  val mediaType = HttpMediaType("application/json")
+  def entityEncoders[F[_]] = underlyingCodecs.mapK {
+    EntityEncoders.fromPayloadCodecK[F](mediaType)
+  }
+
+  // scalafmt: {maxColumn = 120}
+  def entityDecoders[F[_]: Concurrent]: CachedSchemaCompiler[EntityDecoder[F, *]] = underlyingCodecs.mapK {
+    EntityDecoders.fromPayloadCodecK[F](mediaType)
+  }
+
   private val errorHeaders = List(
     smithy4s.http.errorTypeHeader,
     // Adding X-Amzn-Errortype as well to facilitate interop
@@ -57,21 +77,19 @@ private[http4s] class SimpleRestJsonCodecs(
     val messageDecoderCompiler =
       RequestDecoder.restSchemaCompiler[F](
         Metadata.Decoder,
-        EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+        entityDecoders[F]
       )
     val responseEncoderCompiler = {
       val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
         Metadata.Encoder,
-        EntityEncoders.fromCodecAPI[F](underlyingCodecs)
+        entityEncoders[F]
       )
       new CachedSchemaCompiler[ResponseEncoder[F, *]] {
         type Cache = restSchemaCompiler.Cache
         def createCache(): Cache = restSchemaCompiler.createCache()
         def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
-        def fromSchema[A](schema: Schema[A], cache: Cache) = if (
-          schema.isUnit
-        ) {
+        def fromSchema[A](schema: Schema[A], cache: Cache) = if (schema.isUnit) {
           restSchemaCompiler.fromSchema(schema, cache)
         } else {
           restSchemaCompiler
@@ -93,12 +111,12 @@ private[http4s] class SimpleRestJsonCodecs(
     val messageDecoderCompiler =
       ResponseDecoder.restSchemaCompiler[F](
         Metadata.Decoder,
-        EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+        entityDecoders[F]
       )
     val messageEncoderCompiler =
       RequestEncoder.restSchemaCompiler[F](
         Metadata.Encoder,
-        EntityEncoders.fromCodecAPI[F](underlyingCodecs)
+        entityEncoders[F]
       )
     UnaryClientCodecs.Make[F](
       input = messageEncoderCompiler,

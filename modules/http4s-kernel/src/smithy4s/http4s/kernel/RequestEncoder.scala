@@ -22,17 +22,19 @@ import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
 import org.http4s.Uri.Authority
+import smithy4s.Endpoint
 import smithy4s.http.HttpEndpoint
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
-import smithy4s.http.uri.HostPrefixInjector
-import smithy4s.kinds.FunctorK
+import smithy4s.http.HostPrefix
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
+import smithy4s.codecs.Writer
+import fs2.Pure
 
 object RequestEncoder {
 
-  def metadataRequestEncoder[F[_]: Concurrent]: RequestEncoder[F, Metadata] =
+  def metadataRequestEncoder[F[_]]: RequestEncoder[F, Metadata] =
     new RequestEncoder[F, Metadata] {
       def write(request: Request[F], metadata: Metadata): Request[F] = {
         val uri = request.uri.withMultiValueQueryParams(metadata.query)
@@ -41,12 +43,12 @@ object RequestEncoder {
       }
     }
 
-  def fromMetadataEncoder[F[_]: Concurrent, A](
+  def fromMetadataEncoder[F[_], A](
       metadataEncoder: Metadata.Encoder[A]
   ): RequestEncoder[F, A] =
     metadataRequestEncoder[F].contramap(metadataEncoder.encode)
 
-  def fromMetadataEncoderK[F[_]: Concurrent]
+  def fromMetadataEncoderK[F[_]]
       : PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] =
     new PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] {
       def apply[A](fa: Metadata.Encoder[A]): RequestEncoder[F, A] =
@@ -68,22 +70,36 @@ object RequestEncoder {
         fromEntityEncoder[F, A](Concurrent[F], fa)
     }
 
-  def fromHostEndpoint[F[_]: Concurrent, I](
-      hostEndpoint: HostPrefixInjector[I]
-  ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
-    def write(request: Request[F], input: I): Request[F] = {
-      val hostPrefix = hostEndpoint.inject(input)
-      val oldUri = request.uri
-      val newAuth = prefixHost(oldUri, hostPrefix)
-      val newUri = oldUri.copy(authority = newAuth)
-      request.withUri(newUri)
+  def hostPrefix[I](
+      endpoint: Endpoint.Base[I, _, _, _, _]
+  ): RequestEncoder[Pure, I] =
+    HostPrefix(endpoint) match {
+      case Some(prefixEncoder) =>
+        new RequestEncoder[Pure, I] {
+          def write(request: Request[Pure], input: I): Request[Pure] = {
+            val hostPrefix = prefixEncoder.encode(input)
+            val oldUri = request.uri
+            val newAuth = prefixHost(oldUri, hostPrefix)
+            val newUri = oldUri.copy(authority = newAuth)
+            request.withUri(newUri)
+          }
+        }
+      case None => Writer.noop[Request[Pure]]
+    }
+
+  def httpEndpoint[I](
+      endpoint: Endpoint.Base[I, _, _, _, _]
+  ): RequestEncoder[Pure, I] = {
+    HttpEndpoint.unapply(endpoint) match {
+      case Some(httpEndpoint) => fromHttpEndpoint(httpEndpoint)
+      case None               => Writer.noop[Request[Pure]]
     }
   }
 
-  def fromHttpEndpoint[F[_]: Concurrent, I](
+  private def fromHttpEndpoint[I](
       httpEndpoint: HttpEndpoint[I]
-  ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
-    def write(request: Request[F], input: I): Request[F] = {
+  ): RequestEncoder[Pure, I] = new RequestEncoder[Pure, I] {
+    def write(request: Request[Pure], input: I): Request[Pure] = {
       val path = httpEndpoint.path(input)
       val staticQueries = httpEndpoint.staticQueryParams
       val oldUri = request.uri
@@ -102,10 +118,7 @@ object RequestEncoder {
   def rpcSchemaCompiler[F[_]](
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] =
-    FunctorK[CachedSchemaCompiler].mapK(
-      entityEncoderCompiler,
-      fromEntityEncoderK[F]
-    )
+    entityEncoderCompiler.mapK(fromEntityEncoderK[F])
 
   /**
     * A compiler for RequestEncoder that abides by REST-semantics :
@@ -118,14 +131,8 @@ object RequestEncoder {
       metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
-    val bodyCompiler = FunctorK[CachedSchemaCompiler].mapK(
-      entityEncoderCompiler,
-      fromEntityEncoderK
-    )
-    val metadataCompiler = FunctorK[CachedSchemaCompiler].mapK(
-      metadataEncoderCompiler,
-      fromMetadataEncoderK
-    )
+    val bodyCompiler = entityEncoderCompiler.mapK(fromEntityEncoderK)
+    val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
     HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 

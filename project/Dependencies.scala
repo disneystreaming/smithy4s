@@ -29,7 +29,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.2.2"
+    val alloyVersion = "0.2.3"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -70,7 +70,7 @@ object Dependencies {
   }
 
   object Mill {
-    val millVersion = "0.11.0"
+    val millVersion = "0.11.1"
 
     val scalalib = "com.lihaoyi" %% "mill-scalalib" % millVersion
     val main = "com.lihaoyi" %% "mill-main" % millVersion
@@ -93,10 +93,10 @@ object Dependencies {
    * modules/tests/src-ce2/UUIDGen.scala
    */
   val CatsEffect3: Def.Initialize[ModuleID] =
-    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.0")
+    Def.setting("org.typelevel" %%% "cats-effect" % "3.5.1")
 
   object Http4s {
-    val http4sVersion = "0.23.21"
+    val http4sVersion = "0.23.22"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)

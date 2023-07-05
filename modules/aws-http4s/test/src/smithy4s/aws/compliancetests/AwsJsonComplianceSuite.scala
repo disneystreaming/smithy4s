@@ -43,10 +43,7 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
     val disallowed = Set(
       // this would be taken-care of by middleware
-      "HostWithPathOperation",
-      // tests inconsistent with specification : https://github.com/awslabs/smithy/issues/1827
-      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_0",
-      "SDKAppendedGzipAfterProvidedEncoding_awsJson1_1"
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
@@ -66,6 +63,9 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 
+  val jsonPayloadCodecs =
+    smithy4s.aws.internals.AwsJsonCodecs.jsonPayloadCodecs
+
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
       p <- modelDump
@@ -75,7 +75,7 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
         .compile
         .toVector
         .map(_.toArray)
-        .map(decodeDocument(_, smithy4s.http.json.codecs()))
+        .map(decodeDocument(_, jsonPayloadCodecs))
         .flatMap(loadDynamic(_).liftTo[IO])
     } yield dsi
   }

@@ -71,13 +71,13 @@ private[aws] class AwsUnaryEndpoint[F[_], I, E, O, SI, SO](
     awsEnv.region.map { region =>
       val baseUri: Uri =
         Uri.unsafeFromString(s"https://$endpointPrefix.$region.amazonaws.com/")
-      val baseRequest = Request[F](Method.POST, baseUri).withEmptyBody
+      val baseRequest = Request[fs2.Pure](Method.POST, baseUri).withEmptyBody
       inputEncoder.write(baseRequest, input)
     }
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputDecoder.decode(response)
-    else errorDecoder.decode(response).flatMap(effect.raiseError[O](_))
+    if (response.status.isSuccess) outputDecoder.read(response)
+    else errorDecoder.read(response).flatMap(effect.raiseError[O](_))
 
 }

@@ -18,7 +18,6 @@ package smithy4s
 package http
 package internals
 
-import smithy4s.capability.Covariant
 import smithy4s.http.internals.MetaDecode._
 
 import scala.collection.mutable.{Map => MMap}
@@ -183,23 +182,18 @@ private[http] object MetaDecode {
     def putNone(fieldName: String): Unit
   }
 
-  implicit val covariantInstance: Covariant[MetaDecode] =
-    new Covariant[MetaDecode] {
-      def map[A, B](fa: MetaDecode[A])(f: A => B): MetaDecode[B] =
-        fa.map(f)
-      def emap[A, B](
-          fa: MetaDecode[A]
-      )(f: A => Either[ConstraintError, B]): MetaDecode[B] =
-        fa.map(a =>
-          f(a) match {
-            case Right(b) => b
-            case Left(error) =>
-              throw MetaDecodeError(
-                MetadataError.FailedConstraint(_, _, error.message)
-              )
-          }
-        )
-    }
+  def emap[A, B](
+      fa: MetaDecode[A]
+  )(f: A => Either[ConstraintError, B]): MetaDecode[B] =
+    fa.map(a =>
+      f(a) match {
+        case Right(b) => b
+        case Left(error) =>
+          throw MetaDecodeError(
+            MetadataError.FailedConstraint(_, _, error.message)
+          )
+      }
+    )
 
   def fromUnsafe[A](
       expectedType: String
