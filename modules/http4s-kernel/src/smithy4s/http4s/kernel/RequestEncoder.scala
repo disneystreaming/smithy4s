@@ -25,6 +25,7 @@ import smithy4s.http.HttpEndpoint
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
+import smithy4s.codecs.Writer
 import smithy4s.schema._
 
 object RequestEncoder {
@@ -38,18 +39,6 @@ object RequestEncoder {
         val headers = toHeaders(metadata.headers)
         request.withUri(uri).withHeaders(request.headers ++ headers)
       }
-    }
-
-  def fromMetadataEncoder[F[_], A](
-      metadataEncoder: Metadata.Encoder[A]
-  ): RequestEncoder[F, A] =
-    metadataRequestEncoder[F].contramap(metadataEncoder.encode)
-
-  def fromMetadataEncoderK[F[_]]
-      : PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] =
-    new PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] {
-      def apply[A](fa: Metadata.Encoder[A]): RequestEncoder[F, A] =
-        fromMetadataEncoder[F, A](fa)
     }
 
   def fromEntityEncoder[F[_]: Concurrent, A](implicit
@@ -103,7 +92,8 @@ object RequestEncoder {
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
     val bodyCompiler = entityEncoderCompiler.mapK(fromEntityEncoderK)
-    val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
+    val metadataCompiler =
+      metadataEncoderCompiler.mapK(Writer.pipeDataK(metadataRequestEncoder[F]))
     HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 

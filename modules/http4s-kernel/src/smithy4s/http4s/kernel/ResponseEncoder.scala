@@ -21,7 +21,6 @@ import org.http4s.EntityEncoder
 import org.http4s.Response
 import org.http4s.Status
 import smithy4s.Errorable
-import smithy4s.codecs.Writer
 import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpStatusCode
 import smithy4s.http._
@@ -29,6 +28,7 @@ import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Alt
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+import smithy4s.codecs.Writer
 
 object ResponseEncoder {
 
@@ -86,18 +86,6 @@ object ResponseEncoder {
       }
     }
 
-  def fromMetadataEncoder[F[_], A](
-      metadataEncoder: Metadata.Encoder[A]
-  ): ResponseEncoder[F, A] =
-    metadataResponseEncoder[F].contramap(metadataEncoder.encode)
-
-  def fromMetadataEncoderK[F[_]]
-      : PolyFunction[Metadata.Encoder, ResponseEncoder[F, *]] =
-    new PolyFunction[Metadata.Encoder, ResponseEncoder[F, *]] {
-      def apply[A](fa: Metadata.Encoder[A]): ResponseEncoder[F, A] =
-        fromMetadataEncoder[F, A](fa)
-    }
-
   def fromEntityEncoder[F[_]: Concurrent, A](implicit
       entityEncoder: EntityEncoder[F, A]
   ): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
@@ -135,7 +123,8 @@ object ResponseEncoder {
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] = {
     val bodyCompiler =
       entityEncoderCompiler.mapK(fromEntityEncoderK)
-    val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
+    val metadataCompiler =
+      metadataEncoderCompiler.mapK(Writer.pipeDataK(metadataResponseEncoder[F]))
     HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
 

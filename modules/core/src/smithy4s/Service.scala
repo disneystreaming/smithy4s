@@ -127,7 +127,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
    * to the service and routes it to the correct function, returning the result.
    */
   final def interpreter[F[_, _, _, _, _]](compiler: EndpointCompiler[F]) : Interpreter[F] = new Interpreter[F]{
-    val cached = compiler.unsafeCacheBy(endpoints.map(Kind5.existential(_)), identity)
+    val cached = PolyFunction5.unsafeCache[Endpoint, Kind5[F]#handler](compiler, endpoints.map(Kind5.existential(_)))
     def apply[I, E, O, SI, SO](operation: Operation[I, E, O, SI, SO]): F[I, E, O, SI, SO] = {
       val (input, ep) = endpoint(operation)
       cached(ep).apply(input)

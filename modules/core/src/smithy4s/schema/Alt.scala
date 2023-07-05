@@ -92,12 +92,12 @@ object Alt {
           encoderK: EncoderK[G, Result]
       ): G[U] = {
         val precompiledAlts =
-          precompile.toPolyFunction
-            .unsafeCacheBy[String](
-              alts.map(Kind1.existential(_)),
-              (alt: Kind1.Existential[Alt[F, U, *]]) =>
-                alt.asInstanceOf[Alt[F, U, _]].label
-            )
+          PolyFunction.unsafeCacheBy[Alt[F, U, *], G, String](
+            precompile.toPolyFunction,
+            alts.map(Kind1.existential(_)),
+            (alt: Kind1.Existential[Alt[F, U, *]]) =>
+              alt.asInstanceOf[Alt[F, U, _]].label
+          )
 
         encoderK.absorb[U] { u =>
           underlying(u) match {

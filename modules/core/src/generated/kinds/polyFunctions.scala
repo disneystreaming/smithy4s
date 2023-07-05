@@ -21,27 +21,13 @@ package kinds
 
 import smithy4s.Transformation
 
-trait PolyFunction[F[_], G[_]]{ self =>
+trait PolyFunction[-F[_], +G[_]]{ self =>
    def apply[A0](fa: F[A0]): G[A0]
 
    final def andThen[H[_]](other: PolyFunction[G, H]): PolyFunction[F, H] = new PolyFunction[F, H]{
       def apply[A0](fa: F[A0]): H[A0] = other(self(fa))
    }
 
-   import Kind1._
-   private[smithy4s] final def unsafeCacheBy[K](allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction[F, G] =
-     new PolyFunction[F, G] {
-       private val map: Map[K, Any] = {
-         val builder = Map.newBuilder[K, Any]
-         allPossibleInputs.foreach(input =>
-           builder += getKey(input) -> self
-             .apply(input.asInstanceOf[F[Any]])
-             .asInstanceOf[Any]
-         )
-         builder.result()
-       }
-       def apply[A0](input: F[A0]): G[A0] = map(getKey(existential(input))).asInstanceOf[G[A0]]
-   }
 }
 object PolyFunction{
   type From[F[_]] = {
@@ -56,29 +42,33 @@ object PolyFunction{
     new Transformation[PolyFunction[F, G], Alg[F], Alg[G]]{
       def apply(func: PolyFunction[F, G], algF: Alg[F]): Alg[G] = FunctorK[Alg].mapK(algF, func)
     }
+
+   import Kind1._
+   private[smithy4s] final def unsafeCacheBy[F[_], G[_], K](self: PolyFunction[F, G], allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction[F, G] =
+     new PolyFunction[F, G] {
+       private val map: Map[K, Any] = {
+         val builder = Map.newBuilder[K, Any]
+         allPossibleInputs.foreach(input =>
+           builder += getKey(input) -> self
+             .apply(input.asInstanceOf[F[Any]])
+             .asInstanceOf[Any]
+         )
+         builder.result()
+       }
+       def apply[A0](input: F[A0]): G[A0] = map(getKey(existential(input))).asInstanceOf[G[A0]]
+   }
+
+   private[smithy4s] final def unsafeCache[F[_], G[_]](self: PolyFunction[F, G], allPossibleInputs: Seq[Existential[F]]): PolyFunction[F, G] =
+     unsafeCacheBy[F, G, Existential[F]](self, allPossibleInputs, identity(_))
 }
 
-trait PolyFunction2[F[_, _], G[_, _]]{ self =>
+trait PolyFunction2[-F[_, _], +G[_, _]]{ self =>
    def apply[A0, A1](fa: F[A0, A1]): G[A0, A1]
 
    final def andThen[H[_, _]](other: PolyFunction2[G, H]): PolyFunction2[F, H] = new PolyFunction2[F, H]{
       def apply[A0, A1](fa: F[A0, A1]): H[A0, A1] = other(self(fa))
    }
 
-   import Kind2._
-   private[smithy4s] final def unsafeCacheBy[K](allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction2[F, G] =
-     new PolyFunction2[F, G] {
-       private val map: Map[K, Any] = {
-         val builder = Map.newBuilder[K, Any]
-         allPossibleInputs.foreach(input =>
-           builder += getKey(input) -> self
-             .apply(input.asInstanceOf[F[Any, Any]])
-             .asInstanceOf[Any]
-         )
-         builder.result()
-       }
-       def apply[A0, A1](input: F[A0, A1]): G[A0, A1] = map(getKey(existential(input))).asInstanceOf[G[A0, A1]]
-   }
 }
 object PolyFunction2{
   type From[F[_, _]] = {
@@ -93,30 +83,34 @@ object PolyFunction2{
     new Transformation[PolyFunction2[F, G], Alg[F], Alg[G]]{
       def apply(func: PolyFunction2[F, G], algF: Alg[F]): Alg[G] = FunctorK2[Alg].mapK2(algF, func)
     }
+
+   import Kind2._
+   private[smithy4s] final def unsafeCacheBy[F[_, _], G[_, _], K](self: PolyFunction2[F, G], allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction2[F, G] =
+     new PolyFunction2[F, G] {
+       private val map: Map[K, Any] = {
+         val builder = Map.newBuilder[K, Any]
+         allPossibleInputs.foreach(input =>
+           builder += getKey(input) -> self
+             .apply(input.asInstanceOf[F[Any, Any]])
+             .asInstanceOf[Any]
+         )
+         builder.result()
+       }
+       def apply[A0, A1](input: F[A0, A1]): G[A0, A1] = map(getKey(existential(input))).asInstanceOf[G[A0, A1]]
+   }
+
+   private[smithy4s] final def unsafeCache[F[_, _], G[_, _]](self: PolyFunction2[F, G], allPossibleInputs: Seq[Existential[F]]): PolyFunction2[F, G] =
+     unsafeCacheBy[F, G, Existential[F]](self, allPossibleInputs, identity(_))
 }
 
 
-trait PolyFunction5[F[_, _, _, _, _], G[_, _, _, _, _]]{ self =>
+trait PolyFunction5[-F[_, _, _, _, _], +G[_, _, _, _, _]]{ self =>
    def apply[A0, A1, A2, A3, A4](fa: F[A0, A1, A2, A3, A4]): G[A0, A1, A2, A3, A4]
 
    final def andThen[H[_, _, _, _, _]](other: PolyFunction5[G, H]): PolyFunction5[F, H] = new PolyFunction5[F, H]{
       def apply[A0, A1, A2, A3, A4](fa: F[A0, A1, A2, A3, A4]): H[A0, A1, A2, A3, A4] = other(self(fa))
    }
 
-   import Kind5._
-   private[smithy4s] final def unsafeCacheBy[K](allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction5[F, G] =
-     new PolyFunction5[F, G] {
-       private val map: Map[K, Any] = {
-         val builder = Map.newBuilder[K, Any]
-         allPossibleInputs.foreach(input =>
-           builder += getKey(input) -> self
-             .apply(input.asInstanceOf[F[Any, Any, Any, Any, Any]])
-             .asInstanceOf[Any]
-         )
-         builder.result()
-       }
-       def apply[A0, A1, A2, A3, A4](input: F[A0, A1, A2, A3, A4]): G[A0, A1, A2, A3, A4] = map(getKey(existential(input))).asInstanceOf[G[A0, A1, A2, A3, A4]]
-   }
 }
 object PolyFunction5{
   type From[F[_, _, _, _, _]] = {
@@ -131,6 +125,24 @@ object PolyFunction5{
     new Transformation[PolyFunction5[F, G], Alg[F], Alg[G]]{
       def apply(func: PolyFunction5[F, G], algF: Alg[F]): Alg[G] = FunctorK5[Alg].mapK5(algF, func)
     }
+
+   import Kind5._
+   private[smithy4s] final def unsafeCacheBy[F[_, _, _, _, _], G[_, _, _, _, _], K](self: PolyFunction5[F, G], allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction5[F, G] =
+     new PolyFunction5[F, G] {
+       private val map: Map[K, Any] = {
+         val builder = Map.newBuilder[K, Any]
+         allPossibleInputs.foreach(input =>
+           builder += getKey(input) -> self
+             .apply(input.asInstanceOf[F[Any, Any, Any, Any, Any]])
+             .asInstanceOf[Any]
+         )
+         builder.result()
+       }
+       def apply[A0, A1, A2, A3, A4](input: F[A0, A1, A2, A3, A4]): G[A0, A1, A2, A3, A4] = map(getKey(existential(input))).asInstanceOf[G[A0, A1, A2, A3, A4]]
+   }
+
+   private[smithy4s] final def unsafeCache[F[_, _, _, _, _], G[_, _, _, _, _]](self: PolyFunction5[F, G], allPossibleInputs: Seq[Existential[F]]): PolyFunction5[F, G] =
+     unsafeCacheBy[F, G, Existential[F]](self, allPossibleInputs, identity(_))
 }
 
 

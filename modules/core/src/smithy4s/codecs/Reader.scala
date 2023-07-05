@@ -49,7 +49,7 @@ trait Reader[F[_], -Message, A] { self =>
 
 object Reader {
 
-  implicit def readerZipper[F[_]: Zipper, Message]
+  implicit def zipperInstanceForReader[F[_]: Zipper, Message]
       : Zipper[Reader[F, Message, *]] = new Zipper[Reader[F, Message, *]] {
     def pure[A](a: A): Reader[F, Message, A] = new Reader[F, Message, A] {
       def read(message: Message): F[A] = Zipper[F].pure(a)

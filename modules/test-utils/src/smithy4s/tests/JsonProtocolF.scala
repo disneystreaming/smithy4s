@@ -97,9 +97,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
                 .map(e => F.raiseError(errorableE.unliftError(e)))
             case None =>
               new Document.Decoder[F[Nothing]] {
-                def decode(
-                    document: Document
-                ): Either[PayloadError, F[Nothing]] =
+                def read(document: Document): Either[PayloadError, F[Nothing]] =
                   Right(
                     F.raiseError(
                       PayloadError(PayloadPath.root, "Nothing", "Nothing")
@@ -108,7 +106,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
               }
           }
         implicit val decoderFoutput = new Document.Decoder[F[O]] {
-          def decode(
+          def read(
               document: Document
           ): Either[smithy4s.codecs.PayloadError, F[O]] = {
             document match {

@@ -79,20 +79,20 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
 
   type ConstF[A] = F[E]
   val cachedDecoders: PolyFunction[SchemaAlt[E, *], ConstF] =
-    new PolyFunction[SchemaAlt[E, *], ConstF] {
-      def apply[A](alt: SchemaAlt[E, A]): F[E] = {
-        val schema = alt.instance
-        // TODO: apply proper memoization of error instances/
-        // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
-        // This is because the "compile entity encoder" method can trigger a transformation of hints, which
-        // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
-        val cache = compiler.createCache()
-        val errorCodec: F[A] = compiler.fromSchema(schema, cache)
-        Covariant[F].map[A, E](errorCodec)(alt.inject)
-      }
-    }.unsafeCacheBy(
-      alts.map(Kind1.existential(_)),
-      identity(_)
+    PolyFunction.unsafeCache(
+      new PolyFunction[SchemaAlt[E, *], ConstF] {
+        def apply[A](alt: SchemaAlt[E, A]): F[E] = {
+          val schema = alt.instance
+          // TODO: apply proper memoization of error instances/
+          // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
+          // This is because the "compile entity encoder" method can trigger a transformation of hints, which
+          // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
+          val cache = compiler.createCache()
+          val errorCodec: F[A] = compiler.fromSchema(schema, cache)
+          Covariant[F].map[A, E](errorCodec)(alt.inject)
+        }
+      },
+      alts.map(Kind1.existential(_))
     )
 
   def apply(
