@@ -16,6 +16,9 @@
 
 package smithy4s.capability
 
+/**
+  * Abstraction that encodes Functors
+  */
 trait Covariant[F[_]] {
   def map[A, B](fa: F[A])(f: A => B): F[B]
 }

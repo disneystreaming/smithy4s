@@ -16,6 +16,13 @@
 
 package smithy4s.capability
 
+/**
+  * A zipper is similar in notion to `Applicative`, in that it allows for
+  * combining several values of `F` in non-sequential ways.
+  *
+  * The encoding here is specialised towards the traversal of sequences,
+  * which is something that's done heavily in this codebase.
+  */
 trait Zipper[F[_]] extends Covariant[F] {
   def pure[A](a: A): F[A]
 

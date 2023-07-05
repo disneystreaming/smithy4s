@@ -16,6 +16,10 @@
 
 package smithy4s.capability
 
+/**
+  * Abstraction that encodes Contravariant Functors.
+  */
+
 trait Contravariant[F[_]] {
   def contramap[A, B](fa: F[A])(f: B => A): F[B]
 }
