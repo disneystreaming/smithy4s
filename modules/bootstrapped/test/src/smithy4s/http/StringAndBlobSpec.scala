@@ -39,7 +39,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaWriter[A] =
       HttpMediaTyped(
         HttpMediaType("foo/bar"),
-        Writer.encodeStatic(Blob.empty)
+        Writer.encodeStatic(Blob.empty): Encoder[Blob, A]
       )
 
   }
