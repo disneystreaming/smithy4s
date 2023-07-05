@@ -27,9 +27,6 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
   type ConstId[A] = ShapeId
   implicit val covariantConstId: Covariant[ConstId] = new Covariant[ConstId] {
     def map[A, B](fa: ConstId[A])(f: A => B): ConstId[B] = fa
-    def emap[A, B](fa: ConstId[A])(
-        f: A => Either[ConstraintError, B]
-    ): ConstId[B] = fa
   }
   val compiler = new CachedSchemaCompiler[ConstId] {
     type Cache = None.type

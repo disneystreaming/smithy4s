@@ -230,7 +230,7 @@ final class SchemaPartitionSpec extends FunSuite {
 
     def multiPartitionedDecoder[A](schema: Schema[A])(
         predicates: SchemaField[_, _] => Boolean*
-    ): List[Document] => Either[http.PayloadError, A] = {
+    ): List[Document] => Either[codecs.PayloadError, A] = {
       val allDecoders: List[Document.Decoder[PartialData[A]]] =
         predicates.toList.map(schema.partition(_)).collect {
           case SchemaPartition.SplittingMatch(matching, _) =>

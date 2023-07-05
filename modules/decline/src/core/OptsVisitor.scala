@@ -28,7 +28,8 @@ import smithy4s.{
   Lazy,
   Refinement,
   ShapeId,
-  Timestamp
+  Timestamp,
+  Blob
 }
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
@@ -124,12 +125,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   }
 
   private def parseJson[A](schema: Schema[A]): String => Either[String, A] = {
-    val capi = new smithy4s.http.json.JsonCodecs()
-    val codec = capi.compileCodec(schema)
+    val reader = smithy4s.json.Json.payloadCodecs.fromSchema(schema).reader
 
     s =>
-      capi
-        .decodeFromByteArray(codec, s.getBytes())
+      reader
+        .decode(Blob(s))
         .leftMap(pe => pe.toString)
   }
 

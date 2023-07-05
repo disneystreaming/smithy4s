@@ -15,7 +15,7 @@
  */
 
 package smithy4s
-package http.json
+package json
 
 import cats.Show
 import com.github.plokhotnyuk.jsoniter_scala.core._
@@ -24,18 +24,19 @@ import smithy.api.Length
 import smithy.api.Range
 import smithy4s.ByteArray
 import smithy4s.Hints
-import smithy4s.http.PayloadError
+import smithy4s.codecs.PayloadError
 import smithy4s.scalacheck.DynData
 import smithy4s.scalacheck._
 import smithy4s.schema._
 import smithy4s.schema.Schema._
 import munit._
 
-import codecs.schemaVisitorJCodec
 import org.scalacheck.Prop
 import Prop._
 
-class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
+class SchemaVisitorJsonCodecPropertyTests()
+    extends FunSuite
+    with ScalaCheckSuite {
 
   val genSchemaData: Gen[(Schema[DynData], Any)] = for {
     schema <- SchemaGenerator.genSchema(2, 2)
@@ -54,8 +55,7 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
     // asserting roundtrip there.
     forAll(genSchemaData) { schemaAndData =>
       val (schema, data) = schemaAndData
-      implicit val codec: JCodec[Any] =
-        schema.compile(schemaVisitorJCodec(CompilationCache.nop[JCodec]))
+      implicit val codec: JsonCodec[Any] = Json.jsoniter.fromSchema(schema)
       val schemaStr =
         schema.compile(smithy4s.internals.SchemaDescriptionDetailed)
       val json = writeToString(data)
@@ -81,8 +81,8 @@ class SchemaVisitorJCodecPropertyTests() extends FunSuite with ScalaCheckSuite {
       val hint = hints.all.collect { case b: Hints.Binding.StaticBinding[_] =>
         b
       }.head
-      implicit val codec: JCodec[Any] =
-        schema.compile(schemaVisitorJCodec(CompilationCache.nop[JCodec]))
+      implicit val codec: JsonCodec[Any] =
+        Json.jsoniter.fromSchema(schema)
       val json = writeToString(data)
       val config = ReaderConfig.withThrowReaderExceptionWithStackTrace(true)
       val result = scala.util.Try(readFromString[Any](json, config)).toEither

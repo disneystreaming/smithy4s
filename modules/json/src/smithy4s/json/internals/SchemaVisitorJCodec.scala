@@ -15,8 +15,8 @@
  */
 
 package smithy4s
-package http
 package json
+package internals
 
 import java.util.UUID
 import java.util
@@ -41,6 +41,8 @@ import scala.collection.mutable.{Map => MMap}
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
     explicitNullEncoding: Boolean,
+    infinitySupport: Boolean,
+    flexibleCollectionsSupport: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -100,7 +102,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         def encodeKey(x: Long, out: JsonWriter): Unit = out.writeKey(x)
       }
 
-    val float: JCodec[Float] =
+    private val efficientFloat: JCodec[Float] =
       new JCodec[Float] {
         def expecting: String = "float"
 
@@ -113,7 +115,41 @@ private[smithy4s] class SchemaVisitorJCodec(
         def encodeKey(x: Float, out: JsonWriter): Unit = out.writeKey(x)
       }
 
-    val double: JCodec[Double] =
+    private val infinityAllowingFloat: JCodec[Float] = new JCodec[Float] {
+      val expecting: String = "JSON number for numeric values"
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Float =
+        if (in.isNextToken('"')) {
+          in.rollbackToken()
+          val len = in.readStringAsCharBuf()
+          if (in.isCharBufEqualsTo(len, "NaN")) Float.NaN
+          else if (in.isCharBufEqualsTo(len, "Infinity")) Float.PositiveInfinity
+          else if (in.isCharBufEqualsTo(len, "-Infinity"))
+            Float.NegativeInfinity
+          else in.decodeError("illegal float")
+        } else {
+          in.rollbackToken()
+          in.readFloat()
+        }
+
+      def encodeValue(f: Float, out: JsonWriter): Unit =
+        if (java.lang.Float.isFinite(f)) out.writeVal(f)
+        else
+          out.writeNonEscapedAsciiVal {
+            if (f != f) "NaN"
+            else if (f >= 0) "Infinity"
+            else "-Infinity"
+          }
+
+      def decodeKey(in: JsonReader): Float = ???
+
+      def encodeKey(x: Float, out: JsonWriter): Unit = ???
+    }
+
+    val float: JCodec[Float] =
+      if (infinitySupport) infinityAllowingFloat else efficientFloat
+
+    private val efficientDouble: JCodec[Double] =
       new JCodec[Double] {
         def expecting: String = "double"
 
@@ -126,6 +162,41 @@ private[smithy4s] class SchemaVisitorJCodec(
 
         def encodeKey(x: Double, out: JsonWriter): Unit = out.writeKey(x)
       }
+
+    private val infinityAllowingDouble: JCodec[Double] = new JCodec[Double] {
+      val expecting: String = "JSON number for numeric values"
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Double =
+        if (in.isNextToken('"')) {
+          in.rollbackToken()
+          val len = in.readStringAsCharBuf()
+          if (in.isCharBufEqualsTo(len, "NaN")) Double.NaN
+          else if (in.isCharBufEqualsTo(len, "Infinity"))
+            Double.PositiveInfinity
+          else if (in.isCharBufEqualsTo(len, "-Infinity"))
+            Double.NegativeInfinity
+          else in.decodeError("illegal double")
+        } else {
+          in.rollbackToken()
+          in.readDouble()
+        }
+
+      def encodeValue(d: Double, out: JsonWriter): Unit =
+        if (java.lang.Double.isFinite(d)) out.writeVal(d)
+        else
+          out.writeNonEscapedAsciiVal {
+            if (d != d) "NaN"
+            else if (d >= 0) "Infinity"
+            else "-Infinity"
+          }
+
+      def decodeKey(in: JsonReader): Double = ???
+
+      def encodeKey(x: Double, out: JsonWriter): Unit = ???
+    }
+
+    val double: JCodec[Double] =
+      if (infinitySupport) infinityAllowingDouble else efficientDouble
 
     val short: JCodec[Short] =
       new JCodec[Short] {
@@ -728,6 +799,65 @@ private[smithy4s] class SchemaVisitorJCodec(
     listImpl(kvCodec).biject(_.toMap, _.toList)
   }
 
+  private def flexibleNullParsingMap[K, V](
+      jk: JCodec[K],
+      jv: JCodec[V]
+  ): JCodec[Map[K, V]] =
+    new JCodec[Map[K, V]] {
+      val expecting: String = "map"
+
+      override def canBeKey: Boolean = false
+
+      def decodeValue(cursor: Cursor, in: JsonReader): Map[K, V] =
+        if (in.isNextToken('{')) {
+          if (in.isNextToken('}')) Map.empty
+          else {
+            in.rollbackToken()
+            val builder = Map.newBuilder[K, V]
+            var i = 0
+            while ({
+              if (i >= maxArity) maxArityError(cursor)
+              val key = jk.decodeKey(in)
+              cursor.push(i)
+              if (in.isNextToken('n')) {
+                in.readNullOrError[Unit]((), "Expected null")
+              } else {
+                in.rollbackToken()
+                val value = cursor.decode(jv, in)
+                builder += (key -> value)
+              }
+              cursor.pop()
+
+              i += 1
+              in.isNextToken(',')
+            }) ()
+            if (in.isCurrentToken('}')) builder.result()
+            else in.objectEndOrCommaError()
+          }
+        } else in.decodeError("Expected JSON object")
+
+      def encodeValue(xs: Map[K, V], out: JsonWriter): Unit = {
+        out.writeObjectStart()
+        xs.foreach { kv =>
+          jk.encodeKey(kv._1, out)
+          jv.encodeValue(kv._2, out)
+        }
+        out.writeObjectEnd()
+      }
+
+      def decodeKey(in: JsonReader): Map[K, V] =
+        in.decodeError("Cannot use maps as keys")
+
+      def encodeKey(xs: Map[K, V], out: JsonWriter): Unit =
+        out.encodeError("Cannot use maps as keys")
+
+      private def maxArityError(cursor: Cursor): Nothing =
+        throw cursor.payloadError(
+          this,
+          s"Input $expecting exceeded max arity of $maxArity"
+        )
+    }
+
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
@@ -750,8 +880,11 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Map[K, V]] = {
     val jk = apply(key)
     val jv = apply(value)
-    if (jk.canBeKey) objectMap(jk, jv)
-    else arrayMap(key, value)
+    if (jk.canBeKey) {
+      if (flexibleCollectionsSupport && !value.isNullable)
+        flexibleNullParsingMap(jk, jv)
+      else objectMap(jk, jv)
+    } else arrayMap(key, value)
   }
 
   override def biject[A, B](
@@ -764,8 +897,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       schema: Schema[A],
       refinement: Refinement[A, B]
   ): JCodec[B] =
-    JCodec.jcodecInvariant
-      .xmap(apply(schema))(refinement.asFunction, refinement.from)
+    apply(schema).biject(refinement.asThrowingFunction, refinement.from)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): JCodec[A] = new JCodec[A] {
     lazy val underlying = apply(suspend.value)
@@ -1215,22 +1347,15 @@ private[smithy4s] class SchemaVisitorJCodec(
   ): JCodec[Z] =
     new JCodec[Z] {
 
-      private[this] val documentFields =
-        fields.filter { case (field, _, _) =>
-          HttpBinding
-            .fromHints(field.label, field.hints, structHints)
-            .isEmpty
-        }
-
       private[this] val handlers =
-        new util.HashMap[String, Handler](documentFields.length << 1, 0.5f) {
-          documentFields.foreach { case (field, jLabel, _) =>
+        new util.HashMap[String, Handler](fields.length << 1, 0.5f) {
+          fields.foreach { case (field, jLabel, _) =>
             put(jLabel, fieldHandler(field))
           }
         }
 
       private[this] val documentEncoders =
-        documentFields.map(labelledField => fieldEncoder(labelledField._1))
+        fields.map(labelledField => fieldEncoder(labelledField._1))
 
       def expecting: String = "object"
 
@@ -1238,11 +1363,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
         decodeValue_(cursor, in)(emptyMetadata)
-
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
-        Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,
@@ -1312,11 +1432,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def decodeValue(cursor: Cursor, in: JsonReader): Z =
         decodeValue_(cursor, in)(emptyMetadata)
-
-      override def decodeMessage(
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z =
-        Cursor.withCursor(expecting)(decodeValue_(_, in))
 
       private def decodeValue_(
           cursor: Cursor,

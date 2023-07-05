@@ -18,10 +18,9 @@ package smithy4s.aws
 package internals
 
 import cats.effect.Concurrent
-import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
-import smithy4s.http.json.JCodec
+import smithy4s.json.Json
 import fs2.compression.Compression
 import smithy4s.Endpoint
 
@@ -34,23 +33,29 @@ private[aws] object AwsJsonCodecs {
     aws.protocols.AwsJson1_0.protocol.hintMask ++
       aws.protocols.AwsJson1_1.protocol.hintMask
 
+  private[aws] val jsonPayloadCodecs =
+    Json.payloadCodecs.withJsoniterCodecCompiler(
+      Json.jsoniter
+        .withInfinitySupport(true)
+        .withFlexibleCollectionsSupport(true)
+        .withHintMask(hintMask)
+    )
+
   def make[F[_]: Concurrent: Compression](
       contentType: String
   ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val underlyingCodecs = new smithy4s.http.json.JsonCodecAPI(
-      cache => new AwsSchemaVisitorJCodec(cache),
-      Some(hintMask)
-    ) {
-      override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
-        httpMediaType
-    }
     val encoders = RequestEncoder.rpcSchemaCompiler[F](
-      EntityEncoders.fromCodecAPI[F](underlyingCodecs)
+      jsonPayloadCodecs.mapK(
+        EntityEncoders.fromPayloadCodecK[F](httpMediaType)
+      )
     )
-    val decoders = ResponseDecoder.rpcSchemaCompiler[F](
-      EntityDecoders.fromCodecAPI[F](underlyingCodecs)
+    val decoders = jsonPayloadCodecs.mapK(
+      EntityDecoders
+        .fromPayloadCodecK[F](httpMediaType)
+        .andThen(MediaDecoder.fromEntityDecoderK)
     )
+
     val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
     new UnaryClientCodecs.Make[F] {
       def apply[I, E, O, SI, SO](

@@ -16,7 +16,7 @@
 
 package smithy4s.dynamic
 
-import smithy4s.http.PayloadError
+import smithy4s.codecs.PayloadError
 import software.amazon.smithy.model.shapes.ModelSerializer
 import software.amazon.smithy.model.transform.ModelTransformer
 

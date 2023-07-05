@@ -15,13 +15,14 @@
  */
 
 package smithy4s
-package http.json
+package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
 import smithy.api.JsonName
 import smithy4s.schema.Schema._
 
-import smithy4s.http.PayloadError
+import smithy4s.codecs.PayloadError
+import smithy4s.codecs.PayloadPath
 import smithy4s.example.{
   CheckedOrUnchecked,
   CheckedOrUnchecked2,
@@ -73,7 +74,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       .readFromString[A](str, readerConfig)
   }
 
-  import JCodec.derivedImplicitInstance
+  import Json.deriveJsonCodec
 
   case class IntList(head: Int, tail: Option[IntList] = None)
   object IntList {
@@ -148,7 +149,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       readFromString[FooDefaulted](json)
       fail("Expected decoding to fail")
     } catch {
-      case e: smithy4s.http.PayloadError =>
+      case e: smithy4s.codecs.PayloadError =>
         expect.same(e.path, PayloadPath.fromString(".a"))
     }
   }

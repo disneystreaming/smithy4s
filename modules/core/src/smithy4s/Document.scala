@@ -17,10 +17,10 @@
 package smithy4s
 
 import smithy4s.Document._
-import smithy4s.http.PayloadError
 import smithy4s.schema.CachedSchemaCompiler
 import internals.DocumentDecoderSchemaVisitor
 import internals.DocumentEncoderSchemaVisitor
+import smithy4s.codecs.PayloadError
 
 /**
   * A json-like free-form structure serving as a model for
@@ -89,7 +89,7 @@ object Document {
     def encode(a: A): Document
   }
 
-  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+  object Encoder extends CachedSchemaCompiler.DerivingImpl[Encoder] {
 
     protected type Aux[A] = internals.DocumentEncoder[A]
 
@@ -116,7 +116,7 @@ object Document {
     }
   }
 
-  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+  object Decoder extends CachedSchemaCompiler.DerivingImpl[Decoder] {
 
     protected type Aux[A] = internals.DocumentDecoder[A]
 

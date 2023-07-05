@@ -20,7 +20,7 @@ import cats.Applicative
 import cats.effect.std.Console
 import cats.implicits._
 import smithy4s.Endpoint
-import smithy4s.http.CodecAPI
+import smithy4s.codecs.PayloadWriter
 
 trait Printer[F[_], -I, -O] {
   def printInput(input: I): F[Unit]
@@ -32,13 +32,13 @@ object Printer {
 
   def fromCodecs[F[_]: Console: Applicative, Op[_, _, _, _, _], I, O](
       endpoint: Endpoint[Op, I, _, O, _, _],
-      codecs: CodecAPI
+      writers: PayloadWriter.CachedCompiler
   ): Printer[F, I, O] =
     new Printer[F, I, O] {
-      private val outCodec = codecs.compileCodec(endpoint.output)
+      private val outCodec = writers.fromSchema(endpoint.output)
 
       private val errCodec = endpoint.errorable.map { e =>
-        (codecs.compileCodec(e.error), e)
+        (writers.fromSchema(e.error), e)
       }
 
       def printInput(input: I): F[Unit] = Applicative[F].unit
@@ -46,13 +46,13 @@ object Printer {
       def printError(error: Throwable): F[Unit] = errCodec
         .flatMap { case (err, errorable) =>
           errorable.liftError(error).map { e =>
-            new String(codecs.writeToArray(err, e))
+            err.encode(e).toUTF8String
           }
         }
         .traverse_(Console[F].println(_))
 
       def printOutput(output: O): F[Unit] = Console[F].println {
-        new String(codecs.writeToArray(outCodec, output))
+        outCodec.encode(output).toUTF8String
       }
 
     }

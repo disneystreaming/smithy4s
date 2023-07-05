@@ -21,32 +21,35 @@ package kernel
 import org.http4s.EntityEncoder
 import org.http4s.MediaType
 import org.http4s.headers.`Content-Type`
-import smithy4s.http.CodecAPI
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.schema.Schema
+import smithy4s.codecs._
+import smithy4s.http._
+import smithy4s.kinds.PolyFunction
 
 object EntityEncoders {
 
-  def fromCodecAPI[F[_]](
-      codecAPI: CodecAPI
-  ): CachedSchemaCompiler[EntityEncoder[F, *]] =
-    new CachedSchemaCompiler[EntityEncoder[F, *]] {
-      type Cache = codecAPI.Cache
-      def createCache(): Cache = codecAPI.createCache()
-      def fromSchema[A](schema: Schema[A]): EntityEncoder[F, A] =
-        fromSchema(schema, createCache())
+  def fromHttpMediaWriter[F[_], A](
+      httpBodyWriter: HttpMediaWriter[A]
+  ): EntityEncoder[F, A] = {
+    val mediaType = MediaType.unsafeParse(httpBodyWriter.mediaType.value)
+    EntityEncoder
+      .byteArrayEncoder[F]
+      .withContentType(`Content-Type`(mediaType))
+      .contramap[A]((a: A) => httpBodyWriter.instance.encode(a).toArray)
+  }
 
-      def fromSchema[A](
-          schema: Schema[A],
-          cache: Cache
-      ): EntityEncoder[F, A] = {
-        val codecA: codecAPI.Codec[A] = codecAPI.compileCodec(schema, cache)
-        val mediaType = MediaType.unsafeParse(codecAPI.mediaType(codecA).value)
-        EntityEncoder
-          .byteArrayEncoder[F]
-          .withContentType(`Content-Type`(mediaType))
-          .contramap[A]((a: A) => codecAPI.writeToArray(codecA, a))
-      }
+  def fromHttpMediaWriterK[F[_]]
+      : PolyFunction[HttpMediaWriter, EntityEncoder[F, *]] =
+    new PolyFunction[HttpMediaWriter, EntityEncoder[F, *]] {
+      def apply[A](httpBodyWriter: HttpMediaWriter[A]): EntityEncoder[F, A] =
+        fromHttpMediaWriter[F, A](httpBodyWriter)
     }
+
+  def fromPayloadCodecK[F[_]](
+      mediaType: HttpMediaType
+  ): PolyFunction[PayloadCodec, EntityEncoder[F, *]] = {
+    PayloadCodec.writerK
+      .andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
+      .andThen[EntityEncoder[F, *]](EntityEncoders.fromHttpMediaWriterK)
+  }
 
 }
