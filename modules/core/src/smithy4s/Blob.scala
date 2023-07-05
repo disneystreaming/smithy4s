@@ -100,13 +100,13 @@ object Blob {
       buffer.compareTo(other.asInstanceOf[ByteBufferBlob].buffer) == 0
     }
 
-    private val arr: Array[Byte] = null
+    private var arr: Array[Byte] = null
+
     def toArray: Array[Byte] = {
       if (arr == null) {
         this.synchronized {
           if (arr == null) {
-            val arr: Array[Byte] =
-              Array.ofDim[Byte](buffer.remaining())
+            arr = Array.ofDim[Byte](buffer.remaining())
             val _ = buffer.get(arr)
           }
         }
