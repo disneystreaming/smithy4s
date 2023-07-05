@@ -138,11 +138,9 @@ object StringAndBlobCodecs {
                 case None =>
                   Left(
                     HttpPayloadError(
-                      PayloadError(
-                        PayloadPath.root,
-                        s"expected one of ${values.mkString(",")}",
-                        s"Unknown enum value $str"
-                      )
+                      PayloadPath.root,
+                      s"expected one of ${values.mkString(",")}",
+                      s"Unknown enum value $str"
                     )
                   )
               }
@@ -176,11 +174,9 @@ object StringAndBlobCodecs {
               .read(blob)
               .flatMap(refinement.asFunction(_).left.map { error =>
                 HttpPayloadError(
-                  PayloadError(
-                    PayloadPath.root,
-                    refinement.tag.id.show,
-                    error.getMessage
-                  )
+                  PayloadPath.root,
+                  refinement.tag.id.show,
+                  error.getMessage
                 )
               })
         }

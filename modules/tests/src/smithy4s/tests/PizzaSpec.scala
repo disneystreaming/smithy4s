@@ -339,7 +339,7 @@ abstract class PizzaSpec
     res <- runServer(
       impl,
       {
-        case HttpPayloadError(PayloadError(PayloadPath(List()), _, _)) =>
+        case HttpPayloadError(PayloadPath(List()), _, _) =>
           smithy4s.example.GenericClientError("Oops")
         case PizzaAdminServiceImpl.Boom =>
           smithy4s.example.GenericServerError("Crash")

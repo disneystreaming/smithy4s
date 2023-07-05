@@ -20,6 +20,7 @@ package http
 import smithy4s.schema._
 import smithy4s.schema.Schema._
 import smithy4s.codecs.PayloadError
+import smithy4s.codecs.PayloadPath
 
 sealed trait HttpContractError
     extends Throwable
@@ -28,7 +29,11 @@ sealed trait HttpContractError
 object HttpContractError {
 
   def fromPayloadError(payloadError: PayloadError): HttpContractError =
-    HttpPayloadError(payloadError)
+    HttpPayloadError(
+      payloadError.path,
+      payloadError.expected,
+      payloadError.message
+    )
 
   val schema: Schema[HttpContractError] = {
     val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")
@@ -42,20 +47,22 @@ object HttpContractError {
 }
 
 case class HttpPayloadError(
-    payloadError: PayloadError
+    path: PayloadPath,
+    expected: String,
+    message: String
 ) extends HttpContractError {
-  import payloadError._
   override def toString(): String =
     s"HttpPayloadError($path, expected = $expected, message=$message)"
   override def getMessage(): String = s"$message (path: $path)"
 }
 
 object HttpPayloadError {
-  val schema: Schema[HttpPayloadError] = PayloadError.schema
-    .biject(
-      HttpPayloadError(_),
-      (_: HttpPayloadError).payloadError
-    )
+  val schema: Schema[HttpPayloadError] = {
+    val path = PayloadPath.schema.required[HttpPayloadError]("path", _.path)
+    val expected = string.required[HttpPayloadError]("expected", _.expected)
+    val message = string.required[HttpPayloadError]("message", _.message)
+    struct(path, expected, message)(HttpPayloadError.apply)
+  }
 }
 
 sealed trait MetadataError extends HttpContractError {

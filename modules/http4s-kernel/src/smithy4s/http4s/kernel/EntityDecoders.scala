@@ -56,7 +56,7 @@ object EntityDecoders {
   ): PolyFunction[PayloadCodec, EntityDecoder[F, *]] = {
     // scalafmt: {maxColumn = 120}
     PayloadCodec.readerK
-      .andThen[HttpPayloadReader](Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpPayloadError(_))))
+      .andThen[HttpPayloadReader](Reader.liftPolyFunction(PolyFunctions.mapErrorK(HttpContractError.fromPayloadError)))
       .andThen[HttpMediaReader](HttpMediaTyped.mediaTypeK(mediaType))
       .andThen[EntityDecoder[F, *]](EntityDecoders.fromHttpMediaReaderK)
   }
