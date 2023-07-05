@@ -17,6 +17,7 @@
 package smithy4s
 package dynamic
 
+import smithy4s.codecs._
 import DummyIO._
 import cats.syntax.all._
 
@@ -78,7 +79,7 @@ class DynamicJsonServerSpec() extends DummyIO.Suite {
   }
 
   testJsonIO("Dynamic service is correctly wired: Bad Json Input") { jsonIO =>
-    val expected = smithy4s.http.PayloadError(
+    val expected = PayloadError(
       PayloadPath("key"),
       "",
       "Required field not found"

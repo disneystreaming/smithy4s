@@ -16,11 +16,11 @@
 
 package smithy4s.capability
 
-import smithy4s.ConstraintError
-
+/**
+  * Abstraction that encodes Functors
+  */
 trait Covariant[F[_]] {
   def map[A, B](fa: F[A])(f: A => B): F[B]
-  def emap[A, B](fa: F[A])(f: A => Either[ConstraintError, B]): F[B]
 }
 
 object Covariant {

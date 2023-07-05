@@ -85,6 +85,11 @@ sealed trait Schema[A]{
   final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
   final def nullable: Schema[Option[A]] = Schema.nullable(this)
 
+  final def isNullable: Boolean = this match {
+    case _: NullableSchema[_] => true
+    case _ => false
+  }
+
   final def getDefault: Option[Document] =
     this.hints.get(smithy.api.Default).map(_.value)
 
@@ -133,6 +138,9 @@ sealed trait Schema[A]{
 }
 
 object Schema {
+
+  def apply[A](implicit ev: Schema[A]): ev.type = ev
+
   final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
   final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
   final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
@@ -180,6 +188,7 @@ object Schema {
   val boolean: Schema[Boolean] = Primitive.PBoolean.schema(prelude, "Boolean")
   val byte: Schema[Byte] = Primitive.PByte.schema(prelude, "Byte")
   val bytes: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
+  val blob: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")

@@ -14,7 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package smithy4s.codecs
+
+import smithy4s.schema._
 
 case class PayloadPath(segments: List[PayloadPath.Segment]) {
   override def toString = PayloadPath.asString(this)

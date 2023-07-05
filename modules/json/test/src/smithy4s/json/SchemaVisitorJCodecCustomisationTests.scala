@@ -14,18 +14,16 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws
+package smithy4s
+package json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
-import smithy4s.aws.json.AwsSchemaVisitorJCodec
-import smithy4s.http.json.JCodec
-import smithy4s.schema.CompilationCache
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
-import smithy4s.schema.SchemaVisitor
-import weaver._
+import munit._
 
-object AwsSchemaVisitorJCodecTest extends FunSuite {
+class SchemaVisitorJCodecCustomisationTests extends FunSuite {
+
   case class FooDouble(d: Double)
   object FooDouble {
     implicit val schema: Schema[FooDouble] = {
@@ -42,20 +40,19 @@ object AwsSchemaVisitorJCodecTest extends FunSuite {
     }
   }
 
-  val cache = CompilationCache.nop[JCodec]
-  val awsSchemaVisitor: SchemaVisitor[JCodec] = new AwsSchemaVisitorJCodec(
-    cache = cache
-  )
+  val customJsonCodecs = Json.jsoniter
+    .withInfinitySupport(true)
+    .withFlexibleCollectionsSupport(true)
 
-  implicit def awsJsonCodec[A: Schema]: JCodec[A] =
-    implicitly[Schema[A]].compile(awsSchemaVisitor)
+  implicit def jsonCodec[A: Schema]: JsonCodec[A] =
+    customJsonCodecs.fromSchema(implicitly[Schema[A]])
 
   private val readerConfig: ReaderConfig = ReaderConfig
     .withThrowReaderExceptionWithStackTrace(true)
     .withAppendHexDumpToParseException(true)
     .withCheckForEndOfInput(false)
 
-  def readFromString[A: JCodec](str: String): A = {
+  def readFromString[A: JsonCodec](str: String): A = {
     com.github.plokhotnyuk.jsoniter_scala.core
       .readFromString[A](str, readerConfig)
   }

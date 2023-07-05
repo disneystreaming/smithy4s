@@ -18,16 +18,52 @@ package smithy4s.schema
 
 import smithy4s.kinds._
 
-trait CachedSchemaCompiler[+F[_]] {
+trait CachedSchemaCompiler[+F[_]] { self =>
 
   type Cache
   def createCache(): Cache
   def fromSchema[A](schema: Schema[A]): F[A]
   def fromSchema[A](schema: Schema[A], cache: Cache): F[A]
 
+  final def mapK[F0[x] >: F[x], G[_]](
+      fk: PolyFunction[F0, G]
+  ): CachedSchemaCompiler[G] =
+    new CachedSchemaCompiler[G] {
+      type Cache = self.Cache
+      def createCache(): self.Cache = self.createCache()
+      def fromSchema[A](schema: Schema[A]): G[A] = fk(
+        self.fromSchema(schema)
+      )
+      def fromSchema[A](schema: Schema[A], cache: Cache): G[A] = fk(
+        self.fromSchema(schema, cache)
+      )
+    }
+
 }
 
-object CachedSchemaCompiler {
+object CachedSchemaCompiler { outer =>
+
+  type OptionW[F[_], A] = Option[F[A]]
+  type Possible[F[_]] = CachedSchemaCompiler[OptionW[F, *]]
+  object Possible {
+    abstract class Impl[F[_]] extends outer.Impl[OptionW[F, *]]
+  }
+
+  def getOrElse[F[_]](
+      possible: CachedSchemaCompiler.Possible[F],
+      default: CachedSchemaCompiler[F]
+  ): CachedSchemaCompiler[F] = new CachedSchemaCompiler[F] {
+    type Cache = (possible.Cache, default.Cache)
+    def createCache(): Cache = (possible.createCache(), default.createCache())
+
+    def fromSchema[A](schema: Schema[A]): F[A] =
+      possible.fromSchema(schema).getOrElse(default.fromSchema(schema))
+
+    def fromSchema[A](schema: Schema[A], cache: Cache): F[A] = possible
+      .fromSchema(schema, cache._1)
+      .getOrElse(default.fromSchema(schema, cache._2))
+
+  }
 
   implicit val cachedSchemaCompilerFunctorK: FunctorK[CachedSchemaCompiler] =
     new FunctorK[CachedSchemaCompiler] {
@@ -35,16 +71,7 @@ object CachedSchemaCompiler {
           self: CachedSchemaCompiler[F],
           fk: PolyFunction[F, G]
       ): CachedSchemaCompiler[G] =
-        new CachedSchemaCompiler[G] {
-          type Cache = self.Cache
-          def createCache(): self.Cache = self.createCache()
-          def fromSchema[A](schema: Schema[A]): G[A] = fk(
-            self.fromSchema(schema)
-          )
-          def fromSchema[A](schema: Schema[A], cache: Cache): G[A] = fk(
-            self.fromSchema(schema, cache)
-          )
-        }
+        self.mapK(fk)
     }
 
   abstract class Impl[F[_]] extends CachedSchemaCompiler[F] {
@@ -55,7 +82,9 @@ object CachedSchemaCompiler {
       fromSchema(schema, CompilationCache.nop[Aux])
 
     def createCache(): Cache = CompilationCache.make[Aux]
+  }
 
+  abstract class DerivingImpl[F[_]] extends Impl[F] {
     private val globalCache: Cache = createCache()
     implicit def derivedImplicitInstance[A](implicit
         schema: Schema[A]

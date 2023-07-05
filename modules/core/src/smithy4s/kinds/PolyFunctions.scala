@@ -14,10 +14,13 @@
  *  limitations under the License.
  */
 
-package smithy4s.http.json
+package smithy4s.kinds
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+object PolyFunctions {
 
-import scala.collection.{Map => MMap}
+  def mapErrorK[E, E1](f: E => E1): PolyFunction[Either[E, *], Either[E1, *]] =
+    new PolyFunction[Either[E, *], Either[E1, *]] {
+      def apply[A](either: Either[E, A]): Either[E1, A] = either.left.map(f)
+    }
 
-trait MessageCodec[A] extends JsonValueCodec[MMap[String, Any] => A] {}
+}
