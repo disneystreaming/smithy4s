@@ -216,13 +216,27 @@ object Boilerplate {
       |
       |import smithy4s.Transformation
       |
-      -trait PolyFunction$suffix[-F[${`_.._`}], +G[${`_.._`}]]{ self =>
+      -trait PolyFunction$suffix[F[${`_.._`}], G[${`_.._`}]]{ self =>
       -   def apply[${`A..N`}](fa: F[${`A..N`}]): G[${`A..N`}]
       -
       -   final def andThen[H[${`_.._`}]](other: PolyFunction$suffix[G, H]): PolyFunction$suffix[F, H] = new PolyFunction$suffix[F, H]{
       -      def apply[${`A..N`}](fa: F[${`A..N`}]): H[${`A..N`}] = other(self(fa))
       -   }
       -
+      -   import Kind$arity._
+      -   private[smithy4s] final def unsafeCacheBy[K](allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction$suffix[F, G] =
+      -     new PolyFunction$suffix[F, G] {
+      -       private val map: Map[K, Any] = {
+      -         val builder = Map.newBuilder[K, Any]
+      -         allPossibleInputs.foreach(input =>
+      -           builder += getKey(input) -> self
+      -             .apply(input.asInstanceOf[F[${`Any..Any`}]])
+      -             .asInstanceOf[Any]
+      -         )
+      -         builder.result()
+      -       }
+      -       def apply[${`A..N`}](input: F[${`A..N`}]): G[${`A..N`}] = map(getKey(existential(input))).asInstanceOf[G[${`A..N`}]]
+      -   }
       -}
       -object PolyFunction$suffix{
       -  type From[F[${`_.._`}]] = {
@@ -237,24 +251,6 @@ object Boilerplate {
       -    new Transformation[PolyFunction$suffix[F, G], Alg[F], Alg[G]]{
       -      def apply(func: PolyFunction$suffix[F, G], algF: Alg[F]): Alg[G] = FunctorK$suffix[Alg].mapK$suffix(algF, func)
       -    }
-      -
-      -   import Kind$arity._
-      -   private[smithy4s] final def unsafeCacheBy[F[${`_.._`}], G[${`_.._`}], K](self: PolyFunction$suffix[F, G], allPossibleInputs: Seq[Existential[F]], getKey: Existential[F] => K): PolyFunction$suffix[F, G] =
-      -     new PolyFunction$suffix[F, G] {
-      -       private val map: Map[K, Any] = {
-      -         val builder = Map.newBuilder[K, Any]
-      -         allPossibleInputs.foreach(input =>
-      -           builder += getKey(input) -> self
-      -             .apply(input.asInstanceOf[F[${`Any..Any`}]])
-      -             .asInstanceOf[Any]
-      -         )
-      -         builder.result()
-      -       }
-      -       def apply[${`A..N`}](input: F[${`A..N`}]): G[${`A..N`}] = map(getKey(existential(input))).asInstanceOf[G[${`A..N`}]]
-      -   }
-      -
-      -   private[smithy4s] final def unsafeCache[F[${`_.._`}], G[${`_.._`}]](self: PolyFunction$suffix[F, G], allPossibleInputs: Seq[Existential[F]]): PolyFunction$suffix[F, G] =
-      -     unsafeCacheBy[F, G, Existential[F]](self, allPossibleInputs, identity(_))
       -}
       -
       -

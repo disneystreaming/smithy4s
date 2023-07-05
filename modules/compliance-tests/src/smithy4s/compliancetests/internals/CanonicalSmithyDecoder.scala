@@ -54,7 +54,7 @@ object CanonicalSmithyDecoder {
       val decodeFunction =
         schema.compile(new SmithyNodeDocumentDecoderSchemaVisitor(cache))
       new Decoder[A] {
-        def read(a: Document): Either[PayloadError, A] =
+        def decode(a: Document): Either[PayloadError, A] =
           try {
             Right(decodeFunction(Nil, a))
           } catch {

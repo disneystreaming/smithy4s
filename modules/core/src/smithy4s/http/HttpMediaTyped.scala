@@ -42,12 +42,6 @@ final case class HttpMediaTyped[F[_], A](
 
 object HttpMediaTyped {
 
-  implicit def covariantInstanceForHttpMediaTyped[F[_]: Covariant]
-      : Covariant[HttpMediaTyped[F, *]] = new Covariant[HttpMediaTyped[F, *]] {
-    def map[A, B](fa: HttpMediaTyped[F, A])(f: A => B): HttpMediaTyped[F, B] =
-      fa.map(f)
-  }
-
   def mediaTypeK[F[_]](
       mediaType: HttpMediaType
   ): PolyFunction[F, HttpMediaTyped[F, *]] =

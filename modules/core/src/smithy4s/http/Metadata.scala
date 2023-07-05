@@ -161,8 +161,7 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Decoder[A]
-      extends smithy4s.codecs.Reader[Either[MetadataError, *], Metadata, A] {
+  trait Decoder[A] {
     def decode(metadata: Metadata): Either[MetadataError, A]
   }
 
@@ -204,9 +203,8 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Encoder[A] extends smithy4s.codecs.Encoder[Metadata, A] {
+  trait Encoder[A] {
     def encode(a: A): Metadata
-    final def write(in: Any, a: A): Metadata = encode(a)
   }
 
   object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false)

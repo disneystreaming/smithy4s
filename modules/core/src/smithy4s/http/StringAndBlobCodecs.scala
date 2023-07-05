@@ -158,10 +158,8 @@ object StringAndBlobCodecs {
     override def biject[A, B](
         schema: Schema[A],
         bijection: Bijection[A, B]
-    ): CodecResult[B] = {
-      implicitly[smithy4s.capability.Zipper[Either[HttpContractError, *]]]
+    ): CodecResult[B] =
       self(schema).map(_.mapInstance(_.biject(bijection)))
-    }
 
     override def refine[A, B](
         schema: Schema[A],

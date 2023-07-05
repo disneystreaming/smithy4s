@@ -23,13 +23,8 @@ trait Covariant[F[_]] {
   def map[A, B](fa: F[A])(f: A => B): F[B]
 }
 
-object Covariant extends CovariantInstances0 {
+object Covariant {
 
   def apply[F[_]](implicit instance: Covariant[F]): Covariant[F] = instance
 
-}
-
-trait CovariantInstances0 {
-  implicit def covariantInstanceForEither[E]: Covariant[Either[E, *]] =
-    smithy4s.capability.instances.either.zipperInstanceForEither[E]
 }

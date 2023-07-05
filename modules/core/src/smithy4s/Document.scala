@@ -85,9 +85,8 @@ object Document {
   def obj(kv: (String, Document)*): Document = DObject(Map(kv: _*))
   def nullDoc: Document = DNull
 
-  trait Encoder[A] extends smithy4s.codecs.Encoder[Document, A] {
+  trait Encoder[A] {
     def encode(a: A): Document
-    final def write(context: Any, a: A): Document = encode(a)
   }
 
   object Encoder extends CachedSchemaCompiler.DerivingImpl[Encoder] {
@@ -109,12 +108,11 @@ object Document {
 
   }
 
-  trait Decoder[A]
-      extends smithy4s.codecs.Reader[Either[PayloadError, *], Document, A] {
-    self =>
+  trait Decoder[A] { self =>
+    def decode(document: Document): Either[PayloadError, A]
     def map[B](f: A => B): Decoder[B] = new Decoder[B] {
-      def read(document: Document): Either[PayloadError, B] =
-        self.read(document).map(f)
+      def decode(document: Document): Either[PayloadError, B] =
+        self.decode(document).map(f)
     }
   }
 
@@ -129,7 +127,7 @@ object Document {
       val decodeFunction =
         schema.compile(new DocumentDecoderSchemaVisitor(cache))
       new Decoder[A] {
-        def read(a: Document): Either[PayloadError, A] =
+        def decode(a: Document): Either[PayloadError, A] =
           try { Right(decodeFunction(Nil, a)) }
           catch {
             case e: PayloadError => Left(e)

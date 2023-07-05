@@ -41,6 +41,14 @@ object Blob {
     string.getBytes(StandardCharsets.UTF_8)
   )
 
+  trait Encoder[A] {
+    def encode(a: A): Blob
+  }
+
+  trait Decoder[E, A] {
+    def decode(blob: Blob): Either[E, A]
+  }
+
   private final class ByteArrayBlob(private val bytes: Array[Byte])
       extends Blob {
     override def toArray: Array[Byte] = bytes
