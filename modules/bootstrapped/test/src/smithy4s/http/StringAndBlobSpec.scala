@@ -24,9 +24,7 @@ import smithy4s.schema.CachedSchemaCompiler
 
 class StringAndBlobSpec() extends munit.FunSuite {
 
-  val error = HttpPayloadError(
-    PayloadError(PayloadPath.root, "error", "error")
-  )
+  val error = HttpPayloadError(PayloadPath.root, "error", "error")
   object DummyReaderCompiler
       extends CachedSchemaCompiler.Impl[HttpMediaReader] {
     def fromSchema[A](schema: Schema[A], cache: Cache): HttpMediaReader[A] =
@@ -119,7 +117,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
     val readerMediaType = reader.mediaType
     val writerMediaType = writer.mediaType
     val expectedRoundTripped =
-      Left(HttpPayloadError(PayloadError(PayloadPath.root, "error", "error")))
+      Left(HttpPayloadError(PayloadPath.root, "error", "error"))
     expect.same(result, Blob.empty)
     expect.same(roundTripped, expectedRoundTripped)
     expect.same(writerMediaType, HttpMediaType("foo/bar"))

@@ -25,8 +25,23 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{WriterConfig => JsoniterWrite
 
 trait JsonPayloadCodecCompiler extends CachedSchemaCompiler[PayloadCodec] {
 
+  /**
+    * Changes the jsoniter codec compiler that backs this compiler. This can be used
+    * to tweak the behaviour of Json encoding and decoding alike.
+    */
   def withJsoniterCodecCompiler(jsoniterCodecCompiler: JsoniterCodecCompiler): JsonPayloadCodecCompiler
+
+  /**
+    * Changes the jsoniter reader config that is used when parsing json payloads into data.
+    */
   def withJsoniterReaderConfig(jsoniterReaderConfig: JsoniterReaderConfig): JsonPayloadCodecCompiler
+
+  /**
+    * Changes the jsoniter writer config that is used when writing data into json.
+    *
+    * @param jsoniterWriterConfig
+    * @return
+    */
   def withJsoniterWriterConfig(jsoniterWriterConfig: JsoniterWriterConfig): JsonPayloadCodecCompiler
 
 }

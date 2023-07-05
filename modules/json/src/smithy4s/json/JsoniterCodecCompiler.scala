@@ -17,7 +17,11 @@
 package smithy4s.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
+import smithy4s.internals._
 import smithy4s.HintMask
+import smithy4s.IntEnum
+import smithy.api._
+import alloy._
 
 import smithy4s.schema.CachedSchemaCompiler
 
@@ -27,10 +31,59 @@ import smithy4s.schema.CachedSchemaCompiler
 // scalafmt: {maxColumn = 120}
 trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
 
+  /**
+    * Changes the behaviour of the decoders so that they fail after
+    * a certain number of elements when decoding arrays and maps. This
+    * allows to protect against some DDOS attacks.
+    *
+    * Defaults to 1024.
+    */
   def withMaxArity(max: Int): JsoniterCodecCompiler
+
+  /**
+    * Changes the behaviour of Json encoders so that optional values are encoded as
+    * explicit Json null values.
+    *
+    * Defaults to false.
+    */
   def withExplicitNullEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
+
+  /**
+   * Changes the behaviour of Json decoders so that they overlook null values in collections
+   * and maps. This behaviour has a performance overhead.
+   *
+   * Defaults to false
+   */
   def withFlexibleCollectionsSupport(flexibleCollectionsSupport: Boolean): JsoniterCodecCompiler
+
+  /**
+    * Changes the behaviour of Json decoders so that they can parse Infinity/NaN values.
+    * This behaviour has a performance overhead.
+    */
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler
+
+  /**
+    * Changes the hint mask with which the decoder works. Depending on the hint mask, some
+    * smithy traits may be overlooked during encoding/decoding. For instance, `@jsonName`.
+    */
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler
+
+}
+
+object JsoniterCodecCompiler {
+
+  val defaultMaxArity: Int = 1024
+
+  val defaultHintMask: HintMask =
+    HintMask(
+      JsonName,
+      TimestampFormat,
+      Discriminated,
+      Untagged,
+      InputOutput,
+      DiscriminatedUnionMember,
+      IntEnum,
+      Default
+    )
 
 }

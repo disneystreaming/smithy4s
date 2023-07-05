@@ -17,12 +17,8 @@
 package smithy4s.json
 package internals
 
-import smithy4s.internals._
-import smithy4s.IntEnum
 import smithy4s.HintMask
 import smithy4s.schema._
-import smithy.api._
-import alloy._
 
 private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,
@@ -72,26 +68,13 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
 
 private[smithy4s] object JsoniterCodecCompilerImpl {
 
-  val defaultHintMask: HintMask =
-    HintMask(
-      JsonName,
-      TimestampFormat,
-      Discriminated,
-      Untagged,
-      InputOutput,
-      DiscriminatedUnionMember,
-      IntEnum,
-      Default
-    )
-  val defaultMaxArity: Int = 1024
-
   val defaultJsoniterCodecCompiler: JsoniterCodecCompiler =
     JsoniterCodecCompilerImpl(
-      maxArity = defaultMaxArity,
+      maxArity = JsoniterCodecCompiler.defaultMaxArity,
       explicitNullEncoding = false,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
-      hintMask = Some(defaultHintMask)
+      hintMask = Some(JsoniterCodecCompiler.defaultHintMask)
     )
 
 }

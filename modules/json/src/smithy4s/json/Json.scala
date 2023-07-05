@@ -21,9 +21,54 @@ import smithy4s.Blob
 import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadCodec
 import smithy4s.schema.Schema
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
+import com.github.plokhotnyuk.jsoniter_scala.core._
 
 object Json {
+
+  /**
+    * Reads an instance of `A` from a [[smithy4s.Blob]] holding a json payload.
+    *
+    * Beware : using this method with a non-static schema (for instance, dynamically generated) may
+    * result in memory leaks.
+    */
+  def read[A: Schema](blob: Blob): Either[PayloadError, A] = {
+    payloadCodecs
+      .fromSchema(Schema[A], payloadCodecsGlobalCache)
+      .reader
+      .decode(blob)
+  }
+
+  /**
+    * Writes the json representation for an instance of `A` into a [[smithy4s.Blob]].
+    *
+    * Beware : using this method with a non-static schema (for instance, dynamically generated) may
+    * result in memory leaks.
+    *
+    * When writing interpreters, please prefer using the [[payloadCodecs]] object.
+    */
+  def writeBlob[A: Schema](a: A): Blob = {
+    payloadCodecs
+      .fromSchema(Schema[A], payloadCodecsGlobalCache)
+      .writer
+      .encode(a)
+  }
+
+  /**
+    * Writes the json representation for an instance of `A` into a 2-spaces-indented string.
+    *
+    * Beware : using this method with a non-static schema (for instance, dynamically generated) may
+    * result in memory leaks.
+    *
+    * When writing interpreters, please prefer using the [[payloadCodecs]] object.
+    */
+  def writePrettyString[A: Schema](a: A): String = {
+    payloadCodecs
+      .withJsoniterWriterConfig(WriterConfig.withIndentionStep(2))
+      .fromSchema(Schema[A])
+      .writer
+      .encode(a)
+      .toUTF8String
+  }
 
   /**
     * Parses a [[smithy4s.Document]] from a [[smithy4s.Blob]] containing a Json payload.
@@ -79,6 +124,8 @@ object Json {
     */
   val payloadCodecs: JsonPayloadCodecCompiler =
     internals.JsonPayloadCodecCompilerImpl.defaultJsonPayloadCodecCompiler
+
+  private val payloadCodecsGlobalCache = payloadCodecs.createCache()
 
   private val documentCodecs: PayloadCodec[Document] =
     payloadCodecs.fromSchema(Schema.document)
