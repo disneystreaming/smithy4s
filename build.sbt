@@ -105,6 +105,11 @@ lazy val docs =
               else version.value
             }
         },
+        "SERVICE_PRODUCT_SPEC" -> IO
+          .read(
+            (ThisBuild / baseDirectory).value / "sampleSpecs" / "exampleServiceProduct.smithy"
+          )
+          .trim,
         "WEATHER_SERVICE_SPEC" -> IO
           .read(
             (ThisBuild / baseDirectory).value / "sampleSpecs" / "weather-docs.smithy"
