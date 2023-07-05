@@ -21,12 +21,14 @@ import smithy4s.schema.CachedSchemaCompiler
 
 package object codecs {
 
+  type Encoder[Out, A] = Writer[Any, Out, A]
+
   type PayloadReader[A] = Reader[Either[PayloadError, *], Blob, A]
   object PayloadReader {
     type CachedCompiler = CachedSchemaCompiler[PayloadReader]
   }
 
-  type PayloadWriter[A] = Writer[Unit, Blob, A]
+  type PayloadWriter[A] = Writer[Any, Blob, A]
   object PayloadWriter {
     type CachedCompiler = CachedSchemaCompiler[PayloadWriter]
   }

@@ -149,7 +149,7 @@ object StringAndBlobCodecs {
             }
           }
           val writer = new PayloadWriter[E] {
-            def write(unit: Unit, e: E): Blob = Blob(total(e).stringValue)
+            def write(any: Any, e: E): Blob = Blob(total(e).stringValue)
           }
           Some(HttpMediaTyped(mediaType, ReaderWriter(reader, writer)))
 
