@@ -90,7 +90,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   val serverCodecs = makeServerCodecs(endpoint)
   import serverCodecs._
-  val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
+  val contractErrorResponseEncoder: ResponseWriter[fs2.Pure, F, HttpContractError] =
+    serverCodecs.errorEncoder(HttpContractError.schema)
   // format: on
 
   def matches(path: Array[String]): Option[PathParams] = {
@@ -131,11 +132,11 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
       errorTransformation(other).flatMap(F.raiseError)
   }
 
-  private val successResponseBase: Response[F] =
-    Response[F](Status.fromInt(httpEndpoint.code).getOrElse(Status.Ok))
-  private val internalErrorBase: Response[F] =
-    Response[F](Status.InternalServerError)
-  private val badRequestBase: Response[F] = Response[F](Status.BadRequest)
+  private val successResponseBase: Response[fs2.Pure] =
+    Response(Status.fromInt(httpEndpoint.code).getOrElse(Status.Ok))
+  private val internalErrorBase: Response[fs2.Pure] =
+    Response(Status.InternalServerError)
+  private val badRequestBase: Response[fs2.Pure] = Response(Status.BadRequest)
 
   def errorResponse(throwable: Throwable): F[Response[F]] = throwable match {
     case e: HttpContractError =>

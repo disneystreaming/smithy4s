@@ -84,17 +84,20 @@ private[http4s] class SimpleRestJsonCodecs(
         Metadata.Encoder,
         entityEncoders[F]
       )
-      new CachedSchemaCompiler[ResponseEncoder[F, *]] {
+      new CachedSchemaCompiler[ResponseWriter[fs2.Pure, F, *]] {
         type Cache = restSchemaCompiler.Cache
         def createCache(): Cache = restSchemaCompiler.createCache()
         def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
         def fromSchema[A](schema: Schema[A], cache: Cache) = if (schema.isUnit) {
-          restSchemaCompiler.fromSchema(schema, cache)
+          restSchemaCompiler
+            .fromSchema(schema, cache)
+            .compose(_.covary[F])
         } else {
           restSchemaCompiler
             .fromSchema(schema, cache)
             .andThen(addEmptyJsonToResponse(_))
+            .compose(_.covary[F])
         }
       }
     }

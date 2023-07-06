@@ -61,7 +61,7 @@ object UnaryServerCodecs {
           error
         )
       def errorEncoder[EE](schema: Schema[EE]): ResponseWriter[Pure, F, EE] =
-        error.fromSchema(schema, errorResponseEncoderCache)
+        error.fromSchema(schema, errorResponseEncoderCache).andThen(_.covary[F])
     }
   }
 
