@@ -19,7 +19,6 @@ package smithy4s.json
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
 import smithy4s.internals._
 import smithy4s.HintMask
-import smithy4s.IntEnum
 import smithy.api._
 import alloy._
 
@@ -82,7 +81,6 @@ object JsoniterCodecCompiler {
       Untagged,
       InputOutput,
       DiscriminatedUnionMember,
-      IntEnum,
       Default
     )
 

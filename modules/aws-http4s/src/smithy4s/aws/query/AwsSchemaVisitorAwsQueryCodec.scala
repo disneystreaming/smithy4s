@@ -92,18 +92,20 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): AwsQueryCodec[E] = {
-    if (hints.has(IntEnum))
-      new AwsQueryCodec[E] {
-        def apply(value: E): FormData =
-          FormData.SimpleValue(total(value).intValue.toString)
-      }
-    else
-      new AwsQueryCodec[E] {
-        def apply(value: E): FormData =
-          FormData.SimpleValue(total(value).stringValue)
-      }
-  }
+  ): AwsQueryCodec[E] =
+    tag match {
+      case EnumTag.IntEnum =>
+        new AwsQueryCodec[E] {
+          def apply(value: E): FormData =
+            FormData.SimpleValue(total(value).intValue.toString)
+        }
+
+      case EnumTag.StringEnum =>
+        new AwsQueryCodec[E] {
+          def apply(value: E): FormData =
+            FormData.SimpleValue(total(value).stringValue)
+        }
+    }
 
   override def struct[S](
       shapeId: ShapeId,

@@ -288,7 +288,7 @@ private[dynamic] object Compiler {
 
       updateWithHints(
         id, {
-          allHints(shape.traits) ++ Hints(IntEnum())
+          allHints(shape.traits)
         },
         theEnum
       )

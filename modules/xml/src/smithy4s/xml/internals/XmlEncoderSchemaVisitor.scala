@@ -134,18 +134,20 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): XmlEncoder[E] = if (hints.has(IntEnum)) {
-    new XmlEncoder[E] {
-      def encode(value: E): List[XmlContent] = List(
-        XmlText(total(value).intValue.toString())
-      )
-    }
-  } else {
-    new XmlEncoder[E] {
-      def encode(value: E): List[XmlContent] = List(
-        XmlText(total(value).stringValue)
-      )
-    }
+  ): XmlEncoder[E] = tag match {
+    case EnumTag.IntEnum =>
+      new XmlEncoder[E] {
+        def encode(value: E): List[XmlContent] = List(
+          XmlText(total(value).intValue.toString())
+        )
+      }
+
+    case EnumTag.StringEnum =>
+      new XmlEncoder[E] {
+        def encode(value: E): List[XmlContent] = List(
+          XmlText(total(value).stringValue)
+        )
+      }
   }
 
   def union[U](

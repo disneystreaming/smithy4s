@@ -404,7 +404,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           shape.name,
           EnumTag.IntEnum,
           values,
-          hints(shape) :+ Hint.IntEnum
+          hints(shape)
         ).some
       }
 

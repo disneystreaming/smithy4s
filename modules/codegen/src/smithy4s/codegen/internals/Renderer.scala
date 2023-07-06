@@ -1181,7 +1181,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
-    case Hint.IntEnum   => line"${NameRef("smithy4s", "IntEnum")}()".some
     case _              => None
   }
 
