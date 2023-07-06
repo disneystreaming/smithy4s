@@ -53,9 +53,12 @@ private[aws] object AwsXmlCodecs {
 
         val discriminator = AwsErrorTypeDecoder.fromResponse(restDecoders)
 
+        val transformEncoders = applyCompression[F](endpoint.hints)
+        val finalEncoders = transformEncoders(restEncoders)
+
         val make =
           UnaryClientCodecs
-            .Make[F](restEncoders, restDecoders, restDecoders, discriminator)
+            .Make[F](finalEncoders, restDecoders, restDecoders, discriminator)
         make.apply(endpoint)
       }
     }
@@ -70,10 +73,21 @@ private[aws] object AwsXmlCodecs {
           .through(fs2.text.utf8.decode[F])
           .through(events[F, String]())
           .through(documents[F, XmlDocument])
-          .take(1)
+          .head
           .compile
           .last
-          .flatMap(_.liftTo[F](new RuntimeException("BOOM")))
+          .map(
+            _.getOrElse(
+              // TODO: This isn't right
+              XmlDocument(
+                XmlDocument.XmlElem(
+                  XmlDocument.XmlQName(None, "Unit"),
+                  List.empty,
+                  List.empty
+                )
+              )
+            )
+          )
       )
     }
 

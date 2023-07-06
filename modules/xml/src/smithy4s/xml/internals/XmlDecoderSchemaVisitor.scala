@@ -206,7 +206,10 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
         decoder.decode(cursor).map(Some(_))
     }
 
-  private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
+  private def getXmlName(
+      hints: Hints,
+      default: String
+  ): XmlDocument.XmlQName =
     hints
       .get(XmlName)
       .map(_.value)

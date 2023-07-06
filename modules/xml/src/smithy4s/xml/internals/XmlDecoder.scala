@@ -96,6 +96,13 @@ private[smithy4s] object XmlDecoder {
                   s"Could not extract $expectedType from $value"
                 )
               )
+            case Nil =>
+              f("").toRight(
+                XmlDecodeError(
+                  history,
+                  s"Could not extract $expectedType from empty string"
+                )
+              )
             case _ =>
               Left(
                 XmlDecodeError(

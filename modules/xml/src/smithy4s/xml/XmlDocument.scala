@@ -172,8 +172,7 @@ object XmlDocument {
       def makeText(texty: XmlEvent.XmlTexty): Content = texty match {
         case XmlCharRef(_)   => None
         case XmlEntityRef(_) => None
-        case XmlString(s, _) =>
-          if (s.trim.isEmpty) None else Some(XmlDocument.XmlText(s))
+        case XmlString(s, _) => Some(XmlDocument.XmlText(s))
       }
 
       def makeElement(
