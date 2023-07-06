@@ -41,10 +41,12 @@ abstract class ProtocolComplianceSuite
   def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]]
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
+    // TODO: Copy filtering from weaver
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
       .evalMap(index => allRules(index).map(_ -> allTests(index)))
       .flatMap { case (rules, tests) => Stream(tests: _*).map(rules -> _) }
+      // Apply here
       .flatMap { case (rules, test) =>
         runInWeaver(rules, test)
       }
