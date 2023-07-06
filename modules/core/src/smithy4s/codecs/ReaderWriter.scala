@@ -19,6 +19,8 @@ package smithy4s.codecs
 import smithy4s.capability._
 import smithy4s.kinds.PolyFunction
 import smithy4s.Bijection
+import smithy4s.schema.Schema
+import smithy4s.schema.CachedSchemaCompiler
 
 final case class ReaderWriter[F[_], G[_], A](reader: F[A], writer: G[A]) {
   def biject[B](bijection: Bijection[A, B])(implicit
@@ -42,5 +44,25 @@ object ReaderWriter {
     new PolyFunction[ReaderWriter[F, G, *], G] {
       def apply[A](tuple: ReaderWriter[F, G, A]): G[A] = tuple.writer
     }
+
+  def cached[F[_], G[_]](
+      reader: CachedSchemaCompiler[F],
+      writer: CachedSchemaCompiler[G]
+  ) = new CachedSchemaCompiler[ReaderWriter[F, G, *]] {
+    type Cache = (reader.Cache, writer.Cache)
+    def createCache(): Cache =
+      (reader.createCache(), writer.createCache())
+
+    def fromSchema[A](schema: Schema[A]): ReaderWriter[F, G, A] =
+      fromSchema(schema, createCache())
+
+    override def fromSchema[A](
+        schema: Schema[A],
+        cache: Cache
+    ): ReaderWriter[F, G, A] = ReaderWriter(
+      reader.fromSchema(schema),
+      writer.fromSchema(schema)
+    )
+  }
 
 }
