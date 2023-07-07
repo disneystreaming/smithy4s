@@ -105,7 +105,10 @@ private[aws] object AwsXmlCodecs {
         .through(render())
         .through(fs2.text.utf8.encode[F])
 
-      org.http4s.Entity.apply(body, None)
+      org.http4s.Entity.apply(
+        body,
+        None // TODO: How to calculate safely? Or does it get set automatically later?
+      )
     }
 
   private def fromXmlToHttpError(

@@ -225,12 +225,14 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   .tupleRight(resp.status)
                   .tupleRight(resp.headers)
               }
-              .map { case ((actualBody, status), headers) =>
-                val bodyAssert = assert
+              .flatMap { case ((actualBody, status), headers) =>
+                assert
                   .bodyEql(actualBody, testCase.body, testCase.bodyMediaType)
-                bodyAssert |+|
-                  assert.testCase.checkHeaders(testCase, headers) |+|
-                  assert.eql(status.code, testCase.code)
+                  .map { bodyAssert =>
+                    bodyAssert |+|
+                      assert.testCase.checkHeaders(testCase, headers) |+|
+                      assert.eql(status.code, testCase.code)
+                  }
               }
           }
       }

@@ -25,8 +25,13 @@ import org.http4s.Headers
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
+import fs2._
+import fs2.data.xml._
+import cats.effect.Concurrent
 
 private[internals] object assert {
+
+  private implicit val eventsEq: Eq[XmlEvent] = Eq.fromUniversalEquals
 
   def success: ComplianceResult = ().validNel
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
@@ -54,12 +59,28 @@ private[internals] object assert {
     }
   }
 
-  private def xmlEql(result: String, testCase: String): ComplianceResult = {
-    // TODO fix this poor man's attempt at standardising the xml payloads with actual xml parsing
-    eql(
-      result,
-      testCase.replace(">\n", ">").replaceAll("(\\s)*<", "<")
-    )
+  private def xmlEql[F[_]: Concurrent](
+      result: String,
+      testCase: String
+  ): F[ComplianceResult] = {
+    val parseXml: String => F[List[XmlEvent]] = in =>
+      Stream
+        .emit[F, String](in)
+        .through(events(false))
+        .through(normalize)
+        .flatMap {
+          case x @ XmlEvent.XmlString(value, _) =>
+            // TODO: This normalizes out newlines/spaces but sometimes we want to include these (when they are between a start and end tag)
+            if (value.exists(c => !c.isWhitespace)) Stream(x) else Stream.empty
+          case other => Stream(other)
+        }
+        .compile
+        .toList
+
+    for {
+      r <- parseXml(result)
+      t <- parseXml(testCase)
+    } yield eql(r, t)
   }
 
   def eql[A: Eq](
@@ -77,20 +98,20 @@ private[internals] object assert {
     }
   }
 
-  def bodyEql(
+  def bodyEql[F[_]: Concurrent](
       result: String,
       testCase: Option[String],
       bodyMediaType: Option[String]
-  ): ComplianceResult = {
+  ): F[ComplianceResult] = {
     if (testCase.isDefined)
       if (isJson(bodyMediaType)) {
-        jsonEql(result, testCase.getOrElse(""))
+        jsonEql(result, testCase.getOrElse("")).pure[F]
       } else if (isXml(bodyMediaType)) {
-        xmlEql(result, testCase.getOrElse(""))
+        xmlEql[F](result, testCase.getOrElse(""))
       } else {
-        eql(result, testCase.getOrElse(""))
+        eql(result, testCase.getOrElse("")).pure[F]
       }
-    else success
+    else success.pure[F]
   }
 
   private def queryParamsExistenceCheck(

@@ -54,7 +54,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): F[ComplianceResult] = {
 
-    val bodyAssert = request.bodyText.compile.string.map { responseBody =>
+    val bodyAssert = request.bodyText.compile.string.flatMap { responseBody =>
       assert.bodyEql(
         responseBody,
         testCase.body,
@@ -87,14 +87,13 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase.method.toLowerCase(),
       "method test :"
     )
-    val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:
-      List(
+    val ioAsserts: List[F[ComplianceResult]] =
+      bodyAssert +: (List(
         assert.testCase.checkHeaders(testCase, request.headers),
         pathAssert,
         queryAssert,
         methodAssert
-      )
-        .map(_.pure[F])
+      ).map(_.pure[F]))
     ioAsserts.combineAll(cats.Applicative.monoid[F, ComplianceResult])
   }
 

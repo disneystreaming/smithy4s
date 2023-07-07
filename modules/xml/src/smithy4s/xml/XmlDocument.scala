@@ -127,6 +127,16 @@ object XmlDocument {
   object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
     def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
       val rootName: XmlQName = getRootName(schema)
+      val rootNamespace =
+        schema.hints
+          .get(smithy.api.XmlNamespace)
+          .toList
+          .map(ns =>
+            XmlAttr(
+              XmlQName(None, "xmlns"),
+              List(XmlText(ns.uri.toString))
+            )
+          )
       val xmlEncoder = XmlEncoderSchemaVisitor(schema)
       new Encoder[A] {
         def encode(value: A): XmlDocument = {
@@ -135,7 +145,7 @@ object XmlDocument {
               case attr @ XmlAttr(_, _) => Left(attr)
               case other                => Right(other)
             }
-          XmlDocument(XmlElem(rootName, attributes, children))
+          XmlDocument(XmlElem(rootName, rootNamespace ++ attributes, children))
         }
       }
     }

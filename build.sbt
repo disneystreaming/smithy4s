@@ -777,7 +777,8 @@ lazy val complianceTests = projectMatrix
         Dependencies.Http4s.circe.value,
         Dependencies.Http4s.client.value,
         Dependencies.Weaver.cats.value % Test,
-        Dependencies.Pprint.core.value
+        Dependencies.Pprint.core.value,
+        Dependencies.Fs2Data.xml.value
       )
     }
   )
