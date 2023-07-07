@@ -44,8 +44,7 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
 
     val disallowed = Set(
       // this would be taken-care of by middleware
-      "HostWithPathOperation",
-      "XmlUnionsWith" // TODO: fix
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
@@ -68,7 +67,9 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
   private val modelDump = fileFromEnv("MODEL_DUMP")
 
   val jsonPayloadCodecs =
-    smithy4s.aws.internals.AwsJsonCodecs.jsonPayloadCodecs
+    smithy4s.json.Json.payloadCodecs.withJsoniterCodecCompiler {
+      smithy4s.json.Json.jsoniter.withMapOrderPreservation(true)
+    }
 
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
