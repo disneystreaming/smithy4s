@@ -202,7 +202,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     schema.compile(this).emap(refinement.asFunction)
 
   def lazily[A](suspend: Lazy[Schema[A]]): XmlDecoder[A] = new XmlDecoder[A] {
-    lazy val underlying: XmlDecoder[A] = suspend.map(compile(_)).value
+    lazy val underlying: XmlDecoder[A] = compile(suspend.value)
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = {
       underlying.decode(cursor)
     }
@@ -217,7 +217,10 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
         decoder.decode(cursor).map(Some(_))
     }
 
-  private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
+  private def getXmlName(
+      hints: Hints,
+      default: String
+  ): XmlDocument.XmlQName =
     hints
       .get(XmlName)
       .map(_.value)

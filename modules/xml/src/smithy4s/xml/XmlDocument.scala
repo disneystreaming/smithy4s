@@ -33,6 +33,7 @@ import smithy4s.schema.Schema
 import smithy4s.xml.internals.XmlCursor
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import smithy4s.xml.internals.XmlEncoderSchemaVisitor
+import smithy4s.schema.CachedSchemaCompiler
 
 /**
   * A XmlDocument is an atomic piece of xml data that contains only one
@@ -98,8 +99,8 @@ object XmlDocument {
     def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A]
   }
 
-  object Decoder {
-    def fromSchema[A](schema: Schema[A]): Decoder[A] = {
+  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] = {
       val expectedRootName: XmlQName = getRootName(schema)
       val decoder = XmlDecoderSchemaVisitor(schema)
       new Decoder[A] {
@@ -123,8 +124,8 @@ object XmlDocument {
   trait Encoder[A] {
     def encode(value: A): XmlDocument
   }
-  object Encoder {
-    def fromSchema[A](schema: Schema[A]): Encoder[A] = {
+  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
       val rootName: XmlQName = getRootName(schema)
       val xmlEncoder = XmlEncoderSchemaVisitor(schema)
       new Encoder[A] {
@@ -156,8 +157,7 @@ object XmlDocument {
       def makeText(texty: XmlEvent.XmlTexty): Content = texty match {
         case XmlCharRef(_)   => None
         case XmlEntityRef(_) => None
-        case XmlString(s, _) =>
-          if (s.trim.isEmpty) None else Some(XmlDocument.XmlText(s))
+        case XmlString(s, _) => Some(XmlDocument.XmlText(s))
       }
 
       def makeElement(
