@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.syntax.all._
 import org.http4s.HttpApp
 import org.http4s.Headers
@@ -42,7 +42,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 ](
     reverseRouter: ReverseRouter[F],
     serviceInstance: Service[Alg]
-)(implicit ce: Temporal[F]) {
+)(implicit ce: Async[F]) {
   import ce._
   import org.http4s.implicits._
   import reverseRouter._
@@ -110,7 +110,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       clientReq,
-      run = {
+      run = ce.defer {
         val input = inputFromDocument
           .decode(testCase.params.getOrElse(Document.obj()))
           .liftTo[F]
@@ -156,7 +156,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       clientRes,
-      run = {
+      run = ce.defer {
         implicit val outputEq: Eq[O] =
           smithy4s.compliancetests.internals.eq.EqSchemaVisitor(endpoint.output)
         val buildResult = {

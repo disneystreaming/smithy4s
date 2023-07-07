@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.syntax.all._
 import cats.kernel.Eq
 import org.http4s._
@@ -40,7 +40,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     router: Router[F],
     serviceInstance: Service[Alg]
 )(implicit
-    ce: Temporal[F]
+    ce: Async[F]
 ) {
 
   import ce._
@@ -102,7 +102,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       serverReq,
-      run = {
+      run = ce.defer {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
             originalService.fromPolyFunction[Kind1[F]#toKind5](
@@ -179,7 +179,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       serverRes,
-      run = {
+      run = ce.defer {
         val (amendedService, syntheticRequest) = prepareService(endpoint)
 
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
