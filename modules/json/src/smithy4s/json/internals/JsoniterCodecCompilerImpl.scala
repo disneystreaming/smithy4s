@@ -25,6 +25,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
     explicitDefaultsEncoding: Boolean,
     flexibleCollectionsSupport: Boolean,
     infinitySupport: Boolean,
+    preserveMapOrder: Boolean,
     hintMask: Option[HintMask]
 ) extends CachedSchemaCompiler.Impl[JCodec]
     with JsoniterCodecCompiler {
@@ -49,12 +50,18 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler =
     copy(infinitySupport = infinitySupport)
 
+  def withMapOrderPreservation(
+      preserveMapOrder: Boolean
+  ): JsoniterCodecCompiler =
+    copy(preserveMapOrder = preserveMapOrder)
+
   def fromSchema[A](schema: Schema[A], cache: Cache): JCodec[A] = {
     val visitor = new SchemaVisitorJCodec(
       maxArity,
       explicitDefaultsEncoding,
       infinitySupport,
       flexibleCollectionsSupport,
+      preserveMapOrder,
       cache
     )
     val amendedSchema =
@@ -74,6 +81,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
       explicitDefaultsEncoding = false,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
+      preserveMapOrder = false,
       hintMask = Some(JsoniterCodecCompiler.defaultHintMask)
     )
 
