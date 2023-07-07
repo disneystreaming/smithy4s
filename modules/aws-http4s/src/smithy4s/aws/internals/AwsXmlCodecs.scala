@@ -26,21 +26,25 @@ private[aws] object AwsXmlCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        def encoders: CachedSchemaCompiler[EntityEncoder[F, *]] =
+        val encoders: CachedSchemaCompiler[EntityEncoder[F, *]] =
           XmlDocument.Encoder.mapK(
             new PolyFunction[XmlDocument.Encoder, EntityEncoder[F, *]] {
               def apply[A](fa: XmlDocument.Encoder[A]): EntityEncoder[F, A] =
                 xmlEntityEncoder[F].contramap(fa.encode)
             }
           )
-        def decoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
+        val decoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
           XmlDocument.Decoder.mapK(
             new PolyFunction[XmlDocument.Decoder, EntityDecoder[F, *]] {
               def apply[A](
                   fa: XmlDocument.Decoder[A]
               ): EntityDecoder[F, A] =
                 xmlEntityDecoder[F].flatMapR(xmlDocument =>
-                  EitherT.liftF(fa.decode(xmlDocument).liftTo[F])
+                  EitherT.liftF {
+                    fa.decode(xmlDocument)
+                      .leftMap(fromXmlToHttpError)
+                      .liftTo[F]
+                  }
                 )
             }
           )
@@ -103,5 +107,15 @@ private[aws] object AwsXmlCodecs {
 
       org.http4s.Entity.apply(body, None)
     }
+
+  private def fromXmlToHttpError(
+      xmlDecodeError: smithy4s.xml.XmlDecodeError
+  ): smithy4s.http.HttpContractError = {
+    smithy4s.http.HttpPayloadError(
+      xmlDecodeError.path.toPayloadPath,
+      "",
+      xmlDecodeError.message
+    )
+  }
 
 }
