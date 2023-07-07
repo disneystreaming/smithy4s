@@ -90,7 +90,7 @@ private[smithy4s] object XmlDecoder {
         case Nodes(history, NonEmptyList(node, Nil)) =>
           node.children match {
             case XmlDocument.XmlText(value) :: Nil =>
-              f(value).toRight(
+              f(value.trim()).toRight(
                 XmlDecodeError(
                   history,
                   s"Could not extract $expectedType from $value"

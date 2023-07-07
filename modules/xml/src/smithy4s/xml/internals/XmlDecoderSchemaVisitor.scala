@@ -157,23 +157,34 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   ): XmlDecoder[U] = {
     def altDecoder[A](alt: SchemaAlt[U, A]): (XmlQName, XmlDecoder[U]) = {
       val xmlName = getXmlName(alt.hints, alt.label)
-      val decoder = compile(alt.instance).map(alt.inject)
+      val decoder = compile(alt.instance).map(alt.inject).down(xmlName)
       (xmlName, decoder)
     }
     val altMap = alternatives.map(altDecoder(_)).toMap[XmlQName, XmlDecoder[U]]
     new XmlDecoder[U] {
-      def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
-        case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
-          val xmlName = node.name
-          altMap.get(node.name) match {
-            case Some(value) => value.decode(s)
-            case None =>
-              Left(
-                XmlDecodeError(history, s"Not a valid alternative: $xmlName")
-              )
-          }
-        case other =>
-          Left(XmlDecodeError(other.history, "Expected a single node"))
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = {
+        cursor match {
+          case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
+            node.children match {
+              case XmlDocument.XmlElem(xmlName, _, _) :: Nil =>
+                altMap.get(xmlName) match {
+                  case Some(altDecoder) =>
+                    altDecoder.decode(s)
+                  case None =>
+                    Left(
+                      XmlDecodeError(
+                        history,
+                        s"Not a valid alternative: $xmlName"
+                      )
+                    )
+                }
+              case _ =>
+                Left(XmlDecodeError(history, "Expected a single node"))
+            }
+          case other =>
+            // println(other)
+            Left(XmlDecodeError(other.history, "Expected a single node"))
+        }
       }
     }
   }
