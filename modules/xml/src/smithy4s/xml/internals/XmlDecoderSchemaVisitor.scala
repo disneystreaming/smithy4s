@@ -40,8 +40,9 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       tag: Primitive[P]
   ): XmlDecoder[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
+    val trim = (tag != Primitive.PString && tag != Primitive.PBlob)
     Primitive.stringParser(tag, hints) match {
-      case Some(parser) => XmlDecoder.fromStringParser(desc)(parser)
+      case Some(parser) => XmlDecoder.fromStringParser(desc, trim)(parser)
       case None => XmlDecoder.alwaysFailing(s"Cannot decode $desc from XML")
     }
   }
@@ -105,11 +106,13 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     if (isIntEnum) {
       val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
       val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
-      XmlDecoder.fromStringParser(desc)(_.toIntOption.flatMap(valueMap.get))
+      XmlDecoder.fromStringParser(desc, trim = true)(
+        _.toIntOption.flatMap(valueMap.get)
+      )
     } else {
       val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
       val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
-      XmlDecoder.fromStringParser(desc)(valueMap.get)
+      XmlDecoder.fromStringParser(desc, trim = false)(valueMap.get)
     }
   }
 

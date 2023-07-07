@@ -82,7 +82,7 @@ private[smithy4s] object XmlDecoder {
     * This is the method that is used to define primitive decoders, as all primitives
     * are decoded from text content, whether it's in elements or in attributes.
     */
-  def fromStringParser[A](expectedType: String)(
+  def fromStringParser[A](expectedType: String, trim: Boolean)(
       f: String => Option[A]
   ): XmlDecoder[A] =
     new XmlDecoder[A] {
@@ -90,7 +90,7 @@ private[smithy4s] object XmlDecoder {
         case Nodes(history, NonEmptyList(node, Nil)) =>
           node.children match {
             case XmlDocument.XmlText(value) :: Nil =>
-              f(value.trim()).toRight(
+              f(if (trim) value.trim() else value).toRight(
                 XmlDecodeError(
                   history,
                   s"Could not extract $expectedType from $value"
