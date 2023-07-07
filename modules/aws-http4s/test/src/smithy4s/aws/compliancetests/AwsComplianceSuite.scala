@@ -44,8 +44,7 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
 
     val disallowed = Set(
       // this would be taken-care of by middleware
-      "HostWithPathOperation",
-      "XmlUnionsWith" // TODO: fix
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
