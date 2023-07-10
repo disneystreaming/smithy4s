@@ -57,10 +57,17 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     def fieldEncoder[A](field: Field[S, A]): XmlEncoder[S] = {
       val isAttribute = field.localHints.has(XmlAttribute)
       val xmlName = getXmlName(field.localHints, field.label)
-      val encoder =
+      val aEncoder =
         if (isAttribute) compile(field.schema).attribute(xmlName)
         else compile(field.schema).down(xmlName)
-      encoder.contramap(field.get)
+
+      new XmlEncoder[S] {
+        def encode(s: S): List[XmlContent] =
+          field.getIfNonDefault(s) match {
+            case Some(value) => aEncoder.encode(value)
+            case None        => List.empty
+          }
+      }
     }
     implicit val monoid: Monoid[XmlEncoder[S]] = MonoidK[XmlEncoder].algebra[S]
     fields.map(fieldEncoder(_)).combineAll
@@ -165,13 +172,7 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
   }
 
   def nullable[A](schema: Schema[A]): XmlEncoder[Option[A]] =
-    new XmlEncoder[Option[A]] {
-      val encoder = compile(schema)
-      def encode(value: Option[A]): List[XmlContent] = value match {
-        case None        => List.empty
-        case Some(value) => encoder.encode(value)
-      }
-    }
+    compile(schema).optional
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
     hints
