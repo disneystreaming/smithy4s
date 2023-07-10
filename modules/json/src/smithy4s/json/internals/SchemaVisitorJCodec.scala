@@ -23,7 +23,6 @@ import java.util
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
-import smithy.api.HttpPayload
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import alloy.Discriminated
@@ -40,7 +39,7 @@ import scala.collection.mutable.{Map => MMap}
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
-    explicitNullEncoding: Boolean,
+    explicitDefaultsEncoding: Boolean,
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
     val cache: CompilationCache[JCodec]
@@ -791,8 +790,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       k: Schema[K],
       v: Schema[V]
   ): JCodec[Map[K, V]] = {
-    val kField = Field.required[Schema, (K, V), K]("key", k, _._1)
-    val vField = Field.required[Schema, (K, V), V]("value", v, _._2)
+    val kField = Field.required[(K, V), K]("key", k, _._1)
+    val vField = Field.required[(K, V), V]("value", v, _._2)
     val kvCodec = Schema.struct(Vector(kField, vField))(fields =>
       (fields(0).asInstanceOf[K], fields(1).asInstanceOf[V])
     )
@@ -1232,7 +1231,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         }
     }
 
-  private def jsonLabel[A, Z](field: Field[Schema, Z, A]): String =
+  private def jsonLabel[A, Z](field: Field[Z, A]): String =
     field.hints.get(JsonName) match {
       case None    => field.label
       case Some(x) => x.value
@@ -1241,11 +1240,11 @@ private[smithy4s] class SchemaVisitorJCodec(
   private type Handler = (Cursor, JsonReader, util.HashMap[String, Any]) => Unit
 
   private def fieldHandler[Z, A](
-      field: Field[Schema, Z, A]
+      field: Field[Z, A]
   ): Handler = {
-    val codec = apply(field.instance)
+    val codec = apply(field.schema)
     val label = field.label
-    if (field.isRequired) { (cursor, in, mmap) =>
+    (cursor, in, mmap) =>
       val _ = mmap.put(
         label, {
           cursor.push(label)
@@ -1254,86 +1253,35 @@ private[smithy4s] class SchemaVisitorJCodec(
           result
         }
       )
-    } else { (cursor, in, mmap) =>
-      {
-        cursor.push(label)
-        if (in.isNextToken('n')) in.readNullOrError[Unit]((), "Expected null")
-        else {
-          in.rollbackToken()
-          val _ = mmap.put(label, cursor.decode(codec, in))
-        }
-        cursor.pop()
+  }
+
+  private def fieldEncoder[Z, A](
+      field: Field[Z, A]
+  ): (Z, JsonWriter) => Unit = {
+    val codec = apply(field.schema)
+    val jLabel = jsonLabel(field)
+    val writeLabel: JsonWriter => Unit =
+      if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
+        _.writeNonEscapedAsciiKey(jLabel)
+      } else _.writeKey(jLabel)
+
+    if (explicitDefaultsEncoding) { (z: Z, out: JsonWriter) =>
+      writeLabel(out)
+      codec.encodeValue(field.get(z), out)
+    } else { (z: Z, out: JsonWriter) =>
+      field.getIfNonDefault(z).foreach { (a: A) =>
+        writeLabel(out)
+        codec.encodeValue(a, out)
       }
     }
   }
 
-  private def fieldEncoder[Z, A](
-      field: Field[Schema, Z, A]
-  ): (Z, JsonWriter) => Unit = {
-    field.fold(new Field.Folder[Schema, Z, (Z, JsonWriter) => Unit] {
-      def onRequired[AA](
-          label: String,
-          instance: Schema[AA],
-          get: Z => AA
-      ): (Z, JsonWriter) => Unit = {
-        val codec = apply(instance)
-        val jLabel = jsonLabel(field)
-        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
-          (z: Z, out: JsonWriter) =>
-            {
-              out.writeNonEscapedAsciiKey(jLabel)
-              codec.encodeValue(get(z), out)
-            }
-        } else { (z: Z, out: JsonWriter) =>
-          {
-            out.writeKey(jLabel)
-            codec.encodeValue(get(z), out)
-          }
-        }
-      }
-
-      def onOptional[AA](
-          label: String,
-          instance: Schema[AA],
-          get: Z => Option[AA]
-      ): (Z, JsonWriter) => Unit = {
-        val codec = apply(instance)
-        val jLabel = jsonLabel(field)
-        val encodeOptionNone: JsonWriter => Unit =
-          if (explicitNullEncoding) { (out: JsonWriter) =>
-            out.writeNonEscapedAsciiKey(jLabel)
-            out.writeNull()
-          } else (out: JsonWriter) => ()
-        if (jLabel.forall(JsonWriter.isNonEscapedAscii)) {
-          (z: Z, out: JsonWriter) =>
-            {
-              get(z) match {
-                case Some(aa) =>
-                  out.writeNonEscapedAsciiKey(jLabel)
-                  codec.encodeValue(aa, out)
-                case _ => encodeOptionNone(out)
-              }
-            }
-        } else { (z: Z, out: JsonWriter) =>
-          {
-            get(z) match {
-              case Some(aa) =>
-                out.writeKey(jLabel)
-                codec.encodeValue(aa, out)
-              case _ =>
-            }
-          }
-        }
-      }
-    })
-  }
-
-  private type Fields[Z] = Vector[Field[Schema, Z, _]]
+  private type Fields[Z] = Vector[Field[Z, _]]
   private type LabelledFields[Z] = Vector[(Field[Z, _], String, Any)]
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
       val jLabel = jsonLabel(field)
-      val decoded: Option[Any] = field.instance.getDefaultValue
+      val decoded: Option[Any] = field.schema.getDefaultValue
       val default = decoded.orNull
       (field, jLabel, default)
     }
@@ -1396,15 +1344,11 @@ private[smithy4s] class SchemaVisitorJCodec(
           fields.foreach { case (f, jsonLabel, default) =>
             stage2 += {
               val value = buffer.get(f.label)
-              if (f.isRequired) {
-                if (value == null) {
-                  if (default == null)
-                    cursor.requiredFieldError(jsonLabel, jsonLabel)
-                  else default
-                } else value
-              } else {
-                Option(value)
-              }
+              if (value == null) {
+                if (default == null)
+                  cursor.requiredFieldError(jsonLabel, jsonLabel)
+                else default
+              } else value
             }
           }
           const(stage2.result())
@@ -1413,60 +1357,6 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       def encodeValue(z: Z, out: JsonWriter): Unit =
         encode(z, out, documentEncoders)
-
-      def decodeKey(in: JsonReader): Z =
-        in.decodeError("Cannot use products as keys")
-
-      def encodeKey(x: Z, out: JsonWriter): Unit =
-        out.encodeError("Cannot use products as keys")
-    }
-
-  private def payloadStruct[A, Z](
-      payloadField: Field[Schema, Z, _],
-      fields: LabelledFields[Z]
-  )(codec: JCodec[payloadField.T], const: Vector[Any] => Z): JCodec[Z] =
-    new JCodec[Z] {
-      def expecting: String = "object"
-
-      override def canBeKey = false
-
-      def decodeValue(cursor: Cursor, in: JsonReader): Z =
-        decodeValue_(cursor, in)(emptyMetadata)
-
-      private def decodeValue_(
-          cursor: Cursor,
-          in: JsonReader
-      ): scala.collection.Map[String, Any] => Z = {
-        val buffer = new util.HashMap[String, Any](2, 0.5f)
-        // In this case, one field assumes the whole payload. We use
-        // its associated codec.
-        buffer.put(payloadField.label, cursor.decode(codec, in))
-
-        // At this point, we have parsed the json and retrieved
-        // all the values that interest us for the construction
-        // of our domain object.
-        // We therefore reconcile the values pulled from the json
-        // with the ones pull the metadata, and call the constructor
-        // on it.
-        { (meta: scala.collection.Map[String, Any]) =>
-          meta.foreach(kv => buffer.put(kv._1, kv._2))
-          val stage2 = new VectorBuilder[Any]
-          fields.foreach { case (f, jsonLabel, _) =>
-            stage2 += {
-              val value = buffer.get(f.label)
-              if (f.isRequired) {
-                if (value == null)
-                  cursor.requiredFieldError(jsonLabel, jsonLabel)
-                value
-              } else Option(value)
-            }
-          }
-          const(stage2.result())
-        }
-      }
-
-      def encodeValue(z: Z, out: JsonWriter): Unit =
-        payloadField.foreachT(z)(codec.encodeValue(_, out))
 
       def decodeKey(in: JsonReader): Z =
         in.decodeError("Cannot use products as keys")
@@ -1500,11 +1390,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       make: IndexedSeq[Any] => S
   ): JCodec[S] = {
     val lFields = labelledFields[S](fields)
-    (fields.find(_.hints.get(HttpPayload).isDefined), hints) match {
-      case (Some(payloadField), _) =>
-        val codec = apply(payloadField.instance)
-        payloadStruct(payloadField, lFields)(codec, make)
-      case (None, DiscriminatedUnionMember.hint(d)) =>
+    hints match {
+      case DiscriminatedUnionMember.hint(d) =>
         val encode =
           if (
             d.propertyName.forall(JsonWriter.isNonEscapedAscii) &&

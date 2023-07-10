@@ -132,12 +132,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   private def genAlt[S, A](alt: Alt[Schema, S, A]): Gen[S] =
     alt.instance.compile(this).map(alt.inject)
 
-  private def genField[S, A](field: Field[Schema, S, A]): Gen[A] =
-    Gen.lzy(field.mapK(this).instanceA {
-      new Field.ToOptional[Gen] {
-        def apply[AA](genA: Gen[AA]): Gen[Option[AA]] = Gen.option(genA)
-      }
-    })
+  private def genField[S, A](field: Field[S, A]): Gen[A] =
+    this(field.schema)
 
   private def bigDecimalToInt(b: BigDecimal): Int = if (
     b < BigDecimal(Int.MinValue)

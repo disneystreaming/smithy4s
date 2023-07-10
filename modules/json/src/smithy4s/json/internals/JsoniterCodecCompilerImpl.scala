@@ -22,7 +22,7 @@ import smithy4s.schema._
 
 private[smithy4s] case class JsoniterCodecCompilerImpl(
     maxArity: Int,
-    explicitNullEncoding: Boolean,
+    explicitDefaultsEncoding: Boolean,
     flexibleCollectionsSupport: Boolean,
     infinitySupport: Boolean,
     hintMask: Option[HintMask]
@@ -33,10 +33,10 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
 
   def withMaxArity(max: Int): JsoniterCodecCompiler = copy(maxArity = max)
 
-  def withExplicitNullEncoding(
-      explicitNullEncoding: Boolean
+  def withExplicitDefaultsEncoding(
+      explicitDefaultsEncoding: Boolean
   ): JsoniterCodecCompiler =
-    copy(explicitNullEncoding = explicitNullEncoding)
+    copy(explicitDefaultsEncoding = explicitDefaultsEncoding)
 
   def withHintMask(hintMask: HintMask): JsoniterCodecCompiler =
     copy(hintMask = Some(hintMask))
@@ -52,7 +52,7 @@ private[smithy4s] case class JsoniterCodecCompilerImpl(
   def fromSchema[A](schema: Schema[A], cache: Cache): JCodec[A] = {
     val visitor = new SchemaVisitorJCodec(
       maxArity,
-      explicitNullEncoding,
+      explicitDefaultsEncoding,
       infinitySupport,
       flexibleCollectionsSupport,
       cache
@@ -71,7 +71,7 @@ private[smithy4s] object JsoniterCodecCompilerImpl {
   val defaultJsoniterCodecCompiler: JsoniterCodecCompiler =
     JsoniterCodecCompilerImpl(
       maxArity = JsoniterCodecCompiler.defaultMaxArity,
-      explicitNullEncoding = false,
+      explicitDefaultsEncoding = false,
       infinitySupport = false,
       flexibleCollectionsSupport = false,
       hintMask = Some(JsoniterCodecCompiler.defaultHintMask)
