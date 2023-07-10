@@ -36,14 +36,12 @@ import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
-import scala.collection.immutable.ListMap
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
     explicitDefaultsEncoding: Boolean,
     infinitySupport: Boolean,
     flexibleCollectionsSupport: Boolean,
-    preserveMapOrder: Boolean,
     val cache: CompilationCache[JCodec]
 ) extends SchemaVisitor.Cached[JCodec] { self =>
   private val emptyMetadata: MMap[String, Any] = MMap.empty
@@ -465,9 +463,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             else {
               in.rollbackToken()
               // We use the maxArity limit to mitigate DoS vulnerability in default Scala `Map` implementation: https://github.com/scala/bug/issues/11203
-              val obj =
-                if (preserveMapOrder) ListMap.newBuilder[String, Document]
-                else Map.newBuilder[String, Document]
+              val obj = Map.newBuilder[String, Document]
               var i = 0
               while ({
                 if (i >= maxArity) maxArityError(cursor)
@@ -746,9 +742,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         if (in.isNextToken('}')) Map.empty
         else {
           in.rollbackToken()
-          val builder =
-            if (preserveMapOrder) ListMap.newBuilder[K, V]
-            else Map.newBuilder[K, V]
+          val builder = Map.newBuilder[K, V]
           var i = 0
           while ({
             if (i >= maxArity) maxArityError(cursor)

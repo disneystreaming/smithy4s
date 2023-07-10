@@ -40,9 +40,8 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       tag: Primitive[P]
   ): XmlDecoder[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
-    val trim = (tag != Primitive.PString && tag != Primitive.PBlob)
     Primitive.stringParser(tag, hints) match {
-      case Some(parser) => XmlDecoder.fromStringParser(desc, trim)(parser)
+      case Some(parser) => XmlDecoder.fromStringParser(desc)(parser)
       case None => XmlDecoder.alwaysFailing(s"Cannot decode $desc from XML")
     }
   }
@@ -106,14 +105,12 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       case EnumTag.IntEnum =>
         val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
         val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
-        XmlDecoder.fromStringParser(desc, trim = true)(
-          _.toIntOption.flatMap(valueMap.get)
-        )
+        XmlDecoder.fromStringParser(desc)(_.toIntOption.flatMap(valueMap.get))
 
       case EnumTag.StringEnum =>
         val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
         val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
-        XmlDecoder.fromStringParser(desc, trim = false)(valueMap.get)
+        XmlDecoder.fromStringParser(desc)(valueMap.get)
     }
   }
 
@@ -145,33 +142,23 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   ): XmlDecoder[U] = {
     def altDecoder[A](alt: SchemaAlt[U, A]): (XmlQName, XmlDecoder[U]) = {
       val xmlName = getXmlName(alt.hints, alt.label)
-      val decoder = compile(alt.instance).map(alt.inject).down(xmlName)
+      val decoder = compile(alt.instance).map(alt.inject)
       (xmlName, decoder)
     }
     val altMap = alternatives.map(altDecoder(_)).toMap[XmlQName, XmlDecoder[U]]
     new XmlDecoder[U] {
-      def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = {
-        cursor match {
-          case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
-            node.children match {
-              case XmlDocument.XmlElem(xmlName, _, _) :: Nil =>
-                altMap.get(xmlName) match {
-                  case Some(altDecoder) =>
-                    altDecoder.decode(s)
-                  case None =>
-                    Left(
-                      XmlDecodeError(
-                        history,
-                        s"Not a valid alternative: $xmlName"
-                      )
-                    )
-                }
-              case _ =>
-                Left(XmlDecodeError(history, "Expected a single node"))
-            }
-          case other =>
-            Left(XmlDecodeError(other.history, "Expected a single node"))
-        }
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = cursor match {
+        case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
+          val xmlName = node.name
+          altMap.get(node.name) match {
+            case Some(value) => value.decode(s)
+            case None =>
+              Left(
+                XmlDecodeError(history, s"Not a valid alternative: $xmlName")
+              )
+          }
+        case other =>
+          Left(XmlDecodeError(other.history, "Expected a single node"))
       }
     }
   }
@@ -189,14 +176,20 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     schema.compile(this).emap(refinement.asFunction)
 
   def lazily[A](suspend: Lazy[Schema[A]]): XmlDecoder[A] = new XmlDecoder[A] {
-    lazy val underlying: XmlDecoder[A] = compile(suspend.value)
+    lazy val underlying: XmlDecoder[A] = suspend.map(compile(_)).value
     def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = {
       underlying.decode(cursor)
     }
   }
 
   def nullable[A](schema: Schema[A]): XmlDecoder[Option[A]] =
-    compile(schema).optional
+    new XmlDecoder[Option[A]] {
+      val decoder = compile(schema)
+      def decode(cursor: XmlCursor): Either[XmlDecodeError, Option[A]] =
+        // not taking sparse into account for xml : we're just attempting to decode
+        // the value, mapping to Some in case of success.
+        decoder.decode(cursor).map(Some(_))
+    }
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
     hints

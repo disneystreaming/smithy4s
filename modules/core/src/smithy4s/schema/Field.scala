@@ -32,7 +32,7 @@ final case class Field[S, A](
     * had been defined directly on the target shape. Most of the time, this is
     * the desired behaviour when writing SchemaVisitors.
     */
-  lazy val schema: Schema[A] = targetSchema.addHints(localHints)
+  def schema: Schema[A] = targetSchema.addHints(localHints)
 
   /**
     * Returns all hints : the ones defined directly on the field, and the ones

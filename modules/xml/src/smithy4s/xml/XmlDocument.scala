@@ -127,14 +127,29 @@ object XmlDocument {
     def fromSchema[A](schema: Schema[A]): Encoder[A] = {
       val rootName: XmlQName = getRootName(schema)
       val xmlEncoder = XmlEncoderSchemaVisitor(schema)
-      new Encoder[A] {
-        def encode(value: A): XmlDocument = {
-          val (attributes, children) =
-            xmlEncoder.encode(value).partitionEither {
-              case attr @ XmlAttr(_, _) => Left(attr)
-              case other                => Right(other)
-            }
-          XmlDocument(XmlElem(rootName, attributes, children))
+      if (xmlEncoder.encodesUnion) {
+        // The union encoder should always return a single XML element
+        new Encoder[A] {
+          def encode(value: A): XmlDocument = {
+            xmlEncoder
+              .encode(value)
+              .collectFirst { case elem @ XmlElem(_, _, _) =>
+                elem
+              }
+              .map(XmlDocument(_))
+              .getOrElse(XmlDocument(XmlElem(rootName, Nil, Nil)))
+          }
+        }
+      } else {
+        new Encoder[A] {
+          def encode(value: A): XmlDocument = {
+            val (attributes, children) =
+              xmlEncoder.encode(value).partitionEither {
+                case attr @ XmlAttr(_, _) => Left(attr)
+                case other                => Right(other)
+              }
+            XmlDocument(XmlElem(rootName, attributes, children))
+          }
         }
       }
     }

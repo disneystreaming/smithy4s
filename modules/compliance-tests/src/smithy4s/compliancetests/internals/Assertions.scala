@@ -34,9 +34,6 @@ private[internals] object assert {
   private def isJson(bodyMediaType: Option[String]) =
     bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
 
-  private def isXml(bodyMediaType: Option[String]) =
-    bodyMediaType.exists(_.equalsIgnoreCase("application/xml"))
-
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
       case (true, true) => success
@@ -52,14 +49,6 @@ private[internals] object assert {
             fail(s"JSONs are not equal: result json: $a \n testcase json:  $b")
         }
     }
-  }
-
-  private def xmlEql(result: String, testCase: String): ComplianceResult = {
-    // TODO fix this poor man's attempt at standardising the xml payloads with actual xml parsing
-    eql(
-      result,
-      testCase.replace(">\n", ">").replaceAll("(\\s)*<", "<")
-    )
   }
 
   def eql[A: Eq](
@@ -85,8 +74,6 @@ private[internals] object assert {
     if (testCase.isDefined)
       if (isJson(bodyMediaType)) {
         jsonEql(result, testCase.getOrElse(""))
-      } else if (isXml(bodyMediaType)) {
-        xmlEql(result, testCase.getOrElse(""))
       } else {
         eql(result, testCase.getOrElse(""))
       }
