@@ -24,7 +24,6 @@ import smithy4s.schema.Field
 import smithy4s.schema.Alt
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.SchemaAlt
-import smithy4s.schema.Field
 import smithy4s.schema.Schema
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
@@ -44,7 +43,7 @@ import smithy4s.schema.Primitive.PBoolean
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema.Primitive.PUUID
 
-object DefaultSchemaVisitor extends SchemaVisitor[Id] {
+object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -94,17 +93,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       hints: Hints,
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
-    def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =
-      apply(instance)
-
-    def onOptional[A](
-        label: String,
-        instance: Schema[A],
-        get: S => Option[A]
-    ): Any =
-      None
-  })))
+  ): Id[S] = make(fields.map(_.schema.compile(self)))
 
   override def union[U](
       shapeId: ShapeId,

@@ -1,5 +1,3 @@
-package smithy4s.http4s
-
 /*
  *  Copyright 2021-2022 Disney Streaming
  *

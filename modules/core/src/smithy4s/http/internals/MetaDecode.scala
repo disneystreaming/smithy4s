@@ -130,15 +130,16 @@ private[http] sealed abstract class MetaDecode[+A] {
           if (iter.nonEmpty) putField(f(iter))
           else putDefault(putField)
       }
-      case (StatusCodeBinding, _) =>
+      case (StatusCodeBinding, StringValueMetaDecode(f)) =>
         (metadata, putField) =>
           metadata.statusCode match {
             case None =>
               sys.error(
                 "Status code is not available and field needs it."
               )
-            case Some(value) =>
-              putField(value)
+            case Some(statusCode) =>
+              // TODO add a specialised case for this
+              putField(f(statusCode.toString))
           }
       case _ => (metadata: Metadata, buffer) => ()
     }
