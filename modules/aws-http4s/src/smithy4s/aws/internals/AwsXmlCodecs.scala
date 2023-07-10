@@ -76,6 +76,8 @@ private[aws] object AwsXmlCodecs {
         media.body
           .through(fs2.text.utf8.decode[F])
           .through(events[F, String]())
+          .through(referenceResolver())
+          .through(normalize)
           .through(documents[F, XmlDocument])
           .head
           .compile

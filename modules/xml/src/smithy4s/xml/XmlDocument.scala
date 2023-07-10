@@ -23,7 +23,6 @@ import fs2.data.xml.Attr
 import fs2.data.xml.QName
 import fs2.data.xml.XmlEvent
 import fs2.data.xml.XmlEvent.XmlCharRef
-import fs2.data.xml.XmlEvent.XmlEntityRef
 import fs2.data.xml.XmlEvent.XmlString
 import fs2.data.xml.dom.DocumentBuilder
 import fs2.data.xml.dom.DocumentEventifier
@@ -56,6 +55,20 @@ object XmlDocument {
   // format: off
   sealed trait XmlContent extends Product with Serializable
   final case class XmlText(text: String)                                                       extends XmlContent
+  final case class XmlEntityRef(entityName: String)                                                       extends XmlContent {
+    def text: String =
+        entityName match {
+          case "lt"   => "<"
+          case "gt"   => ">"
+          case "amp"  => "&"
+          case "apos" => "'"
+          case "quot" => "\""
+          case other      => buildString(other)
+        }
+
+    private def buildString(name: String) = s"&$name;"
+    
+  }
   final case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
   final case class XmlAttr(name: XmlQName, values: List[XmlText]) extends XmlContent
   final case class XmlQName(prefix: Option[String], name: String) {
@@ -164,10 +177,13 @@ object XmlDocument {
 
       def makeComment(content: String): Option[Misc] = None
 
-      def makeText(texty: XmlEvent.XmlTexty): Content = texty match {
-        case XmlCharRef(_)   => None
-        case XmlEntityRef(_) => None
-        case XmlString(s, _) => Some(XmlDocument.XmlText(s))
+      def makeText(texty: XmlEvent.XmlTexty): Content = {
+        texty match {
+          case XmlCharRef(_) => None
+          case XmlEvent.XmlEntityRef(name) =>
+            Some(XmlDocument.XmlEntityRef(name))
+          case XmlString(s, _) => Some(XmlDocument.XmlText(s))
+        }
       }
 
       def makeElement(
@@ -214,6 +230,8 @@ object XmlDocument {
         xmlContent match {
           case XmlText(text) =>
             Stream(XmlEvent.XmlString(text, isCDATA = false))
+          case XmlDocument.XmlEntityRef(entityName) =>
+            Stream.emit(XmlEvent.XmlEntityRef(entityName))
           case XmlElem(name, attributes, children) =>
             val qName = toQName(name)
             val attr: List[Attr] = attributes.map(toAttr)
