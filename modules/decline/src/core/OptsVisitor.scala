@@ -271,7 +271,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def struct[A](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[A, _]],
+      fields: Vector[Field[A, _]],
       make: IndexedSeq[Any] => A
   ): Opts[A] = {
     def structField[X](

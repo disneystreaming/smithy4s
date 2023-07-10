@@ -20,30 +20,22 @@ package internals
 
 import smithy4s.http.internals.MetaDecode._
 
-import scala.collection.mutable.{Map => MMap}
-
 import HttpBinding._
 
 private[http] sealed abstract class MetaDecode[+A] {
   def map[B](to: A => B): MetaDecode[B] = this match {
-    case StringValueMetaDecode(f) => StringValueMetaDecode(f andThen to)
+    case StringValueMetaDecode(f) => StringValueMetaDecode(f.andThen(to))
     case StringCollectionMetaDecode(f) =>
       StringCollectionMetaDecode(f andThen to)
-    case StringMapMetaDecode(f)     => StringMapMetaDecode(f andThen to)
-    case StringListMapMetaDecode(f) => StringListMapMetaDecode(f andThen to)
+    case StringMapMetaDecode(f)     => StringMapMetaDecode(f.andThen(to))
+    case StringListMapMetaDecode(f) => StringListMapMetaDecode(f.andThen(to))
     case EmptyMetaDecode            => EmptyMetaDecode
-    case StructureMetaDecode(f, maybeTotal) => {
-      val newTotal = maybeTotal.map { total => (m: Metadata) =>
-        total(m).map(to)
-      }
-      StructureMetaDecode(f, newTotal)
-    }
+    case StructureMetaDecode(f)     => StructureMetaDecode(f.andThen(_.map(to)))
   }
 
   private[internals] def updateMetadata(
       binding: HttpBinding,
       fieldName: String,
-      optional: Boolean,
       maybeDefault: Option[Any]
   ): (Metadata, PutField) => Unit = {
     // format: off
@@ -52,43 +44,46 @@ private[http] sealed abstract class MetaDecode[+A] {
     // Throws an exception if the field optional is unset and the key is not
     // found.
     def lookupAndProcess[K, T] (m: Metadata => Map[K, T], key: K)
-                  (process: (T, String, PutFieldCallback) => Unit) :
+                  (process: (T, String, PutField) => Unit) :
                   (Metadata, PutField) => Unit =  {
       (metadata, putField) =>
         m(metadata).get(key) match {
-          case Some(value) if optional => process(value, fieldName, putField.putSome(_, _))
-          case Some(value)             => process(value, fieldName, putField.putRequired(_, _))
-          case None if maybeDefault.isDefined => putField.putRequired(fieldName, maybeDefault.get)
-          case None if optional        => putField.putNone(fieldName)
+          case Some(value)                    => process(value, fieldName, putField(_))
+          case None if maybeDefault.isDefined => putField(maybeDefault.get)
           case None => throw new MetadataError.NotFound(fieldName, binding)
         }
     }
     // format: on
 
+    def putDefault(putField: PutField) = maybeDefault match {
+      case Some(default) => putField(default)
+      case None          => throw new MetadataError.NotFound(fieldName, binding)
+    }
+
     (binding, this) match {
       case (PathBinding(path), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.path, path) { (value, fieldName, putField) =>
-          putField(fieldName, f(value))
+          putField(f(value))
         }
       case (HeaderBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
-            putField(fieldName, f(values.head))
+            putField(f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (HeaderBinding(h), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.headers, h) { (values, fieldName, putField) =>
-          putField(fieldName, f(values.iterator))
+          putField(f(values.iterator))
         }
       case (QueryBinding(h), StringValueMetaDecode(f)) =>
         lookupAndProcess(_.query, h) { (values, fieldName, putField) =>
           if (values.size == 1) {
-            putField(fieldName, f(values.head))
+            putField(f(values.head))
           } else throw MetadataError.ArityError(fieldName, binding)
         }
       case (QueryBinding(q), StringCollectionMetaDecode(f)) =>
         lookupAndProcess(_.query, q) { (values, fieldName, putField) =>
-          putField(fieldName, f(values.iterator))
+          putField(f(values.iterator))
         }
       // see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait
       // when targeting Map[String,String] we take the first value encountered
@@ -100,9 +95,8 @@ private[http] sealed abstract class MetaDecode[+A] {
                 k -> values.head
               } else throw MetadataError.NotFound(fieldName, QueryParamsBinding)
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty) putField(f(iter))
+          else putDefault(putField)
       }
       case (QueryParamsBinding, StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -110,9 +104,8 @@ private[http] sealed abstract class MetaDecode[+A] {
             .map { case (k, values) =>
               k -> values.iterator
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty) putField(f(iter))
+          else putDefault(putField)
       }
       case (HeaderPrefixBinding(prefix), StringMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -124,9 +117,8 @@ private[http] sealed abstract class MetaDecode[+A] {
                 } else
                   throw MetadataError.ArityError(fieldName, HeaderBinding(k))
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty) putField(f(iter))
+          else putDefault(putField)
       }
       case (HeaderPrefixBinding(prefix), StringListMapMetaDecode(f)) => {
         (metadata, putField) =>
@@ -135,22 +127,18 @@ private[http] sealed abstract class MetaDecode[+A] {
               case (k, values) if k.startsWith(prefix) =>
                 k.toString.drop(prefix.length()) -> values.iterator
             }
-          if (iter.nonEmpty && optional) putField.putSome(fieldName, f(iter))
-          else if (iter.isEmpty && optional) putField.putNone(fieldName)
-          else putField.putRequired(fieldName, f(iter))
+          if (iter.nonEmpty) putField(f(iter))
+          else putDefault(putField)
       }
       case (StatusCodeBinding, _) =>
         (metadata, putField) =>
           metadata.statusCode match {
             case None =>
-              if (optional) putField.putNone(fieldName)
-              else
-                sys.error(
-                  "Status code is not available and required field needs it."
-                )
+              sys.error(
+                "Status code is not available and field needs it."
+              )
             case Some(value) =>
-              if (optional) putField.putSome(fieldName, value)
-              else putField.putRequired(fieldName, value)
+              putField(value)
           }
       case _ => (metadata: Metadata, buffer) => ()
     }
@@ -171,16 +159,10 @@ private[http] object MetaDecode {
   final case class StringMapMetaDecode[A](f: Iterator[(String, String)] => A) extends MetaDecode[A]
   final case class StringListMapMetaDecode[A](f: Iterator[(String, Iterator[String])] => A) extends MetaDecode[A]
   case object EmptyMetaDecode extends MetaDecode[Nothing]
-  final case class StructureMetaDecode[A](f: Metadata => Either[MetadataError, MMap[String, Any]], total: Option[Metadata => Either[MetadataError, A]]) extends MetaDecode[A]
+  final case class StructureMetaDecode[A](f: Metadata => Either[MetadataError, A]) extends MetaDecode[A]
   // format: on
 
-  type PutFieldCallback = (String, Any) => Unit
-
-  trait PutField {
-    def putRequired(fieldName: String, value: Any): Unit
-    def putSome(fieldName: String, value: Any): Unit
-    def putNone(fieldName: String): Unit
-  }
+  type PutField = Any => Unit
 
   def emap[A, B](
       fa: MetaDecode[A]

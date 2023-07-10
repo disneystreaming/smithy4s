@@ -92,7 +92,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Gen[S] =
     Gen.sequence(fields.map(f => genField(f))).flatMap { arrayList =>

@@ -46,7 +46,7 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
     override def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): ToShapeIds[S] = {
       fields.flatMap(field => apply(field.instance)).toList ++ List(

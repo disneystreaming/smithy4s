@@ -25,7 +25,7 @@ import smithy4s.schema.Schema._
 import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
-import smithy4s.schema.{Alt, EnumTag, EnumValue, SchemaField}
+import smithy4s.schema.{Alt, EnumTag, EnumValue, Field}
 import DynamicLambdas._
 
 private[dynamic] object Compiler {
@@ -498,7 +498,7 @@ private[dynamic] object Compiler {
                   } else {
                     lMemberSchema.map(
                       _.optional[DynStruct](label, OptionalAccessor(index))
-                        .asInstanceOf[SchemaField[DynStruct, DynData]]
+                        .asInstanceOf[Field[DynStruct, DynData]]
                     )
                   }
                 val memberHints = allHints(mShape.traits)

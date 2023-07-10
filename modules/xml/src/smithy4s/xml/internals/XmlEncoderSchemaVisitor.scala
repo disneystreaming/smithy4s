@@ -51,10 +51,10 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): XmlEncoder[S] = {
-    def fieldEncoder[A](field: SchemaField[S, A]): XmlEncoder[S] = {
+    def fieldEncoder[A](field: Field[S, A]): XmlEncoder[S] = {
       val isAttribute = field.instance.hints.has(XmlAttribute)
       val xmlName = getXmlName(field.hints, field.label)
       val encoder = field

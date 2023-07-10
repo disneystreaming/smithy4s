@@ -21,10 +21,9 @@ import smithy4s.Hints
 import smithy4s.schema.{
   EnumTag,
   EnumValue,
-  Field,
   Primitive,
   Schema,
-  SchemaField,
+  Field,
   SchemaVisitor
 }
 import smithy4s.ShapeId
@@ -71,48 +70,39 @@ class HttpResponseCodeSchemaVisitor()
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): ResponseCodeExtractor[S] = {
     def compileField[A](
-        field: SchemaField[S, A]
+        field: Field[S, A]
     ): Option[ResponseCodeExtractor[S]] = {
-      val folder = new Field.Folder[Schema, S, ResponseCodeExtractor[S]]() {
-        def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): ResponseCodeExtractor[S] = {
-          val aExt = apply(instance)
-          OptionalResponseCode { s =>
-            get(s) match {
-              case None => None
-              case Some(value) =>
-                aExt match {
-                  case NoResponseCode          => None
-                  case RequiredResponseCode(f) => Some(f(value))
-                  case OptionalResponseCode(f) => f(value)
-                }
-            }
-          }
-        }
-        def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): ResponseCodeExtractor[S] = {
-          val aExt = apply(instance)
-          Contravariant[ResponseCodeExtractor].contramap(aExt)(get)
-        }
+      val aExt = apply(field.schema)
+      val fieldExtractor: ResponseCodeExtractor[S] = {
+        Contravariant[ResponseCodeExtractor].contramap(aExt)(field.get)
       }
 
       field.hints
         .get[smithy.api.HttpResponseCode]
-        .map(_ => field.fold(folder))
+        .map(_ => fieldExtractor)
     }
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
 
+  override def nullable[A](
+      schema: Schema[A]
+  ): ResponseCodeExtractor[Option[A]] = {
+    val aExt = apply(schema)
+    OptionalResponseCode[Option[A]] {
+      case None => None
+      case Some(value) =>
+        aExt match {
+          case NoResponseCode          => None
+          case RequiredResponseCode(f) => Some(f(value))
+          case OptionalResponseCode(f) => f(value)
+        }
+    }
+
+  }
 }
 
 object HttpResponseCodeSchemaVisitor {
@@ -129,9 +119,11 @@ object HttpResponseCodeSchemaVisitor {
           fa: ResponseCodeExtractor[A]
       )(f: B => A): ResponseCodeExtractor[B] = {
         fa match {
-          case NoResponseCode          => NoResponseCode
-          case RequiredResponseCode(g) => RequiredResponseCode { b => g(f(b)) }
-          case OptionalResponseCode(g) => OptionalResponseCode { b => g(f(b)) }
+          case NoResponseCode => NoResponseCode
+          case RequiredResponseCode(g) =>
+            RequiredResponseCode { b => g(f(b)) }
+          case OptionalResponseCode(g) =>
+            OptionalResponseCode { b => g(f(b)) }
         }
       }
     }

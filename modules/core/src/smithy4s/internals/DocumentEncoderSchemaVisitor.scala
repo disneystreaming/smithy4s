@@ -180,7 +180,7 @@ class DocumentEncoderSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentEncoder[S] = {
     val discriminator =
@@ -190,17 +190,16 @@ class DocumentEncoderSchemaVisitor(
         ))
       }
     def fieldEncoder[A](
-        field: Field[Schema, S, A]
+        field: Field[S, A]
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
-      val encoder = apply(field.instance)
+      val encoder = apply(field.schema)
+      val jsonLabel = field.hints
+        .get(JsonName)
+        .map(_.value)
+        .getOrElse(field.label)
       (s, builder) =>
-        field.foreachT(s) { t =>
-          val jsonLabel = field.instance.hints
-            .get(JsonName)
-            .map(_.value)
-            .getOrElse(field.label)
-
-          builder.+=(jsonLabel -> encoder.apply(t))
+        field.getIfNonDefault(s).foreach { value =>
+          builder.+=(jsonLabel -> encoder.apply(value))
         }
     }
 

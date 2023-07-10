@@ -110,10 +110,10 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): AwsQueryCodec[S] = {
-    def fieldEncoder[A](field: SchemaField[S, A]): AwsQueryCodec[S] = {
+    def fieldEncoder[A](field: Field[S, A]): AwsQueryCodec[S] = {
       val fieldKey = getKey(field.hints, field.label)
 
       val encoder = field.foldK(new Field.FolderK[Schema, S, AwsQueryCodec] {

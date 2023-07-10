@@ -303,56 +303,54 @@ class DocumentDecoderSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentDecoder[S] = {
-    def jsonLabel[A](field: Field[Schema, S, A]): String =
-      field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
+    def jsonLabel[A](field: Field[S, A]): String =
+      field.hints.get(JsonName).map(_.value).getOrElse(field.label)
 
     def fieldDecoder[A](
-        field: Field[Schema, S, A]
+        field: Field[S, A]
     ): (
         List[PayloadPath.Segment],
         Any => Unit,
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
-      val maybeDefault = field.instance.getDefault
 
-      if (field.isOptional) {
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) =>
-          val path = PayloadPath.Segment(jLabel) :: pp
-          fields
-            .get(jLabel) match {
-            case Some(DNull) => buffer(None)
-            case Some(document) =>
-              buffer(Some(apply(field.instance)(path, document)))
-            case None => buffer(None)
-          }
-      } else {
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) =>
-          val path = PayloadPath.Segment(jLabel) :: pp
-          fields
-            .get(jLabel) match {
-            case Some(document) =>
-              buffer(apply(field.instance)(path, document))
-            case None if maybeDefault.isDefined =>
-              buffer(apply(field.instance)(path, maybeDefault.get))
-            case None =>
-              throw new PayloadError(
-                PayloadPath(path.reverse),
-                "",
-                "Required field not found"
-              )
-          }
+      field.getDefaultValue match {
+        case Some(defaultValue) =>
+          (
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
+          ) =>
+            val path = PayloadPath.Segment(jLabel) :: pp
+            fields
+              .get(jLabel) match {
+              case Some(document) =>
+                buffer(apply(field.schema)(path, document))
+              case None =>
+                buffer(defaultValue)
+            }
+        case None =>
+          (
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
+          ) =>
+            val path = PayloadPath.Segment(jLabel) :: pp
+            fields
+              .get(jLabel) match {
+              case Some(document) =>
+                buffer(apply(field.schema)(path, document))
+              case None =>
+                throw new PayloadError(
+                  PayloadPath(path.reverse),
+                  "",
+                  "Required field not found"
+                )
+            }
       }
     }
 

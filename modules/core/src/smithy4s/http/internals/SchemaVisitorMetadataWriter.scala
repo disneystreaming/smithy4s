@@ -28,7 +28,6 @@ import smithy4s.schema.{
   Field,
   Primitive,
   SchemaAlt,
-  SchemaField,
   SchemaVisitor
 }
 import smithy4s.schema.Alt
@@ -93,7 +92,30 @@ class SchemaVisitorMetadataWriter(
   }
 
   override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
-    EmptyMetaEncode
+    self(schema) match {
+      case StringValueMetaEncode(f) =>
+        StringValueMetaEncode {
+          case Some(value) => f(value)
+          case None        => ""
+        }
+      case StringListMetaEncode(f) =>
+        StringListMetaEncode {
+          case Some(value) => f(value)
+          case None        => List.empty
+        }
+      case StringMapMetaEncode(f) =>
+        StringMapMetaEncode {
+          case Some(value) => f(value)
+          case None        => Map.empty
+        }
+      case StringListMapMetaEncode(f) =>
+        StringListMapMetaEncode {
+          case Some(value) => f(value)
+          case None        => Map.empty
+        }
+      case EmptyMetaEncode        => EmptyMetaEncode
+      case StructureMetaEncode(_) => EmptyMetaEncode
+    }
 
   override def map[K, V](
       shapeId: ShapeId,
@@ -135,35 +157,28 @@ class SchemaVisitorMetadataWriter(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MetaEncode[S] = {
     def encodeField[A](
-        field: SchemaField[S, A]
+        field: Field[S, A]
     ): Option[(Metadata, S) => Metadata] = {
       val fieldHints = field.hints
       HttpBinding
         .fromHints(field.label, fieldHints, hints)
         .map { binding =>
-          val folderT = new Field.LeftFolder[Schema, Metadata] {
-            override def compile[T](
-                label: String,
-                instance: Schema[T]
-            ): (Metadata, T) => Metadata = {
-              val encoder: MetaEncode[T] =
-                self(
-                  instance.addHints(Hints(binding))
-                )
-              val updateFunction = encoder.updateMetadata(binding)
-              (metadata, t: T) => updateFunction(metadata, t)
+          val encoder = self(field.schema.addHints(Hints(binding)))
+          val updateFunction = encoder.updateMetadata(binding)
+          (metadata, s) =>
+            field.getIfNonDefault(s) match {
+              case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
+              case None              => metadata
             }
-          }
-          field.leftFolder(folderT)
         }
     }
     // pull out the query params field as it must be applied last to the metadata
     val (queryParamFieldVec, theRest) =
-      fields.partition(_.instance.hints.has[HttpQueryParams])
+      fields.partition(_.localHints.has[HttpQueryParams])
     val queryParams =
       queryParamFieldVec.flatMap(field => encodeField(field)).headOption
     val updateFunctions = theRest.flatMap(field => encodeField(field))

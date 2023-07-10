@@ -24,7 +24,7 @@ import smithy4s.schema.Field
 import smithy4s.schema.Alt
 import smithy4s.schema.SchemaVisitor
 import smithy4s.schema.SchemaAlt
-import smithy4s.schema.SchemaField
+import smithy4s.schema.Field
 import smithy4s.schema.Schema
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
@@ -92,7 +92,7 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
     def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =

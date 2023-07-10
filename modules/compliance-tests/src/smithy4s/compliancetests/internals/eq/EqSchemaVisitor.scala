@@ -18,11 +18,13 @@ package smithy4s.compliancetests.internals.eq
 
 import smithy4s.compliancetests.internals.eq.Smithy4sEqInstances._
 import cats.kernel.Eq
+import cats.syntax.all._
 import smithy4s._
 import smithy4s.schema.{Schema, _}
 
 import java.util.UUID
 import smithy4s.capability.EncoderK
+import cats.kernel.Monoid
 
 object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def primitive[P](
@@ -71,39 +73,13 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Eq[S] = { (x: S, y: S) =>
-    {
-      def forField[A2](field: Field[Schema, S, A2]): Boolean = {
-        val eqField = field.foldK(new Field.FolderK[Schema, S, Eq]() {
-          override def onRequired[A](
-              label: String,
-              instance: Schema[A],
-              get: S => A
-          ): Eq[A] = self(instance)
-
-          override def onOptional[A](
-              label: String,
-              instance: Schema[A],
-              get: S => Option[A]
-          ): Eq[Option[A]] = {
-            val showA = self(instance)
-            (x: Option[A], y: Option[A]) =>
-              (x, y) match {
-                case (Some(a), Some(b)) => showA.eqv(a, b)
-                case (None, None)       => true
-                case _                  => false
-              }
-          }
-        })
-        eqField.eqv(field.get(x), field.get(y))
-      }
-
-      fields.forall(forField(_))
-
-    }
-
+  ): Eq[S] = {
+    def forField[A2](field: Field[S, A2]): Eq[S] =
+      field.schema.compile(self).contramap(field.get)
+    implicit val monoidEqS: Monoid[Eq[S]] = Eq.allEqualBoundedSemilattice
+    fields.foldMap(forField(_))
   }
 
   override def union[U](

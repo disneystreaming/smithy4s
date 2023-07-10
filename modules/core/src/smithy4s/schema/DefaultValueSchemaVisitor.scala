@@ -68,7 +68,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Option[S] = None
 

@@ -204,7 +204,7 @@ class DocumentSpec() extends FunSuite {
 
     val fromEmpty = Document.decode[DefTest](obj())
 
-    expect(fromEmpty == Right(expectedDecoded))
+    expect.same(fromEmpty, Right(expectedDecoded))
   }
 
   test("defaults should not be applied when field is provided") {
@@ -220,25 +220,8 @@ class DocumentSpec() extends FunSuite {
 
     val roundTripped = Document.decode[DefTest](document)
 
-    expect(document == expectedDocument)
-    expect(roundTripped == Right(defTest))
-  }
-
-  test("defaults should not be applied when field is provided") {
-    val defTest = DefTest(12, "test2")
-
-    val document = Document.encode(defTest)
-    import Document._
-    val expectedDocument =
-      obj(
-        "int" -> fromInt(12),
-        "str" -> fromString("test2")
-      )
-
-    val roundTripped = Document.decode[DefTest](document)
-
-    expect(document == expectedDocument)
-    expect(roundTripped == Right(defTest))
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(defTest))
   }
 
   test("encoding maps keyed with newtypes should not change the encoding") {

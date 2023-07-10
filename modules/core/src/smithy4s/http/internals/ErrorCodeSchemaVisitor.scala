@@ -60,7 +60,7 @@ private[http] class ErrorCodeSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): HttpCode[S] = { _ =>
     hints

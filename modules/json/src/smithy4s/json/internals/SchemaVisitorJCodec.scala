@@ -1329,7 +1329,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   }
 
   private type Fields[Z] = Vector[Field[Schema, Z, _]]
-  private type LabelledFields[Z] = Vector[(SchemaField[Z, _], String, Any)]
+  private type LabelledFields[Z] = Vector[(Field[Z, _], String, Any)]
   private def labelledFields[Z](fields: Fields[Z]): LabelledFields[Z] =
     fields.map { field =>
       val jLabel = jsonLabel(field)
@@ -1496,7 +1496,7 @@ private[smithy4s] class SchemaVisitorJCodec(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): JCodec[S] = {
     val lFields = labelledFields[S](fields)

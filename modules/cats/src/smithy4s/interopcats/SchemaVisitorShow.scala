@@ -126,30 +126,14 @@ final class SchemaVisitorShow(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Show[S] = {
     def compileField[A](
-        schemaField: SchemaField[S, A]
+        field: Field[S, A]
     ): S => String = {
-      val folder = new Field.FolderK[Schema, S, Show]() {
-        override def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): Show[AA] = self(instance)
-
-        override def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): Show[Option[AA]] = {
-          implicit val showAA: Show[AA] = self(instance)
-          Show[Option[AA]]
-        }
-      }
-      val showField = schemaField.foldK(folder)
-      s => s"${schemaField.label} = ${showField.show(schemaField.get(s))}"
+      val showField = self(field.schema).contramap(field.get)
+      s => s"${field.label} = ${showField.show(s)}"
     }
 
     val functions = fields.map(f => compileField(f))

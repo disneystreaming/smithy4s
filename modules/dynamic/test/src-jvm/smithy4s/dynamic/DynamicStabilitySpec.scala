@@ -188,7 +188,7 @@ class DynamicStabilitySpec extends FunSuite {
     def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): ConstUnit[S] = {
       fields.foreach { field =>

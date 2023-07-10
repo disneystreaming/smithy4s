@@ -17,11 +17,7 @@
 package smithy4s.interopcats
 
 import cats.Hash
-import cats.implicits.{
-  catsKernelStdHashForList,
-  catsKernelStdHashForOption,
-  toContravariantOps
-}
+import cats.implicits.{catsKernelStdHashForList, toContravariantOps}
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.capability.EncoderK
 import smithy4s.interopcats.instances.HashInstances._
@@ -98,28 +94,11 @@ final class SchemaVisitorHash(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Hash[S] = {
-    def forField[A2](field: Field[Schema, S, A2]): Hash[S] = {
-      val hashField: Hash[A2] =
-        field.foldK(new Field.FolderK[Schema, S, Hash]() {
-          override def onRequired[A](
-              label: String,
-              instance: Schema[A],
-              get: S => A
-          ): Hash[A] = self(instance)
-
-          override def onOptional[A](
-              label: String,
-              instance: Schema[A],
-              get: S => Option[A]
-          ): Hash[Option[A]] = {
-            implicit val hashA: Hash[A] = self(instance)
-            Hash[Option[A]]
-          }
-        })
-      hashField.contramap(field.get)
+    def forField[A2](field: Field[S, A2]): Hash[S] = {
+      field.schema.compile(self).contramap(field.get)
     }
     val hashInstances: Vector[Hash[S]] = fields.map(field => forField(field))
     // similar to how productPrefix is used

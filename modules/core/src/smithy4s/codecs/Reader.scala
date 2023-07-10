@@ -45,6 +45,14 @@ trait Reader[F[_], -Message, A] { self =>
   final def narrow[M2 <: Message]: Reader[F, M2, A] =
     self.asInstanceOf[Reader[F, M2, A]]
 
+  final def sequence(implicit Z: Zipper[F]): Reader[F, Seq[Message], Seq[A]] =
+    new Reader[F, Seq[Message], Seq[A]] {
+      def read(messages: Seq[Message]): F[Seq[A]] =
+        Z.zipMapAll(messages.map(self.read).asInstanceOf[IndexedSeq[F[Any]]])(
+          _.asInstanceOf[Seq[A]]
+        )
+    }
+
 }
 
 object Reader {

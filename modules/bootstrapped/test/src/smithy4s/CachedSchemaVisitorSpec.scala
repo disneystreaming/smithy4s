@@ -78,7 +78,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): Unit = discard {
       fields.foreach { field =>

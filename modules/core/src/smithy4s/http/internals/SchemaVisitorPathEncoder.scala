@@ -75,33 +75,19 @@ object SchemaVisitorPathEncoder
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MaybePathEncode[S] = {
     type Writer = S => List[String]
 
     def toPathEncoder[A](
-        field: Field[Schema, S, A],
+        field: Field[S, A],
         greedy: Boolean
     ): Option[Writer] = {
-      field.fold(new Field.Folder[Schema, S, Option[Writer]] {
-        def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): Option[Writer] = {
-          if (greedy)
-            self(instance).map(_.contramap(get).encodeGreedy)
-          else
-            self(instance).map(_.contramap(get).encode)
-        }
-
-        def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): Option[Writer] = None
-      })
+      val writer =
+        self(field.schema).map(_.contramap(field.get))
+      if (greedy) writer.map(_.encodeGreedy)
+      else writer.map(_.encode)
     }
     def compile1(path: PathSegment): Option[Writer] = path match {
       case StaticSegment(value) => Some(Function.const(List(value)))

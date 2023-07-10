@@ -28,6 +28,7 @@ import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.Document.DNull
 
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
+  self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -75,19 +76,9 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
-    def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =
-      apply(instance)
-
-    def onOptional[A](
-        label: String,
-        instance: Schema[A],
-        get: S => Option[A]
-    ): Any =
-      None
-  })))
+  ): Id[S] = make(fields.map(_.schema.compile(self)))
 
   override def union[U](
       shapeId: ShapeId,

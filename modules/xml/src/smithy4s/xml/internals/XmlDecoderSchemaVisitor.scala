@@ -117,10 +117,10 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): XmlDecoder[S] = {
-    def fieldReader[A](field: SchemaField[S, A]): XmlDecoder[A] = {
+    def fieldReader[A](field: Field[S, A]): XmlDecoder[A] = {
       val isAttribute = field.instance.hints.has(XmlAttribute)
       val xmlName = getXmlName(field.hints, field.label)
       field

@@ -225,23 +225,11 @@ class HintsTransformationSpec() extends FunSuite {
     def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): Count[S] = {
-      def countField[AA](field: smithy4s.schema.Field[Schema, S, AA]) =
-        field.fold(new Field.Folder[Schema, S, S => Int] {
-          def onRequired[A](
-              label: String,
-              instance: Schema[A],
-              get: S => A
-          ): S => Int = s => compile(instance)(get(s))
-
-          def onOptional[A](
-              label: String,
-              instance: Schema[A],
-              get: S => Option[A]
-          ): S => Int = s => get(s).foldMap(compile(instance))
-        })
+      def countField[AA](field: smithy4s.schema.Field[S, AA]) =
+        compile(field.schema).compose(field.get)
       s => count(hints) + fields.foldMap(countField(_)(s))
     }
 
