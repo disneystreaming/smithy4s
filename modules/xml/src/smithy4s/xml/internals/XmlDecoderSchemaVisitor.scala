@@ -121,27 +121,11 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       make: IndexedSeq[Any] => S
   ): XmlDecoder[S] = {
     def fieldReader[A](field: Field[S, A]): XmlDecoder[A] = {
-      val isAttribute = field.instance.hints.has(XmlAttribute)
-      val xmlName = getXmlName(field.hints, field.label)
-      field
-        .foldK(new Field.FolderK[Schema, S, XmlDecoder] {
-          def onRequired[AA](
-              label: String,
-              instance: Schema[AA],
-              get: S => AA
-          ): XmlDecoder[AA] = {
-            if (isAttribute) compile(instance).attribute(xmlName)
-            else compile(instance).down(xmlName)
-          }
-          def onOptional[AA](
-              label: String,
-              instance: Schema[AA],
-              get: S => Option[AA]
-          ): XmlDecoder[Option[AA]] = {
-            if (isAttribute) compile(instance).optional.attribute(xmlName)
-            else compile(instance).optional.down(xmlName)
-          }
-        })
+      val isAttribute = field.localHints.has(XmlAttribute)
+      val xmlName = getXmlName(field.localHints, field.label)
+      if (isAttribute) compile(field.schema).attribute(xmlName)
+      else compile(field.schema).down(xmlName)
+
     }
     val readers = fields.map(fieldReader(_))
     new XmlDecoder[S] {

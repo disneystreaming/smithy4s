@@ -55,28 +55,11 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       make: IndexedSeq[Any] => S
   ): XmlEncoder[S] = {
     def fieldEncoder[A](field: Field[S, A]): XmlEncoder[S] = {
-      val isAttribute = field.instance.hints.has(XmlAttribute)
-      val xmlName = getXmlName(field.hints, field.label)
-      val encoder = field
-        .foldK(new Field.FolderK[Schema, S, XmlEncoder] {
-          def onRequired[AA](
-              label: String,
-              instance: Schema[AA],
-              get: S => AA
-          ): XmlEncoder[AA] = {
-            if (isAttribute) compile(instance).attribute(xmlName)
-            else compile(instance).down(xmlName)
-          }
-
-          def onOptional[AA](
-              label: String,
-              instance: Schema[AA],
-              get: S => Option[AA]
-          ): XmlEncoder[Option[AA]] = {
-            if (isAttribute) compile(instance).attribute(xmlName).optional
-            else compile(instance).down(xmlName).optional
-          }
-        })
+      val isAttribute = field.localHints.has(XmlAttribute)
+      val xmlName = getXmlName(field.localHints, field.label)
+      val encoder =
+        if (isAttribute) compile(field.schema).attribute(xmlName)
+        else compile(field.schema).down(xmlName)
       encoder.contramap(field.get)
     }
     implicit val monoid: Monoid[XmlEncoder[S]] = MonoidK[XmlEncoder].algebra[S]
