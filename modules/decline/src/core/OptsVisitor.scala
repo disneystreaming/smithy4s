@@ -275,7 +275,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
       make: IndexedSeq[Any] => A
   ): Opts[A] = {
     def structField[X](
-        f: smithy4s.schema.Field[Schema, A, X]
+        f: smithy4s.schema.Field[A, X]
     ): Opts[X] = {
       val childHints = Hints(
         FieldName(f.label),
@@ -284,25 +284,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         IsNested(hints.get(IsNested).isDefined)
       )
 
-      f.foldK[Opts](
-        new smithy4s.schema.Field.FolderK[Schema, A, Opts] {
-          def onRequired[Y](
-              label: String,
-              instance: Schema[Y],
-              get: A => Y
-          ): Opts[Y] =
-            instance.addHints(childHints).compile[Opts](self)
-
-          def onOptional[Y](
-              label: String,
-              instance: Schema[Y],
-              get: A => Option[Y]
-          ): Opts[Option[Y]] = instance
-            .addHints(childHints)
-            .compile[Opts](self)
-            .orNone
-        }
-      )
+      f.schema.addHints(childHints).compile(self)
     }
 
     fields
