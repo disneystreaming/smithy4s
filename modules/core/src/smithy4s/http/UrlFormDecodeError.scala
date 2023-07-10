@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws.query
+package smithy4s
+package http
 
-private[aws] trait AwsQueryCodec[-A] extends (A => FormData) { self =>
-  def apply(a: A): FormData
-  def contramap[B](f: B => A): AwsQueryCodec[B] = new AwsQueryCodec[B] {
-    def apply(b: B): FormData = self(f(b))
-  }
+import smithy4s.codecs.PayloadPath
 
-  def prepend(key: String): AwsQueryCodec[A] = new AwsQueryCodec[A] {
-    def apply(a: A): FormData = self(a).prepend(key)
-  }
+final case class UrlFormDecodeError(path: PayloadPath, message: String)
+    extends Throwable {
+  override def getMessage(): String = s"${path.render()}: $message"
 }

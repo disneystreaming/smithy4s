@@ -840,7 +840,8 @@ lazy val bootstrapped = projectMatrix
     ) ++ scala3MigrationOption(scalaVersion.value),
     libraryDependencies ++=
       munitDeps.value ++ Seq(
-        Dependencies.Cats.core.value % Test
+        Dependencies.Cats.core.value % Test,
+        Dependencies.Weaver.cats.value % Test
       )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)

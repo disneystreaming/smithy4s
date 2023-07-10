@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,9 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws.query
+package smithy4s
+package http
+package internals
 
 import cats.effect.IO
 import cats.syntax.all._
@@ -26,8 +28,12 @@ import smithy4s.schema.Schema._
 import weaver._
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
+import smithy4s.http.UrlForm
+import smithy4s.http.internals.UrlFormDataEncoder
+import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 
-object AwsQueryCodecSpec extends SimpleIOSuite {
+// TODO: Should this use munit for consistency with other tests in boostrapped?
+object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
 
   test("primitive: int") {
     implicit val schema: Schema[Int] = int
@@ -338,12 +344,12 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       schema: Schema[A],
       loc: SourceLocation
   ): IO[Expectations] = {
-    val cache: CompilationCache[AwsQueryCodec] =
-      CompilationCache.make[AwsQueryCodec]
-    val schemaVisitor: AwsSchemaVisitorAwsQueryCodec =
-      new AwsSchemaVisitorAwsQueryCodec(cache)
-    val codec: AwsQueryCodec[A] = schemaVisitor(schema)
-    val formData: FormData = codec(value)
+    val cache: CompilationCache[UrlFormDataEncoder] =
+      CompilationCache.make[UrlFormDataEncoder]
+    val schemaVisitor: UrlFormDataEncoderSchemaVisitor =
+      new UrlFormDataEncoderSchemaVisitor(cache)
+    val encoder: UrlFormDataEncoder[A] = schemaVisitor(schema)
+    val formData: UrlForm.FormData = encoder.encode(value)
     val result: String = formData.render
     IO(expect.same(result, expected))
   }
