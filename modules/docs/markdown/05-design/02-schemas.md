@@ -125,17 +125,6 @@ Conversely, the constructor is used for deserialisation, which involves reconstr
 
 Another detail is the presence of the `addHints` call on field labelled with `b`. This is due to the presence of the `length` trait (from the `smithy.api` namespace, aka the prelude) on the corresponding `b` member of the smithy `Foo` shape.
 
-#### Note related to `optional` and `required`
-
-You may have noticed the `required` and `optional` methods, which create `Field` instances from `Schemas`, in order to pass them to structures.
-In Smithy4s, the concept of `Option` only exists relatively to `struct` calls. It is not possible to construct a `Schema[Option[A]]` on its own.
-
-The rationale is that having a first class `Option` schema constructor leads to leaks in the implementation of serialisation mechanisms, as `None` typically represents the absence of value, and allowing for serialising an absence of value in formats that typically do not support it implies the leak of `Option` (or equivalent) in various interfaces.
-
-Additionally, a first class `Option` schema constructor would allow to create schemas for `Option[Option[Option[Int]]]`, and even though we recognise that
-there are some things that could be encoded this way, it is just not a very pragmatic possibility, and opens the door for easy violation of round-trip properties that any serialisation technology should respect.
-For instance: `Some(None)` and `None` can easily have the same encoding in Json, so how do you distinguish between the two during decoding?
-
 ### Unions
 
 Union, also referred to as coproduct, or sum type, is a construct that expresses sealed polymorphism. It is the dual of a structure:
