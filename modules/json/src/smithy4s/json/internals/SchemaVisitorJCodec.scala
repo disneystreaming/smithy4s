@@ -1265,9 +1265,10 @@ private[smithy4s] class SchemaVisitorJCodec(
         _.writeNonEscapedAsciiKey(jLabel)
       } else _.writeKey(jLabel)
 
-    if (explicitDefaultsEncoding) { (z: Z, out: JsonWriter) =>
-      writeLabel(out)
-      codec.encodeValue(field.get(z), out)
+    if (explicitDefaultsEncoding || field.isStrictlyRequired) {
+      (z: Z, out: JsonWriter) =>
+        writeLabel(out)
+        codec.encodeValue(field.get(z), out)
     } else { (z: Z, out: JsonWriter) =>
       field.getIfNonDefault(z).foreach { (a: A) =>
         writeLabel(out)

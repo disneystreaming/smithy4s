@@ -40,8 +40,7 @@ final case class Field[S, A](
 
   @deprecated("use .schema instead", since = "0.18.0")
   final def instance: Schema[A] = schema
-  def isRequired: Boolean = hints.has(smithy.api.Required)
-  def isOptional: Boolean = !isRequired
+
   lazy val getDefaultValue: Option[A] =
     schema.getDefaultValue
 
@@ -55,7 +54,8 @@ final case class Field[S, A](
     }
   }
 
-  def hasDefaultValue(s: S): Boolean = isDefaultValue(get(s))
+  def hasDefaultValue: Boolean = getDefaultValue.isDefined
+  def isStrictlyRequired: Boolean = !hasDefaultValue
 
   def transformHintsLocally(f: Hints => Hints): Field[S, A] =
     copy(schema = schema.transformHintsLocally(f))
