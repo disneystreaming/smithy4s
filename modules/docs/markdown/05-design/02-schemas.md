@@ -28,7 +28,6 @@ It is encoded as a sealed trait, the members of which capture the following aspe
 
 * Primitives
 * Lists
-* Sets
 * Maps
 * Enumerations
 * Structures
@@ -124,6 +123,16 @@ The labels are there to cater to serialisation mechanisms like JSON or XML, wher
 Conversely, the constructor is used for deserialisation, which involves reconstructing the data after all of its component values have been successfully deserialised.
 
 Another detail is the presence of the `addHints` call on field labelled with `b`. This is due to the presence of the `length` trait (from the `smithy.api` namespace, aka the prelude) on the corresponding `b` member of the smithy `Foo` shape.
+
+#### Note related to `optional` and `required`
+
+You may have noticed the `required` and `optional` methods, which create `Field` instances from `Schemas`, in order to pass them to structures.
+
+Since 0.18, the concept of Option in Smithy4s is backed
+by a `OptionSchema` member of the `Schema` GADT. Having Option as a first-class citizen has some advantages, as it allows to support [sparse collections](https://smithy.io/2.0/spec/aggregate-types.html?highlight=sparse%20collections#list-member-optionality).
+
+The downside is that this allows to create schemas (and therefore codecs) that do not abide by round-tripping properties. Indeed, once data is on the wire, it's often
+impossible to distinguish `Option[Option[Option[Int]] ]` from `Option[Int]`. 
 
 ### Unions
 
@@ -233,11 +242,13 @@ This is useful for the case of newtypes: if we are able to derive a codec that c
 
 ### Collections
 
-Smithy supports three types of collections out of the box :
+Smithy supports two types of collections out of the box :
 
-* set (bound to disappear in smithy 2.0 in favour of the `@uniqueItems` trait)
 * list
 * map
+
+NB: the "set" type was supported in smithy 1.0, but has disappeared in smithy 2.0 in favour of the `uniqueItems`  trait
+
 
 Additionally, Smithy4s allows users to [annotate list shapes](../04-codegen/01-customisation/03-collections.md) to customise the type of collection used during code-generation.
 
