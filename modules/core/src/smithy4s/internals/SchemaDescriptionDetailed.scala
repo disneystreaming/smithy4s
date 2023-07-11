@@ -151,7 +151,7 @@ private[internals] object SchemaDescriptionDetailedImpl
     }
   }
 
-  override def nullable[A](
+  override def option[A](
       schema: Schema[A]
   ): SchemaDescriptionDetailedImpl[Option[A]] =
     apply(schema).mapResult { desc => s"Option[$desc]" }

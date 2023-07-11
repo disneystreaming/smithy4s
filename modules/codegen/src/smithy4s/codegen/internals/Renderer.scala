@@ -1138,7 +1138,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
-      case Nullable(underlying) => line"${underlying.schemaRef}.nullable"
+      case Nullable(underlying) => line"${underlying.schemaRef}.option"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {

@@ -84,6 +84,6 @@ object Field {
       schema: Schema[A],
       get: S => Option[A]
   ): Field[S, Option[A]] =
-    Field(label, schema.nullable, get)
+    Field(label, schema.option, get)
 
 }

@@ -90,7 +90,7 @@ class SchemaVisitorMetadataWriter(
 
   }
 
-  override def nullable[A](schema: Schema[A]): MetaEncode[Option[A]] =
+  override def option[A](schema: Schema[A]): MetaEncode[Option[A]] =
     self(schema) match {
       case StringValueMetaEncode(f) =>
         StringValueMetaEncode {

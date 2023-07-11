@@ -229,7 +229,7 @@ class DynamicStabilitySpec extends FunSuite {
       }
     }
 
-    def nullable[A](schema: Schema[A]): ConstUnit[Option[A]] = {
+    def option[A](schema: Schema[A]): ConstUnit[Option[A]] = {
       self(schema)
     }
   }

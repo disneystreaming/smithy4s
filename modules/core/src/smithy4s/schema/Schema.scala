@@ -46,7 +46,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.withId(newId), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.withId(newId), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.withId(newId)))
-    case s: NullableSchema[a] => NullableSchema(s.underlying.withId(newId)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[a] => OptionSchema(s.underlying.withId(newId)).asInstanceOf[Schema[A]]
   }
 
   final def withId(namespace: String, name: String): Schema[A] = withId(ShapeId(namespace, name))
@@ -61,7 +61,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsLocally(f), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsLocally(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsLocally(f)))
-    case s: NullableSchema[a] => NullableSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsLocally(f)).asInstanceOf[Schema[A]]
   }
 
   final def transformHintsTransitively(f: Hints => Hints): Schema[A] = this match {
@@ -74,7 +74,7 @@ sealed trait Schema[A]{
     case BijectionSchema(schema, bijection) => BijectionSchema(schema.transformHintsTransitively(f), bijection)
     case RefinementSchema(schema, refinement) => RefinementSchema(schema.transformHintsTransitively(f), refinement)
     case LazySchema(suspend) => LazySchema(suspend.map(_.transformHintsTransitively(f)))
-    case s: NullableSchema[a] => NullableSchema(s.underlying.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
+    case s: OptionSchema[a] => OptionSchema(s.underlying.transformHintsTransitively(f)).asInstanceOf[Schema[A]]
   }
 
   final def validated[C](c: C)(implicit constraint: RefinementProvider.Simple[C, A]): Schema[A] = {
@@ -86,10 +86,10 @@ sealed trait Schema[A]{
 
   final def biject[B](bijection: Bijection[A, B]) : Schema[B] = Schema.bijection(this, bijection)
   final def biject[B](to: A => B, from: B => A) : Schema[B] = Schema.bijection(this, to, from)
-  final def nullable: Schema[Option[A]] = Schema.nullable(this)
+  final def option: Schema[Option[A]] = Schema.option(this)
 
-  final def isNullable: Boolean = this match {
-    case _: NullableSchema[_] => true
+  final def isOption: Boolean = this match {
+    case _: OptionSchema[_] => true
     case _ => false
   }
 
@@ -101,7 +101,7 @@ sealed trait Schema[A]{
       case Document.DNull => this.compile(DefaultValueSchemaVisitor)
       case document => Document.Decoder.fromSchema(this).decode(document).toOption
     }
-    maybeDefault.orElse(this.compile(NullableDefaultVisitor))
+    maybeDefault.orElse(this.compile(OptionDefaultVisitor))
   }
 
 
@@ -154,7 +154,7 @@ object Schema {
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: U => Alt.WithValue[U, _]) extends Schema[U]
-  final case class NullableSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
+  final case class OptionSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
     def hints: Hints = underlying.hints
     def shapeId: ShapeId = underlying.shapeId
   }
@@ -209,16 +209,17 @@ object Schema {
   def vector[A](a: Schema[A]): Schema[Vector[A]] = Schema.CollectionSchema[Vector, A](placeholder, Hints.empty, CollectionTag.VectorTag, a)
   def indexedSeq[A](a: Schema[A]): Schema[IndexedSeq[A]] = Schema.CollectionSchema[IndexedSeq, A](placeholder, Hints.empty, CollectionTag.IndexedSeqTag, a)
 
-  def sparseList[A](a: Schema[A]): Schema[List[Option[A]]] = list(nullable(a))
-  def sparseSet[A](a: Schema[A]): Schema[Set[Option[A]]] = set(nullable(a))
-  def sparseVector[A](a: Schema[A]): Schema[Vector[Option[A]]] = vector(nullable(a))
-  def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(nullable(a))
+  def sparseList[A](a: Schema[A]): Schema[List[Option[A]]] = list(option(a))
+  def sparseSet[A](a: Schema[A]): Schema[Set[Option[A]]] = set(option(a))
+  def sparseVector[A](a: Schema[A]): Schema[Vector[Option[A]]] = vector(option(a))
+  def sparseIndexedSeq[A](a: Schema[A]): Schema[IndexedSeq[Option[A]]] = indexedSeq(option(a))
 
   def map[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, V]] = Schema.MapSchema(placeholder, Hints.empty, k, v)
-  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, k, nullable(v))
+  def sparseMap[K, V](k: Schema[K], v: Schema[V]): Schema[Map[K, Option[V]]] = Schema.MapSchema(placeholder, Hints.empty, k, option(v))
+
+  def option[A](s: Schema[A]): Schema[Option[A]] = Schema.OptionSchema(s)
 
   def recursive[A](s: => Schema[A]): Schema[A] = Schema.LazySchema(Lazy(s))
-  def nullable[A](s: Schema[A]): Schema[Option[A]] = Schema.NullableSchema(s)
 
   def union[U](alts: Alt[U, _]*)(dispatch: U => Alt.WithValue[U, _]): Schema.UnionSchema[U] =
     Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
@@ -274,8 +275,8 @@ object Schema {
     }
   }
 
-  private object NullableDefaultVisitor extends SchemaVisitor.Default[Option] {
+  private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
-    override def nullable[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
+    override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
   }
 }

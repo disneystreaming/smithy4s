@@ -195,7 +195,7 @@ final class SchemaVisitorHash(
     }
   }
 
-  override def nullable[A](schema: Schema[A]): Hash[Option[A]] =
+  override def option[A](schema: Schema[A]): Hash[Option[A]] =
     cats.instances.option.catsKernelStdHashForOption(self(schema))
 
 }

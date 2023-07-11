@@ -137,7 +137,7 @@ class HintsTransformationSpec() extends FunSuite {
   }
 
   test(header("nullable")) {
-    implicit val schema: Schema[Option[Int]] = int.nullable
+    implicit val schema: Schema[Option[Int]] = int.option
     checkSchema(1.some, 1)
     checkSchema(none[Int], expectedTransitive = 0, expectedLocal = 0)
   }
@@ -259,7 +259,7 @@ class HintsTransformationSpec() extends FunSuite {
       a => underlying(a)
     }
 
-    def nullable[A](schema: Schema[A]): Count[Option[A]] = {
+    def option[A](schema: Schema[A]): Count[Option[A]] = {
       val count = compile(schema)
       locally {
         case Some(a) => count(a)

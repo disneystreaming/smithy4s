@@ -52,8 +52,8 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
 
-  override def nullable[A](schema: Schema[A]): SchemaDescription[Option[A]] =
-    SchemaDescription.of("Nullable")
+  override def option[A](schema: Schema[A]): SchemaDescription[Option[A]] =
+    SchemaDescription.of("Option")
 
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
     suspend.map(s => SchemaDescription.of(apply(s))).value

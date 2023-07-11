@@ -218,6 +218,6 @@ private[http] class SchemaVisitorMetadataReader(
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
     EmptyMetaDecode
 
-  override def nullable[A](schema: Schema[A]): MetaDecode[Option[A]] =
+  override def option[A](schema: Schema[A]): MetaDecode[Option[A]] =
     self(schema).map(Some(_))
 }

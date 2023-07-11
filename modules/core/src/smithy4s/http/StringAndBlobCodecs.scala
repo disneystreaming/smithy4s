@@ -183,7 +183,7 @@ object StringAndBlobCodecs {
         ReaderWriter(readerB, writerB)
       })
 
-    override def nullable[A](
+    override def option[A](
         schema: Schema[A]
     ): CodecResult[Option[A]] =
       self(schema).map(_.mapInstance { case ReaderWriter(readerA, writerA) =>

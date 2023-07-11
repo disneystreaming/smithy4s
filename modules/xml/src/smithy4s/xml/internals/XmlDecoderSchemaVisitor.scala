@@ -195,7 +195,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     }
   }
 
-  def nullable[A](schema: Schema[A]): XmlDecoder[Option[A]] =
+  def option[A](schema: Schema[A]): XmlDecoder[Option[A]] =
     compile(schema).optional
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =

@@ -171,7 +171,7 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     def encode(value: A): List[XmlContent] = underlying.encode(value)
   }
 
-  def nullable[A](schema: Schema[A]): XmlEncoder[Option[A]] =
+  def option[A](schema: Schema[A]): XmlEncoder[Option[A]] =
     compile(schema).optional
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =

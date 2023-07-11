@@ -880,7 +880,7 @@ private[smithy4s] class SchemaVisitorJCodec(
     val jk = apply(key)
     val jv = apply(value)
     if (jk.canBeKey) {
-      if (flexibleCollectionsSupport && !value.isNullable)
+      if (flexibleCollectionsSupport && !value.isOption)
         flexibleNullParsingMap(jk, jv)
       else objectMap(jk, jv)
     } else arrayMap(key, value)
@@ -1211,7 +1211,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       out.writeKey(total(x).intValue)
   }
 
-  override def nullable[A](schema: Schema[A]): JCodec[Option[A]] =
+  override def option[A](schema: Schema[A]): JCodec[Option[A]] =
     new JCodec[Option[A]] {
       val underlying: JCodec[A] = self(schema)
       def expecting: String = s"JsNull or ${underlying.expecting}"

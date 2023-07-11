@@ -88,7 +88,7 @@ class HttpResponseCodeSchemaVisitor()
     fields.flatMap(f => compileField(f)).headOption.getOrElse(NoResponseCode)
   }
 
-  override def nullable[A](
+  override def option[A](
       schema: Schema[A]
   ): ResponseCodeExtractor[Option[A]] = {
     val aExt = apply(schema)

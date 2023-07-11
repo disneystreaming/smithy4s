@@ -116,5 +116,5 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
-  override def nullable[A](schema: Schema[A]): Id[Option[A]] = None
+  override def option[A](schema: Schema[A]): Id[Option[A]] = None
 }

@@ -117,7 +117,7 @@ class DocumentEncoderSchemaVisitor(
     from[C[A]](c => DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq))
   }
 
-  override def nullable[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
+  override def option[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
     val encoder = self(schema)
     locally {
       case Some(a) => encoder.apply(a)
