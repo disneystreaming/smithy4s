@@ -143,11 +143,11 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): XmlEncoder[U] = new XmlEncoder[U] {
     override def encodesUnion: Boolean = true
-    val underlying = dispatch.compile(new Alt.Precompiler[Schema, XmlEncoder] {
+    val underlying = dispatch.compile(new Alt.Precompiler[XmlEncoder] {
       def apply[A](label: String, instance: Schema[A]): XmlEncoder[A] = {
         val xmlName = getXmlName(instance.hints, label)
         compile(instance).down(xmlName)

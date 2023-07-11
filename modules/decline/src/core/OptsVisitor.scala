@@ -295,12 +295,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def union[A](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[A, _]],
-      dispatch: Alt.Dispatcher[Schema, A]
+      alternatives: Vector[Alt[A, _]],
+      dispatch: Alt.Dispatcher[A]
   ): Opts[A] = {
     def go[X](
-        alt: SchemaAlt[A, X]
-    ): Opts[A] = alt.instance
+        alt: Alt[A, X]
+    ): Opts[A] = alt.schema
       .addHints(hints)
       .compile[Opts](this)
       .map(alt.inject)

@@ -18,7 +18,6 @@ package smithy4s
 
 package object schema {
 
-  type SchemaAlt[U, A] = Alt[Schema, U, A]
   type Repr[A] = String
 
 }

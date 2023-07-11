@@ -27,7 +27,6 @@ import smithy4s.schema.{
   EnumValue,
   Field,
   Primitive,
-  SchemaAlt,
   SchemaVisitor
 }
 import smithy4s.schema.Alt
@@ -196,8 +195,8 @@ class SchemaVisitorMetadataWriter(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatcher: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatcher: Alt.Dispatcher[U]
   ): MetaEncode[U] = MetaEncode.empty
 
   override def biject[A, B](

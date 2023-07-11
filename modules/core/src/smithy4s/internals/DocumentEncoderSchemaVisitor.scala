@@ -216,10 +216,10 @@ class DocumentEncoderSchemaVisitor(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatcher: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatcher: Alt.Dispatcher[U]
   ): DocumentEncoder[U] = {
-    val precompile = new Alt.Precompiler[Schema, DocumentEncoder] {
+    val precompile = new Alt.Precompiler[DocumentEncoder] {
       def apply[A](label: String, schema: Schema[A]): DocumentEncoder[A] = {
         val jsonLabel =
           schema.hints.get(JsonName).map(_.value).getOrElse(label)

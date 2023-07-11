@@ -21,9 +21,8 @@ import cats.Id
 import java.util.UUID
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.Field
-import smithy4s.schema.Alt
 import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.SchemaAlt
+import smithy4s.schema.Alt
 import smithy4s.schema.Schema
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
@@ -98,10 +97,10 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Id[U] = {
-    def processAlt[A](alt: Alt[Schema, U, A]) = alt.inject(apply(alt.instance))
+    def processAlt[A](alt: Alt[U, A]) = alt.inject(apply(alt.schema))
     processAlt(alternatives.head)
   }
 

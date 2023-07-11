@@ -161,15 +161,15 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): AwsQueryCodec[U] = {
 
-    def encode[A](u: U, alt: SchemaAlt[U, A]): FormData = {
+    def encode[A](u: U, alt: Alt[U, A]): FormData = {
       val key = getKey(alt.hints, alt.label)
       dispatch
         .projector(alt)(u)
-        .fold(FormData.Empty.widen)(a => compile(alt.instance)(a))
+        .fold(FormData.Empty.widen)(a => compile(alt.schema)(a))
         .prepend(key)
     }
 

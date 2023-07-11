@@ -286,7 +286,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint.errorable.toList
         .flatMap { errorable =>
           errorable.error.alternatives.flatMap { errorAlt =>
-            errorAlt.instance.hints
+            errorAlt.schema.hints
               .get(HttpResponseTests)
               .toList
               .flatMap(_.value)

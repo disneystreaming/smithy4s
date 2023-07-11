@@ -17,7 +17,6 @@
 package smithy4s.dynamic.internals
 
 import smithy4s.schema.Alt
-import smithy4s.schema.Schema
 
 /**
   * A bunch of hash-code stable lambdas that are less likely to break memoization
@@ -50,9 +49,9 @@ private[internals] object DynamicLambdas {
     }
   }
 
-  case class Dispatcher(alts: IndexedSeq[Alt[Schema, DynAlt, DynData]])
-      extends (DynAlt => Alt.SchemaAndValue[DynAlt, DynData]) {
-    def apply(dynAlt: DynAlt): Alt.SchemaAndValue[DynAlt, DynData] = {
+  case class Dispatcher(alts: IndexedSeq[Alt[DynAlt, DynData]])
+      extends (DynAlt => Alt.WithValue[DynAlt, DynData]) {
+    def apply(dynAlt: DynAlt): Alt.WithValue[DynAlt, DynData] = {
       val index = dynAlt._1
       val data = dynAlt._2
       alts(index).apply(data)

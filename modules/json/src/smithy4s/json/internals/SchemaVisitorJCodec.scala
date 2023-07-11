@@ -917,14 +917,14 @@ private[smithy4s] class SchemaVisitorJCodec(
   private type Writer[A] = A => JsonWriter => Unit
 
   private def taggedUnion[U](
-      alternatives: Vector[Alt[Schema, U, _]]
-  )(dispatch: Alt.Dispatcher[Schema, U]): JCodec[U] =
+      alternatives: Vector[Alt[U, _]]
+  )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
     new JCodec[U] {
       val expecting: String = "tagged-union"
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[Schema, U, A]): String =
+      def jsonLabel[A](alt: Alt[U, A]): String =
         alt.hints.get(JsonName) match {
           case None    => alt.label
           case Some(x) => x.value
@@ -932,8 +932,8 @@ private[smithy4s] class SchemaVisitorJCodec(
 
       private[this] val handlerMap =
         new util.HashMap[String, (Cursor, JsonReader) => U] {
-          def handler[A](alt: Alt[Schema, U, A]) = {
-            val codec = apply(alt.instance)
+          def handler[A](alt: Alt[U, A]) = {
+            val codec = apply(alt.schema)
             (cursor: Cursor, reader: JsonReader) =>
               alt.inject(cursor.decode(codec, reader))
           }
@@ -961,7 +961,7 @@ private[smithy4s] class SchemaVisitorJCodec(
           }
         } else in.decodeError("Expected JSON object")
 
-      val precompiler = new smithy4s.schema.Alt.Precompiler[Schema, Writer] {
+      val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
         def apply[A](label: String, instance: Schema[A]): Writer[A] = {
           val jsonLabel =
             instance.hints.get(JsonName).map(_.value).getOrElse(label)
@@ -989,8 +989,8 @@ private[smithy4s] class SchemaVisitorJCodec(
     }
 
   private def untaggedUnion[U](
-      alternatives: Vector[Alt[Schema, U, _]]
-  )(dispatch: Alt.Dispatcher[Schema, U]): JCodec[U] = new JCodec[U] {
+      alternatives: Vector[Alt[U, _]]
+  )(dispatch: Alt.Dispatcher[U]): JCodec[U] = new JCodec[U] {
     def expecting: String = "untaggedUnion"
 
     override def canBeKey: Boolean = false
@@ -998,8 +998,8 @@ private[smithy4s] class SchemaVisitorJCodec(
     private[this] val handlerList: Array[(Cursor, JsonReader) => U] = {
       val res = Array.newBuilder[(Cursor, JsonReader) => U]
 
-      def handler[A](alt: Alt[Schema, U, A]) = {
-        val codec = apply(alt.instance)
+      def handler[A](alt: Alt[U, A]) = {
+        val codec = apply(alt.schema)
         (cursor: Cursor, reader: JsonReader) =>
           alt.inject(cursor.decode(codec, reader))
       }
@@ -1027,7 +1027,7 @@ private[smithy4s] class SchemaVisitorJCodec(
       else cursor.payloadError(this, "Could not decode untagged union")
     }
 
-    val precompiler = new smithy4s.schema.Alt.Precompiler[Schema, Writer] {
+    val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
       def apply[A](label: String, instance: Schema[A]): Writer[A] = {
         val jcodecA = instance.compile(self)
         a => out => jcodecA.encodeValue(a, out)
@@ -1047,15 +1047,15 @@ private[smithy4s] class SchemaVisitorJCodec(
   }
 
   private def discriminatedUnion[U](
-      alternatives: Vector[Alt[Schema, U, _]],
+      alternatives: Vector[Alt[U, _]],
       discriminated: Discriminated
-  )(dispatch: Alt.Dispatcher[Schema, U]): JCodec[U] =
+  )(dispatch: Alt.Dispatcher[U]): JCodec[U] =
     new JCodec[U] {
       def expecting: String = "discriminated-union"
 
       override def canBeKey: Boolean = false
 
-      def jsonLabel[A](alt: Alt[Schema, U, A]): String =
+      def jsonLabel[A](alt: Alt[U, A]): String =
         alt.hints.get(JsonName) match {
           case None    => alt.label
           case Some(x) => x.value
@@ -1064,9 +1064,9 @@ private[smithy4s] class SchemaVisitorJCodec(
       private[this] val handlerMap =
         new util.HashMap[String, (Cursor, JsonReader) => U] {
           def handler[A](
-              alt: Alt[Schema, U, A]
+              alt: Alt[U, A]
           ): (Cursor, JsonReader) => U = {
-            val codec = apply(alt.instance)
+            val codec = apply(alt.schema)
             (cursor: Cursor, reader: JsonReader) =>
               alt.inject(cursor.decode(codec, reader))
           }
@@ -1093,7 +1093,7 @@ private[smithy4s] class SchemaVisitorJCodec(
             )
         } else in.decodeError("Expected JSON object")
 
-      val precompiler = new smithy4s.schema.Alt.Precompiler[Schema, Writer] {
+      val precompiler = new smithy4s.schema.Alt.Precompiler[Writer] {
         def apply[A](label: String, instance: Schema[A]): Writer[A] = {
           val jsonLabel =
             instance.hints.get(JsonName).map(_.value).getOrElse(label)
@@ -1121,8 +1121,8 @@ private[smithy4s] class SchemaVisitorJCodec(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): JCodec[U] = hints match {
     case Untagged.hint(_)      => untaggedUnion(alternatives)(dispatch)
     case Discriminated.hint(d) => discriminatedUnion(alternatives, d)(dispatch)

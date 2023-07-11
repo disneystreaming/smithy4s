@@ -64,8 +64,8 @@ class ShapeIdHintsSmokeSpec() extends munit.FunSuite {
     override def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): ToShapeIds[U] = {
       alternatives.flatMap(field => apply(field.instance)).toList ++ List(
         shapeId

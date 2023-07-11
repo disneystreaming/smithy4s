@@ -140,12 +140,12 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): XmlDecoder[U] = {
-    def altDecoder[A](alt: SchemaAlt[U, A]): (XmlQName, XmlDecoder[U]) = {
+    def altDecoder[A](alt: Alt[U, A]): (XmlQName, XmlDecoder[U]) = {
       val xmlName = getXmlName(alt.hints, alt.label)
-      val decoder = compile(alt.instance).map(alt.inject).down(xmlName)
+      val decoder = compile(alt.schema).map(alt.inject).down(xmlName)
       (xmlName, decoder)
     }
     val altMap = alternatives.map(altDecoder(_)).toMap[XmlQName, XmlDecoder[U]]

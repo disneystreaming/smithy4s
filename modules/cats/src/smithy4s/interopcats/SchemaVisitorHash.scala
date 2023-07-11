@@ -116,8 +116,8 @@ final class SchemaVisitorHash(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Hash[U] = {
 
     // A version of `Hash` that assumes for the eqv method that the RHS is "up-casted" to U.
@@ -138,12 +138,12 @@ final class SchemaVisitorHash(
       }
     }
 
-    val precompiler = new Alt.Precompiler[Schema, AltHash] {
+    val precompiler = new Alt.Precompiler[AltHash] {
       def apply[A](label: String, instance: Schema[A]): AltHash[A] = {
         // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
         // is lost in the precompiler.
         val altA =
-          alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+          alternatives.find(_.label == label).get.asInstanceOf[Alt[U, A]]
 
         val labelHash = Hash[String].hash(label)
 

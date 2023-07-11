@@ -375,9 +375,9 @@ private[dynamic] object Compiler {
       def errorAlt(
           index: Int,
           shapeId: ShapeId
-      ): Eval[smithy4s.schema.SchemaAlt[DynAlt, DynData]] =
+      ): Eval[smithy4s.schema.Alt[DynAlt, DynData]] =
         getSchemaFromId(shapeId).map { schema =>
-          Alt[Schema, DynAlt, DynData](
+          Alt[DynAlt, DynData](
             shapeId.name,
             schema,
             (index, _: DynData)

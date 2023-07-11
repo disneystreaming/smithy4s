@@ -441,11 +441,11 @@ class DocumentDecoderSchemaVisitor(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): DocumentDecoder[U] = {
-    def jsonLabel[A](alt: Alt[Schema, U, A]): String =
-      alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+    def jsonLabel[A](alt: Alt[U, A]): String =
+      alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
       alternatives.map { case alt @ Alt(_, instance, inject) =>

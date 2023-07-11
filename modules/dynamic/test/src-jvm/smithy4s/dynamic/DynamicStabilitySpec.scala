@@ -199,11 +199,11 @@ class DynamicStabilitySpec extends FunSuite {
     def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): ConstUnit[U] = {
       alternatives.foreach { alt =>
-        self(alt.instance)
+        self(alt.schema)
       }
     }
 

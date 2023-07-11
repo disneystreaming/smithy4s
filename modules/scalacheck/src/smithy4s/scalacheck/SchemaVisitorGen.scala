@@ -101,8 +101,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Gen[U] = {
     if (alternatives.size == 1) genAlt(alternatives(0))
     else
@@ -129,8 +129,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   // // HELPER FUNCTIONS
   // //////////////////////////////////////////////////////////////////////////////////////
 
-  private def genAlt[S, A](alt: Alt[Schema, S, A]): Gen[S] =
-    alt.instance.compile(this).map(alt.inject)
+  private def genAlt[S, A](alt: Alt[S, A]): Gen[S] =
+    alt.schema.compile(this).map(alt.inject)
 
   private def genField[S, A](field: Field[S, A]): Gen[A] =
     this(field.schema)

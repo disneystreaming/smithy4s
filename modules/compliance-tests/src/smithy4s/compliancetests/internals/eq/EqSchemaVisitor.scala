@@ -85,8 +85,8 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Eq[U] = {
     // A version of `Eq` that assumes that the RHS is "up-casted" to U.
     trait AltEq[A] {
@@ -103,12 +103,12 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       }
     }
 
-    val precompiler = new Alt.Precompiler[Schema, AltEq] {
+    val precompiler = new Alt.Precompiler[AltEq] {
       def apply[A](label: String, instance: Schema[A]): AltEq[A] = {
         // Here we "cheat" to recover the `Alt` corresponding to `A`, as this information
         // is lost in the precompiler.
         val altA =
-          alternatives.find(_.label == label).get.asInstanceOf[SchemaAlt[U, A]]
+          alternatives.find(_.label == label).get.asInstanceOf[Alt[U, A]]
         // We're using it to get a function that lets us project the `U` against `A`.
         // `U` is not necessarily an `A, so this function returns an `Option`
         val projectA: U => Option[A] = dispatch.projector(altA)

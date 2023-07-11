@@ -44,7 +44,7 @@ class SchemaGenerator(maxWidth: Int) {
 
   type DynSchema = Schema[DynData]
   type DynFieldSchema = Field[DynStruct, DynData]
-  type DynAltSchema = SchemaAlt[DynAlt, DynData]
+  type DynAltSchema = Alt[DynAlt, DynData]
 
   def primitives: Vector[DynSchema] =
     Vector(

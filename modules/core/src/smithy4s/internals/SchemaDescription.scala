@@ -44,7 +44,7 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =
     SchemaDescription.of("Structure")
 
-  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): SchemaDescription[U] =
+  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: Alt.Dispatcher[U]): SchemaDescription[U] =
     SchemaDescription.of("Union")
 
   override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): SchemaDescription[B] =

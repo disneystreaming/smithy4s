@@ -90,11 +90,11 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): Unit = discard {
       alternatives.foreach { alt =>
-        self(alt.instance)
+        self(alt.schema)
       }
       counter.incrementAndGet()
     }

@@ -75,8 +75,8 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Option[U] = None
 
   def biject[A, B](

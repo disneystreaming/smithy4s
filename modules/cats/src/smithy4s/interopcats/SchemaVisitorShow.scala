@@ -69,11 +69,11 @@ final class SchemaVisitorShow(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Show[U] = {
 
-    val precomputed: Precompiler[Schema, Show] = new Precompiler[Schema, Show] {
+    val precomputed: Precompiler[Show] = new Precompiler[Show] {
       override def apply[A](label: String, instance: Schema[A]): Show[A] = {
         val showUnion = self(instance)
         (t: A) => s"${shapeId.name}($label = ${showUnion.show(t)})"

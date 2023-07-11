@@ -38,7 +38,6 @@ final case class Field[S, A](
     */
   final def hints: Hints = schema.hints
 
-  // TODO : rename
   @deprecated("use .schema instead", since = "0.18.0")
   final def instance: Schema[A] = schema
   def isRequired: Boolean = hints.has(smithy.api.Required)

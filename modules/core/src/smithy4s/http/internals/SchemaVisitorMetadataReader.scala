@@ -201,8 +201,8 @@ private[http] class SchemaVisitorMetadataReader(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): MetaDecode[U] = EmptyMetaDecode
 
   override def biject[A, B](

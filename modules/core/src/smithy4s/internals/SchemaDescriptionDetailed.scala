@@ -104,11 +104,11 @@ private[internals] object SchemaDescriptionDetailedImpl
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): SchemaDescriptionDetailedImpl[U] = { seen =>
-    def forAlt[T](alt: SchemaAlt[U, T]): (String, (Set[ShapeId], String)) = {
-      val desc = apply(alt.instance)(seen)
+    def forAlt[T](alt: Alt[U, T]): (String, (Set[ShapeId], String)) = {
+      val desc = apply(alt.schema)(seen)
       alt.label -> desc
     }
     val (sFinal, res) = alternatives

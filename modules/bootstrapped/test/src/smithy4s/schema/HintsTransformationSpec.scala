@@ -236,10 +236,10 @@ class HintsTransformationSpec() extends FunSuite {
     def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): Count[U] = {
-      val countU = dispatch.compile(new Alt.Precompiler[Schema, Count] {
+      val countU = dispatch.compile(new Alt.Precompiler[Count] {
         def apply[A](label: String, instance: Schema[A]): Count[A] =
           compile(instance)
       })
