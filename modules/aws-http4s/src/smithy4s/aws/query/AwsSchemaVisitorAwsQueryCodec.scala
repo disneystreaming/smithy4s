@@ -115,38 +115,7 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
   ): AwsQueryCodec[S] = {
     def fieldEncoder[A](field: Field[S, A]): AwsQueryCodec[S] = {
       val fieldKey = getKey(field.hints, field.label)
-
-      val encoder = field.foldK(new Field.FolderK[Schema, S, AwsQueryCodec] {
-        override def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): AwsQueryCodec[AA] = {
-          val schema = compile(instance)
-          new AwsQueryCodec[AA] {
-            def apply(a: AA): FormData = schema(a)
-          }
-        }
-
-        override def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): AwsQueryCodec[Option[AA]] = {
-          val schema = compile(instance)
-          new AwsQueryCodec[Option[AA]] {
-            override def apply(a: Option[AA]): FormData = a match {
-              case Some(value) => schema(value)
-              case None        => FormData.Empty
-            }
-          }
-        }
-      })
-
-      new AwsQueryCodec[S] {
-        def apply(s: S): FormData =
-          encoder(field.get(s)).prepend(fieldKey)
-      }
+      compile(field.schema).contramap(field.get).prepend(fieldKey)
     }
 
     val codecs: Vector[AwsQueryCodec[S]] =

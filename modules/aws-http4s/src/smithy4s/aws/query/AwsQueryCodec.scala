@@ -16,6 +16,13 @@
 
 package smithy4s.aws.query
 
-private[aws] trait AwsQueryCodec[-A] extends (A => FormData) {
+private[aws] trait AwsQueryCodec[-A] extends (A => FormData) { self =>
   def apply(a: A): FormData
+  def contramap[B](f: B => A): AwsQueryCodec[B] = new AwsQueryCodec[B] {
+    def apply(b: B): FormData = self(f(b))
+  }
+
+  def prepend(key: String): AwsQueryCodec[A] = new AwsQueryCodec[A] {
+    def apply(a: A): FormData = self(a).prepend(key)
+  }
 }
