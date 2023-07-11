@@ -19,7 +19,6 @@ package smithy4s
 import munit._
 import smithy4s.example.MapWithMemberHints
 import smithy4s.example.ListWithMemberHints
-import smithy4s.schema.Schema
 import smithy.api.{Documentation => Doc}
 
 class CollectionMemberTraitsSmokeSpec() extends FunSuite {
