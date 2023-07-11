@@ -3,6 +3,7 @@ package internals
 
 import cats.effect.Concurrent
 import cats.syntax.all._
+import cats.Applicative
 import fs2.compression.Compression
 import smithy4s.http4s.kernel._
 import smithy4s.Endpoint
@@ -97,19 +98,21 @@ private[aws] object AwsXmlCodecs {
       )
     }
 
-  private def xmlEntityEncoder[F[_]: Concurrent]
+  private def xmlEntityEncoder[F[_]: Applicative]
       : EntityEncoder[F, XmlDocument] =
     EntityEncoder.encodeBy(
       org.http4s.headers.`Content-Type`.apply(MediaType.application.xml)
     ) { xmlDocument =>
-      val body = XmlDocument.documentEventifier
+      val body: fs2.Chunk[Byte] = XmlDocument.documentEventifier
         .eventify(xmlDocument)
         .through(render())
-        .through(fs2.text.utf8.encode[F])
+        .through(fs2.text.utf8.encode[fs2.Pure])
+        .compile
+        .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
 
       org.http4s.Entity.apply(
-        body,
-        None // TODO: How to calculate safely? Or does it get set automatically later?
+        fs2.Stream.chunk(body),
+        Some(body.size.toLong)
       )
     }
 
