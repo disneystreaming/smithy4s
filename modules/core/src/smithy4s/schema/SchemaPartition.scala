@@ -196,7 +196,7 @@ object SchemaPartition {
       case PartialData.Total(struct)    => field.get(struct)
       case PartialData.Partial(_, _, _) => codingError
     }
-    Field(field.label, field.schema, access, field.hints)
+    Field(field.label, field.schema, access)
   }
 
 }

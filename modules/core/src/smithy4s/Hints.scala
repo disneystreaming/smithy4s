@@ -25,11 +25,23 @@ package smithy4s
   * in a label, a regex pattern some string should abide by, a range, etc)
   *
   * This `Hints` interface is a container for hints.
+  *
+  * Under the hood, the hints are composed of two maps : one for member-level hints,
+  * one for target-level hints.
   */
 trait Hints {
   def isEmpty: Boolean
   def all: Iterable[Hints.Binding]
+
+  def memberHintsMap: Map[ShapeId, Hints.Binding]
+  def targetHintsMap: Map[ShapeId, Hints.Binding]
+
+  /**
+    * Returns a map of hints from both level, the member-level having priority
+    * over the target-level one.
+    */
   def toMap: Map[ShapeId, Hints.Binding]
+
   def get[A](implicit key: ShapeTag[A]): Option[A]
   final def has[A](implicit key: ShapeTag[A]): Boolean = this.get[A].isDefined
   final def get[A](key: ShapeTag.Has[A]): Option[A] = get(key.getTag)
@@ -38,25 +50,52 @@ trait Hints {
     Hints.fromSeq(all.filter(predicate).toSeq)
   final def filterNot(predicate: Hint => Boolean): Hints =
     filter(hint => !predicate(hint))
+
+  /**
+    *  Concatenates two set of hints. The levels are concatenated independently.
+    */
   def ++(other: Hints): Hints
+
+  /**
+    * Add hints to the member-level.
+    */
+  def addMemberHints(hints: Hints): Hints
+
+  /**
+    * Add hints to the target-level.
+    */
+  def addTargetHints(hints: Hints): Hints
+
+  /**
+    * Provides an instance of hints containing only the member-level hints.
+    */
+  def memberHints: Hints
+
+  /**
+    * Provides an instance of hints containing only the target-level hints.
+    */
+  def targetHints: Hints
 }
 
 object Hints {
 
-  val empty: Hints = new Impl(Map.empty)
+  val empty: Hints = new Impl(Map.empty, Map.empty)
 
   def apply[S](bindings: Hint*): Hints = fromSeq(bindings)
 
   def fromSeq[S](bindings: Seq[Hint]): Hints = {
-    new Impl(bindings.map {
+    val targetHints = bindings.map {
       case b @ Binding.StaticBinding(k, _)  => k.id -> b
       case b @ Binding.DynamicBinding(k, _) => k -> b
-    }.toMap)
+    }.toMap
+    new Impl(memberHintsMap = Map.empty, targetHintsMap = targetHints)
   }
 
-  private[smithy4s] final class Impl(
-      val toMap: Map[ShapeId, Hint]
+  private[smithy4s] final case class Impl(
+      val memberHintsMap: Map[ShapeId, Hint],
+      val targetHintsMap: Map[ShapeId, Hint]
   ) extends Hints {
+    val toMap = targetHintsMap ++ memberHintsMap
     val isEmpty = toMap.isEmpty
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
@@ -67,15 +106,21 @@ object Hints {
           Document.Decoder.fromSchema(key.schema).decode(value).toOption
       }
     def ++(other: Hints): Hints = {
-      new Impl(toMap ++ other.toMap)
+      Impl(
+        memberHintsMap ++ other.memberHintsMap,
+        targetHintsMap ++ other.targetHintsMap
+      )
     }
+    def targetHints: Hints = Impl(Map.empty, targetHintsMap)
+    def memberHints: Hints = Impl(memberHintsMap, Map.empty)
+    def addMemberHints(hints: Hints): Hints =
+      Impl(memberHintsMap ++ hints.toMap, targetHintsMap)
+
+    def addTargetHints(hints: Hints): Hints =
+      Impl(memberHintsMap, targetHintsMap ++ hints.toMap)
+
     override def toString(): String =
       s"Hints(${all.mkString(", ")})"
-
-    override def hashCode(): Int = toMap.hashCode()
-    override def equals(obj: Any): Boolean = {
-      obj.isInstanceOf[Impl] && obj.asInstanceOf[Impl].toMap == this.toMap
-    }
   }
 
   sealed trait Binding extends Product with Serializable {

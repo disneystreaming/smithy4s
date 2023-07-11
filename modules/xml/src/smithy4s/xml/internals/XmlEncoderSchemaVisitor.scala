@@ -55,8 +55,8 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       make: IndexedSeq[Any] => S
   ): XmlEncoder[S] = {
     def fieldEncoder[A](field: Field[S, A]): XmlEncoder[S] = {
-      val isAttribute = field.localHints.has(XmlAttribute)
-      val xmlName = getXmlName(field.localHints, field.label)
+      val isAttribute = field.memberHints.has(XmlAttribute)
+      val xmlName = getXmlName(field.memberHints, field.label)
       val aEncoder =
         if (isAttribute) compile(field.schema).attribute(xmlName)
         else compile(field.schema).down(xmlName)

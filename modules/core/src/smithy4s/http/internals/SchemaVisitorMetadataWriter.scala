@@ -178,7 +178,7 @@ class SchemaVisitorMetadataWriter(
     }
     // pull out the query params field as it must be applied last to the metadata
     val (queryParamFieldVec, theRest) =
-      fields.partition(_.localHints.has[HttpQueryParams])
+      fields.partition(_.memberHints.has[HttpQueryParams])
     val queryParams =
       queryParamFieldVec.flatMap(field => encodeField(field)).headOption
     val updateFunctions = theRest.flatMap(field => encodeField(field))

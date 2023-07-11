@@ -456,8 +456,10 @@ object XmlCodecSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val foos =
-          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
-            .required[Foo]("foos", _.foos)
+          map(
+            string.addMemberHints(XmlName("k")),
+            int.addMemberHints(XmlName("v"))
+          ).required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply).n
       }
     }

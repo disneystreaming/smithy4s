@@ -1107,15 +1107,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         val hintsLine =
           if (hints.isEmpty) Line.empty
-          else line".addHints(${memberHints(hints)})"
+          else line".addMemberHints(${memberHints(hints)})"
         line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
       case Type.Map(key, keyHints, value, valueHints) =>
         val keyHintsLine =
           if (keyHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(keyHints)})"
+          else line".addMemberHints(${memberHints(keyHints)})"
         val valueHintsLine =
           if (valueHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(valueHints)})"
+          else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,

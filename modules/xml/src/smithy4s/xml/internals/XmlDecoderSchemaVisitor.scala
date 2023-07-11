@@ -124,8 +124,8 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       make: IndexedSeq[Any] => S
   ): XmlDecoder[S] = {
     def fieldReader[A](field: Field[S, A]): XmlDecoder[A] = {
-      val isAttribute = field.localHints.has(XmlAttribute)
-      val xmlName = getXmlName(field.localHints, field.label)
+      val isAttribute = field.memberHints.has(XmlAttribute)
+      val xmlName = getXmlName(field.memberHints, field.label)
       if (isAttribute) compile(field.schema).attribute(xmlName)
       else compile(field.schema).down(xmlName)
 

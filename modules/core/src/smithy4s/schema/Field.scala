@@ -22,27 +22,25 @@ package schema
   */
 final case class Field[S, A](
     label: String,
-    targetSchema: Schema[A],
-    get: S => A,
-    localHints: Hints
+    schema: Schema[A],
+    get: S => A
 ) {
 
   /**
-    * Returns the target schema, amended to carry the local hints as if they
-    * had been defined directly on the target shape. Most of the time, this is
-    * the desired behaviour when writing SchemaVisitors.
+    * Returns the hints that are only relative to the field
+    * (typically derived from member-level traits)
     */
-  def schema: Schema[A] = targetSchema.addHints(localHints)
+  final def memberHints: Hints = schema.hints.memberHints
 
   /**
     * Returns all hints : the ones defined directly on the field, and the ones
     * defined on the target of the field.
     */
-  final def hints = targetSchema.hints ++ localHints
+  final def hints: Hints = schema.hints
 
   // TODO : rename
   @deprecated("use .schema instead", since = "0.18.0")
-  final def instance: Schema[A] = schema.addHints(localHints)
+  final def instance: Schema[A] = schema
   def isRequired: Boolean = hints.has(smithy.api.Required)
   def isOptional: Boolean = !isRequired
   lazy val getDefaultValue: Option[A] =
@@ -61,19 +59,16 @@ final case class Field[S, A](
   def hasDefaultValue(s: S): Boolean = isDefaultValue(get(s))
 
   def transformHintsLocally(f: Hints => Hints): Field[S, A] =
-    copy(localHints = f(localHints))
+    copy(schema = schema.transformHintsLocally(f))
 
   def transformHintsTransitively(f: Hints => Hints) =
-    copy(
-      localHints = f(localHints),
-      targetSchema = targetSchema.transformHintsTransitively(f)
-    )
+    copy(schema = schema.transformHintsTransitively(f))
 
   def contramap[S0](f: S0 => S): Field[S0, A] =
-    Field(label, targetSchema, get.compose(f), localHints)
+    Field(label, schema, get.compose(f))
 
   def addHints(newHints: Hint*): Field[S, A] =
-    copy(localHints = this.localHints ++ Hints(newHints: _*))
+    copy(schema = schema.addMemberHints(newHints: _*))
 }
 
 object Field {
@@ -83,13 +78,13 @@ object Field {
       schema: Schema[A],
       get: S => A
   ): Field[S, A] =
-    Field(label, schema, get, Hints.empty)
+    Field(label, schema, get)
 
   def optional[S, A](
       label: String,
       schema: Schema[A],
       get: S => Option[A]
   ): Field[S, Option[A]] =
-    Field(label, schema.nullable, get, Hints.empty)
+    Field(label, schema.nullable, get)
 
 }

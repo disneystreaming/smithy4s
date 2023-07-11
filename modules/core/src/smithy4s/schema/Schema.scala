@@ -31,7 +31,10 @@ sealed trait Schema[A]{
   final def compile[F[_]](fk: Schema ~> F): F[A] = fk(this)
 
   final def addHints(hints: Hint*): Schema[A] = transformHintsLocally(_ ++ Hints(hints:_*))
+  final def addMemberHints(hints: Hint*): Schema[A] = transformHintsLocally(_.addMemberHints(Hints(hints:_*)))
+
   final def addHints(hints: Hints): Schema[A] = transformHintsLocally(_ ++ hints)
+  final def addMemberHints(hints: Hints): Schema[A] = transformHintsLocally(_.addMemberHints(hints))
 
   final def withId(newId: ShapeId): Schema[A] = this match {
     case PrimitiveSchema(_, hints, tag) => PrimitiveSchema(newId, hints, tag)
