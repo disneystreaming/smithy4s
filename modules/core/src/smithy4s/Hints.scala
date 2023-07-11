@@ -62,9 +62,21 @@ trait Hints {
   def addMemberHints(hints: Hints): Hints
 
   /**
+    * Add hints to the member-level.
+    */
+  final def addMemberHints(hints: Hint*): Hints = addMemberHints(
+    Hints(hints: _*)
+  )
+
+  /**
     * Add hints to the target-level.
     */
   def addTargetHints(hints: Hints): Hints
+
+  /**
+    * Add hints to the target-level.
+    */
+  def addTargetHints(hints: Hint*): Hints = addTargetHints(Hints(hints: _*))
 
   /**
     * Provides an instance of hints containing only the member-level hints.
@@ -81,22 +93,25 @@ object Hints {
 
   val empty: Hints = new Impl(Map.empty, Map.empty)
 
-  def apply[S](bindings: Hint*): Hints = fromSeq(bindings)
+  def apply(bindings: Hint*): Hints = fromSeq(bindings)
+  def member(bindings: Hint*): Hints = Impl(mapFromSeq(bindings), Map.empty)
 
-  def fromSeq[S](bindings: Seq[Hint]): Hints = {
-    val targetHints = bindings.map {
+  def fromSeq(bindings: Seq[Hint]): Hints =
+    Impl(Map.empty, mapFromSeq(bindings))
+
+  private def mapFromSeq(bindings: Seq[Hint]): Map[ShapeId, Hint] = {
+    bindings.map {
       case b @ Binding.StaticBinding(k, _)  => k.id -> b
       case b @ Binding.DynamicBinding(k, _) => k -> b
     }.toMap
-    new Impl(memberHintsMap = Map.empty, targetHintsMap = targetHints)
   }
 
   private[smithy4s] final case class Impl(
-      val memberHintsMap: Map[ShapeId, Hint],
-      val targetHintsMap: Map[ShapeId, Hint]
+      memberHintsMap: Map[ShapeId, Hint],
+      targetHintsMap: Map[ShapeId, Hint]
   ) extends Hints {
     val toMap = targetHintsMap ++ memberHintsMap
-    val isEmpty = toMap.isEmpty
+    def isEmpty = toMap.isEmpty
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
       toMap.get(key.id).flatMap {
