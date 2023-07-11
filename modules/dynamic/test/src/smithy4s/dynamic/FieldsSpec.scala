@@ -50,7 +50,7 @@ class FieldsSpec() extends munit.FunSuite {
           make: IndexedSeq[Any] => S
       ): ToFieldNames[S] = { () =>
         fields.flatMap { f =>
-          f.label :: apply(f.instance)()
+          f.label :: apply(f.schema)()
         }.toList
       }
 

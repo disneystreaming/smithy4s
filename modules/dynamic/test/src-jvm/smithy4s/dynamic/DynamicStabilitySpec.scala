@@ -192,7 +192,7 @@ class DynamicStabilitySpec extends FunSuite {
         make: IndexedSeq[Any] => S
     ): ConstUnit[S] = {
       fields.foreach { field =>
-        self(field.instance)
+        self(field.schema)
       }
     }
 
