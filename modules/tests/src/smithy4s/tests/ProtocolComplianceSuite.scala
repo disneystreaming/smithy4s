@@ -141,7 +141,7 @@ abstract class ProtocolComplianceSuite
       if (shouldRun == ShouldRun.Yes) {
         Stream {
           tc.run
-            .map(res => { println(res); expectSuccess(res) })
+            .map(res => expectSuccess(res))
             .attempt
             .map {
               case Right(expectations) => expectations
