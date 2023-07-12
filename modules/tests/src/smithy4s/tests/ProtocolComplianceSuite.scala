@@ -141,7 +141,7 @@ abstract class ProtocolComplianceSuite
       if (shouldRun == ShouldRun.Yes) {
         Stream {
           tc.run
-            .map(res => expectSuccess(res))
+            .map(res => { println(res); expectSuccess(res) })
             .attempt
             .map {
               case Right(expectations) => expectations
@@ -172,8 +172,9 @@ abstract class ProtocolComplianceSuite
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
     res.toEither match {
-      case Left(failures) => failures.foldMap(Expectations.Helpers.failure(_))
-      case Right(_)       => Expectations.Helpers.success
+      case Left(failures) =>
+        failures.foldMap(Expectations.Helpers.failure(_))
+      case Right(_) => Expectations.Helpers.success
     }
   }
 

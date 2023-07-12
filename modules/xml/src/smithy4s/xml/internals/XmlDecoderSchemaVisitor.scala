@@ -17,7 +17,6 @@
 package smithy4s.xml
 package internals
 
-import cats.data.NonEmptyList
 import cats.syntax.all._
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
@@ -29,9 +28,7 @@ import smithy4s.schema._
 
 import XmlDocument.XmlQName
 
-private[smithy4s] object XmlDecoderSchemaVisitor extends XmlDecoderSchemaVisitor
-
-private[smithy4s] abstract class XmlDecoderSchemaVisitor
+private[smithy4s] object XmlDecoderSchemaVisitor
     extends SchemaVisitor[XmlDecoder]
     with smithy4s.ScalaCompat { compile =>
   def primitive[P](
@@ -64,8 +61,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
             nodes.zipWithIndex
               .traverse { case (elem, index) =>
                 memberReader.decode(
-                  XmlCursor
-                    .Nodes(history.appendIndex(index), NonEmptyList.one(elem))
+                  XmlCursor.SingleNode(history.appendIndex(index), elem)
                 )
               }
               .map(list => tag.fromIterator(list.iterator))
@@ -152,7 +148,7 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     new XmlDecoder[U] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = {
         cursor match {
-          case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
+          case s @ XmlCursor.SingleNode(history, node) =>
             val children = node.children.flatMap {
               case text @ XmlDocument.XmlText(value) =>
                 // Remove newlines or other blank text nodes at this level

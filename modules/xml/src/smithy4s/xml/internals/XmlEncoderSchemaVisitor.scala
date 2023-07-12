@@ -86,8 +86,6 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
         if (isFlattened) compile(member) else compile(member).down(xmlName)
 
       def encode(value: C[A]): List[XmlContent] = {
-        println(isFlattened)
-        println(xmlName)
         tag.iterator(value).toList.foldMap(memberWriter.encode)
       }
 
