@@ -57,6 +57,12 @@ private[smithy4s] object XmlDecoderSchemaVisitor
       def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         val realCursor = if (isFlattened) cursor else cursor.down(xmlName)
         realCursor match {
+          case XmlCursor.SingleNode(history, node) =>
+            memberReader
+              .decode(
+                XmlCursor.SingleNode(history.appendIndex(0), node)
+              )
+              .map(value => tag.fromIterator(Iterator.single(value)))
           case XmlCursor.Nodes(history, nodes) =>
             nodes.zipWithIndex
               .traverse { case (elem, index) =>
