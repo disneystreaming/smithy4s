@@ -1,4 +1,5 @@
-package smithy4s.aws
+package smithy4s
+package aws
 package internals
 
 import cats.effect.Concurrent
@@ -85,14 +86,24 @@ private[aws] object AwsXmlCodecs {
         val restDecoders =
           ResponseDecoder.restSchemaCompiler(Metadata.AwsDecoder, decoders)
 
-        val discriminator = AwsErrorTypeDecoder.fromResponse(restDecoders)
+        val errorDecoders = restDecoders.contramapSchema(
+          smithy4s.schema.Schema.transformHintsLocallyK(
+            _ ++ smithy4s.Hints(
+              smithy4s.xml.internals.XmlStartingPath(
+                List("ErrorResponse", "Error")
+              )
+            )
+          )
+        )
+
+        val discriminator = AwsErrorTypeDecoder.fromResponse(errorDecoders)
 
         val transformEncoders = applyCompression[F](endpoint.hints)
         val finalEncoders = transformEncoders(restEncoders)
 
         val make =
           UnaryClientCodecs
-            .Make[F](finalEncoders, restDecoders, restDecoders, discriminator)
+            .Make[F](finalEncoders, restDecoders, errorDecoders, discriminator)
         make.apply(endpoint)
       }
     }

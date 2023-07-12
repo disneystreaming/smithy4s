@@ -39,6 +39,19 @@ trait CachedSchemaCompiler[+F[_]] { self =>
       )
     }
 
+  final def contramapSchema(
+      fk: PolyFunction[Schema, Schema]
+  ): CachedSchemaCompiler[F] = new CachedSchemaCompiler[F] {
+    type Cache = self.Cache
+    def createCache(): Cache = self.createCache()
+
+    def fromSchema[A](schema: Schema[A]): F[A] = self.fromSchema(fk(schema))
+
+    def fromSchema[A](schema: Schema[A], cache: Cache): F[A] =
+      self.fromSchema(fk(schema), cache)
+
+  }
+
 }
 
 object CachedSchemaCompiler { outer =>
