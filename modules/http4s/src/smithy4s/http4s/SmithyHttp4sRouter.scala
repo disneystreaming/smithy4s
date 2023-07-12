@@ -34,6 +34,18 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     middleware: ServerEndpointMiddleware[F]
 )(implicit effect: EffectCompat[F]) {
 
+  def this(
+    service: smithy4s.Service.Aux[Alg, Op],
+    impl: FunctorInterpreter[Op, F],
+    errorTransformation: PartialFunction[Throwable, F[Throwable]],
+    entityCompiler: EntityCompiler[F],
+    middleware: ServerEndpointMiddleware[F]
+  )(implicit effect: EffectCompat[F]) = 
+    this(service, impl, entityCompiler, {
+      val errorHandler = ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+      errorHandler |+| middleware |+| errorHandler
+    })
+
   private val pathParamsKey =
     Key.newKey[SyncIO, smithy4s.http.PathParams].unsafeRunSync()
 
