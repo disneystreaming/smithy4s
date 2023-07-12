@@ -117,7 +117,7 @@ class DocumentEncoderSchemaVisitor(
     from[C[A]](c => DArray(tag.iterator(c).map(encoderS.apply).toIndexedSeq))
   }
 
-  override def nullable[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
+  override def option[A](schema: Schema[A]): DocumentEncoder[Option[A]] = {
     val encoder = self(schema)
     locally {
       case Some(a) => encoder.apply(a)
@@ -180,7 +180,7 @@ class DocumentEncoderSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentEncoder[S] = {
     val discriminator =
@@ -190,17 +190,16 @@ class DocumentEncoderSchemaVisitor(
         ))
       }
     def fieldEncoder[A](
-        field: Field[Schema, S, A]
+        field: Field[S, A]
     ): (S, Builder[(String, Document), Map[String, Document]]) => Unit = {
-      val encoder = apply(field.instance)
+      val encoder = apply(field.schema)
+      val jsonLabel = field.hints
+        .get(JsonName)
+        .map(_.value)
+        .getOrElse(field.label)
       (s, builder) =>
-        field.foreachT(s) { t =>
-          val jsonLabel = field.instance.hints
-            .get(JsonName)
-            .map(_.value)
-            .getOrElse(field.label)
-
-          builder.+=(jsonLabel -> encoder.apply(t))
+        field.getUnlessDefault(s).foreach { value =>
+          builder.+=(jsonLabel -> encoder.apply(value))
         }
     }
 
@@ -217,10 +216,10 @@ class DocumentEncoderSchemaVisitor(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatcher: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatcher: Alt.Dispatcher[U]
   ): DocumentEncoder[U] = {
-    val precompile = new Alt.Precompiler[Schema, DocumentEncoder] {
+    val precompile = new Alt.Precompiler[DocumentEncoder] {
       def apply[A](label: String, schema: Schema[A]): DocumentEncoder[A] = {
         val jsonLabel =
           schema.hints.get(JsonName).map(_.value).getOrElse(label)

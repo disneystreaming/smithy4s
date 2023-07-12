@@ -242,7 +242,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case _: StructSchema[_] | _: Schema.CollectionSchema[_, _] |
           _: Schema.UnionSchema[_] | _: Schema.LazySchema[_] |
-          _: Schema.MapSchema[_, _] | _: Schema.NullableSchema[_] =>
+          _: Schema.MapSchema[_, _] | _: Schema.OptionSchema[_] =>
         jsonFieldPlural(member.addHints(hints))
 
     }
@@ -271,11 +271,11 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def struct[A](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[A, _]],
+      fields: Vector[Field[A, _]],
       make: IndexedSeq[Any] => A
   ): Opts[A] = {
     def structField[X](
-        f: smithy4s.schema.Field[Schema, A, X]
+        f: smithy4s.schema.Field[A, X]
     ): Opts[X] = {
       val childHints = Hints(
         FieldName(f.label),
@@ -284,25 +284,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         IsNested(hints.get(IsNested).isDefined)
       )
 
-      f.foldK[Opts](
-        new smithy4s.schema.Field.FolderK[Schema, A, Opts] {
-          def onRequired[Y](
-              label: String,
-              instance: Schema[Y],
-              get: A => Y
-          ): Opts[Y] =
-            instance.addHints(childHints).compile[Opts](self)
-
-          def onOptional[Y](
-              label: String,
-              instance: Schema[Y],
-              get: A => Option[Y]
-          ): Opts[Option[Y]] = instance
-            .addHints(childHints)
-            .compile[Opts](self)
-            .orNone
-        }
-      )
+      f.schema.addHints(childHints).compile(self)
     }
 
     fields
@@ -313,12 +295,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def union[A](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[A, _]],
-      dispatch: Alt.Dispatcher[Schema, A]
+      alternatives: Vector[Alt[A, _]],
+      dispatch: Alt.Dispatcher[A]
   ): Opts[A] = {
     def go[X](
-        alt: SchemaAlt[A, X]
-    ): Opts[A] = alt.instance
+        alt: Alt[A, X]
+    ): Opts[A] = alt.schema
       .addHints(hints)
       .compile[Opts](this)
       .map(alt.inject)
@@ -343,6 +325,6 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         Validated.fromEither(refinement(a).leftMap(NonEmptyList.one))
       )
 
-  override def nullable[A](schema: Schema[A]): Opts[Option[A]] =
+  override def option[A](schema: Schema[A]): Opts[Option[A]] =
     schema.compile(this).orNone
 }

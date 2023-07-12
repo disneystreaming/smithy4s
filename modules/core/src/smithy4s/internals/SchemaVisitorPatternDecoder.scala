@@ -74,11 +74,11 @@ private[internals] final class SchemaVisitorPatternDecoder(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MaybePatternDecode[S] = {
     val fieldDecoders = fields.map { field =>
-      field.label -> self(field.instance)
+      field.label -> self(field.schema)
         .getOrElse(
           throw StructurePatternError(
             s"Unable to create decoder for ${field.label}"

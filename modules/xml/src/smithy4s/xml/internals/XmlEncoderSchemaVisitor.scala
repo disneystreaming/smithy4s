@@ -51,33 +51,23 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): XmlEncoder[S] = {
-    def fieldEncoder[A](field: SchemaField[S, A]): XmlEncoder[S] = {
-      val isAttribute = field.instance.hints.has(XmlAttribute)
-      val xmlName = getXmlName(field.hints, field.label)
-      val encoder = field
-        .foldK(new Field.FolderK[Schema, S, XmlEncoder] {
-          def onRequired[AA](
-              label: String,
-              instance: Schema[AA],
-              get: S => AA
-          ): XmlEncoder[AA] = {
-            if (isAttribute) compile(instance).attribute(xmlName)
-            else compile(instance).down(xmlName)
-          }
+    def fieldEncoder[A](field: Field[S, A]): XmlEncoder[S] = {
+      val isAttribute = field.memberHints.has(XmlAttribute)
+      val xmlName = getXmlName(field.memberHints, field.label)
+      val aEncoder =
+        if (isAttribute) compile(field.schema).attribute(xmlName)
+        else compile(field.schema).down(xmlName)
 
-          def onOptional[AA](
-              label: String,
-              instance: Schema[AA],
-              get: S => Option[AA]
-          ): XmlEncoder[Option[AA]] = {
-            if (isAttribute) compile(instance).attribute(xmlName).optional
-            else compile(instance).down(xmlName).optional
+      new XmlEncoder[S] {
+        def encode(s: S): List[XmlContent] =
+          field.getUnlessDefault(s) match {
+            case Some(value) => aEncoder.encode(value)
+            case None        => List.empty
           }
-        })
-      encoder.contramap(field.get)
+      }
     }
     implicit val monoid: Monoid[XmlEncoder[S]] = MonoidK[XmlEncoder].algebra[S]
     fields.map(fieldEncoder(_)).combineAll
@@ -134,28 +124,30 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): XmlEncoder[E] = if (hints.has(IntEnum)) {
-    new XmlEncoder[E] {
-      def encode(value: E): List[XmlContent] = List(
-        XmlText(total(value).intValue.toString())
-      )
-    }
-  } else {
-    new XmlEncoder[E] {
-      def encode(value: E): List[XmlContent] = List(
-        XmlText(total(value).stringValue)
-      )
-    }
+  ): XmlEncoder[E] = tag match {
+    case EnumTag.IntEnum =>
+      new XmlEncoder[E] {
+        def encode(value: E): List[XmlContent] = List(
+          XmlText(total(value).intValue.toString())
+        )
+      }
+
+    case EnumTag.StringEnum =>
+      new XmlEncoder[E] {
+        def encode(value: E): List[XmlContent] = List(
+          XmlText(total(value).stringValue)
+        )
+      }
   }
 
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): XmlEncoder[U] = new XmlEncoder[U] {
     override def encodesUnion: Boolean = true
-    val underlying = dispatch.compile(new Alt.Precompiler[Schema, XmlEncoder] {
+    val underlying = dispatch.compile(new Alt.Precompiler[XmlEncoder] {
       def apply[A](label: String, instance: Schema[A]): XmlEncoder[A] = {
         val xmlName = getXmlName(instance.hints, label)
         compile(instance).down(xmlName)
@@ -179,14 +171,8 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     def encode(value: A): List[XmlContent] = underlying.encode(value)
   }
 
-  def nullable[A](schema: Schema[A]): XmlEncoder[Option[A]] =
-    new XmlEncoder[Option[A]] {
-      val encoder = compile(schema)
-      def encode(value: Option[A]): List[XmlContent] = value match {
-        case None        => List.empty
-        case Some(value) => encoder.encode(value)
-      }
-    }
+  def option[A](schema: Schema[A]): XmlEncoder[Option[A]] =
+    compile(schema).optional
 
   private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
     hints

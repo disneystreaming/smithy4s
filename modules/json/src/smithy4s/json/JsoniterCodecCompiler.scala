@@ -19,7 +19,6 @@ package smithy4s.json
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonCodec
 import smithy4s.internals._
 import smithy4s.HintMask
-import smithy4s.IntEnum
 import smithy.api._
 import alloy._
 
@@ -46,7 +45,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     *
     * Defaults to false.
     */
-  def withExplicitNullEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
+  def withExplicitDefaultsEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
 
   /**
    * Changes the behaviour of Json decoders so that they overlook null values in collections
@@ -87,7 +86,6 @@ object JsoniterCodecCompiler {
       Untagged,
       InputOutput,
       DiscriminatedUnionMember,
-      IntEnum,
       Default
     )
 

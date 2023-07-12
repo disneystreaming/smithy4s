@@ -17,6 +17,7 @@
 package smithy4s
 
 import munit._
+import smithy4s.schema.EnumTag
 
 final class IntEnumSmokeSpec extends FunSuite {
 
@@ -31,9 +32,11 @@ final class IntEnumSmokeSpec extends FunSuite {
       smithy4s.example.FaceCard.ACE,
       smithy4s.example.FaceCard.JOKER
     )
-    val hints = smithy4s.example.FaceCard.hints
     assertEquals(values, expected)
-    assert(hints.has[IntEnum], "int enum should be in hints")
+    assert(
+      smithy4s.example.FaceCard.tag == EnumTag.IntEnum,
+      "tag should be IntEnum"
+    )
   }
 
 }

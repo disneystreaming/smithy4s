@@ -2,7 +2,6 @@ package smithy4s.example
 
 import smithy4s.Enumeration
 import smithy4s.Hints
-import smithy4s.IntEnum
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -21,9 +20,7 @@ sealed abstract class Numbers(_value: String, _name: String, _intValue: Int, _hi
 object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
   val id: ShapeId = ShapeId("smithy4s.example", "Numbers")
 
-  val hints: Hints = Hints(
-    IntEnum(),
-  )
+  val hints: Hints = Hints.empty
 
   case object ONE extends Numbers("ONE", "ONE", 1, Hints())
   case object TWO extends Numbers("TWO", "TWO", 2, Hints())

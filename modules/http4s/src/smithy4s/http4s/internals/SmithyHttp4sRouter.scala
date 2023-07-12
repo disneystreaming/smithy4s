@@ -30,7 +30,6 @@ import smithy4s.kinds._
 private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     service: smithy4s.Service.Aux[Alg, Op],
     impl: FunctorInterpreter[Op, F],
-    errorTransformation: PartialFunction[Throwable, F[Throwable]],
     makeServerCodecs: UnaryServerCodecs.Make[F],
     middleware: ServerEndpointMiddleware[F]
 )(implicit effect: Concurrent[F]) {
@@ -52,7 +51,6 @@ private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _
           impl,
           ep,
           makeServerCodecs,
-          errorTransformation,
           middleware.prepare(service) _
         )
       }

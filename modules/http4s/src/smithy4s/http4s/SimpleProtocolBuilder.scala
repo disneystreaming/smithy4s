@@ -124,6 +124,23 @@ abstract class SimpleProtocolBuilder[P](
       F: Concurrent[F]
   ) {
 
+    /**
+      * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
+      * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
+      * Errors raised in the [[middleware]] will be transformed too. 
+      *
+      * The following two are equivalent:
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, Throwable] = ???
+      * builder.mapErrors(handlerPF).middleware(middleware)
+      * }}}
+
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, Throwable] = ???
+      * val handler = ServerEndpointMiddleware.mapErrors(handlerPF)
+      * builder.middleware(handler |+| middleware |+| handler)
+      * }}}
+      */
     def mapErrors(
         fe: PartialFunction[Throwable, Throwable]
     ): RouterBuilder[Alg, F] =
@@ -133,6 +150,18 @@ abstract class SimpleProtocolBuilder[P](
       * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
       * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
       * Errors raised in the [[middleware]] will be transformed too. 
+      *
+      * The following two are equivalent:
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, F[Throwable]] = ???
+      * builder.flatMapErrors(handlerPF).middleware(middleware)
+      * }}}
+
+      * {{{
+      * val handlerPF: PartialFunction[Throwable, F[Throwable]] = ???
+      * val handler = ServerEndpointMiddleware.flatMapErrors(handlerPF)
+      * builder.middleware(handler |+| middleware |+| handler)
+      * }}}
       */
     def flatMapErrors(
         fe: PartialFunction[Throwable, F[Throwable]]
@@ -152,9 +181,11 @@ abstract class SimpleProtocolBuilder[P](
           new SmithyHttp4sRouter[Alg, service.Operation, F](
             service,
             service.toPolyFunction[Kind1[F]#toKind5](impl),
-            errorTransformation,
-            simpleProtocolCodecs.makeServerCodecs[F],
-            middleware
+            simpleProtocolCodecs.makeServerCodecs[F], {
+              val errorHandler =
+                ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+              errorHandler |+| middleware |+| errorHandler
+            }
           ).routes
         }
 

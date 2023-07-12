@@ -42,6 +42,7 @@ import smithy4s.schema.CachedSchemaCompiler
   */
 final case class XmlDocument(root: XmlDocument.XmlElem)
 
+// scalafmt: {maxColumn = 120}
 object XmlDocument {
 
   /**
@@ -52,29 +53,28 @@ object XmlDocument {
     * It is worth noting that comments and other miscellaneous elements are erased before instances of this
     * ADT are produced
     */
-  // format: off
   sealed trait XmlContent extends Product with Serializable
-  final case class XmlText(text: String)                                                       extends XmlContent
-  final case class XmlEntityRef(entityName: String)                                                       extends XmlContent {
+  final case class XmlText(text: String) extends XmlContent
+  final case class XmlEntityRef(entityName: String) extends XmlContent {
     def text: String =
-        entityName match {
-          case "lt"   => "<"
-          case "gt"   => ">"
-          case "amp"  => "&"
-          case "apos" => "'"
-          case "quot" => "\""
-          case other      => buildString(other)
-        }
+      entityName match {
+        case "lt"   => "<"
+        case "gt"   => ">"
+        case "amp"  => "&"
+        case "apos" => "'"
+        case "quot" => "\""
+        case other  => buildString(other)
+      }
 
     private def buildString(name: String) = s"&$name;"
-    
+
   }
   final case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
   final case class XmlAttr(name: XmlQName, values: List[XmlText]) extends XmlContent
   final case class XmlQName(prefix: Option[String], name: String) {
-    override def toString : String = render
+    override def toString: String = render
     def render: String = prefix match {
-      case None => name
+      case None    => name
       case Some(p) => p + ":" + name
     }
   }
@@ -193,13 +193,24 @@ object XmlDocument {
           children: List[Content]
       ): Elem = {
         val filtered = children.collect { case Some(content) => content }
+        val hasElems = filtered.exists {
+          case _: XmlElem => true
+          case _          => false
+        }
+        // if the children have some xml elements, filtering whitespace around them.
+        val filtered2 = if (hasElems) filtered.filter {
+          case XmlText(text) if text.forall(_.isWhitespace) => false
+          case _                                            => true
+        }
+        else filtered
+
         val xmlAttrs = attributes.map { attr =>
           val values = attr.value.collect { case XmlString(text, _) =>
             XmlText(text)
           }
           XmlAttr(XmlQName(attr.name.prefix, attr.name.local), values)
         }
-        Some(XmlDocument.XmlElem(qname(name), xmlAttrs, filtered))
+        Some(XmlDocument.XmlElem(qname(name), xmlAttrs, filtered2))
       }
 
       def makePI(target: String, content: String): Misc = None

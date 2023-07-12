@@ -32,16 +32,17 @@ import smithy4s.schema.CachedSchemaCompiler
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
-    val explicitNullEncoding: Boolean
+    val explicitDefaultsEncoding: Boolean
 ) extends SimpleProtocolCodecs {
   private val hintMask =
-    alloy.SimpleRestJson.protocol.hintMask ++ HintMask(IntEnum)
+    alloy.SimpleRestJson.protocol.hintMask
+
   private val underlyingCodecs = Json.payloadCodecs
     .withJsoniterCodecCompiler(
       Json.jsoniter
         .withHintMask(hintMask)
         .withMaxArity(maxArity)
-        .withExplicitNullEncoding(explicitNullEncoding)
+        .withExplicitDefaultsEncoding(explicitDefaultsEncoding)
     )
 
   val mediaType = HttpMediaType("application/json")
