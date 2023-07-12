@@ -16,6 +16,7 @@ import fs2.data.xml.dom._
 import cats.data.EitherT
 import smithy4s.kinds.PolyFunction
 import org.http4s.EntityEncoder
+import smithy4s.capability.Covariant
 
 import org.http4s.MediaType
 import smithy4s.http.Metadata
@@ -27,14 +28,37 @@ private[aws] object AwsXmlCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val encoders: CachedSchemaCompiler[EntityEncoder[F, *]] =
+
+        val stringAndBlobsEntityEncoders =
+          smithy4s.http.StringAndBlobCodecs.WriterCompiler
+            .mapK(
+              Covariant.liftPolyFunction[Option](
+                EntityEncoders.fromHttpMediaWriterK[F]
+              )
+            )
+
+        val stringAndBlobsEntityDecoders =
+          smithy4s.http.StringAndBlobCodecs.ReaderCompiler
+            .mapK(
+              Covariant.liftPolyFunction[Option](
+                EntityDecoders.fromHttpMediaReaderK[F]
+              )
+            )
+
+        val xmlEntityEncoders: CachedSchemaCompiler[EntityEncoder[F, *]] =
           XmlDocument.Encoder.mapK(
             new PolyFunction[XmlDocument.Encoder, EntityEncoder[F, *]] {
               def apply[A](fa: XmlDocument.Encoder[A]): EntityEncoder[F, A] =
                 xmlEntityEncoder[F].contramap(fa.encode)
             }
           )
-        val decoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
+
+        val encoders = CachedSchemaCompiler.getOrElse(
+          stringAndBlobsEntityEncoders,
+          xmlEntityEncoders
+        )
+
+        val xmlEntityDecoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
           XmlDocument.Decoder.mapK(
             new PolyFunction[XmlDocument.Decoder, EntityDecoder[F, *]] {
               def apply[A](
@@ -49,6 +73,11 @@ private[aws] object AwsXmlCodecs {
                 )
             }
           )
+
+        val decoders = CachedSchemaCompiler.getOrElse(
+          stringAndBlobsEntityDecoders,
+          xmlEntityDecoders
+        )
 
         val restEncoders =
           RequestEncoder.restSchemaCompiler[F](Metadata.AwsEncoder, encoders)

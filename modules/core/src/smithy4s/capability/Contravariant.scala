@@ -29,8 +29,6 @@ object Contravariant {
   def apply[F[_]](implicit instance: Contravariant[F]): Contravariant[F] =
     instance
 
-  type Wrapped[F[_], G[_], A] = F[G[A]]
-
   implicit def contravariantOfCovariantInstance[F[_], G[_]](implicit
       F: Covariant[F],
       G: Contravariant[G]
