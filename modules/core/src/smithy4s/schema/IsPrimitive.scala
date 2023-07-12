@@ -48,7 +48,7 @@ private[schema] object IsPrimitive {
         refinement: Refinement[A, B]
     ): Boolean = self(schema)
 
-    override def nullable[A](schema: Schema[A]): Boolean =
+    override def option[A](schema: Schema[A]): Boolean =
       self(schema)
 
   }

@@ -79,7 +79,7 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
     assertEquals(result, expected)
   }
 
-  private type GenericAlt = schema.SchemaAlt[Any, _]
+  private type GenericAlt = schema.Alt[Any, _]
   private val alts =
     ErrorHandlingOperation.error.alternatives.asInstanceOf[Vector[GenericAlt]]
   private val altsExtra =

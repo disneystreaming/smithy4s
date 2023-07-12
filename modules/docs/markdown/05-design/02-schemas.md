@@ -28,7 +28,6 @@ It is encoded as a sealed trait, the members of which capture the following aspe
 
 * Primitives
 * Lists
-* Sets
 * Maps
 * Enumerations
 * Structures
@@ -128,13 +127,12 @@ Another detail is the presence of the `addHints` call on field labelled with `b`
 #### Note related to `optional` and `required`
 
 You may have noticed the `required` and `optional` methods, which create `Field` instances from `Schemas`, in order to pass them to structures.
-In Smithy4s, the concept of `Option` only exists relatively to `struct` calls. It is not possible to construct a `Schema[Option[A]]` on its own.
 
-The rationale is that having a first class `Option` schema constructor leads to leaks in the implementation of serialisation mechanisms, as `None` typically represents the absence of value, and allowing for serialising an absence of value in formats that typically do not support it implies the leak of `Option` (or equivalent) in various interfaces.
+Since 0.18, the concept of Option in Smithy4s is backed
+by a `OptionSchema` member of the `Schema` GADT. Having Option as a first-class citizen has some advantages, as it allows to support [sparse collections](https://smithy.io/2.0/spec/aggregate-types.html?highlight=sparse%20collections#list-member-optionality).
 
-Additionally, a first class `Option` schema constructor would allow to create schemas for `Option[Option[Option[Int]]]`, and even though we recognise that
-there are some things that could be encoded this way, it is just not a very pragmatic possibility, and opens the door for easy violation of round-trip properties that any serialisation technology should respect.
-For instance: `Some(None)` and `None` can easily have the same encoding in Json, so how do you distinguish between the two during decoding?
+The downside is that this allows to create schemas (and therefore codecs) that do not abide by round-tripping properties. Indeed, once data is on the wire, it's often
+impossible to distinguish `Option[Option[Option[Int]] ]` from `Option[Int]`. 
 
 ### Unions
 
@@ -244,11 +242,13 @@ This is useful for the case of newtypes: if we are able to derive a codec that c
 
 ### Collections
 
-Smithy supports three types of collections out of the box :
+Smithy supports two types of collections out of the box :
 
-* set (bound to disappear in smithy 2.0 in favour of the `@uniqueItems` trait)
 * list
 * map
+
+NB: the "set" type was supported in smithy 1.0, but has disappeared in smithy 2.0 in favour of the `uniqueItems`  trait
+
 
 Additionally, Smithy4s allows users to [annotate list shapes](../04-codegen/01-customisation/03-collections.md) to customise the type of collection used during code-generation.
 

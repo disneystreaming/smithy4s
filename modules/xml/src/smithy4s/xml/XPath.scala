@@ -19,6 +19,7 @@ import smithy4s.xml.XPath.Segment.Attr
 import smithy4s.xml.XPath.Segment.Index
 import smithy4s.xml.XPath.Segment.Tag
 import smithy4s.xml.XmlDocument.XmlQName
+import smithy4s.codecs.PayloadPath
 
 /**
   * Represents a path in the XML payload. Segments can be either tags, indexes (when dealing with collections), or attributes.
@@ -27,6 +28,15 @@ import smithy4s.xml.XmlDocument.XmlQName
   */
 case class XPath(reversedSegments: List[XPath.Segment]) {
   def render: String = reversedSegments.reverse.map(_.render).mkString(".")
+  def toPayloadPath: PayloadPath = PayloadPath {
+    reversedSegments.reverse.map { xpathSegment =>
+      xpathSegment match {
+        case Index(index) => PayloadPath.Segment(index)
+        case Tag(tag)     => PayloadPath.Segment(tag.name)
+        case Attr(attr)   => PayloadPath.Segment("attr:" + attr)
+      }
+    }
+  }
 
   def appendIndex(index: Int): XPath = XPath(
     XPath.Segment.Index(index) :: reversedSegments

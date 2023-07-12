@@ -173,8 +173,8 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Unexpected success")
     } catch {
       case PayloadError(path, expected, _) =>
-        expect(path == PayloadPath("b"))
-        expect(expected == "int")
+        expect.same(path, PayloadPath("b"))
+        expect.same(expected, "JsNull or int")
     }
   }
 

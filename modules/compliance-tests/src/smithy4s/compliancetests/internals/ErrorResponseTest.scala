@@ -71,12 +71,12 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
 
 private[compliancetests] object ErrorResponseTest {
   def from[E, A](
-      errorAlt: smithy4s.schema.SchemaAlt[E, A],
-      dispatcher: Dispatcher[Schema, E],
+      errorAlt: smithy4s.schema.Alt[E, A],
+      dispatcher: Dispatcher[E],
       errorable: smithy4s.Errorable[E]
   ): ErrorResponseTest[A, E] =
     ErrorResponseTest(
-      errorAlt.instance,
+      errorAlt.schema,
       errorAlt.inject,
       dispatcher.projector(errorAlt),
       errorable

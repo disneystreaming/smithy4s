@@ -41,10 +41,10 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
 
-  override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =
+  override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =
     SchemaDescription.of("Structure")
 
-  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): SchemaDescription[U] =
+  override def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: Alt.Dispatcher[U]): SchemaDescription[U] =
     SchemaDescription.of("Union")
 
   override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): SchemaDescription[B] =
@@ -52,8 +52,8 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): SchemaDescription[B] =
     SchemaDescription.of(apply(schema))
 
-  override def nullable[A](schema: Schema[A]): SchemaDescription[Option[A]] =
-    SchemaDescription.of("Nullable")
+  override def option[A](schema: Schema[A]): SchemaDescription[Option[A]] =
+    SchemaDescription.of("Option")
 
   override def lazily[A](suspend: Lazy[Schema[A]]): SchemaDescription[A] =
     suspend.map(s => SchemaDescription.of(apply(s))).value
