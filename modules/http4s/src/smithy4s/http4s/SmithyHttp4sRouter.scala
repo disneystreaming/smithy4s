@@ -42,7 +42,7 @@ class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _], F[_]](
     middleware: ServerEndpointMiddleware[F]
   )(implicit effect: EffectCompat[F]) = 
     this(service, impl, entityCompiler, {
-      val errorHandler = ServerEndpointMiddleware.flatMapErrors(errorTransformation)
+      val errorHandler = ServerEndpointMiddleware.flatMapErrors(errorTransformation)(effect)
       errorHandler |+| middleware |+| errorHandler
     })
 
