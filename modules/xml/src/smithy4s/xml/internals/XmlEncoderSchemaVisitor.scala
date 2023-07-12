@@ -85,8 +85,11 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       val memberWriter =
         if (isFlattened) compile(member) else compile(member).down(xmlName)
 
-      def encode(value: C[A]): List[XmlContent] =
+      def encode(value: C[A]): List[XmlContent] = {
+        println(isFlattened)
+        println(xmlName)
         tag.iterator(value).toList.foldMap(memberWriter.encode)
+      }
 
       override def down(name: XmlQName): XmlEncoder[C[A]] = {
         if (isFlattened) { (ca: C[A]) =>

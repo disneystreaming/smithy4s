@@ -31,7 +31,7 @@ import cats.effect.Concurrent
 
 private[internals] object assert {
 
-  private implicit val eventsEq: Eq[XmlEvent] = Eq.fromUniversalEquals
+  // private implicit val eventsEq: Eq[XmlEvent] = Eq.fromUniversalEquals
 
   def success: ComplianceResult = ().validNel
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
@@ -80,7 +80,23 @@ private[internals] object assert {
     for {
       r <- parseXml(result)
       t <- parseXml(testCase)
-    } yield eql(r, t)
+    } yield {
+      if (r == t) {
+        success
+      } else {
+        val report = s"""|------- result -------
+                         |$result
+                         |
+                         |$r
+                         |------ expected ------
+                         |$testCase
+                         |
+                         |$t
+                         |""".stripMargin
+        fail(report)
+
+      }
+    }
   }
 
   def eql[A: Eq](
