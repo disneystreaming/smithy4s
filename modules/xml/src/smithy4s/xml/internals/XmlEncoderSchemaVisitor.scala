@@ -63,7 +63,7 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
 
       new XmlEncoder[S] {
         def encode(s: S): List[XmlContent] =
-          field.getIfNonDefault(s) match {
+          field.getUnlessDefault(s) match {
             case Some(value) => aEncoder.encode(value)
             case None        => List.empty
           }

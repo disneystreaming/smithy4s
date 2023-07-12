@@ -169,7 +169,7 @@ class SchemaVisitorMetadataWriter(
           val encoder = self(field.schema.addHints(Hints(binding)))
           val updateFunction = encoder.updateMetadata(binding)
           (metadata, s) =>
-            field.getIfNonDefault(s) match {
+            field.getUnlessDefault(s) match {
               case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
               case None              => metadata
             }

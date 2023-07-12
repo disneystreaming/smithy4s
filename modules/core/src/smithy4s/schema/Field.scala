@@ -46,7 +46,7 @@ final case class Field[S, A](
 
   def isDefaultValue(a: A): Boolean = getDefaultValue.contains(a)
 
-  def getIfNonDefault(s: S): Option[A] = {
+  def getUnlessDefault(s: S): Option[A] = {
     val a = get(s)
     getDefaultValue match {
       case Some(`a`) => None

@@ -93,11 +93,14 @@ object Hints {
 
   val empty: Hints = new Impl(Map.empty, Map.empty)
 
-  def apply(bindings: Hint*): Hints = fromSeq(bindings)
-  def member(bindings: Hint*): Hints = Impl(mapFromSeq(bindings), Map.empty)
+  def apply(bindings: Hint*): Hints =
+    fromSeq(bindings)
+
+  def member(bindings: Hint*): Hints =
+    Impl(memberHintsMap = mapFromSeq(bindings), targetHintsMap = Map.empty)
 
   def fromSeq(bindings: Seq[Hint]): Hints =
-    Impl(Map.empty, mapFromSeq(bindings))
+    Impl(memberHintsMap = Map.empty, targetHintsMap = mapFromSeq(bindings))
 
   private def mapFromSeq(bindings: Seq[Hint]): Map[ShapeId, Hint] = {
     bindings.map {
@@ -122,17 +125,23 @@ object Hints {
       }
     def ++(other: Hints): Hints = {
       Impl(
-        memberHintsMap ++ other.memberHintsMap,
-        targetHintsMap ++ other.targetHintsMap
+        memberHintsMap = memberHintsMap ++ other.memberHintsMap,
+        targetHintsMap = targetHintsMap ++ other.targetHintsMap
       )
     }
     def targetHints: Hints = Impl(Map.empty, targetHintsMap)
     def memberHints: Hints = Impl(memberHintsMap, Map.empty)
     def addMemberHints(hints: Hints): Hints =
-      Impl(memberHintsMap ++ hints.toMap, targetHintsMap)
+      Impl(
+        memberHintsMap = memberHintsMap ++ hints.toMap,
+        targetHintsMap = targetHintsMap
+      )
 
     def addTargetHints(hints: Hints): Hints =
-      Impl(memberHintsMap, targetHintsMap ++ hints.toMap)
+      Impl(
+        memberHintsMap = memberHintsMap,
+        targetHintsMap = targetHintsMap ++ hints.toMap
+      )
 
     override def toString(): String =
       s"Hints(${all.mkString(", ")})"

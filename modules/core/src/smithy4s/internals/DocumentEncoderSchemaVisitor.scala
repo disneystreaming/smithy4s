@@ -198,7 +198,7 @@ class DocumentEncoderSchemaVisitor(
         .map(_.value)
         .getOrElse(field.label)
       (s, builder) =>
-        field.getIfNonDefault(s).foreach { value =>
+        field.getUnlessDefault(s).foreach { value =>
           builder.+=(jsonLabel -> encoder.apply(value))
         }
     }
