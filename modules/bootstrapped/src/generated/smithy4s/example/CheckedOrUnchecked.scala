@@ -17,7 +17,9 @@ object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
   val hints: Hints = Hints.empty
 
   final case class CheckedCase(checked: String) extends CheckedOrUnchecked
+  def checkedCase(checkedCase:String): CheckedOrUnchecked = CheckedCase(checkedCase)
   final case class RawCase(raw: String) extends CheckedOrUnchecked
+  def rawCase(rawCase:String): CheckedOrUnchecked = RawCase(rawCase)
 
   object CheckedCase {
     val hints: Hints = Hints.empty

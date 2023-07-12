@@ -16,7 +16,9 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
   val hints: Hints = Hints.empty
 
   final case class AgeCase(age: Age) extends UnionWithRefinedTypes
+  def ageCase(ageCase:Age): UnionWithRefinedTypes = AgeCase(ageCase)
   final case class DogNameCase(dogName: smithy4s.refined.Name) extends UnionWithRefinedTypes
+  def dogNameCase(dogNameCase:smithy4s.refined.Name): UnionWithRefinedTypes = DogNameCase(dogNameCase)
 
   object AgeCase {
     val hints: Hints = Hints.empty

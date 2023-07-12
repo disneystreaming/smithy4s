@@ -116,7 +116,9 @@ object KVStoreOperation {
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError
+    def unauthorizedErrorCase(unauthorizedErrorCase:UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedErrorCase)
     final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError
+    def keyNotFoundErrorCase(keyNotFoundErrorCase:KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundErrorCase)
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -168,6 +170,7 @@ object KVStoreOperation {
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError
+    def unauthorizedErrorCase(unauthorizedErrorCase:UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedErrorCase)
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -214,7 +217,9 @@ object KVStoreOperation {
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError
+    def unauthorizedErrorCase(unauthorizedErrorCase:UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedErrorCase)
     final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError
+    def keyNotFoundErrorCase(keyNotFoundErrorCase:KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundErrorCase)
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty

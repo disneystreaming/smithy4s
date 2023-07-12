@@ -108,9 +108,13 @@ object ErrorHandlingServiceExtraErrorsOperation {
     val hints: Hints = Hints.empty
 
     final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError
+    def randomOtherClientErrorCase(randomOtherClientErrorCase:RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientErrorCase)
     final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError
+    def randomOtherServerErrorCase(randomOtherServerErrorCase:RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerErrorCase)
     final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError
+    def randomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCodeCase:RandomOtherClientErrorWithCode): ExtraErrorOperationError = RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCodeCase)
     final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError
+    def randomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCodeCase:RandomOtherServerErrorWithCode): ExtraErrorOperationError = RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCodeCase)
 
     object RandomOtherClientErrorCase {
       val hints: Hints = Hints.empty

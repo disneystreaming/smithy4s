@@ -19,7 +19,9 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
   )
 
   final case class EmailCase(email: PersonEmail) extends PersonContactInfo
+  def emailCase(emailCase:PersonEmail): PersonContactInfo = EmailCase(emailCase)
   final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo
+  def phoneCase(phoneCase:PersonPhoneNumber): PersonContactInfo = PhoneCase(phoneCase)
 
   object EmailCase {
     val hints: Hints = Hints.empty

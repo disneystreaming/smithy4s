@@ -118,7 +118,9 @@ object HelloServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError
+    def simpleErrorCase(simpleErrorCase:SimpleError): SayHelloError = SimpleErrorCase(simpleErrorCase)
     final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError
+    def complexErrorCase(complexErrorCase:ComplexError): SayHelloError = ComplexErrorCase(complexErrorCase)
 
     object SimpleErrorCase {
       val hints: Hints = Hints.empty

@@ -105,6 +105,7 @@ object NameCollisionOperation {
     val hints: Hints = Hints.empty
 
     final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError
+    def myOpErrorCase(myOpErrorCase:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpErrorCase)
 
     object MyOpErrorCase {
       val hints: Hints = Hints.empty

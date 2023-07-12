@@ -26,12 +26,16 @@ object Foo extends ShapeTag.Companion[Foo] {
   )
 
   final case class IntCase(int: Int) extends Foo
+  def intCase(intCase:Int): Foo = IntCase(intCase)
   /** this is a comment saying you should be careful for this case
     * you never know what lies ahead with Strings like this
     */
   final case class StrCase(str: String) extends Foo
+  def strCase(strCase:String): Foo = StrCase(strCase)
   final case class BIntCase(bInt: BigInt) extends Foo
+  def bIntCase(bIntCase:BigInt): Foo = BIntCase(bIntCase)
   final case class BDecCase(bDec: BigDecimal) extends Foo
+  def bDecCase(bDecCase:BigDecimal): Foo = BDecCase(bDecCase)
 
   object IntCase {
     val hints: Hints = Hints.empty

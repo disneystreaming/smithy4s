@@ -853,6 +853,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
         NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
     }
+    def smartConstructor(alt: Alt):Line = {
+      val cn = caseName(alt).name
+      val uncapitalised = uncapitalise(cn)
+      val prefix =s"def $uncapitalised"
+      alt.member match {
+        case UnionMember.ProductCase(product) => line"$prefix():$name = ${product.name}"
+        case UnionMember.UnitCase => line"$prefix(): $name = ${caseName(alt)}"
+        case UnionMember.TypeCase(tpe) => line"$prefix($uncapitalised:$tpe): $name = $cn($uncapitalised)"
+      }
+    }
     val caseNames = alts.map(caseName)
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
@@ -883,6 +893,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case object $cn extends $name",
+              smartConstructor(a),
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
@@ -892,7 +903,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name",
+              smartConstructor(a)
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
             val additionalLines = lines(
