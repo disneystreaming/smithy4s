@@ -56,7 +56,6 @@ private[http4s] object SmithyHttp4sServerEndpoint {
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       compilerContext: CompilerContext[F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
       pathParamsKey: Key[PathParams]
   ): Either[
@@ -78,7 +77,6 @@ private[http4s] object SmithyHttp4sServerEndpoint {
             method,
             httpEndpoint,
             compilerContext,
-            errorTransformation,
             middleware,
             pathParamsKey
           )
@@ -94,7 +92,6 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     val method: Method,
     httpEndpoint: HttpEndpoint[I],
     compilerContext: CompilerContext[F],
-    errorTransformation: PartialFunction[Throwable, F[Throwable]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
     pathParamsKey: Key[PathParams]
 )(implicit F: EffectCompat[F]) extends SmithyHttp4sServerEndpoint[F] {
@@ -107,14 +104,8 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint.matches(path)
   }
 
-  private val applyMiddleware: HttpApp[F] => HttpApp[F] = { app =>
-    middleware(endpoint)(app).handleErrorWith(error =>
-      Kleisli.liftF(errorResponse(error))
-    )
-  }
-
-  override val httpApp: HttpApp[F] =
-    httpAppErrorHandle(applyMiddleware(HttpApp[F] { req =>
+  override val httpApp: HttpApp[F] = {
+    val baseApp = HttpApp[F] { req =>
       val pathParams = req.attributes.lookup(pathParamsKey).getOrElse(Map.empty)
 
       val run: F[O] = for {
@@ -123,18 +114,11 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
-      run
-        .recoverWith(transformError)
-        .map(successResponse)
-    }))
-
-  private def httpAppErrorHandle(app: HttpApp[F]): HttpApp[F] = {
-    app
-      .recoverWith {
-        case error if errorTransformation.isDefinedAt(error) =>
-          Kleisli.liftF(errorTransformation.apply(error).flatMap(errorResponse))
-      }
-      .handleErrorWith { error => Kleisli.liftF(errorResponse(error)) }
+      run.map(successResponse)
+    }
+    middleware(endpoint)(baseApp).handleErrorWith(error =>
+      Kleisli.liftF(errorResponse(error))
+    )
   }
 
   private val inputSchema: Schema[I] = endpoint.input
@@ -151,13 +135,6 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   private implicit val httpContractErrorCodec
       : EntityEncoder[F, HttpContractError] =
     entityCompiler.compileEntityEncoder(HttpContractError.schema, entityCache)
-
-  private val transformError: PartialFunction[Throwable, F[O]] = {
-    case e @ endpoint.Error(_, _) => F.raiseError(e)
-    case scala.util.control.NonFatal(other)
-        if errorTransformation.isDefinedAt(other) =>
-      errorTransformation(other).flatMap(F.raiseError)
-  }
 
   private val extractInput: (Metadata, Request[F]) => F[I] = {
     inputMetadataDecoder.total match {
