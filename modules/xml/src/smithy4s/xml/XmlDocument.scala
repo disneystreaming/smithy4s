@@ -246,7 +246,7 @@ object XmlDocument {
             val qName = toQName(name)
             val attr: List[Attr] = attributes.map(toAttr)
             if (children.isEmpty) {
-              Stream(XmlEvent.StartTag(qName, attr, isEmpty = true))
+              Stream(XmlEvent.StartTag(qName, attr, isEmpty = true), XmlEvent.EndTag(qName))
             } else {
               Stream(XmlEvent.StartTag(qName, attr, isEmpty = false)) ++
                 children.foldMap(eventifyContent) ++

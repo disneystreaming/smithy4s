@@ -29,7 +29,7 @@ import org.http4s.Uri
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.Document
-import smithy4s.http.HttpContractError
+// import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.TestConfig._
@@ -130,7 +130,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 val output: F[O] = service
                   .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
-                output.attemptNarrow[HttpContractError].productR(request)
+                output.attempt.productR(request)
               }
               .flatMap { req => matchRequest(req, testCase) }
           }

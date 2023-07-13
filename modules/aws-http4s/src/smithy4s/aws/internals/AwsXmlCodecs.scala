@@ -145,7 +145,7 @@ private[aws] object AwsXmlCodecs {
     ) { xmlDocument =>
       val body: fs2.Chunk[Byte] = XmlDocument.documentEventifier
         .eventify(xmlDocument)
-        .through(render())
+        .through(render(collapseEmpty = false))
         .through(fs2.text.utf8.encode[fs2.Pure])
         .compile
         .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
