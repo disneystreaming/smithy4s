@@ -35,6 +35,7 @@ import cats.Eq
 import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
 import smithy4s.schema.Alt
+import smithy4s.http.HttpContractError
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -130,7 +131,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                 val output: F[O] = service
                   .toPolyFunction[R](client)
                   .apply(endpoint.wrap(in))
-                output.attempt.productR(request)
+                output.attemptNarrow[HttpContractError].productR(request)
               }
               .flatMap { req => matchRequest(req, testCase) }
           }

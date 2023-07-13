@@ -36,7 +36,7 @@ object StringAndBlobCodecs {
     CachedSchemaCompiler.getOrElse(WriterCompiler, other)
 
   object ReaderCompiler
-      extends CachedSchemaCompiler.Possible.Impl[HttpMediaReader] {
+      extends CachedSchemaCompiler.Optional.Impl[HttpMediaReader] {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
@@ -45,7 +45,7 @@ object StringAndBlobCodecs {
   }
 
   object WriterCompiler
-      extends CachedSchemaCompiler.Possible.Impl[HttpMediaWriter] {
+      extends CachedSchemaCompiler.Optional.Impl[HttpMediaWriter] {
     def fromSchema[A](
         schema: Schema[A],
         cache: Cache
