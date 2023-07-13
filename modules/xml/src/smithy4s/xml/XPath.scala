@@ -44,6 +44,9 @@ case class XPath(reversedSegments: List[XPath.Segment]) {
   def appendTag(tag: XmlQName): XPath = XPath(
     XPath.Segment.Tag(tag) :: reversedSegments
   )
+  def appendTag(tag: String): XPath = XPath(
+    XPath.Segment.Tag(XmlQName.parse(tag)) :: reversedSegments
+  )
   def appendAttr(name: XmlQName): XPath = XPath(
     XPath.Segment.Attr(name) :: reversedSegments
   )

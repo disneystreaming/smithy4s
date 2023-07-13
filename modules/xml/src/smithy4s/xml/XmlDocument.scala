@@ -104,6 +104,13 @@ object XmlDocument {
       .getOrElse(XmlQName.fromShapeId(schema.shapeId))
   }
 
+  private def getStartingPath[A](schema: Schema[A]): List[XmlQName] = {
+    schema.hints
+      .get(internals.XmlStartingPath)
+      .map(_.path.map(XmlQName.parse))
+      .getOrElse(List(getRootName(schema)))
+  }
+
   /**
     * A Decoder aims at decoding documents. As such, it is not meant to be a compositional construct, because
     * documents cannot be nested under other documents. This aims at decoding top-level XML payloads.
@@ -114,21 +121,13 @@ object XmlDocument {
 
   object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
     def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] = {
-      val expectedRootName: XmlQName = getRootName(schema)
-      val decoder = XmlDecoderSchemaVisitor(schema)
+      val startingPath: List[XmlQName] = getStartingPath(schema)
       new Decoder[A] {
+        val decoder = XmlDecoderSchemaVisitor(schema)
         def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A] = {
-          val rootName = xmlDocument.root.name
-          if (rootName != expectedRootName) {
-            Left(
-              XmlDecodeError(
-                XPath.root,
-                s"Expected ${expectedRootName} XML root element, got ${rootName}"
-              )
-            )
-          } else {
-            decoder.decode(XmlCursor.fromDocument(xmlDocument))
-          }
+          val documentCursor = XmlCursor.fromDocument(xmlDocument)
+          val updatedCursor = startingPath.foldLeft(documentCursor)(_.down(_))
+          decoder.decode(updatedCursor)
         }
       }
     }

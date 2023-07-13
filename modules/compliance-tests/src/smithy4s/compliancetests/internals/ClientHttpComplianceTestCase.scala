@@ -210,6 +210,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   val res: F[O] = service
                     .toPolyFunction[R](client)
                     .apply(endpoint.wrap(dummyInput))
+
                   res.map { output =>
                     assert.eql(
                       output,
@@ -237,22 +238,19 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .flatMap(_.value)
               .filter(_.protocol == protocolTag.id.toString())
               .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
-              .map(tc =>
+              .map { tc =>
                 clientResponseTest(
                   endpoint,
                   tc,
                   errorSchema = Some(
-                    ErrorResponseTest
-                      .from(
-                        errorAlt,
-                        Alt.Dispatcher.fromUnion(
-                          errorable.error
-                        ),
-                        errorable
-                      )
+                    ErrorResponseTest.from(
+                      errorAlt,
+                      Alt.Dispatcher.fromUnion(errorable.error),
+                      errorable
+                    )
                   )
                 )
-              )
+              }
           }
         }
     }

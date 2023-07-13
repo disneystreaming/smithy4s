@@ -172,8 +172,9 @@ abstract class ProtocolComplianceSuite
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
     res.toEither match {
-      case Left(failures) => failures.foldMap(Expectations.Helpers.failure(_))
-      case Right(_)       => Expectations.Helpers.success
+      case Left(failures) =>
+        failures.foldMap(Expectations.Helpers.failure(_))
+      case Right(_) => Expectations.Helpers.success
     }
   }
 
