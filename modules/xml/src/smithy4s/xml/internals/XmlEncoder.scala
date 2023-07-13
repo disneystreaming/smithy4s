@@ -55,6 +55,16 @@ private[smithy4s] trait XmlEncoder[-A] { self =>
     List(XmlAttr(name, values))
   }
 
+  def addXmlNamespace(maybeNs: Option[XmlAttr]): XmlEncoder[A] = {
+    maybeNs match {
+      case None => this
+      case Some(attr) =>
+        new XmlEncoder[A] {
+          def encode(value: A): List[XmlContent] = attr :: self.encode(value)
+        }
+    }
+  }
+
   def optional: XmlEncoder[Option[A]] = new XmlEncoder[Option[A]] {
     def encode(value: Option[A]): List[XmlContent] = value match {
       case Some(value) => self.encode(value)

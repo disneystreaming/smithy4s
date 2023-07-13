@@ -250,7 +250,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val foos = list(int.addHints(XmlName("x")))
+        val foos = list(int.addMemberHints(XmlName("x")))
           .required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply).n
       }

@@ -143,12 +143,13 @@ object XmlDocument {
         schema.hints
           .get(smithy.api.XmlNamespace)
           .toList
-          .map(ns =>
-            XmlAttr(
-              XmlQName(None, "xmlns"),
-              List(XmlText(ns.uri.toString))
-            )
-          )
+          .map { ns =>
+            val qName = ns.prefix match {
+              case Some(prefix) => XmlQName(Some("xmlns"), prefix.value)
+              case None         => XmlQName(None, "xmlns")
+            }
+            XmlAttr(qName, List(XmlText(ns.uri.value)))
+          }
       val xmlEncoder = XmlEncoderSchemaVisitor(schema)
       new Encoder[A] {
         def encode(value: A): XmlDocument = {
