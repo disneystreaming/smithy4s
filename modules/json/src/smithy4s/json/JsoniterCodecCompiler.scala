@@ -45,7 +45,7 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
     *
     * Defaults to false.
     */
-  def withExplicitNullEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
+  def withExplicitDefaultsEncoding(explicitNulls: Boolean): JsoniterCodecCompiler
 
   /**
    * Changes the behaviour of Json decoders so that they overlook null values in collections

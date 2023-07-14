@@ -332,12 +332,57 @@ object XmlCodecSpec extends SimpleIOSuite {
       union(left, right) {
         case Left(int)     => left(int)
         case Right(string) => right(string)
-      }
+      }.n
     }
-    val xmlLeft = """<left>1</left>"""
-    val xmlRight = """<right>hello</right>""".stripMargin
+    val xmlLeft = """<Foo><left>1</left></Foo>"""
+    val xmlRight = """<Foo><right>hello</right></Foo>""".stripMargin
     checkContent[Foo](xmlLeft, Left(1)) |+|
       checkContent[Foo](xmlRight, Right("hello"))
+  }
+
+  test("union") {
+    type Foo = Either[Int, String]
+    implicit val schema: Schema[Foo] = {
+      val left = int.oneOf[Foo]("left", Left(_))
+      val right = string.oneOf[Foo]("right", Right(_))
+      union(left, right) {
+        case Left(int)     => left(int)
+        case Right(string) => right(string)
+      }.n
+    }
+    val xmlLeft = """<Foo><left>1</left></Foo>"""
+    val xmlRight = """<Foo><right>hello</right></Foo>""".stripMargin
+    checkContent[Foo](xmlLeft, Left(1)) |+|
+      checkContent[Foo](xmlRight, Right("hello"))
+  }
+
+  test("recursiveUnion") {
+
+    sealed trait Foo
+    object Foo {
+      case class Bar(foo: Foo) extends Foo
+      case class Baz(int: Int) extends Foo
+
+      implicit val schema: Schema[Foo] = Schema.recursive {
+        val bar =
+          Foo.schema
+            .biject[Foo.Bar](Foo.Bar(_), (_: Foo.Bar).foo)
+            .oneOf[Foo]("bar")
+        val baz =
+          int.biject[Foo.Baz](Foo.Baz(_), (_: Foo.Baz).int).oneOf[Foo]("baz")
+        union(bar, baz) {
+          case b: Foo.Bar => bar(b)
+          case b: Foo.Baz => baz(b)
+        }.n
+      }
+    }
+    val xml = """|<Foo>
+                 |   <bar>
+                 |      <baz>1</baz>
+                 |   </bar>
+                 |</Foo>
+                 |""".stripMargin
+    checkContent[Foo](xml, Foo.Bar(Foo.Baz(1)))
   }
 
   test("union: custom names") {
@@ -348,10 +393,10 @@ object XmlCodecSpec extends SimpleIOSuite {
       union(left, right) {
         case Left(int)     => left(int)
         case Right(string) => right(string)
-      }
+      }.n
     }
-    val xmlLeft = """<foo>1</foo>"""
-    val xmlRight = """<bar>hello</bar>""".stripMargin
+    val xmlLeft = """<Foo><foo>1</foo></Foo>"""
+    val xmlRight = """<Foo><bar>hello</bar></Foo>""".stripMargin
     checkContent[Foo](xmlLeft, Left(1)) |+|
       checkContent[Foo](xmlRight, Right("hello"))
   }
@@ -411,8 +456,10 @@ object XmlCodecSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val foos =
-          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
-            .required[Foo]("foos", _.foos)
+          map(
+            string.addMemberHints(XmlName("k")),
+            int.addMemberHints(XmlName("v"))
+          ).required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply).n
       }
     }

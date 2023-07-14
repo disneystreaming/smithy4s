@@ -21,10 +21,8 @@ import cats.Id
 import java.util.UUID
 import smithy4s.schema.CollectionTag
 import smithy4s.schema.Field
-import smithy4s.schema.Alt
 import smithy4s.schema.SchemaVisitor
-import smithy4s.schema.SchemaAlt
-import smithy4s.schema.SchemaField
+import smithy4s.schema.Alt
 import smithy4s.schema.Schema
 import smithy4s.schema.EnumTag
 import smithy4s.schema.EnumValue
@@ -44,7 +42,7 @@ import smithy4s.schema.Primitive.PBoolean
 import smithy4s.schema.Primitive.PTimestamp
 import smithy4s.schema.Primitive.PUUID
 
-object DefaultSchemaVisitor extends SchemaVisitor[Id] {
+object DefaultSchemaVisitor extends SchemaVisitor[Id] { self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -92,27 +90,17 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
-    def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =
-      apply(instance)
-
-    def onOptional[A](
-        label: String,
-        instance: Schema[A],
-        get: S => Option[A]
-    ): Any =
-      None
-  })))
+  ): Id[S] = make(fields.map(_.schema.compile(self)))
 
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Id[U] = {
-    def processAlt[A](alt: Alt[Schema, U, A]) = alt.inject(apply(alt.instance))
+    def processAlt[A](alt: Alt[U, A]) = alt.inject(apply(alt.schema))
     processAlt(alternatives.head)
   }
 
@@ -128,5 +116,5 @@ object DefaultSchemaVisitor extends SchemaVisitor[Id] {
 
   override def lazily[A](suspend: Lazy[Schema[A]]): Id[A] = ???
 
-  override def nullable[A](schema: Schema[A]): Id[Option[A]] = None
+  override def option[A](schema: Schema[A]): Id[Option[A]] = None
 }

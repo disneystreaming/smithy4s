@@ -83,12 +83,12 @@ private[internals] object SchemaDescriptionDetailedImpl
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): SchemaDescriptionDetailedImpl[S] = { seen =>
-    def forField[T](sf: SchemaField[S, T]): (String, (Set[ShapeId], String)) = {
-      apply(sf.instance)(seen)
-      sf.label -> apply(sf.instance)(seen)
+    def forField[T](sf: Field[S, T]): (String, (Set[ShapeId], String)) = {
+      apply(sf.schema)(seen)
+      sf.label -> apply(sf.schema)(seen)
     }
     val (sFinal, res) = fields
       .foldLeft((Set.empty[ShapeId], Seq.empty[(String, String)])) {
@@ -104,11 +104,11 @@ private[internals] object SchemaDescriptionDetailedImpl
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): SchemaDescriptionDetailedImpl[U] = { seen =>
-    def forAlt[T](alt: SchemaAlt[U, T]): (String, (Set[ShapeId], String)) = {
-      val desc = apply(alt.instance)(seen)
+    def forAlt[T](alt: Alt[U, T]): (String, (Set[ShapeId], String)) = {
+      val desc = apply(alt.schema)(seen)
       alt.label -> desc
     }
     val (sFinal, res) = alternatives
@@ -151,10 +151,10 @@ private[internals] object SchemaDescriptionDetailedImpl
     }
   }
 
-  override def nullable[A](
+  override def option[A](
       schema: Schema[A]
   ): SchemaDescriptionDetailedImpl[Option[A]] =
-    apply(schema).mapResult { desc => s"Sparse[$desc]" }
+    apply(schema).mapResult { desc => s"Option[$desc]" }
 
   val conversion: SchemaDescriptionDetailedImpl ~> SchemaDescription =
     new (SchemaDescriptionDetailedImpl ~> SchemaDescription) {

@@ -60,7 +60,7 @@ object SchemaVisitorHeaderSplit
       refinement: Refinement[A, B]
   ): AwsHeaderSplitter[B] = schema.compile(self): Option[String => Seq[String]]
 
-  override def nullable[A](schema: Schema[A]): AwsHeaderSplitter[Option[A]] =
+  override def option[A](schema: Schema[A]): AwsHeaderSplitter[Option[A]] =
     schema.compile(self): Option[String => Seq[String]]
 
   override def enumeration[E](

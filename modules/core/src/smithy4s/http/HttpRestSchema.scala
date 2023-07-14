@@ -54,12 +54,12 @@ object HttpRestSchema {
 
   def apply[A](fullSchema: Schema[A]): HttpRestSchema[A] = {
 
-    def isMetadataField(field: SchemaField[_, _]): Boolean = HttpBinding
-      .fromHints(field.label, field.instance.hints, fullSchema.hints)
+    def isMetadataField(field: Field[_, _]): Boolean = HttpBinding
+      .fromHints(field.label, field.memberHints, fullSchema.hints)
       .isDefined
 
-    def isPayloadField(field: SchemaField[_, _]): Boolean =
-      field.instance.hints.has[HttpPayload]
+    def isPayloadField(field: Field[_, _]): Boolean =
+      field.memberHints.has[HttpPayload]
 
     fullSchema.findPayload(isPayloadField) match {
       case TotalMatch(schema) => OnlyBody(schema)

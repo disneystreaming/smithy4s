@@ -78,7 +78,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): Unit = discard {
       fields.foreach { field =>
@@ -90,11 +90,11 @@ class CachedSchemaVisitorSpec() extends FunSuite {
     def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): Unit = discard {
       alternatives.foreach { alt =>
-        self(alt.instance)
+        self(alt.schema)
       }
       counter.incrementAndGet()
     }
@@ -125,7 +125,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
       }
     }
 
-    def nullable[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
+    def option[A](schema: Schema[A]): ConstUnit[Option[A]] = discard {
       self(schema)
       counter.incrementAndGet()
     }

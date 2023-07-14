@@ -29,10 +29,10 @@ private[http] class ErrorCodeSchemaVisitor(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatcher: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatcher: Alt.Dispatcher[U]
   ): HttpCode[U] = {
-    dispatcher.compile(new Alt.Precompiler[Schema, HttpCode] {
+    dispatcher.compile(new Alt.Precompiler[HttpCode] {
       def apply[A](label: String, instance: Schema[A]): HttpCode[A] =
         compile(instance)
     })
@@ -60,7 +60,7 @@ private[http] class ErrorCodeSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): HttpCode[S] = { _ =>
     hints

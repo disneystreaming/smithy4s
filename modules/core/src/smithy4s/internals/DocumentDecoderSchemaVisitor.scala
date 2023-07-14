@@ -206,7 +206,7 @@ class DocumentDecoderSchemaVisitor(
     }
   }
 
-  def nullable[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
+  def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
     new DocumentDecoder[Option[A]] {
       val decoder = schema.compile(self)
       def expected = decoder.expected
@@ -303,56 +303,54 @@ class DocumentDecoderSchemaVisitor(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): DocumentDecoder[S] = {
-    def jsonLabel[A](field: Field[Schema, S, A]): String =
-      field.instance.hints.get(JsonName).map(_.value).getOrElse(field.label)
+    def jsonLabel[A](field: Field[S, A]): String =
+      field.hints.get(JsonName).map(_.value).getOrElse(field.label)
 
     def fieldDecoder[A](
-        field: Field[Schema, S, A]
+        field: Field[S, A]
     ): (
         List[PayloadPath.Segment],
         Any => Unit,
         Map[String, Document]
     ) => Unit = {
       val jLabel = jsonLabel(field)
-      val maybeDefault = field.instance.getDefault
 
-      if (field.isOptional) {
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) =>
-          val path = PayloadPath.Segment(jLabel) :: pp
-          fields
-            .get(jLabel) match {
-            case Some(DNull) => buffer(None)
-            case Some(document) =>
-              buffer(Some(apply(field.instance)(path, document)))
-            case None => buffer(None)
-          }
-      } else {
-        (
-            pp: List[PayloadPath.Segment],
-            buffer: Any => Unit,
-            fields: Map[String, Document]
-        ) =>
-          val path = PayloadPath.Segment(jLabel) :: pp
-          fields
-            .get(jLabel) match {
-            case Some(document) =>
-              buffer(apply(field.instance)(path, document))
-            case None if maybeDefault.isDefined =>
-              buffer(apply(field.instance)(path, maybeDefault.get))
-            case None =>
-              throw new PayloadError(
-                PayloadPath(path.reverse),
-                "",
-                "Required field not found"
-              )
-          }
+      field.getDefaultValue match {
+        case Some(defaultValue) =>
+          (
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
+          ) =>
+            val path = PayloadPath.Segment(jLabel) :: pp
+            fields
+              .get(jLabel) match {
+              case Some(document) =>
+                buffer(apply(field.schema)(path, document))
+              case None =>
+                buffer(defaultValue)
+            }
+        case None =>
+          (
+              pp: List[PayloadPath.Segment],
+              buffer: Any => Unit,
+              fields: Map[String, Document]
+          ) =>
+            val path = PayloadPath.Segment(jLabel) :: pp
+            fields
+              .get(jLabel) match {
+              case Some(document) =>
+                buffer(apply(field.schema)(path, document))
+              case None =>
+                throw new PayloadError(
+                  PayloadPath(path.reverse),
+                  "",
+                  "Required field not found"
+                )
+            }
       }
     }
 
@@ -443,11 +441,11 @@ class DocumentDecoderSchemaVisitor(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): DocumentDecoder[U] = {
-    def jsonLabel[A](alt: Alt[Schema, U, A]): String =
-      alt.instance.hints.get(JsonName).map(_.value).getOrElse(alt.label)
+    def jsonLabel[A](alt: Alt[U, A]): String =
+      alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
       alternatives.map { case alt @ Alt(_, instance, inject) =>

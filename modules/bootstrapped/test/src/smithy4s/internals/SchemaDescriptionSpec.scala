@@ -59,16 +59,11 @@ class SchemaDescriptionSpec() extends FunSuite with ScalaCheckSuite { self =>
       "Union",
       "union UntaggedUnion(three: structure Three(three: String) | four: structure Four(four: Int))"
     ),
-    // TestCase(
-    //   BlobBody.schema,
-    //   "Structure",
-    //   "structure BlobBody(blob: Bytes)"
-    // ),
     TestCase(FooEnum.schema, "Enumeration", "enum(\"Foo\")"),
     TestCase(
       IntList.schema,
       "Structure",
-      "structure IntList(head: Int, tail: Recursive[IntList])"
+      "structure IntList(head: Int, tail: Option[Recursive[IntList]])"
     ) // recursive
   )
 
