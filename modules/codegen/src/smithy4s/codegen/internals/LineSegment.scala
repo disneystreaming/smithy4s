@@ -43,9 +43,15 @@ private[codegen] object LineSegment {
     implicit val nameDefShow: Show[NameDef] = Show.show[NameDef](_.name)
   }
   // A Reference to a Scala type or value s.
-  case class NameRef(pkg: List[String], name: String, typeParams: List[NameRef])
-      extends LineSegment {
+  case class NameRef(
+      rawPkg: List[String],
+      name: String,
+      typeParams: List[NameRef]
+  ) extends LineSegment {
     self =>
+
+    def pkg: List[String] = rawPkg.map(CollisionAvoidance.protectType(_))
+
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
 
     def asImport: String = s"${(pkg :+ getNamePrefix).mkString(".")}"

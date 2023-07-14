@@ -3,6 +3,7 @@ $version: "2.0"
 namespace smithy4s.example.collision
 
 use alloy#simpleRestJson
+use smithy4s.example.package#MyPackageString
 
 @simpleRestJson
 service ReservedNameService {
@@ -56,3 +57,7 @@ operation Option {
 }
 
 string String
+
+structure TestReservedNamespaceImport {
+    package: MyPackageString
+}
