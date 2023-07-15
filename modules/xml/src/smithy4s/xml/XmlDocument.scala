@@ -54,21 +54,8 @@ object XmlDocument {
     * ADT are produced
     */
   sealed trait XmlContent extends Product with Serializable
-  final case class XmlText(text: String) extends XmlContent
-  final case class XmlEntityRef(entityName: String) extends XmlContent {
-    def text: String =
-      entityName match {
-        case "lt"   => "<"
-        case "gt"   => ">"
-        case "amp"  => "&"
-        case "apos" => "'"
-        case "quot" => "\""
-        case other  => buildString(other)
-      }
-
-    private def buildString(name: String) = s"&$name;"
-
-  }
+  final case class XmlText(text: String) extends XmlContent {}
+  final case class XmlEntityRef(entityName: String) extends XmlContent
   final case class XmlElem(name: XmlQName, attributes: List[XmlAttr], children: List[XmlContent]) extends XmlContent
   final case class XmlAttr(name: XmlQName, values: List[XmlText]) extends XmlContent
   final case class XmlQName(prefix: Option[String], name: String) {
@@ -240,7 +227,7 @@ object XmlDocument {
       def eventifyContent(xmlContent: XmlContent): Stream[Pure, XmlEvent] =
         xmlContent match {
           case XmlText(text) =>
-            Stream(XmlEvent.XmlString(text, isCDATA = false))
+            Stream(XmlEvent.XmlString(escape(text), isCDATA = false))
           case XmlDocument.XmlEntityRef(entityName) =>
             Stream.emit(XmlEvent.XmlEntityRef(entityName))
           case XmlElem(name, attributes, children) =>
@@ -258,10 +245,21 @@ object XmlDocument {
 
       private def toAttr(attr: XmlAttr): Attr = Attr(
         toQName(attr.name),
-        attr.values.map(text => XmlEvent.XmlString(text.text, isCDATA = false))
+        attr.values.map(text => XmlEvent.XmlString(escape(text.text), isCDATA = false))
       )
 
       private def toQName(name: XmlQName): QName = QName(name.prefix, name.name)
     }
+
+  private def escape(string: String): String = {
+    string.flatMap {
+      case '<'  => "&lt;"
+      case '>'  => "&gt;"
+      case '&'  => "&amp;"
+      case '\'' => "$apos;"
+      case '"'  => "$quot;"
+      case c    => c.toString()
+    }
+  }
 
 }

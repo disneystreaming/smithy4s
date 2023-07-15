@@ -16,9 +16,7 @@
 
 package smithy4s.aws
 
-// import aws.protocols.AwsJson1_0
-// import aws.protocols.AwsJson1_1
-// import aws.protocols.RestJson1
+import aws.protocols._
 import cats.effect.IO
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.ShapeId
@@ -26,7 +24,6 @@ import cats.syntax.all._
 import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
 import smithy4s.tests.ProtocolComplianceSuite
-import aws.protocols.RestXml
 
 object AwsComplianceSuite extends ProtocolComplianceSuite {
 
@@ -44,8 +41,7 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
 
     val disallowed = Set(
       // this would be taken-care of by middleware
-      "HostWithPathOperation",
-      "BodyWithXmlName" // think these tests are incorrect/flawed
+      "HostWithPathOperation"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
@@ -55,14 +51,14 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
-    // genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
-    //   genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
-    //   genClientTests(impl(RestJson1), restJson1)(dsi) ++
-    genClientTests(impl(RestXml), restXml)(dsi)
+    genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
+      genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
+      genClientTests(impl(RestJson1), restJson1)(dsi) ++
+      genClientTests(impl(RestXml), restXml)(dsi)
 
-  // private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
-  // private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
-  // private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
+  private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
+  private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
+  private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
   private val restXml = ShapeId("aws.protocoltests.restxml", "RestXml")
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
