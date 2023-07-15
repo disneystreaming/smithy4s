@@ -96,9 +96,6 @@ abstract class SimpleProtocolBuilder[P](
     def resource: Resource[F, service.Impl[F]] =
       make.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    @deprecated("0.17.11", "Use make instead")
-    def use: Either[UnsupportedProtocolError, service.Impl[F]] = make
-
     def make: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag)
         // Making sure the router is evaluated lazily, so that all the compilation inside it
