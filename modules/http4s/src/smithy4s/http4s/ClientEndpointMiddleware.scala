@@ -17,18 +17,17 @@
 package smithy4s
 package http4s
 
-import cats.Monoid
 import org.http4s.client.Client
 import cats.kernel.Monoid
 
 // format: off
-trait ClientEndpointMiddleware[F[_]] { 
+trait ClientEndpointMiddleware[F[_]] {
   self =>
   def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
       endpoint: Endpoint[service.Operation, _, _, _, _, _]
   ): Client[F] => Client[F]
 
-  def andThen(other: ClientEndpointMiddleware[F]): ClientEndpointMiddleware[F] = 
+  def andThen(other: ClientEndpointMiddleware[F]): ClientEndpointMiddleware[F] =
     new ClientEndpointMiddleware[F] {
       def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
           endpoint: Endpoint[service.Operation, _, _, _, _, _]
