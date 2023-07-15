@@ -166,8 +166,6 @@ private[aws] object AwsXmlCodecs {
         .compile
         .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
 
-      println(new String(body.toArray))
-
       org.http4s.Entity.apply(
         fs2.Stream.chunk(body),
         Some(body.size.toLong)
