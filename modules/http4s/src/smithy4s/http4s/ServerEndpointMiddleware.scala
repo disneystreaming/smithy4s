@@ -21,17 +21,17 @@ import cats.Monoid
 import cats.MonadThrow
 import cats.data.Kleisli
 import org.http4s.Response
-import cats.implicits._
 import org.http4s.HttpApp
+import cats.implicits._
 
 // format: off
 trait ServerEndpointMiddleware[F[_]] {
-  self  => 
+  self  =>
   def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
       endpoint: Endpoint[service.Operation, _, _, _, _, _]
   ): HttpApp[F] => HttpApp[F]
 
-  def andThen(other: ServerEndpointMiddleware[F]): ServerEndpointMiddleware[F] = 
+  def andThen(other: ServerEndpointMiddleware[F]): ServerEndpointMiddleware[F] =
     new ServerEndpointMiddleware[F] {
       def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
           endpoint: Endpoint[service.Operation, _, _, _, _, _]
@@ -108,5 +108,8 @@ object ServerEndpointMiddleware {
             identity
         }
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> series/0.17
 }

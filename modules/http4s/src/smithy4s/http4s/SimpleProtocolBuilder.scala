@@ -94,9 +94,12 @@ abstract class SimpleProtocolBuilder[P](
       new ClientBuilder[Alg, F](this.client, this.service, this.uri, mid)
 
     def resource: Resource[F, service.Impl[F]] =
-      use.leftWiden[Throwable].liftTo[Resource[F, *]]
+      make.leftWiden[Throwable].liftTo[Resource[F, *]]
 
-    def use: Either[UnsupportedProtocolError, service.Impl[F]] = {
+    @deprecated("0.17.11", "Use make instead")
+    def use: Either[UnsupportedProtocolError, service.Impl[F]] = make
+
+    def make: Either[UnsupportedProtocolError, service.Impl[F]] = {
       checkProtocol(service, protocolTag)
         // Making sure the router is evaluated lazily, so that all the compilation inside it
         // doesn't happen in case of a missing protocol
@@ -127,7 +130,7 @@ abstract class SimpleProtocolBuilder[P](
     /**
       * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
       * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
-      * Errors raised in the [[middleware]] will be transformed too. 
+      * Errors raised in the [[middleware]] will be transformed too.
       *
       * The following two are equivalent:
       * {{{
@@ -149,7 +152,7 @@ abstract class SimpleProtocolBuilder[P](
     /**
       * Applies the error transformation to the errors that are not in the smithy spec (has no effect on errors from spec).
       * Transformed errors raised in endpoint implementation will be observable from [[middleware]].
-      * Errors raised in the [[middleware]] will be transformed too. 
+      * Errors raised in the [[middleware]] will be transformed too.
       *
       * The following two are equivalent:
       * {{{
