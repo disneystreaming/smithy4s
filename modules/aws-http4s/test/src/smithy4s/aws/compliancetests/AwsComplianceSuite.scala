@@ -36,7 +36,10 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
     val jsDisallowed = Set(
       "RestJsonHttpRequestLabelEscaping",
       "RestJsonInputAndOutputWithNumericHeaders",
-      "RestJsonInputWithHeadersAndAllParams"
+      "RestJsonInputWithHeadersAndAllParams",
+      "InputWithHeadersAndAllParams",
+      "HttpRequestLabelEscaping",
+      "InputAndOutputWithNumericHeaders"
     )
 
     val disallowed = Set(

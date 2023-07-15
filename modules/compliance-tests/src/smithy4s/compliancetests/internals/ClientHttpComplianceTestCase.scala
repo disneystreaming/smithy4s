@@ -29,7 +29,6 @@ import org.http4s.Uri
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.Document
-// import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.TestConfig._

@@ -25,7 +25,6 @@ import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s.ByteArray
-// import smithy4s.Hints
 import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.schema.Schema
