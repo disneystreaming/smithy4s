@@ -108,8 +108,5 @@ object ServerEndpointMiddleware {
             identity
         }
     }
-<<<<<<< HEAD
 
-=======
->>>>>>> series/0.17
 }
