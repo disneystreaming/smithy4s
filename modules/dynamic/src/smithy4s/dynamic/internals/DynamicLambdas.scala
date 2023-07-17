@@ -31,6 +31,10 @@ private[internals] object DynamicLambdas {
     def apply(dynAlt: DynAlt): DynData = dynAlt._2
   }
 
+  case object Ordinal extends (DynAlt => Int) {
+    def apply(alt: DynAlt): Int = alt._1
+  }
+
   final case class Accessor(index: Int) extends (DynStruct => DynData) {
     def apply(data: DynStruct): DynData = data(index)
   }

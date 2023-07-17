@@ -530,11 +530,11 @@ private[dynamic] object Compiler {
           if (isRecursive(id)) {
             Eval.later(recursive {
               val alts = lAlts.value
-              union(alts) { case (ord, _) => ord }
+              union(alts)(Ordinal)
             })
           } else
             lAlts.map { alts =>
-              union(alts) { case (ord, _) => ord }
+              union(alts)(Ordinal)
             }
         }
       )
