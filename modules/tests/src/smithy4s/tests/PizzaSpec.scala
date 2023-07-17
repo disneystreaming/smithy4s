@@ -293,6 +293,26 @@ abstract class PizzaSpec
         .map(assert.eql(_, 400))
   }
 
+  routerTest("Empty output body") { (client, uri, log) =>
+    for {
+      res <- client.send[Json](
+        GET(uri / "optional-output"),
+        log
+      )
+    } yield {
+      val (code, headers, _) = res
+      expect(code == 200)
+      expect(
+        headers.get("Content-Length").exists(_ == List("0")),
+        "Content-Length should be 0"
+      )
+      expect(
+        headers.get("Content-Type").isEmpty,
+        "Content-Type header should not be defined when content length is 0"
+      )
+    }
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {

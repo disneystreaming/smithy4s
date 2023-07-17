@@ -53,13 +53,25 @@ private[json] case class JsonPayloadCodecCompilerImpl(
   def fromSchema[A](schema: Schema[A], cache: Cache): PayloadCodec[A] = {
     val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
     val reader: PayloadReader[A] = new JsonPayloadReader(jcodec)
-    val writer: PayloadWriter[A] = Writer.encodeBy { (value: A) =>
-      val intermediate = Blob(
-        writeToArray(value, jsoniterWriterConfig)(jcodec)
-      )
-      if (intermediate.sameBytesAs(Blob("null"))) Blob("{}")
-      else intermediate
-    }
+    val writer: PayloadWriter[A] =
+      schema.hints.get(smithy.api.HttpPayload) match {
+        case Some(_) =>
+          Writer.encodeBy { (value: A) =>
+            val intermediate = Blob(
+              writeToArray(value, jsoniterWriterConfig)(jcodec)
+            )
+            if (intermediate.sameBytesAs(Blob("null"))) Blob("")
+            else intermediate
+          }
+        case None =>
+          Writer.encodeBy { (value: A) =>
+            val intermediate = Blob(
+              writeToArray(value, jsoniterWriterConfig)(jcodec)
+            )
+            if (intermediate.sameBytesAs(Blob("null"))) Blob("{}")
+            else intermediate
+          }
+      }
     ReaderWriter(reader, writer)
   }
 
