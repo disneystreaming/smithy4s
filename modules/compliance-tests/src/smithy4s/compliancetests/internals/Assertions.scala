@@ -25,14 +25,22 @@ import org.http4s.Headers
 import org.typelevel.ci.CIString
 import smithy.test.{HttpRequestTestCase, HttpResponseTestCase}
 import io.circe.parser._
+import fs2._
+import fs2.data.xml._
+import cats.effect.Concurrent
 
 private[internals] object assert {
+
+  // private implicit val eventsEq: Eq[XmlEvent] = Eq.fromUniversalEquals
 
   def success: ComplianceResult = ().validNel
   def fail(msg: String): ComplianceResult = msg.invalidNel[Unit]
 
   private def isJson(bodyMediaType: Option[String]) =
     bodyMediaType.exists(_.equalsIgnoreCase("application/json"))
+
+  private def isXml(bodyMediaType: Option[String]) =
+    bodyMediaType.exists(_.equalsIgnoreCase("application/xml"))
 
   private def jsonEql(result: String, testCase: String): ComplianceResult = {
     (result.isEmpty, testCase.isEmpty) match {
@@ -51,6 +59,46 @@ private[internals] object assert {
     }
   }
 
+  private def xmlEql[F[_]: Concurrent](
+      result: String,
+      testCase: String
+  ): F[ComplianceResult] = {
+    val parseXml: String => F[List[XmlEvent]] = in =>
+      Stream
+        .emit[F, String](in)
+        .through(events(false))
+        .through(normalize)
+        .flatMap {
+          case x @ XmlEvent.XmlString(value, _) =>
+            // TODO: This normalizes out newlines/spaces but sometimes we want to include these (when they are between a start and end tag)
+            if (value.exists(c => !c.isWhitespace)) Stream(x) else Stream.empty
+          case other => Stream(other)
+        }
+        .compile
+        .toList
+
+    for {
+      r <- parseXml(result)
+      t <- parseXml(testCase)
+    } yield {
+      if (r == t) {
+        success
+      } else {
+        val report = s"""|------- result -------
+                         |$result
+                         |
+                         |$r
+                         |------ expected ------
+                         |$testCase
+                         |
+                         |$t
+                         |""".stripMargin
+        fail(report)
+
+      }
+    }
+  }
+
   def eql[A: Eq](
       result: A,
       testCase: A,
@@ -66,18 +114,20 @@ private[internals] object assert {
     }
   }
 
-  def bodyEql(
+  def bodyEql[F[_]: Concurrent](
       result: String,
       testCase: Option[String],
       bodyMediaType: Option[String]
-  ): ComplianceResult = {
+  ): F[ComplianceResult] = {
     if (testCase.isDefined)
       if (isJson(bodyMediaType)) {
-        jsonEql(result, testCase.getOrElse(""))
+        jsonEql(result, testCase.getOrElse("")).pure[F]
+      } else if (isXml(bodyMediaType)) {
+        xmlEql[F](result, testCase.getOrElse(""))
       } else {
-        eql(result, testCase.getOrElse(""))
+        eql(result, testCase.getOrElse("")).pure[F]
       }
-    else success
+    else success.pure[F]
   }
 
   private def queryParamsExistenceCheck(

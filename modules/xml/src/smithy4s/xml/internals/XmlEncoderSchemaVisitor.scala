@@ -42,9 +42,8 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     case None => XmlEncoder.nil
     case Some(writer) =>
       new XmlEncoder[P] {
-        def encode(value: P): List[XmlDocument.XmlContent] = List(
-          XmlText(writer(value))
-        )
+        def encode(value: P): List[XmlDocument.XmlContent] =
+          List(XmlText(writer(value)))
       }
   }
 
@@ -57,9 +56,11 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
     def fieldEncoder[A](field: Field[S, A]): XmlEncoder[S] = {
       val isAttribute = field.memberHints.has(XmlAttribute)
       val xmlName = getXmlName(field.memberHints, field.label)
+      val namespace = getXmlNamespace(field.memberHints)
       val aEncoder =
-        if (isAttribute) compile(field.schema).attribute(xmlName)
-        else compile(field.schema).down(xmlName)
+        if (isAttribute)
+          compile(field.schema).attribute(xmlName)
+        else compile(field.schema).addXmlNamespace(namespace).down(xmlName)
 
       new XmlEncoder[S] {
         def encode(s: S): List[XmlContent] =
@@ -81,22 +82,32 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
   ): XmlEncoder[C[A]] =
     new XmlEncoder[C[A]] { self =>
       val isFlattened: Boolean = hints.has(XmlFlattened)
-      val xmlName = getXmlName(member.hints, "member")
+      val xmlName = getXmlName(member.hints.memberHints, "member")
+      val namespace = getXmlNamespace(member.hints.memberHints)
       val memberWriter =
-        if (isFlattened) compile(member) else compile(member).down(xmlName)
+        if (isFlattened) compile(member)
+        else compile(member).addXmlNamespace(namespace).down(xmlName)
 
-      def encode(value: C[A]): List[XmlContent] =
+      def encode(value: C[A]): List[XmlContent] = {
         tag.iterator(value).toList.foldMap(memberWriter.encode)
+      }
 
       override def down(name: XmlQName): XmlEncoder[C[A]] = {
-        if (isFlattened) { (ca: C[A]) =>
-          tag.iterator(ca).toList.map { a =>
-            val content = memberWriter.encode(a)
-            val (attributes, children) = content.partitionEither {
-              case attr @ XmlAttr(_, _) => Left(attr)
-              case other                => Right(other)
+        if (isFlattened) {
+          new XmlEncoder[C[A]] {
+            def encode(value: C[A]): List[XmlContent] = {
+              tag.iterator(value).toList.map { a =>
+                val content = memberWriter.encode(a)
+                val (attributes, children) = content.partitionEither {
+                  case attr @ XmlAttr(_, _) => Left(attr)
+                  case other                => Right(other)
+                }
+                XmlElem(name, attributes, children)
+              }
             }
-            XmlElem(name, attributes, children)
+            override def addXmlNamespace(
+                maybeNs: Option[XmlAttr]
+            ): XmlEncoder[C[A]] = this
           }
         } else super.down(name)
       }
@@ -114,7 +125,9 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       val vField = value.required[KV]("value", _._2)
       Schema.struct(kField, vField)((_, _))
     }
-    compile(Schema.vector(kvSchema.addHints(XmlName("entry"))).addHints(hints))
+    compile(
+      Schema.vector(kvSchema.addMemberHints(XmlName("entry"))).addHints(hints)
+    )
       .contramap(_.toVector)
   }
 
@@ -180,5 +193,16 @@ private[smithy4s] abstract class XmlEncoderSchemaVisitor
       .map(_.value)
       .map(XmlQName.parse)
       .getOrElse(XmlQName(None, default))
+
+  private def getXmlNamespace(hints: Hints): Option[XmlAttr] =
+    hints
+      .get(smithy.api.XmlNamespace)
+      .map { ns =>
+        val qName = ns.prefix match {
+          case Some(prefix) => XmlQName(Some("xmlns"), prefix.value)
+          case None         => XmlQName(None, "xmlns")
+        }
+        XmlAttr(qName, List(XmlText(ns.uri.value)))
+      }
 
 }

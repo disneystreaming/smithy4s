@@ -28,6 +28,7 @@ import smithy4s.dynamic.DynamicSchemaIndex.load
 import smithy4s.codecs._
 import weaver._
 import fs2.Stream
+import java.util.regex.Pattern
 
 abstract class ProtocolComplianceSuite
     extends EffectSuite[IO]
@@ -41,10 +42,14 @@ abstract class ProtocolComplianceSuite
   def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]]
 
   def spec(args: List[String]): fs2.Stream[IO, TestOutcome] = {
+    val includeTest = Filters.filterTests(this.name)(args)
     fs2.Stream
       .eval(dynamicSchemaIndexLoader)
       .evalMap(index => allRules(index).map(_ -> allTests(index)))
       .flatMap { case (rules, tests) => Stream(tests: _*).map(rules -> _) }
+      .flatMap { case (rules, test) =>
+        if (includeTest(test.id)) Stream.emit((rules, test)) else Stream.empty
+      }
       .flatMap { case (rules, test) =>
         runInWeaver(rules, test)
       }
@@ -167,8 +172,9 @@ abstract class ProtocolComplianceSuite
       res: ComplianceTest.ComplianceResult
   ): Expectations = {
     res.toEither match {
-      case Left(failures) => failures.foldMap(Expectations.Helpers.failure(_))
-      case Right(_)       => Expectations.Helpers.success
+      case Left(failures) =>
+        failures.foldMap(Expectations.Helpers.failure(_))
+      case Right(_) => Expectations.Helpers.success
     }
   }
 
@@ -188,6 +194,63 @@ abstract class ProtocolComplianceSuite
           weaver.SourceLocation.fromContext
         )
     }
+  }
+
+}
+
+// brought over from weaver https://github.com/disneystreaming/weaver-test/blob/d5489c994ecbe84f267550fb84c25c9fba473d70/modules/core/src/weaver/Filters.scala#L5
+object Filters {
+
+  def toPattern(filter: String): Pattern = {
+    val parts = filter
+      .split("\\*", -1)
+      .map { // Don't discard trailing empty string, if any.
+        case ""  => ""
+        case str => Pattern.quote(str)
+      }
+    Pattern.compile(parts.mkString(".*"))
+  }
+
+  private type Predicate = TestName => Boolean
+
+  private object atLine {
+    def unapply(testPath: String): Option[(String, Int)] = {
+      // Can't use string interpolation in pattern (2.12)
+      val members = testPath.split(".line://")
+      if (members.size == 2) {
+        val suiteName = members(0)
+        // Can't use .toIntOption (2.12)
+        val maybeLine = scala.util.Try(members(1).toInt).toOption
+        maybeLine.map(suiteName -> _)
+      } else None
+    }
+  }
+
+  def filterTests(
+      suiteName: String
+  )(args: List[String]): TestName => Boolean = {
+
+    def toPredicate(filter: String): Predicate = {
+      filter match {
+
+        case atLine(`suiteName`, line) => { case TestName(_, indicator, _) =>
+          indicator.line == line
+        }
+        case regexStr => { case TestName(name, _, _) =>
+          val fullName = suiteName + "." + name
+          toPattern(regexStr).matcher(fullName).matches()
+        }
+      }
+    }
+
+    import scala.util.Try
+    val maybePattern = for {
+      index <- Option(args.indexOf("-o"))
+        .orElse(Option(args.indexOf("--only")))
+        .filter(_ >= 0)
+      filter <- Try(args(index + 1)).toOption
+    } yield toPredicate(filter)
+    testId => maybePattern.forall(_.apply(testId))
   }
 
 }

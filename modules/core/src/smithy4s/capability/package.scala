@@ -14,27 +14,8 @@
  *  limitations under the License.
  */
 
-package smithy4s.capability
+package smithy4s
 
-/**
-  * Abstraction that encodes Contravariant Functors.
-  */
-
-trait Contravariant[F[_]] {
-  def contramap[A, B](fa: F[A])(f: B => A): F[B]
-}
-
-object Contravariant {
-
-  def apply[F[_]](implicit instance: Contravariant[F]): Contravariant[F] =
-    instance
-
-  implicit def contravariantOfCovariantInstance[F[_], G[_]](implicit
-      F: Covariant[F],
-      G: Contravariant[G]
-  ): Contravariant[Wrapped[F, G, *]] = new Contravariant[Wrapped[F, G, *]] {
-    def contramap[A, B](fa: F[G[A]])(f: B => A): F[G[B]] =
-      F.map(fa)(ga => G.contramap(ga)(f))
-  }
-
+package object capability {
+  type Wrapped[F[_], G[_], A] = F[G[A]]
 }
