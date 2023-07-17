@@ -359,6 +359,6 @@ structure EchoBody {
 operation OptionalOutput {
     output := {
         @httpPayload
-        body: String
+        body: EchoBody
     }
 }

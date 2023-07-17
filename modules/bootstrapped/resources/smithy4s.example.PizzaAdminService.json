@@ -293,7 +293,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/OptionalOutputOutputPayload"
+                                    "$ref": "#/components/schemas/EchoBody"
                                 }
                             }
                         }
@@ -664,9 +664,6 @@
                 "required": [
                     "name"
                 ]
-            },
-            "OptionalOutputOutputPayload": {
-                "type": "string"
             },
             "Pizza": {
                 "type": "object",
