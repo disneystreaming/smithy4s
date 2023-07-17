@@ -23,4 +23,26 @@ class PartiallyAppliedUnion[U](val alts: Vector[Alt[U, _]]) extends AnyVal {
   def apply(f: U => Int): Schema.UnionSchema[U] =
     Schema.UnionSchema(Schema.placeholder, Hints.empty, alts, f)
 
+  /**
+   * A convenience method to build union schemas easily. It shouldn't be
+   * used in real usecases.
+   */
+  def reflective: Schema.UnionSchema[U] = {
+    def ordinal(u: U) = {
+      var i = -1
+      var found = false
+      while ((i < alts.size) && !found) {
+        i += 1
+        found = alts(i).project.isDefinedAt(u)
+      }
+      i
+    }
+    Schema.UnionSchema(
+      Schema.placeholder,
+      Hints.empty,
+      alts,
+      ordinal
+    )
+  }
+
 }
