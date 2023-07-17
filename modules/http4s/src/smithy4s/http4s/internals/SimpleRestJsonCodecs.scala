@@ -21,14 +21,15 @@ package internals
 import cats.effect.Concurrent
 import org.http4s.EntityDecoder
 import org.http4s.Response
-import org.http4s.headers.`Content-Type`
-import org.http4s.syntax.all._
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.json.Json
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.kinds.PolyFunction
+import smithy4s.codecs.PayloadCodec
+import smithy4s.schema.Schema
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -50,6 +51,39 @@ private[http4s] class SimpleRestJsonCodecs(
     EntityEncoders.fromPayloadCodecK[F](mediaType)
   }
 
+  private val underlyingWithNullValue =
+    new CachedSchemaCompiler[PayloadCodec[*]] {
+      type Cache = underlyingCodecs.Cache
+      def createCache(): Cache = underlyingCodecs.createCache()
+
+      def fromSchema[A](schema: Schema[A]): PayloadCodec[A] =
+        fromSchema(schema, createCache())
+
+      def fromSchema[A](schema: Schema[A], cache: Cache): PayloadCodec[A] = {
+        val emptyValue =
+          if (schema.hints.has[smithy.api.HttpPayload]) Blob.empty
+          else Blob("{}")
+
+        val codec = underlyingCodecs.fromSchema(schema, cache)
+
+        val writer = codec.writer.andThen { blob =>
+          if (blob.sameBytesAs(Blob("null"))) emptyValue else blob
+        }
+        codec.copy(writer = writer)
+      }
+
+    }
+
+  def entityEncodersMedia[F[_]]: CachedSchemaCompiler[HttpMediaWriter[*]] =
+    underlyingWithNullValue.mapK {
+      new PolyFunction[PayloadCodec, HttpMediaWriter] {
+        def apply[A](fa: PayloadCodec[A]): HttpMediaWriter[A] =
+          HttpMediaTyped.mediaTypeK[smithy4s.codecs.PayloadWriter](mediaType)(
+            fa.writer
+          )
+      }
+    }
+
   // scalafmt: {maxColumn = 120}
   def entityDecoders[F[_]: Concurrent]: CachedSchemaCompiler[EntityDecoder[F, *]] = underlyingCodecs.mapK {
     EntityDecoders.fromPayloadCodecK[F](mediaType)
@@ -70,7 +104,6 @@ private[http4s] class SimpleRestJsonCodecs(
         response.body
           .ifEmpty(fs2.Stream.chunk(fs2.Chunk.array("{}".getBytes())))
       )
-      .withContentType(`Content-Type`(mediaType"application/json"))
   }
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
@@ -80,9 +113,9 @@ private[http4s] class SimpleRestJsonCodecs(
         entityDecoders[F]
       )
     val responseEncoderCompiler = {
-      val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
+      val restSchemaCompiler = ResponseEncoder.restSchemaCompilerWithMedia[F](
         Metadata.Encoder,
-        entityEncoders[F]
+        entityEncodersMedia[F]
       )
       new CachedSchemaCompiler[ResponseEncoder[F, *]] {
         type Cache = restSchemaCompiler.Cache

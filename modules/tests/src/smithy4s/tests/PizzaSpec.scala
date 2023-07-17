@@ -295,7 +295,7 @@ abstract class PizzaSpec
 
   routerTest("Empty output body") { (client, uri, log) =>
     for {
-      res <- client.send[Json](
+      res <- client.send[String](
         GET(uri / "optional-output"),
         log
       )

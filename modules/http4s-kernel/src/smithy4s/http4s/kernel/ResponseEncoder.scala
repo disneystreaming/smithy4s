@@ -29,6 +29,7 @@ import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Alt
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+import smithy4s.http.HttpMediaWriter
 
 object ResponseEncoder {
 
@@ -106,6 +107,33 @@ object ResponseEncoder {
     }
   }
 
+  def fromHttpMediaWriter[F[_]: Concurrent, A](implicit
+      mediaWriter: HttpMediaWriter[A]
+  ): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
+    def write(response: Response[F], a: A): Response[F] = {
+      val output = mediaWriter.instance.encode(a).toArray
+      val maybeContentType =
+        if (output.nonEmpty)
+          org.http4s.MediaType
+            .parse(mediaWriter.mediaType.value)
+            .toOption
+            .map(org.http4s.headers.`Content-Type`(_))
+        else None
+      response
+        .withBodyStream(
+          fs2.Stream.emits(output)
+        )
+        .putHeaders(maybeContentType.toList)
+    }
+  }
+
+  def fromHttpMediaWriterK[F[_]: Concurrent]
+      : PolyFunction[HttpMediaWriter[*], ResponseEncoder[F, *]] =
+    new PolyFunction[HttpMediaWriter[*], ResponseEncoder[F, *]] {
+      def apply[A](fa: HttpMediaWriter[A]): ResponseEncoder[F, A] =
+        fromHttpMediaWriter[F, A](Concurrent[F], fa)
+    }
+
   def fromEntityEncoderK[F[_]: Concurrent]
       : PolyFunction[EntityEncoder[F, *], ResponseEncoder[F, *]] =
     new PolyFunction[EntityEncoder[F, *], ResponseEncoder[F, *]] {
@@ -135,6 +163,23 @@ object ResponseEncoder {
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] = {
     val bodyCompiler =
       entityEncoderCompiler.mapK(fromEntityEncoderK)
+    val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
+    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+  }
+
+  /**
+    * A compiler for ResponseEncoder that abides by REST-semantics :
+    * fields that are annotated with `httpHeader` and `httpStatusCode`
+    * are encoded as the corresponding metadata.
+    *
+    * The rest is used to formulate the body of the message.
+    */
+  def restSchemaCompilerWithMedia[F[_]](
+      metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+      httpMediaWriter: CachedSchemaCompiler[HttpMediaWriter[*]]
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] = {
+    val bodyCompiler =
+      httpMediaWriter.mapK(fromHttpMediaWriterK)
     val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
     HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
   }
