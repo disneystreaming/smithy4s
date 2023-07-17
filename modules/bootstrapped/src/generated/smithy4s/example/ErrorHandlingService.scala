@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -37,11 +36,12 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ErrorHandlingServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[ErrorHandlingServiceOperation, _, _, _, _, _]] = IndexedSeq(
     ErrorHandlingServiceOperation.ErrorHandlingOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: ErrorHandlingServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: ErrorHandlingServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: ErrorHandlingServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ErrorHandlingServiceOperation.Transformed[ErrorHandlingServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: ErrorHandlingServiceGen[ErrorHandlingServiceOperation] = ErrorHandlingServiceOperation.reified
@@ -55,7 +55,8 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
 
 sealed trait ErrorHandlingServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ErrorHandlingServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object ErrorHandlingServiceOperation {
@@ -72,7 +73,7 @@ object ErrorHandlingServiceOperation {
   }
   final case class ErrorHandlingOperation(input: ErrorHandlingOperationInput) extends ErrorHandlingServiceOperation[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceGen[F]): F[ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] = impl.errorHandlingOperation(input.in)
-    def endpoint: (ErrorHandlingOperationInput, smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing]) = (input, ErrorHandlingOperation)
+    def ordinal = 0
   }
   object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] with Errorable[ErrorHandlingOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperation")
@@ -98,18 +99,19 @@ object ErrorHandlingServiceOperation {
       case ErrorHandlingOperationError.EHFallbackServerErrorCase(e) => e
     }
   }
-  sealed trait ErrorHandlingOperationError extends scala.Product with scala.Serializable {
+  sealed abstract class ErrorHandlingOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ErrorHandlingOperationError = this
+    def _ordinal: Int
   }
   object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationError")
 
     val hints: Hints = Hints.empty
 
-    final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError
-    final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError
-    final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError
-    final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError
+    final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }
+    final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError { final def _ordinal: Int = 1 }
+    final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError { final def _ordinal: Int = 2 }
+    final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError { final def _ordinal: Int = 3 }
 
     object EHFallbackClientErrorCase {
       val hints: Hints = Hints.empty
@@ -138,10 +140,7 @@ object ErrorHandlingServiceOperation {
       EHNotFoundCase.alt,
       EHFallbackServerErrorCase.alt,
     ){
-      case c: EHFallbackClientErrorCase => EHFallbackClientErrorCase.alt(c)
-      case c: EHServiceUnavailableCase => EHServiceUnavailableCase.alt(c)
-      case c: EHNotFoundCase => EHNotFoundCase.alt(c)
-      case c: EHFallbackServerErrorCase => EHFallbackServerErrorCase.alt(c)
+      _._ordinal
     }
   }
 }

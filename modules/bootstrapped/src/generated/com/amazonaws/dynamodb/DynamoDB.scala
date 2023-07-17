@@ -76,12 +76,13 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[DynamoDBOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[DynamoDBOperation, _, _, _, _, _]] = IndexedSeq(
     DynamoDBOperation.DescribeEndpoints,
     DynamoDBOperation.ListTables,
   )
 
-  def endpoint[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DynamoDBOperation.Transformed[DynamoDBOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: DynamoDBGen[DynamoDBOperation] = DynamoDBOperation.reified
@@ -95,7 +96,8 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
 
 sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, smithy4s.Endpoint[DynamoDBOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object DynamoDBOperation {
@@ -114,7 +116,7 @@ object DynamoDBOperation {
   }
   final case class DescribeEndpoints(input: DescribeEndpointsRequest) extends DynamoDBOperation[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = impl.describeEndpoints()
-    def endpoint: (DescribeEndpointsRequest, smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing]) = (input, DescribeEndpoints)
+    def ordinal = 0
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints")
@@ -130,7 +132,7 @@ object DynamoDBOperation {
   }
   final case class ListTables(input: ListTablesInput) extends DynamoDBOperation[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = impl.listTables(input.exclusiveStartTableName, input.limit)
-    def endpoint: (ListTablesInput, smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing]) = (input, ListTables)
+    def ordinal = 1
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] with Errorable[ListTablesError] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTables")
@@ -156,16 +158,17 @@ object DynamoDBOperation {
       case ListTablesError.InvalidEndpointExceptionCase(e) => e
     }
   }
-  sealed trait ListTablesError extends scala.Product with scala.Serializable {
+  sealed abstract class ListTablesError extends scala.Product with scala.Serializable {
     @inline final def widen: ListTablesError = this
+    def _ordinal: Int
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesError")
 
     val hints: Hints = Hints.empty
 
-    final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError
-    final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError
+    final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
+    final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
 
     object InternalServerErrorCase {
       val hints: Hints = Hints.empty
@@ -182,8 +185,7 @@ object DynamoDBOperation {
       InternalServerErrorCase.alt,
       InvalidEndpointExceptionCase.alt,
     ){
-      case c: InternalServerErrorCase => InternalServerErrorCase.alt(c)
-      case c: InvalidEndpointExceptionCase => InvalidEndpointExceptionCase.alt(c)
+      _._ordinal
     }
   }
 }

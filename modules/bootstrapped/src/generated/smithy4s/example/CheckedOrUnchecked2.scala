@@ -8,8 +8,9 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
-sealed trait CheckedOrUnchecked2 extends scala.Product with scala.Serializable {
+sealed abstract class CheckedOrUnchecked2 extends scala.Product with scala.Serializable {
   @inline final def widen: CheckedOrUnchecked2 = this
+  def _ordinal: Int
 }
 object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
   val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked2")
@@ -18,8 +19,8 @@ object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
     alloy.Untagged(),
   )
 
-  final case class CheckedCase(checked: String) extends CheckedOrUnchecked2
-  final case class RawCase(raw: String) extends CheckedOrUnchecked2
+  final case class CheckedCase(checked: String) extends CheckedOrUnchecked2 { final def _ordinal: Int = 0 }
+  final case class RawCase(raw: String) extends CheckedOrUnchecked2 { final def _ordinal: Int = 1 }
 
   object CheckedCase {
     val hints: Hints = Hints.empty
@@ -36,7 +37,6 @@ object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
     CheckedCase.alt,
     RawCase.alt,
   ){
-    case c: CheckedCase => CheckedCase.alt(c)
-    case c: RawCase => RawCase.alt(c)
+    _._ordinal
   }.withId(id).addHints(hints)
 }

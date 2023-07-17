@@ -8,8 +8,9 @@ import smithy4s.interopcats.SchemaVisitorHash
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed trait PersonContactInfo extends scala.Product with scala.Serializable {
+sealed abstract class PersonContactInfo extends scala.Product with scala.Serializable {
   @inline final def widen: PersonContactInfo = this
+  def _ordinal: Int
 }
 object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
   val id: ShapeId = ShapeId("smithy4s.example", "PersonContactInfo")
@@ -18,8 +19,8 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     smithy4s.example.Hash(),
   )
 
-  final case class EmailCase(email: PersonEmail) extends PersonContactInfo
-  final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo
+  final case class EmailCase(email: PersonEmail) extends PersonContactInfo { final def _ordinal: Int = 0 }
+  final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo { final def _ordinal: Int = 1 }
 
   object EmailCase {
     val hints: Hints = Hints.empty
@@ -36,8 +37,7 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     EmailCase.alt,
     PhoneCase.alt,
   ){
-    case c: EmailCase => EmailCase.alt(c)
-    case c: PhoneCase => PhoneCase.alt(c)
+    _._ordinal
   }.withId(id).addHints(hints)
 
   implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema(schema)

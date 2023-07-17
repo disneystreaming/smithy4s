@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -38,11 +37,12 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation, _, _, _, _, _]] = IndexedSeq(
     ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ErrorHandlingServiceExtraErrorsOperation.Transformed[ErrorHandlingServiceExtraErrorsOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: ErrorHandlingServiceExtraErrorsGen[ErrorHandlingServiceExtraErrorsOperation] = ErrorHandlingServiceExtraErrorsOperation.reified
@@ -56,7 +56,8 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
 
 sealed trait ErrorHandlingServiceExtraErrorsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ErrorHandlingServiceExtraErrorsOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object ErrorHandlingServiceExtraErrorsOperation {
@@ -73,7 +74,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
   }
   final case class ExtraErrorOperation(input: ExtraErrorOperationInput) extends ErrorHandlingServiceExtraErrorsOperation[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[F]): F[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = impl.extraErrorOperation(input.in)
-    def endpoint: (ExtraErrorOperationInput, smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing]) = (input, ExtraErrorOperation)
+    def ordinal = 0
   }
   object ExtraErrorOperation extends smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] with Errorable[ExtraErrorOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperation")
@@ -99,18 +100,19 @@ object ErrorHandlingServiceExtraErrorsOperation {
       case ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e) => e
     }
   }
-  sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable {
+  sealed abstract class ExtraErrorOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ExtraErrorOperationError = this
+    def _ordinal: Int
   }
   object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationError")
 
     val hints: Hints = Hints.empty
 
-    final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError
-    final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError
-    final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError
-    final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError
+    final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError { final def _ordinal: Int = 0 }
+    final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError { final def _ordinal: Int = 1 }
+    final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError { final def _ordinal: Int = 2 }
+    final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError { final def _ordinal: Int = 3 }
 
     object RandomOtherClientErrorCase {
       val hints: Hints = Hints.empty
@@ -139,10 +141,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       RandomOtherClientErrorWithCodeCase.alt,
       RandomOtherServerErrorWithCodeCase.alt,
     ){
-      case c: RandomOtherClientErrorCase => RandomOtherClientErrorCase.alt(c)
-      case c: RandomOtherServerErrorCase => RandomOtherServerErrorCase.alt(c)
-      case c: RandomOtherClientErrorWithCodeCase => RandomOtherClientErrorWithCodeCase.alt(c)
-      case c: RandomOtherServerErrorWithCodeCase => RandomOtherServerErrorWithCodeCase.alt(c)
+      _._ordinal
     }
   }
 }

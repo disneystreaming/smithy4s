@@ -448,7 +448,7 @@ class DocumentDecoderSchemaVisitor(
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject) =>
+      alternatives.map { case alt @ Alt(_, instance, inject, _) =>
         val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(apply(instance)(label :: pp, doc))

@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -40,12 +39,13 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[DummyServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[DummyServiceOperation, _, _, _, _, _]] = IndexedSeq(
     DummyServiceOperation.Dummy,
     DummyServiceOperation.DummyPath,
   )
 
-  def endpoint[I, E, O, SI, SO](op: DummyServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: DummyServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: DummyServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DummyServiceOperation.Transformed[DummyServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: DummyServiceGen[DummyServiceOperation] = DummyServiceOperation.reified
@@ -57,7 +57,8 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
 
 sealed trait DummyServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: DummyServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[DummyServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object DummyServiceOperation {
@@ -76,7 +77,7 @@ object DummyServiceOperation {
   }
   final case class Dummy(input: Queries) extends DummyServiceOperation[Queries, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DummyServiceGen[F]): F[Queries, Nothing, Unit, Nothing, Nothing] = impl.dummy(input.str, input.int, input.ts1, input.ts2, input.ts3, input.ts4, input.b, input.sl, input.ie, input.slm)
-    def endpoint: (Queries, smithy4s.Endpoint[DummyServiceOperation,Queries, Nothing, Unit, Nothing, Nothing]) = (input, Dummy)
+    def ordinal = 0
   }
   object Dummy extends smithy4s.Endpoint[DummyServiceOperation,Queries, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "Dummy")
@@ -93,7 +94,7 @@ object DummyServiceOperation {
   }
   final case class DummyPath(input: PathParams) extends DummyServiceOperation[PathParams, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DummyServiceGen[F]): F[PathParams, Nothing, Unit, Nothing, Nothing] = impl.dummyPath(input.str, input.int, input.ts1, input.ts2, input.ts3, input.ts4, input.b, input.ie)
-    def endpoint: (PathParams, smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing]) = (input, DummyPath)
+    def ordinal = 1
   }
   object DummyPath extends smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "DummyPath")

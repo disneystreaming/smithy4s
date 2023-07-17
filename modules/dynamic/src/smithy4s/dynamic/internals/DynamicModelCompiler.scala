@@ -383,7 +383,8 @@ private[dynamic] object Compiler {
           Alt[DynAlt, DynData](
             shapeId.name,
             schema,
-            (index, _: DynData)
+            (index, _: DynData),
+            { case (`index`, dynData) => dynData }
           )
         }
 
@@ -403,9 +404,7 @@ private[dynamic] object Compiler {
               errorId,
               Hints.empty,
               alts.toVector,
-              { case (index, data) =>
-                alts(index).apply(data)
-              }
+              { case (index, _) => index }
             )
           )
       }
@@ -474,7 +473,7 @@ private[dynamic] object Compiler {
         DynamicService(
           id,
           shape.version.getOrElse(""),
-          endpoints,
+          endpoints.toIndexedSeq,
           allHints(shape.traits)
         )
       }
@@ -523,17 +522,19 @@ private[dynamic] object Compiler {
               case ((label, mShape), index) =>
                 val memberHints = allHints(mShape.traits)
                 schema(mShape.target)
-                  .map(_.oneOf[DynAlt](label, Injector(index)))
+                  .map(
+                    _.oneOf[DynAlt](label, Injector(index))(Projector(index))
+                  )
                   .map(_.addHints(memberHints))
             }
           if (isRecursive(id)) {
             Eval.later(recursive {
               val alts = lAlts.value
-              union(alts)(Dispatcher(alts))
+              union(alts) { case (ord, _) => ord }
             })
           } else
             lAlts.map { alts =>
-              union(alts)(Dispatcher(alts))
+              union(alts) { case (ord, _) => ord }
             }
         }
       )

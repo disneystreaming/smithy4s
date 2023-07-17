@@ -1,6 +1,5 @@
 package smithy4s.example.guides.hello
 
-import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -36,11 +35,12 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[HelloWorldServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[HelloWorldServiceOperation, _, _, _, _, _]] = IndexedSeq(
     HelloWorldServiceOperation.SayWorld,
   )
 
-  def endpoint[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends HelloWorldServiceOperation.Transformed[HelloWorldServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: HelloWorldServiceGen[HelloWorldServiceOperation] = HelloWorldServiceOperation.reified
@@ -52,7 +52,8 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[HelloWorldServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object HelloWorldServiceOperation {
@@ -69,7 +70,8 @@ object HelloWorldServiceOperation {
   }
   final case class SayWorld() extends HelloWorldServiceOperation[Unit, Nothing, World, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Unit, Nothing, World, Nothing, Nothing] = impl.sayWorld()
-    def endpoint: (Unit, smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing]) = ((), SayWorld)
+    def ordinal = 0
+    def input: Unit = ()
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.guides.hello", "SayWorld")

@@ -16,8 +16,6 @@
 
 package smithy4s.dynamic.internals
 
-import smithy4s.schema.Alt
-
 /**
   * A bunch of hash-code stable lambdas that are less likely to break memoization
   * that may be able to SchemaVisitors.
@@ -25,6 +23,12 @@ import smithy4s.schema.Alt
 private[internals] object DynamicLambdas {
   final case class Injector(index: Int) extends (DynData => DynAlt) {
     def apply(data: DynData): DynAlt = (index, data)
+  }
+
+  final case class Projector(index: Int)
+      extends PartialFunction[DynAlt, DynData] {
+    def isDefinedAt(dynAlt: DynAlt): Boolean = dynAlt._1 == index
+    def apply(dynAlt: DynAlt): DynData = dynAlt._2
   }
 
   final case class Accessor(index: Int) extends (DynStruct => DynData) {
@@ -46,15 +50,6 @@ private[internals] object DynamicLambdas {
         case other       => (array(i) = other); i += 1
       }
       array
-    }
-  }
-
-  case class Dispatcher(alts: IndexedSeq[Alt[DynAlt, DynData]])
-      extends (DynAlt => Alt.WithValue[DynAlt, DynData]) {
-    def apply(dynAlt: DynAlt): Alt.WithValue[DynAlt, DynData] = {
-      val index = dynAlt._1
-      val data = dynAlt._2
-      alts(index).apply(data)
     }
   }
 

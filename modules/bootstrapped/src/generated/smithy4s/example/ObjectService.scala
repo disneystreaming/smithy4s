@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -48,12 +47,13 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = IndexedSeq(
     ObjectServiceOperation.PutObject,
     ObjectServiceOperation.GetObject,
   )
 
-  def endpoint[I, E, O, SI, SO](op: ObjectServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: ObjectServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: ObjectServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ObjectServiceOperation.Transformed[ObjectServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: ObjectServiceGen[ObjectServiceOperation] = ObjectServiceOperation.reified
@@ -69,7 +69,8 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
 
 sealed trait ObjectServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ObjectServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object ObjectServiceOperation {
@@ -88,7 +89,7 @@ object ObjectServiceOperation {
   }
   final case class PutObject(input: PutObjectInput) extends ObjectServiceOperation[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] = impl.putObject(input.key, input.bucketName, input.data, input.foo, input.someValue)
-    def endpoint: (PutObjectInput, smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing]) = (input, PutObject)
+    def ordinal = 0
   }
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
@@ -113,16 +114,17 @@ object ObjectServiceOperation {
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }
-  sealed trait PutObjectError extends scala.Product with scala.Serializable {
+  sealed abstract class PutObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: PutObjectError = this
+    def _ordinal: Int
   }
   object PutObjectError extends ShapeTag.Companion[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
 
     val hints: Hints = Hints.empty
 
-    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError
-    final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
+    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def _ordinal: Int = 0 }
+    final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError { final def _ordinal: Int = 1 }
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -139,13 +141,12 @@ object ObjectServiceOperation {
       ServerErrorCase.alt,
       NoMoreSpaceCase.alt,
     ){
-      case c: ServerErrorCase => ServerErrorCase.alt(c)
-      case c: NoMoreSpaceCase => NoMoreSpaceCase.alt(c)
+      _._ordinal
     }
   }
   final case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
-    def endpoint: (GetObjectInput, smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing]) = (input, GetObject)
+    def ordinal = 1
   }
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObject")
@@ -168,15 +169,16 @@ object ObjectServiceOperation {
       case GetObjectError.ServerErrorCase(e) => e
     }
   }
-  sealed trait GetObjectError extends scala.Product with scala.Serializable {
+  sealed abstract class GetObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: GetObjectError = this
+    def _ordinal: Int
   }
   object GetObjectError extends ShapeTag.Companion[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
 
     val hints: Hints = Hints.empty
 
-    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError
+    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def _ordinal: Int = 0 }
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -187,7 +189,7 @@ object ObjectServiceOperation {
     implicit val schema: UnionSchema[GetObjectError] = union(
       ServerErrorCase.alt,
     ){
-      case c: ServerErrorCase => ServerErrorCase.alt(c)
+      _._ordinal
     }
   }
 }

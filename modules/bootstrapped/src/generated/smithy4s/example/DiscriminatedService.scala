@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -34,11 +33,12 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[DiscriminatedServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[DiscriminatedServiceOperation, _, _, _, _, _]] = IndexedSeq(
     DiscriminatedServiceOperation.TestDiscriminated,
   )
 
-  def endpoint[I, E, O, SI, SO](op: DiscriminatedServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: DiscriminatedServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: DiscriminatedServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DiscriminatedServiceOperation.Transformed[DiscriminatedServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: DiscriminatedServiceGen[DiscriminatedServiceOperation] = DiscriminatedServiceOperation.reified
@@ -50,7 +50,8 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
 
 sealed trait DiscriminatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: DiscriminatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[DiscriminatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object DiscriminatedServiceOperation {
@@ -67,7 +68,7 @@ object DiscriminatedServiceOperation {
   }
   final case class TestDiscriminated(input: TestDiscriminatedInput) extends DiscriminatedServiceOperation[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DiscriminatedServiceGen[F]): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = impl.testDiscriminated(input.key)
-    def endpoint: (TestDiscriminatedInput, smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing]) = (input, TestDiscriminated)
+    def ordinal = 0
   }
   object TestDiscriminated extends smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminated")

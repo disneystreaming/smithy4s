@@ -23,7 +23,7 @@ import smithy4s.kinds.PolyFunction5
 private[internals] case class DynamicService(
     id: ShapeId,
     version: String,
-    endpoints: List[DynamicEndpoint],
+    endpoints: IndexedSeq[DynamicEndpoint],
     hints: Hints
 ) extends Service.Reflective[DynamicOp]
     with DynamicSchemaIndex.ServiceWrapper {
@@ -31,17 +31,11 @@ private[internals] case class DynamicService(
   type Alg[P[_, _, _, _, _]] = PolyFunction5.From[DynamicOp]#Algebra[P]
   override val service: Service[Alg] = this
 
-  private lazy val endpointMap: Map[ShapeId, Endpoint[_, _, _, _, _]] =
-    endpoints.map(ep => ep.id -> ep).toMap
+  private lazy val ordinalMap: Map[ShapeId, Int] =
+    endpoints.map(_.id).zipWithIndex.toMap
 
-  def endpoint[I, E, O, SI, SO](
-      op: DynamicOp[I, E, O, SI, SO]
-  ): (I, Endpoint[I, E, O, SI, SO]) = {
-    val endpoint = endpointMap
-      .getOrElse(op.id, sys.error("Unknown endpoint: " + op.id))
-      .asInstanceOf[Endpoint[I, E, O, SI, SO]]
-    val input = op.data
-    (input, endpoint)
-  }
+  def input[I, E, O, SI, SO](op: DynamicOp[I, E, O, SI, SO]): I = op.data
+  def ordinal[I, E, O, SI, SO](op: DynamicOp[I, E, O, SI, SO]): Int =
+    ordinalMap(op.id)
 
 }

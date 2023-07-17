@@ -1,6 +1,5 @@
 package smithy4s.example.imp
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -42,11 +41,12 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ImportServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[ImportServiceOperation, _, _, _, _, _]] = IndexedSeq(
     ImportServiceOperation.ImportOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: ImportServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: ImportServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: ImportServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ImportServiceOperation.Transformed[ImportServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: ImportServiceGen[ImportServiceOperation] = ImportServiceOperation.reified
@@ -60,7 +60,8 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
 
 sealed trait ImportServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ImportServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object ImportServiceOperation {
@@ -77,7 +78,8 @@ object ImportServiceOperation {
   }
   final case class ImportOperation() extends ImportServiceOperation[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ImportServiceGen[F]): F[Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] = impl.importOperation()
-    def endpoint: (Unit, smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing]) = ((), ImportOperation)
+    def ordinal = 0
+    def input: Unit = ()
   }
   object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
@@ -99,15 +101,16 @@ object ImportServiceOperation {
       case ImportOperationError.NotFoundErrorCase(e) => e
     }
   }
-  sealed trait ImportOperationError extends scala.Product with scala.Serializable {
+  sealed abstract class ImportOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ImportOperationError = this
+    def _ordinal: Int
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportOperationError")
 
     val hints: Hints = Hints.empty
 
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
@@ -118,7 +121,7 @@ object ImportServiceOperation {
     implicit val schema: UnionSchema[ImportOperationError] = union(
       NotFoundErrorCase.alt,
     ){
-      case c: NotFoundErrorCase => NotFoundErrorCase.alt(c)
+      _._ordinal
     }
   }
 }

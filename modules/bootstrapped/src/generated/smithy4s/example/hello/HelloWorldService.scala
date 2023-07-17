@@ -1,6 +1,5 @@
 package smithy4s.example.hello
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -40,11 +39,12 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[HelloWorldServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[HelloWorldServiceOperation, _, _, _, _, _]] = IndexedSeq(
     HelloWorldServiceOperation.Hello,
   )
 
-  def endpoint[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends HelloWorldServiceOperation.Transformed[HelloWorldServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: HelloWorldServiceGen[HelloWorldServiceOperation] = HelloWorldServiceOperation.reified
@@ -58,7 +58,8 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[HelloWorldServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object HelloWorldServiceOperation {
@@ -75,7 +76,7 @@ object HelloWorldServiceOperation {
   }
   final case class Hello(input: Person) extends HelloWorldServiceOperation[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] = impl.hello(input.name, input.town)
-    def endpoint: (Person, smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing]) = (input, Hello)
+    def ordinal = 0
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] with Errorable[HelloError] {
     val id: ShapeId = ShapeId("smithy4s.example.hello", "Hello")
@@ -100,16 +101,17 @@ object HelloWorldServiceOperation {
       case HelloError.SpecificServerErrorCase(e) => e
     }
   }
-  sealed trait HelloError extends scala.Product with scala.Serializable {
+  sealed abstract class HelloError extends scala.Product with scala.Serializable {
     @inline final def widen: HelloError = this
+    def _ordinal: Int
   }
   object HelloError extends ShapeTag.Companion[HelloError] {
     val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloError")
 
     val hints: Hints = Hints.empty
 
-    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError
-    final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError
+    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError { final def _ordinal: Int = 0 }
+    final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError { final def _ordinal: Int = 1 }
 
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
@@ -126,8 +128,7 @@ object HelloWorldServiceOperation {
       GenericServerErrorCase.alt,
       SpecificServerErrorCase.alt,
     ){
-      case c: GenericServerErrorCase => GenericServerErrorCase.alt(c)
-      case c: SpecificServerErrorCase => SpecificServerErrorCase.alt(c)
+      _._ordinal
     }
   }
 }

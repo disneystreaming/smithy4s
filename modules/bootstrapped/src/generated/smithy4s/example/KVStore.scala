@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -40,13 +39,14 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[KVStoreOperation, _, _, _, _, _]] = List(
+  val endpoints: IndexedSeq[smithy4s.Endpoint[KVStoreOperation, _, _, _, _, _]] = IndexedSeq(
     KVStoreOperation.Get,
     KVStoreOperation.Put,
     KVStoreOperation.Delete,
   )
 
-  def endpoint[I, E, O, SI, SO](op: KVStoreOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: KVStoreOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: KVStoreOperation[I, E, O, SI, SO]): Int = op.ordinal
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends KVStoreOperation.Transformed[KVStoreOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: KVStoreGen[KVStoreOperation] = KVStoreOperation.reified
@@ -64,7 +64,8 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
 
 sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[KVStoreOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
 }
 
 object KVStoreOperation {
@@ -85,7 +86,7 @@ object KVStoreOperation {
   }
   final case class Get(input: Key) extends KVStoreOperation[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing] = impl.get(input.key)
-    def endpoint: (Key, smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing]) = (input, Get)
+    def ordinal = 0
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] with Errorable[GetError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Get")
@@ -107,16 +108,17 @@ object KVStoreOperation {
       case GetError.KeyNotFoundErrorCase(e) => e
     }
   }
-  sealed trait GetError extends scala.Product with scala.Serializable {
+  sealed abstract class GetError extends scala.Product with scala.Serializable {
     @inline final def widen: GetError = this
+    def _ordinal: Int
   }
   object GetError extends ShapeTag.Companion[GetError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError
-    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError { final def _ordinal: Int = 0 }
+    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError { final def _ordinal: Int = 1 }
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -133,13 +135,12 @@ object KVStoreOperation {
       UnauthorizedErrorCase.alt,
       KeyNotFoundErrorCase.alt,
     ){
-      case c: UnauthorizedErrorCase => UnauthorizedErrorCase.alt(c)
-      case c: KeyNotFoundErrorCase => KeyNotFoundErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class Put(input: KeyValue) extends KVStoreOperation[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = impl.put(input.key, input.value)
-    def endpoint: (KeyValue, smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing]) = (input, Put)
+    def ordinal = 1
   }
   object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] with Errorable[PutError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Put")
@@ -159,15 +160,16 @@ object KVStoreOperation {
       case PutError.UnauthorizedErrorCase(e) => e
     }
   }
-  sealed trait PutError extends scala.Product with scala.Serializable {
+  sealed abstract class PutError extends scala.Product with scala.Serializable {
     @inline final def widen: PutError = this
+    def _ordinal: Int
   }
   object PutError extends ShapeTag.Companion[PutError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def _ordinal: Int = 0 }
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -178,12 +180,12 @@ object KVStoreOperation {
     implicit val schema: UnionSchema[PutError] = union(
       UnauthorizedErrorCase.alt,
     ){
-      case c: UnauthorizedErrorCase => UnauthorizedErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class Delete(input: Key) extends KVStoreOperation[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = impl.delete(input.key)
-    def endpoint: (Key, smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]) = (input, Delete)
+    def ordinal = 2
   }
   object Delete extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] with Errorable[DeleteError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Delete")
@@ -205,16 +207,17 @@ object KVStoreOperation {
       case DeleteError.KeyNotFoundErrorCase(e) => e
     }
   }
-  sealed trait DeleteError extends scala.Product with scala.Serializable {
+  sealed abstract class DeleteError extends scala.Product with scala.Serializable {
     @inline final def widen: DeleteError = this
+    def _ordinal: Int
   }
   object DeleteError extends ShapeTag.Companion[DeleteError] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeleteError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError
-    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError { final def _ordinal: Int = 0 }
+    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError { final def _ordinal: Int = 1 }
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -231,8 +234,7 @@ object KVStoreOperation {
       UnauthorizedErrorCase.alt,
       KeyNotFoundErrorCase.alt,
     ){
-      case c: UnauthorizedErrorCase => UnauthorizedErrorCase.alt(c)
-      case c: KeyNotFoundErrorCase => KeyNotFoundErrorCase.alt(c)
+      _._ordinal
     }
   }
 }

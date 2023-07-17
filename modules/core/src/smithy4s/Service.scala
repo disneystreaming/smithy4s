@@ -109,16 +109,18 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   type ErrorAware[F[_, _]] = BiFunctorAlgebra[Alg, F]
 
   val service: Service[Alg] = this
-  def endpoints: List[Endpoint[_, _, _, _, _]]
-  def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO])
+  def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]]
+  def ordinal[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]) : Int
+  def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
   def version: String
   def hints: Hints
   def reified: Alg[Operation]
   def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Operation, P]): Alg[P]
   def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P]
 
-  final val opToEndpoint: PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
-    def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] = endpoint(op)._2
+  final val endpoint: PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
+    def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] =
+      endpoints(ordinal(op)).asInstanceOf[Endpoint[I, E, O, SI, SO]]
   }
 
   /**
@@ -127,10 +129,15 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
    * to the service and routes it to the correct function, returning the result.
    */
   final def interpreter[F[_, _, _, _, _]](compiler: EndpointCompiler[F]) : Interpreter[F] = new Interpreter[F]{
-    val cached = compiler.unsafeCacheBy(endpoints.map(Kind5.existential(_)), identity)
+    private val cache: Array[Any] = {
+      val builder = scala.collection.mutable.ArrayBuffer[Any]()
+      endpoints.foreach(ep =>
+        builder += compiler(ep).asInstanceOf[Any]
+      )
+      builder.toArray
+    }
     def apply[I, E, O, SI, SO](operation: Operation[I, E, O, SI, SO]): F[I, E, O, SI, SO] = {
-      val (input, ep) = endpoint(operation)
-      cached(ep).apply(input)
+      cache(ordinal(operation)).asInstanceOf[I => F[I, E, O, SI, SO]].apply(input(operation))
     }
   }
 

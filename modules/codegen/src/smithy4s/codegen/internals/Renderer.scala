@@ -353,10 +353,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
-        line"val endpoints: $list[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $list"
+        line"val endpoints: $indexedSeq[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $indexedSeq"
           .args(ops.map(op => line"${opTraitNameRef}.${op.name}")),
         newline,
-        line"def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
+        line"def $input_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): I = op.$input_",
+        line"def $ordinal_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): Int = op.$ordinal_",
         line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ${opTraitNameRef}.$Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
         line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         line"def reified: $genNameRef[$opTraitNameRef] = ${opTraitNameRef}.${NameRef("reified")}",
@@ -431,7 +432,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
       )(
         line"def run[F[_, _, _, _, _]](impl: $genName[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]",
-        line"def endpoint: (Input, $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput])"
+        line"def ordinal: Int",
+        line"def input: Input"
       ),
       newline,
       block(
@@ -469,7 +471,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"def $apply_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): P[I, E, O, SI, SO] = op.run(impl) "
           }
         ),
-        ops.map(renderOperation(name, _))
+        ops.zipWithIndex.map { case (op, ordinal) =>
+          renderOperation(name, op, ordinal)
+        }
       ),
       newline
     )
@@ -477,14 +481,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderOperation(
       serviceName: String,
-      op: Operation
+      op: Operation,
+      ordinal: Int
   ): Lines = {
     val params = if (op.input != Type.unit) {
       line"input: ${op.input}"
     } else Line.empty
-    val inputRef = if (op.input != Type.unit) {
-      line"input"
-    } else line"()"
     val genServiceName = serviceName + "Gen"
     val opObjectName = serviceName + "Operation"
     val opName = op.name
@@ -541,8 +543,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(opObjectName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
-        line"def endpoint: (${op.input}, smithy4s.Endpoint[$traitName,${op
-          .renderAlgParams(opObjectName)}]) = ($inputRef, $opNameRef)"
+        line"def ordinal = $ordinal",
+        if (op.input == Type.unit) line"def input: Unit = ()" else Lines.empty
       ),
       obj(
         opNameRef,
@@ -611,7 +613,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
-      additionalLines: Lines
+      additionalLines: Lines,
+      classBody: Lines
   ): Lines = {
     import product._
     val decl =
@@ -642,7 +645,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         val ext =
           if (extend.nonEmpty) line" extends $extend"
           else Line.empty
-        line"$decl$ext"
+
+        if (classBody.isEmpty) line"$decl$ext"
+        else
+          block(line"$decl$ext") {
+            classBody
+          }
       },
       obj(product.nameRef, shapeTag(product.nameRef))(
         renderId(shapeId),
@@ -724,7 +732,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderProduct(
       product: Product,
       adtParent: Option[NameRef] = None,
-      additionalLines: Lines = Lines.empty
+      additionalLines: Lines = Lines.empty,
+      classBody: Lines = Lines.empty
   ): Lines = {
     import product._
     val base =
@@ -738,7 +747,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderProductNonMixin(
           product,
           adtParent,
-          additionalLines
+          additionalLines,
+          classBody
         )
 
     lines(
@@ -830,8 +840,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           block(
             line"$union_(${members.map { case (n, _) => altVal(n) }.intercalate(line", ")})"
           )(
-            members.map { case (altName, _) =>
-              line"case c: $altName => ${altVal(altName)}(c)"
+            members.zipWithIndex.map { case ((altName, _), index) =>
+              line"case c: $altName => $index"
             }
           )
         )
@@ -866,35 +876,41 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
+        line"sealed abstract class ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       )(
-        line"@inline final def widen: $name = this"
+        line"@inline final def widen: $name = this",
+        line"def _ordinal: Int"
       ),
       obj(name, line"${shapeTag(name)}")(
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
         newline,
-        alts.map {
-          case a @ Alt(_, realName, UnionMember.UnitCase, altHints) =>
+        alts.zipWithIndex.map {
+          case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
             val cn = caseName(a)
             // format: off
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case object $cn extends $name",
+              line"case object $cn extends $name { final def _ordinal: Int = $index }",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
-              line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
             // format: on
-          case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
+          case (
+                a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints),
+                index
+              ) =>
             val cn = caseName(a)
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def _ordinal: Int = $index }"
             )
-          case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
+          case (
+                Alt(_, realName, UnionMember.ProductCase(struct), altHints),
+                index
+              ) =>
             val additionalLines = lines(
               newline,
               line"""val alt = schema.oneOf[$name]("$realName")"""
@@ -906,7 +922,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               // might need deduplication (although the Hints type will take care of it, just in case)
               struct.copy(hints = altHints ++ struct.hints),
               adtParent = Some(name),
-              additionalLines
+              additionalLines,
+              classBody = Lines(line"def _ordinal: Int = $index")
             )
         },
         newline,
@@ -942,12 +959,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .block {
-              caseNamesAndIsUnit.map {
-                case (caseName, true) =>
-                  line"case $caseName => ${caseName}AltWithValue"
-                case (caseName, false) =>
-                  line"case c: $caseName => $caseName.alt(c)"
-              }
+              line"_._ordinal"
             }
             .appendToLast(
               if (error) "" else ".withId(id).addHints(hints)"
