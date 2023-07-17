@@ -22,7 +22,7 @@ import smithy4s.Hints
 import smithy4s.schema.SchemaVisitor
 import Fixtures._
 import smithy4s.ShapeId
-import smithy4s.schema.SchemaField
+import smithy4s.schema.Field
 import smithy4s.schema.Schema
 
 class FieldsSpec() extends munit.FunSuite {
@@ -46,11 +46,11 @@ class FieldsSpec() extends munit.FunSuite {
       override def struct[S](
           shapeId: ShapeId,
           hints: Hints,
-          fields: Vector[SchemaField[S, _]],
+          fields: Vector[Field[S, _]],
           make: IndexedSeq[Any] => S
       ): ToFieldNames[S] = { () =>
         fields.flatMap { f =>
-          f.label :: apply(f.instance)()
+          f.label :: apply(f.schema)()
         }.toList
       }
 

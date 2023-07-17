@@ -92,7 +92,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): Gen[S] =
     Gen.sequence(fields.map(f => genField(f))).flatMap { arrayList =>
@@ -101,8 +101,8 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Gen[U] = {
     if (alternatives.size == 1) genAlt(alternatives(0))
     else
@@ -123,21 +123,17 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
   def lazily[A](suspend: Lazy[Schema[A]]): Gen[A] =
     Gen.lzy(suspend.map(_.compile(this)).value)
 
-  def nullable[A](schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
+  def option[A](schema: Schema[A]): Gen[Option[A]] = Gen.option(this(schema))
 
   // //////////////////////////////////////////////////////////////////////////////////////
   // // HELPER FUNCTIONS
   // //////////////////////////////////////////////////////////////////////////////////////
 
-  private def genAlt[S, A](alt: Alt[Schema, S, A]): Gen[S] =
-    alt.instance.compile(this).map(alt.inject)
+  private def genAlt[S, A](alt: Alt[S, A]): Gen[S] =
+    alt.schema.compile(this).map(alt.inject)
 
-  private def genField[S, A](field: Field[Schema, S, A]): Gen[A] =
-    Gen.lzy(field.mapK(this).instanceA {
-      new Field.ToOptional[Gen] {
-        def apply[AA](genA: Gen[AA]): Gen[Option[AA]] = Gen.option(genA)
-      }
-    })
+  private def genField[S, A](field: Field[S, A]): Gen[A] =
+    this(field.schema)
 
   private def bigDecimalToInt(b: BigDecimal): Int = if (
     b < BigDecimal(Int.MinValue)

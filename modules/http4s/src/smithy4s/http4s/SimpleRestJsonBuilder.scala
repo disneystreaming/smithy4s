@@ -25,20 +25,20 @@ class SimpleRestJsonBuilder private (
       simpleRestJsonCodecs
     ) {
 
-  def this(maxArity: Int, explicitNullEncoding: Boolean) =
-    this(new internals.SimpleRestJsonCodecs(maxArity, explicitNullEncoding))
+  def this(maxArity: Int, explicitDefaultsEncoding: Boolean) =
+    this(new internals.SimpleRestJsonCodecs(maxArity, explicitDefaultsEncoding))
 
   def withMaxArity(maxArity: Int): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       maxArity,
-      simpleRestJsonCodecs.explicitNullEncoding
+      simpleRestJsonCodecs.explicitDefaultsEncoding
     )
 
-  def withExplicitNullEncoding(
-      explicitNullEncoding: Boolean
+  def withExplicitDefaultsEncoding(
+      explicitDefaultsEncoding: Boolean
   ): SimpleRestJsonBuilder =
     new SimpleRestJsonBuilder(
       simpleRestJsonCodecs.maxArity,
-      explicitNullEncoding
+      explicitDefaultsEncoding
     )
 }

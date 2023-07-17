@@ -151,7 +151,7 @@ object Boilerplate {
       }
 
       val schemaFields = synTypes.map { tpe =>
-        s"SchemaField[S, $tpe]"
+        s"Field[S, $tpe]"
       }
 
       val params =
@@ -186,12 +186,12 @@ object Boilerplate {
       |class PartiallyAppliedStruct[S] protected[schema](placeholder: ShapeId) {
       |
       |  def genericArity(
-      |      fields: SchemaField[S, _]*)(
+      |      fields: Field[S, _]*)(
       |      const: IndexedSeq[Any] => S): Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields.toVector, const)
       |
       |  def apply(
-      |     fields: Vector[SchemaField[S, _]])(
+      |     fields: Vector[Field[S, _]])(
       |     const: IndexedSeq[Any] => S): Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields, const)
       |

@@ -137,7 +137,7 @@ class HintsTransformationSpec() extends FunSuite {
   }
 
   test(header("nullable")) {
-    implicit val schema: Schema[Option[Int]] = int.nullable
+    implicit val schema: Schema[Option[Int]] = int.option
     checkSchema(1.some, 1)
     checkSchema(none[Int], expectedTransitive = 0, expectedLocal = 0)
   }
@@ -225,33 +225,21 @@ class HintsTransformationSpec() extends FunSuite {
     def struct[S](
         shapeId: ShapeId,
         hints: Hints,
-        fields: Vector[SchemaField[S, _]],
+        fields: Vector[Field[S, _]],
         make: IndexedSeq[Any] => S
     ): Count[S] = {
-      def countField[AA](field: smithy4s.schema.Field[Schema, S, AA]) =
-        field.fold(new Field.Folder[Schema, S, S => Int] {
-          def onRequired[A](
-              label: String,
-              instance: Schema[A],
-              get: S => A
-          ): S => Int = s => compile(instance)(get(s))
-
-          def onOptional[A](
-              label: String,
-              instance: Schema[A],
-              get: S => Option[A]
-          ): S => Int = s => get(s).foldMap(compile(instance))
-        })
+      def countField[AA](field: smithy4s.schema.Field[S, AA]) =
+        compile(field.schema).compose(field.get)
       s => count(hints) + fields.foldMap(countField(_)(s))
     }
 
     def union[U](
         shapeId: ShapeId,
         hints: Hints,
-        alternatives: Vector[SchemaAlt[U, _]],
-        dispatch: Alt.Dispatcher[Schema, U]
+        alternatives: Vector[Alt[U, _]],
+        dispatch: Alt.Dispatcher[U]
     ): Count[U] = {
-      val countU = dispatch.compile(new Alt.Precompiler[Schema, Count] {
+      val countU = dispatch.compile(new Alt.Precompiler[Count] {
         def apply[A](label: String, instance: Schema[A]): Count[A] =
           compile(instance)
       })
@@ -271,7 +259,7 @@ class HintsTransformationSpec() extends FunSuite {
       a => underlying(a)
     }
 
-    def nullable[A](schema: Schema[A]): Count[Option[A]] = {
+    def option[A](schema: Schema[A]): Count[Option[A]] = {
       val count = compile(schema)
       locally {
         case Some(a) => count(a)

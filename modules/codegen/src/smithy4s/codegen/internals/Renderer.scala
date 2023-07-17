@@ -1124,15 +1124,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         val hintsLine =
           if (hints.isEmpty) Line.empty
-          else line".addHints(${memberHints(hints)})"
+          else line".addMemberHints(${memberHints(hints)})"
         line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
       case Type.Map(key, keyHints, value, valueHints) =>
         val keyHintsLine =
           if (keyHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(keyHints)})"
+          else line".addMemberHints(${memberHints(keyHints)})"
         val valueHintsLine =
           if (valueHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(valueHints)})"
+          else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
@@ -1155,7 +1155,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
-      case Nullable(underlying) => line"${underlying.schemaRef}.nullable"
+      case Nullable(underlying) => line"${underlying.schemaRef}.option"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {

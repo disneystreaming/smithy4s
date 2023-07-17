@@ -30,7 +30,6 @@ import smithy4s.http.internals.MetaDecode.{
 import smithy4s.schema._
 import smithy4s.internals.SchemaDescription
 
-import scala.collection.mutable.{Map => MMap}
 import java.util.Base64
 
 /**
@@ -142,14 +141,14 @@ private[http] class SchemaVisitorMetadataReader(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MetaDecode[S] = {
 
     def decodeField[A](
-        field: SchemaField[S, A]
+        field: Field[S, A]
     ): Option[FieldDecode] = {
-      val schema = field.instance
+      val schema = field.schema
       val label = field.label
       val fieldHints = field.hints
       val maybeDefault = schema.getDefaultValue
@@ -160,7 +159,6 @@ private[http] class SchemaVisitorMetadataReader(
           .updateMetadata(
             binding,
             label,
-            field.isOptional,
             maybeDefault
           )
         FieldDecode(label, binding, update)
@@ -169,89 +167,42 @@ private[http] class SchemaVisitorMetadataReader(
     val fieldUpdates: Vector[FieldDecode] =
       fields.flatMap(f => decodeField(f))
 
-    val partial = { (metadata: Metadata) =>
-      val buffer = MMap.empty[String, Any]
-      val putField: PutField = new PutField {
-        def putRequired(fieldName: String, value: Any): Unit =
-          buffer += (fieldName -> value)
+    if (fieldUpdates.size < fields.size) EmptyMetaDecode
+    else
+      StructureMetaDecode { (metadata: Metadata) =>
+        val buffer = Vector.newBuilder[Any]
+        val putField: PutField = buffer += _
 
-        def putSome(fieldName: String, value: Any): Unit =
-          buffer += (fieldName -> value)
-
-        def putNone(fieldName: String): Unit = ()
-      }
-      var currentFieldName: String = null
-      var currentBinding: HttpBinding = null
-      try {
-        fieldUpdates.foreach { case FieldDecode(fieldName, binding, update) =>
-          currentFieldName = fieldName
-          currentBinding = binding
-          update(metadata, putField)
-        }
-        Right(buffer)
-      } catch {
-        case e: MetadataError => Left(e)
-        case MetaDecode.MetaDecodeError(const) =>
-          Left(const(currentFieldName, currentBinding))
-        case ConstraintError(_, message) =>
-          Left(
-            MetadataError.FailedConstraint(
-              currentFieldName,
-              currentBinding,
-              message
-            )
-          )
-      }
-    }
-
-    val total =
-      if (fieldUpdates.size < fields.size) None
-      else
-        Some { (metadata: Metadata) =>
-          val buffer = Vector.newBuilder[Any]
-          val putField: PutField = new PutField {
-            def putRequired(fieldName: String, value: Any): Unit =
-              buffer += value
-
-            def putSome(fieldName: String, value: Any): Unit =
-              buffer += Some(value)
-
-            def putNone(fieldName: String): Unit = buffer += None
+        var currentFieldName: String = null
+        var currentBinding: HttpBinding = null
+        try {
+          fieldUpdates.foreach { case FieldDecode(fieldName, binding, update) =>
+            currentFieldName = fieldName
+            currentBinding = binding
+            update(metadata, putField)
           }
-
-          var currentFieldName: String = null
-          var currentBinding: HttpBinding = null
-          try {
-            fieldUpdates.foreach {
-              case FieldDecode(fieldName, binding, update) =>
-                currentFieldName = fieldName
-                currentBinding = binding
-                update(metadata, putField)
-            }
-            Right(make(buffer.result()))
-          } catch {
-            case e: MetadataError => Left(e)
-            case MetaDecode.MetaDecodeError(const) =>
-              Left(const(currentFieldName, currentBinding))
-            case ConstraintError(_, message) =>
-              Left(
-                MetadataError.FailedConstraint(
-                  currentFieldName,
-                  currentBinding,
-                  message
-                )
+          Right(make(buffer.result()))
+        } catch {
+          case e: MetadataError => Left(e)
+          case MetaDecode.MetaDecodeError(const) =>
+            Left(const(currentFieldName, currentBinding))
+          case ConstraintError(_, message) =>
+            Left(
+              MetadataError.FailedConstraint(
+                currentFieldName,
+                currentBinding,
+                message
               )
-          }
+            )
         }
-
-    StructureMetaDecode(partial, total)
+      }
   }
 
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): MetaDecode[U] = EmptyMetaDecode
 
   override def biject[A, B](
@@ -267,6 +218,6 @@ private[http] class SchemaVisitorMetadataReader(
   override def lazily[A](suspend: Lazy[Schema[A]]): MetaDecode[A] =
     EmptyMetaDecode
 
-  override def nullable[A](schema: Schema[A]): MetaDecode[Option[A]] =
-    EmptyMetaDecode
+  override def option[A](schema: Schema[A]): MetaDecode[Option[A]] =
+    self(schema).map(Some(_))
 }

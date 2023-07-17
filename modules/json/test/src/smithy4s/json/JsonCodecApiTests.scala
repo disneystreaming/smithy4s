@@ -73,7 +73,7 @@ class JsonCodecApiTests extends FunSuite {
       )(identity)
 
     val capi = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withExplicitNullEncoding(true)
+      Json.jsoniter.withExplicitDefaultsEncoding(true)
     )
 
     val codec = capi.fromSchema(schemaWithJsonName)
@@ -83,11 +83,11 @@ class JsonCodecApiTests extends FunSuite {
   }
 
   test(
-    "explicit nulls should be parsable regardless of explicitNullEncoding setting"
+    "explicit nulls should be parsable regardless of explicitDefaultsEncoding setting"
   ) {
     val withoutNulls = Json.payloadCodecs
     val withNulls = Json.payloadCodecs.withJsoniterCodecCompiler(
-      Json.jsoniter.withExplicitNullEncoding(true)
+      Json.jsoniter.withExplicitDefaultsEncoding(true)
     )
 
     List(withoutNulls, withNulls).foreach { capi =>

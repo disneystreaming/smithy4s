@@ -28,6 +28,7 @@ import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.Document.DNull
 
 private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
+  self =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -75,27 +76,17 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
-  ): Id[S] = make(fields.map(_.fold(new Field.Folder[Schema, S, Any] {
-    def onRequired[A](label: String, instance: Schema[A], get: S => A): Any =
-      apply(instance)
-
-    def onOptional[A](
-        label: String,
-        instance: Schema[A],
-        get: S => Option[A]
-    ): Any =
-      None
-  })))
+  ): Id[S] = make(fields.map(_.schema.compile(self)))
 
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): Id[U] = {
-    def processAlt[A](alt: Alt[Schema, U, A]) = alt.inject(apply(alt.instance))
+    def processAlt[A](alt: Alt[U, A]) = alt.inject(apply(alt.schema))
     processAlt(alternatives.head)
   }
 
@@ -113,6 +104,6 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     suspend.map(apply).value
   }
 
-  override def nullable[A](schema: Schema[A]): Id[Option[A]] = None
+  override def option[A](schema: Schema[A]): Id[Option[A]] = None
 
 }

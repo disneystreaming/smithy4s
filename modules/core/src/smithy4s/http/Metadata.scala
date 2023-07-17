@@ -183,11 +183,8 @@ object Metadata {
       val metaDecode =
         new SchemaVisitorMetadataReader(cache, awsHeaderEncoding)(schema)
       metaDecode match {
-        case internals.MetaDecode.StructureMetaDecode(_, decodeFunction) =>
-          // TODO will be addressed in a later PR that removes the coupling of partial metadata decoding
-          decodeFunction.get(_: Metadata)
-        // case internals.MetaDecode.ImpossibleMetaDecode(message) =>
-        //   (_: Metadata) => Left(MetadataError.ImpossibleDecoding(message))
+        case internals.MetaDecode.StructureMetaDecode(decodeFunction) =>
+          decodeFunction(_: Metadata)
         case _ =>
           (_: Metadata) =>
             Left(
