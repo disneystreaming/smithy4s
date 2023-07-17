@@ -112,15 +112,17 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   def endpoints: Vector[Endpoint[_, _, _, _, _]]
   def ordinal[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]) : Int
   def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
+  def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): Endpoint[I, E, O, SI, SO] =
+    endpoints(ordinal(op)).asInstanceOf[Endpoint[I, E, O, SI, SO]]
   def version: String
   def hints: Hints
   def reified: Alg[Operation]
   def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[Operation, P]): Alg[P]
   def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[Operation, P]
 
-  final val endpoint: PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
+  final val opToEndpoint: PolyFunction5[Operation, Endpoint] = new PolyFunction5[Operation, Endpoint]{
     def apply[I, E, O, SI, SO](op: Operation[I,E,O,SI,SO]): Endpoint[I,E,O,SI,SO] =
-      endpoints(ordinal(op)).asInstanceOf[Endpoint[I, E, O, SI, SO]]
+      endpoint(op)
   }
 
   /**

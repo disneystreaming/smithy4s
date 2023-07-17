@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -40,6 +41,7 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
 
   def input[I, E, O, SI, SO](op: StreamedObjectsOperation[I, E, O, SI, SO]): I = op.input
   def ordinal[I, E, O, SI, SO](op: StreamedObjectsOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: StreamedObjectsOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends StreamedObjectsOperation.Transformed[StreamedObjectsOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: StreamedObjectsGen[StreamedObjectsOperation] = StreamedObjectsOperation.reified
@@ -53,6 +55,7 @@ sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, Streame
   def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def ordinal: Int
   def input: Input
+  def endpoint: Endpoint[StreamedObjectsOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object StreamedObjectsOperation {
@@ -72,6 +75,7 @@ object StreamedObjectsOperation {
   final case class PutStreamedObject(input: PutStreamedObjectInput) extends StreamedObjectsOperation[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = impl.putStreamedObject(input.key)
     def ordinal = 0
+    def endpoint: smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] = PutStreamedObject
   }
   object PutStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutStreamedObject")
@@ -86,6 +90,7 @@ object StreamedObjectsOperation {
   final case class GetStreamedObject(input: GetStreamedObjectInput) extends StreamedObjectsOperation[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     def run[F[_, _, _, _, _]](impl: StreamedObjectsGen[F]): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = impl.getStreamedObject(input.key)
     def ordinal = 1
+    def endpoint: smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] = GetStreamedObject
   }
   object GetStreamedObject extends smithy4s.Endpoint[StreamedObjectsOperation,GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetStreamedObject")

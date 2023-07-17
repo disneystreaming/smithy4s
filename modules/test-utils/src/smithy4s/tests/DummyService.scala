@@ -30,15 +30,13 @@ object DummyService {
         F: Applicative[F]
     ): FunctorAlgebra[Alg, F] = {
       type Op[I, E, O, SI, SO] = service.Operation[I, E, O, SI, SO]
-      service.fromPolyFunction[Kind1[F]#toKind5] {
-        service.endpoint.andThen[Kind1[F]#toKind5](
-          new PolyFunction5[service.Endpoint, Kind1[F]#toKind5] {
-            def apply[I, E, O, SI, SO](
-                ep: Endpoint[Op, I, E, O, SI, SO]
-            ): F[O] =
-              F.pure(ep.output.compile(DefaultSchemaVisitor))
-          }
-        )
+      service.impl[F] {
+        new PolyFunction5[service.Endpoint, Kind1[F]#handler] {
+          def apply[I, E, O, SI, SO](
+              ep: Endpoint[Op, I, E, O, SI, SO]
+          ): I => F[O] =
+            _ => F.pure(ep.output.compile(DefaultSchemaVisitor))
+        }
       }
     }
   }

@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.Service
@@ -39,6 +40,7 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
 
   def input[I, E, O, SI, SO](op: DiscriminatedServiceOperation[I, E, O, SI, SO]): I = op.input
   def ordinal[I, E, O, SI, SO](op: DiscriminatedServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: DiscriminatedServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DiscriminatedServiceOperation.Transformed[DiscriminatedServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: DiscriminatedServiceGen[DiscriminatedServiceOperation] = DiscriminatedServiceOperation.reified
@@ -52,6 +54,7 @@ sealed trait DiscriminatedServiceOperation[Input, Err, Output, StreamedInput, St
   def run[F[_, _, _, _, _]](impl: DiscriminatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def ordinal: Int
   def input: Input
+  def endpoint: Endpoint[DiscriminatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object DiscriminatedServiceOperation {
@@ -69,6 +72,7 @@ object DiscriminatedServiceOperation {
   final case class TestDiscriminated(input: TestDiscriminatedInput) extends DiscriminatedServiceOperation[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DiscriminatedServiceGen[F]): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = impl.testDiscriminated(input.key)
     def ordinal = 0
+    def endpoint: smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] = TestDiscriminated
   }
   object TestDiscriminated extends smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminated")

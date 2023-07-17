@@ -358,6 +358,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         line"def $input_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): I = op.$input_",
         line"def $ordinal_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): Int = op.$ordinal_",
+        line"override def $endpoint_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]) = op.$endpoint_",
         line"class $Constant_[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ${opTraitNameRef}.$Transformed_[$opTraitNameRef, P](reified, $const5_(value))",
         line"type $Default_[F[+_]] = $Constant_[smithy4s.kinds.stubs.Kind1[F]#toKind5]",
         line"def reified: $genNameRef[$opTraitNameRef] = ${opTraitNameRef}.${NameRef("reified")}",
@@ -433,7 +434,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         line"def run[F[_, _, _, _, _]](impl: $genName[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]",
         line"def ordinal: Int",
-        line"def input: Input"
+        line"def input: Input",
+        line"def endpoint: $Endpoint_[$opTraitName, Input, Err, Output, StreamedInput, StreamedOutput]"
       ),
       newline,
       block(
@@ -544,7 +546,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def run[F[_, _, _, _, _]](impl: $genServiceName[F]): F[${op
           .renderAlgParams(opObjectName)}] = impl.${op.methodName}(${op.renderAccessedParams})",
         line"def ordinal = $ordinal",
-        if (op.input == Type.unit) line"def input: Unit = ()" else Lines.empty
+        if (op.input == Type.unit) line"def input: Unit = ()" else Lines.empty,
+        line"def endpoint: smithy4s.Endpoint[$traitName,${op
+          .renderAlgParams(opObjectName)}] = $opNameRef"
       ),
       obj(
         opNameRef,

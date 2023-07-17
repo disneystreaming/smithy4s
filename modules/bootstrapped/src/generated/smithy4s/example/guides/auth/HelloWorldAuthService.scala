@@ -1,5 +1,6 @@
 package smithy4s.example.guides.auth
 
+import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -48,6 +49,7 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
 
   def input[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]): I = op.input
   def ordinal[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends HelloWorldAuthServiceOperation.Transformed[HelloWorldAuthServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: HelloWorldAuthServiceGen[HelloWorldAuthServiceOperation] = HelloWorldAuthServiceOperation.reified
@@ -65,6 +67,7 @@ sealed trait HelloWorldAuthServiceOperation[Input, Err, Output, StreamedInput, S
   def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def ordinal: Int
   def input: Input
+  def endpoint: Endpoint[HelloWorldAuthServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object HelloWorldAuthServiceOperation {
@@ -85,6 +88,7 @@ object HelloWorldAuthServiceOperation {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = impl.sayWorld()
     def ordinal = 0
     def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = SayWorld
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] with Errorable[SayWorldError] {
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "SayWorld")
@@ -134,6 +138,7 @@ object HelloWorldAuthServiceOperation {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = impl.healthCheck()
     def ordinal = 1
     def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = HealthCheck
   }
   object HealthCheck extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] with Errorable[HealthCheckError] {
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheck")

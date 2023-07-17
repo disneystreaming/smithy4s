@@ -83,6 +83,7 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
 
   def input[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]): I = op.input
   def ordinal[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: DynamoDBOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DynamoDBOperation.Transformed[DynamoDBOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: DynamoDBGen[DynamoDBOperation] = DynamoDBOperation.reified
@@ -98,6 +99,7 @@ sealed trait DynamoDBOperation[Input, Err, Output, StreamedInput, StreamedOutput
   def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
   def ordinal: Int
   def input: Input
+  def endpoint: smithy4s.Endpoint[DynamoDBOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object DynamoDBOperation {
@@ -117,6 +119,7 @@ object DynamoDBOperation {
   final case class DescribeEndpoints(input: DescribeEndpointsRequest) extends DynamoDBOperation[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = impl.describeEndpoints()
     def ordinal = 0
+    def endpoint: smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] = DescribeEndpoints
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints")
@@ -133,6 +136,7 @@ object DynamoDBOperation {
   final case class ListTables(input: ListTablesInput) extends DynamoDBOperation[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DynamoDBGen[F]): F[ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = impl.listTables(input.exclusiveStartTableName, input.limit)
     def ordinal = 1
+    def endpoint: smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] = ListTables
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] with Errorable[ListTablesError] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTables")
