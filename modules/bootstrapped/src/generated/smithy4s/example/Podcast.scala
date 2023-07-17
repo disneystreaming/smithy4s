@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
-sealed abstract class Podcast extends PodcastCommon with scala.Product with scala.Serializable {
+sealed trait Podcast extends PodcastCommon with scala.Product with scala.Serializable {
   @inline final def widen: Podcast = this
   def _ordinal: Int
 }

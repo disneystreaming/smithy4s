@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import Schema._
+import smithy4s.kinds.OptionK
 
 // format: off
 trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
@@ -49,7 +50,7 @@ trait SchemaVisitor[F[_]] extends (Schema ~> F) { self =>
 
 
 
-object SchemaVisitor {
+object SchemaVisitor { outer =>
 
   trait Default[F[_]] extends SchemaVisitor[F]{
     def default[A]: F[A]
@@ -64,6 +65,11 @@ object SchemaVisitor {
     override def lazily[A](suspend: Lazy[Schema[A]]): F[A] = default
     override def option[A](schema: Schema[A]): F[Option[A]] = default
   }
+
+  trait Optional[F[_]] extends Default[OptionK[F, *]]{
+    def default[A]: Option[F[A]] = None
+  }
+
 
   abstract class Cached[F[_]] extends SchemaVisitor[F] {
     protected val cache: CompilationCache[F]

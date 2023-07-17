@@ -23,7 +23,7 @@ import smithy4s.kinds.PolyFunction5
 private[internals] case class DynamicService(
     id: ShapeId,
     version: String,
-    endpoints: IndexedSeq[DynamicEndpoint],
+    endpoints: Vector[DynamicEndpoint],
     hints: Hints
 ) extends Service.Reflective[DynamicOp]
     with DynamicSchemaIndex.ServiceWrapper {

@@ -13,7 +13,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
-sealed abstract class TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product with scala.Serializable {
+sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product with scala.Serializable {
   @inline final def widen: TestAdt = this
   def _ordinal: Int
 }

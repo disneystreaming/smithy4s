@@ -17,7 +17,6 @@
 package smithy4s.xml
 package internals
 
-import cats.data.NonEmptyList
 import cats.syntax.all._
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
@@ -29,9 +28,7 @@ import smithy4s.schema._
 
 import XmlDocument.XmlQName
 
-private[smithy4s] object XmlDecoderSchemaVisitor extends XmlDecoderSchemaVisitor
-
-private[smithy4s] abstract class XmlDecoderSchemaVisitor
+private[smithy4s] object XmlDecoderSchemaVisitor
     extends SchemaVisitor[XmlDecoder]
     with smithy4s.ScalaCompat { compile =>
   def primitive[P](
@@ -60,12 +57,17 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
       def decode(cursor: XmlCursor): Either[XmlDecodeError, C[A]] = {
         val realCursor = if (isFlattened) cursor else cursor.down(xmlName)
         realCursor match {
+          case XmlCursor.SingleNode(history, node) =>
+            memberReader
+              .decode(
+                XmlCursor.SingleNode(history.appendIndex(0), node)
+              )
+              .map(value => tag.fromIterator(Iterator.single(value)))
           case XmlCursor.Nodes(history, nodes) =>
             nodes.zipWithIndex
               .traverse { case (elem, index) =>
                 memberReader.decode(
-                  XmlCursor
-                    .Nodes(history.appendIndex(index), NonEmptyList.one(elem))
+                  XmlCursor.SingleNode(history.appendIndex(index), elem)
                 )
               }
               .map(list => tag.fromIterator(list.iterator))
@@ -152,8 +154,14 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
     new XmlDecoder[U] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, U] = {
         cursor match {
-          case s @ XmlCursor.Nodes(history, NonEmptyList(node, Nil)) =>
-            node.children match {
+          case s @ XmlCursor.SingleNode(history, node) =>
+            val children = node.children.flatMap {
+              case text @ XmlDocument.XmlText(value) =>
+                // Remove newlines or other blank text nodes at this level
+                if (value.exists(c => !c.isWhitespace)) Some(text) else None
+              case other => Some(other)
+            }
+            children match {
               case XmlDocument.XmlElem(xmlName, _, _) :: Nil =>
                 altMap.get(xmlName) match {
                   case Some(altDecoder) =>
@@ -166,8 +174,13 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
                       )
                     )
                 }
-              case _ =>
-                Left(XmlDecodeError(history, "Expected a single node"))
+              case other =>
+                Left(
+                  XmlDecodeError(
+                    history,
+                    s"Expected a single node but found $other"
+                  )
+                )
             }
           case other =>
             Left(XmlDecodeError(other.history, "Expected a single node"))
@@ -198,7 +211,10 @@ private[smithy4s] abstract class XmlDecoderSchemaVisitor
   def option[A](schema: Schema[A]): XmlDecoder[Option[A]] =
     compile(schema).optional
 
-  private def getXmlName(hints: Hints, default: String): XmlDocument.XmlQName =
+  private def getXmlName(
+      hints: Hints,
+      default: String
+  ): XmlDocument.XmlQName =
     hints
       .get(XmlName)
       .map(_.value)

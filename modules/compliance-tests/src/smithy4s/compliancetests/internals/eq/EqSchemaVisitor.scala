@@ -150,7 +150,10 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
   }
 
   override def option[A](schema: Schema[A]): Eq[Option[A]] = {
-    Eq.catsKernelEqForOption(self(schema))
+    LenientOptionalCollectionEquality(schema) match {
+      case Some(eq) => eq
+      case None     => Eq.catsKernelEqForOption(self(schema))
+    }
   }
 
   def primitiveEq[P](primitive: Primitive[P]): Eq[P] = {
@@ -169,6 +172,47 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case Primitive.PBlob       => Eq[ByteArray]
       case Primitive.PDocument   => Eq[Document]
       case Primitive.PTimestamp  => Eq[Timestamp]
+    }
+  }
+
+  type EqOpt[A] = Eq[Option[A]]
+  // A sub-visitor that provides lenient equality for Option-wrapped collections,
+  // where None and `Some(Empty)` are considered equivalent. s
+  object LenientOptionalCollectionEquality
+      extends SchemaVisitor.Optional[EqOpt] {
+    override def collection[C[_], A](
+        shapeId: ShapeId,
+        hints: Hints,
+        tag: CollectionTag[C],
+        member: Schema[A]
+    ): Option[Eq[Option[C[A]]]] = Some {
+      val collectionEq = EqSchemaVisitor.collection(shapeId, hints, tag, member)
+      new Eq[Option[C[A]]] {
+        def eqv(x: Option[C[A]], y: Option[C[A]]): Boolean = (x, y) match {
+          case (Some(left), Some(right)) => collectionEq.eqv(left, right)
+          case (None, Some(right))       => tag.isEmpty(right)
+          case (Some(left), None)        => tag.isEmpty(left)
+          case (None, None)              => true
+        }
+      }
+    }
+
+    override def map[K, V](
+        shapeId: ShapeId,
+        hints: Hints,
+        key: Schema[K],
+        value: Schema[V]
+    ): Option[Eq[Option[Map[K, V]]]] = Some {
+      val mapEq = EqSchemaVisitor.map(shapeId, hints, key, value)
+      new Eq[Option[Map[K, V]]] {
+        def eqv(x: Option[Map[K, V]], y: Option[Map[K, V]]): Boolean =
+          (x, y) match {
+            case (Some(left), Some(right)) => mapEq.eqv(left, right)
+            case (None, Some(right))       => right.isEmpty
+            case (Some(left), None)        => left.isEmpty
+            case (None, None)              => true
+          }
+      }
     }
   }
 

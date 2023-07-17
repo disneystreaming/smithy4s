@@ -15,7 +15,7 @@ import smithy4s.schema.Schema.union
   * int, bigInt and bDec are useful number constructs
   * The string case is there because.
   */
-sealed abstract class Foo extends scala.Product with scala.Serializable {
+sealed trait Foo extends scala.Product with scala.Serializable {
   @inline final def widen: Foo = this
   def _ordinal: Int
 }

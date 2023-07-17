@@ -41,7 +41,7 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[HelloWorldAuthServiceOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[HelloWorldAuthServiceOperation, _, _, _, _, _]] = Vector(
     HelloWorldAuthServiceOperation.SayWorld,
     HelloWorldAuthServiceOperation.HealthCheck,
   )
@@ -107,7 +107,7 @@ object HelloWorldAuthServiceOperation {
       case SayWorldError.NotAuthorizedErrorCase(e) => e
     }
   }
-  sealed abstract class SayWorldError extends scala.Product with scala.Serializable {
+  sealed trait SayWorldError extends scala.Product with scala.Serializable {
     @inline final def widen: SayWorldError = this
     def _ordinal: Int
   }
@@ -157,7 +157,7 @@ object HelloWorldAuthServiceOperation {
       case HealthCheckError.NotAuthorizedErrorCase(e) => e
     }
   }
-  sealed abstract class HealthCheckError extends scala.Product with scala.Serializable {
+  sealed trait HealthCheckError extends scala.Product with scala.Serializable {
     @inline final def widen: HealthCheckError = this
     def _ordinal: Int
   }

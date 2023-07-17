@@ -8,7 +8,7 @@ import smithy4s.interopcats.SchemaVisitorHash
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed abstract class PersonContactInfo extends scala.Product with scala.Serializable {
+sealed trait PersonContactInfo extends scala.Product with scala.Serializable {
   @inline final def widen: PersonContactInfo = this
   def _ordinal: Int
 }

@@ -41,7 +41,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[ImportServiceOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[ImportServiceOperation, _, _, _, _, _]] = Vector(
     ImportServiceOperation.ImportOperation,
   )
 
@@ -101,7 +101,7 @@ object ImportServiceOperation {
       case ImportOperationError.NotFoundErrorCase(e) => e
     }
   }
-  sealed abstract class ImportOperationError extends scala.Product with scala.Serializable {
+  sealed trait ImportOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ImportOperationError = this
     def _ordinal: Int
   }

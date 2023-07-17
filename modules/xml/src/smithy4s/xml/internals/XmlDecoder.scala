@@ -17,14 +17,10 @@
 package smithy4s.xml
 package internals
 
-import cats.data.NonEmptyList
 import smithy4s.ConstraintError
 import smithy4s.xml.XmlDocument
 import smithy4s.xml.XmlDocument.XmlQName
-import smithy4s.xml.internals.XmlCursor.AttrNode
-import smithy4s.xml.internals.XmlCursor.FailedNode
-import smithy4s.xml.internals.XmlCursor.NoNode
-import smithy4s.xml.internals.XmlCursor.Nodes
+import smithy4s.xml.internals.XmlCursor._
 
 /**
   * This constructs allow for decoding XML data. It is not limited to top-level
@@ -87,13 +83,20 @@ private[smithy4s] object XmlDecoder {
   ): XmlDecoder[A] =
     new XmlDecoder[A] {
       def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
-        case Nodes(history, NonEmptyList(node, Nil)) =>
+        case SingleNode(history, node) =>
           node.children match {
             case XmlDocument.XmlText(value) :: Nil =>
               f(if (trim) value.trim() else value).toRight(
                 XmlDecodeError(
                   history,
                   s"Could not extract $expectedType from $value"
+                )
+              )
+            case Nil =>
+              f("").toRight(
+                XmlDecodeError(
+                  history,
+                  s"Could not extract $expectedType from empty string"
                 )
               )
             case _ =>

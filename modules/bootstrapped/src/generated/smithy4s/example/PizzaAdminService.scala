@@ -49,7 +49,7 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[PizzaAdminServiceOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[PizzaAdminServiceOperation, _, _, _, _, _]] = Vector(
     PizzaAdminServiceOperation.AddMenuItem,
     PizzaAdminServiceOperation.GetMenu,
     PizzaAdminServiceOperation.Version,
@@ -152,7 +152,7 @@ object PizzaAdminServiceOperation {
       case AddMenuItemError.GenericClientErrorCase(e) => e
     }
   }
-  sealed abstract class AddMenuItemError extends scala.Product with scala.Serializable {
+  sealed trait AddMenuItemError extends scala.Product with scala.Serializable {
     @inline final def widen: AddMenuItemError = this
     def _ordinal: Int
   }
@@ -220,7 +220,7 @@ object PizzaAdminServiceOperation {
       case GetMenuError.GenericClientErrorCase(e) => e
     }
   }
-  sealed abstract class GetMenuError extends scala.Product with scala.Serializable {
+  sealed trait GetMenuError extends scala.Product with scala.Serializable {
     @inline final def widen: GetMenuError = this
     def _ordinal: Int
   }
@@ -307,7 +307,7 @@ object PizzaAdminServiceOperation {
       case HealthError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed abstract class HealthError extends scala.Product with scala.Serializable {
+  sealed trait HealthError extends scala.Product with scala.Serializable {
     @inline final def widen: HealthError = this
     def _ordinal: Int
   }
@@ -387,7 +387,7 @@ object PizzaAdminServiceOperation {
       case GetEnumError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed abstract class GetEnumError extends scala.Product with scala.Serializable {
+  sealed trait GetEnumError extends scala.Product with scala.Serializable {
     @inline final def widen: GetEnumError = this
     def _ordinal: Int
   }
@@ -435,7 +435,7 @@ object PizzaAdminServiceOperation {
       case GetIntEnumError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed abstract class GetIntEnumError extends scala.Product with scala.Serializable {
+  sealed trait GetIntEnumError extends scala.Product with scala.Serializable {
     @inline final def widen: GetIntEnumError = this
     def _ordinal: Int
   }
@@ -483,7 +483,7 @@ object PizzaAdminServiceOperation {
       case CustomCodeError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed abstract class CustomCodeError extends scala.Product with scala.Serializable {
+  sealed trait CustomCodeError extends scala.Product with scala.Serializable {
     @inline final def widen: CustomCodeError = this
     def _ordinal: Int
   }

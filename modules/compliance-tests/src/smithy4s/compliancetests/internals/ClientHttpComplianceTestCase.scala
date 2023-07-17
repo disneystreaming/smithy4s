@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.syntax.all._
 import org.http4s.HttpApp
 import org.http4s.Headers
@@ -29,11 +29,11 @@ import org.http4s.Uri
 import smithy.test._
 import smithy4s.compliancetests.ComplianceTest.ComplianceResult
 import smithy4s.Document
-import smithy4s.http.HttpContractError
 import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
+import smithy4s.http.HttpContractError
 
 private[compliancetests] class ClientHttpComplianceTestCase[
     F[_],
@@ -41,7 +41,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
 ](
     reverseRouter: ReverseRouter[F],
     serviceInstance: Service[Alg]
-)(implicit ce: Temporal[F]) {
+)(implicit ce: Async[F]) {
   import ce._
   import org.http4s.implicits._
   import reverseRouter._
@@ -53,7 +53,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): F[ComplianceResult] = {
 
-    val bodyAssert = request.bodyText.compile.string.map { responseBody =>
+    val bodyAssert = request.bodyText.compile.string.flatMap { responseBody =>
       assert.bodyEql(
         responseBody,
         testCase.body,
@@ -86,14 +86,13 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       testCase.method.toLowerCase(),
       "method test :"
     )
-    val ioAsserts: List[F[ComplianceResult]] = bodyAssert +:
-      List(
+    val ioAsserts: List[F[ComplianceResult]] =
+      bodyAssert +: (List(
         assert.testCase.checkHeaders(testCase, request.headers),
         pathAssert,
         queryAssert,
         methodAssert
-      )
-        .map(_.pure[F])
+      ).map(_.pure[F]))
     ioAsserts.combineAll(cats.Applicative.monoid[F, ComplianceResult])
   }
 
@@ -109,7 +108,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       clientReq,
-      run = {
+      run = ce.defer {
         val input = inputFromDocument
           .decode(testCase.params.getOrElse(Document.obj()))
           .liftTo[F]
@@ -155,7 +154,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       clientRes,
-      run = {
+      run = ce.defer {
         implicit val outputEq: Eq[O] =
           smithy4s.compliancetests.internals.eq.EqSchemaVisitor(endpoint.output)
         val buildResult = {
@@ -210,6 +209,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   val res: F[O] = service
                     .toPolyFunction[R](client)
                     .apply(endpoint.wrap(dummyInput))
+
                   res.map { output =>
                     assert.eql(
                       output,
@@ -237,7 +237,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .flatMap(_.value)
               .filter(_.protocol == protocolTag.id.toString())
               .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
-              .map(tc =>
+              .map { tc =>
                 clientResponseTest(
                   endpoint,
                   tc,
@@ -249,7 +249,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                       )
                   )
                 )
-              )
+              }
           }
         }
     }

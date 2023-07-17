@@ -473,7 +473,7 @@ private[dynamic] object Compiler {
         DynamicService(
           id,
           shape.version.getOrElse(""),
-          endpoints.toIndexedSeq,
+          endpoints.toVector,
           allHints(shape.traits)
         )
       }

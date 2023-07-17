@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.syntax.all._
 import cats.kernel.Eq
 import org.http4s._
@@ -39,7 +39,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     router: Router[F],
     serviceInstance: Service[Alg]
 )(implicit
-    ce: Temporal[F]
+    ce: Async[F]
 ) {
 
   import ce._
@@ -101,7 +101,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       serverReq,
-      run = {
+      run = ce.defer {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
             originalService.fromPolyFunction[Kind1[F]#toKind5](
@@ -178,7 +178,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       endpoint.id,
       testCase.documentation,
       serverRes,
-      run = {
+      run = ce.defer {
         val (amendedService, syntheticRequest) = prepareService(endpoint)
 
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
@@ -224,12 +224,14 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   .tupleRight(resp.status)
                   .tupleRight(resp.headers)
               }
-              .map { case ((actualBody, status), headers) =>
-                val bodyAssert = assert
+              .flatMap { case ((actualBody, status), headers) =>
+                assert
                   .bodyEql(actualBody, testCase.body, testCase.bodyMediaType)
-                bodyAssert |+|
-                  assert.testCase.checkHeaders(testCase, headers) |+|
-                  assert.eql(status.code, testCase.code)
+                  .map { bodyAssert =>
+                    bodyAssert |+|
+                      assert.testCase.checkHeaders(testCase, headers) |+|
+                      assert.eql(status.code, testCase.code)
+                  }
               }
           }
       }
@@ -269,7 +271,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       // format: off
       new Service.Reflective[NoInputOp] {
         override def id: ShapeId = ShapeId("custom", "service")
-        override def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]] = IndexedSeq(amendedEndpoint)
+        override def endpoints: Vector[Endpoint[_, _, _, _, _]] = Vector(amendedEndpoint)
         override def input[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]) : I_ = ???
         override def ordinal[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): Int = ???
         override def version: String = originalService.version

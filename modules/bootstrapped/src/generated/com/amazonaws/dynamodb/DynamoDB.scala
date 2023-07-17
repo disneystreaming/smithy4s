@@ -76,7 +76,7 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[DynamoDBOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[DynamoDBOperation, _, _, _, _, _]] = Vector(
     DynamoDBOperation.DescribeEndpoints,
     DynamoDBOperation.ListTables,
   )
@@ -158,7 +158,7 @@ object DynamoDBOperation {
       case ListTablesError.InvalidEndpointExceptionCase(e) => e
     }
   }
-  sealed abstract class ListTablesError extends scala.Product with scala.Serializable {
+  sealed trait ListTablesError extends scala.Product with scala.Serializable {
     @inline final def widen: ListTablesError = this
     def _ordinal: Int
   }

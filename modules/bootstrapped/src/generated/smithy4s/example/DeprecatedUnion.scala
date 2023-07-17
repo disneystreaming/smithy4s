@@ -10,7 +10,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
 @deprecated(message = "A compelling reason", since = "0.0.1")
-sealed abstract class DeprecatedUnion extends scala.Product with scala.Serializable {
+sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
   @inline final def widen: DeprecatedUnion = this
   def _ordinal: Int
 }

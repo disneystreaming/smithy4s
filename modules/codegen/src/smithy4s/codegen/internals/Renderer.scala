@@ -353,7 +353,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"type $Default_[F[+_, +_]] = $Constant_[smithy4s.kinds.stubs.Kind2[F]#toKind5]"
         ),
         newline,
-        line"val endpoints: $indexedSeq[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $indexedSeq"
+        line"val endpoints: $vector[smithy4s.Endpoint[$opTraitName, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument, $wildcardArgument]] = $vector"
           .args(ops.map(op => line"${opTraitNameRef}.${op.name}")),
         newline,
         line"def $input_[I, E, O, SI, SO](op: $opTraitNameRef[I, E, O, SI, SO]): I = op.$input_",
@@ -841,7 +841,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"$union_(${members.map { case (n, _) => altVal(n) }.intercalate(line", ")})"
           )(
             members.zipWithIndex.map { case ((altName, _), index) =>
-              line"case c: $altName => $index"
+              line"case _: $altName => $index"
             }
           )
         )
@@ -876,7 +876,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
-        line"sealed abstract class ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
+        line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this",
         line"def _ordinal: Int"

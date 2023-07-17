@@ -109,7 +109,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   type ErrorAware[F[_, _]] = BiFunctorAlgebra[Alg, F]
 
   val service: Service[Alg] = this
-  def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]]
+  def endpoints: Vector[Endpoint[_, _, _, _, _]]
   def ordinal[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]) : Int
   def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
   def version: String

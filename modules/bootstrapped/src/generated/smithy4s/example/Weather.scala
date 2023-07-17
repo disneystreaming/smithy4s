@@ -44,7 +44,7 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[WeatherOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[WeatherOperation, _, _, _, _, _]] = Vector(
     WeatherOperation.GetCurrentTime,
     WeatherOperation.GetCity,
     WeatherOperation.GetForecast,
@@ -129,7 +129,7 @@ object WeatherOperation {
       case GetCityError.NoSuchResourceCase(e) => e
     }
   }
-  sealed abstract class GetCityError extends scala.Product with scala.Serializable {
+  sealed trait GetCityError extends scala.Product with scala.Serializable {
     @inline final def widen: GetCityError = this
     def _ordinal: Int
   }

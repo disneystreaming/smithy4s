@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed abstract class Food extends scala.Product with scala.Serializable {
+sealed trait Food extends scala.Product with scala.Serializable {
   @inline final def widen: Food = this
   def _ordinal: Int
 }

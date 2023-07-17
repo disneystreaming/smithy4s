@@ -26,6 +26,7 @@ sealed trait CollectionTag[C[_]] {
   def build[A](put: (A => Unit) => Unit): C[A]
 
   def fromIterator[A](it: Iterator[A]): C[A] = build(put => it.foreach(put(_)))
+  def isEmpty[A](c: C[A]): Boolean
   def empty[A]: C[A] = build(_ => ())
 }
 
@@ -44,6 +45,8 @@ object CollectionTag {
       builder.result().toList
     }
 
+    override def isEmpty[A](c: List[A]): Boolean = c.isEmpty
+
   }
 
   case object SetTag extends CollectionTag[Set] {
@@ -55,6 +58,8 @@ object CollectionTag {
       put(builder.+=(_))
       builder.result()
     }
+
+    override def isEmpty[A](c: Set[A]): Boolean = c.isEmpty
   }
 
   case object VectorTag extends CollectionTag[Vector] {
@@ -66,6 +71,8 @@ object CollectionTag {
       put(builder.+=(_))
       builder.result()
     }
+
+    override def isEmpty[A](c: Vector[A]): Boolean = c.isEmpty
   }
 
   case object IndexedSeqTag extends CollectionTag[IndexedSeq] {
@@ -78,6 +85,8 @@ object CollectionTag {
       put(builder.+=(_))
       builder.result()
     }
+
+    override def isEmpty[A](c: IndexedSeq[A]): Boolean = c.isEmpty
 
     /**
       * Returns a builder that may be able to store the elements in an unboxed

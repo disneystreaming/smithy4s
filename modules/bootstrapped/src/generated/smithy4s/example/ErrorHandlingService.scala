@@ -36,7 +36,7 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[ErrorHandlingServiceOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[ErrorHandlingServiceOperation, _, _, _, _, _]] = Vector(
     ErrorHandlingServiceOperation.ErrorHandlingOperation,
   )
 
@@ -99,7 +99,7 @@ object ErrorHandlingServiceOperation {
       case ErrorHandlingOperationError.EHFallbackServerErrorCase(e) => e
     }
   }
-  sealed abstract class ErrorHandlingOperationError extends scala.Product with scala.Serializable {
+  sealed trait ErrorHandlingOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ErrorHandlingOperationError = this
     def _ordinal: Int
   }

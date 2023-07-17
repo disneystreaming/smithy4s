@@ -337,6 +337,7 @@ private[internals] object CollisionAvoidance {
     val indexedSeq = reserved("scala.collection.immutable", "IndexedSeq")
     val set = reserved("scala.collection.immutable", "Set")
     val map = reserved("scala.collection.immutable", "Map")
+    val vector = reserved("scala", "Vector")
     val option = reserved("scala", "Option")
     val none = reserved("scala", "None")
     val some = reserved("scala", "Some")

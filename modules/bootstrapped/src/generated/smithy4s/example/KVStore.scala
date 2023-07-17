@@ -39,7 +39,7 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[KVStoreOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[KVStoreOperation, _, _, _, _, _]] = Vector(
     KVStoreOperation.Get,
     KVStoreOperation.Put,
     KVStoreOperation.Delete,
@@ -108,7 +108,7 @@ object KVStoreOperation {
       case GetError.KeyNotFoundErrorCase(e) => e
     }
   }
-  sealed abstract class GetError extends scala.Product with scala.Serializable {
+  sealed trait GetError extends scala.Product with scala.Serializable {
     @inline final def widen: GetError = this
     def _ordinal: Int
   }
@@ -160,7 +160,7 @@ object KVStoreOperation {
       case PutError.UnauthorizedErrorCase(e) => e
     }
   }
-  sealed abstract class PutError extends scala.Product with scala.Serializable {
+  sealed trait PutError extends scala.Product with scala.Serializable {
     @inline final def widen: PutError = this
     def _ordinal: Int
   }
@@ -207,7 +207,7 @@ object KVStoreOperation {
       case DeleteError.KeyNotFoundErrorCase(e) => e
     }
   }
-  sealed abstract class DeleteError extends scala.Product with scala.Serializable {
+  sealed trait DeleteError extends scala.Product with scala.Serializable {
     @inline final def widen: DeleteError = this
     def _ordinal: Int
   }

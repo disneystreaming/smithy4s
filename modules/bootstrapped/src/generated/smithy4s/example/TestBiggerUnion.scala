@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed abstract class TestBiggerUnion extends scala.Product with scala.Serializable {
+sealed trait TestBiggerUnion extends scala.Product with scala.Serializable {
   @inline final def widen: TestBiggerUnion = this
   def _ordinal: Int
 }

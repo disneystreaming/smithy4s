@@ -39,18 +39,30 @@ trait CachedSchemaCompiler[+F[_]] { self =>
       )
     }
 
+  final def contramapSchema(
+      fk: PolyFunction[Schema, Schema]
+  ): CachedSchemaCompiler[F] = new CachedSchemaCompiler[F] {
+    type Cache = self.Cache
+    def createCache(): Cache = self.createCache()
+
+    def fromSchema[A](schema: Schema[A]): F[A] = self.fromSchema(fk(schema))
+
+    def fromSchema[A](schema: Schema[A], cache: Cache): F[A] =
+      self.fromSchema(fk(schema), cache)
+
+  }
+
 }
 
 object CachedSchemaCompiler { outer =>
 
-  type OptionW[F[_], A] = Option[F[A]]
-  type Possible[F[_]] = CachedSchemaCompiler[OptionW[F, *]]
-  object Possible {
-    abstract class Impl[F[_]] extends outer.Impl[OptionW[F, *]]
+  type Optional[F[_]] = CachedSchemaCompiler[OptionK[F, *]]
+  object Optional {
+    abstract class Impl[F[_]] extends outer.Impl[OptionK[F, *]]
   }
 
   def getOrElse[F[_]](
-      possible: CachedSchemaCompiler.Possible[F],
+      possible: CachedSchemaCompiler.Optional[F],
       default: CachedSchemaCompiler[F]
   ): CachedSchemaCompiler[F] = new CachedSchemaCompiler[F] {
     type Cache = (possible.Cache, default.Cache)

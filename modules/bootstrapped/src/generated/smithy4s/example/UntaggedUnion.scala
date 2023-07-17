@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed abstract class UntaggedUnion extends scala.Product with scala.Serializable {
+sealed trait UntaggedUnion extends scala.Product with scala.Serializable {
   @inline final def widen: UntaggedUnion = this
   def _ordinal: Int
 }

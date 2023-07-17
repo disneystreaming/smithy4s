@@ -8,7 +8,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
-sealed abstract class CheckedOrUnchecked extends scala.Product with scala.Serializable {
+sealed trait CheckedOrUnchecked extends scala.Product with scala.Serializable {
   @inline final def widen: CheckedOrUnchecked = this
   def _ordinal: Int
 }

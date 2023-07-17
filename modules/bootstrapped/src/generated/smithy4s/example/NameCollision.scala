@@ -38,7 +38,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[NameCollisionOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[NameCollisionOperation, _, _, _, _, _]] = Vector(
     NameCollisionOperation.MyOp,
     NameCollisionOperation.Endpoint,
   )
@@ -99,7 +99,7 @@ object NameCollisionOperation {
       case MyOpError.MyOpErrorCase(e) => e
     }
   }
-  sealed abstract class MyOpError extends scala.Product with scala.Serializable {
+  sealed trait MyOpError extends scala.Product with scala.Serializable {
     @inline final def widen: MyOpError = this
     def _ordinal: Int
   }

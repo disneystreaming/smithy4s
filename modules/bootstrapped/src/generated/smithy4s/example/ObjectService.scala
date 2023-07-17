@@ -47,7 +47,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[ObjectServiceOperation, _, _, _, _, _]] = Vector(
     ObjectServiceOperation.PutObject,
     ObjectServiceOperation.GetObject,
   )
@@ -114,7 +114,7 @@ object ObjectServiceOperation {
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }
-  sealed abstract class PutObjectError extends scala.Product with scala.Serializable {
+  sealed trait PutObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: PutObjectError = this
     def _ordinal: Int
   }
@@ -169,7 +169,7 @@ object ObjectServiceOperation {
       case GetObjectError.ServerErrorCase(e) => e
     }
   }
-  sealed abstract class GetObjectError extends scala.Product with scala.Serializable {
+  sealed trait GetObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: GetObjectError = this
     def _ordinal: Int
   }

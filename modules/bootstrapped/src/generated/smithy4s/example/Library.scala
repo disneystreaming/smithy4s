@@ -34,7 +34,7 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[LibraryOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[LibraryOperation, _, _, _, _, _]] = Vector(
     LibraryOperation.ListPublishers,
     LibraryOperation.GetBook,
     LibraryOperation.BuyBook,

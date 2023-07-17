@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed abstract class UnionWithRefinedTypes extends scala.Product with scala.Serializable {
+sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
   @inline final def widen: UnionWithRefinedTypes = this
   def _ordinal: Int
 }

@@ -37,7 +37,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[ReservedNameServiceOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[ReservedNameServiceOperation, _, _, _, _, _]] = Vector(
     ReservedNameServiceOperation._Set,
     ReservedNameServiceOperation._List,
     ReservedNameServiceOperation._Map,

@@ -37,7 +37,7 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: IndexedSeq[smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation, _, _, _, _, _]] = IndexedSeq(
+  val endpoints: Vector[smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation, _, _, _, _, _]] = Vector(
     ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperation,
   )
 
@@ -100,7 +100,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       case ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e) => e
     }
   }
-  sealed abstract class ExtraErrorOperationError extends scala.Product with scala.Serializable {
+  sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ExtraErrorOperationError = this
     def _ordinal: Int
   }
