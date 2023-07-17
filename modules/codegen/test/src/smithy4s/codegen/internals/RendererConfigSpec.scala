@@ -253,7 +253,9 @@ final class RendererConfigSpec extends munit.FunSuite {
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
          |  final case class BadRequestCase(badRequest: BadRequest) extends OperationError
+         |  def badRequest(badRequest:BadRequest): OperationError = BadRequestCase(badRequest)
          |  final case class InternalServerErrorCase(internalServerError: InternalServerError) extends OperationError
+         |  def internalServerError(internalServerError:InternalServerError): OperationError = InternalServerErrorCase(internalServerError)
          |  object BadRequestCase {
          |    val hints: Hints = Hints.empty
          |    val schema: Schema[BadRequestCase] = bijection(BadRequest.schema.addHints(hints), BadRequestCase(_), _.badRequest)
