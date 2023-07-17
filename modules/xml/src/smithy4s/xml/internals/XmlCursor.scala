@@ -38,27 +38,34 @@ private[smithy4s] sealed trait XmlCursor {
 
 private[smithy4s] object XmlCursor {
   def fromDocument(document: XmlDocument): XmlCursor =
-    Nodes(XPath.root, NonEmptyList.one(document.root))
+    RootNode(document.root)
 
-  case class Nodes(
-      history: XPath,
-      nodes: NonEmptyList[XmlDocument.XmlElem]
-  ) extends XmlCursor {
-    def isSingle: Boolean = nodes.tail.isEmpty
-    def down(tag: XmlQName): XmlCursor = if (isSingle) {
+  case class RootNode(root: XmlDocument.XmlElem) extends XmlCursor {
+    val history = XPath.root
+    def down(tag: XmlQName): XmlCursor = {
       val newHistory = history.appendTag(tag)
-      val node = nodes.head
-      val allNodes = node.children.collect { case e @ XmlElem(`tag`, _, _) =>
-        e
-      }
-      NonEmptyList.fromList(allNodes) match {
-        case None      => NoNode(newHistory)
-        case Some(nel) => Nodes(newHistory, nel)
-      }
-    } else FailedNode(history.appendTag(tag))
+      if (root.name != tag) FailedNode(history.appendTag(tag))
+      else SingleNode(newHistory, root)
+    }
+    def attr(name: XmlQName): XmlCursor = FailedNode(history.appendAttr(name))
 
-    def attr(name: XmlQName): XmlCursor = if (isSingle) {
-      val node = nodes.head
+  }
+
+  case class SingleNode(history: XPath, node: XmlDocument.XmlElem)
+      extends XmlCursor {
+    def down(tag: XmlQName): XmlCursor = {
+      val newHistory = history.appendTag(tag)
+      val matchingNodes = node.children.collect {
+        case e @ XmlElem(`tag`, _, _) =>
+          e
+      }
+      matchingNodes match {
+        case Nil          => NoNode(newHistory)
+        case head :: Nil  => SingleNode(newHistory, head)
+        case head :: tail => Nodes(newHistory, NonEmptyList(head, tail))
+      }
+    }
+    def attr(name: XmlQName): XmlCursor = {
       val newHistory = history.appendAttr(name)
       val allValues = node.attributes.collect {
         case XmlDocument.XmlAttr(`name`, values) =>
@@ -68,7 +75,15 @@ private[smithy4s] object XmlCursor {
         case None      => NoNode(newHistory)
         case Some(nel) => AttrNode(newHistory, nel)
       }
-    } else FailedNode(history.appendAttr(name))
+    }
+  }
+
+  case class Nodes(
+      history: XPath,
+      nodes: NonEmptyList[XmlDocument.XmlElem]
+  ) extends XmlCursor {
+    def down(tag: XmlQName): XmlCursor = FailedNode(history.appendTag(tag))
+    def attr(name: XmlQName): XmlCursor = FailedNode(history.appendAttr(name))
   }
   case class AttrNode(history: XPath, values: NonEmptyList[String])
       extends XmlCursor {

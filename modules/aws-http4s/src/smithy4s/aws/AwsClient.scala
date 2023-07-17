@@ -69,6 +69,9 @@ object AwsClient {
         case AwsProtocol.AWS_REST_JSON_1(_) =>
           AwsRestJsonCodecs.make[F]("application/json")
 
+        case AwsProtocol.AWS_REST_XML(_) =>
+          AwsXmlCodecs.make[F]()
+
         case _ => ???
       }
       service.functorInterpreter {

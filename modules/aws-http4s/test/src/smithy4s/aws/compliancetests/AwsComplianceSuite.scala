@@ -16,9 +16,7 @@
 
 package smithy4s.aws
 
-import aws.protocols.AwsJson1_0
-import aws.protocols.AwsJson1_1
-import aws.protocols.RestJson1
+import aws.protocols._
 import cats.effect.IO
 import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.ShapeId
@@ -27,7 +25,7 @@ import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
 import smithy4s.tests.ProtocolComplianceSuite
 
-object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
+object AwsComplianceSuite extends ProtocolComplianceSuite {
 
   override def allRules(
       dsi: DynamicSchemaIndex
@@ -38,7 +36,10 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
     val jsDisallowed = Set(
       "RestJsonHttpRequestLabelEscaping",
       "RestJsonInputAndOutputWithNumericHeaders",
-      "RestJsonInputWithHeadersAndAllParams"
+      "RestJsonInputWithHeadersAndAllParams",
+      "InputWithHeadersAndAllParams",
+      "HttpRequestLabelEscaping",
+      "InputAndOutputWithNumericHeaders"
     )
 
     val disallowed = Set(
@@ -55,16 +56,20 @@ object AwsJsonComplianceSuite extends ProtocolComplianceSuite {
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
     genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
       genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
-      genClientTests(impl(RestJson1), restJson1)(dsi)
+      genClientTests(impl(RestJson1), restJson1)(dsi) ++
+      genClientTests(impl(RestXml), restXml)(dsi)
 
   private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
   private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
   private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
+  private val restXml = ShapeId("aws.protocoltests.restxml", "RestXml")
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 
   val jsonPayloadCodecs =
-    smithy4s.aws.internals.AwsJsonCodecs.jsonPayloadCodecs
+    smithy4s.json.Json.payloadCodecs.withJsoniterCodecCompiler {
+      smithy4s.json.Json.jsoniter.withMapOrderPreservation(true)
+    }
 
   override def dynamicSchemaIndexLoader: IO[DynamicSchemaIndex] = {
     for {
