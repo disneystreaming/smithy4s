@@ -62,6 +62,11 @@ trait JsoniterCodecCompiler extends CachedSchemaCompiler[JsonCodec] {
   def withInfinitySupport(infinitySupport: Boolean): JsoniterCodecCompiler
 
   /**
+    * Changes the behaviour of Json decoders so that the preserve the ordering of maps.
+    */
+  def withMapOrderPreservation(preserveMapOrder: Boolean): JsoniterCodecCompiler
+
+  /**
     * Changes the hint mask with which the decoder works. Depending on the hint mask, some
     * smithy traits may be overlooked during encoding/decoding. For instance, `@jsonName`.
     */

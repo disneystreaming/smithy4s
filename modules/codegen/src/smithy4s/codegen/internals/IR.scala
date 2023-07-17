@@ -34,10 +34,13 @@ import UnionMember._
 import LineSegment.{NameDef, NameRef}
 
 private[internals] case class CompilationUnit(
-    namespace: String,
+    rawNamespace: String,
     declarations: List[Decl],
     rendererConfig: Renderer.Config
-)
+) {
+  val namespace: String =
+    rawNamespace.split('.').map(CollisionAvoidance.protectType(_)).mkString(".")
+}
 
 private[internals] sealed trait Decl {
   def shapeId: ShapeId

@@ -80,8 +80,11 @@ object AwsErrorTypeDecoder {
     protected[aws] val schema: smithy4s.Schema[AwsErrorType] = {
       import smithy4s.schema.Schema._
 
-      val __typeField = string.optional[AwsErrorType]("__type", _.__type)
-      val codeField = string.optional[AwsErrorType]("code", _.code)
+      val __typeField = string
+        .optional[AwsErrorType]("__type", _.__type)
+      val codeField = string
+        .optional[AwsErrorType]("code", _.code)
+        .addHints(smithy.api.XmlName("Code"))
       val typeHeader =
         string
           .optional[AwsErrorType]("typeHeader", _.typeHeader)

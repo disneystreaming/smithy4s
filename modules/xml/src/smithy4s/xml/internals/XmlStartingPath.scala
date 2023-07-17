@@ -14,27 +14,24 @@
  *  limitations under the License.
  */
 
-package smithy4s.capability
+package smithy4s.xml.internals
 
-/**
-  * Abstraction that encodes Contravariant Functors.
-  */
+import smithy4s.schema.Schema
+import Schema._
+import smithy4s.ShapeTag
+import smithy4s.ShapeId
 
-trait Contravariant[F[_]] {
-  def contramap[A, B](fa: F[A])(f: B => A): F[B]
-}
+case class XmlStartingPath(path: List[String])
 
-object Contravariant {
+object XmlStartingPath extends ShapeTag.Companion[XmlStartingPath] {
 
-  def apply[F[_]](implicit instance: Contravariant[F]): Contravariant[F] =
-    instance
+  val id: ShapeId = ShapeId("smithy4s.xml.internals", "XmlStartingPath")
 
-  implicit def contravariantOfCovariantInstance[F[_], G[_]](implicit
-      F: Covariant[F],
-      G: Contravariant[G]
-  ): Contravariant[Wrapped[F, G, *]] = new Contravariant[Wrapped[F, G, *]] {
-    def contramap[A, B](fa: F[G[A]])(f: B => A): F[G[B]] =
-      F.map(fa)(ga => G.contramap(ga)(f))
-  }
+  val schema: Schema[XmlStartingPath] =
+    list(string)
+      .biject[XmlStartingPath](
+        XmlStartingPath(_),
+        (_: XmlStartingPath).path
+      )
 
 }

@@ -16,6 +16,8 @@
 
 package smithy4s.capability
 
+import smithy4s.kinds.PolyFunction
+
 /**
   * Abstraction that encodes Functors
   */
@@ -26,5 +28,22 @@ trait Covariant[F[_]] {
 object Covariant {
 
   def apply[F[_]](implicit instance: Covariant[F]): Covariant[F] = instance
+
+  def liftPolyFunction[F[_]] = new PartiallyAppliedLiftK[F]()
+
+  class PartiallyAppliedLiftK[F[_]](private val dummy: Boolean = true)
+      extends AnyVal {
+    def apply[G1[_], G2[_]](fk: PolyFunction[G1, G2])(implicit
+        F: Covariant[F]
+    ): PolyFunction[Wrapped[F, G1, *], Wrapped[F, G2, *]] =
+      new PolyFunction[Wrapped[F, G1, *], Wrapped[F, G2, *]] {
+        def apply[A](fa: F[G1[A]]): F[G2[A]] = F.map(fa)(fk(_))
+      }
+  }
+
+  implicit val covariantInstanceForOption: Covariant[Option] =
+    new Covariant[Option] {
+      def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa.map(f)
+    }
 
 }
