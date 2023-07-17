@@ -22,9 +22,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
   @deprecated(message = "N/A", since = "N/A")
   final case class SCase(s: String) extends DeprecatedUnion
-  def sCase(sCase:String): DeprecatedUnion = SCase(sCase)
+  def s(s:String): DeprecatedUnion = SCase(s)
   final case class S_V2Case(s_V2: String) extends DeprecatedUnion
-  def s_V2Case(s_V2Case:String): DeprecatedUnion = S_V2Case(s_V2Case)
+  def s_V2(s_V2:String): DeprecatedUnion = S_V2Case(s_V2)
   @deprecated(message = "N/A", since = "N/A")
   final case class DeprecatedUnionProductCase() extends DeprecatedUnion
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {

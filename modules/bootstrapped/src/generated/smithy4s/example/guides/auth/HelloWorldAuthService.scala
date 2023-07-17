@@ -114,7 +114,7 @@ object HelloWorldAuthServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError
-    def notAuthorizedErrorCase(notAuthorizedErrorCase:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedErrorCase)
+    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -163,7 +163,7 @@ object HelloWorldAuthServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError
-    def notAuthorizedErrorCase(notAuthorizedErrorCase:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedErrorCase)
+    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty

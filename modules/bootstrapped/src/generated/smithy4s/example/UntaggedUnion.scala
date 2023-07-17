@@ -18,9 +18,9 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
   )
 
   final case class ThreeCase(three: Three) extends UntaggedUnion
-  def threeCase(threeCase:Three): UntaggedUnion = ThreeCase(threeCase)
+  def three(three:Three): UntaggedUnion = ThreeCase(three)
   final case class FourCase(four: Four) extends UntaggedUnion
-  def fourCase(fourCase:Four): UntaggedUnion = FourCase(fourCase)
+  def four(four:Four): UntaggedUnion = FourCase(four)
 
   object ThreeCase {
     val hints: Hints = Hints.empty

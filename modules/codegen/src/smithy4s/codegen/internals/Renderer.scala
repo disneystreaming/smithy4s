@@ -614,8 +614,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       additionalLines: Lines
   ): Lines = {
     import product._
+    val renderedArgs = renderArgs(fields)
     val decl =
-      line"final case class ${product.nameDef}(${renderArgs(fields)})"
+      line"final case class ${product.nameDef}($renderedArgs)"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -853,14 +854,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
         NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
     }
-    def smartConstructor(alt: Alt):Line = {
+    def smartConstructor(alt: Alt): Line = {
       val cn = caseName(alt).name
-      val uncapitalised = uncapitalise(cn)
-      val prefix =s"def $uncapitalised"
+      val ident = NameDef(uncapitalise(alt.name))
+      val prefix = line"def $ident"
       alt.member match {
-        case UnionMember.ProductCase(product) => line"$prefix():$name = ${product.name}"
+        case UnionMember.ProductCase(product) =>
+          val args = renderArgs(product.fields)
+          val values = product.fields.map(_.name).intercalate(", ")
+          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
         case UnionMember.UnitCase => line"$prefix(): $name = ${caseName(alt)}"
-        case UnionMember.TypeCase(tpe) => line"$prefix($uncapitalised:$tpe): $name = $cn($uncapitalised)"
+        case UnionMember.TypeCase(tpe) =>
+          line"$prefix($ident:$tpe): $name = $cn($ident)"
       }
     }
     val caseNames = alts.map(caseName)

@@ -230,6 +230,7 @@ private[internals] object CollisionAvoidance {
     "def",
     "do",
     "else",
+    "enum",
     "extends",
     "false",
     "final",

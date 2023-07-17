@@ -109,9 +109,9 @@ object HelloWorldServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError
-    def genericServerErrorCase(genericServerErrorCase:GenericServerError): HelloError = GenericServerErrorCase(genericServerErrorCase)
+    def genericServerError(genericServerError:GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
     final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError
-    def specificServerErrorCase(specificServerErrorCase:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerErrorCase)
+    def specificServerError(specificServerError:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
 
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
