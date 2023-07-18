@@ -197,7 +197,10 @@ object Service {
 
   final case class Builder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] private(
       private val base: Service.Aux[Alg, Op],
-      private val endpointMapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
+      private val endpointMapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e],
+      private val baseId: ShapeId,
+      private val baseVersion: String,
+      private val baseHints: Hints,
   ) {
 
     def mapEndpointEach(
@@ -208,6 +211,22 @@ object Service {
         identity
       )
     )
+
+    def withId(id: ShapeId): Builder[Alg, Op] = copy(baseId = id)
+
+    def mapId(f: ShapeId => ShapeId): Builder[Alg, Op] =
+      copy(baseId = f(baseId))
+
+    def withVersion(version: String): Builder[Alg, Op] = copy(baseVersion = version)
+
+    def mapVersion(f: String => String): Builder[Alg, Op] =
+      copy(baseVersion = f(baseVersion))
+
+    def withHints(hints: Hints): Builder[Alg, Op] =
+      copy(baseHints = hints)
+
+    def mapHints(f: Hints => Hints): Builder[Alg, Op] =
+      copy(baseHints = f(baseHints))
 
     def build: Service.Aux[Alg, Op] = new Service[Alg] {
 
@@ -225,12 +244,11 @@ object Service {
         (input, endpointMapper(baseEndpoint))
       }
 
-      // todo: these should be easier ones
-      override val id: ShapeId = ???
+      override val id: ShapeId = baseId
 
-      override val version: String = ???
+      override val version: String = baseVersion
 
-      override val hints: Hints = ???
+      override val hints: Hints = baseHints
 
       override val reified: Alg[Operation] = base.reified
 
