@@ -226,13 +226,13 @@ object Service {
       }
 
       // todo: these should be easier ones
-      override def id: ShapeId = ???
+      override val id: ShapeId = ???
 
-      override def version: String = ???
+      override val version: String = ???
 
-      override def hints: Hints = ???
+      override val hints: Hints = ???
 
-      override def reified: Alg[Operation] = base.reified
+      override val reified: Alg[Operation] = base.reified
 
       override def fromPolyFunction[P[_, _, _, _, _]](
           function: PolyFunction5[Operation, P]
