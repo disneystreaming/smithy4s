@@ -17,6 +17,7 @@
 package smithy4s.aws
 package internals
 
+import smithy4s.Blob
 import smithy4s.codecs._
 import smithy4s.http._
 import smithy4s.json.Json
@@ -52,8 +53,13 @@ private[aws] object AwsRestJsonCodecs {
           .andThen[HttpMediaReader](HttpMediaTyped.mediaTypeK(mediaType))
       }
 
+    def nullToEmptyObject(blob: Blob): Blob =
+      if (blob.sameBytesAs(Blob("null"))) Blob("{}") else blob
+
     val jsonMediaWriters = jsonPayloadCodecs.mapK {
-      PayloadCodec.writerK.andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
+      PayloadCodec.writerK
+        .andThen[PayloadWriter](Writer.andThenK(nullToEmptyObject))
+        .andThen[HttpMediaWriter](HttpMediaTyped.mediaTypeK(mediaType))
     }
 
     val mediaReaders =
