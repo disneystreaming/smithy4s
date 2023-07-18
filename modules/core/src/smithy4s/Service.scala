@@ -187,4 +187,37 @@ object Service {
     final def toPolyFunction[P[_, _, _, _, _]](algebra: PolyFunction5[Op, P]): PolyFunction5[Op, P] = algebra
     final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]): PolyFunction5[Op, G] = algebra.andThen(function)
   }
+
+  case class Builder[Alg[_[_, _, _, _, _]],I, E, O, SI, SO ](
+    endpointsX: List[Endpoint[_, _, _, _, _]]
+
+  //def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO])
+
+  ) {
+    def withEndpoint(endpoints:  List[Endpoint.Base[I, E, O, SI, SO]]): Builder[Alg,I, E, O, SI, SO] = copy(endpoints = endpointsX)
+
+    def build(): Service[Alg] = new Service[Alg] {
+
+      override type Operation = this.type
+
+      override def endpoints: List[Endpoint[_, _, _, _, _]] =  endpointsX
+
+      override def endpoint[I, E, O, SI, SO](op: this.type): (I, Endpoint[I, E, O, SI, SO]) = ???
+
+      override def version: String = ???
+
+      override def hints: Hints = ???
+
+      override def reified: Alg[this.type] = ???
+
+      override def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[this.type, P]): Alg[P] = ???
+
+      override def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[this.type, P] = ???
+
+      override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G] = ???
+
+      override def id: ShapeId = ???
+    }
+  }
+
 }
