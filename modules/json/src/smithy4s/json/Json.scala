@@ -25,6 +25,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core._
 
 object Json {
 
+  val NullBlob = Blob("null")
+  val EmptyObjectBlob = Blob("{}")
+
   /**
     * Reads an instance of `A` from a [[smithy4s.Blob]] holding a json payload.
     *

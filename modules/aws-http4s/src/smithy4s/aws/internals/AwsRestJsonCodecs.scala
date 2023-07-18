@@ -54,7 +54,7 @@ private[aws] object AwsRestJsonCodecs {
       }
 
     def nullToEmptyObject(blob: Blob): Blob =
-      if (blob.sameBytesAs(Blob("null"))) Blob("{}") else blob
+      if (blob.sameBytesAs(Json.NullBlob)) Json.EmptyObjectBlob else blob
 
     val jsonMediaWriters = jsonPayloadCodecs.mapK {
       PayloadCodec.writerK
