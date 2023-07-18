@@ -35,7 +35,8 @@ class PartiallyAppliedUnion[U](val alts: Vector[Alt[U, _]]) extends AnyVal {
         i += 1
         found = alts(i).project.isDefinedAt(u)
       }
-      i
+      if (found) i
+      else throw new scala.MatchError(u)
     }
     Schema.UnionSchema(
       Schema.placeholder,
