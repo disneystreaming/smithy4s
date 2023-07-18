@@ -25,10 +25,9 @@ import smithy4s.schema._
 import smithy4s.codecs.PayloadPath
 // import smithy4s.http.UrlForm.FormData.Empty
 
-// TODO
-abstract class UrlFormDataDecoderSchemaVisitor(
-    val cache: CompilationCache[UrlFormDataDecoder]
-) extends SchemaVisitor.Cached[UrlFormDataDecoder] {
+// TODO: Caching
+object UrlFormDataDecoderSchemaVisitor
+    extends SchemaVisitor[UrlFormDataDecoder] {
   compile =>
 
   override def primitive[P](
@@ -67,6 +66,8 @@ abstract class UrlFormDataDecoderSchemaVisitor(
               ) =>
             values.zipWithIndex
               .traverse { case (elem, index) =>
+                // TODO: Need to verify index of pathed value matches index from zipWithIndex
+                // Best way is to just sort by index first.
                 memberReader.decode(
                   UrlFormCursor
                     .Value(history.append(index), elem)

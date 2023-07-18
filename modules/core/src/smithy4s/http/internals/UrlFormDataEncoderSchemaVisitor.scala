@@ -23,9 +23,9 @@ import smithy4s.http._
 import smithy4s.schema._
 import smithy4s.codecs.PayloadPath
 
-class UrlFormDataEncoderSchemaVisitor(
-    val cache: CompilationCache[UrlFormDataEncoder]
-) extends SchemaVisitor.Cached[UrlFormDataEncoder] {
+// TODO: Caching
+object UrlFormDataEncoderSchemaVisitor
+    extends SchemaVisitor[UrlFormDataEncoder] {
   compile =>
 
   override def primitive[P](

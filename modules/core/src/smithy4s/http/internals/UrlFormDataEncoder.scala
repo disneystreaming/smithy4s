@@ -54,7 +54,7 @@ private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
 
 object UrlFormDataEncoder {
   // TODO: What's this for?
-  implicit val FormDataEncoderK
+  implicit val UrlFormDataEncoderK
       : EncoderK[UrlFormDataEncoder, UrlForm.FormData] =
     new EncoderK[UrlFormDataEncoder, UrlForm.FormData] {
       def apply[A](fa: UrlFormDataEncoder[A], a: A): UrlForm.FormData =

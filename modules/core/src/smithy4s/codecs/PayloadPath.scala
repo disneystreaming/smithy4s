@@ -60,6 +60,7 @@ object PayloadPath {
     def apply(label: String): Segment = Label(label)
     def apply(index: Int): Segment = Index(index)
 
+    // TODO: What if it was actually meant to be a string?
     def fromString(string: String): Segment = try { Index(string.toInt) }
     catch {
       case _: Throwable => Label(string)

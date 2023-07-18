@@ -48,7 +48,7 @@ abstract class ProtocolComplianceSuite
       .evalMap(index => allRules(index).map(_ -> allTests(index)))
       .flatMap { case (rules, tests) => Stream(tests: _*).map(rules -> _) }
       .flatMap { case (rules, test) =>
-        if (includeTest(test.id)) Stream.emit((rules, test)) else Stream.empty
+        if (includeTest(test.show)) Stream.emit((rules, test)) else Stream.empty
       }
       .flatMap { case (rules, test) =>
         runInWeaver(rules, test)

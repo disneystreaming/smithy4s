@@ -23,6 +23,10 @@ import java.nio.charset.StandardCharsets
 import smithy4s.codecs.PayloadPath
 import smithy4s.codecs.PayloadPath.Segment
 import scala.collection.mutable
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.http.internals.UrlFormCursor
+import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
+import smithy4s.http.internals.UrlFormDataDecoderSchemaVisitor
 
 final case class UrlForm(values: UrlForm.FormData.MultipleValues)
 
@@ -134,8 +138,32 @@ object UrlForm {
     def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A]
   }
 
+  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] =
+      new Decoder[A] {
+        val urlFormDataDecoder = UrlFormDataDecoderSchemaVisitor(schema)
+        def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A] =
+          urlFormDataDecoder.decode(UrlFormCursor.fromUrlForm(urlForm))
+      }
+  }
+
   trait Encoder[A] {
     def encode(a: A): UrlForm
+  }
+  object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+    def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
+      val urlFormDataEncoder = UrlFormDataEncoderSchemaVisitor(schema)
+      new Encoder[A] {
+        def encode(value: A): UrlForm = {
+          val formData = urlFormDataEncoder.encode(value)
+          UrlForm(
+            UrlForm.FormData.MultipleValues(
+              formData.toPathedValues
+            )
+          )
+        }
+      }
+    }
   }
 
 }
