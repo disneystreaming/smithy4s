@@ -115,7 +115,7 @@ object Endpoint {
       override def streamedOutput: StreamingSchema[SO] = streamedOutputX
     }
     def mapBuilder(f: Builders[I, E, O, SI, SO] => Endpoint.Base[I, E, O, SI, SO] ): Endpoint.Base[I, E, O, SI, SO] = f(this)
-    def toEndpoint(endpoint: Endpoint.Base[I, E, O, SI, SO] ): Builders[I, E, O, SI, SO] = {
+    def fromEndpoint(endpoint: Endpoint.Base[I, E, O, SI, SO] ): Builders[I, E, O, SI, SO] = {
       Builders(
         shapeId = endpoint.id,
         hintsX = endpoint.hints,
