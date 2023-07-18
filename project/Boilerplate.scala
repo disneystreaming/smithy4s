@@ -34,7 +34,7 @@ object Boilerplate {
     case object Core3 extends BoilerplateModule
 
     def templates: Map[BoilerplateModule, List[Template]] = Map(
-      Core -> List(PartiallyAppliedStruct, PolyFunction),
+      Core -> List(PartiallyAppliedStruct, PartiallyAppliedTuple, PolyFunction),
       Core2 -> List(Scala2Kinds, FunctorK(Scala2)),
       Core3 -> List(Scala3Kinds, FunctorK(Scala3))
     )
@@ -147,7 +147,7 @@ object Boilerplate {
       import tv._
 
       val fields = synTypes.map { tpe =>
-        s"Field[F, S, $tpe]"
+        s"Field[S, $tpe]"
       }
 
       val schemaFields = synTypes.map { tpe =>
@@ -194,6 +194,57 @@ object Boilerplate {
       |     fields: Vector[Field[S, _]])(
       |     const: IndexedSeq[Any] => S): Schema[S] =
       |    Schema.StructSchema(placeholder, Hints.empty, fields, const)
+      |
+      -  $smartCtsr
+      |
+      |}
+      """
+    }
+  }
+
+  object PartiallyAppliedTuple extends Template {
+    override def range: IndexedSeq[Int] = 2 to 22
+
+    override def filename(root: File): File =
+      root / "generated" / "schema" / "PartiallyAppliedTuple.scala"
+
+    override def content(tv: TemplateVals): String = {
+      import tv._
+
+      // val params =
+      // synVals.zip(fields).map { case (v, t) => s"$v: $t" }.mkString(", ")
+
+      val schemaParams =
+        synVals
+          .zip(synTypes)
+          .map { case (v, t) => s"$v: Schema[$t]" }
+          .mkString(", ")
+
+      val tupleAccessors = (0 until arity).map(n => s"_${n + 1}")
+
+      val fields = synVals
+        .zip(tupleAccessors)
+        .map { case (schema, accessor) =>
+          s"""$schema.required[${`(A..N)`}]("$accessor", _.$accessor)"""
+        }
+        .mkString(", ")
+
+      val consArgs = synVals.map(v => s"_$v").mkString(", ")
+
+      val casts = synTypes.zipWithIndex
+        .map { case (a, i) =>
+          s"arr($i).asInstanceOf[${a}]"
+        }
+        .mkString(", ")
+
+      val smartCtsr =
+        s"""def apply[${`A..N`}]($schemaParams): Schema.StructSchema[${`(A..N)`}] = Schema.StructSchema[${`(A..N)`}](placeholder, Hints.empty, Vector($fields), arr => ($casts))"""
+
+      block"""
+      |package smithy4s
+      |package schema
+      |
+      |class PartiallyAppliedTuple protected[schema](placeholder: ShapeId) {
       |
       -  $smartCtsr
       |

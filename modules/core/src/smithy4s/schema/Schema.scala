@@ -234,12 +234,6 @@ object Schema {
     }
   }
 
-  def tuple[A, B](left: Schema[A], right: Schema[B]) : Schema[(A, B)] = {
-    val l = left.required[(A, B)]("_1", _._1)
-    val r = right.required[(A, B)]("_2", _._2)
-    struct(l, r){ case (l, r) => (l, r)}
-  }
-
   def enumeration[E](total: E => EnumValue[E], tag: EnumTag, values: List[EnumValue[E]]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values, total)
 
@@ -267,7 +261,7 @@ object Schema {
   def constant[A](a: A): Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 
   def struct[S]: PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
-
+  val tuple: PartiallyAppliedTuple = new PartiallyAppliedTuple(placeholder)
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String, get: S => A): Field[S, A] = Field.required(label, schema, get)
   }
