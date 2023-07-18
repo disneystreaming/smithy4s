@@ -30,7 +30,7 @@ Then, there's the **runtime** part. Let's say you're building an HTTP client - i
 ```scala
 SimpleRestJson(WeatherService)
   .client(??? : org.http4s.client.Client[IO])
-  .use
+  .make
 ```
 
 or more generically:
@@ -256,7 +256,7 @@ val service = dsi.getService(ShapeId("weather", "WeatherService")).get
 val client =
   SimpleRestJsonBuilder(service.service)
     .client(Client.fromHttpApp(routes))
-    .use
+    .make
     .toTry
     .get
 ```
@@ -271,7 +271,7 @@ run(
   service = service.service,
   operationName = "GetWeather",
   input = Document.obj("city" -> Document.fromString("London")),
-  alg = SimpleRestJsonBuilder(service.service).client(Client.fromHttpApp(routes)).use.toTry.get,
+  alg = client,
 ).unsafeRunSync().show
 ```
 
@@ -280,21 +280,25 @@ Enjoy the view! As an added bonus, because we happen to have this service at bui
 ```scala mdoc
 import weather._
 
-val clientInterpreter =
-  SimpleRestJsonBuilder(WeatherService).client(Client.fromHttpApp(routes)).use.toTry.get
+val clientStatic =
+  SimpleRestJsonBuilder(WeatherService)
+    .client(Client.fromHttpApp(routes))
+    .make
+    .toTry
+    .get
 
 run(
   service = WeatherService,
   operationName = "GetWeather",
   input = Document.obj("city" -> Document.fromString("London")),
-  alg = clientInterpreter,
+  alg = clientStatic,
 ).unsafeRunSync().show
 ```
 
 Again, this is equivalent to the following call in the static approach:
 
 ```scala mdoc
-clientInterpreter.getWeather(city = "London").unsafeRunSync()
+clientStatic.getWeather(city = "London").unsafeRunSync()
 ```
 
 [^1]: That is, assuming they're written correctly to make no assumptions about the usecase.
