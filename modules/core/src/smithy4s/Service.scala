@@ -203,7 +203,7 @@ object Service {
     def mapEndpointEach(
         mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
     ): Builder[Alg, Op] = copy(
-      endpointMapper = mapper.unsafeCacheBy(
+      endpointMapper = (endpointMapper.andThen(mapper)).unsafeCacheBy(
         base.endpoints.map(Kind5.existential(_)),
         identity
       )
