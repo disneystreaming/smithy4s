@@ -11,6 +11,7 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -121,6 +122,11 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val ServerError = Prism.partial[PutObjectError, ServerError]{ case ServerErrorCase(t) => t }(ServerErrorCase.apply)
+      val NoMoreSpace = Prism.partial[PutObjectError, NoMoreSpace]{ case NoMoreSpaceCase(t) => t }(NoMoreSpaceCase.apply)
+    }
+
     final case class ServerErrorCase(serverError: ServerError) extends PutObjectError
     final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
 
@@ -175,6 +181,10 @@ object ObjectServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
 
     val hints: Hints = Hints.empty
+
+    object Prisms {
+      val ServerError = Prism.partial[GetObjectError, ServerError]{ case ServerErrorCase(t) => t }(ServerErrorCase.apply)
+    }
 
     final case class ServerErrorCase(serverError: ServerError) extends GetObjectError
 

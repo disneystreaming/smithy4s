@@ -854,6 +854,35 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
+  private def caseName(alt: Alt): NameRef = alt.member match {
+    case UnionMember.ProductCase(product) => NameRef(product.name)
+    case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
+      NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
+  }
+
+  private def renderPrisms(
+      unionName: NameRef,
+      alts: NonEmptyList[Alt]
+  ): Lines = {
+    val smithyPrism = NameRef("smithy4s.optics.Prism")
+    val altLines = alts.map { alt =>
+      alt.member match {
+        case UnionMember.ProductCase(p) =>
+          val (mat, tpe) = (p.nameDef, line"${p.name}")
+          line"val ${alt.name} = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
+        case UnionMember.TypeCase(t) =>
+          val (mat, tpe) = (caseName(alt), line"$t")
+          line"val ${alt.name} = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
+        case UnionMember.UnitCase =>
+          val (mat, tpe) = (caseName(alt), line"${caseName(alt)}")
+          line"val ${alt.name} = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
+      }
+    }
+
+    obj(unionName.copy(name = "Prisms"))(altLines) ++
+      newline
+  }
+
   private def renderUnion(
       shapeId: ShapeId,
       name: NameRef,
@@ -863,11 +892,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def caseName(alt: Alt): NameRef = alt.member match {
-      case UnionMember.ProductCase(product) => NameRef(product.name)
-      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
-        NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
-    }
     val caseNames = alts.map(caseName)
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
@@ -890,6 +914,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
+        renderPrisms(name, alts),
         alts.map {
           case a @ Alt(_, realName, UnionMember.UnitCase, altHints) =>
             val cn = caseName(a)

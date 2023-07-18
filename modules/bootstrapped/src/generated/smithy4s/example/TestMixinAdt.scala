@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.optics.Lens
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -17,6 +18,10 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestMixinAdt")
 
   val hints: Hints = Hints.empty
+
+  object Prisms {
+    val test = Prism.partial[TestMixinAdt, TestAdtMemberWithMixin]{ case t: TestAdtMemberWithMixin => t }(identity)
+  }
 
   final case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {

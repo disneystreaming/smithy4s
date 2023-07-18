@@ -11,6 +11,7 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -159,6 +160,12 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val PriceError = Prism.partial[AddMenuItemError, PriceError]{ case PriceErrorCase(t) => t }(PriceErrorCase.apply)
+      val GenericServerError = Prism.partial[AddMenuItemError, GenericServerError]{ case GenericServerErrorCase(t) => t }(GenericServerErrorCase.apply)
+      val GenericClientError = Prism.partial[AddMenuItemError, GenericClientError]{ case GenericClientErrorCase(t) => t }(GenericClientErrorCase.apply)
+    }
+
     final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError
@@ -227,6 +234,13 @@ object PizzaAdminServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "GetMenuError")
 
     val hints: Hints = Hints.empty
+
+    object Prisms {
+      val NotFoundError = Prism.partial[GetMenuError, NotFoundError]{ case NotFoundErrorCase(t) => t }(NotFoundErrorCase.apply)
+      val FallbackError = Prism.partial[GetMenuError, FallbackError]{ case FallbackErrorCase(t) => t }(FallbackErrorCase.apply)
+      val FallbackError2 = Prism.partial[GetMenuError, FallbackError2]{ case FallbackError2Case(t) => t }(FallbackError2Case.apply)
+      val GenericClientError = Prism.partial[GetMenuError, GenericClientError]{ case GenericClientErrorCase(t) => t }(GenericClientErrorCase.apply)
+    }
 
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError
     final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError
@@ -316,6 +330,10 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val UnknownServerError = Prism.partial[HealthError, UnknownServerError]{ case UnknownServerErrorCase(t) => t }(UnknownServerErrorCase.apply)
+    }
+
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError
 
     object UnknownServerErrorCase {
@@ -395,6 +413,10 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val UnknownServerError = Prism.partial[GetEnumError, UnknownServerError]{ case UnknownServerErrorCase(t) => t }(UnknownServerErrorCase.apply)
+    }
+
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError
 
     object UnknownServerErrorCase {
@@ -442,6 +464,10 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val UnknownServerError = Prism.partial[GetIntEnumError, UnknownServerError]{ case UnknownServerErrorCase(t) => t }(UnknownServerErrorCase.apply)
+    }
+
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError
 
     object UnknownServerErrorCase {
@@ -488,6 +514,10 @@ object PizzaAdminServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeError")
 
     val hints: Hints = Hints.empty
+
+    object Prisms {
+      val UnknownServerError = Prism.partial[CustomCodeError, UnknownServerError]{ case UnknownServerErrorCase(t) => t }(UnknownServerErrorCase.apply)
+    }
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError
 

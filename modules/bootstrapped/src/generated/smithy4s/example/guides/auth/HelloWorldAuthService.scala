@@ -11,6 +11,7 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -113,6 +114,10 @@ object HelloWorldAuthServiceOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val NotAuthorizedError = Prism.partial[SayWorldError, NotAuthorizedError]{ case NotAuthorizedErrorCase(t) => t }(NotAuthorizedErrorCase.apply)
+    }
+
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError
 
     object NotAuthorizedErrorCase {
@@ -160,6 +165,10 @@ object HelloWorldAuthServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckError")
 
     val hints: Hints = Hints.empty
+
+    object Prisms {
+      val NotAuthorizedError = Prism.partial[HealthCheckError, NotAuthorizedError]{ case NotAuthorizedErrorCase(t) => t }(NotAuthorizedErrorCase.apply)
+    }
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError
 

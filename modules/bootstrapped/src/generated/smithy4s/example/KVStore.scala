@@ -11,6 +11,7 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -115,6 +116,11 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val UnauthorizedError = Prism.partial[GetError, UnauthorizedError]{ case UnauthorizedErrorCase(t) => t }(UnauthorizedErrorCase.apply)
+      val KeyNotFoundError = Prism.partial[GetError, KeyNotFoundError]{ case KeyNotFoundErrorCase(t) => t }(KeyNotFoundErrorCase.apply)
+    }
+
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError
     final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError
 
@@ -167,6 +173,10 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
+    object Prisms {
+      val UnauthorizedError = Prism.partial[PutError, UnauthorizedError]{ case UnauthorizedErrorCase(t) => t }(UnauthorizedErrorCase.apply)
+    }
+
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError
 
     object UnauthorizedErrorCase {
@@ -212,6 +222,11 @@ object KVStoreOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "DeleteError")
 
     val hints: Hints = Hints.empty
+
+    object Prisms {
+      val UnauthorizedError = Prism.partial[DeleteError, UnauthorizedError]{ case UnauthorizedErrorCase(t) => t }(UnauthorizedErrorCase.apply)
+      val KeyNotFoundError = Prism.partial[DeleteError, KeyNotFoundError]{ case KeyNotFoundErrorCase(t) => t }(KeyNotFoundErrorCase.apply)
+    }
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError
     final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError

@@ -11,6 +11,7 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -106,6 +107,13 @@ object ErrorHandlingServiceExtraErrorsOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationError")
 
     val hints: Hints = Hints.empty
+
+    object Prisms {
+      val RandomOtherClientError = Prism.partial[ExtraErrorOperationError, RandomOtherClientError]{ case RandomOtherClientErrorCase(t) => t }(RandomOtherClientErrorCase.apply)
+      val RandomOtherServerError = Prism.partial[ExtraErrorOperationError, RandomOtherServerError]{ case RandomOtherServerErrorCase(t) => t }(RandomOtherServerErrorCase.apply)
+      val RandomOtherClientErrorWithCode = Prism.partial[ExtraErrorOperationError, RandomOtherClientErrorWithCode]{ case RandomOtherClientErrorWithCodeCase(t) => t }(RandomOtherClientErrorWithCodeCase.apply)
+      val RandomOtherServerErrorWithCode = Prism.partial[ExtraErrorOperationError, RandomOtherServerErrorWithCode]{ case RandomOtherServerErrorWithCodeCase(t) => t }(RandomOtherServerErrorWithCodeCase.apply)
+    }
 
     final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError
     final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError

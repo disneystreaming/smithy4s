@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
@@ -15,6 +16,11 @@ object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
   val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked")
 
   val hints: Hints = Hints.empty
+
+  object Prisms {
+    val checked = Prism.partial[CheckedOrUnchecked, String]{ case CheckedCase(t) => t }(CheckedCase.apply)
+    val raw = Prism.partial[CheckedOrUnchecked, String]{ case RawCase(t) => t }(RawCase.apply)
+  }
 
   final case class CheckedCase(checked: String) extends CheckedOrUnchecked
   final case class RawCase(raw: String) extends CheckedOrUnchecked

@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -16,6 +17,11 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
   val hints: Hints = Hints(
     alloy.Untagged(),
   )
+
+  object Prisms {
+    val three = Prism.partial[UntaggedUnion, Three]{ case ThreeCase(t) => t }(ThreeCase.apply)
+    val four = Prism.partial[UntaggedUnion, Four]{ case FourCase(t) => t }(FourCase.apply)
+  }
 
   final case class ThreeCase(three: Three) extends UntaggedUnion
   final case class FourCase(four: Four) extends UntaggedUnion

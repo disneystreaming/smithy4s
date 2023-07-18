@@ -6,6 +6,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.optics.Lens
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bytes
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.long
@@ -21,6 +22,11 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
 
   val hints: Hints = Hints.empty
+
+  object Prisms {
+    val one = Prism.partial[TestAdt, AdtOne]{ case t: AdtOne => t }(identity)
+    val two = Prism.partial[TestAdt, AdtTwo]{ case t: AdtTwo => t }(identity)
+  }
 
   final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree
   object AdtOne extends ShapeTag.Companion[AdtOne] {

@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -16,6 +17,11 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
   val hints: Hints = Hints(
     alloy.Discriminated("tpe"),
   )
+
+  object Prisms {
+    val one = Prism.partial[TestBiggerUnion, One]{ case OneCase(t) => t }(OneCase.apply)
+    val two = Prism.partial[TestBiggerUnion, Two]{ case TwoCase(t) => t }(TwoCase.apply)
+  }
 
   final case class OneCase(one: One) extends TestBiggerUnion
   final case class TwoCase(two: Two) extends TestBiggerUnion

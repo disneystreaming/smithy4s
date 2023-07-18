@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -14,6 +15,11 @@ object Food extends ShapeTag.Companion[Food] {
   val id: ShapeId = ShapeId("smithy4s.example", "Food")
 
   val hints: Hints = Hints.empty
+
+  object Prisms {
+    val pizza = Prism.partial[Food, Pizza]{ case PizzaCase(t) => t }(PizzaCase.apply)
+    val salad = Prism.partial[Food, Salad]{ case SaladCase(t) => t }(SaladCase.apply)
+  }
 
   final case class PizzaCase(pizza: Pizza) extends Food
   final case class SaladCase(salad: Salad) extends Food

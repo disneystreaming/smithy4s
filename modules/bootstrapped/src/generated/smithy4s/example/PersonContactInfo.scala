@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.interopcats.SchemaVisitorHash
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -17,6 +18,11 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
   )
+
+  object Prisms {
+    val email = Prism.partial[PersonContactInfo, PersonEmail]{ case EmailCase(t) => t }(EmailCase.apply)
+    val phone = Prism.partial[PersonContactInfo, PersonPhoneNumber]{ case PhoneCase(t) => t }(PhoneCase.apply)
+  }
 
   final case class EmailCase(email: PersonEmail) extends PersonContactInfo
   final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo

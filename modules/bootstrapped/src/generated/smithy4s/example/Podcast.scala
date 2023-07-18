@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.optics.Lens
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -17,6 +18,11 @@ object Podcast extends ShapeTag.Companion[Podcast] {
   val id: ShapeId = ShapeId("smithy4s.example", "Podcast")
 
   val hints: Hints = Hints.empty
+
+  object Prisms {
+    val video = Prism.partial[Podcast, Video]{ case t: Video => t }(identity)
+    val audio = Prism.partial[Podcast, Audio]{ case t: Audio => t }(identity)
+  }
 
   final case class Video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast
   object Video extends ShapeTag.Companion[Video] {
