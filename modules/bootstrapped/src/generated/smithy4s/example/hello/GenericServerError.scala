@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -17,6 +18,10 @@ object GenericServerError extends ShapeTag.Companion[GenericServerError] {
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(500),
   )
+
+  object Lenses {
+    val message = Lens[GenericServerError, Option[String]](_.message)(n => a => a.copy(message = n))
+  }
 
   implicit val schema: Schema[GenericServerError] = struct(
     string.optional[GenericServerError]("message", _.message),

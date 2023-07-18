@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.example.common.BrandList
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 final case class AddBrandsInput(brands: Option[List[String]] = None)
@@ -12,6 +13,10 @@ object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "AddBrandsInput")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val brands = Lens[AddBrandsInput, Option[List[String]]](_.brands)(n => a => a.copy(brands = n))
+  }
 
   implicit val schema: Schema[AddBrandsInput] = struct(
     BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands),

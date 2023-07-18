@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.long
@@ -18,6 +19,13 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
+
+  object Lenses {
+    val a = Lens[MixinErrorExample, Option[String]](_.a)(n => a => a.copy(a = n))
+    val b = Lens[MixinErrorExample, Option[Int]](_.b)(n => a => a.copy(b = n))
+    val c = Lens[MixinErrorExample, Option[Long]](_.c)(n => a => a.copy(c = n))
+    val d = Lens[MixinErrorExample, Option[Boolean]](_.d)(n => a => a.copy(d = n))
+  }
 
   implicit val schema: Schema[MixinErrorExample] = struct(
     string.optional[MixinErrorExample]("a", _.a),

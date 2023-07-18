@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -14,6 +15,10 @@ object ExtraErrorOperationInput extends ShapeTag.Companion[ExtraErrorOperationIn
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
+
+  object Lenses {
+    val in = Lens[ExtraErrorOperationInput, Option[String]](_.in)(n => a => a.copy(in = n))
+  }
 
   implicit val schema: Schema[ExtraErrorOperationInput] = struct(
     string.optional[ExtraErrorOperationInput]("in", _.in),

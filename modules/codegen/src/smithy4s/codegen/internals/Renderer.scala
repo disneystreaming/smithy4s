@@ -608,6 +608,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
+  private def renderLenses(product: Product): Lines = if (
+    product.fields.nonEmpty
+  ) {
+    val smithyLens = NameRef("smithy4s.optics.Lens")
+    val lenses = product.fields.map { field =>
+      val fieldType =
+        if (field.required) Line.required(line"${field.tpe}", None)
+        else Line.optional(line"${field.tpe}")
+      line"val ${field.name} = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
+    }
+    obj(product.nameRef.copy(name = "Lenses"))(lenses) ++
+      newline
+  } else Lines.empty
+
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
@@ -650,6 +664,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
+        renderLenses(product),
         if (fields.nonEmpty) {
           val renderedFields =
             fields.map { case Field(fieldName, realName, tpe, required, hints) =>

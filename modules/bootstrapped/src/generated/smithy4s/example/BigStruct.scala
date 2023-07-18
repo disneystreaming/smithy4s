@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
@@ -12,6 +13,32 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
   val id: ShapeId = ShapeId("smithy4s.example", "BigStruct")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val a1 = Lens[BigStruct, Int](_.a1)(n => a => a.copy(a1 = n))
+    val a2 = Lens[BigStruct, Int](_.a2)(n => a => a.copy(a2 = n))
+    val a3 = Lens[BigStruct, Int](_.a3)(n => a => a.copy(a3 = n))
+    val a4 = Lens[BigStruct, Int](_.a4)(n => a => a.copy(a4 = n))
+    val a5 = Lens[BigStruct, Int](_.a5)(n => a => a.copy(a5 = n))
+    val a6 = Lens[BigStruct, Int](_.a6)(n => a => a.copy(a6 = n))
+    val a7 = Lens[BigStruct, Int](_.a7)(n => a => a.copy(a7 = n))
+    val a8 = Lens[BigStruct, Int](_.a8)(n => a => a.copy(a8 = n))
+    val a9 = Lens[BigStruct, Int](_.a9)(n => a => a.copy(a9 = n))
+    val a10 = Lens[BigStruct, Int](_.a10)(n => a => a.copy(a10 = n))
+    val a11 = Lens[BigStruct, Int](_.a11)(n => a => a.copy(a11 = n))
+    val a12 = Lens[BigStruct, Int](_.a12)(n => a => a.copy(a12 = n))
+    val a13 = Lens[BigStruct, Int](_.a13)(n => a => a.copy(a13 = n))
+    val a14 = Lens[BigStruct, Int](_.a14)(n => a => a.copy(a14 = n))
+    val a15 = Lens[BigStruct, Int](_.a15)(n => a => a.copy(a15 = n))
+    val a16 = Lens[BigStruct, Int](_.a16)(n => a => a.copy(a16 = n))
+    val a17 = Lens[BigStruct, Int](_.a17)(n => a => a.copy(a17 = n))
+    val a18 = Lens[BigStruct, Int](_.a18)(n => a => a.copy(a18 = n))
+    val a19 = Lens[BigStruct, Int](_.a19)(n => a => a.copy(a19 = n))
+    val a20 = Lens[BigStruct, Int](_.a20)(n => a => a.copy(a20 = n))
+    val a21 = Lens[BigStruct, Int](_.a21)(n => a => a.copy(a21 = n))
+    val a22 = Lens[BigStruct, Int](_.a22)(n => a => a.copy(a22 = n))
+    val a23 = Lens[BigStruct, Int](_.a23)(n => a => a.copy(a23 = n))
+  }
 
   implicit val schema: Schema[BigStruct] = struct.genericArity(
     int.required[BigStruct]("a1", _.a1).addHints(smithy.api.Required()),

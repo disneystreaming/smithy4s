@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.Timestamp
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -15,6 +16,14 @@ object Metadata extends ShapeTag.Companion[Metadata] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "Metadata")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val contentType = Lens[Metadata, Option[String]](_.contentType)(n => a => a.copy(contentType = n))
+    val lastModified = Lens[Metadata, Option[Timestamp]](_.lastModified)(n => a => a.copy(lastModified = n))
+    val checkSum = Lens[Metadata, Option[String]](_.checkSum)(n => a => a.copy(checkSum = n))
+    val pendingDeletion = Lens[Metadata, Option[Boolean]](_.pendingDeletion)(n => a => a.copy(pendingDeletion = n))
+    val etag = Lens[Metadata, Option[String]](_.etag)(n => a => a.copy(etag = n))
+  }
 
   implicit val schema: Schema[Metadata] = struct(
     string.optional[Metadata]("contentType", _.contentType),

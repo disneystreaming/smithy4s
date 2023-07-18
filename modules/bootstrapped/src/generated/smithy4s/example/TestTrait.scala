@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.struct
 
@@ -18,6 +19,10 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
   val hints: Hints = Hints(
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
+
+  object Lenses {
+    val orderType = Lens[TestTrait, Option[OrderType]](_.orderType)(n => a => a.copy(orderType = n))
+  }
 
   implicit val schema: Schema[TestTrait] = recursive(struct(
     OrderType.schema.optional[TestTrait]("orderType", _.orderType),

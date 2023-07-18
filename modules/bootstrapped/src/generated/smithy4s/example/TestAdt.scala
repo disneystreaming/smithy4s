@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.bytes
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.long
@@ -27,6 +28,13 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
     val hints: Hints = Hints.empty
 
+    object Lenses {
+      val lng = Lens[AdtOne, Option[Long]](_.lng)(n => a => a.copy(lng = n))
+      val sht = Lens[AdtOne, Option[Short]](_.sht)(n => a => a.copy(sht = n))
+      val blb = Lens[AdtOne, Option[ByteArray]](_.blb)(n => a => a.copy(blb = n))
+      val str = Lens[AdtOne, Option[String]](_.str)(n => a => a.copy(str = n))
+    }
+
     val schema: Schema[AdtOne] = struct(
       long.optional[AdtOne]("lng", _.lng),
       short.optional[AdtOne]("sht", _.sht),
@@ -43,6 +51,12 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
 
     val hints: Hints = Hints.empty
+
+    object Lenses {
+      val lng = Lens[AdtTwo, Option[Long]](_.lng)(n => a => a.copy(lng = n))
+      val sht = Lens[AdtTwo, Option[Short]](_.sht)(n => a => a.copy(sht = n))
+      val int = Lens[AdtTwo, Option[Int]](_.int)(n => a => a.copy(int = n))
+    }
 
     val schema: Schema[AdtTwo] = struct(
       long.optional[AdtTwo]("lng", _.lng),

@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.bytes
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -14,6 +15,13 @@ object S3Object extends ShapeTag.Companion[S3Object] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "S3Object")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val id = Lens[S3Object, String](_.id)(n => a => a.copy(id = n))
+    val owner = Lens[S3Object, String](_.owner)(n => a => a.copy(owner = n))
+    val attributes = Lens[S3Object, Attributes](_.attributes)(n => a => a.copy(attributes = n))
+    val data = Lens[S3Object, ByteArray](_.data)(n => a => a.copy(data = n))
+  }
 
   implicit val schema: Schema[S3Object] = struct(
     string.required[S3Object]("id", _.id).addHints(smithy.api.Required()),

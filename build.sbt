@@ -58,6 +58,7 @@ lazy val allModules = Seq(
   tests,
   http4s,
   cats,
+  monocle,
   `http4s-kernel`,
   `http4s-swagger`,
   decline,
@@ -713,6 +714,20 @@ lazy val cats = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Weaver.cats.value % Test,
       Dependencies.Cats.core.value
+    )
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+lazy val monocle = projectMatrix
+  .in(file("modules/monocle"))
+  .dependsOn(core, bootstrapped % Test)
+  .settings(
+    isMimaEnabled := true,
+    libraryDependencies ++= Seq(
+      Dependencies.Weaver.cats.value % Test,
+      Dependencies.Monocle.core.value
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)

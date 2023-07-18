@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -16,6 +17,10 @@ object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMess
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
+
+  object Lenses {
+    val messageField = Lens[ServerErrorCustomMessage, Option[String]](_.messageField)(n => a => a.copy(messageField = n))
+  }
 
   implicit val schema: Schema[ServerErrorCustomMessage] = struct(
     string.optional[ServerErrorCustomMessage]("messageField", _.messageField),

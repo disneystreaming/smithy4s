@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 /** <p>An error occurred on the server side.</p>
@@ -20,6 +21,10 @@ object InternalServerError extends ShapeTag.Companion[InternalServerError] {
     smithy.api.Documentation("<p>An error occurred on the server side.</p>"),
     smithy.api.Error.SERVER.widen,
   )
+
+  object Lenses {
+    val message = Lens[InternalServerError, Option[ErrorMessage]](_.message)(n => a => a.copy(message = n))
+  }
 
   implicit val schema: Schema[InternalServerError] = struct(
     ErrorMessage.schema.optional[InternalServerError]("message", _.message).addHints(smithy.api.Documentation("<p>The server encountered an internal error trying to fulfill the request.</p>")),

@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -12,6 +13,10 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultInMixinUsageTest")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val one = Lens[DefaultInMixinUsageTest, String](_.one)(n => a => a.copy(one = n))
+  }
 
   implicit val schema: Schema[DefaultInMixinUsageTest] = struct(
     string.required[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromString("test"))),

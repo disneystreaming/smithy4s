@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -17,6 +18,10 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(401),
   )
+
+  object Lenses {
+    val message = Lens[NotAuthorizedError, String](_.message)(n => a => a.copy(message = n))
+  }
 
   implicit val schema: Schema[NotAuthorizedError] = struct(
     string.required[NotAuthorizedError]("message", _.message).addHints(smithy.api.Required()),

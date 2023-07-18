@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -31,6 +32,11 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val hints: Hints = Hints(
       smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
     )
+
+    object Lenses {
+      val id = Lens[InStoreOrder, OrderNumber](_.id)(n => a => a.copy(id = n))
+      val locationId = Lens[InStoreOrder, Option[String]](_.locationId)(n => a => a.copy(locationId = n))
+    }
 
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Required()),

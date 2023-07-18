@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.Timestamp
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
@@ -16,6 +17,22 @@ object Attributes extends ShapeTag.Companion[Attributes] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "Attributes")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val user = Lens[Attributes, String](_.user)(n => a => a.copy(user = n))
+    val public = Lens[Attributes, Boolean](_.public)(n => a => a.copy(public = n))
+    val size = Lens[Attributes, Long](_.size)(n => a => a.copy(size = n))
+    val creationDate = Lens[Attributes, Timestamp](_.creationDate)(n => a => a.copy(creationDate = n))
+    val region = Lens[Attributes, String](_.region)(n => a => a.copy(region = n))
+    val queryable = Lens[Attributes, Option[Boolean]](_.queryable)(n => a => a.copy(queryable = n))
+    val queryableLastChange = Lens[Attributes, Option[Timestamp]](_.queryableLastChange)(n => a => a.copy(queryableLastChange = n))
+    val blockPublicAccess = Lens[Attributes, Option[Boolean]](_.blockPublicAccess)(n => a => a.copy(blockPublicAccess = n))
+    val permissions = Lens[Attributes, Option[List[Permission]]](_.permissions)(n => a => a.copy(permissions = n))
+    val tags = Lens[Attributes, Option[List[String]]](_.tags)(n => a => a.copy(tags = n))
+    val backedUp = Lens[Attributes, Option[Boolean]](_.backedUp)(n => a => a.copy(backedUp = n))
+    val metadata = Lens[Attributes, Option[List[Metadata]]](_.metadata)(n => a => a.copy(metadata = n))
+    val encryption = Lens[Attributes, Option[Encryption]](_.encryption)(n => a => a.copy(encryption = n))
+  }
 
   implicit val schema: Schema[Attributes] = struct(
     string.required[Attributes]("user", _.user).addHints(smithy.api.Required()),

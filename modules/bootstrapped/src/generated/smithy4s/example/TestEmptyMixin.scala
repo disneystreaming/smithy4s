@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.struct
 
@@ -12,6 +13,10 @@ object TestEmptyMixin extends ShapeTag.Companion[TestEmptyMixin] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestEmptyMixin")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val a = Lens[TestEmptyMixin, Option[Long]](_.a)(n => a => a.copy(a = n))
+  }
 
   implicit val schema: Schema[TestEmptyMixin] = struct(
     long.optional[TestEmptyMixin]("a", _.a),

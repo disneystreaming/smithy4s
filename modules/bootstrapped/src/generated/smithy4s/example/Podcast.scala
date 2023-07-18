@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -23,6 +24,12 @@ object Podcast extends ShapeTag.Companion[Podcast] {
 
     val hints: Hints = Hints.empty
 
+    object Lenses {
+      val title = Lens[Video, Option[String]](_.title)(n => a => a.copy(title = n))
+      val url = Lens[Video, Option[String]](_.url)(n => a => a.copy(url = n))
+      val durationMillis = Lens[Video, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
+    }
+
     val schema: Schema[Video] = struct(
       string.optional[Video]("title", _.title),
       string.optional[Video]("url", _.url),
@@ -38,6 +45,12 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     val id: ShapeId = ShapeId("smithy4s.example", "Audio")
 
     val hints: Hints = Hints.empty
+
+    object Lenses {
+      val title = Lens[Audio, Option[String]](_.title)(n => a => a.copy(title = n))
+      val url = Lens[Audio, Option[String]](_.url)(n => a => a.copy(url = n))
+      val durationMillis = Lens[Audio, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
+    }
 
     val schema: Schema[Audio] = struct(
       string.optional[Audio]("title", _.title),

@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -12,6 +13,10 @@ object Value extends ShapeTag.Companion[Value] {
   val id: ShapeId = ShapeId("smithy4s.example", "Value")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val value = Lens[Value, String](_.value)(n => a => a.copy(value = n))
+  }
 
   implicit val schema: Schema[Value] = struct(
     string.required[Value]("value", _.value).addHints(smithy.api.Required()),

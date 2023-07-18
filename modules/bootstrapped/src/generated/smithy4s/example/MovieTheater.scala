@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.interopcats.SchemaVisitorHash
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -15,6 +16,10 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
   )
+
+  object Lenses {
+    val name = Lens[MovieTheater, Option[String]](_.name)(n => a => a.copy(name = n))
+  }
 
   implicit val schema: Schema[MovieTheater] = struct(
     string.optional[MovieTheater]("name", _.name),

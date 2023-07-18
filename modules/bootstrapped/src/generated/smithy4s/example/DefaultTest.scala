@@ -7,6 +7,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.Timestamp
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.byte
 import smithy4s.schema.Schema.bytes
@@ -25,6 +26,27 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val id: ShapeId = ShapeId("smithy4s.example", "DefaultTest")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val one = Lens[DefaultTest, Int](_.one)(n => a => a.copy(one = n))
+    val two = Lens[DefaultTest, String](_.two)(n => a => a.copy(two = n))
+    val three = Lens[DefaultTest, List[String]](_.three)(n => a => a.copy(three = n))
+    val four = Lens[DefaultTest, List[String]](_.four)(n => a => a.copy(four = n))
+    val five = Lens[DefaultTest, String](_.five)(n => a => a.copy(five = n))
+    val six = Lens[DefaultTest, Int](_.six)(n => a => a.copy(six = n))
+    val seven = Lens[DefaultTest, Document](_.seven)(n => a => a.copy(seven = n))
+    val eight = Lens[DefaultTest, Map[String, String]](_.eight)(n => a => a.copy(eight = n))
+    val nine = Lens[DefaultTest, Short](_.nine)(n => a => a.copy(nine = n))
+    val ten = Lens[DefaultTest, Double](_.ten)(n => a => a.copy(ten = n))
+    val eleven = Lens[DefaultTest, Float](_.eleven)(n => a => a.copy(eleven = n))
+    val twelve = Lens[DefaultTest, Long](_.twelve)(n => a => a.copy(twelve = n))
+    val thirteen = Lens[DefaultTest, Timestamp](_.thirteen)(n => a => a.copy(thirteen = n))
+    val fourteen = Lens[DefaultTest, Timestamp](_.fourteen)(n => a => a.copy(fourteen = n))
+    val fifteen = Lens[DefaultTest, Timestamp](_.fifteen)(n => a => a.copy(fifteen = n))
+    val sixteen = Lens[DefaultTest, Byte](_.sixteen)(n => a => a.copy(sixteen = n))
+    val seventeen = Lens[DefaultTest, ByteArray](_.seventeen)(n => a => a.copy(seventeen = n))
+    val eighteen = Lens[DefaultTest, Boolean](_.eighteen)(n => a => a.copy(eighteen = n))
+  }
 
   implicit val schema: Schema[DefaultTest] = struct(
     int.required[DefaultTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),

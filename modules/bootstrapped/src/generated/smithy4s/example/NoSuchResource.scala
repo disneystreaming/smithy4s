@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -15,6 +16,10 @@ object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
+
+  object Lenses {
+    val resourceType = Lens[NoSuchResource, String](_.resourceType)(n => a => a.copy(resourceType = n))
+  }
 
   implicit val schema: Schema[NoSuchResource] = struct(
     string.required[NoSuchResource]("resourceType", _.resourceType).addHints(smithy.api.Required()),

@@ -5,6 +5,7 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.Timestamp
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.boolean
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
@@ -16,6 +17,19 @@ object Queries extends ShapeTag.Companion[Queries] {
   val id: ShapeId = ShapeId("smithy4s.example", "Queries")
 
   val hints: Hints = Hints.empty
+
+  object Lenses {
+    val str = Lens[Queries, Option[String]](_.str)(n => a => a.copy(str = n))
+    val int = Lens[Queries, Option[Int]](_.int)(n => a => a.copy(int = n))
+    val ts1 = Lens[Queries, Option[Timestamp]](_.ts1)(n => a => a.copy(ts1 = n))
+    val ts2 = Lens[Queries, Option[Timestamp]](_.ts2)(n => a => a.copy(ts2 = n))
+    val ts3 = Lens[Queries, Option[Timestamp]](_.ts3)(n => a => a.copy(ts3 = n))
+    val ts4 = Lens[Queries, Option[Timestamp]](_.ts4)(n => a => a.copy(ts4 = n))
+    val b = Lens[Queries, Option[Boolean]](_.b)(n => a => a.copy(b = n))
+    val sl = Lens[Queries, Option[List[String]]](_.sl)(n => a => a.copy(sl = n))
+    val ie = Lens[Queries, Option[Numbers]](_.ie)(n => a => a.copy(ie = n))
+    val slm = Lens[Queries, Option[Map[String, String]]](_.slm)(n => a => a.copy(slm = n))
+  }
 
   implicit val schema: Schema[Queries] = struct(
     string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str")),

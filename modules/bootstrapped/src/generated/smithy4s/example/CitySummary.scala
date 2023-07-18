@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -14,6 +15,11 @@ object CitySummary extends ShapeTag.Companion[CitySummary] {
   val hints: Hints = Hints(
     smithy.api.References(List(smithy.api.Reference(resource = smithy.api.NonEmptyString("smithy4s.example#City"), ids = None, service = None, rel = None))),
   )
+
+  object Lenses {
+    val cityId = Lens[CitySummary, CityId](_.cityId)(n => a => a.copy(cityId = n))
+    val name = Lens[CitySummary, String](_.name)(n => a => a.copy(name = n))
+  }
 
   implicit val schema: Schema[CitySummary] = struct(
     CityId.schema.required[CitySummary]("cityId", _.cityId).addHints(smithy.api.Required()),

@@ -40,6 +40,11 @@ object Dependencies {
       Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
   }
 
+  val Monocle = new {
+    val core: Def.Initialize[ModuleID] =
+      Def.setting("dev.optics" %% "monocle-core" % "3.2.0")
+  }
+
   object Circe {
     val circeVersion = "0.14.5"
     val core = Def.setting("io.circe" %%% "circe-core" % circeVersion)

@@ -4,6 +4,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -14,6 +15,11 @@ object ReservationInput extends ShapeTag.Companion[ReservationInput] {
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
+
+  object Lenses {
+    val name = Lens[ReservationInput, String](_.name)(n => a => a.copy(name = n))
+    val town = Lens[ReservationInput, Option[String]](_.town)(n => a => a.copy(town = n))
+  }
 
   implicit val schema: Schema[ReservationInput] = struct(
     string.required[ReservationInput]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
