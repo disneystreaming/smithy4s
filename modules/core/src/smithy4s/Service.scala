@@ -188,35 +188,64 @@ object Service {
     final def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](algebra: PolyFunction5[Op, F], function: PolyFunction5[F, G]): PolyFunction5[Op, G] = algebra.andThen(function)
   }
 
-  case class Builder[Alg[_[_, _, _, _, _]],I, E, O, SI, SO ](
-    endpointsX: List[Endpoint[_, _, _, _, _]]
+  object Builder {
+    def fromService[Alg[_[_, _, _, _, _]]](
+        service: Service[Alg]
+    ): Builder[Alg, service.Operation] =
+      new Builder[Alg, service.Operation](service, PolyFunction5.identity)
+  }
 
-  //def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): (I, Endpoint[I, E, O, SI, SO])
-
+  final case class Builder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] private(
+      private val base: Service.Aux[Alg, Op],
+      private val endpointMapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
   ) {
-    def withEndpoint(endpoints:  List[Endpoint.Base[I, E, O, SI, SO]]): Builder[Alg,I, E, O, SI, SO] = copy(endpoints = endpointsX)
 
-    def build(): Service[Alg] = new Service[Alg] {
+    def mapEndpointEach(
+        mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
+    ): Builder[Alg, Op] = copy(
+      endpointMapper = mapper.unsafeCacheBy(
+        base.endpoints.map(Kind5.existential(_)),
+        identity
+      )
+    )
 
-      override type Operation = this.type
+    def build: Service.Aux[Alg, Op] = new Service[Alg] {
 
-      override def endpoints: List[Endpoint[_, _, _, _, _]] =  endpointsX
+      override type Operation[I, E, O, SI, SO] = Op[I, E, O, SI, SO]
 
-      override def endpoint[I, E, O, SI, SO](op: this.type): (I, Endpoint[I, E, O, SI, SO]) = ???
+      override val endpoints: List[Endpoint[_, _, _, _, _]] =
+        // Explicit upcast to help Scala 3's type inference
+        base.endpoints.map(e => endpointMapper(e): Endpoint[_, _, _, _, _])
+
+      override def endpoint[I, E, O, SI, SO](
+          op: Op[I, E, O, SI, SO]
+      ): (I, Endpoint[I, E, O, SI, SO]) = {
+        val (input, baseEndpoint) = base.endpoint(op)
+
+        (input, endpointMapper(baseEndpoint))
+      }
+
+      // todo: these should be easier ones
+      override def id: ShapeId = ???
 
       override def version: String = ???
 
       override def hints: Hints = ???
 
-      override def reified: Alg[this.type] = ???
+      override def reified: Alg[Operation] = base.reified
 
-      override def fromPolyFunction[P[_, _, _, _, _]](function: PolyFunction5[this.type, P]): Alg[P] = ???
+      override def fromPolyFunction[P[_, _, _, _, _]](
+          function: PolyFunction5[Operation, P]
+      ): Alg[P] = base.fromPolyFunction(function)
 
-      override def toPolyFunction[P[_, _, _, _, _]](algebra: Alg[P]): PolyFunction5[this.type, P] = ???
+      override def toPolyFunction[P[_, _, _, _, _]](
+          algebra: Alg[P]
+      ): PolyFunction5[Operation, P] = base.toPolyFunction(algebra)
 
-      override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: Alg[F], function: PolyFunction5[F, G]): Alg[G] = ???
-
-      override def id: ShapeId = ???
+      override def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](
+          alg: Alg[F],
+          function: PolyFunction5[F, G]
+      ): Alg[G] = base.mapK5(alg, function)
     }
   }
 
