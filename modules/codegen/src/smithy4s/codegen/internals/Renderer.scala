@@ -34,6 +34,7 @@ import LineSyntax.LineInterpolator
 import ToLines.lineToLines
 import smithy4s.codegen.internals.EnumTag.IntEnum
 import smithy4s.codegen.internals.EnumTag.StringEnum
+import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object Renderer {
 
@@ -183,12 +184,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     hints
       .collectFirst { case h: Hint.Deprecated => h }
       .foldMap { dep =>
-        val messagePart = dep.message
-          .map(msg => line"message = ${renderStringLiteral(msg)}")
-        val versionPart =
-          dep.since.map(v => line"since = ${renderStringLiteral(v)}")
+        val messagePart =
+          line"message = ${renderStringLiteral(dep.message.getOrElse("N/A"))}"
 
-        val args = List(messagePart, versionPart).flatten.intercalate(comma)
+        val versionPart =
+          line"since = ${renderStringLiteral(dep.since.getOrElse("N/A"))}"
+
+        val args = List(messagePart, versionPart).intercalate(comma)
 
         val argListOrEmpty = if (args.nonEmpty) line"($args)" else line""
 
@@ -290,8 +292,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     val genName: NameDef = NameDef(name + "Gen")
     val genNameRef: NameRef = genName.toNameRef
+    val genNameProduct: NameDef = NameDef(name + "ProductGen")
+    val genNameProductRef: NameRef = genNameProduct.toNameRef
     val opTraitName = NameDef(name + "Operation")
     val opTraitNameRef = opTraitName.toNameRef
+    val generateServiceProduct = hints.contains(Hint.GenerateServiceProduct)
 
     lines(
       documentationAnnotation(hints),
@@ -314,9 +319,26 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def $transform_: $Transformation.PartiallyApplied[$genName[F]] = $Transformation.of[$genName[F]](this)"
       ),
       newline,
+      lines(
+        block(line"trait $genNameProduct[F[_, _, _, _, _]]")(
+          line"self =>",
+          newline,
+          ops.map { op =>
+            lines(
+              deprecationAnnotation(op.hints),
+              line"def ${op.methodName}: F[${op
+                .renderAlgParams(opTraitNameRef.name)}]"
+            )
+          }
+        ),
+        newline
+      ).when(generateServiceProduct),
       obj(
         genNameRef,
-        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]"
+        ext = line"$Service_.Mixin[$genNameRef, $opTraitNameRef]",
+        w = line"${ServiceProductMirror}[${genNameRef}]".when(
+          generateServiceProduct
+        )
       )(
         newline,
         renderId(shapeId),
@@ -351,9 +373,60 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"val $errorName = $opTraitNameRef.$errorName"
             )
           }
-        }
+        },
+        lines(
+          line"type Prod[F[_, _, _, _, _]] = ${genNameProduct}[F]",
+          line"val serviceProduct: ${ServiceProduct}.Aux[${genNameProduct}, ${genName}] = ${genNameProduct}"
+        ).when(generateServiceProduct)
       ),
       newline,
+      lines(
+        obj(
+          genNameProductRef,
+          ext = line"$ServiceProduct[$genNameProductRef]"
+        )(
+          line"type Alg[F[_, _, _, _, _]] = ${genNameRef}[F]",
+          line"val service: $genName.type = $genName",
+          newline,
+          block(
+            line"def endpointsProduct: ${genNameProductRef}[service.Endpoint] = new ${genNameProductRef}[service.Endpoint]"
+          )(
+            ops.map { op =>
+              line"def ${op.methodName}: service.Endpoint[${op
+                .renderAlgParams(opTraitNameRef.name)}] = ${opTraitNameRef}.${op.name}"
+            }
+          ),
+          newline,
+          block(
+            line"def $toPolyFunction_[P2[_, _, _, _, _]](algebra: ${genNameProductRef}[P2]) = new $PolyFunction5_[service.Endpoint, P2]"
+          )(
+            line"def $apply_[I, E, O, SI, SO](fa: service.Endpoint[I, E, O, SI, SO]): P2[I, E, O, SI, SO] =",
+            if (ops.isEmpty) line"""sys.error("impossible")"""
+            else
+              block(line"fa match")(
+                ops.map { op =>
+                  // This normally compiles, but Scala 3 seems to have an issue with
+                  // it so we have to cast it.
+                  line"case ${opTraitNameRef}.${op.name} => algebra.${op.methodName}.asInstanceOf[P2[I, E, O, SI, SO]]"
+                }
+              )
+          ),
+          newline,
+          block(
+            line"def mapK5[F[_, _, _, _, _], G[_, _, _, _, _]](alg: ${genNameProductRef}[F], f: $PolyFunction5_[F, G]): ${genNameProductRef}[G] ="
+          )(
+            block(
+              line"new ${genNameProductRef}[G]"
+            )(
+              ops.map { op =>
+                val argsTypes = op.renderAlgParams(opTraitNameRef.name)
+                line"def ${op.methodName}: G[${argsTypes}] = f[${argsTypes}](alg.${op.methodName})"
+              }
+            )
+          )
+        ),
+        newline
+      ).when(generateServiceProduct),
       block(
         line"sealed trait $opTraitName[Input, Err, Output, StreamedInput, StreamedOutput]"
       )(
@@ -1034,15 +1107,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         }
         val hintsLine =
           if (hints.isEmpty) Line.empty
-          else line".addHints(${memberHints(hints)})"
+          else line".addMemberHints(${memberHints(hints)})"
         line"${NameRef(col)}(${member.schemaRef}$hintsLine)"
       case Type.Map(key, keyHints, value, valueHints) =>
         val keyHintsLine =
           if (keyHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(keyHints)})"
+          else line".addMemberHints(${memberHints(keyHints)})"
         val valueHintsLine =
           if (valueHints.isEmpty) Line.empty
-          else line".addHints(${memberHints(valueHints)})"
+          else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
             ns,
@@ -1065,6 +1138,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
+      case Nullable(underlying) => line"${underlying.schemaRef}.option"
     }
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
@@ -1107,7 +1181,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderHint(hint: Hint): Option[Line] = hint match {
     case h: Hint.Native => renderNativeHint(h).some
-    case Hint.IntEnum   => line"${NameRef("smithy4s", "IntEnum")}()".some
     case _              => None
   }
 

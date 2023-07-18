@@ -18,7 +18,7 @@ package smithy4s.compliancetests
 package internals
 
 import cats.implicits._
-import cats.effect.Temporal
+import cats.effect.Async
 import cats.effect.syntax.all._
 import cats.kernel.Eq
 import org.http4s._
@@ -30,7 +30,7 @@ import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
-import smithy4s.compliancetests.internals.TestConfig._
+import smithy4s.compliancetests.TestConfig._
 import cats.MonadThrow
 import java.util.concurrent.TimeoutException
 private[compliancetests] class ServerHttpComplianceTestCase[
@@ -40,7 +40,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     router: Router[F],
     serviceInstance: Service[Alg]
 )(implicit
-    ce: Temporal[F]
+    ce: Async[F]
 ) {
 
   import ce._
@@ -55,9 +55,12 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       testCase: HttpRequestTestCase
   ): Request[F] = {
     val expectedHeaders =
-      testCase.bodyMediaType
-        .map(mt => Headers(`Content-Type`(MediaType.unsafeParse(mt))))
-        .getOrElse(Headers.empty) ++ parseHeaders(testCase.headers)
+      testCase.headers.foldMap[Headers](headers => Headers(headers.toList))
+
+    val expectedContentType = testCase.bodyMediaType
+      .foldMap(mt => Headers(`Content-Type`(MediaType.unsafeParse(mt))))
+
+    val allExpectedHeaders = expectedHeaders ++ expectedContentType
 
     val expectedMethod = Method
       .fromString(testCase.method)
@@ -79,7 +82,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
     Request[F](
       method = expectedMethod,
       uri = expectedUri,
-      headers = expectedHeaders,
+      headers = allExpectedHeaders,
       body = body
     )
   }
@@ -95,9 +98,11 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       .liftTo[F]
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
+      testCase.documentation,
       serverReq,
-      run = {
+      run = ce.defer {
         deferred[I].flatMap { inputDeferred =>
           val fakeImpl: FunctorAlgebra[Alg, F] =
             originalService.fromPolyFunction[Kind1[F]#toKind5](
@@ -170,10 +175,12 @@ private[compliancetests] class ServerHttpComplianceTestCase[
 
     ComplianceTest[F](
       testCase.id,
+      testCase.protocol,
       endpoint.id,
+      testCase.documentation,
       serverRes,
-      run = {
-        val (ammendedService, syntheticRequest) = prepareService(endpoint)
+      run = ce.defer {
+        val (amendedService, syntheticRequest) = prepareService(endpoint)
 
         val buildResult: Either[Document => F[Throwable], Document => F[O]] = {
           errorSchema
@@ -206,7 +213,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
             }
           }
 
-        routes(fakeImpl)(ammendedService)
+        routes(fakeImpl)(amendedService)
           .use { server =>
             server.orNotFound
               .run(syntheticRequest)
@@ -218,16 +225,14 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                   .tupleRight(resp.status)
                   .tupleRight(resp.headers)
               }
-              .map { case ((actualBody, status), headers) =>
-                val bodyAssert = testCase.body
-                  .map(body =>
-                    assert.bodyEql(body, actualBody, testCase.bodyMediaType)
-                  )
-                val assertions =
-                  bodyAssert.toList :+
-                    assert.testCase.checkHeaders(testCase, headers) :+
-                    assert.eql(status.code, testCase.code)
-                assertions.combineAll
+              .flatMap { case ((actualBody, status), headers) =>
+                assert
+                  .bodyEql(actualBody, testCase.body, testCase.bodyMediaType)
+                  .map { bodyAssert =>
+                    bodyAssert |+|
+                      assert.testCase.checkHeaders(testCase, headers) |+|
+                      assert.eql(status.code, testCase.code)
+                  }
               }
           }
       }
@@ -277,6 +282,35 @@ private[compliancetests] class ServerHttpComplianceTestCase[
   }
 
   def allServerTests(): List[ComplianceTest[F]] = {
+    def toResponse[I, E, O, SE, SO](
+        endpoint: originalService.Endpoint[I, E, O, SE, SO]
+    ) = {
+      endpoint.errorable.toList
+        .flatMap { errorable =>
+          errorable.error.alternatives.flatMap { errorAlt =>
+            errorAlt.schema.hints
+              .get(HttpResponseTests)
+              .toList
+              .flatMap(_.value)
+              .filter(_.protocol == protocolTag.id.toString())
+              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
+              .map(tc =>
+                serverResponseTest(
+                  endpoint,
+                  tc,
+                  errorSchema = Some(
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        Alt.Dispatcher.fromUnion(errorable.error),
+                        errorable
+                      )
+                  )
+                )
+              )
+          }
+        }
+    }
     originalService.endpoints.flatMap { case endpoint =>
       val requestsTests = endpoint.hints
         .get(HttpRequestTests)
@@ -294,32 +328,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
         .map(tc => serverResponseTest(endpoint, tc))
 
-      val errorResponseTests = endpoint.errorable.toList
-        .flatMap { errorrable =>
-          errorrable.error.alternatives.flatMap { errorAlt =>
-            errorAlt.instance.hints
-              .get(HttpResponseTests)
-              .toList
-              .flatMap(_.value)
-              .filter(_.protocol == protocolTag.id.toString())
-              .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
-              .map(tc =>
-                serverResponseTest(
-                  endpoint,
-                  tc,
-                  errorSchema = Some(
-                    ErrorResponseTest
-                      .from(
-                        errorAlt,
-                        Alt.Dispatcher.fromUnion(errorrable.error),
-                        errorrable
-                      )
-                  )
-                )
-              )
-          }
-        }
-
+      val errorResponseTests = toResponse(endpoint)
       requestsTests ++ opResponseTests ++ errorResponseTests
     }
   }

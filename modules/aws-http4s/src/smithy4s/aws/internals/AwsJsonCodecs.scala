@@ -18,11 +18,11 @@ package smithy4s.aws
 package internals
 
 import cats.effect.Concurrent
-import smithy4s.aws.json.AwsSchemaVisitorJCodec
 import smithy4s.http4s.kernel._
 import smithy4s.http.HttpMediaType
-import smithy4s.http.json.JCodec
-import smithy4s.http.PayloadError
+import smithy4s.json.Json
+import fs2.compression.Compression
+import smithy4s.Endpoint
 
 /**
  * An client codec for the AWS_JSON_1.0/AWS_JSON_1.1 protocol
@@ -33,32 +33,41 @@ private[aws] object AwsJsonCodecs {
     aws.protocols.AwsJson1_0.protocol.hintMask ++
       aws.protocols.AwsJson1_1.protocol.hintMask
 
-  def make[F[_]: Concurrent](contentType: String): UnaryClientCodecs.Make[F] = {
-    val httpMediaType = HttpMediaType(contentType)
-    val underlyingCodecs = new smithy4s.http.json.JsonCodecAPI(
-      cache => new AwsSchemaVisitorJCodec(cache),
-      Some(hintMask)
-    ) {
-      override def mediaType[A](codec: JCodec[A]): HttpMediaType.Type =
-        httpMediaType
+  private[aws] val jsonPayloadCodecs =
+    Json.payloadCodecs.withJsoniterCodecCompiler(
+      Json.jsoniter
+        .withInfinitySupport(true)
+        .withFlexibleCollectionsSupport(true)
+        .withHintMask(hintMask)
+    )
 
-      private val emptyObj = "{}".getBytes()
-      override def decodeFromByteArray[A](
-          codec: JCodec[A],
-          bytes: Array[Byte]
-      ): Either[PayloadError, A] = {
-        if (bytes.isEmpty) super.decodeFromByteArray(codec, emptyObj)
-        else super.decodeFromByteArray(codec, bytes)
+  def make[F[_]: Concurrent: Compression](
+      contentType: String
+  ): UnaryClientCodecs.Make[F] = {
+    val httpMediaType = HttpMediaType(contentType)
+    val encoders = RequestEncoder.rpcSchemaCompiler[F](
+      jsonPayloadCodecs.mapK(
+        EntityEncoders.fromPayloadCodecK[F](httpMediaType)
+      )
+    )
+    val decoders = jsonPayloadCodecs.mapK(
+      EntityDecoders
+        .fromPayloadCodecK[F](httpMediaType)
+        .andThen(MediaDecoder.fromEntityDecoderK)
+    )
+
+    val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
+    new UnaryClientCodecs.Make[F] {
+      def apply[I, E, O, SI, SO](
+          endpoint: Endpoint.Base[I, E, O, SI, SO]
+      ): UnaryClientCodecs[F, I, E, O] = {
+        val transformEncoders = applyCompression[F](endpoint.hints)
+        val finalEncoders = transformEncoders(encoders)
+        val make = UnaryClientCodecs
+          .Make[F](finalEncoders, decoders, decoders, discriminator)
+        make.apply(endpoint)
       }
     }
-    val encoders = MessageEncoder.rpcSchemaCompiler[F](
-      EntityEncoders.fromCodecAPI[F](underlyingCodecs)
-    )
-    val decoders = MessageDecoder.rpcSchemaCompiler[F](
-      EntityDecoders.fromCodecAPI[F](underlyingCodecs)
-    )
-    val discriminator = AwsErrorTypeDecoder.fromResponse(decoders)
-    UnaryClientCodecs.Make[F](encoders, decoders, decoders, discriminator)
   }
 
 }

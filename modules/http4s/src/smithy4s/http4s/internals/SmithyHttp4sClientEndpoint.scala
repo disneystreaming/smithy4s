@@ -18,13 +18,13 @@ package smithy4s
 package http4s
 package internals
 
+import cats.effect.Concurrent
 import cats.syntax.all._
 import org.http4s.Request
 import org.http4s.Response
 import org.http4s.Uri
 import org.http4s.client.Client
 import smithy4s.http4s.kernel._
-import cats.effect.Concurrent
 
 // format: off
 private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
@@ -55,11 +55,11 @@ private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
   val baseRequest = Request[F](org.http4s.Method.POST, baseUri).withEmptyBody
 
   def inputToRequest(input: I): Request[F] = {
-    inputEncoder.addToRequest(baseRequest, input)
+    inputEncoder.write(baseRequest, input)
   }
 
   private def outputFromResponse(response: Response[F]): F[O] =
-    if (response.status.isSuccess) outputDecoder.decodeResponse(response)
-    else errorDecoder.decodeResponse(response).flatMap(effect.raiseError[O](_))
+    if (response.status.isSuccess) outputDecoder.read(response)
+    else errorDecoder.read(response).flatMap(effect.raiseError[O](_))
 
 }

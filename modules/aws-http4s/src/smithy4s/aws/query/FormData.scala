@@ -17,8 +17,8 @@
 package smithy4s
 package aws.query
 
-import smithy4s.PayloadPath
-import smithy4s.PayloadPath.Segment
+import smithy4s.codecs.PayloadPath
+import smithy4s.codecs.PayloadPath.Segment
 import scala.collection.mutable
 import smithy4s.http.internals.URIEncoderDecoder
 

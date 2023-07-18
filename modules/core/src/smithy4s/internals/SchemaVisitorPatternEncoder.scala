@@ -58,29 +58,17 @@ private[internals] final class SchemaVisitorPatternEncoder(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MaybePathEncode[S] = {
     type Writer = S => List[String]
 
     def toPathEncoder[A](
-        field: Field[Schema, S, A]
+        field: Field[S, A]
     ): Option[Writer] = {
-      field.fold(new Field.Folder[Schema, S, Option[Writer]] {
-        def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): Option[Writer] =
-          self(instance).map(_.contramap(get).encode)
-
-        def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): Option[Writer] = None
-      })
+      self(field.schema).map(_.contramap(field.get).encode)
     }
+
     def compile1(path: PatternSegment): Option[Writer] = path match {
       case PatternSegment.StaticSegment(value) =>
         Some(Function.const(List(value)))

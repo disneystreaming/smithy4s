@@ -27,13 +27,11 @@ import smithy4s.schema.{
   EnumValue,
   Field,
   Primitive,
-  SchemaAlt,
-  SchemaField,
   SchemaVisitor
 }
-
 import smithy4s.schema.Alt
 import smithy4s.schema.CompilationCache
+import java.util.Base64
 
 /**
  * This schema visitor works on data that is annotated with :
@@ -48,18 +46,25 @@ import smithy4s.schema.CompilationCache
  *
  */
 class SchemaVisitorMetadataWriter(
-    val cache: CompilationCache[MetaEncode]
+    val cache: CompilationCache[MetaEncode],
+    commaDelimitedEncoding: Boolean
 ) extends SchemaVisitor.Cached[MetaEncode] {
   self =>
-
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
   ): MetaEncode[P] = {
+    val hasMedia = hints.has(smithy.api.MediaType)
     Primitive.stringWriter(tag, hints) match {
-      case None        => MetaEncode.empty[P]
+      case Some(write) if hasMedia =>
+        StringValueMetaEncode(
+          write andThen (str =>
+            Base64.getEncoder().encodeToString(str.getBytes())
+          )
+        )
       case Some(write) => StringValueMetaEncode(write)
+      case None        => MetaEncode.empty[P]
     }
   }
 
@@ -69,12 +74,47 @@ class SchemaVisitorMetadataWriter(
       tag: CollectionTag[C],
       member: Schema[A]
   ): MetaEncode[C[A]] = {
-    self(member) match {
-      case StringValueMetaEncode(f) =>
-        StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
-      case _ => MetaEncode.empty
+    val amendedMember = member.addHints(httpHints(hints))
+    SchemaVisitorHeaderMerge(amendedMember) match {
+      case Some(toMergeableValue) if commaDelimitedEncoding =>
+        StringValueMetaEncode[C[A]] { c =>
+          tag.iterator(c).map(toMergeableValue).mkString(", ")
+        }
+      case _ =>
+        self(amendedMember) match {
+          case StringValueMetaEncode(f) =>
+            StringListMetaEncode[C[A]](c => tag.iterator(c).map(f).toList)
+          case _ => MetaEncode.empty
+        }
     }
+
   }
+
+  override def option[A](schema: Schema[A]): MetaEncode[Option[A]] =
+    self(schema) match {
+      case StringValueMetaEncode(f) =>
+        StringValueMetaEncode {
+          case Some(value) => f(value)
+          case None        => ""
+        }
+      case StringListMetaEncode(f) =>
+        StringListMetaEncode {
+          case Some(value) => f(value)
+          case None        => List.empty
+        }
+      case StringMapMetaEncode(f) =>
+        StringMapMetaEncode {
+          case Some(value) => f(value)
+          case None        => Map.empty
+        }
+      case StringListMapMetaEncode(f) =>
+        StringListMapMetaEncode {
+          case Some(value) => f(value)
+          case None        => Map.empty
+        }
+      case EmptyMetaEncode        => EmptyMetaEncode
+      case StructureMetaEncode(_) => EmptyMetaEncode
+    }
 
   override def map[K, V](
       shapeId: ShapeId,
@@ -82,7 +122,7 @@ class SchemaVisitorMetadataWriter(
       key: Schema[K],
       value: Schema[V]
   ): MetaEncode[Map[K, V]] = {
-    (self(key), self(value)) match {
+    (self(key), self(value.addHints(httpHints(hints)))) match {
       case (StringValueMetaEncode(keyF), StringValueMetaEncode(valueF)) =>
         StringMapMetaEncode(map =>
           map.map { case (k, v) =>
@@ -116,35 +156,28 @@ class SchemaVisitorMetadataWriter(
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): MetaEncode[S] = {
     def encodeField[A](
-        field: SchemaField[S, A]
+        field: Field[S, A]
     ): Option[(Metadata, S) => Metadata] = {
       val fieldHints = field.hints
       HttpBinding
         .fromHints(field.label, fieldHints, hints)
         .map { binding =>
-          val folderT = new Field.LeftFolder[Schema, Metadata] {
-            override def compile[T](
-                label: String,
-                instance: Schema[T]
-            ): (Metadata, T) => Metadata = {
-              val encoder: MetaEncode[T] =
-                self(
-                  instance.addHints(Hints(binding))
-                )
-              val updateFunction = encoder.updateMetadata(binding)
-              (metadata, t: T) => updateFunction(metadata, t)
+          val encoder = self(field.schema.addHints(Hints(binding)))
+          val updateFunction = encoder.updateMetadata(binding)
+          (metadata, s) =>
+            field.getUnlessDefault(s) match {
+              case Some(nonDefaultA) => updateFunction(metadata, nonDefaultA)
+              case None              => metadata
             }
-          }
-          field.leftFolder(folderT)
         }
     }
     // pull out the query params field as it must be applied last to the metadata
     val (queryParamFieldVec, theRest) =
-      fields.partition(_.instance.hints.has[HttpQueryParams])
+      fields.partition(_.memberHints.has[HttpQueryParams])
     val queryParams =
       queryParamFieldVec.flatMap(field => encodeField(field)).headOption
     val updateFunctions = theRest.flatMap(field => encodeField(field))
@@ -162,8 +195,8 @@ class SchemaVisitorMetadataWriter(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatcher: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatcher: Alt.Dispatcher[U]
   ): MetaEncode[U] = MetaEncode.empty
 
   override def biject[A, B](

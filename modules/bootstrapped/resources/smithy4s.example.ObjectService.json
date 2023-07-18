@@ -1,0 +1,231 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "ObjectService",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/{bucketName}/{key}": {
+            "get": {
+                "operationId": "GetObject",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "description": "Sent in the URI label named \"key\".\nKey can also be seen as the filename\nIt is always required for a GET operation",
+                        "schema": {
+                            "type": "string",
+                            "description": "Sent in the URI label named \"key\".\nKey can also be seen as the filename\nIt is always required for a GET operation"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "bucketName",
+                        "in": "path",
+                        "description": "Sent in the URI label named \"bucketName\".",
+                        "schema": {
+                            "type": "string",
+                            "description": "Sent in the URI label named \"bucketName\"."
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "GetObject 200 response",
+                        "headers": {
+                            "X-Size": {
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                },
+                                "required": true
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetObjectOutputPayload"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "ServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "PutObject",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PutObjectInputPayload"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "bucketName",
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "name": "paramName",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Foo",
+                        "in": "header",
+                        "schema": {
+                            "$ref": "#/components/schemas/LowHigh"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PutObject 200 response"
+                    },
+                    "500": {
+                        "description": "ServerError 500 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponseContent"
+                                }
+                            }
+                        }
+                    },
+                    "507": {
+                        "description": "NoMoreSpace 507 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoMoreSpaceResponseContent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Foo": {
+                "description": "Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because.",
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "title": "int",
+                        "properties": {
+                            "int": {
+                                "type": "integer",
+                                "format": "int32"
+                            }
+                        },
+                        "required": [
+                            "int"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "str",
+                        "properties": {
+                            "str": {
+                                "type": "string",
+                                "description": "this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"
+                            }
+                        },
+                        "required": [
+                            "str"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "bInt",
+                        "properties": {
+                            "bInt": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "bInt"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "title": "bDec",
+                        "properties": {
+                            "bDec": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "bDec"
+                        ]
+                    }
+                ]
+            },
+            "GetObjectOutputPayload": {
+                "type": "string"
+            },
+            "LowHigh": {
+                "type": "string",
+                "enum": [
+                    "Low",
+                    "High"
+                ]
+            },
+            "NoMoreSpaceResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "foo": {
+                        "$ref": "#/components/schemas/Foo"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "PutObjectInputPayload": {
+                "type": "string"
+            },
+            "ServerErrorResponseContent": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

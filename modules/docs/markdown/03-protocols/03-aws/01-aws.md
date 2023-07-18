@@ -18,7 +18,7 @@ The supported protocols are :
 * SBT : `"com.disneystreaming.smithy" % s"aws-${service_name}-spec" % "@AWS_SPEC_VERSION@"`
 * Mill : `ivy"com.disneystreaming.smithy:aws-${service_name}-spec:@AWS_SPEC_VERSION@"`
 
-The version corresponds tho the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
+The version corresponds to the latest release in this repo: [aws-sdk-smithy-specs](https://github.com/disneystreaming/aws-sdk-smithy-specs).
 
 AWS does not publishes the specs to their services to Maven. However, The specs in question (that are written in json syntax) can be found in some of the [official SDKs](https://github.com/aws/aws-sdk-js-v3/tree/main/codegen/sdk-codegen/aws-models) published by AWS. These `.json files` can be understood by smithy4s, just like `.smithy`, and can be used to generate code.
 

@@ -2,6 +2,16 @@
 
 ## Behavioural changes
 
+### Mill
+
+The `mill` plugin is build for version `0.11.0`. The changes to the API are solely results of this migration.
+
+The most important migration bits:
+
+1. Change from `def smithy4sInputDirs: mill.define.Sources` to `def smithy4sInputDirs: mill.define.Target[Seq[PathRef]]`
+2. Change from `def manifest: T[mill.modules.Jvm.JarManifest]` to `def manifest: T[mill.api.JarManifest]`
+3. Change from `def smithy4sAllExternalDependencies: T[Agg[Dep]]` to `def smithy4sAllExternalDependencies: T[Agg[BoundDep]]`
+
 ### Cats Module
 
 Addition of a cats module to contain `SchemaVisitor` implementations of commonly-used cats typeclasses. Currently included are `cats.Show` and `cats.Hash` (note that `cats.Eq` is provided by the `cats.Hash` implementation).

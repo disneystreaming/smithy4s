@@ -25,7 +25,7 @@ import smithy4s.schema.Schema._
 import smithy4s.internals.InputOutput
 import cats.Eval
 import cats.syntax.all._
-import smithy4s.schema.{Alt, EnumTag, EnumValue, SchemaField}
+import smithy4s.schema.{Alt, EnumTag, EnumValue, Field}
 import DynamicLambdas._
 
 private[dynamic] object Compiler {
@@ -148,6 +148,9 @@ private[dynamic] object Compiler {
         ValidIdRef.unapply(idRef).get
       )
     }
+
+    private def memberSchema(member: MemberShape): Eval[Schema[DynData]] =
+      schema(member.target).map(_.addMemberHints(allHints(member.traits)))
 
     private def allHints(traits: Map[IdRef, Document]): Hints = {
       val ignoredHints = List(IdRef("smithy.api#enumValue"))
@@ -288,7 +291,7 @@ private[dynamic] object Compiler {
 
       updateWithHints(
         id, {
-          allHints(shape.traits) ++ Hints(IntEnum())
+          allHints(shape.traits)
         },
         theEnum
       )
@@ -331,8 +334,13 @@ private[dynamic] object Compiler {
       }
     }
 
-    override def listShape(id: ShapeId, shape: ListShape): Unit =
-      update(id, shape.traits, schema(shape.member.target).map(s => list(s)))
+    override def listShape(id: ShapeId, shape: ListShape): Unit = {
+      if (shape.traits.contains(IdRef("smithy.api#sparse"))) {
+        update(id, shape.traits, memberSchema(shape.member).map(sparseList))
+      } else {
+        update(id, shape.traits, memberSchema(shape.member).map(list))
+      }
+    }
 
     override def setShape(id: ShapeId, shape: SetShape): Unit =
       update(id, shape.traits, schema(shape.member.target).map(s => set(s)))
@@ -342,9 +350,13 @@ private[dynamic] object Compiler {
         id,
         shape.traits,
         for {
-          k <- schema(shape.key.target)
-          v <- schema(shape.value.target)
-        } yield map(k, v)
+          k <- memberSchema(shape.key)
+          v <- memberSchema(shape.value)
+        } yield {
+          if (shape.traits.contains(IdRef("smithy.api#sparse"))) {
+            sparseMap(k, v).asInstanceOf[Schema[Map[Any, Any]]]
+          } else map(k, v)
+        }
       )
 
     override def operationShape(id: ShapeId, x: OperationShape): Unit = {}
@@ -366,9 +378,9 @@ private[dynamic] object Compiler {
       def errorAlt(
           index: Int,
           shapeId: ShapeId
-      ): Eval[smithy4s.schema.SchemaAlt[DynAlt, DynData]] =
+      ): Eval[smithy4s.schema.Alt[DynAlt, DynData]] =
         getSchemaFromId(shapeId).map { schema =>
-          Alt[Schema, DynAlt, DynData](
+          Alt[DynAlt, DynData](
             shapeId.name,
             schema,
             (index, _: DynData)
@@ -489,7 +501,7 @@ private[dynamic] object Compiler {
                   } else {
                     lMemberSchema.map(
                       _.optional[DynStruct](label, OptionalAccessor(index))
-                        .asInstanceOf[SchemaField[DynStruct, DynData]]
+                        .asInstanceOf[Field[DynStruct, DynData]]
                     )
                   }
                 val memberHints = allHints(mShape.traits)

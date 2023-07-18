@@ -70,6 +70,10 @@ private[internals] object ToLine {
       case Type.PrimitiveType(prim)  => primitiveLine(prim)
       case e: Type.ExternalType =>
         NameRef(e.fullyQualifiedName, e.typeParameters.map(typeToNameRef))
+      case Type.Nullable(underlying) =>
+        NameRef("scala", "Option").copy(typeParams =
+          List(typeToNameRef(underlying))
+        )
     }
   }
 
@@ -127,6 +131,8 @@ private[internals] case class Line(segments: Chain[LineSegment]) {
 
   def appendIf(condition: this.type => Boolean)(other: Line): Line =
     if (condition(this)) this + other else this
+
+  def when(condition: => Boolean): Line = if (condition) this else Line.empty
 }
 
 private[internals] object Line {

@@ -26,6 +26,7 @@ sealed trait CollectionTag[C[_]] {
   def build[A](put: (A => Unit) => Unit): C[A]
 
   def fromIterator[A](it: Iterator[A]): C[A] = build(put => it.foreach(put(_)))
+  def isEmpty[A](c: C[A]): Boolean
   def empty[A]: C[A] = build(_ => ())
 }
 
@@ -44,6 +45,8 @@ object CollectionTag {
       builder.result().toList
     }
 
+    override def isEmpty[A](c: List[A]): Boolean = c.isEmpty
+
   }
 
   case object SetTag extends CollectionTag[Set] {
@@ -55,6 +58,8 @@ object CollectionTag {
       put(builder.+=(_))
       builder.result()
     }
+
+    override def isEmpty[A](c: Set[A]): Boolean = c.isEmpty
   }
 
   case object VectorTag extends CollectionTag[Vector] {
@@ -66,6 +71,8 @@ object CollectionTag {
       put(builder.+=(_))
       builder.result()
     }
+
+    override def isEmpty[A](c: Vector[A]): Boolean = c.isEmpty
   }
 
   case object IndexedSeqTag extends CollectionTag[IndexedSeq] {
@@ -78,6 +85,8 @@ object CollectionTag {
       put(builder.+=(_))
       builder.result()
     }
+
+    override def isEmpty[A](c: IndexedSeq[A]): Boolean = c.isEmpty
 
     /**
       * Returns a builder that may be able to store the elements in an unboxed
@@ -136,14 +145,15 @@ object CollectionTag {
     }
     def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): MaybeCT[Map[K,V]] = Some(implicitly[ClassTag[Map[K, V]]])
     def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): MaybeCT[E] = None
-    def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[SchemaField[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
-    def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[SchemaAlt[U, _]], dispatch: Alt.Dispatcher[Schema, U]): MaybeCT[U] = None
+    def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): MaybeCT[S] = None
+    def union[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: Alt.Dispatcher[U]): MaybeCT[U] = None
     def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): MaybeCT[B] = {
       if (bijection.isInstanceOf[Newtype.Make[_, _]]) apply(schema).asInstanceOf[MaybeCT[B]]
       else None
     }
     def refine[A, B](schema: Schema[A], refinement: Refinement[A,B]): MaybeCT[B] = None
     def lazily[A](suspend: Lazy[Schema[A]]): MaybeCT[A] = None
+    def option[A](schema: Schema[A]) = Some(implicitly[ClassTag[Option[A]]])
   }
   // format: off
 }

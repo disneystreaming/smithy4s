@@ -25,8 +25,8 @@ import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s.ByteArray
-import smithy4s.Hints
 import smithy4s.ShapeId
+import smithy4s.Hints
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.xml.internals.XmlCursor
@@ -249,7 +249,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val foos = list(int.addHints(XmlName("x")))
+        val foos = list(int.addMemberHints(XmlName("x")))
           .required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply).n
       }
@@ -316,8 +316,7 @@ object XmlCodecSpec extends SimpleIOSuite {
 
     val xml = """|<Foo>
                  |   <foo>
-                 |      <foo>
-                 |      </foo>
+                 |      <foo/>
                  |   </foo>
                  |</Foo>
                  |""".stripMargin
@@ -332,12 +331,41 @@ object XmlCodecSpec extends SimpleIOSuite {
       union(left, right) {
         case Left(int)     => left(int)
         case Right(string) => right(string)
-      }
+      }.n
     }
-    val xmlLeft = """<left>1</left>"""
-    val xmlRight = """<right>hello</right>""".stripMargin
+    val xmlLeft = """<Foo><left>1</left></Foo>"""
+    val xmlRight = """<Foo><right>hello</right></Foo>""".stripMargin
     checkContent[Foo](xmlLeft, Left(1)) |+|
       checkContent[Foo](xmlRight, Right("hello"))
+  }
+
+  test("recursiveUnion") {
+
+    sealed trait Foo
+    object Foo {
+      case class Bar(foo: Foo) extends Foo
+      case class Baz(int: Int) extends Foo
+
+      implicit val schema: Schema[Foo] = Schema.recursive {
+        val bar =
+          Foo.schema
+            .biject[Foo.Bar](Foo.Bar(_), (_: Foo.Bar).foo)
+            .oneOf[Foo]("bar")
+        val baz =
+          int.biject[Foo.Baz](Foo.Baz(_), (_: Foo.Baz).int).oneOf[Foo]("baz")
+        union(bar, baz) {
+          case b: Foo.Bar => bar(b)
+          case b: Foo.Baz => baz(b)
+        }.n
+      }
+    }
+    val xml = """|<Foo>
+                 |   <bar>
+                 |      <baz>1</baz>
+                 |   </bar>
+                 |</Foo>
+                 |""".stripMargin
+    checkContent[Foo](xml, Foo.Bar(Foo.Baz(1)))
   }
 
   test("union: custom names") {
@@ -348,10 +376,10 @@ object XmlCodecSpec extends SimpleIOSuite {
       union(left, right) {
         case Left(int)     => left(int)
         case Right(string) => right(string)
-      }
+      }.n
     }
-    val xmlLeft = """<foo>1</foo>"""
-    val xmlRight = """<bar>hello</bar>""".stripMargin
+    val xmlLeft = """<Foo><foo>1</foo></Foo>"""
+    val xmlRight = """<Foo><bar>hello</bar></Foo>""".stripMargin
     checkContent[Foo](xmlLeft, Left(1)) |+|
       checkContent[Foo](xmlRight, Right("hello"))
   }
@@ -411,8 +439,10 @@ object XmlCodecSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val foos =
-          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
-            .required[Foo]("foos", _.foos)
+          map(
+            string.addMemberHints(XmlName("k")),
+            int.addMemberHints(XmlName("v"))
+          ).required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply).n
       }
     }
@@ -457,7 +487,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     checkContent(xml, Foo(Map("a" -> 1, "b" -> 2)))
   }
 
-  test("Document decoding") {
+  test("XMLDocument decoding") {
     case class Foo(x: Int)
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -472,7 +502,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     checkDocument(xml, Foo(1))
   }
 
-  test("Document decoding: custom name") {
+  test("XMLDocument decoding: custom name") {
     case class Foo(x: Int)
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -487,7 +517,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     checkDocument(xml, Foo(1))
   }
 
-  test("Document decoding: failure") {
+  test("XMLDocument decoding: failure") {
     case class Foo(x: Int)
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -506,7 +536,10 @@ object XmlCodecSpec extends SimpleIOSuite {
         expect.same(
           result,
           Left(
-            XmlDecodeError(XPath.root, "Expected Foo XML root element, got Bar")
+            XmlDecodeError(
+              XPath.root.appendTag("Foo"),
+              "Could not decode failed node"
+            )
           )
         )
       }
@@ -563,7 +596,7 @@ object XmlCodecSpec extends SimpleIOSuite {
 
   private def decodeContent[A: Schema](document: XmlDocument): IO[A] = {
     val decoder = implicitly[Schema[A]].compile(XmlDecoderSchemaVisitor)
-    val cursor = XmlCursor.fromDocument(document)
+    val cursor = XmlCursor.SingleNode(XPath.root, document.root)
     decoder.decode(cursor).leftWiden[Throwable].liftTo[IO]
   }
 

@@ -92,59 +92,30 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): AwsQueryCodec[E] = {
-    if (hints.has(IntEnum))
-      new AwsQueryCodec[E] {
-        def apply(value: E): FormData =
-          FormData.SimpleValue(total(value).intValue.toString)
-      }
-    else
-      new AwsQueryCodec[E] {
-        def apply(value: E): FormData =
-          FormData.SimpleValue(total(value).stringValue)
-      }
-  }
+  ): AwsQueryCodec[E] =
+    tag match {
+      case EnumTag.IntEnum =>
+        new AwsQueryCodec[E] {
+          def apply(value: E): FormData =
+            FormData.SimpleValue(total(value).intValue.toString)
+        }
+
+      case EnumTag.StringEnum =>
+        new AwsQueryCodec[E] {
+          def apply(value: E): FormData =
+            FormData.SimpleValue(total(value).stringValue)
+        }
+    }
 
   override def struct[S](
       shapeId: ShapeId,
       hints: Hints,
-      fields: Vector[SchemaField[S, _]],
+      fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): AwsQueryCodec[S] = {
-    def fieldEncoder[A](field: SchemaField[S, A]): AwsQueryCodec[S] = {
+    def fieldEncoder[A](field: Field[S, A]): AwsQueryCodec[S] = {
       val fieldKey = getKey(field.hints, field.label)
-
-      val encoder = field.foldK(new Field.FolderK[Schema, S, AwsQueryCodec] {
-        override def onRequired[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => AA
-        ): AwsQueryCodec[AA] = {
-          val schema = compile(instance)
-          new AwsQueryCodec[AA] {
-            def apply(a: AA): FormData = schema(a)
-          }
-        }
-
-        override def onOptional[AA](
-            label: String,
-            instance: Schema[AA],
-            get: S => Option[AA]
-        ): AwsQueryCodec[Option[AA]] = {
-          val schema = compile(instance)
-          new AwsQueryCodec[Option[AA]] {
-            override def apply(a: Option[AA]): FormData = a match {
-              case Some(value) => schema(value)
-              case None        => FormData.Empty
-            }
-          }
-        }
-      })
-
-      new AwsQueryCodec[S] {
-        def apply(s: S): FormData =
-          encoder(field.get(s)).prepend(fieldKey)
-      }
+      compile(field.schema).contramap(field.get).prepend(fieldKey)
     }
 
     val codecs: Vector[AwsQueryCodec[S]] =
@@ -159,15 +130,15 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
   override def union[U](
       shapeId: ShapeId,
       hints: Hints,
-      alternatives: Vector[SchemaAlt[U, _]],
-      dispatch: Alt.Dispatcher[Schema, U]
+      alternatives: Vector[Alt[U, _]],
+      dispatch: Alt.Dispatcher[U]
   ): AwsQueryCodec[U] = {
 
-    def encode[A](u: U, alt: SchemaAlt[U, A]): FormData = {
+    def encode[A](u: U, alt: Alt[U, A]): FormData = {
       val key = getKey(alt.hints, alt.label)
       dispatch
         .projector(alt)(u)
-        .fold(FormData.Empty.widen)(a => compile(alt.instance)(a))
+        .fold(FormData.Empty.widen)(a => compile(alt.schema)(a))
         .prepend(key)
     }
 
@@ -196,6 +167,15 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
       lazy val underlying: AwsQueryCodec[A] =
         suspend.map(schema => compile(schema)).value
       override def apply(a: A): FormData = { underlying(a) }
+    }
+
+  override def option[A](schema: Schema[A]): AwsQueryCodec[Option[A]] =
+    new AwsQueryCodec[Option[A]] {
+      val encoder = compile(schema)
+      def apply(a: Option[A]): FormData = a match {
+        case None        => FormData.Empty
+        case Some(value) => encoder(value)
+      }
     }
 
   /**

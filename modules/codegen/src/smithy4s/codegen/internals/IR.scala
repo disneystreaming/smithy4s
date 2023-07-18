@@ -34,10 +34,13 @@ import UnionMember._
 import LineSegment.{NameDef, NameRef}
 
 private[internals] case class CompilationUnit(
-    namespace: String,
+    rawNamespace: String,
     declarations: List[Decl],
     rendererConfig: Renderer.Config
-)
+) {
+  val namespace: String =
+    rawNamespace.split('.').map(CollisionAvoidance.protectType(_)).mkString(".")
+}
 
 private[internals] sealed trait Decl {
   def shapeId: ShapeId
@@ -226,6 +229,11 @@ private[internals] object Type {
       member: Type,
       memberHints: List[Hint]
   ) extends Type
+
+  case class Nullable(
+      underlying: Type
+  ) extends Type
+
   case class Map(
       key: Type,
       keyHints: List[Hint],
@@ -290,6 +298,7 @@ private[internals] object Hint {
   case object UniqueItems extends Hint
   case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
       extends Hint
+  case object GenerateServiceProduct extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

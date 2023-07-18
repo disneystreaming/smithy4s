@@ -18,7 +18,7 @@ In `MyHelloWorld.scala`, implement the service interface that is generated at bu
 
 ```scala mdoc:silent
 // the package under which the scala code was generated
-import smithy4s.hello._
+import smithy4s.example.hello._
 
 import cats.effect.IO
 

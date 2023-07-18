@@ -16,86 +16,127 @@
 
 package smithy4s.http4s.kernel
 
+import cats.effect.Concurrent
+import org.http4s.EntityEncoder
 import org.http4s.Response
 import org.http4s.Status
 import smithy4s.Errorable
-import smithy4s.capability.EncoderK
+import smithy4s.codecs.Writer
+import smithy4s.http.HttpRestSchema
 import smithy4s.http.HttpStatusCode
+import smithy4s.http._
+import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Alt
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
 
-trait ResponseEncoder[F[_], A] {
-  def addToResponse(response: Response[F], a: A): Response[F]
-}
-
 object ResponseEncoder {
 
-  def empty[F[_], A]: ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
-    def addToResponse(response: Response[F], a: A): Response[F] = response
-  }
-
-  def combine[F[_], A](
-      left: ResponseEncoder[F, A],
-      right: ResponseEncoder[F, A]
-  ): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
-    def addToResponse(response: Response[F], a: A): Response[F] =
-      right.addToResponse(left.addToResponse(response, a), a)
-  }
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[ResponseEncoder[F, *]]
 
   def forError[F[_], E](
-      errorTypeHeader: String,
+      errorTypeHeaders: List[String],
       maybeErrorable: Option[Errorable[E]],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
   ): ResponseEncoder[F, E] = maybeErrorable match {
     case Some(errorable) =>
-      forErrorAux(errorTypeHeader, errorable, encoderCompiler)
-    case None => noop[F, E]
+      forErrorAux(errorTypeHeaders, errorable, encoderCompiler)
+    case None => Writer.noop
   }
 
   private def forErrorAux[F[_], E](
-      errorTypeHeader: String,
+      errorTypeHeaders: List[String],
       errorable: Errorable[E],
       encoderCompiler: CachedSchemaCompiler[ResponseEncoder[F, *]]
   ): ResponseEncoder[F, E] = {
     val errorUnionSchema = errorable.error
     val dispatcher =
       Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.dispatch)
-    val precompiler = new Alt.Precompiler[Schema, ResponseEncoder[F, *]] {
+    val precompiler = new Alt.Precompiler[ResponseEncoder[F, *]] {
       def apply[Err](
           label: String,
           errorSchema: Schema[Err]
       ): ResponseEncoder[F, Err] = new ResponseEncoder[F, Err] {
         val errorEncoder =
           encoderCompiler.fromSchema(errorSchema, encoderCompiler.createCache())
-        def addToResponse(response: Response[F], err: Err): Response[F] = {
+        def write(response: Response[F], err: Err): Response[F] = {
           val errorCode =
             HttpStatusCode.fromSchema(errorSchema).code(err, 500)
           val status =
             Status.fromInt(errorCode).getOrElse(Status.InternalServerError)
-          val encodedResponse = errorEncoder.addToResponse(response, err)
+          val encodedResponse = errorEncoder.write(response, err)
           encodedResponse
             .withStatus(status)
-            .withHeaders(encodedResponse.headers.put(errorTypeHeader -> label))
+            .putHeaders(errorTypeHeaders.map(_ -> label))
         }
       }
     }
     dispatcher.compile(precompiler)
   }
 
-  def noop[F[_], A]: ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
-    def addToResponse(response: Response[F], a: A): Response[F] = response
-  }
-
-  // format: off
-  implicit def responseEncoderEncoderK[F[_]]: EncoderK[ResponseEncoder[F, *], Response[F] => Response[F]] =
-    new EncoderK[ResponseEncoder[F, *], Response[F] => Response[F]] {
-      def apply[A](fa: ResponseEncoder[F, A], a: A): Response[F] => Response[F] = fa.addToResponse(_, a)
-      def absorb[A](f: A => (Response[F] => Response[F])): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
-        def addToResponse(response: Response[F], a: A): Response[F] =
-          f(a)(response)
+  def metadataResponseEncoder[F[_]]: ResponseEncoder[F, Metadata] =
+    new ResponseEncoder[F, Metadata] {
+      def write(response: Response[F], metadata: Metadata): Response[F] = {
+        val headers = toHeaders(metadata.headers)
+        val status = metadata.statusCode
+          .flatMap(Status.fromInt(_).toOption)
+          .filter(_.responseClass.isSuccess)
+          .getOrElse(response.status)
+        response.withHeaders(response.headers ++ headers).withStatus(status)
       }
     }
-  // format: on
+
+  def fromMetadataEncoder[F[_], A](
+      metadataEncoder: Metadata.Encoder[A]
+  ): ResponseEncoder[F, A] =
+    metadataResponseEncoder[F].contramap(metadataEncoder.encode)
+
+  def fromMetadataEncoderK[F[_]]
+      : PolyFunction[Metadata.Encoder, ResponseEncoder[F, *]] =
+    new PolyFunction[Metadata.Encoder, ResponseEncoder[F, *]] {
+      def apply[A](fa: Metadata.Encoder[A]): ResponseEncoder[F, A] =
+        fromMetadataEncoder[F, A](fa)
+    }
+
+  def fromEntityEncoder[F[_]: Concurrent, A](implicit
+      entityEncoder: EntityEncoder[F, A]
+  ): ResponseEncoder[F, A] = new ResponseEncoder[F, A] {
+    def write(response: Response[F], a: A): Response[F] = {
+      response.withEntity(a)
+    }
+  }
+
+  def fromEntityEncoderK[F[_]: Concurrent]
+      : PolyFunction[EntityEncoder[F, *], ResponseEncoder[F, *]] =
+    new PolyFunction[EntityEncoder[F, *], ResponseEncoder[F, *]] {
+      def apply[A](fa: EntityEncoder[F, A]): ResponseEncoder[F, A] =
+        fromEntityEncoder[F, A](Concurrent[F], fa)
+    }
+
+  /**
+    * A compiler for ResponseEncoder that encodes the whole data in the body
+    * of the request
+    */
+  def rpcSchemaCompiler[F[_]](
+      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] =
+    entityEncoderCompiler.mapK(fromEntityEncoderK[F])
+
+  /**
+    * A compiler for ResponseEncoder that abides by REST-semantics :
+    * fields that are annotated with `httpHeader` and `httpStatusCode`
+    * are encoded as the corresponding metadata.
+    *
+    * The rest is used to formulate the body of the message.
+    */
+  def restSchemaCompiler[F[_]](
+      metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] = {
+    val bodyCompiler =
+      entityEncoderCompiler.mapK(fromEntityEncoderK)
+    val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
+    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+  }
 
 }

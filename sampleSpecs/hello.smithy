@@ -1,4 +1,6 @@
-namespace smithy4s.hello
+$version: "2"
+
+namespace smithy4s.example.hello
 
 use alloy#simpleRestJson
 
@@ -8,13 +10,19 @@ service HelloWorldService {
   version: "1.0.0",
   // Indicates that all operations in `HelloWorldService`,
   // here limited to Hello, can return `GenericServerError`.
-  errors: [GenericServerError],
+  errors: [GenericServerError, SpecificServerError],
   operations: [Hello]
 }
 
 @error("server")
 @httpError(500)
 structure GenericServerError {
+  message: String
+}
+
+@error("server")
+@httpError(599)
+structure SpecificServerError {
   message: String
 }
 
@@ -39,4 +47,3 @@ structure Greeting {
   @required
   message: String
 }
-

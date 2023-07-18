@@ -26,7 +26,7 @@ import cats.effect.IO
 import cats.effect.Resource
 
 // the package under which the scala code was generated
-import smithy4s.hello._
+import smithy4s.example.hello._
 
 object Clients {
   def helloWorldClient2(http4sClient: Client[IO]): Resource[IO, HelloWorldService[IO]] =

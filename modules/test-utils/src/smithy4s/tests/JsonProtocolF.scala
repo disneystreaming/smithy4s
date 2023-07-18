@@ -22,6 +22,7 @@ import Document._
 import cats.syntax.all._
 import cats.MonadThrow
 import smithy4s.kinds._
+import smithy4s.codecs._
 
 /**
   * These are toy interpreters that turn services into json-in/json-out
@@ -98,11 +99,10 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
               new Document.Decoder[F[Nothing]] {
                 def decode(
                     document: Document
-                ): Either[smithy4s.http.PayloadError, F[Nothing]] =
+                ): Either[PayloadError, F[Nothing]] =
                   Right(
                     F.raiseError(
-                      smithy4s.http
-                        .PayloadError(PayloadPath.root, "Nothing", "Nothing")
+                      PayloadError(PayloadPath.root, "Nothing", "Nothing")
                     )
                   )
               }
@@ -110,7 +110,7 @@ class JsonProtocolF[F[_]](implicit F: MonadThrow[F]) {
         implicit val decoderFoutput = new Document.Decoder[F[O]] {
           def decode(
               document: Document
-          ): Either[smithy4s.http.PayloadError, F[O]] = {
+          ): Either[smithy4s.codecs.PayloadError, F[O]] = {
             document match {
               case Document.DObject(map) if (map.contains("error")) =>
                 decoderE.decode(map("error")).map(_.asInstanceOf[F[O]])

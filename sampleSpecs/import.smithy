@@ -1,3 +1,5 @@
+$version: "2"
+
 namespace smithy4s.example.imp
 
 use alloy#simpleRestJson
@@ -10,4 +12,3 @@ service ImportService {
   operations: [ImportOperation],
   errors: [NotFoundError],
 }
-

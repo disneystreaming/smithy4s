@@ -53,7 +53,10 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
           (dispatcher(e), dispatchThrowable(throwable)) match {
             case (Some(expected), Some(result)) =>
               assert.eql(result, expected)
-            case _ => assert.fail("")
+            case _ =>
+              assert.fail(
+                s"Could not decode error response to known model: $throwable"
+              )
           }
         }
         .liftTo[F]
@@ -71,12 +74,12 @@ private[compliancetests] final case class ErrorResponseTest[A, E](
 
 private[compliancetests] object ErrorResponseTest {
   def from[E, A](
-      errorAlt: smithy4s.schema.SchemaAlt[E, A],
-      dispatcher: Dispatcher[Schema, E],
+      errorAlt: smithy4s.schema.Alt[E, A],
+      dispatcher: Dispatcher[E],
       errorable: smithy4s.Errorable[E]
   ): ErrorResponseTest[A, E] =
     ErrorResponseTest(
-      errorAlt.instance,
+      errorAlt.schema,
       errorAlt.inject,
       dispatcher.projector(errorAlt),
       errorable

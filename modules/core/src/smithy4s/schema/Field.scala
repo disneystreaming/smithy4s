@@ -17,159 +17,73 @@
 package smithy4s
 package schema
 
-import smithy4s.kinds.PolyFunction
-
 /**
   * Represents a member of product type (case class)
   */
-sealed abstract class Field[F[_], S, A] {
-  type T
-  def label: String
-  def get: S => A
-  def instance: F[T]
-  def isRequired: Boolean
-  def isOptional: Boolean = !isRequired
-
-  def mapK[G[_]](f: F ~> G): Field[G, S, A]
+final case class Field[S, A](
+    label: String,
+    schema: Schema[A],
+    get: S => A
+) {
 
   /**
-    * Grabs the instance associated to this field, applying a polymorphic
-    * function when the field is optional
+    * Returns the hints that are only relative to the field
+    * (typically derived from member-level traits)
     */
-  def instanceA(onOptional: Field.ToOptional[F]): F[A]
+  final def memberHints: Hints = schema.hints.memberHints
 
   /**
-    * Fold a field into a value independant of the type indexed by the field.
+    * Returns all hints : the ones defined directly on the field, and the ones
+    * defined on the target of the field.
     */
-  def fold[B](folder: Field.Folder[F, S, B]): B
+  final def hints: Hints = schema.hints
 
-  /**
-    * Fold a field into a value tied to the type indexed by the field.
-    */
-  def foldK[G[_]](folder: Field.FolderK[F, S, G]): G[A]
+  @deprecated("use .schema instead", since = "0.18.0")
+  final def instance: Schema[A] = schema
 
-  /**
-    * Transforms the field into a function that can be applied on the product type,
-    * depending on whether it contains the corresponding value.
-    */
-  def leftFolder[B](folder: Field.LeftFolder[F, B]): (B, S) => B
+  lazy val getDefaultValue: Option[A] =
+    schema.getDefaultValue
 
-  /**
-    * Applies a side-effecting thunk on the field's value, unpacking
-    * the option in case of an optional field.
-    */
-  def foreachT(s: S)(f: T => Unit): Unit
+  def isDefaultValue(a: A): Boolean = getDefaultValue.contains(a)
 
-  /**
-    * Applies a side-effecting thunk on the field's value,
-    * which will be an option in case of an optional field.
-    */
-  final def foreachA(s: S)(f: A => Unit): Unit =
-    f(this.get(s))
+  def getUnlessDefault(s: S): Option[A] = {
+    val a = get(s)
+    getDefaultValue match {
+      case Some(`a`) => None
+      case _         => Some(a)
+    }
+  }
 
+  def hasDefaultValue: Boolean = getDefaultValue.isDefined
+  def isStrictlyRequired: Boolean = !hasDefaultValue
+
+  def transformHintsLocally(f: Hints => Hints): Field[S, A] =
+    copy(schema = schema.transformHintsLocally(f))
+
+  def transformHintsTransitively(f: Hints => Hints) =
+    copy(schema = schema.transformHintsTransitively(f))
+
+  def contramap[S0](f: S0 => S): Field[S0, A] =
+    Field(label, schema, get.compose(f))
+
+  def addHints(newHints: Hint*): Field[S, A] =
+    copy(schema = schema.addMemberHints(newHints: _*))
 }
 
 object Field {
 
-  def required[F[_], S, A](
+  def required[S, A](
       label: String,
-      instance: F[A],
+      schema: Schema[A],
       get: S => A
-  ): Field[F, S, A] =
-    Required(label, instance, get)
+  ): Field[S, A] =
+    Field(label, schema, get)
 
-  def optional[F[_], S, A](
+  def optional[S, A](
       label: String,
-      instance: F[A],
+      schema: Schema[A],
       get: S => Option[A]
-  ): Field[F, S, Option[A]] =
-    Optional(label, instance, get)
-
-  private final case class Required[F[_], S, A](
-      label: String,
-      instance: F[A],
-      get: S => A
-  ) extends Field[F, S, A] {
-    type T = A
-    override def toString(): String = s"Required($label, ...)"
-    override def mapK[G[_]](fk: F ~> G): Field[G, S, A] =
-      Required(label, fk(instance), get)
-    override def instanceA(onOptional: ToOptional[F]): F[A] = instance
-    override def fold[B](folder: Field.Folder[F, S, B]): B =
-      folder.onRequired(label, instance, get)
-    override def foldK[G[_]](folder: Field.FolderK[F, S, G]): G[A] =
-      folder.onRequired(label, instance, get)
-    override def leftFolder[B](folder: Field.LeftFolder[F, B]): (B, S) => B = {
-      val partiallyApplied = folder.compile(label, instance)
-      (b, s) => partiallyApplied(b, get(s))
-    }
-    override def isRequired: Boolean = true
-    override def foreachT(s: S)(f: A => Unit): Unit = f(get(s))
-  }
-
-  private final case class Optional[F[_], S, A](
-      label: String,
-      instance: F[A],
-      get: S => Option[A]
-  ) extends Field[F, S, Option[A]] {
-    type T = A
-    override def toString = s"Optional($label, ...)"
-    override def mapK[G[_]](fk: F ~> G): Field[G, S, Option[A]] =
-      Optional(label, fk(instance), get)
-    override def instanceA(onOptional: ToOptional[F]): F[Option[A]] =
-      onOptional.apply(instance)
-    override def fold[B](folder: Field.Folder[F, S, B]): B =
-      folder.onOptional(label, instance, get)
-    override def foldK[G[_]](folder: Field.FolderK[F, S, G]): G[Option[A]] =
-      folder.onOptional(label, instance, get)
-    override def leftFolder[B](folder: Field.LeftFolder[F, B]): (B, S) => B = {
-      val partiallyApplied = folder.compile(label, instance)
-      (b, s) =>
-        get(s) match {
-          case Some(a) => partiallyApplied(b, a)
-          case None    => b
-        }
-    }
-    override def isRequired: Boolean = false
-    override def foreachT(s: S)(f: A => Unit): Unit = get(s).foreach(f)
-  }
-
-
-  // format: off
-  trait FolderK[F[_], S, G[_]]{
-    def onRequired[A](label: String, instance: F[A], get: S => A): G[A]
-    def onOptional[A](label: String, instance: F[A], get: S => Option[A]): G[Option[A]]
-  }
-
-  trait Folder[F[_], S, B] {
-    def onRequired[A](label: String, instance: F[A], get: S => A): B
-    def onOptional[A](label: String, instance: F[A], get: S => Option[A]): B
-  }
-
-  trait LeftFolder[F[_], B] {
-    def compile[T](label: String, instance: F[T]): (B, T) => B
-  }
-
-  type Wrapped[F[_], G[_], A] = F[G[A]]
-  type ToOptional[F[_]] = PolyFunction[F, Wrapped[F, Option, *]]
-
-  // format: on
-
-  implicit class SchemaFieldOps[S, A](private val field: SchemaField[S, A])
-      extends AnyVal {
-
-    def hints: Hints = field.instance.hints
-
-    def addHints(hints: Hint*): SchemaField[S, A] = field.mapK[Schema] {
-      new (Schema ~> Schema) {
-        def apply[AA](fa: Schema[AA]): Schema[AA] =
-          fa.addHints(hints: _*)
-      }
-    }
-
-    def getDefault: Option[Document] =
-      field.instance.getDefault
-
-  }
+  ): Field[S, Option[A]] =
+    Field(label, schema.option, get)
 
 }

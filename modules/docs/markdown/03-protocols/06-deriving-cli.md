@@ -43,7 +43,7 @@ structure Greeting {
 Let's implement the HelloWorld service, we will use `cats.effect.IO` for our effect type.
 
 ```scala mdoc:silent
-import smithy4s.hello._
+import smithy4s.example.hello._
 import cats.effect.IO
 
 object HelloWorldServiceInstance{

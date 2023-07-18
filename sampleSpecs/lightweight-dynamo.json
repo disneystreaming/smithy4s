@@ -1,0 +1,229 @@
+{
+  "smithy": "2.0",
+  "shapes": {
+    "com.amazonaws.dynamodb#DynamoDB_20120810": {
+      "type": "service",
+      "version": "2012-08-10",
+      "operations": [
+        {
+          "target": "com.amazonaws.dynamodb#DescribeEndpoints"
+        },
+        {
+          "target": "com.amazonaws.dynamodb#ListTables"
+        }
+      ],
+      "traits": {
+        "aws.api#clientEndpointDiscovery": {
+          "operation": "com.amazonaws.dynamodb#DescribeEndpoints",
+          "error": "com.amazonaws.dynamodb#InvalidEndpointException"
+        },
+        "aws.api#service": {
+          "sdkId": "DynamoDB",
+          "arnNamespace": "dynamodb",
+          "cloudFormationName": "DynamoDB",
+          "cloudTrailEventSource": "dynamodb.amazonaws.com",
+          "endpointPrefix": "dynamodb"
+        },
+        "aws.auth#sigv4": {
+          "name": "dynamodb"
+        },
+        "aws.protocols#awsJson1_0": {},
+        "smithy.api#documentation": "<fullname>Amazon DynamoDB</fullname>\n\n\n         <p>Amazon DynamoDB is a fully managed NoSQL database service that provides fast and\n      predictable performance with seamless scalability. DynamoDB lets you offload the\n      administrative burdens of operating and scaling a distributed database, so that you don't have\n      to worry about hardware provisioning, setup and configuration, replication, software patching,\n      or cluster scaling.</p>\n\n         <p>With DynamoDB, you can create database tables that can store and retrieve any amount of\n      data, and serve any level of request traffic. You can scale up or scale down your tables'\n      throughput capacity without downtime or performance degradation, and use the AWS Management\n      Console to monitor resource utilization and performance metrics.</p>\n\n         <p>DynamoDB automatically spreads the data and traffic for your tables over a sufficient\n      number of servers to handle your throughput and storage requirements, while maintaining\n      consistent and fast performance. All of your data is stored on solid state disks (SSDs) and\n      automatically replicated across multiple Availability Zones in an AWS region, providing\n      built-in high availability and data durability. </p>",
+        "smithy.api#title": "Amazon DynamoDB",
+        "smithy.api#xmlNamespace": {
+          "uri": "http://dynamodb.amazonaws.com/doc/2012-08-10/"
+        }
+      }
+    },
+    "com.amazonaws.dynamodb#DescribeEndpoints": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.dynamodb#DescribeEndpointsRequest"
+      },
+      "output": {
+        "target": "com.amazonaws.dynamodb#DescribeEndpointsResponse"
+      },
+      "traits": {
+        "smithy.api#documentation": "<p>Returns the regional endpoint information.</p>"
+      }
+    },
+    "com.amazonaws.dynamodb#DescribeEndpointsRequest": {
+      "type": "structure",
+      "members": {}
+    },
+    "com.amazonaws.dynamodb#DescribeEndpointsResponse": {
+      "type": "structure",
+      "members": {
+        "Endpoints": {
+          "target": "com.amazonaws.dynamodb#Endpoints",
+          "traits": {
+            "smithy.api#documentation": "<p>List of endpoints.</p>",
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.dynamodb#Endpoint": {
+      "type": "structure",
+      "members": {
+        "Address": {
+          "target": "com.amazonaws.dynamodb#String",
+          "traits": {
+            "smithy.api#documentation": "<p>IP address of the endpoint.</p>",
+            "smithy.api#required": {}
+          }
+        },
+        "CachePeriodInMinutes": {
+          "target": "com.amazonaws.dynamodb#Long",
+          "traits": {
+            "smithy.api#default": 0,
+            "smithy.api#documentation": "<p>Endpoint cache time to live (TTL) value.</p>",
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "<p>An endpoint information details.</p>"
+      }
+    },
+    "com.amazonaws.dynamodb#Endpoints": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.dynamodb#Endpoint"
+      }
+    },
+    "com.amazonaws.dynamodb#Long": {
+      "type": "long",
+      "traits": {
+        "smithy.api#default": 0
+      }
+    },
+    "com.amazonaws.dynamodb#ErrorMessage": {
+      "type": "string"
+    },
+    "com.amazonaws.dynamodb#InternalServerError": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.dynamodb#ErrorMessage",
+          "traits": {
+            "smithy.api#documentation": "<p>The server encountered an internal error trying to fulfill the request.</p>"
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "<p>An error occurred on the server side.</p>",
+        "smithy.api#error": "server"
+      }
+    },
+    "com.amazonaws.dynamodb#InvalidEndpointException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "target": "com.amazonaws.dynamodb#String"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client",
+        "smithy.api#httpError": 421
+      }
+    },
+    "com.amazonaws.dynamodb#ListTables": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.dynamodb#ListTablesInput"
+      },
+      "output": {
+        "target": "com.amazonaws.dynamodb#ListTablesOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.dynamodb#InternalServerError"
+        },
+        {
+          "target": "com.amazonaws.dynamodb#InvalidEndpointException"
+        }
+      ],
+      "traits": {
+        "aws.api#clientDiscoveredEndpoint": {
+          "required": false
+        },
+        "smithy.api#documentation": "<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>",
+        "smithy.api#paginated": {
+          "inputToken": "ExclusiveStartTableName",
+          "outputToken": "LastEvaluatedTableName",
+          "items": "TableNames",
+          "pageSize": "Limit"
+        }
+      }
+    },
+    "com.amazonaws.dynamodb#ListTablesInput": {
+      "type": "structure",
+      "members": {
+        "ExclusiveStartTableName": {
+          "target": "com.amazonaws.dynamodb#TableName",
+          "traits": {
+            "smithy.api#documentation": "<p>The first table name that this operation will evaluate. Use the value that was returned for\n        <code>LastEvaluatedTableName</code> in a previous operation, so that you can obtain the next page\n      of results.</p>"
+          }
+        },
+        "Limit": {
+          "target": "com.amazonaws.dynamodb#ListTablesInputLimit",
+          "traits": {
+            "smithy.api#documentation": "<p>A maximum number of table names to return. If this parameter is not specified, the limit is 100.</p>"
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "<p>Represents the input of a <code>ListTables</code> operation.</p>"
+      }
+    },
+    "com.amazonaws.dynamodb#ListTablesInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 100
+        }
+      }
+    },
+    "com.amazonaws.dynamodb#ListTablesOutput": {
+      "type": "structure",
+      "members": {
+        "TableNames": {
+          "target": "com.amazonaws.dynamodb#TableNameList",
+          "traits": {
+            "smithy.api#documentation": "<p>The names of the tables associated with the current account at the current endpoint. The maximum size of this array is 100.</p>\n         <p>If <code>LastEvaluatedTableName</code> also appears in the output, you can use this value as the\n        <code>ExclusiveStartTableName</code> parameter in a subsequent <code>ListTables</code> request and\n      obtain the next page of results.</p>"
+          }
+        },
+        "LastEvaluatedTableName": {
+          "target": "com.amazonaws.dynamodb#TableName",
+          "traits": {
+            "smithy.api#documentation": "<p>The name of the last table in the current page of results. Use this value as the\n        <code>ExclusiveStartTableName</code> in a new request to obtain the next page of results, until\n      all the table names are returned.</p>\n         <p>If you do not receive a <code>LastEvaluatedTableName</code> value in the response, this means that\n      there are no more table names to be retrieved.</p>"
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#documentation": "<p>Represents the output of a <code>ListTables</code> operation.</p>"
+      }
+    },
+    "com.amazonaws.dynamodb#String": {
+      "type": "string"
+    },
+    "com.amazonaws.dynamodb#TableName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 3,
+          "max": 255
+        },
+        "smithy.api#pattern": "^[a-zA-Z0-9_.-]+$"
+      }
+    },
+    "com.amazonaws.dynamodb#TableNameList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.dynamodb#TableName"
+      }
+    }
+  }
+}

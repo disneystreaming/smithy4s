@@ -34,7 +34,7 @@ In `Docs.scala`, create an instance of the documentation `HttpRoutes`. There are
 import org.http4s._
 import cats.effect.IO
 // the package under which the scala code was generated
-import smithy4s.hello._
+import smithy4s.example.hello._
 
 object Docs {
   //simplest
@@ -60,7 +60,7 @@ object Docs {
 
 ```scala mdoc:invisible
 // the package under which the scala code was generated
-import smithy4s.hello._
+import smithy4s.example.hello._
 
 import cats.effect.IO
 
@@ -84,7 +84,7 @@ import smithy4s.http4s.swagger.docs
 import cats.effect.IO
 import cats.implicits._
 import org.http4s.implicits._
-import smithy4s.hello._
+import smithy4s.example.hello._
 
 // ...
 val docRoutes = docs[IO](HelloWorldService)

@@ -16,29 +16,43 @@
 
 package smithy4s.http4s
 
+import cats.Applicative
+import cats.Monad
+import cats.effect.SyncIO
+import cats.syntax.all._
+import org.http4s.EntityDecoder
 import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.Media
-import org.http4s.{Method => Http4sMethod}
-import org.typelevel.ci.CIString
-import smithy4s.http.CaseInsensitive
-import smithy4s.http.PathParams
-import smithy4s.http.{HttpMethod => SmithyMethod}
 import org.http4s.ParseFailure
-import cats.syntax.all._
-import smithy4s.http.Metadata
 import org.http4s.Request
 import org.http4s.Response
-import smithy4s.capability.Covariant
-import smithy4s.ConstraintError
-import org.http4s.EntityDecoder
-import cats.Monad
-import org.http4s.DecodeResult
-import org.http4s.InvalidMessageBodyFailure
+import org.http4s.{Method => Http4sMethod}
+import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
-import cats.effect.SyncIO
+import smithy4s.capability.Covariant
+import smithy4s.capability.Zipper
+import smithy4s.http.CaseInsensitive
+import smithy4s.http.Metadata
+import smithy4s.http.PathParams
+import smithy4s.http.{HttpMethod => SmithyMethod}
 
 package object kernel {
+
+  type ResponseEncoder[F[_], A] =
+    smithy4s.codecs.Writer[Response[F], Response[F], A]
+  type RequestEncoder[F[_], A] =
+    smithy4s.codecs.Writer[Request[F], Request[F], A]
+  type MediaDecoder[F[_], A] = smithy4s.codecs.Reader[F, Media[F], A]
+  type RequestDecoder[F[_], A] = smithy4s.codecs.Reader[F, Request[F], A]
+  type ResponseDecoder[F[_], A] = smithy4s.codecs.Reader[F, Response[F], A]
+
+  private[kernel] implicit def applicativeZipper[F[_]: Applicative]: Zipper[F] =
+    new Zipper[F] {
+      def pure[A](a: A): F[A] = Applicative[F].pure(a)
+      def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
+        seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
+    }
 
   /**
     * A vault key that is used to store extracted path-parameters into request during
@@ -118,16 +132,6 @@ package object kernel {
   ): Covariant[EntityDecoder[F, *]] = new Covariant[EntityDecoder[F, *]] {
     def map[A, B](fa: EntityDecoder[F, A])(f: A => B): EntityDecoder[F, B] =
       fa.map(f)
-
-    def emap[A, B](
-        fa: EntityDecoder[F, A]
-    )(f: A => Either[ConstraintError, B]): EntityDecoder[F, B] =
-      fa.flatMapR(a =>
-        f(a) match {
-          case Left(ce) =>
-            DecodeResult.failureT(InvalidMessageBodyFailure(ce.message))
-          case Right(value) => DecodeResult.successT(value)
-        }
-      )
   }
+
 }

@@ -19,15 +19,15 @@ package http4s
 package internals
 
 import cats.data.Kleisli
+import cats.effect.Concurrent
 import cats.syntax.all._
+import org.http4s.HttpApp
 import org.http4s.Method
 import org.http4s.Response
 import org.http4s.Status
 import smithy4s.http._
-import smithy4s.kinds._
-import org.http4s.HttpApp
 import smithy4s.http4s.kernel._
-import cats.effect.Concurrent
+import smithy4s.kinds._
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -51,7 +51,6 @@ private[http4s] object SmithyHttp4sServerEndpoint {
       impl: FunctorInterpreter[Op, F],
       endpoint: Endpoint[Op, I, E, O, SI, SO],
       makeServerCodecs: UnaryServerCodecs.Make[F],
-      errorTransformation: PartialFunction[Throwable, F[Throwable]],
       middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
   ): Either[HttpEndpoint.HttpEndpointError,SmithyHttp4sServerEndpoint[F]] =
   // format: on
@@ -69,7 +68,6 @@ private[http4s] object SmithyHttp4sServerEndpoint {
             method,
             httpEndpoint,
             makeServerCodecs,
-            errorTransformation,
             middleware
           )
         }
@@ -84,7 +82,6 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     val method: Method,
     httpEndpoint: HttpEndpoint[I],
     makeServerCodecs: UnaryServerCodecs.Make[F],
-    errorTransformation: PartialFunction[Throwable, F[Throwable]],
     middleware: ServerEndpointMiddleware.EndpointMiddleware[F, Op],
 )(implicit F: Concurrent[F]) extends SmithyHttp4sServerEndpoint[F] {
 
@@ -97,25 +94,18 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint.matches(path)
   }
 
-  private val applyMiddleware = middleware(endpoint)
-
-  override val httpApp: HttpApp[F] =
-    applyMiddleware(HttpApp[F] { req =>
+  override val httpApp: HttpApp[F] = {
+    val baseApp = HttpApp[F] { req =>
       val run: F[O] = for {
-        input <- inputDecoder.decodeRequest(req)
+        input <- inputDecoder.read(req)
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
-      run
-        .recoverWith(transformError)
-        .map(outputEncoder.addToResponse(successResponseBase, _))
-    }).handleErrorWith(error => Kleisli.liftF(errorResponse(error)))
-
-  private val transformError: PartialFunction[Throwable, F[O]] = {
-    case e @ endpoint.Error(_, _) => F.raiseError(e)
-    case scala.util.control.NonFatal(other)
-        if errorTransformation.isDefinedAt(other) =>
-      errorTransformation(other).flatMap(F.raiseError)
+      run.map(outputEncoder.write(successResponseBase, _))
+    }
+    middleware(endpoint)(baseApp).handleErrorWith(error =>
+      Kleisli.liftF(errorResponse(error))
+    )
   }
 
   private val successResponseBase: Response[F] =
@@ -126,9 +116,9 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   def errorResponse(throwable: Throwable): F[Response[F]] = throwable match {
     case e: HttpContractError =>
-      F.pure(contractErrorResponseEncoder.addToResponse(badRequestBase, e))
+      F.pure(contractErrorResponseEncoder.write(badRequestBase, e))
     case endpoint.Error((_, e)) =>
-      F.pure(errorEncoder.addToResponse(internalErrorBase, e))
+      F.pure(errorEncoder.write(internalErrorBase, e))
     case e: Throwable =>
       F.raiseError(e)
   }

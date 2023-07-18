@@ -23,6 +23,7 @@ import Type.PrimitiveType
 import TypedNode._
 import Type.ExternalType
 import LineSegment._
+import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object CollisionAvoidance {
   def apply(compilationUnit: CompilationUnit): CompilationUnit = {
@@ -131,6 +132,7 @@ private[internals] object CollisionAvoidance {
         modType(under),
         modNativeHint(refinementHint)
       )
+    case Nullable(underlying) => Nullable(modType(underlying))
   }
 
   private def modField(field: Field): Field = {
@@ -217,7 +219,7 @@ private[internals] object CollisionAvoidance {
     if (reservedKeywords(str)) s"_$str" else str
 
   private val names = new Names()
-  private def protectType(str: String): String =
+  private[internals] def protectType(str: String): String =
     if (names.getReservedNames(str)) "_" + str else protectKeyword(str)
 
   private val reservedKeywords: Set[String] = Set(
@@ -276,6 +278,8 @@ private[internals] object CollisionAvoidance {
     val Transformation = NameRef("smithy4s", "Transformation")
     val PolyFunction5_ = NameRef("smithy4s.kinds", "PolyFunction5")
     val Service_ = NameRef("smithy4s", "Service")
+    val ServiceProduct = NameRef("smithy4s", "ServiceProduct")
+    val ServiceProductMirror = NameRef("smithy4s", "ServiceProduct.Mirror")
     val Endpoint_ = NameRef("smithy4s", "Endpoint")
     val NoInput_ = NameRef("smithy4s", "NoInput")
     val ShapeId_ = NameRef("smithy4s", "ShapeId")
