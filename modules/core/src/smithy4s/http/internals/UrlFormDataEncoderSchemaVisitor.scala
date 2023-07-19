@@ -129,10 +129,12 @@ object UrlFormDataEncoderSchemaVisitor
       fields.map(field => fieldEncoder(field))
 
     new UrlFormDataEncoder[S] {
-      override def encode(s: S): UrlForm.FormData =
+      override def encode(s: S): UrlForm.FormData = {
+        println(s"s: $s")
         UrlForm.FormData.MultipleValues(
           codecs.flatMap(_.encode(s).toPathedValues)
         )
+      }
     }
   }
 

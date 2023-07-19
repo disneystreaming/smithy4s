@@ -67,7 +67,7 @@ object AwsClient {
           AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
 
         case AwsProtocol.AWS_QUERY(_) =>
-          AwsQueryCodecs.make[F]()
+          AwsQueryCodecs.make[F](version = service.version)
 
         case AwsProtocol.AWS_REST_JSON_1(_) =>
           AwsRestJsonCodecs.make[F]("application/json")
