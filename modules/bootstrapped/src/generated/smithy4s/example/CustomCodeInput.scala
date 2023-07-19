@@ -14,7 +14,7 @@ object CustomCodeInput extends ShapeTag.Companion[CustomCodeInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val code = Lens[CustomCodeInput, Int](_.code)(n => a => a.copy(code = n))
   }
 

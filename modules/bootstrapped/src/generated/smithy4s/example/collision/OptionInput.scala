@@ -16,7 +16,7 @@ object OptionInput extends ShapeTag.Companion[OptionInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val value = Lens[OptionInput, Option[String]](_.value)(n => a => a.copy(value = n))
   }
 

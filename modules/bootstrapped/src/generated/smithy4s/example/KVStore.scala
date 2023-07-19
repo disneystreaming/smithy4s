@@ -116,7 +116,7 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val UnauthorizedError = Prism.partial[GetError, UnauthorizedError]{ case UnauthorizedErrorCase(t) => t }(UnauthorizedErrorCase.apply)
       val KeyNotFoundError = Prism.partial[GetError, KeyNotFoundError]{ case KeyNotFoundErrorCase(t) => t }(KeyNotFoundErrorCase.apply)
     }
@@ -173,7 +173,7 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val UnauthorizedError = Prism.partial[PutError, UnauthorizedError]{ case UnauthorizedErrorCase(t) => t }(UnauthorizedErrorCase.apply)
     }
 
@@ -223,7 +223,7 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val UnauthorizedError = Prism.partial[DeleteError, UnauthorizedError]{ case UnauthorizedErrorCase(t) => t }(UnauthorizedErrorCase.apply)
       val KeyNotFoundError = Prism.partial[DeleteError, KeyNotFoundError]{ case KeyNotFoundErrorCase(t) => t }(KeyNotFoundErrorCase.apply)
     }

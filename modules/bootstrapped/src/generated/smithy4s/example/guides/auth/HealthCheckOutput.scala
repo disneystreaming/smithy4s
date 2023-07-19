@@ -16,7 +16,7 @@ object HealthCheckOutput extends ShapeTag.Companion[HealthCheckOutput] {
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[HealthCheckOutput, String](_.message)(n => a => a.copy(message = n))
   }
 

@@ -14,7 +14,7 @@ object Dog extends ShapeTag.Companion[Dog] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val name = Lens[Dog, String](_.name)(n => a => a.copy(name = n))
   }
 

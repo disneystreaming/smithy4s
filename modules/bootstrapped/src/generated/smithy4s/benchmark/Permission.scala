@@ -14,7 +14,7 @@ object Permission extends ShapeTag.Companion[Permission] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val read = Lens[Permission, Option[Boolean]](_.read)(n => a => a.copy(read = n))
     val write = Lens[Permission, Option[Boolean]](_.write)(n => a => a.copy(write = n))
     val directory = Lens[Permission, Option[Boolean]](_.directory)(n => a => a.copy(directory = n))

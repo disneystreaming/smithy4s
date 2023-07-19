@@ -16,7 +16,7 @@ object AStructure extends ShapeTag.Companion[AStructure] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val astring = Lens[AStructure, AString](_.astring)(n => a => a.copy(astring = n))
   }
 

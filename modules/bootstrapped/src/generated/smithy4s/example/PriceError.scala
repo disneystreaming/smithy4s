@@ -19,7 +19,7 @@ object PriceError extends ShapeTag.Companion[PriceError] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[PriceError, String](_.message)(n => a => a.copy(message = n))
     val code = Lens[PriceError, Int](_.code)(n => a => a.copy(code = n))
   }

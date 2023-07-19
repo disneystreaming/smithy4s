@@ -16,7 +16,7 @@ object TestPathInput extends ShapeTag.Companion[TestPathInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val path = Lens[TestPathInput, String](_.path)(n => a => a.copy(path = n))
   }
 

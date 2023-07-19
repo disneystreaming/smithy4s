@@ -118,7 +118,7 @@ object HelloServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val SimpleError = Prism.partial[SayHelloError, SimpleError]{ case SimpleErrorCase(t) => t }(SimpleErrorCase.apply)
       val ComplexError = Prism.partial[SayHelloError, ComplexError]{ case ComplexErrorCase(t) => t }(ComplexErrorCase.apply)
     }

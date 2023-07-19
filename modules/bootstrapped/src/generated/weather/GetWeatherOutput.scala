@@ -16,7 +16,7 @@ object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val weather = Lens[GetWeatherOutput, String](_.weather)(n => a => a.copy(weather = n))
   }
 

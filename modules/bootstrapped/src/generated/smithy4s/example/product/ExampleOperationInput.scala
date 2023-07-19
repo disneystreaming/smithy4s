@@ -16,7 +16,7 @@ object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val a = Lens[ExampleOperationInput, String](_.a)(n => a => a.copy(a = n))
   }
 

@@ -23,7 +23,7 @@ object Endpoint extends ShapeTag.Companion[Endpoint] {
     smithy.api.Documentation("<p>An endpoint information details.</p>"),
   )
 
-  object Lenses {
+  object Optics {
     val address = Lens[Endpoint, String](_.address)(n => a => a.copy(address = n))
     val cachePeriodInMinutes = Lens[Endpoint, Long](_.cachePeriodInMinutes)(n => a => a.copy(cachePeriodInMinutes = n))
   }

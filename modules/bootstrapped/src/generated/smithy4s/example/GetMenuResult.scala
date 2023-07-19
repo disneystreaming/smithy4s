@@ -13,7 +13,7 @@ object GetMenuResult extends ShapeTag.Companion[GetMenuResult] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val menu = Lens[GetMenuResult, Map[String, MenuItem]](_.menu)(n => a => a.copy(menu = n))
   }
 

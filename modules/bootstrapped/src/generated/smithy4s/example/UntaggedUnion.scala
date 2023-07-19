@@ -18,7 +18,7 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
     alloy.Untagged(),
   )
 
-  object Prisms {
+  object Optics {
     val three = Prism.partial[UntaggedUnion, Three]{ case ThreeCase(t) => t }(ThreeCase.apply)
     val four = Prism.partial[UntaggedUnion, Four]{ case FourCase(t) => t }(FourCase.apply)
   }

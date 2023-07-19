@@ -16,7 +16,7 @@ object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsRes
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val endpoints = Lens[DescribeEndpointsResponse, List[Endpoint]](_.endpoints)(n => a => a.copy(endpoints = n))
   }
 

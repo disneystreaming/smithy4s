@@ -17,7 +17,7 @@ object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val resourceType = Lens[NoSuchResource, String](_.resourceType)(n => a => a.copy(resourceType = n))
   }
 

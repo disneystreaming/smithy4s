@@ -19,7 +19,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
 
   val hints: Hints = Hints.empty
 
-  object Prisms {
+  object Optics {
     val test = Prism.partial[TestMixinAdt, TestAdtMemberWithMixin]{ case t: TestAdtMemberWithMixin => t }(identity)
   }
 
@@ -29,7 +29,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
 
     val hints: Hints = Hints.empty
 
-    object Lenses {
+    object Optics {
       val a = Lens[TestAdtMemberWithMixin, Option[String]](_.a)(n => a => a.copy(a = n))
       val b = Lens[TestAdtMemberWithMixin, Option[Int]](_.b)(n => a => a.copy(b = n))
     }

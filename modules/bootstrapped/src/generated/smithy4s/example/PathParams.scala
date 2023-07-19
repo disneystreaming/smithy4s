@@ -18,7 +18,7 @@ object PathParams extends ShapeTag.Companion[PathParams] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val str = Lens[PathParams, String](_.str)(n => a => a.copy(str = n))
     val int = Lens[PathParams, Int](_.int)(n => a => a.copy(int = n))
     val ts1 = Lens[PathParams, Timestamp](_.ts1)(n => a => a.copy(ts1 = n))

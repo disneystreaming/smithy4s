@@ -28,7 +28,7 @@ object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
     smithy.api.Documentation("<p>Represents the output of a <code>ListTables</code> operation.</p>"),
   )
 
-  object Lenses {
+  object Optics {
     val tableNames = Lens[ListTablesOutput, Option[List[TableName]]](_.tableNames)(n => a => a.copy(tableNames = n))
     val lastEvaluatedTableName = Lens[ListTablesOutput, Option[TableName]](_.lastEvaluatedTableName)(n => a => a.copy(lastEvaluatedTableName = n))
   }

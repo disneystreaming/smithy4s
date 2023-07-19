@@ -16,7 +16,7 @@ object S3Object extends ShapeTag.Companion[S3Object] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val id = Lens[S3Object, String](_.id)(n => a => a.copy(id = n))
     val owner = Lens[S3Object, String](_.owner)(n => a => a.copy(owner = n))
     val attributes = Lens[S3Object, Attributes](_.attributes)(n => a => a.copy(attributes = n))

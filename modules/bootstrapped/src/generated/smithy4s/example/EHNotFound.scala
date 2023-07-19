@@ -19,7 +19,7 @@ object EHNotFound extends ShapeTag.Companion[EHNotFound] {
     smithy.api.HttpError(404),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[EHNotFound, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

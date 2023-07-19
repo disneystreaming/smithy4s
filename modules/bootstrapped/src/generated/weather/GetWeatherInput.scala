@@ -16,7 +16,7 @@ object GetWeatherInput extends ShapeTag.Companion[GetWeatherInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val city = Lens[GetWeatherInput, String](_.city)(n => a => a.copy(city = n))
   }
 

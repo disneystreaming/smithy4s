@@ -15,7 +15,7 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val publishers = Lens[ListPublishersOutput, List[PublisherId]](_.publishers)(n => a => a.copy(publishers = n))
   }
 

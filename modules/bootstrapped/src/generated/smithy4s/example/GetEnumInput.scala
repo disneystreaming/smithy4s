@@ -13,7 +13,7 @@ object GetEnumInput extends ShapeTag.Companion[GetEnumInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val aa = Lens[GetEnumInput, TheEnum](_.aa)(n => a => a.copy(aa = n))
   }
 

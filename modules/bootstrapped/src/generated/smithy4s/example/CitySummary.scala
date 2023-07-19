@@ -16,7 +16,7 @@ object CitySummary extends ShapeTag.Companion[CitySummary] {
     smithy.api.References(List(smithy.api.Reference(resource = smithy.api.NonEmptyString("smithy4s.example#City"), ids = None, service = None, rel = None))),
   )
 
-  object Lenses {
+  object Optics {
     val cityId = Lens[CitySummary, CityId](_.cityId)(n => a => a.copy(cityId = n))
     val name = Lens[CitySummary, String](_.name)(n => a => a.copy(name = n))
   }

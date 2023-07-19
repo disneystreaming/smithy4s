@@ -1,6 +1,6 @@
 package smithy4s.optics
 
-trait Lens[S, A] extends OpticOptional[S, A] { self =>
+trait Lens[S, A] extends Optional[S, A] { self =>
   def get(s: S): A
   def replace(a: A): S => S
 
@@ -17,9 +17,9 @@ trait Lens[S, A] extends OpticOptional[S, A] { self =>
         self.modify(that.replace(a))
     }
 
-  final def some[A0](implicit
+  final override def some[A0](implicit
       ev1: A =:= Option[A0]
-  ): OpticOptional[S, A0] =
+  ): Optional[S, A0] =
     adapt[Option[A0]].andThen(
       Prism[Option[A0], A0](identity)(Some(_))
     )

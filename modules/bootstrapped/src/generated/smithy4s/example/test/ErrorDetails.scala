@@ -16,7 +16,7 @@ object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val date = Lens[ErrorDetails, Timestamp](_.date)(n => a => a.copy(date = n))
     val location = Lens[ErrorDetails, String](_.location)(n => a => a.copy(location = n))
   }

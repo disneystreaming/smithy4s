@@ -618,7 +618,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         else Line.optional(line"${field.tpe}")
       line"val ${field.name} = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
-    obj(product.nameRef.copy(name = "Lenses"))(lenses) ++
+    obj(product.nameRef.copy(name = "Optics"))(lenses) ++
       newline
   } else Lines.empty
 
@@ -879,7 +879,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
     }
 
-    obj(unionName.copy(name = "Prisms"))(altLines) ++
+    obj(unionName.copy(name = "Optics"))(altLines) ++
       newline
   }
 

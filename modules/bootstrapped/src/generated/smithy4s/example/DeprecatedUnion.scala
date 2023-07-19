@@ -21,7 +21,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 
-  object Prisms {
+  object Optics {
     val s = Prism.partial[DeprecatedUnion, String]{ case SCase(t) => t }(SCase.apply)
     val s_V2 = Prism.partial[DeprecatedUnion, String]{ case S_V2Case(t) => t }(S_V2Case.apply)
     val p = Prism.partial[DeprecatedUnion, DeprecatedUnionProductCase]{ case t: DeprecatedUnionProductCase => t }(identity)

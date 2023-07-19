@@ -19,7 +19,7 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
     smithy.api.HttpError(401),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[NotAuthorizedError, String](_.message)(n => a => a.copy(message = n))
   }
 

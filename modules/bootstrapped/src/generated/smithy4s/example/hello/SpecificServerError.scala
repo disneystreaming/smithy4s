@@ -19,7 +19,7 @@ object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
     smithy.api.HttpError(599),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[SpecificServerError, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

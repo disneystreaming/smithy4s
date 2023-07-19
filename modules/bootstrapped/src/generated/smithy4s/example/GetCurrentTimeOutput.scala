@@ -15,7 +15,7 @@ object GetCurrentTimeOutput extends ShapeTag.Companion[GetCurrentTimeOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val time = Lens[GetCurrentTimeOutput, Timestamp](_.time)(n => a => a.copy(time = n))
   }
 

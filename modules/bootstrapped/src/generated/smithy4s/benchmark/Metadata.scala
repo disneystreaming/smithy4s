@@ -17,7 +17,7 @@ object Metadata extends ShapeTag.Companion[Metadata] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val contentType = Lens[Metadata, Option[String]](_.contentType)(n => a => a.copy(contentType = n))
     val lastModified = Lens[Metadata, Option[Timestamp]](_.lastModified)(n => a => a.copy(lastModified = n))
     val checkSum = Lens[Metadata, Option[String]](_.checkSum)(n => a => a.copy(checkSum = n))

@@ -14,7 +14,7 @@ object SayHelloOutput extends ShapeTag.Companion[SayHelloOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val payload = Lens[SayHelloOutput, SayHelloPayload](_.payload)(n => a => a.copy(payload = n))
     val header1 = Lens[SayHelloOutput, String](_.header1)(n => a => a.copy(header1 = n))
   }

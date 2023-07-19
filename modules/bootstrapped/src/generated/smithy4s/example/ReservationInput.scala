@@ -16,7 +16,7 @@ object ReservationInput extends ShapeTag.Companion[ReservationInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val name = Lens[ReservationInput, String](_.name)(n => a => a.copy(name = n))
     val town = Lens[ReservationInput, Option[String]](_.town)(n => a => a.copy(town = n))
   }

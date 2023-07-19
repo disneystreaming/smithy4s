@@ -26,7 +26,7 @@ object Foo extends ShapeTag.Companion[Foo] {
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
 
-  object Prisms {
+  object Optics {
     val int = Prism.partial[Foo, Int]{ case IntCase(t) => t }(IntCase.apply)
     val str = Prism.partial[Foo, String]{ case StrCase(t) => t }(StrCase.apply)
     val bInt = Prism.partial[Foo, BigInt]{ case BIntCase(t) => t }(BIntCase.apply)

@@ -15,7 +15,7 @@ object DefaultOrderingTest extends ShapeTag.Companion[DefaultOrderingTest] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val three = Lens[DefaultOrderingTest, String](_.three)(n => a => a.copy(three = n))
     val one = Lens[DefaultOrderingTest, Int](_.one)(n => a => a.copy(one = n))
     val two = Lens[DefaultOrderingTest, Option[String]](_.two)(n => a => a.copy(two = n))

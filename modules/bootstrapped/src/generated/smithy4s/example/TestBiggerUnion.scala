@@ -18,7 +18,7 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
     alloy.Discriminated("tpe"),
   )
 
-  object Prisms {
+  object Optics {
     val one = Prism.partial[TestBiggerUnion, One]{ case OneCase(t) => t }(OneCase.apply)
     val two = Prism.partial[TestBiggerUnion, Two]{ case TwoCase(t) => t }(TwoCase.apply)
   }

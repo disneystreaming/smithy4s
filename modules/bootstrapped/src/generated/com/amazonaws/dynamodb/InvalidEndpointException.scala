@@ -19,7 +19,7 @@ object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointExcept
     smithy.api.HttpError(421),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[InvalidEndpointException, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

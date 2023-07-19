@@ -14,7 +14,7 @@ object Pizza extends ShapeTag.Companion[Pizza] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val name = Lens[Pizza, String](_.name)(n => a => a.copy(name = n))
     val base = Lens[Pizza, PizzaBase](_.base)(n => a => a.copy(base = n))
     val toppings = Lens[Pizza, List[Ingredient]](_.toppings)(n => a => a.copy(toppings = n))

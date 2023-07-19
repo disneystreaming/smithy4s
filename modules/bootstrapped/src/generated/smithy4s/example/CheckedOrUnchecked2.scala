@@ -19,7 +19,7 @@ object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
     alloy.Untagged(),
   )
 
-  object Prisms {
+  object Optics {
     val checked = Prism.partial[CheckedOrUnchecked2, String]{ case CheckedCase(t) => t }(CheckedCase.apply)
     val raw = Prism.partial[CheckedOrUnchecked2, String]{ case RawCase(t) => t }(RawCase.apply)
   }

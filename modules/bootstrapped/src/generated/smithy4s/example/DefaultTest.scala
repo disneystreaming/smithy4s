@@ -27,7 +27,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val one = Lens[DefaultTest, Int](_.one)(n => a => a.copy(one = n))
     val two = Lens[DefaultTest, String](_.two)(n => a => a.copy(two = n))
     val three = Lens[DefaultTest, List[String]](_.three)(n => a => a.copy(three = n))

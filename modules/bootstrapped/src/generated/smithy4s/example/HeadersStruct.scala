@@ -18,7 +18,7 @@ object HeadersStruct extends ShapeTag.Companion[HeadersStruct] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val str = Lens[HeadersStruct, Option[String]](_.str)(n => a => a.copy(str = n))
     val int = Lens[HeadersStruct, Option[Int]](_.int)(n => a => a.copy(int = n))
     val ts1 = Lens[HeadersStruct, Option[Timestamp]](_.ts1)(n => a => a.copy(ts1 = n))

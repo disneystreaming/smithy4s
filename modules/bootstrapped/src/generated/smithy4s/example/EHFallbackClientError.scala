@@ -18,7 +18,7 @@ object EHFallbackClientError extends ShapeTag.Companion[EHFallbackClientError] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[EHFallbackClientError, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

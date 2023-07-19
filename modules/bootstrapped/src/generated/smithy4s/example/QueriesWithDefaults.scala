@@ -14,7 +14,7 @@ object QueriesWithDefaults extends ShapeTag.Companion[QueriesWithDefaults] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val dflt = Lens[QueriesWithDefaults, String](_.dflt)(n => a => a.copy(dflt = n))
   }
 

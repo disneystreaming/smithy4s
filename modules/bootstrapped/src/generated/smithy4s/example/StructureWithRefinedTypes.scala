@@ -13,7 +13,7 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val requiredAge = Lens[StructureWithRefinedTypes, Age](_.requiredAge)(n => a => a.copy(requiredAge = n))
     val age = Lens[StructureWithRefinedTypes, Option[Age]](_.age)(n => a => a.copy(age = n))
     val personAge = Lens[StructureWithRefinedTypes, Option[PersonAge]](_.personAge)(n => a => a.copy(personAge = n))

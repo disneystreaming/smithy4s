@@ -19,7 +19,7 @@ object GenericServerError extends ShapeTag.Companion[GenericServerError] {
     smithy.api.HttpError(500),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[GenericServerError, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

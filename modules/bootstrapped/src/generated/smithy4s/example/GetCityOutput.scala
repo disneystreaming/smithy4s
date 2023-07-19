@@ -14,7 +14,7 @@ object GetCityOutput extends ShapeTag.Companion[GetCityOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val name = Lens[GetCityOutput, String](_.name)(n => a => a.copy(name = n))
     val coordinates = Lens[GetCityOutput, CityCoordinates](_.coordinates)(n => a => a.copy(coordinates = n))
   }

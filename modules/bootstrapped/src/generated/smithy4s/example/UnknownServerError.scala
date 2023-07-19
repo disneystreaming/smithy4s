@@ -18,7 +18,7 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
     smithy.api.HttpError(500),
   )
 
-  object Lenses {
+  object Optics {
     val errorCode = Lens[UnknownServerError, UnknownServerErrorCode](_.errorCode)(n => a => a.copy(errorCode = n))
     val description = Lens[UnknownServerError, Option[String]](_.description)(n => a => a.copy(description = n))
     val stateHash = Lens[UnknownServerError, Option[String]](_.stateHash)(n => a => a.copy(stateHash = n))

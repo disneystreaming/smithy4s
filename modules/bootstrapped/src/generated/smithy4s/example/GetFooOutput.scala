@@ -18,7 +18,7 @@ object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val foo = Lens[GetFooOutput, Option[Foo]](_.foo)(n => a => a.copy(foo = n))
   }
 

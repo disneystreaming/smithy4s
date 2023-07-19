@@ -10,6 +10,11 @@ object MonocleConversions {
   implicit def smithy4sToMonoclePrism[S, A](
       smithy4sPrism: smithy4s.optics.Prism[S, A]
   ): monocle.Prism[S, A] =
-    monocle.Prism(smithy4sPrism.get)(smithy4sPrism.project)
+    monocle.Prism(smithy4sPrism.getOption)(smithy4sPrism.project)
+
+  implicit def smithy4sToMonocleOptional[S, A](
+      smithy4sOptional: smithy4s.optics.Optional[S, A]
+  ): monocle.Optional[S, A] =
+    monocle.Optional(smithy4sOptional.getOption)(smithy4sOptional.replace)
 
 }

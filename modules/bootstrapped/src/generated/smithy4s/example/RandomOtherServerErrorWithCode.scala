@@ -19,7 +19,7 @@ object RandomOtherServerErrorWithCode extends ShapeTag.Companion[RandomOtherServ
     smithy.api.HttpError(503),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[RandomOtherServerErrorWithCode, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

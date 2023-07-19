@@ -14,7 +14,7 @@ object RoundTripData extends ShapeTag.Companion[RoundTripData] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val label = Lens[RoundTripData, String](_.label)(n => a => a.copy(label = n))
     val header = Lens[RoundTripData, Option[String]](_.header)(n => a => a.copy(header = n))
     val query = Lens[RoundTripData, Option[String]](_.query)(n => a => a.copy(query = n))

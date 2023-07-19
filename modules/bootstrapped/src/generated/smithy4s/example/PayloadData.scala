@@ -13,7 +13,7 @@ object PayloadData extends ShapeTag.Companion[PayloadData] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val testBiggerUnion = Lens[PayloadData, Option[TestBiggerUnion]](_.testBiggerUnion)(n => a => a.copy(testBiggerUnion = n))
   }
 

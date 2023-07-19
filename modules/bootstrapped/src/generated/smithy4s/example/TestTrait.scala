@@ -20,7 +20,7 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
-  object Lenses {
+  object Optics {
     val orderType = Lens[TestTrait, Option[OrderType]](_.orderType)(n => a => a.copy(orderType = n))
   }
 

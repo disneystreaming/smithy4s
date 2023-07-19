@@ -20,7 +20,7 @@ object Numeric extends ShapeTag.Companion[Numeric] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val i = Lens[Numeric, Int](_.i)(n => a => a.copy(i = n))
     val f = Lens[Numeric, Float](_.f)(n => a => a.copy(f = n))
     val d = Lens[Numeric, Double](_.d)(n => a => a.copy(d = n))

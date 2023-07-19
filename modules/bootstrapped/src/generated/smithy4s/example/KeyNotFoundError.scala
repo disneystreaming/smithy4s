@@ -18,7 +18,7 @@ object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[KeyNotFoundError, String](_.message)(n => a => a.copy(message = n))
   }
 

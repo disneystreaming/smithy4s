@@ -17,7 +17,7 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
     smithy4s.example.Hash(),
   )
 
-  object Lenses {
+  object Optics {
     val name = Lens[MovieTheater, Option[String]](_.name)(n => a => a.copy(name = n))
   }
 

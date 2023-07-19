@@ -14,7 +14,7 @@ object HeadersWithDefaults extends ShapeTag.Companion[HeadersWithDefaults] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val dflt = Lens[HeadersWithDefaults, String](_.dflt)(n => a => a.copy(dflt = n))
   }
 

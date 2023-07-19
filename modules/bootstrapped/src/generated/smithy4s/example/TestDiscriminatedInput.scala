@@ -14,7 +14,7 @@ object TestDiscriminatedInput extends ShapeTag.Companion[TestDiscriminatedInput]
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val key = Lens[TestDiscriminatedInput, String](_.key)(n => a => a.copy(key = n))
   }
 

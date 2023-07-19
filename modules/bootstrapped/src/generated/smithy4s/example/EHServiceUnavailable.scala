@@ -19,7 +19,7 @@ object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
     smithy.api.HttpError(503),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[EHServiceUnavailable, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

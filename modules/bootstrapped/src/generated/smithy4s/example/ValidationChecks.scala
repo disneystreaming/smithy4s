@@ -15,7 +15,7 @@ object ValidationChecks extends ShapeTag.Companion[ValidationChecks] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val str = Lens[ValidationChecks, Option[String]](_.str)(n => a => a.copy(str = n))
     val lst = Lens[ValidationChecks, Option[List[String]]](_.lst)(n => a => a.copy(lst = n))
     val int = Lens[ValidationChecks, Option[Int]](_.int)(n => a => a.copy(int = n))

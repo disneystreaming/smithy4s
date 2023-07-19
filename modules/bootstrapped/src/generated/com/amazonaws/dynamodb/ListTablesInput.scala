@@ -23,7 +23,7 @@ object ListTablesInput extends ShapeTag.Companion[ListTablesInput] {
     smithy.api.Documentation("<p>Represents the input of a <code>ListTables</code> operation.</p>"),
   )
 
-  object Lenses {
+  object Optics {
     val exclusiveStartTableName = Lens[ListTablesInput, Option[TableName]](_.exclusiveStartTableName)(n => a => a.copy(exclusiveStartTableName = n))
     val limit = Lens[ListTablesInput, Option[ListTablesInputLimit]](_.limit)(n => a => a.copy(limit = n))
   }

@@ -16,7 +16,7 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
     smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromDouble(1.0d), "a" -> smithy4s.Document.fromDouble(2.0d))),
   )
 
-  object Lenses {
+  object Optics {
     val status = Lens[HealthResponse, String](_.status)(n => a => a.copy(status = n))
   }
 

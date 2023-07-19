@@ -107,7 +107,7 @@ object ErrorHandlingServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val EHFallbackClientError = Prism.partial[ErrorHandlingOperationError, EHFallbackClientError]{ case EHFallbackClientErrorCase(t) => t }(EHFallbackClientErrorCase.apply)
       val EHServiceUnavailable = Prism.partial[ErrorHandlingOperationError, EHServiceUnavailable]{ case EHServiceUnavailableCase(t) => t }(EHServiceUnavailableCase.apply)
       val EHNotFound = Prism.partial[ErrorHandlingOperationError, EHNotFound]{ case EHNotFoundCase(t) => t }(EHNotFoundCase.apply)

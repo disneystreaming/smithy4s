@@ -105,7 +105,7 @@ object NameCollisionOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val MyOpError = Prism.partial[MyOpError, smithy4s.example.MyOpError]{ case MyOpErrorCase(t) => t }(MyOpErrorCase.apply)
     }
 

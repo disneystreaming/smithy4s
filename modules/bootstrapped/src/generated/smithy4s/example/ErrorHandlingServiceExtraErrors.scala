@@ -108,7 +108,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val RandomOtherClientError = Prism.partial[ExtraErrorOperationError, RandomOtherClientError]{ case RandomOtherClientErrorCase(t) => t }(RandomOtherClientErrorCase.apply)
       val RandomOtherServerError = Prism.partial[ExtraErrorOperationError, RandomOtherServerError]{ case RandomOtherServerErrorCase(t) => t }(RandomOtherServerErrorCase.apply)
       val RandomOtherClientErrorWithCode = Prism.partial[ExtraErrorOperationError, RandomOtherClientErrorWithCode]{ case RandomOtherClientErrorWithCodeCase(t) => t }(RandomOtherClientErrorWithCodeCase.apply)

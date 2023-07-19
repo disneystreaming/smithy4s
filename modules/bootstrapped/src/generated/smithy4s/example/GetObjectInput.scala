@@ -26,7 +26,7 @@ object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
     smithy.api.Documentation("Input for getting an Object\nall fields are required\nand are given through HTTP labels\nSee https://smithy.io/2.0/spec/http-bindings.html?highlight=httppayload#http-uri-label"),
   )
 
-  object Lenses {
+  object Optics {
     val key = Lens[GetObjectInput, ObjectKey](_.key)(n => a => a.copy(key = n))
     val bucketName = Lens[GetObjectInput, BucketName](_.bucketName)(n => a => a.copy(bucketName = n))
   }

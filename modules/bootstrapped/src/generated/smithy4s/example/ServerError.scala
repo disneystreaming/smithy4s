@@ -18,7 +18,7 @@ object ServerError extends ShapeTag.Companion[ServerError] {
     smithy.api.Error.SERVER.widen,
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[ServerError, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

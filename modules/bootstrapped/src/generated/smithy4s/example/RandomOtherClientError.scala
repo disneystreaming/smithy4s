@@ -18,7 +18,7 @@ object RandomOtherClientError extends ShapeTag.Companion[RandomOtherClientError]
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[RandomOtherClientError, Option[String]](_.message)(n => a => a.copy(message = n))
   }
 

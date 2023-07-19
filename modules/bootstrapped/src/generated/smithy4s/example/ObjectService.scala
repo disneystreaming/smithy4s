@@ -122,7 +122,7 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val ServerError = Prism.partial[PutObjectError, ServerError]{ case ServerErrorCase(t) => t }(ServerErrorCase.apply)
       val NoMoreSpace = Prism.partial[PutObjectError, NoMoreSpace]{ case NoMoreSpaceCase(t) => t }(NoMoreSpaceCase.apply)
     }
@@ -182,7 +182,7 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val ServerError = Prism.partial[GetObjectError, ServerError]{ case ServerErrorCase(t) => t }(ServerErrorCase.apply)
     }
 

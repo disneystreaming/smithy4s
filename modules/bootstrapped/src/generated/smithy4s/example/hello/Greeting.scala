@@ -14,7 +14,7 @@ object Greeting extends ShapeTag.Companion[Greeting] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val message = Lens[Greeting, String](_.message)(n => a => a.copy(message = n))
   }
 

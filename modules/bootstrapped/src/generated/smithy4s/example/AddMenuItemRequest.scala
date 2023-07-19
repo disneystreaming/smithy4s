@@ -14,7 +14,7 @@ object AddMenuItemRequest extends ShapeTag.Companion[AddMenuItemRequest] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val restaurant = Lens[AddMenuItemRequest, String](_.restaurant)(n => a => a.copy(restaurant = n))
     val menuItem = Lens[AddMenuItemRequest, MenuItem](_.menuItem)(n => a => a.copy(menuItem = n))
   }

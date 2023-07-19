@@ -15,7 +15,7 @@ object TestStructurePatternTarget extends ShapeTag.Companion[TestStructurePatter
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val one = Lens[TestStructurePatternTarget, String](_.one)(n => a => a.copy(one = n))
     val two = Lens[TestStructurePatternTarget, Int](_.two)(n => a => a.copy(two = n))
   }

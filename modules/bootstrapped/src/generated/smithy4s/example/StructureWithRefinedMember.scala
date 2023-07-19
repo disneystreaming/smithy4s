@@ -15,7 +15,7 @@ object StructureWithRefinedMember extends ShapeTag.Companion[StructureWithRefine
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val otherAge = Lens[StructureWithRefinedMember, Option[smithy4s.refined.Age]](_.otherAge)(n => a => a.copy(otherAge = n))
   }
 

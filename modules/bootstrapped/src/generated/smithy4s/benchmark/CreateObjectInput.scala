@@ -14,7 +14,7 @@ object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val key = Lens[CreateObjectInput, String](_.key)(n => a => a.copy(key = n))
     val bucketName = Lens[CreateObjectInput, String](_.bucketName)(n => a => a.copy(bucketName = n))
     val payload = Lens[CreateObjectInput, S3Object](_.payload)(n => a => a.copy(payload = n))

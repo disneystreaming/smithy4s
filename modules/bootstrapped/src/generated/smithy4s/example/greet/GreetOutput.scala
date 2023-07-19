@@ -16,7 +16,7 @@ object GreetOutput extends ShapeTag.Companion[GreetOutput] {
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[GreetOutput, String](_.message)(n => a => a.copy(message = n))
   }
 

@@ -14,7 +14,7 @@ object EchoBody extends ShapeTag.Companion[EchoBody] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val data = Lens[EchoBody, Option[String]](_.data)(n => a => a.copy(data = n))
   }
 

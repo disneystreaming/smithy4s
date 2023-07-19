@@ -16,7 +16,7 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
 
   val hints: Hints = Hints.empty
 
-  object Prisms {
+  object Optics {
     val age = Prism.partial[UnionWithRefinedTypes, Age]{ case AgeCase(t) => t }(AgeCase.apply)
     val dogName = Prism.partial[UnionWithRefinedTypes, smithy4s.refined.Name]{ case DogNameCase(t) => t }(DogNameCase.apply)
   }

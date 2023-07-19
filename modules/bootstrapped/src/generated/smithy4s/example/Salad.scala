@@ -14,7 +14,7 @@ object Salad extends ShapeTag.Companion[Salad] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val name = Lens[Salad, String](_.name)(n => a => a.copy(name = n))
     val ingredients = Lens[Salad, List[Ingredient]](_.ingredients)(n => a => a.copy(ingredients = n))
   }

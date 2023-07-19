@@ -24,7 +24,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
   )
 
-  object Prisms {
+  object Optics {
     val online = Prism.partial[OrderType, OrderNumber]{ case OnlineCase(t) => t }(OnlineCase.apply)
     val inStore = Prism.partial[OrderType, InStoreOrder]{ case t: InStoreOrder => t }(identity)
     val preview = Prism.partial[OrderType, PreviewCase.type]{ case t: PreviewCase.type => t }(identity)
@@ -40,7 +40,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
       smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
     )
 
-    object Lenses {
+    object Optics {
       val id = Lens[InStoreOrder, OrderNumber](_.id)(n => a => a.copy(id = n))
       val locationId = Lens[InStoreOrder, Option[String]](_.locationId)(n => a => a.copy(locationId = n))
     }

@@ -17,7 +17,7 @@ object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
 
   val hints: Hints = Hints.empty
 
-  object Prisms {
+  object Optics {
     val checked = Prism.partial[CheckedOrUnchecked, String]{ case CheckedCase(t) => t }(CheckedCase.apply)
     val raw = Prism.partial[CheckedOrUnchecked, String]{ case RawCase(t) => t }(RawCase.apply)
   }

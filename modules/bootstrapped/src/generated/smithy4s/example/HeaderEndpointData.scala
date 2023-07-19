@@ -14,7 +14,7 @@ object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val uppercaseHeader = Lens[HeaderEndpointData, Option[String]](_.uppercaseHeader)(n => a => a.copy(uppercaseHeader = n))
     val capitalizedHeader = Lens[HeaderEndpointData, Option[String]](_.capitalizedHeader)(n => a => a.copy(capitalizedHeader = n))
     val lowercaseHeader = Lens[HeaderEndpointData, Option[String]](_.lowercaseHeader)(n => a => a.copy(lowercaseHeader = n))

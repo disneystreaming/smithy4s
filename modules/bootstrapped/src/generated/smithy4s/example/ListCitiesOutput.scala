@@ -14,7 +14,7 @@ object ListCitiesOutput extends ShapeTag.Companion[ListCitiesOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val items = Lens[ListCitiesOutput, List[CitySummary]](_.items)(n => a => a.copy(items = n))
     val nextToken = Lens[ListCitiesOutput, Option[String]](_.nextToken)(n => a => a.copy(nextToken = n))
   }

@@ -136,7 +136,7 @@ object WeatherOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val NoSuchResource = Prism.partial[GetCityError, NoSuchResource]{ case NoSuchResourceCase(t) => t }(NoSuchResourceCase.apply)
     }
 

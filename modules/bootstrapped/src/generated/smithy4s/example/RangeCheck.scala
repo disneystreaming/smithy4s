@@ -16,7 +16,7 @@ object RangeCheck extends ShapeTag.Companion[RangeCheck] {
     smithy.api.Suppress(List("UnreferencedShape")),
   )
 
-  object Lenses {
+  object Optics {
     val qty = Lens[RangeCheck, Int](_.qty)(n => a => a.copy(qty = n))
   }
 

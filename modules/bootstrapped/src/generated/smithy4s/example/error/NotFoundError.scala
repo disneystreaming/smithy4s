@@ -18,7 +18,7 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
     smithy.api.HttpError(404),
   )
 
-  object Lenses {
+  object Optics {
     val error = Lens[NotFoundError, Option[String]](_.error)(n => a => a.copy(error = n))
   }
 

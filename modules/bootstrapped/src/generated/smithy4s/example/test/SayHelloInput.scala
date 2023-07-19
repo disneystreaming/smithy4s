@@ -16,7 +16,7 @@ object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val greeting = Lens[SayHelloInput, Option[String]](_.greeting)(n => a => a.copy(greeting = n))
     val query = Lens[SayHelloInput, Option[String]](_.query)(n => a => a.copy(query = n))
     val name = Lens[SayHelloInput, Option[String]](_.name)(n => a => a.copy(name = n))

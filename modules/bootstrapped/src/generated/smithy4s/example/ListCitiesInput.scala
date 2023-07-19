@@ -15,7 +15,7 @@ object ListCitiesInput extends ShapeTag.Companion[ListCitiesInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val nextToken = Lens[ListCitiesInput, Option[String]](_.nextToken)(n => a => a.copy(nextToken = n))
     val pageSize = Lens[ListCitiesInput, Option[Int]](_.pageSize)(n => a => a.copy(pageSize = n))
   }

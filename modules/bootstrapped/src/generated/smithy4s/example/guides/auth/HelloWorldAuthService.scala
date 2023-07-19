@@ -114,7 +114,7 @@ object HelloWorldAuthServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val NotAuthorizedError = Prism.partial[SayWorldError, NotAuthorizedError]{ case NotAuthorizedErrorCase(t) => t }(NotAuthorizedErrorCase.apply)
     }
 
@@ -166,7 +166,7 @@ object HelloWorldAuthServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val NotAuthorizedError = Prism.partial[HealthCheckError, NotAuthorizedError]{ case NotAuthorizedErrorCase(t) => t }(NotAuthorizedErrorCase.apply)
     }
 

@@ -14,7 +14,7 @@ object HealthRequest extends ShapeTag.Companion[HealthRequest] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val query = Lens[HealthRequest, Option[String]](_.query)(n => a => a.copy(query = n))
   }
 

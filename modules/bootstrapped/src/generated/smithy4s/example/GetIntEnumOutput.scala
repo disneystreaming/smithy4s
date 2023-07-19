@@ -15,7 +15,7 @@ object GetIntEnumOutput extends ShapeTag.Companion[GetIntEnumOutput] {
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val result = Lens[GetIntEnumOutput, EnumResult](_.result)(n => a => a.copy(result = n))
   }
 

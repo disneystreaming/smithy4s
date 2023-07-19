@@ -16,7 +16,7 @@ object SomeCollections extends ShapeTag.Companion[SomeCollections] {
     smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
-  object Lenses {
+  object Optics {
     val someList = Lens[SomeCollections, List[String]](_.someList)(n => a => a.copy(someList = n))
     val someSet = Lens[SomeCollections, Set[String]](_.someSet)(n => a => a.copy(someSet = n))
     val someMap = Lens[SomeCollections, Map[String, String]](_.someMap)(n => a => a.copy(someMap = n))

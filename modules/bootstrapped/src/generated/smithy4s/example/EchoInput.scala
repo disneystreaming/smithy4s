@@ -16,7 +16,7 @@ object EchoInput extends ShapeTag.Companion[EchoInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val pathParam = Lens[EchoInput, String](_.pathParam)(n => a => a.copy(pathParam = n))
     val body = Lens[EchoInput, EchoBody](_.body)(n => a => a.copy(body = n))
     val queryParam = Lens[EchoInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))

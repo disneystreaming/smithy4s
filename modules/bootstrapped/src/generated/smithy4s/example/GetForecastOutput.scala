@@ -13,7 +13,7 @@ object GetForecastOutput extends ShapeTag.Companion[GetForecastOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val forecast = Lens[GetForecastOutput, Option[ForecastResult]](_.forecast)(n => a => a.copy(forecast = n))
   }
 

@@ -17,7 +17,7 @@ object MixinExample extends ShapeTag.Companion[MixinExample] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val a = Lens[MixinExample, Option[String]](_.a)(n => a => a.copy(a = n))
     val b = Lens[MixinExample, Option[Int]](_.b)(n => a => a.copy(b = n))
     val c = Lens[MixinExample, Option[Long]](_.c)(n => a => a.copy(c = n))

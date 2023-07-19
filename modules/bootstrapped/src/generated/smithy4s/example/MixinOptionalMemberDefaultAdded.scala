@@ -14,7 +14,7 @@ object MixinOptionalMemberDefaultAdded extends ShapeTag.Companion[MixinOptionalM
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val a = Lens[MixinOptionalMemberDefaultAdded, String](_.a)(n => a => a.copy(a = n))
   }
 

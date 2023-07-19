@@ -16,7 +16,7 @@ object Encryption extends ShapeTag.Companion[Encryption] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val user = Lens[Encryption, Option[String]](_.user)(n => a => a.copy(user = n))
     val date = Lens[Encryption, Option[Timestamp]](_.date)(n => a => a.copy(date = n))
     val metadata = Lens[Encryption, Option[EncryptionMetadata]](_.metadata)(n => a => a.copy(metadata = n))

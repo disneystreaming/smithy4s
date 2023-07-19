@@ -14,7 +14,7 @@ object PackedInput extends ShapeTag.Companion[PackedInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val key = Lens[PackedInput, String](_.key)(n => a => a.copy(key = n))
   }
 

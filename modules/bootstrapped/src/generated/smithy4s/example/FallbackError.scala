@@ -17,7 +17,7 @@ object FallbackError extends ShapeTag.Companion[FallbackError] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val error = Lens[FallbackError, String](_.error)(n => a => a.copy(error = n))
   }
 

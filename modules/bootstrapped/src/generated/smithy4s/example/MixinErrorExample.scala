@@ -20,7 +20,7 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val a = Lens[MixinErrorExample, Option[String]](_.a)(n => a => a.copy(a = n))
     val b = Lens[MixinErrorExample, Option[Int]](_.b)(n => a => a.copy(b = n))
     val c = Lens[MixinErrorExample, Option[Long]](_.c)(n => a => a.copy(c = n))

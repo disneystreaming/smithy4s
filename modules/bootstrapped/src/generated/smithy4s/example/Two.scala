@@ -14,7 +14,7 @@ object Two extends ShapeTag.Companion[Two] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val value = Lens[Two, Option[Int]](_.value)(n => a => a.copy(value = n))
   }
 

@@ -16,7 +16,7 @@ object ExampleOperationOutput extends ShapeTag.Companion[ExampleOperationOutput]
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val b = Lens[ExampleOperationOutput, String](_.b)(n => a => a.copy(b = n))
   }
 

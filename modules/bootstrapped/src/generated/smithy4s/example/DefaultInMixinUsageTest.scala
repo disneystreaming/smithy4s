@@ -14,7 +14,7 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val one = Lens[DefaultInMixinUsageTest, String](_.one)(n => a => a.copy(one = n))
   }
 

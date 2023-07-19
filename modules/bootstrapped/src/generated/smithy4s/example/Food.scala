@@ -16,7 +16,7 @@ object Food extends ShapeTag.Companion[Food] {
 
   val hints: Hints = Hints.empty
 
-  object Prisms {
+  object Optics {
     val pizza = Prism.partial[Food, Pizza]{ case PizzaCase(t) => t }(PizzaCase.apply)
     val salad = Prism.partial[Food, Salad]{ case SaladCase(t) => t }(SaladCase.apply)
   }

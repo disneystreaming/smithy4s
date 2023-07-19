@@ -19,7 +19,7 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     smithy4s.example.Hash(),
   )
 
-  object Prisms {
+  object Optics {
     val email = Prism.partial[PersonContactInfo, PersonEmail]{ case EmailCase(t) => t }(EmailCase.apply)
     val phone = Prism.partial[PersonContactInfo, PersonPhoneNumber]{ case PhoneCase(t) => t }(PhoneCase.apply)
   }

@@ -14,7 +14,7 @@ object Creds extends ShapeTag.Companion[Creds] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val user = Lens[Creds, Option[String]](_.user)(n => a => a.copy(user = n))
     val key = Lens[Creds, Option[String]](_.key)(n => a => a.copy(key = n))
   }

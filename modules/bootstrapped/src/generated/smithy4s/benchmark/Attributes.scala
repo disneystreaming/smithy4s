@@ -18,7 +18,7 @@ object Attributes extends ShapeTag.Companion[Attributes] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val user = Lens[Attributes, String](_.user)(n => a => a.copy(user = n))
     val public = Lens[Attributes, Boolean](_.public)(n => a => a.copy(public = n))
     val size = Lens[Attributes, Long](_.size)(n => a => a.copy(size = n))

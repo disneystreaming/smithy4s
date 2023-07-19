@@ -14,7 +14,7 @@ object GetStreamedObjectInput extends ShapeTag.Companion[GetStreamedObjectInput]
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val key = Lens[GetStreamedObjectInput, String](_.key)(n => a => a.copy(key = n))
   }
 

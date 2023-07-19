@@ -165,7 +165,7 @@ object DynamoDBOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val InternalServerError = Prism.partial[ListTablesError, InternalServerError]{ case InternalServerErrorCase(t) => t }(InternalServerErrorCase.apply)
       val InvalidEndpointException = Prism.partial[ListTablesError, InvalidEndpointException]{ case InvalidEndpointExceptionCase(t) => t }(InvalidEndpointExceptionCase.apply)
     }

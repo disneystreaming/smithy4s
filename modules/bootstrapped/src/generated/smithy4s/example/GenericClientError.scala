@@ -19,7 +19,7 @@ object GenericClientError extends ShapeTag.Companion[GenericClientError] {
     smithy.api.HttpError(418),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[GenericClientError, String](_.message)(n => a => a.copy(message = n))
   }
 

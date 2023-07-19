@@ -17,7 +17,7 @@ object UnauthorizedError extends ShapeTag.Companion[UnauthorizedError] {
     smithy.api.Error.CLIENT.widen,
   )
 
-  object Lenses {
+  object Optics {
     val reason = Lens[UnauthorizedError, String](_.reason)(n => a => a.copy(reason = n))
   }
 

@@ -24,7 +24,7 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
     smithy.api.HttpError(507),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[NoMoreSpace, String](_.message)(n => a => a.copy(message = n))
     val foo = Lens[NoMoreSpace, Option[Foo]](_.foo)(n => a => a.copy(foo = n))
   }

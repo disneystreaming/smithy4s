@@ -14,7 +14,7 @@ object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val brands = Lens[AddBrandsInput, Option[List[String]]](_.brands)(n => a => a.copy(brands = n))
   }
 

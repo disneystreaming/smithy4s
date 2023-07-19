@@ -17,7 +17,7 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
     smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
   )
 
-  object Lenses {
+  object Optics {
     val key = Lens[PutObjectInput, ObjectKey](_.key)(n => a => a.copy(key = n))
     val bucketName = Lens[PutObjectInput, BucketName](_.bucketName)(n => a => a.copy(bucketName = n))
     val data = Lens[PutObjectInput, String](_.data)(n => a => a.copy(data = n))

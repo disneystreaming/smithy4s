@@ -14,7 +14,7 @@ object RecursiveInput extends ShapeTag.Companion[RecursiveInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val hello = Lens[RecursiveInput, Option[smithy4s.example.RecursiveInput]](_.hello)(n => a => a.copy(hello = n))
   }
 

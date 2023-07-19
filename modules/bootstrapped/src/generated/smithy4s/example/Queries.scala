@@ -18,7 +18,7 @@ object Queries extends ShapeTag.Companion[Queries] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val str = Lens[Queries, Option[String]](_.str)(n => a => a.copy(str = n))
     val int = Lens[Queries, Option[Int]](_.int)(n => a => a.copy(int = n))
     val ts1 = Lens[Queries, Option[Timestamp]](_.ts1)(n => a => a.copy(ts1 = n))

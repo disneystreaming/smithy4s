@@ -17,7 +17,7 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 
-  object Lenses {
+  object Optics {
     val name = Lens[DeprecatedStructure, Option[String]](_.name)(n => a => a.copy(name = n))
     val nameV2 = Lens[DeprecatedStructure, Option[String]](_.nameV2)(n => a => a.copy(nameV2 = n))
     val strings = Lens[DeprecatedStructure, Option[List[String]]](_.strings)(n => a => a.copy(strings = n))

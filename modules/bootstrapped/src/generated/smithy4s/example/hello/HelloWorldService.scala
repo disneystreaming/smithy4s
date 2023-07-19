@@ -109,7 +109,7 @@ object HelloWorldServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val GenericServerError = Prism.partial[HelloError, GenericServerError]{ case GenericServerErrorCase(t) => t }(GenericServerErrorCase.apply)
       val SpecificServerError = Prism.partial[HelloError, SpecificServerError]{ case SpecificServerErrorCase(t) => t }(SpecificServerErrorCase.apply)
     }

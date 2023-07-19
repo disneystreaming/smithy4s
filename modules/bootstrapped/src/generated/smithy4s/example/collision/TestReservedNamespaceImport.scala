@@ -14,7 +14,7 @@ object TestReservedNamespaceImport extends ShapeTag.Companion[TestReservedNamesp
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val _package = Lens[TestReservedNamespaceImport, Option[MyPackageString]](_._package)(n => a => a.copy(_package = n))
   }
 

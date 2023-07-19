@@ -21,7 +21,7 @@ object ComplexError extends ShapeTag.Companion[ComplexError] {
     smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(id = "complex_error", protocol = "alloy#simpleRestJson", code = 504, authScheme = None, headers = None, forbidHeaders = None, requireHeaders = Some(List("X-Error-Type")), body = Some("{\"value\":-1,\"message\":\"some error message\",\"details\":{\"date\":123,\"location\":\"NYC\"}}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("value" -> smithy4s.Document.fromDouble(-1.0d), "message" -> smithy4s.Document.fromString("some error message"), "details" -> smithy4s.Document.obj("date" -> smithy4s.Document.fromDouble(123.0d), "location" -> smithy4s.Document.fromString("NYC")))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpResponseTestCase(id = "complex_error_no_details", protocol = "alloy#simpleRestJson", code = 504, authScheme = None, headers = None, forbidHeaders = None, requireHeaders = Some(List("X-Error-Type")), body = Some("{\"value\":-1,\"message\":\"some error message\"}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("value" -> smithy4s.Document.fromDouble(-1.0d), "message" -> smithy4s.Document.fromString("some error message"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
   )
 
-  object Lenses {
+  object Optics {
     val value = Lens[ComplexError, Int](_.value)(n => a => a.copy(value = n))
     val message = Lens[ComplexError, String](_.message)(n => a => a.copy(message = n))
     val details = Lens[ComplexError, Option[ErrorDetails]](_.details)(n => a => a.copy(details = n))

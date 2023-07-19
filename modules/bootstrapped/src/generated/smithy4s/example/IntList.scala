@@ -15,7 +15,7 @@ object IntList extends ShapeTag.Companion[IntList] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val head = Lens[IntList, Int](_.head)(n => a => a.copy(head = n))
     val tail = Lens[IntList, Option[smithy4s.example.IntList]](_.tail)(n => a => a.copy(tail = n))
   }

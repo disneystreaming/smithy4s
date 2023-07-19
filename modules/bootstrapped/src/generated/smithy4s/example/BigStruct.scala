@@ -14,7 +14,7 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val a1 = Lens[BigStruct, Int](_.a1)(n => a => a.copy(a1 = n))
     val a2 = Lens[BigStruct, Int](_.a2)(n => a => a.copy(a2 = n))
     val a3 = Lens[BigStruct, Int](_.a3)(n => a => a.copy(a3 = n))

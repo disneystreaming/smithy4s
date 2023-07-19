@@ -16,7 +16,7 @@ object ExtraErrorOperationInput extends ShapeTag.Companion[ExtraErrorOperationIn
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val in = Lens[ExtraErrorOperationInput, Option[String]](_.in)(n => a => a.copy(in = n))
   }
 

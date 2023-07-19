@@ -108,7 +108,7 @@ object ImportServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    object Prisms {
+    object Optics {
       val NotFoundError = Prism.partial[ImportOperationError, NotFoundError]{ case NotFoundErrorCase(t) => t }(NotFoundErrorCase.apply)
     }
 

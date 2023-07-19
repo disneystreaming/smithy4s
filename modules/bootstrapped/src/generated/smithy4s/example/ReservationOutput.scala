@@ -16,7 +16,7 @@ object ReservationOutput extends ShapeTag.Companion[ReservationOutput] {
     smithy.api.Output(),
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[ReservationOutput, String](_.message)(n => a => a.copy(message = n))
   }
 

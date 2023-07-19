@@ -23,7 +23,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
   val hints: Hints = Hints.empty
 
-  object Prisms {
+  object Optics {
     val one = Prism.partial[TestAdt, AdtOne]{ case t: AdtOne => t }(identity)
     val two = Prism.partial[TestAdt, AdtTwo]{ case t: AdtTwo => t }(identity)
   }
@@ -34,7 +34,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
     val hints: Hints = Hints.empty
 
-    object Lenses {
+    object Optics {
       val lng = Lens[AdtOne, Option[Long]](_.lng)(n => a => a.copy(lng = n))
       val sht = Lens[AdtOne, Option[Short]](_.sht)(n => a => a.copy(sht = n))
       val blb = Lens[AdtOne, Option[ByteArray]](_.blb)(n => a => a.copy(blb = n))
@@ -58,7 +58,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
     val hints: Hints = Hints.empty
 
-    object Lenses {
+    object Optics {
       val lng = Lens[AdtTwo, Option[Long]](_.lng)(n => a => a.copy(lng = n))
       val sht = Lens[AdtTwo, Option[Short]](_.sht)(n => a => a.copy(sht = n))
       val int = Lens[AdtTwo, Option[Int]](_.int)(n => a => a.copy(int = n))

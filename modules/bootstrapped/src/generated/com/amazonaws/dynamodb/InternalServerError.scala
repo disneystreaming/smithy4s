@@ -22,7 +22,7 @@ object InternalServerError extends ShapeTag.Companion[InternalServerError] {
     smithy.api.Error.SERVER.widen,
   )
 
-  object Lenses {
+  object Optics {
     val message = Lens[InternalServerError, Option[ErrorMessage]](_.message)(n => a => a.copy(message = n))
   }
 

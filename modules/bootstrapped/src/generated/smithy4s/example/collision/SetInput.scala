@@ -15,7 +15,7 @@ object SetInput extends ShapeTag.Companion[SetInput] {
     smithy.api.Input(),
   )
 
-  object Lenses {
+  object Optics {
     val set = Lens[SetInput, Set[String]](_.set)(n => a => a.copy(set = n))
   }
 

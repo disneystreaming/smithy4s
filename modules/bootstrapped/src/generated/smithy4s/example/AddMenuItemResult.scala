@@ -16,7 +16,7 @@ object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val itemId = Lens[AddMenuItemResult, String](_.itemId)(n => a => a.copy(itemId = n))
     val added = Lens[AddMenuItemResult, Timestamp](_.added)(n => a => a.copy(added = n))
   }

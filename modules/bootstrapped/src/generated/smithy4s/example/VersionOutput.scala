@@ -14,7 +14,7 @@ object VersionOutput extends ShapeTag.Companion[VersionOutput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val version = Lens[VersionOutput, String](_.version)(n => a => a.copy(version = n))
   }
 

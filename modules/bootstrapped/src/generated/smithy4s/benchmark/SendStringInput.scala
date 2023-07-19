@@ -14,7 +14,7 @@ object SendStringInput extends ShapeTag.Companion[SendStringInput] {
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val key = Lens[SendStringInput, String](_.key)(n => a => a.copy(key = n))
     val bucketName = Lens[SendStringInput, String](_.bucketName)(n => a => a.copy(bucketName = n))
     val body = Lens[SendStringInput, String](_.body)(n => a => a.copy(body = n))

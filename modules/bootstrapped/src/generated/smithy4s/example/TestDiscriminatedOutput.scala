@@ -13,7 +13,7 @@ object TestDiscriminatedOutput extends ShapeTag.Companion[TestDiscriminatedOutpu
 
   val hints: Hints = Hints.empty
 
-  object Lenses {
+  object Optics {
     val data = Lens[TestDiscriminatedOutput, Option[PayloadData]](_.data)(n => a => a.copy(data = n))
   }
 
