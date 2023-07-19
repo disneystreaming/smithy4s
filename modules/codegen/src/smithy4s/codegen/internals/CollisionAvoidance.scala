@@ -337,6 +337,7 @@ private[internals] object CollisionAvoidance {
     val option = reserved("scala", "Option")
     val none = reserved("scala", "None")
     val some = reserved("scala", "Some")
+    val noStackTrace = reserved("scala.util.control", "NoStackTrace")
 
   }
 
