@@ -75,7 +75,7 @@ trait Prism[S, A] extends Optional[S, A] { self =>
   final def value[A0](implicit bijection: Bijection[A0, A]): Prism[S, A0] =
     new Prism[S, A0] {
       def getOption(s: S): Option[A0] = self.getOption(s).map(bijection.from)
-      def project(a: A0): S = self.project(bijection.from(a))
+      def project(a: A0): S = self.project(bijection.to(a))
     }
 }
 

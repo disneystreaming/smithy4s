@@ -76,7 +76,7 @@ trait Lens[S, A] extends Optional[S, A] { self =>
   final def value[A0](implicit bijection: Bijection[A0, A]): Lens[S, A0] =
     new Lens[S, A0] {
       def get(s: S): A0 = bijection.from(self.get(s))
-      def replace(a: A0): S => S = self.replace(bijection.from(a))
+      def replace(a: A0): S => S = self.replace(bijection.to(a))
     }
 }
 
