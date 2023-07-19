@@ -234,10 +234,7 @@ private[aws] object AwsQueryCodecs {
       : EntityEncoder[F, UrlForm] = EntityEncoders.fromHttpMediaWriter(
     HttpMediaTyped(
       HttpMediaType("application/x-www-form-urlencoded"),
-      (_: Any, urlForm: UrlForm) => {
-        println(s"urlForm: ${urlForm.values.render}")
-        Blob(urlForm.values.render)
-      }
+      (_: Any, urlForm: UrlForm) => Blob(urlForm.values.render)
     )
   )
 

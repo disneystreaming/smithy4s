@@ -190,7 +190,6 @@ object UrlForm {
       val urlFormDataEncoder = UrlFormDataEncoderSchemaVisitor(schema)
       new Encoder[A] {
         def encode(value: A): UrlForm = {
-          println(s"value: $value")
           val formData = urlFormDataEncoder.encode(value)
           // TODO: It smells a bit to have this in UrlForm which is otherwise mostly free of AWS concerns...
           val maybeAction = schema.hints.get[UrlForm.Action]

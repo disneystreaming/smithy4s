@@ -53,7 +53,8 @@ object UrlFormDataEncoderSchemaVisitor
 
     new UrlFormDataEncoder[C[A]] {
       override def encode(collection: C[A]): UrlForm.FormData = {
-        val formData = UrlForm.FormData
+        val formData = 
+          UrlForm.FormData
           .MultipleValues(
             tag
               .iterator(collection)
@@ -67,7 +68,16 @@ object UrlFormDataEncoderSchemaVisitor
               .toVector
           )
           .widen
-        maybeKey.fold(formData)(key => formData.prepend(key))
+        // TODO: This is pretty gross - it's a workaround for the fact the flat way we modelled FormData doesn't allow a key to exist without child nodes.
+        // Ideally we'd refine the model.
+        if(tag.isEmpty(collection))
+          UrlForm.FormData
+          .MultipleValues(
+            Vector(
+              UrlForm.FormData.PathedValue(PayloadPath.root, "")
+            )
+          )
+        else maybeKey.fold(formData)(key => formData.prepend(key))
       }
     }
   }
@@ -89,7 +99,18 @@ object UrlFormDataEncoderSchemaVisitor
 
     new UrlFormDataEncoder[Map[K, V]] {
       override def encode(m: Map[K, V]): UrlForm.FormData =
-        encoder.encode(m.toVector)
+        encoder.encode(m.toVector) match {
+          // TODO: If you thought the hack for collections was bad, how about this?
+          // It's disgusting - a workaround for the fact we don't want that behaviour here, to effectively undo what is done when we delegate to it.
+          case UrlForm.FormData
+          .MultipleValues(
+            Vector(
+              UrlForm.FormData.PathedValue(PayloadPath.root, "")
+            )
+          ) => UrlForm.FormData.Empty
+          
+          case other => other
+        }
     }
   }
 
@@ -129,12 +150,10 @@ object UrlFormDataEncoderSchemaVisitor
       fields.map(field => fieldEncoder(field))
 
     new UrlFormDataEncoder[S] {
-      override def encode(s: S): UrlForm.FormData = {
-        println(s"s: $s")
+      override def encode(s: S): UrlForm.FormData =
         UrlForm.FormData.MultipleValues(
           codecs.flatMap(_.encode(s).toPathedValues)
         )
-      }
     }
   }
 
@@ -188,7 +207,7 @@ object UrlFormDataEncoderSchemaVisitor
     new UrlFormDataEncoder[Option[A]] {
       val encoder = compile(schema)
       override def encode(value: Option[A]): UrlForm.FormData = value match {
-        case None        => UrlForm.FormData.Empty
+        case None => UrlForm.FormData.Empty
         case Some(value) => encoder.encode(value)
       }
     }

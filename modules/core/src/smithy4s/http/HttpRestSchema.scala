@@ -52,7 +52,10 @@ object HttpRestSchema {
   final case class Empty[A](value: A) extends HttpRestSchema[A]
   // format: on
 
-  def apply[A](writeEmptyStructs: Boolean, fullSchema: Schema[A]): HttpRestSchema[A] = {
+  def apply[A](
+      writeEmptyStructs: Boolean,
+      fullSchema: Schema[A]
+  ): HttpRestSchema[A] = {
 
     def isMetadataField(field: Field[_, _]): Boolean = HttpBinding
       .fromHints(field.label, field.memberHints, fullSchema.hints)
