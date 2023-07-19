@@ -40,7 +40,11 @@ private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
 
-  case class Config(errorsAsScala3Unions: Boolean, wildcardArgument: String)
+  case class Config(
+      errorsAsScala3Unions: Boolean,
+      wildcardArgument: String,
+      renderOptics: Boolean
+  )
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
       val errorsAsScala3Unions = metadata
@@ -54,6 +58,12 @@ private[internals] object Renderer {
         .map(_.getValue())
         .getOrElse("_")
 
+      val renderOptics = metadata
+        .get("smithy4sRenderOptics")
+        .flatMap(_.asBooleanNode().asScala)
+        .map(_.getValue())
+        .getOrElse(false)
+
       if (wildcardArgument != "?" && wildcardArgument != "_") {
         throw new IllegalArgumentException(
           s"`smithy4sWildcardArgument` possible values are: `?` or `_`. found `$wildcardArgument`."
@@ -62,7 +72,8 @@ private[internals] object Renderer {
 
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
-        wildcardArgument = wildcardArgument
+        wildcardArgument = wildcardArgument,
+        renderOptics = renderOptics
       )
     }
   }
@@ -609,7 +620,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderLenses(product: Product): Lines = if (
-    product.fields.nonEmpty
+    compilationUnit.rendererConfig.renderOptics && product.fields.nonEmpty
   ) {
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
@@ -863,7 +874,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   private def renderPrisms(
       unionName: NameRef,
       alts: NonEmptyList[Alt]
-  ): Lines = {
+  ): Lines = if (compilationUnit.rendererConfig.renderOptics) {
     val smithyPrism = NameRef("smithy4s.optics.Prism")
     val altLines = alts.map { alt =>
       alt.member match {
@@ -881,7 +892,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     obj(unionName.copy(name = "Optics"))(altLines) ++
       newline
-  }
+  } else Lines.empty
 
   private def renderUnion(
       shapeId: ShapeId,

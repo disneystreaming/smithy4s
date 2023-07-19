@@ -32,6 +32,12 @@ typeclasses such as `cats.Show`, `cats.Eq` or any others you may be using.
 
 See https://github.com/disneystreaming/smithy4s/pull/912
 
+### Smithy4s Optics Instances
+
+When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rendered in the companion objects of the generated code when appropriate.
+
+See <!-- TODO Put link once PR is up --> 
+
 # 0.17.5
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.

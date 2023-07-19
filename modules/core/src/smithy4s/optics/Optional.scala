@@ -17,13 +17,28 @@
 package smithy4s.optics
 
 // inspired by and adapted from https://www.optics.dev/Monocle/ under the MIT license
+
+/**
+ * Optional can be seen as the weak intersection between a [[Lens]]
+ * and a [[Prism]]. It contains the same `replace` function as a [[Lens]]
+ * and the same `getOption` function of a [[Prism]].
+ */
 trait Optional[S, A] { self =>
+
+  /**
+   * Returns a [[Some]] of A from S if it is able to obtain an A.
+   * Else returns [[None]].
+   */
   def getOption(s: S): Option[A]
+
+  /** Provides a function to replace the target of the [[Lens]] */
   def replace(a: A): S => S
 
+  /** Modify the target of the [[Optional]] with a function from A => A */
   def modify(f: A => A): S => S =
     s => getOption(s).fold(s)(a => replace(f(a))(s))
 
+  /** Compose this [[Optional]] with another [[Optional]]. */
   final def andThen[A0](that: Optional[A, A0]): Optional[S, A0] =
     new Optional[S, A0] {
       def getOption(s: S): Option[A0] =
@@ -32,6 +47,10 @@ trait Optional[S, A] { self =>
         self.modify(that.replace(a))
     }
 
+  /** 
+   * Allows abstracting over an optional target by pointing to 
+   * the inside of the optional value (the value inside of the [[Some]]).
+   */
   def some[A0](implicit
       ev1: A =:= Option[A0]
   ): Optional[S, A0] =
