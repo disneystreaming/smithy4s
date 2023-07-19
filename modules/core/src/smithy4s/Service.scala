@@ -192,7 +192,7 @@ object Service {
     def fromService[Alg[_[_, _, _, _, _]]](
         service: Service[Alg]
     ): Builder[Alg, service.Operation] =
-      new Builder[Alg, service.Operation](service, PolyFunction5.identity)
+      new Builder[Alg, service.Operation](service, PolyFunction5.identity, service.id, service.version, service.hints)
   }
 
   final case class Builder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] private(
