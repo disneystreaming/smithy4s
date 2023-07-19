@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -21,6 +22,11 @@ object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
   val id: ShapeId = ShapeId("smithy4s.example", "TheEnum")
 
   val hints: Hints = Hints.empty
+
+  object Optics {
+    val V1 = Prism.partial[TheEnum, TheEnum.V1.type]{ case TheEnum.V1 => TheEnum.V1 }(identity)
+    val V2 = Prism.partial[TheEnum, TheEnum.V2.type]{ case TheEnum.V2 => TheEnum.V2 }(identity)
+  }
 
   case object V1 extends TheEnum("v1", "V1", 0, Hints())
   case object V2 extends TheEnum("v2", "V2", 1, Hints())

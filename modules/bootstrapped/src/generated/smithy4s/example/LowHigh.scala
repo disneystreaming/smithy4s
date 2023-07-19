@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -26,6 +27,11 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
   val id: ShapeId = ShapeId("smithy4s.example", "LowHigh")
 
   val hints: Hints = Hints.empty
+
+  object Optics {
+    val LOW = Prism.partial[LowHigh, LowHigh.LOW.type]{ case LowHigh.LOW => LowHigh.LOW }(identity)
+    val HIGH = Prism.partial[LowHigh, LowHigh.HIGH.type]{ case LowHigh.HIGH => LowHigh.HIGH }(identity)
+  }
 
   /** low */
   case object LOW extends LowHigh("Low", "LOW", 0, Hints(smithy.api.Documentation("low")))

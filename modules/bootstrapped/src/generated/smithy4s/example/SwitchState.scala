@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -21,6 +22,11 @@ object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[Swit
   val id: ShapeId = ShapeId("smithy4s.example", "SwitchState")
 
   val hints: Hints = Hints.empty
+
+  object Optics {
+    val ON = Prism.partial[SwitchState, SwitchState.ON.type]{ case SwitchState.ON => SwitchState.ON }(identity)
+    val OFF = Prism.partial[SwitchState, SwitchState.OFF.type]{ case SwitchState.OFF => SwitchState.OFF }(identity)
+  }
 
   case object ON extends SwitchState("ON", "ON", 0, Hints())
   case object OFF extends SwitchState("OFF", "OFF", 1, Hints())

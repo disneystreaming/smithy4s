@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -23,6 +24,11 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
   val hints: Hints = Hints(
     smithy.api.MediaType("audio/mpeg3"),
   )
+
+  object Optics {
+    val GUITAR = Prism.partial[AudioEnum, AudioEnum.GUITAR.type]{ case AudioEnum.GUITAR => AudioEnum.GUITAR }(identity)
+    val BASS = Prism.partial[AudioEnum, AudioEnum.BASS.type]{ case AudioEnum.BASS => AudioEnum.BASS }(identity)
+  }
 
   case object GUITAR extends AudioEnum("guitar", "GUITAR", 0, Hints())
   case object BASS extends AudioEnum("bass", "BASS", 1, Hints())

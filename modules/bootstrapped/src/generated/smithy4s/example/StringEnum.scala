@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -21,6 +22,11 @@ object StringEnum extends Enumeration[StringEnum] with ShapeTag.Companion[String
   val id: ShapeId = ShapeId("smithy4s.example", "StringEnum")
 
   val hints: Hints = Hints.empty
+
+  object Optics {
+    val STRING = Prism.partial[StringEnum, StringEnum.STRING.type]{ case StringEnum.STRING => StringEnum.STRING }(identity)
+    val INTERESTING = Prism.partial[StringEnum, StringEnum.INTERESTING.type]{ case StringEnum.INTERESTING => StringEnum.INTERESTING }(identity)
+  }
 
   case object STRING extends StringEnum("string", "STRING", 0, Hints())
   case object INTERESTING extends StringEnum("interesting", "INTERESTING", 1, Hints())

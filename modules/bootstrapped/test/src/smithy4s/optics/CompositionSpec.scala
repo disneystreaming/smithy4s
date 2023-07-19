@@ -49,6 +49,19 @@ final class CompositionSpec extends FunSuite {
     assertEquals(Option("Fancy New Name"), result)
   }
 
+  test("enum prisms") {
+    val input = Pizza("Cheese", PizzaBase.TOMATO, List(Ingredient.CHEESE))
+
+    val base = Pizza.Optics.base.andThen(PizzaBase.Optics.TOMATO)
+    val baseCream = Pizza.Optics.base.andThen(PizzaBase.Optics.CREAM)
+
+    val result = base.getOption(input)
+    val result2 = baseCream.getOption(input)
+
+    assertEquals(Option(PizzaBase.TOMATO), result)
+    assertEquals(Option.empty[PizzaBase.CREAM.type], result2)
+  }
+
   test("lens composition newtypes") {
     val input = GetCityInput(CityId("test"))
 

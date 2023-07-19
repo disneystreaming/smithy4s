@@ -5,6 +5,7 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -21,6 +22,11 @@ object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBas
   val id: ShapeId = ShapeId("smithy4s.example", "PizzaBase")
 
   val hints: Hints = Hints.empty
+
+  object Optics {
+    val CREAM = Prism.partial[PizzaBase, PizzaBase.CREAM.type]{ case PizzaBase.CREAM => PizzaBase.CREAM }(identity)
+    val TOMATO = Prism.partial[PizzaBase, PizzaBase.TOMATO.type]{ case PizzaBase.TOMATO => PizzaBase.TOMATO }(identity)
+  }
 
   case object CREAM extends PizzaBase("C", "CREAM", 0, Hints())
   case object TOMATO extends PizzaBase("T", "TOMATO", 1, Hints())

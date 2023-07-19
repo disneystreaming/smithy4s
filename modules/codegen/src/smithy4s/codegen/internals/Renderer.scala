@@ -894,6 +894,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline
   } else Lines.empty
 
+  private def renderPrismsEnum(
+      enumName: NameRef,
+      values: List[EnumValue]
+  ): Lines = if (compilationUnit.rendererConfig.renderOptics) {
+    val smithyPrism = NameRef("smithy4s.optics.Prism")
+    val valueLines = values.map { value =>
+      val (mat, tpe) = (value.name, line"${value.name}")
+      line"val ${value.name} = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
+    }
+
+    obj(enumName.copy(name = "Optics"))(valueLines) ++
+      newline
+  } else Lines.empty
+
   private def renderUnion(
       shapeId: ShapeId,
       name: NameRef,
@@ -1064,6 +1078,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsVal(hints),
       newline,
+      renderPrismsEnum(name, values),
       values.map { case e @ EnumValue(value, intValue, _, hints) =>
         val valueName = NameRef(e.name)
         val valueHints = line"$Hints_(${memberHints(e.hints)})"
