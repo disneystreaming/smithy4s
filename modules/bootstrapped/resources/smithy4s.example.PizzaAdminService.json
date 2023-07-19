@@ -284,6 +284,23 @@
                 }
             }
         },
+        "/optional-output": {
+            "get": {
+                "operationId": "OptionalOutput",
+                "responses": {
+                    "200": {
+                        "description": "OptionalOutput 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OptionalOutputOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/restaurant/{restaurant}/menu": {
             "get": {
                 "operationId": "GetMenu",
@@ -647,6 +664,9 @@
                 "required": [
                     "name"
                 ]
+            },
+            "OptionalOutputOutputPayload": {
+                "type": "string"
             },
             "Pizza": {
                 "type": "object",

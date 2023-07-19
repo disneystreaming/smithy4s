@@ -54,11 +54,9 @@ private[json] case class JsonPayloadCodecCompilerImpl(
     val jcodec = jsoniterCodecCompiler.fromSchema(schema, cache)
     val reader: PayloadReader[A] = new JsonPayloadReader(jcodec)
     val writer: PayloadWriter[A] = Writer.encodeBy { (value: A) =>
-      val intermediate = Blob(
+      Blob(
         writeToArray(value, jsoniterWriterConfig)(jcodec)
       )
-      if (intermediate.sameBytesAs(Blob("null"))) Blob("{}")
-      else intermediate
     }
     ReaderWriter(reader, writer)
   }
