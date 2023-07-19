@@ -16,6 +16,7 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.scalaJSLinkerConfig
 import org.scalajs.linker.interface.ModuleKind
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import com.github.sbt.git.SbtGit.git
+import bloop.integrations.sbt.BloopKeys.bloopGenerate
 
 sealed trait Platform
 case object JSPlatform extends Platform
@@ -527,7 +528,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "scalafix" -> ("scalafix --check", jvm2_13),
       "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
       "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
-      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm),
+      "bloopGenerate" -> ("bloopGenerate", any)
     )
 
     val cmds = all.flatMap { case (doublet, projects) =>
