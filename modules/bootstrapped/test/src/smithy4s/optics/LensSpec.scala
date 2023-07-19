@@ -3,6 +3,7 @@ package smithy4s.optics
 import munit._
 import smithy4s.example.EchoBody
 
+// inspired by and adapted from https://www.optics.dev/Monocle/ under the MIT license
 final class LensSpec extends FunSuite {
 
   test("get and replace") {

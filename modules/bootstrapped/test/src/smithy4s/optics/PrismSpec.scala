@@ -3,6 +3,7 @@ package smithy4s.optics
 import munit._
 import smithy4s.example.Podcast
 
+// inspired by and adapted from https://www.optics.dev/Monocle/ under the MIT license
 final class PrismSpec extends FunSuite {
 
   test("round trip") {

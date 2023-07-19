@@ -49,4 +49,44 @@ final class CompositionSpec extends FunSuite {
     assertEquals(Option("Fancy New Name"), result)
   }
 
+  test("lens composition newtypes") {
+    val input = GetCityInput(CityId("test"))
+
+    val cityName: Lens[GetCityInput, String] = GetCityInput.Optics.cityId.value
+    val updated = cityName.replace("Fancy New Name")(input)
+
+    val result = cityName.getOption(updated)
+
+    assertEquals(Option("Fancy New Name"), result)
+  }
+
+  test("prism composition newtypes") {
+    val input = PersonContactInfo.EmailCase(PersonEmail("test@test.com"))
+
+    val emailPrism: Prism[PersonContactInfo, String] =
+      PersonContactInfo.Optics.email.value
+    val updated = emailPrism.replace("other@other.com")(input)
+
+    val result = emailPrism.getOption(updated)
+
+    assertEquals(Option("other@other.com"), result)
+  }
+
+  test("optional composition newtypes") {
+    case class TopLevel(contact: PersonContactInfo)
+    val topLevel = Lens[TopLevel, PersonContactInfo](_.contact)(a =>
+      s => s.copy(contact = a)
+    )
+    val input =
+      TopLevel(PersonContactInfo.EmailCase(PersonEmail("test@test.com")))
+
+    val emailOpt: Optional[TopLevel, String] =
+      topLevel.andThen(PersonContactInfo.Optics.email.value)
+    val updated = emailOpt.replace("other@other.com")(input)
+
+    val result = emailOpt.getOption(updated)
+
+    assertEquals(Option("other@other.com"), result)
+  }
+
 }
