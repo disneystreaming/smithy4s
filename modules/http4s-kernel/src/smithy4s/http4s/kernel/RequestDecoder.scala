@@ -19,9 +19,13 @@ package smithy4s.http4s.kernel
 import cats.MonadThrow
 import cats.effect.Concurrent
 import org.http4s.EntityDecoder
+import org.http4s.Media
 import org.http4s.Request
-import smithy4s.http.HttpRestSchema
+import smithy4s.codecs.Reader
+import smithy4s.http.HttpRequest
+import smithy4s.http.HttpUri
 import smithy4s.http.Metadata
+import smithy4s.http.MetadataError
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
 
@@ -55,6 +59,36 @@ object RequestDecoder {
         fromMetadataDecoder(fa)
     }
 
+  private def liftEither[F[_]: MonadThrow]
+      : PolyFunction[Either[MetadataError, *], F] =
+    new PolyFunction[Either[MetadataError, *], F] {
+      def apply[A](fa: Either[MetadataError, A]): F[A] =
+        MonadThrow[F].fromEither(fa)
+    }
+
+  private def toHttpRequest[F[_]](req: Request[F]): HttpRequest[Media[F]] = {
+    val pathParams = req.attributes.lookup(pathParamsKey)
+    val params = getQueryParams(req)
+    // EXTRACT the host
+    val uri = HttpUri("localhost", req.uri.path.segments.map(_.encoded), params)
+    val headers = getHeaders(req)
+    HttpRequest(uri, headers, req, pathParams)
+  }
+
+  private def fromHttpRequest[F[_]]: PolyFunction[
+    HttpRequest.Decoder[F, Media[F], *],
+    RequestDecoder[F, *]
+  ] = new PolyFunction[
+    HttpRequest.Decoder[F, Media[F], *],
+    RequestDecoder[F, *]
+  ]() {
+    def apply[A](
+        fa: Reader[F, HttpRequest[Media[F]], A]
+    ): Reader[F, Request[F], A] = {
+      fa.compose[Request[F]](toHttpRequest)
+    }
+  }
+
   /**
     * A compiler for RequestDecoder that abides by REST-semantics :
     * fields that are annotated with `httpLabel`, `httpHeader`, `httpQuery`,
@@ -68,13 +102,13 @@ object RequestDecoder {
   )(implicit
       F: Concurrent[F]
   ): CachedSchemaCompiler[RequestDecoder[F, *]] = {
-    val metadataCompiler =
-      metadataDecoderCompiler.mapK(fromMetadataDecoderK[F])
     val bodyCompiler =
       entityDecoderCompiler.mapK(MediaDecoder.fromEntityDecoderK)
-    HttpRestSchema.combineReaderCompilers[F, Request[F]](
-      metadataCompiler,
-      bodyCompiler
+    val httpRequestCompiler = HttpRequest.restSchemaCompiler[F, Media[F]](
+      metadataDecoderCompiler,
+      bodyCompiler,
+      liftEither
     )
+    httpRequestCompiler.mapK(fromHttpRequest[F])
   }
 }

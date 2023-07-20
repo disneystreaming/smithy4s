@@ -273,6 +273,11 @@ object Boilerplate {
       -   final def andThen[H[${`_.._`}]](other: PolyFunction$suffix[G, H]): PolyFunction$suffix[F, H] = new PolyFunction$suffix[F, H]{
       -      def apply[${`A..N`}](fa: F[${`A..N`}]): H[${`A..N`}] = other(self(fa))
       -   }
+      -
+      -   final def compose[H[${`_.._`}]](other: PolyFunction$suffix[H, F]): PolyFunction$suffix[H, G] = new PolyFunction$suffix[H, G]{
+      -      def apply[${`A..N`}](ha: H[${`A..N`}]): G[${`A..N`}] = self(other(ha))
+      -   }
+
       -}
       -object PolyFunction$suffix{
       -  type From[F[${`_.._`}]] = {
