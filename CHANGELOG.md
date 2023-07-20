@@ -36,7 +36,7 @@ See https://github.com/disneystreaming/smithy4s/pull/912
 
 When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rendered in the companion objects of the generated code when appropriate.
 
-See <!-- TODO Put link once PR is up --> 
+See https://github.com/disneystreaming/smithy4s/pull/1103
 
 # 0.17.5
 
