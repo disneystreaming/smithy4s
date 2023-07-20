@@ -128,10 +128,12 @@ structure GetForecastInput {
     cityId: CityId,
 }
 
+@generateOptics
 structure GetForecastOutput {
     forecast: ForecastResult
 }
 
+@generateOptics
 union ForecastResult {
     rain: ChanceOfRain,
     sun: UVIndex

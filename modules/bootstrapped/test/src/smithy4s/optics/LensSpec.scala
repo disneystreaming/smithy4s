@@ -1,61 +1,61 @@
 package smithy4s.optics
 
 import munit._
-import smithy4s.example.EchoBody
+import smithy4s.example.TestBody
 
 // inspired by and adapted from https://www.optics.dev/Monocle/ under the MIT license
 final class LensSpec extends FunSuite {
 
   test("get and replace") {
-    val lens = EchoBody.Optics.dataLens
-    val e = EchoBody(Some("test body"))
+    val lens = TestBody.Optics.dataLens
+    val e = TestBody(Some("test body"))
     val result = lens.replace(lens.get(e))(e)
     assertEquals(e, result)
   }
 
   test("replace and get") {
-    val lens = EchoBody.Optics.dataLens
-    val e = EchoBody(Some("test body"))
+    val lens = TestBody.Optics.dataLens
+    val e = TestBody(Some("test body"))
     val result = lens.get(lens.replace(Some("test body"))(e))
     assertEquals(e.data, result)
   }
 
   test("replace idempotent") {
-    val lens = EchoBody.Optics.dataLens
+    val lens = TestBody.Optics.dataLens
     val data = Some("test body")
-    val e = EchoBody(data)
+    val e = TestBody(data)
     val result = lens.replace(data)(lens.replace(data)(e))
     assertEquals(e, result)
   }
 
   test("modify identity") {
-    val lens = EchoBody.Optics.dataLens
+    val lens = TestBody.Optics.dataLens
     val data = Some("test body")
-    val e = EchoBody(data)
+    val e = TestBody(data)
     val result = lens.modify(identity)(e)
     assertEquals(e, result)
   }
 
   test("modify composition") {
-    val lens = EchoBody.Optics.dataLens
+    val lens = TestBody.Optics.dataLens
     val data = Some("test body")
-    val e = EchoBody(data)
+    val e = TestBody(data)
     val f: Option[String] => Option[String] = _ => Some("test 2")
     val g: Option[String] => Option[String] = _ => Some("test 3")
     val resultOne = lens.modify(g)(lens.modify(f)(e))
     val resultTwo = lens.modify(g compose f)(e)
-    assertEquals(EchoBody(Some("test 3")), resultOne)
+    assertEquals(TestBody(Some("test 3")), resultOne)
     assertEquals(resultOne, resultTwo)
   }
 
   test("modify == replace") {
-    val lens = EchoBody.Optics.dataLens
+    val lens = TestBody.Optics.dataLens
     val data = Some("test body")
     val data2 = Some("test body 2")
-    val e = EchoBody(data)
+    val e = TestBody(data)
     val resultOne = lens.replace(data2)(e)
     val resultTwo = lens.modify(_ => data2)(e)
-    assertEquals(EchoBody(Some("test body 2")), resultOne)
+    assertEquals(TestBody(Some("test body 2")), resultOne)
     assertEquals(resultOne, resultTwo)
   }
 

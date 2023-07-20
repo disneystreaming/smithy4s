@@ -18,3 +18,23 @@ structure OpticsStructure {
 enum OpticsEnum {
   A, B
 }
+
+@generateOptics
+structure TestInput {
+    @required
+    @httpLabel
+    @length(min: 10)
+    pathParam: String
+    @httpQuery("queryParam")
+    @length(min: 10)
+    queryParam: String
+    @httpPayload
+    @required
+    body: TestBody
+}
+
+@generateOptics
+structure TestBody {
+    @length(min: 10)
+    data: String
+}

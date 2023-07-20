@@ -25,8 +25,8 @@ Below is an example of using the lenses that smithy4s generates. By default, smi
 ```scala mdoc:reset
 import smithy4s.example._
 
-val input = EchoInput("test", EchoBody(Some("test body")))
-val lens = EchoInput.Optics.bodyLens.andThen(EchoBody.Optics.dataLens).some
+val input = TestInput("test", TestBody(Some("test body")))
+val lens = TestInput.Optics.bodyLens.andThen(TestBody.Optics.dataLens).some
 val resultGet = lens.project(input)
 
 resultGet == Option("test body") // true
@@ -34,7 +34,7 @@ resultGet == Option("test body") // true
 val resultSet =
   lens.replace("new body")(input)
 
-val updatedInput = EchoInput("test", EchoBody(Some("new body")))
+val updatedInput = TestInput("test", TestBody(Some("new body")))
 
 resultSet == updatedInput // true
 ```

@@ -5,7 +5,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -22,13 +21,6 @@ object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingred
   val id: ShapeId = ShapeId("smithy4s.example", "Ingredient")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val MUSHROOMPrism = Prism.partial[Ingredient, Ingredient.MUSHROOM.type]{ case Ingredient.MUSHROOM => Ingredient.MUSHROOM }(identity)
-    val CHEESEPrism = Prism.partial[Ingredient, Ingredient.CHEESE.type]{ case Ingredient.CHEESE => Ingredient.CHEESE }(identity)
-    val SALADPrism = Prism.partial[Ingredient, Ingredient.SALAD.type]{ case Ingredient.SALAD => Ingredient.SALAD }(identity)
-    val TOMATOPrism = Prism.partial[Ingredient, Ingredient.TOMATO.type]{ case Ingredient.TOMATO => Ingredient.TOMATO }(identity)
-  }
 
   case object MUSHROOM extends Ingredient("Mushroom", "MUSHROOM", 0, Hints())
   case object CHEESE extends Ingredient("Cheese", "CHEESE", 1, Hints())

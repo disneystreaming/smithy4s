@@ -16,8 +16,6 @@
 
 package smithy4s.meta;
 
-import java.text.Annotation;
-
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ShapeId;

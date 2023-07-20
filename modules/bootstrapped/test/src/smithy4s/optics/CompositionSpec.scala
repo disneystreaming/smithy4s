@@ -6,15 +6,15 @@ import smithy4s.example._
 final class CompositionSpec extends FunSuite {
 
   test("Lens transformation and composition") {
-    val input = EchoInput("test", EchoBody(Some("test body")))
+    val input = TestInput("test", TestBody(Some("test body")))
     val lens =
-      EchoInput.Optics.bodyLens.andThen(EchoBody.Optics.dataLens).some[String]
+      TestInput.Optics.bodyLens.andThen(TestBody.Optics.dataLens).some[String]
     val resultGet = lens.project(input)
 
     val resultSet =
       lens.replace("new body")(input)
 
-    val updatedInput = EchoInput("test", EchoBody(Some("new body")))
+    val updatedInput = TestInput("test", TestBody(Some("new body")))
     assertEquals(Option("test body"), resultGet)
     assertEquals(updatedInput, resultSet)
   }
@@ -31,39 +31,39 @@ final class CompositionSpec extends FunSuite {
     assertEquals(Podcast.Video(Some("New Pod Title")).widen, result)
   }
 
-  test("Deeply Nested") {
-    val input = AddMenuItemRequest(
-      "Pizza Place",
-      MenuItem(
-        Food.PizzaCase(
-          Pizza("Cheese", PizzaBase.TOMATO, List(Ingredient.CHEESE))
-        ),
-        price = 12.5f
-      )
+  test("nested") {
+    val input = GetForecastOutput(
+      Some(ForecastResult.SunCase(UVIndex(6)))
     )
 
-    val pizzaName = AddMenuItemRequest.Optics.menuItemLens
-      .andThen(MenuItem.Optics.foodLens)
-      .andThen(Food.Optics.pizzaPrism)
-      .andThen(Pizza.Optics.nameLens)
-    val updated = pizzaName.replace("Fancy New Name")(input)
+    val uvIndex = GetForecastOutput.Optics.forecastLens
+      .some[ForecastResult]
+      .andThen(ForecastResult.Optics.sunPrism)
+      .value
+    val updated = uvIndex.replace(8)(input)
 
-    val result = pizzaName.project(updated)
+    val result = uvIndex.project(updated)
 
-    assertEquals(Option("Fancy New Name"), result)
+    assertEquals(Option(8), result)
   }
 
   test("enum prisms") {
-    val input = Pizza("Cheese", PizzaBase.TOMATO, List(Ingredient.CHEESE))
+    val input = OpticsStructure(Some(OpticsEnum.A))
 
-    val base = Pizza.Optics.baseLens.andThen(PizzaBase.Optics.TOMATOPrism)
-    val baseCream = Pizza.Optics.baseLens.andThen(PizzaBase.Optics.CREAMPrism)
+    val base =
+      OpticsStructure.Optics.twoLens
+        .some[OpticsEnum]
+        .andThen(OpticsEnum.Optics.APrism)
+    val baseB =
+      OpticsStructure.Optics.twoLens
+        .some[OpticsEnum]
+        .andThen(OpticsEnum.Optics.BPrism)
 
     val result = base.project(input)
-    val result2 = baseCream.project(input)
+    val result2 = baseB.project(input)
 
-    assertEquals(Option(PizzaBase.TOMATO), result)
-    assertEquals(Option.empty[PizzaBase.CREAM.type], result2)
+    assertEquals(Option(OpticsEnum.A), result)
+    assertEquals(Option.empty[OpticsEnum.B.type], result2)
   }
 
   test("lens composition newtypes") {
