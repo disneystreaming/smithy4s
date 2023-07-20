@@ -89,13 +89,6 @@ private[smithy4s] object UrlFormDataDecoder {
                     s"Could not extract $expectedType from $value"
                   )
                 )
-              case _ =>
-                Left(
-                  UrlFormDecodeError(
-                    history,
-                    s"Expected a single value"
-                  )
-                )
             }
           case UrlFormCursor.FailedValue(history) =>
             Left(UrlFormDecodeError(history, s"Could not decode failed value"))

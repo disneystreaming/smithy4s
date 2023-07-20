@@ -40,6 +40,11 @@ object UrlFormDataEncoderSchemaVisitor
       }
   }
 
+  private val SkipEmpty = Hints.Binding.DynamicBinding(
+    ShapeId("smithy4s.http.internals", "SkipEmpty"),
+    Document.DNull
+  )
+
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
@@ -50,11 +55,11 @@ object UrlFormDataEncoderSchemaVisitor
     val maybeKey =
       if (hints.has[XmlFlattened]) None
       else Option(getKey(member.hints, "member"))
+    val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
 
     new UrlFormDataEncoder[C[A]] {
       override def encode(collection: C[A]): UrlForm.FormData = {
-        val formData = 
-          UrlForm.FormData
+        val formData = UrlForm.FormData
           .MultipleValues(
             tag
               .iterator(collection)
@@ -68,16 +73,12 @@ object UrlFormDataEncoderSchemaVisitor
               .toVector
           )
           .widen
-        // TODO: This is pretty gross - it's a workaround for the fact the flat way we modelled FormData doesn't allow a key to exist without child nodes.
-        // Ideally we'd refine the model.
-        if(tag.isEmpty(collection))
-          UrlForm.FormData
-          .MultipleValues(
-            Vector(
-              UrlForm.FormData.PathedValue(PayloadPath.root, "")
-            )
-          )
-        else maybeKey.fold(formData)(key => formData.prepend(key))
+        if (tag.isEmpty(collection) && !skipEmpty) {
+          val emptyValue = UrlForm.FormData.PathedValue(PayloadPath.root, "")
+          UrlForm.FormData.MultipleValues(Vector(emptyValue))
+        } else {
+          maybeKey.fold(formData)(key => formData.prepend(key))
+        }
       }
     }
   }
@@ -94,23 +95,13 @@ object UrlFormDataEncoderSchemaVisitor
       val vField = value.required[KV]("value", _._2)
       Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
     }
-    val schema = Schema.vector(kvSchema).addHints(hints)
+    // avoid serialising empty maps, see https://github.com/smithy-lang/smithy/issues/1868
+    val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
     val encoder = compile(schema)
 
     new UrlFormDataEncoder[Map[K, V]] {
       override def encode(m: Map[K, V]): UrlForm.FormData =
-        encoder.encode(m.toVector) match {
-          // TODO: If you thought the hack for collections was bad, how about this?
-          // It's disgusting - a workaround for the fact we don't want that behaviour here, to effectively undo what is done when we delegate to it.
-          case UrlForm.FormData
-          .MultipleValues(
-            Vector(
-              UrlForm.FormData.PathedValue(PayloadPath.root, "")
-            )
-          ) => UrlForm.FormData.Empty
-          
-          case other => other
-        }
+        encoder.encode(m.toVector)
     }
   }
 
@@ -150,10 +141,11 @@ object UrlFormDataEncoderSchemaVisitor
       fields.map(field => fieldEncoder(field))
 
     new UrlFormDataEncoder[S] {
-      override def encode(s: S): UrlForm.FormData =
+      override def encode(s: S): UrlForm.FormData = {
         UrlForm.FormData.MultipleValues(
           codecs.flatMap(_.encode(s).toPathedValues)
         )
+      }
     }
   }
 
@@ -207,7 +199,7 @@ object UrlFormDataEncoderSchemaVisitor
     new UrlFormDataEncoder[Option[A]] {
       val encoder = compile(schema)
       override def encode(value: Option[A]): UrlForm.FormData = value match {
-        case None => UrlForm.FormData.Empty
+        case None        => UrlForm.FormData.Empty
         case Some(value) => encoder.encode(value)
       }
     }
