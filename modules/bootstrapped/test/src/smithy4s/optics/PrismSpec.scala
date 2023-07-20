@@ -82,7 +82,7 @@ final class PrismSpec extends FunSuite {
     val prism =
       Prism[SomeTest, Option[Int]](i => Some(i.y))(SomeTest.apply)
 
-    assertEquals(prism.some.project(obj), Some(2))
+    assertEquals(prism.some[Int].project(obj), Some(2))
   }
 
 }

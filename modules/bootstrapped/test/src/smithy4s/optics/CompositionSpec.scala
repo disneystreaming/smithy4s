@@ -7,7 +7,8 @@ final class CompositionSpec extends FunSuite {
 
   test("Lens transformation and composition") {
     val input = EchoInput("test", EchoBody(Some("test body")))
-    val lens = EchoInput.Optics.bodyLens.andThen(EchoBody.Optics.dataLens).some
+    val lens =
+      EchoInput.Optics.bodyLens.andThen(EchoBody.Optics.dataLens).some[String]
     val resultGet = lens.project(input)
 
     val resultSet =
@@ -22,7 +23,9 @@ final class CompositionSpec extends FunSuite {
     val input = Podcast.Video(Some("Pod Title"))
 
     val prism =
-      Podcast.Optics.videoPrism.andThen(Podcast.Video.Optics.titleLens).some
+      Podcast.Optics.videoPrism
+        .andThen(Podcast.Video.Optics.titleLens)
+        .some[String]
     val result = prism.replace("New Pod Title")(input)
 
     assertEquals(Podcast.Video(Some("New Pod Title")).widen, result)

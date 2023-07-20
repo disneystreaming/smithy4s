@@ -88,7 +88,7 @@ final class LensSpec extends FunSuite {
 
     val lens = Lens((_: SomeTest).y)(newValue => _.copy(y = newValue))
 
-    assertEquals(lens.some.project(obj), Some(2))
+    assertEquals(lens.some[Int].project(obj), Some(2))
   }
 
 }
