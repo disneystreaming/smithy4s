@@ -119,11 +119,11 @@ private[internals] object Renderer {
       val allImports: List[String] = renderResult.list.flatMap { line =>
         line.segments.toList.collect {
           case nameRef @ NameRef(pkg, _, _)
-            if pkg.nonEmpty && !nameCollisions.contains(
-              nameRef.getNamePrefix
-            )
-              && !nameRef.isAutoImported &&
-              !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
+              if pkg.nonEmpty && !nameCollisions.contains(
+                nameRef.getNamePrefix
+              )
+                && !nameRef.isAutoImported &&
+                !pkg.mkString(".").equalsIgnoreCase(unit.namespace) =>
             nameRef.show
           case Import(value) => value
         }
