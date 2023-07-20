@@ -63,6 +63,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
+  smoking,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -879,6 +880,26 @@ lazy val benchmark = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Circe.generic.value
     )
+  )
+  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+
+lazy val smoking = projectMatrix
+  .in(file("modules/smoking"))
+  .dependsOn(`aws-http4s`)
+  .settings(
+    Compile / allowedNamespaces := Seq(
+      "com.amazonaws.cloudwatch"
+    ),
+    genSmithy(Compile),
+    // Ignore deprecation warnings here - it's all generated code, anyway.
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ) ++ scala3MigrationOption(scalaVersion.value),
+    smithy4sDependencies +=
+      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
+    libraryDependencies += Dependencies.Http4s.emberClient.value,
+    run / fork := true
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)

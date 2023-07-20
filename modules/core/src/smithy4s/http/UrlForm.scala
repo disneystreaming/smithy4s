@@ -25,6 +25,7 @@ import smithy4s.codecs.PayloadPath.Segment
 import scala.collection.mutable
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.http.internals.UrlFormCursor
+import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 import smithy4s.http.internals.UrlFormDataDecoderSchemaVisitor
 
@@ -186,8 +187,11 @@ object UrlForm {
     def encode(a: A): UrlForm
   }
   object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+    protected type Aux[A] = UrlFormDataEncoder[A]
     def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
-      val urlFormDataEncoder = UrlFormDataEncoderSchemaVisitor(schema)
+      val urlFormDataEncoder = new UrlFormDataEncoderSchemaVisitor(cache)(
+        schema
+      )
       new Encoder[A] {
         def encode(value: A): UrlForm = {
           val formData = urlFormDataEncoder.encode(value)
