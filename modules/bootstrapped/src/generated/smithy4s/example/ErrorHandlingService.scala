@@ -11,7 +11,6 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -106,13 +105,6 @@ object ErrorHandlingServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationError")
 
     val hints: Hints = Hints.empty
-
-    object Optics {
-      val EHFallbackClientError = Prism.partial[ErrorHandlingOperationError, EHFallbackClientError]{ case EHFallbackClientErrorCase(t) => t }(EHFallbackClientErrorCase.apply)
-      val EHServiceUnavailable = Prism.partial[ErrorHandlingOperationError, EHServiceUnavailable]{ case EHServiceUnavailableCase(t) => t }(EHServiceUnavailableCase.apply)
-      val EHNotFound = Prism.partial[ErrorHandlingOperationError, EHNotFound]{ case EHNotFoundCase(t) => t }(EHNotFoundCase.apply)
-      val EHFallbackServerError = Prism.partial[ErrorHandlingOperationError, EHFallbackServerError]{ case EHFallbackServerErrorCase(t) => t }(EHFallbackServerErrorCase.apply)
-    }
 
     final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError
     final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError

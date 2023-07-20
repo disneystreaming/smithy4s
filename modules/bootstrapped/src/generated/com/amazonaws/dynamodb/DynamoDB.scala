@@ -10,7 +10,6 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -164,11 +163,6 @@ object DynamoDBOperation {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesError")
 
     val hints: Hints = Hints.empty
-
-    object Optics {
-      val InternalServerError = Prism.partial[ListTablesError, InternalServerError]{ case InternalServerErrorCase(t) => t }(InternalServerErrorCase.apply)
-      val InvalidEndpointException = Prism.partial[ListTablesError, InvalidEndpointException]{ case InvalidEndpointExceptionCase(t) => t }(InvalidEndpointExceptionCase.apply)
-    }
 
     final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError
     final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError

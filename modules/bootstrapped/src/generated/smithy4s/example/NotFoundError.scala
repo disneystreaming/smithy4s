@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -17,10 +16,6 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
   )
-
-  object Optics {
-    val name = Lens[NotFoundError, String](_.name)(n => a => a.copy(name = n))
-  }
 
   implicit val schema: Schema[NotFoundError] = struct(
     string.required[NotFoundError]("name", _.name).addHints(smithy.api.Required()),

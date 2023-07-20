@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -15,10 +14,6 @@ object GetWeatherOutput extends ShapeTag.Companion[GetWeatherOutput] {
   val hints: Hints = Hints(
     smithy.api.Output(),
   )
-
-  object Optics {
-    val weather = Lens[GetWeatherOutput, String](_.weather)(n => a => a.copy(weather = n))
-  }
 
   implicit val schema: Schema[GetWeatherOutput] = struct(
     string.required[GetWeatherOutput]("weather", _.weather).addHints(smithy.api.Required()),

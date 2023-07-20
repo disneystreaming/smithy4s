@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -22,11 +21,6 @@ object Endpoint extends ShapeTag.Companion[Endpoint] {
   val hints: Hints = Hints(
     smithy.api.Documentation("<p>An endpoint information details.</p>"),
   )
-
-  object Optics {
-    val address = Lens[Endpoint, String](_.address)(n => a => a.copy(address = n))
-    val cachePeriodInMinutes = Lens[Endpoint, Long](_.cachePeriodInMinutes)(n => a => a.copy(cachePeriodInMinutes = n))
-  }
 
   implicit val schema: Schema[Endpoint] = struct(
     string.required[Endpoint]("Address", _.address).addHints(smithy.api.Documentation("<p>IP address of the endpoint.</p>"), smithy.api.Required()),

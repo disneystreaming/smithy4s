@@ -33,7 +33,7 @@ trait Lens[S, A] extends Optional[S, A] { self =>
   def replace(a: A): S => S
 
   /** Retrieve the target of the [[Lens]] as an Optional (implemented to conform to [[Optional]]) */
-  final def getOption(s: S): Option[A] = Some(get(s))
+  final def project(s: S): Option[A] = Some(get(s))
 
   /** Modify the target of the [[Lens]] with a function from A => A */
   override final def modify(f: A => A): S => S =
@@ -65,15 +65,18 @@ trait Lens[S, A] extends Optional[S, A] { self =>
     )
 
   private[this] final def adapt[A0](implicit
-      evA: A =:= A0
+      @annotation.unused evA: A =:= A0
   ): Lens[S, A0] =
-    evA.substituteCo[Lens[S, *]](this)
+    // safe due to A =:= A0
+    this.asInstanceOf[Lens[S, A0]]
 
   /**
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
    * or other type with an implicit [[Bijection]] available.
    */
-  final def value[A0](implicit bijection: Bijection[A0, A]): Lens[S, A0] =
+  final override def value[A0](implicit
+      bijection: Bijection[A0, A]
+  ): Lens[S, A0] =
     new Lens[S, A0] {
       def get(s: S): A0 = bijection.from(self.get(s))
       def replace(a: A0): S => S = self.replace(bijection.to(a))

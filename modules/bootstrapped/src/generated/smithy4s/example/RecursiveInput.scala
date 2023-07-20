@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.struct
 
@@ -13,10 +12,6 @@ object RecursiveInput extends ShapeTag.Companion[RecursiveInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveInput")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val hello = Lens[RecursiveInput, Option[smithy4s.example.RecursiveInput]](_.hello)(n => a => a.copy(hello = n))
-  }
 
   implicit val schema: Schema[RecursiveInput] = recursive(struct(
     smithy4s.example.RecursiveInput.schema.optional[RecursiveInput]("hello", _.hello),

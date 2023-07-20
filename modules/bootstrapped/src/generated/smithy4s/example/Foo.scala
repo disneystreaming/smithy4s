@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bigdecimal
 import smithy4s.schema.Schema.bigint
 import smithy4s.schema.Schema.bijection
@@ -25,13 +24,6 @@ object Foo extends ShapeTag.Companion[Foo] {
   val hints: Hints = Hints(
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
-
-  object Optics {
-    val int = Prism.partial[Foo, Int]{ case IntCase(t) => t }(IntCase.apply)
-    val str = Prism.partial[Foo, String]{ case StrCase(t) => t }(StrCase.apply)
-    val bInt = Prism.partial[Foo, BigInt]{ case BIntCase(t) => t }(BIntCase.apply)
-    val bDec = Prism.partial[Foo, BigDecimal]{ case BDecCase(t) => t }(BDecCase.apply)
-  }
 
   final case class IntCase(int: Int) extends Foo
   /** this is a comment saying you should be careful for this case

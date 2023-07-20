@@ -7,8 +7,8 @@ final class CompositionSpec extends FunSuite {
 
   test("Lens transformation and composition") {
     val input = EchoInput("test", EchoBody(Some("test body")))
-    val lens = EchoInput.Optics.body.andThen(EchoBody.Optics.data).some
-    val resultGet = lens.getOption(input)
+    val lens = EchoInput.Optics.bodyLens.andThen(EchoBody.Optics.dataLens).some
+    val resultGet = lens.project(input)
 
     val resultSet =
       lens.replace("new body")(input)
@@ -21,7 +21,8 @@ final class CompositionSpec extends FunSuite {
   test("Prism transformation and composition") {
     val input = Podcast.Video(Some("Pod Title"))
 
-    val prism = Podcast.Optics.video.andThen(Podcast.Video.Optics.title).some
+    val prism =
+      Podcast.Optics.videoPrism.andThen(Podcast.Video.Optics.titleLens).some
     val result = prism.replace("New Pod Title")(input)
 
     assertEquals(Podcast.Video(Some("New Pod Title")).widen, result)
@@ -38,13 +39,13 @@ final class CompositionSpec extends FunSuite {
       )
     )
 
-    val pizzaName = AddMenuItemRequest.Optics.menuItem
-      .andThen(MenuItem.Optics.food)
-      .andThen(Food.Optics.pizza)
-      .andThen(Pizza.Optics.name)
+    val pizzaName = AddMenuItemRequest.Optics.menuItemLens
+      .andThen(MenuItem.Optics.foodLens)
+      .andThen(Food.Optics.pizzaPrism)
+      .andThen(Pizza.Optics.nameLens)
     val updated = pizzaName.replace("Fancy New Name")(input)
 
-    val result = pizzaName.getOption(updated)
+    val result = pizzaName.project(updated)
 
     assertEquals(Option("Fancy New Name"), result)
   }
@@ -52,11 +53,11 @@ final class CompositionSpec extends FunSuite {
   test("enum prisms") {
     val input = Pizza("Cheese", PizzaBase.TOMATO, List(Ingredient.CHEESE))
 
-    val base = Pizza.Optics.base.andThen(PizzaBase.Optics.TOMATO)
-    val baseCream = Pizza.Optics.base.andThen(PizzaBase.Optics.CREAM)
+    val base = Pizza.Optics.baseLens.andThen(PizzaBase.Optics.TOMATOPrism)
+    val baseCream = Pizza.Optics.baseLens.andThen(PizzaBase.Optics.CREAMPrism)
 
-    val result = base.getOption(input)
-    val result2 = baseCream.getOption(input)
+    val result = base.project(input)
+    val result2 = baseCream.project(input)
 
     assertEquals(Option(PizzaBase.TOMATO), result)
     assertEquals(Option.empty[PizzaBase.CREAM.type], result2)
@@ -65,10 +66,11 @@ final class CompositionSpec extends FunSuite {
   test("lens composition newtypes") {
     val input = GetCityInput(CityId("test"))
 
-    val cityName: Lens[GetCityInput, String] = GetCityInput.Optics.cityId.value
+    val cityName: Lens[GetCityInput, String] =
+      GetCityInput.Optics.cityIdLens.value
     val updated = cityName.replace("Fancy New Name")(input)
 
-    val result = cityName.getOption(updated)
+    val result = cityName.project(updated)
 
     assertEquals(Option("Fancy New Name"), result)
   }
@@ -77,10 +79,10 @@ final class CompositionSpec extends FunSuite {
     val input = PersonContactInfo.EmailCase(PersonEmail("test@test.com"))
 
     val emailPrism: Prism[PersonContactInfo, String] =
-      PersonContactInfo.Optics.email.value
+      PersonContactInfo.Optics.emailPrism.value
     val updated = emailPrism.replace("other@other.com")(input)
 
-    val result = emailPrism.getOption(updated)
+    val result = emailPrism.project(updated)
 
     assertEquals(Option("other@other.com"), result)
   }
@@ -94,10 +96,10 @@ final class CompositionSpec extends FunSuite {
       TopLevel(PersonContactInfo.EmailCase(PersonEmail("test@test.com")))
 
     val emailOpt: Optional[TopLevel, String] =
-      topLevel.andThen(PersonContactInfo.Optics.email.value)
+      topLevel.andThen(PersonContactInfo.Optics.emailPrism).value
     val updated = emailOpt.replace("other@other.com")(input)
 
-    val result = emailOpt.getOption(updated)
+    val result = emailOpt.project(updated)
 
     assertEquals(Option("other@other.com"), result)
   }

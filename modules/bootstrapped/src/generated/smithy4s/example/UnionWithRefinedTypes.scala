@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -15,11 +14,6 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
   val id: ShapeId = ShapeId("smithy4s.example", "UnionWithRefinedTypes")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val age = Prism.partial[UnionWithRefinedTypes, Age]{ case AgeCase(t) => t }(AgeCase.apply)
-    val dogName = Prism.partial[UnionWithRefinedTypes, smithy4s.refined.Name]{ case DogNameCase(t) => t }(DogNameCase.apply)
-  }
 
   final case class AgeCase(age: Age) extends UnionWithRefinedTypes
   final case class DogNameCase(dogName: smithy4s.refined.Name) extends UnionWithRefinedTypes

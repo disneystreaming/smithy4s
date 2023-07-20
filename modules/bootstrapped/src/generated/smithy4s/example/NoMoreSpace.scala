@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -23,11 +22,6 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(507),
   )
-
-  object Optics {
-    val message = Lens[NoMoreSpace, String](_.message)(n => a => a.copy(message = n))
-    val foo = Lens[NoMoreSpace, Option[Foo]](_.foo)(n => a => a.copy(foo = n))
-  }
 
   implicit val schema: Schema[NoMoreSpace] = struct(
     string.required[NoMoreSpace]("message", _.message).addHints(smithy.api.Required()),

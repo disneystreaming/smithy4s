@@ -24,8 +24,8 @@ object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBas
   val hints: Hints = Hints.empty
 
   object Optics {
-    val CREAM = Prism.partial[PizzaBase, PizzaBase.CREAM.type]{ case PizzaBase.CREAM => PizzaBase.CREAM }(identity)
-    val TOMATO = Prism.partial[PizzaBase, PizzaBase.TOMATO.type]{ case PizzaBase.TOMATO => PizzaBase.TOMATO }(identity)
+    val CREAMPrism = Prism.partial[PizzaBase, PizzaBase.CREAM.type]{ case PizzaBase.CREAM => PizzaBase.CREAM }(identity)
+    val TOMATOPrism = Prism.partial[PizzaBase, PizzaBase.TOMATO.type]{ case PizzaBase.TOMATO => PizzaBase.TOMATO }(identity)
   }
 
   case object CREAM extends PizzaBase("C", "CREAM", 0, Hints())

@@ -4,8 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -24,12 +22,6 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
   )
 
-  object Optics {
-    val online = Prism.partial[OrderType, OrderNumber]{ case OnlineCase(t) => t }(OnlineCase.apply)
-    val inStore = Prism.partial[OrderType, InStoreOrder]{ case t: InStoreOrder => t }(identity)
-    val preview = Prism.partial[OrderType, PreviewCase.type]{ case t: PreviewCase.type => t }(identity)
-  }
-
   final case class OnlineCase(online: OrderNumber) extends OrderType
   /** For an InStoreOrder a location ID isn't needed */
   final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
@@ -39,11 +31,6 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val hints: Hints = Hints(
       smithy.api.Documentation("For an InStoreOrder a location ID isn\'t needed"),
     )
-
-    object Optics {
-      val id = Lens[InStoreOrder, OrderNumber](_.id)(n => a => a.copy(id = n))
-      val locationId = Lens[InStoreOrder, Option[String]](_.locationId)(n => a => a.copy(locationId = n))
-    }
 
     val schema: Schema[InStoreOrder] = struct(
       OrderNumber.schema.required[InStoreOrder]("id", _.id).addHints(smithy.api.Required()),

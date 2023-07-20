@@ -12,14 +12,12 @@ final case class EchoInput(pathParam: String, body: EchoBody, queryParam: Option
 object EchoInput extends ShapeTag.Companion[EchoInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "EchoInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
-  )
+  val hints: Hints = Hints.empty
 
   object Optics {
-    val pathParam = Lens[EchoInput, String](_.pathParam)(n => a => a.copy(pathParam = n))
-    val body = Lens[EchoInput, EchoBody](_.body)(n => a => a.copy(body = n))
-    val queryParam = Lens[EchoInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))
+    val pathParamLens = Lens[EchoInput, String](_.pathParam)(n => a => a.copy(pathParam = n))
+    val bodyLens = Lens[EchoInput, EchoBody](_.body)(n => a => a.copy(body = n))
+    val queryParamLens = Lens[EchoInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))
   }
 
   implicit val schema: Schema[EchoInput] = struct(

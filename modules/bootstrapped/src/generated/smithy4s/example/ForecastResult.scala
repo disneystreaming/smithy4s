@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -15,11 +14,6 @@ object ForecastResult extends ShapeTag.Companion[ForecastResult] {
   val id: ShapeId = ShapeId("smithy4s.example", "ForecastResult")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val rain = Prism.partial[ForecastResult, ChanceOfRain]{ case RainCase(t) => t }(RainCase.apply)
-    val sun = Prism.partial[ForecastResult, UVIndex]{ case SunCase(t) => t }(SunCase.apply)
-  }
 
   final case class RainCase(rain: ChanceOfRain) extends ForecastResult
   final case class SunCase(sun: UVIndex) extends ForecastResult

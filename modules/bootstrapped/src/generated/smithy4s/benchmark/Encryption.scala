@@ -5,7 +5,6 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.Timestamp
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
@@ -15,12 +14,6 @@ object Encryption extends ShapeTag.Companion[Encryption] {
   val id: ShapeId = ShapeId("smithy4s.benchmark", "Encryption")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val user = Lens[Encryption, Option[String]](_.user)(n => a => a.copy(user = n))
-    val date = Lens[Encryption, Option[Timestamp]](_.date)(n => a => a.copy(date = n))
-    val metadata = Lens[Encryption, Option[EncryptionMetadata]](_.metadata)(n => a => a.copy(metadata = n))
-  }
 
   implicit val schema: Schema[Encryption] = struct(
     string.optional[Encryption]("user", _.user),

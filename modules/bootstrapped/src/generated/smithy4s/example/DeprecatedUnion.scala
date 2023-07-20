@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.constant
 import smithy4s.schema.Schema.string
@@ -20,13 +19,6 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
-
-  object Optics {
-    val s = Prism.partial[DeprecatedUnion, String]{ case SCase(t) => t }(SCase.apply)
-    val s_V2 = Prism.partial[DeprecatedUnion, String]{ case S_V2Case(t) => t }(S_V2Case.apply)
-    val p = Prism.partial[DeprecatedUnion, DeprecatedUnionProductCase]{ case t: DeprecatedUnionProductCase => t }(identity)
-    val p2 = Prism.partial[DeprecatedUnion, UnionProductCaseDeprecatedAtCallSite]{ case t: UnionProductCaseDeprecatedAtCallSite => t }(identity)
-  }
 
   @deprecated(message = "N/A", since = "N/A")
   final case class SCase(s: String) extends DeprecatedUnion

@@ -5,7 +5,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -22,10 +21,6 @@ object UnknownServerErrorCode extends Enumeration[UnknownServerErrorCode] with S
   val id: ShapeId = ShapeId("smithy4s.example", "UnknownServerErrorCode")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val ERROR_CODE = Prism.partial[UnknownServerErrorCode, UnknownServerErrorCode.ERROR_CODE.type]{ case UnknownServerErrorCode.ERROR_CODE => UnknownServerErrorCode.ERROR_CODE }(identity)
-  }
 
   case object ERROR_CODE extends UnknownServerErrorCode("server.error", "ERROR_CODE", 0, Hints())
 

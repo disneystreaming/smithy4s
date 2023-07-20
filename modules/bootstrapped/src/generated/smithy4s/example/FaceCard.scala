@@ -5,7 +5,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -25,14 +24,6 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
   val hints: Hints = Hints(
     smithy.api.Documentation("FaceCard types"),
   )
-
-  object Optics {
-    val JACK = Prism.partial[FaceCard, FaceCard.JACK.type]{ case FaceCard.JACK => FaceCard.JACK }(identity)
-    val QUEEN = Prism.partial[FaceCard, FaceCard.QUEEN.type]{ case FaceCard.QUEEN => FaceCard.QUEEN }(identity)
-    val KING = Prism.partial[FaceCard, FaceCard.KING.type]{ case FaceCard.KING => FaceCard.KING }(identity)
-    val ACE = Prism.partial[FaceCard, FaceCard.ACE.type]{ case FaceCard.ACE => FaceCard.ACE }(identity)
-    val JOKER = Prism.partial[FaceCard, FaceCard.JOKER.type]{ case FaceCard.JOKER => FaceCard.JOKER }(identity)
-  }
 
   case object JACK extends FaceCard("JACK", "JACK", 1, Hints())
   case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints())

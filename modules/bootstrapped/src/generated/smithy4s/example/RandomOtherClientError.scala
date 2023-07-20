@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -17,10 +16,6 @@ object RandomOtherClientError extends ShapeTag.Companion[RandomOtherClientError]
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
-
-  object Optics {
-    val message = Lens[RandomOtherClientError, Option[String]](_.message)(n => a => a.copy(message = n))
-  }
 
   implicit val schema: Schema[RandomOtherClientError] = struct(
     string.optional[RandomOtherClientError]("message", _.message),

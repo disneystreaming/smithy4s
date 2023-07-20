@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 final case class MapInput(value: Map[String, String])
@@ -14,10 +13,6 @@ object MapInput extends ShapeTag.Companion[MapInput] {
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
-
-  object Optics {
-    val value = Lens[MapInput, Map[String, String]](_.value)(n => a => a.copy(value = n))
-  }
 
   implicit val schema: Schema[MapInput] = struct(
     MyMap.underlyingSchema.required[MapInput]("value", _.value).addHints(smithy.api.Required()),

@@ -10,7 +10,6 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -104,10 +103,6 @@ object NameCollisionOperation {
     val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
 
     val hints: Hints = Hints.empty
-
-    object Optics {
-      val MyOpError = Prism.partial[MyOpError, smithy4s.example.MyOpError]{ case MyOpErrorCase(t) => t }(MyOpErrorCase.apply)
-    }
 
     final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError
 

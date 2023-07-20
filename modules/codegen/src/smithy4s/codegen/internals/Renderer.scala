@@ -619,15 +619,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
-  private def renderLenses(product: Product): Lines = if (
-    compilationUnit.rendererConfig.renderOptics && product.fields.nonEmpty
+  private def renderLenses(product: Product, hints: List[Hint]): Lines = if (
+    (compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )) && product.fields.nonEmpty
   ) {
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
       val fieldType =
         if (field.required) Line.required(line"${field.tpe}", None)
         else Line.optional(line"${field.tpe}")
-      line"val ${field.name} = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
+      line"val ${field.name}Lens = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
     obj(product.nameRef.copy(name = "Optics"))(lenses) ++
       newline
@@ -675,7 +677,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
-        renderLenses(product),
+        renderLenses(product, hints),
         if (fields.nonEmpty) {
           val renderedFields =
             fields.map { case Field(fieldName, realName, tpe, required, hints) =>
@@ -873,20 +875,25 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderPrisms(
       unionName: NameRef,
-      alts: NonEmptyList[Alt]
-  ): Lines = if (compilationUnit.rendererConfig.renderOptics) {
+      alts: NonEmptyList[Alt],
+      hints: List[Hint]
+  ): Lines = if (
+    compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )
+  ) {
     val smithyPrism = NameRef("smithy4s.optics.Prism")
     val altLines = alts.map { alt =>
       alt.member match {
         case UnionMember.ProductCase(p) =>
           val (mat, tpe) = (p.nameDef, line"${p.name}")
-          line"val ${alt.name} = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
+          line"val ${alt.name}Prism = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
         case UnionMember.TypeCase(t) =>
           val (mat, tpe) = (caseName(alt), line"$t")
-          line"val ${alt.name} = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
+          line"val ${alt.name}Prism = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
         case UnionMember.UnitCase =>
           val (mat, tpe) = (caseName(alt), line"${caseName(alt)}")
-          line"val ${alt.name} = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
+          line"val ${alt.name}Prism = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
       }
     }
 
@@ -896,12 +903,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderPrismsEnum(
       enumName: NameRef,
-      values: List[EnumValue]
-  ): Lines = if (compilationUnit.rendererConfig.renderOptics) {
+      values: List[EnumValue],
+      hints: List[Hint]
+  ): Lines = if (
+    compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )
+  ) {
     val smithyPrism = NameRef("smithy4s.optics.Prism")
     val valueLines = values.map { value =>
       val (mat, tpe) = (value.name, line"${value.name}")
-      line"val ${value.name} = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
+      line"val ${value.name}Prism = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
     }
 
     obj(enumName.copy(name = "Optics"))(valueLines) ++
@@ -939,7 +951,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
-        renderPrisms(name, alts),
+        renderPrisms(name, alts, hints),
         alts.map {
           case a @ Alt(_, realName, UnionMember.UnitCase, altHints) =>
             val cn = caseName(a)
@@ -1078,7 +1090,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsVal(hints),
       newline,
-      renderPrismsEnum(name, values),
+      renderPrismsEnum(name, values, hints),
       values.map { case e @ EnumValue(value, intValue, _, hints) =>
         val valueName = NameRef(e.name)
         val valueHints = line"$Hints_(${memberHints(e.hints)})"

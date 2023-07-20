@@ -7,23 +7,23 @@ import smithy4s.example.Podcast
 final class PrismSpec extends FunSuite {
 
   test("round trip") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Optics.videoPrism
     val v = Podcast.Video(Some("My Title"))
     val result =
-      prism.getOption(prism.project(v))
+      prism.project(prism.inject(v))
     assertEquals(Option(v), result)
   }
 
   test("round trip - empty") {
-    val prism = Podcast.Optics.audio
+    val prism = Podcast.Optics.audioPrism
     val v: Podcast = Podcast.Video(Some("My Title"))
     val result =
-      prism.getOption(v).map(prism.project)
+      prism.project(v).map(prism.inject)
     assertEquals(Option.empty[Podcast], result)
   }
 
   test("modify identity") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Optics.videoPrism
     val v = Podcast.Video(Some("My Title"))
     val result =
       prism.modify(identity)(v)
@@ -31,7 +31,7 @@ final class PrismSpec extends FunSuite {
   }
 
   test("modify compose") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Optics.videoPrism
     val v = Podcast.Video(Some("My Title"))
     val f: Podcast.Video => Podcast.Video = _.copy(title = Some("Title 2"))
     val g: Podcast.Video => Podcast.Video = _.copy(title = Some("Title 3"))
@@ -43,7 +43,7 @@ final class PrismSpec extends FunSuite {
   }
 
   test("modify == replace") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Optics.videoPrism
     val v = Podcast.Video(Some("My Title"))
     val v2 = Podcast.Video(Some("My Title 2"))
     val resultOne =
@@ -62,17 +62,17 @@ final class PrismSpec extends FunSuite {
   val s =
     Prism[IntOrString, String] { case S(s) => Some(s); case _ => None }(S.apply)
 
-  test("getOption") {
-    assertEquals(i.getOption(I(1)), Option(I(1)))
-    assertEquals(i.getOption(S("")), None)
+  test("project") {
+    assertEquals(i.project(I(1)), Option(I(1)))
+    assertEquals(i.project(S("")), None)
 
-    assertEquals(s.getOption(S("hello")), Some("hello"))
-    assertEquals(s.getOption(I(10)), None)
+    assertEquals(s.project(S("hello")), Some("hello"))
+    assertEquals(s.project(I(10)), None)
   }
 
   test("project") {
-    assertEquals(i.project(I(3)), I(3))
-    assertEquals(s.project("Yop"), S("Yop"))
+    assertEquals(i.inject(I(3)), I(3))
+    assertEquals(s.inject("Yop"), S("Yop"))
   }
 
   test("some") {
@@ -82,7 +82,7 @@ final class PrismSpec extends FunSuite {
     val prism =
       Prism[SomeTest, Option[Int]](i => Some(i.y))(SomeTest.apply)
 
-    assertEquals(prism.some.getOption(obj), Some(2))
+    assertEquals(prism.some.project(obj), Some(2))
   }
 
 }

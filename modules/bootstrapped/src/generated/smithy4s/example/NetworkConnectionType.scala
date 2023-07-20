@@ -6,7 +6,6 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.interopcats.SchemaVisitorHash
-import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -25,11 +24,6 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
   )
-
-  object Optics {
-    val ETHERNET = Prism.partial[NetworkConnectionType, NetworkConnectionType.ETHERNET.type]{ case NetworkConnectionType.ETHERNET => NetworkConnectionType.ETHERNET }(identity)
-    val WIFI = Prism.partial[NetworkConnectionType, NetworkConnectionType.WIFI.type]{ case NetworkConnectionType.WIFI => NetworkConnectionType.WIFI }(identity)
-  }
 
   case object ETHERNET extends NetworkConnectionType("ETHERNET", "ETHERNET", 0, Hints())
   case object WIFI extends NetworkConnectionType("WIFI", "WIFI", 1, Hints())

@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -14,11 +13,6 @@ object ListCitiesInput extends ShapeTag.Companion[ListCitiesInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "ListCitiesInput")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val nextToken = Lens[ListCitiesInput, Option[String]](_.nextToken)(n => a => a.copy(nextToken = n))
-    val pageSize = Lens[ListCitiesInput, Option[Int]](_.pageSize)(n => a => a.copy(pageSize = n))
-  }
 
   implicit val schema: Schema[ListCitiesInput] = struct(
     string.optional[ListCitiesInput]("nextToken", _.nextToken),

@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -13,10 +12,6 @@ object GetMenuRequest extends ShapeTag.Companion[GetMenuRequest] {
   val id: ShapeId = ShapeId("smithy4s.example", "GetMenuRequest")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val restaurant = Lens[GetMenuRequest, String](_.restaurant)(n => a => a.copy(restaurant = n))
-  }
 
   implicit val schema: Schema[GetMenuRequest] = struct(
     string.required[GetMenuRequest]("restaurant", _.restaurant).addHints(smithy.api.HttpLabel(), smithy.api.Required()),

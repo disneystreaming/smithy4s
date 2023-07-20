@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 /** @param Endpoints
@@ -15,10 +14,6 @@ object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsRes
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsResponse")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val endpoints = Lens[DescribeEndpointsResponse, List[Endpoint]](_.endpoints)(n => a => a.copy(endpoints = n))
-  }
 
   implicit val schema: Schema[DescribeEndpointsResponse] = struct(
     Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>"), smithy.api.Required()),

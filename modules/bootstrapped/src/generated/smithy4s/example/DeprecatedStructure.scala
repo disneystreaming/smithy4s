@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -16,12 +15,6 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
-
-  object Optics {
-    val name = Lens[DeprecatedStructure, Option[String]](_.name)(n => a => a.copy(name = n))
-    val nameV2 = Lens[DeprecatedStructure, Option[String]](_.nameV2)(n => a => a.copy(nameV2 = n))
-    val strings = Lens[DeprecatedStructure, Option[List[String]]](_.strings)(n => a => a.copy(strings = n))
-  }
 
   implicit val schema: Schema[DeprecatedStructure] = struct(
     string.optional[DeprecatedStructure]("name", _.name).addHints(smithy.api.Deprecated(message = None, since = None)),

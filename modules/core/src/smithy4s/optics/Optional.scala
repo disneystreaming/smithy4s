@@ -16,12 +16,14 @@
 
 package smithy4s.optics
 
+import smithy4s.Bijection
+
 // inspired by and adapted from https://www.optics.dev/Monocle/ under the MIT license
 
 /**
  * Optional can be seen as the weak intersection between a [[Lens]]
  * and a [[Prism]]. It contains the same `replace` function as a [[Lens]]
- * and the same `getOption` function of a [[Prism]].
+ * and the same `project` function of a [[Prism]].
  */
 trait Optional[S, A] { self =>
 
@@ -29,20 +31,20 @@ trait Optional[S, A] { self =>
    * Returns a [[Some]] of A from S if it is able to obtain an A.
    * Else returns [[None]].
    */
-  def getOption(s: S): Option[A]
+  def project(s: S): Option[A]
 
   /** Provides a function to replace the target of the [[Lens]] */
   def replace(a: A): S => S
 
   /** Modify the target of the [[Optional]] with a function from A => A */
   def modify(f: A => A): S => S =
-    s => getOption(s).fold(s)(a => replace(f(a))(s))
+    s => project(s).fold(s)(a => replace(f(a))(s))
 
   /** Compose this [[Optional]] with another [[Optional]]. */
   final def andThen[A0](that: Optional[A, A0]): Optional[S, A0] =
     new Optional[S, A0] {
-      def getOption(s: S): Option[A0] =
-        self.getOption(s).flatMap(that.getOption)
+      def project(s: S): Option[A0] =
+        self.project(s).flatMap(that.project)
       def replace(a: A0): S => S =
         self.modify(that.replace(a))
     }
@@ -59,7 +61,18 @@ trait Optional[S, A] { self =>
     )
 
   private[this] final def adapt[A0](implicit
-      evA: A =:= A0
+      @annotation.unused evA: A =:= A0
   ): Optional[S, A0] =
-    evA.substituteCo[Optional[S, *]](this)
+    // safe due to A =:= A0
+    this.asInstanceOf[Optional[S, A0]]
+
+  /**
+   * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
+   * or other type with an implicit [[Bijection]] available.
+   */
+  def value[A0](implicit bijection: Bijection[A0, A]): Optional[S, A0] =
+    new Optional[S, A0] {
+      def project(s: S): Option[A0] = self.project(s).map(bijection.from(_))
+      def replace(a: A0): S => S = self.replace(bijection.to(a))
+    }
 }

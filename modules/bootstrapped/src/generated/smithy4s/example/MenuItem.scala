@@ -15,8 +15,8 @@ object MenuItem extends ShapeTag.Companion[MenuItem] {
   val hints: Hints = Hints.empty
 
   object Optics {
-    val food = Lens[MenuItem, Food](_.food)(n => a => a.copy(food = n))
-    val price = Lens[MenuItem, Float](_.price)(n => a => a.copy(price = n))
+    val foodLens = Lens[MenuItem, Food](_.food)(n => a => a.copy(food = n))
+    val priceLens = Lens[MenuItem, Float](_.price)(n => a => a.copy(price = n))
   }
 
   implicit val schema: Schema[MenuItem] = struct(

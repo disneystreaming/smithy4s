@@ -3,6 +3,7 @@ $version: "2"
 namespace smithy4s.example
 
 use alloy#simpleRestJson
+use smithy4s.meta#generateOptics
 
 @simpleRestJson
 service PizzaAdminService {
@@ -148,6 +149,7 @@ map Menu {
     value: MenuItem
 }
 
+@generateOptics
 structure AddMenuItemRequest {
     @httpLabel
     @required
@@ -157,6 +159,7 @@ structure AddMenuItemRequest {
     menuItem: MenuItem
 }
 
+@generateOptics
 structure MenuItem {
     @required
     food: Food
@@ -164,6 +167,7 @@ structure MenuItem {
     price: Float
 }
 
+@generateOptics
 union Food {
     pizza: Pizza
     salad: Salad
@@ -176,6 +180,7 @@ structure Salad {
     ingredients: Ingredients
 }
 
+@generateOptics
 structure Pizza {
     @required
     name: String
@@ -185,11 +190,13 @@ structure Pizza {
     toppings: Ingredients
 }
 
+@generateOptics
 enum PizzaBase {
     CREAM = "C"
     TOMATO = "T"
 }
 
+@generateOptics
 enum Ingredient {
     MUSHROOM = "Mushroom"
     CHEESE = "Cheese"
@@ -333,21 +340,26 @@ operation Reservation {
 
 @http(method: "POST", uri: "/echo/{pathParam}")
 operation Echo {
-    input := {
-        @required
-        @httpLabel
-        @length(min: 10)
-        pathParam: String
-        @httpQuery("queryParam")
-        @length(min: 10)
-        queryParam: String
-        @httpPayload
-        @required
-        body: EchoBody
-    }// this operation must NOT have any errors
+    input: EchoInput
+    // this operation must NOT have any errors
     errors: []
 }
 
+@generateOptics
+structure EchoInput {
+    @required
+    @httpLabel
+    @length(min: 10)
+    pathParam: String
+    @httpQuery("queryParam")
+    @length(min: 10)
+    queryParam: String
+    @httpPayload
+    @required
+    body: EchoBody
+}
+
+@generateOptics
 structure EchoBody {
     @length(min: 10)
     data: String

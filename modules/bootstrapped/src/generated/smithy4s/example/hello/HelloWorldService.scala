@@ -11,7 +11,6 @@ import smithy4s.StreamingSchema
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -108,11 +107,6 @@ object HelloWorldServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloError")
 
     val hints: Hints = Hints.empty
-
-    object Optics {
-      val GenericServerError = Prism.partial[HelloError, GenericServerError]{ case GenericServerErrorCase(t) => t }(GenericServerErrorCase.apply)
-      val SpecificServerError = Prism.partial[HelloError, SpecificServerError]{ case SpecificServerErrorCase(t) => t }(SpecificServerErrorCase.apply)
-    }
 
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError
     final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError

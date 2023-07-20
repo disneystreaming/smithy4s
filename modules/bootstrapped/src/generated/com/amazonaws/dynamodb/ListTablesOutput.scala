@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.struct
 
 /** <p>Represents the output of a <code>ListTables</code> operation.</p>
@@ -27,11 +26,6 @@ object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
   val hints: Hints = Hints(
     smithy.api.Documentation("<p>Represents the output of a <code>ListTables</code> operation.</p>"),
   )
-
-  object Optics {
-    val tableNames = Lens[ListTablesOutput, Option[List[TableName]]](_.tableNames)(n => a => a.copy(tableNames = n))
-    val lastEvaluatedTableName = Lens[ListTablesOutput, Option[TableName]](_.lastEvaluatedTableName)(n => a => a.copy(lastEvaluatedTableName = n))
-  }
 
   implicit val schema: Schema[ListTablesOutput] = struct(
     TableNameList.underlyingSchema.optional[ListTablesOutput]("TableNames", _.tableNames).addHints(smithy.api.Documentation("<p>The names of the tables associated with the current account at the current endpoint. The maximum size of this array is 100.</p>\n         <p>If <code>LastEvaluatedTableName</code> also appears in the output, you can use this value as the\n        <code>ExclusiveStartTableName</code> parameter in a subsequent <code>ListTables</code> request and\n      obtain the next page of results.</p>")),

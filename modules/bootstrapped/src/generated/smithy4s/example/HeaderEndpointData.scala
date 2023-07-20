@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -13,13 +12,6 @@ object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
   val id: ShapeId = ShapeId("smithy4s.example", "HeaderEndpointData")
 
   val hints: Hints = Hints.empty
-
-  object Optics {
-    val uppercaseHeader = Lens[HeaderEndpointData, Option[String]](_.uppercaseHeader)(n => a => a.copy(uppercaseHeader = n))
-    val capitalizedHeader = Lens[HeaderEndpointData, Option[String]](_.capitalizedHeader)(n => a => a.copy(capitalizedHeader = n))
-    val lowercaseHeader = Lens[HeaderEndpointData, Option[String]](_.lowercaseHeader)(n => a => a.copy(lowercaseHeader = n))
-    val mixedHeader = Lens[HeaderEndpointData, Option[String]](_.mixedHeader)(n => a => a.copy(mixedHeader = n))
-  }
 
   implicit val schema: Schema[HeaderEndpointData] = struct(
     string.optional[HeaderEndpointData]("uppercaseHeader", _.uppercaseHeader).addHints(smithy.api.HttpHeader("X-UPPERCASE-HEADER")),

@@ -13,7 +13,6 @@ import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.UnionSchema
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
@@ -107,10 +106,6 @@ object ImportServiceOperation {
     val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportOperationError")
 
     val hints: Hints = Hints.empty
-
-    object Optics {
-      val NotFoundError = Prism.partial[ImportOperationError, NotFoundError]{ case NotFoundErrorCase(t) => t }(NotFoundErrorCase.apply)
-    }
 
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError
 

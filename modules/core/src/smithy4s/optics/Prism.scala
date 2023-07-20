@@ -30,14 +30,14 @@ trait Prism[S, A] extends Optional[S, A] { self =>
    * Returns a [[Some]] of A from S if it is able to obtain an A.
    * Else returns [[None]].
    */
-  def getOption(s: S): Option[A]
+  def project(s: S): Option[A]
 
   /** Returns an S given an A */
-  def project(a: A): S
+  def inject(a: A): S
 
   /** Modify the target of the [[Prism]] with a function from A => A */
   override final def modify(f: A => A): S => S =
-    s => getOption(s).fold(s)(a => project(f(a)))
+    s => project(s).fold(s)(a => inject(f(a)))
 
   /** Provides a function to replace the target of the [[Prism]] */
   def replace(a: A): S => S =
@@ -46,10 +46,10 @@ trait Prism[S, A] extends Optional[S, A] { self =>
   /** Compose this [[Prism]] with another [[Prism]]. */
   final def andThen[A0](that: Prism[A, A0]): Prism[S, A0] =
     new Prism[S, A0] {
-      def getOption(s: S): Option[A0] =
-        self.getOption(s).flatMap(that.getOption)
-      def project(a: A0): S =
-        self.project(that.project(a))
+      def project(s: S): Option[A0] =
+        self.project(s).flatMap(that.project)
+      def inject(a: A0): S =
+        self.inject(that.inject(a))
     }
 
   /** 
@@ -64,18 +64,21 @@ trait Prism[S, A] extends Optional[S, A] { self =>
     )
 
   private[this] final def adapt[A0](implicit
-      evA: A =:= A0
+      @annotation.unused evA: A =:= A0
   ): Prism[S, A0] =
-    evA.substituteCo[Prism[S, *]](this)
+    // safe due to A =:= A0
+    this.asInstanceOf[Prism[S, A0]]
 
   /**
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
    * or other type with an implicit [[Bijection]] available.
    */
-  final def value[A0](implicit bijection: Bijection[A0, A]): Prism[S, A0] =
+  final override def value[A0](implicit
+      bijection: Bijection[A0, A]
+  ): Prism[S, A0] =
     new Prism[S, A0] {
-      def getOption(s: S): Option[A0] = self.getOption(s).map(bijection.from)
-      def project(a: A0): S = self.project(bijection.to(a))
+      def project(s: S): Option[A0] = self.project(s).map(bijection.from)
+      def inject(a: A0): S = self.inject(bijection.to(a))
     }
 }
 
@@ -85,16 +88,16 @@ object Prism {
    * Construct a new [[Prism]] by providing functions for getting
    * an Option[A] from S and getting an S given an A.
    */
-  def apply[S, A](_get: S => Option[A])(_project: A => S): Prism[S, A] =
+  def apply[S, A](_get: S => Option[A])(_inject: A => S): Prism[S, A] =
     new Prism[S, A] {
-      def getOption(s: S): Option[A] = _get(s)
-      def project(a: A): S = _project(a)
+      def project(s: S): Option[A] = _get(s)
+      def inject(a: A): S = _inject(a)
     }
 
   /**
    * Construct a new [[Prism]] with a [[PartialFunction]] to avoid needing
    * to exhaustively handle all possible `S` in the provided get function.
    */
-  def partial[S, A](get: PartialFunction[S, A])(project: A => S): Prism[S, A] =
-    Prism[S, A](get.lift)(project)
+  def partial[S, A](get: PartialFunction[S, A])(inject: A => S): Prism[S, A] =
+    Prism[S, A](get.lift)(inject)
 }

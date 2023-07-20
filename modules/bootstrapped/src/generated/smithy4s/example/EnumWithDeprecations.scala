@@ -5,7 +5,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema.enumeration
 
@@ -27,11 +26,6 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     smithy.api.Documentation("some docs here"),
     smithy.api.Deprecated(message = None, since = None),
   )
-
-  object Optics {
-    val OLD = Prism.partial[EnumWithDeprecations, EnumWithDeprecations.OLD.type]{ case EnumWithDeprecations.OLD => EnumWithDeprecations.OLD }(identity)
-    val NEW = Prism.partial[EnumWithDeprecations, EnumWithDeprecations.NEW.type]{ case EnumWithDeprecations.NEW => EnumWithDeprecations.NEW }(identity)
-  }
 
   @deprecated(message = "N/A", since = "N/A")
   case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints(smithy.api.Deprecated(message = None, since = None)))

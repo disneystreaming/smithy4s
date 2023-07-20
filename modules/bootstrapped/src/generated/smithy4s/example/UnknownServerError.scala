@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -17,12 +16,6 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(500),
   )
-
-  object Optics {
-    val errorCode = Lens[UnknownServerError, UnknownServerErrorCode](_.errorCode)(n => a => a.copy(errorCode = n))
-    val description = Lens[UnknownServerError, Option[String]](_.description)(n => a => a.copy(description = n))
-    val stateHash = Lens[UnknownServerError, Option[String]](_.stateHash)(n => a => a.copy(stateHash = n))
-  }
 
   implicit val schema: Schema[UnknownServerError] = struct(
     UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode).addHints(smithy.api.Required()),

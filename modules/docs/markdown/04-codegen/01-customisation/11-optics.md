@@ -26,8 +26,8 @@ Below is an example of using the lenses that smithy4s generates. By default, smi
 import smithy4s.example._
 
 val input = EchoInput("test", EchoBody(Some("test body")))
-val lens = EchoInput.Optics.body.andThen(EchoBody.Optics.data).some
-val resultGet = lens.getOption(input)
+val lens = EchoInput.Optics.bodyLens.andThen(EchoBody.Optics.dataLens).some
+val resultGet = lens.project(input)
 
 resultGet == Option("test body") // true
 
@@ -46,8 +46,7 @@ import smithy4s.example._
 
 val input = Podcast.Video(Some("Pod Title"))
 
-// Podcast.Optics.video is a Lens and Podcast.Video.Optics.title is a Prism
-val prism = Podcast.Optics.video.andThen(Podcast.Video.Optics.title).some
+val prism = Podcast.Optics.videoPrism.andThen(Podcast.Video.Optics.titleLens).some
 val result = prism.replace("New Pod Title")(input)
 
 Podcast.Video(Some("New Pod Title")) == result // true
@@ -60,10 +59,10 @@ import smithy4s.example._
 
 val input = GetCityInput(CityId("test"))
 
-val cityName: smithy4s.optics.Lens[GetCityInput, String] = GetCityInput.Optics.cityId.value
+val cityName: smithy4s.optics.Lens[GetCityInput, String] = GetCityInput.Optics.cityIdLens.value
 val updated = cityName.replace("Fancy New Name")(input)
 
-val result = cityName.getOption(updated)
+val result = cityName.project(updated)
 
 Option("Fancy New Name") == result // true
 ```
@@ -83,12 +82,12 @@ object MonocleConversions {
   implicit def smithy4sToMonoclePrism[S, A](
       smithy4sPrism: smithy4s.optics.Prism[S, A]
   ): monocle.Prism[S, A] =
-    monocle.Prism(smithy4sPrism.getOption)(smithy4sPrism.project)
+    monocle.Prism(smithy4sPrism.project)(smithy4sPrism.inject)
 
   implicit def smithy4sToMonocleOptional[S, A](
       smithy4sOptional: smithy4s.optics.Optional[S, A]
   ): monocle.Optional[S, A] =
-    monocle.Optional(smithy4sOptional.getOption)(smithy4sOptional.replace)
+    monocle.Optional(smithy4sOptional.project)(smithy4sOptional.replace)
 
 }
 ```
