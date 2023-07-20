@@ -7,7 +7,7 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class EHNotFound(message: Option[String] = None) extends Throwable {
+final case class EHNotFound(message: Option[String] = None) extends scala.util.control.NoStackTrace {
   override def getMessage(): String = message.orNull
 }
 object EHNotFound extends ShapeTag.Companion[EHNotFound] {
