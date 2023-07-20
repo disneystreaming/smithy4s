@@ -204,8 +204,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
    * @return formatted list of scaladoc lines
    */
   private def makeDocLines(
-                            rawLines: List[String]
-                          ): Lines = {
+      rawLines: List[String]
+  ): Lines = {
     lines(
       rawLines
         .mkString_("/** ", "\n  * ", "\n  */")
@@ -215,9 +215,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def documentationAnnotation(
-                                       hints: List[Hint],
-                                       skipMemberDocs: Boolean = false
-                                     ): Lines = {
+      hints: List[Hint],
+      skipMemberDocs: Boolean = false
+  ): Lines = {
     hints
       .collectFirst { case h: Hint.Documentation => h }
       .foldMap { doc =>
@@ -283,12 +283,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderService(
-                             shapeId: ShapeId,
-                             name: String,
-                             ops: List[Operation],
-                             hints: List[Hint],
-                             version: String
-                           ): Lines = {
+      shapeId: ShapeId,
+      name: String,
+      ops: List[Operation],
+      hints: List[Hint],
+      version: String
+  ): Lines = {
 
     val genName: NameDef = NameDef(name + "Gen")
     val genNameRef: NameRef = genName.toNameRef
@@ -476,9 +476,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderOperation(
-                               serviceName: String,
-                               op: Operation
-                             ): Lines = {
+      serviceName: String,
+      op: Operation
+  ): Lines = {
     val params = if (op.input != Type.unit) {
       line"input: ${op.input}"
     } else Line.empty
@@ -563,9 +563,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderStreamingSchemaVal(
-                                        valName: String,
-                                        sField: Option[StreamingField]
-                                      ): Line = sField match {
+      valName: String,
+      sField: Option[StreamingField]
+  ): Line = sField match {
     case Some(StreamingField(name, tpe, hints)) =>
       val mh =
         if (hints.isEmpty) Line.empty
@@ -599,9 +599,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderTypeclasses(
-                                 hints: List[Hint],
-                                 tpe: NameRef
-                               ): Lines = {
+      hints: List[Hint],
+      tpe: NameRef
+  ): Lines = {
     val result = hints.collect { case h: Hint.Typeclass =>
       renderTypeclass(h, tpe)
     }
@@ -609,10 +609,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProductNonMixin(
-                                     product: Product,
-                                     adtParent: Option[NameRef],
-                                     additionalLines: Lines
-                                   ): Lines = {
+      product: Product,
+      adtParent: Option[NameRef],
+      additionalLines: Lines
+  ): Lines = {
     import product._
     val renderedArgs = renderArgs(fields)
     val decl =
@@ -629,7 +629,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||
-                f.name === "message"
+              f.name === "message"
             }
             .filter {
               _.tpe.dealiased == Type.PrimitiveType(Primitive.String)
@@ -706,10 +706,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProductMixin(
-                                  product: Product,
-                                  adtParent: Option[NameRef],
-                                  additionalLines: Lines
-                                ): Lines = {
+      product: Product,
+      adtParent: Option[NameRef],
+      additionalLines: Lines
+  ): Lines = {
     import product._
     val ext = if (mixins.nonEmpty) {
       val mixinExtensions = mixins.map(m => line"$m").intercalate(line" with ")
@@ -723,10 +723,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderProduct(
-                             product: Product,
-                             adtParent: Option[NameRef] = None,
-                             additionalLines: Lines = Lines.empty
-                           ): Lines = {
+      product: Product,
+      adtParent: Option[NameRef] = None,
+      additionalLines: Lines = Lines.empty
+  ): Lines = {
     import product._
     val base =
       if (isMixin)
@@ -798,12 +798,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderErrorAsScala3Union(
-                                        shapeId: ShapeId,
-                                        name: NameRef,
-                                        alts: NonEmptyList[Alt],
-                                        recursive: Boolean,
-                                        hints: List[Hint]
-                                      ) = {
+      shapeId: ShapeId,
+      name: NameRef,
+      alts: NonEmptyList[Alt],
+      recursive: Boolean,
+      hints: List[Hint]
+  ) = {
     // Only Alts with UnionMember.TypeCase are valid for errors
     val members = alts.collect {
       case Alt(altName, _, UnionMember.TypeCase(tpe), _) => altName -> tpe
@@ -841,14 +841,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderUnion(
-                           shapeId: ShapeId,
-                           name: NameRef,
-                           alts: NonEmptyList[Alt],
-                           mixins: List[Type],
-                           recursive: Boolean,
-                           hints: List[Hint],
-                           error: Boolean = false
-                         ): Lines = {
+      shapeId: ShapeId,
+      name: NameRef,
+      alts: NonEmptyList[Alt],
+      mixins: List[Type],
+      recursive: Boolean,
+      hints: List[Hint],
+      error: Boolean = false
+  ): Lines = {
     def caseName(alt: Alt): NameRef = alt.member match {
       case UnionMember.ProductCase(product) => NameRef(product.name)
       case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
@@ -929,11 +929,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         alts.collect {
           case a @ Alt(
-          altName,
-          realName,
-          UnionMember.TypeCase(tpe),
-          altHints
-          ) =>
+                altName,
+                realName,
+                UnionMember.TypeCase(tpe),
+                altHints
+              ) =>
             val cn = caseName(a)
             block(line"object $cn")(
               renderHintsVal(altHints),
@@ -977,9 +977,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def fieldToRenderLine(
-                                 field: Field,
-                                 noDefault: Boolean = false
-                               ): Line = {
+      field: Field,
+      noDefault: Boolean = false
+  ): Line = {
     field match {
       case Field(name, _, tpe, required, hints) =>
         val line = line"$tpe"
@@ -1006,12 +1006,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     .intercalate(Line.comma)
 
   private def renderEnum(
-                          shapeId: ShapeId,
-                          name: NameRef,
-                          tag: EnumTag,
-                          values: List[EnumValue],
-                          hints: List[Hint]
-                        ): Lines = lines(
+      shapeId: ShapeId,
+      name: NameRef,
+      tag: EnumTag,
+      values: List[EnumValue],
+      hints: List[Hint]
+  ): Lines = lines(
     documentationAnnotation(hints),
     deprecationAnnotation(hints),
     block(
@@ -1051,12 +1051,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   )
 
   private def renderNewtype(
-                             shapeId: ShapeId,
-                             name: NameRef,
-                             tpe: Type,
-                             recursive: Boolean,
-                             hints: List[Hint]
-                           ): Lines = {
+      shapeId: ShapeId,
+      name: NameRef,
+      tpe: Type,
+      recursive: Boolean,
+      hints: List[Hint]
+  ): Lines = {
     val definition =
       if (recursive) line"$recursive_("
       else Line.empty
@@ -1135,23 +1135,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(
-      ns,
-      name,
-      _,
-      false
-      ) =>
+            ns,
+            name,
+            _,
+            false
+          ) =>
         NameRef(ns, s"$name.schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
       case Type.Ref(ns, name) => NameRef(ns, s"$name.schema").toLine
       case e @ Type.ExternalType(
-      _,
-      _,
-      _,
-      maybeProviderImport,
-      underlyingTpe,
-      hint
-      ) =>
+            _,
+            _,
+            _,
+            maybeProviderImport,
+            underlyingTpe,
+            hint
+          ) =>
         line"${underlyingTpe.schemaRef}.refined[${e: Type}](${renderNativeHint(hint)})${maybeProviderImport
           .map { providerImport => Import(providerImport).toLine }
           .getOrElse(Line.empty)}"
