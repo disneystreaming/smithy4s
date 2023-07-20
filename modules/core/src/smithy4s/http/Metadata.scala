@@ -17,6 +17,8 @@
 package smithy4s
 package http
 
+import smithy4s.codecs.Reader
+import smithy4s.kinds.PolyFunction
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataWriter
 import smithy4s.http.internals.SchemaVisitorMetadataReader
@@ -161,13 +163,27 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Decoder[A] {
+  trait Decoder[A] { self =>
     def decode(metadata: Metadata): Either[MetadataError, A]
+
+    final def toReader: Reader[Either[MetadataError, *], Metadata, A] =
+      new Reader[Either[MetadataError, *], Metadata, A] {
+        def read(metadata: Metadata): Either[MetadataError, A] =
+          self.decode(metadata)
+      }
   }
 
-  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false)
-  private[smithy4s] object AwsDecoder
-      extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
+  object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
+    // scalafmt: {maxColumn = 120}
+    def toReaderK: PolyFunction[Decoder, Reader[Either[MetadataError, *], Metadata, *]] =
+      new PolyFunction[Decoder, Reader[Either[MetadataError, *], Metadata, *]] {
+        def apply[A](
+            decoder: Decoder[A]
+        ): Reader[Either[MetadataError, *], Metadata, A] =
+          decoder.toReader
+      }
+  }
+  private[smithy4s] object AwsDecoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedDecoderCompilerImpl(awsHeaderEncoding: Boolean)
       extends CachedSchemaCompiler.DerivingImpl[Decoder] {
@@ -205,8 +221,7 @@ object Metadata {
   }
 
   object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false)
-  private[smithy4s] object AwsEncoder
-      extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
+  private[smithy4s] object AwsEncoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedEncoderCompilerImpl(awsHeaderEncoding: Boolean)
       extends CachedSchemaCompiler.DerivingImpl[Encoder] {
