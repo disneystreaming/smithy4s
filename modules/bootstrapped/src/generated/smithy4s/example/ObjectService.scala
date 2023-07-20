@@ -122,7 +122,9 @@ object ObjectServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class ServerErrorCase(serverError: ServerError) extends PutObjectError
+    def serverError(serverError:ServerError): PutObjectError = ServerErrorCase(serverError)
     final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError
+    def noMoreSpace(noMoreSpace:NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -177,6 +179,7 @@ object ObjectServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class ServerErrorCase(serverError: ServerError) extends GetObjectError
+    def serverError(serverError:ServerError): GetObjectError = ServerErrorCase(serverError)
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty

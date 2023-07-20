@@ -165,7 +165,9 @@ object DynamoDBOperation {
     val hints: Hints = Hints.empty
 
     final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError
+    def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
     final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError
+    def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
 
     object InternalServerErrorCase {
       val hints: Hints = Hints.empty

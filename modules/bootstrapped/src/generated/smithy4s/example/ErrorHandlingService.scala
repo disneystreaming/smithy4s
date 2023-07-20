@@ -107,9 +107,13 @@ object ErrorHandlingServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError
+    def eHFallbackClientError(eHFallbackClientError:EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
     final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError
+    def eHServiceUnavailable(eHServiceUnavailable:EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
     final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError
+    def eHNotFound(eHNotFound:EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
     final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError
+    def eHFallbackServerError(eHFallbackServerError:EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
 
     object EHFallbackClientErrorCase {
       val hints: Hints = Hints.empty

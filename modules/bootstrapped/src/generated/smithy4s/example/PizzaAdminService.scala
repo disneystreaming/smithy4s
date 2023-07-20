@@ -164,8 +164,11 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError
+    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError
+    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError
+    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
 
     object PriceErrorCase {
       val hints: Hints = Hints.empty
@@ -233,9 +236,13 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError
+    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
     final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError
+    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
     final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError
+    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError
+    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
@@ -321,6 +328,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError
+    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -400,6 +408,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError
+    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -447,6 +456,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError
+    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -494,6 +504,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError
+    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
