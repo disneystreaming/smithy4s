@@ -31,7 +31,7 @@ object Payload {
       |ridiculus mus. Sed pretium diam nec massa dignissim tempus. Quisque quis
       |commodo tortor""".stripMargin.trim()
 
-  val loremIpsum = ByteArray(loremIpsumString.getBytes())
+  val loremIpsum = Blob(loremIpsumString.getBytes())
 
   val timestamp = Timestamp
     .parse("2021-03-14T10:11:04Z", TimestampFormat.DATE_TIME)

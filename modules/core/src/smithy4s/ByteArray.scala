@@ -18,6 +18,8 @@ package smithy4s
 
 import java.util.Base64
 
+@deprecated("Use smithy4s.Blob instead", since = "0.18.0")
+@annotation.nowarn("msg=Use smithy4s.Blob instead")
 class ByteArray(val array: Array[Byte]) {
   override def equals(other: Any) = other match {
     case bytes: ByteArray => java.util.Arrays.equals(array, bytes.array)
@@ -37,6 +39,7 @@ class ByteArray(val array: Array[Byte]) {
   override def toString = Base64.getEncoder().encodeToString(array)
 }
 
+@annotation.nowarn("msg=Use smithy4s.Blob instead")
 object ByteArray {
   val empty = new ByteArray(Array.emptyByteArray)
 

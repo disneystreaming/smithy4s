@@ -31,7 +31,7 @@ Smithy provides the following "primitive" types out of the box.
 * Byte
 * BigInteger
 * BigDecimal
-* Blob (`smithy4s.ByteArray`, wrapper to `Array[Byte]`)
+* Blob (`smithy4s.Blob`, wrapper to `Array[Byte]` or `ByteBuffer`)
 * Timestamp (`smithy4s.Timestamp`, translated from/to java or javascript time types)
 * Document (`smithy4s.Document`, a bespoke Json ADT)
 

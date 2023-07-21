@@ -90,7 +90,7 @@ class DocumentEncoderSchemaVisitor(
     case PBigDecimal => from(DNumber(_))
     case PInt        => from(int => DNumber(BigDecimal(int)))
     case PBlob =>
-      from(bytes => DString(Base64.getEncoder().encodeToString(bytes.array)))
+      from(bytes => DString(Base64.getEncoder().encodeToString(bytes.toArray)))
     case PTimestamp =>
       hints
         .get(TimestampFormat)

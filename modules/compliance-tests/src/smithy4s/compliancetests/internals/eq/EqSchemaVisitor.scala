@@ -170,7 +170,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case Primitive.PString     => Eq[String]
       case Primitive.PUUID       => Eq[UUID]
       case Primitive.PByte       => Eq[Byte]
-      case Primitive.PBlob       => Eq[ByteArray]
+      case Primitive.PBlob       => Eq[Blob]
       case Primitive.PDocument   => Eq[Document]
       case Primitive.PTimestamp  => Eq[Timestamp]
     }

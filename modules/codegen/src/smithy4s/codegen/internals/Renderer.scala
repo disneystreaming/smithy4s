@@ -1160,7 +1160,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     private def schemaRefP(primitive: Primitive): String = primitive match {
       case Primitive.Unit       => s"${schemaPkg_}.unit"
-      case Primitive.ByteArray  => s"${schemaPkg_}.bytes"
+      case Primitive.Blob       => s"${schemaPkg_}.bytes"
       case Primitive.Bool       => s"${schemaPkg_}.boolean"
       case Primitive.String     => s"${schemaPkg_}.string"
       case Primitive.Timestamp  => s"${schemaPkg_}.timestamp"
@@ -1311,9 +1311,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
       case Primitive.String => renderStringLiteral
       case Primitive.Byte   => b => line"${b.toString}"
-      case Primitive.ByteArray =>
-        ba =>
-          line"${NameRef("smithy4s", "ByteArray")}(Array(${ba.mkString(", ")}))"
+      case Primitive.Blob =>
+        ba => line"${NameRef("smithy4s", "Blob")}(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
         ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>

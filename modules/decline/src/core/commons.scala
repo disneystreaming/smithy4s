@@ -16,12 +16,11 @@
 
 package smithy4s.decline.core
 
-import smithy4s.Blob
 import cats.Functor
 import smithy4s.capability.Covariant
 import com.monovore.decline.Argument
 import cats.data.Validated.Valid
-import smithy4s.{ByteArray, ConstraintError, Document, Schema}
+import smithy4s.{Blob, ConstraintError, Document, Schema}
 import cats.implicits._
 import cats.MonadError
 
@@ -51,9 +50,9 @@ object commons {
 
     Argument.from("json")(parse(_).toValidatedNel)
   }
-  val byteArrayArgument: Argument[ByteArray] = {
+  val blobArgument: Argument[Blob] = {
     val decoder = Base64.getDecoder
-    Argument.from("base64")(s => Valid(ByteArray(decoder.decode(s))))
+    Argument.from("base64")(s => Valid(Blob(decoder.decode(s))))
   }
 }
 

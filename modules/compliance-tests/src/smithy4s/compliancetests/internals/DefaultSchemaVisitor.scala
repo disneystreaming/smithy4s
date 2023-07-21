@@ -22,7 +22,7 @@ import cats.Id
 import java.util.UUID
 import smithy4s.schema._
 import smithy4s.Timestamp
-import smithy4s.ByteArray
+import smithy4s.Blob
 import smithy4s.schema.Primitive._
 import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId}
 import smithy4s.Document.DNull
@@ -38,7 +38,7 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
     case PFloat      => 0: Float
     case PBigDecimal => 0: BigDecimal
     case PBigInt     => 0: BigInt
-    case PBlob       => ByteArray(Array.emptyByteArray)
+    case PBlob       => Blob(Array.emptyByteArray)
     case PDocument   => DNull
     case PByte       => 0: Byte
     case PInt        => 0

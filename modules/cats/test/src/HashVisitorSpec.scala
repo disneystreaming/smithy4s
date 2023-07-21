@@ -19,7 +19,7 @@ package smithy4s.interopcats
 import cats.Hash
 import smithy4s.schema.Schema._
 import smithy4s.schema.Schema
-import smithy4s.{ByteArray, Hints, ShapeId, Timestamp}
+import smithy4s.{Blob, Hints, ShapeId, Timestamp}
 import smithy4s.interopcats.testcases.FooBar
 import smithy4s.interopcats.testcases._
 import smithy4s.interopcats.testcases.IntOrString._
@@ -105,11 +105,11 @@ object HashVisitorSpec extends FunSuite with CompatProvider {
 
   }
 
-  test("smithy4s ByteArray") {
-    val schema: Schema[ByteArray] = bytes
-    val fooBar = ByteArray("fooBar".getBytes)
+  test("smithy4s Blob") {
+    val schema: Schema[Blob] = blob
+    val fooBar = Blob("fooBar".getBytes)
     val hashOutput = visitor(schema).hash(fooBar)
-    expect.eql(fooBar.array.hashCode(), hashOutput)
+    expect.eql(fooBar.toArray.hashCode(), hashOutput)
   }
 
   test("smithy4s timestamp") {

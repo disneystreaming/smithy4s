@@ -348,12 +348,12 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(roundTripped, FaceCard.JACK)
   }
 
-  implicit val byteArraySchema: Schema[ByteArray] = bytes
+  implicit val blobSchema: Schema[Blob] = blob
 
   test("byte arrays are encoded as base64") {
-    val bytes = ByteArray("foobar".getBytes())
+    val bytes = Blob("foobar".getBytes())
     val bytesJson = writeToString(bytes)
-    val decoded = readFromString[ByteArray](bytesJson)
+    val decoded = readFromString[Blob](bytesJson)
     expect.same(bytesJson, "\"Zm9vYmFy\"")
     expect.same(decoded, bytes)
   }

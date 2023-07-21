@@ -59,7 +59,7 @@ final class DefaultValueSpec extends FunSuite {
   }
 
   test("blob") {
-    testCase(Schema.bytes, ByteArray(Array.empty))
+    testCase(Schema.bytes, Blob(Array.empty[Byte]))
   }
 
   test("timestamp - epoch") {

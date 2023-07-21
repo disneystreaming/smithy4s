@@ -18,7 +18,7 @@ package smithy4s.aws.query
 
 import cats.effect.IO
 import cats.syntax.all._
-import smithy4s.ByteArray
+import smithy4s.Blob
 import smithy4s.Hints
 import smithy4s.schema.Schema
 import smithy4s.schema.CompilationCache
@@ -106,9 +106,9 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
   }
 
   test("primitive: bytes") {
-    implicit val schema: Schema[ByteArray] = bytes
+    implicit val schema: Schema[Blob] = bytes
     val expected = "Zm9vYmFy"
-    checkContent(expected, ByteArray("foobar".getBytes()))
+    checkContent(expected, Blob("foobar".getBytes()))
   }
 
   test("struct") {

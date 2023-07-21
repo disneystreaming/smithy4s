@@ -204,7 +204,7 @@ private[internals] object Primitive {
   type Aux[TT] = Primitive { type T = TT }
 
   case object Unit extends Primitive { type T = Unit }
-  case object ByteArray extends Primitive { type T = Array[Byte] }
+  case object Blob extends Primitive { type T = Array[Byte] }
   case object Bool extends Primitive { type T = Boolean }
   case object String extends Primitive { type T = String }
   case object Timestamp extends Primitive { type T = java.time.Instant }
