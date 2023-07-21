@@ -1,20 +1,32 @@
-
-import com.amazonaws.dynamodb.ArchivalSummary
-import com.amazonaws.dynamodb.BackupArn
-import smithy4s.Timestamp
+import com.amazonaws.dynamodb.DescribeEndpointsResponse
+import com.amazonaws.dynamodb.Endpoint
+import com.amazonaws.dynamodb.ListTablesInput
+import com.amazonaws.dynamodb.ListTablesInputLimit
+import com.amazonaws.dynamodb.TableName
 
 object Main extends App {
 
-  val archivalSummary = new ArchivalSummary(
-    // archivalDateTime needs to be rewritten from a com.amazonaws.dynamodb.Date to a simple timestamp
-    archivalDateTime = Some(Timestamp.fromEpochSecond(java.time.Instant.now().getEpochSecond)),
+  val listTablesInput = new ListTablesInput(
+    // TableName is not flattened because it has
+    // @length and @pattern traits applied
+    exclusiveStartTableName = Some(TableName("example-table-name")),
 
-    // archivalReason needs to be rewritten from com.amazonaws.dynamodb.ArchivalReason to a String
-    archivalReason = Some("This is just a string"),
-
-    // archivalBackupArn remains as a newtype because com.amazonaws.dynamodb.BackupArn
-    // has the @length trait applied
-    archivalBackupArn = Some(BackupArn("this-is-a-back-up-arn-with-a-minimum-length"))
+    // ListTablesInputLimit is not flattened because it has
+    // a @range constraint
+    limit = Some(ListTablesInputLimit(5))
   )
+
+  val describeEndpointsResponse = List(
+    Endpoint(
+      // Endpoint address was flattened from a com.amazonaws.dynamodb#String
+      // to a standard String shape
+      address = "example-endpoint",
+
+      // CachePeriodInMinutes was flattened from a com.amazonaws.dynamodb#Long
+      // to a standard long
+      cachePeriodInMinutes = 5L
+    )
+  )
+
 
 }
