@@ -36,14 +36,14 @@ sealed trait Document extends Product with Serializable {
   override def toString(): String = this.show
 
   def name: String = this match {
-    case DNumber(_)  => "number"
-    case DString(_)  => "string"
-    case DBoolean(_) => "boolean"
-    case DNull       => "null"
+    case DNumber(_)  => "Number"
+    case DString(_)  => "String"
+    case DBoolean(_) => "Boolean"
+    case DNull       => "Null"
     case DArray(value) =>
-      s"array[${value.headOption.map(_.name).getOrElse("null")}]"
+      s"Array[${value.headOption.map(_.name).getOrElse("Null")}]"
     case DObject(map) =>
-      s"object{${map.map { case (k, v) => s"$k=${v.name}" }.mkString(",")}}"
+      s"Object{${map.map { case (k, v) => s"$k=${v.name}" }.mkString(",")}}"
   }
 
   /**
