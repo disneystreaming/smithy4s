@@ -69,6 +69,64 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
     )
   }
 
+  test("Keeps member traits") {
+    val kinesisNamespace =
+      """|$version: "2"
+         |
+         |namespace com.amazonaws.kinesis
+         |
+         |string String
+         |""".stripMargin
+
+    val testNamespace =
+      """
+        |$version: "2"
+        |
+        |namespace test
+        |
+        |structure TestStructure {
+        | @length(min:5, max:10)
+        | s: com.amazonaws.kinesis#String
+        |}
+        |""".stripMargin      
+
+    val transformedModel = 
+      new AwsStandardTypesTransformer()
+        .transform(
+          TransformContext
+            .builder()
+            .model(loadModel(kinesisNamespace, testNamespace))
+            .build()
+        )
+
+    val structureCode = generateScalaCode(transformedModel)("test.TestStructure")
+
+    assertEquals(
+      structureCode,
+      """package test
+        |
+        |import smithy4s.Hints
+        |import smithy4s.Schema
+        |import smithy4s.ShapeId
+        |import smithy4s.ShapeTag
+        |import smithy4s.schema.Schema.string
+        |import smithy4s.schema.Schema.struct
+        |
+        |case class TestStructure(s: Option[String] = None)
+        |object TestStructure extends ShapeTag.Companion[TestStructure] {
+        |  val id: ShapeId = ShapeId("test", "TestStructure")
+        |
+        |  val hints: Hints = Hints.empty
+        |
+        |  implicit val schema: Schema[TestStructure] = struct(
+        |    string.validated(smithy.api.Length(min = Some(5L), max = Some(10L))).optional[TestStructure]("s", _.s),
+        |  ){
+        |    TestStructure.apply
+        |  }.withId(id).addHints(hints)
+        |}""".stripMargin
+    )
+  }
+
   test("Keeps default traits") {
     val kinesisNamespace =
       """|$version: "2"

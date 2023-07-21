@@ -37,24 +37,23 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
       ShapeId.fromParts(smithyStandardNamespace, shapeName)
     }
 
-    shape.asMemberShape()
+    shape
+      .asMemberShape()
       .filter{ memberShape =>
-        model.getShape(memberShape.getTarget)
+        model
+          .getShape(memberShape.getTarget)
           .map[Boolean](canReplace)
           .orElse(false)
       }
-      .flatMap[Shape](shape => {
-        val replacementShape = replaceWith(shape.getTarget)
+      .map[Shape](shape => {
         val target = model.expectShape(shape.getTarget)
+        val replacementShape = replaceWith(shape.getTarget)
 
-        val builder = MemberShape
-          .builder()
-          .id(shape.getId)
-          .source(shape.getSourceLocation)
+        shape
+          .toBuilder()
           .target(replacementShape)
-          .copyDefaultTrait(target, replacementShape)
-
-        java.util.Optional.of(builder.build().asInstanceOf[Shape])
+          .copyDefaultTrait(target)
+          .build()
       })
       .orElse(shape)
   }
@@ -64,14 +63,18 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
 
   private def canReplace(shape: Shape): Boolean = {
     shape.isInstanceOf[SimpleShape] &&
-      isAwsShape(shape) &&
-      onlySupportedTraits(shape.getAllTraits)
+    isAwsShape(shape) &&
+    onlySupportedTraits(shape.getAllTraits)
   }
 
   @annotation.nowarn
-  private def onlySupportedTraits(traits: java.util.Map[ShapeId, Trait]) = traits.values().stream().allMatch(t => {
-      t.isInstanceOf[DefaultTrait] || t.isInstanceOf[BoxTrait]
-  })
+  private def onlySupportedTraits(traits: java.util.Map[ShapeId, Trait]) = 
+    traits
+      .values()
+      .stream()
+      .allMatch(t => {
+        t.isInstanceOf[DefaultTrait] || t.isInstanceOf[BoxTrait]
+      })
 
 }
 
@@ -80,12 +83,11 @@ object AwsStandardTypesTransformer {
   val name: String = "AwsStandardTypesTransformer"
 
   private[transformers] final implicit class MemberShapeBuilderOps(val builder: MemberShape.Builder) extends AnyVal {
-    def copyDefaultTrait(shape: Shape, replacementShape: ShapeId): MemberShape.Builder = {
+    def copyDefaultTrait(shape: Shape): MemberShape.Builder = {
       val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
 
-      defaultTraitOpt.map { df =>
-        new DefaultTrait.Provider().createTrait(replacementShape, df.toNode)
-      }.fold(builder){defaultTrait => builder.addTrait(defaultTrait)}
+      defaultTraitOpt
+        .fold(builder)(builder.addTrait(_))
     }
   }
 
