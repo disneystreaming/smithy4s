@@ -9,10 +9,10 @@ import com.amazonaws.cloudwatch._
 
 object Main extends IOApp.Simple {
 
-  def run = resource.use { case (cloudwatch) =>
+  def run = resource.use { case (cloudWatch) =>
     listAll[ListMetricsOutput, Metric](
       listF = maybeNextToken =>
-        cloudwatch
+        cloudWatch
           .listMetrics(
             namespace = Some("AWS/S3"),
             nextToken = maybeNextToken
@@ -51,8 +51,8 @@ object Main extends IOApp.Simple {
         ),
         IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
       )
-      cloudwatch <- AwsClient(CloudWatch, awsEnv)
-    } yield cloudwatch
+      cloudWatch <- AwsClient(CloudWatch, awsEnv)
+    } yield cloudWatch
 
   // This is probably something that's gonna get reimplemented a lot in
   // user-land. Perhaps we could use pagination hints from the specs to

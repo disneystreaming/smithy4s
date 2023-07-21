@@ -63,7 +63,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  smoking,
+  sandbox,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -884,8 +884,8 @@ lazy val benchmark = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
-lazy val smoking = projectMatrix
-  .in(file("modules/smoking"))
+lazy val sandbox = projectMatrix
+  .in(file("modules/sandbox"))
   .dependsOn(`aws-http4s`)
   .settings(
     Compile / allowedNamespaces := Seq(
