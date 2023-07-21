@@ -21,6 +21,7 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
   }
 
   final case class OneCase(one: OpticsStructure) extends OpticsUnion
+  def one(one:OpticsStructure): OpticsUnion = OneCase(one)
 
   object OneCase {
     val hints: Hints = Hints.empty
