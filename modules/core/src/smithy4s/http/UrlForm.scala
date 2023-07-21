@@ -24,10 +24,8 @@ import smithy4s.codecs.PayloadPath
 import smithy4s.codecs.PayloadPath.Segment
 import scala.collection.mutable
 import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.http.internals.UrlFormCursor
 import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
-import smithy4s.http.internals.UrlFormDataDecoderSchemaVisitor
 
 import smithy4s.schema.Schema
 import Schema._
@@ -168,19 +166,6 @@ object UrlForm {
         MultipleValues(newValues)
       }
     }
-  }
-
-  trait Decoder[A] {
-    def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A]
-  }
-
-  object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
-    def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] =
-      new Decoder[A] {
-        val urlFormDataDecoder = UrlFormDataDecoderSchemaVisitor(schema)
-        def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A] =
-          urlFormDataDecoder.decode(UrlFormCursor.fromUrlForm(urlForm))
-      }
   }
 
   trait Encoder[A] {
