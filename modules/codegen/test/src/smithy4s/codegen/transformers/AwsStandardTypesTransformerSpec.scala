@@ -38,7 +38,8 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     val transformedModel = transformer.transform(transformerContext)
 
-    val structureCode = generateScalaCode(transformedModel)("test.TestStructure")
+    val structureCode =
+      generateScalaCode(transformedModel)("test.TestStructure")
 
     assertEquals(
       structureCode,
@@ -88,9 +89,9 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         | @length(min:5, max:10)
         | s: com.amazonaws.kinesis#String
         |}
-        |""".stripMargin      
+        |""".stripMargin
 
-    val transformedModel = 
+    val transformedModel =
       new AwsStandardTypesTransformer()
         .transform(
           TransformContext
@@ -99,7 +100,8 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
             .build()
         )
 
-    val structureCode = generateScalaCode(transformedModel)("test.TestStructure")
+    val structureCode =
+      generateScalaCode(transformedModel)("test.TestStructure")
 
     assertEquals(
       structureCode,
@@ -159,7 +161,8 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     val transformedModel = transformer.transform(transformerContext)
 
-    val structureCode = generateScalaCode(transformedModel)("test.TestStructure")
+    val structureCode =
+      generateScalaCode(transformedModel)("test.TestStructure")
 
     assertEquals(
       structureCode,
@@ -203,7 +206,11 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     val transformedModel = transformer.transform(transformerContext)
 
-    assert(!transformedModel.getShape(ShapeId.from("com.amazonaws.kinesis#Integer")).isPresent)
+    assert(
+      !transformedModel
+        .getShape(ShapeId.from("com.amazonaws.kinesis#Integer"))
+        .isPresent
+    )
   }
 
   test("Flattens AWS dates") {
@@ -222,7 +229,11 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     val transformedModel = transformer.transform(transformerContext)
 
-    assert(!transformedModel.getShape(ShapeId.from("com.amazonaws.kinesis#Date")).isPresent)
+    assert(
+      !transformedModel
+        .getShape(ShapeId.from("com.amazonaws.kinesis#Date"))
+        .isPresent
+    )
   }
 
   test("Does not flatten types with traits") {
@@ -242,9 +253,12 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
     val transformedModel = transformer.transform(transformerContext)
 
-    assert(transformedModel.getShape(ShapeId.from("com.amazonaws.dynamodb#BackupArn")).isPresent)
+    assert(
+      transformedModel
+        .getShape(ShapeId.from("com.amazonaws.dynamodb#BackupArn"))
+        .isPresent
+    )
   }
-
 
   private def loadModel(namespaces: String*): Model = {
     val assembler = Model
@@ -252,9 +266,10 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
       .disableValidation()
       .discoverModels()
 
-    namespaces.foldLeft(assembler) {case (a, model) =>
-      a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
-    }
+    namespaces
+      .foldLeft(assembler) { case (a, model) =>
+        a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
+      }
       .assemble()
       .unwrap()
   }

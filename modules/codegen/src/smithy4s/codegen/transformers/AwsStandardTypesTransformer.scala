@@ -22,11 +22,15 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
     )
   }
 
-  private def mapFunction(model: Model): java.util.function.Function[Shape, Shape] = shape => {
+  private def mapFunction(
+      model: Model
+  ): java.util.function.Function[Shape, Shape] = shape => {
     def replaceWith(shapeId: ShapeId): ShapeId = {
       val shapeType =
         model
-          .expectShape(shapeId) // this should be safe as we already did some filtering before calling the method
+          .expectShape(
+            shapeId
+          ) // this should be safe as we already did some filtering before calling the method
           .getType
 
       // Use the shape type instead of relying on the name
@@ -39,7 +43,7 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
 
     shape
       .asMemberShape()
-      .filter{ memberShape =>
+      .filter { memberShape =>
         model
           .getShape(memberShape.getTarget)
           .map[Boolean](canReplace)
@@ -68,7 +72,7 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
   }
 
   @annotation.nowarn
-  private def onlySupportedTraits(traits: java.util.Map[ShapeId, Trait]) = 
+  private def onlySupportedTraits(traits: java.util.Map[ShapeId, Trait]) =
     traits
       .values()
       .stream()
@@ -82,7 +86,9 @@ object AwsStandardTypesTransformer {
 
   val name: String = "AwsStandardTypesTransformer"
 
-  private[transformers] final implicit class MemberShapeBuilderOps(val builder: MemberShape.Builder) extends AnyVal {
+  private[transformers] final implicit class MemberShapeBuilderOps(
+      val builder: MemberShape.Builder
+  ) extends AnyVal {
     def copyDefaultTrait(shape: Shape): MemberShape.Builder = {
       val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
 
