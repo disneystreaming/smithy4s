@@ -18,6 +18,18 @@ $version: "2"
 metadata smithy4sRenderOptics = true
 ```
 
+Alternatively, if you want to generate optics for only select shapes in your model, you can accomplish this using
+the `smithy4s.meta#generateOptics` trait. This trait can be used on enum, intEnum, union, and structure shapes.
+
+```kotlin
+use smithy4s.meta#generateOptics
+
+@generateOptics
+structure MyStruct {
+  one: String
+}
+```
+
 ## Optics Usage
 
 Below is an example of using the lenses that smithy4s generates. By default, smithy4s will generate lenses for all structure shapes in your input smithy model(s).
