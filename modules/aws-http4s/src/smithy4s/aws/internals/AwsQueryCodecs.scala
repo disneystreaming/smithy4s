@@ -28,9 +28,7 @@ import smithy4s.xml.XmlDocument
 import org.http4s.MediaRange
 import fs2.data.xml._
 import fs2.data.xml.dom._
-// import smithy4s.codecs._
 import smithy4s.http._
-// import smithy4s.http.internals._
 import smithy4s.http4s.kernel._
 import cats.data.EitherT
 import smithy4s.kinds.PolyFunction
@@ -74,23 +72,6 @@ private[aws] object AwsQueryCodecs {
                 )
               )
             )
-
-        // TODO: Not needed here, but will be needed for an OAuth server
-        // val urlFormEntityDecoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
-        //   UrlForm.Decoder.mapK(
-        //     new PolyFunction[UrlForm.Decoder, EntityDecoder[F, *]] {
-        //       def apply[A](
-        //           fa: UrlForm.Decoder[A]
-        //       ): EntityDecoder[F, A] =
-        //         urlFormEntityDecoder[F].flatMapR(urlForm =>
-        //           EitherT.liftF {
-        //             fa.decode(urlForm)
-        //               .leftMap(fromUrlFormToHttpError)
-        //               .liftTo[F]
-        //           }
-        //         )
-        //     }
-        //   )
 
         val xmlEntityDecoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
           XmlDocument.Decoder.mapK(
@@ -188,7 +169,7 @@ private[aws] object AwsQueryCodecs {
       : EntityDecoder[F, XmlDocument] =
     EntityDecoder.decodeBy(
       MediaRange.parse("application/xml").getOrElse(sys.error("TODO"))
-    ) { media =>
+    )(media =>
       EitherT.liftF(
         media.body
           .through(fs2.text.utf8.decode[F])
@@ -212,23 +193,7 @@ private[aws] object AwsQueryCodecs {
             )
           )
       )
-    }
-
-  // TODO: Not needed here, but will be needed for an OAuth server
-  // private def urlFormEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, UrlForm] = EntityDecoders.fromHttpMediaReader(
-  //   HttpMediaTyped(
-  //     HttpMediaType("application/x-www-form-urlencoded"),
-  //       // TODO: Avoid going to string and back
-  //       // TODO: Make error mapping consistent with elsewhere
-  //       blob => UrlFormParser.parseUrlForm(blob.toUTF8String).left.map(parseFailure =>
-  //         HttpPayloadError(
-  //           PayloadPath.root,
-  //           "",
-  //           parseFailure.message
-  //         )
-  //       )
-  //   )
-  // )
+    )
 
   private def urlFormEntityEncoder[F[_]: Concurrent]
       : EntityEncoder[F, UrlForm] = EntityEncoders.fromHttpMediaWriter(
@@ -240,23 +205,11 @@ private[aws] object AwsQueryCodecs {
 
   private def fromXmlToHttpError(
       xmlDecodeError: smithy4s.xml.XmlDecodeError
-  ): smithy4s.http.HttpContractError = {
+  ): smithy4s.http.HttpContractError =
     smithy4s.http.HttpPayloadError(
       xmlDecodeError.path.toPayloadPath,
       "",
       xmlDecodeError.message
     )
-  }
-
-  // TODO: Not needed here, but will be needed for an OAuth server
-  // private def fromUrlFormToHttpError(
-  //     urlFormDecodeError: smithy4s.http.UrlFormDecodeError
-  // ): smithy4s.http.HttpContractError = {
-  //   smithy4s.http.HttpPayloadError(
-  //     urlFormDecodeError.path,
-  //     "",
-  //     urlFormDecodeError.message
-  //   )
-  // }
 
 }
