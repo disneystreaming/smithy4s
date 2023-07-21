@@ -37,7 +37,6 @@ object ServiceBuilderHttp4sSpec  extends SimpleIOSuite{
     .build
 
   test("can modify the uri path of an endpont") {
-    println(HelloWorldAuthServiceGen.version)
     SimpleRestJsonBuilder
       .routes(newService)
       .resource
