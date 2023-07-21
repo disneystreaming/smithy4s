@@ -32,6 +32,10 @@ typeclasses such as `cats.Show`, `cats.Eq` or any others you may be using.
 
 See https://github.com/disneystreaming/smithy4s/pull/912
 
+### smithy4s.Blob
+
+`smithy4s.ByteArray` has been deprecated in favor of `smithy4s.Blob`.
+
 # 0.17.5
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
