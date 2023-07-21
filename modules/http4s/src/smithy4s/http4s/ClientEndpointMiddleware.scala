@@ -18,12 +18,23 @@ package smithy4s
 package http4s
 
 import org.http4s.client.Client
+import cats.kernel.Monoid
 
 // format: off
-trait ClientEndpointMiddleware[F[_]] {
+trait ClientEndpointMiddleware[F[_]] { 
+  self =>
   def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
       endpoint: Endpoint[service.Operation, _, _, _, _, _]
   ): Client[F] => Client[F]
+
+  def andThen(other: ClientEndpointMiddleware[F]): ClientEndpointMiddleware[F] = 
+    new ClientEndpointMiddleware[F] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: Endpoint[service.Operation, _, _, _, _, _]
+      ): Client[F] => Client[F] =
+        self.prepare(service)(endpoint).andThen(other.prepare(service)(endpoint))
+    }
+
 }
 // format: on
 
@@ -48,4 +59,21 @@ object ClientEndpointMiddleware {
       ): Client[F] => Client[F] = identity
     }
 
+  implicit def monoidClientEndpointMiddleware[F[_]]
+      : Monoid[ClientEndpointMiddleware[F]] =
+    new Monoid[ClientEndpointMiddleware[F]] {
+      def combine(
+          a: ClientEndpointMiddleware[F],
+          b: ClientEndpointMiddleware[F]
+      ): ClientEndpointMiddleware[F] =
+        a.andThen(b)
+
+      val empty: ClientEndpointMiddleware[F] =
+        new ClientEndpointMiddleware[F] {
+          def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+              endpoint: Endpoint[service.Operation, _, _, _, _, _]
+          ): Client[F] => Client[F] =
+            identity
+        }
+    }
 }

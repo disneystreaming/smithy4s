@@ -209,7 +209,6 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     else
       Seq.empty
 
-
   def compilerOptions(scalaVersion: String) = {
     val base =
       if (scalaVersion.startsWith("3."))
