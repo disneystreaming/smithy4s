@@ -19,6 +19,7 @@ service PizzaAdminService {
         CustomCode
         Reservation
         Echo
+        OptionalOutput
     ]
 }
 
@@ -354,4 +355,13 @@ structure EchoInput {
 structure EchoBody {
     @length(min: 10)
     data: String
+}
+
+@http(method: "GET", uri: "/optional-output")
+@readonly
+operation OptionalOutput {
+    output := {
+        @httpPayload
+        body: String
+    }
 }

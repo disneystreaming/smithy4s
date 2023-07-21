@@ -116,4 +116,7 @@ class PizzaAdminServiceImpl(ref: Ref[IO, State]) extends PizzaAdminService[IO] {
       body: EchoBody,
       queryParam: Option[String]
   ): IO[Unit] = IO.unit
+
+  def optionalOutput(): IO[OptionalOutputOutput] =
+    IO.pure(OptionalOutputOutput(None))
 }
