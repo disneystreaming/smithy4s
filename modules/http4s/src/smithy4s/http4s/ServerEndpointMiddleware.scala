@@ -17,13 +17,27 @@
 package smithy4s
 package http4s
 
+import cats.Monoid
+import cats.MonadThrow
+import cats.data.Kleisli
+import org.http4s.Response
 import org.http4s.HttpApp
+import cats.implicits._
 
 // format: off
 trait ServerEndpointMiddleware[F[_]] {
+  self  => 
   def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
       endpoint: Endpoint[service.Operation, _, _, _, _, _]
   ): HttpApp[F] => HttpApp[F]
+
+  def andThen(other: ServerEndpointMiddleware[F]): ServerEndpointMiddleware[F] = 
+    new ServerEndpointMiddleware[F] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: Endpoint[service.Operation, _, _, _, _, _]
+      ): HttpApp[F] => HttpApp[F] =
+        self.prepare(service)(endpoint).andThen(other.prepare(service)(endpoint))
+    }
 }
 // format: on
 
@@ -41,6 +55,32 @@ object ServerEndpointMiddleware {
       prepareWithHints(service.hints, endpoint.hints)
   }
 
+  def mapErrors[F[_]: MonadThrow](
+      f: PartialFunction[Throwable, Throwable]
+  ): ServerEndpointMiddleware[F] =
+    flatMapErrors(f.andThen(_.pure[F]))
+
+  def flatMapErrors[F[_]: MonadThrow](
+      f: PartialFunction[Throwable, F[Throwable]]
+  ): ServerEndpointMiddleware[F] =
+    new ServerEndpointMiddleware[F] {
+      def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+          endpoint: Endpoint[service.Operation, _, _, _, _, _]
+      ): HttpApp[F] => HttpApp[F] = http => {
+        val handler: PartialFunction[Throwable, F[Throwable]] = {
+          case e @ endpoint.Error(_, _) => e.raiseError[F, Throwable]
+          case scala.util.control.NonFatal(other) if f.isDefinedAt(other) =>
+            f(other).flatMap(_.raiseError[F, Throwable])
+
+        }
+        Kleisli(req =>
+          http(req).recoverWith(
+            handler.andThen(_.flatMap(_.raiseError[F, Response[F]]))
+          )
+        )
+      }
+    }
+
   private[http4s] type EndpointMiddleware[F[_], Op[_, _, _, _, _]] =
     Endpoint[Op, _, _, _, _, _] => HttpApp[F] => HttpApp[F]
 
@@ -51,4 +91,21 @@ object ServerEndpointMiddleware {
       ): HttpApp[F] => HttpApp[F] = identity
     }
 
+  implicit def monoidServerEndpointMiddleware[F[_]]
+      : Monoid[ServerEndpointMiddleware[F]] =
+    new Monoid[ServerEndpointMiddleware[F]] {
+      def combine(
+          a: ServerEndpointMiddleware[F],
+          b: ServerEndpointMiddleware[F]
+      ): ServerEndpointMiddleware[F] =
+        a.andThen(b)
+
+      val empty: ServerEndpointMiddleware[F] =
+        new ServerEndpointMiddleware[F] {
+          def prepare[Alg[_[_, _, _, _, _]]](service: Service[Alg])(
+              endpoint: Endpoint[service.Operation, _, _, _, _, _]
+          ): HttpApp[F] => HttpApp[F] =
+            identity
+        }
+    }
 }
