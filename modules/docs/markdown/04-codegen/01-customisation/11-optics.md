@@ -38,7 +38,7 @@ Below is an example of using the lenses that smithy4s generates. By default, smi
 import smithy4s.example._
 
 val input = TestInput("test", TestBody(Some("test body")))
-val lens = TestInput.Optics.bodyLens.andThen(TestBody.Optics.dataLens).some
+val lens = TestInput.Optics.body.andThen(TestBody.Optics.data).some
 val resultGet = lens.project(input)
 
 resultGet == Option("test body") // true
@@ -58,7 +58,7 @@ import smithy4s.example._
 
 val input = Podcast.Video(Some("Pod Title"))
 
-val prism = Podcast.Optics.videoPrism.andThen(Podcast.Video.Optics.titleLens).some
+val prism = Podcast.Optics.video.andThen(Podcast.Video.Optics.title).some
 val result = prism.replace("New Pod Title")(input)
 
 Podcast.Video(Some("New Pod Title")) == result // true
@@ -71,7 +71,7 @@ import smithy4s.example._
 
 val input = GetCityInput(CityId("test"))
 
-val cityName: smithy4s.optics.Lens[GetCityInput, String] = GetCityInput.Optics.cityIdLens.value
+val cityName: smithy4s.optics.Lens[GetCityInput, String] = GetCityInput.Optics.cityId.value
 val updated = cityName.replace("Fancy New Name")(input)
 
 val result = cityName.project(updated)

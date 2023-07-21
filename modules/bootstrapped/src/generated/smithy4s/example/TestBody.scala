@@ -15,7 +15,7 @@ object TestBody extends ShapeTag.Companion[TestBody] {
   val hints: Hints = Hints.empty
 
   object Optics {
-    val dataLens = Lens[TestBody, Option[String]](_.data)(n => a => a.copy(data = n))
+    val data: Lens[TestBody, Option[String]] = Lens[TestBody, Option[String]](_.data)(n => a => a.copy(data = n))
   }
 
   implicit val schema: Schema[TestBody] = struct(

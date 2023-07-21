@@ -17,7 +17,7 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
   val hints: Hints = Hints.empty
 
   object Optics {
-    val onePrism = Prism.partial[OpticsUnion, OpticsStructure]{ case OneCase(t) => t }(OneCase.apply)
+    val one: Prism[OpticsUnion, OpticsStructure] = Prism.partial[OpticsUnion, OpticsStructure]{ case OneCase(t) => t }(OneCase.apply)
   }
 
   final case class OneCase(one: OpticsStructure) extends OpticsUnion

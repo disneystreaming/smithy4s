@@ -15,9 +15,9 @@ object TestInput extends ShapeTag.Companion[TestInput] {
   val hints: Hints = Hints.empty
 
   object Optics {
-    val pathParamLens = Lens[TestInput, String](_.pathParam)(n => a => a.copy(pathParam = n))
-    val bodyLens = Lens[TestInput, TestBody](_.body)(n => a => a.copy(body = n))
-    val queryParamLens = Lens[TestInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))
+    val pathParam: Lens[TestInput, String] = Lens[TestInput, String](_.pathParam)(n => a => a.copy(pathParam = n))
+    val body: Lens[TestInput, TestBody] = Lens[TestInput, TestBody](_.body)(n => a => a.copy(body = n))
+    val queryParam: Lens[TestInput, Option[String]] = Lens[TestInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))
   }
 
   implicit val schema: Schema[TestInput] = struct(

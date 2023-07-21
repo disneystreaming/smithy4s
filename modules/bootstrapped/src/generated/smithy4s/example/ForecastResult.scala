@@ -17,8 +17,8 @@ object ForecastResult extends ShapeTag.Companion[ForecastResult] {
   val hints: Hints = Hints.empty
 
   object Optics {
-    val rainPrism = Prism.partial[ForecastResult, ChanceOfRain]{ case RainCase(t) => t }(RainCase.apply)
-    val sunPrism = Prism.partial[ForecastResult, UVIndex]{ case SunCase(t) => t }(SunCase.apply)
+    val rain: Prism[ForecastResult, ChanceOfRain] = Prism.partial[ForecastResult, ChanceOfRain]{ case RainCase(t) => t }(RainCase.apply)
+    val sun: Prism[ForecastResult, UVIndex] = Prism.partial[ForecastResult, UVIndex]{ case SunCase(t) => t }(SunCase.apply)
   }
 
   final case class RainCase(rain: ChanceOfRain) extends ForecastResult

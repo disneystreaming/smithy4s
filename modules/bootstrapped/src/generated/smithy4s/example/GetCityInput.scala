@@ -14,7 +14,7 @@ object GetCityInput extends ShapeTag.Companion[GetCityInput] {
   val hints: Hints = Hints.empty
 
   object Optics {
-    val cityIdLens = Lens[GetCityInput, CityId](_.cityId)(n => a => a.copy(cityId = n))
+    val cityId: Lens[GetCityInput, CityId] = Lens[GetCityInput, CityId](_.cityId)(n => a => a.copy(cityId = n))
   }
 
   implicit val schema: Schema[GetCityInput] = struct(

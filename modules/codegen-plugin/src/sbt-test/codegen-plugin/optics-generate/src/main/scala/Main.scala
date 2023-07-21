@@ -19,7 +19,7 @@ package demo
 object Main extends App {
   try {
     println(
-      smithy4s.example.TestOptics.Optics.oneLens
+      smithy4s.example.TestOptics.Optics.one
         .get(smithy4s.example.TestOptics(Some("test one")))
     )
   } catch {

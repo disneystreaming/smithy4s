@@ -20,8 +20,8 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
   )
 
   object Optics {
-    val emailPrism = Prism.partial[PersonContactInfo, PersonEmail]{ case EmailCase(t) => t }(EmailCase.apply)
-    val phonePrism = Prism.partial[PersonContactInfo, PersonPhoneNumber]{ case PhoneCase(t) => t }(PhoneCase.apply)
+    val email: Prism[PersonContactInfo, PersonEmail] = Prism.partial[PersonContactInfo, PersonEmail]{ case EmailCase(t) => t }(EmailCase.apply)
+    val phone: Prism[PersonContactInfo, PersonPhoneNumber] = Prism.partial[PersonContactInfo, PersonPhoneNumber]{ case PhoneCase(t) => t }(PhoneCase.apply)
   }
 
   final case class EmailCase(email: PersonEmail) extends PersonContactInfo
