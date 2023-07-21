@@ -43,8 +43,11 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
     )
 
     val disallowed = Set(
-      // this would be taken-care of by middleware
-      "HostWithPathOperation"
+      // This would be taken-care of by middleware.
+      "HostWithPathOperation",
+      // We expect users to set idempotency tokens because doing so raises
+      // awareness of the need to do so outside of any retry mechanism.
+      "QueryIdempotencyTokenAutoFill"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
