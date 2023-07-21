@@ -1,8 +1,6 @@
 package smithy4s
 
 import munit._
-//import smithy4s.schema.Schema.StructSchema
-import smithy4s.{Document, Hints, ShapeId}
 
 class EndpointBuilderSpec extends FunSuite {
 
@@ -14,26 +12,16 @@ class EndpointBuilderSpec extends FunSuite {
     "can replace the following values (Id and Hints) using withId and withHints"
   ) {
 
-//    val schema = smithy4s.Schema.StructSchema[Unit](
-//      ShapeId.apply("smithy4s.example", "input"),
-//      Hints.empty,
-//      Vector(),
-//      arr => ()
-//    )
-
     val newEndpoint = builder
       .withId(ShapeId.apply("smithy4s.example", "endpoint"))
       .withHints(Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("this is a endpoint"))))
       .withErrorable(None)
-      //.withInput(schema)
-      //.withOutput(schema)
       .build
 
     assertEquals(newEndpoint.id, ShapeId.apply("smithy4s.example", "endpoint"))
     assertEquals(newEndpoint.hints, Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("this is a endpoint"))))
     assertEquals(newEndpoint.errorable, None)
-    // assertEquals(newService.input, inputSchema)
-    // assertEquals(newService.output, inputSchema)
+
   }
 
 
