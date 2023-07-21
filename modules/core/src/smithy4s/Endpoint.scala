@@ -145,7 +145,7 @@ object Endpoint {
 
         override val streamedOutput: StreamingSchema[SO] = baseStreamedOutput
 
-        override def wrap(input: I): Op[I, E, O, SI, SO] = ???
+        override def wrap(input: I): Op[I, E, O, SI, SO] = baseWrap(input)
       }
   }
 
