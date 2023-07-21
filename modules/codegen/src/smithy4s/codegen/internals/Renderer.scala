@@ -199,10 +199,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   /**
-    * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
-    *
-    * @return formatted list of scaladoc lines
-    */
+   * Returns the given list of Smithy documentation strings formatted as Scaladoc comments.
+   *
+   * @return formatted list of scaladoc lines
+   */
   private def makeDocLines(
       rawLines: List[String]
   ): Lines = {
@@ -614,8 +614,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       additionalLines: Lines
   ): Lines = {
     import product._
+    val renderedArgs = renderArgs(fields)
     val decl =
-      line"final case class ${product.nameDef}(${renderArgs(fields)})"
+      line"final case class ${product.nameDef}($renderedArgs)"
     val schemaImplicit = if (adtParent.isEmpty) "implicit " else ""
 
     lines(
@@ -661,9 +662,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 val addMemHints =
                   if (memHints.nonEmpty) line".addHints($memHints)"
                   else Line.empty
-                  // format: off
-                  line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
-                  // format: on
+                // format: off
+                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
+                // format: on
               }
             }
           if (fields.size <= 22) {
@@ -853,6 +854,20 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
         NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
     }
+    def smartConstructor(alt: Alt): Line = {
+      val cn = caseName(alt).name
+      val ident = NameDef(uncapitalise(alt.name))
+      val prefix = line"def $ident"
+      alt.member match {
+        case UnionMember.ProductCase(product) =>
+          val args = renderArgs(product.fields)
+          val values = product.fields.map(_.name).intercalate(", ")
+          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
+        case UnionMember.UnitCase => line"$prefix(): $name = ${caseName(alt)}"
+        case UnionMember.TypeCase(tpe) =>
+          line"$prefix($ident:$tpe): $name = $cn($ident)"
+      }
+    }
     val caseNames = alts.map(caseName)
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
@@ -883,16 +898,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case object $cn extends $name",
+              smartConstructor(a),
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
               line"private val ${cn}AltWithValue = ${cn}Alt($cn)"
             )
-            // format: on
+          // format: on
           case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
             val cn = caseName(a)
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name"
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name",
+              smartConstructor(a)
             )
           case Alt(_, realName, UnionMember.ProductCase(struct), altHints) =>
             val additionalLines = lines(
@@ -920,10 +937,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             val cn = caseName(a)
             block(line"object $cn")(
               renderHintsVal(altHints),
-            // format: off
-            line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
-            line"""val alt = schema.oneOf[$name]("$realName")""",
-            // format: on
+              // format: off
+              line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
+              line"""val alt = schema.oneOf[$name]("$realName")""",
+              // format: on
             )
         },
         newline, {
