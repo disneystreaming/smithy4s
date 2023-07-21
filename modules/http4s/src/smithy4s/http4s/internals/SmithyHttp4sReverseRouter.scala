@@ -39,8 +39,7 @@ private[http4s] object SmithyHttp4sReverseRouter {
         new SmithyHttp4sClientEndpoint(
           baseUri,
           client,
-          endpoint,
-          compilerContext,
+          compilerContext(endpoint),
           middleware.prepare(service)(endpoint)
         )
     }
