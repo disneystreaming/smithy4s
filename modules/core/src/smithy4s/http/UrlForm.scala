@@ -28,43 +28,10 @@ import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 
 import smithy4s.schema.Schema
-import Schema._
-import smithy4s.ShapeTag
-import smithy4s.ShapeId
 
 final case class UrlForm(values: UrlForm.FormData.MultipleValues)
 
 object UrlForm {
-
-  case class Action(value: String)
-
-  object Action extends ShapeTag.Companion[Action] {
-
-    val id: ShapeId = ShapeId("smithy4s.http.UrlForm", "Action")
-
-    val schema: Schema[Action] =
-      string
-        .biject[Action](
-          Action(_),
-          (_: Action).value
-        )
-
-  }
-
-  case class Version(value: String)
-
-  object Version extends ShapeTag.Companion[Version] {
-
-    val id: ShapeId = ShapeId("smithy4s.http.UrlForm", "Version")
-
-    val schema: Schema[Version] =
-      string
-        .biject[Version](
-          Version(_),
-          (_: Version).value
-        )
-
-  }
 
   // TODO: Clean this up
   val empty: UrlForm =
@@ -180,27 +147,8 @@ object UrlForm {
       new Encoder[A] {
         def encode(value: A): UrlForm = {
           val formData = urlFormDataEncoder.encode(value)
-          // TODO: It smells a bit to have this in UrlForm which is otherwise mostly free of AWS concerns...
-          val maybeAction = schema.hints.get[UrlForm.Action]
-          val maybeVersion = schema.hints.get[UrlForm.Version]
           UrlForm(
             UrlForm.FormData.MultipleValues(
-              maybeAction
-                .map(action =>
-                  UrlForm.FormData.PathedValue(
-                    PayloadPath(PayloadPath.Segment("Action")),
-                    action.value
-                  )
-                )
-                .toVector ++
-                maybeVersion
-                  .map(version =>
-                    UrlForm.FormData.PathedValue(
-                      PayloadPath(PayloadPath.Segment("Version")),
-                      version.value
-                    )
-                  )
-                  .toVector ++
                 formData.toPathedValues
             )
           )

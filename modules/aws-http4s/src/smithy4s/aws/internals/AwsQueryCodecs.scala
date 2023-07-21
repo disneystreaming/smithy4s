@@ -32,6 +32,7 @@ import smithy4s.http._
 import smithy4s.http4s.kernel._
 import cats.data.EitherT
 import smithy4s.kinds.PolyFunction
+import smithy4s.codecs.PayloadPath
 import org.http4s.EntityEncoder
 import smithy4s.capability.Covariant
 import _root_.aws.protocols.AwsQueryError
@@ -61,16 +62,26 @@ private[aws] object AwsQueryCodecs {
             .mapK(
               new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
                 def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-                  urlFormEntityEncoder[F].contramap(fa.encode)
+                  urlFormEntityEncoder[F].contramap((a: A) =>
+                    UrlForm(
+                      UrlForm.FormData.MultipleValues(
+                        UrlForm.FormData
+                          .PathedValue(
+                            PayloadPath(PayloadPath.Segment("Action")),
+                            endpoint.id.name
+                          )
+                          .toPathedValues ++
+                          UrlForm.FormData
+                            .PathedValue(
+                              PayloadPath(PayloadPath.Segment("Version")),
+                              version
+                            )
+                            .toPathedValues ++
+                          fa.encode(a).values.values
+                      )
+                    )
+                  )
               }
-            )
-            .contramapSchema(
-              smithy4s.schema.Schema.transformHintsLocallyK(
-                _ ++ smithy4s.Hints(
-                  smithy4s.http.UrlForm.Action(endpoint.id.name),
-                  smithy4s.http.UrlForm.Version(version)
-                )
-              )
             )
 
         val xmlEntityDecoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
