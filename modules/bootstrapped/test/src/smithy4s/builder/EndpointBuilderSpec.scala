@@ -1,6 +1,7 @@
 package smithy4s
 
 import munit._
+import smithy.api.Documentation
 
 class EndpointBuilderSpec extends FunSuite {
 
@@ -33,10 +34,7 @@ class EndpointBuilderSpec extends FunSuite {
     val newEndpoint = builder
       .mapId(shapeId => ShapeId.apply(shapeId.namespace, "getCityEndpoint"))
       .mapHints { hints =>
-        hints.++(
-          Hints(
-            Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("new endpoint")))
-        )
+        hints ++ Hints(Documentation("new endpoint"))
       }
       .mapInput(s => s.withId(ShapeId.apply("smithy4s.example", "inputSchema")))
       .mapOutput(s => s.withId(ShapeId.apply("smithy4s.example", "outputSchema")))
@@ -47,7 +45,7 @@ class EndpointBuilderSpec extends FunSuite {
     assertEquals( newEndpoint.hints,
       Hints(
         smithy.api.Readonly(),
-        Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("new endpoint"))
+        Documentation("new endpoint")
       )
     )
     assertEquals(newEndpoint.input.shapeId, ShapeId.apply("smithy4s.example", "inputSchema"))
