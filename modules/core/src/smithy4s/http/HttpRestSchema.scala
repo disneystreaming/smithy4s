@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021-2022 Disney Streaming
+ *  Copyright 2021-2023 Disney Streaming
  *
  *  Licensed under the Tomorrow Open Source Technology License, Version 1.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@ object HttpRestSchema {
   // format: on
 
   def apply[A](
-      writeEmptyStructs: Boolean,
-      fullSchema: Schema[A]
+      fullSchema: Schema[A],
+      writeEmptyStructs: Boolean
   ): HttpRestSchema[A] = {
 
     def isMetadataField(field: Field[_, _]): Boolean = HttpBinding
@@ -117,7 +117,7 @@ object HttpRestSchema {
           fullSchema: Schema[A],
           cache: Cache
       ): Writer[Message, Message, A] = {
-        HttpRestSchema(writeEmptyStructs, fullSchema) match {
+        HttpRestSchema(fullSchema, writeEmptyStructs) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
             metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
@@ -171,7 +171,8 @@ object HttpRestSchema {
         fromSchema(schema, createCache())
 
       def fromSchema[A](fullSchema: Schema[A], cache: Cache) = {
-        HttpRestSchema(writeEmptyStructs = false, fullSchema) match {
+        // writeEmptyStructs is not relevant for reading.
+        HttpRestSchema(fullSchema, writeEmptyStructs = false) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata,
             // but we still decoding Unit from the body to drain the message.

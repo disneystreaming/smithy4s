@@ -105,7 +105,11 @@ object RequestEncoder {
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
     val bodyCompiler = entityEncoderCompiler.mapK(fromEntityEncoderK)
     val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
-    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler, writeEmptyStructs)
+    HttpRestSchema.combineWriterCompilers(
+      metadataCompiler,
+      bodyCompiler,
+      writeEmptyStructs
+    )
   }
 
 }

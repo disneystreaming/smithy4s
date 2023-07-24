@@ -23,10 +23,10 @@ import smithy4s.codecs.PayloadPath
 
 private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
 
-  def encode(value: A): UrlForm.FormData
-
   def contramap[B](f: B => A): UrlFormDataEncoder[B] =
     (value: B) => self.encode(f(value))
+
+  def encode(value: A): UrlForm.FormData
 
   def prepend(segment: PayloadPath.Segment): UrlFormDataEncoder[A] =
     (value: A) => self.encode(value).prepend(segment)

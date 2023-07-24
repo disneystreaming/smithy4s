@@ -25,20 +25,17 @@ import smithy4s.codecs.PayloadPath
 
 class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder]
-) extends SchemaVisitor.Cached[UrlFormDataEncoder] {
-  compile =>
+) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
   override def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): UrlFormDataEncoder[P] = new UrlFormDataEncoder[P] {
-    override def encode(p: P): UrlForm.FormData =
-      Primitive.stringWriter(tag, hints) match {
-        case Some(writer) => UrlForm.FormData.SimpleValue(writer(p)).widen
-        case None         => UrlForm.FormData.Empty.widen
-      }
-  }
+  ): UrlFormDataEncoder[P] = (p: P) =>
+    Primitive.stringWriter(tag, hints) match {
+      case Some(writer) => UrlForm.FormData.SimpleValue(writer(p)).widen
+      case None         => UrlForm.FormData.Empty.widen
+    }
 
   private val SkipEmpty = Hints.Binding.DynamicBinding(
     ShapeId("smithy4s.http.internals", "SkipEmpty"),
@@ -51,35 +48,32 @@ class UrlFormDataEncoderSchemaVisitor(
       tag: CollectionTag[C],
       member: Schema[A]
   ): UrlFormDataEncoder[C[A]] = {
-    val memberWriter = compile(member)
+    val memberEncoder = compile(member)
     val maybeKey =
       if (hints.has[XmlFlattened]) None
       else Option(getKey(member.hints, "member"))
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
-
-    new UrlFormDataEncoder[C[A]] {
-      override def encode(collection: C[A]): UrlForm.FormData = {
-        val formData = UrlForm.FormData
-          .MultipleValues(
-            tag
-              .iterator(collection)
-              .zipWithIndex
-              .flatMap { case (a, index) =>
-                memberWriter
-                  .encode(a)
-                  .prepend(PayloadPath.Segment(index + 1))
-                  .toPathedValues
-              }
-              .toVector
-          )
-          .widen
-        if (tag.isEmpty(collection) && !skipEmpty) {
-          val emptyValue = UrlForm.FormData.PathedValue(PayloadPath.root, "")
-          UrlForm.FormData.MultipleValues(Vector(emptyValue))
-        } else {
-          maybeKey.fold(formData)(key => formData.prepend(key))
-        }
-      }
+    (collection: C[A]) => {
+      val formData = UrlForm.FormData
+        .MultipleValues(
+          tag
+            .iterator(collection)
+            .zipWithIndex
+            .flatMap { case (a, index) =>
+              memberEncoder
+                .encode(a)
+                .prepend(PayloadPath.Segment(index + 1))
+                .toPathedValues
+            }
+            .toVector
+        )
+        .widen
+      if (tag.isEmpty(collection) && !skipEmpty)
+        UrlForm.FormData.MultipleValues(
+          Vector(UrlForm.FormData.PathedValue(PayloadPath.root, ""))
+        )
+      else
+        maybeKey.fold(formData)(key => formData.prepend(key))
     }
   }
 
@@ -95,14 +89,11 @@ class UrlFormDataEncoderSchemaVisitor(
       val vField = value.required[KV]("value", _._2)
       Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
     }
-    // avoid serialising empty maps, see https://github.com/smithy-lang/smithy/issues/1868
+    // Avoid serialising empty maps, see
+    // https://github.com/smithy-lang/smithy/issues/1868.
     val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
-    val encoder = compile(schema)
-
-    new UrlFormDataEncoder[Map[K, V]] {
-      override def encode(m: Map[K, V]): UrlForm.FormData =
-        encoder.encode(m.toVector)
-    }
+    val collectionEncoder = compile(schema)
+    (m: Map[K, V]) => collectionEncoder.encode(m.toVector)
   }
 
   override def enumeration[E](
@@ -111,20 +102,13 @@ class UrlFormDataEncoderSchemaVisitor(
       tag: EnumTag,
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): UrlFormDataEncoder[E] =
-    tag match {
-      case EnumTag.IntEnum =>
-        new UrlFormDataEncoder[E] {
-          override def encode(value: E): UrlForm.FormData =
-            UrlForm.FormData.SimpleValue(total(value).intValue.toString)
-        }
+  ): UrlFormDataEncoder[E] = tag match {
+    case EnumTag.IntEnum =>
+      (value: E) => UrlForm.FormData.SimpleValue(total(value).intValue.toString)
 
-      case EnumTag.StringEnum =>
-        new UrlFormDataEncoder[E] {
-          override def encode(value: E): UrlForm.FormData =
-            UrlForm.FormData.SimpleValue(total(value).stringValue)
-        }
-    }
+    case EnumTag.StringEnum =>
+      (value: E) => UrlForm.FormData.SimpleValue(total(value).stringValue)
+  }
 
   override def struct[S](
       shapeId: ShapeId,
@@ -136,17 +120,11 @@ class UrlFormDataEncoderSchemaVisitor(
       val fieldKey = getKey(field.hints, field.label)
       compile(field.schema).contramap(field.get).prepend(fieldKey)
     }
-
-    val codecs: Vector[UrlFormDataEncoder[S]] =
-      fields.map(field => fieldEncoder(field))
-
-    new UrlFormDataEncoder[S] {
-      override def encode(s: S): UrlForm.FormData = {
-        UrlForm.FormData.MultipleValues(
-          codecs.flatMap(_.encode(s).toPathedValues)
-        )
-      }
-    }
+    val encoders = fields.map(fieldEncoder(_))
+    (s: S) =>
+      UrlForm.FormData.MultipleValues(
+        encoders.flatMap(_.encode(s).toPathedValues)
+      )
   }
 
   override def union[U](
@@ -155,7 +133,6 @@ class UrlFormDataEncoderSchemaVisitor(
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
   ): UrlFormDataEncoder[U] = {
-
     def encodeUnion[A](u: U, alt: Alt[U, A]): UrlForm.FormData = {
       val key = getKey(alt.hints, alt.label)
       dispatch
@@ -163,13 +140,10 @@ class UrlFormDataEncoderSchemaVisitor(
         .fold(UrlForm.FormData.Empty.widen)(a => compile(alt.schema).encode(a))
         .prepend(key)
     }
-
-    new UrlFormDataEncoder[U] {
-      override def encode(u: U): UrlForm.FormData =
-        UrlForm.FormData.MultipleValues(
-          alternatives.flatMap(encodeUnion(u, _).toPathedValues)
-        )
-    }
+    (u: U) =>
+      UrlForm.FormData.MultipleValues(
+        alternatives.flatMap(encodeUnion(u, _).toPathedValues)
+      )
   }
 
   override def biject[A, B](
@@ -182,21 +156,20 @@ class UrlFormDataEncoderSchemaVisitor(
       refinement: Refinement[A, B]
   ): UrlFormDataEncoder[B] = compile(schema).contramap(refinement.from)
 
-  override def lazily[A](suspend: Lazy[Schema[A]]): UrlFormDataEncoder[A] =
-    new UrlFormDataEncoder[A] {
-      lazy val underlying: UrlFormDataEncoder[A] =
-        suspend.map(schema => compile(schema)).value
-      override def encode(a: A): UrlForm.FormData = underlying.encode(a)
-    }
+  override def lazily[A](suspend: Lazy[Schema[A]]): UrlFormDataEncoder[A] = {
+    lazy val underlying: UrlFormDataEncoder[A] =
+      suspend.map(schema => compile(schema)).value
+    (a: A) => underlying.encode(a)
+  }
 
-  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] =
-    new UrlFormDataEncoder[Option[A]] {
-      val encoder = compile(schema)
-      override def encode(a: Option[A]): UrlForm.FormData = a match {
+  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] = {
+    val encoder = compile(schema)
+    (a: Option[A]) =>
+      a match {
         case None    => UrlForm.FormData.Empty
         case Some(a) => encoder.encode(a)
       }
-    }
+  }
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints
