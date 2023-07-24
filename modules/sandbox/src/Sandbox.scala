@@ -10,11 +10,10 @@ object Main extends IOApp.Simple {
   def run = resource.use { case (cloudWatch) =>
     listAll[ListMetricsOutput, Metric](
       listF = maybeNextToken =>
-        cloudWatch
-          .listMetrics(
-            namespace = Some("AWS/S3"),
-            nextToken = maybeNextToken
-          ),
+        cloudWatch.listMetrics(
+          namespace = Some("AWS/S3"),
+          nextToken = maybeNextToken
+        ),
       accessResults = _.metrics.toList.flatten,
       accessNextToken = _.nextToken
     )
@@ -27,16 +26,12 @@ object Main extends IOApp.Simple {
       httpClient <- EmberClientBuilder
         .default[IO]
         .build
-        .map(client =>
-          // ResponseLogger.apply(logHeaders = true, logBody = true, redactHeadersWhen = Logger.defaultRedactHeadersWhen, logAction = Some(IO.println _))(
-          RequestLogger.apply(
+        .map(
+          RequestLogger(
             logHeaders = true,
             logBody = true,
             redactHeadersWhen = Logger.defaultRedactHeadersWhen,
             logAction = Some(IO.println _)
-          )(
-            client
-            // )
           )
         )
       awsCredentialsProvider = new AwsCredentialsProvider[IO]

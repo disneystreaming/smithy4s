@@ -125,5 +125,4 @@ object UrlForm {
         )
     }
   }
-
 }
