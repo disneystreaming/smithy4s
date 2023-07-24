@@ -30,7 +30,6 @@ import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s.http.UrlForm
 import smithy4s.http.internals.UrlFormDataEncoder
-import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 
 // TODO: Should this use munit for consistency with other tests in boostrapped?
 object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
