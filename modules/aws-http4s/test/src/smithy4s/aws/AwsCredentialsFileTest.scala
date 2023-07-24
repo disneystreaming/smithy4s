@@ -46,6 +46,24 @@ object AwsCredentialsFileTest extends FunSuite {
     }
   }
 
+  test("be case sensitive") {
+    expectRight(
+      AwsCredentialsFile.processFileLines(
+        asLines(
+          """|[default]
+             |aws_secret_access_key = DeF_SeC
+             |aws_access_key_id     = dEf_KEy
+             |aws_session_token     = dEF_TokEn""".stripMargin
+        )
+      )
+    ) { res =>
+      expect.same(
+        Some(AwsCredentials.Default("dEf_KEy", "DeF_SeC", Some("dEF_TokEn"))),
+        res.default
+      )
+    }
+  }
+
   test("parse comments") {
     expectRight(
       AwsCredentialsFile.processFileLines(

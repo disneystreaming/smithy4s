@@ -115,6 +115,7 @@ object ImportServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
+    def notFoundError(notFoundError:NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty

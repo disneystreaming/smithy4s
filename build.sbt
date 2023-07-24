@@ -821,6 +821,7 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.guides.hello",
       "smithy4s.example.hello",
       "smithy4s.example.test",
+      "smithy4s.example.package",
       "weather",
       "smithy4s.example.product"
     ),

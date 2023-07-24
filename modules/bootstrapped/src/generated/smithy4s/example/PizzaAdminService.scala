@@ -30,6 +30,7 @@ trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   def customCode(code: Int): F[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing]
   def reservation(name: String, town: Option[String] = None): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]
   def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None): F[EchoInput, Nothing, Unit, Nothing, Nothing]
+  def optionalOutput(): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)
 }
@@ -62,6 +63,7 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
     PizzaAdminServiceOperation.CustomCode,
     PizzaAdminServiceOperation.Reservation,
     PizzaAdminServiceOperation.Echo,
+    PizzaAdminServiceOperation.OptionalOutput,
   )
 
   def input[I, E, O, SI, SO](op: PizzaAdminServiceOperation[I, E, O, SI, SO]): I = op.input
@@ -109,6 +111,7 @@ object PizzaAdminServiceOperation {
     def customCode(code: Int) = CustomCode(CustomCodeInput(code))
     def reservation(name: String, town: Option[String] = None) = Reservation(ReservationInput(name, town))
     def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = Echo(EchoInput(pathParam, body, queryParam))
+    def optionalOutput() = OptionalOutput()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PizzaAdminServiceGen[P], f: PolyFunction5[P, P1]) extends PizzaAdminServiceGen[P1] {
     def addMenuItem(restaurant: String, menuItem: MenuItem) = f[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing](alg.addMenuItem(restaurant, menuItem))
@@ -122,6 +125,7 @@ object PizzaAdminServiceOperation {
     def customCode(code: Int) = f[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing](alg.customCode(code))
     def reservation(name: String, town: Option[String] = None) = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
     def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = f[EchoInput, Nothing, Unit, Nothing, Nothing](alg.echo(pathParam, body, queryParam))
+    def optionalOutput() = f[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing](alg.optionalOutput())
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: PizzaAdminServiceGen[P]): PolyFunction5[PizzaAdminServiceOperation, P] = new PolyFunction5[PizzaAdminServiceOperation, P] {
@@ -166,8 +170,11 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
+    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def _ordinal: Int = 1 }
+    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def _ordinal: Int = 2 }
+    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
 
     object PriceErrorCase {
       val hints: Hints = Hints.empty
@@ -235,9 +242,13 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def _ordinal: Int = 0 }
+    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
     final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def _ordinal: Int = 1 }
+    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
     final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def _ordinal: Int = 2 }
+    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def _ordinal: Int = 3 }
+    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
@@ -324,6 +335,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -407,6 +419,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -456,6 +469,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -505,6 +519,7 @@ object PizzaAdminServiceOperation {
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -550,6 +565,25 @@ object PizzaAdminServiceOperation {
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/echo/{pathParam}"), code = 200),
     )
     def wrap(input: EchoInput) = Echo(input)
+    override val errorable: Option[Nothing] = None
+  }
+  final case class OptionalOutput() extends PizzaAdminServiceOperation[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
+    def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = impl.optionalOutput()
+    def ordinal = 11
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = OptionalOutput
+  }
+  object OptionalOutput extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
+    val id: ShapeId = ShapeId("smithy4s.example", "OptionalOutput")
+    val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[OptionalOutputOutput] = OptionalOutputOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
+    val hints: Hints = Hints(
+      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/optional-output"), code = 200),
+      smithy.api.Readonly(),
+    )
+    def wrap(input: Unit) = OptionalOutput()
     override val errorable: Option[Nothing] = None
   }
 }

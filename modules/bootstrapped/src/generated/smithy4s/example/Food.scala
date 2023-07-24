@@ -17,7 +17,9 @@ object Food extends ShapeTag.Companion[Food] {
   val hints: Hints = Hints.empty
 
   final case class PizzaCase(pizza: Pizza) extends Food { final def _ordinal: Int = 0 }
+  def pizza(pizza:Pizza): Food = PizzaCase(pizza)
   final case class SaladCase(salad: Salad) extends Food { final def _ordinal: Int = 1 }
+  def salad(salad:Salad): Food = SaladCase(salad)
 
   object PizzaCase {
     val hints: Hints = Hints.empty

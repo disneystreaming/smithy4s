@@ -19,7 +19,9 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
   )
 
   final case class OneCase(one: One) extends TestBiggerUnion { final def _ordinal: Int = 0 }
+  def one(one:One): TestBiggerUnion = OneCase(one)
   final case class TwoCase(two: Two) extends TestBiggerUnion { final def _ordinal: Int = 1 }
+  def two(two:Two): TestBiggerUnion = TwoCase(two)
 
   object OneCase {
     val hints: Hints = Hints.empty

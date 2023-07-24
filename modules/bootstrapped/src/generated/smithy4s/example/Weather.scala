@@ -144,6 +144,7 @@ object WeatherOperation {
     val hints: Hints = Hints.empty
 
     final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }
+    def noSuchResource(noSuchResource:NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
 
     object NoSuchResourceCase {
       val hints: Hints = Hints.empty

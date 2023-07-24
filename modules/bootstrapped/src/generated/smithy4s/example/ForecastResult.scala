@@ -17,7 +17,9 @@ object ForecastResult extends ShapeTag.Companion[ForecastResult] {
   val hints: Hints = Hints.empty
 
   final case class RainCase(rain: ChanceOfRain) extends ForecastResult { final def _ordinal: Int = 0 }
+  def rain(rain:ChanceOfRain): ForecastResult = RainCase(rain)
   final case class SunCase(sun: UVIndex) extends ForecastResult { final def _ordinal: Int = 1 }
+  def sun(sun:UVIndex): ForecastResult = SunCase(sun)
 
   object RainCase {
     val hints: Hints = Hints.empty

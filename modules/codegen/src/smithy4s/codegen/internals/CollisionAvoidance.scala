@@ -219,7 +219,7 @@ private[internals] object CollisionAvoidance {
     if (reservedKeywords(str)) s"_$str" else str
 
   private val names = new Names()
-  private def protectType(str: String): String =
+  private[internals] def protectType(str: String): String =
     if (names.getReservedNames(str)) "_" + str else protectKeyword(str)
 
   private val reservedKeywords: Set[String] = Set(
