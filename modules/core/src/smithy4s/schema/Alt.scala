@@ -34,9 +34,6 @@ final case class Alt[U, A](
   @deprecated("use .schema instead", since = "0.18.0")
   def instance: Schema[A] = schema
 
-  def apply(value: A): Alt.WithValue[U, A] =
-    Alt.WithValue(this, value)
-
   def hints: Hints = schema.hints
   def memberHints: Hints = schema.hints.memberHints
 
@@ -59,24 +56,6 @@ final case class Alt[U, A](
 
 }
 object Alt {
-
-  final case class WithValue[U, A](
-      private[schema] val alt: Alt[U, A],
-      value: A
-  )
-
-  type ClassTagged[U] = WithClassTag[U, _]
-  final case class WithClassTag[U, A <: U](
-      alt: Alt[U, A],
-      classTag: scala.reflect.ClassTag[A]
-  )
-
-  object WithClassTag {
-    implicit def fromAlt[U, A <: U: ClassTag](
-        alt: Alt[U, A]
-    ): WithClassTag[U, A] =
-      WithClassTag(alt, implicitly[ClassTag[A]])
-  }
 
   /**
     * Precompiles an Alt to produce an instance of `G`

@@ -57,30 +57,6 @@ class FieldsSpec() extends munit.FunSuite {
       override def lazily[A](suspend: Lazy[Schema[A]]): ToFieldNames[A] =
         () => apply(suspend.value)()
 
-      // these will be needed later but are irrelevant for now
-      // override def union[S](
-      //     first: Alt[ToFieldNames, S, _],
-      //     rest: Vector[Alt[ToFieldNames, S, _]]
-      // )(total: S => Alt.WithValue[ToFieldNames, S, _]): ToFieldNames[S] =
-      //   () =>
-      //     first.label :: first.instance() ::: rest.flatMap { a =>
-      //       a.label :: a.instance()
-      //     }.toList
-
-      // override def list[S](fs: ToFieldNames[S]): ToFieldNames[List[S]] = fs
-      // override def vector[S](fs: ToFieldNames[S]): ToFieldNames[Vector[S]] = fs
-      // override def map[K, V](
-      //     fk: ToFieldNames[K],
-      //     fv: ToFieldNames[V]
-      // ): ToFieldNames[Map[K, V]] = () => fk() ++ fv()
-      // override def bijection[A, B](
-      //     f: ToFieldNames[A],
-      //     to: A => B,
-      //     from: B => A
-      // ): ToFieldNames[B] = f
-
-      // override def set[S](fs: ToFieldNames[S]): ToFieldNames[Set[S]] = fs
-
     }
 
     def toFieldNames[Alg[_[_, _, _, _, _]]](
