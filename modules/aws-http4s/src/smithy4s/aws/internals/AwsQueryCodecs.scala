@@ -68,13 +68,13 @@ private[aws] object AwsQueryCodecs {
                         UrlForm.FormData
                           .PathedValue(
                             PayloadPath(PayloadPath.Segment("Action")),
-                            endpoint.id.name
+                            maybeValue = Some(endpoint.id.name)
                           )
                           .toPathedValues ++
                           UrlForm.FormData
                             .PathedValue(
                               PayloadPath(PayloadPath.Segment("Version")),
-                              version
+                              maybeValue = Some(version)
                             )
                             .toPathedValues ++
                           fa.encode(a).values.values

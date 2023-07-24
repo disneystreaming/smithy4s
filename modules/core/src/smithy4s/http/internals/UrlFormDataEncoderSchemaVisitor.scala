@@ -68,9 +68,15 @@ class UrlFormDataEncoderSchemaVisitor(
             .toVector
         )
         .widen
+      // This is to handle a quirk of the AWS Query protocol at
+      // https://github.com/smithy-lang/smithy/blob/f8a846df3c67fa4ae55ecaa57002d22499dc439f/smithy-aws-protocol-tests/model/awsQuery/input-lists.smithy#L43-L57
+      // which is that empty lists must be serialised, i.e. the top level key
+      // for the list must be present, e.g. &listName=&otherValue=foo.
       if (tag.isEmpty(collection) && !skipEmpty)
         UrlForm.FormData.MultipleValues(
-          Vector(UrlForm.FormData.PathedValue(PayloadPath.root, ""))
+          Vector(
+            UrlForm.FormData.PathedValue(PayloadPath.root, maybeValue = None)
+          )
         )
       else
         maybeKey.fold(formData)(key => formData.prepend(key))
@@ -89,7 +95,7 @@ class UrlFormDataEncoderSchemaVisitor(
       val vField = value.required[KV]("value", _._2)
       Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
     }
-    // Avoid serialising empty maps, see
+    // Avoid serialising empty maps, see comment in collection case and
     // https://github.com/smithy-lang/smithy/issues/1868.
     val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
     val collectionEncoder = compile(schema)

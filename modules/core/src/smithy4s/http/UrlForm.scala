@@ -34,33 +34,40 @@ final case class UrlForm(values: UrlForm.FormData.MultipleValues)
 object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
-    def render: String
     def prepend(segment: PayloadPath.Segment): FormData
+    def render: String
     def toPathedValues: Vector[FormData.PathedValue]
     def widen: FormData = this
   }
   object FormData {
     case object Empty extends FormData {
-      override def render: String = ""
 
       override def prepend(segment: PayloadPath.Segment): FormData = this
 
+      override def render: String = ""
+
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+
     }
 
     // TODO: Rename as Value, replace uses by PathedValue?
-    final case class SimpleValue(str: String) extends FormData {
-      override def render: String =
-        URLEncoder.encode(str, StandardCharsets.UTF_8.name())
+    final case class SimpleValue(string: String) extends FormData {
 
       override def prepend(segment: PayloadPath.Segment): PathedValue =
-        PathedValue(PayloadPath(segment), str)
+        PathedValue(PayloadPath(segment), maybeValue = Some(string))
+
+      override def render: String =
+        URLEncoder.encode(string, StandardCharsets.UTF_8.name())
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+
     }
-    // TODO: Make value an option?
-    final case class PathedValue(path: PayloadPath, value: String)
+
+    final case class PathedValue(path: PayloadPath, maybeValue: Option[String])
         extends FormData {
+
+      override def prepend(segment: PayloadPath.Segment): PathedValue =
+        copy(path.prepend(segment), maybeValue)
 
       override def render: String = {
         val lastIndex = path.segments.size - 1
@@ -86,26 +93,30 @@ object UrlForm {
               builder.append(index)
           }
           .toString()
-
-        key + "=" + URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+        val renderedValue = maybeValue match {
+          case None => ""
+          case Some(value) =>
+            URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+        }
+        key + "=" + renderedValue
       }
 
-      override def prepend(segment: PayloadPath.Segment): PathedValue =
-        copy(path.prepend(segment), value)
-
       override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
+
     }
 
     // TODO: Rename as Values?
     final case class MultipleValues(values: Vector[PathedValue])
         extends FormData {
 
-      override def render: String =
-        values.map(_.render).filter(str => str.nonEmpty).mkString("&")
       override def prepend(segment: PayloadPath.Segment): MultipleValues =
         copy(values.map(_.prepend(segment)))
 
+      override def render: String =
+        values.map(_.render).filter(str => str.nonEmpty).mkString("&")
+
       override def toPathedValues: Vector[FormData.PathedValue] = values
+
     }
   }
 
