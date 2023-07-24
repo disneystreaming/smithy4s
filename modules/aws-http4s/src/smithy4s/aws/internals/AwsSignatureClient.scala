@@ -18,6 +18,7 @@ package smithy4s.aws
 package internals
 
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import smithy4s._
 import org.http4s._
 import org.http4s.client.Client
