@@ -13,7 +13,7 @@ import smithy4s.kinds.toPolyFunction5.const5
 trait HelloWorldServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def hello(name: String): F[HelloInput, Nothing, HelloOutput, Nothing, Nothing]
+  def hello(name: java.lang.String): F[HelloInput, Nothing, HelloOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[HelloWorldServiceGen[F]] = Transformation.of[HelloWorldServiceGen[F]](this)
 }
@@ -21,7 +21,7 @@ trait HelloWorldServiceGen[F[_, _, _, _, _]] {
 object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWorldServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloWorldService")
-  val version: String = "1.0.0"
+  val version: scala.Predef.String = "1.0.0"
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -60,10 +60,10 @@ sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, Strea
 object HelloWorldServiceOperation {
 
   object reified extends HelloWorldServiceGen[HelloWorldServiceOperation] {
-    def hello(name: String) = Hello(HelloInput(name))
+    def hello(name: java.lang.String) = Hello(HelloInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloWorldServiceGen[P], f: PolyFunction5[P, P1]) extends HelloWorldServiceGen[P1] {
-    def hello(name: String) = f[HelloInput, Nothing, HelloOutput, Nothing, Nothing](alg.hello(name))
+    def hello(name: java.lang.String) = f[HelloInput, Nothing, HelloOutput, Nothing, Nothing](alg.hello(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloWorldServiceGen[P]): PolyFunction5[HelloWorldServiceOperation, P] = new PolyFunction5[HelloWorldServiceOperation, P] {

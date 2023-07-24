@@ -18,8 +18,8 @@ import smithy4s.schema.Schema.unit
 trait DummyServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, slm: Option[Map[String, String]] = None): F[Queries, Nothing, Unit, Nothing, Nothing]
-  def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): F[PathParams, Nothing, Unit, Nothing, Nothing]
+  def dummy(str: Option[java.lang.String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[java.lang.String]] = None, ie: Option[Numbers] = None, slm: Option[Map[java.lang.String, java.lang.String]] = None): F[Queries, Nothing, Unit, Nothing, Nothing]
+  def dummyPath(str: java.lang.String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers): F[PathParams, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[DummyServiceGen[F]] = Transformation.of[DummyServiceGen[F]](this)
 }
@@ -27,7 +27,7 @@ trait DummyServiceGen[F[_, _, _, _, _]] {
 object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "DummyService")
-  val version: String = "0.0"
+  val version: scala.Predef.String = "0.0"
 
   val hints: Hints = Hints(
     smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
@@ -67,12 +67,12 @@ sealed trait DummyServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object DummyServiceOperation {
 
   object reified extends DummyServiceGen[DummyServiceOperation] {
-    def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, slm: Option[Map[String, String]] = None) = Dummy(Queries(str, int, ts1, ts2, ts3, ts4, b, sl, ie, slm))
-    def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers) = DummyPath(PathParams(str, int, ts1, ts2, ts3, ts4, b, ie))
+    def dummy(str: Option[java.lang.String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[java.lang.String]] = None, ie: Option[Numbers] = None, slm: Option[Map[java.lang.String, java.lang.String]] = None) = Dummy(Queries(str, int, ts1, ts2, ts3, ts4, b, sl, ie, slm))
+    def dummyPath(str: java.lang.String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers) = DummyPath(PathParams(str, int, ts1, ts2, ts3, ts4, b, ie))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DummyServiceGen[P], f: PolyFunction5[P, P1]) extends DummyServiceGen[P1] {
-    def dummy(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, slm: Option[Map[String, String]] = None) = f[Queries, Nothing, Unit, Nothing, Nothing](alg.dummy(str, int, ts1, ts2, ts3, ts4, b, sl, ie, slm))
-    def dummyPath(str: String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers) = f[PathParams, Nothing, Unit, Nothing, Nothing](alg.dummyPath(str, int, ts1, ts2, ts3, ts4, b, ie))
+    def dummy(str: Option[java.lang.String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[java.lang.String]] = None, ie: Option[Numbers] = None, slm: Option[Map[java.lang.String, java.lang.String]] = None) = f[Queries, Nothing, Unit, Nothing, Nothing](alg.dummy(str, int, ts1, ts2, ts3, ts4, b, sl, ie, slm))
+    def dummyPath(str: java.lang.String, int: Int, ts1: Timestamp, ts2: Timestamp, ts3: Timestamp, ts4: Timestamp, b: Boolean, ie: Numbers) = f[PathParams, Nothing, Unit, Nothing, Nothing](alg.dummyPath(str, int, ts1, ts2, ts3, ts4, b, ie))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DummyServiceGen[P]): PolyFunction5[DummyServiceOperation, P] = new PolyFunction5[DummyServiceOperation, P] {

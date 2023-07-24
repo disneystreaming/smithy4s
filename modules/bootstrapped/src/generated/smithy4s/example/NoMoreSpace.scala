@@ -12,8 +12,8 @@ import smithy4s.schema.Schema.struct
   *   int, bigInt and bDec are useful number constructs
   *   The string case is there because.
   */
-final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
-  override def getMessage(): String = message
+final case class NoMoreSpace(message: java.lang.String, foo: Option[Foo] = None) extends Throwable {
+  override def getMessage(): scala.Predef.String = message
 }
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
   val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")

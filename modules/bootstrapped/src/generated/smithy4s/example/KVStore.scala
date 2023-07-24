@@ -19,9 +19,9 @@ import smithy4s.schema.Schema.unit
 trait KVStoreGen[F[_, _, _, _, _]] {
   self =>
 
-  def get(key: String): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing]
-  def put(key: String, value: String): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing]
-  def delete(key: String): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]
+  def get(key: java.lang.String): F[Key, KVStoreOperation.GetError, Value, Nothing, Nothing]
+  def put(key: java.lang.String, value: java.lang.String): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing]
+  def delete(key: java.lang.String): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[KVStoreGen[F]] = Transformation.of[KVStoreGen[F]](this)
 }
@@ -29,7 +29,7 @@ trait KVStoreGen[F[_, _, _, _, _]] {
 object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "KVStore")
-  val version: String = ""
+  val version: scala.Predef.String = ""
 
   val hints: Hints = Hints.empty
 
@@ -74,14 +74,14 @@ sealed trait KVStoreOperation[Input, Err, Output, StreamedInput, StreamedOutput]
 object KVStoreOperation {
 
   object reified extends KVStoreGen[KVStoreOperation] {
-    def get(key: String) = Get(Key(key))
-    def put(key: String, value: String) = Put(KeyValue(key, value))
-    def delete(key: String) = Delete(Key(key))
+    def get(key: java.lang.String) = Get(Key(key))
+    def put(key: java.lang.String, value: java.lang.String) = Put(KeyValue(key, value))
+    def delete(key: java.lang.String) = Delete(Key(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: KVStoreGen[P], f: PolyFunction5[P, P1]) extends KVStoreGen[P1] {
-    def get(key: String) = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
-    def put(key: String, value: String) = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
-    def delete(key: String) = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
+    def get(key: java.lang.String) = f[Key, KVStoreOperation.GetError, Value, Nothing, Nothing](alg.get(key))
+    def put(key: java.lang.String, value: java.lang.String) = f[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing](alg.put(key, value))
+    def delete(key: java.lang.String) = f[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing](alg.delete(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: KVStoreGen[P]): PolyFunction5[KVStoreOperation, P] = new PolyFunction5[KVStoreOperation, P] {

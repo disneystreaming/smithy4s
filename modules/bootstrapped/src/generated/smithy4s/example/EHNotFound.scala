@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class EHNotFound(message: Option[String] = None) extends Throwable {
-  override def getMessage(): String = message.orNull
+final case class EHNotFound(message: Option[java.lang.String] = None) extends Throwable {
+  override def getMessage(): scala.Predef.String = message.orNull
 }
 object EHNotFound extends ShapeTag.Companion[EHNotFound] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHNotFound")

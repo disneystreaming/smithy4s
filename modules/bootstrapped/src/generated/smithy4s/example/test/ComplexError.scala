@@ -8,8 +8,8 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class ComplexError(value: Int, message: String, details: Option[ErrorDetails] = None) extends Throwable {
-  override def getMessage(): String = message
+final case class ComplexError(value: Int, message: java.lang.String, details: Option[ErrorDetails] = None) extends Throwable {
+  override def getMessage(): scala.Predef.String = message
 }
 object ComplexError extends ShapeTag.Companion[ComplexError] {
   val id: ShapeId = ShapeId("smithy4s.example.test", "ComplexError")

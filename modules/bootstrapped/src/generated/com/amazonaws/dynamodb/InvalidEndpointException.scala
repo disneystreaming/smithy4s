@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class InvalidEndpointException(message: Option[String] = None) extends Throwable {
-  override def getMessage(): String = message.orNull
+final case class InvalidEndpointException(message: Option[java.lang.String] = None) extends Throwable {
+  override def getMessage(): scala.Predef.String = message.orNull
 }
 object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointException] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InvalidEndpointException")

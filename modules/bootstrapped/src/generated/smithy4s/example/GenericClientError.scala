@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class GenericClientError(message: String) extends Throwable {
-  override def getMessage(): String = message
+final case class GenericClientError(message: java.lang.String) extends Throwable {
+  override def getMessage(): scala.Predef.String = message
 }
 object GenericClientError extends ShapeTag.Companion[GenericClientError] {
   val id: ShapeId = ShapeId("smithy4s.example", "GenericClientError")

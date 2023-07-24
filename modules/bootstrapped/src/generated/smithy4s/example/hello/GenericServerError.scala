@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class GenericServerError(message: Option[String] = None) extends Throwable {
-  override def getMessage(): String = message.orNull
+final case class GenericServerError(message: Option[java.lang.String] = None) extends Throwable {
+  override def getMessage(): scala.Predef.String = message.orNull
 }
 object GenericServerError extends ShapeTag.Companion[GenericServerError] {
   val id: ShapeId = ShapeId("smithy4s.example.hello", "GenericServerError")

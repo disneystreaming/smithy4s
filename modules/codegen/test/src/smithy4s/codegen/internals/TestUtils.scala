@@ -30,6 +30,10 @@ object TestUtils {
       .addUnparsedModel("foo.smithy", smithySpec)
       .assemble()
       .unwrap()
+    generateScalaCode(model)
+  }
+
+  def generateScalaCode(model: Model): Map[String, String] = {
     CodegenImpl
       .generate(model, None, None)
       .map { case (_, result) =>

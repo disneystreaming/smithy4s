@@ -8,8 +8,8 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class PriceError(message: String, code: Int) extends Throwable {
-  override def getMessage(): String = message
+final case class PriceError(message: java.lang.String, code: Int) extends Throwable {
+  override def getMessage(): scala.Predef.String = message
 }
 object PriceError extends ShapeTag.Companion[PriceError] {
   val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
