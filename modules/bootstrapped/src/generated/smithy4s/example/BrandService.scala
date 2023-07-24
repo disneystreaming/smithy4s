@@ -14,7 +14,7 @@ import smithy4s.schema.Schema.unit
 trait BrandServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def addBrands(brands: Option[List[java.lang.String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
+  def addBrands(brands: Option[List[String]] = None): F[AddBrandsInput, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[BrandServiceGen[F]] = Transformation.of[BrandServiceGen[F]](this)
 }
@@ -22,7 +22,7 @@ trait BrandServiceGen[F[_, _, _, _, _]] {
 object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
-  val version: scala.Predef.String = "1"
+  val version: String = "1"
 
   val hints: Hints = Hints.empty
 
@@ -59,10 +59,10 @@ sealed trait BrandServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object BrandServiceOperation {
 
   object reified extends BrandServiceGen[BrandServiceOperation] {
-    def addBrands(brands: Option[List[java.lang.String]] = None) = AddBrands(AddBrandsInput(brands))
+    def addBrands(brands: Option[List[String]] = None) = AddBrands(AddBrandsInput(brands))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BrandServiceGen[P], f: PolyFunction5[P, P1]) extends BrandServiceGen[P1] {
-    def addBrands(brands: Option[List[java.lang.String]] = None) = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands(brands))
+    def addBrands(brands: Option[List[String]] = None) = f[AddBrandsInput, Nothing, Unit, Nothing, Nothing](alg.addBrands(brands))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BrandServiceGen[P]): PolyFunction5[BrandServiceOperation, P] = new PolyFunction5[BrandServiceOperation, P] {

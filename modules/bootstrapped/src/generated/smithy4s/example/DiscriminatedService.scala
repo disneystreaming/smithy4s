@@ -13,7 +13,7 @@ import smithy4s.kinds.toPolyFunction5.const5
 trait DiscriminatedServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def testDiscriminated(key: java.lang.String): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing]
+  def testDiscriminated(key: String): F[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[DiscriminatedServiceGen[F]] = Transformation.of[DiscriminatedServiceGen[F]](this)
 }
@@ -21,7 +21,7 @@ trait DiscriminatedServiceGen[F[_, _, _, _, _]] {
 object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, DiscriminatedServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "DiscriminatedService")
-  val version: scala.Predef.String = "1.0.0"
+  val version: String = "1.0.0"
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -60,10 +60,10 @@ sealed trait DiscriminatedServiceOperation[Input, Err, Output, StreamedInput, St
 object DiscriminatedServiceOperation {
 
   object reified extends DiscriminatedServiceGen[DiscriminatedServiceOperation] {
-    def testDiscriminated(key: java.lang.String) = TestDiscriminated(TestDiscriminatedInput(key))
+    def testDiscriminated(key: String) = TestDiscriminated(TestDiscriminatedInput(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: DiscriminatedServiceGen[P], f: PolyFunction5[P, P1]) extends DiscriminatedServiceGen[P1] {
-    def testDiscriminated(key: java.lang.String) = f[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing](alg.testDiscriminated(key))
+    def testDiscriminated(key: String) = f[TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing](alg.testDiscriminated(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: DiscriminatedServiceGen[P]): PolyFunction5[DiscriminatedServiceOperation, P] = new PolyFunction5[DiscriminatedServiceOperation, P] {

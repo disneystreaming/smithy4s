@@ -13,7 +13,7 @@ import smithy4s.kinds.toPolyFunction5.const5
 trait GreetServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def greet(name: java.lang.String): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing]
+  def greet(name: String): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[GreetServiceGen[F]] = Transformation.of[GreetServiceGen[F]](this)
 }
@@ -21,7 +21,7 @@ trait GreetServiceGen[F[_, _, _, _, _]] {
 object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.greet", "GreetService")
-  val version: scala.Predef.String = ""
+  val version: String = ""
 
   val hints: Hints = Hints.empty
 
@@ -58,10 +58,10 @@ sealed trait GreetServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object GreetServiceOperation {
 
   object reified extends GreetServiceGen[GreetServiceOperation] {
-    def greet(name: java.lang.String) = Greet(GreetInput(name))
+    def greet(name: String) = Greet(GreetInput(name))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: GreetServiceGen[P], f: PolyFunction5[P, P1]) extends GreetServiceGen[P1] {
-    def greet(name: java.lang.String) = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](alg.greet(name))
+    def greet(name: String) = f[GreetInput, Nothing, GreetOutput, Nothing, Nothing](alg.greet(name))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: GreetServiceGen[P]): PolyFunction5[GreetServiceOperation, P] = new PolyFunction5[GreetServiceOperation, P] {

@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class ServerErrorCustomMessage(messageField: Option[java.lang.String] = None) extends Throwable {
-  override def getMessage(): scala.Predef.String = messageField.orNull
+final case class ServerErrorCustomMessage(messageField: Option[String] = None) extends Throwable {
+  override def getMessage(): String = messageField.orNull
 }
 object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMessage] {
   val id: ShapeId = ShapeId("smithy4s.example", "ServerErrorCustomMessage")

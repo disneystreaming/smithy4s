@@ -11,8 +11,8 @@ import smithy4s.schema.Schema.struct
   * @param message
   *   <p>The server encountered an internal error trying to fulfill the request.</p>
   */
-final case class InternalServerError(message: Option[java.lang.String] = None) extends Throwable {
-  override def getMessage(): scala.Predef.String = message.orNull
+final case class InternalServerError(message: Option[String] = None) extends Throwable {
+  override def getMessage(): String = message.orNull
 }
 object InternalServerError extends ShapeTag.Companion[InternalServerError] {
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InternalServerError")

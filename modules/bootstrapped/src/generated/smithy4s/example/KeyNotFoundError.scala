@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class KeyNotFoundError(message: java.lang.String) extends Throwable {
-  override def getMessage(): scala.Predef.String = message
+final case class KeyNotFoundError(message: String) extends Throwable {
+  override def getMessage(): String = message
 }
 object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
   val id: ShapeId = ShapeId("smithy4s.example", "KeyNotFoundError")

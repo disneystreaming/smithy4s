@@ -19,17 +19,17 @@ import smithy4s.schema.Schema.unit
 trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def addMenuItem(restaurant: java.lang.String, menuItem: MenuItem): F[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing]
-  def getMenu(restaurant: java.lang.String): F[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing]
+  def addMenuItem(restaurant: String, menuItem: MenuItem): F[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing]
+  def getMenu(restaurant: String): F[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing]
   def version(): F[Unit, Nothing, VersionOutput, Nothing, Nothing]
-  def health(query: Option[java.lang.String] = None): F[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing]
-  def headerEndpoint(uppercaseHeader: Option[java.lang.String] = None, capitalizedHeader: Option[java.lang.String] = None, lowercaseHeader: Option[java.lang.String] = None, mixedHeader: Option[java.lang.String] = None): F[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing]
-  def roundTrip(label: java.lang.String, header: Option[java.lang.String] = None, query: Option[java.lang.String] = None, body: Option[java.lang.String] = None): F[RoundTripData, Nothing, RoundTripData, Nothing, Nothing]
+  def health(query: Option[String] = None): F[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing]
+  def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None): F[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing]
+  def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None): F[RoundTripData, Nothing, RoundTripData, Nothing, Nothing]
   def getEnum(aa: TheEnum): F[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing]
   def getIntEnum(aa: EnumResult): F[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing]
   def customCode(code: Int): F[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing]
-  def reservation(name: java.lang.String, town: Option[java.lang.String] = None): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]
-  def echo(pathParam: java.lang.String, body: EchoBody, queryParam: Option[java.lang.String] = None): F[EchoInput, Nothing, Unit, Nothing, Nothing]
+  def reservation(name: String, town: Option[String] = None): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]
+  def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None): F[EchoInput, Nothing, Unit, Nothing, Nothing]
   def optionalOutput(): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[PizzaAdminServiceGen[F]] = Transformation.of[PizzaAdminServiceGen[F]](this)
@@ -38,7 +38,7 @@ trait PizzaAdminServiceGen[F[_, _, _, _, _]] {
 object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdminServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "PizzaAdminService")
-  val version: scala.Predef.String = "1.0.0"
+  val version: String = "1.0.0"
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -100,31 +100,31 @@ sealed trait PizzaAdminServiceOperation[Input, Err, Output, StreamedInput, Strea
 object PizzaAdminServiceOperation {
 
   object reified extends PizzaAdminServiceGen[PizzaAdminServiceOperation] {
-    def addMenuItem(restaurant: java.lang.String, menuItem: MenuItem) = AddMenuItem(AddMenuItemRequest(restaurant, menuItem))
-    def getMenu(restaurant: java.lang.String) = GetMenu(GetMenuRequest(restaurant))
+    def addMenuItem(restaurant: String, menuItem: MenuItem) = AddMenuItem(AddMenuItemRequest(restaurant, menuItem))
+    def getMenu(restaurant: String) = GetMenu(GetMenuRequest(restaurant))
     def version() = Version()
-    def health(query: Option[java.lang.String] = None) = Health(HealthRequest(query))
-    def headerEndpoint(uppercaseHeader: Option[java.lang.String] = None, capitalizedHeader: Option[java.lang.String] = None, lowercaseHeader: Option[java.lang.String] = None, mixedHeader: Option[java.lang.String] = None) = HeaderEndpoint(HeaderEndpointData(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
-    def roundTrip(label: java.lang.String, header: Option[java.lang.String] = None, query: Option[java.lang.String] = None, body: Option[java.lang.String] = None) = RoundTrip(RoundTripData(label, header, query, body))
+    def health(query: Option[String] = None) = Health(HealthRequest(query))
+    def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None) = HeaderEndpoint(HeaderEndpointData(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
+    def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None) = RoundTrip(RoundTripData(label, header, query, body))
     def getEnum(aa: TheEnum) = GetEnum(GetEnumInput(aa))
     def getIntEnum(aa: EnumResult) = GetIntEnum(GetIntEnumInput(aa))
     def customCode(code: Int) = CustomCode(CustomCodeInput(code))
-    def reservation(name: java.lang.String, town: Option[java.lang.String] = None) = Reservation(ReservationInput(name, town))
-    def echo(pathParam: java.lang.String, body: EchoBody, queryParam: Option[java.lang.String] = None) = Echo(EchoInput(pathParam, body, queryParam))
+    def reservation(name: String, town: Option[String] = None) = Reservation(ReservationInput(name, town))
+    def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = Echo(EchoInput(pathParam, body, queryParam))
     def optionalOutput() = OptionalOutput()
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: PizzaAdminServiceGen[P], f: PolyFunction5[P, P1]) extends PizzaAdminServiceGen[P1] {
-    def addMenuItem(restaurant: java.lang.String, menuItem: MenuItem) = f[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing](alg.addMenuItem(restaurant, menuItem))
-    def getMenu(restaurant: java.lang.String) = f[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing](alg.getMenu(restaurant))
+    def addMenuItem(restaurant: String, menuItem: MenuItem) = f[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing](alg.addMenuItem(restaurant, menuItem))
+    def getMenu(restaurant: String) = f[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing](alg.getMenu(restaurant))
     def version() = f[Unit, Nothing, VersionOutput, Nothing, Nothing](alg.version())
-    def health(query: Option[java.lang.String] = None) = f[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing](alg.health(query))
-    def headerEndpoint(uppercaseHeader: Option[java.lang.String] = None, capitalizedHeader: Option[java.lang.String] = None, lowercaseHeader: Option[java.lang.String] = None, mixedHeader: Option[java.lang.String] = None) = f[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing](alg.headerEndpoint(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
-    def roundTrip(label: java.lang.String, header: Option[java.lang.String] = None, query: Option[java.lang.String] = None, body: Option[java.lang.String] = None) = f[RoundTripData, Nothing, RoundTripData, Nothing, Nothing](alg.roundTrip(label, header, query, body))
+    def health(query: Option[String] = None) = f[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing](alg.health(query))
+    def headerEndpoint(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None) = f[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing](alg.headerEndpoint(uppercaseHeader, capitalizedHeader, lowercaseHeader, mixedHeader))
+    def roundTrip(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None) = f[RoundTripData, Nothing, RoundTripData, Nothing, Nothing](alg.roundTrip(label, header, query, body))
     def getEnum(aa: TheEnum) = f[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing](alg.getEnum(aa))
     def getIntEnum(aa: EnumResult) = f[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing](alg.getIntEnum(aa))
     def customCode(code: Int) = f[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing](alg.customCode(code))
-    def reservation(name: java.lang.String, town: Option[java.lang.String] = None) = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
-    def echo(pathParam: java.lang.String, body: EchoBody, queryParam: Option[java.lang.String] = None) = f[EchoInput, Nothing, Unit, Nothing, Nothing](alg.echo(pathParam, body, queryParam))
+    def reservation(name: String, town: Option[String] = None) = f[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing](alg.reservation(name, town))
+    def echo(pathParam: String, body: EchoBody, queryParam: Option[String] = None) = f[EchoInput, Nothing, Unit, Nothing, Nothing](alg.echo(pathParam, body, queryParam))
     def optionalOutput() = f[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing](alg.optionalOutput())
   }
 

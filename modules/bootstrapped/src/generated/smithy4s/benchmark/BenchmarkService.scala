@@ -14,8 +14,8 @@ import smithy4s.schema.Schema.unit
 trait BenchmarkServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def createObject(key: java.lang.String, bucketName: java.lang.String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
-  def sendString(key: java.lang.String, bucketName: java.lang.String, body: java.lang.String): F[SendStringInput, Nothing, Unit, Nothing, Nothing]
+  def createObject(key: String, bucketName: String, payload: S3Object): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing]
+  def sendString(key: String, bucketName: String, body: String): F[SendStringInput, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[BenchmarkServiceGen[F]] = Transformation.of[BenchmarkServiceGen[F]](this)
 }
@@ -23,7 +23,7 @@ trait BenchmarkServiceGen[F[_, _, _, _, _]] {
 object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.benchmark", "BenchmarkService")
-  val version: scala.Predef.String = "1.0.0"
+  val version: String = "1.0.0"
 
   val hints: Hints = Hints.empty
 
@@ -61,12 +61,12 @@ sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, Stream
 object BenchmarkServiceOperation {
 
   object reified extends BenchmarkServiceGen[BenchmarkServiceOperation] {
-    def createObject(key: java.lang.String, bucketName: java.lang.String, payload: S3Object) = CreateObject(CreateObjectInput(key, bucketName, payload))
-    def sendString(key: java.lang.String, bucketName: java.lang.String, body: java.lang.String) = SendString(SendStringInput(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object) = CreateObject(CreateObjectInput(key, bucketName, payload))
+    def sendString(key: String, bucketName: String, body: String) = SendString(SendStringInput(key, bucketName, body))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: BenchmarkServiceGen[P], f: PolyFunction5[P, P1]) extends BenchmarkServiceGen[P1] {
-    def createObject(key: java.lang.String, bucketName: java.lang.String, payload: S3Object) = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
-    def sendString(key: java.lang.String, bucketName: java.lang.String, body: java.lang.String) = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
+    def createObject(key: String, bucketName: String, payload: S3Object) = f[CreateObjectInput, Nothing, Unit, Nothing, Nothing](alg.createObject(key, bucketName, payload))
+    def sendString(key: String, bucketName: String, body: String) = f[SendStringInput, Nothing, Unit, Nothing, Nothing](alg.sendString(key, bucketName, body))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: BenchmarkServiceGen[P]): PolyFunction5[BenchmarkServiceOperation, P] = new PolyFunction5[BenchmarkServiceOperation, P] {

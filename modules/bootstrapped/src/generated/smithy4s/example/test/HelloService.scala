@@ -19,9 +19,9 @@ import smithy4s.schema.Schema.unit
 trait HelloServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def sayHello(greeting: Option[java.lang.String] = None, query: Option[java.lang.String] = None, name: Option[java.lang.String] = None): F[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing]
+  def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None): F[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing]
   def listen(): F[Unit, Nothing, Unit, Nothing, Nothing]
-  def testPath(path: java.lang.String): F[TestPathInput, Nothing, Unit, Nothing, Nothing]
+  def testPath(path: String): F[TestPathInput, Nothing, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[HelloServiceGen[F]] = Transformation.of[HelloServiceGen[F]](this)
 }
@@ -29,7 +29,7 @@ trait HelloServiceGen[F[_, _, _, _, _]] {
 object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloService")
-  val version: scala.Predef.String = ""
+  val version: String = ""
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -72,14 +72,14 @@ sealed trait HelloServiceOperation[Input, Err, Output, StreamedInput, StreamedOu
 object HelloServiceOperation {
 
   object reified extends HelloServiceGen[HelloServiceOperation] {
-    def sayHello(greeting: Option[java.lang.String] = None, query: Option[java.lang.String] = None, name: Option[java.lang.String] = None) = SayHello(SayHelloInput(greeting, query, name))
+    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None) = SayHello(SayHelloInput(greeting, query, name))
     def listen() = Listen()
-    def testPath(path: java.lang.String) = TestPath(TestPathInput(path))
+    def testPath(path: String) = TestPath(TestPathInput(path))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: HelloServiceGen[P], f: PolyFunction5[P, P1]) extends HelloServiceGen[P1] {
-    def sayHello(greeting: Option[java.lang.String] = None, query: Option[java.lang.String] = None, name: Option[java.lang.String] = None) = f[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing](alg.sayHello(greeting, query, name))
+    def sayHello(greeting: Option[String] = None, query: Option[String] = None, name: Option[String] = None) = f[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing](alg.sayHello(greeting, query, name))
     def listen() = f[Unit, Nothing, Unit, Nothing, Nothing](alg.listen())
-    def testPath(path: java.lang.String) = f[TestPathInput, Nothing, Unit, Nothing, Nothing](alg.testPath(path))
+    def testPath(path: String) = f[TestPathInput, Nothing, Unit, Nothing, Nothing](alg.testPath(path))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: HelloServiceGen[P]): PolyFunction5[HelloServiceOperation, P] = new PolyFunction5[HelloServiceOperation, P] {

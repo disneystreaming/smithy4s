@@ -23,7 +23,7 @@ trait WeatherGen[F[_, _, _, _, _]] {
   def getCurrentTime(): F[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing]
   def getCity(cityId: CityId): F[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing]
   def getForecast(cityId: CityId): F[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing]
-  def listCities(nextToken: Option[java.lang.String] = None, pageSize: Option[Int] = None): F[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing]
+  def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None): F[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[WeatherGen[F]] = Transformation.of[WeatherGen[F]](this)
 }
@@ -31,7 +31,7 @@ trait WeatherGen[F[_, _, _, _, _]] {
 object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "Weather")
-  val version: scala.Predef.String = "2006-03-01"
+  val version: String = "2006-03-01"
 
   val hints: Hints = Hints(
     smithy.api.Documentation("Provides weather forecasts."),
@@ -79,13 +79,13 @@ object WeatherOperation {
     def getCurrentTime() = GetCurrentTime()
     def getCity(cityId: CityId) = GetCity(GetCityInput(cityId))
     def getForecast(cityId: CityId) = GetForecast(GetForecastInput(cityId))
-    def listCities(nextToken: Option[java.lang.String] = None, pageSize: Option[Int] = None) = ListCities(ListCitiesInput(nextToken, pageSize))
+    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None) = ListCities(ListCitiesInput(nextToken, pageSize))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherGen[P], f: PolyFunction5[P, P1]) extends WeatherGen[P1] {
     def getCurrentTime() = f[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing](alg.getCurrentTime())
     def getCity(cityId: CityId) = f[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing](alg.getCity(cityId))
     def getForecast(cityId: CityId) = f[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing](alg.getForecast(cityId))
-    def listCities(nextToken: Option[java.lang.String] = None, pageSize: Option[Int] = None) = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](alg.listCities(nextToken, pageSize))
+    def listCities(nextToken: Option[String] = None, pageSize: Option[Int] = None) = f[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing](alg.listCities(nextToken, pageSize))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherGen[P]): PolyFunction5[WeatherOperation, P] = new PolyFunction5[WeatherOperation, P] {

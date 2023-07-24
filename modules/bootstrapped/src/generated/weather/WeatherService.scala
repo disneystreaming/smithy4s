@@ -13,7 +13,7 @@ import smithy4s.kinds.toPolyFunction5.const5
 trait WeatherServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def getWeather(city: java.lang.String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
+  def getWeather(city: String): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[WeatherServiceGen[F]] = Transformation.of[WeatherServiceGen[F]](this)
 }
@@ -21,7 +21,7 @@ trait WeatherServiceGen[F[_, _, _, _, _]] {
 object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherServiceOperation] {
 
   val id: ShapeId = ShapeId("weather", "WeatherService")
-  val version: scala.Predef.String = ""
+  val version: String = ""
 
   val hints: Hints = Hints(
     alloy.SimpleRestJson(),
@@ -60,10 +60,10 @@ sealed trait WeatherServiceOperation[Input, Err, Output, StreamedInput, Streamed
 object WeatherServiceOperation {
 
   object reified extends WeatherServiceGen[WeatherServiceOperation] {
-    def getWeather(city: java.lang.String) = GetWeather(GetWeatherInput(city))
+    def getWeather(city: String) = GetWeather(GetWeatherInput(city))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: WeatherServiceGen[P], f: PolyFunction5[P, P1]) extends WeatherServiceGen[P1] {
-    def getWeather(city: java.lang.String) = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](alg.getWeather(city))
+    def getWeather(city: String) = f[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing](alg.getWeather(city))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: WeatherServiceGen[P]): PolyFunction5[WeatherServiceOperation, P] = new PolyFunction5[WeatherServiceOperation, P] {

@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class RandomOtherServerErrorWithCode(message: Option[java.lang.String] = None) extends Throwable {
-  override def getMessage(): scala.Predef.String = message.orNull
+final case class RandomOtherServerErrorWithCode(message: Option[String] = None) extends Throwable {
+  override def getMessage(): String = message.orNull
 }
 object RandomOtherServerErrorWithCode extends ShapeTag.Companion[RandomOtherServerErrorWithCode] {
   val id: ShapeId = ShapeId("smithy4s.example", "RandomOtherServerErrorWithCode")

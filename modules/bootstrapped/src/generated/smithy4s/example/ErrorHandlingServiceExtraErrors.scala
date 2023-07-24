@@ -19,7 +19,7 @@ import smithy4s.schema.Schema.unit
 trait ErrorHandlingServiceExtraErrorsGen[F[_, _, _, _, _]] {
   self =>
 
-  def extraErrorOperation(in: Option[java.lang.String] = None): F[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing]
+  def extraErrorOperation(in: Option[String] = None): F[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ErrorHandlingServiceExtraErrorsGen[F]] = Transformation.of[ErrorHandlingServiceExtraErrorsGen[F]](this)
 }
@@ -27,7 +27,7 @@ trait ErrorHandlingServiceExtraErrorsGen[F[_, _, _, _, _]] {
 object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingServiceExtraErrorsGen, ErrorHandlingServiceExtraErrorsOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingServiceExtraErrors")
-  val version: scala.Predef.String = "1"
+  val version: String = "1"
 
   val hints: Hints = Hints.empty
 
@@ -66,10 +66,10 @@ sealed trait ErrorHandlingServiceExtraErrorsOperation[Input, Err, Output, Stream
 object ErrorHandlingServiceExtraErrorsOperation {
 
   object reified extends ErrorHandlingServiceExtraErrorsGen[ErrorHandlingServiceExtraErrorsOperation] {
-    def extraErrorOperation(in: Option[java.lang.String] = None) = ExtraErrorOperation(ExtraErrorOperationInput(in))
+    def extraErrorOperation(in: Option[String] = None) = ExtraErrorOperation(ExtraErrorOperationInput(in))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ErrorHandlingServiceExtraErrorsGen[P], f: PolyFunction5[P, P1]) extends ErrorHandlingServiceExtraErrorsGen[P1] {
-    def extraErrorOperation(in: Option[java.lang.String] = None) = f[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing](alg.extraErrorOperation(in))
+    def extraErrorOperation(in: Option[String] = None) = f[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing](alg.extraErrorOperation(in))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[P]): PolyFunction5[ErrorHandlingServiceExtraErrorsOperation, P] = new PolyFunction5[ErrorHandlingServiceExtraErrorsOperation, P] {

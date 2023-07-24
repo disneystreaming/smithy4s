@@ -7,8 +7,8 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class EHServiceUnavailable(message: Option[java.lang.String] = None) extends Throwable {
-  override def getMessage(): scala.Predef.String = message.orNull
+final case class EHServiceUnavailable(message: Option[String] = None) extends Throwable {
+  override def getMessage(): String = message.orNull
 }
 object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
   val id: ShapeId = ShapeId("smithy4s.example", "EHServiceUnavailable")

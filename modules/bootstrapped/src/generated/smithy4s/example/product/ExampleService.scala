@@ -14,7 +14,7 @@ import smithy4s.kinds.toPolyFunction5.const5
 trait ExampleServiceGen[F[_, _, _, _, _]] {
   self =>
 
-  def exampleOperation(a: java.lang.String): F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing]
+  def exampleOperation(a: String): F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing]
 
   def transform: Transformation.PartiallyApplied[ExampleServiceGen[F]] = Transformation.of[ExampleServiceGen[F]](this)
 }
@@ -28,7 +28,7 @@ trait ExampleServiceProductGen[F[_, _, _, _, _]] {
 object ExampleServiceGen extends Service.Mixin[ExampleServiceGen, ExampleServiceOperation] with ServiceProduct.Mirror[ExampleServiceGen] {
 
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleService")
-  val version: scala.Predef.String = ""
+  val version: String = ""
 
   val hints: Hints = Hints.empty
 
@@ -89,10 +89,10 @@ sealed trait ExampleServiceOperation[Input, Err, Output, StreamedInput, Streamed
 object ExampleServiceOperation {
 
   object reified extends ExampleServiceGen[ExampleServiceOperation] {
-    def exampleOperation(a: java.lang.String) = ExampleOperation(ExampleOperationInput(a))
+    def exampleOperation(a: String) = ExampleOperation(ExampleOperationInput(a))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: ExampleServiceGen[P], f: PolyFunction5[P, P1]) extends ExampleServiceGen[P1] {
-    def exampleOperation(a: java.lang.String) = f[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing](alg.exampleOperation(a))
+    def exampleOperation(a: String) = f[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing](alg.exampleOperation(a))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: ExampleServiceGen[P]): PolyFunction5[ExampleServiceOperation, P] = new PolyFunction5[ExampleServiceOperation, P] {

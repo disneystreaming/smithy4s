@@ -14,8 +14,8 @@ import smithy4s.schema.Schema.unit
 trait StreamedObjectsGen[F[_, _, _, _, _]] {
   self =>
 
-  def putStreamedObject(key: java.lang.String): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
-  def getStreamedObject(key: java.lang.String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
+  def putStreamedObject(key: String): F[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing]
+  def getStreamedObject(key: String): F[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob]
 
   def transform: Transformation.PartiallyApplied[StreamedObjectsGen[F]] = Transformation.of[StreamedObjectsGen[F]](this)
 }
@@ -23,7 +23,7 @@ trait StreamedObjectsGen[F[_, _, _, _, _]] {
 object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObjectsOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedObjects")
-  val version: scala.Predef.String = "1.0.0"
+  val version: String = "1.0.0"
 
   val hints: Hints = Hints.empty
 
@@ -61,12 +61,12 @@ sealed trait StreamedObjectsOperation[Input, Err, Output, StreamedInput, Streame
 object StreamedObjectsOperation {
 
   object reified extends StreamedObjectsGen[StreamedObjectsOperation] {
-    def putStreamedObject(key: java.lang.String) = PutStreamedObject(PutStreamedObjectInput(key))
-    def getStreamedObject(key: java.lang.String) = GetStreamedObject(GetStreamedObjectInput(key))
+    def putStreamedObject(key: String) = PutStreamedObject(PutStreamedObjectInput(key))
+    def getStreamedObject(key: String) = GetStreamedObject(GetStreamedObjectInput(key))
   }
   class Transformed[P[_, _, _, _, _], P1[_ ,_ ,_ ,_ ,_]](alg: StreamedObjectsGen[P], f: PolyFunction5[P, P1]) extends StreamedObjectsGen[P1] {
-    def putStreamedObject(key: java.lang.String) = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](alg.putStreamedObject(key))
-    def getStreamedObject(key: java.lang.String) = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](alg.getStreamedObject(key))
+    def putStreamedObject(key: String) = f[PutStreamedObjectInput, Nothing, Unit, StreamedBlob, Nothing](alg.putStreamedObject(key))
+    def getStreamedObject(key: String) = f[GetStreamedObjectInput, Nothing, GetStreamedObjectOutput, Nothing, StreamedBlob](alg.getStreamedObject(key))
   }
 
   def toPolyFunction[P[_, _, _, _, _]](impl: StreamedObjectsGen[P]): PolyFunction5[StreamedObjectsOperation, P] = new PolyFunction5[StreamedObjectsOperation, P] {
