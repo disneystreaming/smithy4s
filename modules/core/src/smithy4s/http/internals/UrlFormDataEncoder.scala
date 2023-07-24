@@ -35,9 +35,12 @@ private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
 }
 
 object UrlFormDataEncoder {
-  implicit val urlFormDataEncoderK: EncoderK[UrlFormDataEncoder, UrlForm.FormData] =
+  implicit val urlFormDataEncoderK
+      : EncoderK[UrlFormDataEncoder, UrlForm.FormData] =
     new EncoderK[UrlFormDataEncoder, UrlForm.FormData] {
-      override def apply[A](fa: UrlFormDataEncoder[A], a: A): UrlForm.FormData = fa.encode(a)
-      override def absorb[A](f: A => UrlForm.FormData): UrlFormDataEncoder[A] = (value: A) => f(value)
+      override def apply[A](fa: UrlFormDataEncoder[A], a: A): UrlForm.FormData =
+        fa.encode(a)
+      override def absorb[A](f: A => UrlForm.FormData): UrlFormDataEncoder[A] =
+        (value: A) => f(value)
     }
 }

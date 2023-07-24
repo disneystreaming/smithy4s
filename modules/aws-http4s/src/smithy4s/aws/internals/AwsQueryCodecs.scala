@@ -23,21 +23,13 @@ import cats.syntax.all._
 import fs2.compression.Compression
 import smithy4s.Endpoint
 import smithy4s.schema.CachedSchemaCompiler
-import org.http4s.EntityDecoder
-import smithy4s.xml.XmlDocument
-import org.http4s.MediaRange
-import fs2.data.xml._
-import fs2.data.xml.dom._
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import cats.data.EitherT
+import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
 import smithy4s.codecs.PayloadPath
 import org.http4s.EntityEncoder
-import smithy4s.capability.Covariant
 import _root_.aws.protocols.AwsQueryError
-
-import smithy4s.http.Metadata
 
 private[aws] object AwsQueryCodecs {
 
@@ -48,179 +40,101 @@ private[aws] object AwsQueryCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-
-        val stringAndBlobsEntityDecoders =
-          smithy4s.http.StringAndBlobCodecs.ReaderCompiler
-            .mapK(
-              Covariant.liftPolyFunction[Option](
-                EntityDecoders.fromHttpMediaReaderK[F]
-              )
-            )
-
-        val urlFormEntityEncoders: CachedSchemaCompiler[EntityEncoder[F, *]] =
-          UrlForm.Encoder
-            .mapK(
-              new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
-                def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-                  urlFormEntityEncoder[F].contramap((a: A) =>
-                    UrlForm(
-                      UrlForm.FormData.MultipleValues(
-                        UrlForm.FormData
-                          .PathedValue(
-                            PayloadPath(PayloadPath.Segment("Action")),
-                            maybeValue = Some(endpoint.id.name)
-                          )
-                          .toPathedValues ++
-                          UrlForm.FormData
-                            .PathedValue(
-                              PayloadPath(PayloadPath.Segment("Version")),
-                              maybeValue = Some(version)
-                            )
-                            .toPathedValues ++
-                          fa.encode(a).values.values
-                      )
-                    )
-                  )
-              }
-            )
-
-        val xmlEntityDecoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
-          XmlDocument.Decoder.mapK(
-            new PolyFunction[XmlDocument.Decoder, EntityDecoder[F, *]] {
-              def apply[A](
-                  fa: XmlDocument.Decoder[A]
-              ): EntityDecoder[F, A] =
-                xmlEntityDecoder[F].flatMapR(xmlDocument =>
-                  EitherT.liftF {
-                    fa.decode(xmlDocument)
-                      .leftMap(fromXmlToHttpError)
-                      .liftTo[F]
-                  }
-                )
-            }
+        val transformEncoders =
+          applyCompression[F](endpoint.hints, retainUserEncoding = false)
+        val requestEncoderCompilersWithCompression = transformEncoders(
+          requestEncoderCompilers[F](
+            action = endpoint.id.name,
+            version = version
           )
-
-        val decoders = CachedSchemaCompiler.getOrElse(
-          stringAndBlobsEntityDecoders,
-          xmlEntityDecoders
         )
 
-        val restEncoders =
-          RequestEncoder
-            .restSchemaCompiler[F](
-              Metadata.AwsEncoder,
-              urlFormEntityEncoders,
-              writeEmptyStructs = true
-            )
-
-        val restDecoders =
-          ResponseDecoder.restSchemaCompiler(Metadata.AwsDecoder, decoders)
-
+        val (xmlResponseDecoderCompilers, errorDecoderCompilers) =
+          AwsXmlCodecs.responseAndErrorDecoderCompilers[F]
         val responseTag = endpoint.name + "Response"
         val resultTag = endpoint.name + "Result"
-        val successDecoders = restDecoders.contramapSchema(
-          smithy4s.schema.Schema.transformHintsLocallyK(
-            _ ++ smithy4s.Hints(
-              smithy4s.xml.internals.XmlStartingPath(
-                List(responseTag, resultTag)
+        val responseDecoderCompilers =
+          xmlResponseDecoderCompilers.contramapSchema(
+            smithy4s.schema.Schema.transformHintsLocallyK(
+              _ ++ smithy4s.Hints(
+                smithy4s.xml.internals.XmlStartingPath(
+                  List(responseTag, resultTag)
+                )
               )
             )
           )
-        )
-
-        val errorDecoders = restDecoders.contramapSchema(
-          smithy4s.schema.Schema.transformHintsLocallyK(
-            _ ++ smithy4s.Hints(
-              smithy4s.xml.internals.XmlStartingPath(
-                List("ErrorResponse", "Error")
-              )
-            )
-          )
-        )
-
         // Takes the `@awsQueryError` trait into consideration to decide how to
         // discriminate error responses.
-        val errorNameMapping: String => String = {
-          endpoint.errorable match {
-            case None => identity[String]
-            case Some(err) =>
-              val mapping = err.error.alternatives.flatMap { alt =>
-                val shapeName = alt.schema.shapeId.name
-                alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
-              }.toMap
-              (errorCode: String) => mapping.getOrElse(errorCode, errorCode)
-          }
-        }
+        val errorNameMapping: (String => String) = endpoint.errorable match {
+          case None =>
+            identity[String]
 
-        val discriminator = AwsErrorTypeDecoder
-          .fromResponse(errorDecoders)
+          case Some(err) =>
+            val mapping = err.error.alternatives.flatMap { alt =>
+              val shapeName = alt.schema.shapeId.name
+              alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
+            }.toMap
+            (errorCode: String) => mapping.getOrElse(errorCode, errorCode)
+        }
+        val errorDiscriminator = AwsErrorTypeDecoder
+          .fromResponse(errorDecoderCompilers)
           .andThen(_.map(_.map {
             case HttpDiscriminator.NameOnly(name) =>
               HttpDiscriminator.NameOnly(errorNameMapping(name))
             case other => other
           }))
 
-        val transformEncoders =
-          applyCompression[F](endpoint.hints, retainUserEncoding = false)
-        val finalEncoders = transformEncoders(restEncoders)
-
-        val make =
-          UnaryClientCodecs
-            .Make[F](
-              finalEncoders,
-              successDecoders,
-              errorDecoders,
-              discriminator
-            )
+        val make = UnaryClientCodecs.Make[F](
+          input = requestEncoderCompilersWithCompression,
+          output = responseDecoderCompilers,
+          error = errorDecoderCompilers,
+          errorDiscriminator = errorDiscriminator
+        )
         make.apply(endpoint)
       }
     }
 
-  private def xmlEntityDecoder[F[_]: Concurrent]
-      : EntityDecoder[F, XmlDocument] =
-    EntityDecoder.decodeBy(
-      MediaRange.parse("application/xml").getOrElse(sys.error("TODO"))
-    )(media =>
-      EitherT.liftF(
-        media.body
-          .through(fs2.text.utf8.decode[F])
-          .through(events[F, String]())
-          .through(referenceResolver())
-          .through(normalize)
-          .through(documents[F, XmlDocument])
-          .head
-          .compile
-          .last
-          .map(
-            _.getOrElse(
-              // TODO: This isn't right (see also AwsXmlCodecs).
-              XmlDocument(
-                XmlDocument.XmlElem(
-                  XmlDocument.XmlQName(None, "Unit"),
-                  List.empty,
-                  List.empty
+  private def requestEncoderCompilers[F[_]: Concurrent](
+      action: String,
+      version: String
+  ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+    val urlFormEntityEncoderCompilers = UrlForm.Encoder.mapK(
+      new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
+        def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
+          urlFormEntityEncoder[F].contramap((a: A) =>
+            UrlForm(
+              UrlForm.FormData
+                .MultipleValues(
+                  Vector(
+                    UrlForm.FormData
+                      .PathedValue(
+                        PayloadPath(PayloadPath.Segment("Action")),
+                        maybeValue = Some(action)
+                      ),
+                    UrlForm.FormData
+                      .PathedValue(
+                        PayloadPath(PayloadPath.Segment("Version")),
+                        maybeValue = Some(version)
+                      )
+                  ) ++ fa.encode(a).values.values
                 )
-              )
             )
           )
+      }
+    )
+    RequestEncoder.restSchemaCompiler[F](
+      metadataEncoderCompiler = Metadata.AwsEncoder,
+      entityEncoderCompiler = urlFormEntityEncoderCompilers,
+      writeEmptyStructs = true
+    )
+  }
+
+  private def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] =
+    EntityEncoders.fromHttpMediaWriter(
+      HttpMediaTyped(
+        HttpMediaType("application/x-www-form-urlencoded"),
+        (_: Any, urlForm: UrlForm) => Blob(urlForm.values.render)
       )
-    )
-
-  private def urlFormEntityEncoder[F[_]: Concurrent]
-      : EntityEncoder[F, UrlForm] = EntityEncoders.fromHttpMediaWriter(
-    HttpMediaTyped(
-      HttpMediaType("application/x-www-form-urlencoded"),
-      (_: Any, urlForm: UrlForm) => Blob(urlForm.values.render)
-    )
-  )
-
-  private def fromXmlToHttpError(
-      xmlDecodeError: smithy4s.xml.XmlDecodeError
-  ): smithy4s.http.HttpContractError =
-    smithy4s.http.HttpPayloadError(
-      xmlDecodeError.path.toPayloadPath,
-      "",
-      xmlDecodeError.message
     )
 
 }

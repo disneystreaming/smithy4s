@@ -138,9 +138,12 @@ class UrlFormDataEncoderSchemaVisitor(
       hints: Hints,
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
-  ): UrlFormDataEncoder[U] = 
+  ): UrlFormDataEncoder[U] =
     dispatch.compile(new Alt.Precompiler[UrlFormDataEncoder] {
-      override def apply[A](label: String, instance: Schema[A]): UrlFormDataEncoder[A] = {
+      override def apply[A](
+          label: String,
+          instance: Schema[A]
+      ): UrlFormDataEncoder[A] = {
         val key = getKey(instance.hints, label)
         compile(instance).prepend(key)
       }
