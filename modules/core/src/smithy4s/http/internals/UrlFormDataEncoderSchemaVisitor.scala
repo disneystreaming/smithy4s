@@ -138,19 +138,13 @@ class UrlFormDataEncoderSchemaVisitor(
       hints: Hints,
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
-  ): UrlFormDataEncoder[U] = {
-    def encodeUnion[A](u: U, alt: Alt[U, A]): UrlForm.FormData = {
-      val key = getKey(alt.hints, alt.label)
-      dispatch
-        .projector(alt)(u)
-        .fold(UrlForm.FormData.Empty.widen)(a => compile(alt.schema).encode(a))
-        .prepend(key)
-    }
-    (u: U) =>
-      UrlForm.FormData.MultipleValues(
-        alternatives.flatMap(encodeUnion(u, _).toPathedValues)
-      )
-  }
+  ): UrlFormDataEncoder[U] = 
+    dispatch.compile(new Alt.Precompiler[UrlFormDataEncoder] {
+      override def apply[A](label: String, instance: Schema[A]): UrlFormDataEncoder[A] = {
+        val key = getKey(instance.hints, label)
+        compile(instance).prepend(key)
+      }
+    })
 
   override def biject[A, B](
       schema: Schema[A],

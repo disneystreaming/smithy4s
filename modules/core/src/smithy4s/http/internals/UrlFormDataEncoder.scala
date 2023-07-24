@@ -18,6 +18,7 @@ package smithy4s
 package http
 package internals
 
+import smithy4s.capability.EncoderK
 import smithy4s.http.UrlForm
 import smithy4s.codecs.PayloadPath
 
@@ -31,4 +32,12 @@ private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
   def prepend(segment: PayloadPath.Segment): UrlFormDataEncoder[A] =
     (value: A) => self.encode(value).prepend(segment)
 
+}
+
+object UrlFormDataEncoder {
+  implicit val urlFormDataEncoderK: EncoderK[UrlFormDataEncoder, UrlForm.FormData] =
+    new EncoderK[UrlFormDataEncoder, UrlForm.FormData] {
+      override def apply[A](fa: UrlFormDataEncoder[A], a: A): UrlForm.FormData = fa.encode(a)
+      override def absorb[A](f: A => UrlForm.FormData): UrlFormDataEncoder[A] = (value: A) => f(value)
+    }
 }
