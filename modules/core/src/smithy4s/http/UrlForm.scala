@@ -50,7 +50,6 @@ object UrlForm {
 
     // TODO: Rename as Value, replace uses by PathedValue?
     final case class SimpleValue(str: String) extends FormData {
-      // TODO: Use Codec, here and elsewhere, like UrlFormParser
       override def render: String =
         URLEncoder.encode(str, StandardCharsets.UTF_8.name())
 
