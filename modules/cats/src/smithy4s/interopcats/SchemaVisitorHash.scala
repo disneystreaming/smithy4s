@@ -149,10 +149,9 @@ final class SchemaVisitorHash(
 
         // We're using it to get a function that lets us project the `U` against `A`.
         // `U` is not necessarily an `A, so this function returns an `Option`
-        val projectA: U => Option[A] = dispatch.projector(altA)
         val hashA = instance.compile(self)
         new AltHash[A] {
-          def eqv(a: A, u: U): Boolean = projectA(u) match {
+          def eqv(a: A, u: U): Boolean = altA.project.lift(u) match {
             case None => false // U is not an A.
             case Some(a2) =>
               hashA.eqv(a, a2) // U is an A, we delegate the comparison

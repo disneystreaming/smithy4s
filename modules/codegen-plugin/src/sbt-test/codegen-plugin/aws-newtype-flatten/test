@@ -1,0 +1,8 @@
+# check if smithy4sCodegen works
+> compile
+
+# This new type was not flattened because it has range constraints
+$ exists  smithy_output/com/amazonaws/dynamodb/ListTablesInputLimit.scala
+
+# Flattened and removed by the projection transformer
+-$ exists smithy_output/com/amazonaws/dynamodb/Long.scala

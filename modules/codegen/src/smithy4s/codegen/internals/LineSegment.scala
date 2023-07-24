@@ -50,7 +50,7 @@ private[codegen] object LineSegment {
   ) extends LineSegment {
     self =>
 
-    def pkg: List[String] = rawPkg.map(CollisionAvoidance.protectType(_))
+    def pkg: List[String] = rawPkg.map(CollisionAvoidance.protectKeyword(_))
 
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
 

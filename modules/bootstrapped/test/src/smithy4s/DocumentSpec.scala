@@ -18,8 +18,8 @@ package smithy4s
 
 import smithy.api.JsonName
 import smithy.api.Default
-import alloy.Discriminated
 import smithy4s.example.IntList
+import alloy.Discriminated
 import munit._
 
 class DocumentSpec() extends FunSuite {
@@ -45,64 +45,45 @@ class DocumentSpec() extends FunSuite {
   }
 
   import smithy4s.schema.Schema._
-  implicit val tupleIntStringSchema: Schema[(Int, String)] = {
-    val i = int.required[(Int, String)]("int", _._1)
-    val s =
-      string
-        .required[(Int, String)]("string", _._2)
-        .addHints(JsonName("_string"))
-    struct(i, s)((_, _))
-  }
+  implicit val tupleIntStringSchema: Schema[(Int, String)] =
+    Schema.tuple(
+      int.addMemberHints(JsonName("int")),
+      string.addMemberHints(JsonName("_string"))
+    )
 
-  implicit val eitherIntStringSchema: Schema[Either[Int, String]] = {
-    val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
-    val right =
-      string
-        .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
-        .addHints(JsonName("_string"))
-    union(left, right) {
-      case Left(i)    => left(i)
-      case Right(str) => right(str)
-    }
-  }
+  implicit val eitherIntStringSchema: Schema[Either[Int, String]] =
+    Schema.either(int, string.addMemberHints(JsonName("_string")))
 
   case class Foo(str: String)
   case class Bar(str: String, int: Int)
 
   implicit val eitherFooBarSchema: Schema[Either[Foo, Bar]] = {
     val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
-      .oneOf[Either[Foo, Bar]]("foo", (f: Foo) => Left(f))
-
     val right = struct(
       string.required[Bar]("str", _.str).addHints(JsonName("barStr")),
       int.required[Bar]("int", _.int)
     )(Bar.apply)
-      .oneOf[Either[Foo, Bar]]("bar", (b: Bar) => Right(b))
-      .addHints(JsonName("barBar"))
+      .addMemberHints(JsonName("barBar"))
 
-    union(left, right) {
-      case Left(f)  => left(f)
-      case Right(b) => right(b)
-    }.addHints(
-      Discriminated("type")
-    )
+    Schema
+      .either(left, right)
+      .addHints(
+        Discriminated("type")
+      )
   }
 
   case class Baz()
 
   implicit val eitherFooBazSchema: Schema[Either[Foo, Baz]] = {
     val left = struct(string.required[Foo]("str", _.str))(Foo.apply)
-      .oneOf[Either[Foo, Baz]]("foo", (f: Foo) => Left(f))
 
     val right = constant(Baz())
-      .oneOf[Either[Foo, Baz]]("baz", (b: Baz) => Right(b))
 
-    union(left, right) {
-      case Left(f)  => left(f)
-      case Right(b) => right(b)
-    }.addHints(
-      Discriminated("type")
-    )
+    Schema
+      .either(left, right)
+      .addHints(
+        Discriminated("type")
+      )
   }
 
   test("jsonName is handled correctly on structures") {
@@ -118,8 +99,8 @@ class DocumentSpec() extends FunSuite {
 
     val roundTripped = Document.decode[(Int, String)](document)
 
-    expect(document == expectedDocument)
-    expect(roundTripped == Right(intAndString))
+    expect.same(document, expectedDocument)
+    expect.same(roundTripped, Right(intAndString))
   }
 
   test("jsonName is handled correctly on unions") {
@@ -163,7 +144,7 @@ class DocumentSpec() extends FunSuite {
     import Document._
     val expectedDocument =
       obj(
-        "type" -> fromString("baz")
+        "type" -> fromString("right")
       )
 
     val roundTripped = Document.decode[Either[Foo, Baz]](document)
