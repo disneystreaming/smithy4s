@@ -175,18 +175,12 @@ class UrlFormDataEncoderSchemaVisitor(
   override def biject[A, B](
       schema: Schema[A],
       bijection: Bijection[A, B]
-  ): UrlFormDataEncoder[B] = new UrlFormDataEncoder[B] {
-    override def encode(b: B): UrlForm.FormData =
-      compile(schema).encode(bijection.from(b))
-  }
+  ): UrlFormDataEncoder[B] = compile(schema).contramap(bijection.from)
 
   override def refine[A, B](
       schema: Schema[A],
       refinement: Refinement[A, B]
-  ): UrlFormDataEncoder[B] = new UrlFormDataEncoder[B] {
-    override def encode(b: B): UrlForm.FormData =
-      compile(schema).encode(refinement.from(b))
-  }
+  ): UrlFormDataEncoder[B] = compile(schema).contramap(refinement.from)
 
   override def lazily[A](suspend: Lazy[Schema[A]]): UrlFormDataEncoder[A] =
     new UrlFormDataEncoder[A] {
@@ -195,14 +189,7 @@ class UrlFormDataEncoderSchemaVisitor(
       override def encode(a: A): UrlForm.FormData = underlying.encode(a)
     }
 
-  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] =
-    new UrlFormDataEncoder[Option[A]] {
-      val encoder = compile(schema)
-      override def encode(value: Option[A]): UrlForm.FormData = value match {
-        case None        => UrlForm.FormData.Empty
-        case Some(value) => encoder.encode(value)
-      }
-    }
+  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] = compile(schema).optional
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints
