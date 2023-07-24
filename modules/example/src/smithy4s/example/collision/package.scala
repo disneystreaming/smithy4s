@@ -7,5 +7,6 @@ package object collision {
   type MySet = smithy4s.example.collision.MySet.Type
   type MyMap = smithy4s.example.collision.MyMap.Type
   type MyList = smithy4s.example.collision.MyList.Type
+  type String = smithy4s.example.collision.String.Type
 
 }

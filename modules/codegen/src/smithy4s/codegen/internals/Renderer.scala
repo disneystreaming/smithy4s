@@ -319,7 +319,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       )(
         newline,
         renderId(shapeId),
-        line"""val version: String = "$version"""",
+        line"""val version: $string_ = "$version"""",
         newline,
         renderHintsVal(hints),
         newline,
@@ -658,13 +658,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderGetMessage(field: Field) = field match {
     case field if field.tpe.isResolved && field.required =>
-      line"override def getMessage(): String = ${field.name}"
+      line"override def getMessage(): $string_ = ${field.name}"
     case field if field.tpe.isResolved =>
-      line"override def getMessage(): String = ${field.name}.orNull"
+      line"override def getMessage(): $string_ = ${field.name}.orNull"
     case field if field.required =>
-      line"override def getMessage(): String = ${field.name}.value"
+      line"override def getMessage(): $string_ = ${field.name}.value"
     case field =>
-      line"override def getMessage(): String = ${field.name}.map(_.value).orNull"
+      line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
   }
 
   private def renderErrorable(op: Operation): Lines = {
@@ -901,12 +901,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     documentationAnnotation(hints),
     deprecationAnnotation(hints),
     block(
-      line"sealed abstract class ${name.name}(_value: String, _name: String, _intValue: Int, _hints: $Hints_) extends $Enumeration_.Value"
+      line"sealed abstract class ${name.name}(_value: $string_, _name: $string_, _intValue: $int_, _hints: $Hints_) extends $Enumeration_.Value"
     )(
       line"override type EnumType = $name",
-      line"override val value: String = _value",
-      line"override val name: String = _name",
-      line"override val intValue: Int = _intValue",
+      line"override val value: $string_ = _value",
+      line"override val name: $string_ = _name",
+      line"override val intValue: $int_ = _intValue",
       line"override val hints: $Hints_ = _hints",
       line"override def enumeration: $Enumeration_[EnumType] = $name",
       line"@inline final def widen: $name = this"
