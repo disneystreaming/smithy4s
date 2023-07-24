@@ -7,6 +7,8 @@ import com.amazonaws.cloudwatch._
 
 object Main extends IOApp.Simple {
 
+  type NextToken = String
+
   def run = resource.use { case (cloudWatch) =>
     listAll[ListMetricsOutput, Metric](
       listF = maybeNextToken =>

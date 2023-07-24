@@ -138,8 +138,8 @@ private[aws] object AwsQueryCodecs {
           )
         )
 
-        // Takes the `@awsQueryError` trait into consideration to decide
-        // how to discriminate error responses.
+        // Takes the `@awsQueryError` trait into consideration to decide how to
+        // discriminate error responses.
         val errorNameMapping: String => String = {
           endpoint.errorable match {
             case None => identity[String]
@@ -193,7 +193,7 @@ private[aws] object AwsQueryCodecs {
           .last
           .map(
             _.getOrElse(
-              // TODO: This isn't right
+              // TODO: This isn't right (see also AwsXmlCodecs).
               XmlDocument(
                 XmlDocument.XmlElem(
                   XmlDocument.XmlQName(None, "Unit"),

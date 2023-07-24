@@ -71,7 +71,7 @@ object UrlForm {
 
       override def render: String = {
         val lastIndex = path.segments.size - 1
-        val key = path.segments.zipWithIndex
+        val renderedKey = path.segments.zipWithIndex
           .foldLeft(new mutable.StringBuilder) {
 
             case (builder, (Segment.Label(label), i)) if i < lastIndex =>
@@ -98,7 +98,7 @@ object UrlForm {
           case Some(value) =>
             URLEncoder.encode(value, StandardCharsets.UTF_8.name())
         }
-        key + "=" + renderedValue
+        renderedKey + "=" + renderedValue
       }
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
