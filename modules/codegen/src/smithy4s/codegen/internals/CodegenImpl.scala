@@ -18,6 +18,7 @@ package smithy4s.codegen
 package internals
 
 import alloy.openapi._
+import smithy4s.codegen.transformers.AwsStandardTypesTransformer
 import software.amazon.smithy.model.Model
 
 import scala.jdk.CollectionConverters._
@@ -34,7 +35,7 @@ private[codegen] object CodegenImpl { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      args.transformers,
+      withAwsTypeTransformer(args.transformers),
       args.discoverModels,
       args.localJars
     )
@@ -148,12 +149,15 @@ private[codegen] object CodegenImpl { self =>
       args.specs.map(_.toIO).toSet,
       args.dependencies,
       args.repositories,
-      args.transformers,
+      withAwsTypeTransformer(args.transformers),
       discoverModels = false,
       args.localJars
     )
 
     Node.prettyPrintJson(ModelSerializer.builder().build.serialize(model))
   }
+
+  private def withAwsTypeTransformer(transformers: List[String]): List[String] =
+    transformers :+ AwsStandardTypesTransformer.name
 
 }
