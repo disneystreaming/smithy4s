@@ -214,17 +214,17 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[GetMenuError]] = Some(this)
     val error: UnionSchema[GetMenuError] = GetMenuError.schema
     def liftError(throwable: Throwable): Option[GetMenuError] = throwable match {
-      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
-      case e: FallbackError => Some(GetMenuError.FallbackErrorCase(e))
-      case e: FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
       case e: GenericClientError => Some(GetMenuError.GenericClientErrorCase(e))
+      case e: FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
+      case e: FallbackError => Some(GetMenuError.FallbackErrorCase(e))
+      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetMenuError): Throwable = e match {
-      case GetMenuError.NotFoundErrorCase(e) => e
-      case GetMenuError.FallbackErrorCase(e) => e
-      case GetMenuError.FallbackError2Case(e) => e
       case GetMenuError.GenericClientErrorCase(e) => e
+      case GetMenuError.FallbackError2Case(e) => e
+      case GetMenuError.FallbackErrorCase(e) => e
+      case GetMenuError.NotFoundErrorCase(e) => e
     }
   }
   sealed trait GetMenuError extends scala.Product with scala.Serializable {
@@ -235,46 +235,46 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError
-    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
-    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError
-    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
-    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError
-    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError
     def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
+    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError
+    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
+    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError
+    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError
+    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
 
-    object NotFoundErrorCase {
+    object GenericClientErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
-      val alt = schema.oneOf[GetMenuError]("NotFoundError")
-    }
-    object FallbackErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), FallbackErrorCase(_), _.fallbackError)
-      val alt = schema.oneOf[GetMenuError]("FallbackError")
+      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GenericClientErrorCase(_), _.genericClientError)
+      val alt = schema.oneOf[GetMenuError]("GenericClientError")
     }
     object FallbackError2Case {
       val hints: Hints = Hints.empty
       val schema: Schema[FallbackError2Case] = bijection(FallbackError2.schema.addHints(hints), FallbackError2Case(_), _.fallbackError2)
       val alt = schema.oneOf[GetMenuError]("FallbackError2")
     }
-    object GenericClientErrorCase {
+    object FallbackErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GenericClientErrorCase(_), _.genericClientError)
-      val alt = schema.oneOf[GetMenuError]("GenericClientError")
+      val schema: Schema[FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), FallbackErrorCase(_), _.fallbackError)
+      val alt = schema.oneOf[GetMenuError]("FallbackError")
+    }
+    object NotFoundErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
+      val alt = schema.oneOf[GetMenuError]("NotFoundError")
     }
 
     implicit val schema: UnionSchema[GetMenuError] = union(
-      NotFoundErrorCase.alt,
-      FallbackErrorCase.alt,
-      FallbackError2Case.alt,
       GenericClientErrorCase.alt,
+      FallbackError2Case.alt,
+      FallbackErrorCase.alt,
+      NotFoundErrorCase.alt,
     ){
-      case c: NotFoundErrorCase => NotFoundErrorCase.alt(c)
-      case c: FallbackErrorCase => FallbackErrorCase.alt(c)
-      case c: FallbackError2Case => FallbackError2Case.alt(c)
       case c: GenericClientErrorCase => GenericClientErrorCase.alt(c)
+      case c: FallbackError2Case => FallbackError2Case.alt(c)
+      case c: FallbackErrorCase => FallbackErrorCase.alt(c)
+      case c: NotFoundErrorCase => NotFoundErrorCase.alt(c)
     }
   }
   final case class Version() extends PizzaAdminServiceOperation[Unit, Nothing, VersionOutput, Nothing, Nothing] {
