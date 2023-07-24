@@ -40,10 +40,8 @@ sealed trait Document extends Product with Serializable {
     case DString(_)  => "String"
     case DBoolean(_) => "Boolean"
     case DNull       => "Null"
-    case DArray(value) =>
-      s"Array[${value.headOption.map(_.name).getOrElse("Null")}]"
-    case DObject(map) =>
-      s"Object{${map.map { case (k, v) => s"$k=${v.name}" }.mkString(",")}}"
+    case DArray(_)   => "Array"
+    case DObject(_)  => "Object"
   }
 
   /**
