@@ -628,15 +628,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
     lines(
       if (hints.contains(Hint.Error)) {
-        val throwable =
+        val exception =
           if (hints.contains(Hint.NoStackTrace))
-            "scala.util.control.NoStackTrace"
-          else "Throwable"
+            noStackTrace
+          else throwable
         val mixinExtensions = if (mixins.nonEmpty) {
           val ext = mixins.map(m => line"$m").intercalate(line" with ")
           line" with $ext"
         } else Line.empty
-        block(line"$decl extends $throwable$mixinExtensions") {
+        block(line"$decl extends $exception$mixinExtensions") {
           fields
             .find { f =>
               f.hints.contains_(Hint.ErrorMessage) ||

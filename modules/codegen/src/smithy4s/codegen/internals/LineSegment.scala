@@ -57,8 +57,8 @@ private[codegen] object LineSegment {
     def asImport: String = s"${(pkg :+ getNamePrefix).mkString(".")}"
 
     def isAutoImported: Boolean = {
-      val value = pkg.mkString(".")
-      value.startsWith("scala") || value.equalsIgnoreCase("java.lang")
+        val value = pkg.mkString(".")
+        NameRef.autoImportedNames.exists(_.equalsIgnoreCase(value))
     }
     def getNamePrefix: String = name.split("\\.").head
     def +(piece: String): NameRef = {
@@ -79,6 +79,12 @@ private[codegen] object LineSegment {
   }
 
   object NameRef {
+    val autoImportedNames: List[String] = List(
+      "scala",
+      "java.lang",
+      "scala.Predef",
+      "scala.collection.immutable"
+    )
     implicit val nameRefShow: Show[NameRef] = Show.show[NameRef](_.asImport)
     def apply(pkg: String, name: String): NameRef =
       NameRef(pkg.split("\\.").toList, name, List.empty)
