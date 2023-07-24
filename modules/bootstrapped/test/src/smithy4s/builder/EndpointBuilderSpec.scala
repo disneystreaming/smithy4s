@@ -15,12 +15,12 @@ class EndpointBuilderSpec extends FunSuite {
 
     val newEndpoint = builder
       .withId(ShapeId.apply("smithy4s.example", "endpoint"))
-      .withHints(Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("this is a endpoint"))))
+      .withHints(Hints(Documentation("this is a endpoint")))
       .withErrorable(None)
       .build
 
     assertEquals(newEndpoint.id, ShapeId.apply("smithy4s.example", "endpoint"))
-    assertEquals(newEndpoint.hints, Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("this is a endpoint"))))
+    assertEquals(newEndpoint.hints, Hints(Documentation("this is a endpoint")))
     assertEquals(newEndpoint.errorable, None)
 
   }
