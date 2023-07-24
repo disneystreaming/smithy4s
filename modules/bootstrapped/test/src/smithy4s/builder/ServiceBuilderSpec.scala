@@ -35,18 +35,13 @@ class ServiceBuilderSpec extends FunSuite {
     val newService = builder
       .mapId(shapeId => ShapeId(shapeId.namespace, "myService"))
       .mapHints{ hints  =>
-        hints.++(
-          Hints(Hints.Binding.DynamicBinding.apply(ShapeId("smithy.api", "documentation2"), Document.fromString("new Service"))))
+        hints ++ Hints(Documentation("new Service"))
       }
       .mapVersion(version => version + "111")
       .build
 
     assertEquals(newService.id, ShapeId("smithy4s.example", "myService"))
-    assertEquals(newService.hints,
-      Hints(
-        smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
-        Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation2"), Document.fromString("new Service")))
-    )
+    assertEquals(newService.hints, Hints(smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"), Documentation("new Service")))
     assertEquals(newService.version, "1.0.0111")
   }
 
