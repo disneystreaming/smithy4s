@@ -113,7 +113,7 @@ object UrlForm {
     def encode(a: A): UrlForm
   }
   object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
-    protected type Aux[A] = UrlFormDataEncoder[A]
+    protected override type Aux[A] = UrlFormDataEncoder[A]
     def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
       val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(cache)
       val urlFormDataEncoder = schemaVisitor(schema)
