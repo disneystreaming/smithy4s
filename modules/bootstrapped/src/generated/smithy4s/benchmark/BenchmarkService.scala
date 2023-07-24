@@ -34,12 +34,14 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[BenchmarkServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[BenchmarkServiceOperation, _, _, _, _, _]] = Vector(
     BenchmarkServiceOperation.CreateObject,
     BenchmarkServiceOperation.SendString,
   )
 
-  def endpoint[I, E, O, SI, SO](op: BenchmarkServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: BenchmarkServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: BenchmarkServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: BenchmarkServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends BenchmarkServiceOperation.Transformed[BenchmarkServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: BenchmarkServiceGen[BenchmarkServiceOperation] = BenchmarkServiceOperation.reified
@@ -51,7 +53,9 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
 
 sealed trait BenchmarkServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[BenchmarkServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[BenchmarkServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object BenchmarkServiceOperation {
@@ -70,7 +74,8 @@ object BenchmarkServiceOperation {
   }
   final case class CreateObject(input: CreateObjectInput) extends BenchmarkServiceOperation[CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[CreateObjectInput, Nothing, Unit, Nothing, Nothing] = impl.createObject(input.key, input.bucketName, input.payload)
-    def endpoint: (CreateObjectInput, smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing]) = (input, CreateObject)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] = CreateObject
   }
   object CreateObject extends smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.benchmark", "CreateObject")
@@ -86,7 +91,8 @@ object BenchmarkServiceOperation {
   }
   final case class SendString(input: SendStringInput) extends BenchmarkServiceOperation[SendStringInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: BenchmarkServiceGen[F]): F[SendStringInput, Nothing, Unit, Nothing, Nothing] = impl.sendString(input.key, input.bucketName, input.body)
-    def endpoint: (SendStringInput, smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing]) = (input, SendString)
+    def ordinal = 1
+    def endpoint: smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] = SendString
   }
   object SendString extends smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.benchmark", "SendString")

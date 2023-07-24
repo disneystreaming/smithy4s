@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class OptionInput(value: Option[String] = None)
@@ -16,7 +15,7 @@ object OptionInput extends ShapeTag.Companion[OptionInput] {
   )
 
   implicit val schema: Schema[OptionInput] = struct(
-    string.optional[OptionInput]("value", _.value),
+    String.schema.optional[OptionInput]("value", _.value),
   ){
     OptionInput.apply
   }.withId(id).addHints(hints)

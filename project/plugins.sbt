@@ -13,7 +13,7 @@ addSbtPlugin("pl.project13.scala"   % "sbt-jmh"                       % "0.4.5")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"                    % "5.9.0")
 addSbtPlugin("org.scala-native"     % "sbt-scala-native"              % "0.4.14")
 addSbtPlugin("com.github.sbt"       % "sbt-git"                       % "2.0.1")
-addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.2")
+addSbtPlugin("com.typesafe"         % "sbt-mima-plugin"               % "1.1.3")
 addSbtPlugin("ch.epfl.scala"        % "sbt-bloop"                     % "1.5.8")
 
 libraryDependencies ++= Seq("com.lihaoyi" %% "os-lib" % "0.8.1")

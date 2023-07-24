@@ -12,6 +12,7 @@ import smithy4s.schema.Schema.union
 @deprecated(message = "A compelling reason", since = "0.0.1")
 sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
   @inline final def widen: DeprecatedUnion = this
+  def _ordinal: Int
 }
 object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
@@ -21,10 +22,14 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   )
 
   @deprecated(message = "N/A", since = "N/A")
-  final case class SCase(s: String) extends DeprecatedUnion
-  final case class S_V2Case(s_V2: String) extends DeprecatedUnion
+  final case class SCase(s: String) extends DeprecatedUnion { final def _ordinal: Int = 0 }
+  def s(s:String): DeprecatedUnion = SCase(s)
+  final case class S_V2Case(s_V2: String) extends DeprecatedUnion { final def _ordinal: Int = 1 }
+  def s_V2(s_V2:String): DeprecatedUnion = S_V2Case(s_V2)
   @deprecated(message = "N/A", since = "N/A")
-  final case class DeprecatedUnionProductCase() extends DeprecatedUnion
+  final case class DeprecatedUnionProductCase() extends DeprecatedUnion {
+    def _ordinal: Int = 2
+  }
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
 
@@ -37,7 +42,9 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
   @deprecated(message = "N/A", since = "N/A")
-  final case class UnionProductCaseDeprecatedAtCallSite() extends DeprecatedUnion
+  final case class UnionProductCaseDeprecatedAtCallSite() extends DeprecatedUnion {
+    def _ordinal: Int = 3
+  }
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
 
@@ -69,9 +76,6 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     DeprecatedUnionProductCase.alt,
     UnionProductCaseDeprecatedAtCallSite.alt,
   ){
-    case c: SCase => SCase.alt(c)
-    case c: S_V2Case => S_V2Case.alt(c)
-    case c: DeprecatedUnionProductCase => DeprecatedUnionProductCase.alt(c)
-    case c: UnionProductCaseDeprecatedAtCallSite => UnionProductCaseDeprecatedAtCallSite.alt(c)
+    _._ordinal
   }.withId(id).addHints(hints)
 }

@@ -28,11 +28,12 @@ object IntOrString {
   case class StringValue(value: String) extends IntOrString
 
   val schema: Schema[IntOrString] = {
-    val intValue = int.oneOf[IntOrString]("intValue", IntValue(_))
-    val stringValue = string.oneOf[IntOrString]("stringValue", StringValue(_))
-    union(intValue, stringValue) {
-      case IntValue(int)       => intValue(int)
-      case StringValue(string) => stringValue(string)
-    }.withId(ShapeId("", "IntOrString"))
+    val intValue = int.oneOf[IntOrString]("intValue", IntValue(_)) {
+      case IntValue(int) => int
+    }
+    val stringValue = string.oneOf[IntOrString]("stringValue", StringValue(_)) {
+      case StringValue(str) => str
+    }
+    union(intValue, stringValue).reflective.withId(ShapeId("", "IntOrString"))
   }
 }

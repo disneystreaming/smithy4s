@@ -7,7 +7,6 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bigdecimal
 import smithy4s.schema.Schema.bigint
 import smithy4s.schema.Schema.bijection
-import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
@@ -17,6 +16,7 @@ import smithy4s.schema.Schema.union
   */
 sealed trait Foo extends scala.Product with scala.Serializable {
   @inline final def widen: Foo = this
+  def _ordinal: Int
 }
 object Foo extends ShapeTag.Companion[Foo] {
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
@@ -25,17 +25,21 @@ object Foo extends ShapeTag.Companion[Foo] {
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
 
-  final case class IntCase(int: Int) extends Foo
+  final case class IntCase(int: Int) extends Foo { final def _ordinal: Int = 0 }
+  def int(int:Int): Foo = IntCase(int)
   /** this is a comment saying you should be careful for this case
     * you never know what lies ahead with Strings like this
     */
-  final case class StrCase(str: String) extends Foo
-  final case class BIntCase(bInt: BigInt) extends Foo
-  final case class BDecCase(bDec: BigDecimal) extends Foo
+  final case class StrCase(str: String) extends Foo { final def _ordinal: Int = 1 }
+  def str(str:String): Foo = StrCase(str)
+  final case class BIntCase(bInt: BigInt) extends Foo { final def _ordinal: Int = 2 }
+  def bInt(bInt:BigInt): Foo = BIntCase(bInt)
+  final case class BDecCase(bDec: BigDecimal) extends Foo { final def _ordinal: Int = 3 }
+  def bDec(bDec:BigDecimal): Foo = BDecCase(bDec)
 
   object IntCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[IntCase] = bijection(int.addHints(hints), IntCase(_), _.int)
+    val schema: Schema[IntCase] = bijection(smithy4s.schema.Schema.int.addHints(hints), IntCase(_), _.int)
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
@@ -62,9 +66,6 @@ object Foo extends ShapeTag.Companion[Foo] {
     BIntCase.alt,
     BDecCase.alt,
   ){
-    case c: IntCase => IntCase.alt(c)
-    case c: StrCase => StrCase.alt(c)
-    case c: BIntCase => BIntCase.alt(c)
-    case c: BDecCase => BDecCase.alt(c)
+    _._ordinal
   }.withId(id).addHints(hints)
 }
