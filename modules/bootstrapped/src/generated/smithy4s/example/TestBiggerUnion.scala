@@ -9,6 +9,7 @@ import smithy4s.schema.Schema.union
 
 sealed trait TestBiggerUnion extends scala.Product with scala.Serializable {
   @inline final def widen: TestBiggerUnion = this
+  def _ordinal: Int
 }
 object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestBiggerUnion")
@@ -17,8 +18,10 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
     alloy.Discriminated("tpe"),
   )
 
-  final case class OneCase(one: One) extends TestBiggerUnion
-  final case class TwoCase(two: Two) extends TestBiggerUnion
+  final case class OneCase(one: One) extends TestBiggerUnion { final def _ordinal: Int = 0 }
+  def one(one:One): TestBiggerUnion = OneCase(one)
+  final case class TwoCase(two: Two) extends TestBiggerUnion { final def _ordinal: Int = 1 }
+  def two(two:Two): TestBiggerUnion = TwoCase(two)
 
   object OneCase {
     val hints: Hints = Hints.empty
@@ -35,7 +38,6 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
     OneCase.alt,
     TwoCase.alt,
   ){
-    case c: OneCase => OneCase.alt(c)
-    case c: TwoCase => TwoCase.alt(c)
+    _._ordinal
   }.withId(id).addHints(hints)
 }

@@ -30,8 +30,7 @@ import smithy4s.http4s.kernel._
 private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
   baseUri: Uri,
   client: Client[F],
-  endpoint: Endpoint.Base[I, E, O, SI, SO],
-  makeClientCodecs: UnaryClientCodecs.Make[F],
+  clientCodecs: UnaryClientCodecs[F, I, E, O],
   middleware: Client[F] => Client[F]
 )(implicit effect: Concurrent[F]) extends (I => F[O]) {
 // format: on
@@ -46,10 +45,7 @@ private[http4s] class SmithyHttp4sClientEndpoint[F[_], I, E, O, SI, SO](
       }
   }
 
-  // format: off
-  val clientCodecs = makeClientCodecs(endpoint)
   import clientCodecs._
-  // format: on
 
   // Method will be amended by inputEncoder
   val baseRequest = Request[F](org.http4s.Method.POST, baseUri).withEmptyBody

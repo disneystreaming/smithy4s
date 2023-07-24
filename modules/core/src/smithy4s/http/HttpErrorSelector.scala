@@ -23,7 +23,6 @@ import smithy.api.HttpError
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.capability.Covariant
 import smithy4s.kinds.PolyFunction
-import smithy4s.kinds.Kind1
 
 /**
   * Utility function to help find the decoder matching a certain discriminator
@@ -80,9 +79,8 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
   type ConstF[A] = F[E]
   val cachedDecoders: PolyFunction[Alt[E, *], ConstF] =
     new PolyFunction[Alt[E, *], ConstF] {
-      def apply[A](alt: Alt[E, A]): F[E] = {
+      def compileAlt[A](alt: Alt[E, A]): F[E] = {
         val schema = alt.schema
-        // TODO: apply proper memoization of error instances/
         // In the line below, we create a new, ephemeral cache for the dynamic recompilation of the error schema.
         // This is because the "compile entity encoder" method can trigger a transformation of hints, which
         // lead to cache-miss and would lead to new entries in existing cache, effectively leading to a memory leak.
@@ -90,10 +88,15 @@ private[http] final class HttpErrorSelector[F[_]: Covariant, E](
         val errorCodec: F[A] = compiler.fromSchema(schema, cache)
         Covariant[F].map[A, E](errorCodec)(alt.inject)
       }
-    }.unsafeCacheBy(
-      alts.map(Kind1.existential(_)),
-      identity(_)
-    )
+      val builder = Map.newBuilder[Any, Any]
+      alts.foreach { alt =>
+        builder += alt -> compileAlt(alt)
+      }
+      val resultCache = builder.result()
+      def apply[A](alt: Alt[E, A]): F[E] = {
+        resultCache(alt).asInstanceOf[F[E]]
+      }
+    }
 
   def apply(
       discriminator: HttpDiscriminator

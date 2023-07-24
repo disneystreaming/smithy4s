@@ -100,12 +100,7 @@ class HintsTransformationSpec() extends FunSuite {
 
   test(header("union")) {
     type Foo = Either[Int, String]
-    val left = int.oneOf[Foo]("left", Left(_))
-    val right = string.oneOf[Foo]("right", Right(_))
-    implicit val schema: Schema[Foo] = union(left, right) {
-      case Left(int)     => left(int)
-      case Right(string) => right(string)
-    }
+    implicit val schema: Schema[Foo] = Schema.either(int, string)
 
     // One for the union, one for the union member
     checkSchema(Left(1): Foo, 2)

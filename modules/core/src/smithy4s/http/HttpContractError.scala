@@ -39,8 +39,8 @@ object HttpContractError {
     val payload = HttpPayloadError.schema.oneOf[HttpContractError]("payload")
     val metadata = MetadataError.schema.oneOf[HttpContractError]("metadata")
     union(payload, metadata) {
-      case n: HttpPayloadError => payload(n)
-      case w: MetadataError    => metadata(w)
+      case _: HttpPayloadError => 0
+      case _: MetadataError    => 1
     }
   }
 
@@ -154,12 +154,19 @@ object MetadataError {
       FailedConstraint.schema.oneOf[MetadataError]("failedConstraint")
     val impossibleDecoding =
       ImpossibleDecoding.schema.oneOf[MetadataError]("impossibleDecoding")
-    union(notFound, wrongType, arityError, failedConstraint) {
-      case n: NotFound           => notFound(n)
-      case w: WrongType          => wrongType(w)
-      case a: ArityError         => arityError(a)
-      case f: FailedConstraint   => failedConstraint(f)
-      case i: ImpossibleDecoding => impossibleDecoding(i)
+
+    union(
+      notFound,
+      wrongType,
+      arityError,
+      failedConstraint,
+      impossibleDecoding
+    ) {
+      case _: NotFound           => 0
+      case _: WrongType          => 1
+      case _: ArityError         => 2
+      case _: FailedConstraint   => 3
+      case _: ImpossibleDecoding => 4
     }
   }
 

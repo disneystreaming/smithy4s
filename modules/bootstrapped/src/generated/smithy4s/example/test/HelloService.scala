@@ -42,13 +42,15 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[HelloServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[HelloServiceOperation, _, _, _, _, _]] = Vector(
     HelloServiceOperation.SayHello,
     HelloServiceOperation.Listen,
     HelloServiceOperation.TestPath,
   )
 
-  def endpoint[I, E, O, SI, SO](op: HelloServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: HelloServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: HelloServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: HelloServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends HelloServiceOperation.Transformed[HelloServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: HelloServiceGen[HelloServiceOperation] = HelloServiceOperation.reified
@@ -62,7 +64,9 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
 
 sealed trait HelloServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[HelloServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[HelloServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object HelloServiceOperation {
@@ -83,7 +87,8 @@ object HelloServiceOperation {
   }
   final case class SayHello(input: SayHelloInput) extends HelloServiceOperation[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = impl.sayHello(input.greeting, input.query, input.name)
-    def endpoint: (SayHelloInput, smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing]) = (input, SayHello)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] = SayHello
   }
   object SayHello extends smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] with Errorable[SayHelloError] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "SayHello")
@@ -111,14 +116,17 @@ object HelloServiceOperation {
   }
   sealed trait SayHelloError extends scala.Product with scala.Serializable {
     @inline final def widen: SayHelloError = this
+    def _ordinal: Int
   }
   object SayHelloError extends ShapeTag.Companion[SayHelloError] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloError")
 
     val hints: Hints = Hints.empty
 
-    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError
-    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError
+    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
+    def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
+    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
+    def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
 
     object SimpleErrorCase {
       val hints: Hints = Hints.empty
@@ -135,13 +143,14 @@ object HelloServiceOperation {
       SimpleErrorCase.alt,
       ComplexErrorCase.alt,
     ){
-      case c: SimpleErrorCase => SimpleErrorCase.alt(c)
-      case c: ComplexErrorCase => ComplexErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class Listen() extends HelloServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.listen()
-    def endpoint: (Unit, smithy4s.Endpoint[HelloServiceOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), Listen)
+    def ordinal = 1
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[HelloServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = Listen
   }
   object Listen extends smithy4s.Endpoint[HelloServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "Listen")
@@ -159,7 +168,8 @@ object HelloServiceOperation {
   }
   final case class TestPath(input: TestPathInput) extends HelloServiceOperation[TestPathInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[TestPathInput, Nothing, Unit, Nothing, Nothing] = impl.testPath(input.path)
-    def endpoint: (TestPathInput, smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing]) = (input, TestPath)
+    def ordinal = 2
+    def endpoint: smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing] = TestPath
   }
   object TestPath extends smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "TestPath")

@@ -66,7 +66,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.7.1")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.8.0")
   }
 
   object Mill {
@@ -96,7 +96,7 @@ object Dependencies {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.5.1")
 
   object Http4s {
-    val http4sVersion = "0.23.22"
+    val http4sVersion = "0.23.23"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -141,9 +141,9 @@ object Dependencies {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.3"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.19.1"
 
-    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
+    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.47"
   }
 
   object AwsSpecSummary {

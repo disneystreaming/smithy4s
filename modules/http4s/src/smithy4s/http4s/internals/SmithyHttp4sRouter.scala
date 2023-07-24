@@ -45,7 +45,7 @@ private[http4s] class SmithyHttp4sRouter[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _
   // format: on
 
   private val http4sEndpoints: List[SmithyHttp4sServerEndpoint[F]] =
-    service.endpoints
+    service.endpoints.toList
       .map { ep =>
         SmithyHttp4sServerEndpoint.make(
           impl,

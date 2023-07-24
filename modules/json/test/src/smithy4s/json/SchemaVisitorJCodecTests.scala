@@ -95,21 +95,18 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
   implicit val eitherBazBinSchema: Schema[Either[Baz, Bin]] = {
     val left = struct(string.required[Baz]("str", _.str))(Baz.apply)
-      .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
 
     val right = struct(
       string.required[Bin]("str", _.str).addHints(JsonName("binStr")),
       int.required[Bin]("int", _.int)
     )(Bin.apply)
-      .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
-      .addHints(JsonName("binBin"))
+      .addMemberHints(JsonName("binBin"))
 
-    union(left, right) {
-      case Left(f)  => left(f)
-      case Right(b) => right(b)
-    }.addHints(
-      Discriminated("type")
-    )
+    Schema
+      .either(left, right)
+      .addHints(
+        Discriminated("type")
+      )
   }
 
   test(
@@ -201,19 +198,11 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   implicit val eitherIntStringSchema: Schema[Either[Int, String]] = {
-    val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
-    val right =
-      string
-        .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
-        .addHints(JsonName("_string"))
-    union(left, right) {
-      case Left(i)    => left(i)
-      case Right(str) => right(str)
-    }
+    Schema.either(int, string.addMemberHints(JsonName("_string")))
   }
 
   test("Union gets encoded correctly") {
-    val jsonInt = """{"int":1}"""
+    val jsonInt = """{"left":1}"""
     val jsonStr = """{"_string":"foo"}"""
     val int = writeToString[Either[Int, String]](Left(1))
     val str = writeToString[Either[Int, String]](Right("foo"))
@@ -252,7 +241,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Discriminated union gets encoded correctly") {
-    val jsonBaz = """{"type":"baz","str":"test"}"""
+    val jsonBaz = """{"type":"left","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = writeToString[Either[Baz, Bin]](Left(Baz("test")))
     val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
@@ -285,7 +274,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Discriminated union gets routed to the correct codec") {
-    val jsonBaz = """{"type":"baz","str":"test"}"""
+    val jsonBaz = """{"type":"left","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = readFromString[Either[Baz, Bin]](jsonBaz)
     val bin = readFromString[Either[Baz, Bin]](jsonBin)
@@ -294,7 +283,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Union gets routed to the correct codec") {
-    val jsonInt = """{"int":  1}"""
+    val jsonInt = """{"left":  1}"""
     val jsonStr = """{"_string": "foo"}"""
     val int = readFromString[Either[Int, String]](jsonInt)
     val str = readFromString[Either[Int, String]](jsonStr)
@@ -303,13 +292,13 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Union: path gets surfaced in errors") {
-    val json = """{"int": null}"""
+    val json = """{"left": null}"""
     try {
       val _ = readFromString[Either[Int, String]](json)
       fail("Unexpected success")
     } catch {
       case PayloadError(path, expected, msg) =>
-        expect.same(path, PayloadPath("int"))
+        expect.same(path, PayloadPath("left"))
         expect.same(expected, "int")
         expect(msg.contains("illegal number"))
 

@@ -51,7 +51,7 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[PizzaAdminServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[PizzaAdminServiceOperation, _, _, _, _, _]] = Vector(
     PizzaAdminServiceOperation.AddMenuItem,
     PizzaAdminServiceOperation.GetMenu,
     PizzaAdminServiceOperation.Version,
@@ -66,7 +66,9 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
     PizzaAdminServiceOperation.OptionalOutput,
   )
 
-  def endpoint[I, E, O, SI, SO](op: PizzaAdminServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: PizzaAdminServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: PizzaAdminServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: PizzaAdminServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends PizzaAdminServiceOperation.Transformed[PizzaAdminServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: PizzaAdminServiceGen[PizzaAdminServiceOperation] = PizzaAdminServiceOperation.reified
@@ -90,7 +92,9 @@ object PizzaAdminServiceGen extends Service.Mixin[PizzaAdminServiceGen, PizzaAdm
 
 sealed trait PizzaAdminServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[PizzaAdminServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[PizzaAdminServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object PizzaAdminServiceOperation {
@@ -129,7 +133,8 @@ object PizzaAdminServiceOperation {
   }
   final case class AddMenuItem(input: AddMenuItemRequest) extends PizzaAdminServiceOperation[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = impl.addMenuItem(input.restaurant, input.menuItem)
-    def endpoint: (AddMenuItemRequest, smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing]) = (input, AddMenuItem)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] = AddMenuItem
   }
   object AddMenuItem extends smithy4s.Endpoint[PizzaAdminServiceOperation,AddMenuItemRequest, PizzaAdminServiceOperation.AddMenuItemError, AddMenuItemResult, Nothing, Nothing] with Errorable[AddMenuItemError] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItem")
@@ -157,15 +162,19 @@ object PizzaAdminServiceOperation {
   }
   sealed trait AddMenuItemError extends scala.Product with scala.Serializable {
     @inline final def widen: AddMenuItemError = this
+    def _ordinal: Int
   }
   object AddMenuItemError extends ShapeTag.Companion[AddMenuItemError] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemError")
 
     val hints: Hints = Hints.empty
 
-    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError
-    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError
+    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
+    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
+    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def _ordinal: Int = 1 }
+    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
+    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def _ordinal: Int = 2 }
+    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
 
     object PriceErrorCase {
       val hints: Hints = Hints.empty
@@ -188,14 +197,13 @@ object PizzaAdminServiceOperation {
       GenericServerErrorCase.alt,
       GenericClientErrorCase.alt,
     ){
-      case c: PriceErrorCase => PriceErrorCase.alt(c)
-      case c: GenericServerErrorCase => GenericServerErrorCase.alt(c)
-      case c: GenericClientErrorCase => GenericClientErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class GetMenu(input: GetMenuRequest) extends PizzaAdminServiceOperation[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = impl.getMenu(input.restaurant)
-    def endpoint: (GetMenuRequest, smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing]) = (input, GetMenu)
+    def ordinal = 1
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] = GetMenu
   }
   object GetMenu extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] with Errorable[GetMenuError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetMenu")
@@ -211,68 +219,72 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[GetMenuError]] = Some(this)
     val error: UnionSchema[GetMenuError] = GetMenuError.schema
     def liftError(throwable: Throwable): Option[GetMenuError] = throwable match {
-      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
-      case e: FallbackError => Some(GetMenuError.FallbackErrorCase(e))
-      case e: FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
       case e: GenericClientError => Some(GetMenuError.GenericClientErrorCase(e))
+      case e: FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
+      case e: FallbackError => Some(GetMenuError.FallbackErrorCase(e))
+      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetMenuError): Throwable = e match {
-      case GetMenuError.NotFoundErrorCase(e) => e
-      case GetMenuError.FallbackErrorCase(e) => e
-      case GetMenuError.FallbackError2Case(e) => e
       case GetMenuError.GenericClientErrorCase(e) => e
+      case GetMenuError.FallbackError2Case(e) => e
+      case GetMenuError.FallbackErrorCase(e) => e
+      case GetMenuError.NotFoundErrorCase(e) => e
     }
   }
   sealed trait GetMenuError extends scala.Product with scala.Serializable {
     @inline final def widen: GetMenuError = this
+    def _ordinal: Int
   }
   object GetMenuError extends ShapeTag.Companion[GetMenuError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetMenuError")
 
     val hints: Hints = Hints.empty
 
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError
-    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError
-    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError
+    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def _ordinal: Int = 0 }
+    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
+    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def _ordinal: Int = 1 }
+    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
+    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def _ordinal: Int = 2 }
+    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def _ordinal: Int = 3 }
+    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
 
-    object NotFoundErrorCase {
+    object GenericClientErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
-      val alt = schema.oneOf[GetMenuError]("NotFoundError")
-    }
-    object FallbackErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), FallbackErrorCase(_), _.fallbackError)
-      val alt = schema.oneOf[GetMenuError]("FallbackError")
+      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GenericClientErrorCase(_), _.genericClientError)
+      val alt = schema.oneOf[GetMenuError]("GenericClientError")
     }
     object FallbackError2Case {
       val hints: Hints = Hints.empty
       val schema: Schema[FallbackError2Case] = bijection(FallbackError2.schema.addHints(hints), FallbackError2Case(_), _.fallbackError2)
       val alt = schema.oneOf[GetMenuError]("FallbackError2")
     }
-    object GenericClientErrorCase {
+    object FallbackErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GenericClientErrorCase(_), _.genericClientError)
-      val alt = schema.oneOf[GetMenuError]("GenericClientError")
+      val schema: Schema[FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), FallbackErrorCase(_), _.fallbackError)
+      val alt = schema.oneOf[GetMenuError]("FallbackError")
+    }
+    object NotFoundErrorCase {
+      val hints: Hints = Hints.empty
+      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
+      val alt = schema.oneOf[GetMenuError]("NotFoundError")
     }
 
     implicit val schema: UnionSchema[GetMenuError] = union(
-      NotFoundErrorCase.alt,
-      FallbackErrorCase.alt,
-      FallbackError2Case.alt,
       GenericClientErrorCase.alt,
+      FallbackError2Case.alt,
+      FallbackErrorCase.alt,
+      NotFoundErrorCase.alt,
     ){
-      case c: NotFoundErrorCase => NotFoundErrorCase.alt(c)
-      case c: FallbackErrorCase => FallbackErrorCase.alt(c)
-      case c: FallbackError2Case => FallbackError2Case.alt(c)
-      case c: GenericClientErrorCase => GenericClientErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class Version() extends PizzaAdminServiceOperation[Unit, Nothing, VersionOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, VersionOutput, Nothing, Nothing] = impl.version()
-    def endpoint: (Unit, smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, VersionOutput, Nothing, Nothing]) = ((), Version)
+    def ordinal = 2
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, VersionOutput, Nothing, Nothing] = Version
   }
   object Version extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, VersionOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "Version")
@@ -289,7 +301,8 @@ object PizzaAdminServiceOperation {
   }
   final case class Health(input: HealthRequest) extends PizzaAdminServiceOperation[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = impl.health(input.query)
-    def endpoint: (HealthRequest, smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing]) = (input, Health)
+    def ordinal = 3
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] = Health
   }
   object Health extends smithy4s.Endpoint[PizzaAdminServiceOperation,HealthRequest, PizzaAdminServiceOperation.HealthError, HealthResponse, Nothing, Nothing] with Errorable[HealthError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Health")
@@ -314,13 +327,15 @@ object PizzaAdminServiceOperation {
   }
   sealed trait HealthError extends scala.Product with scala.Serializable {
     @inline final def widen: HealthError = this
+    def _ordinal: Int
   }
   object HealthError extends ShapeTag.Companion[HealthError] {
     val id: ShapeId = ShapeId("smithy4s.example", "HealthError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -331,12 +346,13 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[HealthError] = union(
       UnknownServerErrorCase.alt,
     ){
-      case c: UnknownServerErrorCase => UnknownServerErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class HeaderEndpoint(input: HeaderEndpointData) extends PizzaAdminServiceOperation[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = impl.headerEndpoint(input.uppercaseHeader, input.capitalizedHeader, input.lowercaseHeader, input.mixedHeader)
-    def endpoint: (HeaderEndpointData, smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing]) = (input, HeaderEndpoint)
+    def ordinal = 4
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] = HeaderEndpoint
   }
   object HeaderEndpoint extends smithy4s.Endpoint[PizzaAdminServiceOperation,HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "HeaderEndpoint")
@@ -352,7 +368,8 @@ object PizzaAdminServiceOperation {
   }
   final case class RoundTrip(input: RoundTripData) extends PizzaAdminServiceOperation[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = impl.roundTrip(input.label, input.header, input.query, input.body)
-    def endpoint: (RoundTripData, smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing]) = (input, RoundTrip)
+    def ordinal = 5
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing] = RoundTrip
   }
   object RoundTrip extends smithy4s.Endpoint[PizzaAdminServiceOperation,RoundTripData, Nothing, RoundTripData, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "RoundTrip")
@@ -368,7 +385,8 @@ object PizzaAdminServiceOperation {
   }
   final case class GetEnum(input: GetEnumInput) extends PizzaAdminServiceOperation[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = impl.getEnum(input.aa)
-    def endpoint: (GetEnumInput, smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing]) = (input, GetEnum)
+    def ordinal = 6
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] = GetEnum
   }
   object GetEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetEnumInput, PizzaAdminServiceOperation.GetEnumError, GetEnumOutput, Nothing, Nothing] with Errorable[GetEnumError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetEnum")
@@ -393,13 +411,15 @@ object PizzaAdminServiceOperation {
   }
   sealed trait GetEnumError extends scala.Product with scala.Serializable {
     @inline final def widen: GetEnumError = this
+    def _ordinal: Int
   }
   object GetEnumError extends ShapeTag.Companion[GetEnumError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetEnumError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -410,12 +430,13 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[GetEnumError] = union(
       UnknownServerErrorCase.alt,
     ){
-      case c: UnknownServerErrorCase => UnknownServerErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class GetIntEnum(input: GetIntEnumInput) extends PizzaAdminServiceOperation[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = impl.getIntEnum(input.aa)
-    def endpoint: (GetIntEnumInput, smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing]) = (input, GetIntEnum)
+    def ordinal = 7
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] = GetIntEnum
   }
   object GetIntEnum extends smithy4s.Endpoint[PizzaAdminServiceOperation,GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] with Errorable[GetIntEnumError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetIntEnum")
@@ -440,13 +461,15 @@ object PizzaAdminServiceOperation {
   }
   sealed trait GetIntEnumError extends scala.Product with scala.Serializable {
     @inline final def widen: GetIntEnumError = this
+    def _ordinal: Int
   }
   object GetIntEnumError extends ShapeTag.Companion[GetIntEnumError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetIntEnumError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -457,12 +480,13 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[GetIntEnumError] = union(
       UnknownServerErrorCase.alt,
     ){
-      case c: UnknownServerErrorCase => UnknownServerErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class CustomCode(input: CustomCodeInput) extends PizzaAdminServiceOperation[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = impl.customCode(input.code)
-    def endpoint: (CustomCodeInput, smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing]) = (input, CustomCode)
+    def ordinal = 8
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] = CustomCode
   }
   object CustomCode extends smithy4s.Endpoint[PizzaAdminServiceOperation,CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] with Errorable[CustomCodeError] {
     val id: ShapeId = ShapeId("smithy4s.example", "CustomCode")
@@ -487,13 +511,15 @@ object PizzaAdminServiceOperation {
   }
   sealed trait CustomCodeError extends scala.Product with scala.Serializable {
     @inline final def widen: CustomCodeError = this
+    def _ordinal: Int
   }
   object CustomCodeError extends ShapeTag.Companion[CustomCodeError] {
     val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeError")
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }
+    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -504,12 +530,13 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[CustomCodeError] = union(
       UnknownServerErrorCase.alt,
     ){
-      case c: UnknownServerErrorCase => UnknownServerErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class Reservation(input: ReservationInput) extends PizzaAdminServiceOperation[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = impl.reservation(input.name, input.town)
-    def endpoint: (ReservationInput, smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing]) = (input, Reservation)
+    def ordinal = 9
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] = Reservation
   }
   object Reservation extends smithy4s.Endpoint[PizzaAdminServiceOperation,ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "Reservation")
@@ -525,7 +552,8 @@ object PizzaAdminServiceOperation {
   }
   final case class Echo(input: EchoInput) extends PizzaAdminServiceOperation[EchoInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[EchoInput, Nothing, Unit, Nothing, Nothing] = impl.echo(input.pathParam, input.body, input.queryParam)
-    def endpoint: (EchoInput, smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing]) = (input, Echo)
+    def ordinal = 10
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing] = Echo
   }
   object Echo extends smithy4s.Endpoint[PizzaAdminServiceOperation,EchoInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "Echo")
@@ -541,7 +569,9 @@ object PizzaAdminServiceOperation {
   }
   final case class OptionalOutput() extends PizzaAdminServiceOperation[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PizzaAdminServiceGen[F]): F[Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = impl.optionalOutput()
-    def endpoint: (Unit, smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing]) = ((), OptionalOutput)
+    def ordinal = 11
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] = OptionalOutput
   }
   object OptionalOutput extends smithy4s.Endpoint[PizzaAdminServiceOperation,Unit, Nothing, OptionalOutputOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "OptionalOutput")
