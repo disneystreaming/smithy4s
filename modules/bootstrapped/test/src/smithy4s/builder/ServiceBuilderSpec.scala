@@ -4,6 +4,7 @@ package smithy4s
 import munit._
 import smithy4s.kinds.PolyFunction5
 import smithy4s.example.FooServiceGen
+import smithy.api.Documentation
 
 class ServiceBuilderSpec extends FunSuite {
 
@@ -16,13 +17,13 @@ class ServiceBuilderSpec extends FunSuite {
   ) {
 
     val newService = builder
-      .withId(ShapeId.apply("smithy4s.example", "newService"))
-      .withHints(Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("this is new Service"))))
+      .withId(ShapeId("smithy4s.example", "newService"))
+      .withHints(Hints(Documentation("this is new Service")))
       .withVersion("v3")
       .build
 
-    assertEquals(newService.id, ShapeId.apply("smithy4s.example", "newService"))
-    assertEquals(newService.hints, Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation"), Document.fromString("this is new Service"))))
+    assertEquals(newService.id, ShapeId("smithy4s.example", "newService"))
+    assertEquals(newService.hints, Hints(Documentation("this is new Service")))
     assertEquals(newService.version, "v3")
   }
 
@@ -32,15 +33,15 @@ class ServiceBuilderSpec extends FunSuite {
 
 
     val newService = builder
-      .mapId(shapeId => ShapeId.apply(shapeId.namespace, "myService"))
+      .mapId(shapeId => ShapeId(shapeId.namespace, "myService"))
       .mapHints{ hints  =>
         hints.++(
-          Hints(Hints.Binding.DynamicBinding.apply(ShapeId.apply("smithy.api", "documentation2"), Document.fromString("new Service"))))
+          Hints(Hints.Binding.DynamicBinding.apply(ShapeId("smithy.api", "documentation2"), Document.fromString("new Service"))))
       }
       .mapVersion(version => version + "111")
       .build
 
-    assertEquals(newService.id, ShapeId.apply("smithy4s.example", "myService"))
+    assertEquals(newService.id, ShapeId("smithy4s.example", "myService"))
     assertEquals(newService.hints,
       Hints(
         smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
@@ -58,14 +59,14 @@ class ServiceBuilderSpec extends FunSuite {
         Endpoint
           .Builder
           .fromEndpoint(op)
-          .withId(ShapeId.apply("smithy4s.example", "operation1"))
+          .withId(ShapeId("smithy4s.example", "operation1"))
           .build
     }
     val newService = builder
       .mapEndpointEach(mapper)
       .build
 
-    assertEquals(newService.endpoints.map(_.id), List(ShapeId.apply("smithy4s.example", "operation1")))
+    assertEquals(newService.endpoints.map(_.id), List(ShapeId("smithy4s.example", "operation1")))
   }
 
 
