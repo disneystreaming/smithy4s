@@ -59,10 +59,10 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
    * You can think of the endpoint as a "template for an [[Operation]]". It contains everything
    * needed to decode/encode operation calls to/from low-level representations (like http requests).
    */
-   type Endpoint[I, E, O, SI, SO] = smithy4s.Endpoint[Operation, I, E, O, SI, SO]
+  type Endpoint[I, E, O, SI, SO] = smithy4s.Endpoint[Operation, I, E, O, SI, SO]
 
   /**
-   * An interpreter specialised for effects of kind `* -> *`, like Try or monofunctor IO.
+   * This is a polymorphic function that runs an instance of an operation and produces an effect F.
    */
   type Interpreter[F[_, _, _, _, _]] = PolyFunction5[Operation, F]
 
@@ -93,7 +93,19 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
    */
   type BiFunctorEndpointCompiler[F[_, _]] = EndpointCompiler[Kind2[F]#toKind5]
 
+  /**
+   * A short-hand for algebras that are specialised for effects of kind `* -> *`.
+   *
+   * NB: this alias should be used in polymorphic implementations. When using the Smithy4s
+   * code generator, equivalent aliases that are named after the service are generated
+   * (e.g. `Weather` corresponding to `WeatherGen`).
+   */
   type Impl[F[_]] = Alg[kinds.Kind1[F]#toKind5]
+
+  /**
+   * A short-hand for algebras that are specialised for effects of kind `* -> (*, *)`.
+   * This is meant to be used in userland, e.g: {{{ val myService = MyService.ErrorAware[Either] }}}
+   */
   type ErrorAware[F[_, _]] = Alg[kinds.Kind2[F]#toKind5]
 
   val service: Service[Alg] = this
