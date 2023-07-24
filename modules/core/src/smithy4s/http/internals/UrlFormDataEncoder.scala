@@ -27,8 +27,6 @@ private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
   def contramap[B](f: B => A): UrlFormDataEncoder[B] =
     new UrlFormDataEncoder[B] {
       def encode(value: B): UrlForm.FormData = self.encode(f(value))
-      override def optional: UrlFormDataEncoder[Option[B]] =
-        self.optional.contramap[Option[B]](_.map(f))
     }
 
   def prepend(segment: PayloadPath.Segment): UrlFormDataEncoder[A] =
@@ -36,13 +34,6 @@ private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
       def encode(value: A): UrlForm.FormData =
         self.encode(value).prepend(segment)
     }
-
-  def optional: UrlFormDataEncoder[Option[A]] = {
-    (_: Option[A]) match {
-      case None    => UrlForm.FormData.Empty
-      case Some(a) => self.encode(a)
-    }
-  }
 
 }
 

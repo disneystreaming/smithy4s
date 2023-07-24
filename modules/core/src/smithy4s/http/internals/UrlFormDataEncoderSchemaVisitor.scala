@@ -189,7 +189,14 @@ class UrlFormDataEncoderSchemaVisitor(
       override def encode(a: A): UrlForm.FormData = underlying.encode(a)
     }
 
-  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] = compile(schema).optional
+  override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] =
+    new UrlFormDataEncoder[Option[A]] {
+      val encoder = compile(schema)
+      override def encode(a: Option[A]): UrlForm.FormData = a match {
+        case None    => UrlForm.FormData.Empty
+        case Some(a) => encoder.encode(a)
+      }
+    }
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints

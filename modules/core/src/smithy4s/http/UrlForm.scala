@@ -128,7 +128,7 @@ object UrlForm {
           val formData = urlFormDataEncoder.encode(value)
           UrlForm(
             UrlForm.FormData.MultipleValues(
-                formData.toPathedValues
+              formData.toPathedValues
             )
           )
         }
