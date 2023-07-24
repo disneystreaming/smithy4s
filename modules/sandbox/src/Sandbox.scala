@@ -1,5 +1,3 @@
-package main
-
 import smithy4s.aws._
 import cats.effect._
 import org.http4s.client.middleware._
