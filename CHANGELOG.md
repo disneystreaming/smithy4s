@@ -55,7 +55,6 @@ Make sure error handling logic in routing is applied before and after middleware
 * Add course link to learning resources in https://github.com/disneystreaming/smithy4s/pull/965
 * Http4s: pre- and post-error handling middleware in https://github.com/disneystreaming/smithy4s/pull/877
 
-
 # 0.17.6
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
