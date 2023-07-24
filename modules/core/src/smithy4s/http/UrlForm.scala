@@ -42,7 +42,6 @@ object UrlForm {
     def prepend(segment: PayloadPath.Segment): FormData
     def toPathedValues: Vector[FormData.PathedValue]
     def widen: FormData = this
-    def down(segment: PayloadPath.Segment): FormData
   }
   object FormData {
     case object Empty extends FormData {
@@ -51,9 +50,6 @@ object UrlForm {
       override def prepend(segment: PayloadPath.Segment): FormData = this
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
-
-      // TODO: Should this be an error?
-      override def down(segment: PayloadPath.Segment): FormData = this
     }
 
     // TODO: Rename as Value, replace uses by PathedValue?
@@ -66,9 +62,6 @@ object UrlForm {
         PathedValue(PayloadPath(segment), str)
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
-
-      // TODO: Should this be an error?
-      override def down(segment: PayloadPath.Segment): FormData = this
     }
     // TODO: Make value an option?
     final case class PathedValue(path: PayloadPath, value: String)
@@ -106,12 +99,6 @@ object UrlForm {
         copy(path.prepend(segment), value)
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
-
-      override def down(segment: PayloadPath.Segment): FormData =
-        if (path.segments.head == segment)
-          PathedValue(PayloadPath(path.segments.tail), value)
-        // TODO: Should this be an error?
-        else Empty
     }
 
     // TODO: Rename as Values?
@@ -124,14 +111,6 @@ object UrlForm {
         copy(values.map(_.prepend(segment)))
 
       override def toPathedValues: Vector[FormData.PathedValue] = values
-
-      override def down(segment: PayloadPath.Segment): FormData = {
-        // TODO: Should we error if any are dropped? Probably not.
-        val newValues = values.map(_.down(segment)).collect {
-          case pathedValue: FormData.PathedValue => pathedValue
-        }
-        MultipleValues(newValues)
-      }
     }
   }
 
