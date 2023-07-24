@@ -36,8 +36,3 @@ private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
     }
 
 }
-
-object UrlFormDataEncoder {
-  // TODO: What's this for?
-  val empty: UrlFormDataEncoder[Any] = { (_: Any) => UrlForm.FormData.Empty }
-}

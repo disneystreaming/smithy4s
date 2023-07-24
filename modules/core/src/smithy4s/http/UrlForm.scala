@@ -33,10 +33,6 @@ final case class UrlForm(values: UrlForm.FormData.MultipleValues)
 
 object UrlForm {
 
-  // TODO: Clean this up
-  val empty: UrlForm =
-    UrlForm(values = UrlForm.FormData.MultipleValues(values = Vector.empty))
-
   sealed trait FormData extends Product with Serializable {
     def render: String
     def prepend(segment: PayloadPath.Segment): FormData
