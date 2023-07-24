@@ -18,7 +18,6 @@ package smithy4s
 package schema
 
 import smithy4s.capability.EncoderK
-import scala.reflect.ClassTag
 import kinds._
 
 /**
