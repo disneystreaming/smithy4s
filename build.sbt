@@ -377,7 +377,8 @@ lazy val codegen = projectMatrix
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
-      .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
+      .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
+    Compile / bloopEnabled := true
   )
 
 /**
@@ -437,7 +438,8 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       )
       publishLocal.value
     },
-    scriptedBufferLog := false
+    scriptedBufferLog := false,
+    Compile / bloopEnabled := true
   )
 
 /**

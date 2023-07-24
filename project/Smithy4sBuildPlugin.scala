@@ -41,6 +41,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val smithy4sModelTransformers = SettingKey[Seq[String]]("smithy4sModelTransformers")
     val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
     val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
+    val bloopEnabled             = SettingKey[Boolean]("bloopEnabled")
     // format: on
   }
   import autoImport._
@@ -73,7 +74,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         .customRow(
           scalaVersions = scalaVersions.filter(_.startsWith("3")),
           axisValues = Seq(VirtualAxis.native),
-          _.enablePlugins(ScalaNativePlugin).settings(simpleNativeLayout)
+          _.enablePlugins(ScalaNativePlugin).settings(nativeDimSettings)
         )
     }
   }
@@ -143,7 +144,17 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       // for Scala 3
       "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
       "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
-    )
+    ),
+    Compile / bloopEnabled := true,
+    Test / bloopEnabled := true,
+    Compile / bloopGenerate := {
+      if ((Compile / bloopEnabled).value) (Compile / bloopGenerate).value
+      else sbt.Value(None)
+    },
+    Test / bloopGenerate := {
+      if ((Test / bloopEnabled).value) (Test / bloopGenerate).value
+      else sbt.Value(None)
+    }
   ) ++ publishSettings ++ loggingSettings ++ compilerPlugins ++ headerSettings
 
   lazy val compilerPlugins = Seq(
@@ -392,7 +403,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     Test / scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.CommonJSModule)
     },
-    Test / fork := false
+    Test / fork := false,
+    Compile / bloopEnabled := false,
+    Test / bloopEnabled := false
   ) ++ {
     // on CI, use linker's batch mode:
     // https://github.com/scala-js/scala-js/blob/6622d0b8f99bec4dbe1b29c125d111fdea246d34/linker-interface/shared/src/main/scala/org/scalajs/linker/interface/StandardConfig.scala#L51
@@ -405,8 +418,15 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     else Seq.empty
   }
 
-  lazy val jvmDimSettings = simpleJVMLayout
-  lazy val nativeDimSettings = simpleNativeLayout ++ Seq(Test / fork := false)
+  lazy val jvmDimSettings = simpleJVMLayout ++ Seq(
+    Compile / bloopEnabled := ((scalaBinaryVersion).value == "2.13"),
+    Test / bloopEnabled := ((scalaBinaryVersion).value == "2.13")
+  )
+  lazy val nativeDimSettings = simpleNativeLayout ++ Seq(
+    Test / fork := false,
+    Compile / bloopEnabled := false,
+    Test / bloopEnabled := false
+  )
 
   lazy val simpleJSLayout = simpleLayout(JSPlatform)
   lazy val simpleJVMLayout = simpleLayout(JVMPlatform)
