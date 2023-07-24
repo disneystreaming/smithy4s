@@ -29,7 +29,6 @@ import weaver._
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 
-// TODO: Should this use munit for consistency with other tests in boostrapped?
 object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
 
   test("primitive: int") {
@@ -342,7 +341,7 @@ object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
       loc: SourceLocation
   ): IO[Expectations] = {
     val cache = CompilationCache.make[UrlFormDataEncoder]
-    val schemaVisitor =   new UrlFormDataEncoderSchemaVisitor(cache)
+    val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(cache)
     val encoder = schemaVisitor(schema)
     val formData = encoder.encode(value)
     val result = formData.render
