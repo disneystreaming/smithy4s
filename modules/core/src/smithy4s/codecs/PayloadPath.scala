@@ -19,52 +19,58 @@ package smithy4s.codecs
 import smithy4s.schema._
 
 case class PayloadPath(segments: List[PayloadPath.Segment]) {
-  def render(prefix: String = "."): String =
-    segments.map(_.render).mkString(prefix, ".", "")
-
-  override def toString = render()
 
   def prepend(segment: PayloadPath.Segment): PayloadPath =
     copy(segment :: segments)
+
+  override def toString = render()
+
+  def render(prefix: String = "."): String =
+    segments.map(_.render).mkString(prefix, ".", "")
+
 }
 
 object PayloadPath {
 
-  val root = PayloadPath(List.empty)
+  val root = PayloadPath(segments = List.empty)
 
   def apply(segments: PayloadPath.Segment*): PayloadPath = PayloadPath(
     segments.toList
   )
 
-  def fromString(str: String): PayloadPath = PayloadPath(
-    str.split('.').filter(_.nonEmpty).map(Segment.fromString).toList
+  def parse(string: String): PayloadPath = PayloadPath(
+    string.split('.').filter(_.nonEmpty).map(Segment.parse).toList
   )
 
   val schema: Schema[PayloadPath] =
-    Schema.bijection(Schema.string, fromString, _.render())
+    Schema.bijection(Schema.string, parse, _.render())
 
   /**
     * A path-segment in a json-like object
     */
   sealed trait Segment {
-    def render: String = this match {
-      case Segment.Label(label) => label
-      case Segment.Index(index) => index.toString
-    }
+    def render: String
   }
 
   object Segment {
     def apply(label: String): Segment = Label(label)
     def apply(index: Int): Segment = Index(index)
 
-    // TODO: What if it was actually meant to be a string?
-    def fromString(string: String): Segment = try { Index(string.toInt) }
+    // Yes, this smells a bit, because there is no type information in the
+    // rendered form - i.e. no way to know if a string that parses as an int is
+    // definitely meant to be read that way vs. read as just a string. Callers
+    // of this function beware.
+    def parse(string: String): Segment = try { Index(string.toInt) }
     catch {
       case _: Throwable => Label(string)
     }
 
-    case class Label(label: String) extends Segment
-    case class Index(index: Int) extends Segment
+    case class Label(label: String) extends Segment {
+      override lazy val render: String = label
+    }
+    case class Index(index: Int) extends Segment {
+      override lazy val render: String = index.toString
+    }
 
     implicit def stringConversion(label: String): Segment = Label(label)
     implicit def intConversion(index: Int): Segment = Index(index)

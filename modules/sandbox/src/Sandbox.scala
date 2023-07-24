@@ -53,9 +53,9 @@ object Main extends IOApp.Simple {
     } yield cloudWatch
 
   // This is probably something that's gonna get reimplemented a lot in
-  // user-land. Perhaps we could use pagination hints from the specs to
-  // avoid having to manually wire up the accessors, and to generate
-  // synthetic service functions that handle pagination?
+  // user-land. Perhaps we could use pagination hints from the specs to avoid
+  // having to manually wire up the accessors, and to generate synthetic service
+  // functions that handle pagination?
   def listAll[ListOutput, Result](
       listF: Option[NextToken] => IO[ListOutput],
       accessResults: ListOutput => List[Result],

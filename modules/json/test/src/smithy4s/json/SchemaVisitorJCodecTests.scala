@@ -150,7 +150,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Expected decoding to fail")
     } catch {
       case e: smithy4s.codecs.PayloadError =>
-        expect.same(e.path, PayloadPath.fromString(".a"))
+        expect.same(e.path, PayloadPath.parse(".a"))
     }
   }
 
@@ -233,7 +233,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(
       result.get,
       PayloadError(
-        PayloadPath.fromString(".checked"),
+        PayloadPath.parse(".checked"),
         "string",
         "String '!@#' does not match pattern '^\\w+$'"
       )
@@ -495,7 +495,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     } catch {
       case PayloadError(path, _, message) =>
         expect.same(message, "length required to be <= 10, but was 11")
-        expect.same(path, PayloadPath.fromString("bar.0.str"))
+        expect.same(path, PayloadPath.parse("bar.0.str"))
     }
   }
 
