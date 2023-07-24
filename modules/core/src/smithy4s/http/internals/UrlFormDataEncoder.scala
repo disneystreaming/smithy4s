@@ -24,14 +24,11 @@ import smithy4s.codecs.PayloadPath
 
 private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
   def encode(value: A): UrlForm.FormData
-  // TODO: What's this for?
-  def encodesUnion: Boolean = false
 
   // TODO: What's this for?
   def contramap[B](f: B => A): UrlFormDataEncoder[B] =
     new UrlFormDataEncoder[B] {
       def encode(value: B): UrlForm.FormData = self.encode(f(value))
-      override def encodesUnion: Boolean = self.encodesUnion
       override def optional: UrlFormDataEncoder[Option[B]] =
         self.optional.contramap[Option[B]](_.map(f))
     }
