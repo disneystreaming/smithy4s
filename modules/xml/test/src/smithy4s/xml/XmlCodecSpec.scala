@@ -325,14 +325,7 @@ object XmlCodecSpec extends SimpleIOSuite {
 
   test("union") {
     type Foo = Either[Int, String]
-    implicit val schema: Schema[Foo] = {
-      val left = int.oneOf[Foo]("left", Left(_))
-      val right = string.oneOf[Foo]("right", Right(_))
-      union(left, right) {
-        case Left(int)     => left(int)
-        case Right(string) => right(string)
-      }.n
-    }
+    implicit val schema: Schema[Foo] = Schema.either(int, string).n
     val xmlLeft = """<Foo><left>1</left></Foo>"""
     val xmlRight = """<Foo><right>hello</right></Foo>""".stripMargin
     checkContent[Foo](xmlLeft, Left(1)) |+|
@@ -354,8 +347,8 @@ object XmlCodecSpec extends SimpleIOSuite {
         val baz =
           int.biject[Foo.Baz](Foo.Baz(_), (_: Foo.Baz).int).oneOf[Foo]("baz")
         union(bar, baz) {
-          case b: Foo.Bar => bar(b)
-          case b: Foo.Baz => baz(b)
+          case _: Foo.Bar => 0
+          case _: Foo.Baz => 1
         }.n
       }
     }
@@ -371,12 +364,9 @@ object XmlCodecSpec extends SimpleIOSuite {
   test("union: custom names") {
     type Foo = Either[Int, String]
     implicit val schema: Schema[Foo] = {
-      val left = int.oneOf[Foo]("left", Left(_)).addHints(XmlName("foo"))
-      val right = string.oneOf[Foo]("right", Right(_)).addHints(XmlName("bar"))
-      union(left, right) {
-        case Left(int)     => left(int)
-        case Right(string) => right(string)
-      }.n
+      val left = int.addHints(XmlName("foo"))
+      val right = string.addHints(XmlName("bar"))
+      Schema.either(left, right).n
     }
     val xmlLeft = """<Foo><foo>1</foo></Foo>"""
     val xmlRight = """<Foo><bar>hello</bar></Foo>""".stripMargin

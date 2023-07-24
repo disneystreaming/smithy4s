@@ -14,6 +14,7 @@ import smithy4s.schema.Schema.union
   */
 sealed trait OrderType extends scala.Product with scala.Serializable {
   @inline final def widen: OrderType = this
+  def _ordinal: Int
 }
 object OrderType extends ShapeTag.Companion[OrderType] {
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
@@ -22,10 +23,12 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
   )
 
-  final case class OnlineCase(online: OrderNumber) extends OrderType
+  final case class OnlineCase(online: OrderNumber) extends OrderType { final def _ordinal: Int = 0 }
   def online(online:OrderNumber): OrderType = OnlineCase(online)
   /** For an InStoreOrder a location ID isn't needed */
-  final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType
+  final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType {
+    def _ordinal: Int = 1
+  }
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
@@ -42,10 +45,9 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
     val alt = schema.oneOf[OrderType]("inStore")
   }
-  case object PreviewCase extends OrderType
+  case object PreviewCase extends OrderType { final def _ordinal: Int = 2 }
   def preview(): OrderType = PreviewCase
   private val PreviewCaseAlt = Schema.constant(PreviewCase).oneOf[OrderType]("preview").addHints(hints)
-  private val PreviewCaseAltWithValue = PreviewCaseAlt(PreviewCase)
 
   object OnlineCase {
     val hints: Hints = Hints.empty
@@ -58,8 +60,6 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     InStoreOrder.alt,
     PreviewCaseAlt,
   ){
-    case c: OnlineCase => OnlineCase.alt(c)
-    case c: InStoreOrder => InStoreOrder.alt(c)
-    case PreviewCase => PreviewCaseAltWithValue
+    _._ordinal
   }.withId(id).addHints(hints)
 }

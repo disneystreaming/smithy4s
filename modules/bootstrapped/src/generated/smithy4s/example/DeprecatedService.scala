@@ -37,11 +37,13 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[DeprecatedServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[DeprecatedServiceOperation, _, _, _, _, _]] = Vector(
     DeprecatedServiceOperation.DeprecatedOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: DeprecatedServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends DeprecatedServiceOperation.Transformed[DeprecatedServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: DeprecatedServiceGen[DeprecatedServiceOperation] = DeprecatedServiceOperation.reified
@@ -53,7 +55,9 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
 
 sealed trait DeprecatedServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[DeprecatedServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object DeprecatedServiceOperation {
@@ -70,7 +74,9 @@ object DeprecatedServiceOperation {
   }
   final case class DeprecatedOperation() extends DeprecatedServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: DeprecatedServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.deprecatedOperation()
-    def endpoint: (Unit, smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), DeprecatedOperation)
+    def ordinal = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] = DeprecatedOperation
   }
   object DeprecatedOperation extends smithy4s.Endpoint[DeprecatedServiceOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedOperation")
