@@ -101,7 +101,7 @@ private[aws] object AwsSigningClient {
           else
             queryParams
               .map { case (k, v) =>
-                URLEncoder.encode(k, "UTF8") + "=" + URLEncoder.encode(v, "UTF8")
+                URLEncoder.encode(k, StandardCharsets.UTF_8.name()) + "=" + URLEncoder.encode(v, StandardCharsets.UTF_8.name())
               }
               .mkString("&")
 

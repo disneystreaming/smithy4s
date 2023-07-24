@@ -28,7 +28,6 @@ import smithy4s.schema.Schema._
 import weaver._
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
-import smithy4s.http.UrlForm
 
 // TODO: Should this use munit for consistency with other tests in boostrapped?
 object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
