@@ -24,11 +24,8 @@ case class PayloadPath(segments: List[PayloadPath.Segment]) {
 
   override def toString = render()
 
-  def append(segment: PayloadPath.Segment): PayloadPath =
-    copy(segments.appended(segment))
-
   def prepend(segment: PayloadPath.Segment): PayloadPath =
-    copy(segments.prepended(segment))
+    copy(segment :: segments)
 }
 
 object PayloadPath {
