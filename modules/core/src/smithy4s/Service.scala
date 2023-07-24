@@ -137,8 +137,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   /**
    * A monofunctor-specialised version of [[interpreter]]
    */
-  final def functorInterpreter[F[_]](compiler: FunctorEndpointCompiler[F]): FunctorInterpreter[F] = interpreter[Kind1[
-F]#toKind5](compiler)
+  final def functorInterpreter[F[_]](compiler: FunctorEndpointCompiler[F]): FunctorInterpreter[F] = interpreter[Kind1[F]#toKind5](compiler)
 
   /**
    * A bifunctor-specialised version of [[interpreter]]
@@ -147,8 +146,7 @@ F]#toKind5](compiler)
 
 
   /**
-   * A function that takes an endpoint compiler and produces an Algebra (typically an instance of the generated interf
-aces),
+   * A function that takes an endpoint compiler and produces an Algebra (typically an instance of the generated interfaces),
    * backed by an interpreter.
    *
    * This is useful for writing generic functions that result in the instantiation of a client instance that abides by
@@ -165,6 +163,7 @@ aces),
    * A monofunctor-specialised version of [[algebra]]
    */
   final def errorAware[F[_, _]](compiler: BiFunctorEndpointCompiler[F]) : ErrorAware[F] = algebra[Kind2[F]#toKind5](compiler)
+
 }
 
 object Service {
