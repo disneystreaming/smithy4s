@@ -5,7 +5,6 @@ package object dynamodb {
   val DynamoDB = DynamoDBGen
 
   type ListTablesInputLimit = com.amazonaws.dynamodb.ListTablesInputLimit.Type
-  type ErrorMessage = com.amazonaws.dynamodb.ErrorMessage.Type
   type TableNameList = com.amazonaws.dynamodb.TableNameList.Type
   /** @param member
     *   <p>An endpoint information details.</p>
