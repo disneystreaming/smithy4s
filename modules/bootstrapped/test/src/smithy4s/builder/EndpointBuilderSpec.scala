@@ -14,12 +14,12 @@ class EndpointBuilderSpec extends FunSuite {
   ) {
 
     val newEndpoint = builder
-      .withId(ShapeId.apply("smithy4s.example", "endpoint"))
+      .withId(ShapeId("smithy4s.example", "endpoint"))
       .withHints(Hints(Documentation("this is a endpoint")))
       .withErrorable(None)
       .build
 
-    assertEquals(newEndpoint.id, ShapeId.apply("smithy4s.example", "endpoint"))
+    assertEquals(newEndpoint.id, ShapeId("smithy4s.example", "endpoint"))
     assertEquals(newEndpoint.hints, Hints(Documentation("this is a endpoint")))
     assertEquals(newEndpoint.errorable, None)
 
@@ -32,24 +32,19 @@ class EndpointBuilderSpec extends FunSuite {
 
 
     val newEndpoint = builder
-      .mapId(shapeId => ShapeId.apply(shapeId.namespace, "getCityEndpoint"))
+      .mapId(shapeId => ShapeId(shapeId.namespace, "getCityEndpoint"))
       .mapHints { hints =>
         hints ++ Hints(Documentation("new endpoint"))
       }
-      .mapInput(s => s.withId(ShapeId.apply("smithy4s.example", "inputSchema")))
-      .mapOutput(s => s.withId(ShapeId.apply("smithy4s.example", "outputSchema")))
+      .mapInput(s => s.withId(ShapeId("smithy4s.example", "inputSchema")))
+      .mapOutput(s => s.withId(ShapeId("smithy4s.example", "outputSchema")))
       .mapErrorable(_ => None)
       .build
 
-    assertEquals(newEndpoint.id, ShapeId.apply("smithy4s.example", "getCityEndpoint"))
-    assertEquals( newEndpoint.hints,
-      Hints(
-        smithy.api.Readonly(),
-        Documentation("new endpoint")
-      )
-    )
-    assertEquals(newEndpoint.input.shapeId, ShapeId.apply("smithy4s.example", "inputSchema"))
-    assertEquals(newEndpoint.output.shapeId, ShapeId.apply("smithy4s.example", "outputSchema"))
+    assertEquals(newEndpoint.id, ShapeId("smithy4s.example", "getCityEndpoint"))
+    assertEquals( newEndpoint.hints, Hints(smithy.api.Readonly(), Documentation("new endpoint")))
+    assertEquals(newEndpoint.input.shapeId, ShapeId("smithy4s.example", "inputSchema"))
+    assertEquals(newEndpoint.output.shapeId, ShapeId("smithy4s.example", "outputSchema"))
     assertEquals(newEndpoint.errorable, None)
   }
 
