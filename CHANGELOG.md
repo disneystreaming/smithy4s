@@ -1,3 +1,7 @@
+# 0.17.13
+
+- Backports Service interpreter logic introduced in [#908](https://github.com/disneystreaming/smithy4s/pull/908).
+
 # 0.17.12
 
 * Remove reserved types in https://github.com/disneystreaming/smithy4s/pull/1052
