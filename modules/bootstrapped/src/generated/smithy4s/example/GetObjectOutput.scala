@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class GetObjectOutput(size: ObjectSize, data: Option[String] = None)
 object GetObjectOutput extends ShapeTag.Companion[GetObjectOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetObjectOutput")
-
   val hints: Hints = Hints.empty
 
   val size = ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.HttpHeader("X-Size"), smithy.api.Required())
@@ -21,5 +19,5 @@ object GetObjectOutput extends ShapeTag.Companion[GetObjectOutput] {
     data,
   ){
     GetObjectOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetObjectOutput")).addHints(hints)
 }

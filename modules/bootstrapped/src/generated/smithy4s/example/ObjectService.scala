@@ -123,8 +123,6 @@ object ObjectServiceOperation {
     def _ordinal: Int
   }
   object PutObjectError extends ShapeTag.Companion[PutObjectError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
-
     val hints: Hints = Hints.empty
 
     final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def _ordinal: Int = 0 }
@@ -181,8 +179,6 @@ object ObjectServiceOperation {
     def _ordinal: Int
   }
   object GetObjectError extends ShapeTag.Companion[GetObjectError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
-
     val hints: Hints = Hints.empty
 
     final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def _ordinal: Int = 0 }

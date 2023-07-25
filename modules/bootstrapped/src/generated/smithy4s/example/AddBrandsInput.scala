@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class AddBrandsInput(brands: Option[List[String]] = None)
 object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "AddBrandsInput")
-
   val hints: Hints = Hints.empty
 
   val brands = BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands)
@@ -19,5 +17,5 @@ object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
     brands,
   ){
     AddBrandsInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "AddBrandsInput")).addHints(hints)
 }

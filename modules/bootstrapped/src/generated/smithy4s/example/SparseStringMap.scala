@@ -9,10 +9,9 @@ import smithy4s.schema.Schema.map
 import smithy4s.schema.Schema.string
 
 object SparseStringMap extends Newtype[Map[String, Option[String]]] {
-  val id: ShapeId = ShapeId("smithy4s.example", "SparseStringMap")
   val hints: Hints = Hints(
     smithy.api.Sparse(),
   )
-  val underlyingSchema: Schema[Map[String, Option[String]]] = map(string, string.option).withId(id).addHints(hints)
+  val underlyingSchema: Schema[Map[String, Option[String]]] = map(string, string.option).withId(ShapeId("smithy4s.example", "SparseStringMap")).addHints(hints)
   implicit val schema: Schema[SparseStringMap] = bijection(underlyingSchema, asBijection)
 }

@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 final case class NotFoundError(name: String) extends Throwable {
 }
 object NotFoundError extends ShapeTag.Companion[NotFoundError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "NotFoundError")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
@@ -23,5 +21,5 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
     name,
   ){
     NotFoundError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "NotFoundError")).addHints(hints)
 }

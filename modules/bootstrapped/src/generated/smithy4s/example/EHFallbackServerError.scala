@@ -11,8 +11,6 @@ final case class EHFallbackServerError(message: Option[String] = None) extends T
   override def getMessage(): String = message.orNull
 }
 object EHFallbackServerError extends ShapeTag.Companion[EHFallbackServerError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "EHFallbackServerError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
@@ -23,5 +21,5 @@ object EHFallbackServerError extends ShapeTag.Companion[EHFallbackServerError] {
     message,
   ){
     EHFallbackServerError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "EHFallbackServerError")).addHints(hints)
 }

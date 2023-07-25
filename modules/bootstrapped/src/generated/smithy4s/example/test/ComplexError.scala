@@ -12,8 +12,6 @@ final case class ComplexError(value: Int, message: String, details: Option[Error
   override def getMessage(): String = message
 }
 object ComplexError extends ShapeTag.Companion[ComplexError] {
-  val id: ShapeId = ShapeId("smithy4s.example.test", "ComplexError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(504),
@@ -30,5 +28,5 @@ object ComplexError extends ShapeTag.Companion[ComplexError] {
     details,
   ){
     ComplexError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.test", "ComplexError")).addHints(hints)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class MixinOptionalMemberDefaultAdded(a: String = "test")
 object MixinOptionalMemberDefaultAdded extends ShapeTag.Companion[MixinOptionalMemberDefaultAdded] {
-  val id: ShapeId = ShapeId("smithy4s.example", "MixinOptionalMemberDefaultAdded")
-
   val hints: Hints = Hints.empty
 
   val a = string.required[MixinOptionalMemberDefaultAdded]("a", _.a).addHints(smithy.api.Default(smithy4s.Document.fromString("test")))
@@ -19,5 +17,5 @@ object MixinOptionalMemberDefaultAdded extends ShapeTag.Companion[MixinOptionalM
     a,
   ){
     MixinOptionalMemberDefaultAdded.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "MixinOptionalMemberDefaultAdded")).addHints(hints)
 }

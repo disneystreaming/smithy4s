@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class TestReservedNamespaceImport(_package: Option[MyPackageString] = None)
 object TestReservedNamespaceImport extends ShapeTag.Companion[TestReservedNamespaceImport] {
-  val id: ShapeId = ShapeId("smithy4s.example.collision", "TestReservedNamespaceImport")
-
   val hints: Hints = Hints.empty
 
   val _package = MyPackageString.schema.optional[TestReservedNamespaceImport]("package", _._package)
@@ -19,5 +17,5 @@ object TestReservedNamespaceImport extends ShapeTag.Companion[TestReservedNamesp
     _package,
   ){
     TestReservedNamespaceImport.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.collision", "TestReservedNamespaceImport")).addHints(hints)
 }

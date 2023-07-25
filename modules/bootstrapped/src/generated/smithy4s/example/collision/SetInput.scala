@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class SetInput(set: Set[String])
 object SetInput extends ShapeTag.Companion[SetInput] {
-  val id: ShapeId = ShapeId("smithy4s.example.collision", "SetInput")
-
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
@@ -20,5 +18,5 @@ object SetInput extends ShapeTag.Companion[SetInput] {
     set,
   ){
     SetInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.collision", "SetInput")).addHints(hints)
 }

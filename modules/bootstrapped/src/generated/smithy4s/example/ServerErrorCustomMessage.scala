@@ -11,8 +11,6 @@ final case class ServerErrorCustomMessage(messageField: Option[String] = None) e
   override def getMessage(): String = messageField.orNull
 }
 object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMessage] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ServerErrorCustomMessage")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
@@ -23,5 +21,5 @@ object ServerErrorCustomMessage extends ShapeTag.Companion[ServerErrorCustomMess
     messageField,
   ){
     ServerErrorCustomMessage.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "ServerErrorCustomMessage")).addHints(hints)
 }

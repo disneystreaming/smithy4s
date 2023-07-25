@@ -11,8 +11,6 @@ final case class EHNotFound(message: Option[String] = None) extends Throwable {
   override def getMessage(): String = message.orNull
 }
 object EHNotFound extends ShapeTag.Companion[EHNotFound] {
-  val id: ShapeId = ShapeId("smithy4s.example", "EHNotFound")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
@@ -24,5 +22,5 @@ object EHNotFound extends ShapeTag.Companion[EHNotFound] {
     message,
   ){
     EHNotFound.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "EHNotFound")).addHints(hints)
 }

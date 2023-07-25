@@ -9,8 +9,7 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.vector
 
 object SomeVector extends Newtype[Vector[String]] {
-  val id: ShapeId = ShapeId("smithy4s.example", "SomeVector")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[Vector[String]] = vector(string).withId(id).addHints(hints)
+  val underlyingSchema: Schema[Vector[String]] = vector(string).withId(ShapeId("smithy4s.example", "SomeVector")).addHints(hints)
   implicit val schema: Schema[SomeVector] = bijection(underlyingSchema, asBijection)
 }

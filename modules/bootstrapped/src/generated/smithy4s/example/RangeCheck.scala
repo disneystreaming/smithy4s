@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class RangeCheck(qty: Int)
 object RangeCheck extends ShapeTag.Companion[RangeCheck] {
-  val id: ShapeId = ShapeId("smithy4s.example", "RangeCheck")
-
   val hints: Hints = Hints(
     smithy.api.Suppress(List("UnreferencedShape")),
   )
@@ -21,5 +19,5 @@ object RangeCheck extends ShapeTag.Companion[RangeCheck] {
     qty,
   ){
     RangeCheck.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "RangeCheck")).addHints(hints)
 }

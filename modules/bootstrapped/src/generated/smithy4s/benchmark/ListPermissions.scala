@@ -8,8 +8,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 
 object ListPermissions extends Newtype[List[Permission]] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "ListPermissions")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[Permission]] = list(Permission.schema).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[Permission]] = list(Permission.schema).withId(ShapeId("smithy4s.benchmark", "ListPermissions")).addHints(hints)
   implicit val schema: Schema[ListPermissions] = bijection(underlyingSchema, asBijection)
 }

@@ -8,8 +8,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 
 object Ingredients extends Newtype[List[Ingredient]] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Ingredients")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[Ingredient]] = list(Ingredient.schema).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[Ingredient]] = list(Ingredient.schema).withId(ShapeId("smithy4s.example", "Ingredients")).addHints(hints)
   implicit val schema: Schema[Ingredients] = bijection(underlyingSchema, asBijection)
 }

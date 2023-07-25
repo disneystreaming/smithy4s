@@ -11,8 +11,7 @@ import smithy4s.schema.Schema.list
   *   <p>An endpoint information details.</p>
   */
 object Endpoints extends Newtype[List[Endpoint]] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "Endpoints")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[Endpoint]] = list(Endpoint.schema).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[Endpoint]] = list(Endpoint.schema).withId(ShapeId("com.amazonaws.dynamodb", "Endpoints")).addHints(hints)
   implicit val schema: Schema[Endpoints] = bijection(underlyingSchema, asBijection)
 }

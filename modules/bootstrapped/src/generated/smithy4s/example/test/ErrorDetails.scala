@@ -11,8 +11,6 @@ import smithy4s.schema.Schema.timestamp
 
 final case class ErrorDetails(date: Timestamp, location: String)
 object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
-  val id: ShapeId = ShapeId("smithy4s.example.test", "ErrorDetails")
-
   val hints: Hints = Hints.empty
 
   val date = timestamp.required[ErrorDetails]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required())
@@ -23,5 +21,5 @@ object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
     location,
   ){
     ErrorDetails.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.test", "ErrorDetails")).addHints(hints)
 }

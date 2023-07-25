@@ -19,8 +19,6 @@ sealed trait Foo extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object Foo extends ShapeTag.Companion[Foo] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Foo")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
@@ -67,5 +65,5 @@ object Foo extends ShapeTag.Companion[Foo] {
     BDecCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "Foo")).addHints(hints)
 }

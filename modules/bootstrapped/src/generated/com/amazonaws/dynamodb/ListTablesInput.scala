@@ -16,8 +16,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class ListTablesInput(exclusiveStartTableName: Option[TableName] = None, limit: Option[ListTablesInputLimit] = None)
 object ListTablesInput extends ShapeTag.Companion[ListTablesInput] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesInput")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("<p>Represents the input of a <code>ListTables</code> operation.</p>"),
   )
@@ -30,5 +28,5 @@ object ListTablesInput extends ShapeTag.Companion[ListTablesInput] {
     limit,
   ){
     ListTablesInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("com.amazonaws.dynamodb", "ListTablesInput")).addHints(hints)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class ListCitiesOutput(items: List[CitySummary], nextToken: Option[String] = None)
 object ListCitiesOutput extends ShapeTag.Companion[ListCitiesOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ListCitiesOutput")
-
   val hints: Hints = Hints.empty
 
   val items = CitySummaries.underlyingSchema.required[ListCitiesOutput]("items", _.items).addHints(smithy.api.Required())
@@ -21,5 +19,5 @@ object ListCitiesOutput extends ShapeTag.Companion[ListCitiesOutput] {
     nextToken,
   ){
     ListCitiesOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "ListCitiesOutput")).addHints(hints)
 }

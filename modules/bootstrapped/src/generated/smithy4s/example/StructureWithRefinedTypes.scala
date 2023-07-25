@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class StructureWithRefinedTypes(requiredAge: Age, age: Option[Age] = None, personAge: Option[PersonAge] = None, fancyList: Option[smithy4s.example.FancyList] = None, unwrappedFancyList: Option[smithy4s.refined.FancyList] = None, name: Option[smithy4s.example.Name] = None, dogName: Option[smithy4s.refined.Name] = None)
 object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefinedTypes] {
-  val id: ShapeId = ShapeId("smithy4s.example", "StructureWithRefinedTypes")
-
   val hints: Hints = Hints.empty
 
   val requiredAge = Age.schema.required[StructureWithRefinedTypes]("requiredAge", _.requiredAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required())
@@ -30,5 +28,5 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
     dogName,
   ){
     StructureWithRefinedTypes.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "StructureWithRefinedTypes")).addHints(hints)
 }

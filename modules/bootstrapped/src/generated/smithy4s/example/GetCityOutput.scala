@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class GetCityOutput(name: String, coordinates: CityCoordinates)
 object GetCityOutput extends ShapeTag.Companion[GetCityOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetCityOutput")
-
   val hints: Hints = Hints.empty
 
   val name = string.required[GetCityOutput]("name", _.name).addHints(smithy.api.Required())
@@ -21,5 +19,5 @@ object GetCityOutput extends ShapeTag.Companion[GetCityOutput] {
     coordinates,
   ){
     GetCityOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetCityOutput")).addHints(hints)
 }

@@ -165,8 +165,6 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object AddMenuItemError extends ShapeTag.Companion[AddMenuItemError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemError")
-
     val hints: Hints = Hints.empty
 
     final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
@@ -237,8 +235,6 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetMenuError extends ShapeTag.Companion[GetMenuError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetMenuError")
-
     val hints: Hints = Hints.empty
 
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def _ordinal: Int = 0 }
@@ -330,8 +326,6 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object HealthError extends ShapeTag.Companion[HealthError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "HealthError")
-
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
@@ -414,8 +408,6 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetEnumError extends ShapeTag.Companion[GetEnumError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetEnumError")
-
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
@@ -464,8 +456,6 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetIntEnumError extends ShapeTag.Companion[GetIntEnumError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetIntEnumError")
-
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
@@ -514,8 +504,6 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object CustomCodeError extends ShapeTag.Companion[CustomCodeError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeError")
-
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }

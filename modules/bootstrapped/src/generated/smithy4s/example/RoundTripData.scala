@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class RoundTripData(label: String, header: Option[String] = None, query: Option[String] = None, body: Option[String] = None)
 object RoundTripData extends ShapeTag.Companion[RoundTripData] {
-  val id: ShapeId = ShapeId("smithy4s.example", "RoundTripData")
-
   val hints: Hints = Hints.empty
 
   val label = string.required[RoundTripData]("label", _.label).addHints(smithy.api.HttpLabel(), smithy.api.Required())
@@ -25,5 +23,5 @@ object RoundTripData extends ShapeTag.Companion[RoundTripData] {
     body,
   ){
     RoundTripData.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "RoundTripData")).addHints(hints)
 }

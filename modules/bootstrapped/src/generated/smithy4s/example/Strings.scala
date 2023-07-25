@@ -10,10 +10,9 @@ import smithy4s.schema.Schema.string
 
 @deprecated(message = "N/A", since = "N/A")
 object Strings extends Newtype[List[String]] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Strings")
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = None, since = None),
   )
-  val underlyingSchema: Schema[List[String]] = list(string).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[String]] = list(string).withId(ShapeId("smithy4s.example", "Strings")).addHints(hints)
   implicit val schema: Schema[Strings] = bijection(underlyingSchema, asBijection)
 }

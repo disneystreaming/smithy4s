@@ -9,8 +9,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
 object TestStructurePattern extends Newtype[TestStructurePatternTarget] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TestStructurePattern")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[TestStructurePatternTarget] = string.refined[TestStructurePatternTarget](alloy.StructurePattern(pattern = "{one}-{two}", target = "smithy4s.example#TestStructurePatternTarget")).withId(id).addHints(hints)
+  val underlyingSchema: Schema[TestStructurePatternTarget] = string.refined[TestStructurePatternTarget](alloy.StructurePattern(pattern = "{one}-{two}", target = "smithy4s.example#TestStructurePatternTarget")).withId(ShapeId("smithy4s.example", "TestStructurePattern")).addHints(hints)
   implicit val schema: Schema[TestStructurePattern] = bijection(underlyingSchema, asBijection)
 }

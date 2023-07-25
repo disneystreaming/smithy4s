@@ -11,8 +11,6 @@ import smithy4s.schema.Schema.struct
 
 final case class S3Object(id: String, owner: String, attributes: Attributes, data: ByteArray)
 object S3Object extends ShapeTag.Companion[S3Object] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "S3Object")
-
   val hints: Hints = Hints.empty
 
   val id = string.required[S3Object]("id", _.id).addHints(smithy.api.Required())
@@ -27,5 +25,5 @@ object S3Object extends ShapeTag.Companion[S3Object] {
     data,
   ){
     S3Object.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "S3Object")).addHints(hints)
 }

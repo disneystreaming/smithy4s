@@ -8,11 +8,9 @@ import smithy4s.schema.Schema.constant
 
 final case class AgeFormat()
 object AgeFormat extends ShapeTag.Companion[AgeFormat] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ageFormat")
-
   val hints: Hints = Hints(
     smithy.api.Trait(selector = Some(":test(integer, member > integer)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
-  implicit val schema: Schema[AgeFormat] = constant(AgeFormat()).withId(id).addHints(hints)
+  implicit val schema: Schema[AgeFormat] = constant(AgeFormat()).withId(ShapeId("smithy4s.example", "ageFormat")).addHints(hints)
 }

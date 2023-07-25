@@ -8,8 +8,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
 object UnicodeRegexString extends Newtype[String] {
-  val id: ShapeId = ShapeId("smithy4s.example", "UnicodeRegexString")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[String] = string.withId(id).addHints(hints).validated(smithy.api.Pattern("^\uD83D\uDE0E$"))
+  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "UnicodeRegexString")).addHints(hints).validated(smithy.api.Pattern("^\uD83D\uDE0E$"))
   implicit val schema: Schema[UnicodeRegexString] = bijection(underlyingSchema, asBijection)
 }

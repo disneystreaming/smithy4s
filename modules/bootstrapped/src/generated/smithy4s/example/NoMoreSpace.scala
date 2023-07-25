@@ -16,8 +16,6 @@ final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends T
   override def getMessage(): String = message
 }
 object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
-  val id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(507),
@@ -31,5 +29,5 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
     foo,
   ){
     NoMoreSpace.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "NoMoreSpace")).addHints(hints)
 }

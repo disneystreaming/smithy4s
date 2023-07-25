@@ -13,8 +13,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class GetFooOutput(foo: Option[Foo] = None)
 object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetFooOutput")
-
   val hints: Hints = Hints.empty
 
   val foo = Foo.schema.optional[GetFooOutput]("foo", _.foo)
@@ -23,5 +21,5 @@ object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
     foo,
   ){
     GetFooOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetFooOutput")).addHints(hints)
 }

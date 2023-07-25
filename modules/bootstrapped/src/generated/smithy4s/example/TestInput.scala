@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 
 final case class TestInput(pathParam: String, body: TestBody, queryParam: Option[String] = None)
 object TestInput extends ShapeTag.Companion[TestInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TestInput")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -30,5 +28,5 @@ object TestInput extends ShapeTag.Companion[TestInput] {
     queryParam,
   ){
     TestInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "TestInput")).addHints(hints)
 }

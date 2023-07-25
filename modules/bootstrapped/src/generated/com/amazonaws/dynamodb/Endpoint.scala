@@ -16,8 +16,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class Endpoint(address: String, cachePeriodInMinutes: Long = 0L)
 object Endpoint extends ShapeTag.Companion[Endpoint] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "Endpoint")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("<p>An endpoint information details.</p>"),
   )
@@ -30,5 +28,5 @@ object Endpoint extends ShapeTag.Companion[Endpoint] {
     cachePeriodInMinutes,
   ){
     Endpoint.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("com.amazonaws.dynamodb", "Endpoint")).addHints(hints)
 }

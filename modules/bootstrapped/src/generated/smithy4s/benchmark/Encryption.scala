@@ -11,8 +11,6 @@ import smithy4s.schema.Schema.timestamp
 
 final case class Encryption(user: Option[String] = None, date: Option[Timestamp] = None, metadata: Option[EncryptionMetadata] = None)
 object Encryption extends ShapeTag.Companion[Encryption] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "Encryption")
-
   val hints: Hints = Hints.empty
 
   val user = string.optional[Encryption]("user", _.user)
@@ -25,5 +23,5 @@ object Encryption extends ShapeTag.Companion[Encryption] {
     metadata,
   ){
     Encryption.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "Encryption")).addHints(hints)
 }

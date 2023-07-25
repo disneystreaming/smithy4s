@@ -14,16 +14,12 @@ sealed trait TestMixinAdt extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TestMixinAdt")
-
   val hints: Hints = Hints.empty
 
   final case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne {
     def _ordinal: Int = 0
   }
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
-    val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
-
     val hints: Hints = Hints.empty
 
     val a = string.optional[TestAdtMemberWithMixin]("a", _.a)
@@ -34,7 +30,7 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
       b,
     ){
       TestAdtMemberWithMixin.apply
-    }.withId(id).addHints(hints)
+    }.withId(ShapeId("smithy4s.example", "TestAdtMemberWithMixin")).addHints(hints)
 
     val alt = schema.oneOf[TestMixinAdt]("test")
   }
@@ -44,5 +40,5 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     TestAdtMemberWithMixin.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "TestMixinAdt")).addHints(hints)
 }

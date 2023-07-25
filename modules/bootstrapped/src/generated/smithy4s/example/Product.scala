@@ -8,9 +8,7 @@ import smithy4s.schema.Schema.constant
 
 final case class Product()
 object Product extends ShapeTag.Companion[Product] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Product")
-
   val hints: Hints = Hints.empty
 
-  implicit val schema: Schema[Product] = constant(Product()).withId(id).addHints(hints)
+  implicit val schema: Schema[Product] = constant(Product()).withId(ShapeId("smithy4s.example", "Product")).addHints(hints)
 }

@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class GetEnumInput(aa: TheEnum)
 object GetEnumInput extends ShapeTag.Companion[GetEnumInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetEnumInput")
-
   val hints: Hints = Hints.empty
 
   val aa = TheEnum.schema.required[GetEnumInput]("aa", _.aa).addHints(smithy.api.HttpLabel(), smithy.api.Required())
@@ -18,5 +16,5 @@ object GetEnumInput extends ShapeTag.Companion[GetEnumInput] {
     aa,
   ){
     GetEnumInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetEnumInput")).addHints(hints)
 }

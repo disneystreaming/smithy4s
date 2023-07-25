@@ -13,8 +13,6 @@ sealed trait CheckedOrUnchecked extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
-  val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked")
-
   val hints: Hints = Hints.empty
 
   final case class CheckedCase(checked: String) extends CheckedOrUnchecked { final def _ordinal: Int = 0 }
@@ -38,5 +36,5 @@ object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
     RawCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "CheckedOrUnchecked")).addHints(hints)
 }

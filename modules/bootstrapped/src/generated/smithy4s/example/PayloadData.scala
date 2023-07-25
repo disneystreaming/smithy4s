@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class PayloadData(testBiggerUnion: Option[TestBiggerUnion] = None)
 object PayloadData extends ShapeTag.Companion[PayloadData] {
-  val id: ShapeId = ShapeId("smithy4s.example", "PayloadData")
-
   val hints: Hints = Hints.empty
 
   val testBiggerUnion = TestBiggerUnion.schema.optional[PayloadData]("testBiggerUnion", _.testBiggerUnion)
@@ -18,5 +16,5 @@ object PayloadData extends ShapeTag.Companion[PayloadData] {
     testBiggerUnion,
   ){
     PayloadData.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "PayloadData")).addHints(hints)
 }

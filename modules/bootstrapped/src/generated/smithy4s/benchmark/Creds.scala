@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class Creds(user: Option[String] = None, key: Option[String] = None)
 object Creds extends ShapeTag.Companion[Creds] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "Creds")
-
   val hints: Hints = Hints.empty
 
   val user = string.optional[Creds]("user", _.user)
@@ -21,5 +19,5 @@ object Creds extends ShapeTag.Companion[Creds] {
     key,
   ){
     Creds.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "Creds")).addHints(hints)
 }

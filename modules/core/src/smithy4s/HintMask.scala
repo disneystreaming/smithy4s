@@ -32,7 +32,7 @@ object HintMask {
   }
 
   def apply(shapeTags: ShapeTag[_]*): HintMask = {
-    new Impl(shapeTags.map(_.id).toSet)
+    new Impl(shapeTags.map(_.schema.shapeId).toSet)
   }
 
   private[this] case object Permissive extends HintMask {

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class ExampleOperationInput(a: String)
 object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
-  val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperationInput")
-
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
@@ -21,5 +19,5 @@ object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
     a,
   ){
     ExampleOperationInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.product", "ExampleOperationInput")).addHints(hints)
 }

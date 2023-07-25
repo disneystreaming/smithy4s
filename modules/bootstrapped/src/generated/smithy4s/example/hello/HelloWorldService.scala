@@ -110,8 +110,6 @@ object HelloWorldServiceOperation {
     def _ordinal: Int
   }
   object HelloError extends ShapeTag.Companion[HelloError] {
-    val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloError")
-
     val hints: Hints = Hints.empty
 
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError { final def _ordinal: Int = 0 }

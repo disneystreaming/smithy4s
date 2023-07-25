@@ -11,8 +11,6 @@ final case class InvalidEndpointException(message: Option[String] = None) extend
   override def getMessage(): String = message.orNull
 }
 object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointException] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "InvalidEndpointException")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(421),
@@ -24,5 +22,5 @@ object InvalidEndpointException extends ShapeTag.Companion[InvalidEndpointExcept
     message,
   ){
     InvalidEndpointException.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("com.amazonaws.dynamodb", "InvalidEndpointException")).addHints(hints)
 }

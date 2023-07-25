@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class VersionOutput(version: String)
 object VersionOutput extends ShapeTag.Companion[VersionOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "VersionOutput")
-
   val hints: Hints = Hints.empty
 
   val version = string.required[VersionOutput]("version", _.version).addHints(smithy.api.HttpPayload(), smithy.api.Required())
@@ -19,5 +17,5 @@ object VersionOutput extends ShapeTag.Companion[VersionOutput] {
     version,
   ){
     VersionOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "VersionOutput")).addHints(hints)
 }

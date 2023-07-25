@@ -18,8 +18,6 @@ sealed abstract class TheEnum(_value: String, _name: String, _intValue: Int, _hi
   @inline final def widen: TheEnum = this
 }
 object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TheEnum")
-
   val hints: Hints = Hints.empty
 
   case object V1 extends TheEnum("v1", "V1", 0, Hints())
@@ -30,5 +28,5 @@ object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
     V2,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[TheEnum] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[TheEnum] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "TheEnum")).addHints(hints)
 }

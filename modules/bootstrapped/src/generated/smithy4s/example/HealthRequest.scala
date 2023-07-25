@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class HealthRequest(query: Option[String] = None)
 object HealthRequest extends ShapeTag.Companion[HealthRequest] {
-  val id: ShapeId = ShapeId("smithy4s.example", "HealthRequest")
-
   val hints: Hints = Hints.empty
 
   val query = string.validated(smithy.api.Length(min = Some(0L), max = Some(5L))).optional[HealthRequest]("query", _.query).addHints(smithy.api.HttpQuery("query"))
@@ -19,5 +17,5 @@ object HealthRequest extends ShapeTag.Companion[HealthRequest] {
     query,
   ){
     HealthRequest.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "HealthRequest")).addHints(hints)
 }

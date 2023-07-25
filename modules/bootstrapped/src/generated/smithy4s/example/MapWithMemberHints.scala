@@ -15,8 +15,7 @@ import smithy4s.schema.Schema.string
   *   mapBar
   */
 object MapWithMemberHints extends Newtype[Map[String, Int]] {
-  val id: ShapeId = ShapeId("smithy4s.example", "MapWithMemberHints")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[Map[String, Int]] = map(string.addMemberHints(smithy.api.Documentation("mapFoo")), int.addMemberHints(smithy.api.Documentation("mapBar"), smithy.api.Deprecated(message = None, since = None))).withId(id).addHints(hints)
+  val underlyingSchema: Schema[Map[String, Int]] = map(string.addMemberHints(smithy.api.Documentation("mapFoo")), int.addMemberHints(smithy.api.Documentation("mapBar"), smithy.api.Deprecated(message = None, since = None))).withId(ShapeId("smithy4s.example", "MapWithMemberHints")).addHints(hints)
   implicit val schema: Schema[MapWithMemberHints] = bijection(underlyingSchema, asBijection)
 }

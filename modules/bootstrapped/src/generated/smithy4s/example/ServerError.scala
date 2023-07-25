@@ -11,8 +11,6 @@ final case class ServerError(message: Option[String] = None) extends Throwable {
   override def getMessage(): String = message.orNull
 }
 object ServerError extends ShapeTag.Companion[ServerError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ServerError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
@@ -23,5 +21,5 @@ object ServerError extends ShapeTag.Companion[ServerError] {
     message,
   ){
     ServerError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "ServerError")).addHints(hints)
 }

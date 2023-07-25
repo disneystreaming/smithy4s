@@ -139,8 +139,6 @@ object WeatherOperation {
     def _ordinal: Int
   }
   object GetCityError extends ShapeTag.Companion[GetCityError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetCityError")
-
     val hints: Hints = Hints.empty
 
     final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }

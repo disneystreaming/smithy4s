@@ -15,8 +15,6 @@ sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
-  val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnion")
-
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
@@ -31,13 +29,11 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def _ordinal: Int = 2
   }
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
-    val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
-
     val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     )
 
-    implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(id).addHints(hints)
+    implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(ShapeId("smithy4s.example", "DeprecatedUnionProductCase")).addHints(hints)
 
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
@@ -46,13 +42,11 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def _ordinal: Int = 3
   }
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
-    val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
-
     val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     )
 
-    implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(id).addHints(hints)
+    implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")).addHints(hints)
 
     val alt = schema.oneOf[DeprecatedUnion]("p2")
   }
@@ -77,5 +71,5 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     UnionProductCaseDeprecatedAtCallSite.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "DeprecatedUnion")).addHints(hints)
 }

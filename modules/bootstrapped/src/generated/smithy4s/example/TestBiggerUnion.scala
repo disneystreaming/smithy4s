@@ -12,8 +12,6 @@ sealed trait TestBiggerUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TestBiggerUnion")
-
   val hints: Hints = Hints(
     alloy.Discriminated("tpe"),
   )
@@ -39,5 +37,5 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
     TwoCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "TestBiggerUnion")).addHints(hints)
 }

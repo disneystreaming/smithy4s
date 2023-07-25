@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class EchoInput(pathParam: String, body: EchoBody, queryParam: Option[String] = None)
 object EchoInput extends ShapeTag.Companion[EchoInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "EchoInput")
-
   val hints: Hints = Hints.empty
 
   val pathParam = string.validated(smithy.api.Length(min = Some(10L), max = None)).required[EchoInput]("pathParam", _.pathParam).addHints(smithy.api.Required(), smithy.api.HttpLabel())
@@ -23,5 +21,5 @@ object EchoInput extends ShapeTag.Companion[EchoInput] {
     queryParam,
   ){
     EchoInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "EchoInput")).addHints(hints)
 }

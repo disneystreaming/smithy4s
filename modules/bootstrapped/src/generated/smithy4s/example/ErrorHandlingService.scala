@@ -108,8 +108,6 @@ object ErrorHandlingServiceOperation {
     def _ordinal: Int
   }
   object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationError")
-
     val hints: Hints = Hints.empty
 
     final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }

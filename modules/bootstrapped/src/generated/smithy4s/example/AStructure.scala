@@ -11,8 +11,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class AStructure(astring: AString = smithy4s.example.AString("\"Hello World\" with \"quotes\""))
 object AStructure extends ShapeTag.Companion[AStructure] {
-  val id: ShapeId = ShapeId("smithy4s.example", "AStructure")
-
   val hints: Hints = Hints.empty
 
   val astring = AString.schema.required[AStructure]("astring", _.astring).addHints(smithy.api.Default(smithy4s.Document.fromString("\"Hello World\" with \"quotes\"")))
@@ -21,5 +19,5 @@ object AStructure extends ShapeTag.Companion[AStructure] {
     astring,
   ){
     AStructure.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "AStructure")).addHints(hints)
 }

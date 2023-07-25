@@ -49,7 +49,6 @@ object ShapeId extends ShapeTag.Has[ShapeId] { self =>
   // Not relying on ShapeTag.Companion here, as it seems to trigger a Scala 3
   // only bug that we have yet to minify.
   implicit val shapeIdTag: ShapeTag[ShapeId] = new ShapeTag[ShapeId] {
-    def id: ShapeId = self.id
     def schema: Schema[ShapeId] = self.schema
   }
 

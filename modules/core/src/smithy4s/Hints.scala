@@ -104,7 +104,7 @@ object Hints {
 
   private def mapFromSeq(bindings: Seq[Hint]): Map[ShapeId, Hint] = {
     bindings.map {
-      case b @ Binding.StaticBinding(k, _)  => k.id -> b
+      case b @ Binding.StaticBinding(k, _)  => k.schema.shapeId -> b
       case b @ Binding.DynamicBinding(k, _) => k -> b
     }.toMap
   }
@@ -117,7 +117,7 @@ object Hints {
     def isEmpty = toMap.isEmpty
     def all: Iterable[Hint] = toMap.values
     def get[A](implicit key: ShapeTag[A]): Option[A] =
-      toMap.get(key.id).flatMap {
+      toMap.get(key.schema.shapeId).flatMap {
         case Binding.StaticBinding(k, value) =>
           if (key.eq(k)) Some(value.asInstanceOf[A]) else None
         case Binding.DynamicBinding(_, value) =>
@@ -154,7 +154,7 @@ object Hints {
   object Binding {
     final case class StaticBinding[A](key: ShapeTag[A], value: A)
         extends Binding {
-      override def keyId: ShapeId = key.id
+      override def keyId: ShapeId = key.schema.shapeId
       override def toString: String = value.toString()
     }
     final case class DynamicBinding(keyId: ShapeId, value: Document)

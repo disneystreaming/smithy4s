@@ -11,8 +11,7 @@ import smithy4s.schema.Schema.map
 import smithy4s.schema.Schema.string
 
 object NonEmptyMapNumbers extends Newtype[NonEmptyMap[String, Int]] {
-  val id: ShapeId = ShapeId("smithy4s.example", "NonEmptyMapNumbers")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[NonEmptyMap[String, Int]] = map(string, int).refined[NonEmptyMap[String, Int]](smithy4s.example.NonEmptyMapFormat()).withId(id).addHints(hints)
+  val underlyingSchema: Schema[NonEmptyMap[String, Int]] = map(string, int).refined[NonEmptyMap[String, Int]](smithy4s.example.NonEmptyMapFormat()).withId(ShapeId("smithy4s.example", "NonEmptyMapNumbers")).addHints(hints)
   implicit val schema: Schema[NonEmptyMapNumbers] = bijection(underlyingSchema, asBijection)
 }

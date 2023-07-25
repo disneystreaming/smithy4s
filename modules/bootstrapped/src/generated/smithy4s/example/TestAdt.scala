@@ -6,7 +6,6 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bytes
-import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.short
 import smithy4s.schema.Schema.string
@@ -18,16 +17,12 @@ sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product wit
   def _ordinal: Int
 }
 object TestAdt extends ShapeTag.Companion[TestAdt] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
-
   val hints: Hints = Hints.empty
 
   final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree {
     def _ordinal: Int = 0
   }
   object AdtOne extends ShapeTag.Companion[AdtOne] {
-    val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
-
     val hints: Hints = Hints.empty
 
     val lng = long.optional[AdtOne]("lng", _.lng)
@@ -42,7 +37,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       str,
     ){
       AdtOne.apply
-    }.withId(id).addHints(hints)
+    }.withId(ShapeId("smithy4s.example", "AdtOne")).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("one")
   }
@@ -50,13 +45,11 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def _ordinal: Int = 1
   }
   object AdtTwo extends ShapeTag.Companion[AdtTwo] {
-    val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
-
     val hints: Hints = Hints.empty
 
     val lng = long.optional[AdtTwo]("lng", _.lng)
     val sht = short.optional[AdtTwo]("sht", _.sht)
-    val int = int.optional[AdtTwo]("int", _.int)
+    val int = smithy4s.schema.Schema.int.optional[AdtTwo]("int", _.int)
 
     val schema: Schema[AdtTwo] = struct(
       lng,
@@ -64,7 +57,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       int,
     ){
       AdtTwo.apply
-    }.withId(id).addHints(hints)
+    }.withId(ShapeId("smithy4s.example", "AdtTwo")).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("two")
   }
@@ -75,5 +68,5 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     AdtTwo.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "TestAdt")).addHints(hints)
 }

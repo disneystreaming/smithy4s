@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 
 final case class MovieTheater(name: Option[String] = None)
 object MovieTheater extends ShapeTag.Companion[MovieTheater] {
-  val id: ShapeId = ShapeId("smithy4s.example", "MovieTheater")
-
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
   )
@@ -22,7 +20,7 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
     name,
   ){
     MovieTheater.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "MovieTheater")).addHints(hints)
 
   implicit val movieTheaterHash: cats.Hash[MovieTheater] = SchemaVisitorHash.fromSchema(schema)
 }

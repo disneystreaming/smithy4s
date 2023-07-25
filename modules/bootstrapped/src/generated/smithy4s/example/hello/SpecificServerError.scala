@@ -11,8 +11,6 @@ final case class SpecificServerError(message: Option[String] = None) extends Thr
   override def getMessage(): String = message.orNull
 }
 object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
-  val id: ShapeId = ShapeId("smithy4s.example.hello", "SpecificServerError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(599),
@@ -24,5 +22,5 @@ object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
     message,
   ){
     SpecificServerError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.hello", "SpecificServerError")).addHints(hints)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class MenuItem(food: Food, price: Float)
 object MenuItem extends ShapeTag.Companion[MenuItem] {
-  val id: ShapeId = ShapeId("smithy4s.example", "MenuItem")
-
   val hints: Hints = Hints.empty
 
   val food = Food.schema.required[MenuItem]("food", _.food).addHints(smithy.api.Required())
@@ -21,5 +19,5 @@ object MenuItem extends ShapeTag.Companion[MenuItem] {
     price,
   ){
     MenuItem.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "MenuItem")).addHints(hints)
 }

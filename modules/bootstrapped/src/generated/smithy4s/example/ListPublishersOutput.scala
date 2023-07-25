@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class ListPublishersOutput(publishers: List[PublisherId])
 object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ListPublishersOutput")
-
   val hints: Hints = Hints(
     smithy.api.Output(),
   )
@@ -20,5 +18,5 @@ object ListPublishersOutput extends ShapeTag.Companion[ListPublishersOutput] {
     publishers,
   ){
     ListPublishersOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "ListPublishersOutput")).addHints(hints)
 }

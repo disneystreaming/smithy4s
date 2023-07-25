@@ -12,8 +12,6 @@ sealed trait Food extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object Food extends ShapeTag.Companion[Food] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Food")
-
   val hints: Hints = Hints.empty
 
   final case class PizzaCase(pizza: Pizza) extends Food { final def _ordinal: Int = 0 }
@@ -37,5 +35,5 @@ object Food extends ShapeTag.Companion[Food] {
     SaladCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "Food")).addHints(hints)
 }

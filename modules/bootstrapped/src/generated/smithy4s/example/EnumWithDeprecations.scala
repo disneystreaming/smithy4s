@@ -20,8 +20,6 @@ sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intVa
   @inline final def widen: EnumWithDeprecations = this
 }
 object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {
-  val id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("some docs here"),
     smithy.api.Deprecated(message = None, since = None),
@@ -36,5 +34,5 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     NEW,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "EnumWithDeprecations")).addHints(hints)
 }

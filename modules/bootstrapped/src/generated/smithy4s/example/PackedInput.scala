@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class PackedInput(key: String)
 object PackedInput extends ShapeTag.Companion[PackedInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "PackedInput")
-
   val hints: Hints = Hints.empty
 
   val key = string.required[PackedInput]("key", _.key).addHints(smithy.api.Required())
@@ -19,5 +17,5 @@ object PackedInput extends ShapeTag.Companion[PackedInput] {
     key,
   ){
     PackedInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "PackedInput")).addHints(hints)
 }

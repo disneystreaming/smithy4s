@@ -11,8 +11,6 @@ final case class GenericServerError(message: Option[String] = None) extends Thro
   override def getMessage(): String = message.orNull
 }
 object GenericServerError extends ShapeTag.Companion[GenericServerError] {
-  val id: ShapeId = ShapeId("smithy4s.example.hello", "GenericServerError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(500),
@@ -24,5 +22,5 @@ object GenericServerError extends ShapeTag.Companion[GenericServerError] {
     message,
   ){
     GenericServerError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.hello", "GenericServerError")).addHints(hints)
 }

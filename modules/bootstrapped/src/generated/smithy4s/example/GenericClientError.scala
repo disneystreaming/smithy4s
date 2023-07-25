@@ -11,8 +11,6 @@ final case class GenericClientError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
 object GenericClientError extends ShapeTag.Companion[GenericClientError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GenericClientError")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(418),
@@ -24,5 +22,5 @@ object GenericClientError extends ShapeTag.Companion[GenericClientError] {
     message,
   ){
     GenericClientError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GenericClientError")).addHints(hints)
 }

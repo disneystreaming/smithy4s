@@ -11,8 +11,6 @@ final case class EHServiceUnavailable(message: Option[String] = None) extends Th
   override def getMessage(): String = message.orNull
 }
 object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
-  val id: ShapeId = ShapeId("smithy4s.example", "EHServiceUnavailable")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(503),
@@ -24,5 +22,5 @@ object EHServiceUnavailable extends ShapeTag.Companion[EHServiceUnavailable] {
     message,
   ){
     EHServiceUnavailable.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "EHServiceUnavailable")).addHints(hints)
 }

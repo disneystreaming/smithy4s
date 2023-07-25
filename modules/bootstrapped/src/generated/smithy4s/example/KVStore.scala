@@ -117,8 +117,6 @@ object KVStoreOperation {
     def _ordinal: Int
   }
   object GetError extends ShapeTag.Companion[GetError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "GetError")
-
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError { final def _ordinal: Int = 0 }
@@ -172,8 +170,6 @@ object KVStoreOperation {
     def _ordinal: Int
   }
   object PutError extends ShapeTag.Companion[PutError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "PutError")
-
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def _ordinal: Int = 0 }
@@ -221,8 +217,6 @@ object KVStoreOperation {
     def _ordinal: Int
   }
   object DeleteError extends ShapeTag.Companion[DeleteError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "DeleteError")
-
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError { final def _ordinal: Int = 0 }

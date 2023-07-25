@@ -116,8 +116,6 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
-    val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "SayWorldError")
-
     val hints: Hints = Hints.empty
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def _ordinal: Int = 0 }
@@ -168,8 +166,6 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
-    val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckError")
-
     val hints: Hints = Hints.empty
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def _ordinal: Int = 0 }

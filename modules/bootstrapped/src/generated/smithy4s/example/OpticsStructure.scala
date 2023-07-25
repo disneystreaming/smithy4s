@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class OpticsStructure(two: Option[OpticsEnum] = None)
 object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
-  val id: ShapeId = ShapeId("smithy4s.example", "OpticsStructure")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -23,5 +21,5 @@ object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
     two,
   ){
     OpticsStructure.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "OpticsStructure")).addHints(hints)
 }

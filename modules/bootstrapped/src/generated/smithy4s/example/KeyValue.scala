@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class KeyValue(key: String, value: String)
 object KeyValue extends ShapeTag.Companion[KeyValue] {
-  val id: ShapeId = ShapeId("smithy4s.example", "KeyValue")
-
   val hints: Hints = Hints.empty
 
   val key = string.required[KeyValue]("key", _.key).addHints(smithy.api.Required())
@@ -21,5 +19,5 @@ object KeyValue extends ShapeTag.Companion[KeyValue] {
     value,
   ){
     KeyValue.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "KeyValue")).addHints(hints)
 }

@@ -173,7 +173,7 @@ object StringAndBlobCodecs {
               .flatMap(refinement.asFunction(_).left.map { error =>
                 HttpPayloadError(
                   PayloadPath.root,
-                  refinement.tag.id.show,
+                  refinement.tag.schema.shapeId.show,
                   error.getMessage
                 )
               })

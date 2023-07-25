@@ -11,8 +11,6 @@ final case class KeyNotFoundError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
 object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "KeyNotFoundError")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
@@ -23,5 +21,5 @@ object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
     message,
   ){
     KeyNotFoundError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "KeyNotFoundError")).addHints(hints)
 }

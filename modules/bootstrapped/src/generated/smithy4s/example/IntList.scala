@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 
 final case class IntList(head: Int, tail: Option[smithy4s.example.IntList] = None)
 object IntList extends ShapeTag.Companion[IntList] {
-  val id: ShapeId = ShapeId("smithy4s.example", "IntList")
-
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[IntList] = recursive(struct(
@@ -19,7 +17,7 @@ object IntList extends ShapeTag.Companion[IntList] {
     tail,
   ){
     IntList.apply
-  }.withId(id).addHints(hints))
+  }.withId(ShapeId("smithy4s.example", "IntList")).addHints(hints))
 
   val head = int.required[IntList]("head", _.head).addHints(smithy.api.Required())
   val tail = smithy4s.example.IntList.schema.optional[IntList]("tail", _.tail)

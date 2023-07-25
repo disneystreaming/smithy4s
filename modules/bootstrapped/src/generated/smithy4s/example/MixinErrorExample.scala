@@ -13,8 +13,6 @@ import smithy4s.schema.Schema.struct
 final case class MixinErrorExample(a: Option[String] = None, b: Option[Int] = None, c: Option[Long] = None, d: Option[Boolean] = None) extends Throwable with CommonFieldsOne with CommonFieldsTwo {
 }
 object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
-  val id: ShapeId = ShapeId("smithy4s.example", "MixinErrorExample")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
@@ -31,5 +29,5 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
     d,
   ){
     MixinErrorExample.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "MixinErrorExample")).addHints(hints)
 }

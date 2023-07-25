@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class TestDiscriminatedOutput(data: Option[PayloadData] = None)
 object TestDiscriminatedOutput extends ShapeTag.Companion[TestDiscriminatedOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminatedOutput")
-
   val hints: Hints = Hints.empty
 
   val data = PayloadData.schema.optional[TestDiscriminatedOutput]("data", _.data).addHints(smithy.api.HttpPayload())
@@ -18,5 +16,5 @@ object TestDiscriminatedOutput extends ShapeTag.Companion[TestDiscriminatedOutpu
     data,
   ){
     TestDiscriminatedOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "TestDiscriminatedOutput")).addHints(hints)
 }

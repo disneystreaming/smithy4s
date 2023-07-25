@@ -107,8 +107,6 @@ object NameCollisionOperation {
     def _ordinal: Int
   }
   object MyOpError extends ShapeTag.Companion[MyOpError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
-
     val hints: Hints = Hints.empty
 
     final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def _ordinal: Int = 0 }

@@ -8,11 +8,9 @@ import smithy4s.schema.Schema.constant
 
 final case class NameFormat()
 object NameFormat extends ShapeTag.Companion[NameFormat] {
-  val id: ShapeId = ShapeId("smithy4s.example", "nameFormat")
-
   val hints: Hints = Hints(
     smithy.api.Trait(selector = Some("string"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 
-  implicit val schema: Schema[NameFormat] = constant(NameFormat()).withId(id).addHints(hints)
+  implicit val schema: Schema[NameFormat] = constant(NameFormat()).withId(ShapeId("smithy4s.example", "nameFormat")).addHints(hints)
 }

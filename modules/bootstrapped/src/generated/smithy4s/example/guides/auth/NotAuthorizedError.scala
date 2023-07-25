@@ -11,8 +11,6 @@ final case class NotAuthorizedError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
 object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
-  val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "NotAuthorizedError")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(401),
@@ -24,5 +22,5 @@ object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
     message,
   ){
     NotAuthorizedError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.guides.auth", "NotAuthorizedError")).addHints(hints)
 }

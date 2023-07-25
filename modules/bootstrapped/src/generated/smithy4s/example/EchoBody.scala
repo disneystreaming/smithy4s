@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class EchoBody(data: Option[String] = None)
 object EchoBody extends ShapeTag.Companion[EchoBody] {
-  val id: ShapeId = ShapeId("smithy4s.example", "EchoBody")
-
   val hints: Hints = Hints.empty
 
   val data = string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[EchoBody]("data", _.data)
@@ -19,5 +17,5 @@ object EchoBody extends ShapeTag.Companion[EchoBody] {
     data,
   ){
     EchoBody.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "EchoBody")).addHints(hints)
 }

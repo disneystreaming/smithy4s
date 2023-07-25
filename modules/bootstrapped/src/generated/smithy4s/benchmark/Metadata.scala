@@ -12,8 +12,6 @@ import smithy4s.schema.Schema.timestamp
 
 final case class Metadata(contentType: Option[String] = None, lastModified: Option[Timestamp] = None, checkSum: Option[String] = None, pendingDeletion: Option[Boolean] = None, etag: Option[String] = None)
 object Metadata extends ShapeTag.Companion[Metadata] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "Metadata")
-
   val hints: Hints = Hints.empty
 
   val contentType = string.optional[Metadata]("contentType", _.contentType)
@@ -30,5 +28,5 @@ object Metadata extends ShapeTag.Companion[Metadata] {
     etag,
   ){
     Metadata.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "Metadata")).addHints(hints)
 }

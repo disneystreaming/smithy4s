@@ -16,7 +16,7 @@
 
 package smithy4s
 
-abstract class Newtype[A] extends HasId { self =>
+abstract class Newtype[A] { self =>
   // This encoding originally comes from this library:
   // https://github.com/alexknvl/newtypes#what-does-it-do
   type Base
@@ -35,7 +35,6 @@ abstract class Newtype[A] extends HasId { self =>
   def schema: Schema[Type]
 
   implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
-    def id: ShapeId = self.id
     def schema: Schema[Type] = self.schema
   }
 

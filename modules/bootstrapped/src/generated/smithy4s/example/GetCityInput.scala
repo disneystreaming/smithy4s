@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class GetCityInput(cityId: CityId)
 object GetCityInput extends ShapeTag.Companion[GetCityInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetCityInput")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -23,5 +21,5 @@ object GetCityInput extends ShapeTag.Companion[GetCityInput] {
     cityId,
   ){
     GetCityInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetCityInput")).addHints(hints)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class DefaultInMixinUsageTest(one: String = "test") extends DefaultInMixinTest
 object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTest] {
-  val id: ShapeId = ShapeId("smithy4s.example", "DefaultInMixinUsageTest")
-
   val hints: Hints = Hints.empty
 
   val one = string.required[DefaultInMixinUsageTest]("one", _.one).addHints(smithy.api.Default(smithy4s.Document.fromString("test")))
@@ -19,5 +17,5 @@ object DefaultInMixinUsageTest extends ShapeTag.Companion[DefaultInMixinUsageTes
     one,
   ){
     DefaultInMixinUsageTest.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "DefaultInMixinUsageTest")).addHints(hints)
 }

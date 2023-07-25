@@ -8,10 +8,9 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.int
 
 object ObjectSize extends Newtype[Int] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ObjectSize")
   val hints: Hints = Hints(
     smithy.api.Box(),
   )
-  val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)
+  val underlyingSchema: Schema[Int] = int.withId(ShapeId("smithy4s.example", "ObjectSize")).addHints(hints)
   implicit val schema: Schema[ObjectSize] = bijection(underlyingSchema, asBijection)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class CustomCodeInput(code: Int)
 object CustomCodeInput extends ShapeTag.Companion[CustomCodeInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeInput")
-
   val hints: Hints = Hints.empty
 
   val code = int.required[CustomCodeInput]("code", _.code).addHints(smithy.api.HttpLabel(), smithy.api.Required())
@@ -19,5 +17,5 @@ object CustomCodeInput extends ShapeTag.Companion[CustomCodeInput] {
     code,
   ){
     CustomCodeInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "CustomCodeInput")).addHints(hints)
 }

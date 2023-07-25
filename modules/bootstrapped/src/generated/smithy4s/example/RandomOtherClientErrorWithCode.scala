@@ -11,8 +11,6 @@ final case class RandomOtherClientErrorWithCode(message: Option[String] = None) 
   override def getMessage(): String = message.orNull
 }
 object RandomOtherClientErrorWithCode extends ShapeTag.Companion[RandomOtherClientErrorWithCode] {
-  val id: ShapeId = ShapeId("smithy4s.example", "RandomOtherClientErrorWithCode")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
     smithy.api.HttpError(404),
@@ -24,5 +22,5 @@ object RandomOtherClientErrorWithCode extends ShapeTag.Companion[RandomOtherClie
     message,
   ){
     RandomOtherClientErrorWithCode.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "RandomOtherClientErrorWithCode")).addHints(hints)
 }

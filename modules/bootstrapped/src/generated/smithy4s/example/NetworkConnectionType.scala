@@ -19,8 +19,6 @@ sealed abstract class NetworkConnectionType(_value: String, _name: String, _intV
   @inline final def widen: NetworkConnectionType = this
 }
 object NetworkConnectionType extends Enumeration[NetworkConnectionType] with ShapeTag.Companion[NetworkConnectionType] {
-  val id: ShapeId = ShapeId("smithy4s.example", "NetworkConnectionType")
-
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
   )
@@ -33,7 +31,7 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
     WIFI,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[NetworkConnectionType] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[NetworkConnectionType] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "NetworkConnectionType")).addHints(hints)
 
   implicit val networkConnectionTypeHash: cats.Hash[NetworkConnectionType] = SchemaVisitorHash.fromSchema(schema)
 }

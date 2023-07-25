@@ -8,8 +8,7 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 
 object TableNameList extends Newtype[List[TableName]] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "TableNameList")
   val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[TableName]] = list(TableName.schema).withId(id).addHints(hints)
+  val underlyingSchema: Schema[List[TableName]] = list(TableName.schema).withId(ShapeId("com.amazonaws.dynamodb", "TableNameList")).addHints(hints)
   implicit val schema: Schema[TableNameList] = bijection(underlyingSchema, asBijection)
 }

@@ -12,8 +12,6 @@ sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable
   def _ordinal: Int
 }
 object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
-  val id: ShapeId = ShapeId("smithy4s.example", "UnionWithRefinedTypes")
-
   val hints: Hints = Hints.empty
 
   final case class AgeCase(age: Age) extends UnionWithRefinedTypes { final def _ordinal: Int = 0 }
@@ -37,5 +35,5 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
     DogNameCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "UnionWithRefinedTypes")).addHints(hints)
 }

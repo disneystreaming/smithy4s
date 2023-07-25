@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class GetForecastOutput(forecast: Option[ForecastResult] = None)
 object GetForecastOutput extends ShapeTag.Companion[GetForecastOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetForecastOutput")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -23,5 +21,5 @@ object GetForecastOutput extends ShapeTag.Companion[GetForecastOutput] {
     forecast,
   ){
     GetForecastOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetForecastOutput")).addHints(hints)
 }

@@ -8,10 +8,9 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
 object CSV extends Newtype[String] {
-  val id: ShapeId = ShapeId("smithy4s.example", "CSV")
   val hints: Hints = Hints(
     smithy.api.MediaType("text/csv"),
   )
-  val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
+  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "CSV")).addHints(hints)
   implicit val schema: Schema[CSV] = bijection(underlyingSchema, asBijection)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class SendStringInput(key: String, bucketName: String, body: String)
 object SendStringInput extends ShapeTag.Companion[SendStringInput] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "SendStringInput")
-
   val hints: Hints = Hints.empty
 
   val key = string.required[SendStringInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required())
@@ -23,5 +21,5 @@ object SendStringInput extends ShapeTag.Companion[SendStringInput] {
     body,
   ){
     SendStringInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "SendStringInput")).addHints(hints)
 }

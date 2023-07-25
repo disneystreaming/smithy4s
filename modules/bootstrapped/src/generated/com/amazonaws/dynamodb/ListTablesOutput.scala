@@ -21,8 +21,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class ListTablesOutput(tableNames: Option[List[TableName]] = None, lastEvaluatedTableName: Option[TableName] = None)
 object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesOutput")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("<p>Represents the output of a <code>ListTables</code> operation.</p>"),
   )
@@ -35,5 +33,5 @@ object ListTablesOutput extends ShapeTag.Companion[ListTablesOutput] {
     lastEvaluatedTableName,
   ){
     ListTablesOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("com.amazonaws.dynamodb", "ListTablesOutput")).addHints(hints)
 }

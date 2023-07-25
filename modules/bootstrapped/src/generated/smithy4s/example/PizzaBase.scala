@@ -18,8 +18,6 @@ sealed abstract class PizzaBase(_value: String, _name: String, _intValue: Int, _
   @inline final def widen: PizzaBase = this
 }
 object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBase] {
-  val id: ShapeId = ShapeId("smithy4s.example", "PizzaBase")
-
   val hints: Hints = Hints.empty
 
   case object CREAM extends PizzaBase("C", "CREAM", 0, Hints())
@@ -30,5 +28,5 @@ object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBas
     TOMATO,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[PizzaBase] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[PizzaBase] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "PizzaBase")).addHints(hints)
 }

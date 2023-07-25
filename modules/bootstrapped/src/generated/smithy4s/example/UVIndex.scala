@@ -8,10 +8,9 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.int
 
 object UVIndex extends Newtype[Int] {
-  val id: ShapeId = ShapeId("smithy4s.example", "UVIndex")
   val hints: Hints = Hints(
     smithy.api.Default(smithy4s.Document.fromDouble(0.0d)),
   )
-  val underlyingSchema: Schema[Int] = int.withId(id).addHints(hints)
+  val underlyingSchema: Schema[Int] = int.withId(ShapeId("smithy4s.example", "UVIndex")).addHints(hints)
   implicit val schema: Schema[UVIndex] = bijection(underlyingSchema, asBijection)
 }

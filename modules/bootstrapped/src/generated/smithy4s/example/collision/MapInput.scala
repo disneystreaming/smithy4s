@@ -8,8 +8,6 @@ import smithy4s.schema.Schema.struct
 
 final case class MapInput(value: Map[String, String])
 object MapInput extends ShapeTag.Companion[MapInput] {
-  val id: ShapeId = ShapeId("smithy4s.example.collision", "MapInput")
-
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
@@ -20,5 +18,5 @@ object MapInput extends ShapeTag.Companion[MapInput] {
     value,
   ){
     MapInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.collision", "MapInput")).addHints(hints)
 }

@@ -12,8 +12,6 @@ sealed trait UntaggedUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
-  val id: ShapeId = ShapeId("smithy4s.example", "UntaggedUnion")
-
   val hints: Hints = Hints(
     alloy.Untagged(),
   )
@@ -39,5 +37,5 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
     FourCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "UntaggedUnion")).addHints(hints)
 }

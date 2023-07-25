@@ -11,8 +11,6 @@ final case class RandomOtherServerError(message: Option[String] = None) extends 
   override def getMessage(): String = message.orNull
 }
 object RandomOtherServerError extends ShapeTag.Companion[RandomOtherServerError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "RandomOtherServerError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
   )
@@ -23,5 +21,5 @@ object RandomOtherServerError extends ShapeTag.Companion[RandomOtherServerError]
     message,
   ){
     RandomOtherServerError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "RandomOtherServerError")).addHints(hints)
 }

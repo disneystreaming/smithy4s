@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class ErrorHandlingOperationOutput(out: Option[String] = None)
 object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOperationOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationOutput")
-
   val hints: Hints = Hints(
     smithy.api.Output(),
   )
@@ -21,5 +19,5 @@ object ErrorHandlingOperationOutput extends ShapeTag.Companion[ErrorHandlingOper
     out,
   ){
     ErrorHandlingOperationOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "ErrorHandlingOperationOutput")).addHints(hints)
 }

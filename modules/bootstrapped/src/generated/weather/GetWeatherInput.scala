@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class GetWeatherInput(city: String)
 object GetWeatherInput extends ShapeTag.Companion[GetWeatherInput] {
-  val id: ShapeId = ShapeId("weather", "GetWeatherInput")
-
   val hints: Hints = Hints(
     smithy.api.Input(),
   )
@@ -21,5 +19,5 @@ object GetWeatherInput extends ShapeTag.Companion[GetWeatherInput] {
     city,
   ){
     GetWeatherInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("weather", "GetWeatherInput")).addHints(hints)
 }

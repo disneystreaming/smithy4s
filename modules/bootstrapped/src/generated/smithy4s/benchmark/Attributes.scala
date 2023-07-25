@@ -13,8 +13,6 @@ import smithy4s.schema.Schema.timestamp
 
 final case class Attributes(user: String, public: Boolean, size: Long, creationDate: Timestamp, region: String, queryable: Option[Boolean] = None, queryableLastChange: Option[Timestamp] = None, blockPublicAccess: Option[Boolean] = None, permissions: Option[List[Permission]] = None, tags: Option[List[String]] = None, backedUp: Option[Boolean] = None, metadata: Option[List[Metadata]] = None, encryption: Option[Encryption] = None)
 object Attributes extends ShapeTag.Companion[Attributes] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "Attributes")
-
   val hints: Hints = Hints.empty
 
   val user = string.required[Attributes]("user", _.user).addHints(smithy.api.Required())
@@ -47,5 +45,5 @@ object Attributes extends ShapeTag.Companion[Attributes] {
     encryption,
   ){
     Attributes.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "Attributes")).addHints(hints)
 }

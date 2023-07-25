@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 final case class NoSuchResource(resourceType: String) extends Throwable {
 }
 object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
-  val id: ShapeId = ShapeId("smithy4s.example", "NoSuchResource")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
@@ -22,5 +20,5 @@ object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
     resourceType,
   ){
     NoSuchResource.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "NoSuchResource")).addHints(hints)
 }

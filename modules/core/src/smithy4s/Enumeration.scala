@@ -19,7 +19,6 @@ package smithy4s
 import smithy4s.schema.EnumValue
 
 trait Enumeration[E <: Enumeration.Value] extends ShapeTag.Companion[E] {
-  def id: ShapeId
   def hints: Hints
   def values: List[E]
   lazy val valueMap = values.map(e => e.value -> e).toMap

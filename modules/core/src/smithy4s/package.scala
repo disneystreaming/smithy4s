@@ -28,7 +28,7 @@ package object smithy4s {
   ): Either[UnsupportedProtocolError, Unit] =
     service.hints
       .get(protocolTag)
-      .toRight(UnsupportedProtocolError(service.id, protocolTag.id))
+      .toRight(UnsupportedProtocolError(service.id, protocolTag.schema.shapeId))
       .map(_ => ())
 
 }

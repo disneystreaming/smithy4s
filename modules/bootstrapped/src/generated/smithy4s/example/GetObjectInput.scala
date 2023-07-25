@@ -19,8 +19,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class GetObjectInput(key: ObjectKey, bucketName: BucketName)
 object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetObjectInput")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("Input for getting an Object\nall fields are required\nand are given through HTTP labels\nSee https://smithy.io/2.0/spec/http-bindings.html?highlight=httppayload#http-uri-label"),
   )
@@ -33,5 +31,5 @@ object GetObjectInput extends ShapeTag.Companion[GetObjectInput] {
     bucketName,
   ){
     GetObjectInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetObjectInput")).addHints(hints)
 }

@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 final case class UnknownServerError(errorCode: UnknownServerErrorCode, description: Option[String] = None, stateHash: Option[String] = None) extends Throwable {
 }
 object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "UnknownServerError")
-
   val hints: Hints = Hints(
     smithy.api.Error.SERVER.widen,
     smithy.api.HttpError(500),
@@ -27,5 +25,5 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
     stateHash,
   ){
     UnknownServerError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "UnknownServerError")).addHints(hints)
 }

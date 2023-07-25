@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class Greeting(message: String)
 object Greeting extends ShapeTag.Companion[Greeting] {
-  val id: ShapeId = ShapeId("smithy4s.example.hello", "Greeting")
-
   val hints: Hints = Hints.empty
 
   val message = string.required[Greeting]("message", _.message).addHints(smithy.api.Required())
@@ -19,5 +17,5 @@ object Greeting extends ShapeTag.Companion[Greeting] {
     message,
   ){
     Greeting.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.hello", "Greeting")).addHints(hints)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class Permission(read: Option[Boolean] = None, write: Option[Boolean] = None, directory: Option[Boolean] = None)
 object Permission extends ShapeTag.Companion[Permission] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "Permission")
-
   val hints: Hints = Hints.empty
 
   val read = boolean.optional[Permission]("read", _.read)
@@ -23,5 +21,5 @@ object Permission extends ShapeTag.Companion[Permission] {
     directory,
   ){
     Permission.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "Permission")).addHints(hints)
 }

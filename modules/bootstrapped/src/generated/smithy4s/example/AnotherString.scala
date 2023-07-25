@@ -12,10 +12,9 @@ import smithy4s.schema.Schema.string
   * Seriously, it's important to escape special characters.
   */
 object AnotherString extends Newtype[String] {
-  val id: ShapeId = ShapeId("smithy4s.example", "AnotherString")
   val hints: Hints = Hints(
     smithy.api.Documentation("Multiple line doc comment for another string\nContaining a random */ here.\nSeriously, it\'s important to escape special characters."),
   )
-  val underlyingSchema: Schema[String] = string.withId(id).addHints(hints)
+  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "AnotherString")).addHints(hints)
   implicit val schema: Schema[AnotherString] = bijection(underlyingSchema, asBijection)
 }

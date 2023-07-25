@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class Dog(name: String)
 object Dog extends ShapeTag.Companion[Dog] {
-  val id: ShapeId = ShapeId("weather", "Dog")
-
   val hints: Hints = Hints.empty
 
   val name = string.required[Dog]("name", _.name).addHints(smithy.api.Required())
@@ -19,5 +17,5 @@ object Dog extends ShapeTag.Companion[Dog] {
     name,
   ){
     Dog.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("weather", "Dog")).addHints(hints)
 }

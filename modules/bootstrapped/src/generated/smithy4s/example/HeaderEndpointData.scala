@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class HeaderEndpointData(uppercaseHeader: Option[String] = None, capitalizedHeader: Option[String] = None, lowercaseHeader: Option[String] = None, mixedHeader: Option[String] = None)
 object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
-  val id: ShapeId = ShapeId("smithy4s.example", "HeaderEndpointData")
-
   val hints: Hints = Hints.empty
 
   val uppercaseHeader = string.optional[HeaderEndpointData]("uppercaseHeader", _.uppercaseHeader).addHints(smithy.api.HttpHeader("X-UPPERCASE-HEADER"))
@@ -25,5 +23,5 @@ object HeaderEndpointData extends ShapeTag.Companion[HeaderEndpointData] {
     mixedHeader,
   ){
     HeaderEndpointData.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "HeaderEndpointData")).addHints(hints)
 }

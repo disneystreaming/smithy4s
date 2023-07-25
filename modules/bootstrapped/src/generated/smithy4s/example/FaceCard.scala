@@ -19,8 +19,6 @@ sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int, _h
   @inline final def widen: FaceCard = this
 }
 object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {
-  val id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
-
   val hints: Hints = Hints(
     smithy.api.Documentation("FaceCard types"),
   )
@@ -39,5 +37,5 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
     JOKER,
   )
   val tag: EnumTag = EnumTag.IntEnum
-  implicit val schema: Schema[FaceCard] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[FaceCard] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "FaceCard")).addHints(hints)
 }

@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class HealthCheckOutput(message: String)
 object HealthCheckOutput extends ShapeTag.Companion[HealthCheckOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckOutput")
-
   val hints: Hints = Hints(
     smithy.api.Output(),
   )
@@ -21,5 +19,5 @@ object HealthCheckOutput extends ShapeTag.Companion[HealthCheckOutput] {
     message,
   ){
     HealthCheckOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example.guides.auth", "HealthCheckOutput")).addHints(hints)
 }

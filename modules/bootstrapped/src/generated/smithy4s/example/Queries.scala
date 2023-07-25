@@ -6,19 +6,16 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.Timestamp
 import smithy4s.schema.Schema.boolean
-import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class Queries(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, slm: Option[Map[String, String]] = None)
 object Queries extends ShapeTag.Companion[Queries] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Queries")
-
   val hints: Hints = Hints.empty
 
   val str = string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str"))
-  val int = int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int"))
+  val int = smithy4s.schema.Schema.int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int"))
   val ts1 = timestamp.optional[Queries]("ts1", _.ts1).addHints(smithy.api.HttpQuery("ts1"))
   val ts2 = timestamp.optional[Queries]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpQuery("ts2"))
   val ts3 = timestamp.optional[Queries]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpQuery("ts3"))
@@ -41,5 +38,5 @@ object Queries extends ShapeTag.Companion[Queries] {
     slm,
   ){
     Queries.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "Queries")).addHints(hints)
 }

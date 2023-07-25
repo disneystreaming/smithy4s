@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.struct
 @deprecated(message = "A compelling reason", since = "0.0.1")
 final case class DeprecatedStructure(@deprecated(message = "N/A", since = "N/A") name: Option[String] = None, nameV2: Option[String] = None, strings: Option[List[String]] = None)
 object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
-  val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedStructure")
-
   val hints: Hints = Hints(
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
@@ -26,5 +24,5 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
     strings,
   ){
     DeprecatedStructure.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "DeprecatedStructure")).addHints(hints)
 }

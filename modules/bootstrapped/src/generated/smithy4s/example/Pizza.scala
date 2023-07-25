@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class Pizza(name: String, base: PizzaBase, toppings: List[Ingredient])
 object Pizza extends ShapeTag.Companion[Pizza] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Pizza")
-
   val hints: Hints = Hints.empty
 
   val name = string.required[Pizza]("name", _.name).addHints(smithy.api.Required())
@@ -23,5 +21,5 @@ object Pizza extends ShapeTag.Companion[Pizza] {
     toppings,
   ){
     Pizza.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "Pizza")).addHints(hints)
 }

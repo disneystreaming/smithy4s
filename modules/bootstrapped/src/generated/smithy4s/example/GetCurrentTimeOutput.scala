@@ -10,8 +10,6 @@ import smithy4s.schema.Schema.timestamp
 
 final case class GetCurrentTimeOutput(time: Timestamp)
 object GetCurrentTimeOutput extends ShapeTag.Companion[GetCurrentTimeOutput] {
-  val id: ShapeId = ShapeId("smithy4s.example", "GetCurrentTimeOutput")
-
   val hints: Hints = Hints.empty
 
   val time = timestamp.required[GetCurrentTimeOutput]("time", _.time).addHints(smithy.api.Required())
@@ -20,5 +18,5 @@ object GetCurrentTimeOutput extends ShapeTag.Companion[GetCurrentTimeOutput] {
     time,
   ){
     GetCurrentTimeOutput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "GetCurrentTimeOutput")).addHints(hints)
 }

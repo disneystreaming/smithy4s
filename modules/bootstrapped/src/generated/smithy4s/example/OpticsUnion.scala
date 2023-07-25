@@ -13,8 +13,6 @@ sealed trait OpticsUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
-  val id: ShapeId = ShapeId("smithy4s.example", "OpticsUnion")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -34,5 +32,5 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
     OneCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "OpticsUnion")).addHints(hints)
 }

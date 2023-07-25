@@ -109,8 +109,6 @@ object ErrorHandlingServiceExtraErrorsOperation {
     def _ordinal: Int
   }
   object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
-    val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationError")
-
     val hints: Hints = Hints.empty
 
     final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError { final def _ordinal: Int = 0 }

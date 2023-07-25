@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class QueriesWithDefaults(dflt: String = "test")
 object QueriesWithDefaults extends ShapeTag.Companion[QueriesWithDefaults] {
-  val id: ShapeId = ShapeId("smithy4s.example", "QueriesWithDefaults")
-
   val hints: Hints = Hints.empty
 
   val dflt = string.required[QueriesWithDefaults]("dflt", _.dflt).addHints(smithy.api.Default(smithy4s.Document.fromString("test")), smithy.api.HttpQuery("dflt"))
@@ -19,5 +17,5 @@ object QueriesWithDefaults extends ShapeTag.Companion[QueriesWithDefaults] {
     dflt,
   ){
     QueriesWithDefaults.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "QueriesWithDefaults")).addHints(hints)
 }

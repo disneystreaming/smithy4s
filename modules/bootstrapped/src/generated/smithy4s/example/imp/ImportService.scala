@@ -110,8 +110,6 @@ object ImportServiceOperation {
     def _ordinal: Int
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
-    val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportOperationError")
-
     val hints: Hints = Hints.empty
 
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }

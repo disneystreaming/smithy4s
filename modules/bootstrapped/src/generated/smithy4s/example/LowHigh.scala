@@ -23,8 +23,6 @@ sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hi
   @inline final def widen: LowHigh = this
 }
 object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
-  val id: ShapeId = ShapeId("smithy4s.example", "LowHigh")
-
   val hints: Hints = Hints.empty
 
   /** low */
@@ -37,5 +35,5 @@ object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
     HIGH,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[LowHigh] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[LowHigh] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "LowHigh")).addHints(hints)
 }

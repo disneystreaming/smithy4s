@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class CreateObjectInput(key: String, bucketName: String, payload: S3Object)
 object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
-  val id: ShapeId = ShapeId("smithy4s.benchmark", "CreateObjectInput")
-
   val hints: Hints = Hints.empty
 
   val key = string.required[CreateObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required())
@@ -23,5 +21,5 @@ object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
     payload,
   ){
     CreateObjectInput.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.benchmark", "CreateObjectInput")).addHints(hints)
 }

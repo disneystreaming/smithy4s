@@ -11,8 +11,6 @@ import smithy4s.schema.Schema.timestamp
 
 final case class AddMenuItemResult(itemId: String, added: Timestamp)
 object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
-  val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemResult")
-
   val hints: Hints = Hints.empty
 
   val itemId = string.required[AddMenuItemResult]("itemId", _.itemId).addHints(smithy.api.HttpPayload(), smithy.api.Required())
@@ -23,5 +21,5 @@ object AddMenuItemResult extends ShapeTag.Companion[AddMenuItemResult] {
     added,
   ){
     AddMenuItemResult.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "AddMenuItemResult")).addHints(hints)
 }

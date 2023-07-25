@@ -19,8 +19,6 @@ sealed abstract class OpticsEnum(_value: String, _name: String, _intValue: Int, 
   @inline final def widen: OpticsEnum = this
 }
 object OpticsEnum extends Enumeration[OpticsEnum] with ShapeTag.Companion[OpticsEnum] {
-  val id: ShapeId = ShapeId("smithy4s.example", "OpticsEnum")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -36,5 +34,5 @@ object OpticsEnum extends Enumeration[OpticsEnum] with ShapeTag.Companion[Optics
     B,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[OpticsEnum] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[OpticsEnum] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "OpticsEnum")).addHints(hints)
 }

@@ -11,8 +11,6 @@ import smithy4s.schema.Schema.struct
   */
 final case class DescribeEndpointsResponse(endpoints: List[Endpoint])
 object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsResponse] {
-  val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsResponse")
-
   val hints: Hints = Hints.empty
 
   val endpoints = Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>"), smithy.api.Required())
@@ -21,5 +19,5 @@ object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsRes
     endpoints,
   ){
     DescribeEndpointsResponse.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsResponse")).addHints(hints)
 }

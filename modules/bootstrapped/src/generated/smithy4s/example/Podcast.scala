@@ -16,8 +16,6 @@ sealed trait Podcast extends PodcastCommon with scala.Product with scala.Seriali
   def _ordinal: Int
 }
 object Podcast extends ShapeTag.Companion[Podcast] {
-  val id: ShapeId = ShapeId("smithy4s.example", "Podcast")
-
   val hints: Hints = Hints.empty
 
   object Optics {
@@ -29,8 +27,6 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def _ordinal: Int = 0
   }
   object Video extends ShapeTag.Companion[Video] {
-    val id: ShapeId = ShapeId("smithy4s.example", "Video")
-
     val hints: Hints = Hints.empty
 
     object Optics {
@@ -49,7 +45,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       durationMillis,
     ){
       Video.apply
-    }.withId(id).addHints(hints)
+    }.withId(ShapeId("smithy4s.example", "Video")).addHints(hints)
 
     val alt = schema.oneOf[Podcast]("video")
   }
@@ -57,8 +53,6 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def _ordinal: Int = 1
   }
   object Audio extends ShapeTag.Companion[Audio] {
-    val id: ShapeId = ShapeId("smithy4s.example", "Audio")
-
     val hints: Hints = Hints.empty
 
     object Optics {
@@ -77,7 +71,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       durationMillis,
     ){
       Audio.apply
-    }.withId(id).addHints(hints)
+    }.withId(ShapeId("smithy4s.example", "Audio")).addHints(hints)
 
     val alt = schema.oneOf[Podcast]("audio")
   }
@@ -88,5 +82,5 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     Audio.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "Podcast")).addHints(hints)
 }

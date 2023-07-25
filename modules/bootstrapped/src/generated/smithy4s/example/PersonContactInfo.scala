@@ -14,8 +14,6 @@ sealed trait PersonContactInfo extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
-  val id: ShapeId = ShapeId("smithy4s.example", "PersonContactInfo")
-
   val hints: Hints = Hints(
     smithy4s.example.Hash(),
   )
@@ -46,7 +44,7 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     PhoneCase.alt,
   ){
     _._ordinal
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "PersonContactInfo")).addHints(hints)
 
   implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema(schema)
 }

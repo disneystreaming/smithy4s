@@ -12,8 +12,6 @@ final case class PriceError(message: String, code: Int) extends Throwable {
   override def getMessage(): String = message
 }
 object PriceError extends ShapeTag.Companion[PriceError] {
-  val id: ShapeId = ShapeId("smithy4s.example", "PriceError")
-
   val hints: Hints = Hints(
     smithy.api.Error.CLIENT.widen,
   )
@@ -26,5 +24,5 @@ object PriceError extends ShapeTag.Companion[PriceError] {
     code,
   ){
     PriceError.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "PriceError")).addHints(hints)
 }

@@ -18,8 +18,6 @@ sealed abstract class AudioEnum(_value: String, _name: String, _intValue: Int, _
   @inline final def widen: AudioEnum = this
 }
 object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnum] {
-  val id: ShapeId = ShapeId("smithy4s.example", "AudioEnum")
-
   val hints: Hints = Hints(
     smithy.api.MediaType("audio/mpeg3"),
   )
@@ -32,5 +30,5 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
     BASS,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[AudioEnum] = enumeration(tag, values).withId(id).addHints(hints)
+  implicit val schema: Schema[AudioEnum] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "AudioEnum")).addHints(hints)
 }

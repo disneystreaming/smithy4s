@@ -235,7 +235,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .get(HttpResponseTests)
               .toList
               .flatMap(_.value)
-              .filter(_.protocol == protocolTag.id.toString())
+              .filter(_.protocol == protocolTag.schema.shapeId.toString())
               .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
               .map { tc =>
                 clientResponseTest(
@@ -258,7 +258,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         .get(HttpRequestTests)
         .map(_.value)
         .getOrElse(Nil)
-        .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.schema.shapeId.toString())
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientRequestTest(endpoint, tc))
 
@@ -266,7 +266,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         .get(HttpResponseTests)
         .map(_.value)
         .getOrElse(Nil)
-        .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.schema.shapeId.toString())
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientResponseTest(endpoint, tc))
 

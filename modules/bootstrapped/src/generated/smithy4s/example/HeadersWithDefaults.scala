@@ -9,8 +9,6 @@ import smithy4s.schema.Schema.struct
 
 final case class HeadersWithDefaults(dflt: String = "test")
 object HeadersWithDefaults extends ShapeTag.Companion[HeadersWithDefaults] {
-  val id: ShapeId = ShapeId("smithy4s.example", "HeadersWithDefaults")
-
   val hints: Hints = Hints.empty
 
   val dflt = string.required[HeadersWithDefaults]("dflt", _.dflt).addHints(smithy.api.Default(smithy4s.Document.fromString("test")), smithy.api.HttpHeader("dflt"))
@@ -19,5 +17,5 @@ object HeadersWithDefaults extends ShapeTag.Companion[HeadersWithDefaults] {
     dflt,
   ){
     HeadersWithDefaults.apply
-  }.withId(id).addHints(hints)
+  }.withId(ShapeId("smithy4s.example", "HeadersWithDefaults")).addHints(hints)
 }

@@ -685,8 +685,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       obj(product.nameRef, shapeTag(product.nameRef))(
-        renderIdVal(shapeId),
-        newline,
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
@@ -706,7 +704,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
                 // format: on
               }
-              line"val $fieldName = $schema"
+              line"val ${NameDef(fieldName)} = $schema"
             }
           val schema = if (fields.size <= 22) {
             val definition =
@@ -714,7 +712,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(fields.map(_.name))
               .block(line"${product.nameRef}.apply")
-              .appendToLast(".withId(id).addHints(hints)")
+              .appendToLast(line".withId(${renderId(shapeId)}).addHints(hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -742,7 +740,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           if (recursive) lines(schema, newline, renderedFields)
           else lines(renderedFields, newline, schema)
         } else {
-          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(id).addHints(hints)"
+          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(${renderId(shapeId)}).addHints(hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
@@ -863,8 +861,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         .map { case (_, tpe) => line"$tpe" }
         .intercalate(line" | ")}",
       obj(name)(
-        renderIdVal(shapeId),
-        newline,
         renderHintsVal(hints),
         newline,
         block(
@@ -982,8 +978,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def _ordinal: Int"
       ),
       obj(name, line"${shapeTag(name)}")(
-        renderIdVal(shapeId),
-        newline,
         renderHintsVal(hints),
         newline,
         renderPrisms(name, alts, hints),
@@ -1066,7 +1060,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"_._ordinal"
             }
             .appendToLast(
-              if (error) "" else ".withId(id).addHints(hints)"
+              if (error) line""
+              else line".withId(${renderId(shapeId)}).addHints(hints)"
             )
             .appendToLast(if (recursive) ")" else "")
         },
@@ -1125,8 +1120,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
-      renderIdVal(shapeId),
-      newline,
       renderHintsVal(hints),
       newline,
       renderPrismsEnum(name, values, hints),
@@ -1145,7 +1138,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         values.map(_.name)
       ),
       renderEnumTag(tag),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(id).addHints(hints)",
+      line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(${renderId(shapeId)}).addHints(hints)",
       renderTypeclasses(hints, name)
     )
   )
@@ -1161,13 +1154,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       if (recursive) line"$recursive_("
       else Line.empty
     val trailingCalls =
-      line".withId(id).addHints(hints)${renderConstraintValidation(hints)}"
+      line".withId(${renderId(shapeId)}).addHints(hints)${renderConstraintValidation(hints)}"
     val closing = if (recursive) ")" else ""
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
-        renderIdVal(shapeId),
         renderHintsVal(hints),
         line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
         lines(
