@@ -66,10 +66,11 @@ private[smithy4s] object UrlForm {
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
 
-      override def writeTo(builder: mutable.StringBuilder): Unit =
-        builder.append(
+      override def writeTo(builder: mutable.StringBuilder): Unit = {
+        val _ = builder.append(
           URLEncoder.encode(string, StandardCharsets.UTF_8.name())
-        ); ()
+        )
+      }
 
     }
 
