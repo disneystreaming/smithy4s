@@ -20,11 +20,11 @@ package schema
 /**
   * Represents a member of product type (case class)
   */
-final case class Field[S, A](
-    label: String,
-    schema: Schema[A],
-    get: S => A
-) {
+sealed abstract class Field[S, A] {
+
+  val label: String
+  val schema: Schema[A]
+  val get: S => A
 
   /**
     * Returns the hints that are only relative to the field
@@ -58,32 +58,49 @@ final case class Field[S, A](
   def isStrictlyRequired: Boolean = !hasDefaultValue
 
   def transformHintsLocally(f: Hints => Hints): Field[S, A] =
-    copy(schema = schema.transformHintsLocally(f))
+    Field.GetterField(label, schema.transformHintsLocally(f), get)
 
   def transformHintsTransitively(f: Hints => Hints) =
-    copy(schema = schema.transformHintsTransitively(f))
+    Field.GetterField(label, schema.transformHintsTransitively(f), get)
 
   def contramap[S0](f: S0 => S): Field[S0, A] =
-    Field(label, schema, get.compose(f))
+    Field.GetterField(label, schema, get.compose(f))
 
   def addHints(newHints: Hint*): Field[S, A] =
-    copy(schema = schema.addMemberHints(newHints: _*))
+    Field.GetterField(label, schema.addMemberHints(newHints: _*), get)
 }
 
 object Field {
 
-  def required[S, A](
+  def apply[S, A](
       label: String,
       schema: Schema[A],
       get: S => A
   ): Field[S, A] =
-    Field(label, schema, get)
+    GetterField(label, schema, get)
 
   def optional[S, A](
       label: String,
       schema: Schema[A],
       get: S => Option[A]
   ): Field[S, Option[A]] =
-    Field(label, schema.option, get)
+    GetterField(label, schema.option, get)
+
+  private[schema] case class GetterField[S, A](
+      label: String,
+      schema: Schema[A],
+      get: S => A
+  ) extends Field[S, A]
+
+  private case class LensField[S, A](
+      label: String,
+      schema: Schema[A],
+      get: S => A,
+      replace: A => (S => S)
+  ) extends Field[S, A]
+      with smithy4s.optics.Lens[S, A] {
+    def get(s: S): A = get.apply(s)
+    def replace(a: A): S => S = replace.apply(a)
+  }
 
 }

@@ -796,8 +796,8 @@ private[smithy4s] class SchemaVisitorJCodec(
       k: Schema[K],
       v: Schema[V]
   ): JCodec[Map[K, V]] = {
-    val kField = Field.required[(K, V), K]("key", k, _._1)
-    val vField = Field.required[(K, V), V]("value", v, _._2)
+    val kField = Field[(K, V), K]("key", k, _._1)
+    val vField = Field[(K, V), V]("value", v, _._2)
     val kvCodec = Schema.struct(Vector(kField, vField))(fields =>
       (fields(0).asInstanceOf[K], fields(1).asInstanceOf[V])
     )

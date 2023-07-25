@@ -256,7 +256,7 @@ object Schema {
   def struct[S]: PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
 
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, get: S => A): Field[S, A] = Field.required(label, schema, get)
+    def apply(label: String, get: S => A): Field[S, A] = Field(label, schema, get)
   }
 
   private [smithy4s] class PartiallyAppliedOptional[S, A](private val schema: Schema[A]) extends AnyVal {

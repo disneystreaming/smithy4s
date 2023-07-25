@@ -141,7 +141,7 @@ class SchemaGenerator(maxWidth: Int) {
       required <- Gen.oneOf(true, false)
     } yield {
       if (required)
-        Field.required(label, instance, (_: DynStruct).apply(label))
+        Field(label, instance, (_: DynStruct).apply(label))
       else
         Field
           .optional(
