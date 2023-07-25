@@ -277,6 +277,7 @@ private[internals] sealed trait Hint
 private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
   case object NoDefault extends Hint
   case object ErrorMessage extends Hint
