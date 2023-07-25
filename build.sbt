@@ -378,7 +378,7 @@ lazy val codegen = projectMatrix
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
       .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
-    Compile / bloopEnabled := true
+    bloopEnabled := true
   )
 
 /**
@@ -439,7 +439,7 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       publishLocal.value
     },
     scriptedBufferLog := false,
-    Compile / bloopEnabled := true
+    bloopEnabled := true
   )
 
 /**
@@ -825,7 +825,7 @@ lazy val bootstrapped = projectMatrix
       "smithy4s.example.test",
       "smithy4s.example.package",
       "weather",
-      "smithy4s.example.product",
+      "smithy4s.example.product"
     ),
     smithySpecs := IO.listFiles(
       (ThisBuild / baseDirectory).value / "sampleSpecs"

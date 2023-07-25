@@ -5,6 +5,7 @@ out
 lib_managed
 project/project
 target
+user.sbt
 
 # Eclipse
 .cache*

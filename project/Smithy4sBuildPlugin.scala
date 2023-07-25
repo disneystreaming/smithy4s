@@ -42,7 +42,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
     val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
     val bloopEnabled             = SettingKey[Boolean]("bloopEnabled")
-    val bloopAllowedCombos       = SettingKey[Seq[Seq[VirtualAxis]]]("bloopAxes")
+    val bloopAllowedCombos       = SettingKey[Seq[Seq[VirtualAxis]]]("bloopAllowedCombos")
     // format: on
   }
   import autoImport._
@@ -149,17 +149,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
       "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
     ),
-    Compile / bloopEnabled := {
-      virtualAxes.?.value match {
-        case Some(virtualAxes) =>
-          checkBloopAllowed(
-            virtualAxes,
-            (ThisBuild / bloopAllowedCombos).value
-          )
-        case None => true
-      }
-    },
-    Test / bloopEnabled := {
+    ThisScope / bloopEnabled := {
       virtualAxes.?.value match {
         case Some(virtualAxes) =>
           checkBloopAllowed(
