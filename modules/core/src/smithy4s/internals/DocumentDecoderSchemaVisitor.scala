@@ -82,7 +82,7 @@ object DocumentDecoder {
         throw PayloadError(
           PayloadPath(history.reverse),
           expectedType,
-          s"Expected Json $expectedJsonShape"
+          s"Expected Json Shape: $expectedJsonShape but got the following Json Shape ${document.name}"
         )
     }
     def expected: String = expectedType
