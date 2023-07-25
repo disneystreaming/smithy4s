@@ -37,18 +37,23 @@ private[smithy4s] object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
     def prepend(segment: PayloadPath.Segment): FormData
-    def render: String
+    def render: String = {
+      val builder = new mutable.StringBuilder
+      writeTo(builder)
+      builder.result()
+    }
     def toPathedValues: Vector[FormData.PathedValue]
     def widen: FormData = this
+    def writeTo(builder: mutable.StringBuilder): Unit
   }
   object FormData {
     case object Empty extends FormData {
 
       override def prepend(segment: PayloadPath.Segment): FormData = this
 
-      override def render: String = ""
-
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+
+      override def writeTo(builder: mutable.StringBuilder): Unit = ()
 
     }
 
@@ -58,10 +63,12 @@ private[smithy4s] object UrlForm {
       override def prepend(segment: PayloadPath.Segment): PathedValue =
         PathedValue(PayloadPath(segment), maybeValue = Some(string))
 
-      override def render: String =
-        URLEncoder.encode(string, StandardCharsets.UTF_8.name())
-
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+
+      override def writeTo(builder: mutable.StringBuilder): Unit =
+        builder.append(
+          URLEncoder.encode(string, StandardCharsets.UTF_8.name())
+        )
 
     }
 
@@ -76,8 +83,9 @@ private[smithy4s] object UrlForm {
       override def prepend(segment: PayloadPath.Segment): PathedValue =
         copy(path.prepend(segment), maybeValue)
 
-      override def render: String = {
-        val builder = new mutable.StringBuilder
+      override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
+
+      override def writeTo(builder: mutable.StringBuilder): Unit = {
         val lastIndex = path.segments.size - 1
         var i = 0
         for (segment <- path.segments) {
@@ -97,11 +105,7 @@ private[smithy4s] object UrlForm {
             URLEncoder.encode(value, StandardCharsets.UTF_8.name())
           )
         )
-        builder.result()
       }
-
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
-
     }
 
     // TODO: Rename as Values?
@@ -111,11 +115,17 @@ private[smithy4s] object UrlForm {
       override def prepend(segment: PayloadPath.Segment): MultipleValues =
         copy(values.map(_.prepend(segment)))
 
-      override def render: String =
-        values.map(_.render).filter(str => str.nonEmpty).mkString("&")
-
       override def toPathedValues: Vector[FormData.PathedValue] = values
 
+      override def writeTo(builder: mutable.StringBuilder): Unit = {
+        val lastIndex = values.size - 1
+        var i = 0
+        for (value <- values) {
+          value.writeTo(builder)
+          if (i < lastIndex) builder.append('&')
+          i += 1
+        }
+      }
     }
   }
 
