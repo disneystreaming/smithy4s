@@ -103,21 +103,12 @@ private[aws] object AwsQueryCodecs {
         def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
           urlFormEntityEncoder[F].contramap((a: A) =>
             UrlForm(
-              UrlForm.FormData
-                .MultipleValues(
-                  Vector(
-                    UrlForm.FormData
-                      .PathedValue(
-                        PayloadPath(PayloadPath.Segment("Action")),
-                        maybeValue = Some(action)
-                      ),
-                    UrlForm.FormData
-                      .PathedValue(
-                        PayloadPath(PayloadPath.Segment("Version")),
-                        maybeValue = Some(version)
-                      )
-                  ) ++ fa.encode(a).values.values
-                )
+              formData = UrlForm.FormData.MultipleValues(
+                values = Vector(
+                  UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
+                  UrlForm.FormData.PathedValue(PayloadPath("Version"), version)
+                ) ++ fa.encode(a).formData.values
+              )
             )
           )
       }
@@ -133,7 +124,7 @@ private[aws] object AwsQueryCodecs {
     EntityEncoders.fromHttpMediaWriter(
       HttpMediaTyped(
         HttpMediaType("application/x-www-form-urlencoded"),
-        (_: Any, urlForm: UrlForm) => Blob(urlForm.values.render)
+        (_: Any, urlForm: UrlForm) => Blob(urlForm.formData.render)
       )
     )
 

@@ -29,7 +29,7 @@ import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 
 import smithy4s.schema.Schema
 
-final case class UrlForm(values: UrlForm.FormData.MultipleValues)
+final case class UrlForm(formData: UrlForm.FormData.MultipleValues)
 
 object UrlForm {
 
@@ -61,6 +61,11 @@ object UrlForm {
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
 
+    }
+
+    object PathedValue {
+      def apply(path: PayloadPath, value: String): PathedValue =
+        PathedValue(path, maybeValue = Some(value))
     }
 
     final case class PathedValue(path: PayloadPath, maybeValue: Option[String])
