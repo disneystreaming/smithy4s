@@ -109,21 +109,24 @@ private[aws] object AwsQueryCodecs {
       action: String,
       version: String
   ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
-    val urlFormEntityEncoderCompilers = UrlForm.Encoder.mapK(
-      new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
-        def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-          urlFormEntityEncoder[F].contramap((a: A) =>
-            UrlForm(
-              formData = UrlForm.FormData.MultipleValues(
-                values = Vector(
-                  UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
-                  UrlForm.FormData.PathedValue(PayloadPath("Version"), version)
-                ) ++ fa.encode(a).formData.values
+    val urlFormEntityEncoderCompilers = UrlForm
+      .Encoder()
+      .mapK(
+        new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
+          def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
+            urlFormEntityEncoder[F].contramap((a: A) =>
+              UrlForm(
+                formData = UrlForm.FormData.MultipleValues(
+                  values = Vector(
+                    UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
+                    UrlForm.FormData
+                      .PathedValue(PayloadPath("Version"), version)
+                  ) ++ fa.encode(a).formData.values
+                )
               )
             )
-          )
-      }
-    )
+        }
+      )
     RequestEncoder.restSchemaCompiler[F](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = urlFormEntityEncoderCompilers,

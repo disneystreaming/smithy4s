@@ -24,7 +24,8 @@ import smithy4s.schema._
 import smithy4s.codecs.PayloadPath
 
 private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
-    val cache: CompilationCache[UrlFormDataEncoder]
+    val cache: CompilationCache[UrlFormDataEncoder],
+    ignoreXmlFlattened: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
   override def primitive[P](
@@ -50,7 +51,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[C[A]] = {
     val memberEncoder = compile(member)
     val maybeKey =
-      if (hints.has[XmlFlattened]) None
+      if (ignoreXmlFlattened || hints.has[XmlFlattened]) None
       else Option(getKey(member.hints, "member"))
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
     (collection: C[A]) => {

@@ -109,21 +109,28 @@ private[aws] object AwsEcsQueryCodecs {
       action: String,
       version: String
   ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
-    val urlFormEntityEncoderCompilers = UrlForm.Encoder.mapK(
-      new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
-        def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-          urlFormEntityEncoder[F].contramap((a: A) =>
-            UrlForm(
-              formData = UrlForm.FormData.MultipleValues(
-                values = Vector(
-                  UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
-                  UrlForm.FormData.PathedValue(PayloadPath("Version"), version)
-                ) ++ fa.encode(a).formData.values
+    val urlFormEntityEncoderCompilers = UrlForm
+      .Encoder(
+        // Per
+        // https://github.com/smithy-lang/smithy/blob/0d7a26d4880cdb7b3c21ba414c2642d93245b19e/smithy-aws-protocol-tests/model/ec2Query/main.smithy#L5.
+        ignoreXmlFlattened = true
+      )
+      .mapK(
+        new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
+          def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
+            urlFormEntityEncoder[F].contramap((a: A) =>
+              UrlForm(
+                formData = UrlForm.FormData.MultipleValues(
+                  values = Vector(
+                    UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
+                    UrlForm.FormData
+                      .PathedValue(PayloadPath("Version"), version)
+                  ) ++ fa.encode(a).formData.values
+                )
               )
             )
-          )
-      }
-    )
+        }
+      )
     RequestEncoder.restSchemaCompiler[F](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = urlFormEntityEncoderCompilers,
