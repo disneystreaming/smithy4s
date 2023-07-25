@@ -23,9 +23,12 @@ object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
     smithy.api.HttpError(507),
   )
 
+  val message = string.required[NoMoreSpace]("message", _.message).addHints(smithy.api.Required())
+  val foo = Foo.schema.optional[NoMoreSpace]("foo", _.foo)
+
   implicit val schema: Schema[NoMoreSpace] = struct(
-    string.required[NoMoreSpace]("message", _.message).addHints(smithy.api.Required()),
-    Foo.schema.optional[NoMoreSpace]("foo", _.foo),
+    message,
+    foo,
   ){
     NoMoreSpace.apply
   }.withId(id).addHints(hints)

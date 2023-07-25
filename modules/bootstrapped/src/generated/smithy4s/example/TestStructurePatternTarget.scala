@@ -14,9 +14,12 @@ object TestStructurePatternTarget extends ShapeTag.Companion[TestStructurePatter
 
   val hints: Hints = Hints.empty
 
+  val one = string.required[TestStructurePatternTarget]("one", _.one).addHints(smithy.api.Required())
+  val two = int.required[TestStructurePatternTarget]("two", _.two).addHints(smithy.api.Required())
+
   implicit val schema: Schema[TestStructurePatternTarget] = struct(
-    string.required[TestStructurePatternTarget]("one", _.one).addHints(smithy.api.Required()),
-    int.required[TestStructurePatternTarget]("two", _.two).addHints(smithy.api.Required()),
+    one,
+    two,
   ){
     TestStructurePatternTarget.apply
   }.withId(id).addHints(hints)

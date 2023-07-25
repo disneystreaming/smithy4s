@@ -115,8 +115,8 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
       }
   }
 
-  def opts: Opts[F[Unit]] = service.endpoints
-    .foldMapK(endpointSubcommand(_))
+  def opts: Opts[F[Unit]] =
+    service.endpoints.toVector.foldMapK(endpointSubcommand(_))
 
   def command: Command[F[Unit]] = {
     Command(

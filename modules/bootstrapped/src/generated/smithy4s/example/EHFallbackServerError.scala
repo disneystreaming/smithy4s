@@ -17,8 +17,10 @@ object EHFallbackServerError extends ShapeTag.Companion[EHFallbackServerError] {
     smithy.api.Error.SERVER.widen,
   )
 
+  val message = string.optional[EHFallbackServerError]("message", _.message)
+
   implicit val schema: Schema[EHFallbackServerError] = struct(
-    string.optional[EHFallbackServerError]("message", _.message),
+    message,
   ){
     EHFallbackServerError.apply
   }.withId(id).addHints(hints)

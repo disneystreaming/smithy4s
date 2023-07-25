@@ -31,9 +31,11 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[MyThingOperation, _, _, _, _, _]] = List()
+  val endpoints: Vector[smithy4s.Endpoint[MyThingOperation, _, _, _, _, _]] = Vector()
 
-  def endpoint[I, E, O, SI, SO](op: MyThingOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: MyThingOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: MyThingOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: MyThingOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends MyThingOperation.Transformed[MyThingOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: MyThingGen[MyThingOperation] = MyThingOperation.reified
@@ -45,7 +47,9 @@ object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
 
 sealed trait MyThingOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: MyThingGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[MyThingOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[MyThingOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object MyThingOperation {

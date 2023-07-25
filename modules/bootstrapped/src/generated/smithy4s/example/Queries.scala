@@ -17,17 +17,28 @@ object Queries extends ShapeTag.Companion[Queries] {
 
   val hints: Hints = Hints.empty
 
+  val str = string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str"))
+  val int = int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int"))
+  val ts1 = timestamp.optional[Queries]("ts1", _.ts1).addHints(smithy.api.HttpQuery("ts1"))
+  val ts2 = timestamp.optional[Queries]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpQuery("ts2"))
+  val ts3 = timestamp.optional[Queries]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpQuery("ts3"))
+  val ts4 = timestamp.optional[Queries]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpQuery("ts4"))
+  val b = boolean.optional[Queries]("b", _.b).addHints(smithy.api.HttpQuery("b"))
+  val sl = StringList.underlyingSchema.optional[Queries]("sl", _.sl).addHints(smithy.api.HttpQuery("sl"))
+  val ie = Numbers.schema.optional[Queries]("ie", _.ie).addHints(smithy.api.HttpQuery("nums"))
+  val slm = StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(smithy.api.HttpQueryParams())
+
   implicit val schema: Schema[Queries] = struct(
-    string.optional[Queries]("str", _.str).addHints(smithy.api.HttpQuery("str")),
-    int.optional[Queries]("int", _.int).addHints(smithy.api.HttpQuery("int")),
-    timestamp.optional[Queries]("ts1", _.ts1).addHints(smithy.api.HttpQuery("ts1")),
-    timestamp.optional[Queries]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.HttpQuery("ts2")),
-    timestamp.optional[Queries]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.HttpQuery("ts3")),
-    timestamp.optional[Queries]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.HttpQuery("ts4")),
-    boolean.optional[Queries]("b", _.b).addHints(smithy.api.HttpQuery("b")),
-    StringList.underlyingSchema.optional[Queries]("sl", _.sl).addHints(smithy.api.HttpQuery("sl")),
-    Numbers.schema.optional[Queries]("ie", _.ie).addHints(smithy.api.HttpQuery("nums")),
-    StringMap.underlyingSchema.optional[Queries]("slm", _.slm).addHints(smithy.api.HttpQueryParams()),
+    str,
+    int,
+    ts1,
+    ts2,
+    ts3,
+    ts4,
+    b,
+    sl,
+    ie,
+    slm,
   ){
     Queries.apply
   }.withId(id).addHints(hints)

@@ -13,8 +13,10 @@ object PackedInput extends ShapeTag.Companion[PackedInput] {
 
   val hints: Hints = Hints.empty
 
+  val key = string.required[PackedInput]("key", _.key).addHints(smithy.api.Required())
+
   implicit val schema: Schema[PackedInput] = struct(
-    string.required[PackedInput]("key", _.key).addHints(smithy.api.Required()),
+    key,
   ){
     PackedInput.apply
   }.withId(id).addHints(hints)

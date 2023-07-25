@@ -278,12 +278,15 @@ object EqVisitorSpec extends FunSuite {
     case class IntValue(value: Int) extends IntOrString
     case class StringValue(value: String) extends IntOrString
     implicit val schema: Schema[IntOrString] = {
-      val intValue = int.oneOf[IntOrString]("intValue", IntValue(_))
-      val stringValue = string.oneOf[IntOrString]("stringValue", StringValue(_))
-      union(intValue, stringValue) {
-        case IntValue(int)       => intValue(int)
-        case StringValue(string) => stringValue(string)
-      }.withId(ShapeId("", "Foo"))
+      val intValue = int.oneOf[IntOrString]("intValue", IntValue(_)) {
+        case IntValue(int) => int
+      }
+      val stringValue =
+        string.oneOf[IntOrString]("stringValue", StringValue(_)) {
+          case StringValue(string) => string
+        }
+      union(intValue, stringValue).reflective
+        .withId(ShapeId("", "Foo"))
     }
     val foo0: IntOrString = IntValue(1)
     val foo1: IntOrString = IntValue(1)

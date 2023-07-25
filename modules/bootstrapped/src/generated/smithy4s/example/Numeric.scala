@@ -19,14 +19,22 @@ object Numeric extends ShapeTag.Companion[Numeric] {
 
   val hints: Hints = Hints.empty
 
+  val i = int.required[Numeric]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+  val f = float.required[Numeric]("f", _.f).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+  val d = double.required[Numeric]("d", _.d).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+  val s = short.required[Numeric]("s", _.s).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+  val l = long.required[Numeric]("l", _.l).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+  val bi = bigint.required[Numeric]("bi", _.bi).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+  val bd = bigdecimal.required[Numeric]("bd", _.bd).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d)))
+
   implicit val schema: Schema[Numeric] = struct(
-    int.required[Numeric]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    float.required[Numeric]("f", _.f).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    double.required[Numeric]("d", _.d).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    short.required[Numeric]("s", _.s).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    long.required[Numeric]("l", _.l).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    bigint.required[Numeric]("bi", _.bi).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
-    bigdecimal.required[Numeric]("bd", _.bd).addHints(smithy.api.Default(smithy4s.Document.fromDouble(1.0d))),
+    i,
+    f,
+    d,
+    s,
+    l,
+    bi,
+    bd,
   ){
     Numeric.apply
   }.withId(id).addHints(hints)

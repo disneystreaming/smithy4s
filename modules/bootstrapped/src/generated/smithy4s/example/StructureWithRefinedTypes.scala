@@ -12,14 +12,22 @@ object StructureWithRefinedTypes extends ShapeTag.Companion[StructureWithRefined
 
   val hints: Hints = Hints.empty
 
+  val requiredAge = Age.schema.required[StructureWithRefinedTypes]("requiredAge", _.requiredAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required())
+  val age = Age.schema.optional[StructureWithRefinedTypes]("age", _.age).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)))
+  val personAge = PersonAge.schema.optional[StructureWithRefinedTypes]("personAge", _.personAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)))
+  val fancyList = smithy4s.example.FancyList.schema.optional[StructureWithRefinedTypes]("fancyList", _.fancyList)
+  val unwrappedFancyList = UnwrappedFancyList.underlyingSchema.optional[StructureWithRefinedTypes]("unwrappedFancyList", _.unwrappedFancyList)
+  val name = smithy4s.example.Name.schema.optional[StructureWithRefinedTypes]("name", _.name)
+  val dogName = DogName.underlyingSchema.optional[StructureWithRefinedTypes]("dogName", _.dogName)
+
   implicit val schema: Schema[StructureWithRefinedTypes] = struct(
-    Age.schema.required[StructureWithRefinedTypes]("requiredAge", _.requiredAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d)), smithy.api.Required()),
-    Age.schema.optional[StructureWithRefinedTypes]("age", _.age).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
-    PersonAge.schema.optional[StructureWithRefinedTypes]("personAge", _.personAge).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
-    smithy4s.example.FancyList.schema.optional[StructureWithRefinedTypes]("fancyList", _.fancyList),
-    UnwrappedFancyList.underlyingSchema.optional[StructureWithRefinedTypes]("unwrappedFancyList", _.unwrappedFancyList),
-    smithy4s.example.Name.schema.optional[StructureWithRefinedTypes]("name", _.name),
-    DogName.underlyingSchema.optional[StructureWithRefinedTypes]("dogName", _.dogName),
+    requiredAge,
+    age,
+    personAge,
+    fancyList,
+    unwrappedFancyList,
+    name,
+    dogName,
   ){
     StructureWithRefinedTypes.apply
   }.withId(id).addHints(hints)

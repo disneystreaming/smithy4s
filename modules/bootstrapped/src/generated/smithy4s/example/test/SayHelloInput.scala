@@ -15,10 +15,14 @@ object SayHelloInput extends ShapeTag.Companion[SayHelloInput] {
     smithy.api.Input(),
   )
 
+  val greeting = string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting"))
+  val query = string.optional[SayHelloInput]("query", _.query).addHints(smithy.api.HttpQuery("Hi"))
+  val name = string.optional[SayHelloInput]("name", _.name)
+
   implicit val schema: Schema[SayHelloInput] = struct(
-    string.optional[SayHelloInput]("greeting", _.greeting).addHints(smithy.api.HttpHeader("X-Greeting")),
-    string.optional[SayHelloInput]("query", _.query).addHints(smithy.api.HttpQuery("Hi")),
-    string.optional[SayHelloInput]("name", _.name),
+    greeting,
+    query,
+    name,
   ){
     SayHelloInput.apply
   }.withId(id).addHints(hints)

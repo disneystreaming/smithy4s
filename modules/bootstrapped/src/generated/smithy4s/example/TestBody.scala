@@ -18,8 +18,10 @@ object TestBody extends ShapeTag.Companion[TestBody] {
     val data: Lens[TestBody, Option[String]] = Lens[TestBody, Option[String]](_.data)(n => a => a.copy(data = n))
   }
 
+  val data = string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestBody]("data", _.data)
+
   implicit val schema: Schema[TestBody] = struct(
-    string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestBody]("data", _.data),
+    data,
   ){
     TestBody.apply
   }.withId(id).addHints(hints)

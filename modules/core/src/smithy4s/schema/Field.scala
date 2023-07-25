@@ -72,6 +72,8 @@ sealed abstract class Field[S, A] {
 
 object Field {
 
+  type Lens[S, A] = Field[S, A] with smithy4s.optics.Lens[S, A]
+
   def apply[S, A](
       label: String,
       schema: Schema[A],

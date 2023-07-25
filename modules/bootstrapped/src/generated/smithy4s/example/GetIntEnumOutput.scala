@@ -14,8 +14,10 @@ object GetIntEnumOutput extends ShapeTag.Companion[GetIntEnumOutput] {
     smithy.api.Output(),
   )
 
+  val result = EnumResult.schema.required[GetIntEnumOutput]("result", _.result).addHints(smithy.api.Required())
+
   implicit val schema: Schema[GetIntEnumOutput] = struct(
-    EnumResult.schema.required[GetIntEnumOutput]("result", _.result).addHints(smithy.api.Required()),
+    result,
   ){
     GetIntEnumOutput.apply
   }.withId(id).addHints(hints)

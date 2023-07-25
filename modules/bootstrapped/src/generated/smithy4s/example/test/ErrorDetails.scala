@@ -15,9 +15,12 @@ object ErrorDetails extends ShapeTag.Companion[ErrorDetails] {
 
   val hints: Hints = Hints.empty
 
+  val date = timestamp.required[ErrorDetails]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required())
+  val location = string.required[ErrorDetails]("location", _.location).addHints(smithy.api.Required())
+
   implicit val schema: Schema[ErrorDetails] = struct(
-    timestamp.required[ErrorDetails]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required()),
-    string.required[ErrorDetails]("location", _.location).addHints(smithy.api.Required()),
+    date,
+    location,
   ){
     ErrorDetails.apply
   }.withId(id).addHints(hints)

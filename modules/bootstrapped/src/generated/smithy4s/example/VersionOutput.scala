@@ -13,8 +13,10 @@ object VersionOutput extends ShapeTag.Companion[VersionOutput] {
 
   val hints: Hints = Hints.empty
 
+  val version = string.required[VersionOutput]("version", _.version).addHints(smithy.api.HttpPayload(), smithy.api.Required())
+
   implicit val schema: Schema[VersionOutput] = struct(
-    string.required[VersionOutput]("version", _.version).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
+    version,
   ){
     VersionOutput.apply
   }.withId(id).addHints(hints)

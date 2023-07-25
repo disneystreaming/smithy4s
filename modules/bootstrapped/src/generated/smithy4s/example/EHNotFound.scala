@@ -18,8 +18,10 @@ object EHNotFound extends ShapeTag.Companion[EHNotFound] {
     smithy.api.HttpError(404),
   )
 
+  val message = string.optional[EHNotFound]("message", _.message)
+
   implicit val schema: Schema[EHNotFound] = struct(
-    string.optional[EHNotFound]("message", _.message),
+    message,
   ){
     EHNotFound.apply
   }.withId(id).addHints(hints)

@@ -13,10 +13,14 @@ object Permission extends ShapeTag.Companion[Permission] {
 
   val hints: Hints = Hints.empty
 
+  val read = boolean.optional[Permission]("read", _.read)
+  val write = boolean.optional[Permission]("write", _.write)
+  val directory = boolean.optional[Permission]("directory", _.directory)
+
   implicit val schema: Schema[Permission] = struct(
-    boolean.optional[Permission]("read", _.read),
-    boolean.optional[Permission]("write", _.write),
-    boolean.optional[Permission]("directory", _.directory),
+    read,
+    write,
+    directory,
   ){
     Permission.apply
   }.withId(id).addHints(hints)

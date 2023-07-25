@@ -16,8 +16,10 @@ object FallbackError extends ShapeTag.Companion[FallbackError] {
     smithy.api.Error.CLIENT.widen,
   )
 
+  val error = string.required[FallbackError]("error", _.error).addHints(smithy.api.Required())
+
   implicit val schema: Schema[FallbackError] = struct(
-    string.required[FallbackError]("error", _.error).addHints(smithy.api.Required()),
+    error,
   ){
     FallbackError.apply
   }.withId(id).addHints(hints)

@@ -13,8 +13,10 @@ object World extends ShapeTag.Companion[World] {
 
   val hints: Hints = Hints.empty
 
+  val message = string.required[World]("message", _.message).addHints(smithy.api.Default(smithy4s.Document.fromString("World !")))
+
   implicit val schema: Schema[World] = struct(
-    string.required[World]("message", _.message).addHints(smithy.api.Default(smithy4s.Document.fromString("World !"))),
+    message,
   ){
     World.apply
   }.withId(id).addHints(hints)

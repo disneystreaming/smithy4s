@@ -19,11 +19,16 @@ object MixinErrorExample extends ShapeTag.Companion[MixinErrorExample] {
     smithy.api.Error.CLIENT.widen,
   )
 
+  val a = string.optional[MixinErrorExample]("a", _.a)
+  val b = int.optional[MixinErrorExample]("b", _.b)
+  val c = long.optional[MixinErrorExample]("c", _.c)
+  val d = boolean.optional[MixinErrorExample]("d", _.d)
+
   implicit val schema: Schema[MixinErrorExample] = struct(
-    string.optional[MixinErrorExample]("a", _.a),
-    int.optional[MixinErrorExample]("b", _.b),
-    long.optional[MixinErrorExample]("c", _.c),
-    boolean.optional[MixinErrorExample]("d", _.d),
+    a,
+    b,
+    c,
+    d,
   ){
     MixinErrorExample.apply
   }.withId(id).addHints(hints)

@@ -20,10 +20,14 @@ object TestInput extends ShapeTag.Companion[TestInput] {
     val queryParam: Lens[TestInput, Option[String]] = Lens[TestInput, Option[String]](_.queryParam)(n => a => a.copy(queryParam = n))
   }
 
+  val pathParam = string.validated(smithy.api.Length(min = Some(10L), max = None)).required[TestInput]("pathParam", _.pathParam).addHints(smithy.api.Required(), smithy.api.HttpLabel())
+  val body = TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload(), smithy.api.Required())
+  val queryParam = string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam"))
+
   implicit val schema: Schema[TestInput] = struct(
-    string.validated(smithy.api.Length(min = Some(10L), max = None)).required[TestInput]("pathParam", _.pathParam).addHints(smithy.api.Required(), smithy.api.HttpLabel()),
-    TestBody.schema.required[TestInput]("body", _.body).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
-    string.validated(smithy.api.Length(min = Some(10L), max = None)).optional[TestInput]("queryParam", _.queryParam).addHints(smithy.api.HttpQuery("queryParam")),
+    pathParam,
+    body,
+    queryParam,
   ){
     TestInput.apply
   }.withId(id).addHints(hints)

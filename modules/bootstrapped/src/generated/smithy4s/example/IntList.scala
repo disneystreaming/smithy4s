@@ -15,9 +15,12 @@ object IntList extends ShapeTag.Companion[IntList] {
   val hints: Hints = Hints.empty
 
   implicit val schema: Schema[IntList] = recursive(struct(
-    int.required[IntList]("head", _.head).addHints(smithy.api.Required()),
-    smithy4s.example.IntList.schema.optional[IntList]("tail", _.tail),
+    head,
+    tail,
   ){
     IntList.apply
   }.withId(id).addHints(hints))
+
+  val head = int.required[IntList]("head", _.head).addHints(smithy.api.Required())
+  val tail = smithy4s.example.IntList.schema.optional[IntList]("tail", _.tail)
 }

@@ -13,9 +13,12 @@ object GetObjectOutput extends ShapeTag.Companion[GetObjectOutput] {
 
   val hints: Hints = Hints.empty
 
+  val size = ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.HttpHeader("X-Size"), smithy.api.Required())
+  val data = string.optional[GetObjectOutput]("data", _.data).addHints(smithy.api.HttpPayload())
+
   implicit val schema: Schema[GetObjectOutput] = struct(
-    ObjectSize.schema.required[GetObjectOutput]("size", _.size).addHints(smithy.api.HttpHeader("X-Size"), smithy.api.Required()),
-    string.optional[GetObjectOutput]("data", _.data).addHints(smithy.api.HttpPayload()),
+    size,
+    data,
   ){
     GetObjectOutput.apply
   }.withId(id).addHints(hints)

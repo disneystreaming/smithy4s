@@ -13,8 +13,10 @@ object TestReservedNamespaceImport extends ShapeTag.Companion[TestReservedNamesp
 
   val hints: Hints = Hints.empty
 
+  val _package = MyPackageString.schema.optional[TestReservedNamespaceImport]("package", _._package)
+
   implicit val schema: Schema[TestReservedNamespaceImport] = struct(
-    MyPackageString.schema.optional[TestReservedNamespaceImport]("package", _._package),
+    _package,
   ){
     TestReservedNamespaceImport.apply
   }.withId(id).addHints(hints)

@@ -13,8 +13,10 @@ object Dog extends ShapeTag.Companion[Dog] {
 
   val hints: Hints = Hints.empty
 
+  val name = string.required[Dog]("name", _.name).addHints(smithy.api.Required())
+
   implicit val schema: Schema[Dog] = struct(
-    string.required[Dog]("name", _.name).addHints(smithy.api.Required()),
+    name,
   ){
     Dog.apply
   }.withId(id).addHints(hints)

@@ -16,10 +16,14 @@ object DeprecatedStructure extends ShapeTag.Companion[DeprecatedStructure] {
     smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
   )
 
+  val name = string.optional[DeprecatedStructure]("name", _.name).addHints(smithy.api.Deprecated(message = None, since = None))
+  val nameV2 = string.optional[DeprecatedStructure]("nameV2", _.nameV2)
+  val strings = Strings.underlyingSchema.optional[DeprecatedStructure]("strings", _.strings)
+
   implicit val schema: Schema[DeprecatedStructure] = struct(
-    string.optional[DeprecatedStructure]("name", _.name).addHints(smithy.api.Deprecated(message = None, since = None)),
-    string.optional[DeprecatedStructure]("nameV2", _.nameV2),
-    Strings.underlyingSchema.optional[DeprecatedStructure]("strings", _.strings),
+    name,
+    nameV2,
+    strings,
   ){
     DeprecatedStructure.apply
   }.withId(id).addHints(hints)

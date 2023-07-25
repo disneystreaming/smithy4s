@@ -13,8 +13,10 @@ object QueriesWithDefaults extends ShapeTag.Companion[QueriesWithDefaults] {
 
   val hints: Hints = Hints.empty
 
+  val dflt = string.required[QueriesWithDefaults]("dflt", _.dflt).addHints(smithy.api.Default(smithy4s.Document.fromString("test")), smithy.api.HttpQuery("dflt"))
+
   implicit val schema: Schema[QueriesWithDefaults] = struct(
-    string.required[QueriesWithDefaults]("dflt", _.dflt).addHints(smithy.api.Default(smithy4s.Document.fromString("test")), smithy.api.HttpQuery("dflt")),
+    dflt,
   ){
     QueriesWithDefaults.apply
   }.withId(id).addHints(hints)

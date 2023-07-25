@@ -15,9 +15,12 @@ object ReservationInput extends ShapeTag.Companion[ReservationInput] {
     smithy.api.Input(),
   )
 
+  val name = string.required[ReservationInput]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val town = string.optional[ReservationInput]("town", _.town).addHints(smithy.api.HttpQuery("town"))
+
   implicit val schema: Schema[ReservationInput] = struct(
-    string.required[ReservationInput]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    string.optional[ReservationInput]("town", _.town).addHints(smithy.api.HttpQuery("town")),
+    name,
+    town,
   ){
     ReservationInput.apply
   }.withId(id).addHints(hints)

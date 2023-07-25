@@ -39,7 +39,10 @@ private[internals] case class CompilationUnit(
     rendererConfig: Renderer.Config
 ) {
   val namespace: String =
-    rawNamespace.split('.').map(CollisionAvoidance.protectType(_)).mkString(".")
+    rawNamespace
+      .split('.')
+      .map(CollisionAvoidance.protectKeyword(_))
+      .mkString(".")
 }
 
 private[internals] sealed trait Decl {

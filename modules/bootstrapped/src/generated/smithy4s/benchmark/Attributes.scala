@@ -17,20 +17,34 @@ object Attributes extends ShapeTag.Companion[Attributes] {
 
   val hints: Hints = Hints.empty
 
+  val user = string.required[Attributes]("user", _.user).addHints(smithy.api.Required())
+  val public = boolean.required[Attributes]("public", _.public).addHints(smithy.api.Required())
+  val size = long.required[Attributes]("size", _.size).addHints(smithy.api.Required())
+  val creationDate = timestamp.required[Attributes]("creationDate", _.creationDate).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required())
+  val region = string.required[Attributes]("region", _.region).addHints(smithy.api.Required())
+  val queryable = boolean.optional[Attributes]("queryable", _.queryable)
+  val queryableLastChange = timestamp.optional[Attributes]("queryableLastChange", _.queryableLastChange).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen)
+  val blockPublicAccess = boolean.optional[Attributes]("blockPublicAccess", _.blockPublicAccess)
+  val permissions = ListPermissions.underlyingSchema.optional[Attributes]("permissions", _.permissions)
+  val tags = ListTags.underlyingSchema.optional[Attributes]("tags", _.tags)
+  val backedUp = boolean.optional[Attributes]("backedUp", _.backedUp)
+  val metadata = ListMetadata.underlyingSchema.optional[Attributes]("metadata", _.metadata)
+  val encryption = Encryption.schema.optional[Attributes]("encryption", _.encryption)
+
   implicit val schema: Schema[Attributes] = struct(
-    string.required[Attributes]("user", _.user).addHints(smithy.api.Required()),
-    boolean.required[Attributes]("public", _.public).addHints(smithy.api.Required()),
-    long.required[Attributes]("size", _.size).addHints(smithy.api.Required()),
-    timestamp.required[Attributes]("creationDate", _.creationDate).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required()),
-    string.required[Attributes]("region", _.region).addHints(smithy.api.Required()),
-    boolean.optional[Attributes]("queryable", _.queryable),
-    timestamp.optional[Attributes]("queryableLastChange", _.queryableLastChange).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    boolean.optional[Attributes]("blockPublicAccess", _.blockPublicAccess),
-    ListPermissions.underlyingSchema.optional[Attributes]("permissions", _.permissions),
-    ListTags.underlyingSchema.optional[Attributes]("tags", _.tags),
-    boolean.optional[Attributes]("backedUp", _.backedUp),
-    ListMetadata.underlyingSchema.optional[Attributes]("metadata", _.metadata),
-    Encryption.schema.optional[Attributes]("encryption", _.encryption),
+    user,
+    public,
+    size,
+    creationDate,
+    region,
+    queryable,
+    queryableLastChange,
+    blockPublicAccess,
+    permissions,
+    tags,
+    backedUp,
+    metadata,
+    encryption,
   ){
     Attributes.apply
   }.withId(id).addHints(hints)

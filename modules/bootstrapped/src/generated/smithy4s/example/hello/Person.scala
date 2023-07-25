@@ -13,9 +13,12 @@ object Person extends ShapeTag.Companion[Person] {
 
   val hints: Hints = Hints.empty
 
+  val name = string.required[Person]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val town = string.optional[Person]("town", _.town).addHints(smithy.api.HttpQuery("town"))
+
   implicit val schema: Schema[Person] = struct(
-    string.required[Person]("name", _.name).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    string.optional[Person]("town", _.town).addHints(smithy.api.HttpQuery("town")),
+    name,
+    town,
   ){
     Person.apply
   }.withId(id).addHints(hints)

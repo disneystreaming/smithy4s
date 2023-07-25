@@ -13,9 +13,12 @@ object ListCitiesOutput extends ShapeTag.Companion[ListCitiesOutput] {
 
   val hints: Hints = Hints.empty
 
+  val items = CitySummaries.underlyingSchema.required[ListCitiesOutput]("items", _.items).addHints(smithy.api.Required())
+  val nextToken = string.optional[ListCitiesOutput]("nextToken", _.nextToken)
+
   implicit val schema: Schema[ListCitiesOutput] = struct(
-    CitySummaries.underlyingSchema.required[ListCitiesOutput]("items", _.items).addHints(smithy.api.Required()),
-    string.optional[ListCitiesOutput]("nextToken", _.nextToken),
+    items,
+    nextToken,
   ){
     ListCitiesOutput.apply
   }.withId(id).addHints(hints)

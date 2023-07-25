@@ -17,15 +17,24 @@ object PathParams extends ShapeTag.Companion[PathParams] {
 
   val hints: Hints = Hints.empty
 
+  val str = string.required[PathParams]("str", _.str).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val int = int.required[PathParams]("int", _.int).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val ts1 = timestamp.required[PathParams]("ts1", _.ts1).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val ts2 = timestamp.required[PathParams]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.Required(), smithy.api.HttpLabel())
+  val ts3 = timestamp.required[PathParams]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required(), smithy.api.HttpLabel())
+  val ts4 = timestamp.required[PathParams]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.Required(), smithy.api.HttpLabel())
+  val b = boolean.required[PathParams]("b", _.b).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val ie = Numbers.schema.required[PathParams]("ie", _.ie).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+
   implicit val schema: Schema[PathParams] = struct(
-    string.required[PathParams]("str", _.str).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    int.required[PathParams]("int", _.int).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    timestamp.required[PathParams]("ts1", _.ts1).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    timestamp.required[PathParams]("ts2", _.ts2).addHints(smithy.api.TimestampFormat.DATE_TIME.widen, smithy.api.Required(), smithy.api.HttpLabel()),
-    timestamp.required[PathParams]("ts3", _.ts3).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen, smithy.api.Required(), smithy.api.HttpLabel()),
-    timestamp.required[PathParams]("ts4", _.ts4).addHints(smithy.api.TimestampFormat.HTTP_DATE.widen, smithy.api.Required(), smithy.api.HttpLabel()),
-    boolean.required[PathParams]("b", _.b).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    Numbers.schema.required[PathParams]("ie", _.ie).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    str,
+    int,
+    ts1,
+    ts2,
+    ts3,
+    ts4,
+    b,
+    ie,
   ){
     PathParams.apply
   }.withId(id).addHints(hints)

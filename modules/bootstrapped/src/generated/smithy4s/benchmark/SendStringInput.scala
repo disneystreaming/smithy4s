@@ -13,10 +13,14 @@ object SendStringInput extends ShapeTag.Companion[SendStringInput] {
 
   val hints: Hints = Hints.empty
 
+  val key = string.required[SendStringInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val bucketName = string.required[SendStringInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val body = string.required[SendStringInput]("body", _.body).addHints(smithy.api.HttpPayload(), smithy.api.Required())
+
   implicit val schema: Schema[SendStringInput] = struct(
-    string.required[SendStringInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    string.required[SendStringInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    string.required[SendStringInput]("body", _.body).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
+    key,
+    bucketName,
+    body,
   ){
     SendStringInput.apply
   }.withId(id).addHints(hints)

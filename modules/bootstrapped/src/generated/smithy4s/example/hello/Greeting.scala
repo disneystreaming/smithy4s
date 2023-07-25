@@ -13,8 +13,10 @@ object Greeting extends ShapeTag.Companion[Greeting] {
 
   val hints: Hints = Hints.empty
 
+  val message = string.required[Greeting]("message", _.message).addHints(smithy.api.Required())
+
   implicit val schema: Schema[Greeting] = struct(
-    string.required[Greeting]("message", _.message).addHints(smithy.api.Required()),
+    message,
   ){
     Greeting.apply
   }.withId(id).addHints(hints)

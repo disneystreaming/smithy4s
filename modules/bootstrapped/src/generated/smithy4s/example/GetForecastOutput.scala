@@ -17,8 +17,10 @@ object GetForecastOutput extends ShapeTag.Companion[GetForecastOutput] {
     val forecast: Lens[GetForecastOutput, Option[ForecastResult]] = Lens[GetForecastOutput, Option[ForecastResult]](_.forecast)(n => a => a.copy(forecast = n))
   }
 
+  val forecast = ForecastResult.schema.optional[GetForecastOutput]("forecast", _.forecast)
+
   implicit val schema: Schema[GetForecastOutput] = struct(
-    ForecastResult.schema.optional[GetForecastOutput]("forecast", _.forecast),
+    forecast,
   ){
     GetForecastOutput.apply
   }.withId(id).addHints(hints)

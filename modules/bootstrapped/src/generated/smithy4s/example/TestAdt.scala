@@ -15,39 +15,53 @@ import smithy4s.schema.Schema.union
 
 sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product with scala.Serializable {
   @inline final def widen: TestAdt = this
+  def _ordinal: Int
 }
 object TestAdt extends ShapeTag.Companion[TestAdt] {
   val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
 
   val hints: Hints = Hints.empty
 
-  final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree
+  final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree {
+    def _ordinal: Int = 0
+  }
   object AdtOne extends ShapeTag.Companion[AdtOne] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
 
     val hints: Hints = Hints.empty
 
+    val lng = long.optional[AdtOne]("lng", _.lng)
+    val sht = short.optional[AdtOne]("sht", _.sht)
+    val blb = bytes.optional[AdtOne]("blb", _.blb)
+    val str = string.optional[AdtOne]("str", _.str)
+
     val schema: Schema[AdtOne] = struct(
-      long.optional[AdtOne]("lng", _.lng),
-      short.optional[AdtOne]("sht", _.sht),
-      bytes.optional[AdtOne]("blb", _.blb),
-      string.optional[AdtOne]("str", _.str),
+      lng,
+      sht,
+      blb,
+      str,
     ){
       AdtOne.apply
     }.withId(id).addHints(hints)
 
     val alt = schema.oneOf[TestAdt]("one")
   }
-  final case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt
+  final case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt {
+    def _ordinal: Int = 1
+  }
   object AdtTwo extends ShapeTag.Companion[AdtTwo] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
 
     val hints: Hints = Hints.empty
 
+    val lng = long.optional[AdtTwo]("lng", _.lng)
+    val sht = short.optional[AdtTwo]("sht", _.sht)
+    val int = int.optional[AdtTwo]("int", _.int)
+
     val schema: Schema[AdtTwo] = struct(
-      long.optional[AdtTwo]("lng", _.lng),
-      short.optional[AdtTwo]("sht", _.sht),
-      int.optional[AdtTwo]("int", _.int),
+      lng,
+      sht,
+      int,
     ){
       AdtTwo.apply
     }.withId(id).addHints(hints)
@@ -60,7 +74,6 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     AdtOne.alt,
     AdtTwo.alt,
   ){
-    case c: AdtOne => AdtOne.alt(c)
-    case c: AdtTwo => AdtTwo.alt(c)
+    _._ordinal
   }.withId(id).addHints(hints)
 }

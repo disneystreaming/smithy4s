@@ -17,8 +17,10 @@ object NotFoundError extends ShapeTag.Companion[NotFoundError] {
     smithy.api.HttpError(404),
   )
 
+  val error = string.optional[NotFoundError]("error", _.error)
+
   implicit val schema: Schema[NotFoundError] = struct(
-    string.optional[NotFoundError]("error", _.error),
+    error,
   ){
     NotFoundError.apply
   }.withId(id).addHints(hints)

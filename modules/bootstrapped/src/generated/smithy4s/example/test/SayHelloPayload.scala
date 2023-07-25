@@ -13,8 +13,10 @@ object SayHelloPayload extends ShapeTag.Companion[SayHelloPayload] {
 
   val hints: Hints = Hints.empty
 
+  val result = string.required[SayHelloPayload]("result", _.result).addHints(smithy.api.Required())
+
   implicit val schema: Schema[SayHelloPayload] = struct(
-    string.required[SayHelloPayload]("result", _.result).addHints(smithy.api.Required()),
+    result,
   ){
     SayHelloPayload.apply
   }.withId(id).addHints(hints)

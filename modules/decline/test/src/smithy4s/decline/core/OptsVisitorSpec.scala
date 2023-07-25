@@ -42,17 +42,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
 
   val sampleUnion = sampleStruct(
     "example", {
-      val lhs = sampleStruct("int", int)
-        .oneOf[Either[Int, String]]("unused2", (_: Int).asLeft)
-
-      val rhs = sampleStruct("str", string)
-        .oneOf[Either[Int, String]]("unused", (_: String).asRight)
-
-      union(
-        lhs,
-        rhs
-      )(_.fold(lhs(_), rhs.apply(_)))
-
+      Schema.either(sampleStruct("int", int), sampleStruct("str", string))
     }
   )
 

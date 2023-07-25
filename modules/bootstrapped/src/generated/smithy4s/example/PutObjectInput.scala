@@ -16,12 +16,18 @@ object PutObjectInput extends ShapeTag.Companion[PutObjectInput] {
     smithy.api.Documentation("A key and bucket is always required for putting a new file in a bucket"),
   )
 
+  val key = ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val bucketName = BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val data = string.required[PutObjectInput]("data", _.data).addHints(smithy.api.HttpPayload(), smithy.api.Required())
+  val foo = LowHigh.schema.optional[PutObjectInput]("foo", _.foo).addHints(smithy.api.HttpHeader("X-Foo"))
+  val someValue = SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).addHints(smithy.api.HttpQuery("paramName"))
+
   implicit val schema: Schema[PutObjectInput] = struct(
-    ObjectKey.schema.required[PutObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    BucketName.schema.required[PutObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
-    string.required[PutObjectInput]("data", _.data).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
-    LowHigh.schema.optional[PutObjectInput]("foo", _.foo).addHints(smithy.api.HttpHeader("X-Foo")),
-    SomeValue.schema.optional[PutObjectInput]("someValue", _.someValue).addHints(smithy.api.HttpQuery("paramName")),
+    key,
+    bucketName,
+    data,
+    foo,
+    someValue,
   ){
     PutObjectInput.apply
   }.withId(id).addHints(hints)

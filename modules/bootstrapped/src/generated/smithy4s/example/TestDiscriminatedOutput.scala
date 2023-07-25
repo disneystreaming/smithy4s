@@ -12,8 +12,10 @@ object TestDiscriminatedOutput extends ShapeTag.Companion[TestDiscriminatedOutpu
 
   val hints: Hints = Hints.empty
 
+  val data = PayloadData.schema.optional[TestDiscriminatedOutput]("data", _.data).addHints(smithy.api.HttpPayload())
+
   implicit val schema: Schema[TestDiscriminatedOutput] = struct(
-    PayloadData.schema.optional[TestDiscriminatedOutput]("data", _.data).addHints(smithy.api.HttpPayload()),
+    data,
   ){
     TestDiscriminatedOutput.apply
   }.withId(id).addHints(hints)

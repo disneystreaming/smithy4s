@@ -13,9 +13,12 @@ object Creds extends ShapeTag.Companion[Creds] {
 
   val hints: Hints = Hints.empty
 
+  val user = string.optional[Creds]("user", _.user)
+  val key = string.optional[Creds]("key", _.key)
+
   implicit val schema: Schema[Creds] = struct(
-    string.optional[Creds]("user", _.user),
-    string.optional[Creds]("key", _.key),
+    user,
+    key,
   ){
     Creds.apply
   }.withId(id).addHints(hints)

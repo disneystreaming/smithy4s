@@ -16,8 +16,10 @@ object MovieTheater extends ShapeTag.Companion[MovieTheater] {
     smithy4s.example.Hash(),
   )
 
+  val name = string.optional[MovieTheater]("name", _.name)
+
   implicit val schema: Schema[MovieTheater] = struct(
-    string.optional[MovieTheater]("name", _.name),
+    name,
   ){
     MovieTheater.apply
   }.withId(id).addHints(hints)

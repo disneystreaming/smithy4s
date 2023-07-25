@@ -35,6 +35,15 @@ sealed trait Document extends Product with Serializable {
 
   override def toString(): String = this.show
 
+  def name: String = this match {
+    case DNumber(_)  => "Number"
+    case DString(_)  => "String"
+    case DBoolean(_) => "Boolean"
+    case DNull       => "Null"
+    case DArray(_)   => "Array"
+    case DObject(_)  => "Object"
+  }
+
   /**
     * Toy renderer that does not comply the json specification :
     * strings aren't escaped and keys aren't quoted.

@@ -15,8 +15,10 @@ object HelloOutput extends ShapeTag.Companion[HelloOutput] {
     smithy.api.Output(),
   )
 
+  val message = string.required[HelloOutput]("message", _.message).addHints(smithy.api.Required())
+
   implicit val schema: Schema[HelloOutput] = struct(
-    string.required[HelloOutput]("message", _.message).addHints(smithy.api.Required()),
+    message,
   ){
     HelloOutput.apply
   }.withId(id).addHints(hints)

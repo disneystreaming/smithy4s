@@ -16,11 +16,16 @@ object MixinExample extends ShapeTag.Companion[MixinExample] {
 
   val hints: Hints = Hints.empty
 
+  val a = string.optional[MixinExample]("a", _.a)
+  val b = int.optional[MixinExample]("b", _.b)
+  val c = long.optional[MixinExample]("c", _.c)
+  val d = boolean.optional[MixinExample]("d", _.d)
+
   implicit val schema: Schema[MixinExample] = struct(
-    string.optional[MixinExample]("a", _.a),
-    int.optional[MixinExample]("b", _.b),
-    long.optional[MixinExample]("c", _.c),
-    boolean.optional[MixinExample]("d", _.d),
+    a,
+    b,
+    c,
+    d,
   ){
     MixinExample.apply
   }.withId(id).addHints(hints)

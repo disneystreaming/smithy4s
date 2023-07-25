@@ -13,8 +13,10 @@ object MixinOptionalMemberOverride extends ShapeTag.Companion[MixinOptionalMembe
 
   val hints: Hints = Hints.empty
 
+  val a = string.required[MixinOptionalMemberOverride]("a", _.a).addHints(smithy.api.Required())
+
   implicit val schema: Schema[MixinOptionalMemberOverride] = struct(
-    string.required[MixinOptionalMemberOverride]("a", _.a).addHints(smithy.api.Required()),
+    a,
   ){
     MixinOptionalMemberOverride.apply
   }.withId(id).addHints(hints)

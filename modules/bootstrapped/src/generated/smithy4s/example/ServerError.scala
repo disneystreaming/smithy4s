@@ -17,8 +17,10 @@ object ServerError extends ShapeTag.Companion[ServerError] {
     smithy.api.Error.SERVER.widen,
   )
 
+  val message = string.optional[ServerError]("message", _.message)
+
   implicit val schema: Schema[ServerError] = struct(
-    string.optional[ServerError]("message", _.message),
+    message,
   ){
     ServerError.apply
   }.withId(id).addHints(hints)

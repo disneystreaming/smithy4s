@@ -14,9 +14,12 @@ object ListCitiesInput extends ShapeTag.Companion[ListCitiesInput] {
 
   val hints: Hints = Hints.empty
 
+  val nextToken = string.optional[ListCitiesInput]("nextToken", _.nextToken)
+  val pageSize = int.optional[ListCitiesInput]("pageSize", _.pageSize)
+
   implicit val schema: Schema[ListCitiesInput] = struct(
-    string.optional[ListCitiesInput]("nextToken", _.nextToken),
-    int.optional[ListCitiesInput]("pageSize", _.pageSize),
+    nextToken,
+    pageSize,
   ){
     ListCitiesInput.apply
   }.withId(id).addHints(hints)

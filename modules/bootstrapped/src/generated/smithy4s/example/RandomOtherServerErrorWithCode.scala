@@ -18,8 +18,10 @@ object RandomOtherServerErrorWithCode extends ShapeTag.Companion[RandomOtherServ
     smithy.api.HttpError(503),
   )
 
+  val message = string.optional[RandomOtherServerErrorWithCode]("message", _.message)
+
   implicit val schema: Schema[RandomOtherServerErrorWithCode] = struct(
-    string.optional[RandomOtherServerErrorWithCode]("message", _.message),
+    message,
   ){
     RandomOtherServerErrorWithCode.apply
   }.withId(id).addHints(hints)

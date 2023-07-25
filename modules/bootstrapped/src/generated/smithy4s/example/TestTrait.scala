@@ -20,8 +20,10 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
   )
 
   implicit val schema: Schema[TestTrait] = recursive(struct(
-    OrderType.schema.optional[TestTrait]("orderType", _.orderType),
+    orderType,
   ){
     TestTrait.apply
   }.withId(id).addHints(hints))
+
+  val orderType = OrderType.schema.optional[TestTrait]("orderType", _.orderType)
 }

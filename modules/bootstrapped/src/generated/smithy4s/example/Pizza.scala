@@ -13,10 +13,14 @@ object Pizza extends ShapeTag.Companion[Pizza] {
 
   val hints: Hints = Hints.empty
 
+  val name = string.required[Pizza]("name", _.name).addHints(smithy.api.Required())
+  val base = PizzaBase.schema.required[Pizza]("base", _.base).addHints(smithy.api.Required())
+  val toppings = Ingredients.underlyingSchema.required[Pizza]("toppings", _.toppings).addHints(smithy.api.Required())
+
   implicit val schema: Schema[Pizza] = struct(
-    string.required[Pizza]("name", _.name).addHints(smithy.api.Required()),
-    PizzaBase.schema.required[Pizza]("base", _.base).addHints(smithy.api.Required()),
-    Ingredients.underlyingSchema.required[Pizza]("toppings", _.toppings).addHints(smithy.api.Required()),
+    name,
+    base,
+    toppings,
   ){
     Pizza.apply
   }.withId(id).addHints(hints)

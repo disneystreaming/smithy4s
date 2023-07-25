@@ -18,8 +18,10 @@ object GenericServerError extends ShapeTag.Companion[GenericServerError] {
     smithy.api.HttpError(500),
   )
 
+  val message = string.optional[GenericServerError]("message", _.message)
+
   implicit val schema: Schema[GenericServerError] = struct(
-    string.optional[GenericServerError]("message", _.message),
+    message,
   ){
     GenericServerError.apply
   }.withId(id).addHints(hints)

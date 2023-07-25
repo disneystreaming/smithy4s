@@ -35,13 +35,15 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[LibraryOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[LibraryOperation, _, _, _, _, _]] = Vector(
     LibraryOperation.ListPublishers,
     LibraryOperation.GetBook,
     LibraryOperation.BuyBook,
   )
 
-  def endpoint[I, E, O, SI, SO](op: LibraryOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: LibraryOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: LibraryOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: LibraryOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends LibraryOperation.Transformed[LibraryOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: LibraryGen[LibraryOperation] = LibraryOperation.reified
@@ -53,7 +55,9 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
 
 sealed trait LibraryOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[LibraryOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[LibraryOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object LibraryOperation {
@@ -74,7 +78,9 @@ object LibraryOperation {
   }
   final case class ListPublishers() extends LibraryOperation[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = impl.listPublishers()
-    def endpoint: (Unit, smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing]) = ((), ListPublishers)
+    def ordinal = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] = ListPublishers
   }
   object ListPublishers extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "ListPublishers")
@@ -90,7 +96,9 @@ object LibraryOperation {
   }
   final case class GetBook() extends LibraryOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.getBook()
-    def endpoint: (Unit, smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), GetBook)
+    def ordinal = 1
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] = GetBook
   }
   object GetBook extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetBook")
@@ -106,7 +114,9 @@ object LibraryOperation {
   }
   final case class BuyBook() extends LibraryOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: LibraryGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.buyBook()
-    def endpoint: (Unit, smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), BuyBook)
+    def ordinal = 2
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] = BuyBook
   }
   object BuyBook extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "BuyBook")

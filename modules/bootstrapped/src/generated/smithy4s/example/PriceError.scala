@@ -18,9 +18,12 @@ object PriceError extends ShapeTag.Companion[PriceError] {
     smithy.api.Error.CLIENT.widen,
   )
 
+  val message = string.required[PriceError]("message", _.message).addHints(smithy.api.Required())
+  val code = int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE"), smithy.api.Required())
+
   implicit val schema: Schema[PriceError] = struct(
-    string.required[PriceError]("message", _.message).addHints(smithy.api.Required()),
-    int.required[PriceError]("code", _.code).addHints(smithy.api.HttpHeader("X-CODE"), smithy.api.Required()),
+    message,
+    code,
   ){
     PriceError.apply
   }.withId(id).addHints(hints)

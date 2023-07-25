@@ -13,8 +13,10 @@ object Candy extends ShapeTag.Companion[Candy] {
 
   val hints: Hints = Hints.empty
 
+  val name = string.optional[Candy]("name", _.name)
+
   implicit val schema: Schema[Candy] = struct(
-    string.optional[Candy]("name", _.name),
+    name,
   ){
     Candy.apply
   }.withId(id).addHints(hints)

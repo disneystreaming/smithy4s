@@ -17,8 +17,10 @@ object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
     val two: Lens[OpticsStructure, Option[OpticsEnum]] = Lens[OpticsStructure, Option[OpticsEnum]](_.two)(n => a => a.copy(two = n))
   }
 
+  val two = OpticsEnum.schema.optional[OpticsStructure]("two", _.two)
+
   implicit val schema: Schema[OpticsStructure] = struct(
-    OpticsEnum.schema.optional[OpticsStructure]("two", _.two),
+    two,
   ){
     OpticsStructure.apply
   }.withId(id).addHints(hints)

@@ -39,11 +39,13 @@ object ExampleServiceGen extends Service.Mixin[ExampleServiceGen, ExampleService
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ExampleServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[ExampleServiceOperation, _, _, _, _, _]] = Vector(
     ExampleServiceOperation.ExampleOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: ExampleServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: ExampleServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: ExampleServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: ExampleServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ExampleServiceOperation.Transformed[ExampleServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: ExampleServiceGen[ExampleServiceOperation] = ExampleServiceOperation.reified
@@ -79,7 +81,9 @@ object ExampleServiceProductGen extends ServiceProduct[ExampleServiceProductGen]
 
 sealed trait ExampleServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ExampleServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ExampleServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[ExampleServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object ExampleServiceOperation {
@@ -96,7 +100,8 @@ object ExampleServiceOperation {
   }
   final case class ExampleOperation(input: ExampleOperationInput) extends ExampleServiceOperation[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ExampleServiceGen[F]): F[ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = impl.exampleOperation(input.a)
-    def endpoint: (ExampleOperationInput, smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing]) = (input, ExampleOperation)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] = ExampleOperation
   }
   object ExampleOperation extends smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperation")

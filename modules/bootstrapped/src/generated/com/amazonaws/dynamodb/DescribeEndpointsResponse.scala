@@ -15,8 +15,10 @@ object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsRes
 
   val hints: Hints = Hints.empty
 
+  val endpoints = Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>"), smithy.api.Required())
+
   implicit val schema: Schema[DescribeEndpointsResponse] = struct(
-    Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>"), smithy.api.Required()),
+    endpoints,
   ){
     DescribeEndpointsResponse.apply
   }.withId(id).addHints(hints)

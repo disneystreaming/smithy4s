@@ -13,9 +13,12 @@ object SayHelloOutput extends ShapeTag.Companion[SayHelloOutput] {
 
   val hints: Hints = Hints.empty
 
+  val payload = SayHelloPayload.schema.required[SayHelloOutput]("payload", _.payload).addHints(smithy.api.HttpPayload(), smithy.api.Required())
+  val header1 = string.required[SayHelloOutput]("header1", _.header1).addHints(smithy.api.HttpHeader("X-H1"), smithy.api.Required())
+
   implicit val schema: Schema[SayHelloOutput] = struct(
-    SayHelloPayload.schema.required[SayHelloOutput]("payload", _.payload).addHints(smithy.api.HttpPayload(), smithy.api.Required()),
-    string.required[SayHelloOutput]("header1", _.header1).addHints(smithy.api.HttpHeader("X-H1"), smithy.api.Required()),
+    payload,
+    header1,
   ){
     SayHelloOutput.apply
   }.withId(id).addHints(hints)

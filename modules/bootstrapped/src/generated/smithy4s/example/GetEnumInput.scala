@@ -12,8 +12,10 @@ object GetEnumInput extends ShapeTag.Companion[GetEnumInput] {
 
   val hints: Hints = Hints.empty
 
+  val aa = TheEnum.schema.required[GetEnumInput]("aa", _.aa).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+
   implicit val schema: Schema[GetEnumInput] = struct(
-    TheEnum.schema.required[GetEnumInput]("aa", _.aa).addHints(smithy.api.HttpLabel(), smithy.api.Required()),
+    aa,
   ){
     GetEnumInput.apply
   }.withId(id).addHints(hints)

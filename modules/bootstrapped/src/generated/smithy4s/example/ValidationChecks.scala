@@ -14,10 +14,14 @@ object ValidationChecks extends ShapeTag.Companion[ValidationChecks] {
 
   val hints: Hints = Hints.empty
 
+  val str = string.validated(smithy.api.Length(min = Some(1L), max = Some(10L))).optional[ValidationChecks]("str", _.str).addHints(smithy.api.HttpQuery("str"))
+  val lst = StringList.underlyingSchema.validated(smithy.api.Length(min = Some(1L), max = Some(10L))).optional[ValidationChecks]("lst", _.lst).addHints(smithy.api.HttpQuery("lst"))
+  val int = int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = Some(scala.math.BigDecimal(10.0)))).optional[ValidationChecks]("int", _.int).addHints(smithy.api.HttpQuery("int"))
+
   implicit val schema: Schema[ValidationChecks] = struct(
-    string.validated(smithy.api.Length(min = Some(1L), max = Some(10L))).optional[ValidationChecks]("str", _.str).addHints(smithy.api.HttpQuery("str")),
-    StringList.underlyingSchema.validated(smithy.api.Length(min = Some(1L), max = Some(10L))).optional[ValidationChecks]("lst", _.lst).addHints(smithy.api.HttpQuery("lst")),
-    int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = Some(scala.math.BigDecimal(10.0)))).optional[ValidationChecks]("int", _.int).addHints(smithy.api.HttpQuery("int")),
+    str,
+    lst,
+    int,
   ){
     ValidationChecks.apply
   }.withId(id).addHints(hints)

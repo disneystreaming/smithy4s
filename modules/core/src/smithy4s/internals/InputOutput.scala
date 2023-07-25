@@ -38,8 +38,8 @@ object InputOutput extends ShapeTag.Companion[InputOutput] {
       .oneOf[InputOutput]("output")
     Schema
       .union(inputAlt, outputAlt) {
-        case Input  => inputAlt(Input)
-        case Output => outputAlt(Output)
+        case Input  => 0
+        case Output => 1
       }
       .withId(id)
   }

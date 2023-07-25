@@ -15,10 +15,14 @@ object Encryption extends ShapeTag.Companion[Encryption] {
 
   val hints: Hints = Hints.empty
 
+  val user = string.optional[Encryption]("user", _.user)
+  val date = timestamp.optional[Encryption]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen)
+  val metadata = EncryptionMetadata.schema.optional[Encryption]("metadata", _.metadata)
+
   implicit val schema: Schema[Encryption] = struct(
-    string.optional[Encryption]("user", _.user),
-    timestamp.optional[Encryption]("date", _.date).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    EncryptionMetadata.schema.optional[Encryption]("metadata", _.metadata),
+    user,
+    date,
+    metadata,
   ){
     Encryption.apply
   }.withId(id).addHints(hints)

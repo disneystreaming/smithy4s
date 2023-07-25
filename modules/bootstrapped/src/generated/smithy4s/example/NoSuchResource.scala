@@ -16,8 +16,10 @@ object NoSuchResource extends ShapeTag.Companion[NoSuchResource] {
     smithy.api.Error.CLIENT.widen,
   )
 
+  val resourceType = string.required[NoSuchResource]("resourceType", _.resourceType).addHints(smithy.api.Required())
+
   implicit val schema: Schema[NoSuchResource] = struct(
-    string.required[NoSuchResource]("resourceType", _.resourceType).addHints(smithy.api.Required()),
+    resourceType,
   ){
     NoSuchResource.apply
   }.withId(id).addHints(hints)

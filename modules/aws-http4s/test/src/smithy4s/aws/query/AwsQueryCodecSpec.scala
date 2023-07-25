@@ -232,14 +232,7 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
 
   test("union") {
     type Foo = Either[Int, String]
-    implicit val schema: Schema[Foo] = {
-      val left = int.oneOf[Foo]("left", Left(_))
-      val right = string.oneOf[Foo]("right", Right(_))
-      union(left, right) {
-        case Left(int)     => left(int)
-        case Right(string) => right(string)
-      }
-    }
+    implicit val schema: Schema[Foo] = Schema.either(int, string)
     val expectedLeft = "left=1"
     val expectedRight = "right=hello"
     checkContent[Foo](expectedLeft, Left(1)) |+|
@@ -248,14 +241,10 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
 
   test("union: custom names") {
     type Foo = Either[Int, String]
-    implicit val schema: Schema[Foo] = {
-      val left = int.oneOf[Foo]("left", Left(_)).addHints(XmlName("foo"))
-      val right = string.oneOf[Foo]("right", Right(_)).addHints(XmlName("bar"))
-      union(left, right) {
-        case Left(int)     => left(int)
-        case Right(string) => right(string)
-      }
-    }
+    implicit val schema: Schema[Foo] = Schema.either(
+      int.addMemberHints(XmlName("foo")),
+      string.addMemberHints(XmlName("bar"))
+    )
     val expectedLeft = "foo=1"
     val expectedRight = "bar=hello".stripMargin
     checkContent[Foo](expectedLeft, Left(1)) |+|

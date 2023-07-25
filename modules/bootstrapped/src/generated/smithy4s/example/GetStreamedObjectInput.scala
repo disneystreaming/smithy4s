@@ -13,8 +13,10 @@ object GetStreamedObjectInput extends ShapeTag.Companion[GetStreamedObjectInput]
 
   val hints: Hints = Hints.empty
 
+  val key = string.required[GetStreamedObjectInput]("key", _.key).addHints(smithy.api.Required())
+
   implicit val schema: Schema[GetStreamedObjectInput] = struct(
-    string.required[GetStreamedObjectInput]("key", _.key).addHints(smithy.api.Required()),
+    key,
   ){
     GetStreamedObjectInput.apply
   }.withId(id).addHints(hints)

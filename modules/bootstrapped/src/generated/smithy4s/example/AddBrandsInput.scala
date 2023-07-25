@@ -13,8 +13,10 @@ object AddBrandsInput extends ShapeTag.Companion[AddBrandsInput] {
 
   val hints: Hints = Hints.empty
 
+  val brands = BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands)
+
   implicit val schema: Schema[AddBrandsInput] = struct(
-    BrandList.underlyingSchema.optional[AddBrandsInput]("brands", _.brands),
+    brands,
   ){
     AddBrandsInput.apply
   }.withId(id).addHints(hints)

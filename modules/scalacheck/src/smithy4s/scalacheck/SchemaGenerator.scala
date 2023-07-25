@@ -94,8 +94,8 @@ class SchemaGenerator(maxWidth: Int) {
         .map(_.toVector)
         .map(distinctBy(_)(_.label).toVector)
     } yield {
-      union[DynAlt](alts: _*) { case (key: String, value) =>
-        alts.find(_.label == key).get.apply(value)
+      union[DynAlt](alts: _*) { case (key: String, _) =>
+        alts.zipWithIndex.find(_._1.label == key).get._2
       }
     }
 
@@ -156,6 +156,11 @@ class SchemaGenerator(maxWidth: Int) {
     for {
       key <- Gen.identifier.map(_.take(8))
       next <- recurse
-    } yield Alt(key, next, (d: DynData) => (key, d))
+    } yield Alt(
+      key,
+      next,
+      (d: DynData) => (key, d),
+      { case (`key`, value) => value }
+    )
 
 }

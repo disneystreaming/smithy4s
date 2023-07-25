@@ -16,12 +16,18 @@ object Metadata extends ShapeTag.Companion[Metadata] {
 
   val hints: Hints = Hints.empty
 
+  val contentType = string.optional[Metadata]("contentType", _.contentType)
+  val lastModified = timestamp.optional[Metadata]("lastModified", _.lastModified).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen)
+  val checkSum = string.optional[Metadata]("checkSum", _.checkSum)
+  val pendingDeletion = boolean.optional[Metadata]("pendingDeletion", _.pendingDeletion)
+  val etag = string.optional[Metadata]("etag", _.etag)
+
   implicit val schema: Schema[Metadata] = struct(
-    string.optional[Metadata]("contentType", _.contentType),
-    timestamp.optional[Metadata]("lastModified", _.lastModified).addHints(smithy.api.TimestampFormat.EPOCH_SECONDS.widen),
-    string.optional[Metadata]("checkSum", _.checkSum),
-    boolean.optional[Metadata]("pendingDeletion", _.pendingDeletion),
-    string.optional[Metadata]("etag", _.etag),
+    contentType,
+    lastModified,
+    checkSum,
+    pendingDeletion,
+    etag,
   ){
     Metadata.apply
   }.withId(id).addHints(hints)

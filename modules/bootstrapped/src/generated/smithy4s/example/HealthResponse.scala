@@ -15,8 +15,10 @@ object HealthResponse extends ShapeTag.Companion[HealthResponse] {
     smithy4s.example.FreeForm(smithy4s.Document.obj("i" -> smithy4s.Document.fromDouble(1.0d), "a" -> smithy4s.Document.fromDouble(2.0d))),
   )
 
+  val status = string.required[HealthResponse]("status", _.status).addHints(smithy.api.Required())
+
   implicit val schema: Schema[HealthResponse] = struct(
-    string.required[HealthResponse]("status", _.status).addHints(smithy.api.Required()),
+    status,
   ){
     HealthResponse.apply
   }.withId(id).addHints(hints)

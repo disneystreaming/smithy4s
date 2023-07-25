@@ -13,8 +13,10 @@ object CustomCodeOutput extends ShapeTag.Companion[CustomCodeOutput] {
 
   val hints: Hints = Hints.empty
 
+  val code = int.optional[CustomCodeOutput]("code", _.code).addHints(smithy.api.HttpResponseCode())
+
   implicit val schema: Schema[CustomCodeOutput] = struct(
-    int.optional[CustomCodeOutput]("code", _.code).addHints(smithy.api.HttpResponseCode()),
+    code,
   ){
     CustomCodeOutput.apply
   }.withId(id).addHints(hints)

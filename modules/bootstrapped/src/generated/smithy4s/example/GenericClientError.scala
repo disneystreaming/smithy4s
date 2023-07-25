@@ -18,8 +18,10 @@ object GenericClientError extends ShapeTag.Companion[GenericClientError] {
     smithy.api.HttpError(418),
   )
 
+  val message = string.required[GenericClientError]("message", _.message).addHints(smithy.api.Required())
+
   implicit val schema: Schema[GenericClientError] = struct(
-    string.required[GenericClientError]("message", _.message).addHints(smithy.api.Required()),
+    message,
   ){
     GenericClientError.apply
   }.withId(id).addHints(hints)

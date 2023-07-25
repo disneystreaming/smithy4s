@@ -14,10 +14,14 @@ object EncryptionMetadata extends ShapeTag.Companion[EncryptionMetadata] {
 
   val hints: Hints = Hints.empty
 
+  val system = string.optional[EncryptionMetadata]("system", _.system)
+  val credentials = Creds.schema.optional[EncryptionMetadata]("credentials", _.credentials)
+  val partial = boolean.optional[EncryptionMetadata]("partial", _.partial)
+
   implicit val schema: Schema[EncryptionMetadata] = struct(
-    string.optional[EncryptionMetadata]("system", _.system),
-    Creds.schema.optional[EncryptionMetadata]("credentials", _.credentials),
-    boolean.optional[EncryptionMetadata]("partial", _.partial),
+    system,
+    credentials,
+    partial,
   ){
     EncryptionMetadata.apply
   }.withId(id).addHints(hints)

@@ -17,10 +17,14 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
     smithy.api.HttpError(500),
   )
 
+  val errorCode = UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode).addHints(smithy.api.Required())
+  val description = string.optional[UnknownServerError]("description", _.description)
+  val stateHash = string.optional[UnknownServerError]("stateHash", _.stateHash)
+
   implicit val schema: Schema[UnknownServerError] = struct(
-    UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode).addHints(smithy.api.Required()),
-    string.optional[UnknownServerError]("description", _.description),
-    string.optional[UnknownServerError]("stateHash", _.stateHash),
+    errorCode,
+    description,
+    stateHash,
   ){
     UnknownServerError.apply
   }.withId(id).addHints(hints)

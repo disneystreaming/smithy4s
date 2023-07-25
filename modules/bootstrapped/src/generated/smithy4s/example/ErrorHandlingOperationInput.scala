@@ -15,8 +15,10 @@ object ErrorHandlingOperationInput extends ShapeTag.Companion[ErrorHandlingOpera
     smithy.api.Input(),
   )
 
+  val in = string.optional[ErrorHandlingOperationInput]("in", _.in)
+
   implicit val schema: Schema[ErrorHandlingOperationInput] = struct(
-    string.optional[ErrorHandlingOperationInput]("in", _.in),
+    in,
   ){
     ErrorHandlingOperationInput.apply
   }.withId(id).addHints(hints)

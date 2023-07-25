@@ -15,8 +15,10 @@ object ExampleOperationInput extends ShapeTag.Companion[ExampleOperationInput] {
     smithy.api.Input(),
   )
 
+  val a = string.required[ExampleOperationInput]("a", _.a).addHints(smithy.api.Required())
+
   implicit val schema: Schema[ExampleOperationInput] = struct(
-    string.required[ExampleOperationInput]("a", _.a).addHints(smithy.api.Required()),
+    a,
   ){
     ExampleOperationInput.apply
   }.withId(id).addHints(hints)

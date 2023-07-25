@@ -13,8 +13,10 @@ object GetEnumOutput extends ShapeTag.Companion[GetEnumOutput] {
 
   val hints: Hints = Hints.empty
 
+  val result = string.optional[GetEnumOutput]("result", _.result)
+
   implicit val schema: Schema[GetEnumOutput] = struct(
-    string.optional[GetEnumOutput]("result", _.result),
+    result,
   ){
     GetEnumOutput.apply
   }.withId(id).addHints(hints)

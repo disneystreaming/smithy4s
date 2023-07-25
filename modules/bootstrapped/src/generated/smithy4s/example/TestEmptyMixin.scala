@@ -13,8 +13,10 @@ object TestEmptyMixin extends ShapeTag.Companion[TestEmptyMixin] {
 
   val hints: Hints = Hints.empty
 
+  val a = long.optional[TestEmptyMixin]("a", _.a)
+
   implicit val schema: Schema[TestEmptyMixin] = struct(
-    long.optional[TestEmptyMixin]("a", _.a),
+    a,
   ){
     TestEmptyMixin.apply
   }.withId(id).addHints(hints)

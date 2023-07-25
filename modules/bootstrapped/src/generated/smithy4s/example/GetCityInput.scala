@@ -17,8 +17,10 @@ object GetCityInput extends ShapeTag.Companion[GetCityInput] {
     val cityId: Lens[GetCityInput, CityId] = Lens[GetCityInput, CityId](_.cityId)(n => a => a.copy(cityId = n))
   }
 
+  val cityId = CityId.schema.required[GetCityInput]("cityId", _.cityId).addHints(smithy.api.Required())
+
   implicit val schema: Schema[GetCityInput] = struct(
-    CityId.schema.required[GetCityInput]("cityId", _.cityId).addHints(smithy.api.Required()),
+    cityId,
   ){
     GetCityInput.apply
   }.withId(id).addHints(hints)

@@ -13,9 +13,12 @@ object CityCoordinates extends ShapeTag.Companion[CityCoordinates] {
 
   val hints: Hints = Hints.empty
 
+  val latitude = float.required[CityCoordinates]("latitude", _.latitude).addHints(smithy.api.Required())
+  val longitude = float.required[CityCoordinates]("longitude", _.longitude).addHints(smithy.api.Required())
+
   implicit val schema: Schema[CityCoordinates] = struct(
-    float.required[CityCoordinates]("latitude", _.latitude).addHints(smithy.api.Required()),
-    float.required[CityCoordinates]("longitude", _.longitude).addHints(smithy.api.Required()),
+    latitude,
+    longitude,
   ){
     CityCoordinates.apply
   }.withId(id).addHints(hints)

@@ -14,8 +14,10 @@ object GetCurrentTimeOutput extends ShapeTag.Companion[GetCurrentTimeOutput] {
 
   val hints: Hints = Hints.empty
 
+  val time = timestamp.required[GetCurrentTimeOutput]("time", _.time).addHints(smithy.api.Required())
+
   implicit val schema: Schema[GetCurrentTimeOutput] = struct(
-    timestamp.required[GetCurrentTimeOutput]("time", _.time).addHints(smithy.api.Required()),
+    time,
   ){
     GetCurrentTimeOutput.apply
   }.withId(id).addHints(hints)

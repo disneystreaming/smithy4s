@@ -17,8 +17,10 @@ object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
 
   val hints: Hints = Hints.empty
 
+  val foo = Foo.schema.optional[GetFooOutput]("foo", _.foo)
+
   implicit val schema: Schema[GetFooOutput] = struct(
-    Foo.schema.optional[GetFooOutput]("foo", _.foo),
+    foo,
   ){
     GetFooOutput.apply
   }.withId(id).addHints(hints)

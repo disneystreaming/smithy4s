@@ -15,11 +15,16 @@ object S3Object extends ShapeTag.Companion[S3Object] {
 
   val hints: Hints = Hints.empty
 
+  val id = string.required[S3Object]("id", _.id).addHints(smithy.api.Required())
+  val owner = string.required[S3Object]("owner", _.owner).addHints(smithy.api.Required())
+  val attributes = Attributes.schema.required[S3Object]("attributes", _.attributes).addHints(smithy.api.Required())
+  val data = bytes.required[S3Object]("data", _.data).addHints(smithy.api.Required())
+
   implicit val schema: Schema[S3Object] = struct(
-    string.required[S3Object]("id", _.id).addHints(smithy.api.Required()),
-    string.required[S3Object]("owner", _.owner).addHints(smithy.api.Required()),
-    Attributes.schema.required[S3Object]("attributes", _.attributes).addHints(smithy.api.Required()),
-    bytes.required[S3Object]("data", _.data).addHints(smithy.api.Required()),
+    id,
+    owner,
+    attributes,
+    data,
   ){
     S3Object.apply
   }.withId(id).addHints(hints)
