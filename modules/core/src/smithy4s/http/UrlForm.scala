@@ -68,7 +68,7 @@ private[smithy4s] object UrlForm {
       override def writeTo(builder: mutable.StringBuilder): Unit =
         builder.append(
           URLEncoder.encode(string, StandardCharsets.UTF_8.name())
-        )
+        ); ()
 
     }
 
