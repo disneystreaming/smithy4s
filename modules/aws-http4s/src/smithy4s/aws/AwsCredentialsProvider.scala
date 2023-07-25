@@ -62,6 +62,8 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
     Resource
       .eval(fromEnv)
       .map(F.pure)
+      // TODO: Ensure minimal delay when these endpoints don't exist, e.g.
+      // when running locally.
       .orElse(refreshing(fromECS(httpClient)))
       .orElse(refreshing(fromEC2(httpClient)))
       .orElse(Resource.eval(_fromDisk).map(F.pure))
@@ -104,7 +106,7 @@ class AwsCredentialsProvider[F[_]](implicit F: Temporal[F]) {
     }
   }
 
-  private def getProfileFromEnv: Option[String] =
+  def getProfileFromEnv: Option[String] =
     SysEnv.envValue(AWS_PROFILE).toOption
 
   val AWS_CONTAINER_CREDENTIALS_RELATIVE_URI =
