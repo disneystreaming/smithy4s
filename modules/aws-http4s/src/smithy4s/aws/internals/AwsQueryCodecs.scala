@@ -49,16 +49,27 @@ private[aws] object AwsQueryCodecs {
           )
         )
 
-        val (xmlResponseDecoderCompilers, errorDecoderCompilers) =
-          AwsXmlCodecs.responseAndErrorDecoderCompilers[F]
         val responseTag = endpoint.name + "Response"
         val resultTag = endpoint.name + "Result"
         val responseDecoderCompilers =
-          xmlResponseDecoderCompilers.contramapSchema(
+          AwsXmlCodecs
+            .responseDecoderCompilers[F]
+            .contramapSchema(
+              smithy4s.schema.Schema.transformHintsLocallyK(
+                _ ++ smithy4s.Hints(
+                  smithy4s.xml.internals.XmlStartingPath(
+                    List(responseTag, resultTag)
+                  )
+                )
+              )
+            )
+        val errorDecoderCompilers = AwsXmlCodecs
+          .responseDecoderCompilers[F]
+          .contramapSchema(
             smithy4s.schema.Schema.transformHintsLocallyK(
               _ ++ smithy4s.Hints(
                 smithy4s.xml.internals.XmlStartingPath(
-                  List(responseTag, resultTag)
+                  List("ErrorResponse", "Error")
                 )
               )
             )

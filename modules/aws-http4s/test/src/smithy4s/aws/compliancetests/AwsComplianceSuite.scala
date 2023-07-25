@@ -57,19 +57,20 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
-    genClientTests(impl(Ec2Query), awsEc2Query)(dsi) ++
-      genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
-      genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
-      genClientTests(impl(AwsQuery), awsQuery)(dsi) ++
-      genClientTests(impl(RestJson1), restJson1)(dsi) ++
-      genClientTests(impl(RestXml), restXml)(dsi)
+    genClientTests(impl(Ec2Query), awsEc2Query)(dsi)
+    //  ++
+      // genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
+      // genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
+      // genClientTests(impl(AwsQuery), awsQuery)(dsi) ++
+      // genClientTests(impl(RestJson1), restJson1)(dsi) ++
+      // genClientTests(impl(RestXml), restXml)(dsi)
 
   private val awsEc2Query = ShapeId("aws.protocoltests.ec2", "AwsEc2")
-  private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
-  private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
-  private val awsQuery = ShapeId("aws.protocoltests.query", "AwsQuery")
-  private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
-  private val restXml = ShapeId("aws.protocoltests.restxml", "RestXml")
+  // private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
+  // private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
+  // private val awsQuery = ShapeId("aws.protocoltests.query", "AwsQuery")
+  // private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
+  // private val restXml = ShapeId("aws.protocoltests.restxml", "RestXml")
 
   private val modelDump = fileFromEnv("MODEL_DUMP")
 

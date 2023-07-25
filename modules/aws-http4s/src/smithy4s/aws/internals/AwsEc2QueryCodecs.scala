@@ -49,20 +49,31 @@ private[aws] object AwsEcsQueryCodecs {
           )
         )
 
-        val (xmlResponseDecoderCompilers, errorDecoderCompilers) =
-          AwsXmlCodecs.responseAndErrorDecoderCompilers[F]
         val responseTag = endpoint.name + "Response"
-        val resultTag = endpoint.name + "Result"
         val responseDecoderCompilers =
-          xmlResponseDecoderCompilers.contramapSchema(
+          AwsXmlCodecs
+            .responseDecoderCompilers[F]
+            .contramapSchema(
+              smithy4s.schema.Schema.transformHintsLocallyK(
+                _ ++ smithy4s.Hints(
+                  smithy4s.xml.internals.XmlStartingPath(
+                    List(responseTag)
+                  )
+                )
+              )
+            )
+        val errorDecoderCompilers = AwsXmlCodecs
+          .responseDecoderCompilers[F]
+          .contramapSchema(
             smithy4s.schema.Schema.transformHintsLocallyK(
               _ ++ smithy4s.Hints(
                 smithy4s.xml.internals.XmlStartingPath(
-                  List(responseTag, resultTag)
+                  List("Response", "Errors", "Error")
                 )
               )
             )
           )
+
         // Takes the `@awsQueryError` trait into consideration to decide how to
         // discriminate error responses.
         val errorNameMapping: (String => String) = endpoint.errorable match {

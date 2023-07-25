@@ -50,14 +50,21 @@ private[aws] object AwsXmlCodecs {
           requestEncoderCompilers[F]
         )
 
-        val (responseDecoderCompilers, errorDecoderCompilers) =
-          responseAndErrorDecoderCompilers[F]
+        val errorDecoderCompilers = responseDecoderCompilers[F].contramapSchema(
+          smithy4s.schema.Schema.transformHintsLocallyK(
+            _ ++ smithy4s.Hints(
+              smithy4s.xml.internals.XmlStartingPath(
+                List("ErrorResponse", "Error")
+              )
+            )
+          )
+        )
         val errorDiscriminator =
           AwsErrorTypeDecoder.fromResponse(errorDecoderCompilers)
 
         val make = UnaryClientCodecs.Make[F](
           input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
+          output = responseDecoderCompilers[F],
           error = errorDecoderCompilers,
           errorDiscriminator = errorDiscriminator
         )
@@ -89,10 +96,8 @@ private[aws] object AwsXmlCodecs {
     )
   }
 
-  def responseAndErrorDecoderCompilers[F[_]: Concurrent]: (
-      CachedSchemaCompiler[ResponseDecoder[F, *]],
-      CachedSchemaCompiler[ResponseDecoder[F, *]]
-  ) = {
+  def responseDecoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[ResponseDecoder[F, *]] = {
     val stringAndBlobsEntityDecoderCompilers =
       smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK(
         Covariant.liftPolyFunction[Option](
@@ -115,20 +120,10 @@ private[aws] object AwsXmlCodecs {
       stringAndBlobsEntityDecoderCompilers,
       xmlEntityDecoderCompilers
     )
-    val responseDecoderCompilers = ResponseDecoder.restSchemaCompiler(
+    ResponseDecoder.restSchemaCompiler(
       metadataDecoderCompiler = Metadata.AwsDecoder,
       entityDecoderCompiler = entityDecoderCompilers
     )
-    val errorDecoderCompilers = responseDecoderCompilers.contramapSchema(
-      smithy4s.schema.Schema.transformHintsLocallyK(
-        _ ++ smithy4s.Hints(
-          smithy4s.xml.internals.XmlStartingPath(
-            List("ErrorResponse", "Error")
-          )
-        )
-      )
-    )
-    (responseDecoderCompilers, errorDecoderCompilers)
   }
 
   private def xmlEntityEncoder[F[_]: Applicative]
