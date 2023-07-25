@@ -23,6 +23,7 @@ import cats.syntax.all._
 import smithy4s.ByteArray
 import smithy4s.Hints
 import smithy4s.schema.Schema
+import scala.collection.mutable
 import smithy4s.schema.CompilationCache
 import smithy4s.schema.Schema._
 import weaver._
@@ -333,7 +334,8 @@ object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
     val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(cache)
     val encoder = schemaVisitor(schema)
     val formData = encoder.encode(value)
-    val result = formData.render
-    IO(expect.same(result, expected))
+    val builder = new mutable.StringBuilder
+    formData.writeTo(builder)
+    IO(expect.same(builder.result(), expected))
   }
 }

@@ -31,17 +31,18 @@ import smithy4s.schema.Schema
 
 private[smithy4s] final case class UrlForm(
     formData: UrlForm.FormData.MultipleValues
-)
+) {
+  def render: String = {
+    val builder = new mutable.StringBuilder
+    formData.writeTo(builder)
+    builder.result()
+  }
+}
 
 private[smithy4s] object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
     def prepend(segment: PayloadPath.Segment): FormData
-    def render: String = {
-      val builder = new mutable.StringBuilder
-      writeTo(builder)
-      builder.result()
-    }
     def toPathedValues: Vector[FormData.PathedValue]
     def widen: FormData = this
     def writeTo(builder: mutable.StringBuilder): Unit
