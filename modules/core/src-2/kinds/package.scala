@@ -28,10 +28,12 @@ package object kinds {
   type Kind1[F[_]] = {
     type toKind2[E, O] = F[O]
     type toKind5[I, E, O, SI, SO] = F[O]
+    type handler[I, E, O, SI, SO] = I => F[O]
   }
 
   type Kind2[F[_, _]] = {
     type toKind5[I, E, O, SI, SO] = F[E, O]
+    type handler[I, E, O, SI, SO] = I => F[E, O]
   }
 
   type Kind5[F[_, _, _, _, _]] = {
