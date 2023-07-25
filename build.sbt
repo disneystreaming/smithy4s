@@ -259,11 +259,10 @@ lazy val `aws-kernel` = projectMatrix
     genSmithy(Compile),
     Test / envVars ++= Map("TEST_VAR" -> "hello"),
     scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent",
-      "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
-      "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
-      "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent",
-      "-Wconf:msg=class RestXml in package protocols is deprecated:silent"
+      "-Wconf:msg=class AwsQuery in package protocols is deprecated:silent",
+      "-Wconf:msg=class Ec2Query in package protocols is deprecated:silent",
+      "-Wconf:msg=class RestXml in package protocols is deprecated:silent",
+      "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
     )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -309,11 +308,10 @@ lazy val `aws-http4s` = projectMatrix
       )
     },
     scalacOptions ++= Seq(
-      "-Wconf:msg=class AwsQuery in package (aws\\.)?protocols is deprecated:silent",
+      "-Wconf:msg=class AwsQuery in package protocols is deprecated:silent",
+      "-Wconf:msg=class Ec2Query in package protocols is deprecated:silent",
       "-Wconf:msg=class RestXml in package protocols is deprecated:silent",
-      "-Wconf:msg=class RestXml in package aws.protocols is deprecated:silent",
-      "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent",
-      "-Wconf:msg=class Ec2Query in package aws.protocols is deprecated:silent"
+      "-Wconf:msg=value noErrorWrapping in class RestXml is deprecated:silent"
     ),
     Test / complianceTestDependencies := Seq(
       Dependencies.Alloy.`protocol-tests`

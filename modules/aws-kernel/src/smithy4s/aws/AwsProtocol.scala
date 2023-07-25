@@ -16,7 +16,7 @@
 
 package smithy4s.aws
 
-import aws.protocols.{AwsJson1_0, AwsJson1_1, AwsQuery, RestJson1, RestXml}
+import aws.protocols._
 import smithy4s.Hints
 import smithy4s.ShapeTag
 
@@ -28,8 +28,13 @@ private[aws] object AwsProtocol {
 
   def apply(hints: Hints): Option[AwsProtocol] =
     hints
-      .get(AwsJson1_0)
-      .map(AWS_JSON_1_0.apply)
+      .get(Ec2Query)
+      .map(AWS_EC2_QUERY.apply)
+      .orElse(
+        hints
+          .get(AwsJson1_0)
+          .map(AWS_JSON_1_0.apply)
+      )
       .orElse(
         hints
           .get(AwsJson1_1)
@@ -52,6 +57,7 @@ private[aws] object AwsProtocol {
       )
 
   // See https://awslabs.github.io/smithy/1.0/spec/aws/aws-json-1_0-protocol.html#differences-between-awsjson1-0-and-awsjson1-1
+  final case class AWS_EC2_QUERY(value: Ec2Query) extends AwsProtocol
   final case class AWS_JSON_1_0(value: AwsJson1_0) extends AwsProtocol
   final case class AWS_JSON_1_1(value: AwsJson1_1) extends AwsProtocol
   final case class AWS_QUERY(value: AwsQuery) extends AwsProtocol

@@ -23,6 +23,7 @@ import fs2.compression.Compression
 import smithy4s.http4s.kernel._
 import smithy4s.aws.internals._
 import _root_.aws.api.{Service => AwsService}
+import smithy4s.aws.internals.AwsQueryCodecs
 
 object AwsClient {
 
@@ -60,6 +61,9 @@ object AwsClient {
         awsEnv: AwsEnvironment[F]
     ): service.FunctorInterpreter[F] = {
       val clientCodecs: UnaryClientCodecs.Make[F] = awsProtocol match {
+        case AwsProtocol.AWS_EC2_QUERY(_) =>
+          AwsEcsQueryCodecs.make[F](version = service.version)
+
         case AwsProtocol.AWS_JSON_1_0(_) =>
           AwsJsonCodecs.make[F]("application/x-amz-json-1.0")
 
