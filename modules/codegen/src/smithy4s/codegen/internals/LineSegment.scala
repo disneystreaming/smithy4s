@@ -57,8 +57,8 @@ private[codegen] object LineSegment {
     def asImport: String = s"${(pkg :+ getNamePrefix).mkString(".")}"
 
     def isAutoImported: Boolean = {
-        val value = pkg.mkString(".")
-        NameRef.autoImportedNames.exists(_.equalsIgnoreCase(value))
+      val value = pkg.mkString(".")
+      NameRef.autoImportedNames.exists(_.equalsIgnoreCase(value))
     }
     def getNamePrefix: String = name.split("\\.").head
     def +(piece: String): NameRef = {
