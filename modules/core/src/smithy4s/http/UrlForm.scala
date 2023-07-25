@@ -135,24 +135,23 @@ private[smithy4s] object UrlForm {
     def encode(a: A): UrlForm
   }
   object Encoder {
-    def apply(
-        ignoreXmlFlattened: Boolean = false
-    ): CachedSchemaCompiler[Encoder] = new CachedSchemaCompiler.Impl[Encoder] {
-      protected override type Aux[A] = UrlFormDataEncoder[A]
-      override def fromSchema[A](
-          schema: Schema[A],
-          cache: Cache
-      ): Encoder[A] = {
-        val schemaVisitor =
-          new UrlFormDataEncoderSchemaVisitor(cache, ignoreXmlFlattened)
-        val urlFormDataEncoder = schemaVisitor(schema)
-        (value: A) =>
-          UrlForm(
-            UrlForm.FormData.MultipleValues(
-              urlFormDataEncoder.encode(value).toPathedValues
+    def apply(ignoreXmlFlattened: Boolean): CachedSchemaCompiler[Encoder] =
+      new CachedSchemaCompiler.Impl[Encoder] {
+        protected override type Aux[A] = UrlFormDataEncoder[A]
+        override def fromSchema[A](
+            schema: Schema[A],
+            cache: Cache
+        ): Encoder[A] = {
+          val schemaVisitor =
+            new UrlFormDataEncoderSchemaVisitor(cache, ignoreXmlFlattened)
+          val urlFormDataEncoder = schemaVisitor(schema)
+          (value: A) =>
+            UrlForm(
+              UrlForm.FormData.MultipleValues(
+                urlFormDataEncoder.encode(value).toPathedValues
+              )
             )
-          )
+        }
       }
-    }
   }
 }
