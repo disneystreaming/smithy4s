@@ -1,3 +1,7 @@
+# 0.17.13
+
+- Backports Service interpreter logic introduced in [#908](https://github.com/disneystreaming/smithy4s/pull/908).
+
 # 0.17.5
 
 This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
