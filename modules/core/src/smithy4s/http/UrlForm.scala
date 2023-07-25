@@ -77,35 +77,27 @@ private[smithy4s] object UrlForm {
         copy(path.prepend(segment), maybeValue)
 
       override def render: String = {
+        val builder = new mutable.StringBuilder
         val lastIndex = path.segments.size - 1
-        val renderedKey = path.segments.zipWithIndex
-          .foldLeft(new mutable.StringBuilder) {
+        var i = 0
+        for (segment <- path.segments) {
+          builder.append(segment match {
+            case Segment.Label(label) =>
+              URLEncoder.encode(label, StandardCharsets.UTF_8.name())
 
-            case (builder, (Segment.Label(label), i)) if i < lastIndex =>
-              builder.append(
-                URLEncoder.encode(label, StandardCharsets.UTF_8.name())
-              )
-              builder.append('.')
-
-            case (builder, (Segment.Index(index), i)) if i < lastIndex =>
-              builder.append(index)
-              builder.append('.')
-
-            case (builder, (Segment.Label(label), _)) =>
-              builder.append(
-                URLEncoder.encode(label, StandardCharsets.UTF_8.name())
-              )
-
-            case (builder, (Segment.Index(index), _)) =>
-              builder.append(index)
-          }
-          .toString()
-        val renderedValue = maybeValue match {
-          case None => ""
-          case Some(value) =>
-            URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+            case Segment.Index(index) =>
+              index
+          })
+          if (i < lastIndex) builder.append('.')
+          i += 1
         }
-        renderedKey + "=" + renderedValue
+        builder.append('=')
+        maybeValue.foreach(value =>
+          builder.append(
+            URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+          )
+        )
+        builder.result()
       }
 
       override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
