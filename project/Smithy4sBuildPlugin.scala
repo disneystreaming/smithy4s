@@ -42,6 +42,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val smithy4sDependencies     = SettingKey[Seq[ModuleID]]("smithy4sDependencies")
     val smithy4sSkip             = SettingKey[Seq[String]]("smithy4sSkip")
     val bloopEnabled             = SettingKey[Boolean]("bloopEnabled")
+    val bloopAllowedCombos       = SettingKey[Seq[Seq[VirtualAxis]]]("bloopAxes")
     // format: on
   }
   import autoImport._
@@ -84,7 +85,10 @@ object Smithy4sBuildPlugin extends AutoPlugin {
 
   override def buildSettings: Seq[Setting[_]] = Seq(
     smithySpecs := Seq.empty,
-    smithy4sDependencies := Seq(Dependencies.Alloy.core)
+    smithy4sDependencies := Seq(Dependencies.Alloy.core),
+    bloopAllowedCombos := Seq(
+      Seq(VirtualAxis.jvm, VirtualAxis.scalaABIVersion(Scala213))
+    )
   )
 
   override val globalSettings = Seq(
@@ -145,8 +149,26 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "-Wconf:msg=object Enum in package smithy.api is deprecated:silent",
       "-Wconf:msg=type Enum in package smithy.api is deprecated:silent"
     ),
-    Compile / bloopEnabled := true,
-    Test / bloopEnabled := true,
+    Compile / bloopEnabled := {
+      virtualAxes.?.value match {
+        case Some(virtualAxes) =>
+          checkBloopAllowed(
+            virtualAxes,
+            (ThisBuild / bloopAllowedCombos).value
+          )
+        case None => true
+      }
+    },
+    Test / bloopEnabled := {
+      virtualAxes.?.value match {
+        case Some(virtualAxes) =>
+          checkBloopAllowed(
+            virtualAxes,
+            (ThisBuild / bloopAllowedCombos).value
+          )
+        case None => true
+      }
+    },
     Compile / bloopGenerate := {
       if ((Compile / bloopEnabled).value) (Compile / bloopGenerate).value
       else sbt.Value(None)
@@ -403,9 +425,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     Test / scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.CommonJSModule)
     },
-    Test / fork := false,
-    Compile / bloopEnabled := false,
-    Test / bloopEnabled := false
+    Test / fork := false
   ) ++ {
     // on CI, use linker's batch mode:
     // https://github.com/scala-js/scala-js/blob/6622d0b8f99bec4dbe1b29c125d111fdea246d34/linker-interface/shared/src/main/scala/org/scalajs/linker/interface/StandardConfig.scala#L51
@@ -418,14 +438,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     else Seq.empty
   }
 
-  lazy val jvmDimSettings = simpleJVMLayout ++ Seq(
-    Compile / bloopEnabled := ((scalaBinaryVersion).value == "2.13"),
-    Test / bloopEnabled := ((scalaBinaryVersion).value == "2.13")
-  )
+  lazy val jvmDimSettings = simpleJVMLayout
   lazy val nativeDimSettings = simpleNativeLayout ++ Seq(
-    Test / fork := false,
-    Compile / bloopEnabled := false,
-    Test / bloopEnabled := false
+    Test / fork := false
   )
 
   lazy val simpleJSLayout = simpleLayout(JSPlatform)
@@ -548,8 +563,7 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       "scalafix" -> ("scalafix --check", jvm2_13),
       "scalafixTests" -> ("Test/scalafix --check", jvm2_13),
       "scalafmt" -> ("scalafmtCheckAll", jvm2_13),
-      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm),
-      "bloopGenerate" -> ("bloopGenerate", any)
+      "mimaReportBinaryIssuesIfRelevant" -> ("mimaReportBinaryIssuesIfRelevant", jvm)
     )
 
     val cmds = all.flatMap { case (doublet, projects) =>
@@ -591,6 +605,14 @@ object Smithy4sBuildPlugin extends AutoPlugin {
         )
       case (_, _) => Nil
     }
+  }
+
+  def checkBloopAllowed(
+      projectAxes: Seq[VirtualAxis],
+      allowedCombos: Seq[Seq[VirtualAxis]]
+  ): Boolean = {
+    // Allowing bloop only if there if the project axes contains all elements of a given combo
+    allowedCombos.exists(combo => VirtualAxis.isMatch(projectAxes, combo))
   }
 
 }
