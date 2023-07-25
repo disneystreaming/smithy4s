@@ -898,7 +898,10 @@ lazy val sandbox = projectMatrix
     ) ++ scala3MigrationOption(scalaVersion.value),
     smithy4sDependencies +=
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
-    libraryDependencies += Dependencies.Http4s.emberClient.value,
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.emberClient.value,
+      Dependencies.slf4jNop
+    ),
     run / fork := true
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)

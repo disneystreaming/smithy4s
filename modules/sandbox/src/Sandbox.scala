@@ -9,10 +9,12 @@ object Main extends IOApp.Simple {
 
   type NextToken = String
 
-  def run = resource.use { case (cloudWatch) =>
+  override def run: IO[Unit] = cloudWatchClientResource.use(cloudWatchClient =>
     listAll[ListMetricsOutput, Metric](
       listF = maybeNextToken =>
-        cloudWatch.listMetrics(
+        cloudWatchClient.listMetrics(
+          // This is just a simple way of reducing the size of the results while
+          // still exercising the pagination handler.
           namespace = Some("AWS/S3"),
           nextToken = maybeNextToken
         ),
@@ -20,19 +22,18 @@ object Main extends IOApp.Simple {
       accessNextToken = _.nextToken
     )
       .map(_.size)
-      .flatMap(IO.println(_))
-  }
+      .flatMap(size => IO.println(s"Found $size metrics"))
+  )
 
-  val resource: Resource[IO, CloudWatch[IO]] =
+  private val cloudWatchClientResource: Resource[IO, CloudWatch[IO]] =
     for {
       httpClient <- EmberClientBuilder
         .default[IO]
         .build
         .map(
-          RequestLogger(
+          RequestLogger.colored(
             logHeaders = true,
             logBody = true,
-            redactHeadersWhen = Logger.defaultRedactHeadersWhen,
             logAction = Some(IO.println _)
           )
         )
@@ -53,7 +54,7 @@ object Main extends IOApp.Simple {
   // user-land. Perhaps we could use pagination hints from the specs to avoid
   // having to manually wire up the accessors, and to generate synthetic service
   // functions that handle pagination?
-  def listAll[ListOutput, Result](
+  private def listAll[ListOutput, Result](
       listF: Option[NextToken] => IO[ListOutput],
       accessResults: ListOutput => List[Result],
       accessNextToken: ListOutput => Option[NextToken],

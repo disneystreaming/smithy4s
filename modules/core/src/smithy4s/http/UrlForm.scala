@@ -29,7 +29,9 @@ import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 
 import smithy4s.schema.Schema
 
-private[smithy4s] final case class UrlForm(formData: UrlForm.FormData.MultipleValues)
+private[smithy4s] final case class UrlForm(
+    formData: UrlForm.FormData.MultipleValues
+)
 
 private[smithy4s] object UrlForm {
 

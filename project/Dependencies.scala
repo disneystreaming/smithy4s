@@ -112,6 +112,8 @@ object Dependencies {
       Def.setting("org.http4s" %%% "http4s-client" % http4sVersion)
   }
 
+  val slf4jNop: ModuleID = "org.slf4j" % "slf4j-nop" % "2.0.7"
+
   object Weaver {
 
     val weaverVersion = "0.8.3"
