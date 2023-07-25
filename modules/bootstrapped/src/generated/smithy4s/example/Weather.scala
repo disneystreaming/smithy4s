@@ -45,14 +45,16 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[WeatherOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[WeatherOperation, _, _, _, _, _]] = Vector(
     WeatherOperation.GetCurrentTime,
     WeatherOperation.GetCity,
     WeatherOperation.GetForecast,
     WeatherOperation.ListCities,
   )
 
-  def endpoint[I, E, O, SI, SO](op: WeatherOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: WeatherOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: WeatherOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: WeatherOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends WeatherOperation.Transformed[WeatherOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: WeatherGen[WeatherOperation] = WeatherOperation.reified
@@ -66,7 +68,9 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
 
 sealed trait WeatherOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[WeatherOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[WeatherOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object WeatherOperation {
@@ -89,7 +93,9 @@ object WeatherOperation {
   }
   final case class GetCurrentTime() extends WeatherOperation[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = impl.getCurrentTime()
-    def endpoint: (Unit, smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing]) = ((), GetCurrentTime)
+    def ordinal = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] = GetCurrentTime
   }
   object GetCurrentTime extends smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetCurrentTime")
@@ -105,7 +111,8 @@ object WeatherOperation {
   }
   final case class GetCity(input: GetCityInput) extends WeatherOperation[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = impl.getCity(input.cityId)
-    def endpoint: (GetCityInput, smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing]) = (input, GetCity)
+    def ordinal = 1
+    def endpoint: smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] = GetCity
   }
   object GetCity extends smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] with Errorable[GetCityError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetCity")
@@ -129,13 +136,14 @@ object WeatherOperation {
   }
   sealed trait GetCityError extends scala.Product with scala.Serializable {
     @inline final def widen: GetCityError = this
+    def _ordinal: Int
   }
   object GetCityError extends ShapeTag.Companion[GetCityError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetCityError")
 
     val hints: Hints = Hints.empty
 
-    final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError
+    final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }
     def noSuchResource(noSuchResource:NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
 
     object NoSuchResourceCase {
@@ -147,12 +155,13 @@ object WeatherOperation {
     implicit val schema: UnionSchema[GetCityError] = union(
       NoSuchResourceCase.alt,
     ){
-      case c: NoSuchResourceCase => NoSuchResourceCase.alt(c)
+      _._ordinal
     }
   }
   final case class GetForecast(input: GetForecastInput) extends WeatherOperation[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = impl.getForecast(input.cityId)
-    def endpoint: (GetForecastInput, smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing]) = (input, GetForecast)
+    def ordinal = 2
+    def endpoint: smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = GetForecast
   }
   object GetForecast extends smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetForecast")
@@ -168,7 +177,8 @@ object WeatherOperation {
   }
   final case class ListCities(input: ListCitiesInput) extends WeatherOperation[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = impl.listCities(input.nextToken, input.pageSize)
-    def endpoint: (ListCitiesInput, smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing]) = (input, ListCities)
+    def ordinal = 3
+    def endpoint: smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] = ListCities
   }
   object ListCities extends smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "ListCities")

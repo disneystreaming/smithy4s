@@ -99,12 +99,7 @@ final class DefaultValueSpec extends FunSuite {
 
   test("union") {
     type Foo = Either[Int, String]
-    val left = Schema.int.oneOf[Foo]("left", Left(_))
-    val right = Schema.string.oneOf[Foo]("right", Right(_))
-    val u: Schema[Foo] = Schema.union(left, right) {
-      case Left(int)     => left(int)
-      case Right(string) => right(string)
-    }
+    val u: Schema[Foo] = Schema.either(Schema.int, Schema.string)
     testCaseOpt(u, None)
   }
 

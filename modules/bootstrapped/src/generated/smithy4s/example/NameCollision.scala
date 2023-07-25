@@ -38,12 +38,14 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[NameCollisionOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[NameCollisionOperation, _, _, _, _, _]] = Vector(
     NameCollisionOperation.MyOp,
     NameCollisionOperation.Endpoint,
   )
 
-  def endpoint[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: NameCollisionOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends NameCollisionOperation.Transformed[NameCollisionOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: NameCollisionGen[NameCollisionOperation] = NameCollisionOperation.reified
@@ -57,7 +59,9 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
 
 sealed trait NameCollisionOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, smithy4s.Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: smithy4s.Endpoint[NameCollisionOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object NameCollisionOperation {
@@ -76,7 +80,9 @@ object NameCollisionOperation {
   }
   final case class MyOp() extends NameCollisionOperation[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = impl.myOp()
-    def endpoint: (Unit, smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing]) = ((), MyOp)
+    def ordinal = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] = MyOp
   }
   object MyOp extends smithy4s.Endpoint[NameCollisionOperation,Unit, NameCollisionOperation.MyOpError, Unit, Nothing, Nothing] with Errorable[MyOpError] {
     val id: ShapeId = ShapeId("smithy4s.example", "MyOp")
@@ -98,13 +104,14 @@ object NameCollisionOperation {
   }
   sealed trait MyOpError extends scala.Product with scala.Serializable {
     @inline final def widen: MyOpError = this
+    def _ordinal: Int
   }
   object MyOpError extends ShapeTag.Companion[MyOpError] {
     val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
 
     val hints: Hints = Hints.empty
 
-    final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError
+    final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def _ordinal: Int = 0 }
     def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
 
     object MyOpErrorCase {
@@ -116,12 +123,14 @@ object NameCollisionOperation {
     implicit val schema: UnionSchema[MyOpError] = union(
       MyOpErrorCase.alt,
     ){
-      case c: MyOpErrorCase => MyOpErrorCase.alt(c)
+      _._ordinal
     }
   }
   final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
-    def endpoint: (Unit, smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing]) = ((), Endpoint)
+    def ordinal = 1
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] = Endpoint
   }
   object Endpoint extends smithy4s.Endpoint[NameCollisionOperation,Unit, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "Endpoint")

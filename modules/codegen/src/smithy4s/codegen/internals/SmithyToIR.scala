@@ -21,6 +21,7 @@ import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.ErrorMessageTrait
 import smithy4s.meta.IndexedSeqTrait
+import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
@@ -535,9 +536,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       //format: on
     }
 
-  private val reservedNames = new CollisionAvoidance.Names().getReservedNames
-  private def isReservedName(str: String): Boolean = reservedNames(str)
-
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
       // See https://awslabs.github.io/smithy/1.0/spec/core/prelude-model.html?highlight=primitiveboolean#prelude-shapes
@@ -632,8 +630,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           getExternalOrBase(shape, Type.PrimitiveType(primitive))
         if (
           shape.getId() != ShapeId.from(primitiveId) &&
-          !isUnboxedPrimitive(shape.getId()) &&
-          !isReservedName(shape.getId().getName())
+          !isUnboxedPrimitive(shape.getId())
         ) {
           Type
             .Alias(
@@ -917,6 +914,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
     case _: ErrorMessageTrait =>
       Hint.ErrorMessage
+    case _: NoStackTraceTrait =>
+      Hint.NoStackTrace
     case _: VectorTrait =>
       Hint.SpecializedList.Vector
     case _: IndexedSeqTrait =>

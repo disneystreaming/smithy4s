@@ -100,11 +100,16 @@ object RequestEncoder {
     */
   def restSchemaCompiler[F[_]](
       metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
+      entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]],
+      writeEmptyStructs: Boolean = false
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
     val bodyCompiler = entityEncoderCompiler.mapK(fromEntityEncoderK)
     val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
-    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+    HttpRestSchema.combineWriterCompilers(
+      metadataCompiler,
+      bodyCompiler,
+      writeEmptyStructs
+    )
   }
 
 }

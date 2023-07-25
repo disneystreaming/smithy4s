@@ -63,6 +63,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
+  sandbox,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -377,7 +378,8 @@ lazy val codegen = projectMatrix
     ),
     libraryDependencies ++= munitDeps.value,
     scalacOptions := scalacOptions.value
-      .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains)
+      .filterNot(Seq("-Ywarn-value-discard", "-Wvalue-discard").contains),
+    bloopEnabled := true
   )
 
 /**
@@ -437,7 +439,8 @@ lazy val codegenPlugin = (projectMatrix in file("modules/codegen-plugin"))
       )
       publishLocal.value
     },
-    scriptedBufferLog := false
+    scriptedBufferLog := false,
+    bloopEnabled := true
   )
 
 /**
@@ -840,7 +843,8 @@ lazy val bootstrapped = projectMatrix
     ) ++ scala3MigrationOption(scalaVersion.value),
     libraryDependencies ++=
       munitDeps.value ++ Seq(
-        Dependencies.Cats.core.value % Test
+        Dependencies.Cats.core.value % Test,
+        Dependencies.Weaver.cats.value % Test
       )
   )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
@@ -878,6 +882,29 @@ lazy val benchmark = projectMatrix
     libraryDependencies ++= Seq(
       Dependencies.Circe.generic.value
     )
+  )
+  .jvmPlatform(List(Scala213), jvmDimSettings)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+
+lazy val sandbox = projectMatrix
+  .in(file("modules/sandbox"))
+  .dependsOn(`aws-http4s`)
+  .settings(
+    Compile / allowedNamespaces := Seq(
+      "com.amazonaws.cloudwatch"
+    ),
+    genSmithy(Compile),
+    // Ignore deprecation warnings here - it's all generated code, anyway.
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ) ++ scala3MigrationOption(scalaVersion.value),
+    smithy4sDependencies +=
+      "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
+    libraryDependencies ++= Seq(
+      Dependencies.Http4s.emberClient.value,
+      Dependencies.slf4jNop
+    ),
+    run / fork := true
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)

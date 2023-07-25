@@ -35,11 +35,13 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[RecursiveInputServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[RecursiveInputServiceOperation, _, _, _, _, _]] = Vector(
     RecursiveInputServiceOperation.RecursiveInputOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: RecursiveInputServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: RecursiveInputServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: RecursiveInputServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: RecursiveInputServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends RecursiveInputServiceOperation.Transformed[RecursiveInputServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: RecursiveInputServiceGen[RecursiveInputServiceOperation] = RecursiveInputServiceOperation.reified
@@ -51,7 +53,9 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
 
 sealed trait RecursiveInputServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: RecursiveInputServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[RecursiveInputServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[RecursiveInputServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object RecursiveInputServiceOperation {
@@ -68,7 +72,8 @@ object RecursiveInputServiceOperation {
   }
   final case class RecursiveInputOperation(input: RecursiveInput) extends RecursiveInputServiceOperation[RecursiveInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: RecursiveInputServiceGen[F]): F[RecursiveInput, Nothing, Unit, Nothing, Nothing] = impl.recursiveInputOperation(input.hello)
-    def endpoint: (RecursiveInput, smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing]) = (input, RecursiveInputOperation)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] = RecursiveInputOperation
   }
   object RecursiveInputOperation extends smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "RecursiveInputOperation")

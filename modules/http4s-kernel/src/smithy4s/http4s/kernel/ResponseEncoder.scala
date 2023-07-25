@@ -51,7 +51,7 @@ object ResponseEncoder {
   ): ResponseEncoder[F, E] = {
     val errorUnionSchema = errorable.error
     val dispatcher =
-      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.dispatch)
+      Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.ordinal)
     val precompiler = new Alt.Precompiler[ResponseEncoder[F, *]] {
       def apply[Err](
           label: String,
