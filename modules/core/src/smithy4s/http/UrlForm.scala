@@ -29,9 +29,9 @@ import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 
 import smithy4s.schema.Schema
 
-final case class UrlForm(formData: UrlForm.FormData.MultipleValues)
+private[smithy4s] final case class UrlForm(formData: UrlForm.FormData.MultipleValues)
 
-object UrlForm {
+private[smithy4s] object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
     def prepend(segment: PayloadPath.Segment): FormData

@@ -23,7 +23,7 @@ import smithy4s.http._
 import smithy4s.schema._
 import smithy4s.codecs.PayloadPath
 
-class UrlFormDataEncoderSchemaVisitor(
+private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder]
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
