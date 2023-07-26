@@ -33,7 +33,6 @@ import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
-import smithy4s.schema.Alt
 import smithy4s.http.HttpContractError
 
 private[compliancetests] class ClientHttpComplianceTestCase[
@@ -243,18 +242,18 @@ private[compliancetests] class ClientHttpComplianceTestCase[
                   endpoint,
                   tc,
                   errorSchema = Some(
-                    ErrorResponseTest.from(
-                      errorAlt,
-                      Alt.Dispatcher.fromUnion(errorable.error),
-                      errorable
-                    )
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        errorable
+                      )
                   )
                 )
               }
           }
         }
     }
-    service.endpoints.flatMap { case endpoint =>
+    service.endpoints.toList.flatMap { case endpoint =>
       val requestTests = endpoint.hints
         .get(HttpRequestTests)
         .map(_.value)

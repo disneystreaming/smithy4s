@@ -46,3 +46,19 @@ If you don't have Flakes support:
 ```bash
 nix-shell
 ```
+
+## Note for metals/bloop users
+
+Smithy4s is a complex project with a heavy build-matrix. In order to ease development, we've elected to only enable bloop-config generation
+for the `JVM/Scala 2.13` combo of build axes, by default.
+
+If you find yourself developing for another combination of build axes, it is possible to tweak the default by adding a `user.sbt` file in the root directory of your clone of this project, and fill it by following this example :
+
+```scala
+ThisBuild / bloopAllowedCombos := Seq(
+  Seq(
+    VirtualAxis.jvm,
+    VirtualAxis.scalaABIVersion("3.3.0")
+  )
+)
+```

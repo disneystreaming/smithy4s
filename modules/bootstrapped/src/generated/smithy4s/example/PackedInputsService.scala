@@ -33,11 +33,13 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[PackedInputsServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[PackedInputsServiceOperation, _, _, _, _, _]] = Vector(
     PackedInputsServiceOperation.PackedInputOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: PackedInputsServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: PackedInputsServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: PackedInputsServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: PackedInputsServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends PackedInputsServiceOperation.Transformed[PackedInputsServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: PackedInputsServiceGen[PackedInputsServiceOperation] = PackedInputsServiceOperation.reified
@@ -49,7 +51,9 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
 
 sealed trait PackedInputsServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: PackedInputsServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[PackedInputsServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[PackedInputsServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object PackedInputsServiceOperation {
@@ -66,7 +70,8 @@ object PackedInputsServiceOperation {
   }
   final case class PackedInputOperation(input: PackedInput) extends PackedInputsServiceOperation[PackedInput, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: PackedInputsServiceGen[F]): F[PackedInput, Nothing, Unit, Nothing, Nothing] = impl.packedInputOperation(input)
-    def endpoint: (PackedInput, smithy4s.Endpoint[PackedInputsServiceOperation,PackedInput, Nothing, Unit, Nothing, Nothing]) = (input, PackedInputOperation)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[PackedInputsServiceOperation,PackedInput, Nothing, Unit, Nothing, Nothing] = PackedInputOperation
   }
   object PackedInputOperation extends smithy4s.Endpoint[PackedInputsServiceOperation,PackedInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "PackedInputOperation")

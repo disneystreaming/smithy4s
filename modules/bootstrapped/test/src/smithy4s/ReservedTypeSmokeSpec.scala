@@ -17,7 +17,7 @@
 package smithy4s
 
 import munit._
-import smithy4s.example.collision.ReservedNameService
+import smithy4s.example.collision.{String => SString, _}
 
 class ReservedTypeSmokeSpec() extends FunSuite {
 
@@ -25,15 +25,15 @@ class ReservedTypeSmokeSpec() extends FunSuite {
     "Names from the Scala stdlib can be used in smithy spec without hurting UX"
   ) {
     val service = new ReservedNameService[Option] {
-      def list(value: List[String]): Option[Unit] = None
-      def map(value: Map[String, String]): Option[Unit] = None
-      def option(value: Option[String]): Option[Unit] = None
-      def set(set: Set[String]): Option[Unit] = None
+      def list(value: List[SString]): Option[Unit] = None
+      def map(value: Map[SString, SString]): Option[Unit] = None
+      def option(value: Option[SString]): Option[Unit] = None
+      def set(set: Set[SString]): Option[Unit] = None
     }
-    assertEquals(service.list(List("foo")), None)
-    assertEquals(service.map(Map("foo" -> "bar")), None)
-    assertEquals(service.option(Some("foo")), None)
-    assertEquals(service.set(Set("foo")), None)
+    assertEquals(service.list(List(SString("foo"))), None)
+    assertEquals(service.map(Map(SString("foo") -> SString("bar"))), None)
+    assertEquals(service.option(Some(SString("foo"))), None)
+    assertEquals(service.set(Set(SString("foo"))), None)
   }
 
 }

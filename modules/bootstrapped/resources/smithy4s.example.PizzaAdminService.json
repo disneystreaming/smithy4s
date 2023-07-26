@@ -326,11 +326,11 @@
                         }
                     },
                     "400": {
-                        "description": "FallbackError2 400 response",
+                        "description": "FallbackError 400 response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/FallbackError2ResponseContent"
+                                    "$ref": "#/components/schemas/FallbackErrorResponseContent"
                                 }
                             }
                         }
@@ -531,7 +531,7 @@
                     }
                 }
             },
-            "FallbackError2ResponseContent": {
+            "FallbackErrorResponseContent": {
                 "type": "object",
                 "properties": {
                     "error": {

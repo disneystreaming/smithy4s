@@ -26,14 +26,12 @@ import kinds._
 final case class Alt[U, A](
     label: String,
     schema: Schema[A],
-    inject: A => U
+    inject: A => U,
+    project: PartialFunction[U, A]
 ) {
 
   @deprecated("use .schema instead", since = "0.18.0")
   def instance: Schema[A] = schema
-
-  def apply(value: A): Alt.WithValue[U, A] =
-    Alt.WithValue(this, value)
 
   def hints: Hints = schema.hints
   def memberHints: Hints = schema.hints.memberHints
@@ -58,11 +56,6 @@ final case class Alt[U, A](
 }
 object Alt {
 
-  final case class WithValue[U, A](
-      private[Alt] val alt: Alt[U, A],
-      value: A
-  )
-
   /**
     * Precompiles an Alt to produce an instance of `G`
     */
@@ -86,7 +79,8 @@ object Alt {
         encoderK: EncoderK[G, Result]
     ): G[U]
 
-    def projector[A](alt: Alt[U, A]): U => Option[A]
+    def ordinal(u: U): Int
+
   }
 
   object Dispatcher {
@@ -94,43 +88,39 @@ object Alt {
     def fromUnion[U](union: Schema.UnionSchema[U]): Dispatcher[U] =
       apply(
         alts = union.alternatives,
-        dispatchF = union.dispatch
+        ordinal = union.ordinal
       )
 
     private[smithy4s] def apply[U](
         alts: Vector[Alt[U, _]],
-        dispatchF: U => Alt.WithValue[U, _]
-    ): Dispatcher[U] = new Impl[U](alts, dispatchF)
+        ordinal: U => Int
+    ): Dispatcher[U] = new Impl[U](alts, ordinal)
 
     private[smithy4s] case class Impl[U](
         alts: Vector[Alt[U, _]],
-        underlying: U => Alt.WithValue[U, _]
+        ord: U => Int
     ) extends Dispatcher[U] {
-      def compile[G[_], Result](precompile: Precompiler[G])(implicit
-          encoderK: EncoderK[G, Result]
-      ): G[U] = {
-        val precompiledAlts =
-          precompile.toPolyFunction
-            .unsafeCacheBy[String](
-              alts.map(Kind1.existential(_)),
-              (alt: Kind1.Existential[Alt[U, *]]) =>
-                alt.asInstanceOf[Alt[U, _]].label
-            )
+      def compile[F[_], Result](precompile: Precompiler[F])(implicit
+          encoderK: EncoderK[F, Result]
+      ): F[U] = {
+        val compiler = precompile.toPolyFunction[U]
+        val builder = scala.collection.mutable.ArrayBuffer[Any]()
+        alts.foreach { alt =>
+          builder += compiler(alt)
+        }
+        val precompiledAlts = builder.toArray
 
         encoderK.absorb[U] { u =>
-          underlying(u) match {
-            case awv: Alt.WithValue[U, a] =>
-              encoderK(precompiledAlts(awv.alt), awv.value)
-          }
+          val ord = ordinal(u)
+          encoderK(
+            precompiledAlts(ord).asInstanceOf[F[Any]],
+            alts(ord).project(u)
+          )
         }
       }
 
-      def projector[A](alt: Alt[U, A]): U => Option[A] = { u =>
-        val under = underlying(u)
-        if (under.alt.label == alt.label)
-          Some(under.value.asInstanceOf[A])
-        else None
-      }
+      def ordinal(u: U): Int = ord(u)
+
     }
   }
 

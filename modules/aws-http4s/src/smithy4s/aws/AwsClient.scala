@@ -66,13 +66,14 @@ object AwsClient {
         case AwsProtocol.AWS_JSON_1_1(_) =>
           AwsJsonCodecs.make[F]("application/x-amz-json-1.1")
 
+        case AwsProtocol.AWS_QUERY(_) =>
+          AwsQueryCodecs.make[F](version = service.version)
+
         case AwsProtocol.AWS_REST_JSON_1(_) =>
           AwsRestJsonCodecs.make[F]("application/json")
 
         case AwsProtocol.AWS_REST_XML(_) =>
           AwsXmlCodecs.make[F]()
-
-        case _ => ???
       }
       service.functorInterpreter {
         new service.FunctorEndpointCompiler[F] {

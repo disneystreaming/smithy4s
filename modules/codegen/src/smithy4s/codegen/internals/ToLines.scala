@@ -56,6 +56,8 @@ private[internals] object ToLines {
 // Models
 
 private[internals] case class Lines(list: List[Line]) {
+  def isEmpty: Boolean = list.isEmpty
+
   def block(l: LinesWithValue*): Lines = {
     val openBlock: List[Line] =
       list.lastOption.flatMap(_.segments.lastOption).collect {

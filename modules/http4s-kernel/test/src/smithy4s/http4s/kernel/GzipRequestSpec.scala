@@ -29,6 +29,7 @@ import weaver._
 object GzipRequestSpec extends SimpleIOSuite with Compat {
   val compressor =
     GzipRequestCompression[IO](
+      retainUserEncoding = false,
       GzipRequestCompression.DefaultBufferSize,
       DeflateParams.Level.DEFAULT
     )

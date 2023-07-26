@@ -52,7 +52,10 @@ object HttpRestSchema {
   final case class Empty[A](value: A) extends HttpRestSchema[A]
   // format: on
 
-  def apply[A](fullSchema: Schema[A]): HttpRestSchema[A] = {
+  def apply[A](
+      fullSchema: Schema[A],
+      writeEmptyStructs: Boolean
+  ): HttpRestSchema[A] = {
 
     def isMetadataField(field: Field[_, _]): Boolean = HttpBinding
       .fromHints(field.label, field.memberHints, fullSchema.hints)
@@ -72,7 +75,7 @@ object HttpRestSchema {
           case NoMatch() =>
             fullSchema match {
               case Schema.StructSchema(_, _, fields, make)
-                  if (fields.isEmpty) =>
+                  if !writeEmptyStructs && (fields.isEmpty) =>
                 Empty(make(IndexedSeq.empty))
               case _ => OnlyBody(fullSchema)
             }
@@ -94,7 +97,8 @@ object HttpRestSchema {
     */
   def combineWriterCompilers[Message](
       metadataEncoderCompiler: Writer.CachedCompiler[Message, Message],
-      bodyEncoderCompiler: Writer.CachedCompiler[Message, Message]
+      bodyEncoderCompiler: Writer.CachedCompiler[Message, Message],
+      writeEmptyStructs: Boolean = false
   ): Writer.CachedCompiler[Message, Message] =
     new Writer.CachedCompiler[Message, Message] {
 
@@ -113,7 +117,7 @@ object HttpRestSchema {
           fullSchema: Schema[A],
           cache: Cache
       ): Writer[Message, Message, A] = {
-        HttpRestSchema(fullSchema) match {
+        HttpRestSchema(fullSchema, writeEmptyStructs) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
             metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
@@ -167,7 +171,8 @@ object HttpRestSchema {
         fromSchema(schema, createCache())
 
       def fromSchema[A](fullSchema: Schema[A], cache: Cache) = {
-        HttpRestSchema(fullSchema) match {
+        // writeEmptyStructs is not relevant for reading.
+        HttpRestSchema(fullSchema, writeEmptyStructs = false) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata,
             // but we still decoding Unit from the body to drain the message.

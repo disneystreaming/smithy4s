@@ -30,20 +30,22 @@ object GzipRequestCompression {
   val DefaultBufferSize = 32 * 1024
 
   def apply[F[_]: Compression](
+      retainUserEncoding: Boolean,
       bufferSize: Int = DefaultBufferSize,
       level: DeflateParams.Level = DeflateParams.Level.DEFAULT
   ): Request[F] => Request[F] = { request =>
     val updateContentTypeEncoding =
-      request.headers.get[`Content-Encoding`] match {
-        case None =>
-          Header.Raw(
-            `Content-Encoding`.headerInstance.name,
-            "gzip"
-          )
-        case Some(`Content-Encoding`(cc)) =>
+      (retainUserEncoding, request.headers.get[`Content-Encoding`]) match {
+        case (true, Some(`Content-Encoding`(cc))) =>
           Header.Raw(
             `Content-Encoding`.headerInstance.name,
             s"${cc.coding}, gzip"
+          )
+
+        case _ =>
+          Header.Raw(
+            `Content-Encoding`.headerInstance.name,
+            "gzip"
           )
       }
     val compressPipe =
