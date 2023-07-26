@@ -110,9 +110,9 @@ object EqVisitorSpec extends FunSuite {
 
   test("smithy4s Blob") {
     implicit val schema: Schema[Blob] = bytes
-    val fooBar = Blob("fooBar".getBytes)
-    val fooBar1 = Blob("fooBar".getBytes)
-    val neqFoo = Blob("neqFoo".getBytes)
+    val fooBar = Blob("fooBar")
+    val fooBar1 = Blob("fooBar")
+    val neqFoo = Blob("neqFoo")
     schemaEq(fooBar, fooBar1)(neqFoo)
   }
 

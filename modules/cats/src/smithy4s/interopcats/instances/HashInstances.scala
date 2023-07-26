@@ -25,7 +25,7 @@ private[interopcats] trait HashInstances {
 
   implicit val blobHash: Hash[Blob] =
     new Hash[Blob] {
-      override def hash(x: Blob): Int = x.toArray.hashCode()
+      override def hash(x: Blob): Int = x.hashCode
 
       override def eqv(x: Blob, y: Blob): Boolean =
         Eq[Blob].eqv(x, y)

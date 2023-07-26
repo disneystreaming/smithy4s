@@ -120,7 +120,7 @@ object XmlCodecSpec extends SimpleIOSuite {
   test("bytes") {
     implicit val schema: Schema[Blob] = bytes.x
     val xml = "<x>Zm9vYmFy</x>"
-    checkContent(xml, Blob("foobar".getBytes()))
+    checkContent(xml, Blob("foobar"))
   }
 
   test("struct") {

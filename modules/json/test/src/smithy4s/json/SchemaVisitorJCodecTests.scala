@@ -340,7 +340,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   implicit val blobSchema: Schema[Blob] = blob
 
   test("byte arrays are encoded as base64") {
-    val bytes = Blob("foobar".getBytes())
+    val bytes = Blob("foobar")
     val bytesJson = writeToString(bytes)
     val decoded = readFromString[Blob](bytesJson)
     expect.same(bytesJson, "\"Zm9vYmFy\"")

@@ -17,7 +17,6 @@
 package smithy4s.interopcats.instances
 
 import cats.Show
-import java.util.Base64
 import smithy4s.schema.Primitive
 import smithy4s.{Blob, Document, ShapeId, Timestamp}
 import smithy4s.kinds.PolyFunction
@@ -25,8 +24,7 @@ import smithy4s.kinds.PolyFunction
 private[interopcats] trait ShowInstances {
 
   implicit val sId: Show[ShapeId] = Show.fromToString
-  implicit val blob: Show[Blob] = (b: Blob) =>
-    Base64.getEncoder().encodeToString(b.toArray)
+  implicit val blob: Show[Blob] = (b: Blob) => b.toBase64String
   implicit val document: Show[Document] = Show.fromToString
   implicit val ts: Show[Timestamp] = Show.fromToString
   val primShowPf: PolyFunction[Primitive, Show] =

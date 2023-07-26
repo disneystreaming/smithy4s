@@ -86,7 +86,7 @@ object CanonicalSmithyDecoder {
         }
       case PBlob =>
         from("Base64 binary blob") { case DString(string) =>
-          Blob(string.getBytes)
+          Blob(string)
         }
       case _ => super.primitive(shapeId, hints, tag)
     }

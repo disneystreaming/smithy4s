@@ -30,8 +30,7 @@ trait Smithy4sEqInstances {
       if (xs eq ys) true
       else StaticMethods.iteratorEq(xs.iterator, ys.iterator)
 
-  implicit val blobEq: Eq[Blob] = (x: Blob, y: Blob) =>
-    Eq[Array[Byte]].contramap[Blob](_.toArray).eqv(x, y)
+  implicit val blobEq: Eq[Blob] = (x: Blob, y: Blob) => x.sameBytesAs(y)
   implicit val documentEq: Eq[Document] = Eq[String].contramap(_.show)
   implicit val timeStampEq: Eq[Timestamp] = Eq[Long].contramap(_.epochSecond)
   implicit val floatEq: Eq[Float] = (x: Float, y: Float) =>

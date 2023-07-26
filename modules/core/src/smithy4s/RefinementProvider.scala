@@ -72,7 +72,7 @@ object RefinementProvider {
     new LengthConstraint[String](_.length)
 
   implicit val blobLengthConstraint: Simple[Length, Blob] =
-    new LengthConstraint[Blob](_.toArray.length)
+    new LengthConstraint[Blob](_.size)
 
   implicit def iterableLengthConstraint[C[_], A](implicit
       ev: C[A] <:< Iterable[A]

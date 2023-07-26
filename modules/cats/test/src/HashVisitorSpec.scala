@@ -107,9 +107,9 @@ object HashVisitorSpec extends FunSuite with CompatProvider {
 
   test("smithy4s Blob") {
     val schema: Schema[Blob] = blob
-    val fooBar = Blob("fooBar".getBytes)
+    val fooBar = Blob("fooBar")
     val hashOutput = visitor(schema).hash(fooBar)
-    expect.eql(fooBar.toArray.hashCode(), hashOutput)
+    expect.eql(fooBar.hashCode, hashOutput)
   }
 
   test("smithy4s timestamp") {

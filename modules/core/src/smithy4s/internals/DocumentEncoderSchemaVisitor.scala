@@ -26,7 +26,6 @@ import alloy.Discriminated
 import smithy4s.capability.EncoderK
 import smithy4s.schema._
 
-import java.util.Base64
 import scala.collection.mutable.Builder
 
 import Document._
@@ -90,7 +89,7 @@ class DocumentEncoderSchemaVisitor(
     case PBigDecimal => from(DNumber(_))
     case PInt        => from(int => DNumber(BigDecimal(int)))
     case PBlob =>
-      from(bytes => DString(Base64.getEncoder().encodeToString(bytes.toArray)))
+      from(bytes => DString(bytes.toBase64String))
     case PTimestamp =>
       hints
         .get(TimestampFormat)

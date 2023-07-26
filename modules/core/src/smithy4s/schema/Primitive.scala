@@ -141,9 +141,7 @@ object Primitive extends smithy4s.ScalaCompat {
       case Primitive.PString     => Some(identity[String])
       case Primitive.PTimestamp  => Some(timestampWriter(hints))
       case Primitive.PBlob =>
-        Some(bytes =>
-          java.util.Base64.getEncoder().encodeToString(bytes.toArray)
-        )
+        Some(bytes => bytes.toBase64String)
       case Primitive.PDocument => None
     }
   }

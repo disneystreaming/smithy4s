@@ -105,7 +105,7 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
 
   test("smithy4s Blob") {
     val schema: Schema[Blob] = blob
-    val fooBar = Blob("fooBar".getBytes)
+    val fooBar = Blob("fooBar")
     val showOutput = schemaVisitorShow(schema).show(fooBar)
     expect.eql(showOutput, "Zm9vQmFy")
   }

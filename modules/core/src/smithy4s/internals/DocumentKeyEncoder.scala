@@ -16,8 +16,6 @@
 
 package smithy4s.internals
 
-import java.util.Base64
-
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat._
 import smithy4s._
@@ -74,7 +72,7 @@ object DocumentKeyEncoder {
           case PByte       => forBigDecimal { a => BigDecimal(a.toInt) }
           case PFloat      => forBigDecimal { a => BigDecimal(a.toDouble) }
           case PBlob =>
-            instance(bytes => Base64.getEncoder().encodeToString(bytes.toArray))
+            instance(_.toBase64String)
           case PTimestamp =>
             hints
               .get(TimestampFormat)

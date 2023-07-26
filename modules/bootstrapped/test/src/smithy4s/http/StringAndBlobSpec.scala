@@ -94,7 +94,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
   test("Blobs") {
     check(
       Schema.blob,
-      Blob("hello".getBytes()),
+      Blob("hello"),
       Blob("hello"),
       "application/octet-stream"
     )
@@ -103,7 +103,7 @@ class StringAndBlobSpec() extends munit.FunSuite {
   test("Blobs (custom media-type)") {
     check(
       PNG.schema,
-      PNG(Blob("hello".getBytes())),
+      PNG(Blob("hello")),
       Blob("hello"),
       "image/png"
     )

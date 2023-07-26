@@ -111,7 +111,7 @@ object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
   test("primitive: bytes") {
     implicit val schema: Schema[Blob] = bytes
     val expected = "Zm9vYmFy"
-    checkContent(expected, Blob("foobar".getBytes()))
+    checkContent(expected, Blob("foobar"))
   }
 
   test("struct") {

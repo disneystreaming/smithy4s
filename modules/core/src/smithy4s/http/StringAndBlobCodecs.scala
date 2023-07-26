@@ -111,13 +111,13 @@ object StringAndBlobCodecs {
     private val blobReader: HttpPayloadReader[Blob] = {
       new HttpPayloadReader[Blob] {
         def read(blob: Blob): Either[HttpPayloadError, Blob] = Right(
-          Blob(blob.toArray)
+          blob
         )
       }
     }
 
     private val blobWriter: PayloadWriter[Blob] =
-      Writer.encodeBy(blob => Blob(blob.toArray))
+      Writer.encodeBy(identity)
 
     override def enumeration[E](
         shapeId: ShapeId,

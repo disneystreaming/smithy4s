@@ -94,7 +94,7 @@ class SchemaVisitorJsonCodecPropertyTests()
                 case m: Map[_, _] => m.size
                 case l: List[_]   => l.size
                 case s: String    => s.size
-                case b: Blob      => b.toArray.size
+                case b: Blob      => b.size
               }
               expect(min.forall(_ <= size))
               expect(max.forall(_ >= size))
