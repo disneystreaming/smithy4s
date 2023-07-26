@@ -20,6 +20,8 @@ import io.circe._
 import smithy4s._
 import smithy4s.Timestamp
 
+import java.util.Base64
+
 object Circe {
   implicit val blobDecoder: Decoder[Blob] =
     Decoder.decodeString.map(s => Blob(Base64.getDecoder().decode(s)))
