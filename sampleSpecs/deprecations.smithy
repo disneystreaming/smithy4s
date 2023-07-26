@@ -6,6 +6,7 @@ use smithy4s.meta#adtMember
 @mixin
 structure DeprecatedMixin {
   @deprecated strings: Strings,
+  other: Strings
 }
 
 @deprecated(message: "A compelling reason", since: "0.0.1")

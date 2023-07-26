@@ -625,8 +625,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     block(line"trait $name$ext") {
       lines(
         fields.map { f =>
-          deprecationAnnotation(f.hints).appendIf(_.nonEmpty)(Line.space) +
+          lines(
+            deprecationAnnotation(f.hints),
+            Line.empty,
             line"def ${fieldToRenderLine(f, noDefault = true)}"
+          )
         }
       )
     }
