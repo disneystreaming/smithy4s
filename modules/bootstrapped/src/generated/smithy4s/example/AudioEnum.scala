@@ -30,8 +30,6 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
   implicit val schema: Schema[AudioEnum] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "AudioEnum"))
   .addHints(
-    Hints(
-      MediaType("audio/mpeg3"),
-    )
+    MediaType("audio/mpeg3"),
   )
 }

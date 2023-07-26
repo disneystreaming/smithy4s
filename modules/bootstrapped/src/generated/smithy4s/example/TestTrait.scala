@@ -1,10 +1,10 @@
 package smithy4s.example
 
 import smithy.api.Trait
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.struct
 
@@ -22,10 +22,8 @@ object TestTrait extends ShapeTag.Companion[TestTrait] {
   }
   .withId(ShapeId("smithy4s.example", "testTrait"))
   .addHints(
-    Hints(
-      Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-    )
+    Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
   ))
 
-  val orderType = OrderType.schema.optional[TestTrait]("orderType", _.orderType, n => c => c.copy(orderType = n))
+  val orderType: FieldLens[TestTrait, Option[OrderType]] = OrderType.schema.optional[TestTrait]("orderType", _.orderType, n => c => c.copy(orderType = n))
 }

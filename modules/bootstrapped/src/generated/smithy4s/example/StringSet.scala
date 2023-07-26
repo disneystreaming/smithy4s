@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy.api.UniqueItems
-import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -13,9 +12,7 @@ object StringSet extends Newtype[Set[String]] {
   val underlyingSchema: Schema[Set[String]] = set(string)
   .withId(ShapeId("smithy4s.example", "StringSet"))
   .addHints(
-    Hints(
-      UniqueItems(),
-    )
+    UniqueItems(),
   )
 
   implicit val schema: Schema[StringSet] = bijection(underlyingSchema, asBijection)

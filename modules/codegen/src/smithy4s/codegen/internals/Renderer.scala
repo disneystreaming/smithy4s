@@ -665,20 +665,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map { case Field(fieldName, realName, tpe, required, hints) =>
+            fields.map { case field @ Field(fieldName, realName, tpe, required, hints) =>
               val req = if (required) "required" else "optional"
               val schema = if (hints.isEmpty) {
                 line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName, n => c => c.copy($fieldName = n))"""
               } else {
-                val memHints = memberHints(hints)
-                val addMemHints =
-                  if (memHints.nonEmpty) line".addHints($memHints)"
-                  else Line.empty
+                val addMemHints = renderAddHints(hints)
                 // format: off
                 line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName, n => c => c.copy($fieldName = n))$addMemHints"""
                 // format: on
               }
-              line"val ${NameDef(fieldName)} = $schema"
+              line"val ${NameDef(fieldName)}: $FieldLens_[${product.nameRef}, ${renderFieldType(field)}] = $schema"
             }
           val schema = if (fields.size <= 22) {
             val definition =
@@ -879,23 +876,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def smartConstructor(alt: Alt): Line = {
-      val cn = caseName(alt).name
-      val ident = NameDef(uncapitalise(alt.name))
-      val prefix = line"def $ident"
-      alt.member match {
-        case UnionMember.ProductCase(product) =>
-          val args = renderArgs(product.fields)
-          val values = product.fields.map(_.name).intercalate(", ")
-          line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
-        case UnionMember.UnitCase => line"$prefix(): $name = ${caseName(alt)}"
-        case UnionMember.TypeCase(tpe) =>
-          line"$prefix($ident:$tpe): $name = $cn($ident)"
-      }
-    }
-    val caseNames = alts.map(caseName)
-    val caseNamesAndIsUnit =
-      caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
+    // val caseNames = alts.map(caseName)
+    // val caseNamesAndIsUnit =
+    //   caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
     val mixinLines = mixins.map(m => line"$m")
     val mixinExtends = mixinLines.intercalate(line" with ")
@@ -913,17 +896,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       ),
       obj(name, line"${shapeTag(name)}")(
         alts.zipWithIndex.map {
-          case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
+          case (a @ Alt(_, _, UnionMember.UnitCase, altHints), index) =>
             val cn = caseName(a)
             // format: off
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case object $cn extends $name { final def _ordinal: Int = $index }",
-              smartConstructor(a),
-
-              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName")""",
-            ).appendToLast(renderAddHints(hints))
+              block(line"case object $cn extends $name")(
+                line"final def _ordinal: Int = $index",
+                Lines(line"""val schema = $Schema_.constant($cn)${renderConstraintValidation(altHints)}${renderAddHints(hints)}""")
+              ),
+            )
             // format: on
           case (
                 a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints),
@@ -933,17 +916,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def _ordinal: Int = $index }",
-              smartConstructor(a)
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def _ordinal: Int = $index }"
             )
           case (
-                Alt(_, realName, UnionMember.ProductCase(struct), altHints),
+                Alt(_, _, UnionMember.ProductCase(struct), altHints),
                 index
               ) =>
-            val additionalLines = lines(
-              newline,
-              line"""val alt = schema.oneOf[$name]("$realName")"""
-            )
             // In case of union members that are inline structs (as opposed to structs being referenced and wrapped by a new class),
             // we want to put a deprecation note (if it exists on the alt) on the struct - there's nowhere else to put it.
             renderProduct(
@@ -951,26 +929,26 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               // might need deduplication (although the Hints type will take care of it, just in case)
               struct.copy(hints = altHints ++ struct.hints),
               adtParent = Some(name),
-              additionalLines,
+              Lines.empty,
               classBody = Lines(line"def _ordinal: Int = $index")
             )
         },
         newline,
         alts.collect {
-          case a @ Alt(
-                altName,
-                realName,
-                UnionMember.TypeCase(tpe),
-                altHints
-              ) =>
+          case a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints) =>
             val cn = caseName(a)
             block(line"object $cn")(
-              // format: off
-              Lines(line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}").appendToLast(renderAddHints(altHints)),
-              line"${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
-              line"""val alt = schema.oneOf[$name]("$realName")""",
-              // format: on
+              // scalafmt: {maxColumn = 160}
+              line"implicit val fromValue: $Bijection_[$tpe, $cn] = $Bijection_($cn(_), _.${uncapitalise(altName)})",
+              line"implicit val toValue: $Bijection_[$cn, $tpe] = fromValue.swap",
+              line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}${renderConstraintValidation(altHints)}, fromValue)${renderAddHints(altHints)}"
             )
+        },
+        newline,
+        alts.map { case a @ Alt(altName, realName, _, _) =>
+          // scalafmt: {maxColumn = 120}
+          val cn = caseName(a)
+          Lines(line"""val ${NameDef(altName)} = $cn.schema.oneOf[$name]("$realName")""")
         },
         newline, {
           val union =
@@ -981,12 +959,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             else
               line"implicit val schema: $Schema_[$name] = $union_"
           union
-            .args {
-              caseNamesAndIsUnit.map {
-                case (caseName, false) => caseName + ".alt"
-                case (caseName, true)  => caseName + "Alt"
-              }
-            }
+            .args(alts.map(_.name))
             .block {
               line"_._ordinal"
             }
@@ -1157,12 +1130,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           if (valueHints.isEmpty) Line.empty
           else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
-      case Type.Alias(
-            ns,
-            name,
-            _,
-            false
-          ) =>
+      case Type.Alias(ns, name, _, false) =>
         NameRef(ns, s"$name.schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
@@ -1224,6 +1192,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case _              => None
   }
 
+  private def renderFieldType(field: Field): Line = {
+    import field.tpe
+    if (field.required) line"$tpe"
+    else line"$option[$tpe]"
+  }
+
   def renderId(shapeId: ShapeId): Line = {
     val ns = shapeId.getNamespace()
     val name = shapeId.getName()
@@ -1257,12 +1231,19 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   def renderIdAndHints(id: ShapeId, hints: List[Hint]): Lines =
     Lines(
       line".withId(${renderId(id)})"
-    ) ++ renderAddHints(hints)
+    ) ++ renderAddHintsMultiline(hints)
 
-  def renderAddHints(hints: List[Hint]): Lines =
-    Lines(
-      line".addHints("
-    ) ++ indent(renderHints(hints)) ++ Lines(")")
+  def renderAddHintsMultiline(hints: List[Hint]): Lines = {
+    if (hints.nonEmpty) {
+      line".addHints".args(hints.flatMap(renderHint))
+    } else Lines.empty
+  }
+
+  def renderAddHints(hints: List[Hint]): Line = {
+    if (hints.nonEmpty) {
+      line".addHints(${memberHints(hints)})"
+    } else Line.empty
+  }
 
   def memberHints(hints: List[Hint]): Line = {
     val h = hints.map(renderHint).collect { case Some(v) => v }
@@ -1349,12 +1330,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.Int        => t => line"${t.toString}"
       case Primitive.Short      => t => line"${t.toString}"
       case Primitive.Bool       => t => line"${t.toString}"
-      case Primitive.Uuid   => uuid => line"java.util.UUID.fromString($uuid)"
-      case Primitive.String => renderStringLiteral
-      case Primitive.Byte   => b => line"${b.toString}"
+      case Primitive.Uuid       => uuid => line"java.util.UUID.fromString($uuid)"
+      case Primitive.String     => renderStringLiteral
+      case Primitive.Byte       => b => line"${b.toString}"
       case Primitive.ByteArray =>
-        ba =>
-          line"${NameRef("smithy4s", "ByteArray")}(Array(${ba.mkString(", ")}))"
+        ba => line"${NameRef("smithy4s", "ByteArray")}(Array(${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
         ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>

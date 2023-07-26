@@ -1,6 +1,5 @@
 package smithy4s.example
 
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -11,7 +10,4 @@ object GetStreamedObjectOutput extends ShapeTag.Companion[GetStreamedObjectOutpu
 
   implicit val schema: Schema[GetStreamedObjectOutput] = constant(GetStreamedObjectOutput()).withId(ShapeId("smithy4s.example", "GetStreamedObjectOutput"))
   .withId(ShapeId("smithy4s.example", "GetStreamedObjectOutput"))
-  .addHints(
-    Hints.empty
-  )
 }

@@ -1,10 +1,10 @@
 package smithy4s.example
 
 import smithy4s.ByteArray
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.bytes
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.short
@@ -22,10 +22,10 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
   }
   object AdtOne extends ShapeTag.Companion[AdtOne] {
 
-    val lng = long.optional[AdtOne]("lng", _.lng, n => c => c.copy(lng = n))
-    val sht = short.optional[AdtOne]("sht", _.sht, n => c => c.copy(sht = n))
-    val blb = bytes.optional[AdtOne]("blb", _.blb, n => c => c.copy(blb = n))
-    val str = string.optional[AdtOne]("str", _.str, n => c => c.copy(str = n))
+    val lng: FieldLens[AdtOne, Option[Long]] = long.optional[AdtOne]("lng", _.lng, n => c => c.copy(lng = n))
+    val sht: FieldLens[AdtOne, Option[Short]] = short.optional[AdtOne]("sht", _.sht, n => c => c.copy(sht = n))
+    val blb: FieldLens[AdtOne, Option[ByteArray]] = bytes.optional[AdtOne]("blb", _.blb, n => c => c.copy(blb = n))
+    val str: FieldLens[AdtOne, Option[String]] = string.optional[AdtOne]("str", _.str, n => c => c.copy(str = n))
 
     val schema: Schema[AdtOne] = struct(
       lng,
@@ -36,20 +36,15 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       AdtOne.apply
     }
     .withId(ShapeId("smithy4s.example", "AdtOne"))
-    .addHints(
-      Hints.empty
-    )
-
-    val alt = schema.oneOf[TestAdt]("one")
   }
   final case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt {
     def _ordinal: Int = 1
   }
   object AdtTwo extends ShapeTag.Companion[AdtTwo] {
 
-    val lng = long.optional[AdtTwo]("lng", _.lng, n => c => c.copy(lng = n))
-    val sht = short.optional[AdtTwo]("sht", _.sht, n => c => c.copy(sht = n))
-    val int = smithy4s.schema.Schema.int.optional[AdtTwo]("int", _.int, n => c => c.copy(int = n))
+    val lng: FieldLens[AdtTwo, Option[Long]] = long.optional[AdtTwo]("lng", _.lng, n => c => c.copy(lng = n))
+    val sht: FieldLens[AdtTwo, Option[Short]] = short.optional[AdtTwo]("sht", _.sht, n => c => c.copy(sht = n))
+    val int: FieldLens[AdtTwo, Option[Int]] = smithy4s.schema.Schema.int.optional[AdtTwo]("int", _.int, n => c => c.copy(int = n))
 
     val schema: Schema[AdtTwo] = struct(
       lng,
@@ -59,22 +54,17 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
       AdtTwo.apply
     }
     .withId(ShapeId("smithy4s.example", "AdtTwo"))
-    .addHints(
-      Hints.empty
-    )
-
-    val alt = schema.oneOf[TestAdt]("two")
   }
 
 
+  val one = AdtOne.schema.oneOf[TestAdt]("one")
+  val two = AdtTwo.schema.oneOf[TestAdt]("two")
+
   implicit val schema: Schema[TestAdt] = union(
-    AdtOne.alt,
-    AdtTwo.alt,
+    one,
+    two,
   ){
     _._ordinal
   }
   .withId(ShapeId("smithy4s.example", "TestAdt"))
-  .addHints(
-    Hints.empty
-  )
 }

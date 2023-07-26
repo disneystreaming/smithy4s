@@ -45,6 +45,8 @@ abstract class Newtype[A] { self =>
     def from(t: Type): A = value(t)
   }
 
+  implicit val toValue: Bijection[Type, A] = asBijection.swap
+
   object hint {
     def unapply(h: Hints): Option[Type] = h.get(tag)
   }

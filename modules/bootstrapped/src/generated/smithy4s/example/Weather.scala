@@ -4,6 +4,7 @@ import smithy.api.Documentation
 import smithy.api.NonEmptyString
 import smithy.api.Paginated
 import smithy.api.Readonly
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -134,7 +135,7 @@ object WeatherOperation {
     override val errorable: Option[Errorable[GetCityError]] = Some(this)
     val error: UnionSchema[GetCityError] = GetCityError.schema
     def liftError(throwable: Throwable): Option[GetCityError] = throwable match {
-      case e: NoSuchResource => Some(GetCityError.NoSuchResourceCase(e))
+      case e: smithy4s.example.NoSuchResource => Some(GetCityError.NoSuchResourceCase(e))
       case _ => None
     }
     def unliftError(e: GetCityError): Throwable = e match {
@@ -146,20 +147,18 @@ object WeatherOperation {
     def _ordinal: Int
   }
   object GetCityError extends ShapeTag.Companion[GetCityError] {
-    final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }
-    def noSuchResource(noSuchResource:NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
+    final case class NoSuchResourceCase(noSuchResource: smithy4s.example.NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }
 
     object NoSuchResourceCase {
-      val schema: Schema[NoSuchResourceCase] = bijection(NoSuchResource.schema
-      .addHints(
-        Hints.empty
-      )
-      , NoSuchResourceCase(_), _.noSuchResource)
-      val alt = schema.oneOf[GetCityError]("NoSuchResource")
+      implicit val fromValue: Bijection[smithy4s.example.NoSuchResource, NoSuchResourceCase] = Bijection(NoSuchResourceCase(_), _.noSuchResource)
+      implicit val toValue: Bijection[NoSuchResourceCase, smithy4s.example.NoSuchResource] = fromValue.swap
+      val schema: Schema[NoSuchResourceCase] = bijection(smithy4s.example.NoSuchResource.schema, fromValue)
     }
 
+    val NoSuchResource = NoSuchResourceCase.schema.oneOf[GetCityError]("NoSuchResource")
+
     implicit val schema: UnionSchema[GetCityError] = union(
-      NoSuchResourceCase.alt,
+      NoSuchResource,
     ){
       _._ordinal
     }

@@ -20,11 +20,12 @@ package schema
 /**
   * Represents a member of product type (case class)
   */
-sealed abstract class Field[S, A] {
+sealed abstract class Field[S, A] extends smithy4s.optics.Getter[S, A] {
 
   val label: String
   val schema: Schema[A]
-  val get: S => A
+  val getF: S => A
+  final def get(s: S): A = getF(s)
 
   /**
     * Returns the hints that are only relative to the field
@@ -64,15 +65,24 @@ sealed abstract class Field[S, A] {
     Field.GetterField(label, schema.transformHintsTransitively(f), get)
 
   def contramap[S0](f: S0 => S): Field[S0, A] =
-    Field.GetterField(label, schema, get.compose(f))
+    Field.GetterField(label, schema, getF.compose(f))
 
   def addHints(newHints: Hint*): Field[S, A] =
     Field.GetterField(label, schema.addMemberHints(newHints: _*), get)
 }
 
-object Field {
+abstract class FieldLens[S, A]
+    extends Field[S, A]
+    with smithy4s.optics.Lens[S, A] {
 
-  type Lens[S, A] = Field[S, A] with smithy4s.optics.Lens[S, A]
+  val replaceF: A => (S => S)
+
+  override def addHints(newHints: Hint*): FieldLens[S, A] =
+    Field.LensField(label, schema.addMemberHints(newHints: _*), get, replaceF)
+
+}
+
+object Field {
 
   def apply[S, A](
       label: String,
@@ -86,7 +96,7 @@ object Field {
       schema: Schema[A],
       get: S => A,
       replace: A => (S => S)
-  ): Field.Lens[S, A] =
+  ): FieldLens[S, A] =
     LensField(label, schema, get, replace)
 
   def optional[S, A](
@@ -101,24 +111,22 @@ object Field {
       schema: Schema[A],
       get: S => Option[A],
       replace: Option[A] => (S => S)
-  ): Field.Lens[S, Option[A]] =
+  ): FieldLens[S, Option[A]] =
     LensField(label, schema.option, get, replace)
 
   private[schema] case class GetterField[S, A](
       label: String,
       schema: Schema[A],
-      get: S => A
+      getF: S => A
   ) extends Field[S, A]
 
-  private case class LensField[S, A](
+  private[schema] case class LensField[S, A](
       label: String,
       schema: Schema[A],
-      get: S => A,
-      replace: A => (S => S)
-  ) extends Field[S, A]
-      with smithy4s.optics.Lens[S, A] {
-    def get(s: S): A = get.apply(s)
-    def replace(a: A): S => S = replace.apply(a)
+      getF: S => A,
+      replaceF: A => (S => S)
+  ) extends FieldLens[S, A] {
+    final def replace(a: A): S => S = replaceF.apply(a)
   }
 
 }

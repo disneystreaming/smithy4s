@@ -1,9 +1,9 @@
 package smithy4s.example
 
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.struct
 
 /** @param foo
@@ -14,7 +14,7 @@ import smithy4s.schema.Schema.struct
 final case class GetFooOutput(foo: Option[Foo] = None)
 object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
 
-  val foo = Foo.schema.optional[GetFooOutput]("foo", _.foo, n => c => c.copy(foo = n))
+  val foo: FieldLens[GetFooOutput, Option[Foo]] = Foo.schema.optional[GetFooOutput]("foo", _.foo, n => c => c.copy(foo = n))
 
   implicit val schema: Schema[GetFooOutput] = struct(
     foo,
@@ -22,7 +22,5 @@ object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
     GetFooOutput.apply
   }
   .withId(ShapeId("smithy4s.example", "GetFooOutput"))
-  .addHints(
-    Hints.empty
-  )
+  .addHints()
 }

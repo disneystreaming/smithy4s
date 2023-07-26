@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy.api.Trait
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -13,8 +12,6 @@ object FancyListFormat extends ShapeTag.Companion[FancyListFormat] {
   implicit val schema: Schema[FancyListFormat] = constant(FancyListFormat()).withId(ShapeId("smithy4s.example", "fancyListFormat"))
   .withId(ShapeId("smithy4s.example", "fancyListFormat"))
   .addHints(
-    Hints(
-      Trait(selector = Some("list:test(> member > string)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
-    )
+    Trait(selector = Some("list:test(> member > string)"), structurallyExclusive = None, conflicts = None, breakingChanges = None),
   )
 }

@@ -4,6 +4,7 @@ import alloy.SimpleRestJson
 import smithy.api.Http
 import smithy.api.NonEmptyString
 import smithy.api.Tags
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -102,8 +103,8 @@ object HelloWorldServiceOperation {
     override val errorable: Option[Errorable[HelloError]] = Some(this)
     val error: UnionSchema[HelloError] = HelloError.schema
     def liftError(throwable: Throwable): Option[HelloError] = throwable match {
-      case e: GenericServerError => Some(HelloError.GenericServerErrorCase(e))
-      case e: SpecificServerError => Some(HelloError.SpecificServerErrorCase(e))
+      case e: smithy4s.example.hello.GenericServerError => Some(HelloError.GenericServerErrorCase(e))
+      case e: smithy4s.example.hello.SpecificServerError => Some(HelloError.SpecificServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: HelloError): Throwable = e match {
@@ -116,31 +117,26 @@ object HelloWorldServiceOperation {
     def _ordinal: Int
   }
   object HelloError extends ShapeTag.Companion[HelloError] {
-    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError { final def _ordinal: Int = 0 }
-    def genericServerError(genericServerError:GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
-    final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError { final def _ordinal: Int = 1 }
-    def specificServerError(specificServerError:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
+    final case class GenericServerErrorCase(genericServerError: smithy4s.example.hello.GenericServerError) extends HelloError { final def _ordinal: Int = 0 }
+    final case class SpecificServerErrorCase(specificServerError: smithy4s.example.hello.SpecificServerError) extends HelloError { final def _ordinal: Int = 1 }
 
     object GenericServerErrorCase {
-      val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , GenericServerErrorCase(_), _.genericServerError)
-      val alt = schema.oneOf[HelloError]("GenericServerError")
+      implicit val fromValue: Bijection[smithy4s.example.hello.GenericServerError, GenericServerErrorCase] = Bijection(GenericServerErrorCase(_), _.genericServerError)
+      implicit val toValue: Bijection[GenericServerErrorCase, smithy4s.example.hello.GenericServerError] = fromValue.swap
+      val schema: Schema[GenericServerErrorCase] = bijection(smithy4s.example.hello.GenericServerError.schema, fromValue)
     }
     object SpecificServerErrorCase {
-      val schema: Schema[SpecificServerErrorCase] = bijection(SpecificServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , SpecificServerErrorCase(_), _.specificServerError)
-      val alt = schema.oneOf[HelloError]("SpecificServerError")
+      implicit val fromValue: Bijection[smithy4s.example.hello.SpecificServerError, SpecificServerErrorCase] = Bijection(SpecificServerErrorCase(_), _.specificServerError)
+      implicit val toValue: Bijection[SpecificServerErrorCase, smithy4s.example.hello.SpecificServerError] = fromValue.swap
+      val schema: Schema[SpecificServerErrorCase] = bijection(smithy4s.example.hello.SpecificServerError.schema, fromValue)
     }
 
+    val GenericServerError = GenericServerErrorCase.schema.oneOf[HelloError]("GenericServerError")
+    val SpecificServerError = SpecificServerErrorCase.schema.oneOf[HelloError]("SpecificServerError")
+
     implicit val schema: UnionSchema[HelloError] = union(
-      GenericServerErrorCase.alt,
-      SpecificServerErrorCase.alt,
+      GenericServerError,
+      SpecificServerError,
     ){
       _._ordinal
     }

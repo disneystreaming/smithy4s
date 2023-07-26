@@ -1,10 +1,10 @@
 package smithy4s.example
 
 import smithy.api.Required
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.recursive
 import smithy4s.schema.Schema.struct
@@ -18,11 +18,8 @@ object IntList extends ShapeTag.Companion[IntList] {
   ){
     IntList.apply
   }
-  .withId(ShapeId("smithy4s.example", "IntList"))
-  .addHints(
-    Hints.empty
-  ))
+  .withId(ShapeId("smithy4s.example", "IntList")))
 
-  val head = int.required[IntList]("head", _.head, n => c => c.copy(head = n)).addHints(Required())
-  val tail = smithy4s.example.IntList.schema.optional[IntList]("tail", _.tail, n => c => c.copy(tail = n))
+  val head: FieldLens[IntList, Int] = int.required[IntList]("head", _.head, n => c => c.copy(head = n)).addHints(Required())
+  val tail: FieldLens[IntList, Option[smithy4s.example.IntList]] = smithy4s.example.IntList.schema.optional[IntList]("tail", _.tail, n => c => c.copy(tail = n))
 }

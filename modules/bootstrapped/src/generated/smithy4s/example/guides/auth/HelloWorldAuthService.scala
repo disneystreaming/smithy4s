@@ -6,6 +6,7 @@ import smithy.api.Http
 import smithy.api.HttpBearerAuth
 import smithy.api.NonEmptyString
 import smithy.api.Readonly
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -112,7 +113,7 @@ object HelloWorldAuthServiceOperation {
     override val errorable: Option[Errorable[SayWorldError]] = Some(this)
     val error: UnionSchema[SayWorldError] = SayWorldError.schema
     def liftError(throwable: Throwable): Option[SayWorldError] = throwable match {
-      case e: NotAuthorizedError => Some(SayWorldError.NotAuthorizedErrorCase(e))
+      case e: smithy4s.example.guides.auth.NotAuthorizedError => Some(SayWorldError.NotAuthorizedErrorCase(e))
       case _ => None
     }
     def unliftError(e: SayWorldError): Throwable = e match {
@@ -124,20 +125,18 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
-    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def _ordinal: Int = 0 }
-    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
+    final case class NotAuthorizedErrorCase(notAuthorizedError: smithy4s.example.guides.auth.NotAuthorizedError) extends SayWorldError { final def _ordinal: Int = 0 }
 
     object NotAuthorizedErrorCase {
-      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema
-      .addHints(
-        Hints.empty
-      )
-      , NotAuthorizedErrorCase(_), _.notAuthorizedError)
-      val alt = schema.oneOf[SayWorldError]("NotAuthorizedError")
+      implicit val fromValue: Bijection[smithy4s.example.guides.auth.NotAuthorizedError, NotAuthorizedErrorCase] = Bijection(NotAuthorizedErrorCase(_), _.notAuthorizedError)
+      implicit val toValue: Bijection[NotAuthorizedErrorCase, smithy4s.example.guides.auth.NotAuthorizedError] = fromValue.swap
+      val schema: Schema[NotAuthorizedErrorCase] = bijection(smithy4s.example.guides.auth.NotAuthorizedError.schema, fromValue)
     }
 
+    val NotAuthorizedError = NotAuthorizedErrorCase.schema.oneOf[SayWorldError]("NotAuthorizedError")
+
     implicit val schema: UnionSchema[SayWorldError] = union(
-      NotAuthorizedErrorCase.alt,
+      NotAuthorizedError,
     ){
       _._ordinal
     }
@@ -165,7 +164,7 @@ object HelloWorldAuthServiceOperation {
     override val errorable: Option[Errorable[HealthCheckError]] = Some(this)
     val error: UnionSchema[HealthCheckError] = HealthCheckError.schema
     def liftError(throwable: Throwable): Option[HealthCheckError] = throwable match {
-      case e: NotAuthorizedError => Some(HealthCheckError.NotAuthorizedErrorCase(e))
+      case e: smithy4s.example.guides.auth.NotAuthorizedError => Some(HealthCheckError.NotAuthorizedErrorCase(e))
       case _ => None
     }
     def unliftError(e: HealthCheckError): Throwable = e match {
@@ -177,20 +176,18 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
-    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def _ordinal: Int = 0 }
-    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
+    final case class NotAuthorizedErrorCase(notAuthorizedError: smithy4s.example.guides.auth.NotAuthorizedError) extends HealthCheckError { final def _ordinal: Int = 0 }
 
     object NotAuthorizedErrorCase {
-      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema
-      .addHints(
-        Hints.empty
-      )
-      , NotAuthorizedErrorCase(_), _.notAuthorizedError)
-      val alt = schema.oneOf[HealthCheckError]("NotAuthorizedError")
+      implicit val fromValue: Bijection[smithy4s.example.guides.auth.NotAuthorizedError, NotAuthorizedErrorCase] = Bijection(NotAuthorizedErrorCase(_), _.notAuthorizedError)
+      implicit val toValue: Bijection[NotAuthorizedErrorCase, smithy4s.example.guides.auth.NotAuthorizedError] = fromValue.swap
+      val schema: Schema[NotAuthorizedErrorCase] = bijection(smithy4s.example.guides.auth.NotAuthorizedError.schema, fromValue)
     }
 
+    val NotAuthorizedError = NotAuthorizedErrorCase.schema.oneOf[HealthCheckError]("NotAuthorizedError")
+
     implicit val schema: UnionSchema[HealthCheckError] = union(
-      NotAuthorizedErrorCase.alt,
+      NotAuthorizedError,
     ){
       _._ordinal
     }

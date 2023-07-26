@@ -3,6 +3,7 @@ package smithy4s.example.imp
 import alloy.SimpleRestJson
 import smithy.api.Http
 import smithy.api.NonEmptyString
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -12,7 +13,6 @@ import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.StreamingSchema
 import smithy4s.Transformation
-import smithy4s.example.error.NotFoundError
 import smithy4s.example.import_test.OpOutput
 import smithy4s.kinds.PolyFunction5
 import smithy4s.kinds.toPolyFunction5.const5
@@ -103,7 +103,7 @@ object ImportServiceOperation {
     override val errorable: Option[Errorable[ImportOperationError]] = Some(this)
     val error: UnionSchema[ImportOperationError] = ImportOperationError.schema
     def liftError(throwable: Throwable): Option[ImportOperationError] = throwable match {
-      case e: NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
+      case e: smithy4s.example.error.NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
       case _ => None
     }
     def unliftError(e: ImportOperationError): Throwable = e match {
@@ -115,20 +115,18 @@ object ImportServiceOperation {
     def _ordinal: Int
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
-    def notFoundError(notFoundError:NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
+    final case class NotFoundErrorCase(notFoundError: smithy4s.example.error.NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
 
     object NotFoundErrorCase {
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema
-      .addHints(
-        Hints.empty
-      )
-      , NotFoundErrorCase(_), _.notFoundError)
-      val alt = schema.oneOf[ImportOperationError]("NotFoundError")
+      implicit val fromValue: Bijection[smithy4s.example.error.NotFoundError, NotFoundErrorCase] = Bijection(NotFoundErrorCase(_), _.notFoundError)
+      implicit val toValue: Bijection[NotFoundErrorCase, smithy4s.example.error.NotFoundError] = fromValue.swap
+      val schema: Schema[NotFoundErrorCase] = bijection(smithy4s.example.error.NotFoundError.schema, fromValue)
     }
 
+    val NotFoundError = NotFoundErrorCase.schema.oneOf[ImportOperationError]("NotFoundError")
+
     implicit val schema: UnionSchema[ImportOperationError] = union(
-      NotFoundErrorCase.alt,
+      NotFoundError,
     ){
       _._ordinal
     }

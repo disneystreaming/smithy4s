@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.Hints
+import smithy4s.Bijection
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -13,35 +13,27 @@ sealed trait Food extends scala.Product with scala.Serializable {
 }
 object Food extends ShapeTag.Companion[Food] {
   final case class PizzaCase(pizza: Pizza) extends Food { final def _ordinal: Int = 0 }
-  def pizza(pizza:Pizza): Food = PizzaCase(pizza)
   final case class SaladCase(salad: Salad) extends Food { final def _ordinal: Int = 1 }
-  def salad(salad:Salad): Food = SaladCase(salad)
 
   object PizzaCase {
-    val schema: Schema[PizzaCase] = bijection(Pizza.schema
-    .addHints(
-      Hints.empty
-    )
-    , PizzaCase(_), _.pizza)
-    val alt = schema.oneOf[Food]("pizza")
+    implicit val fromValue: Bijection[Pizza, PizzaCase] = Bijection(PizzaCase(_), _.pizza)
+    implicit val toValue: Bijection[PizzaCase, Pizza] = fromValue.swap
+    val schema: Schema[PizzaCase] = bijection(Pizza.schema, fromValue)
   }
   object SaladCase {
-    val schema: Schema[SaladCase] = bijection(Salad.schema
-    .addHints(
-      Hints.empty
-    )
-    , SaladCase(_), _.salad)
-    val alt = schema.oneOf[Food]("salad")
+    implicit val fromValue: Bijection[Salad, SaladCase] = Bijection(SaladCase(_), _.salad)
+    implicit val toValue: Bijection[SaladCase, Salad] = fromValue.swap
+    val schema: Schema[SaladCase] = bijection(Salad.schema, fromValue)
   }
 
+  val pizza = PizzaCase.schema.oneOf[Food]("pizza")
+  val salad = SaladCase.schema.oneOf[Food]("salad")
+
   implicit val schema: Schema[Food] = union(
-    PizzaCase.alt,
-    SaladCase.alt,
+    pizza,
+    salad,
   ){
     _._ordinal
   }
   .withId(ShapeId("smithy4s.example", "Food"))
-  .addHints(
-    Hints.empty
-  )
 }

@@ -34,9 +34,7 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
   implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "EnumWithDeprecations"))
   .addHints(
-    Hints(
-      Documentation("some docs here"),
-      Deprecated(message = None, since = None),
-    )
+    Documentation("some docs here"),
+    Deprecated(message = None, since = None),
   )
 }

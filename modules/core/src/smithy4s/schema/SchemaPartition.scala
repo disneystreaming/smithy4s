@@ -161,7 +161,7 @@ object SchemaPartition {
         // The payload field is the only field and we can create a total
         // match from it, by bijecting from its result onto the structure
         val to = (a: A) => make(IndexedSeq(a))
-        val from = field.get
+        val from = field.getF
         SchemaPartition.TotalMatch(field.schema.biject(to, from))
 
       case Some(notMachingSchema) =>

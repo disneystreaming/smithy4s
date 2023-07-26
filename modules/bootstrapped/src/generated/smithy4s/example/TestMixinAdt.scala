@@ -1,9 +1,9 @@
 package smithy4s.example
 
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -19,8 +19,8 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   }
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
 
-    val a = string.optional[TestAdtMemberWithMixin]("a", _.a, n => c => c.copy(a = n))
-    val b = int.optional[TestAdtMemberWithMixin]("b", _.b, n => c => c.copy(b = n))
+    val a: FieldLens[TestAdtMemberWithMixin, Option[String]] = string.optional[TestAdtMemberWithMixin]("a", _.a, n => c => c.copy(a = n))
+    val b: FieldLens[TestAdtMemberWithMixin, Option[Int]] = int.optional[TestAdtMemberWithMixin]("b", _.b, n => c => c.copy(b = n))
 
     val schema: Schema[TestAdtMemberWithMixin] = struct(
       a,
@@ -29,21 +29,15 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
       TestAdtMemberWithMixin.apply
     }
     .withId(ShapeId("smithy4s.example", "TestAdtMemberWithMixin"))
-    .addHints(
-      Hints.empty
-    )
-
-    val alt = schema.oneOf[TestMixinAdt]("test")
   }
 
 
+  val test = TestAdtMemberWithMixin.schema.oneOf[TestMixinAdt]("test")
+
   implicit val schema: Schema[TestMixinAdt] = union(
-    TestAdtMemberWithMixin.alt,
+    test,
   ){
     _._ordinal
   }
   .withId(ShapeId("smithy4s.example", "TestMixinAdt"))
-  .addHints(
-    Hints.empty
-  )
 }

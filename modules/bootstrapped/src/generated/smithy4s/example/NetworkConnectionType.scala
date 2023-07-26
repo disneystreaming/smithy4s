@@ -30,9 +30,7 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
   implicit val schema: Schema[NetworkConnectionType] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "NetworkConnectionType"))
   .addHints(
-    Hints(
-      smithy4s.example.Hash(),
-    )
+    smithy4s.example.Hash(),
   )
 
   implicit val networkConnectionTypeHash: cats.Hash[NetworkConnectionType] = SchemaVisitorHash.fromSchema(schema)

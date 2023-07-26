@@ -11,6 +11,7 @@ import smithy.api.NonEmptyString
 import smithy.api.Paginated
 import smithy.api.Title
 import smithy.api.XmlNamespace
+import smithy4s.Bijection
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -166,8 +167,8 @@ object DynamoDBOperation {
     override val errorable: Option[Errorable[ListTablesError]] = Some(this)
     val error: UnionSchema[ListTablesError] = ListTablesError.schema
     def liftError(throwable: Throwable): Option[ListTablesError] = throwable match {
-      case e: InternalServerError => Some(ListTablesError.InternalServerErrorCase(e))
-      case e: InvalidEndpointException => Some(ListTablesError.InvalidEndpointExceptionCase(e))
+      case e: com.amazonaws.dynamodb.InternalServerError => Some(ListTablesError.InternalServerErrorCase(e))
+      case e: com.amazonaws.dynamodb.InvalidEndpointException => Some(ListTablesError.InvalidEndpointExceptionCase(e))
       case _ => None
     }
     def unliftError(e: ListTablesError): Throwable = e match {
@@ -180,31 +181,26 @@ object DynamoDBOperation {
     def _ordinal: Int
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
-    final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
-    def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
-    final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
-    def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
+    final case class InternalServerErrorCase(internalServerError: com.amazonaws.dynamodb.InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
+    final case class InvalidEndpointExceptionCase(invalidEndpointException: com.amazonaws.dynamodb.InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
 
     object InternalServerErrorCase {
-      val schema: Schema[InternalServerErrorCase] = bijection(InternalServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , InternalServerErrorCase(_), _.internalServerError)
-      val alt = schema.oneOf[ListTablesError]("InternalServerError")
+      implicit val fromValue: Bijection[com.amazonaws.dynamodb.InternalServerError, InternalServerErrorCase] = Bijection(InternalServerErrorCase(_), _.internalServerError)
+      implicit val toValue: Bijection[InternalServerErrorCase, com.amazonaws.dynamodb.InternalServerError] = fromValue.swap
+      val schema: Schema[InternalServerErrorCase] = bijection(com.amazonaws.dynamodb.InternalServerError.schema, fromValue)
     }
     object InvalidEndpointExceptionCase {
-      val schema: Schema[InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema
-      .addHints(
-        Hints.empty
-      )
-      , InvalidEndpointExceptionCase(_), _.invalidEndpointException)
-      val alt = schema.oneOf[ListTablesError]("InvalidEndpointException")
+      implicit val fromValue: Bijection[com.amazonaws.dynamodb.InvalidEndpointException, InvalidEndpointExceptionCase] = Bijection(InvalidEndpointExceptionCase(_), _.invalidEndpointException)
+      implicit val toValue: Bijection[InvalidEndpointExceptionCase, com.amazonaws.dynamodb.InvalidEndpointException] = fromValue.swap
+      val schema: Schema[InvalidEndpointExceptionCase] = bijection(com.amazonaws.dynamodb.InvalidEndpointException.schema, fromValue)
     }
 
+    val InternalServerError = InternalServerErrorCase.schema.oneOf[ListTablesError]("InternalServerError")
+    val InvalidEndpointException = InvalidEndpointExceptionCase.schema.oneOf[ListTablesError]("InvalidEndpointException")
+
     implicit val schema: UnionSchema[ListTablesError] = union(
-      InternalServerErrorCase.alt,
-      InvalidEndpointExceptionCase.alt,
+      InternalServerError,
+      InvalidEndpointException,
     ){
       _._ordinal
     }

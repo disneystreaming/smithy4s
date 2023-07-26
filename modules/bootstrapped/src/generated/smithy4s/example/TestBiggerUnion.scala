@@ -1,7 +1,7 @@
 package smithy4s.example
 
 import alloy.Discriminated
-import smithy4s.Hints
+import smithy4s.Bijection
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -14,37 +14,30 @@ sealed trait TestBiggerUnion extends scala.Product with scala.Serializable {
 }
 object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
   final case class OneCase(one: One) extends TestBiggerUnion { final def _ordinal: Int = 0 }
-  def one(one:One): TestBiggerUnion = OneCase(one)
   final case class TwoCase(two: Two) extends TestBiggerUnion { final def _ordinal: Int = 1 }
-  def two(two:Two): TestBiggerUnion = TwoCase(two)
 
   object OneCase {
-    val schema: Schema[OneCase] = bijection(One.schema
-    .addHints(
-      Hints.empty
-    )
-    , OneCase(_), _.one)
-    val alt = schema.oneOf[TestBiggerUnion]("one")
+    implicit val fromValue: Bijection[One, OneCase] = Bijection(OneCase(_), _.one)
+    implicit val toValue: Bijection[OneCase, One] = fromValue.swap
+    val schema: Schema[OneCase] = bijection(One.schema, fromValue)
   }
   object TwoCase {
-    val schema: Schema[TwoCase] = bijection(Two.schema
-    .addHints(
-      Hints.empty
-    )
-    , TwoCase(_), _.two)
-    val alt = schema.oneOf[TestBiggerUnion]("two")
+    implicit val fromValue: Bijection[Two, TwoCase] = Bijection(TwoCase(_), _.two)
+    implicit val toValue: Bijection[TwoCase, Two] = fromValue.swap
+    val schema: Schema[TwoCase] = bijection(Two.schema, fromValue)
   }
 
+  val one = OneCase.schema.oneOf[TestBiggerUnion]("one")
+  val two = TwoCase.schema.oneOf[TestBiggerUnion]("two")
+
   implicit val schema: Schema[TestBiggerUnion] = union(
-    OneCase.alt,
-    TwoCase.alt,
+    one,
+    two,
   ){
     _._ordinal
   }
   .withId(ShapeId("smithy4s.example", "TestBiggerUnion"))
   .addHints(
-    Hints(
-      Discriminated("tpe"),
-    )
+    Discriminated("tpe"),
   )
 }

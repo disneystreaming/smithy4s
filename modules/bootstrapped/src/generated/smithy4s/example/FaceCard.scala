@@ -37,8 +37,6 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
   implicit val schema: Schema[FaceCard] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "FaceCard"))
   .addHints(
-    Hints(
-      Documentation("FaceCard types"),
-    )
+    Documentation("FaceCard types"),
   )
 }

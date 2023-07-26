@@ -1,6 +1,5 @@
 package com.amazonaws.dynamodb
 
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -11,7 +10,4 @@ object DescribeEndpointsRequest extends ShapeTag.Companion[DescribeEndpointsRequ
 
   implicit val schema: Schema[DescribeEndpointsRequest] = constant(DescribeEndpointsRequest()).withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsRequest"))
   .withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsRequest"))
-  .addHints(
-    Hints.empty
-  )
 }

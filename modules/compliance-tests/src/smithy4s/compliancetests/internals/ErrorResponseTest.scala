@@ -79,7 +79,7 @@ private[compliancetests] object ErrorResponseTest {
     ErrorResponseTest(
       errorAlt.schema,
       errorAlt.inject,
-      errorAlt.project.lift,
+      errorAlt.project,
       errorable
     )
 }

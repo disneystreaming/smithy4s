@@ -2,17 +2,17 @@ package smithy4s.example.greet
 
 import smithy.api.Input
 import smithy.api.Required
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
 final case class GreetInput(name: String)
 object GreetInput extends ShapeTag.Companion[GreetInput] {
 
-  val name = string.required[GreetInput]("name", _.name, n => c => c.copy(name = n)).addHints(Required())
+  val name: FieldLens[GreetInput, String] = string.required[GreetInput]("name", _.name, n => c => c.copy(name = n)).addHints(Required())
 
   implicit val schema: Schema[GreetInput] = struct(
     name,
@@ -21,8 +21,6 @@ object GreetInput extends ShapeTag.Companion[GreetInput] {
   }
   .withId(ShapeId("smithy4s.example.greet", "GreetInput"))
   .addHints(
-    Hints(
-      Input(),
-    )
+    Input(),
   )
 }

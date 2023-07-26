@@ -28,7 +28,4 @@ object OpticsEnum extends Enumeration[OpticsEnum] with ShapeTag.Companion[Optics
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[OpticsEnum] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "OpticsEnum"))
-  .addHints(
-    Hints.empty
-  )
 }

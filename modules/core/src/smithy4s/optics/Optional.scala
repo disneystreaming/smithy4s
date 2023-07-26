@@ -49,8 +49,8 @@ trait Optional[S, A] { self =>
         self.modify(that.replace(a))
     }
 
-  /** 
-   * Allows abstracting over an optional target by pointing to 
+  /**
+   * Allows abstracting over an optional target by pointing to
    * the inside of the optional value (the value inside of the [[Some]]).
    */
   def some[A0](implicit
@@ -70,9 +70,9 @@ trait Optional[S, A] { self =>
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
    * or other type with an implicit [[Bijection]] available.
    */
-  def value[A0](implicit bijection: Bijection[A0, A]): Optional[S, A0] =
+  def value[A0](implicit bijection: Bijection[A, A0]): Optional[S, A0] =
     new Optional[S, A0] {
-      def project(s: S): Option[A0] = self.project(s).map(bijection.from(_))
-      def replace(a: A0): S => S = self.replace(bijection.to(a))
+      def project(s: S): Option[A0] = self.project(s).map(bijection.to(_))
+      def replace(a: A0): S => S = self.replace(bijection.from(a))
     }
 }

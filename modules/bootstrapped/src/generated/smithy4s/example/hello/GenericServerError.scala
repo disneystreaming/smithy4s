@@ -2,10 +2,10 @@ package smithy4s.example.hello
 
 import smithy.api.Error
 import smithy.api.HttpError
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -14,7 +14,7 @@ final case class GenericServerError(message: Option[String] = None) extends Thro
 }
 object GenericServerError extends ShapeTag.Companion[GenericServerError] {
 
-  val message = string.optional[GenericServerError]("message", _.message, n => c => c.copy(message = n))
+  val message: FieldLens[GenericServerError, Option[String]] = string.optional[GenericServerError]("message", _.message, n => c => c.copy(message = n))
 
   implicit val schema: Schema[GenericServerError] = struct(
     message,
@@ -23,9 +23,7 @@ object GenericServerError extends ShapeTag.Companion[GenericServerError] {
   }
   .withId(ShapeId("smithy4s.example.hello", "GenericServerError"))
   .addHints(
-    Hints(
-      Error.SERVER.widen,
-      HttpError(500),
-    )
+    Error.SERVER.widen,
+    HttpError(500),
   )
 }

@@ -28,7 +28,4 @@ object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[TheEnum] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "TheEnum"))
-  .addHints(
-    Hints.empty
-  )
 }

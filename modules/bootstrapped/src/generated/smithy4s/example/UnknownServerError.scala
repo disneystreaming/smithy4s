@@ -3,10 +3,10 @@ package smithy4s.example
 import smithy.api.Error
 import smithy.api.HttpError
 import smithy.api.Required
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -14,9 +14,9 @@ final case class UnknownServerError(errorCode: UnknownServerErrorCode, descripti
 }
 object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
 
-  val errorCode = UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode, n => c => c.copy(errorCode = n)).addHints(Required())
-  val description = string.optional[UnknownServerError]("description", _.description, n => c => c.copy(description = n))
-  val stateHash = string.optional[UnknownServerError]("stateHash", _.stateHash, n => c => c.copy(stateHash = n))
+  val errorCode: FieldLens[UnknownServerError, UnknownServerErrorCode] = UnknownServerErrorCode.schema.required[UnknownServerError]("errorCode", _.errorCode, n => c => c.copy(errorCode = n)).addHints(Required())
+  val description: FieldLens[UnknownServerError, Option[String]] = string.optional[UnknownServerError]("description", _.description, n => c => c.copy(description = n))
+  val stateHash: FieldLens[UnknownServerError, Option[String]] = string.optional[UnknownServerError]("stateHash", _.stateHash, n => c => c.copy(stateHash = n))
 
   implicit val schema: Schema[UnknownServerError] = struct(
     errorCode,
@@ -27,9 +27,7 @@ object UnknownServerError extends ShapeTag.Companion[UnknownServerError] {
   }
   .withId(ShapeId("smithy4s.example", "UnknownServerError"))
   .addHints(
-    Hints(
-      Error.SERVER.widen,
-      HttpError(500),
-    )
+    Error.SERVER.widen,
+    HttpError(500),
   )
 }

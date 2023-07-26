@@ -30,7 +30,4 @@ object EnumWithSymbols extends Enumeration[EnumWithSymbols] with ShapeTag.Compan
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[EnumWithSymbols] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "EnumWithSymbols"))
-  .addHints(
-    Hints.empty
-  )
 }

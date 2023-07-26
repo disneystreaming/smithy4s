@@ -113,7 +113,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
         // `U` is not necessarily an `A, so this function returns an `Option`
         val eqA = instance.compile(self)
         new AltEq[A] {
-          def eqv(a: A, u: U): Boolean = altA.project.lift(u) match {
+          def eqv(a: A, u: U): Boolean = altA.project(u) match {
             case None => false // U is not an A.
             case Some(a2) =>
               eqA.eqv(a, a2) // U is an A, we delegate the comparison

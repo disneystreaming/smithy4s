@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Bijection
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
@@ -110,19 +111,17 @@ object NameCollisionOperation {
   }
   object MyOpError extends ShapeTag.Companion[MyOpError] {
     final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def _ordinal: Int = 0 }
-    def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
 
     object MyOpErrorCase {
-      val schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema
-      .addHints(
-        Hints.empty
-      )
-      , MyOpErrorCase(_), _.myOpError)
-      val alt = schema.oneOf[MyOpError]("MyOpError")
+      implicit val fromValue: Bijection[smithy4s.example.MyOpError, MyOpErrorCase] = Bijection(MyOpErrorCase(_), _.myOpError)
+      implicit val toValue: Bijection[MyOpErrorCase, smithy4s.example.MyOpError] = fromValue.swap
+      val schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema, fromValue)
     }
 
+    val MyOpError = MyOpErrorCase.schema.oneOf[MyOpError]("MyOpError")
+
     implicit val schema: UnionSchema[MyOpError] = union(
-      MyOpErrorCase.alt,
+      MyOpError,
     ){
       _._ordinal
     }

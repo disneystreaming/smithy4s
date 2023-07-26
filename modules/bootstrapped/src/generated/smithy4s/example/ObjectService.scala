@@ -5,6 +5,7 @@ import smithy.api.Http
 import smithy.api.Idempotent
 import smithy.api.NonEmptyString
 import smithy.api.Readonly
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -116,8 +117,8 @@ object ObjectServiceOperation {
     override val errorable: Option[Errorable[PutObjectError]] = Some(this)
     val error: UnionSchema[PutObjectError] = PutObjectError.schema
     def liftError(throwable: Throwable): Option[PutObjectError] = throwable match {
-      case e: ServerError => Some(PutObjectError.ServerErrorCase(e))
-      case e: NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
+      case e: smithy4s.example.ServerError => Some(PutObjectError.ServerErrorCase(e))
+      case e: smithy4s.example.NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
       case _ => None
     }
     def unliftError(e: PutObjectError): Throwable = e match {
@@ -130,31 +131,26 @@ object ObjectServiceOperation {
     def _ordinal: Int
   }
   object PutObjectError extends ShapeTag.Companion[PutObjectError] {
-    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def _ordinal: Int = 0 }
-    def serverError(serverError:ServerError): PutObjectError = ServerErrorCase(serverError)
-    final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError { final def _ordinal: Int = 1 }
-    def noMoreSpace(noMoreSpace:NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
+    final case class ServerErrorCase(serverError: smithy4s.example.ServerError) extends PutObjectError { final def _ordinal: Int = 0 }
+    final case class NoMoreSpaceCase(noMoreSpace: smithy4s.example.NoMoreSpace) extends PutObjectError { final def _ordinal: Int = 1 }
 
     object ServerErrorCase {
-      val schema: Schema[ServerErrorCase] = bijection(ServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , ServerErrorCase(_), _.serverError)
-      val alt = schema.oneOf[PutObjectError]("ServerError")
+      implicit val fromValue: Bijection[smithy4s.example.ServerError, ServerErrorCase] = Bijection(ServerErrorCase(_), _.serverError)
+      implicit val toValue: Bijection[ServerErrorCase, smithy4s.example.ServerError] = fromValue.swap
+      val schema: Schema[ServerErrorCase] = bijection(smithy4s.example.ServerError.schema, fromValue)
     }
     object NoMoreSpaceCase {
-      val schema: Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema
-      .addHints(
-        Hints.empty
-      )
-      , NoMoreSpaceCase(_), _.noMoreSpace)
-      val alt = schema.oneOf[PutObjectError]("NoMoreSpace")
+      implicit val fromValue: Bijection[smithy4s.example.NoMoreSpace, NoMoreSpaceCase] = Bijection(NoMoreSpaceCase(_), _.noMoreSpace)
+      implicit val toValue: Bijection[NoMoreSpaceCase, smithy4s.example.NoMoreSpace] = fromValue.swap
+      val schema: Schema[NoMoreSpaceCase] = bijection(smithy4s.example.NoMoreSpace.schema, fromValue)
     }
 
+    val ServerError = ServerErrorCase.schema.oneOf[PutObjectError]("ServerError")
+    val NoMoreSpace = NoMoreSpaceCase.schema.oneOf[PutObjectError]("NoMoreSpace")
+
     implicit val schema: UnionSchema[PutObjectError] = union(
-      ServerErrorCase.alt,
-      NoMoreSpaceCase.alt,
+      ServerError,
+      NoMoreSpace,
     ){
       _._ordinal
     }
@@ -180,7 +176,7 @@ object ObjectServiceOperation {
     override val errorable: Option[Errorable[GetObjectError]] = Some(this)
     val error: UnionSchema[GetObjectError] = GetObjectError.schema
     def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
-      case e: ServerError => Some(GetObjectError.ServerErrorCase(e))
+      case e: smithy4s.example.ServerError => Some(GetObjectError.ServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetObjectError): Throwable = e match {
@@ -192,20 +188,18 @@ object ObjectServiceOperation {
     def _ordinal: Int
   }
   object GetObjectError extends ShapeTag.Companion[GetObjectError] {
-    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def _ordinal: Int = 0 }
-    def serverError(serverError:ServerError): GetObjectError = ServerErrorCase(serverError)
+    final case class ServerErrorCase(serverError: smithy4s.example.ServerError) extends GetObjectError { final def _ordinal: Int = 0 }
 
     object ServerErrorCase {
-      val schema: Schema[ServerErrorCase] = bijection(ServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , ServerErrorCase(_), _.serverError)
-      val alt = schema.oneOf[GetObjectError]("ServerError")
+      implicit val fromValue: Bijection[smithy4s.example.ServerError, ServerErrorCase] = Bijection(ServerErrorCase(_), _.serverError)
+      implicit val toValue: Bijection[ServerErrorCase, smithy4s.example.ServerError] = fromValue.swap
+      val schema: Schema[ServerErrorCase] = bijection(smithy4s.example.ServerError.schema, fromValue)
     }
 
+    val ServerError = ServerErrorCase.schema.oneOf[GetObjectError]("ServerError")
+
     implicit val schema: UnionSchema[GetObjectError] = union(
-      ServerErrorCase.alt,
+      ServerError,
     ){
       _._ordinal
     }

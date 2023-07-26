@@ -28,7 +28,4 @@ object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumRe
   val tag: EnumTag = EnumTag.IntEnum
   implicit val schema: Schema[EnumResult] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "EnumResult"))
-  .addHints(
-    Hints.empty
-  )
 }

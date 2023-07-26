@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -92,10 +93,10 @@ object ErrorHandlingServiceOperation {
     override val errorable: Option[Errorable[ErrorHandlingOperationError]] = Some(this)
     val error: UnionSchema[ErrorHandlingOperationError] = ErrorHandlingOperationError.schema
     def liftError(throwable: Throwable): Option[ErrorHandlingOperationError] = throwable match {
-      case e: EHFallbackClientError => Some(ErrorHandlingOperationError.EHFallbackClientErrorCase(e))
-      case e: EHServiceUnavailable => Some(ErrorHandlingOperationError.EHServiceUnavailableCase(e))
-      case e: EHNotFound => Some(ErrorHandlingOperationError.EHNotFoundCase(e))
-      case e: EHFallbackServerError => Some(ErrorHandlingOperationError.EHFallbackServerErrorCase(e))
+      case e: smithy4s.example.EHFallbackClientError => Some(ErrorHandlingOperationError.EHFallbackClientErrorCase(e))
+      case e: smithy4s.example.EHServiceUnavailable => Some(ErrorHandlingOperationError.EHServiceUnavailableCase(e))
+      case e: smithy4s.example.EHNotFound => Some(ErrorHandlingOperationError.EHNotFoundCase(e))
+      case e: smithy4s.example.EHFallbackServerError => Some(ErrorHandlingOperationError.EHFallbackServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: ErrorHandlingOperationError): Throwable = e match {
@@ -110,53 +111,42 @@ object ErrorHandlingServiceOperation {
     def _ordinal: Int
   }
   object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
-    final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }
-    def eHFallbackClientError(eHFallbackClientError:EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
-    final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError { final def _ordinal: Int = 1 }
-    def eHServiceUnavailable(eHServiceUnavailable:EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
-    final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError { final def _ordinal: Int = 2 }
-    def eHNotFound(eHNotFound:EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
-    final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError { final def _ordinal: Int = 3 }
-    def eHFallbackServerError(eHFallbackServerError:EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
+    final case class EHFallbackClientErrorCase(eHFallbackClientError: smithy4s.example.EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }
+    final case class EHServiceUnavailableCase(eHServiceUnavailable: smithy4s.example.EHServiceUnavailable) extends ErrorHandlingOperationError { final def _ordinal: Int = 1 }
+    final case class EHNotFoundCase(eHNotFound: smithy4s.example.EHNotFound) extends ErrorHandlingOperationError { final def _ordinal: Int = 2 }
+    final case class EHFallbackServerErrorCase(eHFallbackServerError: smithy4s.example.EHFallbackServerError) extends ErrorHandlingOperationError { final def _ordinal: Int = 3 }
 
     object EHFallbackClientErrorCase {
-      val schema: Schema[EHFallbackClientErrorCase] = bijection(EHFallbackClientError.schema
-      .addHints(
-        Hints.empty
-      )
-      , EHFallbackClientErrorCase(_), _.eHFallbackClientError)
-      val alt = schema.oneOf[ErrorHandlingOperationError]("EHFallbackClientError")
+      implicit val fromValue: Bijection[smithy4s.example.EHFallbackClientError, EHFallbackClientErrorCase] = Bijection(EHFallbackClientErrorCase(_), _.eHFallbackClientError)
+      implicit val toValue: Bijection[EHFallbackClientErrorCase, smithy4s.example.EHFallbackClientError] = fromValue.swap
+      val schema: Schema[EHFallbackClientErrorCase] = bijection(smithy4s.example.EHFallbackClientError.schema, fromValue)
     }
     object EHServiceUnavailableCase {
-      val schema: Schema[EHServiceUnavailableCase] = bijection(EHServiceUnavailable.schema
-      .addHints(
-        Hints.empty
-      )
-      , EHServiceUnavailableCase(_), _.eHServiceUnavailable)
-      val alt = schema.oneOf[ErrorHandlingOperationError]("EHServiceUnavailable")
+      implicit val fromValue: Bijection[smithy4s.example.EHServiceUnavailable, EHServiceUnavailableCase] = Bijection(EHServiceUnavailableCase(_), _.eHServiceUnavailable)
+      implicit val toValue: Bijection[EHServiceUnavailableCase, smithy4s.example.EHServiceUnavailable] = fromValue.swap
+      val schema: Schema[EHServiceUnavailableCase] = bijection(smithy4s.example.EHServiceUnavailable.schema, fromValue)
     }
     object EHNotFoundCase {
-      val schema: Schema[EHNotFoundCase] = bijection(EHNotFound.schema
-      .addHints(
-        Hints.empty
-      )
-      , EHNotFoundCase(_), _.eHNotFound)
-      val alt = schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
+      implicit val fromValue: Bijection[smithy4s.example.EHNotFound, EHNotFoundCase] = Bijection(EHNotFoundCase(_), _.eHNotFound)
+      implicit val toValue: Bijection[EHNotFoundCase, smithy4s.example.EHNotFound] = fromValue.swap
+      val schema: Schema[EHNotFoundCase] = bijection(smithy4s.example.EHNotFound.schema, fromValue)
     }
     object EHFallbackServerErrorCase {
-      val schema: Schema[EHFallbackServerErrorCase] = bijection(EHFallbackServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , EHFallbackServerErrorCase(_), _.eHFallbackServerError)
-      val alt = schema.oneOf[ErrorHandlingOperationError]("EHFallbackServerError")
+      implicit val fromValue: Bijection[smithy4s.example.EHFallbackServerError, EHFallbackServerErrorCase] = Bijection(EHFallbackServerErrorCase(_), _.eHFallbackServerError)
+      implicit val toValue: Bijection[EHFallbackServerErrorCase, smithy4s.example.EHFallbackServerError] = fromValue.swap
+      val schema: Schema[EHFallbackServerErrorCase] = bijection(smithy4s.example.EHFallbackServerError.schema, fromValue)
     }
 
+    val EHFallbackClientError = EHFallbackClientErrorCase.schema.oneOf[ErrorHandlingOperationError]("EHFallbackClientError")
+    val EHServiceUnavailable = EHServiceUnavailableCase.schema.oneOf[ErrorHandlingOperationError]("EHServiceUnavailable")
+    val EHNotFound = EHNotFoundCase.schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
+    val EHFallbackServerError = EHFallbackServerErrorCase.schema.oneOf[ErrorHandlingOperationError]("EHFallbackServerError")
+
     implicit val schema: UnionSchema[ErrorHandlingOperationError] = union(
-      EHFallbackClientErrorCase.alt,
-      EHServiceUnavailableCase.alt,
-      EHNotFoundCase.alt,
-      EHFallbackServerErrorCase.alt,
+      EHFallbackClientError,
+      EHServiceUnavailable,
+      EHNotFound,
+      EHFallbackServerError,
     ){
       _._ordinal
     }

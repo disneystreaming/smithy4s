@@ -32,7 +32,4 @@ object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingred
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[Ingredient] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "Ingredient"))
-  .addHints(
-    Hints.empty
-  )
 }

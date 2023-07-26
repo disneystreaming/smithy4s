@@ -2,10 +2,10 @@ package com.amazonaws.dynamodb
 
 import smithy.api.Documentation
 import smithy.api.Error
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
@@ -18,7 +18,7 @@ final case class InternalServerError(message: Option[String] = None) extends Thr
 }
 object InternalServerError extends ShapeTag.Companion[InternalServerError] {
 
-  val message = string.optional[InternalServerError]("message", _.message, n => c => c.copy(message = n)).addHints(Documentation("<p>The server encountered an internal error trying to fulfill the request.</p>"))
+  val message: FieldLens[InternalServerError, Option[String]] = string.optional[InternalServerError]("message", _.message, n => c => c.copy(message = n)).addHints(Documentation("<p>The server encountered an internal error trying to fulfill the request.</p>"))
 
   implicit val schema: Schema[InternalServerError] = struct(
     message,
@@ -27,9 +27,7 @@ object InternalServerError extends ShapeTag.Companion[InternalServerError] {
   }
   .withId(ShapeId("com.amazonaws.dynamodb", "InternalServerError"))
   .addHints(
-    Hints(
-      Documentation("<p>An error occurred on the server side.</p>"),
-      Error.SERVER.widen,
-    )
+    Documentation("<p>An error occurred on the server side.</p>"),
+    Error.SERVER.widen,
   )
 }

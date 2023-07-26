@@ -1,9 +1,9 @@
 package smithy4s.example
 
-import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -19,9 +19,9 @@ object Podcast extends ShapeTag.Companion[Podcast] {
   }
   object Video extends ShapeTag.Companion[Video] {
 
-    val title = string.optional[Video]("title", _.title, n => c => c.copy(title = n))
-    val url = string.optional[Video]("url", _.url, n => c => c.copy(url = n))
-    val durationMillis = long.optional[Video]("durationMillis", _.durationMillis, n => c => c.copy(durationMillis = n))
+    val title: FieldLens[Video, Option[String]] = string.optional[Video]("title", _.title, n => c => c.copy(title = n))
+    val url: FieldLens[Video, Option[String]] = string.optional[Video]("url", _.url, n => c => c.copy(url = n))
+    val durationMillis: FieldLens[Video, Option[Long]] = long.optional[Video]("durationMillis", _.durationMillis, n => c => c.copy(durationMillis = n))
 
     val schema: Schema[Video] = struct(
       title,
@@ -31,20 +31,15 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       Video.apply
     }
     .withId(ShapeId("smithy4s.example", "Video"))
-    .addHints(
-      Hints.empty
-    )
-
-    val alt = schema.oneOf[Podcast]("video")
   }
   final case class Audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast {
     def _ordinal: Int = 1
   }
   object Audio extends ShapeTag.Companion[Audio] {
 
-    val title = string.optional[Audio]("title", _.title, n => c => c.copy(title = n))
-    val url = string.optional[Audio]("url", _.url, n => c => c.copy(url = n))
-    val durationMillis = long.optional[Audio]("durationMillis", _.durationMillis, n => c => c.copy(durationMillis = n))
+    val title: FieldLens[Audio, Option[String]] = string.optional[Audio]("title", _.title, n => c => c.copy(title = n))
+    val url: FieldLens[Audio, Option[String]] = string.optional[Audio]("url", _.url, n => c => c.copy(url = n))
+    val durationMillis: FieldLens[Audio, Option[Long]] = long.optional[Audio]("durationMillis", _.durationMillis, n => c => c.copy(durationMillis = n))
 
     val schema: Schema[Audio] = struct(
       title,
@@ -54,22 +49,17 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       Audio.apply
     }
     .withId(ShapeId("smithy4s.example", "Audio"))
-    .addHints(
-      Hints.empty
-    )
-
-    val alt = schema.oneOf[Podcast]("audio")
   }
 
 
+  val video = Video.schema.oneOf[Podcast]("video")
+  val audio = Audio.schema.oneOf[Podcast]("audio")
+
   implicit val schema: Schema[Podcast] = union(
-    Video.alt,
-    Audio.alt,
+    video,
+    audio,
   ){
     _._ordinal
   }
   .withId(ShapeId("smithy4s.example", "Podcast"))
-  .addHints(
-    Hints.empty
-  )
 }

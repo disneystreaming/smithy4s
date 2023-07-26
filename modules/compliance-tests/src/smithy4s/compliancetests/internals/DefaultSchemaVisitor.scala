@@ -86,7 +86,7 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
       alternatives: Vector[Alt[U, _]],
       dispatch: Alt.Dispatcher[U]
   ): Id[U] = {
-    def processAlt[A](alt: Alt[U, A]) = alt.inject.apply(apply(alt.schema))
+    def processAlt[A](alt: Alt[U, A]) = alt.inject(apply(alt.schema))
     processAlt(alternatives.head)
   }
 

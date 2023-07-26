@@ -34,7 +34,7 @@ final class PartiallyAppliedUnion[U](val alts: Vector[Alt[U, _]])
       var found = false
       while ((i < alts.size) && !found) {
         i += 1
-        found = alts(i).project.isDefinedAt(u)
+        found = alts(i).projectPF.isDefinedAt(u)
       }
       if (found) i
       else throw new scala.MatchError(u)

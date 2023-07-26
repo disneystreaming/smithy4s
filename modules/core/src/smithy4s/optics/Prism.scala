@@ -52,8 +52,8 @@ trait Prism[S, A] extends Optional[S, A] { self =>
         self.inject(that.inject(a))
     }
 
-  /** 
-   * Allows abstracting over an optional target by pointing to 
+  /**
+   * Allows abstracting over an optional target by pointing to
    * the inside of the optional value (the value inside of the [[Some]]).
    */
   final override def some[A0](implicit
@@ -74,11 +74,11 @@ trait Prism[S, A] extends Optional[S, A] { self =>
    * or other type with an implicit [[Bijection]] available.
    */
   final override def value[A0](implicit
-      bijection: Bijection[A0, A]
+      bijection: Bijection[A, A0]
   ): Prism[S, A0] =
     new Prism[S, A0] {
-      def project(s: S): Option[A0] = self.project(s).map(bijection.from)
-      def inject(a: A0): S = self.inject(bijection.to(a))
+      def project(s: S): Option[A0] = self.project(s).map(bijection.to)
+      def inject(a: A0): S = self.inject(bijection.from(a))
     }
 }
 

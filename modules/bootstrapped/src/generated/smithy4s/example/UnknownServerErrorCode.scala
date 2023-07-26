@@ -26,7 +26,4 @@ object UnknownServerErrorCode extends Enumeration[UnknownServerErrorCode] with S
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[UnknownServerErrorCode] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "UnknownServerErrorCode"))
-  .addHints(
-    Hints.empty
-  )
 }

@@ -4,6 +4,7 @@ import alloy.SimpleRestJson
 import smithy.api.Http
 import smithy.api.NonEmptyString
 import smithy.api.Readonly
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -155,9 +156,9 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[AddMenuItemError]] = Some(this)
     val error: UnionSchema[AddMenuItemError] = AddMenuItemError.schema
     def liftError(throwable: Throwable): Option[AddMenuItemError] = throwable match {
-      case e: PriceError => Some(AddMenuItemError.PriceErrorCase(e))
-      case e: GenericServerError => Some(AddMenuItemError.GenericServerErrorCase(e))
-      case e: GenericClientError => Some(AddMenuItemError.GenericClientErrorCase(e))
+      case e: smithy4s.example.PriceError => Some(AddMenuItemError.PriceErrorCase(e))
+      case e: smithy4s.example.GenericServerError => Some(AddMenuItemError.GenericServerErrorCase(e))
+      case e: smithy4s.example.GenericClientError => Some(AddMenuItemError.GenericClientErrorCase(e))
       case _ => None
     }
     def unliftError(e: AddMenuItemError): Throwable = e match {
@@ -171,42 +172,34 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object AddMenuItemError extends ShapeTag.Companion[AddMenuItemError] {
-    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
-    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
-    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def _ordinal: Int = 1 }
-    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def _ordinal: Int = 2 }
-    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
+    final case class PriceErrorCase(priceError: smithy4s.example.PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
+    final case class GenericServerErrorCase(genericServerError: smithy4s.example.GenericServerError) extends AddMenuItemError { final def _ordinal: Int = 1 }
+    final case class GenericClientErrorCase(genericClientError: smithy4s.example.GenericClientError) extends AddMenuItemError { final def _ordinal: Int = 2 }
 
     object PriceErrorCase {
-      val schema: Schema[PriceErrorCase] = bijection(PriceError.schema
-      .addHints(
-        Hints.empty
-      )
-      , PriceErrorCase(_), _.priceError)
-      val alt = schema.oneOf[AddMenuItemError]("PriceError")
+      implicit val fromValue: Bijection[smithy4s.example.PriceError, PriceErrorCase] = Bijection(PriceErrorCase(_), _.priceError)
+      implicit val toValue: Bijection[PriceErrorCase, smithy4s.example.PriceError] = fromValue.swap
+      val schema: Schema[PriceErrorCase] = bijection(smithy4s.example.PriceError.schema, fromValue)
     }
     object GenericServerErrorCase {
-      val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , GenericServerErrorCase(_), _.genericServerError)
-      val alt = schema.oneOf[AddMenuItemError]("GenericServerError")
+      implicit val fromValue: Bijection[smithy4s.example.GenericServerError, GenericServerErrorCase] = Bijection(GenericServerErrorCase(_), _.genericServerError)
+      implicit val toValue: Bijection[GenericServerErrorCase, smithy4s.example.GenericServerError] = fromValue.swap
+      val schema: Schema[GenericServerErrorCase] = bijection(smithy4s.example.GenericServerError.schema, fromValue)
     }
     object GenericClientErrorCase {
-      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema
-      .addHints(
-        Hints.empty
-      )
-      , GenericClientErrorCase(_), _.genericClientError)
-      val alt = schema.oneOf[AddMenuItemError]("GenericClientError")
+      implicit val fromValue: Bijection[smithy4s.example.GenericClientError, GenericClientErrorCase] = Bijection(GenericClientErrorCase(_), _.genericClientError)
+      implicit val toValue: Bijection[GenericClientErrorCase, smithy4s.example.GenericClientError] = fromValue.swap
+      val schema: Schema[GenericClientErrorCase] = bijection(smithy4s.example.GenericClientError.schema, fromValue)
     }
 
+    val PriceError = PriceErrorCase.schema.oneOf[AddMenuItemError]("PriceError")
+    val GenericServerError = GenericServerErrorCase.schema.oneOf[AddMenuItemError]("GenericServerError")
+    val GenericClientError = GenericClientErrorCase.schema.oneOf[AddMenuItemError]("GenericClientError")
+
     implicit val schema: UnionSchema[AddMenuItemError] = union(
-      PriceErrorCase.alt,
-      GenericServerErrorCase.alt,
-      GenericClientErrorCase.alt,
+      PriceError,
+      GenericServerError,
+      GenericClientError,
     ){
       _._ordinal
     }
@@ -232,10 +225,10 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[GetMenuError]] = Some(this)
     val error: UnionSchema[GetMenuError] = GetMenuError.schema
     def liftError(throwable: Throwable): Option[GetMenuError] = throwable match {
-      case e: GenericClientError => Some(GetMenuError.GenericClientErrorCase(e))
-      case e: FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
-      case e: FallbackError => Some(GetMenuError.FallbackErrorCase(e))
-      case e: NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
+      case e: smithy4s.example.GenericClientError => Some(GetMenuError.GenericClientErrorCase(e))
+      case e: smithy4s.example.FallbackError2 => Some(GetMenuError.FallbackError2Case(e))
+      case e: smithy4s.example.FallbackError => Some(GetMenuError.FallbackErrorCase(e))
+      case e: smithy4s.example.NotFoundError => Some(GetMenuError.NotFoundErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetMenuError): Throwable = e match {
@@ -250,53 +243,42 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetMenuError extends ShapeTag.Companion[GetMenuError] {
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def _ordinal: Int = 0 }
-    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
-    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def _ordinal: Int = 1 }
-    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
-    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def _ordinal: Int = 2 }
-    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def _ordinal: Int = 3 }
-    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
+    final case class GenericClientErrorCase(genericClientError: smithy4s.example.GenericClientError) extends GetMenuError { final def _ordinal: Int = 0 }
+    final case class FallbackError2Case(fallbackError2: smithy4s.example.FallbackError2) extends GetMenuError { final def _ordinal: Int = 1 }
+    final case class FallbackErrorCase(fallbackError: smithy4s.example.FallbackError) extends GetMenuError { final def _ordinal: Int = 2 }
+    final case class NotFoundErrorCase(notFoundError: smithy4s.example.NotFoundError) extends GetMenuError { final def _ordinal: Int = 3 }
 
     object GenericClientErrorCase {
-      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema
-      .addHints(
-        Hints.empty
-      )
-      , GenericClientErrorCase(_), _.genericClientError)
-      val alt = schema.oneOf[GetMenuError]("GenericClientError")
+      implicit val fromValue: Bijection[smithy4s.example.GenericClientError, GenericClientErrorCase] = Bijection(GenericClientErrorCase(_), _.genericClientError)
+      implicit val toValue: Bijection[GenericClientErrorCase, smithy4s.example.GenericClientError] = fromValue.swap
+      val schema: Schema[GenericClientErrorCase] = bijection(smithy4s.example.GenericClientError.schema, fromValue)
     }
     object FallbackError2Case {
-      val schema: Schema[FallbackError2Case] = bijection(FallbackError2.schema
-      .addHints(
-        Hints.empty
-      )
-      , FallbackError2Case(_), _.fallbackError2)
-      val alt = schema.oneOf[GetMenuError]("FallbackError2")
+      implicit val fromValue: Bijection[smithy4s.example.FallbackError2, FallbackError2Case] = Bijection(FallbackError2Case(_), _.fallbackError2)
+      implicit val toValue: Bijection[FallbackError2Case, smithy4s.example.FallbackError2] = fromValue.swap
+      val schema: Schema[FallbackError2Case] = bijection(smithy4s.example.FallbackError2.schema, fromValue)
     }
     object FallbackErrorCase {
-      val schema: Schema[FallbackErrorCase] = bijection(FallbackError.schema
-      .addHints(
-        Hints.empty
-      )
-      , FallbackErrorCase(_), _.fallbackError)
-      val alt = schema.oneOf[GetMenuError]("FallbackError")
+      implicit val fromValue: Bijection[smithy4s.example.FallbackError, FallbackErrorCase] = Bijection(FallbackErrorCase(_), _.fallbackError)
+      implicit val toValue: Bijection[FallbackErrorCase, smithy4s.example.FallbackError] = fromValue.swap
+      val schema: Schema[FallbackErrorCase] = bijection(smithy4s.example.FallbackError.schema, fromValue)
     }
     object NotFoundErrorCase {
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema
-      .addHints(
-        Hints.empty
-      )
-      , NotFoundErrorCase(_), _.notFoundError)
-      val alt = schema.oneOf[GetMenuError]("NotFoundError")
+      implicit val fromValue: Bijection[smithy4s.example.NotFoundError, NotFoundErrorCase] = Bijection(NotFoundErrorCase(_), _.notFoundError)
+      implicit val toValue: Bijection[NotFoundErrorCase, smithy4s.example.NotFoundError] = fromValue.swap
+      val schema: Schema[NotFoundErrorCase] = bijection(smithy4s.example.NotFoundError.schema, fromValue)
     }
 
+    val GenericClientError = GenericClientErrorCase.schema.oneOf[GetMenuError]("GenericClientError")
+    val FallbackError2 = FallbackError2Case.schema.oneOf[GetMenuError]("FallbackError2")
+    val FallbackError = FallbackErrorCase.schema.oneOf[GetMenuError]("FallbackError")
+    val NotFoundError = NotFoundErrorCase.schema.oneOf[GetMenuError]("NotFoundError")
+
     implicit val schema: UnionSchema[GetMenuError] = union(
-      GenericClientErrorCase.alt,
-      FallbackError2Case.alt,
-      FallbackErrorCase.alt,
-      NotFoundErrorCase.alt,
+      GenericClientError,
+      FallbackError2,
+      FallbackError,
+      NotFoundError,
     ){
       _._ordinal
     }
@@ -342,7 +324,7 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[HealthError]] = Some(this)
     val error: UnionSchema[HealthError] = HealthError.schema
     def liftError(throwable: Throwable): Option[HealthError] = throwable match {
-      case e: UnknownServerError => Some(HealthError.UnknownServerErrorCase(e))
+      case e: smithy4s.example.UnknownServerError => Some(HealthError.UnknownServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: HealthError): Throwable = e match {
@@ -354,20 +336,18 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object HealthError extends ShapeTag.Companion[HealthError] {
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
+    final case class UnknownServerErrorCase(unknownServerError: smithy4s.example.UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , UnknownServerErrorCase(_), _.unknownServerError)
-      val alt = schema.oneOf[HealthError]("UnknownServerError")
+      implicit val fromValue: Bijection[smithy4s.example.UnknownServerError, UnknownServerErrorCase] = Bijection(UnknownServerErrorCase(_), _.unknownServerError)
+      implicit val toValue: Bijection[UnknownServerErrorCase, smithy4s.example.UnknownServerError] = fromValue.swap
+      val schema: Schema[UnknownServerErrorCase] = bijection(smithy4s.example.UnknownServerError.schema, fromValue)
     }
 
+    val UnknownServerError = UnknownServerErrorCase.schema.oneOf[HealthError]("UnknownServerError")
+
     implicit val schema: UnionSchema[HealthError] = union(
-      UnknownServerErrorCase.alt,
+      UnknownServerError,
     ){
       _._ordinal
     }
@@ -429,7 +409,7 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[GetEnumError]] = Some(this)
     val error: UnionSchema[GetEnumError] = GetEnumError.schema
     def liftError(throwable: Throwable): Option[GetEnumError] = throwable match {
-      case e: UnknownServerError => Some(GetEnumError.UnknownServerErrorCase(e))
+      case e: smithy4s.example.UnknownServerError => Some(GetEnumError.UnknownServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetEnumError): Throwable = e match {
@@ -441,20 +421,18 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetEnumError extends ShapeTag.Companion[GetEnumError] {
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
+    final case class UnknownServerErrorCase(unknownServerError: smithy4s.example.UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , UnknownServerErrorCase(_), _.unknownServerError)
-      val alt = schema.oneOf[GetEnumError]("UnknownServerError")
+      implicit val fromValue: Bijection[smithy4s.example.UnknownServerError, UnknownServerErrorCase] = Bijection(UnknownServerErrorCase(_), _.unknownServerError)
+      implicit val toValue: Bijection[UnknownServerErrorCase, smithy4s.example.UnknownServerError] = fromValue.swap
+      val schema: Schema[UnknownServerErrorCase] = bijection(smithy4s.example.UnknownServerError.schema, fromValue)
     }
 
+    val UnknownServerError = UnknownServerErrorCase.schema.oneOf[GetEnumError]("UnknownServerError")
+
     implicit val schema: UnionSchema[GetEnumError] = union(
-      UnknownServerErrorCase.alt,
+      UnknownServerError,
     ){
       _._ordinal
     }
@@ -480,7 +458,7 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[GetIntEnumError]] = Some(this)
     val error: UnionSchema[GetIntEnumError] = GetIntEnumError.schema
     def liftError(throwable: Throwable): Option[GetIntEnumError] = throwable match {
-      case e: UnknownServerError => Some(GetIntEnumError.UnknownServerErrorCase(e))
+      case e: smithy4s.example.UnknownServerError => Some(GetIntEnumError.UnknownServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: GetIntEnumError): Throwable = e match {
@@ -492,20 +470,18 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetIntEnumError extends ShapeTag.Companion[GetIntEnumError] {
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
+    final case class UnknownServerErrorCase(unknownServerError: smithy4s.example.UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , UnknownServerErrorCase(_), _.unknownServerError)
-      val alt = schema.oneOf[GetIntEnumError]("UnknownServerError")
+      implicit val fromValue: Bijection[smithy4s.example.UnknownServerError, UnknownServerErrorCase] = Bijection(UnknownServerErrorCase(_), _.unknownServerError)
+      implicit val toValue: Bijection[UnknownServerErrorCase, smithy4s.example.UnknownServerError] = fromValue.swap
+      val schema: Schema[UnknownServerErrorCase] = bijection(smithy4s.example.UnknownServerError.schema, fromValue)
     }
 
+    val UnknownServerError = UnknownServerErrorCase.schema.oneOf[GetIntEnumError]("UnknownServerError")
+
     implicit val schema: UnionSchema[GetIntEnumError] = union(
-      UnknownServerErrorCase.alt,
+      UnknownServerError,
     ){
       _._ordinal
     }
@@ -531,7 +507,7 @@ object PizzaAdminServiceOperation {
     override val errorable: Option[Errorable[CustomCodeError]] = Some(this)
     val error: UnionSchema[CustomCodeError] = CustomCodeError.schema
     def liftError(throwable: Throwable): Option[CustomCodeError] = throwable match {
-      case e: UnknownServerError => Some(CustomCodeError.UnknownServerErrorCase(e))
+      case e: smithy4s.example.UnknownServerError => Some(CustomCodeError.UnknownServerErrorCase(e))
       case _ => None
     }
     def unliftError(e: CustomCodeError): Throwable = e match {
@@ -543,20 +519,18 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object CustomCodeError extends ShapeTag.Companion[CustomCodeError] {
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
+    final case class UnknownServerErrorCase(unknownServerError: smithy4s.example.UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema
-      .addHints(
-        Hints.empty
-      )
-      , UnknownServerErrorCase(_), _.unknownServerError)
-      val alt = schema.oneOf[CustomCodeError]("UnknownServerError")
+      implicit val fromValue: Bijection[smithy4s.example.UnknownServerError, UnknownServerErrorCase] = Bijection(UnknownServerErrorCase(_), _.unknownServerError)
+      implicit val toValue: Bijection[UnknownServerErrorCase, smithy4s.example.UnknownServerError] = fromValue.swap
+      val schema: Schema[UnknownServerErrorCase] = bijection(smithy4s.example.UnknownServerError.schema, fromValue)
     }
 
+    val UnknownServerError = UnknownServerErrorCase.schema.oneOf[CustomCodeError]("UnknownServerError")
+
     implicit val schema: UnionSchema[CustomCodeError] = union(
-      UnknownServerErrorCase.alt,
+      UnknownServerError,
     ){
       _._ordinal
     }

@@ -8,6 +8,7 @@ import smithy.test.HttpRequestTestCase
 import smithy.test.HttpRequestTests
 import smithy.test.HttpResponseTestCase
 import smithy.test.HttpResponseTests
+import smithy4s.Bijection
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -115,8 +116,8 @@ object HelloServiceOperation {
     override val errorable: Option[Errorable[SayHelloError]] = Some(this)
     val error: UnionSchema[SayHelloError] = SayHelloError.schema
     def liftError(throwable: Throwable): Option[SayHelloError] = throwable match {
-      case e: SimpleError => Some(SayHelloError.SimpleErrorCase(e))
-      case e: ComplexError => Some(SayHelloError.ComplexErrorCase(e))
+      case e: smithy4s.example.test.SimpleError => Some(SayHelloError.SimpleErrorCase(e))
+      case e: smithy4s.example.test.ComplexError => Some(SayHelloError.ComplexErrorCase(e))
       case _ => None
     }
     def unliftError(e: SayHelloError): Throwable = e match {
@@ -129,31 +130,26 @@ object HelloServiceOperation {
     def _ordinal: Int
   }
   object SayHelloError extends ShapeTag.Companion[SayHelloError] {
-    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
-    def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
-    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
-    def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
+    final case class SimpleErrorCase(simpleError: smithy4s.example.test.SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
+    final case class ComplexErrorCase(complexError: smithy4s.example.test.ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
 
     object SimpleErrorCase {
-      val schema: Schema[SimpleErrorCase] = bijection(SimpleError.schema
-      .addHints(
-        Hints.empty
-      )
-      , SimpleErrorCase(_), _.simpleError)
-      val alt = schema.oneOf[SayHelloError]("SimpleError")
+      implicit val fromValue: Bijection[smithy4s.example.test.SimpleError, SimpleErrorCase] = Bijection(SimpleErrorCase(_), _.simpleError)
+      implicit val toValue: Bijection[SimpleErrorCase, smithy4s.example.test.SimpleError] = fromValue.swap
+      val schema: Schema[SimpleErrorCase] = bijection(smithy4s.example.test.SimpleError.schema, fromValue)
     }
     object ComplexErrorCase {
-      val schema: Schema[ComplexErrorCase] = bijection(ComplexError.schema
-      .addHints(
-        Hints.empty
-      )
-      , ComplexErrorCase(_), _.complexError)
-      val alt = schema.oneOf[SayHelloError]("ComplexError")
+      implicit val fromValue: Bijection[smithy4s.example.test.ComplexError, ComplexErrorCase] = Bijection(ComplexErrorCase(_), _.complexError)
+      implicit val toValue: Bijection[ComplexErrorCase, smithy4s.example.test.ComplexError] = fromValue.swap
+      val schema: Schema[ComplexErrorCase] = bijection(smithy4s.example.test.ComplexError.schema, fromValue)
     }
 
+    val SimpleError = SimpleErrorCase.schema.oneOf[SayHelloError]("SimpleError")
+    val ComplexError = ComplexErrorCase.schema.oneOf[SayHelloError]("ComplexError")
+
     implicit val schema: UnionSchema[SayHelloError] = union(
-      SimpleErrorCase.alt,
-      ComplexErrorCase.alt,
+      SimpleError,
+      ComplexError,
     ){
       _._ordinal
     }

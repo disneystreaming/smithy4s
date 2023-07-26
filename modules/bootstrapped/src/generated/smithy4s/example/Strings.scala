@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy.api.Deprecated
-import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -14,9 +13,7 @@ object Strings extends Newtype[List[String]] {
   val underlyingSchema: Schema[List[String]] = list(string)
   .withId(ShapeId("smithy4s.example", "Strings"))
   .addHints(
-    Hints(
-      Deprecated(message = None, since = None),
-    )
+    Deprecated(message = None, since = None),
   )
 
   implicit val schema: Schema[Strings] = bijection(underlyingSchema, asBijection)

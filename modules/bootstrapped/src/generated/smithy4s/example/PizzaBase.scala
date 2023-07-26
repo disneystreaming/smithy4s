@@ -28,7 +28,4 @@ object PizzaBase extends Enumeration[PizzaBase] with ShapeTag.Companion[PizzaBas
   val tag: EnumTag = EnumTag.StringEnum
   implicit val schema: Schema[PizzaBase] = enumeration(tag, values)
   .withId(ShapeId("smithy4s.example", "PizzaBase"))
-  .addHints(
-    Hints.empty
-  )
 }

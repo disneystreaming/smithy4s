@@ -1,7 +1,6 @@
 package smithy4s.example
 
 import smithy.api.Sparse
-import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -13,9 +12,7 @@ object SparseStringList extends Newtype[List[Option[String]]] {
   val underlyingSchema: Schema[List[Option[String]]] = list(string.option)
   .withId(ShapeId("smithy4s.example", "SparseStringList"))
   .addHints(
-    Hints(
-      Sparse(),
-    )
+    Sparse(),
   )
 
   implicit val schema: Schema[SparseStringList] = bijection(underlyingSchema, asBijection)

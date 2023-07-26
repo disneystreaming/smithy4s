@@ -24,20 +24,10 @@ import smithy4s.Bijection
  * Lens implementation which can be used to abstract over accessing/updating
  * a member of a product type
  */
-trait Lens[S, A] extends Getter[S, A] with Optional[S, A] { self =>
+trait Getter[S, A] { self =>
 
   /** Retrieve the target of the [[Lens]] */
   def get(s: S): A
-
-  /** Provides a function to replace the target of the [[Lens]] */
-  def replace(a: A): S => S
-
-  /** Retrieve the target of the [[Lens]] as an Optional (implemented to conform to [[Optional]]) */
-  final def project(s: S): Option[A] = Some(get(s))
-
-  /** Modify the target of the [[Lens]] with a function from A => A */
-  override final def modify(f: A => A): S => S =
-    s => replace(f(get(s)))(s)
 
   /**
    * Compose this [[Lens]] with another [[Lens]].
@@ -45,54 +35,32 @@ trait Lens[S, A] extends Getter[S, A] with Optional[S, A] { self =>
    * of the first lens and points to the target of the second
    * lens.
    */
-  final def andThen[A0](that: Lens[A, A0]): Lens[S, A0] =
-    new Lens[S, A0] {
-      def get(s: S): A0 =
-        that.get(self.get(s))
-      def replace(a: A0): S => S =
-        self.modify(that.replace(a))
+  def andThen[A0](that: Getter[A, A0]): Getter[S, A0] =
+    new Getter[S, A0] {
+      def get(s: S): A0 = that.get(self.get(s))
     }
-
-  /**
-   * Allows abstracting over an optional target by pointing to
-   * the inside of the optional value (the value inside of the [[Some]]).
-   */
-  final override def some[A0](implicit
-      ev1: A =:= Option[A0]
-  ): Optional[S, A0] =
-    adapt[Option[A0]].andThen(
-      Prism[Option[A0], A0](identity)(Some(_))
-    )
-
-  private[this] final def adapt[A0](implicit
-      @annotation.unused evA: A =:= A0
-  ): Lens[S, A0] =
-    // safe due to A =:= A0
-    this.asInstanceOf[Lens[S, A0]]
 
   /**
    * Helper function for targeting the value inside of a [[smithy4s.Newtype]]
    * or other type with an implicit [[Bijection]] available.
    */
-  final override def value[A0](implicit
+  def value[A0](implicit
       bijection: Bijection[A, A0]
-  ): Lens[S, A0] =
-    new Lens[S, A0] {
-      def get(s: S): A0 = bijection.from(self.get(s))
-      def replace(a: A0): S => S = self.replace(bijection.from(a))
+  ): Getter[S, A0] =
+    new Getter[S, A0] {
+      def get(s: S): A0 = bijection.to(self.get(s))
     }
 }
 
-object Lens {
+object Getter {
 
   /**
    * Construct a new [[Lens]] by providing functions for getting
    * A from S and updating S given a new A.
    */
-  def apply[S, A](_get: S => A)(_replace: A => S => S): Lens[S, A] =
-    new Lens[S, A] {
+  def apply[S, A](_get: S => A): Getter[S, A] =
+    new Getter[S, A] {
       def get(s: S): A = _get(s)
-      def replace(a: A): S => S = _replace(a)
     }
 
 }
