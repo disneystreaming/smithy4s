@@ -33,7 +33,7 @@ import smithy4s.example._
 
 val input = Podcast.Video(Some("Pod Title"))
 
-val prism = Podcast.video.andThen(Podcast.Video.title).some
+val prism = Podcast.Video.alt.andThen(Podcast.Video.title).some
 val result = prism.replace("New Pod Title")(input)
 
 Podcast.Video(Some("New Pod Title")) == result // true
