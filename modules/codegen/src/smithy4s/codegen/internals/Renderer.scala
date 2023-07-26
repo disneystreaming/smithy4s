@@ -1333,7 +1333,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       case Primitive.String => renderStringLiteral
       case Primitive.Byte   => b => line"${b.toString}"
       case Primitive.Blob =>
-        ba => line"${NameRef("smithy4s", "Blob")}(Array[Byte](${ba.mkString(", ")}))"
+        ba =>
+          line"${NameRef("smithy4s", "Blob")}(Array[Byte](${ba.mkString(", ")}))"
       case Primitive.Timestamp =>
         ts => line"${NameRef("smithy4s", "Timestamp")}(${ts.toEpochMilli}, 0)"
       case Primitive.Document => { (node: Node) =>
