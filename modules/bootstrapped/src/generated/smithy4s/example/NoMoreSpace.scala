@@ -3,6 +3,7 @@ package smithy4s.example
 import smithy.api.Error
 import smithy.api.HttpError
 import smithy.api.Required
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -18,20 +19,21 @@ import smithy4s.schema.Schema.struct
 final case class NoMoreSpace(message: String, foo: Option[Foo] = None) extends Throwable {
   override def getMessage(): String = message
 }
-object NoMoreSpace extends ShapeTag.Companion[NoMoreSpace] {
+object NoMoreSpace extends ShapeTag.$Companion[NoMoreSpace] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "NoMoreSpace")
+
+  val $hints: Hints = Hints(
+    Error.SERVER.widen,
+    HttpError(507),
+  )
 
   val message: FieldLens[NoMoreSpace, String] = string.required[NoMoreSpace]("message", _.message, n => c => c.copy(message = n)).addHints(Required())
-  val foo: FieldLens[NoMoreSpace, Option[Foo]] = Foo.schema.optional[NoMoreSpace]("foo", _.foo, n => c => c.copy(foo = n))
+  val foo: FieldLens[NoMoreSpace, Option[Foo]] = Foo.$schema.optional[NoMoreSpace]("foo", _.foo, n => c => c.copy(foo = n))
 
-  implicit val schema: Schema[NoMoreSpace] = struct(
+  implicit val $schema: Schema[NoMoreSpace] = struct(
     message,
     foo,
   ){
     NoMoreSpace.apply
-  }
-  .withId(ShapeId("smithy4s.example", "NoMoreSpace"))
-  .addHints(
-    Error.SERVER.widen,
-    HttpError(507),
-  )
+  }.withId($id).addHints($hints)
 }

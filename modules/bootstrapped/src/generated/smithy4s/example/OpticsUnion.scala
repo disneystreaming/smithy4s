@@ -1,6 +1,7 @@
 package smithy4s.example
 
 import smithy4s.Bijection
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -11,21 +12,27 @@ sealed trait OpticsUnion extends scala.Product with scala.Serializable {
   @inline final def widen: OpticsUnion = this
   def _ordinal: Int
 }
-object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
+object OpticsUnion extends ShapeTag.$Companion[OpticsUnion] {
+
+  def one(one:OpticsStructure): OpticsUnion = OneCase(one)
+
+  val $id: ShapeId = ShapeId("smithy4s.example", "OpticsUnion")
+
+  val $hints: Hints = Hints.empty
+
   final case class OneCase(one: OpticsStructure) extends OpticsUnion { final def _ordinal: Int = 0 }
 
   object OneCase {
     implicit val fromValue: Bijection[OpticsStructure, OneCase] = Bijection(OneCase(_), _.one)
     implicit val toValue: Bijection[OneCase, OpticsStructure] = fromValue.swap
-    val schema: Schema[OneCase] = bijection(OpticsStructure.schema, fromValue)
+    val $schema: Schema[OneCase] = bijection(OpticsStructure.$schema, fromValue)
   }
 
-  val one = OneCase.schema.oneOf[OpticsUnion]("one")
+  val one = OneCase.$schema.oneOf[OpticsUnion]("one")
 
-  implicit val schema: Schema[OpticsUnion] = union(
+  implicit val $schema: Schema[OpticsUnion] = union(
     one,
   ){
     _._ordinal
-  }
-  .withId(ShapeId("smithy4s.example", "OpticsUnion"))
+  }.withId($id).addHints($hints)
 }

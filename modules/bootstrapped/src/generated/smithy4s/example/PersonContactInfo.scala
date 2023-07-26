@@ -1,6 +1,7 @@
 package smithy4s.example
 
 import smithy4s.Bijection
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -12,34 +13,40 @@ sealed trait PersonContactInfo extends scala.Product with scala.Serializable {
   @inline final def widen: PersonContactInfo = this
   def _ordinal: Int
 }
-object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
+object PersonContactInfo extends ShapeTag.$Companion[PersonContactInfo] {
+
+  def email(email:PersonEmail): PersonContactInfo = EmailCase(email)
+  def phone(phone:PersonPhoneNumber): PersonContactInfo = PhoneCase(phone)
+
+  val $id: ShapeId = ShapeId("smithy4s.example", "PersonContactInfo")
+
+  val $hints: Hints = Hints(
+    smithy4s.example.Hash(),
+  )
+
   final case class EmailCase(email: PersonEmail) extends PersonContactInfo { final def _ordinal: Int = 0 }
   final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo { final def _ordinal: Int = 1 }
 
   object EmailCase {
     implicit val fromValue: Bijection[PersonEmail, EmailCase] = Bijection(EmailCase(_), _.email)
     implicit val toValue: Bijection[EmailCase, PersonEmail] = fromValue.swap
-    val schema: Schema[EmailCase] = bijection(PersonEmail.schema, fromValue)
+    val $schema: Schema[EmailCase] = bijection(PersonEmail.$schema, fromValue)
   }
   object PhoneCase {
     implicit val fromValue: Bijection[PersonPhoneNumber, PhoneCase] = Bijection(PhoneCase(_), _.phone)
     implicit val toValue: Bijection[PhoneCase, PersonPhoneNumber] = fromValue.swap
-    val schema: Schema[PhoneCase] = bijection(PersonPhoneNumber.schema, fromValue)
+    val $schema: Schema[PhoneCase] = bijection(PersonPhoneNumber.$schema, fromValue)
   }
 
-  val email = EmailCase.schema.oneOf[PersonContactInfo]("email")
-  val phone = PhoneCase.schema.oneOf[PersonContactInfo]("phone")
+  val email = EmailCase.$schema.oneOf[PersonContactInfo]("email")
+  val phone = PhoneCase.$schema.oneOf[PersonContactInfo]("phone")
 
-  implicit val schema: Schema[PersonContactInfo] = union(
+  implicit val $schema: Schema[PersonContactInfo] = union(
     email,
     phone,
   ){
     _._ordinal
-  }
-  .withId(ShapeId("smithy4s.example", "PersonContactInfo"))
-  .addHints(
-    smithy4s.example.Hash(),
-  )
+  }.withId($id).addHints($hints)
 
-  implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema(schema)
+  implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema($schema)
 }

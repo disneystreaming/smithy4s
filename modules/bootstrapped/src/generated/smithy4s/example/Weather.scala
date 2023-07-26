@@ -38,8 +38,7 @@ object WeatherGen extends Service.Mixin[WeatherGen, WeatherOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "Weather")
   val version: String = "2006-03-01"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     Documentation("Provides weather forecasts."),
     Paginated(inputToken = Some(NonEmptyString("nextToken")), outputToken = Some(NonEmptyString("nextToken")), items = None, pageSize = Some(NonEmptyString("pageSize"))),
   )
@@ -106,11 +105,10 @@ object WeatherOperation {
   object GetCurrentTime extends smithy4s.Endpoint[WeatherOperation,Unit, Nothing, GetCurrentTimeOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetCurrentTime")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetCurrentTimeOutput] = GetCurrentTimeOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val output: Schema[GetCurrentTimeOutput] = GetCurrentTimeOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Readonly(),
     )
     def wrap(input: Unit) = GetCurrentTime()
@@ -123,17 +121,16 @@ object WeatherOperation {
   }
   object GetCity extends smithy4s.Endpoint[WeatherOperation,GetCityInput, WeatherOperation.GetCityError, GetCityOutput, Nothing, Nothing] with Errorable[GetCityError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetCity")
-    val input: Schema[GetCityInput] = GetCityInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetCityOutput] = GetCityOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[GetCityInput] = GetCityInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[GetCityOutput] = GetCityOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Readonly(),
     )
     def wrap(input: GetCityInput) = GetCity(input)
     override val errorable: Option[Errorable[GetCityError]] = Some(this)
-    val error: UnionSchema[GetCityError] = GetCityError.schema
+    val error: UnionSchema[GetCityError] = GetCityError.$schema
     def liftError(throwable: Throwable): Option[GetCityError] = throwable match {
       case e: smithy4s.example.NoSuchResource => Some(GetCityError.NoSuchResourceCase(e))
       case _ => None
@@ -146,23 +143,29 @@ object WeatherOperation {
     @inline final def widen: GetCityError = this
     def _ordinal: Int
   }
-  object GetCityError extends ShapeTag.Companion[GetCityError] {
+  object GetCityError extends ShapeTag.$Companion[GetCityError] {
+
+    def noSuchResource(noSuchResource:smithy4s.example.NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "GetCityError")
+
+    val $hints: Hints = Hints.empty
+
     final case class NoSuchResourceCase(noSuchResource: smithy4s.example.NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }
 
     object NoSuchResourceCase {
       implicit val fromValue: Bijection[smithy4s.example.NoSuchResource, NoSuchResourceCase] = Bijection(NoSuchResourceCase(_), _.noSuchResource)
       implicit val toValue: Bijection[NoSuchResourceCase, smithy4s.example.NoSuchResource] = fromValue.swap
-      val schema: Schema[NoSuchResourceCase] = bijection(smithy4s.example.NoSuchResource.schema, fromValue)
+      val $schema: Schema[NoSuchResourceCase] = bijection(smithy4s.example.NoSuchResource.$schema, fromValue)
     }
 
-    val NoSuchResource = NoSuchResourceCase.schema.oneOf[GetCityError]("NoSuchResource")
+    val NoSuchResource = NoSuchResourceCase.$schema.oneOf[GetCityError]("NoSuchResource")
 
-    implicit val schema: UnionSchema[GetCityError] = union(
+    implicit val $schema: UnionSchema[GetCityError] = union(
       NoSuchResource,
     ){
       _._ordinal
     }
-    
   }
   final case class GetForecast(input: GetForecastInput) extends WeatherOperation[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherGen[F]): F[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] = impl.getForecast(input.cityId)
@@ -171,12 +174,11 @@ object WeatherOperation {
   }
   object GetForecast extends smithy4s.Endpoint[WeatherOperation,GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetForecast")
-    val input: Schema[GetForecastInput] = GetForecastInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetForecastOutput] = GetForecastOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[GetForecastInput] = GetForecastInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[GetForecastOutput] = GetForecastOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Readonly(),
     )
     def wrap(input: GetForecastInput) = GetForecast(input)
@@ -189,12 +191,11 @@ object WeatherOperation {
   }
   object ListCities extends smithy4s.Endpoint[WeatherOperation,ListCitiesInput, Nothing, ListCitiesOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "ListCities")
-    val input: Schema[ListCitiesInput] = ListCitiesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ListCitiesOutput] = ListCitiesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[ListCitiesInput] = ListCitiesInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[ListCitiesOutput] = ListCitiesOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Paginated(inputToken = None, outputToken = None, items = Some(NonEmptyString("items")), pageSize = None),
       Readonly(),
     )

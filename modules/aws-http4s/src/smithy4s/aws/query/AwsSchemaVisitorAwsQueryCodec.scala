@@ -136,8 +136,8 @@ private[aws] class AwsSchemaVisitorAwsQueryCodec(
 
     def encode[A](u: U, alt: Alt[U, A]): FormData = {
       val key = getKey(alt.hints, alt.label)
-      alt.project
-        .lift(u)
+      alt
+        .project(u)
         .fold(FormData.Empty.widen)(a => compile(alt.schema)(a))
         .prepend(key)
     }

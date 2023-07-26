@@ -70,8 +70,7 @@ object DynamoDBGen extends smithy4s.Service.Mixin[DynamoDBGen, DynamoDBOperation
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DynamoDB_20120810")
   val version: String = "2012-08-10"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     Sigv4(name = "dynamodb"),
     Title("Amazon DynamoDB"),
     AwsJson1_0(http = None, eventStreamHttp = None),
@@ -135,12 +134,11 @@ object DynamoDBOperation {
   }
   object DescribeEndpoints extends smithy4s.Endpoint[DynamoDBOperation,DescribeEndpointsRequest, Nothing, DescribeEndpointsResponse, Nothing, Nothing] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DescribeEndpoints")
-    val input: Schema[DescribeEndpointsRequest] = DescribeEndpointsRequest.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[DescribeEndpointsResponse] = DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[DescribeEndpointsRequest] = DescribeEndpointsRequest.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[DescribeEndpointsResponse] = DescribeEndpointsResponse.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Documentation("<p>Returns the regional endpoint information.</p>"),
     )
     def wrap(input: DescribeEndpointsRequest) = DescribeEndpoints(input)
@@ -153,19 +151,18 @@ object DynamoDBOperation {
   }
   object ListTables extends smithy4s.Endpoint[DynamoDBOperation,ListTablesInput, DynamoDBOperation.ListTablesError, ListTablesOutput, Nothing, Nothing] with Errorable[ListTablesError] {
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTables")
-    val input: Schema[ListTablesInput] = ListTablesInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ListTablesOutput] = ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[ListTablesInput] = ListTablesInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[ListTablesOutput] = ListTablesOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       ClientDiscoveredEndpoint(required = false),
       Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"),
       Paginated(inputToken = Some(NonEmptyString("ExclusiveStartTableName")), outputToken = Some(NonEmptyString("LastEvaluatedTableName")), items = Some(NonEmptyString("TableNames")), pageSize = Some(NonEmptyString("Limit"))),
     )
     def wrap(input: ListTablesInput) = ListTables(input)
     override val errorable: Option[Errorable[ListTablesError]] = Some(this)
-    val error: UnionSchema[ListTablesError] = ListTablesError.schema
+    val error: UnionSchema[ListTablesError] = ListTablesError.$schema
     def liftError(throwable: Throwable): Option[ListTablesError] = throwable match {
       case e: com.amazonaws.dynamodb.InternalServerError => Some(ListTablesError.InternalServerErrorCase(e))
       case e: com.amazonaws.dynamodb.InvalidEndpointException => Some(ListTablesError.InvalidEndpointExceptionCase(e))
@@ -180,31 +177,38 @@ object DynamoDBOperation {
     @inline final def widen: ListTablesError = this
     def _ordinal: Int
   }
-  object ListTablesError extends ShapeTag.Companion[ListTablesError] {
+  object ListTablesError extends ShapeTag.$Companion[ListTablesError] {
+
+    def internalServerError(internalServerError:com.amazonaws.dynamodb.InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
+    def invalidEndpointException(invalidEndpointException:com.amazonaws.dynamodb.InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
+
+    val $id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesError")
+
+    val $hints: Hints = Hints.empty
+
     final case class InternalServerErrorCase(internalServerError: com.amazonaws.dynamodb.InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
     final case class InvalidEndpointExceptionCase(invalidEndpointException: com.amazonaws.dynamodb.InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
 
     object InternalServerErrorCase {
       implicit val fromValue: Bijection[com.amazonaws.dynamodb.InternalServerError, InternalServerErrorCase] = Bijection(InternalServerErrorCase(_), _.internalServerError)
       implicit val toValue: Bijection[InternalServerErrorCase, com.amazonaws.dynamodb.InternalServerError] = fromValue.swap
-      val schema: Schema[InternalServerErrorCase] = bijection(com.amazonaws.dynamodb.InternalServerError.schema, fromValue)
+      val $schema: Schema[InternalServerErrorCase] = bijection(com.amazonaws.dynamodb.InternalServerError.$schema, fromValue)
     }
     object InvalidEndpointExceptionCase {
       implicit val fromValue: Bijection[com.amazonaws.dynamodb.InvalidEndpointException, InvalidEndpointExceptionCase] = Bijection(InvalidEndpointExceptionCase(_), _.invalidEndpointException)
       implicit val toValue: Bijection[InvalidEndpointExceptionCase, com.amazonaws.dynamodb.InvalidEndpointException] = fromValue.swap
-      val schema: Schema[InvalidEndpointExceptionCase] = bijection(com.amazonaws.dynamodb.InvalidEndpointException.schema, fromValue)
+      val $schema: Schema[InvalidEndpointExceptionCase] = bijection(com.amazonaws.dynamodb.InvalidEndpointException.$schema, fromValue)
     }
 
-    val InternalServerError = InternalServerErrorCase.schema.oneOf[ListTablesError]("InternalServerError")
-    val InvalidEndpointException = InvalidEndpointExceptionCase.schema.oneOf[ListTablesError]("InvalidEndpointException")
+    val InternalServerError = InternalServerErrorCase.$schema.oneOf[ListTablesError]("InternalServerError")
+    val InvalidEndpointException = InvalidEndpointExceptionCase.$schema.oneOf[ListTablesError]("InvalidEndpointException")
 
-    implicit val schema: UnionSchema[ListTablesError] = union(
+    implicit val $schema: UnionSchema[ListTablesError] = union(
       InternalServerError,
       InvalidEndpointException,
     ){
       _._ordinal
     }
-    
   }
 }
 

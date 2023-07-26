@@ -17,6 +17,10 @@
 package smithy4s
 
 abstract class Newtype[A] { self =>
+  def id: ShapeId
+  def schema: Schema[Type]
+  def $schema: Schema[Type] = schema
+
   // This encoding originally comes from this library:
   // https://github.com/alexknvl/newtypes#what-does-it-do
   type Base
@@ -32,9 +36,8 @@ abstract class Newtype[A] { self =>
     @inline final def value: A = Newtype.this.value(self)
   }
 
-  def schema: Schema[Type]
-
   implicit val tag: ShapeTag[Type] = new ShapeTag[Type] {
+    def id: ShapeId = self.id
     def schema: Schema[Type] = self.schema
   }
 
@@ -53,5 +56,7 @@ abstract class Newtype[A] { self =>
 }
 
 object Newtype {
+  type Aux[A, T] = Newtype[A] { type Type = T }
+
   private[smithy4s] trait Make[A, B] extends Bijection[A, B]
 }

@@ -3,6 +3,7 @@ package smithy4s.example
 import smithy.api.HttpQuery
 import smithy.api.HttpQueryParams
 import smithy.api.TimestampFormat
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -14,7 +15,10 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class Queries(str: Option[String] = None, int: Option[Int] = None, ts1: Option[Timestamp] = None, ts2: Option[Timestamp] = None, ts3: Option[Timestamp] = None, ts4: Option[Timestamp] = None, b: Option[Boolean] = None, sl: Option[List[String]] = None, ie: Option[Numbers] = None, slm: Option[Map[String, String]] = None)
-object Queries extends ShapeTag.Companion[Queries] {
+object Queries extends ShapeTag.$Companion[Queries] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "Queries")
+
+  val $hints: Hints = Hints.empty
 
   val str: FieldLens[Queries, Option[String]] = string.optional[Queries]("str", _.str, n => c => c.copy(str = n)).addHints(HttpQuery("str"))
   val int: FieldLens[Queries, Option[Int]] = smithy4s.schema.Schema.int.optional[Queries]("int", _.int, n => c => c.copy(int = n)).addHints(HttpQuery("int"))
@@ -24,10 +28,10 @@ object Queries extends ShapeTag.Companion[Queries] {
   val ts4: FieldLens[Queries, Option[Timestamp]] = timestamp.optional[Queries]("ts4", _.ts4, n => c => c.copy(ts4 = n)).addHints(TimestampFormat.HTTP_DATE.widen, HttpQuery("ts4"))
   val b: FieldLens[Queries, Option[Boolean]] = boolean.optional[Queries]("b", _.b, n => c => c.copy(b = n)).addHints(HttpQuery("b"))
   val sl: FieldLens[Queries, Option[List[String]]] = StringList.underlyingSchema.optional[Queries]("sl", _.sl, n => c => c.copy(sl = n)).addHints(HttpQuery("sl"))
-  val ie: FieldLens[Queries, Option[Numbers]] = Numbers.schema.optional[Queries]("ie", _.ie, n => c => c.copy(ie = n)).addHints(HttpQuery("nums"))
+  val ie: FieldLens[Queries, Option[Numbers]] = Numbers.$schema.optional[Queries]("ie", _.ie, n => c => c.copy(ie = n)).addHints(HttpQuery("nums"))
   val slm: FieldLens[Queries, Option[Map[String, String]]] = StringMap.underlyingSchema.optional[Queries]("slm", _.slm, n => c => c.copy(slm = n)).addHints(HttpQueryParams())
 
-  implicit val schema: Schema[Queries] = struct(
+  implicit val $schema: Schema[Queries] = struct(
     str,
     int,
     ts1,
@@ -40,6 +44,5 @@ object Queries extends ShapeTag.Companion[Queries] {
     slm,
   ){
     Queries.apply
-  }
-  .withId(ShapeId("smithy4s.example", "Queries"))
+  }.withId($id).addHints($hints)
 }

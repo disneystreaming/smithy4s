@@ -35,8 +35,7 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     Documentation("The most basics of services\nGetFoo is its only operation"),
   )
 
@@ -91,11 +90,10 @@ object FooServiceOperation {
   object GetFoo extends smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val output: Schema[GetFooOutput] = GetFooOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/foo"), code = 200),
       Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""),
       Readonly(),

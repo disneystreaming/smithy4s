@@ -4,6 +4,7 @@ import smithy.api.Error
 import smithy.api.Required
 import smithy.test.HttpResponseTestCase
 import smithy.test.HttpResponseTests
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -13,18 +14,19 @@ import smithy4s.schema.Schema.struct
 
 final case class SimpleError(expected: Int) extends Throwable {
 }
-object SimpleError extends ShapeTag.Companion[SimpleError] {
+object SimpleError extends ShapeTag.$Companion[SimpleError] {
+  val $id: ShapeId = ShapeId("smithy4s.example.test", "SimpleError")
 
-  val expected: FieldLens[SimpleError, Int] = int.required[SimpleError]("expected", _.expected, n => c => c.copy(expected = n)).addHints(Required())
-
-  implicit val schema: Schema[SimpleError] = struct(
-    expected,
-  ){
-    SimpleError.apply
-  }
-  .withId(ShapeId("smithy4s.example.test", "SimpleError"))
-  .addHints(
+  val $hints: Hints = Hints(
     Error.CLIENT.widen,
     HttpResponseTests(List(HttpResponseTestCase(id = "simple_error", protocol = "alloy#simpleRestJson", code = 400, authScheme = None, headers = None, forbidHeaders = None, requireHeaders = Some(List("X-Error-Type")), body = Some("{\"expected\":-1}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("expected" -> smithy4s.Document.fromDouble(-1.0d))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
   )
+
+  val expected: FieldLens[SimpleError, Int] = int.required[SimpleError]("expected", _.expected, n => c => c.copy(expected = n)).addHints(Required())
+
+  implicit val $schema: Schema[SimpleError] = struct(
+    expected,
+  ){
+    SimpleError.apply
+  }.withId($id).addHints($hints)
 }

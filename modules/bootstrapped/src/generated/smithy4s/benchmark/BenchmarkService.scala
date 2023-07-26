@@ -27,8 +27,7 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   val id: ShapeId = ShapeId("smithy4s.benchmark", "BenchmarkService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -82,12 +81,11 @@ object BenchmarkServiceOperation {
   }
   object CreateObject extends smithy4s.Endpoint[BenchmarkServiceOperation,CreateObjectInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.benchmark", "CreateObject")
-    val input: Schema[CreateObjectInput] = CreateObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[CreateObjectInput] = CreateObjectInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/complex/{bucketName}/{key}"), code = 200),
     )
     def wrap(input: CreateObjectInput) = CreateObject(input)
@@ -100,12 +98,11 @@ object BenchmarkServiceOperation {
   }
   object SendString extends smithy4s.Endpoint[BenchmarkServiceOperation,SendStringInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.benchmark", "SendString")
-    val input: Schema[SendStringInput] = SendStringInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[SendStringInput] = SendStringInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/simple/{bucketName}/{key}"), code = 200),
     )
     def wrap(input: SendStringInput) = SendString(input)

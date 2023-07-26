@@ -18,7 +18,8 @@ sealed abstract class AudioEnum(_value: String, _name: String, _intValue: Int, _
   override def enumeration: Enumeration[EnumType] = AudioEnum
   @inline final def widen: AudioEnum = this
 }
-object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnum] {
+object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.$Companion[AudioEnum] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "AudioEnum")
   case object GUITAR extends AudioEnum("guitar", "GUITAR", 0, Hints())
   case object BASS extends AudioEnum("bass", "BASS", 1, Hints())
 
@@ -27,8 +28,8 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
     BASS,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[AudioEnum] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "AudioEnum"))
+  implicit val $schema: Schema[AudioEnum] = enumeration(tag, values)
+  .withId($id)
   .addHints(
     MediaType("audio/mpeg3"),
   )

@@ -17,7 +17,8 @@ sealed abstract class EnumResult(_value: String, _name: String, _intValue: Int, 
   override def enumeration: Enumeration[EnumType] = EnumResult
   @inline final def widen: EnumResult = this
 }
-object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumResult] {
+object EnumResult extends Enumeration[EnumResult] with ShapeTag.$Companion[EnumResult] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "EnumResult")
   case object FIRST extends EnumResult("FIRST", "FIRST", 1, Hints())
   case object SECOND extends EnumResult("SECOND", "SECOND", 2, Hints())
 
@@ -26,6 +27,6 @@ object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumRe
     SECOND,
   )
   val tag: EnumTag = EnumTag.IntEnum
-  implicit val schema: Schema[EnumResult] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "EnumResult"))
+  implicit val $schema: Schema[EnumResult] = enumeration(tag, values)
+  .withId($id)
 }

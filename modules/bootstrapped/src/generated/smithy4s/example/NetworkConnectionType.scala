@@ -18,7 +18,8 @@ sealed abstract class NetworkConnectionType(_value: String, _name: String, _intV
   override def enumeration: Enumeration[EnumType] = NetworkConnectionType
   @inline final def widen: NetworkConnectionType = this
 }
-object NetworkConnectionType extends Enumeration[NetworkConnectionType] with ShapeTag.Companion[NetworkConnectionType] {
+object NetworkConnectionType extends Enumeration[NetworkConnectionType] with ShapeTag.$Companion[NetworkConnectionType] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "NetworkConnectionType")
   case object ETHERNET extends NetworkConnectionType("ETHERNET", "ETHERNET", 0, Hints())
   case object WIFI extends NetworkConnectionType("WIFI", "WIFI", 1, Hints())
 
@@ -27,11 +28,11 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
     WIFI,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[NetworkConnectionType] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "NetworkConnectionType"))
+  implicit val $schema: Schema[NetworkConnectionType] = enumeration(tag, values)
+  .withId($id)
   .addHints(
     smithy4s.example.Hash(),
   )
 
-  implicit val networkConnectionTypeHash: cats.Hash[NetworkConnectionType] = SchemaVisitorHash.fromSchema(schema)
+  implicit val networkConnectionTypeHash: cats.Hash[NetworkConnectionType] = SchemaVisitorHash.fromSchema($schema)
 }

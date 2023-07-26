@@ -3,6 +3,7 @@ package smithy4s.example
 import smithy.api.Documentation
 import smithy.api.Required
 import smithy4s.Bijection
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -19,52 +20,61 @@ sealed trait OrderType extends scala.Product with scala.Serializable {
   @inline final def widen: OrderType = this
   def _ordinal: Int
 }
-object OrderType extends ShapeTag.Companion[OrderType] {
+object OrderType extends ShapeTag.$Companion[OrderType] {
+
+  def online(online:OrderNumber): OrderType = OnlineCase(online)
+  /** For an InStoreOrder a location ID isn't needed */
+  def inStoreOrder(id: OrderNumber, locationId: Option[String] = None): OrderType = InStoreOrder(id, locationId)
+  def preview(): OrderType = PreviewCase
+
+  val $id: ShapeId = ShapeId("smithy4s.example", "OrderType")
+
+  val $hints: Hints = Hints(
+    Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"),
+  )
+
   final case class OnlineCase(online: OrderNumber) extends OrderType { final def _ordinal: Int = 0 }
   /** For an InStoreOrder a location ID isn't needed */
   final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType {
     def _ordinal: Int = 1
   }
-  object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
+  object InStoreOrder extends ShapeTag.$Companion[InStoreOrder] {
+    val $id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
 
-    val id: FieldLens[InStoreOrder, OrderNumber] = OrderNumber.schema.required[InStoreOrder]("id", _.id, n => c => c.copy(id = n)).addHints(Required())
+    val $hints: Hints = Hints(
+      Documentation("For an InStoreOrder a location ID isn\'t needed"),
+    )
+
+    val id: FieldLens[InStoreOrder, OrderNumber] = OrderNumber.$schema.required[InStoreOrder]("id", _.id, n => c => c.copy(id = n)).addHints(Required())
     val locationId: FieldLens[InStoreOrder, Option[String]] = string.optional[InStoreOrder]("locationId", _.locationId, n => c => c.copy(locationId = n))
 
-    val schema: Schema[InStoreOrder] = struct(
+    val $schema: Schema[InStoreOrder] = struct(
       id,
       locationId,
     ){
       InStoreOrder.apply
-    }
-    .withId(ShapeId("smithy4s.example", "InStoreOrder"))
-    .addHints(
-      Documentation("For an InStoreOrder a location ID isn\'t needed"),
-    )
+    }.withId($id).addHints($hints)
   }
   case object PreviewCase extends OrderType {
     final def _ordinal: Int = 2
-    val schema = Schema.constant(PreviewCase).addHints(Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"))
+    val $schema = Schema.constant(PreviewCase).addHints(Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"))
   }
 
   object OnlineCase {
     implicit val fromValue: Bijection[OrderNumber, OnlineCase] = Bijection(OnlineCase(_), _.online)
     implicit val toValue: Bijection[OnlineCase, OrderNumber] = fromValue.swap
-    val schema: Schema[OnlineCase] = bijection(OrderNumber.schema, fromValue)
+    val $schema: Schema[OnlineCase] = bijection(OrderNumber.$schema, fromValue)
   }
 
-  val online = OnlineCase.schema.oneOf[OrderType]("online")
-  val inStore = InStoreOrder.schema.oneOf[OrderType]("inStore")
-  val preview = PreviewCase.schema.oneOf[OrderType]("preview")
+  val online = OnlineCase.$schema.oneOf[OrderType]("online")
+  val inStore = InStoreOrder.$schema.oneOf[OrderType]("inStore")
+  val preview_ = PreviewCase.$schema.oneOf[OrderType]("preview")
 
-  implicit val schema: Schema[OrderType] = union(
+  implicit val $schema: Schema[OrderType] = union(
     online,
     inStore,
-    preview,
+    preview_,
   ){
     _._ordinal
-  }
-  .withId(ShapeId("smithy4s.example", "OrderType"))
-  .addHints(
-    Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID"),
-  )
+  }.withId($id).addHints($hints)
 }

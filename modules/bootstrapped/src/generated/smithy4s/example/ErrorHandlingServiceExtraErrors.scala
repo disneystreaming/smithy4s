@@ -30,8 +30,7 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingServiceExtraErrors")
   val version: String = "1"
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -84,15 +83,14 @@ object ErrorHandlingServiceExtraErrorsOperation {
   }
   object ExtraErrorOperation extends smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] with Errorable[ExtraErrorOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperation")
-    val input: Schema[ExtraErrorOperationInput] = ExtraErrorOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[ExtraErrorOperationInput] = ExtraErrorOperationInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: ExtraErrorOperationInput) = ExtraErrorOperation(input)
     override val errorable: Option[Errorable[ExtraErrorOperationError]] = Some(this)
-    val error: UnionSchema[ExtraErrorOperationError] = ExtraErrorOperationError.schema
+    val error: UnionSchema[ExtraErrorOperationError] = ExtraErrorOperationError.$schema
     def liftError(throwable: Throwable): Option[ExtraErrorOperationError] = throwable match {
       case e: smithy4s.example.RandomOtherClientError => Some(ExtraErrorOperationError.RandomOtherClientErrorCase(e))
       case e: smithy4s.example.RandomOtherServerError => Some(ExtraErrorOperationError.RandomOtherServerErrorCase(e))
@@ -111,7 +109,17 @@ object ErrorHandlingServiceExtraErrorsOperation {
     @inline final def widen: ExtraErrorOperationError = this
     def _ordinal: Int
   }
-  object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
+  object ExtraErrorOperationError extends ShapeTag.$Companion[ExtraErrorOperationError] {
+
+    def randomOtherClientError(randomOtherClientError:smithy4s.example.RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
+    def randomOtherServerError(randomOtherServerError:smithy4s.example.RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerError)
+    def randomOtherClientErrorWithCode(randomOtherClientErrorWithCode:smithy4s.example.RandomOtherClientErrorWithCode): ExtraErrorOperationError = RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode)
+    def randomOtherServerErrorWithCode(randomOtherServerErrorWithCode:smithy4s.example.RandomOtherServerErrorWithCode): ExtraErrorOperationError = RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationError")
+
+    val $hints: Hints = Hints.empty
+
     final case class RandomOtherClientErrorCase(randomOtherClientError: smithy4s.example.RandomOtherClientError) extends ExtraErrorOperationError { final def _ordinal: Int = 0 }
     final case class RandomOtherServerErrorCase(randomOtherServerError: smithy4s.example.RandomOtherServerError) extends ExtraErrorOperationError { final def _ordinal: Int = 1 }
     final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: smithy4s.example.RandomOtherClientErrorWithCode) extends ExtraErrorOperationError { final def _ordinal: Int = 2 }
@@ -120,30 +128,30 @@ object ErrorHandlingServiceExtraErrorsOperation {
     object RandomOtherClientErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.RandomOtherClientError, RandomOtherClientErrorCase] = Bijection(RandomOtherClientErrorCase(_), _.randomOtherClientError)
       implicit val toValue: Bijection[RandomOtherClientErrorCase, smithy4s.example.RandomOtherClientError] = fromValue.swap
-      val schema: Schema[RandomOtherClientErrorCase] = bijection(smithy4s.example.RandomOtherClientError.schema, fromValue)
+      val $schema: Schema[RandomOtherClientErrorCase] = bijection(smithy4s.example.RandomOtherClientError.$schema, fromValue)
     }
     object RandomOtherServerErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.RandomOtherServerError, RandomOtherServerErrorCase] = Bijection(RandomOtherServerErrorCase(_), _.randomOtherServerError)
       implicit val toValue: Bijection[RandomOtherServerErrorCase, smithy4s.example.RandomOtherServerError] = fromValue.swap
-      val schema: Schema[RandomOtherServerErrorCase] = bijection(smithy4s.example.RandomOtherServerError.schema, fromValue)
+      val $schema: Schema[RandomOtherServerErrorCase] = bijection(smithy4s.example.RandomOtherServerError.$schema, fromValue)
     }
     object RandomOtherClientErrorWithCodeCase {
       implicit val fromValue: Bijection[smithy4s.example.RandomOtherClientErrorWithCode, RandomOtherClientErrorWithCodeCase] = Bijection(RandomOtherClientErrorWithCodeCase(_), _.randomOtherClientErrorWithCode)
       implicit val toValue: Bijection[RandomOtherClientErrorWithCodeCase, smithy4s.example.RandomOtherClientErrorWithCode] = fromValue.swap
-      val schema: Schema[RandomOtherClientErrorWithCodeCase] = bijection(smithy4s.example.RandomOtherClientErrorWithCode.schema, fromValue)
+      val $schema: Schema[RandomOtherClientErrorWithCodeCase] = bijection(smithy4s.example.RandomOtherClientErrorWithCode.$schema, fromValue)
     }
     object RandomOtherServerErrorWithCodeCase {
       implicit val fromValue: Bijection[smithy4s.example.RandomOtherServerErrorWithCode, RandomOtherServerErrorWithCodeCase] = Bijection(RandomOtherServerErrorWithCodeCase(_), _.randomOtherServerErrorWithCode)
       implicit val toValue: Bijection[RandomOtherServerErrorWithCodeCase, smithy4s.example.RandomOtherServerErrorWithCode] = fromValue.swap
-      val schema: Schema[RandomOtherServerErrorWithCodeCase] = bijection(smithy4s.example.RandomOtherServerErrorWithCode.schema, fromValue)
+      val $schema: Schema[RandomOtherServerErrorWithCodeCase] = bijection(smithy4s.example.RandomOtherServerErrorWithCode.$schema, fromValue)
     }
 
-    val RandomOtherClientError = RandomOtherClientErrorCase.schema.oneOf[ExtraErrorOperationError]("RandomOtherClientError")
-    val RandomOtherServerError = RandomOtherServerErrorCase.schema.oneOf[ExtraErrorOperationError]("RandomOtherServerError")
-    val RandomOtherClientErrorWithCode = RandomOtherClientErrorWithCodeCase.schema.oneOf[ExtraErrorOperationError]("RandomOtherClientErrorWithCode")
-    val RandomOtherServerErrorWithCode = RandomOtherServerErrorWithCodeCase.schema.oneOf[ExtraErrorOperationError]("RandomOtherServerErrorWithCode")
+    val RandomOtherClientError = RandomOtherClientErrorCase.$schema.oneOf[ExtraErrorOperationError]("RandomOtherClientError")
+    val RandomOtherServerError = RandomOtherServerErrorCase.$schema.oneOf[ExtraErrorOperationError]("RandomOtherServerError")
+    val RandomOtherClientErrorWithCode = RandomOtherClientErrorWithCodeCase.$schema.oneOf[ExtraErrorOperationError]("RandomOtherClientErrorWithCode")
+    val RandomOtherServerErrorWithCode = RandomOtherServerErrorWithCodeCase.$schema.oneOf[ExtraErrorOperationError]("RandomOtherServerErrorWithCode")
 
-    implicit val schema: UnionSchema[ExtraErrorOperationError] = union(
+    implicit val $schema: UnionSchema[ExtraErrorOperationError] = union(
       RandomOtherClientError,
       RandomOtherServerError,
       RandomOtherClientErrorWithCode,
@@ -151,7 +159,6 @@ object ErrorHandlingServiceExtraErrorsOperation {
     ){
       _._ordinal
     }
-    
   }
 }
 

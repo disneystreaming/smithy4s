@@ -32,8 +32,7 @@ object KVStoreGen extends Service.Mixin[KVStoreGen, KVStoreOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "KVStore")
   val version: String = ""
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -96,15 +95,14 @@ object KVStoreOperation {
   }
   object Get extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.GetError, Value, Nothing, Nothing] with Errorable[GetError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Get")
-    val input: Schema[Key] = Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Value] = Value.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[Key] = Key.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[Value] = Value.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: Key) = Get(input)
     override val errorable: Option[Errorable[GetError]] = Some(this)
-    val error: UnionSchema[GetError] = GetError.schema
+    val error: UnionSchema[GetError] = GetError.$schema
     def liftError(throwable: Throwable): Option[GetError] = throwable match {
       case e: smithy4s.example.UnauthorizedError => Some(GetError.UnauthorizedErrorCase(e))
       case e: smithy4s.example.KeyNotFoundError => Some(GetError.KeyNotFoundErrorCase(e))
@@ -119,31 +117,38 @@ object KVStoreOperation {
     @inline final def widen: GetError = this
     def _ordinal: Int
   }
-  object GetError extends ShapeTag.Companion[GetError] {
+  object GetError extends ShapeTag.$Companion[GetError] {
+
+    def unauthorizedError(unauthorizedError:smithy4s.example.UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedError)
+    def keyNotFoundError(keyNotFoundError:smithy4s.example.KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "GetError")
+
+    val $hints: Hints = Hints.empty
+
     final case class UnauthorizedErrorCase(unauthorizedError: smithy4s.example.UnauthorizedError) extends GetError { final def _ordinal: Int = 0 }
     final case class KeyNotFoundErrorCase(keyNotFoundError: smithy4s.example.KeyNotFoundError) extends GetError { final def _ordinal: Int = 1 }
 
     object UnauthorizedErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.UnauthorizedError, UnauthorizedErrorCase] = Bijection(UnauthorizedErrorCase(_), _.unauthorizedError)
       implicit val toValue: Bijection[UnauthorizedErrorCase, smithy4s.example.UnauthorizedError] = fromValue.swap
-      val schema: Schema[UnauthorizedErrorCase] = bijection(smithy4s.example.UnauthorizedError.schema, fromValue)
+      val $schema: Schema[UnauthorizedErrorCase] = bijection(smithy4s.example.UnauthorizedError.$schema, fromValue)
     }
     object KeyNotFoundErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.KeyNotFoundError, KeyNotFoundErrorCase] = Bijection(KeyNotFoundErrorCase(_), _.keyNotFoundError)
       implicit val toValue: Bijection[KeyNotFoundErrorCase, smithy4s.example.KeyNotFoundError] = fromValue.swap
-      val schema: Schema[KeyNotFoundErrorCase] = bijection(smithy4s.example.KeyNotFoundError.schema, fromValue)
+      val $schema: Schema[KeyNotFoundErrorCase] = bijection(smithy4s.example.KeyNotFoundError.$schema, fromValue)
     }
 
-    val UnauthorizedError = UnauthorizedErrorCase.schema.oneOf[GetError]("UnauthorizedError")
-    val KeyNotFoundError = KeyNotFoundErrorCase.schema.oneOf[GetError]("KeyNotFoundError")
+    val UnauthorizedError = UnauthorizedErrorCase.$schema.oneOf[GetError]("UnauthorizedError")
+    val KeyNotFoundError = KeyNotFoundErrorCase.$schema.oneOf[GetError]("KeyNotFoundError")
 
-    implicit val schema: UnionSchema[GetError] = union(
+    implicit val $schema: UnionSchema[GetError] = union(
       UnauthorizedError,
       KeyNotFoundError,
     ){
       _._ordinal
     }
-    
   }
   final case class Put(input: KeyValue) extends KVStoreOperation[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] = impl.put(input.key, input.value)
@@ -152,15 +157,14 @@ object KVStoreOperation {
   }
   object Put extends smithy4s.Endpoint[KVStoreOperation,KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] with Errorable[PutError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Put")
-    val input: Schema[KeyValue] = KeyValue.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[KeyValue] = KeyValue.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: KeyValue) = Put(input)
     override val errorable: Option[Errorable[PutError]] = Some(this)
-    val error: UnionSchema[PutError] = PutError.schema
+    val error: UnionSchema[PutError] = PutError.$schema
     def liftError(throwable: Throwable): Option[PutError] = throwable match {
       case e: smithy4s.example.UnauthorizedError => Some(PutError.UnauthorizedErrorCase(e))
       case _ => None
@@ -173,23 +177,29 @@ object KVStoreOperation {
     @inline final def widen: PutError = this
     def _ordinal: Int
   }
-  object PutError extends ShapeTag.Companion[PutError] {
+  object PutError extends ShapeTag.$Companion[PutError] {
+
+    def unauthorizedError(unauthorizedError:smithy4s.example.UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "PutError")
+
+    val $hints: Hints = Hints.empty
+
     final case class UnauthorizedErrorCase(unauthorizedError: smithy4s.example.UnauthorizedError) extends PutError { final def _ordinal: Int = 0 }
 
     object UnauthorizedErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.UnauthorizedError, UnauthorizedErrorCase] = Bijection(UnauthorizedErrorCase(_), _.unauthorizedError)
       implicit val toValue: Bijection[UnauthorizedErrorCase, smithy4s.example.UnauthorizedError] = fromValue.swap
-      val schema: Schema[UnauthorizedErrorCase] = bijection(smithy4s.example.UnauthorizedError.schema, fromValue)
+      val $schema: Schema[UnauthorizedErrorCase] = bijection(smithy4s.example.UnauthorizedError.$schema, fromValue)
     }
 
-    val UnauthorizedError = UnauthorizedErrorCase.schema.oneOf[PutError]("UnauthorizedError")
+    val UnauthorizedError = UnauthorizedErrorCase.$schema.oneOf[PutError]("UnauthorizedError")
 
-    implicit val schema: UnionSchema[PutError] = union(
+    implicit val $schema: UnionSchema[PutError] = union(
       UnauthorizedError,
     ){
       _._ordinal
     }
-    
   }
   final case class Delete(input: Key) extends KVStoreOperation[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: KVStoreGen[F]): F[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] = impl.delete(input.key)
@@ -198,15 +208,14 @@ object KVStoreOperation {
   }
   object Delete extends smithy4s.Endpoint[KVStoreOperation,Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] with Errorable[DeleteError] {
     val id: ShapeId = ShapeId("smithy4s.example", "Delete")
-    val input: Schema[Key] = Key.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[Key] = Key.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: Key) = Delete(input)
     override val errorable: Option[Errorable[DeleteError]] = Some(this)
-    val error: UnionSchema[DeleteError] = DeleteError.schema
+    val error: UnionSchema[DeleteError] = DeleteError.$schema
     def liftError(throwable: Throwable): Option[DeleteError] = throwable match {
       case e: smithy4s.example.UnauthorizedError => Some(DeleteError.UnauthorizedErrorCase(e))
       case e: smithy4s.example.KeyNotFoundError => Some(DeleteError.KeyNotFoundErrorCase(e))
@@ -221,31 +230,38 @@ object KVStoreOperation {
     @inline final def widen: DeleteError = this
     def _ordinal: Int
   }
-  object DeleteError extends ShapeTag.Companion[DeleteError] {
+  object DeleteError extends ShapeTag.$Companion[DeleteError] {
+
+    def unauthorizedError(unauthorizedError:smithy4s.example.UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedError)
+    def keyNotFoundError(keyNotFoundError:smithy4s.example.KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "DeleteError")
+
+    val $hints: Hints = Hints.empty
+
     final case class UnauthorizedErrorCase(unauthorizedError: smithy4s.example.UnauthorizedError) extends DeleteError { final def _ordinal: Int = 0 }
     final case class KeyNotFoundErrorCase(keyNotFoundError: smithy4s.example.KeyNotFoundError) extends DeleteError { final def _ordinal: Int = 1 }
 
     object UnauthorizedErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.UnauthorizedError, UnauthorizedErrorCase] = Bijection(UnauthorizedErrorCase(_), _.unauthorizedError)
       implicit val toValue: Bijection[UnauthorizedErrorCase, smithy4s.example.UnauthorizedError] = fromValue.swap
-      val schema: Schema[UnauthorizedErrorCase] = bijection(smithy4s.example.UnauthorizedError.schema, fromValue)
+      val $schema: Schema[UnauthorizedErrorCase] = bijection(smithy4s.example.UnauthorizedError.$schema, fromValue)
     }
     object KeyNotFoundErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.KeyNotFoundError, KeyNotFoundErrorCase] = Bijection(KeyNotFoundErrorCase(_), _.keyNotFoundError)
       implicit val toValue: Bijection[KeyNotFoundErrorCase, smithy4s.example.KeyNotFoundError] = fromValue.swap
-      val schema: Schema[KeyNotFoundErrorCase] = bijection(smithy4s.example.KeyNotFoundError.schema, fromValue)
+      val $schema: Schema[KeyNotFoundErrorCase] = bijection(smithy4s.example.KeyNotFoundError.$schema, fromValue)
     }
 
-    val UnauthorizedError = UnauthorizedErrorCase.schema.oneOf[DeleteError]("UnauthorizedError")
-    val KeyNotFoundError = KeyNotFoundErrorCase.schema.oneOf[DeleteError]("KeyNotFoundError")
+    val UnauthorizedError = UnauthorizedErrorCase.$schema.oneOf[DeleteError]("UnauthorizedError")
+    val KeyNotFoundError = KeyNotFoundErrorCase.$schema.oneOf[DeleteError]("KeyNotFoundError")
 
-    implicit val schema: UnionSchema[DeleteError] = union(
+    implicit val $schema: UnionSchema[DeleteError] = union(
       UnauthorizedError,
       KeyNotFoundError,
     ){
       _._ordinal
     }
-    
   }
 }
 

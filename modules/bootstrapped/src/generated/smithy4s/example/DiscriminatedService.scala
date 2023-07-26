@@ -27,8 +27,7 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   val id: ShapeId = ShapeId("smithy4s.example", "DiscriminatedService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -81,12 +80,11 @@ object DiscriminatedServiceOperation {
   }
   object TestDiscriminated extends smithy4s.Endpoint[DiscriminatedServiceOperation,TestDiscriminatedInput, Nothing, TestDiscriminatedOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestDiscriminated")
-    val input: Schema[TestDiscriminatedInput] = TestDiscriminatedInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[TestDiscriminatedOutput] = TestDiscriminatedOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[TestDiscriminatedInput] = TestDiscriminatedInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[TestDiscriminatedOutput] = TestDiscriminatedOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/test/{key}"), code = 200),
       Readonly(),
     )

@@ -27,8 +27,7 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "Library")
   val version: String = ""
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -87,11 +86,10 @@ object LibraryOperation {
   object ListPublishers extends smithy4s.Endpoint[LibraryOperation,Unit, Nothing, ListPublishersOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "ListPublishers")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ListPublishersOutput] = ListPublishersOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val output: Schema[ListPublishersOutput] = ListPublishersOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Readonly(),
     )
     def wrap(input: Unit) = ListPublishers()
@@ -109,8 +107,7 @@ object LibraryOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Readonly(),
     )
     def wrap(input: Unit) = GetBook()
@@ -128,8 +125,7 @@ object LibraryOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: Unit) = BuyBook()
     override val errorable: Option[Nothing] = None
   }

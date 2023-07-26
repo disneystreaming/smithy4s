@@ -30,8 +30,7 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
   val version: java.lang.String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -93,12 +92,11 @@ object ReservedNameServiceOperation {
   }
   object Set extends smithy4s.Endpoint[ReservedNameServiceOperation,SetInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Set")
-    val input: Schema[SetInput] = SetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[SetInput] = SetInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/set/"), code = 204),
     )
     def wrap(input: SetInput) = Set(input)
@@ -111,12 +109,11 @@ object ReservedNameServiceOperation {
   }
   object List extends smithy4s.Endpoint[ReservedNameServiceOperation,ListInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "List")
-    val input: Schema[ListInput] = ListInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[ListInput] = ListInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/list/"), code = 204),
     )
     def wrap(input: ListInput) = List(input)
@@ -129,12 +126,11 @@ object ReservedNameServiceOperation {
   }
   object Map extends smithy4s.Endpoint[ReservedNameServiceOperation,MapInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Map")
-    val input: Schema[MapInput] = MapInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[MapInput] = MapInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/map/"), code = 204),
     )
     def wrap(input: MapInput) = Map(input)
@@ -147,12 +143,11 @@ object ReservedNameServiceOperation {
   }
   object Option extends smithy4s.Endpoint[ReservedNameServiceOperation,OptionInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.collision", "Option")
-    val input: Schema[OptionInput] = OptionInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[OptionInput] = OptionInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/option/"), code = 204),
     )
     def wrap(input: OptionInput) = Option(input)

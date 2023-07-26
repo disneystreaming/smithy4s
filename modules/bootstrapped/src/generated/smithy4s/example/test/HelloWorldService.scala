@@ -28,8 +28,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloWorldService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -82,12 +81,11 @@ object HelloWorldServiceOperation {
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "Hello")
-    val input: Schema[HelloInput] = HelloInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[HelloOutput] = HelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[HelloInput] = HelloInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[HelloOutput] = HelloOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       HttpRequestTests(List(HttpRequestTestCase(id = "helloSuccess", protocol = "alloy#simpleRestJson", method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), HttpRequestTestCase(id = "helloFails", protocol = "alloy#simpleRestJson", method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/{name}"), code = 200),
     )

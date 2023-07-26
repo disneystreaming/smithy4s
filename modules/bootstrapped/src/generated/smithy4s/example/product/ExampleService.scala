@@ -30,8 +30,7 @@ object ExampleServiceGen extends Service.Mixin[ExampleServiceGen, ExampleService
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleService")
   val version: String = ""
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -106,12 +105,11 @@ object ExampleServiceOperation {
   }
   object ExampleOperation extends smithy4s.Endpoint[ExampleServiceOperation,ExampleOperationInput, Nothing, ExampleOperationOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleOperation")
-    val input: Schema[ExampleOperationInput] = ExampleOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ExampleOperationOutput] = ExampleOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[ExampleOperationInput] = ExampleOperationInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[ExampleOperationOutput] = ExampleOperationOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: ExampleOperationInput) = ExampleOperation(input)
     override val errorable: Option[Nothing] = None
   }

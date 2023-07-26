@@ -1,6 +1,7 @@
 package smithy4s.example
 
 import smithy.api.Trait
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -13,17 +14,18 @@ import smithy4s.schema.Schema.struct
   *   Except for preview orders, these don't have an ID
   */
 final case class TestTrait(orderType: Option[OrderType] = None)
-object TestTrait extends ShapeTag.Companion[TestTrait] {
+object TestTrait extends ShapeTag.$Companion[TestTrait] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "testTrait")
 
-  implicit val schema: Schema[TestTrait] = recursive(struct(
+  val $hints: Hints = Hints(
+    Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+  )
+
+  implicit val $schema: Schema[TestTrait] = recursive(struct(
     orderType,
   ){
     TestTrait.apply
-  }
-  .withId(ShapeId("smithy4s.example", "testTrait"))
-  .addHints(
-    Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  ))
+  }.withId($id).addHints($hints))
 
-  val orderType: FieldLens[TestTrait, Option[OrderType]] = OrderType.schema.optional[TestTrait]("orderType", _.orderType, n => c => c.copy(orderType = n))
+  val orderType: FieldLens[TestTrait, Option[OrderType]] = OrderType.$schema.optional[TestTrait]("orderType", _.orderType, n => c => c.copy(orderType = n))
 }

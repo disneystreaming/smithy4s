@@ -5,6 +5,7 @@ import smithy.api.Default
 import smithy.api.TimestampFormat
 import smithy4s.ByteArray
 import smithy4s.Document
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -24,7 +25,10 @@ import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.timestamp
 
 final case class DefaultTest(one: Int = 1, two: String = "test", three: List[String] = List(), four: List[String] = List(), five: String = "", six: Int = 0, seven: Document = smithy4s.Document.nullDoc, eight: Map[String, String] = Map(), nine: Short = 0, ten: Double = 0.0d, eleven: Float = 0.0f, twelve: Long = 0L, thirteen: Timestamp = Timestamp(0, 0), fourteen: Timestamp = Timestamp(0, 0), fifteen: Timestamp = Timestamp(0, 0), sixteen: Byte = 0, seventeen: ByteArray = ByteArray(Array()), eighteen: Boolean = false)
-object DefaultTest extends ShapeTag.Companion[DefaultTest] {
+object DefaultTest extends ShapeTag.$Companion[DefaultTest] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "DefaultTest")
+
+  val $hints: Hints = Hints.empty
 
   val one: FieldLens[DefaultTest, Int] = int.required[DefaultTest]("one", _.one, n => c => c.copy(one = n)).addHints(Default(smithy4s.Document.fromDouble(1.0d)))
   val two: FieldLens[DefaultTest, String] = string.required[DefaultTest]("two", _.two, n => c => c.copy(two = n)).addHints(Default(smithy4s.Document.fromString("test")))
@@ -45,7 +49,7 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
   val seventeen: FieldLens[DefaultTest, ByteArray] = bytes.required[DefaultTest]("seventeen", _.seventeen, n => c => c.copy(seventeen = n)).addHints(Default(smithy4s.Document.array()))
   val eighteen: FieldLens[DefaultTest, Boolean] = boolean.required[DefaultTest]("eighteen", _.eighteen, n => c => c.copy(eighteen = n)).addHints(Box(), Default(smithy4s.Document.fromBoolean(false)))
 
-  implicit val schema: Schema[DefaultTest] = struct(
+  implicit val $schema: Schema[DefaultTest] = struct(
     one,
     two,
     three,
@@ -66,6 +70,5 @@ object DefaultTest extends ShapeTag.Companion[DefaultTest] {
     eighteen,
   ){
     DefaultTest.apply
-  }
-  .withId(ShapeId("smithy4s.example", "DefaultTest"))
+  }.withId($id).addHints($hints)
 }

@@ -1,6 +1,7 @@
 package smithy4s.example
 
 import smithy.api.Required
+import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
@@ -9,7 +10,10 @@ import smithy4s.schema.Schema.int
 import smithy4s.schema.Schema.struct
 
 final case class BigStruct(a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int, a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int, a21: Int, a22: Int, a23: Int)
-object BigStruct extends ShapeTag.Companion[BigStruct] {
+object BigStruct extends ShapeTag.$Companion[BigStruct] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "BigStruct")
+
+  val $hints: Hints = Hints.empty
 
   val a1: FieldLens[BigStruct, Int] = int.required[BigStruct]("a1", _.a1, n => c => c.copy(a1 = n)).addHints(Required())
   val a2: FieldLens[BigStruct, Int] = int.required[BigStruct]("a2", _.a2, n => c => c.copy(a2 = n)).addHints(Required())
@@ -35,7 +39,7 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
   val a22: FieldLens[BigStruct, Int] = int.required[BigStruct]("a22", _.a22, n => c => c.copy(a22 = n)).addHints(Required())
   val a23: FieldLens[BigStruct, Int] = int.required[BigStruct]("a23", _.a23, n => c => c.copy(a23 = n)).addHints(Required())
 
-  implicit val schema: Schema[BigStruct] = struct.genericArity(
+  implicit val $schema: Schema[BigStruct] = struct.genericArity(
     a1,
     a2,
     a3,
@@ -85,6 +89,5 @@ object BigStruct extends ShapeTag.Companion[BigStruct] {
       arr(21).asInstanceOf[Int],
       arr(22).asInstanceOf[Int],
     )
-  }
-  .withId(ShapeId("smithy4s.example", "BigStruct"))
+  }.withId($id).addHints($hints)
 }

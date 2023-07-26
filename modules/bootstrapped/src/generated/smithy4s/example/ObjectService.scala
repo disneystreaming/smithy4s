@@ -43,8 +43,7 @@ object ObjectServiceGen extends Service.Mixin[ObjectServiceGen, ObjectServiceOpe
   val id: ShapeId = ShapeId("smithy4s.example", "ObjectService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -104,18 +103,17 @@ object ObjectServiceOperation {
   }
   object PutObject extends smithy4s.Endpoint[ObjectServiceOperation,PutObjectInput, ObjectServiceOperation.PutObjectError, Unit, Nothing, Nothing] with Errorable[PutObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "PutObject")
-    val input: Schema[PutObjectInput] = PutObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[PutObjectInput] = PutObjectInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("PUT"), uri = NonEmptyString("/{bucketName}/{key}"), code = 200),
       Idempotent(),
     )
     def wrap(input: PutObjectInput) = PutObject(input)
     override val errorable: Option[Errorable[PutObjectError]] = Some(this)
-    val error: UnionSchema[PutObjectError] = PutObjectError.schema
+    val error: UnionSchema[PutObjectError] = PutObjectError.$schema
     def liftError(throwable: Throwable): Option[PutObjectError] = throwable match {
       case e: smithy4s.example.ServerError => Some(PutObjectError.ServerErrorCase(e))
       case e: smithy4s.example.NoMoreSpace => Some(PutObjectError.NoMoreSpaceCase(e))
@@ -130,31 +128,38 @@ object ObjectServiceOperation {
     @inline final def widen: PutObjectError = this
     def _ordinal: Int
   }
-  object PutObjectError extends ShapeTag.Companion[PutObjectError] {
+  object PutObjectError extends ShapeTag.$Companion[PutObjectError] {
+
+    def serverError(serverError:smithy4s.example.ServerError): PutObjectError = ServerErrorCase(serverError)
+    def noMoreSpace(noMoreSpace:smithy4s.example.NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
+
+    val $hints: Hints = Hints.empty
+
     final case class ServerErrorCase(serverError: smithy4s.example.ServerError) extends PutObjectError { final def _ordinal: Int = 0 }
     final case class NoMoreSpaceCase(noMoreSpace: smithy4s.example.NoMoreSpace) extends PutObjectError { final def _ordinal: Int = 1 }
 
     object ServerErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.ServerError, ServerErrorCase] = Bijection(ServerErrorCase(_), _.serverError)
       implicit val toValue: Bijection[ServerErrorCase, smithy4s.example.ServerError] = fromValue.swap
-      val schema: Schema[ServerErrorCase] = bijection(smithy4s.example.ServerError.schema, fromValue)
+      val $schema: Schema[ServerErrorCase] = bijection(smithy4s.example.ServerError.$schema, fromValue)
     }
     object NoMoreSpaceCase {
       implicit val fromValue: Bijection[smithy4s.example.NoMoreSpace, NoMoreSpaceCase] = Bijection(NoMoreSpaceCase(_), _.noMoreSpace)
       implicit val toValue: Bijection[NoMoreSpaceCase, smithy4s.example.NoMoreSpace] = fromValue.swap
-      val schema: Schema[NoMoreSpaceCase] = bijection(smithy4s.example.NoMoreSpace.schema, fromValue)
+      val $schema: Schema[NoMoreSpaceCase] = bijection(smithy4s.example.NoMoreSpace.$schema, fromValue)
     }
 
-    val ServerError = ServerErrorCase.schema.oneOf[PutObjectError]("ServerError")
-    val NoMoreSpace = NoMoreSpaceCase.schema.oneOf[PutObjectError]("NoMoreSpace")
+    val ServerError = ServerErrorCase.$schema.oneOf[PutObjectError]("ServerError")
+    val NoMoreSpace = NoMoreSpaceCase.$schema.oneOf[PutObjectError]("NoMoreSpace")
 
-    implicit val schema: UnionSchema[PutObjectError] = union(
+    implicit val $schema: UnionSchema[PutObjectError] = union(
       ServerError,
       NoMoreSpace,
     ){
       _._ordinal
     }
-    
   }
   final case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ObjectServiceGen[F]): F[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] = impl.getObject(input.key, input.bucketName)
@@ -163,18 +168,17 @@ object ObjectServiceOperation {
   }
   object GetObject extends smithy4s.Endpoint[ObjectServiceOperation,GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] with Errorable[GetObjectError] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetObject")
-    val input: Schema[GetObjectInput] = GetObjectInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetObjectOutput] = GetObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[GetObjectInput] = GetObjectInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[GetObjectOutput] = GetObjectOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/{bucketName}/{key}"), code = 200),
       Readonly(),
     )
     def wrap(input: GetObjectInput) = GetObject(input)
     override val errorable: Option[Errorable[GetObjectError]] = Some(this)
-    val error: UnionSchema[GetObjectError] = GetObjectError.schema
+    val error: UnionSchema[GetObjectError] = GetObjectError.$schema
     def liftError(throwable: Throwable): Option[GetObjectError] = throwable match {
       case e: smithy4s.example.ServerError => Some(GetObjectError.ServerErrorCase(e))
       case _ => None
@@ -187,23 +191,29 @@ object ObjectServiceOperation {
     @inline final def widen: GetObjectError = this
     def _ordinal: Int
   }
-  object GetObjectError extends ShapeTag.Companion[GetObjectError] {
+  object GetObjectError extends ShapeTag.$Companion[GetObjectError] {
+
+    def serverError(serverError:smithy4s.example.ServerError): GetObjectError = ServerErrorCase(serverError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
+
+    val $hints: Hints = Hints.empty
+
     final case class ServerErrorCase(serverError: smithy4s.example.ServerError) extends GetObjectError { final def _ordinal: Int = 0 }
 
     object ServerErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.ServerError, ServerErrorCase] = Bijection(ServerErrorCase(_), _.serverError)
       implicit val toValue: Bijection[ServerErrorCase, smithy4s.example.ServerError] = fromValue.swap
-      val schema: Schema[ServerErrorCase] = bijection(smithy4s.example.ServerError.schema, fromValue)
+      val $schema: Schema[ServerErrorCase] = bijection(smithy4s.example.ServerError.$schema, fromValue)
     }
 
-    val ServerError = ServerErrorCase.schema.oneOf[GetObjectError]("ServerError")
+    val ServerError = ServerErrorCase.$schema.oneOf[GetObjectError]("ServerError")
 
-    implicit val schema: UnionSchema[GetObjectError] = union(
+    implicit val $schema: UnionSchema[GetObjectError] = union(
       ServerError,
     ){
       _._ordinal
     }
-    
   }
 }
 

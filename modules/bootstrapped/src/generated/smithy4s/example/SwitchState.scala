@@ -17,7 +17,8 @@ sealed abstract class SwitchState(_value: String, _name: String, _intValue: Int,
   override def enumeration: Enumeration[EnumType] = SwitchState
   @inline final def widen: SwitchState = this
 }
-object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[SwitchState] {
+object SwitchState extends Enumeration[SwitchState] with ShapeTag.$Companion[SwitchState] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "SwitchState")
   case object ON extends SwitchState("ON", "ON", 0, Hints())
   case object OFF extends SwitchState("OFF", "OFF", 1, Hints())
 
@@ -26,6 +27,6 @@ object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[Swit
     OFF,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[SwitchState] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "SwitchState"))
+  implicit val $schema: Schema[SwitchState] = enumeration(tag, values)
+  .withId($id)
 }

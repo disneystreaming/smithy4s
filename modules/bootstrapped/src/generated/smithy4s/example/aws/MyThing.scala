@@ -19,8 +19,7 @@ object MyThingGen extends smithy4s.Service.Mixin[MyThingGen, MyThingOperation] {
   val id: ShapeId = ShapeId("smithy4s.example.aws", "MyAwsService")
   val version: String = ""
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     aws.api.Service(sdkId = "MyThing", arnNamespace = None, cloudFormationName = None, cloudTrailEventSource = None, endpointPrefix = Some("mything")),
   )
 

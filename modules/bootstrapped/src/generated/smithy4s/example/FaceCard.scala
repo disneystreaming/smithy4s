@@ -19,7 +19,8 @@ sealed abstract class FaceCard(_value: String, _name: String, _intValue: Int, _h
   override def enumeration: Enumeration[EnumType] = FaceCard
   @inline final def widen: FaceCard = this
 }
-object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] {
+object FaceCard extends Enumeration[FaceCard] with ShapeTag.$Companion[FaceCard] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "FaceCard")
   case object JACK extends FaceCard("JACK", "JACK", 1, Hints())
   case object QUEEN extends FaceCard("QUEEN", "QUEEN", 2, Hints())
   case object KING extends FaceCard("KING", "KING", 3, Hints())
@@ -34,8 +35,8 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
     JOKER,
   )
   val tag: EnumTag = EnumTag.IntEnum
-  implicit val schema: Schema[FaceCard] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "FaceCard"))
+  implicit val $schema: Schema[FaceCard] = enumeration(tag, values)
+  .withId($id)
   .addHints(
     Documentation("FaceCard types"),
   )

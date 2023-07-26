@@ -105,7 +105,7 @@ object AllowRule {
   val schema: Schema[AllowRule] = {
     val idField = Glob.schema.required[AllowRule]("id", _.id)
     val appliesToField =
-      AppliesTo.schema.optional[AllowRule]("appliesTo", _.appliesTo)
+      AppliesTo.$schema.optional[AllowRule]("appliesTo", _.appliesTo)
     val testTypeField =
       TestType.schema.optional[AllowRule]("testType", _.testType)
     Schema.struct(idField, appliesToField, testTypeField) {

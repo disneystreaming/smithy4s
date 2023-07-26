@@ -21,7 +21,8 @@ sealed abstract class EnumWithDeprecations(_value: String, _name: String, _intVa
   override def enumeration: Enumeration[EnumType] = EnumWithDeprecations
   @inline final def widen: EnumWithDeprecations = this
 }
-object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.Companion[EnumWithDeprecations] {
+object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with ShapeTag.$Companion[EnumWithDeprecations] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "EnumWithDeprecations")
   @deprecated(message = "N/A", since = "N/A")
   case object OLD extends EnumWithDeprecations("OLD", "OLD", 0, Hints(Deprecated(message = None, since = None)))
   case object NEW extends EnumWithDeprecations("NEW", "NEW", 1, Hints())
@@ -31,8 +32,8 @@ object EnumWithDeprecations extends Enumeration[EnumWithDeprecations] with Shape
     NEW,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[EnumWithDeprecations] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "EnumWithDeprecations"))
+  implicit val $schema: Schema[EnumWithDeprecations] = enumeration(tag, values)
+  .withId($id)
   .addHints(
     Documentation("some docs here"),
     Deprecated(message = None, since = None),

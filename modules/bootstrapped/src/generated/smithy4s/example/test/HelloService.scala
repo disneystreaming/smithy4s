@@ -40,8 +40,7 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloService")
   val version: String = ""
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -102,19 +101,18 @@ object HelloServiceOperation {
   }
   object SayHello extends smithy4s.Endpoint[HelloServiceOperation,SayHelloInput, HelloServiceOperation.SayHelloError, SayHelloOutput, Nothing, Nothing] with Errorable[SayHelloError] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "SayHello")
-    val input: Schema[SayHelloInput] = SayHelloInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[SayHelloOutput] = SayHelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[SayHelloInput] = SayHelloInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[SayHelloOutput] = SayHelloOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       HttpRequestTests(List(HttpRequestTestCase(id = "say_hello", protocol = "alloy#simpleRestJson", method = "POST", uri = "/", host = None, resolvedHost = None, authScheme = None, queryParams = Some(List("Hi=Hello%20there")), forbidQueryParams = None, requireQueryParams = None, headers = Some(Map("X-Greeting" -> "Hi")), forbidHeaders = None, requireHeaders = None, body = Some("{\"name\":\"Teddy\"}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("greeting" -> smithy4s.Document.fromString("Hi"), "name" -> smithy4s.Document.fromString("Teddy"), "query" -> smithy4s.Document.fromString("Hello there"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/"), code = 200),
       HttpResponseTests(List(HttpResponseTestCase(id = "say_hello", protocol = "alloy#simpleRestJson", code = 200, authScheme = None, headers = Some(Map("X-H1" -> "V1")), forbidHeaders = None, requireHeaders = None, body = Some("{\"result\":\"Hello!\"}"), bodyMediaType = None, params = Some(smithy4s.Document.obj("payload" -> smithy4s.Document.obj("result" -> smithy4s.Document.fromString("Hello!")), "header1" -> smithy4s.Document.fromString("V1"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
     )
     def wrap(input: SayHelloInput) = SayHello(input)
     override val errorable: Option[Errorable[SayHelloError]] = Some(this)
-    val error: UnionSchema[SayHelloError] = SayHelloError.schema
+    val error: UnionSchema[SayHelloError] = SayHelloError.$schema
     def liftError(throwable: Throwable): Option[SayHelloError] = throwable match {
       case e: smithy4s.example.test.SimpleError => Some(SayHelloError.SimpleErrorCase(e))
       case e: smithy4s.example.test.ComplexError => Some(SayHelloError.ComplexErrorCase(e))
@@ -129,31 +127,38 @@ object HelloServiceOperation {
     @inline final def widen: SayHelloError = this
     def _ordinal: Int
   }
-  object SayHelloError extends ShapeTag.Companion[SayHelloError] {
+  object SayHelloError extends ShapeTag.$Companion[SayHelloError] {
+
+    def simpleError(simpleError:smithy4s.example.test.SimpleError): SayHelloError = SimpleErrorCase(simpleError)
+    def complexError(complexError:smithy4s.example.test.ComplexError): SayHelloError = ComplexErrorCase(complexError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloError")
+
+    val $hints: Hints = Hints.empty
+
     final case class SimpleErrorCase(simpleError: smithy4s.example.test.SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
     final case class ComplexErrorCase(complexError: smithy4s.example.test.ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
 
     object SimpleErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.test.SimpleError, SimpleErrorCase] = Bijection(SimpleErrorCase(_), _.simpleError)
       implicit val toValue: Bijection[SimpleErrorCase, smithy4s.example.test.SimpleError] = fromValue.swap
-      val schema: Schema[SimpleErrorCase] = bijection(smithy4s.example.test.SimpleError.schema, fromValue)
+      val $schema: Schema[SimpleErrorCase] = bijection(smithy4s.example.test.SimpleError.$schema, fromValue)
     }
     object ComplexErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.test.ComplexError, ComplexErrorCase] = Bijection(ComplexErrorCase(_), _.complexError)
       implicit val toValue: Bijection[ComplexErrorCase, smithy4s.example.test.ComplexError] = fromValue.swap
-      val schema: Schema[ComplexErrorCase] = bijection(smithy4s.example.test.ComplexError.schema, fromValue)
+      val $schema: Schema[ComplexErrorCase] = bijection(smithy4s.example.test.ComplexError.$schema, fromValue)
     }
 
-    val SimpleError = SimpleErrorCase.schema.oneOf[SayHelloError]("SimpleError")
-    val ComplexError = ComplexErrorCase.schema.oneOf[SayHelloError]("ComplexError")
+    val SimpleError = SimpleErrorCase.$schema.oneOf[SayHelloError]("SimpleError")
+    val ComplexError = ComplexErrorCase.$schema.oneOf[SayHelloError]("ComplexError")
 
-    implicit val schema: UnionSchema[SayHelloError] = union(
+    implicit val $schema: UnionSchema[SayHelloError] = union(
       SimpleError,
       ComplexError,
     ){
       _._ordinal
     }
-    
   }
   final case class Listen() extends HelloServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.listen()
@@ -167,8 +172,7 @@ object HelloServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       HttpRequestTests(List(HttpRequestTestCase(id = "listen", protocol = "alloy#simpleRestJson", method = "GET", uri = "/listen", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = None, vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/listen"), code = 200),
       Readonly(),
@@ -183,12 +187,11 @@ object HelloServiceOperation {
   }
   object TestPath extends smithy4s.Endpoint[HelloServiceOperation,TestPathInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "TestPath")
-    val input: Schema[TestPathInput] = TestPathInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[TestPathInput] = TestPathInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       HttpRequestTests(List(HttpRequestTestCase(id = "TestPath", protocol = "alloy#simpleRestJson", method = "GET", uri = "/test-path/sameValue", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("path" -> smithy4s.Document.fromString("sameValue"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/test-path/{path}"), code = 200),
       Readonly(),

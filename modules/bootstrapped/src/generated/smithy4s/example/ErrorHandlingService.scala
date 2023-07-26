@@ -29,8 +29,7 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingService")
   val version: String = "1"
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -83,15 +82,14 @@ object ErrorHandlingServiceOperation {
   }
   object ErrorHandlingOperation extends smithy4s.Endpoint[ErrorHandlingServiceOperation,ErrorHandlingOperationInput, ErrorHandlingServiceOperation.ErrorHandlingOperationError, ErrorHandlingOperationOutput, Nothing, Nothing] with Errorable[ErrorHandlingOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperation")
-    val input: Schema[ErrorHandlingOperationInput] = ErrorHandlingOperationInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[ErrorHandlingOperationOutput] = ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[ErrorHandlingOperationInput] = ErrorHandlingOperationInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[ErrorHandlingOperationOutput] = ErrorHandlingOperationOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: ErrorHandlingOperationInput) = ErrorHandlingOperation(input)
     override val errorable: Option[Errorable[ErrorHandlingOperationError]] = Some(this)
-    val error: UnionSchema[ErrorHandlingOperationError] = ErrorHandlingOperationError.schema
+    val error: UnionSchema[ErrorHandlingOperationError] = ErrorHandlingOperationError.$schema
     def liftError(throwable: Throwable): Option[ErrorHandlingOperationError] = throwable match {
       case e: smithy4s.example.EHFallbackClientError => Some(ErrorHandlingOperationError.EHFallbackClientErrorCase(e))
       case e: smithy4s.example.EHServiceUnavailable => Some(ErrorHandlingOperationError.EHServiceUnavailableCase(e))
@@ -110,7 +108,17 @@ object ErrorHandlingServiceOperation {
     @inline final def widen: ErrorHandlingOperationError = this
     def _ordinal: Int
   }
-  object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
+  object ErrorHandlingOperationError extends ShapeTag.$Companion[ErrorHandlingOperationError] {
+
+    def eHFallbackClientError(eHFallbackClientError:smithy4s.example.EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
+    def eHServiceUnavailable(eHServiceUnavailable:smithy4s.example.EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
+    def eHNotFound(eHNotFound:smithy4s.example.EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
+    def eHFallbackServerError(eHFallbackServerError:smithy4s.example.EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationError")
+
+    val $hints: Hints = Hints.empty
+
     final case class EHFallbackClientErrorCase(eHFallbackClientError: smithy4s.example.EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }
     final case class EHServiceUnavailableCase(eHServiceUnavailable: smithy4s.example.EHServiceUnavailable) extends ErrorHandlingOperationError { final def _ordinal: Int = 1 }
     final case class EHNotFoundCase(eHNotFound: smithy4s.example.EHNotFound) extends ErrorHandlingOperationError { final def _ordinal: Int = 2 }
@@ -119,30 +127,30 @@ object ErrorHandlingServiceOperation {
     object EHFallbackClientErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.EHFallbackClientError, EHFallbackClientErrorCase] = Bijection(EHFallbackClientErrorCase(_), _.eHFallbackClientError)
       implicit val toValue: Bijection[EHFallbackClientErrorCase, smithy4s.example.EHFallbackClientError] = fromValue.swap
-      val schema: Schema[EHFallbackClientErrorCase] = bijection(smithy4s.example.EHFallbackClientError.schema, fromValue)
+      val $schema: Schema[EHFallbackClientErrorCase] = bijection(smithy4s.example.EHFallbackClientError.$schema, fromValue)
     }
     object EHServiceUnavailableCase {
       implicit val fromValue: Bijection[smithy4s.example.EHServiceUnavailable, EHServiceUnavailableCase] = Bijection(EHServiceUnavailableCase(_), _.eHServiceUnavailable)
       implicit val toValue: Bijection[EHServiceUnavailableCase, smithy4s.example.EHServiceUnavailable] = fromValue.swap
-      val schema: Schema[EHServiceUnavailableCase] = bijection(smithy4s.example.EHServiceUnavailable.schema, fromValue)
+      val $schema: Schema[EHServiceUnavailableCase] = bijection(smithy4s.example.EHServiceUnavailable.$schema, fromValue)
     }
     object EHNotFoundCase {
       implicit val fromValue: Bijection[smithy4s.example.EHNotFound, EHNotFoundCase] = Bijection(EHNotFoundCase(_), _.eHNotFound)
       implicit val toValue: Bijection[EHNotFoundCase, smithy4s.example.EHNotFound] = fromValue.swap
-      val schema: Schema[EHNotFoundCase] = bijection(smithy4s.example.EHNotFound.schema, fromValue)
+      val $schema: Schema[EHNotFoundCase] = bijection(smithy4s.example.EHNotFound.$schema, fromValue)
     }
     object EHFallbackServerErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.EHFallbackServerError, EHFallbackServerErrorCase] = Bijection(EHFallbackServerErrorCase(_), _.eHFallbackServerError)
       implicit val toValue: Bijection[EHFallbackServerErrorCase, smithy4s.example.EHFallbackServerError] = fromValue.swap
-      val schema: Schema[EHFallbackServerErrorCase] = bijection(smithy4s.example.EHFallbackServerError.schema, fromValue)
+      val $schema: Schema[EHFallbackServerErrorCase] = bijection(smithy4s.example.EHFallbackServerError.$schema, fromValue)
     }
 
-    val EHFallbackClientError = EHFallbackClientErrorCase.schema.oneOf[ErrorHandlingOperationError]("EHFallbackClientError")
-    val EHServiceUnavailable = EHServiceUnavailableCase.schema.oneOf[ErrorHandlingOperationError]("EHServiceUnavailable")
-    val EHNotFound = EHNotFoundCase.schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
-    val EHFallbackServerError = EHFallbackServerErrorCase.schema.oneOf[ErrorHandlingOperationError]("EHFallbackServerError")
+    val EHFallbackClientError = EHFallbackClientErrorCase.$schema.oneOf[ErrorHandlingOperationError]("EHFallbackClientError")
+    val EHServiceUnavailable = EHServiceUnavailableCase.$schema.oneOf[ErrorHandlingOperationError]("EHServiceUnavailable")
+    val EHNotFound = EHNotFoundCase.$schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
+    val EHFallbackServerError = EHFallbackServerErrorCase.$schema.oneOf[ErrorHandlingOperationError]("EHFallbackServerError")
 
-    implicit val schema: UnionSchema[ErrorHandlingOperationError] = union(
+    implicit val $schema: UnionSchema[ErrorHandlingOperationError] = union(
       EHFallbackClientError,
       EHServiceUnavailable,
       EHNotFound,
@@ -150,7 +158,6 @@ object ErrorHandlingServiceOperation {
     ){
       _._ordinal
     }
-    
   }
 }
 

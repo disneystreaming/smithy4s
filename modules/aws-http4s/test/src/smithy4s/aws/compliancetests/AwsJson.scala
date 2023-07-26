@@ -27,7 +27,7 @@ import smithy4s.schema.Schema
 
 object AwsJson extends smithy4s.aws.Compat {
   def impl[A](
-      protocol: smithy4s.ShapeTag.Companion[A]
+      protocol: smithy4s.ShapeTag.Has[A]
   ): ReverseRouter[IO] = new ReverseRouter[IO] {
     type Protocol = A
     val protocolTag: ShapeTag[A] = protocol.getTag

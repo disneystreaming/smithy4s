@@ -46,8 +46,7 @@ object TestConfig {
     def enumeration: Enumeration[EnumType] = TestType
   }
   object TestType extends smithy4s.Enumeration[TestType] {
-
-    def id: ShapeId = ShapeId("smithy4s.compliancetests.internals", "TestType")
+    val $id: ShapeId = ShapeId("smithy4s.compliancetests.internals", "TestType")
     def hints: Hints = Hints.empty
     def values: List[TestType] = List(Request, Response)
     case object Request extends TestType("request", 0)

@@ -26,8 +26,7 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   val id: ShapeId = ShapeId("weather", "WeatherService")
   val version: String = ""
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -80,12 +79,11 @@ object WeatherServiceOperation {
   }
   object GetWeather extends smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("weather", "GetWeather")
-    val input: Schema[GetWeatherInput] = GetWeatherInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GetWeatherOutput] = GetWeatherOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[GetWeatherInput] = GetWeatherInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[GetWeatherOutput] = GetWeatherOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/weather/{city}"), code = 200),
     )
     def wrap(input: GetWeatherInput) = GetWeather(input)

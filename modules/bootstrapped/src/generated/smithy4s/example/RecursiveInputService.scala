@@ -28,8 +28,7 @@ object RecursiveInputServiceGen extends Service.Mixin[RecursiveInputServiceGen, 
   val id: ShapeId = ShapeId("smithy4s.example", "RecursiveInputService")
   val version: String = "0.0.1"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -82,12 +81,11 @@ object RecursiveInputServiceOperation {
   }
   object RecursiveInputOperation extends smithy4s.Endpoint[RecursiveInputServiceOperation,RecursiveInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "RecursiveInputOperation")
-    val input: Schema[RecursiveInput] = RecursiveInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[RecursiveInput] = RecursiveInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("PUT"), uri = NonEmptyString("/subscriptions"), code = 200),
       Idempotent(),
     )

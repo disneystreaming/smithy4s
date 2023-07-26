@@ -17,13 +17,14 @@ sealed abstract class FooEnum(_value: String, _name: String, _intValue: Int, _hi
   override def enumeration: Enumeration[EnumType] = FooEnum
   @inline final def widen: FooEnum = this
 }
-object FooEnum extends Enumeration[FooEnum] with ShapeTag.Companion[FooEnum] {
+object FooEnum extends Enumeration[FooEnum] with ShapeTag.$Companion[FooEnum] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "FooEnum")
   case object FOO extends FooEnum("Foo", "FOO", 0, Hints())
 
   val values: List[FooEnum] = List(
     FOO,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[FooEnum] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "FooEnum"))
+  implicit val $schema: Schema[FooEnum] = enumeration(tag, values)
+  .withId($id)
 }

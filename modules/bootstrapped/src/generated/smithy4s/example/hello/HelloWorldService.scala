@@ -33,8 +33,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloWorldService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
     Tags(List("testServiceTag")),
   )
@@ -90,18 +89,17 @@ object HelloWorldServiceOperation {
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,Person, HelloWorldServiceOperation.HelloError, Greeting, Nothing, Nothing] with Errorable[HelloError] {
     val id: ShapeId = ShapeId("smithy4s.example.hello", "Hello")
-    val input: Schema[Person] = Person.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[Greeting] = Greeting.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[Person] = Person.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[Greeting] = Greeting.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/{name}"), code = 200),
       Tags(List("testOperationTag")),
     )
     def wrap(input: Person) = Hello(input)
     override val errorable: Option[Errorable[HelloError]] = Some(this)
-    val error: UnionSchema[HelloError] = HelloError.schema
+    val error: UnionSchema[HelloError] = HelloError.$schema
     def liftError(throwable: Throwable): Option[HelloError] = throwable match {
       case e: smithy4s.example.hello.GenericServerError => Some(HelloError.GenericServerErrorCase(e))
       case e: smithy4s.example.hello.SpecificServerError => Some(HelloError.SpecificServerErrorCase(e))
@@ -116,31 +114,38 @@ object HelloWorldServiceOperation {
     @inline final def widen: HelloError = this
     def _ordinal: Int
   }
-  object HelloError extends ShapeTag.Companion[HelloError] {
+  object HelloError extends ShapeTag.$Companion[HelloError] {
+
+    def genericServerError(genericServerError:smithy4s.example.hello.GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
+    def specificServerError(specificServerError:smithy4s.example.hello.SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example.hello", "HelloError")
+
+    val $hints: Hints = Hints.empty
+
     final case class GenericServerErrorCase(genericServerError: smithy4s.example.hello.GenericServerError) extends HelloError { final def _ordinal: Int = 0 }
     final case class SpecificServerErrorCase(specificServerError: smithy4s.example.hello.SpecificServerError) extends HelloError { final def _ordinal: Int = 1 }
 
     object GenericServerErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.hello.GenericServerError, GenericServerErrorCase] = Bijection(GenericServerErrorCase(_), _.genericServerError)
       implicit val toValue: Bijection[GenericServerErrorCase, smithy4s.example.hello.GenericServerError] = fromValue.swap
-      val schema: Schema[GenericServerErrorCase] = bijection(smithy4s.example.hello.GenericServerError.schema, fromValue)
+      val $schema: Schema[GenericServerErrorCase] = bijection(smithy4s.example.hello.GenericServerError.$schema, fromValue)
     }
     object SpecificServerErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.hello.SpecificServerError, SpecificServerErrorCase] = Bijection(SpecificServerErrorCase(_), _.specificServerError)
       implicit val toValue: Bijection[SpecificServerErrorCase, smithy4s.example.hello.SpecificServerError] = fromValue.swap
-      val schema: Schema[SpecificServerErrorCase] = bijection(smithy4s.example.hello.SpecificServerError.schema, fromValue)
+      val $schema: Schema[SpecificServerErrorCase] = bijection(smithy4s.example.hello.SpecificServerError.$schema, fromValue)
     }
 
-    val GenericServerError = GenericServerErrorCase.schema.oneOf[HelloError]("GenericServerError")
-    val SpecificServerError = SpecificServerErrorCase.schema.oneOf[HelloError]("SpecificServerError")
+    val GenericServerError = GenericServerErrorCase.$schema.oneOf[HelloError]("GenericServerError")
+    val SpecificServerError = SpecificServerErrorCase.$schema.oneOf[HelloError]("SpecificServerError")
 
-    implicit val schema: UnionSchema[HelloError] = union(
+    implicit val $schema: UnionSchema[HelloError] = union(
       GenericServerError,
       SpecificServerError,
     ){
       _._ordinal
     }
-    
   }
 }
 

@@ -20,8 +20,7 @@ object EmptyServiceGen extends Service.Mixin[EmptyServiceGen, EmptyServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example", "EmptyService")
   val version: String = "1.0"
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 

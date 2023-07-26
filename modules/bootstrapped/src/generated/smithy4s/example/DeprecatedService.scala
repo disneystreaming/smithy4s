@@ -27,8 +27,7 @@ object DeprecatedServiceGen extends Service.Mixin[DeprecatedServiceGen, Deprecat
   val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedService")
   val version: String = ""
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     Deprecated(message = None, since = None),
   )
 
@@ -86,8 +85,7 @@ object DeprecatedServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Deprecated(message = None, since = None),
     )
     def wrap(input: Unit) = DeprecatedOperation()

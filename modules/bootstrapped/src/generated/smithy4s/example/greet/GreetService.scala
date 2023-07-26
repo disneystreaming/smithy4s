@@ -23,8 +23,7 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example.greet", "GreetService")
   val version: String = ""
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -75,12 +74,11 @@ object GreetServiceOperation {
   }
   object Greet extends smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.greet", "Greet")
-    val input: Schema[GreetInput] = GreetInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[GreetOutput] = GreetOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val input: Schema[GreetInput] = GreetInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val output: Schema[GreetOutput] = GreetOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: GreetInput) = Greet(input)
     override val errorable: Option[Nothing] = None
   }

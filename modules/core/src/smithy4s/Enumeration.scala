@@ -18,7 +18,7 @@ package smithy4s
 
 import smithy4s.schema.EnumValue
 
-trait Enumeration[E <: Enumeration.Value] extends ShapeTag.Companion[E] {
+trait Enumeration[E <: Enumeration.Value] {
   def values: List[E]
   lazy val valueMap = values.map(e => e.value -> e).toMap
   lazy val intValueMap = values.map(e => e.intValue -> e).toMap

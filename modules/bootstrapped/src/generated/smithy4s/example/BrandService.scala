@@ -26,8 +26,7 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
   val version: String = "1"
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -78,12 +77,11 @@ object BrandServiceOperation {
   }
   object AddBrands extends smithy4s.Endpoint[BrandServiceOperation,AddBrandsInput, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "AddBrands")
-    val input: Schema[AddBrandsInput] = AddBrandsInput.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[AddBrandsInput] = AddBrandsInput.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("POST"), uri = NonEmptyString("/brands"), code = 200),
     )
     def wrap(input: AddBrandsInput) = AddBrands(input)

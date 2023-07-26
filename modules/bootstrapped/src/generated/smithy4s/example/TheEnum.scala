@@ -17,7 +17,8 @@ sealed abstract class TheEnum(_value: String, _name: String, _intValue: Int, _hi
   override def enumeration: Enumeration[EnumType] = TheEnum
   @inline final def widen: TheEnum = this
 }
-object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
+object TheEnum extends Enumeration[TheEnum] with ShapeTag.$Companion[TheEnum] {
+  val $id: ShapeId = ShapeId("smithy4s.example", "TheEnum")
   case object V1 extends TheEnum("v1", "V1", 0, Hints())
   case object V2 extends TheEnum("v2", "V2", 1, Hints())
 
@@ -26,6 +27,6 @@ object TheEnum extends Enumeration[TheEnum] with ShapeTag.Companion[TheEnum] {
     V2,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[TheEnum] = enumeration(tag, values)
-  .withId(ShapeId("smithy4s.example", "TheEnum"))
+  implicit val $schema: Schema[TheEnum] = enumeration(tag, values)
+  .withId($id)
 }

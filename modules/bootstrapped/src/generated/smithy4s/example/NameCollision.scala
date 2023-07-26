@@ -30,8 +30,7 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
   val version: String = ""
 
-  val hints: Hints =
-  Hints.empty
+  val hints: Hints = Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -92,11 +91,10 @@ object NameCollisionOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: Unit) = MyOp()
     override val errorable: Option[Errorable[MyOpError]] = Some(this)
-    val error: UnionSchema[MyOpError] = MyOpError.schema
+    val error: UnionSchema[MyOpError] = MyOpError.$schema
     def liftError(throwable: Throwable): Option[MyOpError] = throwable match {
       case e: smithy4s.example.MyOpError => Some(MyOpError.MyOpErrorCase(e))
       case _ => None
@@ -109,23 +107,29 @@ object NameCollisionOperation {
     @inline final def widen: MyOpError = this
     def _ordinal: Int
   }
-  object MyOpError extends ShapeTag.Companion[MyOpError] {
+  object MyOpError extends ShapeTag.$Companion[MyOpError] {
+
+    def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
+
+    val $hints: Hints = Hints.empty
+
     final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def _ordinal: Int = 0 }
 
     object MyOpErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.MyOpError, MyOpErrorCase] = Bijection(MyOpErrorCase(_), _.myOpError)
       implicit val toValue: Bijection[MyOpErrorCase, smithy4s.example.MyOpError] = fromValue.swap
-      val schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema, fromValue)
+      val $schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.$schema, fromValue)
     }
 
-    val MyOpError = MyOpErrorCase.schema.oneOf[MyOpError]("MyOpError")
+    val MyOpError = MyOpErrorCase.$schema.oneOf[MyOpError]("MyOpError")
 
-    implicit val schema: UnionSchema[MyOpError] = union(
+    implicit val $schema: UnionSchema[MyOpError] = union(
       MyOpError,
     ){
       _._ordinal
     }
-    
   }
   final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
@@ -139,8 +143,7 @@ object NameCollisionOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints.empty
+    val hints: Hints = Hints.empty
     def wrap(input: Unit) = Endpoint()
     override val errorable: Option[Nothing] = None
   }

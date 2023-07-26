@@ -33,8 +33,7 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example", "DummyService")
   val version: String = "0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
   )
 
@@ -90,12 +89,11 @@ object DummyServiceOperation {
   }
   object Dummy extends smithy4s.Endpoint[DummyServiceOperation,Queries, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "Dummy")
-    val input: Schema[Queries] = Queries.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[Queries] = Queries.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/dummy"), code = 200),
       Readonly(),
     )
@@ -109,12 +107,11 @@ object DummyServiceOperation {
   }
   object DummyPath extends smithy4s.Endpoint[DummyServiceOperation,PathParams, Nothing, Unit, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "DummyPath")
-    val input: Schema[PathParams] = PathParams.schema.addHints(smithy4s.internals.InputOutput.Input.widen)
+    val input: Schema[PathParams] = PathParams.$schema.addHints(smithy4s.internals.InputOutput.Input.widen)
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200),
       Readonly(),
     )

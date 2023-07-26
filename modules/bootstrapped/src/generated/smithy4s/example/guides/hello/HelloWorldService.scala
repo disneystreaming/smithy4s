@@ -29,8 +29,7 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val id: ShapeId = ShapeId("smithy4s.example.guides.hello", "HelloWorldService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
     Cors(origin = NonEmptyString("http://mysite.com"), maxAge = 600, additionalAllowedHeaders = Some(List(NonEmptyString("Authorization"))), additionalExposedHeaders = Some(List(NonEmptyString("X-Smithy4s")))),
   )
@@ -86,11 +85,10 @@ object HelloWorldServiceOperation {
   object SayWorld extends smithy4s.Endpoint[HelloWorldServiceOperation,Unit, Nothing, World, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.guides.hello", "SayWorld")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[World] = World.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val output: Schema[World] = World.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/hello"), code = 200),
       Readonly(),
     )

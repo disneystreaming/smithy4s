@@ -604,7 +604,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val target = NameRef(hint.targetType)
     val interpreter = NameRef(hint.interpreter)
     val lowerCasedName = uncapitalise(tpe.name)
-    line"implicit val $lowerCasedName${hint.id.getName.capitalize}: $target[$tpe] = $interpreter.fromSchema(schema)"
+    line"implicit val $lowerCasedName${hint.id.getName.capitalize}: $target[$tpe] = $interpreter.fromSchema($$schema)"
   }
 
   private def renderTypeclasses(
@@ -661,6 +661,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       obj(product.nameRef, shapeTag(product.nameRef))(
+        render$IdVal(shapeId),
+        newline,
+        render$HintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
         if (fields.nonEmpty) {
@@ -680,18 +683,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val schema = if (fields.size <= 22) {
             val definition =
               if (recursive) line"$recursive_($struct_" else line"$struct_"
-            line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
+            line"${schemaImplicit}val $$schema: $Schema_[${product.nameRef}] = $definition"
               .args(fields.map(_.name))
               .block(line"${product.nameRef}.apply")
-              .appendToLast(
-                renderIdAndHints(shapeId, hints)
-              )
+              .appendToLast(s".withId($$id).addHints($$hints)")
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
               if (recursive) line"$recursive_($struct_.genericArity"
               else line"$struct_.genericArity"
-            line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
+            line"${schemaImplicit}val $$schema: $Schema_[${product.nameRef}] = $definition"
               .args(fields.map(_.name))
               .block(
                 line"arr => new ${product.nameRef}".args(
@@ -705,9 +706,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                   }
                 )
               )
-              .appendToLast(
-                renderIdAndHints(shapeId, hints)
-              )
+              .appendToLast(s".withId($$id).addHints($$hints)")
               .appendToLast(if (recursive) ")" else "")
           }
           // Depending on whether the structure is recursive, fields must be rendered before or after
@@ -715,12 +714,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           if (recursive) lines(schema, newline, renderedFields)
           else lines(renderedFields, newline, schema)
         } else {
-          Lines(
-            line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(${renderId(shapeId)})"
-          )
-            .appendToLast(
-              renderIdAndHints(shapeId, hints)
-            )
+          line"implicit val $$schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId($$id).addHints($$hints)"
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
@@ -795,7 +789,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     else
       lines(
         line"override val errorable: $option[$Errorable_[$errorName]] = $some(this)",
-        line"val error: $unionSchema_[$errorName] = $errorName.schema",
+        line"val error: $unionSchema_[$errorName] = $errorName.$$schema",
         block(
           line"def liftError(throwable: Throwable): $option[$errorName] = throwable match"
         ) {
@@ -841,13 +835,17 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         .map { case (_, tpe) => line"$tpe" }
         .intercalate(line" | ")}",
       obj(name)(
+        render$IdVal(shapeId),
+        newline,
+        render$HintsVal(hints),
+        newline,
         block(
-          line"val schema: $unionSchema_[$name] ="
+          line"val $$schema: $unionSchema_[$name] ="
         )(
           members.map { case (altName, tpe) =>
             line"""val ${altVal(
               altName
-            )} = $tpe.schema.oneOf[${name}]("$altName")"""
+            )} = $tpe.$$schema.oneOf[${name}]("$altName")"""
           },
           block(
             line"$union_(${members.map { case (n, _) => altVal(n) }.intercalate(line", ")})"
@@ -861,12 +859,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
-  private def caseName(alt: Alt): NameRef = alt.member match {
-    case UnionMember.ProductCase(product) => NameRef(product.name)
-    case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
-      NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
-  }
-
   private def renderUnion(
       shapeId: ShapeId,
       name: NameRef,
@@ -876,12 +868,39 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    // val caseNames = alts.map(caseName)
-    // val caseNamesAndIsUnit =
-    //   caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
+    def caseName(alt: Alt): NameRef = alt.member match {
+      case UnionMember.ProductCase(product) => NameRef(product.name)
+      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
+        NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
+    }
+    def smartConstructor(alt: Alt): Lines = {
+      val cn = caseName(alt).name
+      val ident = NameDef(uncapitalise(alt.name))
+      val prefix = line"def $ident"
+      val constructor = alt.member match {
+        case UnionMember.ProductCase(product) =>
+          val args = renderArgs(product.fields)
+          val values = product.fields.map(_.name).intercalate(", ")
+          line"def ${uncapitalise(product.nameDef.name)}($args): $name = ${product.nameRef}($values)"
+        case UnionMember.UnitCase =>
+          line"${prefix}(): $name = ${caseName(alt)}"
+        case UnionMember.TypeCase(tpe) =>
+          line"$prefix($ident:$tpe): $name = $cn($ident)"
+      }
+      lines(
+        documentationAnnotation(alt.hints),
+        deprecationAnnotation(alt.hints),
+        constructor
+      )
+    }
 
     val mixinLines = mixins.map(m => line"$m")
     val mixinExtends = mixinLines.intercalate(line" with ")
+    def altPrismName(alt: Alt): String = alt.member match {
+      case UnionMember.UnitCase => alt.name + "_"
+      case _                    => alt.name
+    }
+
     val mixinExtendsStatement =
       if (mixinExtends.segments.isEmpty) Line.empty
       else line"$mixinExtends with "
@@ -895,6 +914,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def _ordinal: Int"
       ),
       obj(name, line"${shapeTag(name)}")(
+        newline,
+        alts.map(smartConstructor),
+        newline,
+        render$IdVal(shapeId),
+        newline,
+        render$HintsVal(hints),
+        newline,
         alts.zipWithIndex.map {
           case (a @ Alt(_, _, UnionMember.UnitCase, altHints), index) =>
             val cn = caseName(a)
@@ -904,7 +930,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               deprecationAnnotation(altHints),
               block(line"case object $cn extends $name")(
                 line"final def _ordinal: Int = $index",
-                Lines(line"""val schema = $Schema_.constant($cn)${renderConstraintValidation(altHints)}${renderAddHints(hints)}""")
+                Lines(line"""val $$schema = $Schema_.constant($cn)${renderConstraintValidation(altHints)}${renderAddHints(hints)}""")
               ),
             )
             // format: on
@@ -941,31 +967,30 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               // scalafmt: {maxColumn = 160}
               line"implicit val fromValue: $Bijection_[$tpe, $cn] = $Bijection_($cn(_), _.${uncapitalise(altName)})",
               line"implicit val toValue: $Bijection_[$cn, $tpe] = fromValue.swap",
-              line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}${renderConstraintValidation(altHints)}, fromValue)${renderAddHints(altHints)}"
+              line"val $$schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}${renderConstraintValidation(altHints)}, fromValue)${renderAddHints(altHints)}"
             )
         },
         newline,
-        alts.map { case a @ Alt(altName, realName, _, _) =>
+        alts.map { case a @ Alt(_, realName, _, _) =>
           // scalafmt: {maxColumn = 120}
           val cn = caseName(a)
-          Lines(line"""val ${NameDef(altName)} = $cn.schema.oneOf[$name]("$realName")""")
+          Lines(line"""val ${NameDef(altPrismName(a))} = $cn.$$schema.oneOf[$name]("$realName")""")
         },
         newline, {
           val union =
             if (error)
-              line"implicit val schema: $unionSchema_[$name] = $union_"
+              line"implicit val $$schema: $unionSchema_[$name] = $union_"
             else if (recursive)
-              line"implicit val schema: $Schema_[$name] = $recursive_($union_"
+              line"implicit val $$schema: $Schema_[$name] = $recursive_($union_"
             else
-              line"implicit val schema: $Schema_[$name] = $union_"
+              line"implicit val $$schema: $Schema_[$name] = $union_"
           union
-            .args(alts.map(_.name))
+            .args(alts.map(a => NameRef(altPrismName(a))))
             .block {
               line"_._ordinal"
             }
             .appendToLast(
-              if (error) newline
-              else renderIdAndHints(shapeId, hints)
+              if (error) "" else s".withId($$id).addHints($$hints)"
             )
             .appendToLast(if (recursive) ")" else "")
         },
@@ -1024,6 +1049,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
+      render$IdVal(shapeId),
       values.map { case e @ EnumValue(value, intValue, _, hints) =>
         val valueName = NameRef(e.name)
         val valueHints = line"$Hints_(${memberHints(e.hints)})"
@@ -1040,8 +1066,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       ),
       renderEnumTag(tag),
       Lines(
-        line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values)"
-      ).appendToLast(renderIdAndHints(shapeId, hints)),
+        line"implicit val $$schema: $Schema_[$name] = $enumeration_(tag, values)"
+      ).appendToLast(renderIdAndHints(hints)),
       renderTypeclasses(hints, name)
     )
   )
@@ -1056,16 +1082,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val definition =
       if (recursive) line"$recursive_("
       else Line.empty
-    val trailingCalls = renderIdAndHints(shapeId, hints) ++ Lines(
-      renderConstraintValidation(hints)
-    )
     val closing = if (recursive) ")" else ""
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
-        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}",
-        trailingCalls,
+        renderIdVal(shapeId),
+        renderHintsVal(hints),
+        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}.withId(id).addHints(hints)${renderConstraintValidation(hints)}",
         lines(
           line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         ),
@@ -1131,10 +1155,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           else line".addMemberHints(${memberHints(valueHints)})"
         line"${NameRef(s"$schemaPkg_.map")}(${key.schemaRef}$keyHintsLine, ${value.schemaRef}$valueHintsLine)"
       case Type.Alias(ns, name, _, false) =>
-        NameRef(ns, s"$name.schema").toLine
+        NameRef(ns, s"$name.$$schema").toLine
       case Type.Alias(ns, name, _, _) =>
         NameRef(ns, s"$name.underlyingSchema").toLine
-      case Type.Ref(ns, name) => NameRef(ns, s"$name.schema").toLine
+      case Type.Ref(ns, name) => NameRef(ns, s"$name.$$schema").toLine
       case e @ Type.ExternalType(
             _,
             _,
@@ -1208,6 +1232,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     line"""val id: $ShapeId_ = ${renderId(shapeId)}"""
   }
 
+  def render$IdVal(shapeId: ShapeId): Line = {
+    line"""val $$id: $ShapeId_ = ${renderId(shapeId)}"""
+  }
+
   def renderEnumTag(tag: EnumTag): Line = {
     val tagStr = tag match {
       case IntEnum    => "IntEnum"
@@ -1217,7 +1245,19 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
-    Lines(line"val hints: $Hints_ =") ++ renderHints(hints)
+    val base = line"val hints: $Hints_ = $Hints_"
+    hints.flatMap(renderHint) match {
+      case Nil  => lines(base + line".empty")
+      case args => base.args(args)
+    }
+  }
+
+  def render$HintsVal(hints: List[Hint]): Lines = {
+    val base = line"val $$hints: $Hints_ = $Hints_"
+    hints.flatMap(renderHint) match {
+      case Nil  => lines(base + line".empty")
+      case args => base.args(args)
+    }
   }
 
   def renderHints(hints: List[Hint]): Lines = {
@@ -1228,9 +1268,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     }
   }
 
-  def renderIdAndHints(id: ShapeId, hints: List[Hint]): Lines =
+  def renderIdAndHints(hints: List[Hint]): Lines =
     Lines(
-      line".withId(${renderId(id)})"
+      line".withId($$id)"
     ) ++ renderAddHintsMultiline(hints)
 
   def renderAddHintsMultiline(hints: List[Hint]): Lines = {
@@ -1263,7 +1303,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def shapeTag(name: NameRef): Line =
-    line"$ShapeTag_.Companion[$name]"
+    line"$ShapeTag_.$$Companion[$name]"
 
   type TopLevel = Boolean
   type InCollection = Boolean

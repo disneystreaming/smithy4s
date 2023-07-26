@@ -34,8 +34,7 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
   val version: String = "1.0.0"
 
-  val hints: Hints =
-  Hints(
+  val hints: Hints = Hints(
     SimpleRestJson(),
   )
 
@@ -92,16 +91,15 @@ object ImportServiceOperation {
   object ImportOperation extends smithy4s.Endpoint[ImportServiceOperation,Unit, ImportServiceOperation.ImportOperationError, OpOutput, Nothing, Nothing] with Errorable[ImportOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example.import_test", "ImportOperation")
     val input: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Input.widen)
-    val output: Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
+    val output: Schema[OpOutput] = OpOutput.$schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints =
-    Hints(
+    val hints: Hints = Hints(
       Http(method = NonEmptyString("GET"), uri = NonEmptyString("/test"), code = 200),
     )
     def wrap(input: Unit) = ImportOperation()
     override val errorable: Option[Errorable[ImportOperationError]] = Some(this)
-    val error: UnionSchema[ImportOperationError] = ImportOperationError.schema
+    val error: UnionSchema[ImportOperationError] = ImportOperationError.$schema
     def liftError(throwable: Throwable): Option[ImportOperationError] = throwable match {
       case e: smithy4s.example.error.NotFoundError => Some(ImportOperationError.NotFoundErrorCase(e))
       case _ => None
@@ -114,23 +112,29 @@ object ImportServiceOperation {
     @inline final def widen: ImportOperationError = this
     def _ordinal: Int
   }
-  object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
+  object ImportOperationError extends ShapeTag.$Companion[ImportOperationError] {
+
+    def notFoundError(notFoundError:smithy4s.example.error.NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
+
+    val $id: ShapeId = ShapeId("smithy4s.example.imp", "ImportOperationError")
+
+    val $hints: Hints = Hints.empty
+
     final case class NotFoundErrorCase(notFoundError: smithy4s.example.error.NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
 
     object NotFoundErrorCase {
       implicit val fromValue: Bijection[smithy4s.example.error.NotFoundError, NotFoundErrorCase] = Bijection(NotFoundErrorCase(_), _.notFoundError)
       implicit val toValue: Bijection[NotFoundErrorCase, smithy4s.example.error.NotFoundError] = fromValue.swap
-      val schema: Schema[NotFoundErrorCase] = bijection(smithy4s.example.error.NotFoundError.schema, fromValue)
+      val $schema: Schema[NotFoundErrorCase] = bijection(smithy4s.example.error.NotFoundError.$schema, fromValue)
     }
 
-    val NotFoundError = NotFoundErrorCase.schema.oneOf[ImportOperationError]("NotFoundError")
+    val NotFoundError = NotFoundErrorCase.$schema.oneOf[ImportOperationError]("NotFoundError")
 
-    implicit val schema: UnionSchema[ImportOperationError] = union(
+    implicit val $schema: UnionSchema[ImportOperationError] = union(
       NotFoundError,
     ){
       _._ordinal
     }
-    
   }
 }
 
