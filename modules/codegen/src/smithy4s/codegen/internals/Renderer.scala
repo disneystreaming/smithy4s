@@ -631,7 +631,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         else Line.optional(line"${field.tpe}")
       line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
-    obj(product.nameRef.copy(name = "Optics"))(lenses) ++
+    obj(product.nameRef.copy(name = "optics"))(lenses) ++
       newline
   } else Lines.empty
 
@@ -898,7 +898,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       }
     }
 
-    obj(unionName.copy(name = "Optics"))(altLines) ++
+    obj(unionName.copy(name = "optics"))(altLines) ++
       newline
   } else Lines.empty
 
@@ -917,7 +917,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"val ${value.name}: $smithyPrism[$enumName, $enumName.$tpe.type] = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
     }
 
-    obj(enumName.copy(name = "Optics"))(valueLines) ++
+    obj(enumName.copy(name = "optics"))(valueLines) ++
       newline
   } else Lines.empty
 

@@ -7,21 +7,21 @@ import smithy4s.example.TestBody
 final class LensSpec extends FunSuite {
 
   test("get and replace") {
-    val lens = TestBody.Optics.data
+    val lens = TestBody.optics.data
     val e = TestBody(Some("test body"))
     val result = lens.replace(lens.get(e))(e)
     assertEquals(e, result)
   }
 
   test("replace and get") {
-    val lens = TestBody.Optics.data
+    val lens = TestBody.optics.data
     val e = TestBody(Some("test body"))
     val result = lens.get(lens.replace(Some("test body"))(e))
     assertEquals(e.data, result)
   }
 
   test("replace idempotent") {
-    val lens = TestBody.Optics.data
+    val lens = TestBody.optics.data
     val data = Some("test body")
     val e = TestBody(data)
     val result = lens.replace(data)(lens.replace(data)(e))
@@ -29,7 +29,7 @@ final class LensSpec extends FunSuite {
   }
 
   test("modify identity") {
-    val lens = TestBody.Optics.data
+    val lens = TestBody.optics.data
     val data = Some("test body")
     val e = TestBody(data)
     val result = lens.modify(identity)(e)
@@ -37,7 +37,7 @@ final class LensSpec extends FunSuite {
   }
 
   test("modify composition") {
-    val lens = TestBody.Optics.data
+    val lens = TestBody.optics.data
     val data = Some("test body")
     val e = TestBody(data)
     val f: Option[String] => Option[String] = _ => Some("test 2")
@@ -49,7 +49,7 @@ final class LensSpec extends FunSuite {
   }
 
   test("modify == replace") {
-    val lens = TestBody.Optics.data
+    val lens = TestBody.optics.data
     val data = Some("test body")
     val data2 = Some("test body 2")
     val e = TestBody(data)

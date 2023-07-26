@@ -13,7 +13,7 @@ object OpticsStructure extends ShapeTag.Companion[OpticsStructure] {
 
   val hints: Hints = Hints.empty
 
-  object Optics {
+  object optics {
     val two: Lens[OpticsStructure, Option[OpticsEnum]] = Lens[OpticsStructure, Option[OpticsEnum]](_.two)(n => a => a.copy(two = n))
   }
 

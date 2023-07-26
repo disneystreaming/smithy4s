@@ -19,7 +19,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
 
   val hints: Hints = Hints.empty
 
-  object Optics {
+  object optics {
     val video: Prism[Podcast, Video] = Prism.partial[Podcast, Video]{ case t: Video => t }(identity)
     val audio: Prism[Podcast, Audio] = Prism.partial[Podcast, Audio]{ case t: Audio => t }(identity)
   }
@@ -30,7 +30,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
 
     val hints: Hints = Hints.empty
 
-    object Optics {
+    object optics {
       val title: Lens[Video, Option[String]] = Lens[Video, Option[String]](_.title)(n => a => a.copy(title = n))
       val url: Lens[Video, Option[String]] = Lens[Video, Option[String]](_.url)(n => a => a.copy(url = n))
       val durationMillis: Lens[Video, Option[Long]] = Lens[Video, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
@@ -52,7 +52,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
 
     val hints: Hints = Hints.empty
 
-    object Optics {
+    object optics {
       val title: Lens[Audio, Option[String]] = Lens[Audio, Option[String]](_.title)(n => a => a.copy(title = n))
       val url: Lens[Audio, Option[String]] = Lens[Audio, Option[String]](_.url)(n => a => a.copy(url = n))
       val durationMillis: Lens[Audio, Option[Long]] = Lens[Audio, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
