@@ -9,10 +9,14 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
 object PersonPhoneNumber extends Newtype[String] {
-  val hints: Hints = Hints(
-    smithy4s.example.Hash(),
+  val underlyingSchema: Schema[String] = string
+  .withId(ShapeId("smithy4s.example", "PersonPhoneNumber"))
+  .addHints(
+    Hints(
+      smithy4s.example.Hash(),
+    )
   )
-  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "PersonPhoneNumber")).addHints(hints)
+
   implicit val schema: Schema[PersonPhoneNumber] = bijection(underlyingSchema, asBijection)
 
   implicit val personPhoneNumberHash: cats.Hash[PersonPhoneNumber] = SchemaVisitorHash.fromSchema(schema)

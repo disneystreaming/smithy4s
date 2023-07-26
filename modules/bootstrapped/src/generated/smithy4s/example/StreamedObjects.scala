@@ -25,7 +25,8 @@ object StreamedObjectsGen extends Service.Mixin[StreamedObjectsGen, StreamedObje
   val id: ShapeId = ShapeId("smithy4s.example", "StreamedObjects")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -83,7 +84,8 @@ object StreamedObjectsOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[StreamedBlob] = StreamingSchema("PutStreamedObjectInput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString(""))))
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: PutStreamedObjectInput) = PutStreamedObject(input)
     override val errorable: Option[Nothing] = None
   }
@@ -98,7 +100,8 @@ object StreamedObjectsOperation {
     val output: Schema[GetStreamedObjectOutput] = GetStreamedObjectOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[StreamedBlob] = StreamingSchema("GetStreamedObjectOutput", StreamedBlob.schema.addHints(smithy.api.Default(smithy4s.Document.fromString(""))))
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: GetStreamedObjectInput) = GetStreamedObject(input)
     override val errorable: Option[Nothing] = None
   }

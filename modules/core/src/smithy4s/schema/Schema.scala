@@ -264,10 +264,12 @@ object Schema {
   val tuple: PartiallyAppliedTuple = new PartiallyAppliedTuple(placeholder)
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String, get: S => A): Field[S, A] = Field(label, schema, get)
+    def apply(label: String, get: S => A, replace: A => (S => S)): Field.Lens[S, A] = Field(label, schema, get, replace)
   }
 
   private [smithy4s] class PartiallyAppliedOptional[S, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String, get: S => Option[A]): Field[S, Option[A]] = Field.optional(label, schema, get)
+    def apply(label: String, get: S => Option[A], replace: Option[A] => (S => S)): Field.Lens[S, Option[A]] = Field.optional(label, schema, get, replace)
   }
 
   private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {

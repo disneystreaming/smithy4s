@@ -1,5 +1,9 @@
 package smithy4s.example
 
+import smithy.api.Documentation
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy.api.Readonly
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -31,8 +35,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "FooService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("The most basics of services\nGetFoo is its only operation"),
+  val hints: Hints =
+  Hints(
+    Documentation("The most basics of services\nGetFoo is its only operation"),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -89,10 +94,11 @@ object FooServiceOperation {
     val output: Schema[GetFooOutput] = GetFooOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/foo"), code = 200),
-      smithy.api.Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/foo"), code = 200),
+      Documentation("Returns a useful Foo\nNo input necessary to find our Foo\nThe path for this operation is \"/foo\""),
+      Readonly(),
     )
     def wrap(input: Unit) = GetFoo()
     override val errorable: Option[Nothing] = None

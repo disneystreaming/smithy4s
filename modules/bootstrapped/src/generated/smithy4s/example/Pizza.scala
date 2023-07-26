@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,11 +10,10 @@ import smithy4s.schema.Schema.struct
 
 final case class Pizza(name: String, base: PizzaBase, toppings: List[Ingredient])
 object Pizza extends ShapeTag.Companion[Pizza] {
-  val hints: Hints = Hints.empty
 
-  val name = string.required[Pizza]("name", _.name).addHints(smithy.api.Required())
-  val base = PizzaBase.schema.required[Pizza]("base", _.base).addHints(smithy.api.Required())
-  val toppings = Ingredients.underlyingSchema.required[Pizza]("toppings", _.toppings).addHints(smithy.api.Required())
+  val name = string.required[Pizza]("name", _.name, n => c => c.copy(name = n)).addHints(Required())
+  val base = PizzaBase.schema.required[Pizza]("base", _.base, n => c => c.copy(base = n)).addHints(Required())
+  val toppings = Ingredients.underlyingSchema.required[Pizza]("toppings", _.toppings, n => c => c.copy(toppings = n)).addHints(Required())
 
   implicit val schema: Schema[Pizza] = struct(
     name,
@@ -21,5 +21,9 @@ object Pizza extends ShapeTag.Companion[Pizza] {
     toppings,
   ){
     Pizza.apply
-  }.withId(ShapeId("smithy4s.example", "Pizza")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "Pizza"))
+  .addHints(
+    Hints.empty
+  )
 }

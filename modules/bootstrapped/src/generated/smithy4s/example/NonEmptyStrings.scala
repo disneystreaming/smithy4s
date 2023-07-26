@@ -10,7 +10,11 @@ import smithy4s.schema.Schema.list
 import smithy4s.schema.Schema.string
 
 object NonEmptyStrings extends Newtype[NonEmptyList[String]] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[NonEmptyList[String]] = list(string).refined[NonEmptyList[String]](smithy4s.example.NonEmptyListFormat()).withId(ShapeId("smithy4s.example", "NonEmptyStrings")).addHints(hints)
+  val underlyingSchema: Schema[NonEmptyList[String]] = list(string).refined[NonEmptyList[String]](NonEmptyListFormat())
+  .withId(ShapeId("smithy4s.example", "NonEmptyStrings"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[NonEmptyStrings] = bijection(underlyingSchema, asBijection)
 }

@@ -1,5 +1,8 @@
 package smithy4s.example.imp
 
+import alloy.SimpleRestJson
+import smithy.api.Http
+import smithy.api.NonEmptyString
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -31,8 +34,9 @@ object ImportServiceGen extends Service.Mixin[ImportServiceGen, ImportServiceOpe
   val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -91,8 +95,9 @@ object ImportServiceOperation {
     val output: Schema[OpOutput] = OpOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test"), code = 200),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/test"), code = 200),
     )
     def wrap(input: Unit) = ImportOperation()
     override val errorable: Option[Errorable[ImportOperationError]] = Some(this)
@@ -110,14 +115,15 @@ object ImportServiceOperation {
     def _ordinal: Int
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
-    val hints: Hints = Hints.empty
-
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
     def notFoundError(notFoundError:NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
 
     object NotFoundErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
+      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema
+      .addHints(
+        Hints.empty
+      )
+      , NotFoundErrorCase(_), _.notFoundError)
       val alt = schema.oneOf[ImportOperationError]("NotFoundError")
     }
 
@@ -126,6 +132,7 @@ object ImportServiceOperation {
     ){
       _._ordinal
     }
+    
   }
 }
 

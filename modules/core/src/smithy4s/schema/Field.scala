@@ -81,12 +81,28 @@ object Field {
   ): Field[S, A] =
     GetterField(label, schema, get)
 
+  def apply[S, A](
+      label: String,
+      schema: Schema[A],
+      get: S => A,
+      replace: A => (S => S)
+  ): Field.Lens[S, A] =
+    LensField(label, schema, get, replace)
+
   def optional[S, A](
       label: String,
       schema: Schema[A],
       get: S => Option[A]
   ): Field[S, Option[A]] =
     GetterField(label, schema.option, get)
+
+  def optional[S, A](
+      label: String,
+      schema: Schema[A],
+      get: S => Option[A],
+      replace: Option[A] => (S => S)
+  ): Field.Lens[S, Option[A]] =
+    LensField(label, schema.option, get, replace)
 
   private[schema] case class GetterField[S, A](
       label: String,

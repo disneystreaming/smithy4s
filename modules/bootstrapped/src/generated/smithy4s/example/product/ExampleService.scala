@@ -30,7 +30,8 @@ object ExampleServiceGen extends Service.Mixin[ExampleServiceGen, ExampleService
   val id: ShapeId = ShapeId("smithy4s.example.product", "ExampleService")
   val version: String = ""
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -109,7 +110,8 @@ object ExampleServiceOperation {
     val output: Schema[ExampleOperationOutput] = ExampleOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: ExampleOperationInput) = ExampleOperation(input)
     override val errorable: Option[Nothing] = None
   }

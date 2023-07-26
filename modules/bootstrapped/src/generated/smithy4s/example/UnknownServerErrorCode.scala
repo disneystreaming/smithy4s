@@ -18,13 +18,15 @@ sealed abstract class UnknownServerErrorCode(_value: String, _name: String, _int
   @inline final def widen: UnknownServerErrorCode = this
 }
 object UnknownServerErrorCode extends Enumeration[UnknownServerErrorCode] with ShapeTag.Companion[UnknownServerErrorCode] {
-  val hints: Hints = Hints.empty
-
   case object ERROR_CODE extends UnknownServerErrorCode("server.error", "ERROR_CODE", 0, Hints())
 
   val values: List[UnknownServerErrorCode] = List(
     ERROR_CODE,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[UnknownServerErrorCode] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "UnknownServerErrorCode")).addHints(hints)
+  implicit val schema: Schema[UnknownServerErrorCode] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "UnknownServerErrorCode"))
+  .addHints(
+    Hints.empty
+  )
 }

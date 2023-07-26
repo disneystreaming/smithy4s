@@ -3,7 +3,6 @@ $version: "2"
 namespace smithy4s.example
 
 use smithy4s.meta#typeclass
-use smithy4s.meta#generateOptics
 
 // NOTE: normally you would likely not need to add instances of hash or other typeclasses
 // to all of your types. Here I am doing it just to test different rendering cases.
@@ -21,7 +20,6 @@ structure MovieTheater {
   name: String
 }
 
-@generateOptics
 @hash
 union PersonContactInfo {
   email: PersonEmail

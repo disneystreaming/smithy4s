@@ -1,5 +1,7 @@
 package smithy4s.example.hello
 
+import smithy.api.Error
+import smithy.api.HttpError
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -11,16 +13,19 @@ final case class SpecificServerError(message: Option[String] = None) extends Thr
   override def getMessage(): String = message.orNull
 }
 object SpecificServerError extends ShapeTag.Companion[SpecificServerError] {
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(599),
-  )
 
-  val message = string.optional[SpecificServerError]("message", _.message)
+  val message = string.optional[SpecificServerError]("message", _.message, n => c => c.copy(message = n))
 
   implicit val schema: Schema[SpecificServerError] = struct(
     message,
   ){
     SpecificServerError.apply
-  }.withId(ShapeId("smithy4s.example.hello", "SpecificServerError")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example.hello", "SpecificServerError"))
+  .addHints(
+    Hints(
+      Error.SERVER.widen,
+      HttpError(599),
+    )
+  )
 }

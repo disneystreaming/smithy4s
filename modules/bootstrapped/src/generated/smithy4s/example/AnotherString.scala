@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Documentation
 import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
@@ -12,9 +13,13 @@ import smithy4s.schema.Schema.string
   * Seriously, it's important to escape special characters.
   */
 object AnotherString extends Newtype[String] {
-  val hints: Hints = Hints(
-    smithy.api.Documentation("Multiple line doc comment for another string\nContaining a random */ here.\nSeriously, it\'s important to escape special characters."),
+  val underlyingSchema: Schema[String] = string
+  .withId(ShapeId("smithy4s.example", "AnotherString"))
+  .addHints(
+    Hints(
+      Documentation("Multiple line doc comment for another string\nContaining a random */ here.\nSeriously, it\'s important to escape special characters."),
+    )
   )
-  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "AnotherString")).addHints(hints)
+
   implicit val schema: Schema[AnotherString] = bijection(underlyingSchema, asBijection)
 }

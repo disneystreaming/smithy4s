@@ -8,7 +8,11 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 
 object CitySummaries extends Newtype[List[CitySummary]] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[List[CitySummary]] = list(CitySummary.schema).withId(ShapeId("smithy4s.example", "CitySummaries")).addHints(hints)
+  val underlyingSchema: Schema[List[CitySummary]] = list(CitySummary.schema)
+  .withId(ShapeId("smithy4s.example", "CitySummaries"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[CitySummaries] = bijection(underlyingSchema, asBijection)
 }

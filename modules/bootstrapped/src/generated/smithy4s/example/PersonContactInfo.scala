@@ -5,7 +5,6 @@ import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.interopcats.SchemaVisitorHash
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -14,28 +13,25 @@ sealed trait PersonContactInfo extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
-  val hints: Hints = Hints(
-    smithy4s.example.Hash(),
-  )
-
-  object Optics {
-    val email: Prism[PersonContactInfo, PersonEmail] = Prism.partial[PersonContactInfo, PersonEmail]{ case EmailCase(t) => t }(EmailCase.apply)
-    val phone: Prism[PersonContactInfo, PersonPhoneNumber] = Prism.partial[PersonContactInfo, PersonPhoneNumber]{ case PhoneCase(t) => t }(PhoneCase.apply)
-  }
-
   final case class EmailCase(email: PersonEmail) extends PersonContactInfo { final def _ordinal: Int = 0 }
   def email(email:PersonEmail): PersonContactInfo = EmailCase(email)
   final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo { final def _ordinal: Int = 1 }
   def phone(phone:PersonPhoneNumber): PersonContactInfo = PhoneCase(phone)
 
   object EmailCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[EmailCase] = bijection(PersonEmail.schema.addHints(hints), EmailCase(_), _.email)
+    val schema: Schema[EmailCase] = bijection(PersonEmail.schema
+    .addHints(
+      Hints.empty
+    )
+    , EmailCase(_), _.email)
     val alt = schema.oneOf[PersonContactInfo]("email")
   }
   object PhoneCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[PhoneCase] = bijection(PersonPhoneNumber.schema.addHints(hints), PhoneCase(_), _.phone)
+    val schema: Schema[PhoneCase] = bijection(PersonPhoneNumber.schema
+    .addHints(
+      Hints.empty
+    )
+    , PhoneCase(_), _.phone)
     val alt = schema.oneOf[PersonContactInfo]("phone")
   }
 
@@ -44,7 +40,13 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     PhoneCase.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "PersonContactInfo")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "PersonContactInfo"))
+  .addHints(
+    Hints(
+      smithy4s.example.Hash(),
+    )
+  )
 
   implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema(schema)
 }

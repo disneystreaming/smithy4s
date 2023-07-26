@@ -22,7 +22,7 @@ import cats.syntax.all._
 class CollectionInTraitsSmokeSpec() extends FunSuite {
 
   test("Traits with collection members do not refer to them using newtypes") {
-    val (someList, someSet, someMap) = smithy4s.example.SomeInt.hints
+    val (someList, someSet, someMap) = smithy4s.example.SomeInt.schema.hints
       .get(smithy4s.example.SomeCollections)
       .foldMap(x => (x.someList, x.someSet, x.someMap))
 

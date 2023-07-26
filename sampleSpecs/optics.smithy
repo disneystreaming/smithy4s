@@ -2,24 +2,18 @@ $version: "2"
 
 namespace smithy4s.example
 
-use smithy4s.meta#generateOptics
-
-@generateOptics
 union OpticsUnion {
   one: OpticsStructure
 }
 
-@generateOptics
 structure OpticsStructure {
   two: OpticsEnum
 }
 
-@generateOptics
 enum OpticsEnum {
   A, B
 }
 
-@generateOptics
 structure TestInput {
     @required
     @httpLabel
@@ -33,7 +27,6 @@ structure TestInput {
     body: TestBody
 }
 
-@generateOptics
 structure TestBody {
     @length(min: 10)
     data: String

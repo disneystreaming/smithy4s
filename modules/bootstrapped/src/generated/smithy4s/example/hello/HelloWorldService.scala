@@ -1,5 +1,9 @@
 package smithy4s.example.hello
 
+import alloy.SimpleRestJson
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy.api.Tags
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -28,9 +32,10 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloWorldService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-    smithy.api.Tags(List("testServiceTag")),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
+    Tags(List("testServiceTag")),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -88,9 +93,10 @@ object HelloWorldServiceOperation {
     val output: Schema[Greeting] = Greeting.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200),
-      smithy.api.Tags(List("testOperationTag")),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/{name}"), code = 200),
+      Tags(List("testOperationTag")),
     )
     def wrap(input: Person) = Hello(input)
     override val errorable: Option[Errorable[HelloError]] = Some(this)
@@ -110,21 +116,25 @@ object HelloWorldServiceOperation {
     def _ordinal: Int
   }
   object HelloError extends ShapeTag.Companion[HelloError] {
-    val hints: Hints = Hints.empty
-
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError { final def _ordinal: Int = 0 }
     def genericServerError(genericServerError:GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
     final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError { final def _ordinal: Int = 1 }
     def specificServerError(specificServerError:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
 
     object GenericServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), GenericServerErrorCase(_), _.genericServerError)
+      val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema
+      .addHints(
+        Hints.empty
+      )
+      , GenericServerErrorCase(_), _.genericServerError)
       val alt = schema.oneOf[HelloError]("GenericServerError")
     }
     object SpecificServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[SpecificServerErrorCase] = bijection(SpecificServerError.schema.addHints(hints), SpecificServerErrorCase(_), _.specificServerError)
+      val schema: Schema[SpecificServerErrorCase] = bijection(SpecificServerError.schema
+      .addHints(
+        Hints.empty
+      )
+      , SpecificServerErrorCase(_), _.specificServerError)
       val alt = schema.oneOf[HelloError]("SpecificServerError")
     }
 
@@ -134,6 +144,7 @@ object HelloWorldServiceOperation {
     ){
       _._ordinal
     }
+    
   }
 }
 

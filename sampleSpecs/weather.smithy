@@ -1,7 +1,5 @@
 namespace smithy4s.example
 
-use smithy4s.meta#generateOptics
-
 /// Provides weather forecasts.
 @paginated(inputToken: "nextToken", outputToken: "nextToken",
            pageSize: "pageSize")
@@ -34,7 +32,6 @@ operation GetCity {
     errors: [NoSuchResource]
 }
 
-@generateOptics
 structure GetCityInput {
     // "cityId" provides the identifier for the resource and
     // has to be marked as required.
@@ -128,12 +125,10 @@ structure GetForecastInput {
     cityId: CityId,
 }
 
-@generateOptics
 structure GetForecastOutput {
     forecast: ForecastResult
 }
 
-@generateOptics
 union ForecastResult {
     rain: ChanceOfRain,
     sun: UVIndex

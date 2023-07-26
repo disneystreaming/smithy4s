@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Trait
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -13,15 +14,18 @@ import smithy4s.schema.Schema.struct
   */
 final case class TestTrait(orderType: Option[OrderType] = None)
 object TestTrait extends ShapeTag.Companion[TestTrait] {
-  val hints: Hints = Hints(
-    smithy.api.Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
-  )
 
   implicit val schema: Schema[TestTrait] = recursive(struct(
     orderType,
   ){
     TestTrait.apply
-  }.withId(ShapeId("smithy4s.example", "testTrait")).addHints(hints))
+  }
+  .withId(ShapeId("smithy4s.example", "testTrait"))
+  .addHints(
+    Hints(
+      Trait(selector = None, structurallyExclusive = None, conflicts = None, breakingChanges = None),
+    )
+  ))
 
-  val orderType = OrderType.schema.optional[TestTrait]("orderType", _.orderType)
+  val orderType = OrderType.schema.optional[TestTrait]("orderType", _.orderType, n => c => c.copy(orderType = n))
 }

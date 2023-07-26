@@ -24,7 +24,8 @@ object PackedInputsServiceGen extends Service.Mixin[PackedInputsServiceGen, Pack
   val id: ShapeId = ShapeId("smithy4s.example", "PackedInputsService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -79,7 +80,8 @@ object PackedInputsServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: PackedInput) = PackedInputOperation(input)
     override val errorable: Option[Nothing] = None
   }

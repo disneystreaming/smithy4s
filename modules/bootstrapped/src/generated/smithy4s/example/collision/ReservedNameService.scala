@@ -1,5 +1,8 @@
 package smithy4s.example.collision
 
+import alloy.SimpleRestJson
+import smithy.api.Http
+import smithy.api.NonEmptyString
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -27,8 +30,9 @@ object ReservedNameServiceGen extends Service.Mixin[ReservedNameServiceGen, Rese
   val id: ShapeId = ShapeId("smithy4s.example.collision", "ReservedNameService")
   val version: java.lang.String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -93,8 +97,9 @@ object ReservedNameServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/set/"), code = 204),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/set/"), code = 204),
     )
     def wrap(input: SetInput) = Set(input)
     override val errorable: scala.Option[Nothing] = None
@@ -110,8 +115,9 @@ object ReservedNameServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/list/"), code = 204),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/list/"), code = 204),
     )
     def wrap(input: ListInput) = List(input)
     override val errorable: scala.Option[Nothing] = None
@@ -127,8 +133,9 @@ object ReservedNameServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/map/"), code = 204),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/map/"), code = 204),
     )
     def wrap(input: MapInput) = Map(input)
     override val errorable: scala.Option[Nothing] = None
@@ -144,8 +151,9 @@ object ReservedNameServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/api/option/"), code = 204),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/api/option/"), code = 204),
     )
     def wrap(input: OptionInput) = Option(input)
     override val errorable: scala.Option[Nothing] = None

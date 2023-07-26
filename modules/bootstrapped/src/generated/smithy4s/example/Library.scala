@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Readonly
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -26,7 +27,8 @@ object LibraryGen extends Service.Mixin[LibraryGen, LibraryOperation] {
   val id: ShapeId = ShapeId("smithy4s.example", "Library")
   val version: String = ""
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -88,8 +90,9 @@ object LibraryOperation {
     val output: Schema[ListPublishersOutput] = ListPublishersOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Readonly(),
     )
     def wrap(input: Unit) = ListPublishers()
     override val errorable: Option[Nothing] = None
@@ -106,8 +109,9 @@ object LibraryOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Readonly(),
     )
     def wrap(input: Unit) = GetBook()
     override val errorable: Option[Nothing] = None
@@ -124,7 +128,8 @@ object LibraryOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: Unit) = BuyBook()
     override val errorable: Option[Nothing] = None
   }

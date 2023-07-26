@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Documentation
 import smithy4s.Enumeration
 import smithy4s.Hints
 import smithy4s.Schema
@@ -23,17 +24,19 @@ sealed abstract class LowHigh(_value: String, _name: String, _intValue: Int, _hi
   @inline final def widen: LowHigh = this
 }
 object LowHigh extends Enumeration[LowHigh] with ShapeTag.Companion[LowHigh] {
-  val hints: Hints = Hints.empty
-
   /** low */
-  case object LOW extends LowHigh("Low", "LOW", 0, Hints(smithy.api.Documentation("low")))
+  case object LOW extends LowHigh("Low", "LOW", 0, Hints(Documentation("low")))
   /** high */
-  case object HIGH extends LowHigh("High", "HIGH", 1, Hints(smithy.api.Documentation("high")))
+  case object HIGH extends LowHigh("High", "HIGH", 1, Hints(Documentation("high")))
 
   val values: List[LowHigh] = List(
     LOW,
     HIGH,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[LowHigh] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "LowHigh")).addHints(hints)
+  implicit val schema: Schema[LowHigh] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "LowHigh"))
+  .addHints(
+    Hints.empty
+  )
 }

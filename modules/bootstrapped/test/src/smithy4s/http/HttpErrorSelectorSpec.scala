@@ -40,41 +40,44 @@ final class HttpErrorSelectorSpec extends munit.FunSuite {
   val selector = HttpErrorSelector(ErrorHandlingOperation.errorable, compiler)
 
   test("pick exact x-error-type - shapeId") {
-    val result = selector(HttpDiscriminator.FullId(EHNotFound.id))
-    val expected = Some(EHNotFound.id)
+    val result = selector(HttpDiscriminator.FullId(EHNotFound.schema.shapeId))
+    val expected = Some(EHNotFound.schema.shapeId)
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - name") {
-    val result = selector(HttpDiscriminator.NameOnly(EHNotFound.id.name))
-    val expected = Some(EHNotFound.id)
+    val result =
+      selector(HttpDiscriminator.NameOnly(EHNotFound.schema.shapeId.name))
+    val expected = Some(EHNotFound.schema.shapeId)
 
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - name is case sensitive") {
     val result =
-      selector(HttpDiscriminator.NameOnly(EHNotFound.id.name.toLowerCase))
+      selector(
+        HttpDiscriminator.NameOnly(EHNotFound.schema.shapeId.name.toLowerCase)
+      )
     assertEquals(result, None)
   }
 
   test("pick exact x-error-type - status code exact match") {
     val result = selector(HttpDiscriminator.StatusCode(404))
-    val expected = Some(EHNotFound.id)
+    val expected = Some(EHNotFound.schema.shapeId)
 
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - status code fallback") {
     val result = selector(HttpDiscriminator.StatusCode(400))
-    val expected = Some(EHFallbackClientError.id)
+    val expected = Some(EHFallbackClientError.schema.shapeId)
 
     assertEquals(result, expected)
   }
 
   test("pick exact x-error-type - status code fallback to server-level error") {
     val result = selector(HttpDiscriminator.StatusCode(500))
-    val expected = Some(EHFallbackServerError.id)
+    val expected = Some(EHFallbackServerError.schema.shapeId)
 
     assertEquals(result, expected)
   }

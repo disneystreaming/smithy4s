@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Error
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -11,15 +12,18 @@ final case class RandomOtherServerError(message: Option[String] = None) extends 
   override def getMessage(): String = message.orNull
 }
 object RandomOtherServerError extends ShapeTag.Companion[RandomOtherServerError] {
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-  )
 
-  val message = string.optional[RandomOtherServerError]("message", _.message)
+  val message = string.optional[RandomOtherServerError]("message", _.message, n => c => c.copy(message = n))
 
   implicit val schema: Schema[RandomOtherServerError] = struct(
     message,
   ){
     RandomOtherServerError.apply
-  }.withId(ShapeId("smithy4s.example", "RandomOtherServerError")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "RandomOtherServerError"))
+  .addHints(
+    Hints(
+      Error.SERVER.widen,
+    )
+  )
 }

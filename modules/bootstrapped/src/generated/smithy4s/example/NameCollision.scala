@@ -29,7 +29,8 @@ object NameCollisionGen extends Service.Mixin[NameCollisionGen, NameCollisionOpe
   val id: ShapeId = ShapeId("smithy4s.example", "NameCollision")
   val version: String = ""
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -90,7 +91,8 @@ object NameCollisionOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: Unit) = MyOp()
     override val errorable: Option[Errorable[MyOpError]] = Some(this)
     val error: UnionSchema[MyOpError] = MyOpError.schema
@@ -107,14 +109,15 @@ object NameCollisionOperation {
     def _ordinal: Int
   }
   object MyOpError extends ShapeTag.Companion[MyOpError] {
-    val hints: Hints = Hints.empty
-
     final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def _ordinal: Int = 0 }
     def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
 
     object MyOpErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema.addHints(hints), MyOpErrorCase(_), _.myOpError)
+      val schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema
+      .addHints(
+        Hints.empty
+      )
+      , MyOpErrorCase(_), _.myOpError)
       val alt = schema.oneOf[MyOpError]("MyOpError")
     }
 
@@ -123,6 +126,7 @@ object NameCollisionOperation {
     ){
       _._ordinal
     }
+    
   }
   final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: NameCollisionGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.endpoint()
@@ -136,7 +140,8 @@ object NameCollisionOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: Unit) = Endpoint()
     override val errorable: Option[Nothing] = None
   }

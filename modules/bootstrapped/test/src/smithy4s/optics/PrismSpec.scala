@@ -7,7 +7,7 @@ import smithy4s.example.Podcast
 final class PrismSpec extends FunSuite {
 
   test("round trip") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Video.alt
     val v = Podcast.Video(Some("My Title"))
     val result =
       prism.project(prism.inject(v))
@@ -15,7 +15,7 @@ final class PrismSpec extends FunSuite {
   }
 
   test("round trip - empty") {
-    val prism = Podcast.Optics.audio
+    val prism = Podcast.Audio.alt
     val v: Podcast = Podcast.Video(Some("My Title"))
     val result =
       prism.project(v).map(prism.inject)
@@ -23,7 +23,7 @@ final class PrismSpec extends FunSuite {
   }
 
   test("modify identity") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Video.alt
     val v = Podcast.Video(Some("My Title"))
     val result =
       prism.modify(identity)(v)
@@ -31,7 +31,7 @@ final class PrismSpec extends FunSuite {
   }
 
   test("modify compose") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Video.alt
     val v = Podcast.Video(Some("My Title"))
     val f: Podcast.Video => Podcast.Video = _.copy(title = Some("Title 2"))
     val g: Podcast.Video => Podcast.Video = _.copy(title = Some("Title 3"))
@@ -43,7 +43,7 @@ final class PrismSpec extends FunSuite {
   }
 
   test("modify == replace") {
-    val prism = Podcast.Optics.video
+    val prism = Podcast.Video.alt
     val v = Podcast.Video(Some("My Title"))
     val v2 = Podcast.Video(Some("My Title 2"))
     val resultOne =

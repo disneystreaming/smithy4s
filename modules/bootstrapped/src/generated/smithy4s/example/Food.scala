@@ -12,21 +12,25 @@ sealed trait Food extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object Food extends ShapeTag.Companion[Food] {
-  val hints: Hints = Hints.empty
-
   final case class PizzaCase(pizza: Pizza) extends Food { final def _ordinal: Int = 0 }
   def pizza(pizza:Pizza): Food = PizzaCase(pizza)
   final case class SaladCase(salad: Salad) extends Food { final def _ordinal: Int = 1 }
   def salad(salad:Salad): Food = SaladCase(salad)
 
   object PizzaCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[PizzaCase] = bijection(Pizza.schema.addHints(hints), PizzaCase(_), _.pizza)
+    val schema: Schema[PizzaCase] = bijection(Pizza.schema
+    .addHints(
+      Hints.empty
+    )
+    , PizzaCase(_), _.pizza)
     val alt = schema.oneOf[Food]("pizza")
   }
   object SaladCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[SaladCase] = bijection(Salad.schema.addHints(hints), SaladCase(_), _.salad)
+    val schema: Schema[SaladCase] = bijection(Salad.schema
+    .addHints(
+      Hints.empty
+    )
+    , SaladCase(_), _.salad)
     val alt = schema.oneOf[Food]("salad")
   }
 
@@ -35,5 +39,9 @@ object Food extends ShapeTag.Companion[Food] {
     SaladCase.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "Food")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "Food"))
+  .addHints(
+    Hints.empty
+  )
 }

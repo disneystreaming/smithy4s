@@ -1,9 +1,19 @@
 package com.amazonaws.dynamodb
 
+import aws.api.ArnNamespace
+import aws.api.ClientDiscoveredEndpoint
+import aws.api.ClientEndpointDiscovery
+import aws.api.CloudFormationName
+import aws.auth.Sigv4
+import aws.protocols.AwsJson1_0
+import smithy.api.Documentation
+import smithy.api.NonEmptyString
+import smithy.api.Paginated
+import smithy.api.Title
+import smithy.api.XmlNamespace
 import smithy4s.Errorable
 import smithy4s.Hints
 import smithy4s.Schema
-import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
 import smithy4s.StreamingSchema
@@ -54,19 +64,20 @@ trait DynamoDBGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[DynamoDBGen[F]] = Transformation.of[DynamoDBGen[F]](this)
 }
 
-object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
+object DynamoDBGen extends smithy4s.Service.Mixin[DynamoDBGen, DynamoDBOperation] {
 
   val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "DynamoDB_20120810")
   val version: String = "2012-08-10"
 
-  val hints: Hints = Hints(
-    aws.auth.Sigv4(name = "dynamodb"),
-    smithy.api.Title("Amazon DynamoDB"),
-    aws.protocols.AwsJson1_0(http = None, eventStreamHttp = None),
-    smithy.api.Documentation("<fullname>Amazon DynamoDB</fullname>\n\n\n         <p>Amazon DynamoDB is a fully managed NoSQL database service that provides fast and\n      predictable performance with seamless scalability. DynamoDB lets you offload the\n      administrative burdens of operating and scaling a distributed database, so that you don\'t have\n      to worry about hardware provisioning, setup and configuration, replication, software patching,\n      or cluster scaling.</p>\n\n         <p>With DynamoDB, you can create database tables that can store and retrieve any amount of\n      data, and serve any level of request traffic. You can scale up or scale down your tables\'\n      throughput capacity without downtime or performance degradation, and use the AWS Management\n      Console to monitor resource utilization and performance metrics.</p>\n\n         <p>DynamoDB automatically spreads the data and traffic for your tables over a sufficient\n      number of servers to handle your throughput and storage requirements, while maintaining\n      consistent and fast performance. All of your data is stored on solid state disks (SSDs) and\n      automatically replicated across multiple Availability Zones in an AWS region, providing\n      built-in high availability and data durability. </p>"),
-    aws.api.Service(sdkId = "DynamoDB", arnNamespace = Some(aws.api.ArnNamespace("dynamodb")), cloudFormationName = Some(aws.api.CloudFormationName("DynamoDB")), cloudTrailEventSource = Some("dynamodb.amazonaws.com"), endpointPrefix = Some("dynamodb")),
-    smithy.api.XmlNamespace(uri = smithy.api.NonEmptyString("http://dynamodb.amazonaws.com/doc/2012-08-10/"), prefix = None),
-    aws.api.ClientEndpointDiscovery(operation = "com.amazonaws.dynamodb#DescribeEndpoints", error = Some("com.amazonaws.dynamodb#InvalidEndpointException")),
+  val hints: Hints =
+  Hints(
+    Sigv4(name = "dynamodb"),
+    Title("Amazon DynamoDB"),
+    AwsJson1_0(http = None, eventStreamHttp = None),
+    Documentation("<fullname>Amazon DynamoDB</fullname>\n\n\n         <p>Amazon DynamoDB is a fully managed NoSQL database service that provides fast and\n      predictable performance with seamless scalability. DynamoDB lets you offload the\n      administrative burdens of operating and scaling a distributed database, so that you don\'t have\n      to worry about hardware provisioning, setup and configuration, replication, software patching,\n      or cluster scaling.</p>\n\n         <p>With DynamoDB, you can create database tables that can store and retrieve any amount of\n      data, and serve any level of request traffic. You can scale up or scale down your tables\'\n      throughput capacity without downtime or performance degradation, and use the AWS Management\n      Console to monitor resource utilization and performance metrics.</p>\n\n         <p>DynamoDB automatically spreads the data and traffic for your tables over a sufficient\n      number of servers to handle your throughput and storage requirements, while maintaining\n      consistent and fast performance. All of your data is stored on solid state disks (SSDs) and\n      automatically replicated across multiple Availability Zones in an AWS region, providing\n      built-in high availability and data durability. </p>"),
+    aws.api.Service(sdkId = "DynamoDB", arnNamespace = Some(ArnNamespace("dynamodb")), cloudFormationName = Some(CloudFormationName("DynamoDB")), cloudTrailEventSource = Some("dynamodb.amazonaws.com"), endpointPrefix = Some("dynamodb")),
+    XmlNamespace(uri = NonEmptyString("http://dynamodb.amazonaws.com/doc/2012-08-10/"), prefix = None),
+    ClientEndpointDiscovery(operation = "com.amazonaws.dynamodb#DescribeEndpoints", error = Some("com.amazonaws.dynamodb#InvalidEndpointException")),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -127,8 +138,9 @@ object DynamoDBOperation {
     val output: Schema[DescribeEndpointsResponse] = DescribeEndpointsResponse.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Documentation("<p>Returns the regional endpoint information.</p>"),
+    val hints: Hints =
+    Hints(
+      Documentation("<p>Returns the regional endpoint information.</p>"),
     )
     def wrap(input: DescribeEndpointsRequest) = DescribeEndpoints(input)
     override val errorable: Option[Nothing] = None
@@ -144,10 +156,11 @@ object DynamoDBOperation {
     val output: Schema[ListTablesOutput] = ListTablesOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      aws.api.ClientDiscoveredEndpoint(required = false),
-      smithy.api.Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"),
-      smithy.api.Paginated(inputToken = Some(smithy.api.NonEmptyString("ExclusiveStartTableName")), outputToken = Some(smithy.api.NonEmptyString("LastEvaluatedTableName")), items = Some(smithy.api.NonEmptyString("TableNames")), pageSize = Some(smithy.api.NonEmptyString("Limit"))),
+    val hints: Hints =
+    Hints(
+      ClientDiscoveredEndpoint(required = false),
+      Documentation("<p>Returns an array of table names associated with the current account and endpoint. The output\n      from <code>ListTables</code> is paginated, with each page returning a maximum of 100 table\n      names.</p>"),
+      Paginated(inputToken = Some(NonEmptyString("ExclusiveStartTableName")), outputToken = Some(NonEmptyString("LastEvaluatedTableName")), items = Some(NonEmptyString("TableNames")), pageSize = Some(NonEmptyString("Limit"))),
     )
     def wrap(input: ListTablesInput) = ListTables(input)
     override val errorable: Option[Errorable[ListTablesError]] = Some(this)
@@ -167,21 +180,25 @@ object DynamoDBOperation {
     def _ordinal: Int
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
-    val hints: Hints = Hints.empty
-
     final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
     def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
     final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
     def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
 
     object InternalServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[InternalServerErrorCase] = bijection(InternalServerError.schema.addHints(hints), InternalServerErrorCase(_), _.internalServerError)
+      val schema: Schema[InternalServerErrorCase] = bijection(InternalServerError.schema
+      .addHints(
+        Hints.empty
+      )
+      , InternalServerErrorCase(_), _.internalServerError)
       val alt = schema.oneOf[ListTablesError]("InternalServerError")
     }
     object InvalidEndpointExceptionCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema.addHints(hints), InvalidEndpointExceptionCase(_), _.invalidEndpointException)
+      val schema: Schema[InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema
+      .addHints(
+        Hints.empty
+      )
+      , InvalidEndpointExceptionCase(_), _.invalidEndpointException)
       val alt = schema.oneOf[ListTablesError]("InvalidEndpointException")
     }
 
@@ -191,6 +208,7 @@ object DynamoDBOperation {
     ){
       _._ordinal
     }
+    
   }
 }
 

@@ -1,5 +1,13 @@
 package smithy4s.example.test
 
+import alloy.SimpleRestJson
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy.api.Readonly
+import smithy.test.HttpRequestTestCase
+import smithy.test.HttpRequestTests
+import smithy.test.HttpResponseTestCase
+import smithy.test.HttpResponseTests
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -31,8 +39,9 @@ object HelloServiceGen extends Service.Mixin[HelloServiceGen, HelloServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example.test", "HelloService")
   val version: String = ""
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -96,10 +105,11 @@ object HelloServiceOperation {
     val output: Schema[SayHelloOutput] = SayHelloOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "say_hello", protocol = "alloy#simpleRestJson", method = "POST", uri = "/", host = None, resolvedHost = None, authScheme = None, queryParams = Some(List("Hi=Hello%20there")), forbidQueryParams = None, requireQueryParams = None, headers = Some(Map("X-Greeting" -> "Hi")), forbidHeaders = None, requireHeaders = None, body = Some("{\"name\":\"Teddy\"}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("greeting" -> smithy4s.Document.fromString("Hi"), "name" -> smithy4s.Document.fromString("Teddy"), "query" -> smithy4s.Document.fromString("Hello there"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/"), code = 200),
-      smithy.test.HttpResponseTests(List(smithy.test.HttpResponseTestCase(id = "say_hello", protocol = "alloy#simpleRestJson", code = 200, authScheme = None, headers = Some(Map("X-H1" -> "V1")), forbidHeaders = None, requireHeaders = None, body = Some("{\"result\":\"Hello!\"}"), bodyMediaType = None, params = Some(smithy4s.Document.obj("payload" -> smithy4s.Document.obj("result" -> smithy4s.Document.fromString("Hello!")), "header1" -> smithy4s.Document.fromString("V1"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+    val hints: Hints =
+    Hints(
+      HttpRequestTests(List(HttpRequestTestCase(id = "say_hello", protocol = "alloy#simpleRestJson", method = "POST", uri = "/", host = None, resolvedHost = None, authScheme = None, queryParams = Some(List("Hi=Hello%20there")), forbidQueryParams = None, requireQueryParams = None, headers = Some(Map("X-Greeting" -> "Hi")), forbidHeaders = None, requireHeaders = None, body = Some("{\"name\":\"Teddy\"}"), bodyMediaType = Some("application/json"), params = Some(smithy4s.Document.obj("greeting" -> smithy4s.Document.fromString("Hi"), "name" -> smithy4s.Document.fromString("Teddy"), "query" -> smithy4s.Document.fromString("Hello there"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/"), code = 200),
+      HttpResponseTests(List(HttpResponseTestCase(id = "say_hello", protocol = "alloy#simpleRestJson", code = 200, authScheme = None, headers = Some(Map("X-H1" -> "V1")), forbidHeaders = None, requireHeaders = None, body = Some("{\"result\":\"Hello!\"}"), bodyMediaType = None, params = Some(smithy4s.Document.obj("payload" -> smithy4s.Document.obj("result" -> smithy4s.Document.fromString("Hello!")), "header1" -> smithy4s.Document.fromString("V1"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
     )
     def wrap(input: SayHelloInput) = SayHello(input)
     override val errorable: Option[Errorable[SayHelloError]] = Some(this)
@@ -119,21 +129,25 @@ object HelloServiceOperation {
     def _ordinal: Int
   }
   object SayHelloError extends ShapeTag.Companion[SayHelloError] {
-    val hints: Hints = Hints.empty
-
     final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
     def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
     final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
     def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
 
     object SimpleErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[SimpleErrorCase] = bijection(SimpleError.schema.addHints(hints), SimpleErrorCase(_), _.simpleError)
+      val schema: Schema[SimpleErrorCase] = bijection(SimpleError.schema
+      .addHints(
+        Hints.empty
+      )
+      , SimpleErrorCase(_), _.simpleError)
       val alt = schema.oneOf[SayHelloError]("SimpleError")
     }
     object ComplexErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[ComplexErrorCase] = bijection(ComplexError.schema.addHints(hints), ComplexErrorCase(_), _.complexError)
+      val schema: Schema[ComplexErrorCase] = bijection(ComplexError.schema
+      .addHints(
+        Hints.empty
+      )
+      , ComplexErrorCase(_), _.complexError)
       val alt = schema.oneOf[SayHelloError]("ComplexError")
     }
 
@@ -143,6 +157,7 @@ object HelloServiceOperation {
     ){
       _._ordinal
     }
+    
   }
   final case class Listen() extends HelloServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloServiceGen[F]): F[Unit, Nothing, Unit, Nothing, Nothing] = impl.listen()
@@ -156,10 +171,11 @@ object HelloServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "listen", protocol = "alloy#simpleRestJson", method = "GET", uri = "/listen", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = None, vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/listen"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      HttpRequestTests(List(HttpRequestTestCase(id = "listen", protocol = "alloy#simpleRestJson", method = "GET", uri = "/listen", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = None, vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/listen"), code = 200),
+      Readonly(),
     )
     def wrap(input: Unit) = Listen()
     override val errorable: Option[Nothing] = None
@@ -175,10 +191,11 @@ object HelloServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "TestPath", protocol = "alloy#simpleRestJson", method = "GET", uri = "/test-path/sameValue", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("path" -> smithy4s.Document.fromString("sameValue"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test-path/{path}"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      HttpRequestTests(List(HttpRequestTestCase(id = "TestPath", protocol = "alloy#simpleRestJson", method = "GET", uri = "/test-path/sameValue", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("path" -> smithy4s.Document.fromString("sameValue"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/test-path/{path}"), code = 200),
+      Readonly(),
     )
     def wrap(input: TestPathInput) = TestPath(input)
     override val errorable: Option[Nothing] = None

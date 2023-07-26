@@ -1,5 +1,7 @@
 package smithy4s.example.greet
 
+import smithy.api.Input
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,15 +11,18 @@ import smithy4s.schema.Schema.struct
 
 final case class GreetInput(name: String)
 object GreetInput extends ShapeTag.Companion[GreetInput] {
-  val hints: Hints = Hints(
-    smithy.api.Input(),
-  )
 
-  val name = string.required[GreetInput]("name", _.name).addHints(smithy.api.Required())
+  val name = string.required[GreetInput]("name", _.name, n => c => c.copy(name = n)).addHints(Required())
 
   implicit val schema: Schema[GreetInput] = struct(
     name,
   ){
     GreetInput.apply
-  }.withId(ShapeId("smithy4s.example.greet", "GreetInput")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example.greet", "GreetInput"))
+  .addHints(
+    Hints(
+      Input(),
+    )
+  )
 }

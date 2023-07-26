@@ -1,5 +1,8 @@
 package smithy4s.example.guides.auth
 
+import smithy.api.Error
+import smithy.api.HttpError
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -11,16 +14,19 @@ final case class NotAuthorizedError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
 object NotAuthorizedError extends ShapeTag.Companion[NotAuthorizedError] {
-  val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-    smithy.api.HttpError(401),
-  )
 
-  val message = string.required[NotAuthorizedError]("message", _.message).addHints(smithy.api.Required())
+  val message = string.required[NotAuthorizedError]("message", _.message, n => c => c.copy(message = n)).addHints(Required())
 
   implicit val schema: Schema[NotAuthorizedError] = struct(
     message,
   ){
     NotAuthorizedError.apply
-  }.withId(ShapeId("smithy4s.example.guides.auth", "NotAuthorizedError")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example.guides.auth", "NotAuthorizedError"))
+  .addHints(
+    Hints(
+      Error.CLIENT.widen,
+      HttpError(401),
+    )
+  )
 }

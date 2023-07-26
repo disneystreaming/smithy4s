@@ -18,8 +18,6 @@ sealed abstract class Letters(_value: String, _name: String, _intValue: Int, _hi
   @inline final def widen: Letters = this
 }
 object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
-  val hints: Hints = Hints.empty
-
   case object A extends Letters("a", "A", 0, Hints())
   case object B extends Letters("b", "B", 1, Hints())
   case object C extends Letters("c", "C", 2, Hints())
@@ -30,5 +28,9 @@ object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
     C,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[Letters] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "Letters")).addHints(hints)
+  implicit val schema: Schema[Letters] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "Letters"))
+  .addHints(
+    Hints.empty
+  )
 }

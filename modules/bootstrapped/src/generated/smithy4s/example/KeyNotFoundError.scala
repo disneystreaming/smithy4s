@@ -1,5 +1,7 @@
 package smithy4s.example
 
+import smithy.api.Error
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -11,15 +13,18 @@ final case class KeyNotFoundError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
 object KeyNotFoundError extends ShapeTag.Companion[KeyNotFoundError] {
-  val hints: Hints = Hints(
-    smithy.api.Error.CLIENT.widen,
-  )
 
-  val message = string.required[KeyNotFoundError]("message", _.message).addHints(smithy.api.Required())
+  val message = string.required[KeyNotFoundError]("message", _.message, n => c => c.copy(message = n)).addHints(Required())
 
   implicit val schema: Schema[KeyNotFoundError] = struct(
     message,
   ){
     KeyNotFoundError.apply
-  }.withId(ShapeId("smithy4s.example", "KeyNotFoundError")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "KeyNotFoundError"))
+  .addHints(
+    Hints(
+      Error.CLIENT.widen,
+    )
+  )
 }

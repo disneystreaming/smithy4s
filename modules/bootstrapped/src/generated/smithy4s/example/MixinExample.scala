@@ -12,12 +12,11 @@ import smithy4s.schema.Schema.struct
 
 final case class MixinExample(a: Option[String] = None, b: Option[Int] = None, c: Option[Long] = None, d: Option[Boolean] = None) extends CommonFieldsOne with CommonFieldsTwo
 object MixinExample extends ShapeTag.Companion[MixinExample] {
-  val hints: Hints = Hints.empty
 
-  val a = string.optional[MixinExample]("a", _.a)
-  val b = int.optional[MixinExample]("b", _.b)
-  val c = long.optional[MixinExample]("c", _.c)
-  val d = boolean.optional[MixinExample]("d", _.d)
+  val a = string.optional[MixinExample]("a", _.a, n => c => c.copy(a = n))
+  val b = int.optional[MixinExample]("b", _.b, n => c => c.copy(b = n))
+  val c = long.optional[MixinExample]("c", _.c, n => c => c.copy(c = n))
+  val d = boolean.optional[MixinExample]("d", _.d, n => c => c.copy(d = n))
 
   implicit val schema: Schema[MixinExample] = struct(
     a,
@@ -26,5 +25,9 @@ object MixinExample extends ShapeTag.Companion[MixinExample] {
     d,
   ){
     MixinExample.apply
-  }.withId(ShapeId("smithy4s.example", "MixinExample")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "MixinExample"))
+  .addHints(
+    Hints.empty
+  )
 }

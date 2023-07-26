@@ -28,7 +28,11 @@ final case class Alt[U, A](
     schema: Schema[A],
     inject: A => U,
     project: PartialFunction[U, A]
-) {
+) extends smithy4s.optics.Prism[U, A] {
+
+  def inject(a: A): U = inject.apply(a)
+
+  def project(u: U): Option[A] = project.lift.apply(u)
 
   @deprecated("use .schema instead", since = "0.18.0")
   def instance: Schema[A] = schema
@@ -114,7 +118,7 @@ object Alt {
           val ord = ordinal(u)
           encoderK(
             precompiledAlts(ord).asInstanceOf[F[Any]],
-            alts(ord).project(u)
+            alts(ord).project.apply(u)
           )
         }
       }

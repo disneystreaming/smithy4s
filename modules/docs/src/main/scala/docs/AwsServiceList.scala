@@ -10,8 +10,8 @@ object AwsServiceList {
   def renderServiceList(): Unit = {
     val summary = getSummary()
     val supportedProtocols = Set(
-      AwsJson1_0.id.name,
-      AwsJson1_1.id.name
+      AwsJson1_0.schema.shapeId.name,
+      AwsJson1_1.schema.shapeId.name
     )
     val (supported, unsupported) =
       summary.artifacts.partition(a => supportedProtocols(a.protocol))

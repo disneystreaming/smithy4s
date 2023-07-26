@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Deprecated
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -15,10 +16,6 @@ sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
-  val hints: Hints = Hints(
-    smithy.api.Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
-  )
-
   @deprecated(message = "N/A", since = "N/A")
   final case class SCase(s: String) extends DeprecatedUnion { final def _ordinal: Int = 0 }
   def s(s:String): DeprecatedUnion = SCase(s)
@@ -29,11 +26,14 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def _ordinal: Int = 2
   }
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
-    val hints: Hints = Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    )
 
-    implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(ShapeId("smithy4s.example", "DeprecatedUnionProductCase")).addHints(hints)
+    implicit val schema: Schema[DeprecatedUnionProductCase] = constant(DeprecatedUnionProductCase()).withId(ShapeId("smithy4s.example", "DeprecatedUnionProductCase"))
+    .withId(ShapeId("smithy4s.example", "DeprecatedUnionProductCase"))
+    .addHints(
+      Hints(
+        Deprecated(message = None, since = None),
+      )
+    )
 
     val alt = schema.oneOf[DeprecatedUnion]("p")
   }
@@ -42,25 +42,34 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def _ordinal: Int = 3
   }
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
-    val hints: Hints = Hints(
-      smithy.api.Deprecated(message = None, since = None),
-    )
 
-    implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")).addHints(hints)
+    implicit val schema: Schema[UnionProductCaseDeprecatedAtCallSite] = constant(UnionProductCaseDeprecatedAtCallSite()).withId(ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite"))
+    .withId(ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite"))
+    .addHints(
+      Hints(
+        Deprecated(message = None, since = None),
+      )
+    )
 
     val alt = schema.oneOf[DeprecatedUnion]("p2")
   }
 
   object SCase {
-    val hints: Hints = Hints(
-      smithy.api.Deprecated(message = None, since = None),
+    val schema: Schema[SCase] = bijection(string
+    .addHints(
+      Hints(
+        Deprecated(message = None, since = None),
+      )
     )
-    val schema: Schema[SCase] = bijection(string.addHints(hints), SCase(_), _.s)
+    , SCase(_), _.s)
     val alt = schema.oneOf[DeprecatedUnion]("s")
   }
   object S_V2Case {
-    val hints: Hints = Hints.empty
-    val schema: Schema[S_V2Case] = bijection(string.addHints(hints), S_V2Case(_), _.s_V2)
+    val schema: Schema[S_V2Case] = bijection(string
+    .addHints(
+      Hints.empty
+    )
+    , S_V2Case(_), _.s_V2)
     val alt = schema.oneOf[DeprecatedUnion]("s_V2")
   }
 
@@ -71,5 +80,11 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     UnionProductCaseDeprecatedAtCallSite.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "DeprecatedUnion")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "DeprecatedUnion"))
+  .addHints(
+    Hints(
+      Deprecated(message = Some("A compelling reason"), since = Some("0.0.1")),
+    )
+  )
 }

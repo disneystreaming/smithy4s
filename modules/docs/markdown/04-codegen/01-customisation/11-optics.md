@@ -1,34 +1,9 @@
 ---
-sidebar_label: Wildcard types
-title: Scala wildcard type arguments
+sidebar_label: Optics
+title: Optics - Lens and Prism
 ---
 
-Smithy4s has the ability to render optics (Lens/Prism) instances in the code it generates.
-
-If you're using Smithy4s via `mill` or `sbt`, then you can enable this functionality with the following keys:
-
-* in mill, task: `def smithy4sRenderOptics = true`
-* in sbt, setting: `smithy4sRenderOptics := true`
-
-If you are using Smithy4s via the CLI, then they way to utilize this feature is through your Smithy specifications. The simplest approach is to add a file with the following content to your CLI invocation:
-
-```kotlin
-$version: "2"
-
-metadata smithy4sRenderOptics = true
-```
-
-Alternatively, if you want to generate optics for only select shapes in your model, you can accomplish this using
-the `smithy4s.meta#generateOptics` trait. This trait can be used on enum, intEnum, union, and structure shapes.
-
-```kotlin
-use smithy4s.meta#generateOptics
-
-@generateOptics
-structure MyStruct {
-  one: String
-}
-```
+Smithy4s renders unions such that the alternatives it renders can be used as Prisms. Similarly, structures are rendered such that their fields can be used as Lenses.
 
 ## Optics Usage
 
@@ -38,7 +13,7 @@ Below is an example of using the lenses that smithy4s generates. By default, smi
 import smithy4s.example._
 
 val input = TestInput("test", TestBody(Some("test body")))
-val lens = TestInput.Optics.body.andThen(TestBody.Optics.data).some
+val lens = TestInput.body.andThen(TestBody.data).some
 val resultGet = lens.project(input)
 
 resultGet == Option("test body") // true
@@ -58,7 +33,7 @@ import smithy4s.example._
 
 val input = Podcast.Video(Some("Pod Title"))
 
-val prism = Podcast.Optics.video.andThen(Podcast.Video.Optics.title).some
+val prism = Podcast.video.andThen(Podcast.Video.title).some
 val result = prism.replace("New Pod Title")(input)
 
 Podcast.Video(Some("New Pod Title")) == result // true
@@ -71,7 +46,7 @@ import smithy4s.example._
 
 val input = GetCityInput(CityId("test"))
 
-val cityName: smithy4s.optics.Lens[GetCityInput, String] = GetCityInput.Optics.cityId.value
+val cityName: smithy4s.optics.Lens[GetCityInput, String] = GetCityInput.cityId.value
 val updated = cityName.replace("Fancy New Name")(input)
 
 val result = cityName.project(updated)

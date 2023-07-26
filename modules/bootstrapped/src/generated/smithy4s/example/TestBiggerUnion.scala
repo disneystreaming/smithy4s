@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import alloy.Discriminated
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -12,23 +13,25 @@ sealed trait TestBiggerUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
-  val hints: Hints = Hints(
-    alloy.Discriminated("tpe"),
-  )
-
   final case class OneCase(one: One) extends TestBiggerUnion { final def _ordinal: Int = 0 }
   def one(one:One): TestBiggerUnion = OneCase(one)
   final case class TwoCase(two: Two) extends TestBiggerUnion { final def _ordinal: Int = 1 }
   def two(two:Two): TestBiggerUnion = TwoCase(two)
 
   object OneCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[OneCase] = bijection(One.schema.addHints(hints), OneCase(_), _.one)
+    val schema: Schema[OneCase] = bijection(One.schema
+    .addHints(
+      Hints.empty
+    )
+    , OneCase(_), _.one)
     val alt = schema.oneOf[TestBiggerUnion]("one")
   }
   object TwoCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[TwoCase] = bijection(Two.schema.addHints(hints), TwoCase(_), _.two)
+    val schema: Schema[TwoCase] = bijection(Two.schema
+    .addHints(
+      Hints.empty
+    )
+    , TwoCase(_), _.two)
     val alt = schema.oneOf[TestBiggerUnion]("two")
   }
 
@@ -37,5 +40,11 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
     TwoCase.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "TestBiggerUnion")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "TestBiggerUnion"))
+  .addHints(
+    Hints(
+      Discriminated("tpe"),
+    )
+  )
 }

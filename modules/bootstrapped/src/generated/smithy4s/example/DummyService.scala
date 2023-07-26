@@ -1,5 +1,9 @@
 package smithy4s.example
 
+import smithy.api.Documentation
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy.api.Readonly
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -29,8 +33,9 @@ object DummyServiceGen extends Service.Mixin[DummyServiceGen, DummyServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example", "DummyService")
   val version: String = "0.0"
 
-  val hints: Hints = Hints(
-    smithy.api.Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
+  val hints: Hints =
+  Hints(
+    Documentation("Just a dummy service to ensure that the rendered services compile\nwhen testing core"),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -89,9 +94,10 @@ object DummyServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/dummy"), code = 200),
+      Readonly(),
     )
     def wrap(input: Queries) = Dummy(input)
     override val errorable: Option[Nothing] = None
@@ -107,9 +113,10 @@ object DummyServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/dummy-path/{str}/{int}/{ts1}/{ts2}/{ts3}/{ts4}/{b}/{ie}?value=foo&baz=bar"), code = 200),
+      Readonly(),
     )
     def wrap(input: PathParams) = DummyPath(input)
     override val errorable: Option[Nothing] = None

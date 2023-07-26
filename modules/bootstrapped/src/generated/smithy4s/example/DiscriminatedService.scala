@@ -1,5 +1,9 @@
 package smithy4s.example
 
+import alloy.SimpleRestJson
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy.api.Readonly
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -23,8 +27,9 @@ object DiscriminatedServiceGen extends Service.Mixin[DiscriminatedServiceGen, Di
   val id: ShapeId = ShapeId("smithy4s.example", "DiscriminatedService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -80,9 +85,10 @@ object DiscriminatedServiceOperation {
     val output: Schema[TestDiscriminatedOutput] = TestDiscriminatedOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/test/{key}"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/test/{key}"), code = 200),
+      Readonly(),
     )
     def wrap(input: TestDiscriminatedInput) = TestDiscriminated(input)
     override val errorable: Option[Nothing] = None

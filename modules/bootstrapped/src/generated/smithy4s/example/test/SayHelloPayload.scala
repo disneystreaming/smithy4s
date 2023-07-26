@@ -1,5 +1,6 @@
 package smithy4s.example.test
 
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,13 +10,16 @@ import smithy4s.schema.Schema.struct
 
 final case class SayHelloPayload(result: String)
 object SayHelloPayload extends ShapeTag.Companion[SayHelloPayload] {
-  val hints: Hints = Hints.empty
 
-  val result = string.required[SayHelloPayload]("result", _.result).addHints(smithy.api.Required())
+  val result = string.required[SayHelloPayload]("result", _.result, n => c => c.copy(result = n)).addHints(Required())
 
   implicit val schema: Schema[SayHelloPayload] = struct(
     result,
   ){
     SayHelloPayload.apply
-  }.withId(ShapeId("smithy4s.example.test", "SayHelloPayload")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example.test", "SayHelloPayload"))
+  .addHints(
+    Hints.empty
+  )
 }

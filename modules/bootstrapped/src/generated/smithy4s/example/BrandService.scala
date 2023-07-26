@@ -1,5 +1,7 @@
 package smithy4s.example
 
+import smithy.api.Http
+import smithy.api.NonEmptyString
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -24,7 +26,8 @@ object BrandServiceGen extends Service.Mixin[BrandServiceGen, BrandServiceOperat
   val id: ShapeId = ShapeId("smithy4s.example", "BrandService")
   val version: String = "1"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -79,8 +82,9 @@ object BrandServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/brands"), code = 200),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/brands"), code = 200),
     )
     def wrap(input: AddBrandsInput) = AddBrands(input)
     override val errorable: Option[Nothing] = None

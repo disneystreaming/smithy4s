@@ -1,5 +1,8 @@
 package smithy4s.example
 
+import smithy.api.Range
+import smithy.api.Required
+import smithy.api.Suppress
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,15 +12,18 @@ import smithy4s.schema.Schema.struct
 
 final case class RangeCheck(qty: Int)
 object RangeCheck extends ShapeTag.Companion[RangeCheck] {
-  val hints: Hints = Hints(
-    smithy.api.Suppress(List("UnreferencedShape")),
-  )
 
-  val qty = int.validated(smithy.api.Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty).addHints(smithy.api.Required())
+  val qty = int.validated(Range(min = Some(scala.math.BigDecimal(1.0)), max = None)).required[RangeCheck]("qty", _.qty, n => c => c.copy(qty = n)).addHints(Required())
 
   implicit val schema: Schema[RangeCheck] = struct(
     qty,
   ){
     RangeCheck.apply
-  }.withId(ShapeId("smithy4s.example", "RangeCheck")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "RangeCheck"))
+  .addHints(
+    Hints(
+      Suppress(List("UnreferencedShape")),
+    )
+  )
 }

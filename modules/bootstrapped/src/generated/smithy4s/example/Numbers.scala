@@ -18,8 +18,6 @@ sealed abstract class Numbers(_value: String, _name: String, _intValue: Int, _hi
   @inline final def widen: Numbers = this
 }
 object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
-  val hints: Hints = Hints.empty
-
   case object ONE extends Numbers("ONE", "ONE", 1, Hints())
   case object TWO extends Numbers("TWO", "TWO", 2, Hints())
 
@@ -28,5 +26,9 @@ object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
     TWO,
   )
   val tag: EnumTag = EnumTag.IntEnum
-  implicit val schema: Schema[Numbers] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "Numbers")).addHints(hints)
+  implicit val schema: Schema[Numbers] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "Numbers"))
+  .addHints(
+    Hints.empty
+  )
 }

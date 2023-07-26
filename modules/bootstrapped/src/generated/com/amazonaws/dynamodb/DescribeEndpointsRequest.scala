@@ -8,7 +8,10 @@ import smithy4s.schema.Schema.constant
 
 final case class DescribeEndpointsRequest()
 object DescribeEndpointsRequest extends ShapeTag.Companion[DescribeEndpointsRequest] {
-  val hints: Hints = Hints.empty
 
-  implicit val schema: Schema[DescribeEndpointsRequest] = constant(DescribeEndpointsRequest()).withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsRequest")).addHints(hints)
+  implicit val schema: Schema[DescribeEndpointsRequest] = constant(DescribeEndpointsRequest()).withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsRequest"))
+  .withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsRequest"))
+  .addHints(
+    Hints.empty
+  )
 }

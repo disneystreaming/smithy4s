@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Documentation
 import smithy4s.Hints
 import smithy4s.Newtype
 import smithy4s.Schema
@@ -9,9 +10,13 @@ import smithy4s.schema.Schema.string
 
 /** This is a simple example of a "quoted string" */
 object AString extends Newtype[String] {
-  val hints: Hints = Hints(
-    smithy.api.Documentation("This is a simple example of a \"quoted string\""),
+  val underlyingSchema: Schema[String] = string
+  .withId(ShapeId("smithy4s.example", "AString"))
+  .addHints(
+    Hints(
+      Documentation("This is a simple example of a \"quoted string\""),
+    )
   )
-  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "AString")).addHints(hints)
+
   implicit val schema: Schema[AString] = bijection(underlyingSchema, asBijection)
 }

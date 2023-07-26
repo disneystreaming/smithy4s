@@ -1,5 +1,8 @@
 package weather
 
+import alloy.SimpleRestJson
+import smithy.api.Http
+import smithy.api.NonEmptyString
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -23,8 +26,9 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
   val id: ShapeId = ShapeId("weather", "WeatherService")
   val version: String = ""
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -80,8 +84,9 @@ object WeatherServiceOperation {
     val output: Schema[GetWeatherOutput] = GetWeatherOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/weather/{city}"), code = 200),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/weather/{city}"), code = 200),
     )
     def wrap(input: GetWeatherInput) = GetWeather(input)
     override val errorable: Option[Nothing] = None

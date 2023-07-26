@@ -1,5 +1,6 @@
 package weather
 
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,13 +10,16 @@ import smithy4s.schema.Schema.struct
 
 final case class Dog(name: String)
 object Dog extends ShapeTag.Companion[Dog] {
-  val hints: Hints = Hints.empty
 
-  val name = string.required[Dog]("name", _.name).addHints(smithy.api.Required())
+  val name = string.required[Dog]("name", _.name, n => c => c.copy(name = n)).addHints(Required())
 
   implicit val schema: Schema[Dog] = struct(
     name,
   ){
     Dog.apply
-  }.withId(ShapeId("weather", "Dog")).addHints(hints)
+  }
+  .withId(ShapeId("weather", "Dog"))
+  .addHints(
+    Hints.empty
+  )
 }

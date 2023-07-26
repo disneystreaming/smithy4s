@@ -42,8 +42,7 @@ private[internals] object Renderer {
 
   case class Config(
       errorsAsScala3Unions: Boolean,
-      wildcardArgument: String,
-      renderOptics: Boolean
+      wildcardArgument: String
   )
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
@@ -58,12 +57,6 @@ private[internals] object Renderer {
         .map(_.getValue())
         .getOrElse("_")
 
-      val renderOptics = metadata
-        .get("smithy4sRenderOptics")
-        .flatMap(_.asBooleanNode().asScala)
-        .map(_.getValue())
-        .getOrElse(false)
-
       if (wildcardArgument != "?" && wildcardArgument != "_") {
         throw new IllegalArgumentException(
           s"`smithy4sWildcardArgument` possible values are: `?` or `_`. found `$wildcardArgument`."
@@ -72,8 +65,7 @@ private[internals] object Renderer {
 
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
-        wildcardArgument = wildcardArgument,
-        renderOptics = renderOptics
+        wildcardArgument = wildcardArgument
       )
     }
   }
@@ -625,22 +617,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
-  private def renderLenses(product: Product, hints: List[Hint]): Lines = if (
-    (compilationUnit.rendererConfig.renderOptics || hints.contains(
-      Hint.GenerateOptics
-    )) && product.fields.nonEmpty
-  ) {
-    val smithyLens = NameRef("smithy4s.optics.Lens")
-    val lenses = product.fields.map { field =>
-      val fieldType =
-        if (field.required) Line.required(line"${field.tpe}", None)
-        else Line.optional(line"${field.tpe}")
-      line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
-    }
-    obj(product.nameRef.copy(name = "Optics"))(lenses) ++
-      newline
-  } else Lines.empty
-
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
@@ -685,23 +661,21 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           }
       },
       obj(product.nameRef, shapeTag(product.nameRef))(
-        renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
-        renderLenses(product, hints),
         if (fields.nonEmpty) {
           val renderedFields =
             fields.map { case Field(fieldName, realName, tpe, required, hints) =>
               val req = if (required) "required" else "optional"
               val schema = if (hints.isEmpty) {
-                line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
+                line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName, n => c => c.copy($fieldName = n))"""
               } else {
                 val memHints = memberHints(hints)
                 val addMemHints =
                   if (memHints.nonEmpty) line".addHints($memHints)"
                   else Line.empty
                 // format: off
-                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName)$addMemHints"""
+                line"""${tpe.schemaRef}${renderConstraintValidation(hints)}.$req[${product.nameRef}]("$realName", _.$fieldName, n => c => c.copy($fieldName = n))$addMemHints"""
                 // format: on
               }
               line"val ${NameDef(fieldName)} = $schema"
@@ -712,7 +686,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             line"${schemaImplicit}val schema: $Schema_[${product.nameRef}] = $definition"
               .args(fields.map(_.name))
               .block(line"${product.nameRef}.apply")
-              .appendToLast(line".withId(${renderId(shapeId)}).addHints(hints)")
+              .appendToLast(
+                renderIdAndHints(shapeId, hints)
+              )
               .appendToLast(if (recursive) ")" else "")
           } else {
             val definition =
@@ -732,7 +708,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                   }
                 )
               )
-              .appendToLast(line".withId(${renderId(shapeId)}).addHints(hints)")
+              .appendToLast(
+                renderIdAndHints(shapeId, hints)
+              )
               .appendToLast(if (recursive) ")" else "")
           }
           // Depending on whether the structure is recursive, fields must be rendered before or after
@@ -740,7 +718,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           if (recursive) lines(schema, newline, renderedFields)
           else lines(renderedFields, newline, schema)
         } else {
-          line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(${renderId(shapeId)}).addHints(hints)"
+          Lines(
+            line"implicit val schema: $Schema_[${product.nameRef}] = $constant_(${product.nameRef}()).withId(${renderId(shapeId)})"
+          )
+            .appendToLast(
+              renderIdAndHints(shapeId, hints)
+            )
         },
         renderTypeclasses(product.hints, product.nameRef),
         additionalLines
@@ -861,8 +844,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         .map { case (_, tpe) => line"$tpe" }
         .intercalate(line" | ")}",
       obj(name)(
-        renderHintsVal(hints),
-        newline,
         block(
           line"val schema: $unionSchema_[$name] ="
         )(
@@ -888,53 +869,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
       NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
   }
-
-  private def renderPrisms(
-      unionName: NameRef,
-      alts: NonEmptyList[Alt],
-      hints: List[Hint]
-  ): Lines = if (
-    compilationUnit.rendererConfig.renderOptics || hints.contains(
-      Hint.GenerateOptics
-    )
-  ) {
-    val smithyPrism = NameRef("smithy4s.optics.Prism")
-    val altLines = alts.map { alt =>
-      alt.member match {
-        case UnionMember.ProductCase(p) =>
-          val (mat, tpe) = (p.nameDef, line"${p.name}")
-          line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
-        case UnionMember.TypeCase(t) =>
-          val (mat, tpe) = (caseName(alt), line"$t")
-          line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
-        case UnionMember.UnitCase =>
-          val (mat, tpe) = (caseName(alt), line"${caseName(alt)}")
-          line"val ${alt.name}: $smithyPrism[$unionName, $tpe.type] = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
-      }
-    }
-
-    obj(unionName.copy(name = "Optics"))(altLines) ++
-      newline
-  } else Lines.empty
-
-  private def renderPrismsEnum(
-      enumName: NameRef,
-      values: List[EnumValue],
-      hints: List[Hint]
-  ): Lines = if (
-    compilationUnit.rendererConfig.renderOptics || hints.contains(
-      Hint.GenerateOptics
-    )
-  ) {
-    val smithyPrism = NameRef("smithy4s.optics.Prism")
-    val valueLines = values.map { value =>
-      val (mat, tpe) = (value.name, line"${value.name}")
-      line"val ${value.name}: $smithyPrism[$enumName, $enumName.$tpe.type] = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
-    }
-
-    obj(enumName.copy(name = "Optics"))(valueLines) ++
-      newline
-  } else Lines.empty
 
   private def renderUnion(
       shapeId: ShapeId,
@@ -978,9 +912,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def _ordinal: Int"
       ),
       obj(name, line"${shapeTag(name)}")(
-        renderHintsVal(hints),
-        newline,
-        renderPrisms(name, alts, hints),
         alts.zipWithIndex.map {
           case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
             val cn = caseName(a)
@@ -991,8 +922,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"case object $cn extends $name { final def _ordinal: Int = $index }",
               smartConstructor(a),
 
-              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
-            )
+              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName")""",
+            ).appendToLast(renderAddHints(hints))
             // format: on
           case (
                 a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints),
@@ -1034,9 +965,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               ) =>
             val cn = caseName(a)
             block(line"object $cn")(
-              renderHintsVal(altHints),
               // format: off
-              line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
+              Lines(line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}").appendToLast(renderAddHints(altHints)),
+              line"${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
               line"""val alt = schema.oneOf[$name]("$realName")""",
               // format: on
             )
@@ -1060,8 +991,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               line"_._ordinal"
             }
             .appendToLast(
-              if (error) line""
-              else line".withId(${renderId(shapeId)}).addHints(hints)"
+              if (error) newline
+              else renderIdAndHints(shapeId, hints)
             )
             .appendToLast(if (recursive) ")" else "")
         },
@@ -1120,9 +1051,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       line"@inline final def widen: $name = this"
     ),
     obj(name, ext = line"$Enumeration_[$name]", w = line"${shapeTag(name)}")(
-      renderHintsVal(hints),
-      newline,
-      renderPrismsEnum(name, values, hints),
       values.map { case e @ EnumValue(value, intValue, _, hints) =>
         val valueName = NameRef(e.name)
         val valueHints = line"$Hints_(${memberHints(e.hints)})"
@@ -1138,7 +1066,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         values.map(_.name)
       ),
       renderEnumTag(tag),
-      line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values).withId(${renderId(shapeId)}).addHints(hints)",
+      Lines(
+        line"implicit val schema: $Schema_[$name] = $enumeration_(tag, values)"
+      ).appendToLast(renderIdAndHints(shapeId, hints)),
       renderTypeclasses(hints, name)
     )
   )
@@ -1153,15 +1083,16 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val definition =
       if (recursive) line"$recursive_("
       else Line.empty
-    val trailingCalls =
-      line".withId(${renderId(shapeId)}).addHints(hints)${renderConstraintValidation(hints)}"
+    val trailingCalls = renderIdAndHints(shapeId, hints) ++ Lines(
+      renderConstraintValidation(hints)
+    )
     val closing = if (recursive) ")" else ""
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       obj(name, line"$Newtype_[$tpe]")(
-        renderHintsVal(hints),
-        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}$trailingCalls",
+        line"val underlyingSchema: $Schema_[$tpe] = ${tpe.schemaRef}",
+        trailingCalls,
         lines(
           line"implicit val schema: $Schema_[$name] = $definition$bijection_(underlyingSchema, asBijection)$closing"
         ),
@@ -1312,12 +1243,26 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   def renderHintsVal(hints: List[Hint]): Lines = {
-    val base = line"val hints: $Hints_ = $Hints_"
+    Lines(line"val hints: $Hints_ =") ++ renderHints(hints)
+  }
+
+  def renderHints(hints: List[Hint]): Lines = {
+    val base = line"$Hints_"
     hints.flatMap(renderHint) match {
       case Nil  => lines(base + line".empty")
       case args => base.args(args)
     }
   }
+
+  def renderIdAndHints(id: ShapeId, hints: List[Hint]): Lines =
+    Lines(
+      line".withId(${renderId(id)})"
+    ) ++ renderAddHints(hints)
+
+  def renderAddHints(hints: List[Hint]): Lines =
+    Lines(
+      line".addHints("
+    ) ++ indent(renderHints(hints)) ++ Lines(")")
 
   def memberHints(hints: List[Hint]): Line = {
     val h = hints.map(renderHint).collect { case Some(v) => v }
@@ -1356,7 +1301,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
 
   private def renderTypedNode(tn: TypedNode[CString]): CString = tn match {
     case EnumerationTN(ref, _, _, name) =>
-      line"${ref.show + "." + name + ".widen"}".write
+      line"${NameRef(ref.show)}.$name.widen".write
     case StructureTN(ref, fields) =>
       val fieldStrings = fields.map {
         case (name, FieldTN.RequiredTN(value)) =>
@@ -1365,18 +1310,18 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           line"$name = $some(${value.runDefault})"
         case (name, FieldTN.OptionalNoneTN) => line"$name = $none"
       }
-      line"${ref.show}(${fieldStrings.intercalate(Line.comma)})".write
+      line"${NameRef(ref.show)}(${fieldStrings.intercalate(Line.comma)})".write
     case NewTypeTN(ref, target) =>
       Reader(topLevel => {
         val (wroteCollection, text) = target.run(topLevel)
         if (wroteCollection && !topLevel)
           false -> text
         else
-          false -> line"${ref.show}($text)"
+          false -> line"${NameRef(ref.show)}($text)"
       })
 
     case AltTN(ref, altName, AltValueTN.TypeAltTN(alt)) =>
-      line"${ref.show}.${altName.capitalize}Case(${alt.runDefault}).widen".write
+      line"${NameRef(ref.show)}.${altName.capitalize}Case(${alt.runDefault}).widen".write
 
     case AltTN(_, _, AltValueTN.ProductAltTN(alt)) =>
       alt.runDefault.write

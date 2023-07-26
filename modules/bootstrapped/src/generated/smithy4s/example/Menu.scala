@@ -9,7 +9,11 @@ import smithy4s.schema.Schema.map
 import smithy4s.schema.Schema.string
 
 object Menu extends Newtype[Map[String, MenuItem]] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[Map[String, MenuItem]] = map(string, MenuItem.schema).withId(ShapeId("smithy4s.example", "Menu")).addHints(hints)
+  val underlyingSchema: Schema[Map[String, MenuItem]] = map(string, MenuItem.schema)
+  .withId(ShapeId("smithy4s.example", "Menu"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[Menu] = bijection(underlyingSchema, asBijection)
 }

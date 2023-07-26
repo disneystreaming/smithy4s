@@ -18,8 +18,6 @@ sealed abstract class SwitchState(_value: String, _name: String, _intValue: Int,
   @inline final def widen: SwitchState = this
 }
 object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[SwitchState] {
-  val hints: Hints = Hints.empty
-
   case object ON extends SwitchState("ON", "ON", 0, Hints())
   case object OFF extends SwitchState("OFF", "OFF", 1, Hints())
 
@@ -28,5 +26,9 @@ object SwitchState extends Enumeration[SwitchState] with ShapeTag.Companion[Swit
     OFF,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[SwitchState] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "SwitchState")).addHints(hints)
+  implicit val schema: Schema[SwitchState] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "SwitchState"))
+  .addHints(
+    Hints.empty
+  )
 }

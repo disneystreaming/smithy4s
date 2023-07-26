@@ -49,7 +49,7 @@ private[dynamic] object Compiler {
       traits: Map[IdRef, Document]
   ): Option[A] =
     traits
-      .get(toIdRef(implicitly[ShapeTag[A]].id))
+      .get(toIdRef(implicitly[ShapeTag[A]].schema.shapeId))
       .flatMap { document =>
         document.decode[A].toOption
       }

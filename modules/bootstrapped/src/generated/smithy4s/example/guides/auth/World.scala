@@ -1,5 +1,6 @@
 package smithy4s.example.guides.auth
 
+import smithy.api.Default
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,13 +10,16 @@ import smithy4s.schema.Schema.struct
 
 final case class World(message: String = "World !")
 object World extends ShapeTag.Companion[World] {
-  val hints: Hints = Hints.empty
 
-  val message = string.required[World]("message", _.message).addHints(smithy.api.Default(smithy4s.Document.fromString("World !")))
+  val message = string.required[World]("message", _.message, n => c => c.copy(message = n)).addHints(Default(smithy4s.Document.fromString("World !")))
 
   implicit val schema: Schema[World] = struct(
     message,
   ){
     World.apply
-  }.withId(ShapeId("smithy4s.example.guides.auth", "World")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example.guides.auth", "World"))
+  .addHints(
+    Hints.empty
+  )
 }

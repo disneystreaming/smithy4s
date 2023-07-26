@@ -9,13 +9,16 @@ import smithy4s.schema.Schema.struct
 
 final case class GetEnumOutput(result: Option[String] = None)
 object GetEnumOutput extends ShapeTag.Companion[GetEnumOutput] {
-  val hints: Hints = Hints.empty
 
-  val result = string.optional[GetEnumOutput]("result", _.result)
+  val result = string.optional[GetEnumOutput]("result", _.result, n => c => c.copy(result = n))
 
   implicit val schema: Schema[GetEnumOutput] = struct(
     result,
   ){
     GetEnumOutput.apply
-  }.withId(ShapeId("smithy4s.example", "GetEnumOutput")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "GetEnumOutput"))
+  .addHints(
+    Hints.empty
+  )
 }

@@ -8,7 +8,10 @@ import smithy4s.schema.Schema.constant
 
 final case class Serializable()
 object Serializable extends ShapeTag.Companion[Serializable] {
-  val hints: Hints = Hints.empty
 
-  implicit val schema: Schema[Serializable] = constant(Serializable()).withId(ShapeId("smithy4s.example", "Serializable")).addHints(hints)
+  implicit val schema: Schema[Serializable] = constant(Serializable()).withId(ShapeId("smithy4s.example", "Serializable"))
+  .withId(ShapeId("smithy4s.example", "Serializable"))
+  .addHints(
+    Hints.empty
+  )
 }

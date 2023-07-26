@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import smithy.api.Documentation
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -19,10 +20,6 @@ sealed trait Foo extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object Foo extends ShapeTag.Companion[Foo] {
-  val hints: Hints = Hints(
-    smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
-  )
-
   final case class IntCase(int: Int) extends Foo { final def _ordinal: Int = 0 }
   def int(int:Int): Foo = IntCase(int)
   /** this is a comment saying you should be careful for this case
@@ -36,25 +33,37 @@ object Foo extends ShapeTag.Companion[Foo] {
   def bDec(bDec:BigDecimal): Foo = BDecCase(bDec)
 
   object IntCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[IntCase] = bijection(smithy4s.schema.Schema.int.addHints(hints), IntCase(_), _.int)
+    val schema: Schema[IntCase] = bijection(smithy4s.schema.Schema.int
+    .addHints(
+      Hints.empty
+    )
+    , IntCase(_), _.int)
     val alt = schema.oneOf[Foo]("int")
   }
   object StrCase {
-    val hints: Hints = Hints(
-      smithy.api.Documentation("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
+    val schema: Schema[StrCase] = bijection(string
+    .addHints(
+      Hints(
+        Documentation("this is a comment saying you should be careful for this case\nyou never know what lies ahead with Strings like this"),
+      )
     )
-    val schema: Schema[StrCase] = bijection(string.addHints(hints), StrCase(_), _.str)
+    , StrCase(_), _.str)
     val alt = schema.oneOf[Foo]("str")
   }
   object BIntCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[BIntCase] = bijection(bigint.addHints(hints), BIntCase(_), _.bInt)
+    val schema: Schema[BIntCase] = bijection(bigint
+    .addHints(
+      Hints.empty
+    )
+    , BIntCase(_), _.bInt)
     val alt = schema.oneOf[Foo]("bInt")
   }
   object BDecCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[BDecCase] = bijection(bigdecimal.addHints(hints), BDecCase(_), _.bDec)
+    val schema: Schema[BDecCase] = bijection(bigdecimal
+    .addHints(
+      Hints.empty
+    )
+    , BDecCase(_), _.bDec)
     val alt = schema.oneOf[Foo]("bDec")
   }
 
@@ -65,5 +74,11 @@ object Foo extends ShapeTag.Companion[Foo] {
     BDecCase.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "Foo")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "Foo"))
+  .addHints(
+    Hints(
+      Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
+    )
+  )
 }

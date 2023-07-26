@@ -1,5 +1,7 @@
 package smithy4s.example
 
+import smithy.api.HttpPayload
+import smithy.api.Output
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,15 +11,18 @@ import smithy4s.schema.Schema.struct
 
 final case class OptionalOutputOutput(body: Option[String] = None)
 object OptionalOutputOutput extends ShapeTag.Companion[OptionalOutputOutput] {
-  val hints: Hints = Hints(
-    smithy.api.Output(),
-  )
 
-  val body = string.optional[OptionalOutputOutput]("body", _.body).addHints(smithy.api.HttpPayload())
+  val body = string.optional[OptionalOutputOutput]("body", _.body, n => c => c.copy(body = n)).addHints(HttpPayload())
 
   implicit val schema: Schema[OptionalOutputOutput] = struct(
     body,
   ){
     OptionalOutputOutput.apply
-  }.withId(ShapeId("smithy4s.example", "OptionalOutputOutput")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "OptionalOutputOutput"))
+  .addHints(
+    Hints(
+      Output(),
+    )
+  )
 }

@@ -1,5 +1,7 @@
 package com.amazonaws.dynamodb
 
+import smithy.api.Documentation
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -11,13 +13,16 @@ import smithy4s.schema.Schema.struct
   */
 final case class DescribeEndpointsResponse(endpoints: List[Endpoint])
 object DescribeEndpointsResponse extends ShapeTag.Companion[DescribeEndpointsResponse] {
-  val hints: Hints = Hints.empty
 
-  val endpoints = Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints).addHints(smithy.api.Documentation("<p>List of endpoints.</p>"), smithy.api.Required())
+  val endpoints = Endpoints.underlyingSchema.required[DescribeEndpointsResponse]("Endpoints", _.endpoints, n => c => c.copy(endpoints = n)).addHints(Documentation("<p>List of endpoints.</p>"), Required())
 
   implicit val schema: Schema[DescribeEndpointsResponse] = struct(
     endpoints,
   ){
     DescribeEndpointsResponse.apply
-  }.withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsResponse")).addHints(hints)
+  }
+  .withId(ShapeId("com.amazonaws.dynamodb", "DescribeEndpointsResponse"))
+  .addHints(
+    Hints.empty
+  )
 }

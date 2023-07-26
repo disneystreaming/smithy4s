@@ -18,8 +18,6 @@ sealed abstract class Ingredient(_value: String, _name: String, _intValue: Int, 
   @inline final def widen: Ingredient = this
 }
 object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingredient] {
-  val hints: Hints = Hints.empty
-
   case object MUSHROOM extends Ingredient("Mushroom", "MUSHROOM", 0, Hints())
   case object CHEESE extends Ingredient("Cheese", "CHEESE", 1, Hints())
   case object SALAD extends Ingredient("Salad", "SALAD", 2, Hints())
@@ -32,5 +30,9 @@ object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingred
     TOMATO,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[Ingredient] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "Ingredient")).addHints(hints)
+  implicit val schema: Schema[Ingredient] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "Ingredient"))
+  .addHints(
+    Hints.empty
+  )
 }

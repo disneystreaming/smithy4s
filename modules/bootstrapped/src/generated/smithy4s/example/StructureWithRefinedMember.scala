@@ -10,13 +10,16 @@ import smithy4s.schema.Schema.struct
 
 final case class StructureWithRefinedMember(otherAge: Option[smithy4s.refined.Age] = None)
 object StructureWithRefinedMember extends ShapeTag.Companion[StructureWithRefinedMember] {
-  val hints: Hints = Hints.empty
 
-  val otherAge = int.refined[smithy4s.refined.Age](smithy4s.example.AgeFormat()).optional[StructureWithRefinedMember]("otherAge", _.otherAge).addHints(smithy4s.example.AgeFormat())
+  val otherAge = int.refined[smithy4s.refined.Age](AgeFormat()).optional[StructureWithRefinedMember]("otherAge", _.otherAge, n => c => c.copy(otherAge = n)).addHints(AgeFormat())
 
   implicit val schema: Schema[StructureWithRefinedMember] = struct(
     otherAge,
   ){
     StructureWithRefinedMember.apply
-  }.withId(ShapeId("smithy4s.example", "StructureWithRefinedMember")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "StructureWithRefinedMember"))
+  .addHints(
+    Hints.empty
+  )
 }

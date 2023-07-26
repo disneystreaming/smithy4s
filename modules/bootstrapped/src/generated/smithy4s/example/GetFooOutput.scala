@@ -13,13 +13,16 @@ import smithy4s.schema.Schema.struct
   */
 final case class GetFooOutput(foo: Option[Foo] = None)
 object GetFooOutput extends ShapeTag.Companion[GetFooOutput] {
-  val hints: Hints = Hints.empty
 
-  val foo = Foo.schema.optional[GetFooOutput]("foo", _.foo)
+  val foo = Foo.schema.optional[GetFooOutput]("foo", _.foo, n => c => c.copy(foo = n))
 
   implicit val schema: Schema[GetFooOutput] = struct(
     foo,
   ){
     GetFooOutput.apply
-  }.withId(ShapeId("smithy4s.example", "GetFooOutput")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "GetFooOutput"))
+  .addHints(
+    Hints.empty
+  )
 }

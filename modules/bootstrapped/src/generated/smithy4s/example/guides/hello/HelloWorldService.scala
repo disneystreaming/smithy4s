@@ -1,5 +1,10 @@
 package smithy4s.example.guides.hello
 
+import alloy.SimpleRestJson
+import smithy.api.Cors
+import smithy.api.Http
+import smithy.api.NonEmptyString
+import smithy.api.Readonly
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -24,9 +29,10 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
   val id: ShapeId = ShapeId("smithy4s.example.guides.hello", "HelloWorldService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-    smithy.api.Cors(origin = smithy.api.NonEmptyString("http://mysite.com"), maxAge = 600, additionalAllowedHeaders = Some(List(smithy.api.NonEmptyString("Authorization"))), additionalExposedHeaders = Some(List(smithy.api.NonEmptyString("X-Smithy4s")))),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
+    Cors(origin = NonEmptyString("http://mysite.com"), maxAge = 600, additionalAllowedHeaders = Some(List(NonEmptyString("Authorization"))), additionalExposedHeaders = Some(List(NonEmptyString("X-Smithy4s")))),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -83,9 +89,10 @@ object HelloWorldServiceOperation {
     val output: Schema[World] = World.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/hello"), code = 200),
+      Readonly(),
     )
     def wrap(input: Unit) = SayWorld()
     override val errorable: Option[Nothing] = None

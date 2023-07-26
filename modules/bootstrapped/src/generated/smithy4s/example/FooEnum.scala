@@ -18,13 +18,15 @@ sealed abstract class FooEnum(_value: String, _name: String, _intValue: Int, _hi
   @inline final def widen: FooEnum = this
 }
 object FooEnum extends Enumeration[FooEnum] with ShapeTag.Companion[FooEnum] {
-  val hints: Hints = Hints.empty
-
   case object FOO extends FooEnum("Foo", "FOO", 0, Hints())
 
   val values: List[FooEnum] = List(
     FOO,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[FooEnum] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "FooEnum")).addHints(hints)
+  implicit val schema: Schema[FooEnum] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "FooEnum"))
+  .addHints(
+    Hints.empty
+  )
 }

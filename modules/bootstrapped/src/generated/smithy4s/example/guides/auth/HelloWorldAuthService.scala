@@ -1,5 +1,11 @@
 package smithy4s.example.guides.auth
 
+import alloy.SimpleRestJson
+import smithy.api.Auth
+import smithy.api.Http
+import smithy.api.HttpBearerAuth
+import smithy.api.NonEmptyString
+import smithy.api.Readonly
 import smithy4s.Endpoint
 import smithy4s.Errorable
 import smithy4s.Hints
@@ -30,9 +36,10 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
   val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HelloWorldAuthService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints(
-    alloy.SimpleRestJson(),
-    smithy.api.HttpBearerAuth(),
+  val hints: Hints =
+  Hints(
+    SimpleRestJson(),
+    HttpBearerAuth(),
   )
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
@@ -96,9 +103,10 @@ object HelloWorldAuthServiceOperation {
     val output: Schema[World] = World.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/hello"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/hello"), code = 200),
+      Readonly(),
     )
     def wrap(input: Unit) = SayWorld()
     override val errorable: Option[Errorable[SayWorldError]] = Some(this)
@@ -116,14 +124,15 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
-    val hints: Hints = Hints.empty
-
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def _ordinal: Int = 0 }
     def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
 
     object NotAuthorizedErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema.addHints(hints), NotAuthorizedErrorCase(_), _.notAuthorizedError)
+      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema
+      .addHints(
+        Hints.empty
+      )
+      , NotAuthorizedErrorCase(_), _.notAuthorizedError)
       val alt = schema.oneOf[SayWorldError]("NotAuthorizedError")
     }
 
@@ -132,6 +141,7 @@ object HelloWorldAuthServiceOperation {
     ){
       _._ordinal
     }
+    
   }
   final case class HealthCheck() extends HelloWorldAuthServiceOperation[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = impl.healthCheck()
@@ -145,10 +155,11 @@ object HelloWorldAuthServiceOperation {
     val output: Schema[HealthCheckOutput] = HealthCheckOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Auth(Set()),
-      smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/health"), code = 200),
-      smithy.api.Readonly(),
+    val hints: Hints =
+    Hints(
+      Auth(Set()),
+      Http(method = NonEmptyString("GET"), uri = NonEmptyString("/health"), code = 200),
+      Readonly(),
     )
     def wrap(input: Unit) = HealthCheck()
     override val errorable: Option[Errorable[HealthCheckError]] = Some(this)
@@ -166,14 +177,15 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
-    val hints: Hints = Hints.empty
-
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def _ordinal: Int = 0 }
     def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
 
     object NotAuthorizedErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema.addHints(hints), NotAuthorizedErrorCase(_), _.notAuthorizedError)
+      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema
+      .addHints(
+        Hints.empty
+      )
+      , NotAuthorizedErrorCase(_), _.notAuthorizedError)
       val alt = schema.oneOf[HealthCheckError]("NotAuthorizedError")
     }
 
@@ -182,6 +194,7 @@ object HelloWorldAuthServiceOperation {
     ){
       _._ordinal
     }
+    
   }
 }
 

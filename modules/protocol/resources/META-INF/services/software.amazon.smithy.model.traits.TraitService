@@ -8,4 +8,3 @@ smithy4s.meta.UnwrapTrait$Provider
 smithy4s.meta.AdtTrait$Provider
 smithy4s.meta.TypeclassTrait$Provider
 smithy4s.meta.GenerateServiceProductTrait$Provider
-smithy4s.meta.GenerateOpticsTrait$Provider

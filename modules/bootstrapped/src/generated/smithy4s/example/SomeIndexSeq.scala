@@ -9,7 +9,11 @@ import smithy4s.schema.Schema.indexedSeq
 import smithy4s.schema.Schema.string
 
 object SomeIndexSeq extends Newtype[IndexedSeq[String]] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[IndexedSeq[String]] = indexedSeq(string).withId(ShapeId("smithy4s.example", "SomeIndexSeq")).addHints(hints)
+  val underlyingSchema: Schema[IndexedSeq[String]] = indexedSeq(string)
+  .withId(ShapeId("smithy4s.example", "SomeIndexSeq"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[SomeIndexSeq] = bijection(underlyingSchema, asBijection)
 }

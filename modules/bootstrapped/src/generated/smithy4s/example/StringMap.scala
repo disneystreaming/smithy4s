@@ -9,7 +9,11 @@ import smithy4s.schema.Schema.map
 import smithy4s.schema.Schema.string
 
 object StringMap extends Newtype[Map[String, String]] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[Map[String, String]] = map(string, string).withId(ShapeId("smithy4s.example", "StringMap")).addHints(hints)
+  val underlyingSchema: Schema[Map[String, String]] = map(string, string)
+  .withId(ShapeId("smithy4s.example", "StringMap"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[StringMap] = bijection(underlyingSchema, asBijection)
 }

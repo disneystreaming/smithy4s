@@ -89,6 +89,14 @@ private[internals] case class Lines(list: List[Line]) {
     Lines(newLines)
   }
 
+  def appendToLast(lines: Lines): Lines = {
+    val newlines = list.lastOption.map(_ +: lines.list) match {
+      case Some(values) => list.dropRight(1) ++ values
+      case None         => list
+    }
+    Lines(newlines)
+  }
+
   def transformLines(f: List[Line] => List[Line]): Lines = Lines(f(list))
   def mapLines(f: Line => Line): Lines = transformLines(_.map(f))
 

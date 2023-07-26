@@ -1,5 +1,7 @@
 package smithy4s.benchmark
 
+import smithy.api.Http
+import smithy.api.NonEmptyString
 import smithy4s.Endpoint
 import smithy4s.Hints
 import smithy4s.Schema
@@ -25,7 +27,8 @@ object BenchmarkServiceGen extends Service.Mixin[BenchmarkServiceGen, BenchmarkS
   val id: ShapeId = ShapeId("smithy4s.benchmark", "BenchmarkService")
   val version: String = "1.0.0"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -83,8 +86,9 @@ object BenchmarkServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/complex/{bucketName}/{key}"), code = 200),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/complex/{bucketName}/{key}"), code = 200),
     )
     def wrap(input: CreateObjectInput) = CreateObject(input)
     override val errorable: Option[Nothing] = None
@@ -100,8 +104,9 @@ object BenchmarkServiceOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints(
-      smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/simple/{bucketName}/{key}"), code = 200),
+    val hints: Hints =
+    Hints(
+      Http(method = NonEmptyString("POST"), uri = NonEmptyString("/simple/{bucketName}/{key}"), code = 200),
     )
     def wrap(input: SendStringInput) = SendString(input)
     override val errorable: Option[Nothing] = None

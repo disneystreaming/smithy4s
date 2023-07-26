@@ -1,5 +1,8 @@
 package smithy4s.example.test
 
+import smithy.api.HttpLabel
+import smithy.api.Input
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,15 +12,18 @@ import smithy4s.schema.Schema.struct
 
 final case class TestPathInput(path: String)
 object TestPathInput extends ShapeTag.Companion[TestPathInput] {
-  val hints: Hints = Hints(
-    smithy.api.Input(),
-  )
 
-  val path = string.required[TestPathInput]("path", _.path).addHints(smithy.api.HttpLabel(), smithy.api.Required())
+  val path = string.required[TestPathInput]("path", _.path, n => c => c.copy(path = n)).addHints(HttpLabel(), Required())
 
   implicit val schema: Schema[TestPathInput] = struct(
     path,
   ){
     TestPathInput.apply
-  }.withId(ShapeId("smithy4s.example.test", "TestPathInput")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example.test", "TestPathInput"))
+  .addHints(
+    Hints(
+      Input(),
+    )
+  )
 }

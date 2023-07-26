@@ -29,7 +29,8 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingServiceExtraErrors")
   val version: String = "1"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -86,7 +87,8 @@ object ErrorHandlingServiceExtraErrorsOperation {
     val output: Schema[Unit] = unit.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: ExtraErrorOperationInput) = ExtraErrorOperation(input)
     override val errorable: Option[Errorable[ExtraErrorOperationError]] = Some(this)
     val error: UnionSchema[ExtraErrorOperationError] = ExtraErrorOperationError.schema
@@ -109,8 +111,6 @@ object ErrorHandlingServiceExtraErrorsOperation {
     def _ordinal: Int
   }
   object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
-    val hints: Hints = Hints.empty
-
     final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError { final def _ordinal: Int = 0 }
     def randomOtherClientError(randomOtherClientError:RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
     final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError { final def _ordinal: Int = 1 }
@@ -121,23 +121,35 @@ object ErrorHandlingServiceExtraErrorsOperation {
     def randomOtherServerErrorWithCode(randomOtherServerErrorWithCode:RandomOtherServerErrorWithCode): ExtraErrorOperationError = RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode)
 
     object RandomOtherClientErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherClientErrorCase] = bijection(RandomOtherClientError.schema.addHints(hints), RandomOtherClientErrorCase(_), _.randomOtherClientError)
+      val schema: Schema[RandomOtherClientErrorCase] = bijection(RandomOtherClientError.schema
+      .addHints(
+        Hints.empty
+      )
+      , RandomOtherClientErrorCase(_), _.randomOtherClientError)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherClientError")
     }
     object RandomOtherServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherServerErrorCase] = bijection(RandomOtherServerError.schema.addHints(hints), RandomOtherServerErrorCase(_), _.randomOtherServerError)
+      val schema: Schema[RandomOtherServerErrorCase] = bijection(RandomOtherServerError.schema
+      .addHints(
+        Hints.empty
+      )
+      , RandomOtherServerErrorCase(_), _.randomOtherServerError)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherServerError")
     }
     object RandomOtherClientErrorWithCodeCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherClientErrorWithCodeCase] = bijection(RandomOtherClientErrorWithCode.schema.addHints(hints), RandomOtherClientErrorWithCodeCase(_), _.randomOtherClientErrorWithCode)
+      val schema: Schema[RandomOtherClientErrorWithCodeCase] = bijection(RandomOtherClientErrorWithCode.schema
+      .addHints(
+        Hints.empty
+      )
+      , RandomOtherClientErrorWithCodeCase(_), _.randomOtherClientErrorWithCode)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherClientErrorWithCode")
     }
     object RandomOtherServerErrorWithCodeCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherServerErrorWithCodeCase] = bijection(RandomOtherServerErrorWithCode.schema.addHints(hints), RandomOtherServerErrorWithCodeCase(_), _.randomOtherServerErrorWithCode)
+      val schema: Schema[RandomOtherServerErrorWithCodeCase] = bijection(RandomOtherServerErrorWithCode.schema
+      .addHints(
+        Hints.empty
+      )
+      , RandomOtherServerErrorWithCodeCase(_), _.randomOtherServerErrorWithCode)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherServerErrorWithCode")
     }
 
@@ -149,6 +161,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
     ){
       _._ordinal
     }
+    
   }
 }
 

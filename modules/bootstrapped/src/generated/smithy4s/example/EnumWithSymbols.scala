@@ -18,8 +18,6 @@ sealed abstract class EnumWithSymbols(_value: String, _name: String, _intValue: 
   @inline final def widen: EnumWithSymbols = this
 }
 object EnumWithSymbols extends Enumeration[EnumWithSymbols] with ShapeTag.Companion[EnumWithSymbols] {
-  val hints: Hints = Hints.empty
-
   case object FooFooFoo extends EnumWithSymbols("foo:foo:foo", "FooFooFoo", 0, Hints())
   case object BarBarBar extends EnumWithSymbols("bar:bar:bar", "BarBarBar", 1, Hints())
   case object Value2 extends EnumWithSymbols("_", "Value2", 2, Hints())
@@ -30,5 +28,9 @@ object EnumWithSymbols extends Enumeration[EnumWithSymbols] with ShapeTag.Compan
     Value2,
   )
   val tag: EnumTag = EnumTag.StringEnum
-  implicit val schema: Schema[EnumWithSymbols] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "EnumWithSymbols")).addHints(hints)
+  implicit val schema: Schema[EnumWithSymbols] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "EnumWithSymbols"))
+  .addHints(
+    Hints.empty
+  )
 }

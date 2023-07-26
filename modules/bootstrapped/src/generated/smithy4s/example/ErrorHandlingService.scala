@@ -28,7 +28,8 @@ object ErrorHandlingServiceGen extends Service.Mixin[ErrorHandlingServiceGen, Er
   val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingService")
   val version: String = "1"
 
-  val hints: Hints = Hints.empty
+  val hints: Hints =
+  Hints.empty
 
   def apply[F[_]](implicit F: Impl[F]): F.type = F
 
@@ -85,7 +86,8 @@ object ErrorHandlingServiceOperation {
     val output: Schema[ErrorHandlingOperationOutput] = ErrorHandlingOperationOutput.schema.addHints(smithy4s.internals.InputOutput.Output.widen)
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
-    val hints: Hints = Hints.empty
+    val hints: Hints =
+    Hints.empty
     def wrap(input: ErrorHandlingOperationInput) = ErrorHandlingOperation(input)
     override val errorable: Option[Errorable[ErrorHandlingOperationError]] = Some(this)
     val error: UnionSchema[ErrorHandlingOperationError] = ErrorHandlingOperationError.schema
@@ -108,8 +110,6 @@ object ErrorHandlingServiceOperation {
     def _ordinal: Int
   }
   object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
-    val hints: Hints = Hints.empty
-
     final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }
     def eHFallbackClientError(eHFallbackClientError:EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
     final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError { final def _ordinal: Int = 1 }
@@ -120,23 +120,35 @@ object ErrorHandlingServiceOperation {
     def eHFallbackServerError(eHFallbackServerError:EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
 
     object EHFallbackClientErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[EHFallbackClientErrorCase] = bijection(EHFallbackClientError.schema.addHints(hints), EHFallbackClientErrorCase(_), _.eHFallbackClientError)
+      val schema: Schema[EHFallbackClientErrorCase] = bijection(EHFallbackClientError.schema
+      .addHints(
+        Hints.empty
+      )
+      , EHFallbackClientErrorCase(_), _.eHFallbackClientError)
       val alt = schema.oneOf[ErrorHandlingOperationError]("EHFallbackClientError")
     }
     object EHServiceUnavailableCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[EHServiceUnavailableCase] = bijection(EHServiceUnavailable.schema.addHints(hints), EHServiceUnavailableCase(_), _.eHServiceUnavailable)
+      val schema: Schema[EHServiceUnavailableCase] = bijection(EHServiceUnavailable.schema
+      .addHints(
+        Hints.empty
+      )
+      , EHServiceUnavailableCase(_), _.eHServiceUnavailable)
       val alt = schema.oneOf[ErrorHandlingOperationError]("EHServiceUnavailable")
     }
     object EHNotFoundCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[EHNotFoundCase] = bijection(EHNotFound.schema.addHints(hints), EHNotFoundCase(_), _.eHNotFound)
+      val schema: Schema[EHNotFoundCase] = bijection(EHNotFound.schema
+      .addHints(
+        Hints.empty
+      )
+      , EHNotFoundCase(_), _.eHNotFound)
       val alt = schema.oneOf[ErrorHandlingOperationError]("EHNotFound")
     }
     object EHFallbackServerErrorCase {
-      val hints: Hints = Hints.empty
-      val schema: Schema[EHFallbackServerErrorCase] = bijection(EHFallbackServerError.schema.addHints(hints), EHFallbackServerErrorCase(_), _.eHFallbackServerError)
+      val schema: Schema[EHFallbackServerErrorCase] = bijection(EHFallbackServerError.schema
+      .addHints(
+        Hints.empty
+      )
+      , EHFallbackServerErrorCase(_), _.eHFallbackServerError)
       val alt = schema.oneOf[ErrorHandlingOperationError]("EHFallbackServerError")
     }
 
@@ -148,6 +160,7 @@ object ErrorHandlingServiceOperation {
     ){
       _._ordinal
     }
+    
   }
 }
 

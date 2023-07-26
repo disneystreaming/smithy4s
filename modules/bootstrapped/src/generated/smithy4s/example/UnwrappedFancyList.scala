@@ -9,7 +9,11 @@ import smithy4s.schema.Schema.list
 import smithy4s.schema.Schema.string
 
 object UnwrappedFancyList extends Newtype[smithy4s.refined.FancyList] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[smithy4s.refined.FancyList] = list(string).refined[smithy4s.refined.FancyList](smithy4s.example.FancyListFormat()).withId(ShapeId("smithy4s.example", "UnwrappedFancyList")).addHints(hints)
+  val underlyingSchema: Schema[smithy4s.refined.FancyList] = list(string).refined[smithy4s.refined.FancyList](FancyListFormat())
+  .withId(ShapeId("smithy4s.example", "UnwrappedFancyList"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[UnwrappedFancyList] = bijection(underlyingSchema, asBijection)
 }

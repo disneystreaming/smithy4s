@@ -1,5 +1,8 @@
 package smithy4s.benchmark
 
+import smithy.api.HttpLabel
+import smithy.api.HttpPayload
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -9,11 +12,10 @@ import smithy4s.schema.Schema.struct
 
 final case class CreateObjectInput(key: String, bucketName: String, payload: S3Object)
 object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
-  val hints: Hints = Hints.empty
 
-  val key = string.required[CreateObjectInput]("key", _.key).addHints(smithy.api.HttpLabel(), smithy.api.Required())
-  val bucketName = string.required[CreateObjectInput]("bucketName", _.bucketName).addHints(smithy.api.HttpLabel(), smithy.api.Required())
-  val payload = S3Object.schema.required[CreateObjectInput]("payload", _.payload).addHints(smithy.api.HttpPayload(), smithy.api.Required())
+  val key = string.required[CreateObjectInput]("key", _.key, n => c => c.copy(key = n)).addHints(HttpLabel(), Required())
+  val bucketName = string.required[CreateObjectInput]("bucketName", _.bucketName, n => c => c.copy(bucketName = n)).addHints(HttpLabel(), Required())
+  val payload = S3Object.schema.required[CreateObjectInput]("payload", _.payload, n => c => c.copy(payload = n)).addHints(HttpPayload(), Required())
 
   implicit val schema: Schema[CreateObjectInput] = struct(
     key,
@@ -21,5 +23,9 @@ object CreateObjectInput extends ShapeTag.Companion[CreateObjectInput] {
     payload,
   ){
     CreateObjectInput.apply
-  }.withId(ShapeId("smithy4s.benchmark", "CreateObjectInput")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.benchmark", "CreateObjectInput"))
+  .addHints(
+    Hints.empty
+  )
 }

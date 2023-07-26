@@ -4,7 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
@@ -13,18 +12,15 @@ sealed trait OpticsUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
-  val hints: Hints = Hints.empty
-
-  object Optics {
-    val one: Prism[OpticsUnion, OpticsStructure] = Prism.partial[OpticsUnion, OpticsStructure]{ case OneCase(t) => t }(OneCase.apply)
-  }
-
   final case class OneCase(one: OpticsStructure) extends OpticsUnion { final def _ordinal: Int = 0 }
   def one(one:OpticsStructure): OpticsUnion = OneCase(one)
 
   object OneCase {
-    val hints: Hints = Hints.empty
-    val schema: Schema[OneCase] = bijection(OpticsStructure.schema.addHints(hints), OneCase(_), _.one)
+    val schema: Schema[OneCase] = bijection(OpticsStructure.schema
+    .addHints(
+      Hints.empty
+    )
+    , OneCase(_), _.one)
     val alt = schema.oneOf[OpticsUnion]("one")
   }
 
@@ -32,5 +28,9 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
     OneCase.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "OpticsUnion")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "OpticsUnion"))
+  .addHints(
+    Hints.empty
+  )
 }

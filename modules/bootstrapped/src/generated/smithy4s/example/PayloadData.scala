@@ -8,13 +8,16 @@ import smithy4s.schema.Schema.struct
 
 final case class PayloadData(testBiggerUnion: Option[TestBiggerUnion] = None)
 object PayloadData extends ShapeTag.Companion[PayloadData] {
-  val hints: Hints = Hints.empty
 
-  val testBiggerUnion = TestBiggerUnion.schema.optional[PayloadData]("testBiggerUnion", _.testBiggerUnion)
+  val testBiggerUnion = TestBiggerUnion.schema.optional[PayloadData]("testBiggerUnion", _.testBiggerUnion, n => c => c.copy(testBiggerUnion = n))
 
   implicit val schema: Schema[PayloadData] = struct(
     testBiggerUnion,
   ){
     PayloadData.apply
-  }.withId(ShapeId("smithy4s.example", "PayloadData")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "PayloadData"))
+  .addHints(
+    Hints.empty
+  )
 }

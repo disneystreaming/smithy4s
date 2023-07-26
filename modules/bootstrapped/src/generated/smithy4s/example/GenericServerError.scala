@@ -1,5 +1,8 @@
 package smithy4s.example
 
+import smithy.api.Error
+import smithy.api.HttpError
+import smithy.api.Required
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -11,16 +14,19 @@ final case class GenericServerError(message: String) extends Throwable {
   override def getMessage(): String = message
 }
 object GenericServerError extends ShapeTag.Companion[GenericServerError] {
-  val hints: Hints = Hints(
-    smithy.api.Error.SERVER.widen,
-    smithy.api.HttpError(502),
-  )
 
-  val message = string.required[GenericServerError]("message", _.message).addHints(smithy.api.Required())
+  val message = string.required[GenericServerError]("message", _.message, n => c => c.copy(message = n)).addHints(Required())
 
   implicit val schema: Schema[GenericServerError] = struct(
     message,
   ){
     GenericServerError.apply
-  }.withId(ShapeId("smithy4s.example", "GenericServerError")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "GenericServerError"))
+  .addHints(
+    Hints(
+      Error.SERVER.widen,
+      HttpError(502),
+    )
+  )
 }

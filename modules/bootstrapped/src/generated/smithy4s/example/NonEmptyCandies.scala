@@ -9,7 +9,11 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.list
 
 object NonEmptyCandies extends Newtype[NonEmptyList[Candy]] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[NonEmptyList[Candy]] = list(Candy.schema).refined[NonEmptyList[Candy]](smithy4s.example.NonEmptyListFormat()).withId(ShapeId("smithy4s.example", "NonEmptyCandies")).addHints(hints)
+  val underlyingSchema: Schema[NonEmptyList[Candy]] = list(Candy.schema).refined[NonEmptyList[Candy]](NonEmptyListFormat())
+  .withId(ShapeId("smithy4s.example", "NonEmptyCandies"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[NonEmptyCandies] = bijection(underlyingSchema, asBijection)
 }

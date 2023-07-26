@@ -2,7 +2,6 @@ package smithy4s.example.aws
 
 import smithy4s.Endpoint
 import smithy4s.Hints
-import smithy4s.Service
 import smithy4s.ShapeId
 import smithy4s.Transformation
 import smithy4s.kinds.PolyFunction5
@@ -15,12 +14,13 @@ trait MyThingGen[F[_, _, _, _, _]] {
   def transform: Transformation.PartiallyApplied[MyThingGen[F]] = Transformation.of[MyThingGen[F]](this)
 }
 
-object MyThingGen extends Service.Mixin[MyThingGen, MyThingOperation] {
+object MyThingGen extends smithy4s.Service.Mixin[MyThingGen, MyThingOperation] {
 
   val id: ShapeId = ShapeId("smithy4s.example.aws", "MyAwsService")
   val version: String = ""
 
-  val hints: Hints = Hints(
+  val hints: Hints =
+  Hints(
     aws.api.Service(sdkId = "MyThing", arnNamespace = None, cloudFormationName = None, cloudTrailEventSource = None, endpointPrefix = Some("mything")),
   )
 

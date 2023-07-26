@@ -14,23 +14,24 @@ sealed trait TestMixinAdt extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
-  val hints: Hints = Hints.empty
-
   final case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne {
     def _ordinal: Int = 0
   }
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
-    val hints: Hints = Hints.empty
 
-    val a = string.optional[TestAdtMemberWithMixin]("a", _.a)
-    val b = int.optional[TestAdtMemberWithMixin]("b", _.b)
+    val a = string.optional[TestAdtMemberWithMixin]("a", _.a, n => c => c.copy(a = n))
+    val b = int.optional[TestAdtMemberWithMixin]("b", _.b, n => c => c.copy(b = n))
 
     val schema: Schema[TestAdtMemberWithMixin] = struct(
       a,
       b,
     ){
       TestAdtMemberWithMixin.apply
-    }.withId(ShapeId("smithy4s.example", "TestAdtMemberWithMixin")).addHints(hints)
+    }
+    .withId(ShapeId("smithy4s.example", "TestAdtMemberWithMixin"))
+    .addHints(
+      Hints.empty
+    )
 
     val alt = schema.oneOf[TestMixinAdt]("test")
   }
@@ -40,5 +41,9 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     TestAdtMemberWithMixin.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "TestMixinAdt")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "TestMixinAdt"))
+  .addHints(
+    Hints.empty
+  )
 }

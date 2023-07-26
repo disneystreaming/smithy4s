@@ -18,8 +18,6 @@ sealed abstract class EnumResult(_value: String, _name: String, _intValue: Int, 
   @inline final def widen: EnumResult = this
 }
 object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumResult] {
-  val hints: Hints = Hints.empty
-
   case object FIRST extends EnumResult("FIRST", "FIRST", 1, Hints())
   case object SECOND extends EnumResult("SECOND", "SECOND", 2, Hints())
 
@@ -28,5 +26,9 @@ object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumRe
     SECOND,
   )
   val tag: EnumTag = EnumTag.IntEnum
-  implicit val schema: Schema[EnumResult] = enumeration(tag, values).withId(ShapeId("smithy4s.example", "EnumResult")).addHints(hints)
+  implicit val schema: Schema[EnumResult] = enumeration(tag, values)
+  .withId(ShapeId("smithy4s.example", "EnumResult"))
+  .addHints(
+    Hints.empty
+  )
 }

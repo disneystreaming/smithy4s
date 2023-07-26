@@ -8,7 +8,7 @@ final class CompositionSpec extends FunSuite {
   test("Lens transformation and composition") {
     val input = TestInput("test", TestBody(Some("test body")))
     val lens =
-      TestInput.Optics.body.andThen(TestBody.Optics.data).some[String]
+      TestInput.body.andThen(TestBody.data).some[String]
     val resultGet = lens.project(input)
 
     val resultSet =
@@ -23,8 +23,8 @@ final class CompositionSpec extends FunSuite {
     val input = Podcast.Video(Some("Pod Title"))
 
     val prism =
-      Podcast.Optics.video
-        .andThen(Podcast.Video.Optics.title)
+      Podcast.Video.alt
+        .andThen(Podcast.Video.title)
         .some[String]
     val result = prism.replace("New Pod Title")(input)
 
@@ -36,9 +36,9 @@ final class CompositionSpec extends FunSuite {
       Some(ForecastResult.SunCase(UVIndex(6)))
     )
 
-    val uvIndex = GetForecastOutput.Optics.forecast
+    val uvIndex = GetForecastOutput.forecast
       .some[ForecastResult]
-      .andThen(ForecastResult.Optics.sun)
+      .andThen(ForecastResult.sun)
       .value
     val updated = uvIndex.replace(8)(input)
 
@@ -51,13 +51,13 @@ final class CompositionSpec extends FunSuite {
     val input = OpticsStructure(Some(OpticsEnum.A))
 
     val base =
-      OpticsStructure.Optics.two
+      OpticsStructure.two
         .some[OpticsEnum]
-        .andThen(OpticsEnum.Optics.A)
+        .andThen(OpticsEnum.A)
     val baseB =
-      OpticsStructure.Optics.two
+      OpticsStructure.two
         .some[OpticsEnum]
-        .andThen(OpticsEnum.Optics.B)
+        .andThen(OpticsEnum.B)
 
     val result = base.project(input)
     val result2 = baseB.project(input)
@@ -70,7 +70,7 @@ final class CompositionSpec extends FunSuite {
     val input = GetCityInput(CityId("test"))
 
     val cityName: Lens[GetCityInput, String] =
-      GetCityInput.Optics.cityId.value
+      GetCityInput.cityId.value
     val updated = cityName.replace("Fancy New Name")(input)
 
     val result = cityName.project(updated)
@@ -82,7 +82,7 @@ final class CompositionSpec extends FunSuite {
     val input = PersonContactInfo.EmailCase(PersonEmail("test@test.com"))
 
     val emailPrism: Prism[PersonContactInfo, String] =
-      PersonContactInfo.Optics.email.value
+      PersonContactInfo.email.value
     val updated = emailPrism.replace("other@other.com")(input)
 
     val result = emailPrism.project(updated)
@@ -99,7 +99,7 @@ final class CompositionSpec extends FunSuite {
       TopLevel(PersonContactInfo.EmailCase(PersonEmail("test@test.com")))
 
     val emailOpt: Optional[TopLevel, String] =
-      topLevel.andThen(PersonContactInfo.Optics.email).value
+      topLevel.andThen(PersonContactInfo.email).value
     val updated = emailOpt.replace("other@other.com")(input)
 
     val result = emailOpt.project(updated)

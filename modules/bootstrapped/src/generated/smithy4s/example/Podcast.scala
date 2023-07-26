@@ -4,8 +4,6 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
-import smithy4s.optics.Lens
-import smithy4s.optics.Prism
 import smithy4s.schema.Schema.long
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
@@ -16,28 +14,14 @@ sealed trait Podcast extends PodcastCommon with scala.Product with scala.Seriali
   def _ordinal: Int
 }
 object Podcast extends ShapeTag.Companion[Podcast] {
-  val hints: Hints = Hints.empty
-
-  object Optics {
-    val video: Prism[Podcast, Video] = Prism.partial[Podcast, Video]{ case t: Video => t }(identity)
-    val audio: Prism[Podcast, Audio] = Prism.partial[Podcast, Audio]{ case t: Audio => t }(identity)
-  }
-
   final case class Video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast {
     def _ordinal: Int = 0
   }
   object Video extends ShapeTag.Companion[Video] {
-    val hints: Hints = Hints.empty
 
-    object Optics {
-      val title: Lens[Video, Option[String]] = Lens[Video, Option[String]](_.title)(n => a => a.copy(title = n))
-      val url: Lens[Video, Option[String]] = Lens[Video, Option[String]](_.url)(n => a => a.copy(url = n))
-      val durationMillis: Lens[Video, Option[Long]] = Lens[Video, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
-    }
-
-    val title = string.optional[Video]("title", _.title)
-    val url = string.optional[Video]("url", _.url)
-    val durationMillis = long.optional[Video]("durationMillis", _.durationMillis)
+    val title = string.optional[Video]("title", _.title, n => c => c.copy(title = n))
+    val url = string.optional[Video]("url", _.url, n => c => c.copy(url = n))
+    val durationMillis = long.optional[Video]("durationMillis", _.durationMillis, n => c => c.copy(durationMillis = n))
 
     val schema: Schema[Video] = struct(
       title,
@@ -45,7 +29,11 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       durationMillis,
     ){
       Video.apply
-    }.withId(ShapeId("smithy4s.example", "Video")).addHints(hints)
+    }
+    .withId(ShapeId("smithy4s.example", "Video"))
+    .addHints(
+      Hints.empty
+    )
 
     val alt = schema.oneOf[Podcast]("video")
   }
@@ -53,17 +41,10 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def _ordinal: Int = 1
   }
   object Audio extends ShapeTag.Companion[Audio] {
-    val hints: Hints = Hints.empty
 
-    object Optics {
-      val title: Lens[Audio, Option[String]] = Lens[Audio, Option[String]](_.title)(n => a => a.copy(title = n))
-      val url: Lens[Audio, Option[String]] = Lens[Audio, Option[String]](_.url)(n => a => a.copy(url = n))
-      val durationMillis: Lens[Audio, Option[Long]] = Lens[Audio, Option[Long]](_.durationMillis)(n => a => a.copy(durationMillis = n))
-    }
-
-    val title = string.optional[Audio]("title", _.title)
-    val url = string.optional[Audio]("url", _.url)
-    val durationMillis = long.optional[Audio]("durationMillis", _.durationMillis)
+    val title = string.optional[Audio]("title", _.title, n => c => c.copy(title = n))
+    val url = string.optional[Audio]("url", _.url, n => c => c.copy(url = n))
+    val durationMillis = long.optional[Audio]("durationMillis", _.durationMillis, n => c => c.copy(durationMillis = n))
 
     val schema: Schema[Audio] = struct(
       title,
@@ -71,7 +52,11 @@ object Podcast extends ShapeTag.Companion[Podcast] {
       durationMillis,
     ){
       Audio.apply
-    }.withId(ShapeId("smithy4s.example", "Audio")).addHints(hints)
+    }
+    .withId(ShapeId("smithy4s.example", "Audio"))
+    .addHints(
+      Hints.empty
+    )
 
     val alt = schema.oneOf[Podcast]("audio")
   }
@@ -82,5 +67,9 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     Audio.alt,
   ){
     _._ordinal
-  }.withId(ShapeId("smithy4s.example", "Podcast")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.example", "Podcast"))
+  .addHints(
+    Hints.empty
+  )
 }

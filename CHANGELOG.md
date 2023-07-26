@@ -34,7 +34,7 @@ See https://github.com/disneystreaming/smithy4s/pull/912
 
 ### Smithy4s Optics Instances
 
-When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rendered in the companion objects of the generated code when appropriate.
+Add Lens and Prism abstractions of smithy4s core. Union Alternatives and Structure Fields now implement these abstractions.
 
 See https://github.com/disneystreaming/smithy4s/pull/1103
 

@@ -8,7 +8,11 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 
 object BucketName extends Newtype[String] {
-  val hints: Hints = Hints.empty
-  val underlyingSchema: Schema[String] = string.withId(ShapeId("smithy4s.example", "BucketName")).addHints(hints)
+  val underlyingSchema: Schema[String] = string
+  .withId(ShapeId("smithy4s.example", "BucketName"))
+  .addHints(
+    Hints.empty
+  )
+
   implicit val schema: Schema[BucketName] = bijection(underlyingSchema, asBijection)
 }

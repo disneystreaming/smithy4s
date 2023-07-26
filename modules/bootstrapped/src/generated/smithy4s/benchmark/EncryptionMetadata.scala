@@ -10,11 +10,10 @@ import smithy4s.schema.Schema.struct
 
 final case class EncryptionMetadata(system: Option[String] = None, credentials: Option[Creds] = None, partial: Option[Boolean] = None)
 object EncryptionMetadata extends ShapeTag.Companion[EncryptionMetadata] {
-  val hints: Hints = Hints.empty
 
-  val system = string.optional[EncryptionMetadata]("system", _.system)
-  val credentials = Creds.schema.optional[EncryptionMetadata]("credentials", _.credentials)
-  val partial = boolean.optional[EncryptionMetadata]("partial", _.partial)
+  val system = string.optional[EncryptionMetadata]("system", _.system, n => c => c.copy(system = n))
+  val credentials = Creds.schema.optional[EncryptionMetadata]("credentials", _.credentials, n => c => c.copy(credentials = n))
+  val partial = boolean.optional[EncryptionMetadata]("partial", _.partial, n => c => c.copy(partial = n))
 
   implicit val schema: Schema[EncryptionMetadata] = struct(
     system,
@@ -22,5 +21,9 @@ object EncryptionMetadata extends ShapeTag.Companion[EncryptionMetadata] {
     partial,
   ){
     EncryptionMetadata.apply
-  }.withId(ShapeId("smithy4s.benchmark", "EncryptionMetadata")).addHints(hints)
+  }
+  .withId(ShapeId("smithy4s.benchmark", "EncryptionMetadata"))
+  .addHints(
+    Hints.empty
+  )
 }
