@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import scala.util.control.NoStackTrace
 import smithy.api.Error
 import smithy.api.HttpError
 import smithy4s.Hints
@@ -10,7 +11,7 @@ import smithy4s.schema.FieldLens
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 
-final case class EHServiceUnavailable(message: Option[String] = None) extends Throwable {
+final case class EHServiceUnavailable(message: Option[String] = None) extends NoStackTrace {
   override def getMessage(): String = message.orNull
 }
 object EHServiceUnavailable extends ShapeTag.$Companion[EHServiceUnavailable] {

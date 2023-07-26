@@ -21,6 +21,7 @@ import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.ErrorMessageTrait
 import smithy4s.meta.IndexedSeqTrait
+import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
@@ -913,6 +914,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
     case _: ErrorMessageTrait =>
       Hint.ErrorMessage
+    case _: NoStackTraceTrait =>
+      Hint.NoStackTrace
     case _: VectorTrait =>
       Hint.SpecializedList.Vector
     case _: IndexedSeqTrait =>

@@ -233,7 +233,7 @@ class DocumentDecoderSchemaVisitor(
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
-                val path = PayloadPath.Segment.fromString(key) :: pp
+                val path = PayloadPath.Segment.parse(key) :: pp
                 throw PayloadError(
                   PayloadPath(path.reverse),
                   expectedType,
