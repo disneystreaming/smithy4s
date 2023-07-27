@@ -13,14 +13,16 @@ sealed trait CheckedOrUnchecked extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
+
+  def checked(checked:String): CheckedOrUnchecked = CheckedCase(checked)
+  def raw(raw:String): CheckedOrUnchecked = RawCase(raw)
+
   val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked")
 
   val hints: Hints = Hints.empty
 
   final case class CheckedCase(checked: String) extends CheckedOrUnchecked { final def _ordinal: Int = 0 }
-  def checked(checked:String): CheckedOrUnchecked = CheckedCase(checked)
   final case class RawCase(raw: String) extends CheckedOrUnchecked { final def _ordinal: Int = 1 }
-  def raw(raw:String): CheckedOrUnchecked = RawCase(raw)
 
   object CheckedCase {
     val hints: Hints = Hints.empty

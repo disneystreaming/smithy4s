@@ -119,14 +119,16 @@ object HelloServiceOperation {
     def _ordinal: Int
   }
   object SayHelloError extends ShapeTag.Companion[SayHelloError] {
+
+    def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
+    def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
+
     val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloError")
 
     val hints: Hints = Hints.empty
 
     final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
-    def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
     final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
-    def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
 
     object SimpleErrorCase {
       val hints: Hints = Hints.empty

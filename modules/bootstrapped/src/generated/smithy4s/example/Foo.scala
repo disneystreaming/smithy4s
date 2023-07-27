@@ -19,6 +19,15 @@ sealed trait Foo extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object Foo extends ShapeTag.Companion[Foo] {
+
+  def int(int:Int): Foo = IntCase(int)
+  /** this is a comment saying you should be careful for this case
+    * you never know what lies ahead with Strings like this
+    */
+  def str(str:String): Foo = StrCase(str)
+  def bInt(bInt:BigInt): Foo = BIntCase(bInt)
+  def bDec(bDec:BigDecimal): Foo = BDecCase(bDec)
+
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
 
   val hints: Hints = Hints(
@@ -26,16 +35,12 @@ object Foo extends ShapeTag.Companion[Foo] {
   )
 
   final case class IntCase(int: Int) extends Foo { final def _ordinal: Int = 0 }
-  def int(int:Int): Foo = IntCase(int)
   /** this is a comment saying you should be careful for this case
     * you never know what lies ahead with Strings like this
     */
   final case class StrCase(str: String) extends Foo { final def _ordinal: Int = 1 }
-  def str(str:String): Foo = StrCase(str)
   final case class BIntCase(bInt: BigInt) extends Foo { final def _ordinal: Int = 2 }
-  def bInt(bInt:BigInt): Foo = BIntCase(bInt)
   final case class BDecCase(bDec: BigDecimal) extends Foo { final def _ordinal: Int = 3 }
-  def bDec(bDec:BigDecimal): Foo = BDecCase(bDec)
 
   object IntCase {
     val hints: Hints = Hints.empty

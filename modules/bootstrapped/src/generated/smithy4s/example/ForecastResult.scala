@@ -13,6 +13,10 @@ sealed trait ForecastResult extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object ForecastResult extends ShapeTag.Companion[ForecastResult] {
+
+  def rain(rain:ChanceOfRain): ForecastResult = RainCase(rain)
+  def sun(sun:UVIndex): ForecastResult = SunCase(sun)
+
   val id: ShapeId = ShapeId("smithy4s.example", "ForecastResult")
 
   val hints: Hints = Hints.empty
@@ -23,9 +27,7 @@ object ForecastResult extends ShapeTag.Companion[ForecastResult] {
   }
 
   final case class RainCase(rain: ChanceOfRain) extends ForecastResult { final def _ordinal: Int = 0 }
-  def rain(rain:ChanceOfRain): ForecastResult = RainCase(rain)
   final case class SunCase(sun: UVIndex) extends ForecastResult { final def _ordinal: Int = 1 }
-  def sun(sun:UVIndex): ForecastResult = SunCase(sun)
 
   object RainCase {
     val hints: Hints = Hints.empty

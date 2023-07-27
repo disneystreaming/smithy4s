@@ -116,12 +116,14 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
+
+    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
+
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "SayWorldError")
 
     val hints: Hints = Hints.empty
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def _ordinal: Int = 0 }
-    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -168,12 +170,14 @@ object HelloWorldAuthServiceOperation {
     def _ordinal: Int
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
+
+    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
+
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckError")
 
     val hints: Hints = Hints.empty
 
     final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def _ordinal: Int = 0 }
-    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty

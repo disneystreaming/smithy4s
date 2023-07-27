@@ -167,14 +167,16 @@ object DynamoDBOperation {
     def _ordinal: Int
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
+
+    def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
+    def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
+
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesError")
 
     val hints: Hints = Hints.empty
 
     final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
-    def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
     final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
-    def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
 
     object InternalServerErrorCase {
       val hints: Hints = Hints.empty

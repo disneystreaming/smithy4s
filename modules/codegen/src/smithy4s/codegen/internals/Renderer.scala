@@ -948,11 +948,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def smartConstructor(alt: Alt): Line = {
+    def smartConstructor(alt: Alt): Lines = {
       val cn = caseName(alt).name
       val ident = NameDef(uncapitalise(alt.name))
       val prefix = line"def $ident"
-      alt.member match {
+      val constructor = alt.member match {
         case UnionMember.ProductCase(product) =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
@@ -961,6 +961,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         case UnionMember.TypeCase(tpe) =>
           line"$prefix($ident:$tpe): $name = $cn($ident)"
       }
+      lines(
+        documentationAnnotation(alt.hints),
+        deprecationAnnotation(alt.hints),
+        constructor
+      )
     }
     val caseNames = alts.map(caseName)
     val caseNamesAndIsUnit =
@@ -981,6 +986,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def _ordinal: Int"
       ),
       obj(name, line"${shapeTag(name)}")(
+        newline,
+        alts.map(smartConstructor),
+        newline,
         renderId(shapeId),
         newline,
         renderHintsVal(hints),
@@ -994,8 +1002,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
               line"case object $cn extends $name { final def _ordinal: Int = $index }",
-              smartConstructor(a),
-
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
             )
             // format: on
@@ -1007,8 +1013,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def _ordinal: Int = $index }",
-              smartConstructor(a)
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def _ordinal: Int = $index }"
             )
           case (
                 Alt(_, realName, UnionMember.ProductCase(struct), altHints),

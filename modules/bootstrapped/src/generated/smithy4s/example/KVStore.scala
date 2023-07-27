@@ -117,14 +117,16 @@ object KVStoreOperation {
     def _ordinal: Int
   }
   object GetError extends ShapeTag.Companion[GetError] {
+
+    def unauthorizedError(unauthorizedError:UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedError)
+    def keyNotFoundError(keyNotFoundError:KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "GetError")
 
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError { final def _ordinal: Int = 0 }
-    def unauthorizedError(unauthorizedError:UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedError)
     final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError { final def _ordinal: Int = 1 }
-    def keyNotFoundError(keyNotFoundError:KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundError)
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -172,12 +174,14 @@ object KVStoreOperation {
     def _ordinal: Int
   }
   object PutError extends ShapeTag.Companion[PutError] {
+
+    def unauthorizedError(unauthorizedError:UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "PutError")
 
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def _ordinal: Int = 0 }
-    def unauthorizedError(unauthorizedError:UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -221,14 +225,16 @@ object KVStoreOperation {
     def _ordinal: Int
   }
   object DeleteError extends ShapeTag.Companion[DeleteError] {
+
+    def unauthorizedError(unauthorizedError:UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedError)
+    def keyNotFoundError(keyNotFoundError:KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "DeleteError")
 
     val hints: Hints = Hints.empty
 
     final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError { final def _ordinal: Int = 0 }
-    def unauthorizedError(unauthorizedError:UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedError)
     final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError { final def _ordinal: Int = 1 }
-    def keyNotFoundError(keyNotFoundError:KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundError)
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty

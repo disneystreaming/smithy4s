@@ -108,18 +108,20 @@ object ErrorHandlingServiceOperation {
     def _ordinal: Int
   }
   object ErrorHandlingOperationError extends ShapeTag.Companion[ErrorHandlingOperationError] {
+
+    def eHFallbackClientError(eHFallbackClientError:EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
+    def eHServiceUnavailable(eHServiceUnavailable:EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
+    def eHNotFound(eHNotFound:EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
+    def eHFallbackServerError(eHFallbackServerError:EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "ErrorHandlingOperationError")
 
     val hints: Hints = Hints.empty
 
     final case class EHFallbackClientErrorCase(eHFallbackClientError: EHFallbackClientError) extends ErrorHandlingOperationError { final def _ordinal: Int = 0 }
-    def eHFallbackClientError(eHFallbackClientError:EHFallbackClientError): ErrorHandlingOperationError = EHFallbackClientErrorCase(eHFallbackClientError)
     final case class EHServiceUnavailableCase(eHServiceUnavailable: EHServiceUnavailable) extends ErrorHandlingOperationError { final def _ordinal: Int = 1 }
-    def eHServiceUnavailable(eHServiceUnavailable:EHServiceUnavailable): ErrorHandlingOperationError = EHServiceUnavailableCase(eHServiceUnavailable)
     final case class EHNotFoundCase(eHNotFound: EHNotFound) extends ErrorHandlingOperationError { final def _ordinal: Int = 2 }
-    def eHNotFound(eHNotFound:EHNotFound): ErrorHandlingOperationError = EHNotFoundCase(eHNotFound)
     final case class EHFallbackServerErrorCase(eHFallbackServerError: EHFallbackServerError) extends ErrorHandlingOperationError { final def _ordinal: Int = 3 }
-    def eHFallbackServerError(eHFallbackServerError:EHFallbackServerError): ErrorHandlingOperationError = EHFallbackServerErrorCase(eHFallbackServerError)
 
     object EHFallbackClientErrorCase {
       val hints: Hints = Hints.empty

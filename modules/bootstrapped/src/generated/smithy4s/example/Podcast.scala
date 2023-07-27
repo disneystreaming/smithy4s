@@ -16,6 +16,10 @@ sealed trait Podcast extends PodcastCommon with scala.Product with scala.Seriali
   def _ordinal: Int
 }
 object Podcast extends ShapeTag.Companion[Podcast] {
+
+  def video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None):Video = Video(title, url, durationMillis)
+  def audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None):Audio = Audio(title, url, durationMillis)
+
   val id: ShapeId = ShapeId("smithy4s.example", "Podcast")
 
   val hints: Hints = Hints.empty

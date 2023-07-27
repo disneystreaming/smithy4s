@@ -13,6 +13,9 @@ sealed trait OpticsUnion extends scala.Product with scala.Serializable {
   def _ordinal: Int
 }
 object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
+
+  def one(one:OpticsStructure): OpticsUnion = OneCase(one)
+
   val id: ShapeId = ShapeId("smithy4s.example", "OpticsUnion")
 
   val hints: Hints = Hints.empty
@@ -22,7 +25,6 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
   }
 
   final case class OneCase(one: OpticsStructure) extends OpticsUnion { final def _ordinal: Int = 0 }
-  def one(one:OpticsStructure): OpticsUnion = OneCase(one)
 
   object OneCase {
     val hints: Hints = Hints.empty

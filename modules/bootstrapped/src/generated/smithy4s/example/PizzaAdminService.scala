@@ -165,16 +165,18 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object AddMenuItemError extends ShapeTag.Companion[AddMenuItemError] {
+
+    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
+    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
+    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemError")
 
     val hints: Hints = Hints.empty
 
     final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
-    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
     final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def _ordinal: Int = 1 }
-    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def _ordinal: Int = 2 }
-    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
 
     object PriceErrorCase {
       val hints: Hints = Hints.empty
@@ -237,18 +239,20 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetMenuError extends ShapeTag.Companion[GetMenuError] {
+
+    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
+    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
+    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
+    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "GetMenuError")
 
     val hints: Hints = Hints.empty
 
     final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def _ordinal: Int = 0 }
-    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
     final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def _ordinal: Int = 1 }
-    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
     final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def _ordinal: Int = 2 }
-    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
     final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def _ordinal: Int = 3 }
-    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
 
     object GenericClientErrorCase {
       val hints: Hints = Hints.empty
@@ -330,12 +334,14 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object HealthError extends ShapeTag.Companion[HealthError] {
+
+    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "HealthError")
 
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -414,12 +420,14 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetEnumError extends ShapeTag.Companion[GetEnumError] {
+
+    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "GetEnumError")
 
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -464,12 +472,14 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object GetIntEnumError extends ShapeTag.Companion[GetIntEnumError] {
+
+    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "GetIntEnumError")
 
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -514,12 +524,14 @@ object PizzaAdminServiceOperation {
     def _ordinal: Int
   }
   object CustomCodeError extends ShapeTag.Companion[CustomCodeError] {
+
+    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeError")
 
     val hints: Hints = Hints.empty
 
     final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }
-    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
