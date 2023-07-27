@@ -14,12 +14,11 @@
  *  limitations under the License.
  */
 
-import smithy4s.aws._
 import cats.effect._
+import com.amazonaws.cloudwatch._
 import org.http4s.client.middleware._
 import org.http4s.ember.client.EmberClientBuilder
-
-import com.amazonaws.cloudwatch._
+import smithy4s.aws._
 
 object Main extends IOApp.Simple {
 

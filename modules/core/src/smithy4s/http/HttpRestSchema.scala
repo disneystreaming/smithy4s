@@ -17,15 +17,15 @@
 package smithy4s
 package http
 
-import smithy4s.PartialData
 import smithy.api.HttpPayload
-import smithy4s.schema._
+import smithy4s.PartialData
+import smithy4s.capability.Zipper
+import smithy4s.codecs.Reader
+import smithy4s.codecs.Writer
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
 import smithy4s.schema.SchemaPartition.TotalMatch
-import smithy4s.codecs.Writer
-import smithy4s.codecs.Reader
-import smithy4s.capability.Zipper
+import smithy4s.schema._
 
 /**
  * This construct indicates how a schema is split between http metadata

@@ -16,10 +16,10 @@
 
 package smithy4s.aws
 
-import smithy4s.http4s.kernel.RequestEncoder
 import fs2.compression.Compression
-import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.Hints
+import smithy4s.http4s.kernel.RequestEncoder
+import smithy4s.schema.CachedSchemaCompiler
 
 package object internals {
 

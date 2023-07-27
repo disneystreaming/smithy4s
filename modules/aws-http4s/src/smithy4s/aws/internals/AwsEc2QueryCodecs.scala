@@ -18,15 +18,15 @@ package smithy4s
 package aws
 package internals
 
-import smithy.api.XmlName
+import _root_.aws.protocols.AwsQueryError
+import _root_.aws.protocols.Ec2QueryName
 import cats.effect.Concurrent
 import cats.syntax.all._
 import fs2.compression.Compression
+import smithy.api.XmlName
 import smithy4s.Endpoint
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import _root_.aws.protocols.Ec2QueryName
-import _root_.aws.protocols.AwsQueryError
 
 private[aws] object AwsEcsQueryCodecs {
 

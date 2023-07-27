@@ -17,17 +17,16 @@
 package smithy4s
 package http
 
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-
 import smithy4s.codecs.PayloadPath
 import smithy4s.codecs.PayloadPath.Segment
-import scala.collection.mutable
-import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
-
+import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
+
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import scala.collection.mutable
 
 private[smithy4s] final case class UrlForm(
     formData: UrlForm.FormData.MultipleValues

@@ -16,14 +16,14 @@
 
 package smithy4s.aws
 
+import _root_.aws.api.{Service => AwsService}
 import cats.effect.Async
 import cats.effect.Resource
 import cats.syntax.all._
 import fs2.compression.Compression
-import smithy4s.http4s.kernel._
-import smithy4s.aws.internals._
-import _root_.aws.api.{Service => AwsService}
 import smithy4s.aws.internals.AwsQueryCodecs
+import smithy4s.aws.internals._
+import smithy4s.http4s.kernel._
 
 object AwsClient {
 

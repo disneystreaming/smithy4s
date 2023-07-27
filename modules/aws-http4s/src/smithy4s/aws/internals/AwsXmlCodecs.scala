@@ -18,25 +18,24 @@ package smithy4s
 package aws
 package internals
 
+import cats.Applicative
+import cats.data.EitherT
 import cats.effect.Concurrent
 import cats.syntax.all._
-import cats.Applicative
 import fs2.compression.Compression
-import smithy4s.http4s.kernel._
-import smithy4s.Endpoint
-import smithy4s.schema.CachedSchemaCompiler
-import org.http4s.EntityDecoder
-import smithy4s.xml.XmlDocument
-import org.http4s.MediaRange
 import fs2.data.xml._
 import fs2.data.xml.dom._
-import cats.data.EitherT
-import smithy4s.kinds.PolyFunction
+import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
-import smithy4s.capability.Covariant
-
+import org.http4s.MediaRange
 import org.http4s.MediaType
+import smithy4s.Endpoint
+import smithy4s.capability.Covariant
 import smithy4s.http.Metadata
+import smithy4s.http4s.kernel._
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.xml.XmlDocument
 
 private[aws] object AwsXmlCodecs {
 

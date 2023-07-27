@@ -18,11 +18,11 @@ package smithy4s.aws
 
 import aws.protocols._
 import cats.effect.IO
-import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.ShapeId
 import cats.syntax.all._
+import smithy4s.ShapeId
 import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
+import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.tests.ProtocolComplianceSuite
 
 object AwsComplianceSuite extends ProtocolComplianceSuite {

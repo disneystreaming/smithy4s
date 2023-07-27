@@ -18,18 +18,18 @@ package smithy4s
 package aws
 package internals
 
+import _root_.aws.protocols.AwsQueryError
 import cats.effect.Concurrent
 import cats.syntax.all._
 import fs2.compression.Compression
+import org.http4s.EntityEncoder
 import smithy4s.Endpoint
-import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.codecs.PayloadPath
+import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
-import smithy4s.codecs.PayloadPath
-import org.http4s.EntityEncoder
-import _root_.aws.protocols.AwsQueryError
+import smithy4s.schema.CachedSchemaCompiler
 
 private[aws] object AwsQueryCodecs {
 
