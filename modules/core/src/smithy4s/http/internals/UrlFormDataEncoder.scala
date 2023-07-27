@@ -24,23 +24,27 @@ import smithy4s.http.UrlForm
 
 private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
 
-  def contramap[B](f: B => A): UrlFormDataEncoder[B] =
-    (value: B) => self.encode(f(value))
-
   def encode(value: A): UrlForm.FormData
 
+  def contramap[B](f: B => A): UrlFormDataEncoder[B] =
+    value => self.encode(f(value))
+
   def prepend(segment: PayloadPath.Segment): UrlFormDataEncoder[A] =
-    (value: A) => self.encode(value).prepend(segment)
+    value => self.encode(value).prepend(segment)
 
 }
 
 object UrlFormDataEncoder {
+
   implicit val urlFormDataEncoderK
       : EncoderK[UrlFormDataEncoder, UrlForm.FormData] =
     new EncoderK[UrlFormDataEncoder, UrlForm.FormData] {
+
+      override def absorb[A](f: A => UrlForm.FormData): UrlFormDataEncoder[A] =
+        f(_)
+
       override def apply[A](fa: UrlFormDataEncoder[A], a: A): UrlForm.FormData =
         fa.encode(a)
-      override def absorb[A](f: A => UrlForm.FormData): UrlFormDataEncoder[A] =
-        (value: A) => f(value)
+
     }
 }

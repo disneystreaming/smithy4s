@@ -19,6 +19,9 @@ package http
 
 import smithy4s.codecs.PayloadPath
 import smithy4s.codecs.PayloadPath.Segment
+import smithy4s.http.internals.UrlFormCursor
+import smithy4s.http.internals.UrlFormDataDecoder
+import smithy4s.http.internals.UrlFormDataDecoderSchemaVisitor
 import smithy4s.http.internals.UrlFormDataEncoder
 import smithy4s.http.internals.UrlFormDataEncoderSchemaVisitor
 import smithy4s.schema.CachedSchemaCompiler
@@ -28,7 +31,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import scala.collection.mutable
 
-private[smithy4s] final case class UrlForm(
+final case class UrlForm(
     formData: UrlForm.FormData.MultipleValues
 ) {
   def render: String = {
@@ -41,6 +44,7 @@ private[smithy4s] final case class UrlForm(
 private[smithy4s] object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
+    def down(segment: PayloadPath.Segment): FormData
     def prepend(segment: PayloadPath.Segment): FormData
     def toPathedValues: Vector[FormData.PathedValue]
     def widen: FormData = this
@@ -48,6 +52,9 @@ private[smithy4s] object UrlForm {
   }
   object FormData {
     case object Empty extends FormData {
+
+      // TODO: Should this be an error?
+      override def down(segment: PayloadPath.Segment): FormData = this
 
       override def prepend(segment: PayloadPath.Segment): FormData = this
 
@@ -60,6 +67,9 @@ private[smithy4s] object UrlForm {
     // TODO: Rename as Value, replace uses by PathedValue?
     final case class SimpleValue(string: String) extends FormData {
 
+      // TODO: Should this be an error?
+      override def down(segment: PayloadPath.Segment): FormData = this
+
       override def prepend(segment: PayloadPath.Segment): PathedValue =
         PathedValue(PayloadPath(segment), maybeValue = Some(string))
 
@@ -70,7 +80,6 @@ private[smithy4s] object UrlForm {
           URLEncoder.encode(string, StandardCharsets.UTF_8.name())
         )
       }
-
     }
 
     object PathedValue {
@@ -80,6 +89,12 @@ private[smithy4s] object UrlForm {
 
     final case class PathedValue(path: PayloadPath, maybeValue: Option[String])
         extends FormData {
+
+      override def down(segment: PayloadPath.Segment): FormData =
+        if (path.segments.head == segment)
+          PathedValue(PayloadPath(path.segments.tail), maybeValue)
+        // TODO: Should this be an error?
+        else Empty
 
       override def prepend(segment: PayloadPath.Segment): PathedValue =
         copy(path.prepend(segment), maybeValue)
@@ -113,6 +128,15 @@ private[smithy4s] object UrlForm {
     final case class MultipleValues(values: Vector[PathedValue])
         extends FormData {
 
+      override def down(segment: PayloadPath.Segment): FormData = {
+        // TODO: Should we error if any are dropped? Probably not.
+        val newValues = values.map(_.down(segment)).collect {
+          case pathedValue: FormData.PathedValue => pathedValue
+        }
+        if (newValues.nonEmpty) MultipleValues(newValues)
+        else Empty
+      }
+
       override def prepend(segment: PayloadPath.Segment): MultipleValues =
         copy(values.map(_.prepend(segment)))
 
@@ -128,6 +152,35 @@ private[smithy4s] object UrlForm {
         }
       }
     }
+  }
+
+  trait Decoder[A] {
+    def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A]
+  }
+  object Decoder {
+    def apply(
+        ignoreXmlFlattened: Boolean,
+        capitalizeStructAndUnionMemberNames: Boolean
+    ): CachedSchemaCompiler[Decoder] =
+      new CachedSchemaCompiler.Impl[Decoder] {
+        protected override type Aux[A] = UrlFormDataDecoder[A]
+        override def fromSchema[A](
+            schema: Schema[A],
+            cache: Cache
+        ): Decoder[A] = {
+          val schemaVisitor =
+            new UrlFormDataDecoderSchemaVisitor(
+              cache,
+              ignoreXmlFlattened,
+              capitalizeStructAndUnionMemberNames
+            )
+          val urlFormDataDecoder = schemaVisitor(schema)
+          (urlForm: UrlForm) =>
+            urlFormDataDecoder.decode(
+              UrlFormCursor.fromUrlForm(urlForm)
+            )
+        }
+      }
   }
 
   trait Encoder[A] {
