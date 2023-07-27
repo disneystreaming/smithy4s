@@ -16,6 +16,7 @@
 
 import cats.effect._
 import com.amazonaws.cloudwatch._
+import com.amazonaws.ec2._
 import org.http4s.client.middleware._
 import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws._
@@ -24,7 +25,11 @@ object Main extends IOApp.Simple {
 
   type NextToken = String
 
-  override def run: IO[Unit] = cloudWatchClientResource.use(cloudWatchClient =>
+  override def run: IO[Unit] = awsEnvironmentResource.use { awsEnvironment =>
+    // Per
+    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
+    // CloudWatch is one of a few services that use the awsQuery protocol.
+    AwsClient(CloudWatch, awsEnvironment).use(cloudWatchClient =>
     listAll[ListMetricsOutput, Metric](
       listF = maybeNextToken =>
         cloudWatchClient.listMetrics(
@@ -38,11 +43,27 @@ object Main extends IOApp.Simple {
     )
       .map(_.size)
       .flatMap(size => IO.println(s"Found $size metrics"))
-  )
+    )
+    // Per
+    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
+    // EC2 is the only service that use the ec2Query protocol.
+    AwsClient(EC2, awsEnvironment).use(ec2Client =>
+    listAll[DescribeInstancesOutput, Metric](
+      listF = maybeNextToken =>
+        ec2Client.describeInstanceTypes(
+          nextToken = maybeNextToken
+        ),
+      accessResults = _.reservationSet.toList.flatten,
+      accessNextToken = _.nextToken
+    )
+      .map(_.size)
+      .flatMap(size => IO.println(s"Found $size instance types"))
+    )
+  }
 
-  private val cloudWatchClientResource: Resource[IO, CloudWatch[IO]] =
+  private val awsEnvironmentResource: Resource[IO, AwsEnvironment[IO]] =
     for {
-      httpClient <- EmberClientBuilder
+      client <- EmberClientBuilder
         .default[IO]
         .build
         .map(
@@ -53,17 +74,15 @@ object Main extends IOApp.Simple {
           )
         )
       awsCredentialsProvider = new AwsCredentialsProvider[IO]
-      awsEnv = AwsEnvironment.make(
-        httpClient,
-        IO.pure(AwsRegion.US_EAST_1),
-        awsCredentialsProvider.defaultCredentialsFile.flatMap(
-          awsCredentialsProvider
-            .fromDisk(_, awsCredentialsProvider.getProfileFromEnv)
-        ),
-        IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
-      )
-      cloudWatch <- AwsClient(CloudWatch, awsEnv)
-    } yield cloudWatch
+    } yield AwsEnvironment.make(
+      client,
+      IO.pure(AwsRegion.US_EAST_1),
+      awsCredentialsProvider.defaultCredentialsFile.flatMap(
+        awsCredentialsProvider
+          .fromDisk(_, awsCredentialsProvider.getProfileFromEnv)
+      ),
+      IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
+    )
 
   // This is probably something that's gonna get reimplemented a lot in
   // user-land. Perhaps we could use pagination hints from the specs to avoid

@@ -890,15 +890,18 @@ lazy val sandbox = projectMatrix
   .dependsOn(`aws-http4s`)
   .settings(
     Compile / allowedNamespaces := Seq(
-      "com.amazonaws.cloudwatch"
+      "com.amazonaws.cloudwatch",
+      "com.amazonaws.ec2"
     ),
     genSmithy(Compile),
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
     ) ++ scala3MigrationOption(scalaVersion.value),
-    smithy4sDependencies +=
+    smithy4sDependencies ++= Seq(
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
+      "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
+    ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
       Dependencies.slf4jNop

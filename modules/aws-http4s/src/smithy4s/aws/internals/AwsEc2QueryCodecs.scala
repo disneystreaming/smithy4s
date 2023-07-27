@@ -71,7 +71,7 @@ private[aws] object AwsEcsQueryCodecs {
                         XmlName(xmlName.value.capitalize)
                       )
 
-                    case _ =>
+                    case None =>
                       hints
                   }
               }
