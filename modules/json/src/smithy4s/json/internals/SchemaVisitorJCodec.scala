@@ -1276,7 +1276,7 @@ private[smithy4s] class SchemaVisitorJCodec(
         writeLabel(out)
         codec.encodeValue(field.get(z), out)
     } else { (z: Z, out: JsonWriter) =>
-      field.getUnlessDefault(z).foreach { (a: A) =>
+      field.foreachUnlessDefault(z) { (a: A) =>
         writeLabel(out)
         codec.encodeValue(a, out)
       }

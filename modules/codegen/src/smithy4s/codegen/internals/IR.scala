@@ -303,6 +303,7 @@ private[internals] object Hint {
   case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
       extends Hint
   case object GenerateServiceProduct extends Hint
+  case object GenerateOptics extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

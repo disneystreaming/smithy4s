@@ -40,7 +40,11 @@ private[internals] object Renderer {
 
   case class Result(namespace: String, name: String, content: String)
 
-  case class Config(errorsAsScala3Unions: Boolean, wildcardArgument: String)
+  case class Config(
+      errorsAsScala3Unions: Boolean,
+      wildcardArgument: String,
+      renderOptics: Boolean
+  )
   object Config {
     def load(metadata: Map[String, Node]): Renderer.Config = {
       val errorsAsScala3Unions = metadata
@@ -54,6 +58,12 @@ private[internals] object Renderer {
         .map(_.getValue())
         .getOrElse("_")
 
+      val renderOptics = metadata
+        .get("smithy4sRenderOptics")
+        .flatMap(_.asBooleanNode().asScala)
+        .map(_.getValue())
+        .getOrElse(false)
+
       if (wildcardArgument != "?" && wildcardArgument != "_") {
         throw new IllegalArgumentException(
           s"`smithy4sWildcardArgument` possible values are: `?` or `_`. found `$wildcardArgument`."
@@ -62,7 +72,8 @@ private[internals] object Renderer {
 
       Renderer.Config(
         errorsAsScala3Unions = errorsAsScala3Unions,
-        wildcardArgument = wildcardArgument
+        wildcardArgument = wildcardArgument,
+        renderOptics = renderOptics
       )
     }
   }
@@ -614,6 +625,22 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     if (result.isEmpty) Lines.empty else newline ++ Lines(result)
   }
 
+  private def renderLenses(product: Product, hints: List[Hint]): Lines = if (
+    (compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )) && product.fields.nonEmpty
+  ) {
+    val smithyLens = NameRef("smithy4s.optics.Lens")
+    val lenses = product.fields.map { field =>
+      val fieldType =
+        if (field.required) Line.required(line"${field.tpe}", None)
+        else Line.optional(line"${field.tpe}")
+      line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
+    }
+    obj(product.nameRef.copy(name = "optics"))(lenses) ++
+      newline
+  } else Lines.empty
+
   private def renderProductNonMixin(
       product: Product,
       adtParent: Option[NameRef],
@@ -667,6 +694,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderHintsVal(hints),
         renderProtocol(product.nameRef, hints),
         newline,
+        renderLenses(product, hints),
         if (fields.nonEmpty) {
           val renderedFields =
             fields.map { case Field(fieldName, realName, tpe, required, hints) =>
@@ -858,6 +886,59 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
+  private def caseName(alt: Alt): NameRef = alt.member match {
+    case UnionMember.ProductCase(product) => NameRef(product.name)
+    case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
+      NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
+  }
+
+  private def renderPrisms(
+      unionName: NameRef,
+      alts: NonEmptyList[Alt],
+      hints: List[Hint]
+  ): Lines = if (
+    compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )
+  ) {
+    val smithyPrism = NameRef("smithy4s.optics.Prism")
+    val altLines = alts.map { alt =>
+      alt.member match {
+        case UnionMember.ProductCase(p) =>
+          val (mat, tpe) = (p.nameDef, line"${p.name}")
+          line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
+        case UnionMember.TypeCase(t) =>
+          val (mat, tpe) = (caseName(alt), line"$t")
+          line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
+        case UnionMember.UnitCase =>
+          val (mat, tpe) = (caseName(alt), line"${caseName(alt)}")
+          line"val ${alt.name}: $smithyPrism[$unionName, $tpe.type] = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
+      }
+    }
+
+    obj(unionName.copy(name = "optics"))(altLines) ++
+      newline
+  } else Lines.empty
+
+  private def renderPrismsEnum(
+      enumName: NameRef,
+      values: List[EnumValue],
+      hints: List[Hint]
+  ): Lines = if (
+    compilationUnit.rendererConfig.renderOptics || hints.contains(
+      Hint.GenerateOptics
+    )
+  ) {
+    val smithyPrism = NameRef("smithy4s.optics.Prism")
+    val valueLines = values.map { value =>
+      val (mat, tpe) = (value.name, line"${value.name}")
+      line"val ${value.name}: $smithyPrism[$enumName, $enumName.$tpe.type] = $smithyPrism.partial[$enumName, $enumName.$tpe.type]{ case $enumName.$mat => $enumName.$mat }(identity)"
+    }
+
+    obj(enumName.copy(name = "optics"))(valueLines) ++
+      newline
+  } else Lines.empty
+
   private def renderUnion(
       shapeId: ShapeId,
       name: NameRef,
@@ -867,11 +948,6 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       hints: List[Hint],
       error: Boolean = false
   ): Lines = {
-    def caseName(alt: Alt): NameRef = alt.member match {
-      case UnionMember.ProductCase(product) => NameRef(product.name)
-      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
-        NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
-    }
     def smartConstructor(alt: Alt): Line = {
       val cn = caseName(alt).name
       val ident = NameDef(uncapitalise(alt.name))
@@ -909,6 +985,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         newline,
         renderHintsVal(hints),
         newline,
+        renderPrisms(name, alts, hints),
         alts.zipWithIndex.map {
           case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
             val cn = caseName(a)
@@ -1051,6 +1128,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       newline,
       renderHintsVal(hints),
       newline,
+      renderPrismsEnum(name, values, hints),
       values.map { case e @ EnumValue(value, intValue, _, hints) =>
         val valueName = NameRef(e.name)
         val valueHints = line"$Hints_(${memberHints(e.hints)})"

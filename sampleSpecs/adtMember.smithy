@@ -4,6 +4,7 @@ namespace smithy4s.example
 
 use smithy4s.meta#adtMember
 use smithy4s.meta#adt
+use smithy4s.meta#generateOptics
 
 integer OrderNumber
 
@@ -66,6 +67,7 @@ structure AdtTwo with [AdtMixinOne, AdtMixinTwo] {
 }
 
 @adt
+@generateOptics
 union Podcast {
   video: Video
   audio: Audio
@@ -78,5 +80,7 @@ structure PodcastCommon {
   durationMillis: Long
 }
 
+@generateOptics
 structure Video with [PodcastCommon] {}
+@generateOptics
 structure Audio with [PodcastCommon] {}
