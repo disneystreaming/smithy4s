@@ -25,7 +25,8 @@ import smithy4s.codecs.PayloadPath
 
 private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder],
-    ignoreXmlFlattened: Boolean
+    ignoreXmlFlattened: Boolean,
+    capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
   override def primitive[P](
@@ -180,6 +181,8 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       .get(XmlName)
       .map(_.value)
       .map(PayloadPath.Segment(_))
-      .getOrElse(default)
+      .getOrElse(
+        if (capitalizeStructAndUnionMemberNames) default.capitalize else default
+      )
 
 }

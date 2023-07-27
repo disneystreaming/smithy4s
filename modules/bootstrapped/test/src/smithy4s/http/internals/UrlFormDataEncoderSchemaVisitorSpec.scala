@@ -331,7 +331,11 @@ object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
       loc: SourceLocation
   ): IO[Expectations] = {
     val cache = CompilationCache.make[UrlFormDataEncoder]
-    val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(cache)
+    val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
+      cache,
+      ignoreXmlFlattened = false,
+      capitalizeStructAndUnionMemberNames = false
+    )
     val encoder = schemaVisitor(schema)
     val formData = encoder.encode(value)
     val builder = new mutable.StringBuilder

@@ -45,6 +45,7 @@ private[aws] object AwsQueryCodecs {
         val requestEncoderCompilersWithCompression = transformEncoders(
           requestEncoderCompilers[F](
             ignoreXmlFlattened = false,
+            capitalizeStructAndUnionMemberNames = false,
             action = endpoint.id.name,
             version = version
           )
@@ -108,11 +109,12 @@ private[aws] object AwsQueryCodecs {
 
   def requestEncoderCompilers[F[_]: Concurrent](
       ignoreXmlFlattened: Boolean,
+      capitalizeStructAndUnionMemberNames: Boolean,
       action: String,
       version: String
   ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
     val urlFormEntityEncoderCompilers = UrlForm
-      .Encoder(ignoreXmlFlattened)
+      .Encoder(ignoreXmlFlattened = ignoreXmlFlattened, capitalizeStructAndUnionMemberNames = capitalizeStructAndUnionMemberNames)
       .mapK(
         new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
           def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =

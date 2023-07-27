@@ -25,7 +25,6 @@ import fs2.compression.Compression
 import smithy4s.Endpoint
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import smithy4s.schema._
 import _root_.aws.protocols.Ec2QueryName
 import _root_.aws.protocols.AwsQueryError
 
@@ -35,118 +34,36 @@ private[aws] object AwsEcsQueryCodecs {
       version: String
   ): UnaryClientCodecs.Make[F] =
     new UnaryClientCodecs.Make[F] {
-      // TODO: Caching?
-      object foo extends SchemaVisitor.Default[Schema] { self =>
-        override def default[A]: Schema[A] = ???
-        override def apply[A](schema: Schema[A]): Schema[A] =
-          schema.hints.get(Ec2QueryName) match {
-            case Some(ec2QueryName) =>
-              schema.addHints(XmlName(ec2QueryName.value))
-
-            case None =>
-              schema.hints.get(XmlName) match {
-                case Some(xmlName) =>
-                  schema.addHints(
-                    XmlName(xmlName.value.capitalize)
-                  )
-
-                case _ =>
-                  schema match {
-                    case s: Schema.CollectionSchema[_, _] =>
-                      s.copy(
-                        member = self(s.member)
-                      )
-
-                    case m: Schema.MapSchema[_, _] =>
-                      m.copy(
-                        key = self(m.key),
-                        value = self(m.value)
-                      )
-
-                    case struct: Schema.StructSchema[_] =>
-                      struct.copy(
-                        fields = struct.fields.map(field =>
-                          field.hints.get(Ec2QueryName) match {
-                            case Some(ec2QueryName) =>
-                              def transformField[S, B](
-                                  field: Field[S, B]
-                              ): Field[S, B] =
-                                field
-                                  .copy(
-                                    schema = self(field.schema)
-                                  )
-                                  .addHints(XmlName(ec2QueryName.value))
-                              transformField(field)
-                            case None =>
-                              def transformField[S, B](
-                                  field: Field[S, B]
-                              ): Field[S, B] =
-                                field.hints.get(XmlName) match {
-                                  case Some(xmlName) =>
-                                    field
-                                      .addHints(
-                                        XmlName(xmlName.value.capitalize)
-                                      )
-                                  case _ =>
-                                    println(s"transforming field ${field}")
-                                    field                                    
-                                      .copy(
-                                        schema = self(field.schema)
-                                      ).
-                                    addHints(
-                                      XmlName(field.label.capitalize)
-                                    )
-                                }
-                              transformField(field)
-                          }
-                        )
-                      )
-                    case union: Schema.UnionSchema[_] =>
-                      union.copy(
-                        alternatives = union.alternatives.map(field =>
-                          field.addHints(
-                            XmlName(field.label.capitalize)
-                          )
-                        )
-                      )
-                    case _ => schema
-                  }
-              }
-          }
-      }
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
         val requestEncoderCompilers = AwsQueryCodecs
           .requestEncoderCompilers[F](
             ignoreXmlFlattened = true,
+            capitalizeStructAndUnionMemberNames = true,
             action = endpoint.id.name,
             version = version
           )
           .contramapSchema(
-            foo
-            // smithy4s.schema.Schema.transformHintsTransitivelyK(hints =>
-            //   hints.get(Ec2QueryName) match {
-            //     case Some(ec2QueryName) =>
-            //       hints ++ smithy4s.Hints(
-            //         XmlName(ec2QueryName.value)
-            //       )
+            smithy4s.schema.Schema.transformHintsTransitivelyK(hints =>
+              hints.get(Ec2QueryName) match {
+                case Some(ec2QueryName) =>
+                  hints.filterNot(_.keyId == XmlName.id) ++ smithy4s.Hints(
+                    XmlName(ec2QueryName.value)
+                  )
 
-            //     case None =>
-            //       hints.get(XmlName) match {
-            //         case Some(xmlName) if !xmlName.value.isEmpty =>
-            //           hints ++ smithy4s.Hints(
-            //             XmlName(xmlName.value.capitalize)
-            //           )
+                case None =>
+                  hints.get(XmlName) match {
+                    case Some(xmlName) =>
+                      hints.filterNot(_.keyId == XmlName.id) ++ smithy4s.Hints(
+                        XmlName(xmlName.value.capitalize)
+                      )
 
-            //         case _ =>
-            //           hints
-            //           //  ++ smithy4s.Hints(
-            //             // XmlName(s"${Character.toUpperCase(xmlName.value.charAt(0))}${xmlName.value.substring(1)}")
-            //           // )
-            //       }
-            //   }
-            // )
+                    case _ =>
+                      hints
+                  }
+              }
+            )
           )
         val transformEncoders =
           applyCompression[F](endpoint.hints, retainUserEncoding = false)
