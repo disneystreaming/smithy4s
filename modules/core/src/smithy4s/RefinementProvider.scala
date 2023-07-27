@@ -71,8 +71,8 @@ object RefinementProvider {
   implicit val stringLengthConstraint: Simple[Length, String] =
     new LengthConstraint[String](_.length)
 
-  implicit val byteArrayLengthConstraint: Simple[Length, ByteArray] =
-    new LengthConstraint[ByteArray](_.array.length)
+  implicit val blobLengthConstraint: Simple[Length, Blob] =
+    new LengthConstraint[Blob](_.size)
 
   implicit def iterableLengthConstraint[C[_], A](implicit
       ev: C[A] <:< Iterable[A]

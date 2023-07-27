@@ -1,6 +1,6 @@
 package smithy4s.example
 
-import smithy4s.ByteArray
+import smithy4s.Blob
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -22,7 +22,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
 
   val hints: Hints = Hints.empty
 
-  final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[ByteArray] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree {
+  final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree {
     def _ordinal: Int = 0
   }
   object AdtOne extends ShapeTag.Companion[AdtOne] {

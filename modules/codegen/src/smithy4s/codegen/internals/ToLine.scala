@@ -82,7 +82,7 @@ private[internals] object ToLine {
     def javaP(name: String) = NameRef("java.lang", name)
     p match {
       case Primitive.Unit       => scalaP("Unit")
-      case Primitive.ByteArray  => NameRef("smithy4s", "ByteArray")
+      case Primitive.Blob       => NameRef("smithy4s", "Blob")
       case Primitive.Bool       => scalaP("Boolean")
       case Primitive.String     => javaP("String")
       case Primitive.Timestamp  => NameRef("smithy4s", "Timestamp")

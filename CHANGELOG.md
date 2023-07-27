@@ -32,6 +32,10 @@ typeclasses such as `cats.Show`, `cats.Eq` or any others you may be using.
 
 See https://github.com/disneystreaming/smithy4s/pull/912
 
+### smithy4s.Blob
+
+`smithy4s.ByteArray` has been deprecated in favor of `smithy4s.Blob`.
+
 ### Smithy4s Optics Instances
 
 When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rendered in the companion objects of the generated code when appropriate.

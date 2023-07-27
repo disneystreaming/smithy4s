@@ -24,7 +24,7 @@ import fs2.data.xml.dom._
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
-import smithy4s.ByteArray
+import smithy4s.Blob
 import smithy4s.ShapeId
 import smithy4s.Hints
 import smithy4s.schema.Schema
@@ -118,9 +118,9 @@ object XmlCodecSpec extends SimpleIOSuite {
   }
 
   test("bytes") {
-    implicit val schema: Schema[ByteArray] = bytes.x
+    implicit val schema: Schema[Blob] = bytes.x
     val xml = "<x>Zm9vYmFy</x>"
-    checkContent(xml, ByteArray("foobar".getBytes()))
+    checkContent(xml, Blob("foobar"))
   }
 
   test("struct") {

@@ -225,23 +225,23 @@ private[smithy4s] class SchemaVisitorJCodec(
         def encodeKey(x: Byte, out: JsonWriter): Unit = out.writeKey(x)
       }
 
-    val bytes: JCodec[ByteArray] =
-      new JCodec[ByteArray] {
+    val bytes: JCodec[Blob] =
+      new JCodec[Blob] {
         def expecting: String = "byte-array" // or blob?
 
         override def canBeKey: Boolean = false
 
-        def decodeValue(cursor: Cursor, in: JsonReader): ByteArray = ByteArray(
+        def decodeValue(cursor: Cursor, in: JsonReader): Blob = Blob(
           in.readBase64AsBytes(null)
         )
 
-        def encodeValue(x: ByteArray, out: JsonWriter): Unit =
-          out.writeBase64Val(x.array, doPadding = true)
+        def encodeValue(x: Blob, out: JsonWriter): Unit =
+          out.writeBase64Val(x.toArray, doPadding = true)
 
-        def decodeKey(in: JsonReader): ByteArray =
+        def decodeKey(in: JsonReader): Blob =
           in.decodeError("Cannot use byte array as key")
 
-        def encodeKey(x: ByteArray, out: JsonWriter): Unit =
+        def encodeKey(x: Blob, out: JsonWriter): Unit =
           out.encodeError("Cannot use byte array as key")
       }
 
