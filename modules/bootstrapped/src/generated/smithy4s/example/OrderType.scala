@@ -14,7 +14,7 @@ import smithy4s.schema.Schema.union
   */
 sealed trait OrderType extends scala.Product with scala.Serializable {
   @inline final def widen: OrderType = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object OrderType extends ShapeTag.Companion[OrderType] {
 
@@ -29,10 +29,10 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     smithy.api.Documentation("Our order types have different ways to identify a product\nExcept for preview orders, these don\'t have an ID "),
   )
 
-  final case class OnlineCase(online: OrderNumber) extends OrderType { final def _ordinal: Int = 0 }
+  final case class OnlineCase(online: OrderNumber) extends OrderType { final def $ordinal: Int = 0 }
   /** For an InStoreOrder a location ID isn't needed */
   final case class InStoreOrder(id: OrderNumber, locationId: Option[String] = None) extends OrderType {
-    def _ordinal: Int = 1
+    def $ordinal: Int = 1
   }
   object InStoreOrder extends ShapeTag.Companion[InStoreOrder] {
     val id: ShapeId = ShapeId("smithy4s.example", "InStoreOrder")
@@ -50,7 +50,7 @@ object OrderType extends ShapeTag.Companion[OrderType] {
 
     val alt = schema.oneOf[OrderType]("inStore")
   }
-  case object PreviewCase extends OrderType { final def _ordinal: Int = 2 }
+  case object PreviewCase extends OrderType { final def $ordinal: Int = 2 }
   private val PreviewCaseAlt = Schema.constant(PreviewCase).oneOf[OrderType]("preview").addHints(hints)
 
   object OnlineCase {
@@ -64,6 +64,6 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     InStoreOrder.alt,
     PreviewCaseAlt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

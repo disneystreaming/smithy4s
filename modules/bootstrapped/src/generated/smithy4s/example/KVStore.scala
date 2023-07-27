@@ -114,7 +114,7 @@ object KVStoreOperation {
   }
   sealed trait GetError extends scala.Product with scala.Serializable {
     @inline final def widen: GetError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object GetError extends ShapeTag.Companion[GetError] {
 
@@ -125,8 +125,8 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError { final def _ordinal: Int = 0 }
-    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError { final def _ordinal: Int = 1 }
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends GetError { final def $ordinal: Int = 0 }
+    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends GetError { final def $ordinal: Int = 1 }
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -143,7 +143,7 @@ object KVStoreOperation {
       UnauthorizedErrorCase.alt,
       KeyNotFoundErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class Put(input: KeyValue) extends KVStoreOperation[KeyValue, KVStoreOperation.PutError, Unit, Nothing, Nothing] {
@@ -171,7 +171,7 @@ object KVStoreOperation {
   }
   sealed trait PutError extends scala.Product with scala.Serializable {
     @inline final def widen: PutError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object PutError extends ShapeTag.Companion[PutError] {
 
@@ -181,7 +181,7 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def _ordinal: Int = 0 }
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends PutError { final def $ordinal: Int = 0 }
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -192,7 +192,7 @@ object KVStoreOperation {
     implicit val schema: UnionSchema[PutError] = union(
       UnauthorizedErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class Delete(input: Key) extends KVStoreOperation[Key, KVStoreOperation.DeleteError, Unit, Nothing, Nothing] {
@@ -222,7 +222,7 @@ object KVStoreOperation {
   }
   sealed trait DeleteError extends scala.Product with scala.Serializable {
     @inline final def widen: DeleteError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object DeleteError extends ShapeTag.Companion[DeleteError] {
 
@@ -233,8 +233,8 @@ object KVStoreOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError { final def _ordinal: Int = 0 }
-    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError { final def _ordinal: Int = 1 }
+    final case class UnauthorizedErrorCase(unauthorizedError: UnauthorizedError) extends DeleteError { final def $ordinal: Int = 0 }
+    final case class KeyNotFoundErrorCase(keyNotFoundError: KeyNotFoundError) extends DeleteError { final def $ordinal: Int = 1 }
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -251,7 +251,7 @@ object KVStoreOperation {
       UnauthorizedErrorCase.alt,
       KeyNotFoundErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }

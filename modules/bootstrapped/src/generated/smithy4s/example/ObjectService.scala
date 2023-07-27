@@ -120,7 +120,7 @@ object ObjectServiceOperation {
   }
   sealed trait PutObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: PutObjectError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object PutObjectError extends ShapeTag.Companion[PutObjectError] {
 
@@ -131,8 +131,8 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def _ordinal: Int = 0 }
-    final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError { final def _ordinal: Int = 1 }
+    final case class ServerErrorCase(serverError: ServerError) extends PutObjectError { final def $ordinal: Int = 0 }
+    final case class NoMoreSpaceCase(noMoreSpace: NoMoreSpace) extends PutObjectError { final def $ordinal: Int = 1 }
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -149,7 +149,7 @@ object ObjectServiceOperation {
       ServerErrorCase.alt,
       NoMoreSpaceCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class GetObject(input: GetObjectInput) extends ObjectServiceOperation[GetObjectInput, ObjectServiceOperation.GetObjectError, GetObjectOutput, Nothing, Nothing] {
@@ -180,7 +180,7 @@ object ObjectServiceOperation {
   }
   sealed trait GetObjectError extends scala.Product with scala.Serializable {
     @inline final def widen: GetObjectError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object GetObjectError extends ShapeTag.Companion[GetObjectError] {
 
@@ -190,7 +190,7 @@ object ObjectServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def _ordinal: Int = 0 }
+    final case class ServerErrorCase(serverError: ServerError) extends GetObjectError { final def $ordinal: Int = 0 }
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
@@ -201,7 +201,7 @@ object ObjectServiceOperation {
     implicit val schema: UnionSchema[GetObjectError] = union(
       ServerErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }

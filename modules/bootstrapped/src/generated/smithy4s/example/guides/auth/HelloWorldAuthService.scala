@@ -113,7 +113,7 @@ object HelloWorldAuthServiceOperation {
   }
   sealed trait SayWorldError extends scala.Product with scala.Serializable {
     @inline final def widen: SayWorldError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
 
@@ -123,7 +123,7 @@ object HelloWorldAuthServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def _ordinal: Int = 0 }
+    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def $ordinal: Int = 0 }
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -134,7 +134,7 @@ object HelloWorldAuthServiceOperation {
     implicit val schema: UnionSchema[SayWorldError] = union(
       NotAuthorizedErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class HealthCheck() extends HelloWorldAuthServiceOperation[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] {
@@ -167,7 +167,7 @@ object HelloWorldAuthServiceOperation {
   }
   sealed trait HealthCheckError extends scala.Product with scala.Serializable {
     @inline final def widen: HealthCheckError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
 
@@ -177,7 +177,7 @@ object HelloWorldAuthServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def _ordinal: Int = 0 }
+    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def $ordinal: Int = 0 }
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -188,7 +188,7 @@ object HelloWorldAuthServiceOperation {
     implicit val schema: UnionSchema[HealthCheckError] = union(
       NotAuthorizedErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }

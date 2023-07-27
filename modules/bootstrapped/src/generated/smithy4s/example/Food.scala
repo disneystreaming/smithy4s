@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.union
 
 sealed trait Food extends scala.Product with scala.Serializable {
   @inline final def widen: Food = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object Food extends ShapeTag.Companion[Food] {
 
@@ -20,8 +20,8 @@ object Food extends ShapeTag.Companion[Food] {
 
   val hints: Hints = Hints.empty
 
-  final case class PizzaCase(pizza: Pizza) extends Food { final def _ordinal: Int = 0 }
-  final case class SaladCase(salad: Salad) extends Food { final def _ordinal: Int = 1 }
+  final case class PizzaCase(pizza: Pizza) extends Food { final def $ordinal: Int = 0 }
+  final case class SaladCase(salad: Salad) extends Food { final def $ordinal: Int = 1 }
 
   object PizzaCase {
     val hints: Hints = Hints.empty
@@ -38,6 +38,6 @@ object Food extends ShapeTag.Companion[Food] {
     PizzaCase.alt,
     SaladCase.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

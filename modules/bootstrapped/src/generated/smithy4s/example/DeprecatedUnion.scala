@@ -12,7 +12,7 @@ import smithy4s.schema.Schema.union
 @deprecated(message = "A compelling reason", since = "0.0.1")
 sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
   @inline final def widen: DeprecatedUnion = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
@@ -30,11 +30,11 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   )
 
   @deprecated(message = "N/A", since = "N/A")
-  final case class SCase(s: String) extends DeprecatedUnion { final def _ordinal: Int = 0 }
-  final case class S_V2Case(s_V2: String) extends DeprecatedUnion { final def _ordinal: Int = 1 }
+  final case class SCase(s: String) extends DeprecatedUnion { final def $ordinal: Int = 0 }
+  final case class S_V2Case(s_V2: String) extends DeprecatedUnion { final def $ordinal: Int = 1 }
   @deprecated(message = "N/A", since = "N/A")
   final case class DeprecatedUnionProductCase() extends DeprecatedUnion {
-    def _ordinal: Int = 2
+    def $ordinal: Int = 2
   }
   object DeprecatedUnionProductCase extends ShapeTag.Companion[DeprecatedUnionProductCase] {
     val id: ShapeId = ShapeId("smithy4s.example", "DeprecatedUnionProductCase")
@@ -49,7 +49,7 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
   }
   @deprecated(message = "N/A", since = "N/A")
   final case class UnionProductCaseDeprecatedAtCallSite() extends DeprecatedUnion {
-    def _ordinal: Int = 3
+    def $ordinal: Int = 3
   }
   object UnionProductCaseDeprecatedAtCallSite extends ShapeTag.Companion[UnionProductCaseDeprecatedAtCallSite] {
     val id: ShapeId = ShapeId("smithy4s.example", "UnionProductCaseDeprecatedAtCallSite")
@@ -82,6 +82,6 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     DeprecatedUnionProductCase.alt,
     UnionProductCaseDeprecatedAtCallSite.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

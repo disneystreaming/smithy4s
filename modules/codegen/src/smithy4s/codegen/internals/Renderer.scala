@@ -983,7 +983,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
       )(
         line"@inline final def widen: $name = this",
-        line"def _ordinal: Int"
+        line"def $$ordinal: Int"
       ),
       obj(name, line"${shapeTag(name)}")(
         newline,
@@ -1001,7 +1001,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case object $cn extends $name { final def _ordinal: Int = $index }",
+              line"case object $cn extends $name { final def $$ordinal: Int = $index }",
               line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
             )
             // format: on
@@ -1013,7 +1013,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def _ordinal: Int = $index }"
+              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
             )
           case (
                 Alt(_, realName, UnionMember.ProductCase(struct), altHints),
@@ -1031,7 +1031,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               struct.copy(hints = altHints ++ struct.hints),
               adtParent = Some(name),
               additionalLines,
-              classBody = Lines(line"def _ordinal: Int = $index")
+              classBody = Lines(line"def $$ordinal: Int = $index")
             )
         },
         newline,
@@ -1067,7 +1067,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               }
             }
             .block {
-              line"_._ordinal"
+              line"_.$$ordinal"
             }
             .appendToLast(
               if (error) "" else ".withId(id).addHints(hints)"

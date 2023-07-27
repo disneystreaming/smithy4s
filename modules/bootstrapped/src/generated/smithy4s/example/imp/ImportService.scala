@@ -107,7 +107,7 @@ object ImportServiceOperation {
   }
   sealed trait ImportOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ImportOperationError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
 
@@ -117,7 +117,7 @@ object ImportServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def _ordinal: Int = 0 }
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends ImportOperationError { final def $ordinal: Int = 0 }
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
@@ -128,7 +128,7 @@ object ImportServiceOperation {
     implicit val schema: UnionSchema[ImportOperationError] = union(
       NotFoundErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }

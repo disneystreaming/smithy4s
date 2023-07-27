@@ -9,7 +9,7 @@ import smithy4s.schema.Schema.union
 
 sealed trait UntaggedUnion extends scala.Product with scala.Serializable {
   @inline final def widen: UntaggedUnion = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
 
@@ -22,8 +22,8 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
     alloy.Untagged(),
   )
 
-  final case class ThreeCase(three: Three) extends UntaggedUnion { final def _ordinal: Int = 0 }
-  final case class FourCase(four: Four) extends UntaggedUnion { final def _ordinal: Int = 1 }
+  final case class ThreeCase(three: Three) extends UntaggedUnion { final def $ordinal: Int = 0 }
+  final case class FourCase(four: Four) extends UntaggedUnion { final def $ordinal: Int = 1 }
 
   object ThreeCase {
     val hints: Hints = Hints.empty
@@ -40,6 +40,6 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
     ThreeCase.alt,
     FourCase.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

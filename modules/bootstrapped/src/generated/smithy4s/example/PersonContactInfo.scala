@@ -11,7 +11,7 @@ import smithy4s.schema.Schema.union
 
 sealed trait PersonContactInfo extends scala.Product with scala.Serializable {
   @inline final def widen: PersonContactInfo = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
 
@@ -29,8 +29,8 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     val phone: Prism[PersonContactInfo, PersonPhoneNumber] = Prism.partial[PersonContactInfo, PersonPhoneNumber]{ case PhoneCase(t) => t }(PhoneCase.apply)
   }
 
-  final case class EmailCase(email: PersonEmail) extends PersonContactInfo { final def _ordinal: Int = 0 }
-  final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo { final def _ordinal: Int = 1 }
+  final case class EmailCase(email: PersonEmail) extends PersonContactInfo { final def $ordinal: Int = 0 }
+  final case class PhoneCase(phone: PersonPhoneNumber) extends PersonContactInfo { final def $ordinal: Int = 1 }
 
   object EmailCase {
     val hints: Hints = Hints.empty
@@ -47,7 +47,7 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     EmailCase.alt,
     PhoneCase.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 
   implicit val personContactInfoHash: cats.Hash[PersonContactInfo] = SchemaVisitorHash.fromSchema(schema)

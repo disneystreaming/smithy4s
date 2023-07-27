@@ -162,7 +162,7 @@ object PizzaAdminServiceOperation {
   }
   sealed trait AddMenuItemError extends scala.Product with scala.Serializable {
     @inline final def widen: AddMenuItemError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object AddMenuItemError extends ShapeTag.Companion[AddMenuItemError] {
 
@@ -174,9 +174,9 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def _ordinal: Int = 0 }
-    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def _ordinal: Int = 1 }
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def _ordinal: Int = 2 }
+    final case class PriceErrorCase(priceError: PriceError) extends AddMenuItemError { final def $ordinal: Int = 0 }
+    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends AddMenuItemError { final def $ordinal: Int = 1 }
+    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends AddMenuItemError { final def $ordinal: Int = 2 }
 
     object PriceErrorCase {
       val hints: Hints = Hints.empty
@@ -199,7 +199,7 @@ object PizzaAdminServiceOperation {
       GenericServerErrorCase.alt,
       GenericClientErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class GetMenu(input: GetMenuRequest) extends PizzaAdminServiceOperation[GetMenuRequest, PizzaAdminServiceOperation.GetMenuError, GetMenuResult, Nothing, Nothing] {
@@ -236,7 +236,7 @@ object PizzaAdminServiceOperation {
   }
   sealed trait GetMenuError extends scala.Product with scala.Serializable {
     @inline final def widen: GetMenuError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object GetMenuError extends ShapeTag.Companion[GetMenuError] {
 
@@ -249,10 +249,10 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def _ordinal: Int = 0 }
-    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def _ordinal: Int = 1 }
-    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def _ordinal: Int = 2 }
-    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def _ordinal: Int = 3 }
+    final case class GenericClientErrorCase(genericClientError: GenericClientError) extends GetMenuError { final def $ordinal: Int = 0 }
+    final case class FallbackError2Case(fallbackError2: FallbackError2) extends GetMenuError { final def $ordinal: Int = 1 }
+    final case class FallbackErrorCase(fallbackError: FallbackError) extends GetMenuError { final def $ordinal: Int = 2 }
+    final case class NotFoundErrorCase(notFoundError: NotFoundError) extends GetMenuError { final def $ordinal: Int = 3 }
 
     object GenericClientErrorCase {
       val hints: Hints = Hints.empty
@@ -281,7 +281,7 @@ object PizzaAdminServiceOperation {
       FallbackErrorCase.alt,
       NotFoundErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class Version() extends PizzaAdminServiceOperation[Unit, Nothing, VersionOutput, Nothing, Nothing] {
@@ -331,7 +331,7 @@ object PizzaAdminServiceOperation {
   }
   sealed trait HealthError extends scala.Product with scala.Serializable {
     @inline final def widen: HealthError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object HealthError extends ShapeTag.Companion[HealthError] {
 
@@ -341,7 +341,7 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def _ordinal: Int = 0 }
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends HealthError { final def $ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -352,7 +352,7 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[HealthError] = union(
       UnknownServerErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class HeaderEndpoint(input: HeaderEndpointData) extends PizzaAdminServiceOperation[HeaderEndpointData, Nothing, HeaderEndpointData, Nothing, Nothing] {
@@ -417,7 +417,7 @@ object PizzaAdminServiceOperation {
   }
   sealed trait GetEnumError extends scala.Product with scala.Serializable {
     @inline final def widen: GetEnumError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object GetEnumError extends ShapeTag.Companion[GetEnumError] {
 
@@ -427,7 +427,7 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def _ordinal: Int = 0 }
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetEnumError { final def $ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -438,7 +438,7 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[GetEnumError] = union(
       UnknownServerErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class GetIntEnum(input: GetIntEnumInput) extends PizzaAdminServiceOperation[GetIntEnumInput, PizzaAdminServiceOperation.GetIntEnumError, GetIntEnumOutput, Nothing, Nothing] {
@@ -469,7 +469,7 @@ object PizzaAdminServiceOperation {
   }
   sealed trait GetIntEnumError extends scala.Product with scala.Serializable {
     @inline final def widen: GetIntEnumError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object GetIntEnumError extends ShapeTag.Companion[GetIntEnumError] {
 
@@ -479,7 +479,7 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def _ordinal: Int = 0 }
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends GetIntEnumError { final def $ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -490,7 +490,7 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[GetIntEnumError] = union(
       UnknownServerErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class CustomCode(input: CustomCodeInput) extends PizzaAdminServiceOperation[CustomCodeInput, PizzaAdminServiceOperation.CustomCodeError, CustomCodeOutput, Nothing, Nothing] {
@@ -521,7 +521,7 @@ object PizzaAdminServiceOperation {
   }
   sealed trait CustomCodeError extends scala.Product with scala.Serializable {
     @inline final def widen: CustomCodeError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object CustomCodeError extends ShapeTag.Companion[CustomCodeError] {
 
@@ -531,7 +531,7 @@ object PizzaAdminServiceOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def _ordinal: Int = 0 }
+    final case class UnknownServerErrorCase(unknownServerError: UnknownServerError) extends CustomCodeError { final def $ordinal: Int = 0 }
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
@@ -542,7 +542,7 @@ object PizzaAdminServiceOperation {
     implicit val schema: UnionSchema[CustomCodeError] = union(
       UnknownServerErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class Reservation(input: ReservationInput) extends PizzaAdminServiceOperation[ReservationInput, Nothing, ReservationOutput, Nothing, Nothing] {

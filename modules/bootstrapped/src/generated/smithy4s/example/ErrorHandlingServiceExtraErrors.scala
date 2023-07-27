@@ -106,7 +106,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
   }
   sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ExtraErrorOperationError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
 
@@ -119,10 +119,10 @@ object ErrorHandlingServiceExtraErrorsOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError { final def _ordinal: Int = 0 }
-    final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError { final def _ordinal: Int = 1 }
-    final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError { final def _ordinal: Int = 2 }
-    final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError { final def _ordinal: Int = 3 }
+    final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError { final def $ordinal: Int = 0 }
+    final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError { final def $ordinal: Int = 1 }
+    final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError { final def $ordinal: Int = 2 }
+    final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError { final def $ordinal: Int = 3 }
 
     object RandomOtherClientErrorCase {
       val hints: Hints = Hints.empty
@@ -151,7 +151,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       RandomOtherClientErrorWithCodeCase.alt,
       RandomOtherServerErrorWithCodeCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }

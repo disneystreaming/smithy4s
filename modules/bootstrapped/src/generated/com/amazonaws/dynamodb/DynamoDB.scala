@@ -164,7 +164,7 @@ object DynamoDBOperation {
   }
   sealed trait ListTablesError extends scala.Product with scala.Serializable {
     @inline final def widen: ListTablesError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
 
@@ -175,8 +175,8 @@ object DynamoDBOperation {
 
     val hints: Hints = Hints.empty
 
-    final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError { final def _ordinal: Int = 0 }
-    final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError { final def _ordinal: Int = 1 }
+    final case class InternalServerErrorCase(internalServerError: InternalServerError) extends ListTablesError { final def $ordinal: Int = 0 }
+    final case class InvalidEndpointExceptionCase(invalidEndpointException: InvalidEndpointException) extends ListTablesError { final def $ordinal: Int = 1 }
 
     object InternalServerErrorCase {
       val hints: Hints = Hints.empty
@@ -193,7 +193,7 @@ object DynamoDBOperation {
       InternalServerErrorCase.alt,
       InvalidEndpointExceptionCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }
