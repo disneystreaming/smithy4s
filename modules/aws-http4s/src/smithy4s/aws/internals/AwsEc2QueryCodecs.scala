@@ -39,23 +39,35 @@ private[aws] object AwsEcsQueryCodecs {
       ): UnaryClientCodecs[F, I, E, O] = {
         val requestEncoderCompilers = AwsQueryCodecs
           .requestEncoderCompilers[F](
+            // These are set to fulfil the requirements of
+            // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
+            // without UrlFormDataEncoderSchemaVisitor having to have more aware
+            // than necessary of these protocol quirks (having it be aware of
+            // XmlName and XmlFlattened already feels like too much - perhaps in
+            // a future change UrlFormDataEncoderSchemaVisitor can work with
+            // better-named hints, and we can use this same transformation
+            // approach in AwsQueryCodecs to translate the AWS XML hints to
+            // those new hints).
             ignoreXmlFlattened = true,
             capitalizeStructAndUnionMemberNames = true,
             action = endpoint.id.name,
             version = version
           )
           .contramapSchema(
+            // This pre-processing works in collaboration with the passing of
+            // the capitalizeStructAndUnionMemberNames flags to
+            // UrlFormDataEncoderSchemaVisitor.
             smithy4s.schema.Schema.transformHintsTransitivelyK(hints =>
-              hints.get(Ec2QueryName) match {
+              hints.memberHints.get(Ec2QueryName) match {
                 case Some(ec2QueryName) =>
-                  hints.filterNot(_.keyId == XmlName.id) ++ smithy4s.Hints(
+                  hints.addMemberHints(
                     XmlName(ec2QueryName.value)
                   )
 
                 case None =>
-                  hints.get(XmlName) match {
+                  hints.memberHints.get(XmlName) match {
                     case Some(xmlName) =>
-                      hints.filterNot(_.keyId == XmlName.id) ++ smithy4s.Hints(
+                      hints.addMemberHints(
                         XmlName(xmlName.value.capitalize)
                       )
 
@@ -65,8 +77,12 @@ private[aws] object AwsEcsQueryCodecs {
               }
             )
           )
-        val transformEncoders =
-          applyCompression[F](endpoint.hints, retainUserEncoding = false)
+        val transformEncoders = applyCompression[F](
+          endpoint.hints,
+          // To fulfil the requirement of
+          // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/ec2Query/requestCompression.smithy#L152-L298.
+          retainUserEncoding = false
+        )
         val requestEncoderCompilersWithCompression = transformEncoders(
           requestEncoderCompilers
         )

@@ -54,6 +54,10 @@ object HttpRestSchema {
 
   def apply[A](
       fullSchema: Schema[A],
+      // This is used by AwsQueryCodecs and AwsEc2QueryCodecs to ensure that
+      // body producer is retained even in the case where a top-level struct
+      // input is empty. They need that to happen so that a body is produced to
+      // which the Action and Version metadata can be added.
       writeEmptyStructs: Boolean
   ): HttpRestSchema[A] = {
 
@@ -75,7 +79,7 @@ object HttpRestSchema {
           case NoMatch() =>
             fullSchema match {
               case Schema.StructSchema(_, _, fields, make)
-                  if !writeEmptyStructs && (fields.isEmpty) =>
+                  if !writeEmptyStructs && fields.isEmpty =>
                 Empty(make(IndexedSeq.empty))
               case _ => OnlyBody(fullSchema)
             }

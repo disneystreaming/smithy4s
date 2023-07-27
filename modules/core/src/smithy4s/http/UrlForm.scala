@@ -135,7 +135,10 @@ private[smithy4s] object UrlForm {
     def encode(a: A): UrlForm
   }
   object Encoder {
-    def apply(ignoreXmlFlattened: Boolean, capitalizeStructAndUnionMemberNames: Boolean): CachedSchemaCompiler[Encoder] =
+    def apply(
+        ignoreXmlFlattened: Boolean,
+        capitalizeStructAndUnionMemberNames: Boolean
+    ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
         protected override type Aux[A] = UrlFormDataEncoder[A]
         override def fromSchema[A](
@@ -143,7 +146,11 @@ private[smithy4s] object UrlForm {
             cache: Cache
         ): Encoder[A] = {
           val schemaVisitor =
-            new UrlFormDataEncoderSchemaVisitor(cache, ignoreXmlFlattened, capitalizeStructAndUnionMemberNames)
+            new UrlFormDataEncoderSchemaVisitor(
+              cache,
+              ignoreXmlFlattened,
+              capitalizeStructAndUnionMemberNames
+            )
           val urlFormDataEncoder = schemaVisitor(schema)
           (value: A) =>
             UrlForm(

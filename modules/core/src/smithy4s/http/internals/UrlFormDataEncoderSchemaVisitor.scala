@@ -25,6 +25,8 @@ import smithy4s.codecs.PayloadPath
 
 private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder],
+    // These are used by AwsEc2QueryCodecs to conform to the requirements of
+    // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
     ignoreXmlFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
@@ -182,7 +184,8 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       .map(_.value)
       .map(PayloadPath.Segment(_))
       .getOrElse(
-        if (capitalizeStructAndUnionMemberNames) default.capitalize else default
+        if (capitalizeStructAndUnionMemberNames) default.capitalize
+        else default
       )
 
 }

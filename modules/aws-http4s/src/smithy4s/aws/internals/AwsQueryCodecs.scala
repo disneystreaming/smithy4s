@@ -40,8 +40,12 @@ private[aws] object AwsQueryCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders =
-          applyCompression[F](endpoint.hints, retainUserEncoding = false)
+        val transformEncoders = applyCompression[F](
+          endpoint.hints,
+          // To fulfil the requirement of
+          // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/awsQuery/requestCompression.smithy#L152-L298.
+          retainUserEncoding = false
+        )
         val requestEncoderCompilersWithCompression = transformEncoders(
           requestEncoderCompilers[F](
             ignoreXmlFlattened = false,
@@ -114,7 +118,11 @@ private[aws] object AwsQueryCodecs {
       version: String
   ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
     val urlFormEntityEncoderCompilers = UrlForm
-      .Encoder(ignoreXmlFlattened = ignoreXmlFlattened, capitalizeStructAndUnionMemberNames = capitalizeStructAndUnionMemberNames)
+      .Encoder(
+        ignoreXmlFlattened = ignoreXmlFlattened,
+        capitalizeStructAndUnionMemberNames =
+          capitalizeStructAndUnionMemberNames
+      )
       .mapK(
         new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
           def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
@@ -134,6 +142,11 @@ private[aws] object AwsQueryCodecs {
     RequestEncoder.restSchemaCompiler[F](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = urlFormEntityEncoderCompilers,
+      // We have to set this so that a body is produced even in the case where a
+      // top-level struct input is empty. If it wasn't then the contramap above
+      // wouldn't have the required effect because there would be no UrlForm to
+      // add Action and Version to (literally no UrlForm value - not just an
+      // empty one).
       writeEmptyStructs = true
     )
   }
