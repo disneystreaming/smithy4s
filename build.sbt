@@ -133,7 +133,8 @@ lazy val docs =
         Dependencies.Http4s.emberClient.value,
         Dependencies.Http4s.emberServer.value,
         Dependencies.Decline.effect.value,
-        Dependencies.AwsSpecSummary.value
+        Dependencies.AwsSpecSummary.value,
+        Dependencies.Monocle.core.value
       )
     )
     .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
