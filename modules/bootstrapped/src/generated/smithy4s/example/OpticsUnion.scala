@@ -10,9 +10,12 @@ import smithy4s.schema.Schema.union
 
 sealed trait OpticsUnion extends scala.Product with scala.Serializable {
   @inline final def widen: OpticsUnion = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
+
+  def one(one:OpticsStructure): OpticsUnion = OneCase(one)
+
   val id: ShapeId = ShapeId("smithy4s.example", "OpticsUnion")
 
   val hints: Hints = Hints.empty
@@ -21,8 +24,7 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
     val one: Prism[OpticsUnion, OpticsStructure] = Prism.partial[OpticsUnion, OpticsStructure]{ case OneCase(t) => t }(OneCase.apply)
   }
 
-  final case class OneCase(one: OpticsStructure) extends OpticsUnion { final def _ordinal: Int = 0 }
-  def one(one:OpticsStructure): OpticsUnion = OneCase(one)
+  final case class OneCase(one: OpticsStructure) extends OpticsUnion { final def $ordinal: Int = 0 }
 
   object OneCase {
     val hints: Hints = Hints.empty
@@ -33,6 +35,6 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
   implicit val schema: Schema[OpticsUnion] = union(
     OneCase.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

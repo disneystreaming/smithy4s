@@ -15,15 +15,19 @@ import smithy4s.schema.Schema.union
 
 sealed trait TestAdt extends AdtMixinOne with AdtMixinTwo with scala.Product with scala.Serializable {
   @inline final def widen: TestAdt = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object TestAdt extends ShapeTag.Companion[TestAdt] {
+
+  def adtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None):AdtOne = AdtOne(lng, sht, blb, str)
+  def adtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None):AdtTwo = AdtTwo(lng, sht, int)
+
   val id: ShapeId = ShapeId("smithy4s.example", "TestAdt")
 
   val hints: Hints = Hints.empty
 
   final case class AdtOne(lng: Option[Long] = None, sht: Option[Short] = None, blb: Option[Blob] = None, str: Option[String] = None) extends TestAdt with AdtMixinThree {
-    def _ordinal: Int = 0
+    def $ordinal: Int = 0
   }
   object AdtOne extends ShapeTag.Companion[AdtOne] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtOne")
@@ -42,7 +46,7 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     val alt = schema.oneOf[TestAdt]("one")
   }
   final case class AdtTwo(lng: Option[Long] = None, sht: Option[Short] = None, int: Option[Int] = None) extends TestAdt {
-    def _ordinal: Int = 1
+    def $ordinal: Int = 1
   }
   object AdtTwo extends ShapeTag.Companion[AdtTwo] {
     val id: ShapeId = ShapeId("smithy4s.example", "AdtTwo")
@@ -65,6 +69,6 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     AdtOne.alt,
     AdtTwo.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

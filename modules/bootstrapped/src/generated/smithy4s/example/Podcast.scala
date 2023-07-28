@@ -13,9 +13,13 @@ import smithy4s.schema.Schema.union
 
 sealed trait Podcast extends PodcastCommon with scala.Product with scala.Serializable {
   @inline final def widen: Podcast = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object Podcast extends ShapeTag.Companion[Podcast] {
+
+  def video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None):Video = Video(title, url, durationMillis)
+  def audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None):Audio = Audio(title, url, durationMillis)
+
   val id: ShapeId = ShapeId("smithy4s.example", "Podcast")
 
   val hints: Hints = Hints.empty
@@ -26,7 +30,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
   }
 
   final case class Video(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast {
-    def _ordinal: Int = 0
+    def $ordinal: Int = 0
   }
   object Video extends ShapeTag.Companion[Video] {
     val id: ShapeId = ShapeId("smithy4s.example", "Video")
@@ -50,7 +54,7 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     val alt = schema.oneOf[Podcast]("video")
   }
   final case class Audio(title: Option[String] = None, url: Option[String] = None, durationMillis: Option[Long] = None) extends Podcast {
-    def _ordinal: Int = 1
+    def $ordinal: Int = 1
   }
   object Audio extends ShapeTag.Companion[Audio] {
     val id: ShapeId = ShapeId("smithy4s.example", "Audio")
@@ -79,6 +83,6 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     Video.alt,
     Audio.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

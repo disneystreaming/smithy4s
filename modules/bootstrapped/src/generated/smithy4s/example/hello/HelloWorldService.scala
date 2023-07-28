@@ -107,17 +107,19 @@ object HelloWorldServiceOperation {
   }
   sealed trait HelloError extends scala.Product with scala.Serializable {
     @inline final def widen: HelloError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object HelloError extends ShapeTag.Companion[HelloError] {
+
+    def genericServerError(genericServerError:GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
+    def specificServerError(specificServerError:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
+
     val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloError")
 
     val hints: Hints = Hints.empty
 
-    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError { final def _ordinal: Int = 0 }
-    def genericServerError(genericServerError:GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
-    final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError { final def _ordinal: Int = 1 }
-    def specificServerError(specificServerError:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
+    final case class GenericServerErrorCase(genericServerError: GenericServerError) extends HelloError { final def $ordinal: Int = 0 }
+    final case class SpecificServerErrorCase(specificServerError: SpecificServerError) extends HelloError { final def $ordinal: Int = 1 }
 
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
@@ -134,7 +136,7 @@ object HelloWorldServiceOperation {
       GenericServerErrorCase.alt,
       SpecificServerErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
 }

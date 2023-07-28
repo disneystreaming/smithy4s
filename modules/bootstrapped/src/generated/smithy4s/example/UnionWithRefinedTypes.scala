@@ -9,17 +9,19 @@ import smithy4s.schema.Schema.union
 
 sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
   @inline final def widen: UnionWithRefinedTypes = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
+
+  def age(age:Age): UnionWithRefinedTypes = AgeCase(age)
+  def dogName(dogName:smithy4s.refined.Name): UnionWithRefinedTypes = DogNameCase(dogName)
+
   val id: ShapeId = ShapeId("smithy4s.example", "UnionWithRefinedTypes")
 
   val hints: Hints = Hints.empty
 
-  final case class AgeCase(age: Age) extends UnionWithRefinedTypes { final def _ordinal: Int = 0 }
-  def age(age:Age): UnionWithRefinedTypes = AgeCase(age)
-  final case class DogNameCase(dogName: smithy4s.refined.Name) extends UnionWithRefinedTypes { final def _ordinal: Int = 1 }
-  def dogName(dogName:smithy4s.refined.Name): UnionWithRefinedTypes = DogNameCase(dogName)
+  final case class AgeCase(age: Age) extends UnionWithRefinedTypes { final def $ordinal: Int = 0 }
+  final case class DogNameCase(dogName: smithy4s.refined.Name) extends UnionWithRefinedTypes { final def $ordinal: Int = 1 }
 
   object AgeCase {
     val hints: Hints = Hints.empty
@@ -36,6 +38,6 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
     AgeCase.alt,
     DogNameCase.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }
