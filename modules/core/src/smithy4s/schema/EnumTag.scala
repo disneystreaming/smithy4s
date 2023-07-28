@@ -16,9 +16,28 @@
 
 package smithy4s.schema
 
-sealed trait EnumTag
+sealed trait EnumTag[+E]
 
 object EnumTag {
-  case object StringEnum extends EnumTag
-  case object IntEnum extends EnumTag
+  case object ClosedStringEnum extends EnumTag[Nothing]
+  case object ClosedIntEnum extends EnumTag[Nothing]
+  case class OpenStringEnum[E](unkown: String => E) extends EnumTag[E]
+  case class OpenIntEnum[E](unkown: Int => E) extends EnumTag[E]
+
+  object StringEnum {
+    def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
+      case ClosedStringEnum  => true
+      case OpenStringEnum(_) => true
+      case _                 => false
+    }
+
+  }
+
+  object IntEnum {
+    def unapply[E](enumTag: EnumTag[E]): Boolean = enumTag match {
+      case ClosedStringEnum  => true
+      case OpenStringEnum(_) => true
+      case _                 => false
+    }
+  }
 }
