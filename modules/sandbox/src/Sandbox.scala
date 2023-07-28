@@ -48,16 +48,17 @@ object Main extends IOApp.Simple {
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
     // EC2 is the only service that use the ec2Query protocol.
     AwsClient(EC2, awsEnvironment).use(ec2Client =>
-      listAll[DescribeInstanceTypesResult, InstanceTypeInfo](
+      listAll[DescribeInstancesResult, Reservation](
         listF = maybeNextToken =>
-          ec2Client.describeInstanceTypes(
+          ec2Client.describeInstances(
+            maxResults = 100,
             nextToken = maybeNextToken
           ),
-        accessResults = _.instanceTypes.toList.flatten,
+        accessResults = _.reservations.toList.flatten,
         accessNextToken = _.nextToken
       )
         .map(_.size)
-        .flatMap(size => IO.println(s"Found $size instance types"))
+        .flatMap(size => IO.println(s"Found $size instances"))
     )
   }
 
@@ -67,7 +68,7 @@ object Main extends IOApp.Simple {
         .default[IO]
         .build
         .map(
-          RequestLogger.colored(
+          Logger(
             logHeaders = true,
             logBody = true,
             logAction = Some(IO.println _)
