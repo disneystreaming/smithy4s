@@ -217,6 +217,62 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
     )
   }
 
+  test("Doesn't keep default traits on Lists") {
+    val kinesisNamespace =
+      """|$version: "2"
+         |
+         |namespace com.amazonaws.kinesis
+         |
+         |@default(5)
+         |integer Integer
+         |""".stripMargin
+
+    val testNamespace =
+      """
+        |$version: "2"
+        |
+        |namespace test
+        |
+        |list TestList {
+        |  member: com.amazonaws.kinesis#Integer
+        |}
+        |""".stripMargin
+
+    val rawModel = loadModel(kinesisNamespace, testNamespace)
+
+    val transformer = new AwsStandardTypesTransformer()
+    val transformerContext =
+      TransformContext
+        .builder()
+        .model(rawModel)
+        .build()
+
+    val transformedModel = transformer.transform(transformerContext)
+
+    val listCode =
+      generateScalaCode(transformedModel)("test.TestList")
+
+    assertEquals(
+      listCode,
+      """package test
+        |
+        |import smithy4s.Hints
+        |import smithy4s.Newtype
+        |import smithy4s.Schema
+        |import smithy4s.ShapeId
+        |import smithy4s.schema.Schema.bijection
+        |import smithy4s.schema.Schema.int
+        |import smithy4s.schema.Schema.list
+        |
+        |object TestList extends Newtype[List[Int]] {
+        |  val id: ShapeId = ShapeId("test", "TestList")
+        |  val hints: Hints = Hints.empty
+        |  val underlyingSchema: Schema[List[Int]] = list(int).withId(id).addHints(hints)
+        |  implicit val schema: Schema[TestList] = bijection(underlyingSchema, asBijection)
+        |}""".stripMargin
+    )
+  }
+
   test("Removes AWS new types after flattening") {
     val kinesisNamespace =
       """|namespace com.amazonaws.kinesis
