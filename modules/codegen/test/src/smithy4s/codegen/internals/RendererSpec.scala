@@ -394,4 +394,36 @@ final class RendererSpec extends munit.FunSuite {
 
     assert(!contents.exists(_.contains("ServiceProduct")))
   }
+  test(
+    "string literal not containing $ is rendered as an uninterpolated string"
+  ) {
+    val smithy = """
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |@documentation("foo bar")
+                   |string MyString
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(contents.exists(_.contains("smithy.api.Documentation(\"foo bar\")")))
+  }
+  test(
+    "string literal containing $ is rendered as an interpolated string with $ escaped as $$"
+  ) {
+    val smithy = """
+                   |$version: "2.0"
+                   |
+                   |namespace smithy4s
+                   |
+                   |@documentation("foo $bar")
+                   |string MyString
+                   |""".stripMargin
+
+    val contents = generateScalaCode(smithy).values
+
+    assert(contents.exists(_.contains("smithy.api.Documentation(s\"foo $$bar\")")))
+  }
 }

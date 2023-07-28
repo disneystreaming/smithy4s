@@ -1465,7 +1465,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     // render any such strings as interpolated strings (even though that would
     // otherwise be unecessary) so that we can render "$" as "$$", which get
     // converted back to "$" during interpolation.
-    val escaped = if(str.contains('$')) s"s${str.replace("$", "$$")}" else str
+    val escaped = if (str.contains('$')) s"s${str.replace("$", "$$")}" else str
 
     line"$escaped"
   }
