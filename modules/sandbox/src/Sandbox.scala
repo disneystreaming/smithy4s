@@ -30,34 +30,34 @@ object Main extends IOApp.Simple {
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
     // CloudWatch is one of a few services that use the awsQuery protocol.
     AwsClient(CloudWatch, awsEnvironment).use(cloudWatchClient =>
-    listAll[ListMetricsOutput, Metric](
-      listF = maybeNextToken =>
-        cloudWatchClient.listMetrics(
-          // This is just a simple way of reducing the size of the results while
-          // still exercising the pagination handler.
-          namespace = Some("AWS/S3"),
-          nextToken = maybeNextToken
-        ),
-      accessResults = _.metrics.toList.flatten,
-      accessNextToken = _.nextToken
-    )
-      .map(_.size)
-      .flatMap(size => IO.println(s"Found $size metrics"))
+      listAll[ListMetricsOutput, Metric](
+        listF = maybeNextToken =>
+          cloudWatchClient.listMetrics(
+            // This is just a simple way of reducing the size of the results while
+            // still exercising the pagination handler.
+            namespace = Some("AWS/S3"),
+            nextToken = maybeNextToken
+          ),
+        accessResults = _.metrics.toList.flatten,
+        accessNextToken = _.nextToken
+      )
+        .map(_.size)
+        .flatMap(size => IO.println(s"Found $size metrics"))
     )
     // Per
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
     // EC2 is the only service that use the ec2Query protocol.
     AwsClient(EC2, awsEnvironment).use(ec2Client =>
-    listAll[DescribeInstancesOutput, Metric](
-      listF = maybeNextToken =>
-        ec2Client.describeInstanceTypes(
-          nextToken = maybeNextToken
-        ),
-      accessResults = _.reservationSet.toList.flatten,
-      accessNextToken = _.nextToken
-    )
-      .map(_.size)
-      .flatMap(size => IO.println(s"Found $size instance types"))
+      listAll[DescribeInstanceTypesResult, InstanceTypeInfo](
+        listF = maybeNextToken =>
+          ec2Client.describeInstanceTypes(
+            nextToken = maybeNextToken
+          ),
+        accessResults = _.instanceTypes.toList.flatten,
+        accessNextToken = _.nextToken
+      )
+        .map(_.size)
+        .flatMap(size => IO.println(s"Found $size instance types"))
     )
   }
 

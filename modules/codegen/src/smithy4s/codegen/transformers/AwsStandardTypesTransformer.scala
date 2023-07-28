@@ -65,16 +65,20 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
           .map[Boolean](canReplace)
           .orElse(false)
       }
-      .map[Shape](shape => {
+      .map[Shape] { shape =>
         val target = model.expectShape(shape.getTarget)
         val replacementShape = replaceWith(shape.getTarget)
+        // Member shapes can only carry the `@default` trait IF
+        // their container is a structures
+        val canCarryDefault =
+          model.expectShape(shape.getContainer()).isStructureShape()
 
         shape
           .toBuilder()
           .target(replacementShape)
-          .copyDefaultTrait(target)
+          .when(canCarryDefault)(_.copyDefaultTrait(target))
           .build()
-      })
+      }
       .orElse(shape)
   }
 
@@ -105,11 +109,16 @@ object AwsStandardTypesTransformer {
   private[transformers] final implicit class MemberShapeBuilderOps(
       val builder: MemberShape.Builder
   ) extends AnyVal {
-    def copyDefaultTrait(shape: Shape): MemberShape.Builder = {
-      val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
+    def when(condition: Boolean)(
+        mutation: MemberShape.Builder => MemberShape.Builder
+    ): MemberShape.Builder =
+      if (condition)(mutation(builder)) else builder
 
-      defaultTraitOpt
-        .fold(builder)(builder.addTrait(_))
+    def copyDefaultTrait(
+        shape: Shape
+    ): MemberShape.Builder = {
+      val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
+      defaultTraitOpt.fold(builder)(builder.addTrait(_))
     }
   }
 
