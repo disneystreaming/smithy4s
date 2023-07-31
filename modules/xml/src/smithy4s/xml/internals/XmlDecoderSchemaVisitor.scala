@@ -28,10 +28,11 @@ import smithy4s.schema._
 
 import XmlDocument.XmlQName
 
-// TODO: Caching
-private[smithy4s] object XmlDecoderSchemaVisitor
-    extends SchemaVisitor[XmlDecoder]
+private[smithy4s] class XmlDecoderSchemaVisitor(
+    val cache: CompilationCache[XmlDecoder]
+) extends SchemaVisitor.Cached[XmlDecoder]
     with smithy4s.ScalaCompat { compile =>
+
   def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
