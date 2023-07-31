@@ -25,12 +25,20 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
 
   import smithy4s.codegen.internals.TestUtils._
 
-  test("Flattens member shapes targeting AWS new-types") {
+  test(
+    "Flattens member shapes targeting AWS new-types named after standard shapes"
+  ) {
     val kinesisNamespace =
-      """|namespace com.amazonaws.kinesis
+      """|$version: "2"
+         |namespace com.amazonaws.kinesis
          |
+         |// We expect this one to be removed in favour of smithy.api#Integer
          |integer Integer
+         |// This one should be kept because it has a different name
          |timestamp Date
+         |// This one should be kept because it has a trait
+         |@range(min: 1)
+         |long Long
          |""".stripMargin
 
     val testNamespace =
@@ -38,8 +46,10 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
         |namespace test
         |
         |structure TestStructure {
+        | @required
         | i: com.amazonaws.kinesis#Integer
         | d: com.amazonaws.kinesis#Date
+        | l: com.amazonaws.kinesis#Long,
         |}
         |""".stripMargin
 
@@ -61,24 +71,25 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
       structureCode,
       """package test
         |
+        |import com.amazonaws.kinesis.Date
+        |import com.amazonaws.kinesis.Long
         |import smithy4s.Hints
         |import smithy4s.Schema
         |import smithy4s.ShapeId
         |import smithy4s.ShapeTag
-        |import smithy4s.Timestamp
         |import smithy4s.schema.Schema.int
         |import smithy4s.schema.Schema.struct
-        |import smithy4s.schema.Schema.timestamp
         |
-        |final case class TestStructure(i: Int = 0, d: Option[Timestamp] = None)
+        |final case class TestStructure(i: Int, d: Option[Date] = None, l: Option[Long] = None)
         |object TestStructure extends ShapeTag.Companion[TestStructure] {
         |  val id: ShapeId = ShapeId("test", "TestStructure")
         |
         |  val hints: Hints = Hints.empty
         |
         |  implicit val schema: Schema[TestStructure] = struct(
-        |    int.required[TestStructure]("i", _.i).addHints(smithy.api.Default(smithy4s.Document.fromDouble(0.0d))),
-        |    timestamp.optional[TestStructure]("d", _.d),
+        |    int.required[TestStructure]("i", _.i).addHints(smithy.api.Required()),
+        |    Date.schema.optional[TestStructure]("d", _.d),
+        |    Long.schema.optional[TestStructure]("l", _.l),
         |  ){
         |    TestStructure.apply
         |  }.withId(id).addHints(hints)
@@ -206,6 +217,62 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
     )
   }
 
+  test("Doesn't keep default traits on Lists") {
+    val kinesisNamespace =
+      """|$version: "2"
+         |
+         |namespace com.amazonaws.kinesis
+         |
+         |@default(5)
+         |integer Integer
+         |""".stripMargin
+
+    val testNamespace =
+      """
+        |$version: "2"
+        |
+        |namespace test
+        |
+        |list TestList {
+        |  member: com.amazonaws.kinesis#Integer
+        |}
+        |""".stripMargin
+
+    val rawModel = loadModel(kinesisNamespace, testNamespace)
+
+    val transformer = new AwsStandardTypesTransformer()
+    val transformerContext =
+      TransformContext
+        .builder()
+        .model(rawModel)
+        .build()
+
+    val transformedModel = transformer.transform(transformerContext)
+
+    val listCode =
+      generateScalaCode(transformedModel)("test.TestList")
+
+    assertEquals(
+      listCode,
+      """package test
+        |
+        |import smithy4s.Hints
+        |import smithy4s.Newtype
+        |import smithy4s.Schema
+        |import smithy4s.ShapeId
+        |import smithy4s.schema.Schema.bijection
+        |import smithy4s.schema.Schema.int
+        |import smithy4s.schema.Schema.list
+        |
+        |object TestList extends Newtype[List[Int]] {
+        |  val id: ShapeId = ShapeId("test", "TestList")
+        |  val hints: Hints = Hints.empty
+        |  val underlyingSchema: Schema[List[Int]] = list(int).withId(id).addHints(hints)
+        |  implicit val schema: Schema[TestList] = bijection(underlyingSchema, asBijection)
+        |}""".stripMargin
+    )
+  }
+
   test("Removes AWS new types after flattening") {
     val kinesisNamespace =
       """|namespace com.amazonaws.kinesis
@@ -234,6 +301,7 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
       """|namespace com.amazonaws.kinesis
          |
          |timestamp Date
+         |timestamp Timestamp
          |""".stripMargin
 
     val transformer = new AwsStandardTypesTransformer()
@@ -246,8 +314,14 @@ final class AwsStandardTypesTransformerSpec extends munit.FunSuite {
     val transformedModel = transformer.transform(transformerContext)
 
     assert(
-      !transformedModel
+      transformedModel
         .getShape(ShapeId.from("com.amazonaws.kinesis#Date"))
+        .isPresent
+    )
+
+    assert(
+      !transformedModel
+        .getShape(ShapeId.from("com.amazonaws.kinesis#Timestamp"))
         .isPresent
     )
   }
