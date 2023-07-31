@@ -55,7 +55,7 @@ abstract class SchemaVisitorGen extends SchemaVisitor[Gen] { self =>
         length(hints)
           .flatMap(l => Gen.stringOfN(l, Gen.asciiPrintableChar))
           .map(_.getBytes)
-          .map(ByteArray.apply)
+          .map(Blob.apply)
     }
   }
 

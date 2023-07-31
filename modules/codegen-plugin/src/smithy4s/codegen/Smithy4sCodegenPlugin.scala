@@ -131,6 +131,11 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         "String value to use as wildcard argument in types in generated code"
       )
 
+    val smithy4sRenderOptics =
+      taskKey[Boolean](
+        "Boolean value to indicate whether or not to generate optics"
+      )
+
     val smithy4sGeneratedSmithyFiles =
       taskKey[Seq[File]](
         "Generated smithy files"
@@ -218,14 +223,15 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         case _                                                        => "_"
       }
     },
+    config / smithy4sRenderOptics := false,
     config / smithy4sGeneratedSmithyMetadataFile := {
       (config / sourceManaged).value / "smithy" / "generated-metadata.smithy"
     },
     config / smithy4sGeneratedSmithyFiles := {
       val cacheFactory = (config / streams).value.cacheStoreFactory
-      val cached = Tracked.inputChanged[String, Seq[File]](
+      val cached = Tracked.inputChanged[(String, Boolean), Seq[File]](
         cacheFactory.make("smithy4sGeneratedSmithyFilesInput")
-      ) { case (changed, wildcardArg) =>
+      ) { case (changed, (wildcardArg, shouldGenerateOptics)) =>
         val lastOutput = Tracked.lastOutput[Boolean, Seq[File]](
           cacheFactory.make("smithy4sGeneratedSmithyFilesOutput")
         ) { case (changed, prevResult) =>
@@ -235,6 +241,7 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
               file,
               s"""$$version: "2"
                  |metadata smithy4sWildcardArgument = "$wildcardArg"
+                 |metadata smithy4sRenderOptics = $shouldGenerateOptics
                  |""".stripMargin
             )
             Seq(file)
@@ -245,7 +252,8 @@ object Smithy4sCodegenPlugin extends AutoPlugin {
         lastOutput(changed)
       }
       val wildcardArg = (config / smithy4sWildcardArgument).value
-      cached(wildcardArg)
+      val generateOptics = (config / smithy4sRenderOptics).value
+      cached((wildcardArg, generateOptics))
     },
     config / sourceGenerators += (config / smithy4sCodegen).map(
       _.filter(_.ext == "scala")

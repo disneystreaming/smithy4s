@@ -127,7 +127,7 @@ class DocumentDecoderSchemaVisitor(
       )
     case PBlob =>
       fromUnsafe("Base64 binary blob") { case DString(string) =>
-        ByteArray(Base64.getDecoder().decode(string))
+        Blob(Base64.getDecoder().decode(string))
       }
     case PBigInt =>
       from("BigInt") {

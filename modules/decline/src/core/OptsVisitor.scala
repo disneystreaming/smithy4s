@@ -21,16 +21,7 @@ import cats.implicits._
 import com.monovore.decline.Argument
 import com.monovore.decline.Opts
 import smithy.api.{Documentation, ExternalDocumentation, TimestampFormat}
-import smithy4s.{
-  Bijection,
-  ByteArray,
-  Hints,
-  Lazy,
-  Refinement,
-  ShapeId,
-  Timestamp,
-  Blob
-}
+import smithy4s.{Bijection, Hints, Lazy, Refinement, ShapeId, Timestamp, Blob}
 import smithy4s.decline.core.CoreHints._
 import smithy4s.schema.Alt
 import smithy4s.schema.EnumValue
@@ -167,8 +158,8 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case PDocument => jsonField(tag.schema(shapeId).addHints(hints))
       case PBlob => {
-        implicit val byteArrayArgument = commons.byteArrayArgument
-        field[ByteArray](hints)
+        implicit val blobArgument = commons.blobArgument
+        field[Blob](hints)
       }
     }
 
@@ -195,8 +186,8 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
         fieldPlural(member.hints)
 
       case PBlob =>
-        implicit val byteArrayArgument = commons.byteArrayArgument
-        fieldPlural[ByteArray](member.hints)
+        implicit val blobArgument = commons.blobArgument
+        fieldPlural[Blob](member.hints)
 
       case PBoolean | PDocument => jsonFieldPlural(member)
     }

@@ -21,7 +21,7 @@ See https://github.com/disneystreaming/smithy4s/pull/921
 ### Structure Patterns
 
 Allows for marking string types with the `alloy#structurePattern` trait. This trait indicates that a given pattern, with parameters, applies to a given string and that this string should
-actually be parsed into a structure where the members of the structure are derived from the parameters in the string pattern. 
+actually be parsed into a structure where the members of the structure are derived from the parameters in the string pattern.
 
 See https://github.com/disneystreaming/smithy4s/pull/942
 
@@ -32,10 +32,25 @@ typeclasses such as `cats.Show`, `cats.Eq` or any others you may be using.
 
 See https://github.com/disneystreaming/smithy4s/pull/912
 
+### smithy4s.Blob
+
+`smithy4s.ByteArray` has been deprecated in favor of `smithy4s.Blob`.
+
+### Smithy4s Optics Instances
+
+When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rendered in the companion objects of the generated code when appropriate.
+
+See https://github.com/disneystreaming/smithy4s/pull/1103
+
+# 0.17.14
+
+* Only transform AWS shapes named after standard shapes in [#1127](https://github.com/disneystreaming/smithy4s/pull/1127)
+* Fixes AWS AwsStandardTypesTransformer bug by in [1129](https://github.com/disneystreaming/smithy4s/pull/1129)
+
 # 0.17.13
 
-- Backports Service interpreter logic introduced in [#908](https://github.com/disneystreaming/smithy4s/pull/908).
-- Fixes rendering of deprecated annotations in mixins in [#1123](https://github.com/disneystreaming/smithy4s/pull/1123)
+* Backports Service interpreter logic introduced in [#908](https://github.com/disneystreaming/smithy4s/pull/908).
+* Fixes rendering of deprecated annotations in mixins in [#1123](https://github.com/disneystreaming/smithy4s/pull/1123)
 
 # 0.17.12
 

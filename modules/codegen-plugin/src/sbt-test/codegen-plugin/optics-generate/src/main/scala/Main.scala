@@ -14,31 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s
+package demo
 
-import java.util.Base64
-
-class ByteArray(val array: Array[Byte]) {
-  override def equals(other: Any) = other match {
-    case bytes: ByteArray => java.util.Arrays.equals(array, bytes.array)
-    case _                => false
+object Main extends App {
+  try {
+    println(
+      smithy4s.example.TestOptics.optics.one
+        .get(smithy4s.example.TestOptics(Some("test one")))
+    )
+  } catch {
+    case _: java.lang.ExceptionInInitializerError =>
+      println("failed")
+      sys.exit(1)
   }
-
-  override def hashCode(): Int = {
-    var hashCode = 0
-    var i = 0
-    while (i < array.length) {
-      hashCode += array(i).hashCode()
-      i += 1
-    }
-    hashCode
-  }
-
-  override def toString = Base64.getEncoder().encodeToString(array)
-}
-
-object ByteArray {
-  val empty = new ByteArray(Array.emptyByteArray)
-
-  def apply(array: Array[Byte]) = new ByteArray(array)
 }

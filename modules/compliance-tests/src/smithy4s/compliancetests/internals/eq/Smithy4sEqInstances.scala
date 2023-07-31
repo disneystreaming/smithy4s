@@ -18,7 +18,7 @@ package smithy4s.compliancetests.internals.eq
 
 import cats.implicits.{catsSyntaxEq, toContravariantOps}
 import cats.kernel.Eq
-import smithy4s.{ByteArray, Document, Timestamp}
+import smithy4s.{Blob, Document, Timestamp}
 import cats.kernel.instances.StaticMethods
 
 trait Smithy4sEqInstances {
@@ -30,8 +30,7 @@ trait Smithy4sEqInstances {
       if (xs eq ys) true
       else StaticMethods.iteratorEq(xs.iterator, ys.iterator)
 
-  implicit val byteArrayEq: Eq[ByteArray] = (x: ByteArray, y: ByteArray) =>
-    Eq[Array[Byte]].contramap[ByteArray](_.array).eqv(x, y)
+  implicit val blobEq: Eq[Blob] = (x: Blob, y: Blob) => x.sameBytesAs(y)
   implicit val documentEq: Eq[Document] = Eq[String].contramap(_.show)
   implicit val timeStampEq: Eq[Timestamp] = Eq[Long].contramap(_.epochSecond)
   implicit val floatEq: Eq[Float] = (x: Float, y: Float) =>

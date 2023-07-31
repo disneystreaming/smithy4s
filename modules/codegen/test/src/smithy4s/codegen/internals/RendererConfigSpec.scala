@@ -245,18 +245,18 @@ final class RendererConfigSpec extends munit.FunSuite {
     assertContainsSection(serviceCode, "sealed trait OperationError")(
       """|sealed trait OperationError extends scala.Product with scala.Serializable {
          |  @inline final def widen: OperationError = this
-         |  def _ordinal: Int
+         |  def $ordinal: Int
          |}""".stripMargin
     )
 
     assertContainsSection(serviceCode, "object OperationError")(
       """|object OperationError extends ShapeTag.Companion[OperationError] {
+         |  def badRequest(badRequest:BadRequest): OperationError = BadRequestCase(badRequest)
+         |  def internalServerError(internalServerError:InternalServerError): OperationError = InternalServerErrorCase(internalServerError)
          |  val id: ShapeId = ShapeId("smithy4s.errors", "OperationError")
          |  val hints: Hints = Hints.empty
-         |  final case class BadRequestCase(badRequest: BadRequest) extends OperationError { final def _ordinal: Int = 0 }
-         |  def badRequest(badRequest:BadRequest): OperationError = BadRequestCase(badRequest)
-         |  final case class InternalServerErrorCase(internalServerError: InternalServerError) extends OperationError { final def _ordinal: Int = 1 }
-         |  def internalServerError(internalServerError:InternalServerError): OperationError = InternalServerErrorCase(internalServerError)
+         |  final case class BadRequestCase(badRequest: BadRequest) extends OperationError { final def $ordinal: Int = 0 }
+         |  final case class InternalServerErrorCase(internalServerError: InternalServerError) extends OperationError { final def $ordinal: Int = 1 }
          |  object BadRequestCase {
          |    val hints: Hints = Hints.empty
          |    val schema: Schema[BadRequestCase] = bijection(BadRequest.schema.addHints(hints), BadRequestCase(_), _.badRequest)
@@ -271,7 +271,7 @@ final class RendererConfigSpec extends munit.FunSuite {
          |    BadRequestCase.alt,
          |    InternalServerErrorCase.alt,
          |  ){
-         |    _._ordinal
+         |    _.$ordinal
          |  }
          |}""".stripMargin
     )

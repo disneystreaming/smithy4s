@@ -22,7 +22,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalacheck.Gen
 import smithy.api.Length
 import smithy.api.Range
-import smithy4s.ByteArray
+import smithy4s.Blob
 import smithy4s.Hints
 import smithy4s.codecs.PayloadError
 import smithy4s.scalacheck.DynData
@@ -94,7 +94,7 @@ class SchemaVisitorJsonCodecPropertyTests()
                 case m: Map[_, _] => m.size
                 case l: List[_]   => l.size
                 case s: String    => s.size
-                case b: ByteArray => b.array.size
+                case b: Blob      => b.size
               }
               expect(min.forall(_ <= size))
               expect(max.forall(_ >= size))

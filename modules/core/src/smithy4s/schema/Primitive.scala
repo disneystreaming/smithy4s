@@ -42,7 +42,7 @@ object Primitive extends smithy4s.ScalaCompat {
   case object PString extends Primitive[String]
   case object PUUID extends Primitive[java.util.UUID]
   case object PByte extends Primitive[Byte]
-  case object PBlob extends Primitive[ByteArray]
+  case object PBlob extends Primitive[Blob]
   case object PDocument extends Primitive[Document]
   case object PTimestamp extends Primitive[Timestamp]
 
@@ -58,7 +58,7 @@ object Primitive extends smithy4s.ScalaCompat {
       string: F[String],
       uuid: F[java.util.UUID],
       byte: F[Byte],
-      blob: F[ByteArray],
+      blob: F[Blob],
       document: F[Document],
       timestamp: F[Timestamp]
   ): PolyFunction[Primitive, F] = new PolyFunction[Primitive, F] {
@@ -114,9 +114,7 @@ object Primitive extends smithy4s.ScalaCompat {
       case Primitive.PString     => Some(s => Some(s))
       case Primitive.PBlob =>
         Some(
-          unsafeStringParser(s =>
-            ByteArray(java.util.Base64.getDecoder().decode(s))
-          )
+          unsafeStringParser(s => Blob(java.util.Base64.getDecoder().decode(s)))
         )
       case Primitive.PUUID =>
         Some(unsafeStringParser(java.util.UUID.fromString))
@@ -143,7 +141,7 @@ object Primitive extends smithy4s.ScalaCompat {
       case Primitive.PString     => Some(identity[String])
       case Primitive.PTimestamp  => Some(timestampWriter(hints))
       case Primitive.PBlob =>
-        Some(bytes => java.util.Base64.getEncoder().encodeToString(bytes.array))
+        Some(bytes => bytes.toBase64String)
       case Primitive.PDocument => None
     }
   }

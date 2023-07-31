@@ -104,15 +104,17 @@ object NameCollisionOperation {
   }
   sealed trait MyOpError extends scala.Product with scala.Serializable {
     @inline final def widen: MyOpError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object MyOpError extends ShapeTag.Companion[MyOpError] {
+
+    def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
+
     val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
 
     val hints: Hints = Hints.empty
 
-    final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def _ordinal: Int = 0 }
-    def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
+    final case class MyOpErrorCase(myOpError: smithy4s.example.MyOpError) extends MyOpError { final def $ordinal: Int = 0 }
 
     object MyOpErrorCase {
       val hints: Hints = Hints.empty
@@ -123,7 +125,7 @@ object NameCollisionOperation {
     implicit val schema: UnionSchema[MyOpError] = union(
       MyOpErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class Endpoint() extends NameCollisionOperation[Unit, Nothing, Unit, Nothing, Nothing] {

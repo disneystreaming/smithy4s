@@ -136,15 +136,17 @@ object WeatherOperation {
   }
   sealed trait GetCityError extends scala.Product with scala.Serializable {
     @inline final def widen: GetCityError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object GetCityError extends ShapeTag.Companion[GetCityError] {
+
+    def noSuchResource(noSuchResource:NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
+
     val id: ShapeId = ShapeId("smithy4s.example", "GetCityError")
 
     val hints: Hints = Hints.empty
 
-    final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError { final def _ordinal: Int = 0 }
-    def noSuchResource(noSuchResource:NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
+    final case class NoSuchResourceCase(noSuchResource: NoSuchResource) extends GetCityError { final def $ordinal: Int = 0 }
 
     object NoSuchResourceCase {
       val hints: Hints = Hints.empty
@@ -155,7 +157,7 @@ object WeatherOperation {
     implicit val schema: UnionSchema[GetCityError] = union(
       NoSuchResourceCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class GetForecast(input: GetForecastInput) extends WeatherOperation[GetForecastInput, Nothing, GetForecastOutput, Nothing, Nothing] {

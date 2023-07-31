@@ -17,18 +17,18 @@
 package smithy4s.interopcats.instances
 
 import cats.{Eq, Hash}
-import smithy4s.{ByteArray, ShapeId, Timestamp}
+import smithy4s.{Blob, ShapeId, Timestamp}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.Primitive
 
 private[interopcats] trait HashInstances {
 
-  implicit val byteArrayHash: Hash[ByteArray] =
-    new Hash[ByteArray] {
-      override def hash(x: ByteArray): Int = x.array.hashCode()
+  implicit val blobHash: Hash[Blob] =
+    new Hash[Blob] {
+      override def hash(x: Blob): Int = x.hashCode
 
-      override def eqv(x: ByteArray, y: ByteArray): Boolean =
-        Eq[ByteArray].eqv(x, y)
+      override def eqv(x: Blob, y: Blob): Boolean =
+        Eq[Blob].eqv(x, y)
     }
   implicit val documentHash: Hash[smithy4s.Document] =
     Hash.fromUniversalHashCode

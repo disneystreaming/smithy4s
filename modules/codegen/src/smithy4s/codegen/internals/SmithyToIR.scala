@@ -27,6 +27,7 @@ import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
 import smithy4s.meta.GenerateServiceProductTrait
+import smithy4s.meta.GenerateOpticsTrait
 import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -654,7 +655,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             )
             .some
         } else {
-          primitive(x, "smithy.api#Blob", Primitive.ByteArray)
+          primitive(x, "smithy.api#Blob", Primitive.Blob)
         }
 
       def booleanShape(x: BooleanShape): Option[Type] =
@@ -924,6 +925,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.UniqueItems
     case _: GenerateServiceProductTrait =>
       Hint.GenerateServiceProduct
+    case _: GenerateOpticsTrait =>
+      Hint.GenerateOptics
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
@@ -1329,8 +1332,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
     case (node, Primitive.Byte) if node == Node.nullNode =>
       TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
-    case (node, Primitive.ByteArray) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.ByteArray, Array.empty[Byte])
+    case (node, Primitive.Blob) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
     case (node, Primitive.Bool) if node == Node.nullNode =>
       TypedNode.PrimitiveTN(Primitive.Bool, false)
     case (node, Primitive.Timestamp) if node == Node.nullNode =>

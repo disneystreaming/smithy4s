@@ -1,7 +1,7 @@
 package smithy4s.example
 
-import smithy4s.ByteArray
+import smithy4s.Blob
 
 trait AdtMixinThree {
-  def blb: Option[ByteArray]
+  def blb: Option[Blob]
 }
