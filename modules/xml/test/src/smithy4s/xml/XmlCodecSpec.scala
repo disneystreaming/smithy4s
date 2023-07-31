@@ -184,8 +184,12 @@ object XmlCodecSpec extends SimpleIOSuite {
     case class Foo(x: String, y: Option[String])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val x = string.required[Foo]("x", _.x).addHints(Default(Document.fromString("bar")))
-        val y = string.optional[Foo]("y", _.y).addHints(Default(Document.fromString("baz")))
+        val x = string
+          .required[Foo]("x", _.x)
+          .addHints(Default(Document.fromString("bar")))
+        val y = string
+          .optional[Foo]("y", _.y)
+          .addHints(Default(Document.fromString("baz")))
         struct(x, y)(Foo.apply).n
       }
     }
@@ -200,7 +204,7 @@ object XmlCodecSpec extends SimpleIOSuite {
         expect.same(
           result,
           Right(
-             Foo("bar", Some("baz"))
+            Foo("bar", Some("baz"))
           )
         )
       }

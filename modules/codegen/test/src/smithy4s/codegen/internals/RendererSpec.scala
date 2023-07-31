@@ -424,6 +424,8 @@ final class RendererSpec extends munit.FunSuite {
 
     val contents = generateScalaCode(smithy).values
 
-    assert(contents.exists(_.contains("smithy.api.Documentation(s\"foo $$bar\")")))
+    assert(
+      contents.exists(_.contains("smithy.api.Documentation(s\"foo $$bar\")"))
+    )
   }
 }
