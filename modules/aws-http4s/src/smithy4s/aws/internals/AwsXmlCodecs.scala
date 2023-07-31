@@ -19,17 +19,13 @@ package aws
 package internals
 
 import cats.effect.Concurrent
-import cats.syntax.all._
 import cats.Applicative
 import fs2.compression.Compression
 import smithy4s.http4s.kernel._
 import smithy4s.Endpoint
 import smithy4s.schema.CachedSchemaCompiler
 import org.http4s.EntityDecoder
-import smithy4s.xml.XmlDocument
 import org.http4s.MediaRange
-import fs2.data.xml._
-import fs2.data.xml.dom._
 import cats.data.EitherT
 import smithy4s.kinds.PolyFunction
 import org.http4s.EntityEncoder
@@ -37,6 +33,8 @@ import smithy4s.capability.Covariant
 
 import org.http4s.MediaType
 import smithy4s.http.Metadata
+import smithy4s.xml.Xml
+import cats.syntax.all._
 
 private[aws] object AwsXmlCodecs {
 
@@ -73,12 +71,7 @@ private[aws] object AwsXmlCodecs {
           EntityEncoders.fromHttpMediaWriterK[F]
         )
       )
-    val xmlEntityEncoderCompilers = XmlDocument.Encoder.mapK(
-      new PolyFunction[XmlDocument.Encoder, EntityEncoder[F, *]] {
-        def apply[A](fa: XmlDocument.Encoder[A]): EntityEncoder[F, A] =
-          xmlEntityEncoder[F].contramap(fa.encode)
-      }
-    )
+    val xmlEntityEncoderCompilers = xmlEntityEncoder[F]
     val entityEncoderCompilers = CachedSchemaCompiler.getOrElse(
       stringAndBlobsEntityEncoderCompilers,
       xmlEntityEncoderCompilers
@@ -99,18 +92,8 @@ private[aws] object AwsXmlCodecs {
           EntityDecoders.fromHttpMediaReaderK[F]
         )
       )
-    val xmlEntityDecoderCompilers = XmlDocument.Decoder.mapK(
-      new PolyFunction[XmlDocument.Decoder, EntityDecoder[F, *]] {
-        def apply[A](fa: XmlDocument.Decoder[A]): EntityDecoder[F, A] =
-          xmlEntityDecoder[F].flatMapR(xmlDocument =>
-            EitherT.liftF {
-              fa.decode(xmlDocument)
-                .leftMap(fromXmlToHttpError)
-                .liftTo[F]
-            }
-          )
-      }
-    )
+    val xmlEntityDecoderCompilers = xmlEntityDecoder[F]
+
     val entityDecoderCompilers = CachedSchemaCompiler.getOrElse(
       stringAndBlobsEntityDecoderCompilers,
       xmlEntityDecoderCompilers
@@ -132,59 +115,57 @@ private[aws] object AwsXmlCodecs {
   }
 
   private def xmlEntityEncoder[F[_]: Applicative]
-      : EntityEncoder[F, XmlDocument] =
-    EntityEncoder.encodeBy(
-      org.http4s.headers.`Content-Type`(MediaType.application.xml)
-    ) { xmlDocument =>
-      val body: fs2.Chunk[Byte] = XmlDocument.documentEventifier
-        .eventify(xmlDocument)
-        .through(render(collapseEmpty = false))
-        .through(fs2.text.utf8.encode[fs2.Pure])
-        .compile
-        .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
-      org.http4s.Entity(
-        body = fs2.Stream.chunk(body),
-        length = Some(body.size.toLong)
-      )
+      : CachedSchemaCompiler[EntityEncoder[F, *]] =
+    Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
+      new PolyFunction[
+        Xml.XmlByteStreamEncoder[fs2.Pure, *],
+        EntityEncoder[F, *]
+      ] {
+        def apply[A](
+            encoder: Xml.XmlByteStreamEncoder[fs2.Pure, A]
+        ): EntityEncoder[F, A] =
+          EntityEncoder.encodeBy(
+            org.http4s.headers.`Content-Type`(MediaType.application.xml)
+          ) { xmlDocument =>
+            val body = encoder
+              .encode(xmlDocument)
+              .compile
+              .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
+            org.http4s.Entity(
+              body = fs2.Stream.chunk(body),
+              length = Some(body.size.toLong)
+            )
+          }
+      }
     }
 
   private def xmlEntityDecoder[F[_]: Concurrent]
-      : EntityDecoder[F, XmlDocument] =
-    EntityDecoder.decodeBy(
-      MediaRange.parse("application/xml").getOrElse(sys.error("TODO"))
-    )(media =>
-      EitherT.liftF(
-        media.body
-          .through(fs2.text.utf8.decode[F])
-          .through(events[F, String]())
-          .through(referenceResolver())
-          .through(normalize)
-          .through(documents[F, XmlDocument])
-          .head
-          .compile
-          .last
-          .map(
-            _.getOrElse(
-              // TODO: This isn't right
-              XmlDocument(
-                XmlDocument.XmlElem(
-                  XmlDocument.XmlQName(None, "Unit"),
-                  List.empty,
-                  List.empty
-                )
-              )
+      : CachedSchemaCompiler[EntityDecoder[F, *]] =
+    Xml.xmlByteStreamDecoders[F].mapK {
+      val xmlMediaRange = MediaRange
+        .parse("application/xml")
+        .getOrElse(throw new RuntimeException("Unable to parse xml MediaRange"))
+      new PolyFunction[Xml.XmlByteStreamDecoder[F, *], EntityDecoder[F, *]] {
+        def apply[A](
+            decoder: Xml.XmlByteStreamDecoder[F, A]
+        ): EntityDecoder[F, A] =
+          EntityDecoder.decodeBy(
+            xmlMediaRange
+          )(media =>
+            EitherT.liftF(
+              decoder.decode(media.body).adaptError(fromXmlToHttpError)
             )
           )
-      )
-    )
+      }
+    }
 
-  private def fromXmlToHttpError(
-      xmlDecodeError: smithy4s.xml.XmlDecodeError
-  ): smithy4s.http.HttpContractError =
-    smithy4s.http.HttpPayloadError(
-      xmlDecodeError.path.toPayloadPath,
-      "",
-      xmlDecodeError.message
-    )
+  private val fromXmlToHttpError: PartialFunction[Throwable, Throwable] = {
+    case xmlDecodeError: smithy4s.xml.XmlDecodeError =>
+      smithy4s.http.HttpPayloadError(
+        xmlDecodeError.path.toPayloadPath,
+        "",
+        xmlDecodeError.message
+      )
+  }
 
 }
