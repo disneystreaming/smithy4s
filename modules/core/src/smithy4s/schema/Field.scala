@@ -54,6 +54,11 @@ final case class Field[S, A](
     }
   }
 
+  def foreachUnlessDefault(s: S)(f: A => Unit): Unit = {
+    val a = get(s)
+    if (isDefaultValue(a)) () else f(a)
+  }
+
   def hasDefaultValue: Boolean = getDefaultValue.isDefined
   def isStrictlyRequired: Boolean = !hasDefaultValue
 

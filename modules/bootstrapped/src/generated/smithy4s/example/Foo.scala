@@ -16,26 +16,31 @@ import smithy4s.schema.Schema.union
   */
 sealed trait Foo extends scala.Product with scala.Serializable {
   @inline final def widen: Foo = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object Foo extends ShapeTag.Companion[Foo] {
+
+  def int(int:Int): Foo = IntCase(int)
+  /** this is a comment saying you should be careful for this case
+    * you never know what lies ahead with Strings like this
+    */
+  def str(str:String): Foo = StrCase(str)
+  def bInt(bInt:BigInt): Foo = BIntCase(bInt)
+  def bDec(bDec:BigDecimal): Foo = BDecCase(bDec)
+
   val id: ShapeId = ShapeId("smithy4s.example", "Foo")
 
   val hints: Hints = Hints(
     smithy.api.Documentation("Helpful information for Foo\nint, bigInt and bDec are useful number constructs\nThe string case is there because."),
   )
 
-  final case class IntCase(int: Int) extends Foo { final def _ordinal: Int = 0 }
-  def int(int:Int): Foo = IntCase(int)
+  final case class IntCase(int: Int) extends Foo { final def $ordinal: Int = 0 }
   /** this is a comment saying you should be careful for this case
     * you never know what lies ahead with Strings like this
     */
-  final case class StrCase(str: String) extends Foo { final def _ordinal: Int = 1 }
-  def str(str:String): Foo = StrCase(str)
-  final case class BIntCase(bInt: BigInt) extends Foo { final def _ordinal: Int = 2 }
-  def bInt(bInt:BigInt): Foo = BIntCase(bInt)
-  final case class BDecCase(bDec: BigDecimal) extends Foo { final def _ordinal: Int = 3 }
-  def bDec(bDec:BigDecimal): Foo = BDecCase(bDec)
+  final case class StrCase(str: String) extends Foo { final def $ordinal: Int = 1 }
+  final case class BIntCase(bInt: BigInt) extends Foo { final def $ordinal: Int = 2 }
+  final case class BDecCase(bDec: BigDecimal) extends Foo { final def $ordinal: Int = 3 }
 
   object IntCase {
     val hints: Hints = Hints.empty
@@ -66,6 +71,6 @@ object Foo extends ShapeTag.Companion[Foo] {
     BIntCase.alt,
     BDecCase.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

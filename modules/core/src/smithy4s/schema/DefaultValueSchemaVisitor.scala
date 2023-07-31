@@ -35,7 +35,7 @@ private[schema] object DefaultValueSchemaVisitor extends SchemaVisitor[Option] {
       case PLong       => Some(0L)
       case PBoolean    => Some(false)
       case PTimestamp  => Some(Timestamp.epoch)
-      case PBlob       => Some(ByteArray.empty)
+      case PBlob       => Some(Blob.empty)
       case PBigInt     => Some(BigInt(0))
       case PBigDecimal => Some(BigDecimal(0))
       case PDocument   => Some(Document.DNull)

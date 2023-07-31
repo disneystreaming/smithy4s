@@ -20,7 +20,7 @@ import cats.kernel.Eq
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
 import smithy4s.schema.{Schema, SchemaVisitor}
 import smithy4s.schema.Schema._
-import smithy4s.{ByteArray, Enumeration, Hints, ShapeId, Timestamp}
+import smithy4s.{Blob, Enumeration, Hints, ShapeId, Timestamp}
 import weaver.{Expectations, FunSuite}
 
 object EqVisitorSpec extends FunSuite {
@@ -108,11 +108,11 @@ object EqVisitorSpec extends FunSuite {
 
   }
 
-  test("smithy4s ByteArray") {
-    implicit val schema: Schema[ByteArray] = bytes
-    val fooBar = ByteArray("fooBar".getBytes)
-    val fooBar1 = ByteArray("fooBar".getBytes)
-    val neqFoo = ByteArray("neqFoo".getBytes)
+  test("smithy4s Blob") {
+    implicit val schema: Schema[Blob] = bytes
+    val fooBar = Blob("fooBar")
+    val fooBar1 = Blob("fooBar")
+    val neqFoo = Blob("neqFoo")
     schemaEq(fooBar, fooBar1)(neqFoo)
   }
 

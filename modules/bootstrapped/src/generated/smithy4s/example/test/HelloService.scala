@@ -116,17 +116,19 @@ object HelloServiceOperation {
   }
   sealed trait SayHelloError extends scala.Product with scala.Serializable {
     @inline final def widen: SayHelloError = this
-    def _ordinal: Int
+    def $ordinal: Int
   }
   object SayHelloError extends ShapeTag.Companion[SayHelloError] {
+
+    def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
+    def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
+
     val id: ShapeId = ShapeId("smithy4s.example.test", "SayHelloError")
 
     val hints: Hints = Hints.empty
 
-    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def _ordinal: Int = 0 }
-    def simpleError(simpleError:SimpleError): SayHelloError = SimpleErrorCase(simpleError)
-    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def _ordinal: Int = 1 }
-    def complexError(complexError:ComplexError): SayHelloError = ComplexErrorCase(complexError)
+    final case class SimpleErrorCase(simpleError: SimpleError) extends SayHelloError { final def $ordinal: Int = 0 }
+    final case class ComplexErrorCase(complexError: ComplexError) extends SayHelloError { final def $ordinal: Int = 1 }
 
     object SimpleErrorCase {
       val hints: Hints = Hints.empty
@@ -143,7 +145,7 @@ object HelloServiceOperation {
       SimpleErrorCase.alt,
       ComplexErrorCase.alt,
     ){
-      _._ordinal
+      _.$ordinal
     }
   }
   final case class Listen() extends HelloServiceOperation[Unit, Nothing, Unit, Nothing, Nothing] {

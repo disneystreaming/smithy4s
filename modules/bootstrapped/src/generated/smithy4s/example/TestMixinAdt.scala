@@ -11,15 +11,18 @@ import smithy4s.schema.Schema.union
 
 sealed trait TestMixinAdt extends scala.Product with scala.Serializable {
   @inline final def widen: TestMixinAdt = this
-  def _ordinal: Int
+  def $ordinal: Int
 }
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
+
+  def testAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None):TestAdtMemberWithMixin = TestAdtMemberWithMixin(a, b)
+
   val id: ShapeId = ShapeId("smithy4s.example", "TestMixinAdt")
 
   val hints: Hints = Hints.empty
 
   final case class TestAdtMemberWithMixin(a: Option[String] = None, b: Option[Int] = None) extends TestMixinAdt with CommonFieldsOne {
-    def _ordinal: Int = 0
+    def $ordinal: Int = 0
   }
   object TestAdtMemberWithMixin extends ShapeTag.Companion[TestAdtMemberWithMixin] {
     val id: ShapeId = ShapeId("smithy4s.example", "TestAdtMemberWithMixin")
@@ -40,6 +43,6 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   implicit val schema: Schema[TestMixinAdt] = union(
     TestAdtMemberWithMixin.alt,
   ){
-    _._ordinal
+    _.$ordinal
   }.withId(id).addHints(hints)
 }
