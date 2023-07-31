@@ -21,12 +21,14 @@ import cats.syntax.all._
 import fs2._
 import fs2.data.xml._
 import fs2.data.xml.dom._
+import smithy.api.Default
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s.Blob
-import smithy4s.ShapeId
+import smithy4s.Document
 import smithy4s.Hints
+import smithy4s.ShapeId
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.xml.internals.XmlCursor
@@ -174,6 +176,32 @@ object XmlCodecSpec extends SimpleIOSuite {
                  |</Foo>""".stripMargin
 
     checkContent(xml, Foo("x", Some("y")))
+  }
+
+  test("struct: default value decoding") {
+    case class Foo(x: String, y: Option[String])
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = string.required[Foo]("x", _.x).addHints(Default(Document.fromString("bar")))
+        val y = string.optional[Foo]("y", _.y).addHints(Default(Document.fromString("baz")))
+        struct(x, y)(Foo.apply).n
+      }
+    }
+
+    val xml = """|<Foo>
+                 |</Foo>""".stripMargin
+
+    parseDocument(xml)
+      .flatMap(decodeDocument[Foo](_))
+      .attempt
+      .map { result =>
+        expect.same(
+          result,
+          Right(
+             Foo("bar", Some("baz"))
+          )
+        )
+      }
   }
 
   test("struct: attributes") {
