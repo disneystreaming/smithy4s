@@ -17,10 +17,13 @@
 package smithy4s.codegen.transformers
 
 import smithy4s.codegen.transformers.AwsStandardTypesTransformer.MemberShapeBuilderOps
-import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
+import software.amazon.smithy.build.ProjectionTransformer
+import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
-import software.amazon.smithy.model.traits.{BoxTrait, DefaultTrait, Trait}
+import software.amazon.smithy.model.traits.BoxTrait
+import software.amazon.smithy.model.traits.DefaultTrait
+import software.amazon.smithy.model.traits.Trait
 
 class AwsStandardTypesTransformer extends ProjectionTransformer {
 

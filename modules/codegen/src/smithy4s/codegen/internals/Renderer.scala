@@ -20,8 +20,11 @@ package internals
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
+import smithy4s.codegen.internals.EnumTag.IntEnum
+import smithy4s.codegen.internals.EnumTag.StringEnum
 import smithy4s.codegen.internals.LineSegment._
 import smithy4s.codegen.internals.Primitive.Nothing
+import smithy4s.codegen.internals.Type.Nullable
 import smithy4s.codegen.internals.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
@@ -32,9 +35,6 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
-import smithy4s.codegen.internals.EnumTag.IntEnum
-import smithy4s.codegen.internals.EnumTag.StringEnum
-import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object Renderer {
 
