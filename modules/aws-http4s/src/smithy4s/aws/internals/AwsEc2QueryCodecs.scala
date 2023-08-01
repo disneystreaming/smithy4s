@@ -41,7 +41,7 @@ private[aws] object AwsEcsQueryCodecs {
           .requestEncoderCompilers[F](
             // These are set to fulfil the requirements of
             // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-            // without UrlFormDataEncoderSchemaVisitor having to have more aware
+            // without UrlFormDataEncoderSchemaVisitor having to be more aware
             // than necessary of these protocol quirks (having it be aware of
             // XmlName and XmlFlattened already feels like too much - perhaps in
             // a future change UrlFormDataEncoderSchemaVisitor can work with
