@@ -1,13 +1,24 @@
 package smithy4s
 
+
 import munit._
 import smithy.api.Documentation
+import smithy4s.example.WeatherOperation
+import smithy4s.example.GetForecastInput
+import smithy4s.example.GetForecastOutput
 
 class EndpointBuilderSpec extends FunSuite {
 
-  val endpoint = smithy4s.example.WeatherGen.endpoints.apply(2)
+  val endpoint = WeatherOperation.GetForecast
 
-  val builder = smithy4s.Endpoint.Builder.fromEndpoint(endpoint)
+  val builder = smithy4s.Endpoint.Builder.fromEndpoint[
+    WeatherOperation,
+    GetForecastInput,
+    Nothing,
+    GetForecastOutput,
+    Nothing,
+    Nothing
+  ](endpoint)
 
   test(
     "can replace the following values (Id and Hints) using withId and withHints"
