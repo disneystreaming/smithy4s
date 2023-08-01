@@ -23,8 +23,6 @@ import com.amazonaws.cloudwatch._
 
 object Main extends IOApp.Simple {
 
-  type NextToken = String
-
   override def run: IO[Unit] = cloudWatchClientResource.use(cloudWatchClient =>
     listAll[ListMetricsOutput, Metric](
       listF = maybeNextToken =>
