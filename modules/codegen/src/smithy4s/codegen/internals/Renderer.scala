@@ -761,7 +761,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     } else Line.empty
     block(line"trait $name$ext") {
       lines(
-        fields.map(f => line"def ${fieldToRenderLine(f, noDefault = true)}")
+        fields.map { f =>
+          lines(
+            deprecationAnnotation(f.hints),
+            Line.empty,
+            line"def ${fieldToRenderLine(f, noDefault = true)}"
+          )
+        }
       )
     }
   }
@@ -1100,12 +1106,14 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           )
         }
 
-        deprecationAnnotation(hints).appendIf(_.nonEmpty)(Line.space) +
-          line"$name: " + tpeAndDefault
+        line"$name: " + tpeAndDefault
     }
   }
   private def renderArgs(fields: List[Field]): Line = fields
-    .map(fieldToRenderLine(_))
+    .map { f =>
+      deprecationAnnotation(f.hints).appendIf(_.nonEmpty)(Line.space) +
+        fieldToRenderLine(f)
+    }
     .intercalate(Line.comma)
 
   private def renderEnum(
