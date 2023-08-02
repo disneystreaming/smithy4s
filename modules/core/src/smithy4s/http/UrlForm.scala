@@ -31,17 +31,10 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import scala.collection.mutable
 
-final case class UrlForm(
-    values: List[UrlForm.FormData]
-) {
+final case class UrlForm(values: List[UrlForm.FormData]) {
 
   def render: String = {
     val builder = new mutable.StringBuilder
-    writeTo(builder)
-    builder.result()
-  }
-
-  def writeTo(builder: mutable.StringBuilder): Unit = {
     val lastIndex = values.size - 1
     var i = 0
     for (value <- values) {
@@ -49,6 +42,7 @@ final case class UrlForm(
       if (i < lastIndex) builder.append('&')
       i += 1
     }
+    builder.result()
   }
 }
 
@@ -97,17 +91,15 @@ private[smithy4s] object UrlForm {
             schema: Schema[A],
             cache: Cache
         ): Decoder[A] = {
-          val schemaVisitor =
-            new UrlFormDataDecoderSchemaVisitor(
+          val schemaVisitor = new UrlFormDataDecoderSchemaVisitor(
               cache,
               ignoreXmlFlattened,
               capitalizeStructAndUnionMemberNames
             )
           val urlFormDataDecoder = schemaVisitor(schema)
-          urlForm =>
-            urlFormDataDecoder.decode(
-              UrlFormCursor.fromUrlForm(urlForm)
-            )
+          urlForm => urlFormDataDecoder.decode(
+            UrlFormCursor(PayloadPath.root, urlForm.values)
+          )
         }
       }
   }
@@ -127,8 +119,7 @@ private[smithy4s] object UrlForm {
             schema: Schema[A],
             cache: Cache
         ): Encoder[A] = {
-          val schemaVisitor =
-            new UrlFormDataEncoderSchemaVisitor(
+          val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
               cache,
               ignoreXmlFlattened,
               capitalizeStructAndUnionMemberNames

@@ -63,7 +63,10 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
     // TODO: Does the skip empty thing need to be here too?
     cursor =>
       maybeKey.fold(cursor)(cursor.down(_)) match {
-        case UrlFormCursor.Value(history, values) =>
+        case UrlFormCursor(_, Nil) =>
+          Right(tag.empty)
+
+        case UrlFormCursor(history, values) =>
           // Collection members aren't necessarily primitives, and if they
           // aren't, then there will be multiple pathed values for the same
           // index. One example is maps, which are encoded as collections of
@@ -89,21 +92,15 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
               index
             }
             .map { case (index, indicesAndValues) =>
-              UrlFormCursor
-                .Value(
-                  history,
-                  indicesAndValues.map { case (_, value) =>
-                    value
-                  }
-                )
+              UrlFormCursor(
+                history,
+                indicesAndValues.map { case (_, value) => value }
+              )
                 .down(PayloadPath.Segment.Index(index))
             }
           groupedAndSortedCursors
             .traverse[UrlFormDecodeError, A](memberDecoder.decode(_))
             .map(list => tag.fromIterator(list.iterator))
-
-        case UrlFormCursor.Empty(_) =>
-          Right(tag.empty)
       }
   }
 
@@ -176,7 +173,7 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
       .map(altDecoder(_))
       .toMap[PayloadPath.Segment, UrlFormDataDecoder[U]]
     ({
-      case value @ UrlFormCursor.Value(
+      case value @ UrlFormCursor(
             history,
             UrlForm.FormData(PayloadPath(segment :: Nil), _) :: Nil
           ) =>

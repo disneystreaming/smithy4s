@@ -29,26 +29,15 @@ import smithy4s.http.UrlForm
   * used instead of the direct data. This makes it easier to express the
   * decoding logic that needs to "peek further down" the UrlForm data.
   */
-private[smithy4s] sealed trait UrlFormCursor {
+private[smithy4s] final case class UrlFormCursor(
+    history: PayloadPath,
+    values: List[UrlForm.FormData]
+) {
 
-  def history: PayloadPath
-
-  def down(segment: PayloadPath.Segment): UrlFormCursor
-
-}
-
-private[smithy4s] object UrlFormCursor {
-
-  def fromUrlForm(urlForm: UrlForm): UrlFormCursor =
-    Value(PayloadPath.root, urlForm.values)
-
-  // TODO: Name
-  final case class Value(
-      override val history: PayloadPath,
-      values: List[UrlForm.FormData]
-  ) extends UrlFormCursor {
-    override def down(segment: PayloadPath.Segment): UrlFormCursor = {
-      val matchingValues = values.collect {
+  def down(segment: PayloadPath.Segment): UrlFormCursor =
+    UrlFormCursor(
+      history.append(segment),
+      values.collect {
         case UrlForm.FormData(
               PayloadPath(`segment` :: segments),
               Some(value)
@@ -58,21 +47,6 @@ private[smithy4s] object UrlFormCursor {
             maybeValue = Some(value)
           )
       }
-      if (matchingValues.nonEmpty)
-        Value(
-          history.append(segment),
-          matchingValues
-        )
-      else
-        Empty(history.append(segment))
-    }
-  }
+    )
 
-  final case class Empty(override val history: PayloadPath)
-      extends UrlFormCursor {
-    override def down(segment: PayloadPath.Segment): UrlFormCursor =
-      Empty(
-        history.append(segment)
-      )
-  }
 }

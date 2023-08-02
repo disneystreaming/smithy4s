@@ -40,8 +40,8 @@ private[smithy4s] trait UrlFormDataDecoder[A] { self =>
     cursor => self.decode(cursor).map(f)
 
   def optional: UrlFormDataDecoder[Option[A]] = {
-    case UrlFormCursor.Empty(_) => Right(None)
-    case other                  => self.decode(other).map(Some(_))
+    case UrlFormCursor(_, Nil) => Right(None)
+    case other                 => self.decode(other).map(Some(_))
   }
 }
 
@@ -55,7 +55,7 @@ private[smithy4s] object UrlFormDataDecoder {
   def fromStringParser[A](expectedType: String)(
       f: String => Option[A]
   ): UrlFormDataDecoder[A] = {
-    case UrlFormCursor.Value(
+    case UrlFormCursor(
           history,
           List(UrlForm.FormData(PayloadPath.root, Some(value)))
         ) =>
