@@ -15,8 +15,8 @@
  */
 
 import cats.effect._
-import com.amazonaws.cloudwatch._
-import com.amazonaws.ec2._
+import com.amazonaws.cloudwatch
+import com.amazonaws.ec2
 import org.http4s.client.middleware._
 import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws._
@@ -27,8 +27,8 @@ object Main extends IOApp.Simple {
     // Per
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
     // CloudWatch is one of a few services that use the awsQuery protocol.
-    AwsClient(CloudWatch, awsEnvironment).use(cloudWatchClient =>
-      listAll[ListMetricsOutput, Metric](
+    AwsClient(cloudwatch.CloudWatch, awsEnvironment).use(cloudWatchClient =>
+      listAll[cloudwatch.NextToken, cloudwatch.ListMetricsOutput, cloudwatch.Metric](
         listF = maybeNextToken =>
           cloudWatchClient.listMetrics(
             // This is just a simple way of reducing the size of the results while
@@ -45,8 +45,8 @@ object Main extends IOApp.Simple {
     // Per
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
     // EC2 is the only service that use the ec2Query protocol.
-    AwsClient(EC2, awsEnvironment).use(ec2Client =>
-      listAll[DescribeInstanceStatusResult, InstanceStatus](
+    AwsClient(ec2.EC2, awsEnvironment).use(ec2Client =>
+      listAll[String, ec2.DescribeInstanceStatusResult, ec2.InstanceStatus](
         listF = maybeNextToken =>
           ec2Client.describeInstanceStatus(
             maxResults = 100,
@@ -87,7 +87,7 @@ object Main extends IOApp.Simple {
   // user-land. Perhaps we could use pagination hints from the specs to avoid
   // having to manually wire up the accessors, and to generate synthetic service
   // functions that handle pagination?
-  private def listAll[ListOutput, Result](
+  private def listAll[NextToken, ListOutput, Result](
       listF: Option[NextToken] => IO[ListOutput],
       accessResults: ListOutput => List[Result],
       accessNextToken: ListOutput => Option[NextToken],
