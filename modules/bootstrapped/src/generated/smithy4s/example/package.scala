@@ -65,6 +65,7 @@ package object example {
   type FreeForm = smithy4s.example.FreeForm.Type
   type SomeInt = smithy4s.example.SomeInt.Type
   type DogName = smithy4s.example.DogName.Type
+  type TestIdRefTwo = smithy4s.example.TestIdRefTwo.Type
   type FancyList = smithy4s.example.FancyList.Type
   type Ingredients = smithy4s.example.Ingredients.Type
   type StringList = smithy4s.example.StringList.Type

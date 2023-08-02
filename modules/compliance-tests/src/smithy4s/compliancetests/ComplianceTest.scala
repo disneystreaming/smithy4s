@@ -21,7 +21,7 @@ import smithy4s.ShapeId
 
 case class ComplianceTest[F[_]](
     id: String,
-    protocol: String,
+    protocol: ShapeId,
     endpoint: ShapeId,
     documentation: Option[String],
     config: TestConfig,
