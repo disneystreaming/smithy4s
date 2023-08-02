@@ -164,7 +164,7 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
         alloy
           .StructurePattern(
             pattern = pattern,
-            target = ""
+            target = ShapeId("", "")
           )
       )
       .from(input)
@@ -186,7 +186,7 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
         alloy
           .StructurePattern(
             pattern = pattern,
-            target = ""
+            target = ShapeId("", "")
           )
       )
       .apply(input)
