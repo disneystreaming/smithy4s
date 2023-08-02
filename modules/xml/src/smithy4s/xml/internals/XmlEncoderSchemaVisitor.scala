@@ -28,10 +28,9 @@ import smithy4s.{Schema => _, _}
 import XmlDocument._
 import cats.kernel.Monoid
 
-private[smithy4s] object XmlEncoderSchemaVisitor extends XmlEncoderSchemaVisitor
-
-private[smithy4s] abstract class XmlEncoderSchemaVisitor
-    extends SchemaVisitor[XmlEncoder]
+private[smithy4s] class XmlEncoderSchemaVisitor(
+    val cache: CompilationCache[XmlEncoder]
+) extends SchemaVisitor.Cached[XmlEncoder]
     with smithy4s.ScalaCompat { compile =>
 
   def primitive[P](

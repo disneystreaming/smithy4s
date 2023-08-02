@@ -28,9 +28,11 @@ import smithy4s.schema._
 
 import XmlDocument.XmlQName
 
-private[smithy4s] object XmlDecoderSchemaVisitor
-    extends SchemaVisitor[XmlDecoder]
+private[smithy4s] class XmlDecoderSchemaVisitor(
+    val cache: CompilationCache[XmlDecoder]
+) extends SchemaVisitor.Cached[XmlDecoder]
     with smithy4s.ScalaCompat { compile =>
+
   def primitive[P](
       shapeId: ShapeId,
       hints: Hints,
@@ -126,11 +128,15 @@ private[smithy4s] object XmlDecoderSchemaVisitor
       make: IndexedSeq[Any] => S
   ): XmlDecoder[S] = {
     def fieldReader[A](field: Field[S, A]): XmlDecoder[A] = {
+      val decoderWithAnyDefaultValue = field.getDefaultValue match {
+        case None => compile(field.schema)
+        case Some(defaultValue) =>
+          compile(field.schema).withDefault(defaultValue)
+      }
       val isAttribute = field.memberHints.has(XmlAttribute)
       val xmlName = getXmlName(field.memberHints, field.label)
-      if (isAttribute) compile(field.schema).attribute(xmlName)
-      else compile(field.schema).down(xmlName)
-
+      if (isAttribute) decoderWithAnyDefaultValue.attribute(xmlName)
+      else decoderWithAnyDefaultValue.down(xmlName)
     }
     val readers = fields.map(fieldReader(_))
     new XmlDecoder[S] {

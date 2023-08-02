@@ -18,13 +18,18 @@ package smithy4s
 package http
 package internals
 
-import smithy.api.{XmlFlattened, XmlName}
+import smithy.api.XmlFlattened
+import smithy.api.XmlName
+import smithy4s.codecs.PayloadPath
 import smithy4s.http._
 import smithy4s.schema._
-import smithy4s.codecs.PayloadPath
 
 private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
-    val cache: CompilationCache[UrlFormDataEncoder]
+    val cache: CompilationCache[UrlFormDataEncoder],
+    // These are used by AwsEc2QueryCodecs to conform to the requirements of
+    // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
+    ignoreXmlFlattened: Boolean,
+    capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
   override def primitive[P](
@@ -50,7 +55,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[C[A]] = {
     val memberEncoder = compile(member)
     val maybeKey =
-      if (hints.has[XmlFlattened]) None
+      if (ignoreXmlFlattened || hints.has[XmlFlattened]) None
       else Option(getKey(member.hints, "member"))
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
     (collection: C[A]) => {
@@ -179,6 +184,9 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       .get(XmlName)
       .map(_.value)
       .map(PayloadPath.Segment(_))
-      .getOrElse(default)
+      .getOrElse(
+        if (capitalizeStructAndUnionMemberNames) default.capitalize
+        else default
+      )
 
 }

@@ -20,8 +20,11 @@ package internals
 import cats.data.NonEmptyList
 import cats.data.Reader
 import cats.syntax.all._
+import smithy4s.codegen.internals.EnumTag.IntEnum
+import smithy4s.codegen.internals.EnumTag.StringEnum
 import smithy4s.codegen.internals.LineSegment._
 import smithy4s.codegen.internals.Primitive.Nothing
+import smithy4s.codegen.internals.Type.Nullable
 import smithy4s.codegen.internals.TypedNode._
 import software.amazon.smithy.model.node.Node
 import software.amazon.smithy.model.node._
@@ -32,9 +35,6 @@ import scala.jdk.CollectionConverters._
 import Line._
 import LineSyntax.LineInterpolator
 import ToLines.lineToLines
-import smithy4s.codegen.internals.EnumTag.IntEnum
-import smithy4s.codegen.internals.EnumTag.StringEnum
-import smithy4s.codegen.internals.Type.Nullable
 
 private[internals] object Renderer {
 
@@ -1468,7 +1468,13 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       // with unicode character escapes like "\uD83D" that can be parsed in the regex implementations on all platforms.
       // See https://github.com/disneystreaming/smithy4s/pull/499
       .replace("\\\\u", "\\u")
+    // If the string contains "$", the use of -Xlint:missing-interpolator when
+    // compiling the generated code will result in warnings. To prevent that we
+    // render any such strings as interpolated strings (even though that would
+    // otherwise be unecessary) so that we can render "$" as "$$", which get
+    // converted back to "$" during interpolation.
+    val escaped = if (str.contains('$')) s"s${str.replace("$", "$$")}" else str
 
-    line"$str"
+    line"$escaped"
   }
 }

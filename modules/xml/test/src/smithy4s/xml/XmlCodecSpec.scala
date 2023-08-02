@@ -21,15 +21,19 @@ import cats.syntax.all._
 import fs2._
 import fs2.data.xml._
 import fs2.data.xml.dom._
+import smithy.api.Default
 import smithy.api.XmlAttribute
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s.Blob
-import smithy4s.ShapeId
+import smithy4s.Document
 import smithy4s.Hints
+import smithy4s.ShapeId
+import smithy4s.schema.CompilationCache
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import smithy4s.xml.internals.XmlCursor
+import smithy4s.xml.internals.XmlDecoder
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import weaver._
 
@@ -174,6 +178,36 @@ object XmlCodecSpec extends SimpleIOSuite {
                  |</Foo>""".stripMargin
 
     checkContent(xml, Foo("x", Some("y")))
+  }
+
+  test("struct: default value decoding") {
+    case class Foo(x: String, y: Option[String])
+    object Foo {
+      implicit val schema: Schema[Foo] = {
+        val x = string
+          .required[Foo]("x", _.x)
+          .addHints(Default(Document.fromString("bar")))
+        val y = string
+          .optional[Foo]("y", _.y)
+          .addHints(Default(Document.fromString("baz")))
+        struct(x, y)(Foo.apply).n
+      }
+    }
+
+    val xml = """|<Foo>
+                 |</Foo>""".stripMargin
+
+    parseDocument(xml)
+      .flatMap(decodeDocument[Foo](_))
+      .attempt
+      .map { result =>
+        expect.same(
+          result,
+          Right(
+            Foo("bar", Some("baz"))
+          )
+        )
+      }
   }
 
   test("struct: attributes") {
@@ -535,7 +569,7 @@ object XmlCodecSpec extends SimpleIOSuite {
       }
   }
 
-  def checkContent[A: Schema](xmlString: String, expected: A)(implicit
+  private def checkContent[A: Schema](xmlString: String, expected: A)(implicit
       loc: SourceLocation
   ): IO[Expectations] = {
     parseDocument(xmlString).flatMap { document =>
@@ -561,7 +595,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     }
   }
 
-  def checkDocument[A: Schema](xmlString: String, expected: A)(implicit
+  private def checkDocument[A: Schema](xmlString: String, expected: A)(implicit
       loc: SourceLocation
   ): IO[Expectations] = {
     parseDocument(xmlString)
@@ -579,13 +613,15 @@ object XmlCodecSpec extends SimpleIOSuite {
       .liftTo[IO]
   }
 
-  def encodeDocument[A: Schema](value: A): XmlDocument = {
+  private def encodeDocument[A: Schema](value: A): XmlDocument = {
     val encoder = XmlDocument.Encoder.fromSchema(implicitly[Schema[A]])
     encoder.encode(value)
   }
 
   private def decodeContent[A: Schema](document: XmlDocument): IO[A] = {
-    val decoder = implicitly[Schema[A]].compile(XmlDecoderSchemaVisitor)
+    val cache = CompilationCache.make[XmlDecoder]
+    val schemaVisitor = new XmlDecoderSchemaVisitor(cache)
+    val decoder = schemaVisitor(implicitly[Schema[A]])
     val cursor = XmlCursor.SingleNode(XPath.root, document.root)
     decoder.decode(cursor).leftWiden[Throwable].liftTo[IO]
   }
