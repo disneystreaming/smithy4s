@@ -18,122 +18,119 @@ package smithy4s
 package http
 package internals
 
-import cats.effect.IO
-import cats.syntax.all._
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
 import smithy4s.Blob
 import smithy4s.Hints
-import smithy4s.schema.CompilationCache
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
 
 object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
 
-  test("primitive encoding: int") {
+  pureTest("primitive: int") {
     implicit val schema: Schema[Int] = int
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = 1,
-      rendered = "1"
+      renderedValue = "=1"
     )
   }
 
-  test("primitive encoding: string") {
+  pureTest("primitive: string") {
     implicit val schema: Schema[String] = string
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = "foo",
-      rendered = "foo"
+      renderedValue = "=foo"
     )
   }
 
-  test("primitive encoding: boolean") {
+  pureTest("primitive: boolean") {
     implicit val schema: Schema[Boolean] = boolean
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = true,
-      rendered = "true"
+      renderedValue = "=true"
     )
   }
 
-  test("primitive encoding: long") {
+  pureTest("primitive: long") {
     implicit val schema: Schema[Long] = long
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = 1L,
-      rendered = "1"
+      renderedValue = "=1"
     )
   }
 
-  test("primitive encoding: short") {
+  pureTest("primitive: short") {
     implicit val schema: Schema[Short] = short
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = 1.toShort,
-      rendered = "1"
+      renderedValue = "=1"
     )
   }
 
-  test("primitive encoding: byte") {
+  pureTest("primitive: byte") {
     implicit val schema: Schema[Byte] = byte
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = 'c'.toByte,
-      rendered = "99"
+      renderedValue = "=99"
     )
   }
 
-  test("primitive encoding: double") {
+  pureTest("primitive: double") {
     implicit val schema: Schema[Double] = double
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = 1.1,
-      rendered = "1.1"
+      renderedValue = "=1.1"
     )
   }
 
-  test("primitive encoding: float") {
+  pureTest("primitive: float") {
     implicit val schema: Schema[Float] = float
     if (!Platform.isJS) {
-      checkEncoding(
+      checkEncodingAndDecoding(
         value = 1.1f,
-        rendered = "1.1"
+        renderedValue = "=1.1"
       )
     } else {
       // 1.1f prints 1.100000023841858 in JS
-      checkEncoding(
+      checkEncodingAndDecoding(
         value = 1.0f,
-        rendered = "1"
+        renderedValue = "=1"
       )
     }
   }
 
-  test("primitive encoding: bigint") {
+  pureTest("primitive: bigint") {
     implicit val schema: Schema[BigInt] = bigint
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = BigInt(
         "1000000000000000000000000000000000000000000000000000000000000000"
       ),
-      rendered =
-        "1000000000000000000000000000000000000000000000000000000000000000"
+      renderedValue =
+        "=1000000000000000000000000000000000000000000000000000000000000000"
     )
   }
 
-  test("primitive encoding: bigdecimal") {
+  pureTest("primitive: bigdecimal") {
     implicit val schema: Schema[BigDecimal] = bigdecimal
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = BigDecimal(
         "1000000000000000000000000000000000000000000000000000000000000000.1"
       ),
-      rendered =
-        "1000000000000000000000000000000000000000000000000000000000000000.1"
+      renderedValue =
+        "=1000000000000000000000000000000000000000000000000000000000000000.1"
     )
   }
 
-  test("primitive encoding: bytes") {
+  pureTest("primitive: bytes") {
     implicit val schema: Schema[Blob] = bytes
-    checkEncoding(
+    checkEncodingAndDecoding(
       value = Blob("foobar"),
-      rendered = "Zm9vYmFy"
+      renderedValue = "=Zm9vYmFy"
     )
   }
 
-  test("struct encoding and decoding") {
+  pureTest("struct") {
     case class Foo(x: String, y: Option[String])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -142,13 +139,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(x, y)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo("value-x", Some("value-y")),
-      rendered = "x=value-x&y=value-y"
+      renderedValue = "x=value-x&y=value-y"
     )
   }
 
-  test("struct encoding and decoding: empty optional") {
+  pureTest("struct: empty optional") {
     case class Foo(x: String, y: Option[String])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -157,13 +154,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(x, y)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo("value-x", None),
-      rendered = "x=value-x"
+      renderedValue = "x=value-x"
     )
   }
 
-  test("struct encoding and decoding: custom names") {
+  pureTest("struct: custom names") {
     case class Foo(x: String, y: Option[String])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -172,13 +169,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(x, y)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo("value-x", Some("value-y")),
-      rendered = "xx=value-x&y%3Ay=value-y"
+      renderedValue = "xx=value-x&y%3Ay=value-y"
     )
   }
 
-  test("list encoding and decoding") {
+  pureTest("list") {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -186,13 +183,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(List(1, 2, 3)),
-      rendered = "foos.member.1=1&foos.member.2=2&foos.member.3=3"
+      renderedValue = "foos.member.1=1&foos.member.2=2&foos.member.3=3"
     )
   }
 
-  test("list encoding and decoding: custom names") {
+  pureTest("list: custom names") {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -201,13 +198,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(List(1, 2, 3)),
-      rendered = "foos.x.1=1&foos.x.2=2&foos.x.3=3"
+      renderedValue = "foos.x.1=1&foos.x.2=2&foos.x.3=3"
     )
   }
 
-  test("list encoding and decoding: flattened") {
+  pureTest("list: flattened") {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -217,13 +214,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(List(1, 2, 3)),
-      rendered = "foos.1=1&foos.2=2&foos.3=3"
+      renderedValue = "foos.1=1&foos.2=2&foos.3=3"
     )
   }
 
-  test("list encoding and decoding: flattened custom names") {
+  pureTest("list: flattened custom names") {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -233,13 +230,13 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(List(1, 2, 3)),
-      rendered = "x.1=1&x.2=2&x.3=3"
+      renderedValue = "x.1=1&x.2=2&x.3=3"
     )
   }
 
-  test("recursion encoding and decoding") {
+  pureTest("recursion") {
     case class IntList(head: Int, tail: Option[IntList])
     object IntList {
       implicit val schema: Schema[IntList] = recursive {
@@ -248,40 +245,40 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(head, tail)(IntList.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = IntList(1, Some(IntList(2, None))),
-      rendered = "head=1&tail.head=2"
+      renderedValue = "head=1&tail.head=2"
     )
   }
 
-  test("union encoding and decoding") {
+  pureTest("union") {
     type Foo = Either[Int, String]
     implicit val schema: Schema[Foo] = Schema.either(int, string)
-    checkBoth[Foo](
+    checkEncodingAndDecoding[Foo](
       value = Left(1),
-      rendered = "left=1"
-    ) |+| checkBoth[Foo](
+      renderedValue = "left=1"
+    ) && checkEncodingAndDecoding[Foo](
       value = Right("hello"),
-      rendered = "right=hello"
+      renderedValue = "right=hello"
     )
   }
 
-  test("union encoding and decoding: custom names") {
+  pureTest("union: custom names") {
     type Foo = Either[Int, String]
     implicit val schema: Schema[Foo] = Schema.either(
       int.addMemberHints(XmlName("foo")),
       string.addMemberHints(XmlName("bar"))
     )
-    checkBoth[Foo](
+    checkEncodingAndDecoding[Foo](
       value = Left(1),
-      rendered = "foo=1"
-    ) |+| checkBoth[Foo](
+      renderedValue = "foo=1"
+    ) && checkEncodingAndDecoding[Foo](
       value = Right("hello"),
-      rendered = "bar=hello"
+      renderedValue = "bar=hello"
     )
   }
 
-  test("enumeration encoding") {
+  pureTest("enumeration") {
     sealed abstract class FooBar(val value: String, val intValue: Int)
         extends smithy4s.Enumeration.Value {
       val name = value
@@ -298,16 +295,16 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
       implicit val schema: Schema[FooBar] =
         Schema.stringEnumeration[FooBar](List(Foo, Bar))
     }
-    checkEncoding[FooBar](
+    checkEncodingAndDecoding[FooBar](
       value = FooBar.Foo,
-      rendered = "foo"
-    ) <+> checkEncoding[FooBar](
+      renderedValue = "=foo"
+    ) && checkEncodingAndDecoding[FooBar](
       value = FooBar.Bar,
-      rendered = "bar"
+      renderedValue = "=bar"
     )
   }
 
-  test("map encoding and decoding") {
+  pureTest("map") {
     case class Foo(foos: Map[String, Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -315,14 +312,14 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(Map("a" -> 1, "b" -> 2)),
-      rendered =
+      renderedValue =
         "foos.entry.1.key=a&foos.entry.1.value=1&foos.entry.2.key=b&foos.entry.2.value=2"
     )
   }
 
-  test("map encoding and decoding: custom names") {
+  pureTest("map: custom names") {
     case class Foo(foos: Map[String, Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -333,14 +330,14 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(Map("a" -> 1, "b" -> 2)),
-      rendered =
+      renderedValue =
         "entries.entry.1.k=a&entries.entry.1.v=1&entries.entry.2.k=b&entries.entry.2.v=2"
     )
   }
 
-  test("map encoding and decoding: flattened") {
+  pureTest("map: flattened") {
     case class Foo(foos: Map[String, Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
@@ -351,76 +348,41 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         struct(foos)(Foo.apply)
       }
     }
-    checkBoth(
+    checkEncodingAndDecoding(
       value = Foo(Map("a" -> 1, "b" -> 2)),
-      rendered = "foos.1.key=a&foos.1.value=1&foos.2.key=b&foos.2.value=2"
+      renderedValue = "foos.1.key=a&foos.1.value=1&foos.2.key=b&foos.2.value=2"
     )
   }
 
-  private def checkEncoding[A: Schema](value: A, rendered: String)(implicit
-      loc: SourceLocation
-  ): IO[Expectations] = {
-    val encodedString = UrlForm(encodeFormData(value)).render
-    IO(expect.same(encodedString, rendered))
-  }
-
-  def checkBoth[A](value: A, rendered: String)(implicit
+  private def checkEncodingAndDecoding[A](value: A, renderedValue: String)(
+      implicit
       schema: Schema[A],
       loc: SourceLocation
-  ): IO[Expectations] = {
-    val encodedString = encodeUrlForm(value).render
-    for {
-      decodedResult <- for {
-        urlForm <- parseUrlForm(rendered)
-        value <- decodeUrlForm(urlForm)
-      } yield value
-    } yield expect.same(encodedString, rendered) &&
-      expect.same(decodedResult, value)
-  }
-
-  // private def checkUrlForm[A: Schema](urlFormString: String, expected: A)(
-  //     implicit loc: SourceLocation
-  // ): IO[Expectations] =
-  //   parseUrlForm(urlFormString)
-  //     .flatMap(decodeUrlForm[A](_))
-  //     .map(result => expect.same(result, expected))
-
-  def decodeUrlForm[A](
-      urlForm: UrlForm
-  )(implicit schema: Schema[A]): IO[A] =
-    UrlForm
-      .Decoder(
-        ignoreXmlFlattened = false,
-        capitalizeStructAndUnionMemberNames = false
+  ): Expectations =
+    expect.same(
+      UrlForm
+        .Encoder(
+          ignoreXmlFlattened = false,
+          capitalizeStructAndUnionMemberNames = false
+        )
+        .fromSchema(schema)
+        .encode(value)
+        .render,
+      renderedValue
+    ) &&
+      expect.same(
+        UrlFormParser
+          .parseUrlForm(renderedValue)
+          .flatMap(urlForm =>
+            UrlForm
+              .Decoder(
+                ignoreXmlFlattened = false,
+                capitalizeStructAndUnionMemberNames = false
+              )
+              .fromSchema(schema)
+              .decode(urlForm)
+          ),
+        Right(value)
       )
-      .fromSchema(schema)
-      .decode(urlForm)
-      .leftWiden[Throwable]
-      .liftTo[IO]
-
-  def encodeFormData[A](
-      value: A
-  )(implicit schema: Schema[A]): List[UrlForm.FormData] = {
-    val encoderCache = CompilationCache.make[UrlFormDataEncoder]
-    val encoderSchemaVisitor = new UrlFormDataEncoderSchemaVisitor(
-      encoderCache,
-      ignoreXmlFlattened = false,
-      capitalizeStructAndUnionMemberNames = false
-    )
-    val encoder = encoderSchemaVisitor(schema)
-    encoder.encode(value)
-  }
-
-  def encodeUrlForm[A](value: A)(implicit schema: Schema[A]): UrlForm =
-    UrlForm
-      .Encoder(
-        ignoreXmlFlattened = false,
-        capitalizeStructAndUnionMemberNames = false
-      )
-      .fromSchema(schema)
-      .encode(value)
-
-  def parseUrlForm(urlFormString: String): IO[UrlForm] =
-    IO.fromEither(UrlFormParser.parseUrlForm(urlFormString))
 
 }

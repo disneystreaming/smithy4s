@@ -67,7 +67,7 @@ private[smithy4s] object UrlForm {
         if (i < lastIndex) builder.append('.')
         i += 1
       }
-      if (i > 0) builder.append('=')
+      builder.append('=')
       maybeValue.foreach(value =>
         builder.append(
           URLEncoder.encode(value, StandardCharsets.UTF_8.name())
