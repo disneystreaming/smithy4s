@@ -10,3 +10,26 @@ structure TestIdRef {
 
 @idRef
 string TestIdRefTwo
+
+union TestIdRefUnion {
+  @idRef
+  test: String
+  testTwo: TestIdRefTwo
+}
+
+list TestIdRefList {
+  @idRef
+  member: String
+}
+
+map TestIdRefKeyMap {
+  @idRef
+  key: String
+  value: String
+}
+
+map TestIdRefValueMap {
+  key: String
+  @idRef
+  value: String
+}
