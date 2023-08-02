@@ -44,22 +44,22 @@ private[smithy4s] object UrlFormCursor {
 
   case class Value(
       override val history: PayloadPath,
-      formData: UrlForm.FormData.MultipleValues
+      formData: UrlForm.FormData.KeyValues
   ) extends UrlFormCursor {
     override def down(segment: PayloadPath.Segment): UrlFormCursor = {
       val matchingValues = formData.values.collect {
-        case pathedValue
-            if pathedValue.path.segments.headOption.contains(segment) &&
-              pathedValue.maybeValue.isDefined =>
-          UrlForm.FormData.PathedValue(
-            PayloadPath(pathedValue.path.segments.tail),
-            pathedValue.maybeValue
+        case keyValue
+            if keyValue.path.segments.headOption.contains(segment) &&
+              keyValue.maybeValue.isDefined =>
+          UrlForm.FormData.KeyValue(
+            PayloadPath(keyValue.path.segments.tail),
+            keyValue.maybeValue
           )
       }
       if (matchingValues.nonEmpty)
         Value(
           history.append(segment),
-          UrlForm.FormData.MultipleValues(matchingValues)
+          UrlForm.FormData.KeyValues(matchingValues)
         )
       else
         Empty(history.append(segment))

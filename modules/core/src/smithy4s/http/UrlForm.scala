@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets
 import scala.collection.mutable
 
 final case class UrlForm(
-    formData: UrlForm.FormData.MultipleValues
+    formData: UrlForm.FormData.KeyValues
 ) {
   def render: String = {
     val builder = new mutable.StringBuilder
@@ -47,7 +47,7 @@ private[smithy4s] object UrlForm {
 
     def prepend(segment: PayloadPath.Segment): FormData
 
-    def toPathedValues: List[FormData.PathedValue]
+    def toKeyValues: List[FormData.KeyValue]
 
     def widen: FormData = this
 
@@ -60,19 +60,18 @@ private[smithy4s] object UrlForm {
 
       override def prepend(segment: PayloadPath.Segment): FormData = this
 
-      override def toPathedValues: List[FormData.PathedValue] = List.empty
+      override def toKeyValues: List[FormData.KeyValue] = List.empty
 
       override def writeTo(builder: mutable.StringBuilder): Unit = ()
 
     }
 
-    // TODO: Rename as Value, replace uses by PathedValue?
-    final case class SimpleValue(string: String) extends FormData {
+    final case class Value(string: String) extends FormData {
 
-      override def prepend(segment: PayloadPath.Segment): PathedValue =
-        PathedValue(PayloadPath(segment), maybeValue = Some(string))
+      override def prepend(segment: PayloadPath.Segment): KeyValue =
+        KeyValue(PayloadPath(segment), maybeValue = Some(string))
 
-      override def toPathedValues: List[FormData.PathedValue] = List.empty
+      override def toKeyValues: List[FormData.KeyValue] = List.empty
 
       override def writeTo(builder: mutable.StringBuilder): Unit = {
         val _ = builder.append(
@@ -81,18 +80,18 @@ private[smithy4s] object UrlForm {
       }
     }
 
-    object PathedValue {
-      def apply(path: PayloadPath, value: String): PathedValue =
-        PathedValue(path, maybeValue = Some(value))
+    object KeyValue {
+      def apply(path: PayloadPath, value: String): KeyValue =
+        KeyValue(path, maybeValue = Some(value))
     }
 
-    final case class PathedValue(path: PayloadPath, maybeValue: Option[String])
+    final case class KeyValue(path: PayloadPath, maybeValue: Option[String])
         extends FormData {
 
-      override def prepend(segment: PayloadPath.Segment): PathedValue =
+      override def prepend(segment: PayloadPath.Segment): KeyValue =
         copy(path.prepend(segment), maybeValue)
 
-      override def toPathedValues: List[FormData.PathedValue] = List(this)
+      override def toKeyValues: List[FormData.KeyValue] = List(this)
 
       override def writeTo(builder: mutable.StringBuilder): Unit = {
         val lastIndex = path.segments.size - 1
@@ -117,14 +116,12 @@ private[smithy4s] object UrlForm {
       }
     }
 
-    // TODO: Rename as Values?
-    final case class MultipleValues(values: List[PathedValue])
-        extends FormData {
+    final case class KeyValues(values: List[KeyValue]) extends FormData {
 
-      override def prepend(segment: PayloadPath.Segment): MultipleValues =
+      override def prepend(segment: PayloadPath.Segment): KeyValues =
         copy(values.map(_.prepend(segment)))
 
-      override def toPathedValues: List[FormData.PathedValue] = values
+      override def toKeyValues: List[FormData.KeyValue] = values
 
       override def writeTo(builder: mutable.StringBuilder): Unit = {
         val lastIndex = values.size - 1
@@ -190,8 +187,8 @@ private[smithy4s] object UrlForm {
           val urlFormDataEncoder = schemaVisitor(schema)
           value =>
             UrlForm(
-              UrlForm.FormData.MultipleValues(
-                urlFormDataEncoder.encode(value).toPathedValues
+              UrlForm.FormData.KeyValues(
+                urlFormDataEncoder.encode(value).toKeyValues
               )
             )
         }

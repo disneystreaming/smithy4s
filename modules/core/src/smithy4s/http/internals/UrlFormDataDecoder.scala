@@ -58,8 +58,8 @@ private[smithy4s] object UrlFormDataDecoder {
     // TODO: Flatten FormData types
     case UrlFormCursor.Value(
           history,
-          UrlForm.FormData.MultipleValues(
-            List(UrlForm.FormData.PathedValue(PayloadPath.root, Some(value)))
+          UrlForm.FormData.KeyValues(
+            UrlForm.FormData.KeyValue(PayloadPath.root, Some(value)) :: Nil
           )
         ) =>
       f(value).toRight(

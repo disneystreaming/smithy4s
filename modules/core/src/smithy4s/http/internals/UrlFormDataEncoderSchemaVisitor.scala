@@ -38,7 +38,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       tag: Primitive[P]
   ): UrlFormDataEncoder[P] = (p: P) =>
     Primitive.stringWriter(tag, hints) match {
-      case Some(writer) => UrlForm.FormData.SimpleValue(writer(p)).widen
+      case Some(writer) => UrlForm.FormData.Value(writer(p)).widen
       case None         => UrlForm.FormData.Empty.widen
     }
 
@@ -60,7 +60,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
     collection => {
       val formData = UrlForm.FormData
-        .MultipleValues(
+        .KeyValues(
           tag
             .iterator(collection)
             .zipWithIndex
@@ -68,7 +68,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
               memberEncoder
                 .encode(a)
                 .prepend(PayloadPath.Segment(index + 1))
-                .toPathedValues
+                .toKeyValues
             }
             .toList
         )
@@ -78,9 +78,9 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       // which is that empty lists must be serialised, i.e. the top level key
       // for the list must be present, e.g. &listName=&otherValue=foo.
       if (tag.isEmpty(collection) && !skipEmpty)
-        UrlForm.FormData.MultipleValues(
+        UrlForm.FormData.KeyValues(
           List(
-            UrlForm.FormData.PathedValue(PayloadPath.root, maybeValue = None)
+            UrlForm.FormData.KeyValue(PayloadPath.root, maybeValue = None)
           )
         )
       else
@@ -115,10 +115,10 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       total: E => EnumValue[E]
   ): UrlFormDataEncoder[E] = tag match {
     case EnumTag.IntEnum =>
-      value => UrlForm.FormData.SimpleValue(total(value).intValue.toString)
+      value => UrlForm.FormData.Value(total(value).intValue.toString)
 
     case EnumTag.StringEnum =>
-      value => UrlForm.FormData.SimpleValue(total(value).stringValue)
+      value => UrlForm.FormData.Value(total(value).stringValue)
   }
 
   override def struct[S](
@@ -133,8 +133,8 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
         .prepend(getKey(field.hints, field.label))
     val encoders = fields.map(fieldEncoder(_))
     struct =>
-      UrlForm.FormData.MultipleValues(
-        encoders.flatMap(_.encode(struct).toPathedValues).toList
+      UrlForm.FormData.KeyValues(
+        encoders.flatMap(_.encode(struct).toKeyValues).toList
       )
   }
 

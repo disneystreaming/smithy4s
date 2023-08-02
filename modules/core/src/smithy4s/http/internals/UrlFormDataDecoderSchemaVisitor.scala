@@ -42,7 +42,9 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
   ): UrlFormDataDecoder[P] = {
     val desc = SchemaDescription.primitive(shapeId, hints, tag)
     Primitive.stringParser(tag, hints) match {
-      case Some(parser) => UrlFormDataDecoder.fromStringParser(desc)(parser)
+      case Some(parser) =>
+        UrlFormDataDecoder.fromStringParser(desc)(parser)
+
       case None =>
         UrlFormDataDecoder.alwaysFailing(s"Cannot decode $desc from URL form")
     }
@@ -63,7 +65,7 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
       maybeKey.fold(cursor)(cursor.down(_)) match {
         case UrlFormCursor.Value(
               history,
-              UrlForm.FormData.MultipleValues(values)
+              UrlForm.FormData.KeyValues(values)
             ) =>
           // Collection members aren't necessarily primitives, and if they
           // aren't, then there will be multiple pathed values for the same
@@ -76,7 +78,7 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
           // then sort by index.
           val groupedAndSortedCursors = values
             .collect {
-              case formData @ UrlForm.FormData.PathedValue(
+              case formData @ UrlForm.FormData.KeyValue(
                     PayloadPath(PayloadPath.Segment.Index(index) :: _),
                     _
                   ) =>
@@ -89,21 +91,23 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
             .sortBy { case (index, _) =>
               index
             }
-            .map { case (index, indicesAndPathedValues) =>
+            .map { case (index, indicesAndKeyValues) =>
               UrlFormCursor
                 .Value(
                   history,
-                  UrlForm.FormData
-                    .MultipleValues(indicesAndPathedValues.map {
-                      case (_, pathedValue) => pathedValue
-                    })
+                  UrlForm.FormData.KeyValues(indicesAndKeyValues.map {
+                    case (_, keyValue) => keyValue
+                  })
                 )
                 .down(PayloadPath.Segment.Index(index))
             }
           groupedAndSortedCursors
             .traverse[UrlFormDecodeError, A](memberDecoder.decode(_))
             .map(list => tag.fromIterator(list.iterator))
-        case UrlFormCursor.Empty(_) => Right(tag.empty)
+
+        case UrlFormCursor.Empty(_) =>
+          Right(tag.empty)
+
         case other =>
           Left(
             UrlFormDecodeError(
@@ -185,29 +189,29 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
     ({
       case s @ UrlFormCursor.Value(
             history,
-            UrlForm.FormData.MultipleValues(
-              List(pathedValue)
+            UrlForm.FormData.KeyValues(
+              UrlForm.FormData.KeyValue(PayloadPath(segment :: Nil), _) :: Nil
             )
           ) =>
-        pathedValue match {
-          case UrlForm.FormData
-                .PathedValue(PayloadPath(segment :: Nil), _) =>
-            altMap.get(segment) match {
-              case Some(altDecoder) =>
-                altDecoder.decode(s)
-              case None =>
-                Left(
-                  UrlFormDecodeError(
-                    history,
-                    s"Not a valid alternative: $segment"
-                  )
-                )
-            }
-          case _ =>
-            Left(UrlFormDecodeError(history, "Expected a single value"))
+        altMap.get(segment) match {
+          case Some(altDecoder) =>
+            altDecoder.decode(s)
+          case None =>
+            Left(
+              UrlFormDecodeError(
+                history,
+                s"Not a valid alternative: $segment"
+              )
+            )
         }
+
       case other =>
-        Left(UrlFormDecodeError(other.history, "Expected a single value"))
+        Left(
+          UrlFormDecodeError(
+            other.history,
+            s"Expected a single value but got $other"
+          )
+        )
     })
   }
 
