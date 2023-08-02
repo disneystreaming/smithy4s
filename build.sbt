@@ -887,7 +887,7 @@ lazy val benchmark = projectMatrix
 
 lazy val sandbox = projectMatrix
   .in(file("modules/sandbox"))
-  .dependsOn(`aws-http4s`)
+  .dependsOn(`aws-http4s`, http4s)
   .settings(
     Compile / allowedNamespaces := Seq(
       "com.amazonaws.cloudwatch",

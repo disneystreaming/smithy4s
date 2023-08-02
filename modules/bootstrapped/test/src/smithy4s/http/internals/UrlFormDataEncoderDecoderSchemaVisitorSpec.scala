@@ -372,7 +372,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     ) &&
       expect.same(
         UrlFormParser
-          .parseUrlForm(renderedValue)
+          .parse(renderedValue)
           .flatMap(urlForm =>
             UrlForm
               .Decoder(

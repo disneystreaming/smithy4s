@@ -29,9 +29,7 @@ import scala.collection.immutable.BitSet
 // This is based on http4s' own equivalent, but simplified for our use case.
 private[smithy4s] object UrlFormParser {
 
-  def parseUrlForm(
-      urlFormString: String
-  ): Either[UrlFormDecodeError, UrlForm] = {
+  def parse(urlFormString: String): Either[UrlFormDecodeError, UrlForm] = {
     val inputBuffer = CharBuffer.wrap(urlFormString)
     val encodedTermBuilder = new StringBuilder(capacity = 32)
     val outputBuilder = List.newBuilder[UrlForm.FormData]

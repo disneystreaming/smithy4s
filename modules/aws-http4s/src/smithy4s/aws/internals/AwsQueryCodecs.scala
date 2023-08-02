@@ -111,6 +111,9 @@ private[aws] object AwsQueryCodecs {
       }
     }
 
+  // TODO: Lift out of aws-http4s into core, then re-use in OAuthCodecs? At the
+  // same time, change the UrlForm schema visitors to work with something other
+  // than "Xml*" hints.
   def requestEncoderCompilers[F[_]: Concurrent](
       ignoreXmlFlattened: Boolean,
       capitalizeStructAndUnionMemberNames: Boolean,
