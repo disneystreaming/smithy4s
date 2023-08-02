@@ -29,8 +29,6 @@ import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
 
-import scala.collection.mutable
-
 object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
 
   test("primitive encoding: int") {
@@ -362,10 +360,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
   private def checkEncoding[A: Schema](value: A, rendered: String)(implicit
       loc: SourceLocation
   ): IO[Expectations] = {
-    val encodedFormData = encodeFormData(value)
-    val builder = new mutable.StringBuilder
-    encodedFormData.writeTo(builder)
-    val encodedString = builder.result()
+    val encodedString = UrlForm(encodeFormData(value)).render
     IO(expect.same(encodedString, rendered))
   }
 
@@ -373,10 +368,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
       schema: Schema[A],
       loc: SourceLocation
   ): IO[Expectations] = {
-    val encodedUrlForm = encodeUrlForm(value)
-    val builder = new mutable.StringBuilder
-    encodedUrlForm.formData.writeTo(builder)
-    val encodedString = builder.result()
+    val encodedString = encodeUrlForm(value).render
     for {
       decodedResult <- for {
         urlForm <- parseUrlForm(rendered)
@@ -408,7 +400,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
 
   def encodeFormData[A](
       value: A
-  )(implicit schema: Schema[A]): UrlForm.FormData = {
+  )(implicit schema: Schema[A]): List[UrlForm.FormData] = {
     val encoderCache = CompilationCache.make[UrlFormDataEncoder]
     val encoderSchemaVisitor = new UrlFormDataEncoderSchemaVisitor(
       encoderCache,

@@ -32,112 +32,60 @@ import java.nio.charset.StandardCharsets
 import scala.collection.mutable
 
 final case class UrlForm(
-    formData: UrlForm.FormData.KeyValues
+    values: List[UrlForm.FormData]
 ) {
+
   def render: String = {
     val builder = new mutable.StringBuilder
-    formData.writeTo(builder)
+    writeTo(builder)
     builder.result()
+  }
+
+  def writeTo(builder: mutable.StringBuilder): Unit = {
+    val lastIndex = values.size - 1
+    var i = 0
+    for (value <- values) {
+      value.writeTo(builder)
+      if (i < lastIndex) builder.append('&')
+      i += 1
+    }
   }
 }
 
 private[smithy4s] object UrlForm {
 
-  sealed trait FormData extends Product with Serializable {
+  final case class FormData(path: PayloadPath, maybeValue: Option[String]) {
 
-    def prepend(segment: PayloadPath.Segment): FormData
+    def prepend(segment: PayloadPath.Segment): FormData =
+      copy(path.prepend(segment), maybeValue)
 
-    def toKeyValues: List[FormData.KeyValue]
+    def writeTo(builder: mutable.StringBuilder): Unit = {
+      val lastIndex = path.segments.size - 1
+      var i = 0
+      for (segment <- path.segments) {
+        builder.append(segment match {
+          case Segment.Label(label) =>
+            URLEncoder.encode(label, StandardCharsets.UTF_8.name())
 
-    def widen: FormData = this
-
-    def writeTo(builder: mutable.StringBuilder): Unit
-
-  }
-  object FormData {
-
-    case object Empty extends FormData {
-
-      override def prepend(segment: PayloadPath.Segment): FormData = this
-
-      override def toKeyValues: List[FormData.KeyValue] = List.empty
-
-      override def writeTo(builder: mutable.StringBuilder): Unit = ()
-
-    }
-
-    final case class Value(string: String) extends FormData {
-
-      override def prepend(segment: PayloadPath.Segment): KeyValue =
-        KeyValue(PayloadPath(segment), maybeValue = Some(string))
-
-      override def toKeyValues: List[FormData.KeyValue] = List.empty
-
-      override def writeTo(builder: mutable.StringBuilder): Unit = {
-        val _ = builder.append(
-          URLEncoder.encode(string, StandardCharsets.UTF_8.name())
+          case Segment.Index(index) =>
+            index
+        })
+        if (i < lastIndex) builder.append('.')
+        i += 1
+      }
+      if (i > 0) builder.append('=')
+      maybeValue.foreach(value =>
+        builder.append(
+          URLEncoder.encode(value, StandardCharsets.UTF_8.name())
         )
-      }
-    }
-
-    object KeyValue {
-      def apply(path: PayloadPath, value: String): KeyValue =
-        KeyValue(path, maybeValue = Some(value))
-    }
-
-    final case class KeyValue(path: PayloadPath, maybeValue: Option[String])
-        extends FormData {
-
-      override def prepend(segment: PayloadPath.Segment): KeyValue =
-        copy(path.prepend(segment), maybeValue)
-
-      override def toKeyValues: List[FormData.KeyValue] = List(this)
-
-      override def writeTo(builder: mutable.StringBuilder): Unit = {
-        val lastIndex = path.segments.size - 1
-        var i = 0
-        for (segment <- path.segments) {
-          builder.append(segment match {
-            case Segment.Label(label) =>
-              URLEncoder.encode(label, StandardCharsets.UTF_8.name())
-
-            case Segment.Index(index) =>
-              index
-          })
-          if (i < lastIndex) builder.append('.')
-          i += 1
-        }
-        builder.append('=')
-        maybeValue.foreach(value =>
-          builder.append(
-            URLEncoder.encode(value, StandardCharsets.UTF_8.name())
-          )
-        )
-      }
-    }
-
-    final case class KeyValues(values: List[KeyValue]) extends FormData {
-
-      override def prepend(segment: PayloadPath.Segment): KeyValues =
-        copy(values.map(_.prepend(segment)))
-
-      override def toKeyValues: List[FormData.KeyValue] = values
-
-      override def writeTo(builder: mutable.StringBuilder): Unit = {
-        val lastIndex = values.size - 1
-        var i = 0
-        for (value <- values) {
-          value.writeTo(builder)
-          if (i < lastIndex) builder.append('&')
-          i += 1
-        }
-      }
+      )
     }
   }
 
   trait Decoder[A] {
     def decode(urlForm: UrlForm): Either[UrlFormDecodeError, A]
   }
+
   object Decoder {
     def apply(
         ignoreXmlFlattened: Boolean,
@@ -167,6 +115,7 @@ private[smithy4s] object UrlForm {
   trait Encoder[A] {
     def encode(a: A): UrlForm
   }
+
   object Encoder {
     def apply(
         ignoreXmlFlattened: Boolean,
@@ -185,12 +134,7 @@ private[smithy4s] object UrlForm {
               capitalizeStructAndUnionMemberNames
             )
           val urlFormDataEncoder = schemaVisitor(schema)
-          value =>
-            UrlForm(
-              UrlForm.FormData.KeyValues(
-                urlFormDataEncoder.encode(value).toKeyValues
-              )
-            )
+          value => UrlForm(urlFormDataEncoder.encode(value))
         }
       }
   }

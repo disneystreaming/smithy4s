@@ -55,12 +55,9 @@ private[smithy4s] object UrlFormDataDecoder {
   def fromStringParser[A](expectedType: String)(
       f: String => Option[A]
   ): UrlFormDataDecoder[A] = {
-    // TODO: Flatten FormData types
     case UrlFormCursor.Value(
           history,
-          UrlForm.FormData.KeyValues(
-            UrlForm.FormData.KeyValue(PayloadPath.root, Some(value)) :: Nil
-          )
+          List(UrlForm.FormData(PayloadPath.root, Some(value)))
         ) =>
       f(value).toRight(
         UrlFormDecodeError(

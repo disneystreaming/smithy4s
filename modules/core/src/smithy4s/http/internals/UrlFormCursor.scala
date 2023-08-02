@@ -40,33 +40,36 @@ private[smithy4s] sealed trait UrlFormCursor {
 private[smithy4s] object UrlFormCursor {
 
   def fromUrlForm(urlForm: UrlForm): UrlFormCursor =
-    Value(PayloadPath.root, urlForm.formData)
+    Value(PayloadPath.root, urlForm.values)
 
-  case class Value(
+  // TODO: Name
+  final case class Value(
       override val history: PayloadPath,
-      formData: UrlForm.FormData.KeyValues
+      values: List[UrlForm.FormData]
   ) extends UrlFormCursor {
     override def down(segment: PayloadPath.Segment): UrlFormCursor = {
-      val matchingValues = formData.values.collect {
-        case keyValue
-            if keyValue.path.segments.headOption.contains(segment) &&
-              keyValue.maybeValue.isDefined =>
-          UrlForm.FormData.KeyValue(
-            PayloadPath(keyValue.path.segments.tail),
-            keyValue.maybeValue
+      val matchingValues = values.collect {
+        case UrlForm.FormData(
+              PayloadPath(`segment` :: segments),
+              Some(value)
+            ) =>
+          UrlForm.FormData(
+            path = PayloadPath(segments),
+            maybeValue = Some(value)
           )
       }
       if (matchingValues.nonEmpty)
         Value(
           history.append(segment),
-          UrlForm.FormData.KeyValues(matchingValues)
+          matchingValues
         )
       else
         Empty(history.append(segment))
     }
   }
 
-  case class Empty(override val history: PayloadPath) extends UrlFormCursor {
+  final case class Empty(override val history: PayloadPath)
+      extends UrlFormCursor {
     override def down(segment: PayloadPath.Segment): UrlFormCursor =
       Empty(
         history.append(segment)

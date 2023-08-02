@@ -63,10 +63,7 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
     // TODO: Does the skip empty thing need to be here too?
     cursor =>
       maybeKey.fold(cursor)(cursor.down(_)) match {
-        case UrlFormCursor.Value(
-              history,
-              UrlForm.FormData.KeyValues(values)
-            ) =>
+        case UrlFormCursor.Value(history, values) =>
           // Collection members aren't necessarily primitives, and if they
           // aren't, then there will be multiple pathed values for the same
           // index. One example is maps, which are encoded as collections of
@@ -78,7 +75,7 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
           // then sort by index.
           val groupedAndSortedCursors = values
             .collect {
-              case formData @ UrlForm.FormData.KeyValue(
+              case formData @ UrlForm.FormData(
                     PayloadPath(PayloadPath.Segment.Index(index) :: _),
                     _
                   ) =>
@@ -91,13 +88,13 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
             .sortBy { case (index, _) =>
               index
             }
-            .map { case (index, indicesAndKeyValues) =>
+            .map { case (index, indicesAndValues) =>
               UrlFormCursor
                 .Value(
                   history,
-                  UrlForm.FormData.KeyValues(indicesAndKeyValues.map {
-                    case (_, keyValue) => keyValue
-                  })
+                  indicesAndValues.map { case (_, value) =>
+                    value
+                  }
                 )
                 .down(PayloadPath.Segment.Index(index))
             }
@@ -107,14 +104,6 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
 
         case UrlFormCursor.Empty(_) =>
           Right(tag.empty)
-
-        case other =>
-          Left(
-            UrlFormDecodeError(
-              other.history,
-              s"Expected one or multiple values"
-            )
-          )
       }
   }
 
@@ -187,15 +176,14 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
       .map(altDecoder(_))
       .toMap[PayloadPath.Segment, UrlFormDataDecoder[U]]
     ({
-      case s @ UrlFormCursor.Value(
+      case value @ UrlFormCursor.Value(
             history,
-            UrlForm.FormData.KeyValues(
-              UrlForm.FormData.KeyValue(PayloadPath(segment :: Nil), _) :: Nil
-            )
+            UrlForm.FormData(PayloadPath(segment :: Nil), _) :: Nil
           ) =>
         altMap.get(segment) match {
           case Some(altDecoder) =>
-            altDecoder.decode(s)
+            altDecoder.decode(value)
+
           case None =>
             Left(
               UrlFormDecodeError(

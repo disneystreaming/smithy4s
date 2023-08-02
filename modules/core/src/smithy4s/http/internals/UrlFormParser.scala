@@ -36,7 +36,7 @@ private[smithy4s] object UrlFormParser {
   def parseUrlForm(urlFormString: String): Either[ParseFailure, UrlForm] = {
     val inputBuffer = CharBuffer.wrap(urlFormString)
     val encodedTermBuilder = new StringBuilder(capacity = 32)
-    val outputBuilder = List.newBuilder[UrlForm.FormData.KeyValue]
+    val outputBuilder = List.newBuilder[UrlForm.FormData]
 
     var state: State = Key
     var error: ParseFailure = null
@@ -48,15 +48,15 @@ private[smithy4s] object UrlFormParser {
     }
 
     def appendPair(): Unit = if (state == Key) {
-      outputBuilder += UrlForm.FormData.KeyValue(
-        PayloadPath.parse(decodeTerm(encodedTermBuilder.result())),
-        ""
+      outputBuilder += UrlForm.FormData(
+        path = PayloadPath.parse(decodeTerm(encodedTermBuilder.result())),
+        maybeValue = None
       )
       encodedTermBuilder.clear()
     } else {
-      outputBuilder += UrlForm.FormData.KeyValue(
-        PayloadPath.parse(decodeTerm(key)),
-        decodeTerm(encodedTermBuilder.result())
+      outputBuilder += UrlForm.FormData(
+        path = PayloadPath.parse(decodeTerm(key)),
+        maybeValue = Some(decodeTerm(encodedTermBuilder.result()))
       )
       key = null
       encodedTermBuilder.clear()
@@ -89,7 +89,7 @@ private[smithy4s] object UrlFormParser {
     if (error != null) Left(error)
     else {
       appendPair()
-      Right(UrlForm(UrlForm.FormData.KeyValues(outputBuilder.result())))
+      Right(UrlForm(outputBuilder.result()))
     }
   }
 
