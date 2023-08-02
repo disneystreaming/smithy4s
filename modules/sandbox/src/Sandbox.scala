@@ -28,7 +28,11 @@ object Main extends IOApp.Simple {
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
     // CloudWatch is one of a few services that use the awsQuery protocol.
     AwsClient(cloudwatch.CloudWatch, awsEnvironment).use(cloudWatchClient =>
-      listAll[cloudwatch.NextToken, cloudwatch.ListMetricsOutput, cloudwatch.Metric](
+      listAll[
+        cloudwatch.NextToken,
+        cloudwatch.ListMetricsOutput,
+        cloudwatch.Metric
+      ](
         listF = maybeNextToken =>
           cloudWatchClient.listMetrics(
             // This is just a simple way of reducing the size of the results while
