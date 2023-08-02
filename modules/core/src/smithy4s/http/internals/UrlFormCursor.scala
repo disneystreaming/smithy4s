@@ -53,7 +53,7 @@ private[smithy4s] object UrlFormCursor {
           segment: PayloadPath.Segment
       ): UrlForm.FormData =
         if (
-          pathedValue.path.segments.head == segment && pathedValue.maybeValue.isDefined
+          pathedValue.path.segments.headOption.contains(segment) && pathedValue.maybeValue.isDefined
         )
           UrlForm.FormData.PathedValue(
             PayloadPath(pathedValue.path.segments.tail),
