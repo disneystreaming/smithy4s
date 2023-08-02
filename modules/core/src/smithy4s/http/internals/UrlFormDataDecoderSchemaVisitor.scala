@@ -60,7 +60,6 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
     val maybeKey =
       if (ignoreXmlFlattened || hints.has[XmlFlattened]) None
       else Option(getKey(member.hints, "member"))
-    // TODO: Does the skip empty thing need to be here too?
     cursor =>
       maybeKey.fold(cursor)(cursor.down(_)) match {
         case UrlFormCursor(_, Nil) =>
