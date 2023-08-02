@@ -47,14 +47,14 @@ private[smithy4s] object UrlFormParser {
 
     def appendPair(): Unit = if (state == Key) {
       outputBuilder += UrlForm.FormData(
-        path = PayloadPath.parse(decodeTerm(encodedTermBuilder.result())),
+        PayloadPath.parse(decodeTerm(encodedTermBuilder.result())),
         maybeValue = None
       )
       encodedTermBuilder.clear()
     } else {
       outputBuilder += UrlForm.FormData(
-        path = PayloadPath.parse(decodeTerm(key)),
-        maybeValue = Some(decodeTerm(encodedTermBuilder.result()))
+        PayloadPath.parse(decodeTerm(key)),
+        Some(decodeTerm(encodedTermBuilder.result()))
       )
       key = null
       encodedTermBuilder.clear()

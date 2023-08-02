@@ -91,7 +91,7 @@ private[aws] object AwsQueryCodecs {
               val shapeName = alt.schema.shapeId.name
               alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
             }.toMap
-            (errorCode: String) => mapping.getOrElse(errorCode, errorCode)
+            errorCode => mapping.getOrElse(errorCode, errorCode)
         }
         val errorDiscriminator = AwsErrorTypeDecoder
           .fromResponse(errorDecoderCompilers)
@@ -126,15 +126,12 @@ private[aws] object AwsQueryCodecs {
       .mapK(
         new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
           def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-            urlFormEntityEncoder[F].contramap((a: A) =>
+            urlFormEntityEncoder[F].contramap(a =>
               UrlForm(
-                formData = UrlForm.FormData.MultipleValues(
-                  values = Vector(
-                    UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
-                    UrlForm.FormData
-                      .PathedValue(PayloadPath("Version"), version)
-                  ) ++ fa.encode(a).formData.values
-                )
+                List(
+                  UrlForm.FormData(PayloadPath("Action"), Some(action)),
+                  UrlForm.FormData(PayloadPath("Version"), Some(version))
+                ) ++ fa.encode(a).values
               )
             )
         }

@@ -39,14 +39,10 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[P] =
     Primitive.stringWriter(tag, hints) match {
       case Some(writer) =>
-        p =>
-          List(
-            UrlForm.FormData(
-              path = PayloadPath.root,
-              maybeValue = Some(writer(p))
-            )
-          )
-      case None => _ => Nil
+        p => List(UrlForm.FormData(PayloadPath.root, Some(writer(p))))
+
+      case None =>
+        _ => Nil
     }
 
   private val SkipEmpty = Hints.Binding.DynamicBinding(
@@ -118,8 +114,8 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       value =>
         List(
           UrlForm.FormData(
-            path = PayloadPath.root,
-            maybeValue = Some(total(value).intValue.toString)
+            PayloadPath.root,
+            Some(total(value).intValue.toString)
           )
         )
 
@@ -127,8 +123,8 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       value =>
         List(
           UrlForm.FormData(
-            path = PayloadPath.root,
-            maybeValue = Some(total(value).stringValue)
+            PayloadPath.root,
+            Some(total(value).stringValue)
           )
         )
   }

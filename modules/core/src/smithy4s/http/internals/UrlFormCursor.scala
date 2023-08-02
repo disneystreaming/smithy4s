@@ -38,14 +38,9 @@ private[smithy4s] final case class UrlFormCursor(
     UrlFormCursor(
       history.append(segment),
       values.collect {
-        case UrlForm.FormData(
-              PayloadPath(`segment` :: segments),
-              Some(value)
-            ) =>
-          UrlForm.FormData(
-            path = PayloadPath(segments),
-            maybeValue = Some(value)
-          )
+        case UrlForm
+              .FormData(PayloadPath(`segment` :: segments), Some(value)) =>
+          UrlForm.FormData(PayloadPath(segments), Some(value))
       }
     )
 

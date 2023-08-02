@@ -123,7 +123,7 @@ private[aws] object AwsEcsQueryCodecs {
               val shapeName = alt.schema.shapeId.name
               alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
             }.toMap
-            (errorCode: String) => mapping.getOrElse(errorCode, errorCode)
+            errorCode => mapping.getOrElse(errorCode, errorCode)
         }
         val errorDiscriminator = AwsErrorTypeDecoder
           .fromResponse(errorDecoderCompilers)
