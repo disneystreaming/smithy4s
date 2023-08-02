@@ -669,6 +669,14 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       def booleanShape(x: BooleanShape): Option[Type] =
         primitive(x, "smithy.api#Boolean", Primitive.Bool)
 
+      def getHints(tpe: Type, shape: Shape): List[Hint] = {
+        val h = hints(shape)
+        tpe match {
+          case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
+          case _                    => h
+        }
+      }
+
       def listShape(x: ListShape): Option[Type] = {
         x.getMember()
           .accept(this)
@@ -705,10 +713,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       @nowarn("msg=class SetShape in package shapes is deprecated")
-      override def setShape(x: SetShape): Option[Type] =
+      override def setShape(x: SetShape): Option[Type] = {
         x.getMember()
           .accept(this)
-          .map(Type.Collection(CollectionType.Set, _, hints(x.getMember())))
+          .map(mem =>
+            Type
+              .Collection(CollectionType.Set, mem, getHints(mem, x.getMember()))
+          )
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
@@ -720,23 +731,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               isUnwrapped
             )
           }
+      }
 
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
         v <- x.getValue().accept(this).map { tpe =>
           if (x.hasTrait(classOf[SparseTrait])) Type.Nullable(tpe) else tpe
         }
-      } yield {
-        def getHints(tpe: Type, shape: Shape): List[Hint] = {
-          val h = hints(shape)
-          tpe match {
-            case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
-            case _                    => h
-          }
-        }
-        Type.Map(k, getHints(k, x.getKey()), v, getHints(v, x.getValue()))
-
-      }).map { tpe =>
+      } yield Type.Map(
+        k,
+        getHints(k, x.getKey()),
+        v,
+        getHints(v, x.getValue())
+      )).map { tpe =>
         val externalOrBase =
           getExternalOrBase(x, tpe)
         val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)

@@ -91,6 +91,7 @@ package object example {
   type Strings = smithy4s.example.Strings.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
+  type TestIdRefSet = smithy4s.example.TestIdRefSet.Type
   type TestIdRefKeyMap = smithy4s.example.TestIdRefKeyMap.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
