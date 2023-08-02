@@ -580,7 +580,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               if (trt.toShapeId == IdRefTrait.ID) {
                 val rt = RefinementTrait
                   .builder()
-                  .providerImport("smithy4s.refinements._")
                   .targetType("smithy4s.ShapeId")
                   .build()
                 Some(trt -> ExternalTypeInfo.RefinementInfo(rt))
