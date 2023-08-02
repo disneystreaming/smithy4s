@@ -23,8 +23,6 @@ import smithy4s.aws._
 
 object Main extends IOApp.Simple {
 
-  type NextToken = String
-
   override def run: IO[Unit] = awsEnvironmentResource.use { awsEnvironment =>
     // Per
     // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
