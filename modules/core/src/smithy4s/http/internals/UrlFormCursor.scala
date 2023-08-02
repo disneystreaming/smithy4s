@@ -63,10 +63,10 @@ private[smithy4s] object UrlFormCursor {
           UrlForm.FormData.Empty
       value match {
         case UrlForm.FormData.Empty =>
-          FailedValue(history.append(segment))
+          Empty(history.append(segment))
 
         case _: UrlForm.FormData.SimpleValue =>
-          FailedValue(history.append(segment))
+          Empty(history.append(segment))
 
         case pathedValue: UrlForm.FormData.PathedValue =>
           downPathedValue(pathedValue, segment) match {
@@ -84,7 +84,6 @@ private[smithy4s] object UrlFormCursor {
           val newValues = values.map(downPathedValue(_, segment)).collect {
             case pathedValue: UrlForm.FormData.PathedValue => pathedValue
           }
-
           if (newValues.nonEmpty)
             Value(
               history.append(segment),
@@ -96,17 +95,9 @@ private[smithy4s] object UrlFormCursor {
     }
   }
 
-  // TODO: Remove?
   case class Empty(override val history: PayloadPath) extends UrlFormCursor {
     override def down(segment: PayloadPath.Segment): UrlFormCursor =
-      FailedValue(
-        history.append(segment)
-      )
-  }
-  case class FailedValue(override val history: PayloadPath)
-      extends UrlFormCursor {
-    override def down(segment: PayloadPath.Segment): UrlFormCursor =
-      FailedValue(
+      Empty(
         history.append(segment)
       )
   }

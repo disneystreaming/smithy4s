@@ -44,12 +44,18 @@ final case class UrlForm(
 private[smithy4s] object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
+
     def prepend(segment: PayloadPath.Segment): FormData
+
     def toPathedValues: List[FormData.PathedValue]
+
     def widen: FormData = this
+
     def writeTo(builder: mutable.StringBuilder): Unit
+
   }
   object FormData {
+
     case object Empty extends FormData {
 
       override def prepend(segment: PayloadPath.Segment): FormData = this
@@ -153,7 +159,7 @@ private[smithy4s] object UrlForm {
               capitalizeStructAndUnionMemberNames
             )
           val urlFormDataDecoder = schemaVisitor(schema)
-          (urlForm: UrlForm) =>
+          urlForm =>
             urlFormDataDecoder.decode(
               UrlFormCursor.fromUrlForm(urlForm)
             )
@@ -182,7 +188,7 @@ private[smithy4s] object UrlForm {
               capitalizeStructAndUnionMemberNames
             )
           val urlFormDataEncoder = schemaVisitor(schema)
-          (value: A) =>
+          value =>
             UrlForm(
               UrlForm.FormData.MultipleValues(
                 urlFormDataEncoder.encode(value).toPathedValues

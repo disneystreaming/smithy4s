@@ -80,9 +80,6 @@ private[smithy4s] object UrlFormDataDecoder {
         )
       )
 
-    case UrlFormCursor.FailedValue(history) =>
-      Left(UrlFormDecodeError(history, s"Could not decode failed value"))
-
     case other =>
       Left(
         UrlFormDecodeError(
