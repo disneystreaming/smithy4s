@@ -69,17 +69,6 @@ private[smithy4s] object UrlFormDataDecoder {
         )
       )
 
-    case UrlFormCursor.Value(
-          history,
-          UrlForm.FormData.PathedValue(_, Some(value))
-        ) =>
-      f(value).toRight(
-        UrlFormDecodeError(
-          history,
-          s"Could not extract $expectedType from $value"
-        )
-      )
-
     case other =>
       Left(
         UrlFormDecodeError(
