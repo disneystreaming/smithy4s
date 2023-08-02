@@ -19,6 +19,7 @@ package http
 
 import smithy4s.codecs.PayloadPath
 
+// TODO: DRY messages.
 final case class UrlFormDecodeError(path: PayloadPath, message: String)
     extends Throwable {
   override def getMessage(): String = s"${path.render()}: $message"

@@ -92,13 +92,13 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
             .map { case (index, indicesAndPathedValues) =>
               UrlFormCursor
                 .Value(
-                  history.append(index),
+                  history,
                   UrlForm.FormData
                     .MultipleValues(indicesAndPathedValues.map {
                       case (_, pathedValue) => pathedValue
                     })
-                    .down(PayloadPath.Segment.Index(index))
                 )
+                .down(PayloadPath.Segment.Index(index))
             }
           groupedAndSortedCursors
             .traverse[UrlFormDecodeError, A](memberDecoder.decode(_))
@@ -157,12 +157,12 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): UrlFormDataDecoder[S] = {
-    def fieldReader[A](field: Field[S, A]): UrlFormDataDecoder[A] =
+    def fieldDecoder[A](field: Field[S, A]): UrlFormDataDecoder[A] =
       compile(field.schema).down(getKey(field.hints, field.label))
-    val readers = fields.map(fieldReader(_))
+    val decoders = fields.map(fieldDecoder(_))
     cursor =>
-      readers
-        .traverse(_.decode(cursor))
+      decoders
+        .traverse((decoder: UrlFormDataDecoder[_]) => decoder.decode(cursor))
         .map(make)
   }
 
@@ -186,8 +186,7 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
       case s @ UrlFormCursor.Value(
             history,
             UrlForm.FormData.MultipleValues(
-              // TODO: Change values to list?
-              Vector(pathedValue)
+              List(pathedValue)
             )
           ) =>
         pathedValue match {

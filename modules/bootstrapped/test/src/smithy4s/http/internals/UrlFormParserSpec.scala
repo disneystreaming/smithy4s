@@ -25,7 +25,7 @@ class UrlFormParserSpec() extends munit.FunSuite {
   test("struct") {
     val expected = UrlForm(
       UrlForm.FormData.MultipleValues(
-        Vector(
+        List(
           UrlForm.FormData.PathedValue(PayloadPath("x"), "value-x"),
           UrlForm.FormData.PathedValue(PayloadPath("y"), "value-y")
         )
@@ -38,7 +38,7 @@ class UrlFormParserSpec() extends munit.FunSuite {
   test("list") {
     val expected = UrlForm(
       UrlForm.FormData.MultipleValues(
-        Vector(
+        List(
           UrlForm.FormData.PathedValue(PayloadPath("foos", "member", 1), "1"),
           UrlForm.FormData.PathedValue(PayloadPath("foos", "member", 2), "2"),
           UrlForm.FormData.PathedValue(PayloadPath("foos", "member", 3), "3")

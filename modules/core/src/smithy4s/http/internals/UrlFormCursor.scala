@@ -20,6 +20,7 @@ package internals
 
 import smithy4s.codecs.PayloadPath
 import smithy4s.http.UrlForm
+import smithy4s.http.UrlForm.FormData.PathedValue
 
 /**
   * This construct is an internal implementation-detail used for decoding
@@ -46,15 +47,53 @@ private[smithy4s] object UrlFormCursor {
       override val history: PayloadPath,
       value: UrlForm.FormData
   ) extends UrlFormCursor {
-    override def down(segment: PayloadPath.Segment): UrlFormCursor =
-      value.down(segment) match {
-        case UrlForm.FormData.Empty => Empty(history.append(segment))
-        case formData =>
-          Value(
-            history.append(segment),
-            formData
+    override def down(segment: PayloadPath.Segment): UrlFormCursor = {
+      def downPathedValue(
+          pathedValue: UrlForm.FormData.PathedValue,
+          segment: PayloadPath.Segment
+      ): UrlForm.FormData =
+        if (
+          pathedValue.path.segments.head == segment && pathedValue.maybeValue.isDefined
+        )
+          UrlForm.FormData.PathedValue(
+            PayloadPath(pathedValue.path.segments.tail),
+            pathedValue.maybeValue
           )
+        else
+          UrlForm.FormData.Empty
+      value match {
+        case UrlForm.FormData.Empty =>
+          FailedValue(history.append(segment))
+
+        case _: UrlForm.FormData.SimpleValue =>
+          FailedValue(history.append(segment))
+
+        case pathedValue: UrlForm.FormData.PathedValue =>
+          downPathedValue(pathedValue, segment) match {
+            case pathedValue: PathedValue =>
+              Value(
+                history.append(segment),
+                pathedValue
+              )
+
+            case _ =>
+              Empty(history.append(segment))
+          }
+
+        case UrlForm.FormData.MultipleValues(values) =>
+          val newValues = values.map(downPathedValue(_, segment)).collect {
+            case pathedValue: UrlForm.FormData.PathedValue => pathedValue
+          }
+
+          if (newValues.nonEmpty)
+            Value(
+              history.append(segment),
+              UrlForm.FormData.MultipleValues(newValues)
+            )
+          else
+            Empty(history.append(segment))
       }
+    }
   }
 
   // TODO: Remove?
@@ -66,6 +105,9 @@ private[smithy4s] object UrlFormCursor {
   }
   case class FailedValue(override val history: PayloadPath)
       extends UrlFormCursor {
-    override def down(segment: PayloadPath.Segment): UrlFormCursor = this
+    override def down(segment: PayloadPath.Segment): UrlFormCursor =
+      FailedValue(
+        history.append(segment)
+      )
   }
 }

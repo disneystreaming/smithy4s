@@ -59,8 +59,7 @@ private[smithy4s] object UrlFormDataDecoder {
     case UrlFormCursor.Value(
           history,
           UrlForm.FormData.MultipleValues(
-            // TODO: Change values to list
-            Vector(UrlForm.FormData.PathedValue(PayloadPath.root, Some(value)))
+            List(UrlForm.FormData.PathedValue(PayloadPath.root, Some(value)))
           )
         ) =>
       f(value).toRight(

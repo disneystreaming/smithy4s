@@ -44,21 +44,17 @@ final case class UrlForm(
 private[smithy4s] object UrlForm {
 
   sealed trait FormData extends Product with Serializable {
-    def down(segment: PayloadPath.Segment): FormData
     def prepend(segment: PayloadPath.Segment): FormData
-    def toPathedValues: Vector[FormData.PathedValue]
+    def toPathedValues: List[FormData.PathedValue]
     def widen: FormData = this
     def writeTo(builder: mutable.StringBuilder): Unit
   }
   object FormData {
     case object Empty extends FormData {
 
-      // TODO: Should this be an error?
-      override def down(segment: PayloadPath.Segment): FormData = this
-
       override def prepend(segment: PayloadPath.Segment): FormData = this
 
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+      override def toPathedValues: List[FormData.PathedValue] = List.empty
 
       override def writeTo(builder: mutable.StringBuilder): Unit = ()
 
@@ -67,13 +63,10 @@ private[smithy4s] object UrlForm {
     // TODO: Rename as Value, replace uses by PathedValue?
     final case class SimpleValue(string: String) extends FormData {
 
-      // TODO: Should this be an error?
-      override def down(segment: PayloadPath.Segment): FormData = this
-
       override def prepend(segment: PayloadPath.Segment): PathedValue =
         PathedValue(PayloadPath(segment), maybeValue = Some(string))
 
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector.empty
+      override def toPathedValues: List[FormData.PathedValue] = List.empty
 
       override def writeTo(builder: mutable.StringBuilder): Unit = {
         val _ = builder.append(
@@ -90,16 +83,10 @@ private[smithy4s] object UrlForm {
     final case class PathedValue(path: PayloadPath, maybeValue: Option[String])
         extends FormData {
 
-      override def down(segment: PayloadPath.Segment): FormData =
-        if (path.segments.head == segment)
-          PathedValue(PayloadPath(path.segments.tail), maybeValue)
-        // TODO: Should this be an error?
-        else Empty
-
       override def prepend(segment: PayloadPath.Segment): PathedValue =
         copy(path.prepend(segment), maybeValue)
 
-      override def toPathedValues: Vector[FormData.PathedValue] = Vector(this)
+      override def toPathedValues: List[FormData.PathedValue] = List(this)
 
       override def writeTo(builder: mutable.StringBuilder): Unit = {
         val lastIndex = path.segments.size - 1
@@ -125,22 +112,13 @@ private[smithy4s] object UrlForm {
     }
 
     // TODO: Rename as Values?
-    final case class MultipleValues(values: Vector[PathedValue])
+    final case class MultipleValues(values: List[PathedValue])
         extends FormData {
-
-      override def down(segment: PayloadPath.Segment): FormData = {
-        // TODO: Should we error if any are dropped? Probably not.
-        val newValues = values.map(_.down(segment)).collect {
-          case pathedValue: FormData.PathedValue => pathedValue
-        }
-        if (newValues.nonEmpty) MultipleValues(newValues)
-        else Empty
-      }
 
       override def prepend(segment: PayloadPath.Segment): MultipleValues =
         copy(values.map(_.prepend(segment)))
 
-      override def toPathedValues: Vector[FormData.PathedValue] = values
+      override def toPathedValues: List[FormData.PathedValue] = values
 
       override def writeTo(builder: mutable.StringBuilder): Unit = {
         val lastIndex = values.size - 1

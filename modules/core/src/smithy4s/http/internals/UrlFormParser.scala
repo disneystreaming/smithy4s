@@ -36,7 +36,7 @@ private[smithy4s] object UrlFormParser {
   def parseUrlForm(urlFormString: String): Either[ParseFailure, UrlForm] = {
     val inputBuffer = CharBuffer.wrap(urlFormString)
     val encodedTermBuilder = new StringBuilder(capacity = 32)
-    val outputBuilder = Vector.newBuilder[UrlForm.FormData.PathedValue]
+    val outputBuilder = List.newBuilder[UrlForm.FormData.PathedValue]
 
     var state: State = Key
     var error: ParseFailure = null

@@ -70,7 +70,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
                 .prepend(PayloadPath.Segment(index + 1))
                 .toPathedValues
             }
-            .toVector
+            .toList
         )
         .widen
       // This is to handle a quirk of the AWS Query protocol at
@@ -79,7 +79,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       // for the list must be present, e.g. &listName=&otherValue=foo.
       if (tag.isEmpty(collection) && !skipEmpty)
         UrlForm.FormData.MultipleValues(
-          Vector(
+          List(
             UrlForm.FormData.PathedValue(PayloadPath.root, maybeValue = None)
           )
         )
@@ -134,7 +134,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
     val encoders = fields.map(fieldEncoder(_))
     struct =>
       UrlForm.FormData.MultipleValues(
-        encoders.flatMap(_.encode(struct).toPathedValues)
+        encoders.flatMap(_.encode(struct).toPathedValues).toList
       )
   }
 
