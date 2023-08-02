@@ -173,13 +173,13 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
       .map(altDecoder(_))
       .toMap[PayloadPath.Segment, UrlFormDataDecoder[U]]
     ({
-      case value @ UrlFormCursor(
+      case cursor @ UrlFormCursor(
             history,
             UrlForm.FormData(PayloadPath(segment :: Nil), _) :: Nil
           ) =>
         altMap.get(segment) match {
           case Some(altDecoder) =>
-            altDecoder.decode(value)
+            altDecoder.decode(cursor)
 
           case None =>
             Left(
@@ -190,13 +190,8 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
             )
         }
 
-      case other =>
-        Left(
-          UrlFormDecodeError(
-            other.history,
-            s"Expected a single value but got $other"
-          )
-        )
+      case cursor =>
+        Left(UrlFormDecodeError.singleValueExpected(cursor))
     })
   }
 

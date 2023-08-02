@@ -18,9 +18,19 @@ package smithy4s
 package http
 
 import smithy4s.codecs.PayloadPath
+import smithy4s.http.internals.UrlFormCursor
 
-// TODO: DRY messages.
 final case class UrlFormDecodeError(path: PayloadPath, message: String)
     extends Throwable {
   override def getMessage(): String = s"${path.render()}: $message"
+}
+
+object UrlFormDecodeError {
+
+  def singleValueExpected(cursor: UrlFormCursor): UrlFormDecodeError =
+    UrlFormDecodeError(
+      cursor.history,
+      s"Expected a single value but got ${cursor.values}"
+    )
+
 }

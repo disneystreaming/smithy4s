@@ -24,10 +24,10 @@ class UrlFormParserSpec() extends munit.FunSuite {
 
   test("struct") {
     val expected = UrlForm(
-        List(
-          UrlForm.FormData(path = PayloadPath("x"), maybeValue = Some("value-x")),
-          UrlForm.FormData(path = PayloadPath("y"), maybeValue = Some("value-y"))
-        )
+      List(
+        UrlForm.FormData(path = PayloadPath("x"), maybeValue = Some("value-x")),
+        UrlForm.FormData(path = PayloadPath("y"), maybeValue = Some("value-y"))
+      )
     )
 
     checkContent(expected, "x=value-x&y=value-y")
@@ -35,11 +35,20 @@ class UrlFormParserSpec() extends munit.FunSuite {
 
   test("list") {
     val expected = UrlForm(
-        List(
-          UrlForm.FormData(path = PayloadPath("foos", "member", 1), maybeValue = Some("1")),
-          UrlForm.FormData(path = PayloadPath("foos", "member", 2), maybeValue = Some("2")),
-          UrlForm.FormData(path = PayloadPath("foos", "member", 3), maybeValue = Some("3"))
+      List(
+        UrlForm.FormData(
+          path = PayloadPath("foos", "member", 1),
+          maybeValue = Some("1")
+        ),
+        UrlForm.FormData(
+          path = PayloadPath("foos", "member", 2),
+          maybeValue = Some("2")
+        ),
+        UrlForm.FormData(
+          path = PayloadPath("foos", "member", 3),
+          maybeValue = Some("3")
         )
+      )
     )
 
     checkContent(expected, "foos.member.1=1&foos.member.2=2&foos.member.3=3")

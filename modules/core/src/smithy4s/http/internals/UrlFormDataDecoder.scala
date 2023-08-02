@@ -48,9 +48,7 @@ private[smithy4s] trait UrlFormDataDecoder[A] { self =>
 private[smithy4s] object UrlFormDataDecoder {
 
   def alwaysFailing[A](message: String): UrlFormDataDecoder[A] = cursor =>
-    Left(
-      UrlFormDecodeError(cursor.history, message)
-    )
+    Left(UrlFormDecodeError(cursor.history, message))
 
   def fromStringParser[A](expectedType: String)(
       f: String => Option[A]
@@ -66,12 +64,7 @@ private[smithy4s] object UrlFormDataDecoder {
         )
       )
 
-    case other =>
-      Left(
-        UrlFormDecodeError(
-          other.history,
-          s"Expected a single value but got $other"
-        )
-      )
+    case cursor =>
+      Left(UrlFormDecodeError.singleValueExpected(cursor))
   }
 }

@@ -92,14 +92,15 @@ private[smithy4s] object UrlForm {
             cache: Cache
         ): Decoder[A] = {
           val schemaVisitor = new UrlFormDataDecoderSchemaVisitor(
-              cache,
-              ignoreXmlFlattened,
-              capitalizeStructAndUnionMemberNames
-            )
-          val urlFormDataDecoder = schemaVisitor(schema)
-          urlForm => urlFormDataDecoder.decode(
-            UrlFormCursor(PayloadPath.root, urlForm.values)
+            cache,
+            ignoreXmlFlattened,
+            capitalizeStructAndUnionMemberNames
           )
+          val urlFormDataDecoder = schemaVisitor(schema)
+          urlForm =>
+            urlFormDataDecoder.decode(
+              UrlFormCursor(PayloadPath.root, urlForm.values)
+            )
         }
       }
   }
@@ -120,10 +121,10 @@ private[smithy4s] object UrlForm {
             cache: Cache
         ): Encoder[A] = {
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
-              cache,
-              ignoreXmlFlattened,
-              capitalizeStructAndUnionMemberNames
-            )
+            cache,
+            ignoreXmlFlattened,
+            capitalizeStructAndUnionMemberNames
+          )
           val urlFormDataEncoder = schemaVisitor(schema)
           value => UrlForm(urlFormDataEncoder.encode(value))
         }

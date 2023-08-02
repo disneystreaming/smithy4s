@@ -29,17 +29,15 @@ import scala.collection.immutable.BitSet
 // This is based on http4s' own equivalent, but simplified for our use case.
 private[smithy4s] object UrlFormParser {
 
-  final case class ParseFailure(details: String) extends Throwable {
-    override def getMessage(): String = details
-  }
-
-  def parseUrlForm(urlFormString: String): Either[ParseFailure, UrlForm] = {
+  def parseUrlForm(
+      urlFormString: String
+  ): Either[UrlFormDecodeError, UrlForm] = {
     val inputBuffer = CharBuffer.wrap(urlFormString)
     val encodedTermBuilder = new StringBuilder(capacity = 32)
     val outputBuilder = List.newBuilder[UrlForm.FormData]
 
     var state: State = Key
-    var error: ParseFailure = null
+    var error: UrlFormDecodeError = null
     var key: String = null
 
     def endPair(): Unit = {
@@ -81,7 +79,8 @@ private[smithy4s] object UrlFormParser {
         case char if QueryChars.contains(char.toInt) =>
           encodedTermBuilder.append(char)
         case char =>
-          error = ParseFailure(
+          error = UrlFormDecodeError(
+            PayloadPath.root,
             s"Invalid char while splitting key/value pairs: '$char'"
           )
       }
