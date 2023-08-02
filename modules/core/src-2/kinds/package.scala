@@ -41,5 +41,4 @@ package object kinds {
   type Kind5[F[_, _, _, _, _]] = {
     type handler[I, E, O, SI, SO] = I => F[I, E, O, SI, SO]
   }
-
 }

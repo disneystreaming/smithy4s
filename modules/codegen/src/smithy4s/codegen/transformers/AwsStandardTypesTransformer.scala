@@ -91,7 +91,8 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
   private def canReplace(shape: Shape): Boolean = {
     shape.isInstanceOf[SimpleShape] &&
     isAwsShape(shape) &&
-    onlySupportedTraits(shape.getAllTraits)
+    onlySupportedTraits(shape.getAllTraits) &&
+    hasStandardName(shape)
   }
 
   @annotation.nowarn
@@ -103,11 +104,32 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
         t.isInstanceOf[DefaultTrait] || t.isInstanceOf[BoxTrait]
       })
 
+  private def hasStandardName(shape: Shape): Boolean =
+    AwsStandardTypesTransformer.standardSimpleShapes.contains(
+      shape.getId().getName()
+    )
+
 }
 
 object AwsStandardTypesTransformer {
 
   val name: String = "AwsStandardTypesTransformer"
+
+  val standardSimpleShapes = Set(
+    "Integer",
+    "Short",
+    "Long",
+    "Float",
+    "Double",
+    "BigInteger",
+    "BigDecimal",
+    "Byte",
+    "Blob",
+    "Boolean",
+    "String",
+    "Document",
+    "Timestamp"
+  )
 
   private[transformers] final implicit class MemberShapeBuilderOps(
       val builder: MemberShape.Builder
