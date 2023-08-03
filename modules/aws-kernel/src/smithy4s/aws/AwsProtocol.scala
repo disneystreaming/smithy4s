@@ -24,7 +24,7 @@ private[aws] sealed trait AwsProtocol extends Product with Serializable {}
 
 private[aws] object AwsProtocol {
   val supportedProtocols: List[ShapeTag[_]] =
-    List(AwsJson1_0, AwsJson1_1, AwsQuery, RestJson1, RestXml)
+    List(Ec2Query, AwsJson1_0, AwsJson1_1, AwsQuery, RestJson1, RestXml)
 
   def apply(hints: Hints): Option[AwsProtocol] =
     hints
