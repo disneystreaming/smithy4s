@@ -18,13 +18,14 @@ package smithy4s
 package http
 
 import smithy4s.codecs.Reader
-import smithy4s.kinds.PolyFunction
-import smithy4s.http.internals.MetaEncode._
-import smithy4s.http.internals.SchemaVisitorMetadataWriter
-import smithy4s.http.internals.SchemaVisitorMetadataReader
+import smithy4s.codecs.Writer
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
-import smithy4s.schema.CompilationCache
+import smithy4s.http.internals.MetaEncode._
+import smithy4s.http.internals.SchemaVisitorMetadataReader
+import smithy4s.http.internals.SchemaVisitorMetadataWriter
+import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.schema.CompilationCache
 
 /**
   * Datatype containing metadata associated to a http message.
@@ -216,11 +217,22 @@ object Metadata {
     * Reads metadata and produces a map that contains values extracted from it, labelled
     * by field names.
     */
-  trait Encoder[A] {
+  trait Encoder[A] { self =>
     def encode(a: A): Metadata
+
+    final def toWriter: Writer[Any, Metadata, A] =
+      new Writer[Any, Metadata, A]() {
+        def write(input: Any, a: A): Metadata = self.encode(a)
+      }
   }
 
-  object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false)
+  object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false) {
+    // scalafmt: {maxColumn = 120}
+    def toWriterK: PolyFunction[Encoder, Writer[Any, Metadata, *]] =
+      new PolyFunction[Encoder, Writer[Any, Metadata, *]]() {
+        def apply[A](fa: Encoder[A]): Writer[Any, Metadata, A] = fa.toWriter
+      }
+  }
   private[smithy4s] object AwsEncoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)
 
   private[http] class CachedEncoderCompilerImpl(awsHeaderEncoding: Boolean)

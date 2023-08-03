@@ -17,12 +17,16 @@
 package smithy4s.http4s.kernel
 
 import cats.effect.Concurrent
+import org.http4s.Entity
 import org.http4s.EntityEncoder
+import org.http4s.Header
+import org.http4s.Headers
 import org.http4s.Response
 import org.http4s.Status
+import org.typelevel.ci.CIString
 import smithy4s.Errorable
 import smithy4s.codecs.Writer
-import smithy4s.http.HttpRestSchema
+import smithy4s.codecs.Encoder
 import smithy4s.http.HttpStatusCode
 import smithy4s.http._
 import smithy4s.kinds.PolyFunction
@@ -113,6 +117,74 @@ object ResponseEncoder {
         fromEntityEncoder[F, A](Concurrent[F], fa)
     }
 
+  def fromEntityEncoder2[F[_]: Concurrent, A](implicit
+      entityEncoder: EntityEncoder[F, A]
+  ): Encoder[Entity[F], A] = new Encoder[Entity[F], A] {
+    def write(any: Any, a: A): Entity[F] = {
+      entityEncoder.toEntity(a)
+    }
+  }
+
+  def fromEntityEncoderK2[F[_]: Concurrent]
+      : PolyFunction[EntityEncoder[F, *], Encoder[Entity[F], *]] =
+    new PolyFunction[EntityEncoder[F, *], Encoder[Entity[F], *]] {
+      def apply[A](fa: EntityEncoder[F, A]): Encoder[Entity[F], A] =
+        fromEntityEncoder2[F, A](Concurrent[F], fa)
+    }
+
+  private def fromHttpResponse[F[_]](
+      res: HttpResponse[Entity[F]]
+  ): Response[F] = {
+    val status =
+      Status
+        .fromInt(res.statusCode)
+        .getOrElse(
+          throw new IllegalStateException(
+            s"Invalid status code ${res.statusCode}"
+          )
+        )
+    val contentLength: Option[Header.ToRaw] =
+      res.body.length.map(l => org.http4s.headers.`Content-Length`(l))
+
+    val rawHeaders: Seq[Header.ToRaw] =
+      res.headers.toSeq.map { case (name, values) =>
+        Header.ToRaw.rawToRaw(
+          Header.Raw(CIString(name.value), values.mkString(","))
+        )
+      }
+    val headers = Headers(rawHeaders ++ contentLength)
+    Response(status, headers = headers, body = res.body.body)
+  }
+
+  private def fromResponse[F[_]](
+      res: Response[F]
+  ): HttpResponse[Entity[F]] = HttpResponse[Entity[F]](
+    res.status.code,
+    res.headers.headers
+      .map(h => CaseInsensitive(h.name.toString) -> Seq(h.value))
+      .toMap,
+    Entity(
+      res.body,
+      res.headers.get[org.http4s.headers.`Content-Length`].map(_.length)
+    )
+  )
+
+  private def toResponseEncoder[F[_]]: PolyFunction[
+    HttpResponse.Encoder[Entity[F], *],
+    ResponseEncoder[F, *]
+  ] = new PolyFunction[
+    HttpResponse.Encoder[Entity[F], *],
+    ResponseEncoder[F, *]
+  ]() {
+    def apply[A](
+        encoder: HttpResponse.Encoder[Entity[F], A]
+    ): ResponseEncoder[F, A] = new ResponseEncoder[F, A]() {
+      def write(input: Response[F], a: A): Response[F] = {
+        fromHttpResponse(encoder.write(fromResponse(input), a))
+      }
+    }
+  }
+
   /**
     * A compiler for ResponseEncoder that encodes the whole data in the body
     * of the request
@@ -134,9 +206,10 @@ object ResponseEncoder {
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] = {
     val bodyCompiler =
-      entityEncoderCompiler.mapK(fromEntityEncoderK)
-    val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
-    HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+      entityEncoderCompiler.mapK(fromEntityEncoderK2)
+    HttpResponse
+      .restSchemaCompiler[Entity[F]](metadataEncoderCompiler, bodyCompiler)
+      .mapK(toResponseEncoder[F])
   }
 
 }
