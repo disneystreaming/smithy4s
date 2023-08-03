@@ -21,6 +21,7 @@ import cats.Monad
 import cats.effect.SyncIO
 import cats.syntax.all._
 import org.http4s.EntityDecoder
+import org.http4s.Entity
 import org.http4s.Header
 import org.http4s.Headers
 import org.http4s.Media
@@ -39,6 +40,8 @@ import smithy4s.http.{HttpMethod => SmithyMethod}
 
 package object kernel {
 
+  type EntityEncoder[F[_], A] =
+    smithy4s.codecs.Writer[Any, Entity[F], A]
   type ResponseEncoder[F[_], A] =
     smithy4s.codecs.Writer[Response[F], Response[F], A]
   type RequestEncoder[F[_], A] =
