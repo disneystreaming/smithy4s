@@ -68,12 +68,12 @@ private[aws] object AwsRestJsonCodecs {
     val mediaWriters =
       smithy4s.http.StringAndBlobCodecs.writerOr(jsonMediaWriters)
 
-    val encoders = RequestEncoder.restSchemaCompiler[F](
+    val encoders = RequestWriter.restSchemaCompiler[F](
       Metadata.AwsEncoder,
       mediaWriters.mapK(EntityEncoders.fromHttpMediaWriterK[F])
     )
 
-    val decoders = ResponseDecoder.restSchemaCompiler[F](
+    val decoders = ResponseReader.restSchemaCompiler[F](
       Metadata.AwsDecoder,
       mediaReaders.mapK(EntityDecoders.fromHttpMediaReaderK[F])
     )

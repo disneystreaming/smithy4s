@@ -27,12 +27,12 @@ import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema._
 
-object RequestEncoder {
+object RequestWriter {
 
-  type CachedCompiler[F[_]] = CachedSchemaCompiler[RequestEncoder[F, *]]
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[RequestWriter[F, *]]
 
-  def metadataRequestEncoder[F[_]]: RequestEncoder[F, Metadata] =
-    new RequestEncoder[F, Metadata] {
+  def metadataRequestEncoder[F[_]]: RequestWriter[F, Metadata] =
+    new RequestWriter[F, Metadata] {
       def write(request: Request[F], metadata: Metadata): Request[F] = {
         val uri = request.uri.withMultiValueQueryParams(metadata.query)
         val headers = toHeaders(metadata.headers)
@@ -42,34 +42,34 @@ object RequestEncoder {
 
   def fromMetadataEncoder[F[_], A](
       metadataEncoder: Metadata.Encoder[A]
-  ): RequestEncoder[F, A] =
+  ): RequestWriter[F, A] =
     metadataRequestEncoder[F].contramap(metadataEncoder.encode)
 
   def fromMetadataEncoderK[F[_]]
-      : PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] =
-    new PolyFunction[Metadata.Encoder, RequestEncoder[F, *]] {
-      def apply[A](fa: Metadata.Encoder[A]): RequestEncoder[F, A] =
+      : PolyFunction[Metadata.Encoder, RequestWriter[F, *]] =
+    new PolyFunction[Metadata.Encoder, RequestWriter[F, *]] {
+      def apply[A](fa: Metadata.Encoder[A]): RequestWriter[F, A] =
         fromMetadataEncoder[F, A](fa)
     }
 
   def fromEntityEncoder[F[_]: Concurrent, A](implicit
       entityEncoder: EntityEncoder[F, A]
-  ): RequestEncoder[F, A] = new RequestEncoder[F, A] {
+  ): RequestWriter[F, A] = new RequestWriter[F, A] {
     def write(request: Request[F], a: A): Request[F] = {
       request.withEntity(a)
     }
   }
 
   def fromEntityEncoderK[F[_]: Concurrent]
-      : PolyFunction[EntityEncoder[F, *], RequestEncoder[F, *]] =
-    new PolyFunction[EntityEncoder[F, *], RequestEncoder[F, *]] {
-      def apply[A](fa: EntityEncoder[F, A]): RequestEncoder[F, A] =
+      : PolyFunction[EntityEncoder[F, *], RequestWriter[F, *]] =
+    new PolyFunction[EntityEncoder[F, *], RequestWriter[F, *]] {
+      def apply[A](fa: EntityEncoder[F, A]): RequestWriter[F, A] =
         fromEntityEncoder[F, A](Concurrent[F], fa)
     }
 
   def fromHttpEndpoint[F[_]: Concurrent, I](
       httpEndpoint: HttpEndpoint[I]
-  ): RequestEncoder[F, I] = new RequestEncoder[F, I] {
+  ): RequestWriter[F, I] = new RequestWriter[F, I] {
     def write(request: Request[F], input: I): Request[F] = {
       val path = httpEndpoint.path(input)
       val staticQueries = httpEndpoint.staticQueryParams
@@ -88,7 +88,7 @@ object RequestEncoder {
     */
   def rpcSchemaCompiler[F[_]](
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]]
-  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] =
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestWriter[F, *]] =
     entityEncoderCompiler.mapK(fromEntityEncoderK[F])
 
   /**
@@ -102,7 +102,7 @@ object RequestEncoder {
       metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
       entityEncoderCompiler: CachedSchemaCompiler[EntityEncoder[F, *]],
       writeEmptyStructs: Boolean = false
-  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+  )(implicit F: Concurrent[F]): CachedSchemaCompiler[RequestWriter[F, *]] = {
     val bodyCompiler = entityEncoderCompiler.mapK(fromEntityEncoderK)
     val metadataCompiler = metadataEncoderCompiler.mapK(fromMetadataEncoderK[F])
     HttpRestSchema.combineWriterCompilers(

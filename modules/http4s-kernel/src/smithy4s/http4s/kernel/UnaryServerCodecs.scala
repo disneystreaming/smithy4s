@@ -21,10 +21,10 @@ import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.schema.Schema
 
 trait UnaryServerCodecs[F[_], I, E, O] {
-  val inputDecoder: RequestDecoder[F, I]
-  val outputEncoder: ResponseEncoder[F, O]
-  def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE]
-  val errorEncoder: ResponseEncoder[F, E]
+  val inputDecoder: RequestReader[F, I]
+  val outputEncoder: ResponseWriter[F, O]
+  def errorEncoder[EE](schema: Schema[EE]): ResponseWriter[F, EE]
+  val errorEncoder: ResponseWriter[F, E]
 }
 
 object UnaryServerCodecs {
@@ -37,9 +37,9 @@ object UnaryServerCodecs {
     smithy4s.kinds.PolyFunction5[Endpoint.Base, For[F]#toKind5]
 
   def make[F[_]](
-      input: CachedSchemaCompiler[RequestDecoder[F, *]],
-      output: CachedSchemaCompiler[ResponseEncoder[F, *]],
-      error: CachedSchemaCompiler[ResponseEncoder[F, *]],
+      input: CachedSchemaCompiler[RequestReader[F, *]],
+      output: CachedSchemaCompiler[ResponseWriter[F, *]],
+      error: CachedSchemaCompiler[ResponseWriter[F, *]],
       errorHeaders: List[String]
   ): Make[F] = new Make[F] {
     val requestDecoderCache: input.Cache = input.createCache()
@@ -49,17 +49,17 @@ object UnaryServerCodecs {
     def apply[I, E, O, SI, SO](
         endpoint: Endpoint.Base[I, E, O, SI, SO]
     ): UnaryServerCodecs[F, I, E, O] = new UnaryServerCodecs[F, I, E, O] {
-      val inputDecoder: RequestDecoder[F, I] =
+      val inputDecoder: RequestReader[F, I] =
         input.fromSchema(endpoint.input, requestDecoderCache)
-      val outputEncoder: ResponseEncoder[F, O] =
+      val outputEncoder: ResponseWriter[F, O] =
         output.fromSchema(endpoint.output, responseEncoderCache)
-      val errorEncoder: ResponseEncoder[F, E] =
-        ResponseEncoder.forError(
+      val errorEncoder: ResponseWriter[F, E] =
+        ResponseWriter.forError(
           errorHeaders,
           endpoint.errorable,
           error
         )
-      def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE] =
+      def errorEncoder[EE](schema: Schema[EE]): ResponseWriter[F, EE] =
         error.fromSchema(schema, errorResponseEncoderCache)
     }
   }

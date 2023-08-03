@@ -27,18 +27,18 @@ object MediaDecoder {
   def fromEntityDecoder[F[_], A](implicit
       F: MonadThrow[F],
       entityDecoder: EntityDecoder[F, A]
-  ): MediaDecoder[F, A] = new MediaDecoder[F, A] {
+  ): MediaReader[F, A] = new MediaReader[F, A] {
     def read(response: Media[F]): F[A] = response.as[A]
   }
 
   def fromEntityDecoderK[F[_]: MonadThrow]
-      : PolyFunction[EntityDecoder[F, *], MediaDecoder[F, *]] =
-    new PolyFunction[EntityDecoder[F, *], MediaDecoder[F, *]] {
-      def apply[A](fa: EntityDecoder[F, A]): MediaDecoder[F, A] =
+      : PolyFunction[EntityDecoder[F, *], MediaReader[F, *]] =
+    new PolyFunction[EntityDecoder[F, *], MediaReader[F, *]] {
+      def apply[A](fa: EntityDecoder[F, A]): MediaReader[F, A] =
         fromEntityDecoder(MonadThrow[F], fa)
     }
 
   type CachedCompiler[F[_], Message] =
-    CachedSchemaCompiler[MediaDecoder[F, *]]
+    CachedSchemaCompiler[MediaReader[F, *]]
 
 }

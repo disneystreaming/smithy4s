@@ -87,7 +87,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   val serverCodecs = makeServerCodecs(endpoint)
   import serverCodecs._
-  val contractErrorResponseEncoder: ResponseEncoder[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
+  val contractErrorResponseEncoder: ResponseWriter[F, HttpContractError] = serverCodecs.errorEncoder(HttpContractError.schema)
   // format: on
 
   def matches(path: Array[String]): Option[PathParams] = {

@@ -40,15 +40,16 @@ import smithy4s.http.{HttpMethod => SmithyMethod}
 
 package object kernel {
 
-  type EntityEncoder[F[_], A] =
+  type EntityWriter[F[_], A] =
     smithy4s.codecs.Writer[Any, Entity[F], A]
-  type ResponseEncoder[F[_], A] =
+  type ResponseWriter[F[_], A] =
     smithy4s.codecs.Writer[Response[F], Response[F], A]
-  type RequestEncoder[F[_], A] =
+  type RequestWriter[F[_], A] =
     smithy4s.codecs.Writer[Request[F], Request[F], A]
-  type MediaDecoder[F[_], A] = smithy4s.codecs.Reader[F, Media[F], A]
-  type RequestDecoder[F[_], A] = smithy4s.codecs.Reader[F, Request[F], A]
-  type ResponseDecoder[F[_], A] = smithy4s.codecs.Reader[F, Response[F], A]
+
+  type MediaReader[F[_], A] = smithy4s.codecs.Reader[F, Media[F], A]
+  type RequestReader[F[_], A] = smithy4s.codecs.Reader[F, Request[F], A]
+  type ResponseReader[F[_], A] = smithy4s.codecs.Reader[F, Response[F], A]
 
   private[kernel] implicit def applicativeZipper[F[_]: Applicative]: Zipper[F] =
     new Zipper[F] {

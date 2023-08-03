@@ -30,7 +30,7 @@ object AwsErrorTypeDecoder {
   private val errorTypeHeader = CIString(`X-Amzn-Errortype`)
 
   private[aws] def fromResponse[F[_]](
-      decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]]
+      decoderCompiler: CachedSchemaCompiler[ResponseReader[F, *]]
   )(implicit F: MonadThrow[F]): Response[F] => F[Option[HttpDiscriminator]] = {
     val decoder = decoderCompiler.fromSchema(AwsErrorType.schema)
     (response: Response[F]) =>

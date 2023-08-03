@@ -45,7 +45,7 @@ private[aws] object AwsJsonCodecs {
       contentType: String
   ): UnaryClientCodecs.Make[F] = {
     val httpMediaType = HttpMediaType(contentType)
-    val encoders = RequestEncoder.rpcSchemaCompiler[F](
+    val encoders = RequestWriter.rpcSchemaCompiler[F](
       jsonPayloadCodecs.mapK(
         EntityEncoders.fromPayloadCodecK[F](httpMediaType)
       )

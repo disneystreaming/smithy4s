@@ -72,7 +72,7 @@ private[aws] object AwsXmlCodecs {
     }
 
   private def requestEncoderCompilers[F[_]: Concurrent]
-      : CachedSchemaCompiler[RequestEncoder[F, *]] = {
+      : CachedSchemaCompiler[RequestWriter[F, *]] = {
     val stringAndBlobsEntityEncoderCompilers =
       smithy4s.http.StringAndBlobCodecs.WriterCompiler.mapK(
         Covariant.liftPolyFunction[Option](
@@ -89,14 +89,14 @@ private[aws] object AwsXmlCodecs {
       stringAndBlobsEntityEncoderCompilers,
       xmlEntityEncoderCompilers
     )
-    RequestEncoder.restSchemaCompiler[F](
+    RequestWriter.restSchemaCompiler[F](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = entityEncoderCompilers
     )
   }
 
   def responseDecoderCompilers[F[_]: Concurrent]
-      : CachedSchemaCompiler[ResponseDecoder[F, *]] = {
+      : CachedSchemaCompiler[ResponseReader[F, *]] = {
     val stringAndBlobsEntityDecoderCompilers =
       smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK(
         Covariant.liftPolyFunction[Option](
@@ -119,7 +119,7 @@ private[aws] object AwsXmlCodecs {
       stringAndBlobsEntityDecoderCompilers,
       xmlEntityDecoderCompilers
     )
-    ResponseDecoder.restSchemaCompiler(
+    ResponseReader.restSchemaCompiler(
       metadataDecoderCompiler = Metadata.AwsDecoder,
       entityDecoderCompiler = entityDecoderCompilers
     )

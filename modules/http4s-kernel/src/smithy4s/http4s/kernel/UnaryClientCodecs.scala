@@ -24,9 +24,9 @@ import smithy4s.http.HttpEndpoint
 import smithy4s.schema.CachedSchemaCompiler
 
 trait UnaryClientCodecs[F[_], I, E, O] {
-  val inputEncoder: RequestEncoder[F, I]
-  val outputDecoder: ResponseDecoder[F, O]
-  val errorDecoder: ResponseDecoder[F, Throwable]
+  val inputEncoder: RequestWriter[F, I]
+  val outputDecoder: ResponseReader[F, O]
+  val errorDecoder: ResponseReader[F, Throwable]
 }
 
 object UnaryClientCodecs {
@@ -40,9 +40,9 @@ object UnaryClientCodecs {
 
   object Make {
     def apply[F[_]: Concurrent](
-        input: CachedSchemaCompiler[RequestEncoder[F, *]],
-        output: CachedSchemaCompiler[ResponseDecoder[F, *]],
-        error: CachedSchemaCompiler[ResponseDecoder[F, *]],
+        input: CachedSchemaCompiler[RequestWriter[F, *]],
+        output: CachedSchemaCompiler[ResponseReader[F, *]],
+        error: CachedSchemaCompiler[ResponseReader[F, *]],
         errorDiscriminator: Response[F] => F[Option[HttpDiscriminator]]
     ): Make[F] = new Make[F] {
 
@@ -53,11 +53,11 @@ object UnaryClientCodecs {
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = new UnaryClientCodecs[F, I, E, O] {
 
-        val inputEncoder: RequestEncoder[F, I] =
+        val inputEncoder: RequestWriter[F, I] =
           HttpEndpoint.cast(endpoint).toOption match {
             case Some(httpEndpoint) => {
               val httpInputEncoder =
-                RequestEncoder.fromHttpEndpoint[F, I](httpEndpoint)
+                RequestWriter.fromHttpEndpoint[F, I](httpEndpoint)
               val requestEncoder =
                 input.fromSchema(endpoint.input, requestEncoderCache)
               httpInputEncoder.pipe(requestEncoder)
@@ -65,10 +65,10 @@ object UnaryClientCodecs {
             case None => input.fromSchema(endpoint.input, requestEncoderCache)
           }
 
-        val outputDecoder: ResponseDecoder[F, O] =
+        val outputDecoder: ResponseReader[F, O] =
           output.fromSchema(endpoint.output, responseDecoderCache)
-        val errorDecoder: ResponseDecoder[F, Throwable] =
-          ResponseDecoder.forErrorAsThrowable(
+        val errorDecoder: ResponseReader[F, Throwable] =
+          ResponseReader.forErrorAsThrowable(
             endpoint.errorable,
             error,
             errorDiscriminator

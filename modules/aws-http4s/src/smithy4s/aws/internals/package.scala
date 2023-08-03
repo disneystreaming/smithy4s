@@ -18,13 +18,13 @@ package smithy4s.aws
 
 import fs2.compression.Compression
 import smithy4s.Hints
-import smithy4s.http4s.kernel.RequestEncoder
+import smithy4s.http4s.kernel.RequestWriter
 import smithy4s.schema.CachedSchemaCompiler
 
 package object internals {
 
   private[internals] type RequestEncoderCompiler[F[_]] =
-    CachedSchemaCompiler[RequestEncoder[F, *]]
+    CachedSchemaCompiler[RequestWriter[F, *]]
 
   private[internals] def applyCompression[F[_]: Compression](
       hints: Hints,

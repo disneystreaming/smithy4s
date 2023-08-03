@@ -45,8 +45,8 @@ final case class HttpRequest[+A](
 }
 
 object HttpRequest {
-  type Decoder[F[_], Body, A] = Reader[F, HttpRequest[Body], A]
-  type BodyDecoder[F[_], Body, A] = Reader[F, Body, A]
+  type HttpRequestReader[F[_], Body, A] = Reader[F, HttpRequest[Body], A]
+  type HttpRequestBodyReader[F[_], Body, A] = Reader[F, Body, A]
 
   implicit val reqCovariant: Covariant[HttpRequest] =
     new Covariant[HttpRequest] {
@@ -55,8 +55,8 @@ object HttpRequest {
 
   def fromMetadataDecoder[A](
       metadataDecoder: Metadata.Decoder[A]
-  ): Decoder[Either[MetadataError, *], Any, A] =
-    new Decoder[Either[MetadataError, *], Any, A] {
+  ): HttpRequestReader[Either[MetadataError, *], Any, A] =
+    new HttpRequestReader[Either[MetadataError, *], Any, A] {
       def read(request: HttpRequest[Any]): Either[MetadataError, A] = {
         metadataDecoder.decode(request.toMetadata)
       }
@@ -65,33 +65,37 @@ object HttpRequest {
   private type MetadataReader[A] = Reader[Either[MetadataError, *], Metadata, A]
   private def extractMetadata[F[_], Body](
       liftToF: PolyFunction[Either[MetadataError, *], F]
-  ): PolyFunction[MetadataReader, Decoder[F, Body, *]] =
-    new PolyFunction[MetadataReader, Decoder[F, Body, *]] {
-      def apply[A](mr: MetadataReader[A]): Decoder[F, Body, A] = {
+  ): PolyFunction[MetadataReader, HttpRequestReader[F, Body, *]] =
+    new PolyFunction[MetadataReader, HttpRequestReader[F, Body, *]] {
+      def apply[A](mr: MetadataReader[A]): HttpRequestReader[F, Body, A] = {
         mr.compose[HttpRequest[Body]](_.toMetadata).mapK(liftToF)
       }
     }
 
   private def extractBody[F[_], Body]
-      : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
-    new PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] {
-      def apply[A](mr: Reader[F, Body, A]): Decoder[F, Body, A] = {
+      : PolyFunction[Reader[F, Body, *], HttpRequestReader[F, Body, *]] =
+    new PolyFunction[Reader[F, Body, *], HttpRequestReader[F, Body, *]] {
+      def apply[A](mr: Reader[F, Body, A]): HttpRequestReader[F, Body, A] = {
         mr.compose[HttpRequest[Body]](_.body)
       }
     }
 
   def restSchemaCompiler[F[_]: Zipper, Body](
       metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
-      entityDecoderCompiler: CachedSchemaCompiler[BodyDecoder[F, Body, *]],
+      entityDecoderCompiler: CachedSchemaCompiler[
+        HttpRequestBodyReader[F, Body, *]
+      ],
       liftToF: PolyFunction[Either[MetadataError, *], F]
-  ): CachedSchemaCompiler[Decoder[F, Body, *]] = {
-    val restMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
+  ): CachedSchemaCompiler[HttpRequestReader[F, Body, *]] = {
+    val restMetadataCompiler
+        : CachedSchemaCompiler[HttpRequestReader[F, Body, *]] =
       metadataDecoderCompiler.mapK(
         Metadata.Decoder.toReaderK
           .andThen(extractMetadata[F, Body](liftToF))
       )
 
-    val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
+    val bodyMetadataCompiler
+        : CachedSchemaCompiler[HttpRequestReader[F, Body, *]] =
       entityDecoderCompiler.mapK { extractBody[F, Body] }
 
     HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](

@@ -29,9 +29,9 @@ import smithy4s.http.Metadata
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 
-object ResponseDecoder {
+object ResponseReader {
 
-  type CachedCompiler[F[_]] = CachedSchemaCompiler[ResponseDecoder[F, *]]
+  type CachedCompiler[F[_]] = CachedSchemaCompiler[ResponseReader[F, *]]
 
   /**
     * Creates a response decoder that dispatches the response to
@@ -39,9 +39,9 @@ object ResponseDecoder {
     */
   def forError[F[_]: Concurrent, E](
       maybeErrorable: Option[Errorable[E]],
-      decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]],
+      decoderCompiler: CachedSchemaCompiler[ResponseReader[F, *]],
       discriminate: Response[F] => F[Option[HttpDiscriminator]]
-  ): ResponseDecoder[F, E] =
+  ): ResponseReader[F, E] =
     discriminating(
       discriminate,
       HttpErrorSelector(maybeErrorable, decoderCompiler)
@@ -54,9 +54,9 @@ object ResponseDecoder {
     */
   def forErrorAsThrowable[F[_]: Concurrent, E](
       maybeErrorable: Option[Errorable[E]],
-      decoderCompiler: CachedSchemaCompiler[ResponseDecoder[F, *]],
+      decoderCompiler: CachedSchemaCompiler[ResponseReader[F, *]],
       discriminate: Response[F] => F[Option[HttpDiscriminator]]
-  ): ResponseDecoder[F, Throwable] =
+  ): ResponseReader[F, Throwable] =
     discriminating(
       discriminate,
       HttpErrorSelector.asThrowable(maybeErrorable, decoderCompiler)
@@ -68,9 +68,9 @@ object ResponseDecoder {
     */
   def discriminating[F[_]: Concurrent, Discriminator, E](
       discriminate: Response[F] => F[Option[Discriminator]],
-      select: Discriminator => Option[ResponseDecoder[F, E]]
-  ): ResponseDecoder[F, E] = {
-    new ResponseDecoder[F, E] {
+      select: Discriminator => Option[ResponseReader[F, E]]
+  ): ResponseReader[F, E] = {
+    new ResponseReader[F, E] {
       def read(response: Response[F]): F[E] =
         response.toStrict(None).flatMap { strictResponse =>
           discriminate(strictResponse).map(_.flatMap(select)).flatMap {
@@ -97,7 +97,7 @@ object ResponseDecoder {
     */
   def fromMetadataDecoder[F[_]: MonadThrow, A](
       metadataDecoder: Metadata.Decoder[A]
-  ): ResponseDecoder[F, A] = new ResponseDecoder[F, A] {
+  ): ResponseReader[F, A] = new ResponseReader[F, A] {
 
     def read(response: Response[F]): F[A] = {
       val metadata = getResponseMetadata(response)
@@ -106,9 +106,9 @@ object ResponseDecoder {
   }
 
   def fromMetadataDecoderK[F[_]: MonadThrow]
-      : PolyFunction[Metadata.Decoder, ResponseDecoder[F, *]] =
-    new PolyFunction[Metadata.Decoder, ResponseDecoder[F, *]] {
-      def apply[A](fa: Metadata.Decoder[A]): ResponseDecoder[F, A] =
+      : PolyFunction[Metadata.Decoder, ResponseReader[F, *]] =
+    new PolyFunction[Metadata.Decoder, ResponseReader[F, *]] {
+      def apply[A](fa: Metadata.Decoder[A]): ResponseReader[F, A] =
         fromMetadataDecoder(fa)
     }
 
@@ -124,7 +124,7 @@ object ResponseDecoder {
       entityDecoderCompiler: CachedSchemaCompiler[EntityDecoder[F, *]]
   )(implicit
       F: Concurrent[F]
-  ): CachedSchemaCompiler[ResponseDecoder[F, *]] = {
+  ): CachedSchemaCompiler[ResponseReader[F, *]] = {
     val metadataCompiler = metadataDecoderCompiler.mapK(fromMetadataDecoderK[F])
     val bodyCompiler =
       entityDecoderCompiler.mapK(MediaDecoder.fromEntityDecoderK)

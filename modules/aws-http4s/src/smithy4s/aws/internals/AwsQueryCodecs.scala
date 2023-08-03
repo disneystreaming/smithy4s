@@ -116,7 +116,7 @@ private[aws] object AwsQueryCodecs {
       capitalizeStructAndUnionMemberNames: Boolean,
       action: String,
       version: String
-  ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
+  ): CachedSchemaCompiler[RequestWriter[F, *]] = {
     val urlFormEntityEncoderCompilers = UrlForm
       .Encoder(
         ignoreXmlFlattened = ignoreXmlFlattened,
@@ -139,7 +139,7 @@ private[aws] object AwsQueryCodecs {
             )
         }
       )
-    RequestEncoder.restSchemaCompiler[F](
+    RequestWriter.restSchemaCompiler[F](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = urlFormEntityEncoderCompilers,
       // We have to set this so that a body is produced even in the case where a

@@ -75,16 +75,16 @@ private[http4s] class SimpleRestJsonCodecs(
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
-      RequestDecoder.restSchemaCompiler[F](
+      RequestReader.restSchemaCompiler[F](
         Metadata.Decoder,
         entityDecoders[F]
       )
     val responseEncoderCompiler = {
-      val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
+      val restSchemaCompiler = ResponseWriter.restSchemaCompiler[F](
         Metadata.Encoder,
         entityEncoders[F]
       )
-      new CachedSchemaCompiler[ResponseEncoder[F, *]] {
+      new CachedSchemaCompiler[ResponseWriter[F, *]] {
         type Cache = restSchemaCompiler.Cache
         def createCache(): Cache = restSchemaCompiler.createCache()
         def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
@@ -109,12 +109,12 @@ private[http4s] class SimpleRestJsonCodecs(
 
   def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F] = {
     val messageDecoderCompiler =
-      ResponseDecoder.restSchemaCompiler[F](
+      ResponseReader.restSchemaCompiler[F](
         Metadata.Decoder,
         entityDecoders[F]
       )
     val messageEncoderCompiler =
-      RequestEncoder.restSchemaCompiler[F](
+      RequestWriter.restSchemaCompiler[F](
         Metadata.Encoder,
         entityEncoders[F]
       )
