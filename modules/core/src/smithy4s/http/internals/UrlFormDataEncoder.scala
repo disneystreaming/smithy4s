@@ -19,8 +19,8 @@ package http
 package internals
 
 import smithy4s.capability.EncoderK
-import smithy4s.http.UrlForm
 import smithy4s.codecs.PayloadPath
+import smithy4s.http.UrlForm
 
 private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
 

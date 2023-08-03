@@ -17,10 +17,13 @@
 package smithy4s.codegen.transformers
 
 import smithy4s.codegen.transformers.AwsStandardTypesTransformer.MemberShapeBuilderOps
-import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
+import software.amazon.smithy.build.ProjectionTransformer
+import software.amazon.smithy.build.TransformContext
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
-import software.amazon.smithy.model.traits.{BoxTrait, DefaultTrait, Trait}
+import software.amazon.smithy.model.traits.BoxTrait
+import software.amazon.smithy.model.traits.DefaultTrait
+import software.amazon.smithy.model.traits.Trait
 
 class AwsStandardTypesTransformer extends ProjectionTransformer {
 
@@ -65,16 +68,20 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
           .map[Boolean](canReplace)
           .orElse(false)
       }
-      .map[Shape](shape => {
+      .map[Shape] { shape =>
         val target = model.expectShape(shape.getTarget)
         val replacementShape = replaceWith(shape.getTarget)
+        // Member shapes can only carry the `@default` trait IF
+        // their container is a structures
+        val canCarryDefault =
+          model.expectShape(shape.getContainer()).isStructureShape()
 
         shape
           .toBuilder()
           .target(replacementShape)
-          .copyDefaultTrait(target)
+          .when(canCarryDefault)(_.copyDefaultTrait(target))
           .build()
-      })
+      }
       .orElse(shape)
   }
 
@@ -84,7 +91,8 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
   private def canReplace(shape: Shape): Boolean = {
     shape.isInstanceOf[SimpleShape] &&
     isAwsShape(shape) &&
-    onlySupportedTraits(shape.getAllTraits)
+    onlySupportedTraits(shape.getAllTraits) &&
+    hasStandardName(shape)
   }
 
   @annotation.nowarn
@@ -96,20 +104,46 @@ class AwsStandardTypesTransformer extends ProjectionTransformer {
         t.isInstanceOf[DefaultTrait] || t.isInstanceOf[BoxTrait]
       })
 
+  private def hasStandardName(shape: Shape): Boolean =
+    AwsStandardTypesTransformer.standardSimpleShapes.contains(
+      shape.getId().getName()
+    )
+
 }
 
 object AwsStandardTypesTransformer {
 
   val name: String = "AwsStandardTypesTransformer"
 
+  val standardSimpleShapes = Set(
+    "Integer",
+    "Short",
+    "Long",
+    "Float",
+    "Double",
+    "BigInteger",
+    "BigDecimal",
+    "Byte",
+    "Blob",
+    "Boolean",
+    "String",
+    "Document",
+    "Timestamp"
+  )
+
   private[transformers] final implicit class MemberShapeBuilderOps(
       val builder: MemberShape.Builder
   ) extends AnyVal {
-    def copyDefaultTrait(shape: Shape): MemberShape.Builder = {
-      val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
+    def when(condition: Boolean)(
+        mutation: MemberShape.Builder => MemberShape.Builder
+    ): MemberShape.Builder =
+      if (condition)(mutation(builder)) else builder
 
-      defaultTraitOpt
-        .fold(builder)(builder.addTrait(_))
+    def copyDefaultTrait(
+        shape: Shape
+    ): MemberShape.Builder = {
+      val defaultTraitOpt = toOption(shape.getTrait(classOf[DefaultTrait]))
+      defaultTraitOpt.fold(builder)(builder.addTrait(_))
     }
   }
 

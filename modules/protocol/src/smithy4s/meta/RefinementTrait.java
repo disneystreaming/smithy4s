@@ -87,7 +87,7 @@ public final class RefinementTrait extends AbstractTrait implements ToSmithyBuil
 	public static final class Builder extends AbstractTraitBuilder<RefinementTrait, RefinementTrait.Builder> {
 
 		private String targetType;
-		private Optional<String> providerImport;
+		private Optional<String> providerImport = Optional.empty();
 		private boolean parameterised;
 
 		public RefinementTrait.Builder providerImport(String providerImport) {

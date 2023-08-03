@@ -26,7 +26,7 @@ object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
 
   object CheckedCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[CheckedCase] = bijection(string.addHints(hints).validated(smithy.api.Pattern("^\\w+$")), CheckedCase(_), _.checked)
+    val schema: Schema[CheckedCase] = bijection(string.addHints(hints).validated(smithy.api.Pattern(s"^\\w+$$")), CheckedCase(_), _.checked)
     val alt = schema.oneOf[CheckedOrUnchecked]("checked")
   }
   object RawCase {

@@ -30,6 +30,11 @@ object GzipRequestCompression {
   val DefaultBufferSize = 32 * 1024
 
   def apply[F[_]: Compression](
+      // This is used by AwsQueryCodecs and AwsEc2QueryCodecs to conform to the
+      // requirements of
+      // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/awsQuery/requestCompression.smithy#L152-L298
+      // and
+      // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/ec2Query/requestCompression.smithy#L152-L298.
       retainUserEncoding: Boolean,
       bufferSize: Int = DefaultBufferSize,
       level: DeflateParams.Level = DeflateParams.Level.DEFAULT

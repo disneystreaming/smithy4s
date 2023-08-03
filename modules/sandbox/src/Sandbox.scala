@@ -14,36 +14,59 @@
  *  limitations under the License.
  */
 
-import smithy4s.aws._
 import cats.effect._
+import com.amazonaws.cloudwatch
+import com.amazonaws.ec2
 import org.http4s.client.middleware._
 import org.http4s.ember.client.EmberClientBuilder
-
-import com.amazonaws.cloudwatch._
+import smithy4s.aws._
 
 object Main extends IOApp.Simple {
 
-  type NextToken = String
-
-  override def run: IO[Unit] = cloudWatchClientResource.use(cloudWatchClient =>
-    listAll[ListMetricsOutput, Metric](
-      listF = maybeNextToken =>
-        cloudWatchClient.listMetrics(
-          // This is just a simple way of reducing the size of the results while
-          // still exercising the pagination handler.
-          namespace = Some("AWS/S3"),
-          nextToken = maybeNextToken
-        ),
-      accessResults = _.metrics.toList.flatten,
-      accessNextToken = _.nextToken
+  override def run: IO[Unit] = awsEnvironmentResource.use { awsEnvironment =>
+    // Per
+    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#awsquery,
+    // CloudWatch is one of a few services that use the awsQuery protocol.
+    AwsClient(cloudwatch.CloudWatch, awsEnvironment).use(cloudWatchClient =>
+      listAll[
+        cloudwatch.NextToken,
+        cloudwatch.ListMetricsOutput,
+        cloudwatch.Metric
+      ](
+        listF = maybeNextToken =>
+          cloudWatchClient.listMetrics(
+            // This is just a simple way of reducing the size of the results while
+            // still exercising the pagination handler.
+            namespace = Some("AWS/S3"),
+            nextToken = maybeNextToken
+          ),
+        accessResults = _.metrics.toList.flatten,
+        accessNextToken = _.nextToken
+      )
+        .map(_.size)
+        .flatMap(size => IO.println(s"Found $size metrics"))
     )
-      .map(_.size)
-      .flatMap(size => IO.println(s"Found $size metrics"))
-  )
+    // Per
+    // https://disneystreaming.github.io/smithy4s/docs/protocols/aws/aws/#ec2query,
+    // EC2 is the only service that use the ec2Query protocol.
+    AwsClient(ec2.EC2, awsEnvironment).use(ec2Client =>
+      listAll[String, ec2.DescribeInstanceStatusResult, ec2.InstanceStatus](
+        listF = maybeNextToken =>
+          ec2Client.describeInstanceStatus(
+            maxResults = 100,
+            nextToken = maybeNextToken
+          ),
+        accessResults = _.instanceStatuses.toList.flatten,
+        accessNextToken = _.nextToken
+      )
+        .map(_.size)
+        .flatMap(size => IO.println(s"Found $size instance statuses"))
+    )
+  }
 
-  private val cloudWatchClientResource: Resource[IO, CloudWatch[IO]] =
+  private val awsEnvironmentResource: Resource[IO, AwsEnvironment[IO]] =
     for {
-      httpClient <- EmberClientBuilder
+      client <- EmberClientBuilder
         .default[IO]
         .build
         .map(
@@ -54,23 +77,21 @@ object Main extends IOApp.Simple {
           )
         )
       awsCredentialsProvider = new AwsCredentialsProvider[IO]
-      awsEnv = AwsEnvironment.make(
-        httpClient,
-        IO.pure(AwsRegion.US_EAST_1),
-        awsCredentialsProvider.defaultCredentialsFile.flatMap(
-          awsCredentialsProvider
-            .fromDisk(_, awsCredentialsProvider.getProfileFromEnv)
-        ),
-        IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
-      )
-      cloudWatch <- AwsClient(CloudWatch, awsEnv)
-    } yield cloudWatch
+    } yield AwsEnvironment.make(
+      client,
+      IO.pure(AwsRegion.US_EAST_1),
+      awsCredentialsProvider.defaultCredentialsFile.flatMap(
+        awsCredentialsProvider
+          .fromDisk(_, awsCredentialsProvider.getProfileFromEnv)
+      ),
+      IO.realTime.map(_.toSeconds).map(Timestamp(_, 0))
+    )
 
   // This is probably something that's gonna get reimplemented a lot in
   // user-land. Perhaps we could use pagination hints from the specs to avoid
   // having to manually wire up the accessors, and to generate synthetic service
   // functions that handle pagination?
-  private def listAll[ListOutput, Result](
+  private def listAll[NextToken, ListOutput, Result](
       listF: Option[NextToken] => IO[ListOutput],
       accessResults: ListOutput => List[Result],
       accessNextToken: ListOutput => Option[NextToken],

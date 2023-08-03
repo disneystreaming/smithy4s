@@ -20,15 +20,16 @@ package internals
 
 import cats.effect.IO
 import cats.syntax.all._
-import smithy4s.Blob
-import smithy4s.Hints
-import smithy4s.schema.Schema
-import scala.collection.mutable
-import smithy4s.schema.CompilationCache
-import smithy4s.schema.Schema._
-import weaver._
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
+import smithy4s.Blob
+import smithy4s.Hints
+import smithy4s.schema.CompilationCache
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema._
+import weaver._
+
+import scala.collection.mutable
 
 object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
 
@@ -331,7 +332,11 @@ object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
       loc: SourceLocation
   ): IO[Expectations] = {
     val cache = CompilationCache.make[UrlFormDataEncoder]
-    val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(cache)
+    val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
+      cache,
+      ignoreXmlFlattened = false,
+      capitalizeStructAndUnionMemberNames = false
+    )
     val encoder = schemaVisitor(schema)
     val formData = encoder.encode(value)
     val builder = new mutable.StringBuilder

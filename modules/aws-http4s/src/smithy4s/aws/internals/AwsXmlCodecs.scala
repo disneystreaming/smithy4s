@@ -18,25 +18,24 @@ package smithy4s
 package aws
 package internals
 
+import cats.Applicative
+import cats.data.EitherT
 import cats.effect.Concurrent
 import cats.syntax.all._
-import cats.Applicative
 import fs2.compression.Compression
-import smithy4s.http4s.kernel._
-import smithy4s.Endpoint
-import smithy4s.schema.CachedSchemaCompiler
-import org.http4s.EntityDecoder
-import smithy4s.xml.XmlDocument
-import org.http4s.MediaRange
 import fs2.data.xml._
 import fs2.data.xml.dom._
-import cats.data.EitherT
-import smithy4s.kinds.PolyFunction
+import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
-import smithy4s.capability.Covariant
-
+import org.http4s.MediaRange
 import org.http4s.MediaType
+import smithy4s.Endpoint
+import smithy4s.capability.Covariant
 import smithy4s.http.Metadata
+import smithy4s.http4s.kernel._
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.xml.XmlDocument
 
 private[aws] object AwsXmlCodecs {
 
@@ -50,14 +49,21 @@ private[aws] object AwsXmlCodecs {
           requestEncoderCompilers[F]
         )
 
-        val (responseDecoderCompilers, errorDecoderCompilers) =
-          responseAndErrorDecoderCompilers[F]
+        val errorDecoderCompilers = responseDecoderCompilers[F].contramapSchema(
+          smithy4s.schema.Schema.transformHintsLocallyK(
+            _ ++ smithy4s.Hints(
+              smithy4s.xml.internals.XmlStartingPath(
+                List("ErrorResponse", "Error")
+              )
+            )
+          )
+        )
         val errorDiscriminator =
           AwsErrorTypeDecoder.fromResponse(errorDecoderCompilers)
 
         val make = UnaryClientCodecs.Make[F](
           input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
+          output = responseDecoderCompilers[F],
           error = errorDecoderCompilers,
           errorDiscriminator = errorDiscriminator
         )
@@ -89,10 +95,8 @@ private[aws] object AwsXmlCodecs {
     )
   }
 
-  def responseAndErrorDecoderCompilers[F[_]: Concurrent]: (
-      CachedSchemaCompiler[ResponseDecoder[F, *]],
-      CachedSchemaCompiler[ResponseDecoder[F, *]]
-  ) = {
+  def responseDecoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[ResponseDecoder[F, *]] = {
     val stringAndBlobsEntityDecoderCompilers =
       smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK(
         Covariant.liftPolyFunction[Option](
@@ -115,20 +119,10 @@ private[aws] object AwsXmlCodecs {
       stringAndBlobsEntityDecoderCompilers,
       xmlEntityDecoderCompilers
     )
-    val responseDecoderCompilers = ResponseDecoder.restSchemaCompiler(
+    ResponseDecoder.restSchemaCompiler(
       metadataDecoderCompiler = Metadata.AwsDecoder,
       entityDecoderCompiler = entityDecoderCompilers
     )
-    val errorDecoderCompilers = responseDecoderCompilers.contramapSchema(
-      smithy4s.schema.Schema.transformHintsLocallyK(
-        _ ++ smithy4s.Hints(
-          smithy4s.xml.internals.XmlStartingPath(
-            List("ErrorResponse", "Error")
-          )
-        )
-      )
-    )
-    (responseDecoderCompilers, errorDecoderCompilers)
   }
 
   private def xmlEntityEncoder[F[_]: Applicative]

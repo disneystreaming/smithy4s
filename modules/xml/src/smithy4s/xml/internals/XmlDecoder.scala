@@ -64,6 +64,12 @@ private[smithy4s] trait XmlDecoder[A] { self =>
       }
     }
   }
+  def withDefault(value: A): XmlDecoder[A] = new XmlDecoder[A] {
+    def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
+      case NoNode(_) => Right(value)
+      case _         => self.decode(cursor)
+    }
+  }
 }
 
 private[smithy4s] object XmlDecoder {
@@ -80,55 +86,82 @@ private[smithy4s] object XmlDecoder {
     */
   def fromStringParser[A](expectedType: String, trim: Boolean)(
       f: String => Option[A]
-  ): XmlDecoder[A] =
-    new XmlDecoder[A] {
-      def decode(cursor: XmlCursor): Either[XmlDecodeError, A] = cursor match {
-        case SingleNode(history, node) =>
-          node.children match {
-            case XmlDocument.XmlText(value) :: Nil =>
-              f(if (trim) value.trim() else value).toRight(
-                XmlDecodeError(
-                  history,
-                  s"Could not extract $expectedType from $value"
-                )
-              )
-            case Nil =>
-              f("").toRight(
-                XmlDecodeError(
-                  history,
-                  s"Could not extract $expectedType from empty string"
-                )
-              )
-            case _ =>
-              Left(
-                XmlDecodeError(
-                  history,
-                  s"Expected a single node with text content"
-                )
-              )
-          }
-        case AttrNode(history, values) =>
-          if (values.tail.nonEmpty) {
-            Left(XmlDecodeError(history, s"Expected a single text attribute"))
-          } else {
-            val value = values.head
-            f(value).toRight(
-              XmlDecodeError(
-                history,
-                s"Could not extract $expectedType from $value"
-              )
+  ): XmlDecoder[A] = {
+    case RootNode(root) =>
+      Left(
+        XmlDecodeError(
+          XPath.root,
+          s"Could not extract $expectedType from $root"
+        )
+      )
+
+    case Nodes(history, nodes) =>
+      Left(
+        XmlDecodeError(
+          history,
+          s"Could not extract $expectedType from $nodes"
+        )
+      )
+
+    case NoNode(history) =>
+      Left(
+        XmlDecodeError(
+          history,
+          s"Expected a single node with text content"
+        )
+      )
+
+    case FailedNode(history) =>
+      Left(
+        XmlDecodeError(
+          history,
+          s"Could not decode failed node"
+        )
+      )
+
+    case SingleNode(history, node) =>
+      node.children match {
+        case XmlDocument.XmlText(value) :: Nil =>
+          f(if (trim) value.trim() else value).toRight(
+            XmlDecodeError(
+              history,
+              s"Could not extract $expectedType from $value"
             )
-          }
-        case FailedNode(history) =>
-          Left(XmlDecodeError(history, s"Could not decode failed node"))
-        case other =>
+          )
+
+        case Nil =>
+          f("").toRight(
+            XmlDecodeError(
+              history,
+              s"Could not extract $expectedType from empty string"
+            )
+          )
+
+        case _ =>
           Left(
             XmlDecodeError(
-              other.history,
+              history,
               s"Expected a single node with text content"
             )
           )
       }
-    }
 
+    case AttrNode(history, values) =>
+      if (values.tail.nonEmpty) {
+        Left(
+          XmlDecodeError(
+            history,
+            s"Expected a single text attribute"
+          )
+        )
+      } else {
+        val value = values.head
+        f(value).toRight(
+          XmlDecodeError(
+            history,
+            s"Could not extract $expectedType from $value"
+          )
+        )
+      }
+  }
 }
