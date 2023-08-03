@@ -63,7 +63,8 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  sandbox,
+  `aws-sandbox`,
+  `oauth-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -885,9 +886,9 @@ lazy val benchmark = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
-lazy val sandbox = projectMatrix
-  .in(file("modules/sandbox"))
-  .dependsOn(`aws-http4s`, http4s)
+lazy val `aws-sandbox` = projectMatrix
+  .in(file("modules/aws-sandbox"))
+  .dependsOn(`aws-http4s`)
   .settings(
     Compile / allowedNamespaces := Seq(
       "com.amazonaws.cloudwatch",
@@ -897,18 +898,55 @@ lazy val sandbox = projectMatrix
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
-    ) ++ scala3MigrationOption(scalaVersion.value),
+    ),
     smithy4sDependencies ++= Seq(
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
       "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
-      Dependencies.slf4jNop
+      Dependencies.Slf4jSimple % Runtime
     ),
     run / fork := true
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
+  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
+
+lazy val `oauth-sandbox` = projectMatrix
+  .in(file("modules/oauth-sandbox"))
+  // TODO: Nope, shouldn't need to depend on anything AWS.
+  .dependsOn(`aws-http4s`, http4s)
+  .settings(
+    Compile / allowedNamespaces := Seq(
+      "smithy4s.sandbox.oauth"
+    ),
+    smithySpecs := IO.listFiles(
+      (ThisBuild / baseDirectory).value / "modules" / "oauth-sandbox" / "smithy"
+    ),
+    genSmithy(Compile),
+    // Ignore deprecation warnings here - it's all generated code, anyway.
+    scalacOptions ++= Seq(
+      "-Wconf:cat=deprecation:silent"
+    ),
+    libraryDependencies ++= Seq(
+      // TODO: Replace with cats-effect?
+      "dev.zio" %% "zio" % "2.0.15",
+      "dev.zio" %% "zio-interop-cats" % "23.0.0.8",
+      Dependencies.CatsEffect3.value,
+      Dependencies.Circe.core.value,
+      Dependencies.Circe.parser.value,
+      Dependencies.Http4s.circe.value,
+      Dependencies.Http4s.client.value,
+      Dependencies.Http4s.core.value,
+      Dependencies.Http4s.dsl.value,
+      Dependencies.Http4s.emberClient.value,
+      Dependencies.Http4s.emberServer.value,
+      Dependencies.Slf4jSimple % Runtime
+    ),
+    run / fork := true,
+    run / outputStrategy := Some(OutputStrategy.StdoutOutput)
+  )
+  .jvmPlatform(List(Scala3), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 def genSmithy(config: Configuration) = Def.settings(

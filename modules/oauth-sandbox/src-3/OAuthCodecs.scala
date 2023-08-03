@@ -34,13 +34,14 @@ import smithy4s.json.Json
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 
-private[http4s] class OAuthCodecs(
+// TODO: Move out of sandbox.
+// private[http4s]
+class OAuthCodecs(
     val maxArity: Int,
     val explicitDefaultsEncoding: Boolean
 ) extends SimpleProtocolCodecs {
 
-  private val jsonHintMask =
-    alloy.SimpleRestJson.protocol.hintMask
+  private val jsonHintMask = alloy.SimpleRestJson.protocol.hintMask
 
   private val jsonUnderlyingCodecs = Json.payloadCodecs
     .withJsoniterCodecCompiler(
@@ -55,8 +56,8 @@ private[http4s] class OAuthCodecs(
     EntityEncoders.fromPayloadCodecK[F](jsonMediaType)
   )
 
-  // scalafmt: {maxColumn = 120}
-  def jsonEntityDecoders[F[_]: Concurrent]: CachedSchemaCompiler[EntityDecoder[F, *]] = jsonUnderlyingCodecs.mapK(
+  def jsonEntityDecoders[F[_]: Concurrent]
+      : CachedSchemaCompiler[EntityDecoder[F, *]] = jsonUnderlyingCodecs.mapK(
     EntityDecoders.fromPayloadCodecK[F](jsonMediaType)
   )
 
@@ -104,7 +105,8 @@ private[http4s] class OAuthCodecs(
     )
   }
 
-  private def urlFormRequestDecoderCompilers[F[_]: Concurrent]: CachedSchemaCompiler[RequestDecoder[F, *]] =
+  private def urlFormRequestDecoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[RequestDecoder[F, *]] =
     RequestDecoder.restSchemaCompiler[F](
       metadataDecoderCompiler = Metadata.AwsDecoder,
       entityDecoderCompiler = UrlForm
@@ -134,7 +136,8 @@ private[http4s] class OAuthCodecs(
     )
 
   // TODO: Use fromPayloadCodec, here and elsewhere?
-  private def urlFormEntityDecoder[F[_]: Concurrent]: EntityDecoder[F, UrlForm] =
+  private def urlFormEntityDecoder[F[_]: Concurrent]
+      : EntityDecoder[F, UrlForm] =
     EntityDecoders.fromHttpMediaReader(
       HttpMediaTyped(
         HttpMediaType("application/x-www-form-urlencoded"),
@@ -153,7 +156,8 @@ private[http4s] class OAuthCodecs(
       )
     )
 
-  private def urlFormRequestEncoderCompilers[F[_]: Concurrent]: CachedSchemaCompiler[RequestEncoder[F, *]] =
+  private def urlFormRequestEncoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[RequestEncoder[F, *]] =
     RequestEncoder.restSchemaCompiler[F](
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = UrlForm

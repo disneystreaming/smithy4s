@@ -18,12 +18,11 @@ package smithy4s
 package http
 package internals
 
+import smithy.api.XmlFlattened
+import smithy.api.XmlName
 import smithy4s.codecs.PayloadPath
 import smithy4s.internals.SchemaDescription
 import smithy4s.schema._
-
-import smithy.api.XmlFlattened
-import smithy.api.XmlName
 
 private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataDecoder],
