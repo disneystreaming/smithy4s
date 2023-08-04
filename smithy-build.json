@@ -1,7 +1,10 @@
 {
-  "imports": ["./sampleSpecs", "./modules/protocol/resources"],
+  "imports": [
+    "./sampleSpecs",
+    "./modules/protocol/resources"
+  ],
   "mavenDependencies": [
     "software.amazon.smithy:smithy-protocol-test-traits:1.31.0",
-    "com.disneystreaming.alloy:alloy-core:0.2.2"
+    "com.disneystreaming.alloy:alloy-core:0.2.4"
   ]
 }
