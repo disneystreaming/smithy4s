@@ -134,10 +134,31 @@ object DocumentKeyDecoder {
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyDecoder[E] = {
-        // TODO: Handle open / closed
         val fromName = values.map(e => e.stringValue -> e.value).toMap
-        from(s"value in [${fromName.keySet.mkString(", ")}]") {
-          case DString(value) if fromName.contains(value) => fromName(value)
+        val fromNum = values.map(e => e.intValue -> e.value).toMap
+        val intVal = s"value in [${fromNum.keySet.mkString(", ")}]"
+        val stringVal = s"value in [${fromName.keySet.mkString(", ")}]"
+        tag match {
+          case EnumTag.OpenIntEnum(unknown) =>
+            from(intVal) {
+              case DString(value) if value.toIntOption.isDefined =>
+                val i = value.toInt
+                fromNum.getOrElse(i, unknown(i))
+            }
+          case EnumTag.ClosedIntEnum =>
+            from(intVal) {
+              case DString(value)
+                  if value.toIntOption.exists(fromNum.contains(_)) =>
+                fromNum(value.toInt)
+            }
+          case EnumTag.OpenStringEnum(unknown) =>
+            from(stringVal) { case DString(value) =>
+              fromName.getOrElse(value, unknown(value))
+            }
+          case EnumTag.ClosedStringEnum =>
+            from(stringVal) {
+              case DString(value) if fromName.contains(value) => fromName(value)
+            }
         }
       }
 

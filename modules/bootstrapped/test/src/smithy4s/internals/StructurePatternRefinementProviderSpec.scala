@@ -21,6 +21,7 @@ import smithy4s._
 import smithy4s.schema.EnumTag
 import smithy4s.schema.Schema._
 import java.util.UUID
+import smithy4s.example.OpenEnumTest
 
 final class StructurePatternRefinementProviderSpec extends FunSuite {
 
@@ -88,7 +89,7 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
 
     val values = List(ONE, TWO)
 
-    val tag = EnumTag.StringEnum
+    val tag = EnumTag.ClosedStringEnum
 
     implicit val schema: Schema[SomeEnum] =
       enumeration(tag, values).withId(id).addHints(hints)
@@ -107,7 +108,8 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
       j: UUID,
       k: Byte,
       l: Timestamp,
-      m: SomeEnum
+      m: SomeEnum,
+      n: OpenEnumTest
   )
 
   object Primitives {
@@ -125,7 +127,8 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
         uuid.required[Primitives]("j", _.j),
         byte.required[Primitives]("k", _.k),
         timestamp.required[Primitives]("l", _.l),
-        SomeEnum.schema.required[Primitives]("m", _.m)
+        SomeEnum.schema.required[Primitives]("m", _.m),
+        OpenEnumTest.schema.required[Primitives]("n", _.n)
       )(Primitives.apply)
   }
 
@@ -143,14 +146,15 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
       UUID.fromString("246365e6-1665-488a-9ec8-4cc916dc88f6"),
       'a'.toByte,
       Timestamp(0, 0),
-      SomeEnum.ONE
+      SomeEnum.ONE,
+      OpenEnumTest.Unknown("test")
     )
-    val pattern = "{a}_{b}_{c}_{d}_{e}_{f}_{g}_{h}_{i}_{j}_{k}_{l}_{m}"
+    val pattern = "{a}_{b}_{c}_{d}_{e}_{f}_{g}_{h}_{i}_{j}_{k}_{l}_{m}_{n}"
     val expect =
       if (Platform.isJS)
-        "1_2_3_4_5_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE"
+        "1_2_3_4_5_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE_test"
       else
-        "1_2_3.0_4_5.0_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE"
+        "1_2_3.0_4_5.0_6_7_true_something_246365e6-1665-488a-9ec8-4cc916dc88f6_97_1970-01-01T00:00:00Z_ONE_test"
     runEncode(pattern, in, expect)
   }
 

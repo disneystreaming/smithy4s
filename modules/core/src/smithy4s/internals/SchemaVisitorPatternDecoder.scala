@@ -53,21 +53,38 @@ private[internals] final class SchemaVisitorPatternDecoder(
       total: E => EnumValue[E]
   ): MaybePatternDecode[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
+    val fromOrdinal =
+      values.map(e => BigDecimal(e.intValue) -> e.value).toMap
     tag match {
       case EnumTag.ClosedIntEnum =>
-        val fromOrdinal =
-          values.map(e => BigDecimal(e.intValue) -> e.value).toMap
         PatternDecode.from(value =>
           if (fromOrdinal.contains(BigDecimal(value)))
             fromOrdinal(BigDecimal(value))
           else throw StructurePatternError(s"Enum case for '$value' not found.")
+        )
+      case EnumTag.OpenIntEnum(unknown) =>
+        PatternDecode.from(value =>
+          if (fromOrdinal.contains(BigDecimal(value)))
+            fromOrdinal(BigDecimal(value))
+          else
+            value.toIntOption
+              .map(unknown(_))
+              .getOrElse(
+                throw StructurePatternError(
+                  s"Enum case for '$value' not found."
+                )
+              )
         )
       case EnumTag.ClosedStringEnum =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
-      case _ => ??? // TODO: Handle
+      case EnumTag.OpenStringEnum(unknown) =>
+        PatternDecode.from(value =>
+          if (fromName.contains(value)) fromName(value)
+          else unknown(value)
+        )
     }
   }
 

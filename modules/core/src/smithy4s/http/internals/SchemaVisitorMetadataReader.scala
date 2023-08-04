@@ -114,24 +114,33 @@ private[http] class SchemaVisitorMetadataReader(
       tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): MetaDecode[E] =
+  ): MetaDecode[E] = {
+    val intVals = s"Enum[${values.map(_.stringValue).mkString(",")}]"
+    val stringVals = s"Enum[${values.map(_.stringValue).mkString(",")}]"
+    val handleInt: Option[Int] => Option[E] = { maybeInt =>
+      values
+        .find(v => maybeInt.contains(v.intValue))
+        .map(_.value)
+    }
+    val handleString: String => Option[E] = { string =>
+      values.find(_.stringValue == string).map(_.value)
+    }
     tag match {
       case EnumTag.ClosedIntEnum =>
-        MetaDecode
-          .from(
-            s"Enum[${values.map(_.stringValue).mkString(",")}]"
-          )(string =>
-            values
-              .find(v => string.toIntOption.contains(v.intValue))
-              .map(_.value)
-          )
+        MetaDecode.from(intVals)(str => handleInt(str.toIntOption))
+      case EnumTag.OpenIntEnum(unknown) =>
+        MetaDecode.from(intVals) { string =>
+          val maybeInt = string.toIntOption
+          handleInt(maybeInt).orElse(maybeInt.map(unknown))
+        }
       case EnumTag.ClosedStringEnum =>
-        MetaDecode
-          .from(
-            s"Enum[${values.map(_.stringValue).mkString(",")}]"
-          )(string => values.find(_.stringValue == string).map(_.value))
-      case _ => ??? // TODO: Implement
+        MetaDecode.from(stringVals)(handleString)
+      case EnumTag.OpenStringEnum(unknown) =>
+        MetaDecode.from(stringVals)(str =>
+          Some(handleString(str).getOrElse(unknown(str)))
+        )
     }
+  }
 
   private case class FieldDecode(
       fieldName: String,
