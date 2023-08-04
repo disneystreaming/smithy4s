@@ -110,14 +110,14 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): UrlFormDataEncoder[E] = tag match {
-    case EnumTag.IntEnum =>
+    case EnumTag.IntEnum() =>
       (value: E) => UrlForm.FormData.SimpleValue(total(value).intValue.toString)
 
-    case EnumTag.StringEnum =>
+    case _ =>
       (value: E) => UrlForm.FormData.SimpleValue(total(value).stringValue)
   }
 

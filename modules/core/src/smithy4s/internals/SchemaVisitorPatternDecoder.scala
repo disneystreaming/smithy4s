@@ -20,7 +20,6 @@ import smithy4s.schema._
 import smithy4s.internals.PatternDecode.MaybePatternDecode
 import smithy4s.Bijection
 import smithy4s.{Hints, Lazy, Refinement, ShapeId}
-import smithy4s.schema.EnumTag.StringEnum
 
 private[internals] final class SchemaVisitorPatternDecoder(
     segments: List[PatternSegment]
@@ -49,13 +48,13 @@ private[internals] final class SchemaVisitorPatternDecoder(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePatternDecode[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
     tag match {
-      case EnumTag.IntEnum =>
+      case EnumTag.ClosedIntEnum =>
         val fromOrdinal =
           values.map(e => BigDecimal(e.intValue) -> e.value).toMap
         PatternDecode.from(value =>
@@ -63,11 +62,12 @@ private[internals] final class SchemaVisitorPatternDecoder(
             fromOrdinal(BigDecimal(value))
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
-      case StringEnum =>
+      case EnumTag.ClosedStringEnum =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
+      case _ => ??? // TODO: Handle
     }
   }
 

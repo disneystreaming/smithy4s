@@ -238,19 +238,19 @@ object Schema {
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values, total)
 
   def stringEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
-    enumeration(total, EnumTag.StringEnum, values)
+    enumeration(total, EnumTag.ClosedStringEnum, values)
 
   def intEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
-    enumeration(total, EnumTag.IntEnum, values)
+    enumeration(total, EnumTag.ClosedIntEnum, values)
 
   def enumeration[E <: Enumeration.Value](tag: EnumTag[E], values: List[E]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
 
   def stringEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
-    enumeration(EnumTag.StringEnum, values)
+    enumeration(EnumTag.ClosedStringEnum, values)
 
   def intEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
-    enumeration(EnumTag.IntEnum, values)
+    enumeration(EnumTag.ClosedIntEnum, values)
 
   def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]): Schema[B] =
     Schema.BijectionSchema(a, bijection)

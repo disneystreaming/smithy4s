@@ -130,10 +130,11 @@ object DocumentKeyDecoder {
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
-          tag: EnumTag,
+          tag: EnumTag[E],
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
       ): OptDocumentKeyDecoder[E] = {
+        // TODO: Handle open / closed
         val fromName = values.map(e => e.stringValue -> e.value).toMap
         from(s"value in [${fromName.keySet.mkString(", ")}]") {
           case DString(value) if fromName.contains(value) => fromName(value)

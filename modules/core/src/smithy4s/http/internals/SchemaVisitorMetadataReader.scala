@@ -111,12 +111,12 @@ private[http] class SchemaVisitorMetadataReader(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MetaDecode[E] =
     tag match {
-      case EnumTag.IntEnum =>
+      case EnumTag.ClosedIntEnum =>
         MetaDecode
           .from(
             s"Enum[${values.map(_.stringValue).mkString(",")}]"
@@ -125,11 +125,12 @@ private[http] class SchemaVisitorMetadataReader(
               .find(v => string.toIntOption.contains(v.intValue))
               .map(_.value)
           )
-      case EnumTag.StringEnum =>
+      case EnumTag.ClosedStringEnum =>
         MetaDecode
           .from(
             s"Enum[${values.map(_.stringValue).mkString(",")}]"
           )(string => values.find(_.stringValue == string).map(_.value))
+      case _ => ??? // TODO: Implement
     }
 
   private case class FieldDecode(

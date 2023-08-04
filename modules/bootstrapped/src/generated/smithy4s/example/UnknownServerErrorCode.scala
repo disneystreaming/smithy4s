@@ -27,6 +27,6 @@ object UnknownServerErrorCode extends Enumeration[UnknownServerErrorCode] with S
   val values: List[UnknownServerErrorCode] = List(
     ERROR_CODE,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[UnknownServerErrorCode] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[UnknownServerErrorCode] = enumeration(tag, values).withId(id).addHints(hints)
 }

@@ -31,6 +31,6 @@ object AudioEnum extends Enumeration[AudioEnum] with ShapeTag.Companion[AudioEnu
     GUITAR,
     BASS,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[AudioEnum] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[AudioEnum] = enumeration(tag, values).withId(id).addHints(hints)
 }

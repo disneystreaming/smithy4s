@@ -29,6 +29,6 @@ object StringEnum extends Enumeration[StringEnum] with ShapeTag.Companion[String
     STRING,
     INTERESTING,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[StringEnum] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[StringEnum] = enumeration(tag, values).withId(id).addHints(hints)
 }

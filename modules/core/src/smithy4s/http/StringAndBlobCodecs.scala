@@ -127,9 +127,9 @@ object StringAndBlobCodecs {
         total: E => EnumValue[E]
     ): CodecResult[E] = {
       val mediaType = stringMediaType(hints)
-      tag match {
-        case EnumTag.StringEnum =>
-          val reader = new HttpPayloadReader[E] {
+      val maybeReader = tag match {
+        case EnumTag.ClosedStringEnum =>
+          Some(new HttpPayloadReader[E] {
             def read(blob: Blob): Either[HttpPayloadError, E] = {
               val str = blob.toUTF8String
               values
@@ -145,13 +145,25 @@ object StringAndBlobCodecs {
                   )
               }
             }
-          }
-          val writer = new PayloadWriter[E] {
-            def write(any: Any, e: E): Blob = Blob(total(e).stringValue)
-          }
-          Some(HttpMediaTyped(mediaType, ReaderWriter(reader, writer)))
-
-        case EnumTag.IntEnum => None
+          })
+        case EnumTag.OpenStringEnum(processUnknown) =>
+          Some(new HttpPayloadReader[E] {
+            def read(blob: Blob): Either[HttpPayloadError, E] = {
+              val str = blob.toUTF8String
+              val result: E = values
+                .find(_.stringValue == str)
+                .map(_.value)
+                .getOrElse(processUnknown(str))
+              Right(result)
+            }
+          })
+        case _ => None
+      }
+      maybeReader.map { reader =>
+        val writer = new PayloadWriter[E] {
+          def write(any: Any, e: E): Blob = Blob(total(e).stringValue)
+        }
+        HttpMediaTyped(mediaType, ReaderWriter(reader, writer))
       }
     }
 

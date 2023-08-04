@@ -276,13 +276,13 @@ class DocumentDecoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): DocumentDecoder[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
     tag match {
-      case EnumTag.IntEnum =>
+      case EnumTag.IntEnum() =>
         val fromOrdinal =
           values.map(e => BigDecimal(e.intValue) -> e.value).toMap
         from(
@@ -291,7 +291,7 @@ class DocumentDecoderSchemaVisitor(
           case DNumber(value) if fromOrdinal.contains(value) =>
             fromOrdinal(value)
         }
-      case EnumTag.StringEnum =>
+      case _ =>
         from(
           s"value in [${fromName.keySet.mkString(", ")}]"
         ) {

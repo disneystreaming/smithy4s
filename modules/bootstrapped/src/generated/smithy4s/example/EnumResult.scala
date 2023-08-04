@@ -29,6 +29,6 @@ object EnumResult extends Enumeration[EnumResult] with ShapeTag.Companion[EnumRe
     FIRST,
     SECOND,
   )
-  val tag: EnumTag = EnumTag.IntEnum
+  val tag: EnumTag[EnumResult] = EnumTag.ClosedIntEnum
   implicit val schema: Schema[EnumResult] = enumeration(tag, values).withId(id).addHints(hints)
 }
