@@ -4,19 +4,30 @@ import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
 import smithy4s.ShapeTag
+import smithy4s.optics.Prism
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
 sealed trait ForecastResult extends scala.Product with scala.Serializable {
   @inline final def widen: ForecastResult = this
+  def $ordinal: Int
 }
 object ForecastResult extends ShapeTag.Companion[ForecastResult] {
+
+  def rain(rain:ChanceOfRain): ForecastResult = RainCase(rain)
+  def sun(sun:UVIndex): ForecastResult = SunCase(sun)
+
   val id: ShapeId = ShapeId("smithy4s.example", "ForecastResult")
 
   val hints: Hints = Hints.empty
 
-  final case class RainCase(rain: ChanceOfRain) extends ForecastResult
-  final case class SunCase(sun: UVIndex) extends ForecastResult
+  object optics {
+    val rain: Prism[ForecastResult, ChanceOfRain] = Prism.partial[ForecastResult, ChanceOfRain]{ case RainCase(t) => t }(RainCase.apply)
+    val sun: Prism[ForecastResult, UVIndex] = Prism.partial[ForecastResult, UVIndex]{ case SunCase(t) => t }(SunCase.apply)
+  }
+
+  final case class RainCase(rain: ChanceOfRain) extends ForecastResult { final def $ordinal: Int = 0 }
+  final case class SunCase(sun: UVIndex) extends ForecastResult { final def $ordinal: Int = 1 }
 
   object RainCase {
     val hints: Hints = Hints.empty
@@ -33,7 +44,6 @@ object ForecastResult extends ShapeTag.Companion[ForecastResult] {
     RainCase.alt,
     SunCase.alt,
   ){
-    case c: RainCase => RainCase.alt(c)
-    case c: SunCase => SunCase.alt(c)
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

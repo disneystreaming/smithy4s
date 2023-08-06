@@ -19,15 +19,19 @@ package smithy4s.tests
 import cats.effect.IO
 import cats.effect.std.Env
 import cats.syntax.all._
+import fs2.Stream
 import fs2.io.file.Path
-import smithy4s.{Blob, Document, Schema, ShapeId}
+import smithy4s.Blob
+import smithy4s.Document
+import smithy4s.Schema
+import smithy4s.ShapeId
+import smithy4s.codecs._
 import smithy4s.compliancetests._
 import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.dynamic.model.Model
 import smithy4s.dynamic.DynamicSchemaIndex.load
-import smithy4s.codecs._
+import smithy4s.dynamic.model.Model
 import weaver._
-import fs2.Stream
+
 import java.util.regex.Pattern
 
 abstract class ProtocolComplianceSuite
@@ -48,7 +52,7 @@ abstract class ProtocolComplianceSuite
       .evalMap(index => allRules(index).map(_ -> allTests(index)))
       .flatMap { case (rules, tests) => Stream(tests: _*).map(rules -> _) }
       .flatMap { case (rules, test) =>
-        if (includeTest(test.id)) Stream.emit((rules, test)) else Stream.empty
+        if (includeTest(test.show)) Stream.emit((rules, test)) else Stream.empty
       }
       .flatMap { case (rules, test) =>
         runInWeaver(rules, test)

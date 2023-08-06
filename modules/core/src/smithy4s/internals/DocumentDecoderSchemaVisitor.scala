@@ -17,20 +17,20 @@
 package smithy4s
 package internals
 
-import java.util.Base64
-import java.util.UUID
-
+import alloy.Discriminated
 import smithy.api.JsonName
 import smithy.api.TimestampFormat
 import smithy.api.TimestampFormat.DATE_TIME
 import smithy.api.TimestampFormat.EPOCH_SECONDS
 import smithy.api.TimestampFormat.HTTP_DATE
-import alloy.Discriminated
-import smithy4s.codecs._
-import smithy4s.capability.Covariant
 import smithy4s.Document._
-import smithy4s.schema._
+import smithy4s.capability.Covariant
+import smithy4s.codecs._
 import smithy4s.schema.Primitive._
+import smithy4s.schema._
+
+import java.util.Base64
+import java.util.UUID
 import scala.collection.immutable.ListMap
 
 trait DocumentDecoder[A] { self =>
@@ -82,7 +82,7 @@ object DocumentDecoder {
         throw PayloadError(
           PayloadPath(history.reverse),
           expectedType,
-          s"Expected Json $expectedJsonShape"
+          s"Expected Json Shape: $expectedJsonShape but got the following Json Shape ${document.name}"
         )
     }
     def expected: String = expectedType
@@ -127,7 +127,7 @@ class DocumentDecoderSchemaVisitor(
       )
     case PBlob =>
       fromUnsafe("Base64 binary blob") { case DString(string) =>
-        ByteArray(Base64.getDecoder().decode(string))
+        Blob(Base64.getDecoder().decode(string))
       }
     case PBigInt =>
       from("BigInt") {
@@ -233,7 +233,7 @@ class DocumentDecoderSchemaVisitor(
           map.foreach { case (key, value) =>
             val decodedKey = keyDecoder(DString(key)).fold(
               { case DocumentKeyDecoder.DecodeError(expectedType) =>
-                val path = PayloadPath.Segment.fromString(key) :: pp
+                val path = PayloadPath.Segment.parse(key) :: pp
                 throw PayloadError(
                   PayloadPath(path.reverse),
                   expectedType,
@@ -448,7 +448,7 @@ class DocumentDecoderSchemaVisitor(
       alt.schema.hints.get(JsonName).map(_.value).getOrElse(alt.label)
 
     val decoders: DecoderMap[U] =
-      alternatives.map { case alt @ Alt(_, instance, inject) =>
+      alternatives.map { case alt @ Alt(_, instance, inject, _) =>
         val label = jsonLabel(alt)
         val encoder = { (pp: List[PayloadPath.Segment], doc: Document) =>
           inject(apply(instance)(label :: pp, doc))

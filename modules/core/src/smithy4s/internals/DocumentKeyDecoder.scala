@@ -91,7 +91,7 @@ object DocumentKeyDecoder {
 
           case PBlob =>
             fromUnsafe(shortDesc) { case DString(string) =>
-              ByteArray(Base64.getDecoder().decode(string))
+              Blob(Base64.getDecoder().decode(string))
             }
           case PBigInt =>
             from(shortDesc) {

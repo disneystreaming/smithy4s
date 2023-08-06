@@ -42,12 +42,14 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[HelloWorldAuthServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[HelloWorldAuthServiceOperation, _, _, _, _, _]] = Vector(
     HelloWorldAuthServiceOperation.SayWorld,
     HelloWorldAuthServiceOperation.HealthCheck,
   )
 
-  def endpoint[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: HelloWorldAuthServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends HelloWorldAuthServiceOperation.Transformed[HelloWorldAuthServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: HelloWorldAuthServiceGen[HelloWorldAuthServiceOperation] = HelloWorldAuthServiceOperation.reified
@@ -63,7 +65,9 @@ object HelloWorldAuthServiceGen extends Service.Mixin[HelloWorldAuthServiceGen, 
 
 sealed trait HelloWorldAuthServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[HelloWorldAuthServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[HelloWorldAuthServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object HelloWorldAuthServiceOperation {
@@ -82,7 +86,9 @@ object HelloWorldAuthServiceOperation {
   }
   final case class SayWorld() extends HelloWorldAuthServiceOperation[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = impl.sayWorld()
-    def endpoint: (Unit, smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing]) = ((), SayWorld)
+    def ordinal = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] = SayWorld
   }
   object SayWorld extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.SayWorldError, World, Nothing, Nothing] with Errorable[SayWorldError] {
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "SayWorld")
@@ -107,13 +113,17 @@ object HelloWorldAuthServiceOperation {
   }
   sealed trait SayWorldError extends scala.Product with scala.Serializable {
     @inline final def widen: SayWorldError = this
+    def $ordinal: Int
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
+
+    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
+
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "SayWorldError")
 
     val hints: Hints = Hints.empty
 
-    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError
+    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends SayWorldError { final def $ordinal: Int = 0 }
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -124,12 +134,14 @@ object HelloWorldAuthServiceOperation {
     implicit val schema: UnionSchema[SayWorldError] = union(
       NotAuthorizedErrorCase.alt,
     ){
-      case c: NotAuthorizedErrorCase => NotAuthorizedErrorCase.alt(c)
+      _.$ordinal
     }
   }
   final case class HealthCheck() extends HelloWorldAuthServiceOperation[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldAuthServiceGen[F]): F[Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = impl.healthCheck()
-    def endpoint: (Unit, smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing]) = ((), HealthCheck)
+    def ordinal = 1
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] = HealthCheck
   }
   object HealthCheck extends smithy4s.Endpoint[HelloWorldAuthServiceOperation,Unit, HelloWorldAuthServiceOperation.HealthCheckError, HealthCheckOutput, Nothing, Nothing] with Errorable[HealthCheckError] {
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheck")
@@ -155,13 +167,17 @@ object HelloWorldAuthServiceOperation {
   }
   sealed trait HealthCheckError extends scala.Product with scala.Serializable {
     @inline final def widen: HealthCheckError = this
+    def $ordinal: Int
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
+
+    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
+
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckError")
 
     val hints: Hints = Hints.empty
 
-    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError
+    final case class NotAuthorizedErrorCase(notAuthorizedError: NotAuthorizedError) extends HealthCheckError { final def $ordinal: Int = 0 }
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
@@ -172,7 +188,7 @@ object HelloWorldAuthServiceOperation {
     implicit val schema: UnionSchema[HealthCheckError] = union(
       NotAuthorizedErrorCase.alt,
     ){
-      case c: NotAuthorizedErrorCase => NotAuthorizedErrorCase.alt(c)
+      _.$ordinal
     }
   }
 }

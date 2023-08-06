@@ -18,6 +18,7 @@ package smithy4s
 package schema
 
 import Schema._
+import scala.reflect.ClassTag
 
 // format: off
 sealed trait Schema[A]{
@@ -153,7 +154,7 @@ object Schema {
   final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
   final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
-  final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], dispatch: U => Alt.WithValue[U, _]) extends Schema[U]
+  final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
   final case class OptionSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
     def hints: Hints = underlying.hints
     def shapeId: ShapeId = underlying.shapeId
@@ -194,15 +195,15 @@ object Schema {
   val string: Schema[String] = Primitive.PString.schema(prelude, "String")
   val boolean: Schema[Boolean] = Primitive.PBoolean.schema(prelude, "Boolean")
   val byte: Schema[Byte] = Primitive.PByte.schema(prelude, "Byte")
-  val bytes: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
-  val blob: Schema[ByteArray] = Primitive.PBlob.schema(prelude, "Blob")
+  val bytes: Schema[Blob] = Primitive.PBlob.schema(prelude, "Blob")
+  val blob: Schema[Blob] = Primitive.PBlob.schema(prelude, "Blob")
   val timestamp: Schema[Timestamp] = Primitive.PTimestamp.schema(prelude, "Timestamp")
   val document: Schema[Document] = Primitive.PDocument.schema(prelude, "Document")
   val uuid: Schema[java.util.UUID] = Primitive.PUUID.schema("alloy", "UUID")
 
   val unit: Schema[Unit] = Schema.StructSchema(ShapeId("smithy.api", "Unit"), Hints.empty, Vector.empty, _ => ())
 
-  private val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
+  private[schema] val placeholder: ShapeId = ShapeId("placeholder", "Placeholder")
 
   def list[A](a: Schema[A]): Schema[List[A]] = Schema.CollectionSchema[List, A](placeholder, Hints.empty, CollectionTag.ListTag, a)
   def set[A](a: Schema[A]): Schema[Set[A]] = Schema.CollectionSchema[Set, A](placeholder, Hints.empty, CollectionTag.SetTag, a)
@@ -221,11 +222,17 @@ object Schema {
 
   def recursive[A](s: => Schema[A]): Schema[A] = Schema.LazySchema(Lazy(s))
 
-  def union[U](alts: Alt[U, _]*)(dispatch: U => Alt.WithValue[U, _]): Schema.UnionSchema[U] =
-    Schema.UnionSchema(placeholder, Hints.empty, alts.toVector, dispatch)
+  def union[U](alts: Vector[Alt[U, _]]): PartiallyAppliedUnion[U] = new PartiallyAppliedUnion(alts)
+  def union[U](alts: Alt[U, _]*) : PartiallyAppliedUnion[U] = new PartiallyAppliedUnion(alts.toVector)
 
-  def union[U](alts: Vector[Alt[U, _]])(dispatch: U => Alt.WithValue[U, _]): Schema.UnionSchema[U] =
-    Schema.UnionSchema(placeholder, Hints.empty, alts, dispatch)
+  def either[A, B](left: Schema[A], right: Schema[B]) : Schema[Either[A, B]] = {
+    val l = left.oneOf[Either[A, B]]("left", Left(_: A)) { case Left(a) => a }
+    val r = right.oneOf[Either[A, B]]("right", Right(_: B)) { case Right(b) => b }
+    union(l, r) {
+      case Left(_) => 0
+      case Right(_) =>  1
+    }
+  }
 
   def enumeration[E](total: E => EnumValue[E], tag: EnumTag, values: List[EnumValue[E]]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values, total)
@@ -254,7 +261,7 @@ object Schema {
   def constant[A](a: A): Schema[A] = Schema.StructSchema(placeholder, Hints.empty, Vector.empty, _ => a)
 
   def struct[S]: PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
-
+  val tuple: PartiallyAppliedTuple = new PartiallyAppliedTuple(placeholder)
   private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
     def apply(label: String, get: S => A): Field[S, A] = Field.required(label, schema, get)
   }
@@ -264,8 +271,9 @@ object Schema {
   }
 
   private [smithy4s] class PartiallyAppliedOneOf[U, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String)(implicit ev: A <:< U): Alt[U, A] = Alt(label, schema, ev)
-    def apply(label: String, inject: A => U): Alt[U, A] = Alt(label, schema, inject)
+    def apply(label: String)(implicit ev: A <:< U, ct: ClassTag[A]): Alt[U, A] = Alt(label, schema, ev, { case a: A => a })
+    def apply(label: String, inject: A => U)(project: PartialFunction[U, A]): Alt[U, A] =
+      Alt(label, schema, inject, project)
   }
 
   private [smithy4s] class PartiallyAppliedRefinement[A, B](private val schema: Schema[A]) extends AnyVal {

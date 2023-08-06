@@ -14,20 +14,24 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws.query
+package smithy4s
+package http
+package internals
 
 import cats.effect.IO
 import cats.syntax.all._
-import smithy4s.ByteArray
-import smithy4s.Hints
-import smithy4s.schema.Schema
-import smithy4s.schema.CompilationCache
-import smithy4s.schema.Schema._
-import weaver._
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
+import smithy4s.Blob
+import smithy4s.Hints
+import smithy4s.schema.CompilationCache
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema._
+import weaver._
 
-object AwsQueryCodecSpec extends SimpleIOSuite {
+import scala.collection.mutable
+
+object UrlFormDataEncoderSchemaVisitorSpec extends SimpleIOSuite {
 
   test("primitive: int") {
     implicit val schema: Schema[Int] = int
@@ -106,9 +110,9 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
   }
 
   test("primitive: bytes") {
-    implicit val schema: Schema[ByteArray] = bytes
+    implicit val schema: Schema[Blob] = bytes
     val expected = "Zm9vYmFy"
-    checkContent(expected, ByteArray("foobar".getBytes()))
+    checkContent(expected, Blob("foobar"))
   }
 
   test("struct") {
@@ -232,14 +236,7 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
 
   test("union") {
     type Foo = Either[Int, String]
-    implicit val schema: Schema[Foo] = {
-      val left = int.oneOf[Foo]("left", Left(_))
-      val right = string.oneOf[Foo]("right", Right(_))
-      union(left, right) {
-        case Left(int)     => left(int)
-        case Right(string) => right(string)
-      }
-    }
+    implicit val schema: Schema[Foo] = Schema.either(int, string)
     val expectedLeft = "left=1"
     val expectedRight = "right=hello"
     checkContent[Foo](expectedLeft, Left(1)) |+|
@@ -248,14 +245,10 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
 
   test("union: custom names") {
     type Foo = Either[Int, String]
-    implicit val schema: Schema[Foo] = {
-      val left = int.oneOf[Foo]("left", Left(_)).addHints(XmlName("foo"))
-      val right = string.oneOf[Foo]("right", Right(_)).addHints(XmlName("bar"))
-      union(left, right) {
-        case Left(int)     => left(int)
-        case Right(string) => right(string)
-      }
-    }
+    implicit val schema: Schema[Foo] = Schema.either(
+      int.addMemberHints(XmlName("foo")),
+      string.addMemberHints(XmlName("bar"))
+    )
     val expectedLeft = "foo=1"
     val expectedRight = "bar=hello".stripMargin
     checkContent[Foo](expectedLeft, Left(1)) |+|
@@ -338,13 +331,16 @@ object AwsQueryCodecSpec extends SimpleIOSuite {
       schema: Schema[A],
       loc: SourceLocation
   ): IO[Expectations] = {
-    val cache: CompilationCache[AwsQueryCodec] =
-      CompilationCache.make[AwsQueryCodec]
-    val schemaVisitor: AwsSchemaVisitorAwsQueryCodec =
-      new AwsSchemaVisitorAwsQueryCodec(cache)
-    val codec: AwsQueryCodec[A] = schemaVisitor(schema)
-    val formData: FormData = codec(value)
-    val result: String = formData.render
-    IO(expect.same(result, expected))
+    val cache = CompilationCache.make[UrlFormDataEncoder]
+    val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
+      cache,
+      ignoreXmlFlattened = false,
+      capitalizeStructAndUnionMemberNames = false
+    )
+    val encoder = schemaVisitor(schema)
+    val formData = encoder.encode(value)
+    val builder = new mutable.StringBuilder
+    formData.writeTo(builder)
+    IO(expect.same(builder.result(), expected))
   }
 }

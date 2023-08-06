@@ -21,11 +21,13 @@ import cats.implicits._
 import smithy4s.meta.AdtMemberTrait
 import smithy4s.meta.ErrorMessageTrait
 import smithy4s.meta.IndexedSeqTrait
+import smithy4s.meta.NoStackTraceTrait
 import smithy4s.meta.PackedInputsTrait
 import smithy4s.meta.RefinementTrait
 import smithy4s.meta.VectorTrait
 import smithy4s.meta.AdtTrait
 import smithy4s.meta.GenerateServiceProductTrait
+import smithy4s.meta.GenerateOpticsTrait
 import alloy.StructurePatternTrait
 import software.amazon.smithy.aws.traits.ServiceTrait
 import software.amazon.smithy.model.Model
@@ -535,9 +537,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       //format: on
     }
 
-  private val reservedNames = new CollisionAvoidance.Names().getReservedNames
-  private def isReservedName(str: String): Boolean = reservedNames(str)
-
   private val toType: ShapeVisitor[Option[Type]] =
     new ShapeVisitor[Option[Type]] {
       // See https://awslabs.github.io/smithy/1.0/spec/core/prelude-model.html?highlight=primitiveboolean#prelude-shapes
@@ -570,11 +569,20 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           .getAllTraits()
           .asScala
           .flatMap { case (_, trt) =>
-            model
+            val refinement = model
               .getShape(trt.toShapeId)
               .asScala
               .flatMap(_.getTrait(classOf[RefinementTrait]).asScala)
               .map(rt => trt -> ExternalTypeInfo.RefinementInfo(rt))
+            def idRef =
+              if (trt.toShapeId == IdRefTrait.ID) {
+                val rt = RefinementTrait
+                  .builder()
+                  .targetType("smithy4s.ShapeId")
+                  .build()
+                Some(trt -> ExternalTypeInfo.RefinementInfo(rt))
+              } else None
+            refinement.orElse(idRef)
           }
           .headOption // Shapes can have at most ONE trait that has the refined trait
           .orElse {
@@ -584,7 +592,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
       }
 
-      private def getExternalOrBase(shape: Shape, base: Type): Type = {
+      private def getExternalOrBase(shape: Shape, base: Type): Type =
         getExternalTypeInfo(shape)
           .map {
             case (trt, ExternalTypeInfo.RefinementInfo(refined)) =>
@@ -612,7 +620,6 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               )
           }
           .getOrElse(base)
-      }
 
       private def isExternal(tpe: Type): Boolean = tpe match {
         case _: Type.ExternalType => true
@@ -632,8 +639,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           getExternalOrBase(shape, Type.PrimitiveType(primitive))
         if (
           shape.getId() != ShapeId.from(primitiveId) &&
-          !isUnboxedPrimitive(shape.getId()) &&
-          !isReservedName(shape.getId().getName())
+          !isUnboxedPrimitive(shape.getId())
         ) {
           Type
             .Alias(
@@ -657,11 +663,19 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             )
             .some
         } else {
-          primitive(x, "smithy.api#Blob", Primitive.ByteArray)
+          primitive(x, "smithy.api#Blob", Primitive.Blob)
         }
 
       def booleanShape(x: BooleanShape): Option[Type] =
         primitive(x, "smithy.api#Boolean", Primitive.Bool)
+
+      def getHints(tpe: Type, shape: Shape): List[Hint] = {
+        val h = hints(shape)
+        tpe match {
+          case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
+          case _                    => h
+        }
+      }
 
       def listShape(x: ListShape): Option[Type] = {
         x.getMember()
@@ -673,7 +687,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
           .map { tpe =>
             val _hints = hints(x)
-            val memberHints = hints(x.getMember())
+            val memberHints = {
+              val h = hints(x.getMember())
+              tpe match {
+                case e: Type.ExternalType => h.filterNot(_ == e.refinementHint)
+                case _                    => h
+              }
+            }
             if (_hints.contains(Hint.UniqueItems)) {
               Type.Collection(CollectionType.Set, tpe, memberHints)
             } else if (_hints.contains(Hint.SpecializedList.Vector)) {
@@ -693,10 +713,13 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       }
 
       @nowarn("msg=class SetShape in package shapes is deprecated")
-      override def setShape(x: SetShape): Option[Type] =
+      override def setShape(x: SetShape): Option[Type] = {
         x.getMember()
           .accept(this)
-          .map(Type.Collection(CollectionType.Set, _, hints(x.getMember())))
+          .map(mem =>
+            Type
+              .Collection(CollectionType.Set, mem, getHints(mem, x.getMember()))
+          )
           .map { tpe =>
             val externalOrBase =
               getExternalOrBase(x, tpe)
@@ -708,18 +731,23 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               isUnwrapped
             )
           }
+      }
 
       def mapShape(x: MapShape): Option[Type] = (for {
         k <- x.getKey().accept(this)
         v <- x.getValue().accept(this).map { tpe =>
           if (x.hasTrait(classOf[SparseTrait])) Type.Nullable(tpe) else tpe
         }
-      } yield Type.Map(k, hints(x.getKey()), v, hints(x.getValue()))).map {
-        tpe =>
-          val externalOrBase =
-            getExternalOrBase(x, tpe)
-          val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
-          Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
+      } yield Type.Map(
+        k,
+        getHints(k, x.getKey()),
+        v,
+        getHints(v, x.getValue())
+      )).map { tpe =>
+        val externalOrBase =
+          getExternalOrBase(x, tpe)
+        val isUnwrapped = !isExternal(externalOrBase) || isUnwrappedShape(x)
+        Type.Alias(x.namespace, x.name, externalOrBase, isUnwrapped)
       }
 
       def byteShape(x: ByteShape): Option[Type] =
@@ -917,6 +945,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.Deprecated(d.getMessage.asScala, d.getSince.asScala)
     case _: ErrorMessageTrait =>
       Hint.ErrorMessage
+    case _: NoStackTraceTrait =>
+      Hint.NoStackTrace
     case _: VectorTrait =>
       Hint.SpecializedList.Vector
     case _: IndexedSeqTrait =>
@@ -925,6 +955,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       Hint.UniqueItems
     case _: GenerateServiceProductTrait =>
       Hint.GenerateServiceProduct
+    case _: GenerateOpticsTrait =>
+      Hint.GenerateOptics
     case t if t.toShapeId() == ShapeId.fromParts("smithy.api", "trait") =>
       Hint.Trait
     case ConstraintTrait(tr) => Hint.Constraint(toTypeRef(tr), unfoldTrait(tr))
@@ -1025,8 +1057,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             hints(member) ++ default ++ noDefault
           )
         }
-        .collect { case (name, Some(tpe), required, hints) =>
-          Field(name, tpe, required, hints)
+        .collect {
+          case (name, Some(tpe: Type.ExternalType), required, hints) =>
+            val newHints = hints.filterNot(_ == tpe.refinementHint)
+            Field(name, tpe, required, newHints)
+          case (name, Some(tpe), required, hints) =>
+            Field(name, tpe, required, hints)
         }
         .toList
 
@@ -1064,6 +1100,12 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         .collect {
           case (name, Some(Right(Type.unit)), h) =>
             Alt(name, UnionMember.UnitCase, h)
+          case (name, Some(Right(tpe: Type.ExternalType)), h) =>
+            Alt(
+              name,
+              UnionMember.TypeCase(tpe),
+              h.filterNot(_ == tpe.refinementHint)
+            )
           case (name, Some(Right(tpe)), h) =>
             Alt(name, UnionMember.TypeCase(tpe), h)
           case (name, Some(Left(p: Product)), h) =>
@@ -1286,8 +1328,37 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         TypedNode.CollectionTN(collectionType, List.empty)
       case (node, Type.Map(_, _, _, _)) if node == Node.nullNode =>
         TypedNode.MapTN(List.empty)
+      case (node, IdRefCase()) =>
+        val ref = Type.Ref("smithy4s", "ShapeId")
+        val namespace :: name :: _ =
+          node.asStringNode.get.getValue.split("#").toList
+        def toField(value: String) = TypedNode.FieldTN.RequiredTN(
+          NodeAndType(
+            Node.from(value),
+            Type.PrimitiveType(Primitive.String)
+          )
+        )
+        TypedNode.StructureTN(
+          ref,
+          List("namespace" -> toField(namespace), "name" -> toField(name))
+        )
       case (node, tpe) => throw UnhandledTraitBinding(node, tpe)
     }
+
+  private object IdRefCase {
+    def unapply(tpe: Type): Boolean = tpe match {
+      case Type.ExternalType(
+            _,
+            fqn,
+            _,
+            _,
+            Type.PrimitiveType(Primitive.String),
+            _
+          ) if fqn === "smithy4s.ShapeId" =>
+        true
+      case _ => false
+    }
+  }
 
   private def unfoldNodeAndTypeP(
       node: Node,
@@ -1330,8 +1401,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       TypedNode.PrimitiveTN(Primitive.Short, 0: Short)
     case (node, Primitive.Byte) if node == Node.nullNode =>
       TypedNode.PrimitiveTN(Primitive.Byte, 0.toByte)
-    case (node, Primitive.ByteArray) if node == Node.nullNode =>
-      TypedNode.PrimitiveTN(Primitive.ByteArray, Array.empty[Byte])
+    case (node, Primitive.Blob) if node == Node.nullNode =>
+      TypedNode.PrimitiveTN(Primitive.Blob, Array.empty[Byte])
     case (node, Primitive.Bool) if node == Node.nullNode =>
       TypedNode.PrimitiveTN(Primitive.Bool, false)
     case (node, Primitive.Timestamp) if node == Node.nullNode =>

@@ -190,14 +190,7 @@ class CachedSchemaVisitorSpec() extends FunSuite {
   }
 
   test(header + "union") {
-    type Foo = Either[Int, String]
-    val left = int.oneOf[Foo]("left", Left(_))
-    val right = string.oneOf[Foo]("right", Right(_))
-    val schema = union(left, right) {
-      case Left(int)     => left(int)
-      case Right(string) => right(string)
-    }
-
+    val schema = Schema.either(int, string)
     checkSchema(schema)
   }
 

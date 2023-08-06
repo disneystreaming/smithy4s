@@ -38,11 +38,13 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation, _, _, _, _, _]] = Vector(
     ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperation,
   )
 
-  def endpoint[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: ErrorHandlingServiceExtraErrorsOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends ErrorHandlingServiceExtraErrorsOperation.Transformed[ErrorHandlingServiceExtraErrorsOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: ErrorHandlingServiceExtraErrorsGen[ErrorHandlingServiceExtraErrorsOperation] = ErrorHandlingServiceExtraErrorsOperation.reified
@@ -56,7 +58,9 @@ object ErrorHandlingServiceExtraErrorsGen extends Service.Mixin[ErrorHandlingSer
 
 sealed trait ErrorHandlingServiceExtraErrorsOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[ErrorHandlingServiceExtraErrorsOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[ErrorHandlingServiceExtraErrorsOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object ErrorHandlingServiceExtraErrorsOperation {
@@ -73,7 +77,8 @@ object ErrorHandlingServiceExtraErrorsOperation {
   }
   final case class ExtraErrorOperation(input: ExtraErrorOperationInput) extends ErrorHandlingServiceExtraErrorsOperation[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: ErrorHandlingServiceExtraErrorsGen[F]): F[ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = impl.extraErrorOperation(input.in)
-    def endpoint: (ExtraErrorOperationInput, smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing]) = (input, ExtraErrorOperation)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] = ExtraErrorOperation
   }
   object ExtraErrorOperation extends smithy4s.Endpoint[ErrorHandlingServiceExtraErrorsOperation,ExtraErrorOperationInput, ErrorHandlingServiceExtraErrorsOperation.ExtraErrorOperationError, Unit, Nothing, Nothing] with Errorable[ExtraErrorOperationError] {
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperation")
@@ -101,16 +106,23 @@ object ErrorHandlingServiceExtraErrorsOperation {
   }
   sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable {
     @inline final def widen: ExtraErrorOperationError = this
+    def $ordinal: Int
   }
   object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
+
+    def randomOtherClientError(randomOtherClientError:RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
+    def randomOtherServerError(randomOtherServerError:RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerError)
+    def randomOtherClientErrorWithCode(randomOtherClientErrorWithCode:RandomOtherClientErrorWithCode): ExtraErrorOperationError = RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode)
+    def randomOtherServerErrorWithCode(randomOtherServerErrorWithCode:RandomOtherServerErrorWithCode): ExtraErrorOperationError = RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode)
+
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationError")
 
     val hints: Hints = Hints.empty
 
-    final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError
-    final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError
-    final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError
-    final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError
+    final case class RandomOtherClientErrorCase(randomOtherClientError: RandomOtherClientError) extends ExtraErrorOperationError { final def $ordinal: Int = 0 }
+    final case class RandomOtherServerErrorCase(randomOtherServerError: RandomOtherServerError) extends ExtraErrorOperationError { final def $ordinal: Int = 1 }
+    final case class RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode) extends ExtraErrorOperationError { final def $ordinal: Int = 2 }
+    final case class RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode) extends ExtraErrorOperationError { final def $ordinal: Int = 3 }
 
     object RandomOtherClientErrorCase {
       val hints: Hints = Hints.empty
@@ -139,10 +151,7 @@ object ErrorHandlingServiceExtraErrorsOperation {
       RandomOtherClientErrorWithCodeCase.alt,
       RandomOtherServerErrorWithCodeCase.alt,
     ){
-      case c: RandomOtherClientErrorCase => RandomOtherClientErrorCase.alt(c)
-      case c: RandomOtherServerErrorCase => RandomOtherServerErrorCase.alt(c)
-      case c: RandomOtherClientErrorWithCodeCase => RandomOtherClientErrorWithCodeCase.alt(c)
-      case c: RandomOtherServerErrorWithCodeCase => RandomOtherServerErrorWithCodeCase.alt(c)
+      _.$ordinal
     }
   }
 }

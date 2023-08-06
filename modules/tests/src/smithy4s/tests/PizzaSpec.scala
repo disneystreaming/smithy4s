@@ -293,6 +293,27 @@ abstract class PizzaSpec
         .map(assert.eql(_, 400))
   }
 
+  routerTest("Optional payload set to empty") { (client, uri, log) =>
+    for {
+      res <- client.send[Json](
+        GET(uri / "optional-output"),
+        log
+      )
+    } yield {
+      val (code, headers, body) = res
+      expect.same(body, Json.Null) &&
+      expect.same(code, 200) &&
+      expect(
+        headers.get("Content-Length").exists(_ == List("4")),
+        "Content-Length should be 4"
+      ) &&
+      expect.same(
+        headers.get("Content-Type"),
+        Some(List("application/json"))
+      )
+    }
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {
@@ -349,7 +370,7 @@ abstract class PizzaSpec
           // If it was the case, these errors would be turned into a GenericServerError
           // and would fail.
           smithy4s.example.GenericServerError("CatchAll: " + t.getMessage())
-        case other => other.printStackTrace(); other
+        case other => other
       }
     )
   } yield res

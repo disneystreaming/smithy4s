@@ -18,25 +18,24 @@ package smithy4s
 package aws
 package internals
 
+import cats.Applicative
+import cats.data.EitherT
 import cats.effect.Concurrent
 import cats.syntax.all._
-import cats.Applicative
 import fs2.compression.Compression
-import smithy4s.http4s.kernel._
-import smithy4s.Endpoint
-import smithy4s.schema.CachedSchemaCompiler
-import org.http4s.EntityDecoder
-import smithy4s.xml.XmlDocument
-import org.http4s.MediaRange
 import fs2.data.xml._
 import fs2.data.xml.dom._
-import cats.data.EitherT
-import smithy4s.kinds.PolyFunction
+import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
-import smithy4s.capability.Covariant
-
+import org.http4s.MediaRange
 import org.http4s.MediaType
+import smithy4s.Endpoint
+import smithy4s.capability.Covariant
 import smithy4s.http.Metadata
+import smithy4s.http4s.kernel._
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.xml.XmlDocument
 
 private[aws] object AwsXmlCodecs {
 
@@ -45,64 +44,12 @@ private[aws] object AwsXmlCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-
-        val stringAndBlobsEntityEncoders =
-          smithy4s.http.StringAndBlobCodecs.WriterCompiler
-            .mapK(
-              Covariant.liftPolyFunction[Option](
-                EntityEncoders.fromHttpMediaWriterK[F]
-              )
-            )
-
-        val stringAndBlobsEntityDecoders =
-          smithy4s.http.StringAndBlobCodecs.ReaderCompiler
-            .mapK(
-              Covariant.liftPolyFunction[Option](
-                EntityDecoders.fromHttpMediaReaderK[F]
-              )
-            )
-
-        val xmlEntityEncoders: CachedSchemaCompiler[EntityEncoder[F, *]] =
-          XmlDocument.Encoder.mapK(
-            new PolyFunction[XmlDocument.Encoder, EntityEncoder[F, *]] {
-              def apply[A](fa: XmlDocument.Encoder[A]): EntityEncoder[F, A] =
-                xmlEntityEncoder[F].contramap(fa.encode)
-            }
-          )
-
-        val encoders = CachedSchemaCompiler.getOrElse(
-          stringAndBlobsEntityEncoders,
-          xmlEntityEncoders
+        val transformEncoders = applyCompression[F](endpoint.hints)
+        val requestEncoderCompilersWithCompression = transformEncoders(
+          requestEncoderCompilers[F]
         )
 
-        val xmlEntityDecoders: CachedSchemaCompiler[EntityDecoder[F, *]] =
-          XmlDocument.Decoder.mapK(
-            new PolyFunction[XmlDocument.Decoder, EntityDecoder[F, *]] {
-              def apply[A](
-                  fa: XmlDocument.Decoder[A]
-              ): EntityDecoder[F, A] =
-                xmlEntityDecoder[F].flatMapR(xmlDocument =>
-                  EitherT.liftF {
-                    fa.decode(xmlDocument)
-                      .leftMap(fromXmlToHttpError)
-                      .liftTo[F]
-                  }
-                )
-            }
-          )
-
-        val decoders = CachedSchemaCompiler.getOrElse(
-          stringAndBlobsEntityDecoders,
-          xmlEntityDecoders
-        )
-
-        val restEncoders =
-          RequestEncoder.restSchemaCompiler[F](Metadata.AwsEncoder, encoders)
-
-        val restDecoders =
-          ResponseDecoder.restSchemaCompiler(Metadata.AwsDecoder, decoders)
-
-        val errorDecoders = restDecoders.contramapSchema(
+        val errorDecoderCompilers = responseDecoderCompilers[F].contramapSchema(
           smithy4s.schema.Schema.transformHintsLocallyK(
             _ ++ smithy4s.Hints(
               smithy4s.xml.internals.XmlStartingPath(
@@ -111,24 +58,95 @@ private[aws] object AwsXmlCodecs {
             )
           )
         )
+        val errorDiscriminator =
+          AwsErrorTypeDecoder.fromResponse(errorDecoderCompilers)
 
-        val discriminator = AwsErrorTypeDecoder.fromResponse(errorDecoders)
-
-        val transformEncoders = applyCompression[F](endpoint.hints)
-        val finalEncoders = transformEncoders(restEncoders)
-
-        val make =
-          UnaryClientCodecs
-            .Make[F](finalEncoders, restDecoders, errorDecoders, discriminator)
+        val make = UnaryClientCodecs.Make[F](
+          input = requestEncoderCompilersWithCompression,
+          output = responseDecoderCompilers[F],
+          error = errorDecoderCompilers,
+          errorDiscriminator = errorDiscriminator
+        )
         make.apply(endpoint)
       }
+    }
+
+  private def requestEncoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[RequestEncoder[F, *]] = {
+    val stringAndBlobsEntityEncoderCompilers =
+      smithy4s.http.StringAndBlobCodecs.WriterCompiler.mapK(
+        Covariant.liftPolyFunction[Option](
+          EntityEncoders.fromHttpMediaWriterK[F]
+        )
+      )
+    val xmlEntityEncoderCompilers = XmlDocument.Encoder.mapK(
+      new PolyFunction[XmlDocument.Encoder, EntityEncoder[F, *]] {
+        def apply[A](fa: XmlDocument.Encoder[A]): EntityEncoder[F, A] =
+          xmlEntityEncoder[F].contramap(fa.encode)
+      }
+    )
+    val entityEncoderCompilers = CachedSchemaCompiler.getOrElse(
+      stringAndBlobsEntityEncoderCompilers,
+      xmlEntityEncoderCompilers
+    )
+    RequestEncoder.restSchemaCompiler[F](
+      metadataEncoderCompiler = Metadata.AwsEncoder,
+      entityEncoderCompiler = entityEncoderCompilers
+    )
+  }
+
+  def responseDecoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[ResponseDecoder[F, *]] = {
+    val stringAndBlobsEntityDecoderCompilers =
+      smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK(
+        Covariant.liftPolyFunction[Option](
+          EntityDecoders.fromHttpMediaReaderK[F]
+        )
+      )
+    val xmlEntityDecoderCompilers = XmlDocument.Decoder.mapK(
+      new PolyFunction[XmlDocument.Decoder, EntityDecoder[F, *]] {
+        def apply[A](fa: XmlDocument.Decoder[A]): EntityDecoder[F, A] =
+          xmlEntityDecoder[F].flatMapR(xmlDocument =>
+            EitherT.liftF {
+              fa.decode(xmlDocument)
+                .leftMap(fromXmlToHttpError)
+                .liftTo[F]
+            }
+          )
+      }
+    )
+    val entityDecoderCompilers = CachedSchemaCompiler.getOrElse(
+      stringAndBlobsEntityDecoderCompilers,
+      xmlEntityDecoderCompilers
+    )
+    ResponseDecoder.restSchemaCompiler(
+      metadataDecoderCompiler = Metadata.AwsDecoder,
+      entityDecoderCompiler = entityDecoderCompilers
+    )
+  }
+
+  private def xmlEntityEncoder[F[_]: Applicative]
+      : EntityEncoder[F, XmlDocument] =
+    EntityEncoder.encodeBy(
+      org.http4s.headers.`Content-Type`(MediaType.application.xml)
+    ) { xmlDocument =>
+      val body: fs2.Chunk[Byte] = XmlDocument.documentEventifier
+        .eventify(xmlDocument)
+        .through(render(collapseEmpty = false))
+        .through(fs2.text.utf8.encode[fs2.Pure])
+        .compile
+        .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
+      org.http4s.Entity(
+        body = fs2.Stream.chunk(body),
+        length = Some(body.size.toLong)
+      )
     }
 
   private def xmlEntityDecoder[F[_]: Concurrent]
       : EntityDecoder[F, XmlDocument] =
     EntityDecoder.decodeBy(
       MediaRange.parse("application/xml").getOrElse(sys.error("TODO"))
-    ) { media =>
+    )(media =>
       EitherT.liftF(
         media.body
           .through(fs2.text.utf8.decode[F])
@@ -152,34 +170,15 @@ private[aws] object AwsXmlCodecs {
             )
           )
       )
-    }
-
-  private def xmlEntityEncoder[F[_]: Applicative]
-      : EntityEncoder[F, XmlDocument] =
-    EntityEncoder.encodeBy(
-      org.http4s.headers.`Content-Type`.apply(MediaType.application.xml)
-    ) { xmlDocument =>
-      val body: fs2.Chunk[Byte] = XmlDocument.documentEventifier
-        .eventify(xmlDocument)
-        .through(render(collapseEmpty = false))
-        .through(fs2.text.utf8.encode[fs2.Pure])
-        .compile
-        .foldChunks(fs2.Chunk.empty[Byte])(_ ++ _)
-
-      org.http4s.Entity.apply(
-        fs2.Stream.chunk(body),
-        Some(body.size.toLong)
-      )
-    }
+    )
 
   private def fromXmlToHttpError(
       xmlDecodeError: smithy4s.xml.XmlDecodeError
-  ): smithy4s.http.HttpContractError = {
+  ): smithy4s.http.HttpContractError =
     smithy4s.http.HttpPayloadError(
       xmlDecodeError.path.toPayloadPath,
       "",
       xmlDecodeError.message
     )
-  }
 
 }

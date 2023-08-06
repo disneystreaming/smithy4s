@@ -29,7 +29,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.2.3"
+    val alloyVersion = "0.2.4"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -38,6 +38,11 @@ object Dependencies {
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
       Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
+  }
+
+  val Monocle = new {
+    val core: Def.Initialize[ModuleID] =
+      Def.setting("dev.optics" %% "monocle-core" % "3.2.0")
   }
 
   object Circe {
@@ -55,7 +60,7 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.7.0"
+    val fs2Version = "3.8.0"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -66,7 +71,7 @@ object Dependencies {
 
   object Fs2Data {
     val xml: Def.Initialize[ModuleID] =
-      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.7.1")
+      Def.setting("org.gnieh" %%% "fs2-data-xml" % "1.8.0")
   }
 
   object Mill {
@@ -96,7 +101,7 @@ object Dependencies {
     Def.setting("org.typelevel" %%% "cats-effect" % "3.5.1")
 
   object Http4s {
-    val http4sVersion = "0.23.22"
+    val http4sVersion = "0.23.23"
 
     val emberServer: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-ember-server" % http4sVersion)
@@ -111,6 +116,8 @@ object Dependencies {
     val client: Def.Initialize[ModuleID] =
       Def.setting("org.http4s" %%% "http4s-client" % http4sVersion)
   }
+
+  val slf4jNop: ModuleID = "org.slf4j" % "slf4j-nop" % "2.0.7"
 
   object Weaver {
 
@@ -141,9 +148,9 @@ object Dependencies {
   }
 
   object Webjars {
-    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.18.3"
+    val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.19.1"
 
-    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.42"
+    val webjarsLocator: ModuleID = "org.webjars" % "webjars-locator" % "0.47"
   }
 
   object AwsSpecSummary {

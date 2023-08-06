@@ -33,7 +33,6 @@ import smithy4s.Service
 import cats.Eq
 import smithy4s.compliancetests.TestConfig._
 import scala.concurrent.duration._
-import smithy4s.schema.Alt
 import smithy4s.http.HttpContractError
 
 private[compliancetests] class ClientHttpComplianceTestCase[
@@ -236,30 +235,30 @@ private[compliancetests] class ClientHttpComplianceTestCase[
               .get(HttpResponseTests)
               .toList
               .flatMap(_.value)
-              .filter(_.protocol == protocolTag.id.toString())
+              .filter(_.protocol == protocolTag.id)
               .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
               .map { tc =>
                 clientResponseTest(
                   endpoint,
                   tc,
                   errorSchema = Some(
-                    ErrorResponseTest.from(
-                      errorAlt,
-                      Alt.Dispatcher.fromUnion(errorable.error),
-                      errorable
-                    )
+                    ErrorResponseTest
+                      .from(
+                        errorAlt,
+                        errorable
+                      )
                   )
                 )
               }
           }
         }
     }
-    service.endpoints.flatMap { case endpoint =>
+    service.endpoints.toList.flatMap { case endpoint =>
       val requestTests = endpoint.hints
         .get(HttpRequestTests)
         .map(_.value)
         .getOrElse(Nil)
-        .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.id)
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientRequestTest(endpoint, tc))
 
@@ -267,7 +266,7 @@ private[compliancetests] class ClientHttpComplianceTestCase[
         .get(HttpResponseTests)
         .map(_.value)
         .getOrElse(Nil)
-        .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.id)
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.CLIENT))
         .map(tc => clientResponseTest(endpoint, tc))
 

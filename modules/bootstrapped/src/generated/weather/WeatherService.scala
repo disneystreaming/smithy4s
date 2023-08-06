@@ -34,11 +34,13 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[WeatherServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[WeatherServiceOperation, _, _, _, _, _]] = Vector(
     WeatherServiceOperation.GetWeather,
   )
 
-  def endpoint[I, E, O, SI, SO](op: WeatherServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: WeatherServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: WeatherServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: WeatherServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends WeatherServiceOperation.Transformed[WeatherServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: WeatherServiceGen[WeatherServiceOperation] = WeatherServiceOperation.reified
@@ -50,7 +52,9 @@ object WeatherServiceGen extends Service.Mixin[WeatherServiceGen, WeatherService
 
 sealed trait WeatherServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: WeatherServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[WeatherServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[WeatherServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object WeatherServiceOperation {
@@ -67,7 +71,8 @@ object WeatherServiceOperation {
   }
   final case class GetWeather(input: GetWeatherInput) extends WeatherServiceOperation[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: WeatherServiceGen[F]): F[GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = impl.getWeather(input.city)
-    def endpoint: (GetWeatherInput, smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing]) = (input, GetWeather)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] = GetWeather
   }
   object GetWeather extends smithy4s.Endpoint[WeatherServiceOperation,GetWeatherInput, Nothing, GetWeatherOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("weather", "GetWeather")

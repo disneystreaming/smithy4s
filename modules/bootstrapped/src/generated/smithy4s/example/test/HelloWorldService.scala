@@ -34,11 +34,13 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[HelloWorldServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[HelloWorldServiceOperation, _, _, _, _, _]] = Vector(
     HelloWorldServiceOperation.Hello,
   )
 
-  def endpoint[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: HelloWorldServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends HelloWorldServiceOperation.Transformed[HelloWorldServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: HelloWorldServiceGen[HelloWorldServiceOperation] = HelloWorldServiceOperation.reified
@@ -50,7 +52,9 @@ object HelloWorldServiceGen extends Service.Mixin[HelloWorldServiceGen, HelloWor
 
 sealed trait HelloWorldServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[HelloWorldServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[HelloWorldServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object HelloWorldServiceOperation {
@@ -67,7 +71,8 @@ object HelloWorldServiceOperation {
   }
   final case class Hello(input: HelloInput) extends HelloWorldServiceOperation[HelloInput, Nothing, HelloOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: HelloWorldServiceGen[F]): F[HelloInput, Nothing, HelloOutput, Nothing, Nothing] = impl.hello(input.name)
-    def endpoint: (HelloInput, smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing]) = (input, Hello)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] = Hello
   }
   object Hello extends smithy4s.Endpoint[HelloWorldServiceOperation,HelloInput, Nothing, HelloOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.test", "Hello")
@@ -76,7 +81,7 @@ object HelloWorldServiceOperation {
     val streamedInput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val streamedOutput: StreamingSchema[Nothing] = StreamingSchema.nothing
     val hints: Hints = Hints(
-      smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "helloSuccess", protocol = "alloy#simpleRestJson", method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpRequestTestCase(id = "helloFails", protocol = "alloy#simpleRestJson", method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
+      smithy.test.HttpRequestTests(List(smithy.test.HttpRequestTestCase(id = "helloSuccess", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/World", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None), smithy.test.HttpRequestTestCase(id = "helloFails", protocol = smithy4s.ShapeId(namespace = "alloy", name = "simpleRestJson"), method = "POST", uri = "/fail", host = None, resolvedHost = None, authScheme = None, queryParams = None, forbidQueryParams = None, requireQueryParams = None, headers = None, forbidHeaders = None, requireHeaders = None, body = None, bodyMediaType = None, params = Some(smithy4s.Document.obj("name" -> smithy4s.Document.fromString("World"))), vendorParams = None, vendorParamsShape = None, documentation = None, tags = None, appliesTo = None))),
       smithy.api.Http(method = smithy.api.NonEmptyString("POST"), uri = smithy.api.NonEmptyString("/{name}"), code = 200),
     )
     def wrap(input: HelloInput) = Hello(input)

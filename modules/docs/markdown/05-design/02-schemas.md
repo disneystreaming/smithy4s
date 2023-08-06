@@ -132,7 +132,7 @@ Since 0.18, the concept of Option in Smithy4s is backed
 by a `OptionSchema` member of the `Schema` GADT. Having Option as a first-class citizen has some advantages, as it allows to support [sparse collections](https://smithy.io/2.0/spec/aggregate-types.html?highlight=sparse%20collections#list-member-optionality).
 
 The downside is that this allows to create schemas (and therefore codecs) that do not abide by round-tripping properties. Indeed, once data is on the wire, it's often
-impossible to distinguish `Option[Option[Option[Int]] ]` from `Option[Int]`. 
+impossible to distinguish `Option[Option[Option[Int]] ]` from `Option[Int]`.
 
 ### Unions
 
@@ -184,8 +184,8 @@ object Bar extends smithy4s.ShapeTag.Companion[Bar] {
     ACase.alt,
     BCase.alt,
   ){
-    case c: ACase => ACase.alt(c)
-    case c: BCase => BCase.alt(c)
+    case _: ACase => 0
+    case _: BCase => 1
   }.withId(id)
 }
 ```
@@ -202,7 +202,7 @@ Much like a `field`, an `alt` contains a label, and can carry hints. But unlike 
 This is useful for de-serialisation, when, after successfully de-serialising a member of a union, you need to inject it into the ADT to return the expected type.
 
 As for the union's schema, it is somewhat similar to the structure's, in that it references all its alternatives.
-But instead of a structure's constructor, we have a dispatch function instead, which contains a pattern match against all the possible members, and dispatches the "down-casted" value to its corresponding alternative.
+But instead of a structure's constructor, we have a dispatch function instead, which contains a pattern match against all the possible members, and dispatches the "down-casted" value to its corresponding ordinal, allowing to recover the corresponding alternative.
 This is useful for serialisation, when the behaviour of the alternatives can only be applied to values of the corresponding type: "if my ADT is an A, then I serialise the A, and add a discriminating tag to the serialised A".
 
 ### Named simple shapes

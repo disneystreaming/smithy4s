@@ -10,20 +10,25 @@ import smithy4s.schema.Schema.union
 
 sealed trait CheckedOrUnchecked2 extends scala.Product with scala.Serializable {
   @inline final def widen: CheckedOrUnchecked2 = this
+  def $ordinal: Int
 }
 object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
+
+  def checked(checked:String): CheckedOrUnchecked2 = CheckedCase(checked)
+  def raw(raw:String): CheckedOrUnchecked2 = RawCase(raw)
+
   val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked2")
 
   val hints: Hints = Hints(
     alloy.Untagged(),
   )
 
-  final case class CheckedCase(checked: String) extends CheckedOrUnchecked2
-  final case class RawCase(raw: String) extends CheckedOrUnchecked2
+  final case class CheckedCase(checked: String) extends CheckedOrUnchecked2 { final def $ordinal: Int = 0 }
+  final case class RawCase(raw: String) extends CheckedOrUnchecked2 { final def $ordinal: Int = 1 }
 
   object CheckedCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[CheckedCase] = bijection(string.addHints(hints).validated(smithy.api.Pattern("^\\w+$")), CheckedCase(_), _.checked)
+    val schema: Schema[CheckedCase] = bijection(string.addHints(hints).validated(smithy.api.Pattern(s"^\\w+$$")), CheckedCase(_), _.checked)
     val alt = schema.oneOf[CheckedOrUnchecked2]("checked")
   }
   object RawCase {
@@ -36,7 +41,6 @@ object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
     CheckedCase.alt,
     RawCase.alt,
   ){
-    case c: CheckedCase => CheckedCase.alt(c)
-    case c: RawCase => RawCase.alt(c)
+    _.$ordinal
   }.withId(id).addHints(hints)
 }

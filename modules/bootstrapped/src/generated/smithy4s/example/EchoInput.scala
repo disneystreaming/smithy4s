@@ -11,9 +11,7 @@ final case class EchoInput(pathParam: String, body: EchoBody, queryParam: Option
 object EchoInput extends ShapeTag.Companion[EchoInput] {
   val id: ShapeId = ShapeId("smithy4s.example", "EchoInput")
 
-  val hints: Hints = Hints(
-    smithy.api.Input(),
-  )
+  val hints: Hints = Hints.empty
 
   implicit val schema: Schema[EchoInput] = struct(
     string.validated(smithy.api.Length(min = Some(10L), max = None)).required[EchoInput]("pathParam", _.pathParam).addHints(smithy.api.Required(), smithy.api.HttpLabel()),

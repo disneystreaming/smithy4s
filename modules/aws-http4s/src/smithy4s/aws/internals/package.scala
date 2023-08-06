@@ -16,10 +16,10 @@
 
 package smithy4s.aws
 
-import smithy4s.http4s.kernel.RequestEncoder
 import fs2.compression.Compression
-import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.Hints
+import smithy4s.http4s.kernel.RequestEncoder
+import smithy4s.schema.CachedSchemaCompiler
 
 package object internals {
 
@@ -27,9 +27,11 @@ package object internals {
     CachedSchemaCompiler[RequestEncoder[F, *]]
 
   private[internals] def applyCompression[F[_]: Compression](
-      hints: Hints
+      hints: Hints,
+      retainUserEncoding: Boolean = true
   ): RequestEncoderCompiler[F] => RequestEncoderCompiler[F] = {
-    val compression = smithy4s.http4s.kernel.GzipRequestCompression[F]()
+    val compression =
+      smithy4s.http4s.kernel.GzipRequestCompression[F](retainUserEncoding)
     import smithy4s.codecs.Writer
     hints.get(smithy.api.RequestCompression) match {
       case Some(rc) if rc.encodings.contains("gzip") =>

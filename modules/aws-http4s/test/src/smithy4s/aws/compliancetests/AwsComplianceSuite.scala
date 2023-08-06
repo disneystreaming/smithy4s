@@ -18,11 +18,11 @@ package smithy4s.aws
 
 import aws.protocols._
 import cats.effect.IO
-import smithy4s.dynamic.DynamicSchemaIndex
-import smithy4s.ShapeId
 import cats.syntax.all._
+import smithy4s.ShapeId
 import smithy4s.aws.AwsJson.impl
 import smithy4s.compliancetests._
+import smithy4s.dynamic.DynamicSchemaIndex
 import smithy4s.tests.ProtocolComplianceSuite
 
 object AwsComplianceSuite extends ProtocolComplianceSuite {
@@ -43,8 +43,11 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
     )
 
     val disallowed = Set(
-      // this would be taken-care of by middleware
-      "HostWithPathOperation"
+      // This would be taken-care of by middleware.
+      "HostWithPathOperation",
+      // We expect users to set idempotency tokens because doing so raises
+      // awareness of the need to do so outside of any retry mechanism.
+      "QueryIdempotencyTokenAutoFill"
     )
     (complianceTest: ComplianceTest[IO]) =>
       if (disallowed.exists(complianceTest.show.contains(_))) ShouldRun.No
@@ -54,13 +57,17 @@ object AwsComplianceSuite extends ProtocolComplianceSuite {
   }
 
   override def allTests(dsi: DynamicSchemaIndex): List[ComplianceTest[IO]] =
-    genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
+    genClientTests(impl(Ec2Query), awsEc2Query)(dsi) ++
+      genClientTests(impl(AwsJson1_0), awsJson1_0)(dsi) ++
       genClientTests(impl(AwsJson1_1), awsJson1_1)(dsi) ++
+      genClientTests(impl(AwsQuery), awsQuery)(dsi) ++
       genClientTests(impl(RestJson1), restJson1)(dsi) ++
       genClientTests(impl(RestXml), restXml)(dsi)
 
+  private val awsEc2Query = ShapeId("aws.protocoltests.ec2", "AwsEc2")
   private val awsJson1_0 = ShapeId("aws.protocoltests.json10", "JsonRpc10")
   private val awsJson1_1 = ShapeId("aws.protocoltests.json", "JsonProtocol")
+  private val awsQuery = ShapeId("aws.protocoltests.query", "AwsQuery")
   private val restJson1 = ShapeId("aws.protocoltests.restjson", "RestJson")
   private val restXml = ShapeId("aws.protocoltests.restxml", "RestXml")
 

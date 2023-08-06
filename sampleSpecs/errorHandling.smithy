@@ -2,6 +2,8 @@ $version: "2"
 
 namespace smithy4s.example
 
+use smithy4s.meta#noStackTrace
+
 // Where the errors are placed in this spec doesn't necessarily "make sense" but is
 // mixed up to test some specific scenarios such as falling back to service-level
 // errors when no operation-level ones are found.
@@ -22,17 +24,20 @@ operation ErrorHandlingOperation {
   errors: [EHNotFound, EHFallbackServerError]
 }
 
+@noStackTrace
 @httpError(404)
 @error("client")
 structure EHNotFound {
   message: String
 }
 
+@noStackTrace
 @error("client")
 structure EHFallbackClientError {
   message: String
 }
 
+@noStackTrace
 @httpError(503)
 @error("server")
 structure EHServiceUnavailable {

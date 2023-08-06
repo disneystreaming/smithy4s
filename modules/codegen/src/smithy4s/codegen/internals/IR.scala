@@ -39,7 +39,10 @@ private[internals] case class CompilationUnit(
     rendererConfig: Renderer.Config
 ) {
   val namespace: String =
-    rawNamespace.split('.').map(CollisionAvoidance.protectType(_)).mkString(".")
+    rawNamespace
+      .split('.')
+      .map(CollisionAvoidance.protectKeyword(_))
+      .mkString(".")
 }
 
 private[internals] sealed trait Decl {
@@ -204,7 +207,7 @@ private[internals] object Primitive {
   type Aux[TT] = Primitive { type T = TT }
 
   case object Unit extends Primitive { type T = Unit }
-  case object ByteArray extends Primitive { type T = Array[Byte] }
+  case object Blob extends Primitive { type T = Array[Byte] }
   case object Bool extends Primitive { type T = Boolean }
   case object String extends Primitive { type T = String }
   case object Timestamp extends Primitive { type T = java.time.Instant }
@@ -274,6 +277,7 @@ private[internals] sealed trait Hint
 private[internals] object Hint {
   case object Trait extends Hint
   case object Error extends Hint
+  case object NoStackTrace extends Hint
   case object PackedInputs extends Hint
   case object NoDefault extends Hint
   case object ErrorMessage extends Hint
@@ -299,6 +303,7 @@ private[internals] object Hint {
   case class Typeclass(id: ShapeId, targetType: String, interpreter: String)
       extends Hint
   case object GenerateServiceProduct extends Hint
+  case object GenerateOptics extends Hint
 
   implicit val eq: Eq[Hint] = Eq.fromUniversalEquals
 }

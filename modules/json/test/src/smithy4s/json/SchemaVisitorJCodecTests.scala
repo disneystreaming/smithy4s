@@ -17,30 +17,27 @@
 package smithy4s
 package json
 
+import alloy.Discriminated
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString => _, _}
+import munit.FunSuite
+import smithy.api.Default
 import smithy.api.JsonName
-import smithy4s.schema.Schema._
-
 import smithy4s.codecs.PayloadError
 import smithy4s.codecs.PayloadPath
-import smithy4s.example.{
-  CheckedOrUnchecked,
-  CheckedOrUnchecked2,
-  FaceCard,
-  Four,
-  One,
-  PayloadData,
-  RangeCheck,
-  TestBiggerUnion,
-  Three,
-  UntaggedUnion
-}
-import alloy.Discriminated
+import smithy4s.example.CheckedOrUnchecked
+import smithy4s.example.CheckedOrUnchecked2
+import smithy4s.example.FaceCard
+import smithy4s.example.Four
+import smithy4s.example.One
+import smithy4s.example.PayloadData
+import smithy4s.example.RangeCheck
+import smithy4s.example.TestBiggerUnion
+import smithy4s.example.Three
+import smithy4s.example.UntaggedUnion
+import smithy4s.schema.Schema._
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
-import munit.FunSuite
-import smithy.api.Default
 
 class SchemaVisitorJCodecTests() extends FunSuite {
 
@@ -95,21 +92,18 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
   implicit val eitherBazBinSchema: Schema[Either[Baz, Bin]] = {
     val left = struct(string.required[Baz]("str", _.str))(Baz.apply)
-      .oneOf[Either[Baz, Bin]]("baz", (f: Baz) => Left(f))
 
     val right = struct(
       string.required[Bin]("str", _.str).addHints(JsonName("binStr")),
       int.required[Bin]("int", _.int)
     )(Bin.apply)
-      .oneOf[Either[Baz, Bin]]("bin", (b: Bin) => Right(b))
-      .addHints(JsonName("binBin"))
+      .addMemberHints(JsonName("binBin"))
 
-    union(left, right) {
-      case Left(f)  => left(f)
-      case Right(b) => right(b)
-    }.addHints(
-      Discriminated("type")
-    )
+    Schema
+      .either(left, right)
+      .addHints(
+        Discriminated("type")
+      )
   }
 
   test(
@@ -150,7 +144,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
       fail("Expected decoding to fail")
     } catch {
       case e: smithy4s.codecs.PayloadError =>
-        expect.same(e.path, PayloadPath.fromString(".a"))
+        expect.same(e.path, PayloadPath.parse(".a"))
     }
   }
 
@@ -201,19 +195,11 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   implicit val eitherIntStringSchema: Schema[Either[Int, String]] = {
-    val left = int.oneOf[Either[Int, String]]("int", (int: Int) => Left(int))
-    val right =
-      string
-        .oneOf[Either[Int, String]]("string", (str: String) => Right(str))
-        .addHints(JsonName("_string"))
-    union(left, right) {
-      case Left(i)    => left(i)
-      case Right(str) => right(str)
-    }
+    Schema.either(int, string.addMemberHints(JsonName("_string")))
   }
 
   test("Union gets encoded correctly") {
-    val jsonInt = """{"int":1}"""
+    val jsonInt = """{"left":1}"""
     val jsonStr = """{"_string":"foo"}"""
     val int = writeToString[Either[Int, String]](Left(1))
     val str = writeToString[Either[Int, String]](Right("foo"))
@@ -233,7 +219,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(
       result.get,
       PayloadError(
-        PayloadPath.fromString(".checked"),
+        PayloadPath.parse(".checked"),
         "string",
         "String '!@#' does not match pattern '^\\w+$'"
       )
@@ -252,7 +238,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Discriminated union gets encoded correctly") {
-    val jsonBaz = """{"type":"baz","str":"test"}"""
+    val jsonBaz = """{"type":"left","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = writeToString[Either[Baz, Bin]](Left(Baz("test")))
     val bin = writeToString[Either[Baz, Bin]](Right(Bin("foo", 2022)))
@@ -285,7 +271,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Discriminated union gets routed to the correct codec") {
-    val jsonBaz = """{"type":"baz","str":"test"}"""
+    val jsonBaz = """{"type":"left","str":"test"}"""
     val jsonBin = """{"type":"binBin","binStr":"foo","int":2022}"""
     val baz = readFromString[Either[Baz, Bin]](jsonBaz)
     val bin = readFromString[Either[Baz, Bin]](jsonBin)
@@ -294,7 +280,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Union gets routed to the correct codec") {
-    val jsonInt = """{"int":  1}"""
+    val jsonInt = """{"left":  1}"""
     val jsonStr = """{"_string": "foo"}"""
     val int = readFromString[Either[Int, String]](jsonInt)
     val str = readFromString[Either[Int, String]](jsonStr)
@@ -303,13 +289,13 @@ class SchemaVisitorJCodecTests() extends FunSuite {
   }
 
   test("Union: path gets surfaced in errors") {
-    val json = """{"int": null}"""
+    val json = """{"left": null}"""
     try {
       val _ = readFromString[Either[Int, String]](json)
       fail("Unexpected success")
     } catch {
       case PayloadError(path, expected, msg) =>
-        expect.same(path, PayloadPath("int"))
+        expect.same(path, PayloadPath("left"))
         expect.same(expected, "int")
         expect(msg.contains("illegal number"))
 
@@ -348,12 +334,12 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     expect.same(roundTripped, FaceCard.JACK)
   }
 
-  implicit val byteArraySchema: Schema[ByteArray] = bytes
+  implicit val blobSchema: Schema[Blob] = blob
 
   test("byte arrays are encoded as base64") {
-    val bytes = ByteArray("foobar".getBytes())
+    val bytes = Blob("foobar")
     val bytesJson = writeToString(bytes)
-    val decoded = readFromString[ByteArray](bytesJson)
+    val decoded = readFromString[Blob](bytesJson)
     expect.same(bytesJson, "\"Zm9vYmFy\"")
     expect.same(decoded, bytes)
   }
@@ -495,7 +481,7 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     } catch {
       case PayloadError(path, _, message) =>
         expect.same(message, "length required to be <= 10, but was 11")
-        expect.same(path, PayloadPath.fromString("bar.0.str"))
+        expect.same(path, PayloadPath.parse("bar.0.str"))
     }
   }
 

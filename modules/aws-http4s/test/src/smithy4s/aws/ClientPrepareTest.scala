@@ -30,6 +30,7 @@ object ClientPrepareTest extends FunSuite {
           AwsClientInitialisationError.UnsupportedProtocol(
             MyThing.id,
             List(
+              aws.protocols.Ec2Query.getTag,
               aws.protocols.AwsJson1_0.getTag,
               aws.protocols.AwsJson1_1.getTag,
               aws.protocols.AwsQuery.getTag,

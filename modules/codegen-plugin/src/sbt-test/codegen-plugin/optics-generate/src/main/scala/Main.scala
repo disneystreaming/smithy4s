@@ -14,15 +14,17 @@
  *  limitations under the License.
  */
 
-package smithy4s.aws.query
+package demo
 
-private[aws] trait AwsQueryCodec[-A] extends (A => FormData) { self =>
-  def apply(a: A): FormData
-  def contramap[B](f: B => A): AwsQueryCodec[B] = new AwsQueryCodec[B] {
-    def apply(b: B): FormData = self(f(b))
-  }
-
-  def prepend(key: String): AwsQueryCodec[A] = new AwsQueryCodec[A] {
-    def apply(a: A): FormData = self(a).prepend(key)
+object Main extends App {
+  try {
+    println(
+      smithy4s.example.TestOptics.optics.one
+        .get(smithy4s.example.TestOptics(Some("test one")))
+    )
+  } catch {
+    case _: java.lang.ExceptionInInitializerError =>
+      println("failed")
+      sys.exit(1)
   }
 }

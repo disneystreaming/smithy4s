@@ -26,7 +26,6 @@ import org.http4s.headers.`Content-Type`
 import smithy.test._
 import smithy4s.{Document, Errorable, Hints, Service, ShapeId}
 import smithy4s.kinds._
-import smithy4s.schema.Alt
 
 import scala.concurrent.duration._
 import smithy4s.compliancetests.internals.eq.EqSchemaVisitor
@@ -110,8 +109,8 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                 def apply[I_, E_, O_, SE_, SO_](
                     op: originalService.Operation[I_, E_, O_, SE_, SO_]
                 ): F[O_] = {
-                  val (in, endpointInternal) = originalService.endpoint(op)
-
+                  val endpointInternal = originalService.endpoint(op)
+                  val in = originalService.input(op)
                   if (endpointInternal.id == endpoint.id)
                     inputDeferred.complete(in.asInstanceOf[I]) *>
                       raiseError(new IntendedShortCircuit)
@@ -272,8 +271,9 @@ private[compliancetests] class ServerHttpComplianceTestCase[
       // format: off
       new Service.Reflective[NoInputOp] {
         override def id: ShapeId = ShapeId("custom", "service")
-        override def endpoints: List[Endpoint[_, _, _, _, _]] = List(amendedEndpoint)
-        override def endpoint[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): (I_, Endpoint[I_, E_, O_, SI_, SO_]) = ???
+        override def endpoints: Vector[Endpoint[_, _, _, _, _]] = Vector(amendedEndpoint)
+        override def input[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]) : I_ = ???
+        override def ordinal[I_, E_, O_, SI_, SO_](op: NoInputOp[I_, E_, O_, SI_, SO_]): Int = ???
         override def version: String = originalService.version
         override def hints: Hints = originalService.hints
       }
@@ -292,7 +292,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
               .get(HttpResponseTests)
               .toList
               .flatMap(_.value)
-              .filter(_.protocol == protocolTag.id.toString())
+              .filter(_.protocol == protocolTag.id)
               .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
               .map(tc =>
                 serverResponseTest(
@@ -302,7 +302,6 @@ private[compliancetests] class ServerHttpComplianceTestCase[
                     ErrorResponseTest
                       .from(
                         errorAlt,
-                        Alt.Dispatcher.fromUnion(errorable.error),
                         errorable
                       )
                   )
@@ -311,12 +310,12 @@ private[compliancetests] class ServerHttpComplianceTestCase[
           }
         }
     }
-    originalService.endpoints.flatMap { case endpoint =>
+    originalService.endpoints.toList.flatMap { case endpoint =>
       val requestsTests = endpoint.hints
         .get(HttpRequestTests)
         .map(_.value)
         .getOrElse(Nil)
-        .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.id)
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
         .map(tc => serverRequestTest(endpoint, tc))
 
@@ -324,7 +323,7 @@ private[compliancetests] class ServerHttpComplianceTestCase[
         .get(HttpResponseTests)
         .map(_.value)
         .getOrElse(Nil)
-        .filter(_.protocol == protocolTag.id.toString())
+        .filter(_.protocol == protocolTag.id)
         .filter(tc => tc.appliesTo.forall(_ == AppliesTo.SERVER))
         .map(tc => serverResponseTest(endpoint, tc))
 

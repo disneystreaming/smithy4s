@@ -19,6 +19,7 @@ service PizzaAdminService {
         CustomCode
         Reservation
         Echo
+        OptionalOutput
     ]
 }
 
@@ -333,22 +334,34 @@ operation Reservation {
 
 @http(method: "POST", uri: "/echo/{pathParam}")
 operation Echo {
-    input := {
-        @required
-        @httpLabel
-        @length(min: 10)
-        pathParam: String
-        @httpQuery("queryParam")
-        @length(min: 10)
-        queryParam: String
-        @httpPayload
-        @required
-        body: EchoBody
-    }// this operation must NOT have any errors
+    input: EchoInput
+    // this operation must NOT have any errors
     errors: []
+}
+
+structure EchoInput {
+    @required
+    @httpLabel
+    @length(min: 10)
+    pathParam: String
+    @httpQuery("queryParam")
+    @length(min: 10)
+    queryParam: String
+    @httpPayload
+    @required
+    body: EchoBody
 }
 
 structure EchoBody {
     @length(min: 10)
     data: String
+}
+
+@http(method: "GET", uri: "/optional-output")
+@readonly
+operation OptionalOutput {
+    output := {
+        @httpPayload
+        body: String
+    }
 }

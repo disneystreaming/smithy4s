@@ -32,11 +32,13 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[GreetServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[GreetServiceOperation, _, _, _, _, _]] = Vector(
     GreetServiceOperation.Greet,
   )
 
-  def endpoint[I, E, O, SI, SO](op: GreetServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: GreetServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: GreetServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: GreetServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends GreetServiceOperation.Transformed[GreetServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: GreetServiceGen[GreetServiceOperation] = GreetServiceOperation.reified
@@ -48,7 +50,9 @@ object GreetServiceGen extends Service.Mixin[GreetServiceGen, GreetServiceOperat
 
 sealed trait GreetServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: GreetServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[GreetServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[GreetServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object GreetServiceOperation {
@@ -65,7 +69,8 @@ object GreetServiceOperation {
   }
   final case class Greet(input: GreetInput) extends GreetServiceOperation[GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: GreetServiceGen[F]): F[GreetInput, Nothing, GreetOutput, Nothing, Nothing] = impl.greet(input.name)
-    def endpoint: (GreetInput, smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing]) = (input, Greet)
+    def ordinal = 0
+    def endpoint: smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] = Greet
   }
   object Greet extends smithy4s.Endpoint[GreetServiceOperation,GreetInput, Nothing, GreetOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example.greet", "Greet")

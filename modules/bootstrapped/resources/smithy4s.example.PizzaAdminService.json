@@ -284,6 +284,23 @@
                 }
             }
         },
+        "/optional-output": {
+            "get": {
+                "operationId": "OptionalOutput",
+                "responses": {
+                    "200": {
+                        "description": "OptionalOutput 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OptionalOutputOutputPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/restaurant/{restaurant}/menu": {
             "get": {
                 "operationId": "GetMenu",
@@ -309,11 +326,11 @@
                         }
                     },
                     "400": {
-                        "description": "FallbackError2 400 response",
+                        "description": "FallbackError 400 response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/FallbackError2ResponseContent"
+                                    "$ref": "#/components/schemas/FallbackErrorResponseContent"
                                 }
                             }
                         }
@@ -514,7 +531,7 @@
                     }
                 }
             },
-            "FallbackError2ResponseContent": {
+            "FallbackErrorResponseContent": {
                 "type": "object",
                 "properties": {
                     "error": {
@@ -647,6 +664,9 @@
                 "required": [
                     "name"
                 ]
+            },
+            "OptionalOutputOutputPayload": {
+                "type": "string"
             },
             "Pizza": {
                 "type": "object",

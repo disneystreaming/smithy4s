@@ -17,15 +17,15 @@
 package smithy4s
 package http
 
-import smithy4s.PartialData
 import smithy.api.HttpPayload
-import smithy4s.schema._
+import smithy4s.PartialData
+import smithy4s.capability.Zipper
+import smithy4s.codecs.Reader
+import smithy4s.codecs.Writer
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
 import smithy4s.schema.SchemaPartition.TotalMatch
-import smithy4s.codecs.Writer
-import smithy4s.codecs.Reader
-import smithy4s.capability.Zipper
+import smithy4s.schema._
 
 /**
  * This construct indicates how a schema is split between http metadata
@@ -52,7 +52,14 @@ object HttpRestSchema {
   final case class Empty[A](value: A) extends HttpRestSchema[A]
   // format: on
 
-  def apply[A](fullSchema: Schema[A]): HttpRestSchema[A] = {
+  def apply[A](
+      fullSchema: Schema[A],
+      // This is used by AwsQueryCodecs and AwsEc2QueryCodecs to ensure that
+      // body producer is retained even in the case where a top-level struct
+      // input is empty. They need that to happen so that a body is produced to
+      // which the Action and Version metadata can be added.
+      writeEmptyStructs: Boolean
+  ): HttpRestSchema[A] = {
 
     def isMetadataField(field: Field[_, _]): Boolean = HttpBinding
       .fromHints(field.label, field.memberHints, fullSchema.hints)
@@ -72,7 +79,7 @@ object HttpRestSchema {
           case NoMatch() =>
             fullSchema match {
               case Schema.StructSchema(_, _, fields, make)
-                  if (fields.isEmpty) =>
+                  if !writeEmptyStructs && fields.isEmpty =>
                 Empty(make(IndexedSeq.empty))
               case _ => OnlyBody(fullSchema)
             }
@@ -94,7 +101,8 @@ object HttpRestSchema {
     */
   def combineWriterCompilers[Message](
       metadataEncoderCompiler: Writer.CachedCompiler[Message, Message],
-      bodyEncoderCompiler: Writer.CachedCompiler[Message, Message]
+      bodyEncoderCompiler: Writer.CachedCompiler[Message, Message],
+      writeEmptyStructs: Boolean = false
   ): Writer.CachedCompiler[Message, Message] =
     new Writer.CachedCompiler[Message, Message] {
 
@@ -113,7 +121,7 @@ object HttpRestSchema {
           fullSchema: Schema[A],
           cache: Cache
       ): Writer[Message, Message, A] = {
-        HttpRestSchema(fullSchema) match {
+        HttpRestSchema(fullSchema, writeEmptyStructs) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata.
             metadataEncoderCompiler.fromSchema(metadataSchema, cache._1)
@@ -167,7 +175,8 @@ object HttpRestSchema {
         fromSchema(schema, createCache())
 
       def fromSchema[A](fullSchema: Schema[A], cache: Cache) = {
-        HttpRestSchema(fullSchema) match {
+        // writeEmptyStructs is not relevant for reading.
+        HttpRestSchema(fullSchema, writeEmptyStructs = false) match {
           case HttpRestSchema.OnlyMetadata(metadataSchema) =>
             // The data can be fully decoded from the metadata,
             // but we still decoding Unit from the body to drain the message.

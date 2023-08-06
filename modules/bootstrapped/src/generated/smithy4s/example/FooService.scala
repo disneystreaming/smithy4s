@@ -42,11 +42,13 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
     type Default[F[+_, +_]] = Constant[smithy4s.kinds.stubs.Kind2[F]#toKind5]
   }
 
-  val endpoints: List[smithy4s.Endpoint[FooServiceOperation, _, _, _, _, _]] = List(
+  val endpoints: Vector[smithy4s.Endpoint[FooServiceOperation, _, _, _, _, _]] = Vector(
     FooServiceOperation.GetFoo,
   )
 
-  def endpoint[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]) = op.endpoint
+  def input[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]): I = op.input
+  def ordinal[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]): Int = op.ordinal
+  override def endpoint[I, E, O, SI, SO](op: FooServiceOperation[I, E, O, SI, SO]) = op.endpoint
   class Constant[P[-_, +_, +_, +_, +_]](value: P[Any, Nothing, Nothing, Nothing, Nothing]) extends FooServiceOperation.Transformed[FooServiceOperation, P](reified, const5(value))
   type Default[F[+_]] = Constant[smithy4s.kinds.stubs.Kind1[F]#toKind5]
   def reified: FooServiceGen[FooServiceOperation] = FooServiceOperation.reified
@@ -58,7 +60,9 @@ object FooServiceGen extends Service.Mixin[FooServiceGen, FooServiceOperation] {
 
 sealed trait FooServiceOperation[Input, Err, Output, StreamedInput, StreamedOutput] {
   def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Input, Err, Output, StreamedInput, StreamedOutput]
-  def endpoint: (Input, Endpoint[FooServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput])
+  def ordinal: Int
+  def input: Input
+  def endpoint: Endpoint[FooServiceOperation, Input, Err, Output, StreamedInput, StreamedOutput]
 }
 
 object FooServiceOperation {
@@ -75,7 +79,9 @@ object FooServiceOperation {
   }
   final case class GetFoo() extends FooServiceOperation[Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     def run[F[_, _, _, _, _]](impl: FooServiceGen[F]): F[Unit, Nothing, GetFooOutput, Nothing, Nothing] = impl.getFoo()
-    def endpoint: (Unit, smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing]) = ((), GetFoo)
+    def ordinal = 0
+    def input: Unit = ()
+    def endpoint: smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing] = GetFoo
   }
   object GetFoo extends smithy4s.Endpoint[FooServiceOperation,Unit, Nothing, GetFooOutput, Nothing, Nothing] {
     val id: ShapeId = ShapeId("smithy4s.example", "GetFoo")

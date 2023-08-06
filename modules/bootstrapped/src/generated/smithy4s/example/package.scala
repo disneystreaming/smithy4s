@@ -54,6 +54,7 @@ package object example {
     *   mapBar
     */
   type MapWithMemberHints = smithy4s.example.MapWithMemberHints.Type
+  type TestIdRefList = smithy4s.example.TestIdRefList.Type
   type CitySummaries = smithy4s.example.CitySummaries.Type
   /** This is a simple example of a "quoted string" */
   type AString = smithy4s.example.AString.Type
@@ -65,6 +66,7 @@ package object example {
   type FreeForm = smithy4s.example.FreeForm.Type
   type SomeInt = smithy4s.example.SomeInt.Type
   type DogName = smithy4s.example.DogName.Type
+  type TestIdRefTwo = smithy4s.example.TestIdRefTwo.Type
   type FancyList = smithy4s.example.FancyList.Type
   type Ingredients = smithy4s.example.Ingredients.Type
   type StringList = smithy4s.example.StringList.Type
@@ -89,7 +91,10 @@ package object example {
   type Strings = smithy4s.example.Strings.Type
   type NonEmptyCandies = smithy4s.example.NonEmptyCandies.Type
   type SomeIndexSeq = smithy4s.example.SomeIndexSeq.Type
+  type TestIdRefSet = smithy4s.example.TestIdRefSet.Type
+  type TestIdRefKeyMap = smithy4s.example.TestIdRefKeyMap.Type
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
+  type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
   type PNG = smithy4s.example.PNG.Type
   type Name = smithy4s.example.Name.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type

@@ -17,7 +17,7 @@
 package smithy4s.interopcats
 
 import cats.Show
-import smithy4s.{ByteArray, ShapeId, Timestamp}
+import smithy4s.{Blob, ShapeId, Timestamp}
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver.FunSuite
@@ -103,9 +103,9 @@ object ShowVisitorSpec extends FunSuite with CompatProvider {
 
   }
 
-  test("smithy4s ByteArray") {
-    val schema: Schema[ByteArray] = bytes
-    val fooBar = ByteArray("fooBar".getBytes)
+  test("smithy4s Blob") {
+    val schema: Schema[Blob] = blob
+    val fooBar = Blob("fooBar")
     val showOutput = schemaVisitorShow(schema).show(fooBar)
     expect.eql(showOutput, "Zm9vQmFy")
   }

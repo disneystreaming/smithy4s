@@ -111,10 +111,9 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
           alternatives.find(_.label == label).get.asInstanceOf[Alt[U, A]]
         // We're using it to get a function that lets us project the `U` against `A`.
         // `U` is not necessarily an `A, so this function returns an `Option`
-        val projectA: U => Option[A] = dispatch.projector(altA)
         val eqA = instance.compile(self)
         new AltEq[A] {
-          def eqv(a: A, u: U): Boolean = projectA(u) match {
+          def eqv(a: A, u: U): Boolean = altA.project.lift(u) match {
             case None => false // U is not an A.
             case Some(a2) =>
               eqA.eqv(a, a2) // U is an A, we delegate the comparison
@@ -170,7 +169,7 @@ object EqSchemaVisitor extends SchemaVisitor[Eq] { self =>
       case Primitive.PString     => Eq[String]
       case Primitive.PUUID       => Eq[UUID]
       case Primitive.PByte       => Eq[Byte]
-      case Primitive.PBlob       => Eq[ByteArray]
+      case Primitive.PBlob       => Eq[Blob]
       case Primitive.PDocument   => Eq[Document]
       case Primitive.PTimestamp  => Eq[Timestamp]
     }
