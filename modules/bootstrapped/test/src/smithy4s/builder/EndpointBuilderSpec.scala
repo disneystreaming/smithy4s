@@ -1,11 +1,9 @@
 package smithy4s
 
-
 import munit._
+
 import smithy.api.Documentation
-import smithy4s.example.WeatherOperation
-import smithy4s.example.GetForecastInput
-import smithy4s.example.GetForecastOutput
+import smithy4s.example.{GetForecastInput, GetForecastOutput, WeatherOperation}
 
 class EndpointBuilderSpec extends FunSuite {
 
@@ -58,5 +56,4 @@ class EndpointBuilderSpec extends FunSuite {
     assertEquals(newEndpoint.output.shapeId, ShapeId("smithy4s.example", "outputSchema"))
     assertEquals(newEndpoint.errorable, None)
   }
-
 }
