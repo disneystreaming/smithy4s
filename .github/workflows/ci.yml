@@ -106,7 +106,7 @@ jobs:
     needs: build
     if:
       startsWith(github.ref, 'refs/tags/v') ||
-      github.event.inputs.publishSnapshot ||
+      github.event.inputs.publishSnapshot == 'true' ||
       github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -145,7 +145,7 @@ jobs:
     name: Publish Docs Microsite
     if:
       startsWith(github.ref, 'refs/tags/v') ||
-      github.event.inputs.publishMicrosite
+      github.event.inputs.publishMicrosite == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch (full)
