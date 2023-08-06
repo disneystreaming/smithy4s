@@ -215,13 +215,10 @@ object Service {
     def mapEndpointEach(
         mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
     ): Builder[Alg, Op] = copy(
-      endpointMapper = (endpointMapper.andThen(mapper)).unsafeCacheBy(
-        base.endpoints.map(Kind5.existential(_)),
-        identity
-      )
+      endpointMapper = (endpointMapper.andThen(mapper))
     )
 
-    def withId(id: ShapeId): Builder[Alg, Op] = copy(baseId = id)
+    def withId(id: ShapeId): Builder[Alg, Op ] = copy(baseId = id)
 
     def mapId(f: ShapeId => ShapeId): Builder[Alg, Op] =
       copy(baseId = f(baseId))
@@ -241,17 +238,14 @@ object Service {
 
       override type Operation[I, E, O, SI, SO] = Op[I, E, O, SI, SO]
 
-      override val endpoints: List[Endpoint[_, _, _, _, _]] =
+      override def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]] =
         // Explicit upcast to help Scala 3's type inference
         base.endpoints.map(e => endpointMapper(e): Endpoint[_, _, _, _, _])
 
       override def endpoint[I, E, O, SI, SO](
           op: Op[I, E, O, SI, SO]
-      ): (I, Endpoint[I, E, O, SI, SO]) = {
-        val (input, baseEndpoint) = base.endpoint(op)
-
-        (input, endpointMapper(baseEndpoint))
-      }
+      ): Endpoint[I, E, O, SI, SO] =
+        endpointMapper(base.endpoint(op))
 
       override val id: ShapeId = baseId
 
@@ -260,6 +254,10 @@ object Service {
       override val hints: Hints = baseHints
 
       override val reified: Alg[Operation] = base.reified
+
+      override def ordinal[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): Int = base.ordinal(op)
+
+      override def input[I, E, O, SI, SO](op: Op[I, E, O, SI, SO]): I = base.input(op)
 
       override def fromPolyFunction[P[_, _, _, _, _]](
           function: PolyFunction5[Operation, P]

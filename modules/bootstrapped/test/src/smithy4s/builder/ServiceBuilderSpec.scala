@@ -61,7 +61,7 @@ class ServiceBuilderSpec extends FunSuite {
       .mapEndpointEach(mapper)
       .build
 
-    assertEquals(newService.endpoints.map(_.id), List(ShapeId("smithy4s.example", "operation1")))
+    assertEquals(newService.endpoints.map(_.id), IndexedSeq(ShapeId("smithy4s.example", "operation1")))
   }
 
 
