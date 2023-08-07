@@ -1,6 +1,6 @@
 ---
-sidebar_label: Wildcard types
-title: Scala wildcard type arguments
+sidebar_label: Optics
+title: Optics - Lenses and Prisms
 ---
 
 Smithy4s has the ability to render optics (Lens/Prism) instances in the code it generates.
