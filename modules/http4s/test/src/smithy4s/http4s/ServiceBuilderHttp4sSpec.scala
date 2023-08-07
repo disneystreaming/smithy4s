@@ -3,14 +3,24 @@ package smithy4s.http4s
 import cats.effect.IO
 import org.http4s.implicits._
 import org.http4s.Request
-import smithy4s.example.guides.auth.{World, HealthCheckOutput, HelloWorldAuthServiceGen, HelloWorldAuthService}
-import smithy4s.example.{UnknownServerError, UnknownServerErrorCode, HealthResponse, PizzaAdminService, PizzaAdminServiceGen}
+import smithy4s.example.guides.auth.{
+  World,
+  HealthCheckOutput,
+  HelloWorldAuthServiceGen,
+  HelloWorldAuthService
+}
+import smithy4s.example.{
+  UnknownServerError,
+  UnknownServerErrorCode,
+  HealthResponse,
+  PizzaAdminService,
+  PizzaAdminServiceGen
+}
 import smithy4s.kinds.PolyFunction5
 import smithy4s.{Endpoint, Hints, Service}
 import weaver.SimpleIOSuite
 
-object ServiceBuilderHttp4sSpec  extends SimpleIOSuite{
-
+object ServiceBuilderHttp4sSpec extends SimpleIOSuite {
 
   test("Capable of altering the URI path of an endpoint") {
     val serviceImpl: HelloWorldAuthService[IO] = new HelloWorldAuthService[IO] {
@@ -19,19 +29,26 @@ object ServiceBuilderHttp4sSpec  extends SimpleIOSuite{
       override def healthCheck(): IO[HealthCheckOutput] = ???
     }
 
-
     val builder = Service.Builder.fromService(HelloWorldAuthService)
 
-    val mapper = new PolyFunction5[HelloWorldAuthServiceGen.Endpoint, HelloWorldAuthServiceGen.Endpoint] {
-      def apply[I, E, O, SI, SO](op: HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO]): HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO] = {
+    val mapper = new PolyFunction5[
+      HelloWorldAuthServiceGen.Endpoint,
+      HelloWorldAuthServiceGen.Endpoint
+    ] {
+      def apply[I, E, O, SI, SO](
+          op: HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO]
+      ): HelloWorldAuthServiceGen.Endpoint[I, E, O, SI, SO] = {
         if (op.name == "SayWorld") {
-          Endpoint
-            .Builder
+          Endpoint.Builder
             .fromEndpoint(op)
             .withHints(
               Hints(
-                smithy.api.Http(method = smithy.api.NonEmptyString("GET"), uri = smithy.api.NonEmptyString("/yeap"), code = 200),
-                smithy.api.Readonly(),
+                smithy.api.Http(
+                  method = smithy.api.NonEmptyString("GET"),
+                  uri = smithy.api.NonEmptyString("/yeap"),
+                  code = 200
+                ),
+                smithy.api.Readonly()
               )
             )
             .build
@@ -44,8 +61,6 @@ object ServiceBuilderHttp4sSpec  extends SimpleIOSuite{
       .mapEndpointEach(mapper)
       .build
 
-
-
     SimpleRestJsonBuilder(modifiedService)
       .routes(serviceImpl)
       .resource
@@ -56,21 +71,29 @@ object ServiceBuilderHttp4sSpec  extends SimpleIOSuite{
       }
   }
 
+  test(
+    "when an errorable is removed and the service raises an error, it behaves in the same way as any other throwable"
+  ) {
+    val serviceImpl: PizzaAdminService[IO] =
+      new PizzaAdminService.Default[IO](IO.stub) {
+        override def health(query: Option[String]): IO[HealthResponse] =
+          IO.raiseError(
+            UnknownServerError(
+              UnknownServerErrorCode.ERROR_CODE
+            )
+          )
 
-
-  test("when an errorable is removed and the service raises an error, it behaves in the same way as any other throwable") {
-    val serviceImpl: PizzaAdminService[IO] = new PizzaAdminService.Default[IO](IO.stub) {
-      override def health(query: Option[String]): IO[HealthResponse] = IO.raiseError(UnknownServerError(
-        UnknownServerErrorCode.ERROR_CODE,
-      ))
-
-    }
+      }
 
     val servicebuilder = Service.Builder.fromService(PizzaAdminService)
-    val mapper = new PolyFunction5[PizzaAdminServiceGen.Endpoint, PizzaAdminServiceGen.Endpoint] {
-      def apply[I, E, O, SI, SO](op: PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO]): PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO] =
-        Endpoint
-          .Builder
+    val mapper = new PolyFunction5[
+      PizzaAdminServiceGen.Endpoint,
+      PizzaAdminServiceGen.Endpoint
+    ] {
+      def apply[I, E, O, SI, SO](
+          op: PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO]
+      ): PizzaAdminServiceGen.Endpoint[I, E, O, SI, SO] =
+        Endpoint.Builder
           .fromEndpoint(op)
           .mapErrorable(_ => None)
           .build
@@ -84,8 +107,13 @@ object ServiceBuilderHttp4sSpec  extends SimpleIOSuite{
       .routes(serviceImpl)
       .resource
       .use { routes =>
-        routes.orNotFound.run(Request[IO](uri = uri"/health")).attempt.map { response =>
-          assert(response == Left(UnknownServerError(UnknownServerErrorCode.ERROR_CODE)))
+        routes.orNotFound.run(Request[IO](uri = uri"/health")).attempt.map {
+          response =>
+            assert(
+              response == Left(
+                UnknownServerError(UnknownServerErrorCode.ERROR_CODE)
+              )
+            )
         }
       }
   }
