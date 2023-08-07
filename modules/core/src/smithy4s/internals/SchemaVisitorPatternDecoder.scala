@@ -67,7 +67,10 @@ private[internals] final class SchemaVisitorPatternDecoder(
           if (fromOrdinal.contains(BigDecimal(value)))
             fromOrdinal(BigDecimal(value))
           else
-            value.toIntOption
+            // toIntOption not available on 2.12
+            util
+              .Try(value.toInt)
+              .toOption
               .map(unknown(_))
               .getOrElse(
                 throw StructurePatternError(

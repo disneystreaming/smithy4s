@@ -178,7 +178,7 @@ class DynamicStabilitySpec extends FunSuite {
     def enumeration[E](
         shapeId: ShapeId,
         hints: Hints,
-        tag: EnumTag,
+        tag: EnumTag[E],
         values: List[EnumValue[E]],
         total: E => EnumValue[E]
     ): ConstUnit[E] = {

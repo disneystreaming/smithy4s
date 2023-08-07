@@ -495,7 +495,10 @@ lazy val decline = (projectMatrix in file("modules/decline"))
       Dependencies.Weaver.cats.value % Test
     )
   )
-  .dependsOn(json)
+  .dependsOn(
+    json,
+    bootstrapped % "test->test"
+  )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
