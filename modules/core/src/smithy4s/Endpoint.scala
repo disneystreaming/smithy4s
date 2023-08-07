@@ -86,7 +86,7 @@ object Endpoint {
     def mapId(f: ShapeId => ShapeId): Builder[Op, I, E, O, SI, SO] =
       copy(baseId = f(baseId))
 
-    def withHints(hints: Hints): Builder[Op,I, E, O, SI, SO] =
+    def withHints(hints: Hints): Builder[Op, I, E, O, SI, SO] =
       copy(baseHints = hints)
 
     def mapHints(f: Hints => Hints): Builder[Op, I, E, O, SI, SO] =
@@ -118,7 +118,8 @@ object Endpoint {
 
     def mapStreamedInput(
         f: StreamingSchema[SI] => StreamingSchema[SI]
-    ): Builder[Op, I, E, O, SI, SO] = copy(baseStreamedInput = f(baseStreamedInput))
+    ): Builder[Op, I, E, O, SI, SO] =
+      copy(baseStreamedInput = f(baseStreamedInput))
 
     def withSteamedOutput(
         streamedOutput: StreamingSchema[SO]
