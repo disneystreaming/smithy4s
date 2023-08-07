@@ -34,11 +34,9 @@ class EndpointBuilderSpec extends FunSuite {
 
   }
 
-
   test(
     "can modify the following values (Id, Hints, Input, Output, Errorable) using mapId, mapHints, mapInput, mapOutput, mapErrorable"
   ) {
-
 
     val newEndpoint = builder
       .mapId(shapeId => ShapeId(shapeId.namespace, "getCityEndpoint"))
@@ -51,9 +49,18 @@ class EndpointBuilderSpec extends FunSuite {
       .build
 
     assertEquals(newEndpoint.id, ShapeId("smithy4s.example", "getCityEndpoint"))
-    assertEquals( newEndpoint.hints, Hints(smithy.api.Readonly(), Documentation("new endpoint")))
-    assertEquals(newEndpoint.input.shapeId, ShapeId("smithy4s.example", "inputSchema"))
-    assertEquals(newEndpoint.output.shapeId, ShapeId("smithy4s.example", "outputSchema"))
+    assertEquals(
+      newEndpoint.hints,
+      Hints(smithy.api.Readonly(), Documentation("new endpoint"))
+    )
+    assertEquals(
+      newEndpoint.input.shapeId,
+      ShapeId("smithy4s.example", "inputSchema")
+    )
+    assertEquals(
+      newEndpoint.output.shapeId,
+      ShapeId("smithy4s.example", "outputSchema")
+    )
     assertEquals(newEndpoint.errorable, None)
   }
 }
