@@ -914,8 +914,7 @@ lazy val `aws-sandbox` = projectMatrix
 
 lazy val `oauth-sandbox` = projectMatrix
   .in(file("modules/oauth-sandbox"))
-  // TODO: Nope, shouldn't need to depend on anything AWS.
-  .dependsOn(`aws-http4s`, http4s)
+  .dependsOn(http4s)
   .settings(
     Compile / allowedNamespaces := Seq(
       "smithy4s.sandbox.oauth"
