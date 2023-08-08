@@ -29,15 +29,15 @@ object OpenEnumCollisionTest extends Enumeration[OpenEnumCollisionTest] with Sha
     val ONE: Prism[OpenEnumCollisionTest, OpenEnumCollisionTest.ONE.type] = Prism.partial[OpenEnumCollisionTest, OpenEnumCollisionTest.ONE.type]{ case OpenEnumCollisionTest.ONE => OpenEnumCollisionTest.ONE }(identity)
     val TWO: Prism[OpenEnumCollisionTest, OpenEnumCollisionTest.TWO.type] = Prism.partial[OpenEnumCollisionTest, OpenEnumCollisionTest.TWO.type]{ case OpenEnumCollisionTest.TWO => OpenEnumCollisionTest.TWO }(identity)
     val Unknown: Prism[OpenEnumCollisionTest, OpenEnumCollisionTest.Unknown.type] = Prism.partial[OpenEnumCollisionTest, OpenEnumCollisionTest.Unknown.type]{ case OpenEnumCollisionTest.Unknown => OpenEnumCollisionTest.Unknown }(identity)
-    val $unknown: Prism[OpenEnumCollisionTest, OpenEnumCollisionTest.$Unknown] = Prism.partial[OpenEnumCollisionTest, OpenEnumCollisionTest.$Unknown]{ case u: OpenEnumCollisionTest.$Unknown => u }(identity)
+    val $unknown: Prism[OpenEnumCollisionTest, OpenEnumCollisionTest.$$Unknown] = Prism.partial[OpenEnumCollisionTest, OpenEnumCollisionTest.$$Unknown]{ case u: OpenEnumCollisionTest.$$Unknown => u }(identity)
   }
 
   case object ONE extends OpenEnumCollisionTest("ONE", "ONE", 0, Hints())
   case object TWO extends OpenEnumCollisionTest("TWO", "TWO", 1, Hints())
   case object Unknown extends OpenEnumCollisionTest("Unknown", "Unknown", 2, Hints())
-  final case class $Unknown(str: String) extends OpenEnumCollisionTest(str, s"$$Unknown", -1, Hints.empty)
+  final case class $$Unknown(str: String) extends OpenEnumCollisionTest(str, s"$$Unknown", -1, Hints.empty)
 
-  val $unknown: String => OpenEnumCollisionTest = $Unknown(_)
+  val $unknown: String => OpenEnumCollisionTest = $$Unknown(_)
 
   val values: List[OpenEnumCollisionTest] = List(
     ONE,

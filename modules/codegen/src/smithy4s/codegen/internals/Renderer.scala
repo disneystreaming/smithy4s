@@ -940,7 +940,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val openLine =
       if (isOpen)
         List(
-          line"val $$unknown: $smithyPrism[$enumName, $enumName.$$Unknown] = $smithyPrism.partial[$enumName, $enumName.$$Unknown]{ case u: $enumName.$$Unknown => u }(identity)"
+          line"val $$unknown: $smithyPrism[$enumName, $enumName.$$$$Unknown] = $smithyPrism.partial[$enumName, $enumName.$$$$Unknown]{ case u: $enumName.$$$$Unknown => u }(identity)"
         )
       else List.empty
     val valueLines = values.map { value =>
@@ -1171,9 +1171,9 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val intValue = if (isIntEnum) paramName else "-1"
           val stringValue = if (isIntEnum) "s\"$$Unknown\"" else paramName
           lines(
-            line"""final case class $$Unknown($paramName: $paramType) extends $name($stringValue, s"$$$$Unknown", $intValue, Hints.empty)""",
+            line"""final case class $$$$Unknown($paramName: $paramType) extends $name($stringValue, s"$$$$Unknown", $intValue, Hints.empty)""",
             newline,
-            line"val $$unknown: $paramType => $name = $$Unknown(_)"
+            line"val $$unknown: $paramType => $name = $$$$Unknown(_)"
           )
         } else Lines.empty,
         newline,
