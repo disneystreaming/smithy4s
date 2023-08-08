@@ -112,6 +112,7 @@ package object internals {
     object Structure extends ShapeExtractor(_.asStructureShape())
     object Union extends ShapeExtractor(_.asUnionShape())
     object Enumeration extends ShapeExtractor(_.asEnumShape())
+    object IntEnumeration extends ShapeExtractor(_.asIntEnumShape())
     object Service extends ShapeExtractor(_.asServiceShape())
     object Resource extends ShapeExtractor(_.asResourceShape())
     object Operation extends ShapeExtractor(_.asOperationShape())
