@@ -39,7 +39,7 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[P] =
     Primitive.stringWriter(tag, hints) match {
       case Some(writer) =>
-        p => List(UrlForm.FormData(PayloadPath.root, Some(writer(p))))
+        primitive => List(UrlForm.FormData(PayloadPath.root, Some(writer(primitive))))
 
       case None =>
         _ => Nil

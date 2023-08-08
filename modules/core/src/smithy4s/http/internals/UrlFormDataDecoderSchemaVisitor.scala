@@ -66,13 +66,13 @@ private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
 
         case UrlFormCursor(history, values) =>
           // Collection members aren't necessarily primitives, and if they
-          // aren't, then there will be multiple pathed values for the same
+          // aren't, then there will be multiple values for the same
           // index. One example is maps, which are encoded as collections of
           // structs, e.g.
           // foos.entry.1.key=a&foos.entry.1.value=1&foos.entry.2.key=b&foos.entry.2.value=2.
           // That's why we have to group by index.
           //
-          // We can't assume they were encoding in order. That's why we have to
+          // We can't assume they were encoded in order. That's why we have to
           // then sort by index.
           val groupedAndSortedCursors = values
             .collect {
