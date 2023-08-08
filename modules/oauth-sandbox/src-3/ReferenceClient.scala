@@ -18,6 +18,7 @@ package smithy4s
 package sandbox
 package oauth
 
+import cats.effect._
 import io.circe.Json
 import org.http4s.*
 import org.http4s.client.middleware.Logger
@@ -26,28 +27,13 @@ import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.io._
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.server.defaults.HttpPort
-import zio.*
-import zio.interop.catz.*
+import scala.concurrent.duration.*
 
-object ReferenceClient extends ZIOAppDefault with Http4sClientDsl[Task]:
+object ReferenceClient extends IOApp.Simple with Http4sClientDsl[IO]:
 
-  override def run: RIO[Scope, Unit] = for
-    client <- EmberClientBuilder
-      .default[Task]
-      .build
-      .map(
-        Logger.colored(
-          logHeaders = true,
-          logBody = true
-        )
-      )
-      .toScopedZIO
-    oauthSandboxApiUri = Uri(
-      scheme = Some(Uri.Scheme.http),
-      authority = Some(Uri.Authority(port = Some(HttpPort)))
-    )
-    _ <- (for
-      statusAndJson <- client
+  override def run: IO[Unit] = clientResource.use(client =>
+    (for
+      errorOrStatusAndErrorOrJson <- client
         .run(
           POST(
             UrlForm(
@@ -56,28 +42,53 @@ object ReferenceClient extends ZIOAppDefault with Http4sClientDsl[Task]:
               "grant_type" -> "refresh_token",
               "refresh_token" -> expectedRefreshToken.value
             ),
-            oauthSandboxApiUri / "token"
+            Uri(
+              scheme = Some(Uri.Scheme.http),
+              authority = Some(Uri.Authority(port = Some(HttpPort)))
+            ) / "token"
           )
         )
-        .use(response => response.as[Json].map(response.status -> _))
-      _ <- statusAndJson match
-        case (Status.Ok, json) =>
+        .use(response => response.as[Json].attempt.map(response.status -> _))
+        .attempt
+      _ <- errorOrStatusAndErrorOrJson match
+        case Right((Status.Ok, Right(json))) =>
           for
-            accessToken <- ZIO.fromEither(
+            accessToken <- IO.fromEither(
               json.hcursor.get[String]("access_token")
             )
-            _ <- Console.printLine(s"Access token: $accessToken")
+            _ <- IO.println(s"Access token: $accessToken")
           yield ()
 
-        case (Status.BadRequest, json) =>
+        case Right((Status.BadRequest, Right(json))) =>
           for
-            error <- ZIO.fromEither(
-              json.hcursor.get[String]("error")
-            )
-            _ <- Console.printLine(s"Error: $error")
+            errorOrError <- IO
+              .fromEither(
+                json.hcursor.get[String]("error")
+              )
+              .attempt
+            _ <- errorOrError match
+              case Right(error) => IO.println(s"Error: $error")
+              case Left(error)  => IO.println(s"Error: $error")
           yield ()
 
-        case (status, json) =>
-          Console.printLine(s"Error: $status, $json")
-    yield ()).repeat(Schedule.spaced(1.second))
-  yield ()
+        case Right((status, Right(json))) =>
+          IO.println(s"Error: $status, $json")
+
+        case Right((status, Left(error))) =>
+          IO.println(s"Error: $status, $error")
+
+        case Left(error) =>
+          IO.println(s"Error: $error")
+      _ <- IO.sleep(1.second)
+    yield ()).foreverM
+  )
+
+  private val clientResource = EmberClientBuilder
+    .default[IO]
+    .build
+    .map(
+      Logger.colored(
+        logHeaders = true,
+        logBody = true
+      )
+    )

@@ -18,39 +18,36 @@ package smithy4s
 package sandbox
 package oauth
 
+import cats.effect._
 import io.circe.Json
 import org.http4s.*
 import org.http4s.server.middleware.Logger
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.ember.server.EmberServerBuilder
-import zio.*
-import zio.interop.catz.*
+import scala.concurrent.duration.*
 
-object ReferenceServer extends ZIOAppDefault with Http4sDsl[Task]:
+object ReferenceServer extends IOApp.Simple with Http4sDsl[IO]:
 
-  override def run: RIO[Scope, Unit] = for
-    _ <- EmberServerBuilder
-      .default[Task]
-      .withHttpApp(
-        Logger.httpApp(
-          logHeaders = true,
-          logBody = true
-        )(createAccessTokenRoute.orNotFound)
-      )
-      .withShutdownTimeout(0.seconds.asScala)
-      .build
-      .toScopedZIO
-    _ <- ZIO.never
-  yield ()
+  override def run: IO[Unit] = EmberServerBuilder
+    .default[IO]
+    .withHttpApp(
+      Logger.httpApp(
+        logHeaders = true,
+        logBody = true
+      )(createAccessTokenRoute.orNotFound)
+    )
+    .withShutdownTimeout(0.seconds)
+    .build
+    .useForever
 
-  private val createAccessTokenRoute: HttpRoutes[Task] = HttpRoutes.of {
+  private val createAccessTokenRoute: HttpRoutes[IO] = HttpRoutes.of {
     case request @ POST -> Root / "token" =>
       request.decodeStrict[UrlForm](parameters =>
-        ZIO.succeed {
+        IO.pure {
           def equal(key: String, value: String): Boolean =
             parameters.getFirst(key).contains(value)
-          def badRequest(error: String): Response[Task] =
+          def badRequest(error: String): Response[IO] =
             Response(BadRequest).withEntity(
               Json.obj(
                 "error" -> Json.fromString(error)

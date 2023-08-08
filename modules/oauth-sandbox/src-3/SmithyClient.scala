@@ -18,18 +18,42 @@ package smithy4s
 package sandbox
 package oauth
 
+import cats.effect._
 import org.http4s.Uri
 import org.http4s.client.middleware.Logger
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.server.defaults.HttpPort
-import zio.*
-import zio.interop.catz.*
+import scala.concurrent.duration.*
 
-object SmithyClient extends ZIOAppDefault:
+object SmithyClient extends IOApp.Simple:
 
-  override def run: RIO[Scope, Unit] = for
+  override def run: IO[Unit] =
+    tokenExchangeClientResource.use(tokenExchangeClient =>
+      (for
+        createAccessTokenResult <- tokenExchangeClient
+          .createAccessToken(
+            clientId = expectedClientId,
+            clientSecret = expectedClientSecret,
+            grantType = GrantType.REFRESH_TOKEN,
+            refreshToken = expectedRefreshToken
+          )
+          .attempt
+        _ <- createAccessTokenResult match
+          case Right(createAccessTokenOutput) =>
+            IO.println(s"Access token: ${createAccessTokenOutput.accessToken}")
+
+          case Left(badRequest: BadRequest) =>
+            IO.println(s"Error: ${badRequest.error}")
+
+          case Left(error) =>
+            IO.println(s"Error: $error")
+        _ <- IO.sleep(1.second)
+      yield ()).foreverM
+    )
+
+  private val tokenExchangeClientResource = for
     client <- EmberClientBuilder
-      .default[Task]
+      .default[IO]
       .build
       .map(
         Logger.colored(
@@ -37,35 +61,13 @@ object SmithyClient extends ZIOAppDefault:
           logBody = true
         )
       )
-      .toScopedZIO
-    oauthSandboxApiUri = Uri(
-      scheme = Some(Uri.Scheme.http),
-      authority = Some(Uri.Authority(port = Some(HttpPort)))
-    )
-    oauthSandboxTokenApi <- TokenExchangeBuilder(TokenApi)
+    tokenExchangeClient <- TokenExchangeBuilder(TokenApi)
       .client(client)
-      .uri(oauthSandboxApiUri)
-      .resource
-      .toScopedZIO
-    _ <- (for
-      createAccessTokenResult <- oauthSandboxTokenApi
-        .createAccessToken(
-          clientId = expectedClientId,
-          clientSecret = expectedClientSecret,
-          grantType = GrantType.REFRESH_TOKEN,
-          refreshToken = expectedRefreshToken
+      .uri(
+        Uri(
+          scheme = Some(Uri.Scheme.http),
+          authority = Some(Uri.Authority(port = Some(HttpPort)))
         )
-        .either
-      _ <- createAccessTokenResult match
-        case Right(createAccessTokenOutput) =>
-          Console.printLine(
-            s"Access token: ${createAccessTokenOutput.accessToken}"
-          )
-
-        case Left(badRequest: BadRequest) =>
-          Console.printLine(s"Error: ${badRequest.error}")
-
-        case Left(error) =>
-          Console.printLine(s"Error: $error")
-    yield ()).repeat(Schedule.spaced(1.second))
-  yield ()
+      )
+      .resource
+  yield tokenExchangeClient

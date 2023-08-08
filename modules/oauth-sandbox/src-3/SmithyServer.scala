@@ -18,51 +18,47 @@ package smithy4s
 package sandbox
 package oauth
 
+import cats.effect._
 import org.http4s.server.middleware.Logger
 import org.http4s.ember.server.EmberServerBuilder
 import smithy4s.http4s.SimpleRestJsonBuilder
-import zio.*
-import zio.interop.catz.*
+import scala.concurrent.duration.*
 
-object SmithyServer extends ZIOAppDefault:
+object SmithyServer extends IOApp.Simple:
 
-  override def run: RIO[Scope, Unit] = for
-    createAccessTokenRoute <- ZIO.fromEither(
-      TokenExchangeBuilder
-        .routes(TokenApiImpl)
-        .make
-    )
+  override def run: IO[Unit] = (for
+    createAccessTokenRoute <- TokenExchangeBuilder
+      .routes(TokenApiImpl)
+      .resource
     _ <- EmberServerBuilder
-      .default[Task]
+      .default[IO]
       .withHttpApp(
         Logger.httpApp(
           logHeaders = true,
           logBody = true
         )(createAccessTokenRoute.orNotFound)
       )
-      .withShutdownTimeout(0.seconds.asScala)
+      .withShutdownTimeout(0.seconds)
       .build
-      .toScopedZIO
-    _ <- ZIO.never
-  yield ()
+  yield ()).useForever
 
-  private object TokenApiImpl extends TokenApi[Task]:
+  private object TokenApiImpl extends TokenApi[IO]:
     override def createAccessToken(
         clientId: ClientId,
         clientSecret: ClientSecret,
         grantType: GrantType,
         refreshToken: RefreshToken
-    ): Task[CreateAccessTokenOutput] =
+    ): IO[CreateAccessTokenOutput] =
       if (clientId != expectedClientId)
-        ZIO.fail(BadRequest(error = Error.INVALID_CLIENT))
+        IO.raiseError(BadRequest(error = Error.INVALID_CLIENT))
       else if (clientSecret != expectedClientSecret)
-        ZIO.fail(BadRequest(error = Error.UNAUTHORIZED_CLIENT))
+        IO.raiseError(BadRequest(error = Error.UNAUTHORIZED_CLIENT))
       else if (grantType != GrantType.REFRESH_TOKEN)
-        ZIO.fail(BadRequest(error = Error.UNSUPPORTED_GRANT_TYPE))
+        IO.raiseError(BadRequest(error = Error.UNSUPPORTED_GRANT_TYPE))
       else if (refreshToken != expectedRefreshToken)
-        ZIO.fail(BadRequest(error = Error.INVALID_GRANT))
+        IO.raiseError(BadRequest(error = Error.INVALID_GRANT))
       else
-        ZIO.succeed(
+        IO.pure(
           CreateAccessTokenOutput(
             accessToken = AccessToken("this is an access token, promise!"),
             expiresIn = ExpiresIn(3600),

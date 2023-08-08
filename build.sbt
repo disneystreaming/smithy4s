@@ -928,9 +928,6 @@ lazy val `oauth-sandbox` = projectMatrix
       "-Wconf:cat=deprecation:silent"
     ),
     libraryDependencies ++= Seq(
-      // TODO: Replace with cats-effect?
-      "dev.zio" %% "zio" % "2.0.15",
-      "dev.zio" %% "zio-interop-cats" % "23.0.0.8",
       Dependencies.CatsEffect3.value,
       Dependencies.Circe.core.value,
       Dependencies.Circe.parser.value,
