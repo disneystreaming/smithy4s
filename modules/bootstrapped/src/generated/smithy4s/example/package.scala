@@ -96,6 +96,7 @@ package object example {
   type StreamedBlob = smithy4s.example.StreamedBlob.Type
   type TestIdRefValueMap = smithy4s.example.TestIdRefValueMap.Type
   type PNG = smithy4s.example.PNG.Type
+  type StringWithEnumTraits = smithy4s.example.StringWithEnumTraits.Type
   type Name = smithy4s.example.Name.Type
   type ObjectKey = smithy4s.example.ObjectKey.Type
   type UnwrappedFancyList = smithy4s.example.UnwrappedFancyList.Type
