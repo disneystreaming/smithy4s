@@ -2,6 +2,8 @@ $version: "2"
 
 namespace smithy4s.sandbox.oauth
 
+use alloy#tokenExchange
+
 @tokenExchange
 service TokenApi {
     operations: [

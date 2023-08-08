@@ -15,13 +15,31 @@
  */
 
 package smithy4s
-package sandbox
-package oauth
-
-import smithy4s.http4s.*
+package http4s
 
 // TODO: Move out of sandbox.
-object TokenExchangeBuilder
-    extends SimpleProtocolBuilder[TokenExchange](
-      new internals.OAuthCodecs(1024, false)
+object TokenExchangeBuilder extends TokenExchangeBuilder(1024, false)
+
+class TokenExchangeBuilder private (
+    oauthCodecs: internals.OAuthCodecs
+) extends SimpleProtocolBuilder[alloy.TokenExchange](
+      oauthCodecs
+    ) {
+
+  def this(maxArity: Int, explicitDefaultsEncoding: Boolean) =
+    this(new internals.OAuthCodecs(maxArity, explicitDefaultsEncoding))
+
+  def withMaxArity(maxArity: Int): TokenExchangeBuilder =
+    new TokenExchangeBuilder(
+      maxArity,
+      oauthCodecs.explicitDefaultsEncoding
     )
+
+  def withExplicitDefaultsEncoding(
+      explicitDefaultsEncoding: Boolean
+  ): TokenExchangeBuilder =
+    new TokenExchangeBuilder(
+      oauthCodecs.maxArity,
+      explicitDefaultsEncoding
+    )
+}

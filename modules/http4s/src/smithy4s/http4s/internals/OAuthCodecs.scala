@@ -34,9 +34,7 @@ import smithy4s.json.Json
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 
-// TODO: Move out of sandbox.
-// private[http4s]
-class OAuthCodecs(
+private[http4s] class OAuthCodecs(
     val maxArity: Int,
     val explicitDefaultsEncoding: Boolean
 ) extends SimpleProtocolCodecs {

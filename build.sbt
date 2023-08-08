@@ -917,6 +917,8 @@ lazy val `oauth-sandbox` = projectMatrix
   .dependsOn(http4s)
   .settings(
     Compile / allowedNamespaces := Seq(
+      // TODO: Remove once tokenExchange is upstreamed.
+      "alloy",
       "smithy4s.sandbox.oauth"
     ),
     smithySpecs := IO.listFiles(

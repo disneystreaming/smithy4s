@@ -1,6 +1,6 @@
 $version: "2"
 
-namespace smithy4s.sandbox.oauth
+namespace alloy
 
 // TODO: Move out of sandbox.
 

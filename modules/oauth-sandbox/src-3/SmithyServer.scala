@@ -23,6 +23,7 @@ import org.http4s.server.middleware.Logger
 import org.http4s.ember.server.EmberServerBuilder
 import smithy4s.http4s.SimpleRestJsonBuilder
 import scala.concurrent.duration.*
+import smithy4s.http4s.TokenExchangeBuilder
 
 object SmithyServer extends IOApp.Simple:
 

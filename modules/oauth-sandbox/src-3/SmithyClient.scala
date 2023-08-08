@@ -24,6 +24,7 @@ import org.http4s.client.middleware.Logger
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.server.defaults.HttpPort
 import scala.concurrent.duration.*
+import smithy4s.http4s.TokenExchangeBuilder
 
 object SmithyClient extends IOApp.Simple:
 
