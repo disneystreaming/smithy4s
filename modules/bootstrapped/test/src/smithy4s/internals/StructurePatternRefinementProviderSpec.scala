@@ -147,7 +147,7 @@ final class StructurePatternRefinementProviderSpec extends FunSuite {
       'a'.toByte,
       Timestamp(0, 0),
       SomeEnum.ONE,
-      OpenEnumTest.Unknown("test")
+      OpenEnumTest.$Unknown("test")
     )
     val pattern = "{a}_{b}_{c}_{d}_{e}_{f}_{g}_{h}_{i}_{j}_{k}_{l}_{m}_{n}"
     val expect =

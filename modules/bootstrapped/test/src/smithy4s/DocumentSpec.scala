@@ -181,7 +181,7 @@ class DocumentSpec() extends FunSuite {
 
   test("open integer based enum - unknown") {
     import smithy4s.example._
-    val unknown: OpenIntEnumTest = OpenIntEnumTest.Unknown(202)
+    val unknown: OpenIntEnumTest = OpenIntEnumTest.$Unknown(202)
     val document = Document.encode(unknown)
     import Document._
     val expectedDocument = DNumber(202)
@@ -198,7 +198,7 @@ class DocumentSpec() extends FunSuite {
       map(OpenIntEnumTest.schema, int)
 
     val mapTest =
-      Map(OpenIntEnumTest.ONE -> 1, OpenIntEnumTest.Unknown(100) -> 2)
+      Map(OpenIntEnumTest.ONE -> 1, OpenIntEnumTest.$Unknown(100) -> 2)
     val document = Document.encode(mapTest)
     import Document._
     val expectedDocument =
@@ -228,7 +228,7 @@ class DocumentSpec() extends FunSuite {
 
   test("open string based enum - unknown") {
     import smithy4s.example._
-    val unknown: OpenEnumTest = OpenEnumTest.Unknown("test")
+    val unknown: OpenEnumTest = OpenEnumTest.$Unknown("test")
     val document = Document.encode(unknown)
     import Document._
     val expectedDocument = DString("test")
@@ -245,7 +245,7 @@ class DocumentSpec() extends FunSuite {
       map(OpenEnumTest.schema, int)
 
     val mapTest =
-      Map(OpenEnumTest.ONE -> 1, OpenEnumTest.Unknown("test") -> 2)
+      Map(OpenEnumTest.ONE -> 1, OpenEnumTest.$Unknown("test") -> 2)
     val document = Document.encode(mapTest)
     import Document._
     val expectedDocument =

@@ -26,14 +26,14 @@ object OpenNums extends Enumeration[OpenNums] with ShapeTag.Companion[OpenNums] 
 
   case object ONE extends OpenNums("ONE", "ONE", 1, Hints())
   case object TWO extends OpenNums("TWO", "TWO", 2, Hints())
-  final case class Unknown(int: Int) extends OpenNums("Unknown", "Unknown", int, Hints.empty)
+  final case class $Unknown(int: Int) extends OpenNums("$Unknown", "$Unknown", int, Hints.empty)
 
-  val unknown: Int => OpenNums = Unknown(_)
+  val $unknown: Int => OpenNums = $Unknown(_)
 
   val values: List[OpenNums] = List(
     ONE,
     TWO,
   )
-  val tag: EnumTag[OpenNums] = EnumTag.OpenIntEnum(unknown)
+  val tag: EnumTag[OpenNums] = EnumTag.OpenIntEnum($unknown)
   implicit val schema: Schema[OpenNums] = enumeration(tag, values).withId(id).addHints(hints)
 }

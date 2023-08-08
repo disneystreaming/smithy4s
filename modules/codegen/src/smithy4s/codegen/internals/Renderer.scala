@@ -940,7 +940,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val openLine =
       if (isOpen)
         List(
-          line"val unknown: $smithyPrism[$enumName, $enumName.Unknown] = $smithyPrism.partial[$enumName, $enumName.Unknown]{ case u: $enumName.Unknown => u }(identity)"
+          line"val $$unknown: $smithyPrism[$enumName, $enumName.$$Unknown] = $smithyPrism.partial[$enumName, $enumName.$$Unknown]{ case u: $enumName.$$Unknown => u }(identity)"
         )
       else List.empty
     val valueLines = values.map { value =>
@@ -1169,11 +1169,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val (paramName, paramType) =
             if (isIntEnum) ("int", "Int") else ("str", "String")
           val intValue = if (isIntEnum) paramName else "-1"
-          val stringValue = if (isIntEnum) "\"Unknown\"" else paramName
+          val stringValue = if (isIntEnum) "\"$Unknown\"" else paramName
           lines(
-            line"""final case class Unknown($paramName: $paramType) extends $name($stringValue, "Unknown", $intValue, Hints.empty)""",
+            line"""final case class $$Unknown($paramName: $paramType) extends $name($stringValue, "$$Unknown", $intValue, Hints.empty)""",
             newline,
-            line"val unknown: $paramType => $name = Unknown(_)"
+            line"val $$unknown: $paramType => $name = $$Unknown(_)"
           )
         } else Lines.empty,
         newline,
@@ -1348,8 +1348,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val tagStr = tag match {
       case IntEnum                => "ClosedIntEnum"
       case StringEnum             => "ClosedStringEnum"
-      case EnumTag.OpenIntEnum    => "OpenIntEnum(unknown)"
-      case EnumTag.OpenStringEnum => "OpenStringEnum(unknown)"
+      case EnumTag.OpenIntEnum    => "OpenIntEnum($unknown)"
+      case EnumTag.OpenStringEnum => "OpenStringEnum($unknown)"
     }
     line"val tag: $EnumTag_[$parentType] = $EnumTag_.$tagStr"
   }

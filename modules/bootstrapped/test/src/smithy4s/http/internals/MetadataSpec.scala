@@ -243,9 +243,9 @@ class MetadataSpec() extends FunSuite {
 
   test("Open Int Enum query parameter - unknown") {
 
-    val queries = Queries(on = Some(smithy4s.example.OpenNums.Unknown(101)))
+    val queries = Queries(on = Some(smithy4s.example.OpenNums.$Unknown(101)))
     val finished = Queries(
-      on = Some(smithy4s.example.OpenNums.Unknown(101)),
+      on = Some(smithy4s.example.OpenNums.$Unknown(101)),
       slm = Some(Map("openNums" -> "101"))
     )
     val expected = Metadata(query = Map("openNums" -> List("101")))
@@ -266,9 +266,9 @@ class MetadataSpec() extends FunSuite {
   test("Open String Enum query parameter - unknown") {
 
     val queries =
-      Queries(ons = Some(smithy4s.example.OpenNumsStr.Unknown("test")))
+      Queries(ons = Some(smithy4s.example.OpenNumsStr.$Unknown("test")))
     val finished = Queries(
-      ons = Some(smithy4s.example.OpenNumsStr.Unknown("test")),
+      ons = Some(smithy4s.example.OpenNumsStr.$Unknown("test")),
       slm = Some(Map("openNumsStr" -> "test"))
     )
     val expected = Metadata(query = Map("openNumsStr" -> List("test")))
@@ -373,7 +373,7 @@ class MetadataSpec() extends FunSuite {
 
   test("Open Int enum header - unknown") {
     val headers =
-      HeadersStruct(on = Some(smithy4s.example.OpenNums.Unknown(101)))
+      HeadersStruct(on = Some(smithy4s.example.OpenNums.$Unknown(101)))
     val expected = Metadata.empty.addHeader("openNums", "101")
     checkRoundTrip(headers, expected)
   }
@@ -387,7 +387,7 @@ class MetadataSpec() extends FunSuite {
 
   test("Open String enum header - unknown") {
     val headers =
-      HeadersStruct(ons = Some(smithy4s.example.OpenNumsStr.Unknown("test")))
+      HeadersStruct(ons = Some(smithy4s.example.OpenNumsStr.$Unknown("test")))
     val expected = Metadata.empty.addHeader("openNumsStr", "test")
     checkRoundTrip(headers, expected)
   }
