@@ -29,6 +29,6 @@ object OldStyleLeftRight extends Enumeration[OldStyleLeftRight] with ShapeTag.Co
     LEFT,
     RIGHT,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[OldStyleLeftRight] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[OldStyleLeftRight] = enumeration(tag, values).withId(id).addHints(hints)
 }
