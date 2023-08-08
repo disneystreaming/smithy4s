@@ -345,10 +345,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
   test("Open Int Enum gets encoded/decoded correctly - unknown value") {
     val jsonInt = "123"
-    val in = writeToString[OpenIntEnumTest](OpenIntEnumTest.Unknown(123))
+    val in = writeToString[OpenIntEnumTest](OpenIntEnumTest.$$Unknown(123))
     val roundTripped = readFromString[OpenIntEnumTest](in)
     expect.same(in, jsonInt)
-    expect.same(roundTripped, OpenIntEnumTest.Unknown(123))
+    expect.same(roundTripped, OpenIntEnumTest.$$Unknown(123))
   }
 
   test("Open String Enum gets encoded/decoded correctly - known value") {
@@ -361,10 +361,10 @@ class SchemaVisitorJCodecTests() extends FunSuite {
 
   test("Open String Enum gets encoded/decoded correctly - unknown value") {
     val jsonStr = "\"SOMETHING\""
-    val in = writeToString[OpenEnumTest](OpenEnumTest.Unknown("SOMETHING"))
+    val in = writeToString[OpenEnumTest](OpenEnumTest.$$Unknown("SOMETHING"))
     val roundTripped = readFromString[OpenEnumTest](in)
     expect.same(in, jsonStr)
-    expect.same(roundTripped, OpenEnumTest.Unknown("SOMETHING"))
+    expect.same(roundTripped, OpenEnumTest.$$Unknown("SOMETHING"))
   }
 
   implicit val blobSchema: Schema[Blob] = blob
