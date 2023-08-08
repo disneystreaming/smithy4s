@@ -794,6 +794,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       override def enumShape(x: EnumShape): Option[Type] =
         Type.Ref(x.namespace, x.name).some
 
+      override def intEnumShape(x: IntEnumShape): Option[Type] =
+        Type.Ref(x.namespace, x.name).some
+
       def stringShape(x: StringShape): Option[Type] = x match {
         case T.enumeration(_) => Type.Ref(x.namespace, x.name).some
         case shape if shape.getId() == uuidShapeId =>
@@ -1284,7 +1287,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
       // Alias
       case (node, Type.Alias(ns, name, tpe, _)) =>
         TypedNode.NewTypeTN(Type.Ref(ns, name), NodeAndType(node, tpe))
-      // Enumeration
+      // Enumeration (enum trait)
       case (N.StringNode(str), UnRef(shape @ T.enumeration(e))) =>
         val (enumDef, index) =
           e.getValues().asScala.zipWithIndex.find(_._1.getValue() == str).get
@@ -1300,6 +1303,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             index
           )
         )
+      // Enumeration
       case (N.StringNode(str), UnRef(S.Enumeration(enumeration))) =>
         val ((enumName, enumValue), index) =
           enumeration
@@ -1314,6 +1318,22 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           ref,
           enumValue,
           index,
+          enumName
+        )
+      // Integer enumeration
+      case (N.NumberNode(num), UnRef(S.IntEnumeration(enumeration))) =>
+        val (enumName, enumValue) =
+          enumeration
+            .getEnumValues()
+            .asScala
+            .find { case (_, value) => value == num.intValue }
+            .get
+        val shapeId = enumeration.getId()
+        val ref = Type.Ref(shapeId.getNamespace(), shapeId.getName())
+        TypedNode.EnumerationTN(
+          ref,
+          enumName,
+          enumValue,
           enumName
         )
       // List
