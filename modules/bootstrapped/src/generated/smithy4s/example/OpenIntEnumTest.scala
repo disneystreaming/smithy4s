@@ -31,7 +31,7 @@ object OpenIntEnumTest extends Enumeration[OpenIntEnumTest] with ShapeTag.Compan
   }
 
   case object ONE extends OpenIntEnumTest("ONE", "ONE", 1, Hints())
-  final case class $Unknown(int: Int) extends OpenIntEnumTest("$Unknown", "$Unknown", int, Hints.empty)
+  final case class $Unknown(int: Int) extends OpenIntEnumTest(s"$$Unknown", s"$$Unknown", int, Hints.empty)
 
   val $unknown: Int => OpenIntEnumTest = $Unknown(_)
 

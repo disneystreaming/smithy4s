@@ -31,7 +31,7 @@ object OpenEnumTest extends Enumeration[OpenEnumTest] with ShapeTag.Companion[Op
   }
 
   case object ONE extends OpenEnumTest("ONE", "ONE", 0, Hints())
-  final case class $Unknown(str: String) extends OpenEnumTest(str, "$Unknown", -1, Hints.empty)
+  final case class $Unknown(str: String) extends OpenEnumTest(str, s"$$Unknown", -1, Hints.empty)
 
   val $unknown: String => OpenEnumTest = $Unknown(_)
 
