@@ -24,7 +24,6 @@ import cats.data.EitherT
 import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import smithy4s.codecs.PayloadPath
-import smithy4s.http.internals.UrlFormParser
 import smithy4s.http.HttpDiscriminator
 import smithy4s.http.Metadata
 import smithy4s.http._
@@ -139,7 +138,7 @@ private[http4s] class OAuthCodecs(
       HttpMediaTyped(
         HttpMediaType("application/x-www-form-urlencoded"),
         blob =>
-          UrlFormParser
+          UrlForm
             .parse(blob.toUTF8String)
             .left
             .map(urlFormDecodeError =>

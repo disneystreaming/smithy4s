@@ -29,7 +29,7 @@ import smithy4s.http.UrlForm
   * used instead of the direct data. This makes it easier to express the
   * decoding logic that needs to "peek further down" the UrlForm data.
   */
-private[smithy4s] final case class UrlFormCursor(
+private[http] final case class UrlFormCursor(
     history: PayloadPath,
     values: List[UrlForm.FormData]
 ) {

@@ -33,10 +33,10 @@ object SmithyClient extends IOApp.Simple:
       (for
         createAccessTokenResult <- tokenExchangeClient
           .createAccessToken(
-            clientId = expectedClientId,
-            clientSecret = expectedClientSecret,
+            clientId = ExpectedClientId,
+            clientSecret = ExpectedClientSecret,
             grantType = GrantType.REFRESH_TOKEN,
-            refreshToken = expectedRefreshToken
+            refreshToken = ExpectedRefreshToken
           )
           .attempt
         _ <- createAccessTokenResult match

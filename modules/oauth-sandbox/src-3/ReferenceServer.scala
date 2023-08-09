@@ -53,13 +53,13 @@ object ReferenceServer extends IOApp.Simple with Http4sDsl[IO]:
                 "error" -> Json.fromString(error)
               )
             )
-          if (!equal("client_id", expectedClientId.value))
+          if (!equal("client_id", ExpectedClientId.value))
             badRequest("invalid_client")
-          else if (!equal("client_secret", expectedClientSecret.value))
+          else if (!equal("client_secret", ExpectedClientSecret.value))
             badRequest("unauthorized_client")
           else if (!equal("grant_type", GrantType.REFRESH_TOKEN.value))
             badRequest("unsupport_grant_type")
-          else if (!equal("refresh_token", expectedRefreshToken.value))
+          else if (!equal("refresh_token", ExpectedRefreshToken.value))
             badRequest("invalid_grant")
           else
             Response(Ok).withEntity(
@@ -69,7 +69,7 @@ object ReferenceServer extends IOApp.Simple with Http4sDsl[IO]:
                 ),
                 "token_type" -> Json.fromString("Bearer"),
                 "expires_in" -> Json.fromLong(3600),
-                "refresh_token" -> Json.fromString(expectedRefreshToken.value)
+                "refresh_token" -> Json.fromString(ExpectedRefreshToken.value)
               )
             )
         }

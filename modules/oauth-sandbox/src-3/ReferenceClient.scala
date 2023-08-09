@@ -37,10 +37,10 @@ object ReferenceClient extends IOApp.Simple with Http4sClientDsl[IO]:
         .run(
           POST(
             UrlForm(
-              "client_id" -> expectedClientId.value,
-              "client_secret" -> expectedClientSecret.value,
+              "client_id" -> ExpectedClientId.value,
+              "client_secret" -> ExpectedClientSecret.value,
               "grant_type" -> "refresh_token",
-              "refresh_token" -> expectedRefreshToken.value
+              "refresh_token" -> ExpectedRefreshToken.value
             ),
             Uri(
               scheme = Some(Uri.Scheme.http),

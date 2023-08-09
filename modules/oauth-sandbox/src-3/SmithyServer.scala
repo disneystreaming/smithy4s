@@ -50,20 +50,20 @@ object SmithyServer extends IOApp.Simple:
         grantType: GrantType,
         refreshToken: RefreshToken
     ): IO[CreateAccessTokenOutput] =
-      if (clientId != expectedClientId)
+      if (clientId != ExpectedClientId)
         IO.raiseError(BadRequest(error = Error.INVALID_CLIENT))
-      else if (clientSecret != expectedClientSecret)
+      else if (clientSecret != ExpectedClientSecret)
         IO.raiseError(BadRequest(error = Error.UNAUTHORIZED_CLIENT))
       else if (grantType != GrantType.REFRESH_TOKEN)
         IO.raiseError(BadRequest(error = Error.UNSUPPORTED_GRANT_TYPE))
-      else if (refreshToken != expectedRefreshToken)
+      else if (refreshToken != ExpectedRefreshToken)
         IO.raiseError(BadRequest(error = Error.INVALID_GRANT))
       else
         IO.pure(
           CreateAccessTokenOutput(
             accessToken = AccessToken("this is an access token, promise!"),
             expiresIn = ExpiresIn(3600),
-            refreshToken = expectedRefreshToken,
+            refreshToken = ExpectedRefreshToken,
             tokenType = TokenType.BEARER
           )
         )

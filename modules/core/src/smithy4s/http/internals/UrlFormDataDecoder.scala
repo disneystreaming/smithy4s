@@ -20,7 +20,7 @@ package internals
 
 import smithy4s.codecs.PayloadPath
 
-private[smithy4s] trait UrlFormDataDecoder[A] { self =>
+private[http] trait UrlFormDataDecoder[A] { self =>
 
   def decode(cursor: UrlFormCursor): Either[UrlFormDecodeError, A]
 
@@ -45,7 +45,7 @@ private[smithy4s] trait UrlFormDataDecoder[A] { self =>
   }
 }
 
-private[smithy4s] object UrlFormDataDecoder {
+private[internals] object UrlFormDataDecoder {
 
   def alwaysFailing[A](message: String): UrlFormDataDecoder[A] = cursor =>
     Left(UrlFormDecodeError(cursor.history, message))

@@ -24,7 +24,7 @@ import smithy4s.codecs.PayloadPath
 import smithy4s.internals.SchemaDescription
 import smithy4s.schema._
 
-private[smithy4s] class UrlFormDataDecoderSchemaVisitor(
+private[http] class UrlFormDataDecoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataDecoder],
     // These are used by AwsEc2QueryCodecs to conform to the requirements of
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.

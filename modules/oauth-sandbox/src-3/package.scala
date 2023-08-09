@@ -18,6 +18,6 @@ package smithy4s
 package sandbox
 package oauth
 
-val expectedClientId = ClientId("oauth-sandbox")
-val expectedClientSecret = ClientSecret("correct horse battery staple")
-val expectedRefreshToken = RefreshToken("this is a refresh token, promise!")
+val ExpectedClientId = ClientId("oauth-sandbox")
+val ExpectedClientSecret = ClientSecret("correct horse battery staple")
+val ExpectedRefreshToken = RefreshToken("this is a refresh token, promise!")

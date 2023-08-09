@@ -20,12 +20,14 @@ package http
 import smithy4s.codecs.PayloadPath
 import smithy4s.http.internals.UrlFormCursor
 
-final case class UrlFormDecodeError(path: PayloadPath, message: String)
-    extends Throwable {
+private[http] final case class UrlFormDecodeError(
+    path: PayloadPath,
+    message: String
+) extends Throwable {
   override def getMessage(): String = s"${path.render()}: $message"
 }
 
-object UrlFormDecodeError {
+private[http] object UrlFormDecodeError {
 
   def singleValueExpected(cursor: UrlFormCursor): UrlFormDecodeError =
     UrlFormDecodeError(
