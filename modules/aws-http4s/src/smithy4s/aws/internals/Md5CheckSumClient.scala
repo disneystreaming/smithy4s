@@ -16,8 +16,6 @@
 
 package smithy4s.aws.internals
 
-import smithy4s._
-
 import org.http4s._
 import org.http4s.client.Client
 import cats.effect.Sync
@@ -25,6 +23,7 @@ import cats.effect.Resource
 import fs2.{Chunk, Pipe, Stream}
 import cats.syntax.all._
 import org.typelevel.ci.CIString
+import smithy4s.Hints
 
 private[internals] object Md5CheckSumClient {
   def apply[F[_]: Sync](hints: Hints): Client[F] => Client[F] = { client =>
