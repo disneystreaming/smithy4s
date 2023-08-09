@@ -133,7 +133,6 @@ private[http4s] class OAuthCodecs(
         )
     )
 
-  // TODO: Use fromPayloadCodec, here and elsewhere?
   private def urlFormEntityDecoder[F[_]: Concurrent]
       : EntityDecoder[F, UrlForm] =
     EntityDecoders.fromHttpMediaReader(
