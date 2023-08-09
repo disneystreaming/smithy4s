@@ -64,11 +64,6 @@ object Xml {
   def writeToString[A: Schema](a: A): Option[String] =
     writeToStringStream[A](a).compile.last
 
-  type XmlByteStreamEncoder[F[_], A] =
-    smithy4s.codecs.Writer[Any, Stream[F, Byte], A]
-  type XmlByteStreamDecoder[F[_], A] =
-    smithy4s.codecs.Reader[F, Stream[F, Byte], A]
-
   /**
     * Byte Stream Encoder Compiler made accessible to reduce repetition of Xml handling
     * in interpreters.

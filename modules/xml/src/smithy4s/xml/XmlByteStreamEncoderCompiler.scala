@@ -17,6 +17,7 @@
 package smithy4s.xml
 
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.fs2._
 
 trait XmlByteStreamEncoderCompiler[F[_]]
-    extends CachedSchemaCompiler[Xml.XmlByteStreamEncoder[F, *]]
+    extends CachedSchemaCompiler[XmlByteStreamEncoder[F, *]]
