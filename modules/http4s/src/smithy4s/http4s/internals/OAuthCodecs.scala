@@ -138,7 +138,6 @@ private[http4s] class OAuthCodecs(
     EntityDecoders.fromHttpMediaReader(
       HttpMediaTyped(
         HttpMediaType("application/x-www-form-urlencoded"),
-        // TODO: Pass bytes directly?
         blob =>
           UrlFormParser
             .parse(blob.toUTF8String)
