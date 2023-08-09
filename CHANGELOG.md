@@ -21,7 +21,7 @@ See https://github.com/disneystreaming/smithy4s/pull/921
 ### Structure Patterns
 
 Allows for marking string types with the `alloy#structurePattern` trait. This trait indicates that a given pattern, with parameters, applies to a given string and that this string should
-actually be parsed into a structure where the members of the structure are derived from the parameters in the string pattern. 
+actually be parsed into a structure where the members of the structure are derived from the parameters in the string pattern.
 
 See https://github.com/disneystreaming/smithy4s/pull/942
 
@@ -41,6 +41,82 @@ See https://github.com/disneystreaming/smithy4s/pull/912
 When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rendered in the companion objects of the generated code when appropriate.
 
 See https://github.com/disneystreaming/smithy4s/pull/1103
+
+# 0.17.14
+
+* Only transform AWS shapes named after standard shapes in [#1127](https://github.com/disneystreaming/smithy4s/pull/1127)
+* Fixes AWS AwsStandardTypesTransformer bug by in [1129](https://github.com/disneystreaming/smithy4s/pull/1129)
+
+# 0.17.13
+
+* Backports Service interpreter logic introduced in [#908](https://github.com/disneystreaming/smithy4s/pull/908).
+* Fixes rendering of deprecated annotations in mixins in [#1123](https://github.com/disneystreaming/smithy4s/pull/1123)
+
+# 0.17.12
+
+* Remove reserved types in https://github.com/disneystreaming/smithy4s/pull/1052
+
+Remove a legacy mechanism of dealing with name conflicts in generated types. Fixes #1051
+
+* Flatten AWS newtypes in https://github.com/disneystreaming/smithy4s/pull/1110
+
+Adjusts the rendering of Smithy shapes from AWS specs, as it would've often been inconvenient due to the change above.
+
+* Bump webjar dependency to 0.47 in https://github.com/disneystreaming/smithy4s/pull/1100
+
+Updates a previously frozen dependency to alleviate potential security issues.
+
+# 0.17.11
+
+This is mostly a bugfix and cleanup release.
+
+* [aws] Keep casing in file credential provider in https://github.com/disneystreaming/smithy4s/pull/1076
+
+Resolves a case-sensitivity issue in the file-based AWS credentials provider.
+
+* Deprecate `ClientBuilder.use`, add `.make` in https://github.com/disneystreaming/smithy4s/pull/1073
+
+Deprecates a method - the migration path would be just to move to another one with the same shape.
+
+* Error transformations as middleware in https://github.com/disneystreaming/smithy4s/pull/1084
+
+Changes the error transformation logic in the http4s servers so that it's implemented using the (public) per-endpoint middleware construct.
+
+# 0.17.10
+
+* Revert original behavior where middleware get all errors in https://github.com/disneystreaming/smithy4s/pull/1034
+
+This change adds a fix for an accidental behavior change around error handling/capture in middlewares.
+
+## Other changes
+
+* Adding a comment in flatMapErrors in https://github.com/disneystreaming/smithy4s/pull/1030
+
+# 0.17.9
+
+* Update smithy-model to 1.31.0, alloy to 0.2.2 in https://github.com/disneystreaming/smithy4s/pull/1022
+
+# 0.17.8
+
+* backport of [improve: fallback unspecified members of deprecated trait to N/A] in https://github.com/disneystreaming/smithy4s/pull/989
+* Dynamic module guide in https://github.com/disneystreaming/smithy4s/pull/960
+* Add an option to encode missing fields as nulls in https://github.com/disneystreaming/smithy4s/pull/995
+
+# 0.17.7
+
+Make sure error handling logic in routing is applied before and after middleware application .
+
+* Add course link to learning resources in https://github.com/disneystreaming/smithy4s/pull/965
+* Http4s: pre- and post-error handling middleware in https://github.com/disneystreaming/smithy4s/pull/877
+
+# 0.17.6
+
+This release is backward binary-compatible with the previous releases from the 0.17.x lineage.
+
+## Bug fixes
+
+* Fixes a [bug](https://github.com/disneystreaming/smithy4s/pull/898) related to swagger-ui redirects that would occur with empty paths.
+* Fixes a [bug](https://github.com/disneystreaming/smithy4s/pull/904) related to the undocumented "dynamic" module not respecting the order of fields specified in smithy models
 
 # 0.17.5
 

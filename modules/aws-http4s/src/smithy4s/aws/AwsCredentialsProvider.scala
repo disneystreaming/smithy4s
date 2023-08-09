@@ -18,20 +18,21 @@ package smithy4s.aws
 
 import cats.effect._
 import cats.syntax.all._
+import fs2.io.file.Files
+import org.http4s.EntityDecoder
+import org.http4s.Uri
+import org.http4s.client.Client
+import org.http4s.syntax.all._
 import smithy4s.aws.kernel.AWS_ACCESS_KEY_ID
+import smithy4s.aws.kernel.AWS_PROFILE
 import smithy4s.aws.kernel.AWS_SECRET_ACCESS_KEY
 import smithy4s.aws.kernel.AWS_SESSION_TOKEN
-import smithy4s.aws.kernel.AWS_PROFILE
 import smithy4s.aws.kernel.AwsInstanceMetadata
 import smithy4s.aws.kernel.AwsTemporaryCredentials
 import smithy4s.aws.kernel.SysEnv
 import smithy4s.http4s.kernel.EntityDecoders
-import fs2.io.file.Files
+
 import scala.concurrent.duration._
-import org.http4s.EntityDecoder
-import org.http4s.client.Client
-import org.http4s.syntax.all._
-import org.http4s.Uri
 
 object AwsCredentialsProvider {
 

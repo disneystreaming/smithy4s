@@ -17,15 +17,15 @@
 package smithy4s
 package http
 
-import smithy4s.PartialData
 import smithy.api.HttpPayload
-import smithy4s.schema._
+import smithy4s.PartialData
+import smithy4s.capability.Zipper
+import smithy4s.codecs.Reader
+import smithy4s.codecs.Writer
 import smithy4s.schema.SchemaPartition.NoMatch
 import smithy4s.schema.SchemaPartition.SplittingMatch
 import smithy4s.schema.SchemaPartition.TotalMatch
-import smithy4s.codecs.Writer
-import smithy4s.codecs.Reader
-import smithy4s.capability.Zipper
+import smithy4s.schema._
 
 /**
  * This construct indicates how a schema is split between http metadata
@@ -54,6 +54,10 @@ object HttpRestSchema {
 
   def apply[A](
       fullSchema: Schema[A],
+      // This is used by AwsQueryCodecs and AwsEc2QueryCodecs to ensure that
+      // body producer is retained even in the case where a top-level struct
+      // input is empty. They need that to happen so that a body is produced to
+      // which the Action and Version metadata can be added.
       writeEmptyStructs: Boolean
   ): HttpRestSchema[A] = {
 
@@ -75,7 +79,7 @@ object HttpRestSchema {
           case NoMatch() =>
             fullSchema match {
               case Schema.StructSchema(_, _, fields, make)
-                  if !writeEmptyStructs && (fields.isEmpty) =>
+                  if !writeEmptyStructs && fields.isEmpty =>
                 Empty(make(IndexedSeq.empty))
               case _ => OnlyBody(fullSchema)
             }

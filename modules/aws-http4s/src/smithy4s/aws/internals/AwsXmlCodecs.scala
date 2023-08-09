@@ -14,27 +14,26 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package aws
+package smithy4s.aws
 package internals
 
-import cats.effect.Concurrent
 import cats.Applicative
-import fs2.compression.Compression
-import smithy4s.http4s.kernel._
-import smithy4s.Endpoint
-import smithy4s.schema.CachedSchemaCompiler
-import org.http4s.EntityDecoder
-import org.http4s.MediaRange
 import cats.data.EitherT
-import smithy4s.kinds.PolyFunction
-import org.http4s.EntityEncoder
-import smithy4s.capability.Covariant
-
-import org.http4s.MediaType
-import smithy4s.http.Metadata
-import smithy4s.xml.Xml
+import cats.effect.Concurrent
 import cats.syntax.all._
+import fs2.compression.Compression
+import org.http4s.EntityDecoder
+import org.http4s.EntityEncoder
+import org.http4s.MediaRange
+import org.http4s.MediaType
+import smithy4s.Endpoint
+import smithy4s.capability.Covariant
+import smithy4s.http.Metadata
+import smithy4s.http4s.kernel._
+import smithy4s.kinds.PolyFunction
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.xml.Xml
+import smithy4s.fs2._
 
 private[aws] object AwsXmlCodecs {
 
@@ -48,14 +47,21 @@ private[aws] object AwsXmlCodecs {
           requestEncoderCompilers[F]
         )
 
-        val (responseDecoderCompilers, errorDecoderCompilers) =
-          responseAndErrorDecoderCompilers[F]
+        val errorDecoderCompilers = responseDecoderCompilers[F].contramapSchema(
+          smithy4s.schema.Schema.transformHintsLocallyK(
+            _ ++ smithy4s.Hints(
+              smithy4s.xml.internals.XmlStartingPath(
+                List("ErrorResponse", "Error")
+              )
+            )
+          )
+        )
         val errorDiscriminator =
           AwsErrorTypeDecoder.fromResponse(errorDecoderCompilers)
 
         val make = UnaryClientCodecs.Make[F](
           input = requestEncoderCompilersWithCompression,
-          output = responseDecoderCompilers,
+          output = responseDecoderCompilers[F],
           error = errorDecoderCompilers,
           errorDiscriminator = errorDiscriminator
         )
@@ -82,10 +88,8 @@ private[aws] object AwsXmlCodecs {
     )
   }
 
-  def responseAndErrorDecoderCompilers[F[_]: Concurrent]: (
-      CachedSchemaCompiler[ResponseDecoder[F, *]],
-      CachedSchemaCompiler[ResponseDecoder[F, *]]
-  ) = {
+  def responseDecoderCompilers[F[_]: Concurrent]
+      : CachedSchemaCompiler[ResponseDecoder[F, *]] = {
     val stringAndBlobsEntityDecoderCompilers =
       smithy4s.http.StringAndBlobCodecs.ReaderCompiler.mapK(
         Covariant.liftPolyFunction[Option](
@@ -98,31 +102,21 @@ private[aws] object AwsXmlCodecs {
       stringAndBlobsEntityDecoderCompilers,
       xmlEntityDecoderCompilers
     )
-    val responseDecoderCompilers = ResponseDecoder.restSchemaCompiler(
+    ResponseDecoder.restSchemaCompiler(
       metadataDecoderCompiler = Metadata.AwsDecoder,
       entityDecoderCompiler = entityDecoderCompilers
     )
-    val errorDecoderCompilers = responseDecoderCompilers.contramapSchema(
-      smithy4s.schema.Schema.transformHintsLocallyK(
-        _ ++ smithy4s.Hints(
-          smithy4s.xml.internals.XmlStartingPath(
-            List("ErrorResponse", "Error")
-          )
-        )
-      )
-    )
-    (responseDecoderCompilers, errorDecoderCompilers)
   }
 
   private def xmlEntityEncoder[F[_]: Applicative]
       : CachedSchemaCompiler[EntityEncoder[F, *]] =
     Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
       new PolyFunction[
-        Xml.XmlByteStreamEncoder[fs2.Pure, *],
+        XmlByteStreamEncoder[fs2.Pure, *],
         EntityEncoder[F, *]
       ] {
         def apply[A](
-            encoder: Xml.XmlByteStreamEncoder[fs2.Pure, A]
+            encoder: XmlByteStreamEncoder[fs2.Pure, A]
         ): EntityEncoder[F, A] =
           EntityEncoder.encodeBy(
             org.http4s.headers.`Content-Type`(MediaType.application.xml)
@@ -145,9 +139,9 @@ private[aws] object AwsXmlCodecs {
       val xmlMediaRange = MediaRange
         .parse("application/xml")
         .getOrElse(throw new RuntimeException("Unable to parse xml MediaRange"))
-      new PolyFunction[Xml.XmlByteStreamDecoder[F, *], EntityDecoder[F, *]] {
+      new PolyFunction[XmlByteStreamDecoder[F, *], EntityDecoder[F, *]] {
         def apply[A](
-            decoder: Xml.XmlByteStreamDecoder[F, A]
+            decoder: XmlByteStreamDecoder[F, A]
         ): EntityDecoder[F, A] =
           EntityDecoder.decodeBy(
             xmlMediaRange

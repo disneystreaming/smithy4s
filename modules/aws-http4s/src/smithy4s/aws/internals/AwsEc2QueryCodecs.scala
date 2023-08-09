@@ -18,20 +18,16 @@ package smithy4s.aws
 package internals
 
 import _root_.aws.protocols.AwsQueryError
+import _root_.aws.protocols.Ec2QueryName
 import cats.effect.Concurrent
 import cats.syntax.all._
 import fs2.compression.Compression
-import org.http4s.EntityEncoder
+import smithy.api.XmlName
 import smithy4s.Endpoint
-import smithy4s.codecs.PayloadPath
-import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
-import smithy4s.kinds.PolyFunction
-import smithy4s.schema.CachedSchemaCompiler
-import smithy4s.Blob
 
-private[aws] object AwsQueryCodecs {
+private[aws] object AwsEcsQueryCodecs {
 
   def make[F[_]: Concurrent: Compression](
       version: String
@@ -40,23 +36,57 @@ private[aws] object AwsQueryCodecs {
       def apply[I, E, O, SI, SO](
           endpoint: Endpoint.Base[I, E, O, SI, SO]
       ): UnaryClientCodecs[F, I, E, O] = {
-        val transformEncoders = applyCompression[F](
-          endpoint.hints,
-          // To fulfil the requirement of
-          // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/awsQuery/requestCompression.smithy#L152-L298.
-          retainUserEncoding = false
-        )
-        val requestEncoderCompilersWithCompression = transformEncoders(
-          requestEncoderCompilers[F](
-            ignoreXmlFlattened = false,
-            capitalizeStructAndUnionMemberNames = false,
+        val requestEncoderCompilers = AwsQueryCodecs
+          .requestEncoderCompilers[F](
+            // These are set to fulfil the requirements of
+            // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
+            // without UrlFormDataEncoderSchemaVisitor having to be more aware
+            // than necessary of these protocol quirks (having it be aware of
+            // XmlName and XmlFlattened already feels like too much - perhaps in
+            // a future change UrlFormDataEncoderSchemaVisitor can work with
+            // better-named hints, and we can use this same transformation
+            // approach in AwsQueryCodecs to translate the AWS XML hints to
+            // those new hints).
+            ignoreXmlFlattened = true,
+            capitalizeStructAndUnionMemberNames = true,
             action = endpoint.id.name,
             version = version
           )
+          .contramapSchema(
+            // This pre-processing works in collaboration with the passing of
+            // the capitalizeStructAndUnionMemberNames flags to
+            // UrlFormDataEncoderSchemaVisitor.
+            smithy4s.schema.Schema.transformHintsTransitivelyK(hints =>
+              hints.memberHints.get(Ec2QueryName) match {
+                case Some(ec2QueryName) =>
+                  hints.addMemberHints(
+                    XmlName(ec2QueryName.value)
+                  )
+
+                case None =>
+                  hints.memberHints.get(XmlName) match {
+                    case Some(xmlName) =>
+                      hints.addMemberHints(
+                        XmlName(xmlName.value.capitalize)
+                      )
+
+                    case None =>
+                      hints
+                  }
+              }
+            )
+          )
+        val transformEncoders = applyCompression[F](
+          endpoint.hints,
+          // To fulfil the requirement of
+          // https://github.com/smithy-lang/smithy/blob/main/smithy-aws-protocol-tests/model/ec2Query/requestCompression.smithy#L152-L298.
+          retainUserEncoding = false
+        )
+        val requestEncoderCompilersWithCompression = transformEncoders(
+          requestEncoderCompilers
         )
 
         val responseTag = endpoint.name + "Response"
-        val resultTag = endpoint.name + "Result"
         val responseDecoderCompilers =
           AwsXmlCodecs
             .responseDecoderCompilers[F]
@@ -64,7 +94,7 @@ private[aws] object AwsQueryCodecs {
               smithy4s.schema.Schema.transformHintsLocallyK(
                 _ ++ smithy4s.Hints(
                   smithy4s.xml.internals.XmlStartingPath(
-                    List(responseTag, resultTag)
+                    List(responseTag)
                   )
                 )
               )
@@ -75,11 +105,12 @@ private[aws] object AwsQueryCodecs {
             smithy4s.schema.Schema.transformHintsLocallyK(
               _ ++ smithy4s.Hints(
                 smithy4s.xml.internals.XmlStartingPath(
-                  List("ErrorResponse", "Error")
+                  List("Response", "Errors", "Error")
                 )
               )
             )
           )
+
         // Takes the `@awsQueryError` trait into consideration to decide how to
         // discriminate error responses.
         val errorNameMapping: (String => String) = endpoint.errorable match {
@@ -110,53 +141,5 @@ private[aws] object AwsQueryCodecs {
         make.apply(endpoint)
       }
     }
-
-  def requestEncoderCompilers[F[_]: Concurrent](
-      ignoreXmlFlattened: Boolean,
-      capitalizeStructAndUnionMemberNames: Boolean,
-      action: String,
-      version: String
-  ): CachedSchemaCompiler[RequestEncoder[F, *]] = {
-    val urlFormEntityEncoderCompilers = UrlForm
-      .Encoder(
-        ignoreXmlFlattened = ignoreXmlFlattened,
-        capitalizeStructAndUnionMemberNames =
-          capitalizeStructAndUnionMemberNames
-      )
-      .mapK(
-        new PolyFunction[UrlForm.Encoder, EntityEncoder[F, *]] {
-          def apply[A](fa: UrlForm.Encoder[A]): EntityEncoder[F, A] =
-            urlFormEntityEncoder[F].contramap((a: A) =>
-              UrlForm(
-                formData = UrlForm.FormData.MultipleValues(
-                  values = Vector(
-                    UrlForm.FormData.PathedValue(PayloadPath("Action"), action),
-                    UrlForm.FormData
-                      .PathedValue(PayloadPath("Version"), version)
-                  ) ++ fa.encode(a).formData.values
-                )
-              )
-            )
-        }
-      )
-    RequestEncoder.restSchemaCompiler[F](
-      metadataEncoderCompiler = Metadata.AwsEncoder,
-      entityEncoderCompiler = urlFormEntityEncoderCompilers,
-      // We have to set this so that a body is produced even in the case where a
-      // top-level struct input is empty. If it wasn't then the contramap above
-      // wouldn't have the required effect because there would be no UrlForm to
-      // add Action and Version to (literally no UrlForm value - not just an
-      // empty one).
-      writeEmptyStructs = true
-    )
-  }
-
-  private def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] =
-    EntityEncoders.fromHttpMediaWriter(
-      HttpMediaTyped(
-        HttpMediaType("application/x-www-form-urlencoded"),
-        (_: Any, urlForm: UrlForm) => Blob(urlForm.render)
-      )
-    )
 
 }

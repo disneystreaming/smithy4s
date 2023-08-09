@@ -30,7 +30,9 @@ import smithy.api.XmlName
 import smithy4s.ShapeId
 import smithy4s.schema.Schema
 import smithy4s.xml.internals.XmlCursor
+import smithy4s.xml.internals.XmlDecoder
 import smithy4s.xml.internals.XmlDecoderSchemaVisitor
+import smithy4s.xml.internals.XmlEncoder
 import smithy4s.xml.internals.XmlEncoderSchemaVisitor
 import smithy4s.schema.CachedSchemaCompiler
 
@@ -107,15 +109,15 @@ object XmlDocument {
   }
 
   object Decoder extends CachedSchemaCompiler.Impl[Decoder] {
+    protected override type Aux[A] = XmlDecoder[A]
     def fromSchema[A](schema: Schema[A], cache: Cache): Decoder[A] = {
       val startingPath: List[XmlQName] = getStartingPath(schema)
-      new Decoder[A] {
-        val decoder = XmlDecoderSchemaVisitor(schema)
-        def decode(xmlDocument: XmlDocument): Either[XmlDecodeError, A] = {
-          val documentCursor = XmlCursor.fromDocument(xmlDocument)
-          val updatedCursor = startingPath.foldLeft(documentCursor)(_.down(_))
-          decoder.decode(updatedCursor)
-        }
+      val schemaVisitor = new XmlDecoderSchemaVisitor(cache)
+      val xmlDecoder = schemaVisitor(schema)
+      (xmlDocument: XmlDocument) => {
+        val documentCursor = XmlCursor.fromDocument(xmlDocument)
+        val updatedCursor = startingPath.foldLeft(documentCursor)(_.down(_))
+        xmlDecoder.decode(updatedCursor)
       }
     }
   }
@@ -124,6 +126,7 @@ object XmlDocument {
     def encode(value: A): XmlDocument
   }
   object Encoder extends CachedSchemaCompiler.Impl[Encoder] {
+    protected override type Aux[A] = XmlEncoder[A]
     def fromSchema[A](schema: Schema[A], cache: Cache): Encoder[A] = {
       val rootName: XmlQName = getRootName(schema)
       val rootNamespace =
@@ -137,16 +140,15 @@ object XmlDocument {
             }
             XmlAttr(qName, List(XmlText(ns.uri.value)))
           }
-      val xmlEncoder = XmlEncoderSchemaVisitor(schema)
-      new Encoder[A] {
-        def encode(value: A): XmlDocument = {
-          val (attributes, children) =
-            xmlEncoder.encode(value).partitionEither {
-              case attr @ XmlAttr(_, _) => Left(attr)
-              case other                => Right(other)
-            }
-          XmlDocument(XmlElem(rootName, rootNamespace ++ attributes, children))
-        }
+      val schemaVisitor = new XmlEncoderSchemaVisitor(cache)
+      val xmlEncoder = schemaVisitor(schema)
+      (value: A) => {
+        val (attributes, children) =
+          xmlEncoder.encode(value).partitionEither {
+            case attr @ XmlAttr(_, _) => Left(attr)
+            case other                => Right(other)
+          }
+        XmlDocument(XmlElem(rootName, rootNamespace ++ attributes, children))
       }
     }
   }
