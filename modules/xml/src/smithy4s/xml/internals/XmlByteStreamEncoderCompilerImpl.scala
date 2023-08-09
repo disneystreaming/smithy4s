@@ -22,7 +22,7 @@ import fs2._
 import fs2.data.xml._
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.codecs.Writer
-import smithy4s.fs2._
+import smithy4s.fs2lib._
 
 private[smithy4s] final case class XmlByteStreamEncoderCompilerImpl[F[_]]()
     extends CachedSchemaCompiler.Impl[XmlByteStreamEncoder[F, *]]

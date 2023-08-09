@@ -33,7 +33,7 @@ import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.xml.Xml
-import smithy4s.fs2._
+import smithy4s.fs2lib._
 
 private[aws] object AwsXmlCodecs {
 

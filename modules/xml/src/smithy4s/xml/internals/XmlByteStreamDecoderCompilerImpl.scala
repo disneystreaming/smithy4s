@@ -25,7 +25,7 @@ import fs2.data.xml._
 import fs2.data.xml.dom._
 import cats.effect.Concurrent
 import cats.syntax.all._
-import smithy4s.fs2._
+import smithy4s.fs2lib._
 
 private[smithy4s] final case class XmlByteStreamDecoderCompilerImpl[
     F[_]: Concurrent
