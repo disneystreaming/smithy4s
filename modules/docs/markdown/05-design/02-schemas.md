@@ -45,7 +45,7 @@ In Smithy, all shapes (and members of composite shapes) can be annotated with **
 
 So if you have the following Smithy description:
 
-```kotlin
+```smithy
 namespace example
 
 @trait
@@ -79,7 +79,7 @@ This allows to give users a little customisability in the json serialisation of 
 A structure, also referred to as product, or record, is a construct that groups several values together.
 Typically, it translates naturally to a case class.
 
-```kotlin
+```smithy
 namespace example
 
 structure Foo {
@@ -141,7 +141,7 @@ when structures express that you have **A AND B**, unions express that you can h
 
 The way this is expressed in Smithy looks like this:
 
-```kotlin
+```smithy
 namespace example
 
 union Bar {
@@ -209,7 +209,7 @@ This is useful for serialisation, when the behaviour of the alternatives can onl
 
 Smithy allows for the creation of named shapes that reference "primitive types":
 
-```kotlin
+```smithy
 namespace example
 
 integer MyInt
@@ -255,7 +255,7 @@ Additionally, Smithy4s allows users to [annotate list shapes](../04-codegen/01-c
 Smithy does not support generics, therefore all collection are named. Though seemingly tedious, it makes it easier to build tooling
 (and probably helps languages that do not support generics). Provided the following shape :
 
-```kotlin
+```smithy
 namespace example
 
 list IntList {

@@ -9,7 +9,7 @@ These traits let you associate protocol-specific details to your data models and
 
 For instance, an operation can be labelled as compatible with http semantics using the [http traits](https://awslabs.github.io/smithy/1.0/spec/core/http-traits.html?highlight=http%20traits#http-binding-traits):
 
-```kotlin
+```smithy
 namespace foo
 
 @http(method: "GET", uri: "/hello/{name}")
@@ -42,7 +42,7 @@ structure BadInput {
 
 Smithy makes it really easy to create your own traits:
 
-```kotlin
+```smithy
 namespace foo
 
 @trait(selector: is(structure))

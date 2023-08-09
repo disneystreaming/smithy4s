@@ -5,7 +5,7 @@ title: New types (and unwrapping)
 
 By default, smithy4s will wrap all standalone primitive types in a Newtype. A standalone primitive type is one that is defined like the following:
 
-```kotlin
+```smithy
 string Email // standalone primitive
 
 structure Test {
@@ -22,7 +22,7 @@ final case class Test(email: Email, other: String)
 
 This wrapping may be undesirable in some circumstances. As such, we've provided the `smithy4s.meta#unwrap` trait. This trait tells the smithy4s code generation to not wrap these types in a newtype when they are used.
 
-```kotlin
+```smithy
 use smithy4s.meta#unwrap
 
 @unwrap
@@ -42,7 +42,7 @@ final case class Test(email: String, other: String)
 
 This can be particularly useful when working with refinement types (see above for details on refinements). By default, any type that is `refined` will be generated inside of a newtype. If you don't want this, you can mark the type with the `unwrap` trait.
 
-```kotlin
+```smithy
 @trait(selector: "string")
 structure emailFormat {}
 

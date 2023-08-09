@@ -7,7 +7,7 @@ Smithy's `union` keyword allow to define a co-product, namely a piece of data th
 
 This concept translates naturally to Scala sealed-traits (or Scala 3 enums), and `union` are therefore generated as such.
 
-```kotlin
+```smithy
 union MyUnion {
   i: Integer
   s: MyStructure
@@ -82,7 +82,7 @@ are encoded as such :
 
 Untagged unions are supported via an annotation: `@untagged`. Despite the smaller payload size this encoding produces, it is arguably the worst way of encoding unions, as it may require backtracking multiple times on the parsing side. Use this carefully, preferably only when you need to retrofit an existing API into Smithy
 
-```kotlin
+```smithy
 use alloy#untagged
 
 @untagged
@@ -117,7 +117,7 @@ In this encoding, the discriminator is inlined as a JSON field within JSON objec
 
 Despite the JSON payload exhibiting less nesting than in the `tagged union` encoding, this encoding often leads to bigger payloads, and requires backtracking once during parsing.
 
-```kotlin
+```smithy
 use alloy#discriminated
 
 @discriminated("tpe")
