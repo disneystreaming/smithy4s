@@ -27,7 +27,7 @@ When the `alloy#openEnum` trait is present, it makes it so the enumeration is re
 ```scala
 case object SQUARE extends Shape
 case object CIRCLE extends Shape
-final case class $$Unknown(value: String) extends Shape
+final case class $Unknown(value: String) extends Shape
 ```
 
-Note that the leading `$$` is added onto the `Unknown` case to prevent potential collisions with actual enum values.
+Note that the leading `$` is added onto the `Unknown` case to prevent potential collisions with actual enum values.

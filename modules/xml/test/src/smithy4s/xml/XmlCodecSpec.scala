@@ -439,7 +439,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     checkContent[OpenEnumTest](xmlKnown, OpenEnumTest.ONE) <+>
       checkContent[OpenEnumTest](
         xmlUnknown,
-        OpenEnumTest.$$Unknown("something")
+        OpenEnumTest.$Unknown("something")
       )
   }
 
@@ -447,7 +447,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     val xmlKnown = "<OpenIntEnumTest>1</OpenIntEnumTest>"
     val xmlUnknown = "<OpenIntEnumTest>123</OpenIntEnumTest>"
     checkContent[OpenIntEnumTest](xmlKnown, OpenIntEnumTest.ONE) <+>
-      checkContent[OpenIntEnumTest](xmlUnknown, OpenIntEnumTest.$$Unknown(123))
+      checkContent[OpenIntEnumTest](xmlUnknown, OpenIntEnumTest.$Unknown(123))
   }
 
   test("map") {

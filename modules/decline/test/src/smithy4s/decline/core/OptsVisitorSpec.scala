@@ -282,7 +282,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("compile open string enum - unknown value") {
     assert.parsed(
       parseOpts(sampleStruct("test", OpenEnumTest.schema))("SOMETHING"),
-      OpenEnumTest.$$Unknown("SOMETHING")
+      OpenEnumTest.$Unknown("SOMETHING")
     )
   }
 
@@ -296,7 +296,7 @@ object OptsSchematicSpec extends SimpleIOSuite {
   pureTest("compile open int enum - unknown value") {
     assert.parsed(
       parseOpts(sampleStruct("test", OpenIntEnumTest.schema))("123"),
-      OpenIntEnumTest.$$Unknown(123)
+      OpenIntEnumTest.$Unknown(123)
     )
   }
 
