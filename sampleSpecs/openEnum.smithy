@@ -56,3 +56,15 @@ intEnum OpenIntEnumCollisionTest2 {
   TWO = 2,
   unknown = 3
 }
+
+@openEnum
+@enum([
+  {value: "ONE", name: "ONE"}
+])
+string OpenOldEnumTest
+
+@openEnum
+@enum([
+  {value: "unknown", name: "Unknown"}
+])
+string OpenOldEnumCollisionTest
