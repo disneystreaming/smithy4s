@@ -30,7 +30,11 @@ class BlobSpec() extends FunSuite {
   test("equals depends on underlying data structure") {
     assert(Blob("foo") != Blob(ByteBuffer.wrap("foo".getBytes)))
     assert(Blob("foo") == Blob("foo"))
-    assert(Blob(ByteBuffer.wrap("foo".getBytes)) == Blob(ByteBuffer.wrap("foo".getBytes)))
+    assert(
+      Blob(ByteBuffer.wrap("foo".getBytes)) == Blob(
+        ByteBuffer.wrap("foo".getBytes)
+      )
+    )
   }
 
   test("ByteBufferBlob.toArray is idempotent, instantiation-wise") {
