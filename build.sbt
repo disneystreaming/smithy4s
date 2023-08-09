@@ -912,6 +912,7 @@ lazy val `aws-sandbox` = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
+// TODO: Move out of smithy4s.
 lazy val `oauth-sandbox` = projectMatrix
   .in(file("modules/oauth-sandbox"))
   .dependsOn(http4s)

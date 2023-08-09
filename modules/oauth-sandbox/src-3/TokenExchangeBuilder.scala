@@ -17,7 +17,7 @@
 package smithy4s
 package http4s
 
-// TODO: Move out of sandbox.
+// TODO: Move out of smithy4s.
 object TokenExchangeBuilder extends TokenExchangeBuilder(1024, false)
 
 class TokenExchangeBuilder private (
