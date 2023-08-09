@@ -21,6 +21,7 @@ package object example {
   type NonEmptyMapNumbers = smithy4s.example.NonEmptyMapNumbers.Type
   type SomeValue = smithy4s.example.SomeValue.Type
   type TestString = smithy4s.example.TestString.Type
+  type StringWithEnumTraits = smithy4s.example.StringWithEnumTraits.Type
   type NonEmptyNames = smithy4s.example.NonEmptyNames.Type
   type Age = smithy4s.example.Age.Type
   type BucketName = smithy4s.example.BucketName.Type

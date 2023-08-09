@@ -806,7 +806,7 @@ lazy val example = projectMatrix
       "smithy4s.example.error",
       "smithy4s.example.common",
       "smithy4s.example.collision",
-      "smithy4s.example.reservedNameOverride",
+      "smithy4s.example.reservedNameOverride"
     ),
     smithySpecs := Seq(
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "example.smithy",
@@ -828,6 +828,7 @@ lazy val example = projectMatrix
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "quoted_string.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "numeric.smithy",
       (ThisBuild / baseDirectory).value / "sampleSpecs" / "reservedNameOverride.smithy",
+      (ThisBuild / baseDirectory).value / "sampleSpecs" / "enumTraits.smithy"
     ),
     Compile / resourceDirectory := (ThisBuild / baseDirectory).value / "modules" / "example" / "resources",
     isCE3 := true,
