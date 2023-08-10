@@ -148,3 +148,67 @@ are  encoded as such
 { "tpe": "first", "string": "smithy4s" }
 { "tpe": "second", "int": 42 }
 ```
+
+## Union Projections and Visitors
+
+In order to make working with unions more ergonomic, smithy4s provides projection functions and generates visitors for all unions.
+
+#### Projection Functions
+
+Here we will see what a projection function looks like using a simple union example of `Pet`.
+
+```scala
+sealed trait Pet {
+  object project {
+    def dog: Option[Dog]
+    def cat: Option[Cat]
+  }
+}
+object Pet {
+  case class DogCase(dog: Dog) extends Pet
+  case class CatCase(cat: Cat) extends Pet
+}
+```
+
+These functions can then be used as follows:
+
+```scala
+val myPet: Pet = Pet.DogCase(Dog(name = "Spot"))
+
+myPet.project.dog // Some(Dog(name = "Spot"))
+myPet.project.cat // None
+```
+
+These projection functions make it so you can work with specific union alternatives without needing to do any pattern matching.
+
+#### Visitors
+
+Using the same pet example, we will now see what the visitors look like that smithy4s generates.
+
+```scala
+sealed trait Pet {
+  def accept[A](visitor: Pet.Visitor[A]): A = // ...
+}
+object Pet {
+  case class DogCase(dog: Dog) extends Pet
+  case class CatCase(cat: Cat) extends Pet
+
+  trait Visitor[A] {
+    def dog(dog: Dog): A
+    def cat(cat: Cat): A
+  }
+}
+```
+
+Similar to the projection functions, the visitor allows us to handle the alternatives without a pattern match. For example:
+
+```scala
+val myPet: Pet = Pet.DogCase(Dog(name = "Spot"))
+
+val visitor = new Pet.Visitor[String] {
+    def dog(dog: Dog): String = s"Dog named ${dog.name}"
+    def cat(cat: Cat): String = s"Cat named ${cat.name}"
+}
+
+myPet.accept(visitor) // "Dog named Spot"
+```

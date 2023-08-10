@@ -102,13 +102,21 @@ object NameCollisionOperation {
       case MyOpError.MyOpErrorCase(e) => e
     }
   }
-  sealed trait MyOpError extends scala.Product with scala.Serializable {
+  sealed trait MyOpError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: MyOpError = this
     def $ordinal: Int
+
+    object project {
+      def myOpError: Option[smithy4s.example.MyOpError] = MyOpError.MyOpErrorCase.alt.project.lift(self).map(_.myOpError)
+    }
+
+    def accept[A](visitor: MyOpError.Visitor[A]): A = this match {
+      case value: MyOpError.MyOpErrorCase => visitor.myOpError(value.myOpError)
+    }
   }
   object MyOpError extends ShapeTag.Companion[MyOpError] {
 
-    def myOpError(myOpError:smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
+    def myOpError(myOpError: smithy4s.example.MyOpError): MyOpError = MyOpErrorCase(myOpError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "MyOpError")
 
@@ -118,12 +126,16 @@ object NameCollisionOperation {
 
     object MyOpErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema.addHints(hints), MyOpErrorCase(_), _.myOpError)
+      val schema: Schema[MyOpError.MyOpErrorCase] = bijection(smithy4s.example.MyOpError.schema.addHints(hints), MyOpError.MyOpErrorCase(_), _.myOpError)
       val alt = schema.oneOf[MyOpError]("MyOpError")
     }
 
+    trait Visitor[A] {
+      def myOpError(value: smithy4s.example.MyOpError): A
+    }
+
     implicit val schema: UnionSchema[MyOpError] = union(
-      MyOpErrorCase.alt,
+      MyOpError.MyOpErrorCase.alt,
     ){
       _.$ordinal
     }

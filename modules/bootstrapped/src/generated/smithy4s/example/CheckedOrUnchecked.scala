@@ -8,14 +8,24 @@ import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
-sealed trait CheckedOrUnchecked extends scala.Product with scala.Serializable {
+sealed trait CheckedOrUnchecked extends scala.Product with scala.Serializable { self =>
   @inline final def widen: CheckedOrUnchecked = this
   def $ordinal: Int
+
+  object project {
+    def checked: Option[String] = CheckedOrUnchecked.CheckedCase.alt.project.lift(self).map(_.checked)
+    def raw: Option[String] = CheckedOrUnchecked.RawCase.alt.project.lift(self).map(_.raw)
+  }
+
+  def accept[A](visitor: CheckedOrUnchecked.Visitor[A]): A = this match {
+    case value: CheckedOrUnchecked.CheckedCase => visitor.checked(value.checked)
+    case value: CheckedOrUnchecked.RawCase => visitor.raw(value.raw)
+  }
 }
 object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
 
-  def checked(checked:String): CheckedOrUnchecked = CheckedCase(checked)
-  def raw(raw:String): CheckedOrUnchecked = RawCase(raw)
+  def checked(checked: String): CheckedOrUnchecked = CheckedCase(checked)
+  def raw(raw: String): CheckedOrUnchecked = RawCase(raw)
 
   val id: ShapeId = ShapeId("smithy4s.example", "CheckedOrUnchecked")
 
@@ -26,18 +36,23 @@ object CheckedOrUnchecked extends ShapeTag.Companion[CheckedOrUnchecked] {
 
   object CheckedCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[CheckedCase] = bijection(string.addHints(hints).validated(smithy.api.Pattern(s"^\\w+$$")), CheckedCase(_), _.checked)
+    val schema: Schema[CheckedOrUnchecked.CheckedCase] = bijection(string.addHints(hints).validated(smithy.api.Pattern(s"^\\w+$$")), CheckedOrUnchecked.CheckedCase(_), _.checked)
     val alt = schema.oneOf[CheckedOrUnchecked]("checked")
   }
   object RawCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[RawCase] = bijection(string.addHints(hints), RawCase(_), _.raw)
+    val schema: Schema[CheckedOrUnchecked.RawCase] = bijection(string.addHints(hints), CheckedOrUnchecked.RawCase(_), _.raw)
     val alt = schema.oneOf[CheckedOrUnchecked]("raw")
   }
 
+  trait Visitor[A] {
+    def checked(value: String): A
+    def raw(value: String): A
+  }
+
   implicit val schema: Schema[CheckedOrUnchecked] = union(
-    CheckedCase.alt,
-    RawCase.alt,
+    CheckedOrUnchecked.CheckedCase.alt,
+    CheckedOrUnchecked.RawCase.alt,
   ){
     _.$ordinal
   }.withId(id).addHints(hints)

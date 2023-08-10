@@ -160,15 +160,27 @@ object PizzaAdminServiceOperation {
       case AddMenuItemError.GenericClientErrorCase(e) => e
     }
   }
-  sealed trait AddMenuItemError extends scala.Product with scala.Serializable {
+  sealed trait AddMenuItemError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: AddMenuItemError = this
     def $ordinal: Int
+
+    object project {
+      def priceError: Option[PriceError] = AddMenuItemError.PriceErrorCase.alt.project.lift(self).map(_.priceError)
+      def genericServerError: Option[GenericServerError] = AddMenuItemError.GenericServerErrorCase.alt.project.lift(self).map(_.genericServerError)
+      def genericClientError: Option[GenericClientError] = AddMenuItemError.GenericClientErrorCase.alt.project.lift(self).map(_.genericClientError)
+    }
+
+    def accept[A](visitor: AddMenuItemError.Visitor[A]): A = this match {
+      case value: AddMenuItemError.PriceErrorCase => visitor.priceError(value.priceError)
+      case value: AddMenuItemError.GenericServerErrorCase => visitor.genericServerError(value.genericServerError)
+      case value: AddMenuItemError.GenericClientErrorCase => visitor.genericClientError(value.genericClientError)
+    }
   }
   object AddMenuItemError extends ShapeTag.Companion[AddMenuItemError] {
 
-    def priceError(priceError:PriceError): AddMenuItemError = PriceErrorCase(priceError)
-    def genericServerError(genericServerError:GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
-    def genericClientError(genericClientError:GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
+    def priceError(priceError: PriceError): AddMenuItemError = PriceErrorCase(priceError)
+    def genericServerError(genericServerError: GenericServerError): AddMenuItemError = GenericServerErrorCase(genericServerError)
+    def genericClientError(genericClientError: GenericClientError): AddMenuItemError = GenericClientErrorCase(genericClientError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "AddMenuItemError")
 
@@ -180,24 +192,30 @@ object PizzaAdminServiceOperation {
 
     object PriceErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[PriceErrorCase] = bijection(PriceError.schema.addHints(hints), PriceErrorCase(_), _.priceError)
+      val schema: Schema[AddMenuItemError.PriceErrorCase] = bijection(PriceError.schema.addHints(hints), AddMenuItemError.PriceErrorCase(_), _.priceError)
       val alt = schema.oneOf[AddMenuItemError]("PriceError")
     }
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), GenericServerErrorCase(_), _.genericServerError)
+      val schema: Schema[AddMenuItemError.GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), AddMenuItemError.GenericServerErrorCase(_), _.genericServerError)
       val alt = schema.oneOf[AddMenuItemError]("GenericServerError")
     }
     object GenericClientErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GenericClientErrorCase(_), _.genericClientError)
+      val schema: Schema[AddMenuItemError.GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), AddMenuItemError.GenericClientErrorCase(_), _.genericClientError)
       val alt = schema.oneOf[AddMenuItemError]("GenericClientError")
     }
 
+    trait Visitor[A] {
+      def priceError(value: PriceError): A
+      def genericServerError(value: GenericServerError): A
+      def genericClientError(value: GenericClientError): A
+    }
+
     implicit val schema: UnionSchema[AddMenuItemError] = union(
-      PriceErrorCase.alt,
-      GenericServerErrorCase.alt,
-      GenericClientErrorCase.alt,
+      AddMenuItemError.PriceErrorCase.alt,
+      AddMenuItemError.GenericServerErrorCase.alt,
+      AddMenuItemError.GenericClientErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -234,16 +252,30 @@ object PizzaAdminServiceOperation {
       case GetMenuError.NotFoundErrorCase(e) => e
     }
   }
-  sealed trait GetMenuError extends scala.Product with scala.Serializable {
+  sealed trait GetMenuError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetMenuError = this
     def $ordinal: Int
+
+    object project {
+      def genericClientError: Option[GenericClientError] = GetMenuError.GenericClientErrorCase.alt.project.lift(self).map(_.genericClientError)
+      def fallbackError2: Option[FallbackError2] = GetMenuError.FallbackError2Case.alt.project.lift(self).map(_.fallbackError2)
+      def fallbackError: Option[FallbackError] = GetMenuError.FallbackErrorCase.alt.project.lift(self).map(_.fallbackError)
+      def notFoundError: Option[NotFoundError] = GetMenuError.NotFoundErrorCase.alt.project.lift(self).map(_.notFoundError)
+    }
+
+    def accept[A](visitor: GetMenuError.Visitor[A]): A = this match {
+      case value: GetMenuError.GenericClientErrorCase => visitor.genericClientError(value.genericClientError)
+      case value: GetMenuError.FallbackError2Case => visitor.fallbackError2(value.fallbackError2)
+      case value: GetMenuError.FallbackErrorCase => visitor.fallbackError(value.fallbackError)
+      case value: GetMenuError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
+    }
   }
   object GetMenuError extends ShapeTag.Companion[GetMenuError] {
 
-    def genericClientError(genericClientError:GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
-    def fallbackError2(fallbackError2:FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
-    def fallbackError(fallbackError:FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
-    def notFoundError(notFoundError:NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
+    def genericClientError(genericClientError: GenericClientError): GetMenuError = GenericClientErrorCase(genericClientError)
+    def fallbackError2(fallbackError2: FallbackError2): GetMenuError = FallbackError2Case(fallbackError2)
+    def fallbackError(fallbackError: FallbackError): GetMenuError = FallbackErrorCase(fallbackError)
+    def notFoundError(notFoundError: NotFoundError): GetMenuError = NotFoundErrorCase(notFoundError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetMenuError")
 
@@ -256,30 +288,37 @@ object PizzaAdminServiceOperation {
 
     object GenericClientErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GenericClientErrorCase(_), _.genericClientError)
+      val schema: Schema[GetMenuError.GenericClientErrorCase] = bijection(GenericClientError.schema.addHints(hints), GetMenuError.GenericClientErrorCase(_), _.genericClientError)
       val alt = schema.oneOf[GetMenuError]("GenericClientError")
     }
     object FallbackError2Case {
       val hints: Hints = Hints.empty
-      val schema: Schema[FallbackError2Case] = bijection(FallbackError2.schema.addHints(hints), FallbackError2Case(_), _.fallbackError2)
+      val schema: Schema[GetMenuError.FallbackError2Case] = bijection(FallbackError2.schema.addHints(hints), GetMenuError.FallbackError2Case(_), _.fallbackError2)
       val alt = schema.oneOf[GetMenuError]("FallbackError2")
     }
     object FallbackErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), FallbackErrorCase(_), _.fallbackError)
+      val schema: Schema[GetMenuError.FallbackErrorCase] = bijection(FallbackError.schema.addHints(hints), GetMenuError.FallbackErrorCase(_), _.fallbackError)
       val alt = schema.oneOf[GetMenuError]("FallbackError")
     }
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
+      val schema: Schema[GetMenuError.NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), GetMenuError.NotFoundErrorCase(_), _.notFoundError)
       val alt = schema.oneOf[GetMenuError]("NotFoundError")
     }
 
+    trait Visitor[A] {
+      def genericClientError(value: GenericClientError): A
+      def fallbackError2(value: FallbackError2): A
+      def fallbackError(value: FallbackError): A
+      def notFoundError(value: NotFoundError): A
+    }
+
     implicit val schema: UnionSchema[GetMenuError] = union(
-      GenericClientErrorCase.alt,
-      FallbackError2Case.alt,
-      FallbackErrorCase.alt,
-      NotFoundErrorCase.alt,
+      GetMenuError.GenericClientErrorCase.alt,
+      GetMenuError.FallbackError2Case.alt,
+      GetMenuError.FallbackErrorCase.alt,
+      GetMenuError.NotFoundErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -329,13 +368,21 @@ object PizzaAdminServiceOperation {
       case HealthError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed trait HealthError extends scala.Product with scala.Serializable {
+  sealed trait HealthError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: HealthError = this
     def $ordinal: Int
+
+    object project {
+      def unknownServerError: Option[UnknownServerError] = HealthError.UnknownServerErrorCase.alt.project.lift(self).map(_.unknownServerError)
+    }
+
+    def accept[A](visitor: HealthError.Visitor[A]): A = this match {
+      case value: HealthError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
+    }
   }
   object HealthError extends ShapeTag.Companion[HealthError] {
 
-    def unknownServerError(unknownServerError:UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
+    def unknownServerError(unknownServerError: UnknownServerError): HealthError = UnknownServerErrorCase(unknownServerError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "HealthError")
 
@@ -345,12 +392,16 @@ object PizzaAdminServiceOperation {
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), UnknownServerErrorCase(_), _.unknownServerError)
+      val schema: Schema[HealthError.UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), HealthError.UnknownServerErrorCase(_), _.unknownServerError)
       val alt = schema.oneOf[HealthError]("UnknownServerError")
     }
 
+    trait Visitor[A] {
+      def unknownServerError(value: UnknownServerError): A
+    }
+
     implicit val schema: UnionSchema[HealthError] = union(
-      UnknownServerErrorCase.alt,
+      HealthError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -415,13 +466,21 @@ object PizzaAdminServiceOperation {
       case GetEnumError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed trait GetEnumError extends scala.Product with scala.Serializable {
+  sealed trait GetEnumError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetEnumError = this
     def $ordinal: Int
+
+    object project {
+      def unknownServerError: Option[UnknownServerError] = GetEnumError.UnknownServerErrorCase.alt.project.lift(self).map(_.unknownServerError)
+    }
+
+    def accept[A](visitor: GetEnumError.Visitor[A]): A = this match {
+      case value: GetEnumError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
+    }
   }
   object GetEnumError extends ShapeTag.Companion[GetEnumError] {
 
-    def unknownServerError(unknownServerError:UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
+    def unknownServerError(unknownServerError: UnknownServerError): GetEnumError = UnknownServerErrorCase(unknownServerError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetEnumError")
 
@@ -431,12 +490,16 @@ object PizzaAdminServiceOperation {
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), UnknownServerErrorCase(_), _.unknownServerError)
+      val schema: Schema[GetEnumError.UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), GetEnumError.UnknownServerErrorCase(_), _.unknownServerError)
       val alt = schema.oneOf[GetEnumError]("UnknownServerError")
     }
 
+    trait Visitor[A] {
+      def unknownServerError(value: UnknownServerError): A
+    }
+
     implicit val schema: UnionSchema[GetEnumError] = union(
-      UnknownServerErrorCase.alt,
+      GetEnumError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -467,13 +530,21 @@ object PizzaAdminServiceOperation {
       case GetIntEnumError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed trait GetIntEnumError extends scala.Product with scala.Serializable {
+  sealed trait GetIntEnumError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetIntEnumError = this
     def $ordinal: Int
+
+    object project {
+      def unknownServerError: Option[UnknownServerError] = GetIntEnumError.UnknownServerErrorCase.alt.project.lift(self).map(_.unknownServerError)
+    }
+
+    def accept[A](visitor: GetIntEnumError.Visitor[A]): A = this match {
+      case value: GetIntEnumError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
+    }
   }
   object GetIntEnumError extends ShapeTag.Companion[GetIntEnumError] {
 
-    def unknownServerError(unknownServerError:UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
+    def unknownServerError(unknownServerError: UnknownServerError): GetIntEnumError = UnknownServerErrorCase(unknownServerError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetIntEnumError")
 
@@ -483,12 +554,16 @@ object PizzaAdminServiceOperation {
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), UnknownServerErrorCase(_), _.unknownServerError)
+      val schema: Schema[GetIntEnumError.UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), GetIntEnumError.UnknownServerErrorCase(_), _.unknownServerError)
       val alt = schema.oneOf[GetIntEnumError]("UnknownServerError")
     }
 
+    trait Visitor[A] {
+      def unknownServerError(value: UnknownServerError): A
+    }
+
     implicit val schema: UnionSchema[GetIntEnumError] = union(
-      UnknownServerErrorCase.alt,
+      GetIntEnumError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -519,13 +594,21 @@ object PizzaAdminServiceOperation {
       case CustomCodeError.UnknownServerErrorCase(e) => e
     }
   }
-  sealed trait CustomCodeError extends scala.Product with scala.Serializable {
+  sealed trait CustomCodeError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: CustomCodeError = this
     def $ordinal: Int
+
+    object project {
+      def unknownServerError: Option[UnknownServerError] = CustomCodeError.UnknownServerErrorCase.alt.project.lift(self).map(_.unknownServerError)
+    }
+
+    def accept[A](visitor: CustomCodeError.Visitor[A]): A = this match {
+      case value: CustomCodeError.UnknownServerErrorCase => visitor.unknownServerError(value.unknownServerError)
+    }
   }
   object CustomCodeError extends ShapeTag.Companion[CustomCodeError] {
 
-    def unknownServerError(unknownServerError:UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
+    def unknownServerError(unknownServerError: UnknownServerError): CustomCodeError = UnknownServerErrorCase(unknownServerError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "CustomCodeError")
 
@@ -535,12 +618,16 @@ object PizzaAdminServiceOperation {
 
     object UnknownServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), UnknownServerErrorCase(_), _.unknownServerError)
+      val schema: Schema[CustomCodeError.UnknownServerErrorCase] = bijection(UnknownServerError.schema.addHints(hints), CustomCodeError.UnknownServerErrorCase(_), _.unknownServerError)
       val alt = schema.oneOf[CustomCodeError]("UnknownServerError")
     }
 
+    trait Visitor[A] {
+      def unknownServerError(value: UnknownServerError): A
+    }
+
     implicit val schema: UnionSchema[CustomCodeError] = union(
-      UnknownServerErrorCase.alt,
+      CustomCodeError.UnknownServerErrorCase.alt,
     ){
       _.$ordinal
     }

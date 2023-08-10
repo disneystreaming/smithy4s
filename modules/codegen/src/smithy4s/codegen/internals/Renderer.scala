@@ -892,11 +892,47 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     )
   }
 
-  private def caseName(alt: Alt): NameRef = alt.member match {
-    case UnionMember.ProductCase(product) => NameRef(product.name)
-    case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
-      NameRef(alt.name.dropWhile(_ == '_').capitalize + "Case")
-  }
+  private def caseName(unionName: NameRef, alt: Alt): NameRef =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        unionName.down(product.name)
+      case UnionMember.TypeCase(_) | UnionMember.UnitCase =>
+        unionName.down(
+          alt.name.dropWhile(_ == '_').capitalize + "Case"
+        )
+    }
+
+  private def caseNameForMatch(unionName: NameRef, alt: Alt): NameRef =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        unionName.down(product.name)
+      case UnionMember.TypeCase(_) =>
+        unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case")
+      case UnionMember.UnitCase =>
+        unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case.type")
+    }
+
+  private def caseNameType(unionName: NameRef, alt: Alt): Line =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        line"${unionName.down(product.name)}"
+      case UnionMember.TypeCase(tpe) => line"$tpe"
+      case UnionMember.UnitCase =>
+        line"${unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case.type")}"
+    }
+
+  private def caseNameWithAlt(unionName: NameRef, alt: Alt): Line =
+    alt.member match {
+      case UnionMember.ProductCase(product) =>
+        line"${unionName.down(product.name)}.alt"
+      case UnionMember.TypeCase(_) =>
+        val n = unionName.down(alt.name.dropWhile(_ == '_').capitalize + "Case")
+        line"$n.alt"
+      case UnionMember.UnitCase =>
+        val n =
+          unionName.down(alt.name.dropWhile(_ == '_').capitalize + "CaseAlt")
+        line"$n"
+    }
 
   private def renderPrisms(
       unionName: NameRef,
@@ -914,10 +950,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val (mat, tpe) = (p.nameDef, line"${p.name}")
           line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case t: $mat => t }(identity)"
         case UnionMember.TypeCase(t) =>
-          val (mat, tpe) = (caseName(alt), line"$t")
+          val (mat, tpe) = (caseName(unionName, alt), line"$t")
           line"val ${alt.name}: $smithyPrism[$unionName, $tpe] = $smithyPrism.partial[$unionName, $tpe]{ case $mat(t) => t }($mat.apply)"
         case UnionMember.UnitCase =>
-          val (mat, tpe) = (caseName(alt), line"${caseName(alt)}")
+          val (mat, tpe) =
+            (caseName(unionName, alt), line"${caseName(unionName, alt)}")
           line"val ${alt.name}: $smithyPrism[$unionName, $tpe.type] = $smithyPrism.partial[$unionName, $tpe.type]{ case t: $mat.type => t }(identity)"
       }
     }
@@ -962,7 +999,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       error: Boolean = false
   ): Lines = {
     def smartConstructor(alt: Alt): Lines = {
-      val cn = caseName(alt).name
+      val cn = caseName(name, alt).name
       val ident = NameDef(uncapitalise(alt.name))
       val prefix = line"def $ident"
       val constructor = alt.member match {
@@ -970,9 +1007,10 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
           val args = renderArgs(product.fields)
           val values = product.fields.map(_.name).intercalate(", ")
           line"def ${uncapitalise(product.nameDef.name)}($args):${product.nameRef} = ${product.nameRef}($values)"
-        case UnionMember.UnitCase => line"$prefix(): $name = ${caseName(alt)}"
+        case UnionMember.UnitCase =>
+          line"$prefix(): $name = ${caseName(name, alt)}"
         case UnionMember.TypeCase(tpe) =>
-          line"$prefix($ident:$tpe): $name = $cn($ident)"
+          line"$prefix($ident: $tpe): $name = $cn($ident)"
       }
       lines(
         documentationAnnotation(alt.hints),
@@ -980,7 +1018,7 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         constructor
       )
     }
-    val caseNames = alts.map(caseName)
+    val caseNames = alts.map(caseName(name, _))
     val caseNamesAndIsUnit =
       caseNames.zip(alts.map(_.member == UnionMember.UnitCase))
 
@@ -989,14 +1027,45 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
     val mixinExtendsStatement =
       if (mixinExtends.segments.isEmpty) Line.empty
       else line"$mixinExtends with "
+    val projectors: Lines = obj(NameRef("project"))(
+      alts.map { alt =>
+        val ident = NameDef(uncapitalise(alt.name))
+        val maybeMap = alt.member match {
+          case UnionMember.TypeCase(_) => line".map(_.$ident)"
+          case _                       => Line.empty
+        }
+        line"def $ident: Option[${caseNameType(name, alt)}] = ${caseNameWithAlt(name, alt)}.project.lift(self)$maybeMap"
+      }
+    )
+    val visitor: Lines = block(line"trait Visitor[A]")(
+      alts.map { alt =>
+        val ident = NameDef(uncapitalise(alt.name))
+        line"def $ident(value: ${caseNameType(name, alt)}): A"
+      }
+    )
+    val accept: Lines =
+      block(line"def accept[A](visitor: $name.Visitor[A]): A = this match")(
+        alts.map { alt =>
+          val ident = NameDef(uncapitalise(alt.name))
+          val innerValue = alt.member match {
+            case UnionMember.TypeCase(_) => line".$ident"
+            case _                       => Line.empty
+          }
+          line"case value: ${caseNameForMatch(name, alt)} => visitor.$ident(value$innerValue)"
+        }
+      )
     lines(
       documentationAnnotation(hints),
       deprecationAnnotation(hints),
       block(
         line"sealed trait ${NameDef(name.name)} extends ${mixinExtendsStatement}scala.Product with scala.Serializable"
-      )(
+      ).withSameLineValue(line" self =>")(
         line"@inline final def widen: $name = this",
-        line"def $$ordinal: Int"
+        line"def $$ordinal: Int",
+        newline,
+        projectors,
+        newline,
+        accept
       ),
       obj(name, line"${shapeTag(name)}")(
         newline,
@@ -1009,24 +1078,24 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderPrisms(name, alts, hints),
         alts.zipWithIndex.map {
           case (a @ Alt(_, realName, UnionMember.UnitCase, altHints), index) =>
-            val cn = caseName(a)
+            val cn = caseName(name, a)
             // format: off
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"case object $cn extends $name { final def $$ordinal: Int = $index }",
-              line"""private val ${cn}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
+              line"case object ${cn.nameDef} extends $name { final def $$ordinal: Int = $index }",
+              line"""private val ${cn.nameDef}Alt = $Schema_.constant($cn)${renderConstraintValidation(altHints)}.oneOf[$name]("$realName").addHints(hints)""",
             )
             // format: on
           case (
                 a @ Alt(altName, _, UnionMember.TypeCase(tpe), altHints),
                 index
               ) =>
-            val cn = caseName(a)
+            val cn = caseName(name, a)
             lines(
               documentationAnnotation(altHints),
               deprecationAnnotation(altHints),
-              line"final case class $cn(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
+              line"final case class ${cn.nameDef}(${uncapitalise(altName)}: $tpe) extends $name { final def $$ordinal: Int = $index }"
             )
           case (
                 Alt(_, realName, UnionMember.ProductCase(struct), altHints),
@@ -1055,8 +1124,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
                 UnionMember.TypeCase(tpe),
                 altHints
               ) =>
-            val cn = caseName(a)
-            block(line"object $cn")(
+            val cn = caseName(name, a)
+            block(line"object ${cn.nameDef}")(
               renderHintsVal(altHints),
               // format: off
               line"val schema: $Schema_[$cn] = $bijection_(${tpe.schemaRef}.addHints(hints)${renderConstraintValidation(altHints)}, $cn(_), _.${uncapitalise(altName)})",
@@ -1064,6 +1133,8 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               // format: on
             )
         },
+        newline,
+        visitor,
         newline, {
           val union =
             if (error)

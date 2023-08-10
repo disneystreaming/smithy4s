@@ -105,13 +105,21 @@ object ImportServiceOperation {
       case ImportOperationError.NotFoundErrorCase(e) => e
     }
   }
-  sealed trait ImportOperationError extends scala.Product with scala.Serializable {
+  sealed trait ImportOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ImportOperationError = this
     def $ordinal: Int
+
+    object project {
+      def notFoundError: Option[NotFoundError] = ImportOperationError.NotFoundErrorCase.alt.project.lift(self).map(_.notFoundError)
+    }
+
+    def accept[A](visitor: ImportOperationError.Visitor[A]): A = this match {
+      case value: ImportOperationError.NotFoundErrorCase => visitor.notFoundError(value.notFoundError)
+    }
   }
   object ImportOperationError extends ShapeTag.Companion[ImportOperationError] {
 
-    def notFoundError(notFoundError:NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
+    def notFoundError(notFoundError: NotFoundError): ImportOperationError = NotFoundErrorCase(notFoundError)
 
     val id: ShapeId = ShapeId("smithy4s.example.imp", "ImportOperationError")
 
@@ -121,12 +129,16 @@ object ImportServiceOperation {
 
     object NotFoundErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), NotFoundErrorCase(_), _.notFoundError)
+      val schema: Schema[ImportOperationError.NotFoundErrorCase] = bijection(NotFoundError.schema.addHints(hints), ImportOperationError.NotFoundErrorCase(_), _.notFoundError)
       val alt = schema.oneOf[ImportOperationError]("NotFoundError")
     }
 
+    trait Visitor[A] {
+      def notFoundError(value: NotFoundError): A
+    }
+
     implicit val schema: UnionSchema[ImportOperationError] = union(
-      NotFoundErrorCase.alt,
+      ImportOperationError.NotFoundErrorCase.alt,
     ){
       _.$ordinal
     }

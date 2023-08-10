@@ -11,9 +11,19 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
-sealed trait Podcast extends PodcastCommon with scala.Product with scala.Serializable {
+sealed trait Podcast extends PodcastCommon with scala.Product with scala.Serializable { self =>
   @inline final def widen: Podcast = this
   def $ordinal: Int
+
+  object project {
+    def video: Option[Podcast.Video] = Podcast.Video.alt.project.lift(self)
+    def audio: Option[Podcast.Audio] = Podcast.Audio.alt.project.lift(self)
+  }
+
+  def accept[A](visitor: Podcast.Visitor[A]): A = this match {
+    case value: Podcast.Video => visitor.video(value)
+    case value: Podcast.Audio => visitor.audio(value)
+  }
 }
 object Podcast extends ShapeTag.Companion[Podcast] {
 
@@ -79,9 +89,14 @@ object Podcast extends ShapeTag.Companion[Podcast] {
   }
 
 
+  trait Visitor[A] {
+    def video(value: Podcast.Video): A
+    def audio(value: Podcast.Audio): A
+  }
+
   implicit val schema: Schema[Podcast] = union(
-    Video.alt,
-    Audio.alt,
+    Podcast.Video.alt,
+    Podcast.Audio.alt,
   ){
     _.$ordinal
   }.withId(id).addHints(hints)

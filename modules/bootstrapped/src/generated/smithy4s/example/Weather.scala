@@ -134,13 +134,21 @@ object WeatherOperation {
       case GetCityError.NoSuchResourceCase(e) => e
     }
   }
-  sealed trait GetCityError extends scala.Product with scala.Serializable {
+  sealed trait GetCityError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetCityError = this
     def $ordinal: Int
+
+    object project {
+      def noSuchResource: Option[NoSuchResource] = GetCityError.NoSuchResourceCase.alt.project.lift(self).map(_.noSuchResource)
+    }
+
+    def accept[A](visitor: GetCityError.Visitor[A]): A = this match {
+      case value: GetCityError.NoSuchResourceCase => visitor.noSuchResource(value.noSuchResource)
+    }
   }
   object GetCityError extends ShapeTag.Companion[GetCityError] {
 
-    def noSuchResource(noSuchResource:NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
+    def noSuchResource(noSuchResource: NoSuchResource): GetCityError = NoSuchResourceCase(noSuchResource)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetCityError")
 
@@ -150,12 +158,16 @@ object WeatherOperation {
 
     object NoSuchResourceCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NoSuchResourceCase] = bijection(NoSuchResource.schema.addHints(hints), NoSuchResourceCase(_), _.noSuchResource)
+      val schema: Schema[GetCityError.NoSuchResourceCase] = bijection(NoSuchResource.schema.addHints(hints), GetCityError.NoSuchResourceCase(_), _.noSuchResource)
       val alt = schema.oneOf[GetCityError]("NoSuchResource")
     }
 
+    trait Visitor[A] {
+      def noSuchResource(value: NoSuchResource): A
+    }
+
     implicit val schema: UnionSchema[GetCityError] = union(
-      NoSuchResourceCase.alt,
+      GetCityError.NoSuchResourceCase.alt,
     ){
       _.$ordinal
     }

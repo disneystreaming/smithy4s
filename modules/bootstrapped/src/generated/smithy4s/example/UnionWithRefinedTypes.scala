@@ -7,14 +7,24 @@ import smithy4s.ShapeTag
 import smithy4s.schema.Schema.bijection
 import smithy4s.schema.Schema.union
 
-sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable {
+sealed trait UnionWithRefinedTypes extends scala.Product with scala.Serializable { self =>
   @inline final def widen: UnionWithRefinedTypes = this
   def $ordinal: Int
+
+  object project {
+    def age: Option[Age] = UnionWithRefinedTypes.AgeCase.alt.project.lift(self).map(_.age)
+    def dogName: Option[smithy4s.refined.Name] = UnionWithRefinedTypes.DogNameCase.alt.project.lift(self).map(_.dogName)
+  }
+
+  def accept[A](visitor: UnionWithRefinedTypes.Visitor[A]): A = this match {
+    case value: UnionWithRefinedTypes.AgeCase => visitor.age(value.age)
+    case value: UnionWithRefinedTypes.DogNameCase => visitor.dogName(value.dogName)
+  }
 }
 object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
 
-  def age(age:Age): UnionWithRefinedTypes = AgeCase(age)
-  def dogName(dogName:smithy4s.refined.Name): UnionWithRefinedTypes = DogNameCase(dogName)
+  def age(age: Age): UnionWithRefinedTypes = AgeCase(age)
+  def dogName(dogName: smithy4s.refined.Name): UnionWithRefinedTypes = DogNameCase(dogName)
 
   val id: ShapeId = ShapeId("smithy4s.example", "UnionWithRefinedTypes")
 
@@ -25,18 +35,23 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
 
   object AgeCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[AgeCase] = bijection(Age.schema.addHints(hints), AgeCase(_), _.age)
+    val schema: Schema[UnionWithRefinedTypes.AgeCase] = bijection(Age.schema.addHints(hints), UnionWithRefinedTypes.AgeCase(_), _.age)
     val alt = schema.oneOf[UnionWithRefinedTypes]("age")
   }
   object DogNameCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[DogNameCase] = bijection(DogName.underlyingSchema.addHints(hints), DogNameCase(_), _.dogName)
+    val schema: Schema[UnionWithRefinedTypes.DogNameCase] = bijection(DogName.underlyingSchema.addHints(hints), UnionWithRefinedTypes.DogNameCase(_), _.dogName)
     val alt = schema.oneOf[UnionWithRefinedTypes]("dogName")
   }
 
+  trait Visitor[A] {
+    def age(value: Age): A
+    def dogName(value: smithy4s.refined.Name): A
+  }
+
   implicit val schema: Schema[UnionWithRefinedTypes] = union(
-    AgeCase.alt,
-    DogNameCase.alt,
+    UnionWithRefinedTypes.AgeCase.alt,
+    UnionWithRefinedTypes.DogNameCase.alt,
   ){
     _.$ordinal
   }.withId(id).addHints(hints)

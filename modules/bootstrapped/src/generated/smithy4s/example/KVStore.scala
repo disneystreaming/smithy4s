@@ -112,14 +112,24 @@ object KVStoreOperation {
       case GetError.KeyNotFoundErrorCase(e) => e
     }
   }
-  sealed trait GetError extends scala.Product with scala.Serializable {
+  sealed trait GetError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetError = this
     def $ordinal: Int
+
+    object project {
+      def unauthorizedError: Option[UnauthorizedError] = GetError.UnauthorizedErrorCase.alt.project.lift(self).map(_.unauthorizedError)
+      def keyNotFoundError: Option[KeyNotFoundError] = GetError.KeyNotFoundErrorCase.alt.project.lift(self).map(_.keyNotFoundError)
+    }
+
+    def accept[A](visitor: GetError.Visitor[A]): A = this match {
+      case value: GetError.UnauthorizedErrorCase => visitor.unauthorizedError(value.unauthorizedError)
+      case value: GetError.KeyNotFoundErrorCase => visitor.keyNotFoundError(value.keyNotFoundError)
+    }
   }
   object GetError extends ShapeTag.Companion[GetError] {
 
-    def unauthorizedError(unauthorizedError:UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedError)
-    def keyNotFoundError(keyNotFoundError:KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundError)
+    def unauthorizedError(unauthorizedError: UnauthorizedError): GetError = UnauthorizedErrorCase(unauthorizedError)
+    def keyNotFoundError(keyNotFoundError: KeyNotFoundError): GetError = KeyNotFoundErrorCase(keyNotFoundError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetError")
 
@@ -130,18 +140,23 @@ object KVStoreOperation {
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), UnauthorizedErrorCase(_), _.unauthorizedError)
+      val schema: Schema[GetError.UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), GetError.UnauthorizedErrorCase(_), _.unauthorizedError)
       val alt = schema.oneOf[GetError]("UnauthorizedError")
     }
     object KeyNotFoundErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[KeyNotFoundErrorCase] = bijection(KeyNotFoundError.schema.addHints(hints), KeyNotFoundErrorCase(_), _.keyNotFoundError)
+      val schema: Schema[GetError.KeyNotFoundErrorCase] = bijection(KeyNotFoundError.schema.addHints(hints), GetError.KeyNotFoundErrorCase(_), _.keyNotFoundError)
       val alt = schema.oneOf[GetError]("KeyNotFoundError")
     }
 
+    trait Visitor[A] {
+      def unauthorizedError(value: UnauthorizedError): A
+      def keyNotFoundError(value: KeyNotFoundError): A
+    }
+
     implicit val schema: UnionSchema[GetError] = union(
-      UnauthorizedErrorCase.alt,
-      KeyNotFoundErrorCase.alt,
+      GetError.UnauthorizedErrorCase.alt,
+      GetError.KeyNotFoundErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -169,13 +184,21 @@ object KVStoreOperation {
       case PutError.UnauthorizedErrorCase(e) => e
     }
   }
-  sealed trait PutError extends scala.Product with scala.Serializable {
+  sealed trait PutError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: PutError = this
     def $ordinal: Int
+
+    object project {
+      def unauthorizedError: Option[UnauthorizedError] = PutError.UnauthorizedErrorCase.alt.project.lift(self).map(_.unauthorizedError)
+    }
+
+    def accept[A](visitor: PutError.Visitor[A]): A = this match {
+      case value: PutError.UnauthorizedErrorCase => visitor.unauthorizedError(value.unauthorizedError)
+    }
   }
   object PutError extends ShapeTag.Companion[PutError] {
 
-    def unauthorizedError(unauthorizedError:UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
+    def unauthorizedError(unauthorizedError: UnauthorizedError): PutError = UnauthorizedErrorCase(unauthorizedError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "PutError")
 
@@ -185,12 +208,16 @@ object KVStoreOperation {
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), UnauthorizedErrorCase(_), _.unauthorizedError)
+      val schema: Schema[PutError.UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), PutError.UnauthorizedErrorCase(_), _.unauthorizedError)
       val alt = schema.oneOf[PutError]("UnauthorizedError")
     }
 
+    trait Visitor[A] {
+      def unauthorizedError(value: UnauthorizedError): A
+    }
+
     implicit val schema: UnionSchema[PutError] = union(
-      UnauthorizedErrorCase.alt,
+      PutError.UnauthorizedErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -220,14 +247,24 @@ object KVStoreOperation {
       case DeleteError.KeyNotFoundErrorCase(e) => e
     }
   }
-  sealed trait DeleteError extends scala.Product with scala.Serializable {
+  sealed trait DeleteError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: DeleteError = this
     def $ordinal: Int
+
+    object project {
+      def unauthorizedError: Option[UnauthorizedError] = DeleteError.UnauthorizedErrorCase.alt.project.lift(self).map(_.unauthorizedError)
+      def keyNotFoundError: Option[KeyNotFoundError] = DeleteError.KeyNotFoundErrorCase.alt.project.lift(self).map(_.keyNotFoundError)
+    }
+
+    def accept[A](visitor: DeleteError.Visitor[A]): A = this match {
+      case value: DeleteError.UnauthorizedErrorCase => visitor.unauthorizedError(value.unauthorizedError)
+      case value: DeleteError.KeyNotFoundErrorCase => visitor.keyNotFoundError(value.keyNotFoundError)
+    }
   }
   object DeleteError extends ShapeTag.Companion[DeleteError] {
 
-    def unauthorizedError(unauthorizedError:UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedError)
-    def keyNotFoundError(keyNotFoundError:KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundError)
+    def unauthorizedError(unauthorizedError: UnauthorizedError): DeleteError = UnauthorizedErrorCase(unauthorizedError)
+    def keyNotFoundError(keyNotFoundError: KeyNotFoundError): DeleteError = KeyNotFoundErrorCase(keyNotFoundError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "DeleteError")
 
@@ -238,18 +275,23 @@ object KVStoreOperation {
 
     object UnauthorizedErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), UnauthorizedErrorCase(_), _.unauthorizedError)
+      val schema: Schema[DeleteError.UnauthorizedErrorCase] = bijection(UnauthorizedError.schema.addHints(hints), DeleteError.UnauthorizedErrorCase(_), _.unauthorizedError)
       val alt = schema.oneOf[DeleteError]("UnauthorizedError")
     }
     object KeyNotFoundErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[KeyNotFoundErrorCase] = bijection(KeyNotFoundError.schema.addHints(hints), KeyNotFoundErrorCase(_), _.keyNotFoundError)
+      val schema: Schema[DeleteError.KeyNotFoundErrorCase] = bijection(KeyNotFoundError.schema.addHints(hints), DeleteError.KeyNotFoundErrorCase(_), _.keyNotFoundError)
       val alt = schema.oneOf[DeleteError]("KeyNotFoundError")
     }
 
+    trait Visitor[A] {
+      def unauthorizedError(value: UnauthorizedError): A
+      def keyNotFoundError(value: KeyNotFoundError): A
+    }
+
     implicit val schema: UnionSchema[DeleteError] = union(
-      UnauthorizedErrorCase.alt,
-      KeyNotFoundErrorCase.alt,
+      DeleteError.UnauthorizedErrorCase.alt,
+      DeleteError.KeyNotFoundErrorCase.alt,
     ){
       _.$ordinal
     }

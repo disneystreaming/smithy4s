@@ -10,15 +10,29 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.union
 
 @deprecated(message = "A compelling reason", since = "0.0.1")
-sealed trait DeprecatedUnion extends scala.Product with scala.Serializable {
+sealed trait DeprecatedUnion extends scala.Product with scala.Serializable { self =>
   @inline final def widen: DeprecatedUnion = this
   def $ordinal: Int
+
+  object project {
+    def s: Option[String] = DeprecatedUnion.SCase.alt.project.lift(self).map(_.s)
+    def s_V2: Option[String] = DeprecatedUnion.S_V2Case.alt.project.lift(self).map(_.s_V2)
+    def p: Option[DeprecatedUnion.DeprecatedUnionProductCase] = DeprecatedUnion.DeprecatedUnionProductCase.alt.project.lift(self)
+    def p2: Option[DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite] = DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite.alt.project.lift(self)
+  }
+
+  def accept[A](visitor: DeprecatedUnion.Visitor[A]): A = this match {
+    case value: DeprecatedUnion.SCase => visitor.s(value.s)
+    case value: DeprecatedUnion.S_V2Case => visitor.s_V2(value.s_V2)
+    case value: DeprecatedUnion.DeprecatedUnionProductCase => visitor.p(value)
+    case value: DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite => visitor.p2(value)
+  }
 }
 object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
 
   @deprecated(message = "N/A", since = "N/A")
-  def s(s:String): DeprecatedUnion = SCase(s)
-  def s_V2(s_V2:String): DeprecatedUnion = S_V2Case(s_V2)
+  def s(s: String): DeprecatedUnion = SCase(s)
+  def s_V2(s_V2: String): DeprecatedUnion = S_V2Case(s_V2)
   def deprecatedUnionProductCase():DeprecatedUnionProductCase = DeprecatedUnionProductCase()
   @deprecated(message = "N/A", since = "N/A")
   def unionProductCaseDeprecatedAtCallSite():UnionProductCaseDeprecatedAtCallSite = UnionProductCaseDeprecatedAtCallSite()
@@ -67,20 +81,27 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     val hints: Hints = Hints(
       smithy.api.Deprecated(message = None, since = None),
     )
-    val schema: Schema[SCase] = bijection(string.addHints(hints), SCase(_), _.s)
+    val schema: Schema[DeprecatedUnion.SCase] = bijection(string.addHints(hints), DeprecatedUnion.SCase(_), _.s)
     val alt = schema.oneOf[DeprecatedUnion]("s")
   }
   object S_V2Case {
     val hints: Hints = Hints.empty
-    val schema: Schema[S_V2Case] = bijection(string.addHints(hints), S_V2Case(_), _.s_V2)
+    val schema: Schema[DeprecatedUnion.S_V2Case] = bijection(string.addHints(hints), DeprecatedUnion.S_V2Case(_), _.s_V2)
     val alt = schema.oneOf[DeprecatedUnion]("s_V2")
   }
 
+  trait Visitor[A] {
+    def s(value: String): A
+    def s_V2(value: String): A
+    def p(value: DeprecatedUnion.DeprecatedUnionProductCase): A
+    def p2(value: DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite): A
+  }
+
   implicit val schema: Schema[DeprecatedUnion] = union(
-    SCase.alt,
-    S_V2Case.alt,
-    DeprecatedUnionProductCase.alt,
-    UnionProductCaseDeprecatedAtCallSite.alt,
+    DeprecatedUnion.SCase.alt,
+    DeprecatedUnion.S_V2Case.alt,
+    DeprecatedUnion.DeprecatedUnionProductCase.alt,
+    DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite.alt,
   ){
     _.$ordinal
   }.withId(id).addHints(hints)
