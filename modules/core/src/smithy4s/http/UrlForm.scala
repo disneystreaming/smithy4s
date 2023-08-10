@@ -163,7 +163,7 @@ private[smithy4s] object UrlForm {
 
   object Decoder {
     def apply(
-        ignoreXmlFlattened: Boolean,
+        ignoreUrlFormFlattened: Boolean,
         capitalizeStructAndUnionMemberNames: Boolean
     ): CachedSchemaCompiler[Decoder] =
       new CachedSchemaCompiler.Impl[Decoder] {
@@ -174,7 +174,7 @@ private[smithy4s] object UrlForm {
         ): Decoder[A] = {
           val schemaVisitor = new UrlFormDataDecoderSchemaVisitor(
             cache,
-            ignoreXmlFlattened,
+            ignoreUrlFormFlattened,
             capitalizeStructAndUnionMemberNames
           )
           val urlFormDataDecoder = schemaVisitor(schema)
@@ -192,7 +192,7 @@ private[smithy4s] object UrlForm {
 
   object Encoder {
     def apply(
-        ignoreXmlFlattened: Boolean,
+        ignoreUrlFormFlattened: Boolean,
         capitalizeStructAndUnionMemberNames: Boolean
     ): CachedSchemaCompiler[Encoder] =
       new CachedSchemaCompiler.Impl[Encoder] {
@@ -203,7 +203,7 @@ private[smithy4s] object UrlForm {
         ): Encoder[A] = {
           val schemaVisitor = new UrlFormDataEncoderSchemaVisitor(
             cache,
-            ignoreXmlFlattened,
+            ignoreUrlFormFlattened,
             capitalizeStructAndUnionMemberNames
           )
           val urlFormDataEncoder = schemaVisitor(schema)

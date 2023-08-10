@@ -18,8 +18,8 @@ package smithy4s
 package http
 package internals
 
-import smithy.api.XmlFlattened
-import smithy.api.XmlName
+import alloy.UrlFormFlattened
+import alloy.UrlFormName
 import smithy4s.codecs.PayloadPath
 import smithy4s.http._
 import smithy4s.schema._
@@ -28,7 +28,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder],
     // These are used by AwsEc2QueryCodecs to conform to the requirements of
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-    ignoreXmlFlattened: Boolean,
+    ignoreUrlFormFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
@@ -59,7 +59,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[C[A]] = {
     val memberEncoder = compile(member)
     val maybeKey =
-      if (ignoreXmlFlattened || hints.has[XmlFlattened]) None
+      if (ignoreUrlFormFlattened || hints.has[UrlFormFlattened]) None
       else Option(getKey(member.hints, "member"))
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
     collection =>
@@ -95,7 +95,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
+      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName("entry"))
     }
     // Avoid serialising empty maps, see comment in collection case and
     // https://github.com/smithy-lang/smithy/issues/1868.
@@ -187,7 +187,7 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints
-      .get(XmlName)
+      .get(UrlFormName)
       .map(_.value)
       .map(PayloadPath.Segment(_))
       .getOrElse(

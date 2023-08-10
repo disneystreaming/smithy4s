@@ -18,8 +18,8 @@ package smithy4s
 package http
 package internals
 
-import smithy.api.XmlFlattened
-import smithy.api.XmlName
+import alloy.UrlFormFlattened
+import alloy.UrlFormName
 import smithy4s.Blob
 import smithy4s.Hints
 import smithy4s.schema.Schema
@@ -164,8 +164,8 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     case class Foo(x: String, y: Option[String])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val x = string.required[Foo]("x", _.x).addHints(XmlName("xx"))
-        val y = string.optional[Foo]("y", _.y).addHints(XmlName("y:y"))
+        val x = string.required[Foo]("x", _.x).addHints(UrlFormName("xx"))
+        val y = string.optional[Foo]("y", _.y).addHints(UrlFormName("y:y"))
         struct(x, y)(Foo.apply)
       }
     }
@@ -193,7 +193,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     case class Foo(foos: List[Int])
     object Foo {
       implicit val schema: Schema[Foo] = {
-        val foos = list(int.addHints(XmlName("x")))
+        val foos = list(int.addHints(UrlFormName("x")))
           .required[Foo]("foos", _.foos)
         struct(foos)(Foo.apply)
       }
@@ -210,7 +210,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val foos = list(int)
           .required[Foo]("foos", _.foos)
-          .addHints(XmlFlattened())
+          .addHints(UrlFormFlattened())
         struct(foos)(Foo.apply)
       }
     }
@@ -226,7 +226,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
       implicit val schema: Schema[Foo] = {
         val foos = list(int)
           .required[Foo]("foos", _.foos)
-          .addHints(XmlFlattened(), XmlName("x"))
+          .addHints(UrlFormFlattened(), UrlFormName("x"))
         struct(foos)(Foo.apply)
       }
     }
@@ -266,8 +266,8 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
   pureTest("union: custom names") {
     type Foo = Either[Int, String]
     implicit val schema: Schema[Foo] = Schema.either(
-      int.addMemberHints(XmlName("foo")),
-      string.addMemberHints(XmlName("bar"))
+      int.addMemberHints(UrlFormName("foo")),
+      string.addMemberHints(UrlFormName("bar"))
     )
     checkEncodingAndDecoding[Foo](
       value = Left(1),
@@ -324,9 +324,9 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     object Foo {
       implicit val schema: Schema[Foo] = {
         val foos =
-          map(string.addHints(XmlName("k")), int.addHints(XmlName("v")))
+          map(string.addHints(UrlFormName("k")), int.addHints(UrlFormName("v")))
             .required[Foo]("foos", _.foos)
-            .addHints(XmlName("entries"))
+            .addHints(UrlFormName("entries"))
         struct(foos)(Foo.apply)
       }
     }
@@ -344,7 +344,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
         val foos =
           map(string, int)
             .required[Foo]("foos", _.foos)
-            .addHints(XmlFlattened())
+            .addHints(UrlFormFlattened())
         struct(foos)(Foo.apply)
       }
     }
@@ -362,7 +362,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
     expect.same(
       UrlForm
         .Encoder(
-          ignoreXmlFlattened = false,
+          ignoreUrlFormFlattened = false,
           capitalizeStructAndUnionMemberNames = false
         )
         .fromSchema(schema)
@@ -376,7 +376,7 @@ object UrlFormDataEncoderDecoderSchemaVisitorSpec extends SimpleIOSuite {
           .flatMap(urlForm =>
             UrlForm
               .Decoder(
-                ignoreXmlFlattened = false,
+                ignoreUrlFormFlattened = false,
                 capitalizeStructAndUnionMemberNames = false
               )
               .fromSchema(schema)

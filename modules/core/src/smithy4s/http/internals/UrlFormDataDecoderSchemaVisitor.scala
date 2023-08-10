@@ -18,8 +18,8 @@ package smithy4s
 package http
 package internals
 
-import smithy.api.XmlFlattened
-import smithy.api.XmlName
+import alloy.UrlFormFlattened
+import alloy.UrlFormName
 import smithy4s.codecs.PayloadPath
 import smithy4s.internals.SchemaDescription
 import smithy4s.schema._
@@ -28,7 +28,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataDecoder],
     // These are used by AwsEc2QueryCodecs to conform to the requirements of
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-    ignoreXmlFlattened: Boolean,
+    ignoreUrlFormFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataDecoder]
     with smithy4s.ScalaCompat {
@@ -57,7 +57,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
   ): UrlFormDataDecoder[C[A]] = {
     val memberDecoder = compile(member)
     val maybeKey =
-      if (ignoreXmlFlattened || hints.has[XmlFlattened]) None
+      if (ignoreUrlFormFlattened || hints.has[UrlFormFlattened]) None
       else Option(getKey(member.hints, "member"))
     cursor =>
       maybeKey.fold(cursor)(cursor.down(_)) match {
@@ -112,7 +112,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
+      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName("entry"))
     }
     compile(Schema.vector(kvSchema).addHints(hints))
       .map(_.toMap)
@@ -215,7 +215,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints
-      .get(XmlName)
+      .get(UrlFormName)
       .map(_.value)
       .map(PayloadPath.Segment(_))
       .getOrElse(
