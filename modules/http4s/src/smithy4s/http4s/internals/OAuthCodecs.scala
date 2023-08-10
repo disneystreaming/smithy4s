@@ -109,7 +109,7 @@ private[http4s] class OAuthCodecs(
       metadataDecoderCompiler = Metadata.AwsDecoder,
       entityDecoderCompiler = UrlForm
         .Decoder(
-          ignoreXmlFlattened = false,
+          ignoreUrlFormFlattened = false,
           capitalizeStructAndUnionMemberNames = false
         )
         .mapK(
@@ -158,7 +158,7 @@ private[http4s] class OAuthCodecs(
       metadataEncoderCompiler = Metadata.AwsEncoder,
       entityEncoderCompiler = UrlForm
         .Encoder(
-          ignoreXmlFlattened = false,
+          ignoreUrlFormFlattened = false,
           capitalizeStructAndUnionMemberNames = false
         )
         .mapK(
