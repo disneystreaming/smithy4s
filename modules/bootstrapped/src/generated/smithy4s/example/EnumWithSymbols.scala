@@ -31,6 +31,6 @@ object EnumWithSymbols extends Enumeration[EnumWithSymbols] with ShapeTag.Compan
     BarBarBar,
     Value2,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[EnumWithSymbols] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[EnumWithSymbols] = enumeration(tag, values).withId(id).addHints(hints)
 }

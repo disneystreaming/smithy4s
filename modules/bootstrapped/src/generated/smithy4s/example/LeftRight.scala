@@ -29,6 +29,6 @@ object LeftRight extends Enumeration[LeftRight] with ShapeTag.Companion[LeftRigh
     LEFT,
     RIGHT,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[LeftRight] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[LeftRight] = enumeration(tag, values).withId(id).addHints(hints)
 }

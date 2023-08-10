@@ -33,6 +33,6 @@ object Ingredient extends Enumeration[Ingredient] with ShapeTag.Companion[Ingred
     SALAD,
     TOMATO,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[Ingredient] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[Ingredient] = enumeration(tag, values).withId(id).addHints(hints)
 }

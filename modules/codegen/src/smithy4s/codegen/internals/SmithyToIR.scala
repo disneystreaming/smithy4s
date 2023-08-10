@@ -382,12 +382,15 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
           }
           .toList
 
+        val isOpen = shape.hasTrait(classOf[alloy.OpenEnumTrait])
+        val openEnumHint = if (isOpen) List(Hint.OpenEnum) else List.empty
+
         Enumeration(
           shape.getId(),
           shape.name,
-          EnumTag.StringEnum,
+          if (isOpen) EnumTag.OpenStringEnum else EnumTag.StringEnum,
           values,
-          hints = hints(shape)
+          hints = hints(shape) ++ openEnumHint
         ).some
       }
 
@@ -401,12 +404,16 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             EnumValue(name, value, name, hints(member))
           }
           .toList
+
+        val isOpen = shape.hasTrait(classOf[alloy.OpenEnumTrait])
+        val openEnumHint = if (isOpen) List(Hint.OpenEnum) else List.empty
+
         Enumeration(
           shape.getId(),
           shape.name,
-          EnumTag.IntEnum,
+          if (isOpen) EnumTag.OpenIntEnum else EnumTag.IntEnum,
           values,
-          hints(shape)
+          hints(shape) ++ openEnumHint
         ).some
       }
 

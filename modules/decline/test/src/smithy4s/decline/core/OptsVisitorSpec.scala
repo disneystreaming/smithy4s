@@ -29,6 +29,7 @@ import smithy4s.schema.EnumValue
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
+import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 
 object OptsSchematicSpec extends SimpleIOSuite {
   def sampleStruct[A](name: String, schema: Schema[A]): Schema[A] =
@@ -45,6 +46,9 @@ object OptsSchematicSpec extends SimpleIOSuite {
       Schema.either(sampleStruct("int", int), sampleStruct("str", string))
     }
   )
+
+  implicit val openEnumTestEq: Eq[OpenEnumTest] = Eq.fromUniversalEquals
+  implicit val openIntEnumTestEq: Eq[OpenIntEnumTest] = Eq.fromUniversalEquals
 
   sealed trait Superpower
   case object Fire extends Superpower
@@ -265,6 +269,34 @@ object OptsSchematicSpec extends SimpleIOSuite {
     assert.parsed(
       parseOpts(Superpower.schema)("Fire"),
       Fire
+    )
+  }
+
+  pureTest("compile open string enum - known value") {
+    assert.parsed(
+      parseOpts(sampleStruct("test", OpenEnumTest.schema))("ONE"),
+      OpenEnumTest.ONE
+    )
+  }
+
+  pureTest("compile open string enum - unknown value") {
+    assert.parsed(
+      parseOpts(sampleStruct("test", OpenEnumTest.schema))("SOMETHING"),
+      OpenEnumTest.$Unknown("SOMETHING")
+    )
+  }
+
+  pureTest("compile open int enum - known value") {
+    assert.parsed(
+      parseOpts(sampleStruct("test", OpenIntEnumTest.schema))("1"),
+      OpenIntEnumTest.ONE
+    )
+  }
+
+  pureTest("compile open int enum - unknown value") {
+    assert.parsed(
+      parseOpts(sampleStruct("test", OpenIntEnumTest.schema))("123"),
+      OpenIntEnumTest.$Unknown(123)
     )
   }
 

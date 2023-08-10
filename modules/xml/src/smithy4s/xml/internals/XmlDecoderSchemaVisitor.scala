@@ -102,22 +102,35 @@ private[smithy4s] class XmlDecoderSchemaVisitor(
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): XmlDecoder[E] = {
     tag match {
-      case EnumTag.IntEnum =>
+      case EnumTag.IntEnum() =>
         val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
         val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
+        val handler: String => Option[E] =
+          tag match {
+            case EnumTag.OpenIntEnum(unknown) =>
+              _.toIntOption.map(i => valueMap.getOrElse(i, unknown(i)))
+            case _ =>
+              _.toIntOption.flatMap(valueMap.get)
+          }
         XmlDecoder.fromStringParser(desc, trim = true)(
-          _.toIntOption.flatMap(valueMap.get)
+          handler(_)
         )
-
-      case EnumTag.StringEnum =>
+      case _ =>
         val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
         val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
-        XmlDecoder.fromStringParser(desc, trim = false)(valueMap.get)
+        val handler: String => Option[E] =
+          tag match {
+            case EnumTag.OpenStringEnum(unknown) =>
+              s => Some(valueMap.getOrElse(s, unknown(s)))
+            case _ =>
+              valueMap.get(_)
+          }
+        XmlDecoder.fromStringParser(desc, trim = false)(handler)
     }
   }
 

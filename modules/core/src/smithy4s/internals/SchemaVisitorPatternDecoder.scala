@@ -20,7 +20,6 @@ import smithy4s.schema._
 import smithy4s.internals.PatternDecode.MaybePatternDecode
 import smithy4s.Bijection
 import smithy4s.{Hints, Lazy, Refinement, ShapeId}
-import smithy4s.schema.EnumTag.StringEnum
 
 private[internals] final class SchemaVisitorPatternDecoder(
     segments: List[PatternSegment]
@@ -49,24 +48,45 @@ private[internals] final class SchemaVisitorPatternDecoder(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): MaybePatternDecode[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
+    val fromOrdinal =
+      values.map(e => BigDecimal(e.intValue) -> e.value).toMap
     tag match {
-      case EnumTag.IntEnum =>
-        val fromOrdinal =
-          values.map(e => BigDecimal(e.intValue) -> e.value).toMap
+      case EnumTag.ClosedIntEnum =>
         PatternDecode.from(value =>
           if (fromOrdinal.contains(BigDecimal(value)))
             fromOrdinal(BigDecimal(value))
           else throw StructurePatternError(s"Enum case for '$value' not found.")
         )
-      case StringEnum =>
+      case EnumTag.OpenIntEnum(unknown) =>
+        PatternDecode.from(value =>
+          if (fromOrdinal.contains(BigDecimal(value)))
+            fromOrdinal(BigDecimal(value))
+          else
+            // toIntOption not available on 2.12
+            util
+              .Try(value.toInt)
+              .toOption
+              .map(unknown(_))
+              .getOrElse(
+                throw StructurePatternError(
+                  s"Enum case for '$value' not found."
+                )
+              )
+        )
+      case EnumTag.ClosedStringEnum =>
         PatternDecode.from(value =>
           if (fromName.contains(value)) fromName(value)
           else throw StructurePatternError(s"Enum case for '$value' not found.")
+        )
+      case EnumTag.OpenStringEnum(unknown) =>
+        PatternDecode.from(value =>
+          if (fromName.contains(value)) fromName(value)
+          else unknown(value)
         )
     }
   }
