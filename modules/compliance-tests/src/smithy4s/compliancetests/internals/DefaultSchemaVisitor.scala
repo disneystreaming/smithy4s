@@ -68,7 +68,7 @@ private[compliancetests] object DefaultSchemaVisitor extends SchemaVisitor[Id] {
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Id[E] = values.head.value

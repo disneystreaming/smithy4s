@@ -32,6 +32,7 @@ import smithy4s.ShapeId
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
 import weaver._
+import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 
 object XmlCodecSpec extends SimpleIOSuite {
 
@@ -416,6 +417,23 @@ object XmlCodecSpec extends SimpleIOSuite {
     val xmlBar = "<x>bar</x>"
     checkContent[FooBar](xmlFoo, FooBar.Foo) <+>
       checkContent[FooBar](xmlBar, FooBar.Bar)
+  }
+
+  test("open string enumeration") {
+    val xmlKnown = "<OpenEnumTest>ONE</OpenEnumTest>"
+    val xmlUnknown = "<OpenEnumTest>something</OpenEnumTest>"
+    checkContent[OpenEnumTest](xmlKnown, OpenEnumTest.ONE) <+>
+      checkContent[OpenEnumTest](
+        xmlUnknown,
+        OpenEnumTest.$Unknown("something")
+      )
+  }
+
+  test("open int enumeration") {
+    val xmlKnown = "<OpenIntEnumTest>1</OpenIntEnumTest>"
+    val xmlUnknown = "<OpenIntEnumTest>123</OpenIntEnumTest>"
+    checkContent[OpenIntEnumTest](xmlKnown, OpenIntEnumTest.ONE) <+>
+      checkContent[OpenIntEnumTest](xmlUnknown, OpenIntEnumTest.$Unknown(123))
   }
 
   test("map") {

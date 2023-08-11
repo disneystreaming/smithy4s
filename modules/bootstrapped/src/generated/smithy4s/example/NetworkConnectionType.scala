@@ -32,7 +32,7 @@ object NetworkConnectionType extends Enumeration[NetworkConnectionType] with Sha
     ETHERNET,
     WIFI,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[NetworkConnectionType] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[NetworkConnectionType] = enumeration(tag, values).withId(id).addHints(hints)
 
   implicit val networkConnectionTypeHash: cats.Hash[NetworkConnectionType] = SchemaVisitorHash.fromSchema(schema)

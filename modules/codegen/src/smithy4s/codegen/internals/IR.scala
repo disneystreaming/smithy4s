@@ -121,6 +121,8 @@ private[internals] sealed trait EnumTag
 private[internals] object EnumTag {
   case object StringEnum extends EnumTag
   case object IntEnum extends EnumTag
+  case object OpenStringEnum extends EnumTag
+  case object OpenIntEnum extends EnumTag
 }
 
 private[internals] case class Field(
@@ -293,6 +295,7 @@ private[internals] object Hint {
   // traits that get rendered generically
   case class Native(typedNode: Fix[TypedNode]) extends Hint
   case object IntEnum extends Hint
+  case object OpenEnum extends Hint
 
   sealed trait SpecializedList extends Hint
   object SpecializedList {
