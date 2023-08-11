@@ -94,6 +94,11 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint.matches(path)
   }
 
+  private val headRemoveBody: Response[F] => Response[F] =
+    if (endpoint.hints.get[smithy.api.Http].exists(_.method == "HEAD"))
+      _.withBodyStream(fs2.Stream.empty)
+    else identity
+
   override val httpApp: HttpApp[F] = {
     val baseApp = HttpApp[F] { req =>
       val run: F[O] = for {
@@ -101,7 +106,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
-      run.map(outputEncoder.write(successResponseBase, _))
+      run.map(outputEncoder.write(successResponseBase, _)).map(headRemoveBody)
     }
     middleware(endpoint)(baseApp).handleErrorWith(error =>
       Kleisli.liftF(errorResponse(error))
