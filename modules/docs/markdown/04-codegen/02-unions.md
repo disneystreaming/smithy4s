@@ -212,3 +212,16 @@ val visitor = new Pet.Visitor[String] {
 
 myPet.accept(visitor) // "Dog named Spot"
 ```
+
+You can also implement a Visitor using `Visitor.Default` to provide a default value to be used for cases that you don't explicitly implement. For example:
+
+```scala
+val myPet: Pet = Pet.DogCase(Dog(name = "Spot"))
+
+val visitor = new Pet.Visitor.Default[String] {
+    def default: String = "default value"
+    def cat(cat: Cat): String = s"Cat named ${cat.name}"
+}
+
+myPet.accept(visitor) // "default value"
+```

@@ -279,6 +279,13 @@ final class RendererConfigSpec extends munit.FunSuite {
          |    def badRequest(value: BadRequest): A
          |    def internalServerError(value: InternalServerError): A
          |  }
+         |  object Visitor {
+         |    trait Default[A] extends Visitor[A] {
+         |      def default: A
+         |      def badRequest(value: BadRequest): A = default
+         |      def internalServerError(value: InternalServerError): A = default
+         |    }
+         |  }
          |  implicit val schema: UnionSchema[OperationError] = union(
          |    OperationError.BadRequestCase.alt,
          |    OperationError.InternalServerErrorCase.alt,

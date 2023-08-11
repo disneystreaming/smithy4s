@@ -143,6 +143,13 @@ object HelloWorldAuthServiceOperation {
       def notAuthorizedError(value: NotAuthorizedError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def notAuthorizedError(value: NotAuthorizedError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[SayWorldError] = union(
       SayWorldError.NotAuthorizedErrorCase.alt,
     ){
@@ -207,6 +214,13 @@ object HelloWorldAuthServiceOperation {
 
     trait Visitor[A] {
       def notAuthorizedError(value: NotAuthorizedError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def notAuthorizedError(value: NotAuthorizedError): A = default
+      }
     }
 
     implicit val schema: UnionSchema[HealthCheckError] = union(

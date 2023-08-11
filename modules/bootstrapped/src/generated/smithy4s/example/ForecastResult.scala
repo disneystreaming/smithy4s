@@ -55,6 +55,14 @@ object ForecastResult extends ShapeTag.Companion[ForecastResult] {
     def sun(value: UVIndex): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def rain(value: ChanceOfRain): A = default
+      def sun(value: UVIndex): A = default
+    }
+  }
+
   implicit val schema: Schema[ForecastResult] = union(
     ForecastResult.RainCase.alt,
     ForecastResult.SunCase.alt,

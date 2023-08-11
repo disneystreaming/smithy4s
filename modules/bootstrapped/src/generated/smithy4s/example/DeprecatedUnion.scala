@@ -97,6 +97,16 @@ object DeprecatedUnion extends ShapeTag.Companion[DeprecatedUnion] {
     def p2(value: DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def s(value: String): A = default
+      def s_V2(value: String): A = default
+      def p(value: DeprecatedUnion.DeprecatedUnionProductCase): A = default
+      def p2(value: DeprecatedUnion.UnionProductCaseDeprecatedAtCallSite): A = default
+    }
+  }
+
   implicit val schema: Schema[DeprecatedUnion] = union(
     DeprecatedUnion.SCase.alt,
     DeprecatedUnion.S_V2Case.alt,

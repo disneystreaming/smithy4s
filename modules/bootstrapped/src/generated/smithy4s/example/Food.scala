@@ -49,6 +49,14 @@ object Food extends ShapeTag.Companion[Food] {
     def salad(value: Salad): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def pizza(value: Pizza): A = default
+      def salad(value: Salad): A = default
+    }
+  }
+
   implicit val schema: Schema[Food] = union(
     Food.PizzaCase.alt,
     Food.SaladCase.alt,

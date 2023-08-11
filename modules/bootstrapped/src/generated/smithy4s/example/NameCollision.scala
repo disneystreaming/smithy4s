@@ -134,6 +134,13 @@ object NameCollisionOperation {
       def myOpError(value: smithy4s.example.MyOpError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def myOpError(value: smithy4s.example.MyOpError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[MyOpError] = union(
       MyOpError.MyOpErrorCase.alt,
     ){

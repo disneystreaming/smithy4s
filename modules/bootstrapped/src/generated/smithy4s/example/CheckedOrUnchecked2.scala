@@ -52,6 +52,14 @@ object CheckedOrUnchecked2 extends ShapeTag.Companion[CheckedOrUnchecked2] {
     def raw(value: String): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def checked(value: String): A = default
+      def raw(value: String): A = default
+    }
+  }
+
   implicit val schema: Schema[CheckedOrUnchecked2] = union(
     CheckedOrUnchecked2.CheckedCase.alt,
     CheckedOrUnchecked2.RawCase.alt,

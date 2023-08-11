@@ -165,6 +165,16 @@ object ErrorHandlingServiceOperation {
       def eHFallbackServerError(value: EHFallbackServerError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def eHFallbackClientError(value: EHFallbackClientError): A = default
+        def eHServiceUnavailable(value: EHServiceUnavailable): A = default
+        def eHNotFound(value: EHNotFound): A = default
+        def eHFallbackServerError(value: EHFallbackServerError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ErrorHandlingOperationError] = union(
       ErrorHandlingOperationError.EHFallbackClientErrorCase.alt,
       ErrorHandlingOperationError.EHServiceUnavailableCase.alt,

@@ -44,6 +44,13 @@ object OpticsUnion extends ShapeTag.Companion[OpticsUnion] {
     def one(value: OpticsStructure): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def one(value: OpticsStructure): A = default
+    }
+  }
+
   implicit val schema: Schema[OpticsUnion] = union(
     OpticsUnion.OneCase.alt,
   ){

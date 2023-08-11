@@ -212,6 +212,15 @@ object PizzaAdminServiceOperation {
       def genericClientError(value: GenericClientError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def priceError(value: PriceError): A = default
+        def genericServerError(value: GenericServerError): A = default
+        def genericClientError(value: GenericClientError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[AddMenuItemError] = union(
       AddMenuItemError.PriceErrorCase.alt,
       AddMenuItemError.GenericServerErrorCase.alt,
@@ -314,6 +323,16 @@ object PizzaAdminServiceOperation {
       def notFoundError(value: NotFoundError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def genericClientError(value: GenericClientError): A = default
+        def fallbackError2(value: FallbackError2): A = default
+        def fallbackError(value: FallbackError): A = default
+        def notFoundError(value: NotFoundError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[GetMenuError] = union(
       GetMenuError.GenericClientErrorCase.alt,
       GetMenuError.FallbackError2Case.alt,
@@ -398,6 +417,13 @@ object PizzaAdminServiceOperation {
 
     trait Visitor[A] {
       def unknownServerError(value: UnknownServerError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unknownServerError(value: UnknownServerError): A = default
+      }
     }
 
     implicit val schema: UnionSchema[HealthError] = union(
@@ -498,6 +524,13 @@ object PizzaAdminServiceOperation {
       def unknownServerError(value: UnknownServerError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unknownServerError(value: UnknownServerError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[GetEnumError] = union(
       GetEnumError.UnknownServerErrorCase.alt,
     ){
@@ -562,6 +595,13 @@ object PizzaAdminServiceOperation {
       def unknownServerError(value: UnknownServerError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unknownServerError(value: UnknownServerError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[GetIntEnumError] = union(
       GetIntEnumError.UnknownServerErrorCase.alt,
     ){
@@ -624,6 +664,13 @@ object PizzaAdminServiceOperation {
 
     trait Visitor[A] {
       def unknownServerError(value: UnknownServerError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unknownServerError(value: UnknownServerError): A = default
+      }
     }
 
     implicit val schema: UnionSchema[CustomCodeError] = union(

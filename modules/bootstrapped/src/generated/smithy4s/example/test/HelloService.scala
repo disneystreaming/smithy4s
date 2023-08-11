@@ -156,6 +156,14 @@ object HelloServiceOperation {
       def complexError(value: ComplexError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def simpleError(value: SimpleError): A = default
+        def complexError(value: ComplexError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[SayHelloError] = union(
       SayHelloError.SimpleErrorCase.alt,
       SayHelloError.ComplexErrorCase.alt,

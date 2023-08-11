@@ -204,6 +204,14 @@ object DynamoDBOperation {
       def invalidEndpointException(value: InvalidEndpointException): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def internalServerError(value: InternalServerError): A = default
+        def invalidEndpointException(value: InvalidEndpointException): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ListTablesError] = union(
       ListTablesError.InternalServerErrorCase.alt,
       ListTablesError.InvalidEndpointExceptionCase.alt,

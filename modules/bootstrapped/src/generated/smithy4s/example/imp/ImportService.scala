@@ -137,6 +137,13 @@ object ImportServiceOperation {
       def notFoundError(value: NotFoundError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def notFoundError(value: NotFoundError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ImportOperationError] = union(
       ImportOperationError.NotFoundErrorCase.alt,
     ){

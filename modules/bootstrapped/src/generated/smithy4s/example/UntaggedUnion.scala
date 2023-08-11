@@ -51,6 +51,14 @@ object UntaggedUnion extends ShapeTag.Companion[UntaggedUnion] {
     def four(value: Four): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def three(value: Three): A = default
+      def four(value: Four): A = default
+    }
+  }
+
   implicit val schema: Schema[UntaggedUnion] = union(
     UntaggedUnion.ThreeCase.alt,
     UntaggedUnion.FourCase.alt,

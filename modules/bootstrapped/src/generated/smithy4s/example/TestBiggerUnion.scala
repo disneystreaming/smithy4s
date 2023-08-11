@@ -51,6 +51,14 @@ object TestBiggerUnion extends ShapeTag.Companion[TestBiggerUnion] {
     def two(value: Two): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def one(value: One): A = default
+      def two(value: Two): A = default
+    }
+  }
+
   implicit val schema: Schema[TestBiggerUnion] = union(
     TestBiggerUnion.OneCase.alt,
     TestBiggerUnion.TwoCase.alt,

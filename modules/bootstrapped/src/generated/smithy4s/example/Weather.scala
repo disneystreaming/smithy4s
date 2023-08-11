@@ -166,6 +166,13 @@ object WeatherOperation {
       def noSuchResource(value: NoSuchResource): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def noSuchResource(value: NoSuchResource): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[GetCityError] = union(
       GetCityError.NoSuchResourceCase.alt,
     ){

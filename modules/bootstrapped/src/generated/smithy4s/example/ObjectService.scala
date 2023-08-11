@@ -160,6 +160,14 @@ object ObjectServiceOperation {
       def noMoreSpace(value: NoMoreSpace): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def serverError(value: ServerError): A = default
+        def noMoreSpace(value: NoMoreSpace): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[PutObjectError] = union(
       PutObjectError.ServerErrorCase.alt,
       PutObjectError.NoMoreSpaceCase.alt,
@@ -223,6 +231,13 @@ object ObjectServiceOperation {
 
     trait Visitor[A] {
       def serverError(value: ServerError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def serverError(value: ServerError): A = default
+      }
     }
 
     implicit val schema: UnionSchema[GetObjectError] = union(

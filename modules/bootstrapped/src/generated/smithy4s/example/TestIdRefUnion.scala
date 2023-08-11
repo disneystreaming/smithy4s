@@ -50,6 +50,14 @@ object TestIdRefUnion extends ShapeTag.Companion[TestIdRefUnion] {
     def testTwo(value: TestIdRefTwo): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def test(value: ShapeId): A = default
+      def testTwo(value: TestIdRefTwo): A = default
+    }
+  }
+
   implicit val schema: Schema[TestIdRefUnion] = union(
     TestIdRefUnion.TestCase.alt,
     TestIdRefUnion.TestTwoCase.alt,

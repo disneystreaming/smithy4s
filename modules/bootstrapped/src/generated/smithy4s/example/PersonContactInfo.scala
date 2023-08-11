@@ -58,6 +58,14 @@ object PersonContactInfo extends ShapeTag.Companion[PersonContactInfo] {
     def phone(value: PersonPhoneNumber): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def email(value: PersonEmail): A = default
+      def phone(value: PersonPhoneNumber): A = default
+    }
+  }
+
   implicit val schema: Schema[PersonContactInfo] = union(
     PersonContactInfo.EmailCase.alt,
     PersonContactInfo.PhoneCase.alt,

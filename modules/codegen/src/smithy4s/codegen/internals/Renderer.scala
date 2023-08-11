@@ -1037,11 +1037,23 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         line"def $ident: Option[${caseNameType(name, alt)}] = ${caseNameWithAlt(name, alt)}.project.lift(self)$maybeMap"
       }
     )
-    val visitor: Lines = block(line"trait Visitor[A]")(
-      alts.map { alt =>
-        val ident = NameDef(uncapitalise(alt.name))
-        line"def $ident(value: ${caseNameType(name, alt)}): A"
-      }
+    val visitor: Lines = lines(
+      block(line"trait Visitor[A]")(
+        alts.map { alt =>
+          val ident = NameDef(uncapitalise(alt.name))
+          line"def $ident(value: ${caseNameType(name, alt)}): A"
+        }
+      ),
+      newline,
+      block(line"object Visitor")(
+        block(line"trait Default[A] extends Visitor[A]")(
+          line"def default: A",
+          alts.map { alt =>
+            val ident = NameDef(uncapitalise(alt.name))
+            line"def $ident(value: ${caseNameType(name, alt)}): A = default"
+          }
+        )
+      )
     )
     val accept: Lines =
       block(line"def accept[A](visitor: $name.Visitor[A]): A = this match")(

@@ -52,6 +52,13 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
     def test(value: TestMixinAdt.TestAdtMemberWithMixin): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def test(value: TestMixinAdt.TestAdtMemberWithMixin): A = default
+    }
+  }
+
   implicit val schema: Schema[TestMixinAdt] = union(
     TestMixinAdt.TestAdtMemberWithMixin.alt,
   ){

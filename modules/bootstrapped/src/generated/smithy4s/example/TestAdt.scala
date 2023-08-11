@@ -80,6 +80,14 @@ object TestAdt extends ShapeTag.Companion[TestAdt] {
     def two(value: TestAdt.AdtTwo): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def one(value: TestAdt.AdtOne): A = default
+      def two(value: TestAdt.AdtTwo): A = default
+    }
+  }
+
   implicit val schema: Schema[TestAdt] = union(
     TestAdt.AdtOne.alt,
     TestAdt.AdtTwo.alt,

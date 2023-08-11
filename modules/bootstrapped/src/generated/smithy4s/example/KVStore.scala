@@ -154,6 +154,14 @@ object KVStoreOperation {
       def keyNotFoundError(value: KeyNotFoundError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unauthorizedError(value: UnauthorizedError): A = default
+        def keyNotFoundError(value: KeyNotFoundError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[GetError] = union(
       GetError.UnauthorizedErrorCase.alt,
       GetError.KeyNotFoundErrorCase.alt,
@@ -214,6 +222,13 @@ object KVStoreOperation {
 
     trait Visitor[A] {
       def unauthorizedError(value: UnauthorizedError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unauthorizedError(value: UnauthorizedError): A = default
+      }
     }
 
     implicit val schema: UnionSchema[PutError] = union(
@@ -287,6 +302,14 @@ object KVStoreOperation {
     trait Visitor[A] {
       def unauthorizedError(value: UnauthorizedError): A
       def keyNotFoundError(value: KeyNotFoundError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def unauthorizedError(value: UnauthorizedError): A = default
+        def keyNotFoundError(value: KeyNotFoundError): A = default
+      }
     }
 
     implicit val schema: UnionSchema[DeleteError] = union(

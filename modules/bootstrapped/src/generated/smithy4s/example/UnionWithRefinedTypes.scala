@@ -49,6 +49,14 @@ object UnionWithRefinedTypes extends ShapeTag.Companion[UnionWithRefinedTypes] {
     def dogName(value: smithy4s.refined.Name): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def age(value: Age): A = default
+      def dogName(value: smithy4s.refined.Name): A = default
+    }
+  }
+
   implicit val schema: Schema[UnionWithRefinedTypes] = union(
     UnionWithRefinedTypes.AgeCase.alt,
     UnionWithRefinedTypes.DogNameCase.alt,

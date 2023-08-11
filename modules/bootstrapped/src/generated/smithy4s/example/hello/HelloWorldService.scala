@@ -147,6 +147,14 @@ object HelloWorldServiceOperation {
       def specificServerError(value: SpecificServerError): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def genericServerError(value: GenericServerError): A = default
+        def specificServerError(value: SpecificServerError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[HelloError] = union(
       HelloError.GenericServerErrorCase.alt,
       HelloError.SpecificServerErrorCase.alt,

@@ -166,6 +166,16 @@ object ErrorHandlingServiceExtraErrorsOperation {
       def randomOtherServerErrorWithCode(value: RandomOtherServerErrorWithCode): A
     }
 
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def randomOtherClientError(value: RandomOtherClientError): A = default
+        def randomOtherServerError(value: RandomOtherServerError): A = default
+        def randomOtherClientErrorWithCode(value: RandomOtherClientErrorWithCode): A = default
+        def randomOtherServerErrorWithCode(value: RandomOtherServerErrorWithCode): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ExtraErrorOperationError] = union(
       ExtraErrorOperationError.RandomOtherClientErrorCase.alt,
       ExtraErrorOperationError.RandomOtherServerErrorCase.alt,

@@ -94,6 +94,14 @@ object Podcast extends ShapeTag.Companion[Podcast] {
     def audio(value: Podcast.Audio): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def video(value: Podcast.Video): A = default
+      def audio(value: Podcast.Audio): A = default
+    }
+  }
+
   implicit val schema: Schema[Podcast] = union(
     Podcast.Video.alt,
     Podcast.Audio.alt,

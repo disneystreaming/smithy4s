@@ -25,6 +25,24 @@ final class VisitorAndProjectionSpec extends FunSuite {
     )
   }
 
+  test("visitor - default") {
+    val visitor = new OrderType.Visitor.Default[String] {
+      def default: String = "test"
+    }
+    assertEquals(
+      OrderType.OnlineCase(OrderNumber(123)).accept(visitor),
+      "test"
+    )
+    assertEquals(
+      OrderType.InStoreOrder(OrderNumber(2)).accept(visitor),
+      "test"
+    )
+    assertEquals(
+      OrderType.PreviewCase.accept(visitor),
+      "test"
+    )
+  }
+
   test("projections") {
     val one = OrderType.OnlineCase(OrderNumber(123))
     val two = OrderType.InStoreOrder(OrderNumber(2))

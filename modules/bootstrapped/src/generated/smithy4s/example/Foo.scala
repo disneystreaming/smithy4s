@@ -86,6 +86,16 @@ object Foo extends ShapeTag.Companion[Foo] {
     def bDec(value: BigDecimal): A
   }
 
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def int(value: Int): A = default
+      def str(value: String): A = default
+      def bInt(value: BigInt): A = default
+      def bDec(value: BigDecimal): A = default
+    }
+  }
+
   implicit val schema: Schema[Foo] = union(
     Foo.IntCase.alt,
     Foo.StrCase.alt,
