@@ -7,7 +7,7 @@ use alloy#simpleRestJson
 @simpleRestJson
 service PizzaAdminService {
   version: "1.0.0",
-  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book, Echo]
+  operations: [AddMenuItem, GetMenu, Version, Health, HeaderEndpoint, RoundTrip, GetEnum, GetIntEnum, CustomCode, Book, Echo, HeadRequest]
 }
 
 @http(method: "POST", uri: "/restaurant/{restaurant}/menu/item", code: 201)
@@ -335,4 +335,16 @@ operation Echo {
 structure EchoBody {
   @length(min: 10)
   data: String
+}
+
+@http(method: "HEAD", uri: "/head-request")
+@readonly
+operation HeadRequest {
+    output: HeadRequestOutput
+}
+
+structure HeadRequestOutput {
+    @httpHeader("Test")
+    @required
+    test: String
 }

@@ -117,4 +117,7 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
       body: EchoBody,
       queryParam: Option[String]
   ): IO[Unit] = IO.unit
+
+  def headRequest(): cats.effect.IO[HeadRequestOutput] =
+    IO.pure(HeadRequestOutput("test"))
 }
