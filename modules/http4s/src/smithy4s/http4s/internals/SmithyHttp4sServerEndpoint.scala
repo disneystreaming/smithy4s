@@ -96,7 +96,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
   }
 
   private val headRemoveBody: Response[F] => Response[F] =
-    if (endpoint.hints.get[smithy.api.Http].exists(_.method == "HEAD"))
+    if (endpoint.hints.get[smithy.api.Http].exists(_.method.value === "HEAD"))
       r =>
         r.withHeaders(
           r.headers.headers.filterNot(_.name === CIString("Content-Type"))
