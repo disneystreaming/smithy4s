@@ -64,7 +64,6 @@ lazy val allModules = Seq(
   codegenPlugin,
   benchmark,
   `aws-sandbox`,
-  `oauth-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -913,42 +912,6 @@ lazy val `aws-sandbox` = projectMatrix
     run / fork := true
   )
   .jvmPlatform(List(Scala213), jvmDimSettings)
-  .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
-
-// TODO: Move out of smithy4s.
-lazy val `oauth-sandbox` = projectMatrix
-  .in(file("modules/oauth-sandbox"))
-  .dependsOn(http4s)
-  .settings(
-    Compile / allowedNamespaces := Seq(
-      // TODO: Remove once tokenExchange is upstreamed.
-      "alloy",
-      "smithy4s.sandbox.oauth"
-    ),
-    smithySpecs := IO.listFiles(
-      (ThisBuild / baseDirectory).value / "modules" / "oauth-sandbox" / "smithy"
-    ),
-    genSmithy(Compile),
-    // Ignore deprecation warnings here - it's all generated code, anyway.
-    scalacOptions ++= Seq(
-      "-Wconf:cat=deprecation:silent"
-    ),
-    libraryDependencies ++= Seq(
-      Dependencies.CatsEffect3.value,
-      Dependencies.Circe.core.value,
-      Dependencies.Circe.parser.value,
-      Dependencies.Http4s.circe.value,
-      Dependencies.Http4s.client.value,
-      Dependencies.Http4s.core.value,
-      Dependencies.Http4s.dsl.value,
-      Dependencies.Http4s.emberClient.value,
-      Dependencies.Http4s.emberServer.value,
-      Dependencies.Slf4jSimple % Runtime
-    ),
-    run / fork := true,
-    run / outputStrategy := Some(OutputStrategy.StdoutOutput)
-  )
-  .jvmPlatform(List(Scala3), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
 def genSmithy(config: Configuration) = Def.settings(
