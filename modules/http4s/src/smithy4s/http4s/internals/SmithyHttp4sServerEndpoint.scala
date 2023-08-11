@@ -109,7 +109,11 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     if (endpoint.hints.get[smithy.api.Http].exists(_.method == "HEAD"))
       r =>
         r.withHeaders(
-          r.headers.headers.filterNot(_.name === CIString("Content-Type"))
+          r.headers.headers.filterNot(h =>
+            h.name === CIString("Content-Type") || h.name === CIString(
+              "Content-Length"
+            )
+          )
         ).withBodyStream(fs2.Stream.empty)
     else identity
 

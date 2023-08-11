@@ -326,7 +326,6 @@ abstract class PizzaSpec
         headers,
         HeaderMap(
           Map(
-            CaseInsensitive("Content-Length") -> List("2"),
             CaseInsensitive("Test") -> List("test")
           )
         )
