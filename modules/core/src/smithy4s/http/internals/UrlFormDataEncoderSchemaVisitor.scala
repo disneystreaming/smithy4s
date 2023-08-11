@@ -112,20 +112,22 @@ private[http] class UrlFormDataEncoderSchemaVisitor(
       total: E => EnumValue[E]
   ): UrlFormDataEncoder[E] = tag match {
     case EnumTag.IntEnum() =>
-      value => List(
-        UrlForm.FormData(
-          PayloadPath.root,
-          Some(total(value).intValue.toString)
+      value =>
+        List(
+          UrlForm.FormData(
+            PayloadPath.root,
+            Some(total(value).intValue.toString)
+          )
         )
-      )
 
-    case EnumTag.StringEnum() =>
-      value => List(
-        UrlForm.FormData(
-          PayloadPath.root,
-          Some(total(value).stringValue)
+    case _ =>
+      value =>
+        List(
+          UrlForm.FormData(
+            PayloadPath.root,
+            Some(total(value).stringValue)
+          )
         )
-      )
   }
 
   override def struct[S](

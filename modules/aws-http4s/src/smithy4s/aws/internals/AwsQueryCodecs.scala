@@ -138,20 +138,20 @@ private[aws] object AwsQueryCodecs {
       .restSchemaCompiler[F](
         metadataEncoderCompiler = Metadata.AwsEncoder,
         entityEncoderCompiler = urlFormEntityEncoderCompilers,
-        // We have to set this so that a body is produced even in the case where a
-        // top-level struct input is empty. If it wasn't then the contramap above
-        // wouldn't have the required effect because there would be no UrlForm to
-        // add Action and Version to (literally no UrlForm value - not just an
-        // empty one).
+        // We have to set this so that a body is produced even in the case where
+        // a top-level struct input is empty. If it wasn't then the contramap
+        // above wouldn't have the required effect because there would be no
+        // UrlForm to add Action and Version to (literally no UrlForm value -
+        // not just an empty one).
         writeEmptyStructs = true
       )
       .contramapSchema(
-      // The AWS protocol works in terms of XmlFlattened and XmlName hints, even
-      // for the input side, which is most definitely _not_ XML. Partly because
-      // that seems odd, but mostly so that the URL form support can be
-      // completely agnostic of AWS protocol details, they work with their own
-      // more appropriately named hints - which is what necessitates the
-      // translation here.
+        // The AWS protocol works in terms of XmlFlattened and XmlName hints,
+        // even for the input side, which is most definitely _not_ XML. Partly
+        // because that seems odd, but mostly so that the URL form support can
+        // be completely agnostic of AWS protocol details, they work with their
+        // own more appropriately named hints - which is what necessitates the
+        // translation here.
         Schema.transformHintsTransitivelyK { hints =>
           def translateFlattened(hints: Hints): Hints =
             hints.memberHints.get(XmlFlattened) match {

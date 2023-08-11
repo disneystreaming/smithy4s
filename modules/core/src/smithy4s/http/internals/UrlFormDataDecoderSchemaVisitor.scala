@@ -121,23 +121,22 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
-  ): UrlFormDataDecoder[E] =
-    tag match {
-      case EnumTag.IntEnum =>
-        val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
-        val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
-        UrlFormDataDecoder.fromStringParser(desc)(
-          _.toIntOption.flatMap(valueMap.get(_))
-        )
+  ): UrlFormDataDecoder[E] = tag match {
+    case EnumTag.IntEnum() =>
+      val desc = s"enum[${values.map(_.intValue).mkString(", ")}]"
+      val valueMap = values.map(ev => ev.intValue -> ev.value).toMap
+      UrlFormDataDecoder.fromStringParser(desc)(
+        _.toIntOption.flatMap(valueMap.get(_))
+      )
 
-      case EnumTag.StringEnum =>
-        val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
-        val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
-        UrlFormDataDecoder.fromStringParser(desc)(valueMap.get)
-    }
+    case _ =>
+      val desc = s"enum[${values.map(_.stringValue).mkString(", ")}]"
+      val valueMap = values.map(ev => ev.stringValue -> ev.value).toMap
+      UrlFormDataDecoder.fromStringParser(desc)(valueMap.get)
+  }
 
   override def struct[S](
       shapeId: ShapeId,
