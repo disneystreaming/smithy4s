@@ -314,6 +314,19 @@ abstract class PizzaSpec
     }
   }
 
+  routerTest("HEAD request should have empty body") { (client, uri, log) =>
+    for {
+      res <- client.send[String](
+        HEAD((uri / "head-request")),
+        log
+      )
+    } yield {
+      val (code, _, body) = res
+      expect.same(code, 200) &&
+      expect.same(body, "")
+    }
+  }
+
   // note: these aren't really part of the pizza suite
 
   pureTest("Happy path: httpMatch") {
