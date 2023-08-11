@@ -321,9 +321,17 @@ abstract class PizzaSpec
         log
       )
     } yield {
-      val (code, _, body) = res
+      val (code, headers, body) = res
       expect.same(code, 200) &&
-      expect.same(body, "")
+      expect.same(body, "") &&
+      expect.same(
+        headers,
+        HeaderMap(
+          Map(
+            CaseInsensitive("Test") -> List("test")
+          )
+        )
+      )
     }
   }
 

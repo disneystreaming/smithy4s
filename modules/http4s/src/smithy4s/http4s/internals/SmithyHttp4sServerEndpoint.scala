@@ -28,6 +28,7 @@ import org.http4s.Status
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.kinds._
+import org.typelevel.ci.CIString
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -96,7 +97,10 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
 
   private val headRemoveBody: Response[F] => Response[F] =
     if (endpoint.hints.get[smithy.api.Http].exists(_.method == "HEAD"))
-      _.withBodyStream(fs2.Stream.empty)
+      r =>
+        r.withHeaders(
+          r.headers.headers.filterNot(_.name === CIString("Content-Type"))
+        ).withBodyStream(fs2.Stream.empty)
     else identity
 
   override val httpApp: HttpApp[F] = {
