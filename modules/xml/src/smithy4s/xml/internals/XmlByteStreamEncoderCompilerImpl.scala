@@ -22,18 +22,18 @@ import fs2._
 import fs2.data.xml._
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.codecs.Writer
-import smithy4s.fs2lib._
+import smithy4s.interopfs2._
 
 private[smithy4s] final case class XmlByteStreamEncoderCompilerImpl[F[_]]()
-    extends CachedSchemaCompiler.Impl[XmlByteStreamEncoder[F, *]]
+    extends CachedSchemaCompiler.Impl[ByteStreamEncoder[F, *]]
     with XmlByteStreamEncoderCompiler[F] {
 
-  type Aux[A] = XmlByteStreamEncoder[F, A]
+  type Aux[A] = ByteStreamEncoder[F, A]
 
   def fromSchema[A](
       schema: Schema[A],
       cache: Cache
-  ): XmlByteStreamEncoder[F, A] = new Writer[Any, Stream[F, Byte], A] {
+  ): ByteStreamEncoder[F, A] = new Writer[Any, Stream[F, Byte], A] {
     val fa = XmlDocument.Encoder.fromSchema(schema)
 
     def write(input: Any, a: A): Stream[F, Byte] = {

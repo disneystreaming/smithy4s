@@ -33,7 +33,7 @@ import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.xml.Xml
-import smithy4s.fs2lib._
+import smithy4s.interopfs2._
 
 private[aws] object AwsXmlCodecs {
 
@@ -112,11 +112,11 @@ private[aws] object AwsXmlCodecs {
       : CachedSchemaCompiler[EntityEncoder[F, *]] =
     Xml.xmlByteStreamEncoders[fs2.Pure].mapK {
       new PolyFunction[
-        XmlByteStreamEncoder[fs2.Pure, *],
+        ByteStreamEncoder[fs2.Pure, *],
         EntityEncoder[F, *]
       ] {
         def apply[A](
-            encoder: XmlByteStreamEncoder[fs2.Pure, A]
+            encoder: ByteStreamEncoder[fs2.Pure, A]
         ): EntityEncoder[F, A] =
           EntityEncoder.encodeBy(
             org.http4s.headers.`Content-Type`(MediaType.application.xml)
@@ -139,9 +139,9 @@ private[aws] object AwsXmlCodecs {
       val xmlMediaRange = MediaRange
         .parse("application/xml")
         .getOrElse(throw new RuntimeException("Unable to parse xml MediaRange"))
-      new PolyFunction[XmlByteStreamDecoder[F, *], EntityDecoder[F, *]] {
+      new PolyFunction[ByteStreamDecoder[F, *], EntityDecoder[F, *]] {
         def apply[A](
-            decoder: XmlByteStreamDecoder[F, A]
+            decoder: ByteStreamDecoder[F, A]
         ): EntityDecoder[F, A] =
           EntityDecoder.decodeBy(
             xmlMediaRange

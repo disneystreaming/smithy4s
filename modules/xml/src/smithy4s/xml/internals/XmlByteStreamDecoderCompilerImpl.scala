@@ -25,19 +25,19 @@ import fs2.data.xml._
 import fs2.data.xml.dom._
 import cats.effect.Concurrent
 import cats.syntax.all._
-import smithy4s.fs2lib._
+import smithy4s.interopfs2._
 
 private[smithy4s] final case class XmlByteStreamDecoderCompilerImpl[
     F[_]: Concurrent
-]() extends CachedSchemaCompiler.Impl[XmlByteStreamDecoder[F, *]]
+]() extends CachedSchemaCompiler.Impl[ByteStreamDecoder[F, *]]
     with XmlByteStreamDecoderCompiler[F] {
 
-  type Aux[A] = XmlByteStreamDecoder[F, A]
+  type Aux[A] = ByteStreamDecoder[F, A]
 
   def fromSchema[A](
       schema: Schema[A],
       cache: Cache
-  ): XmlByteStreamDecoder[F, A] =
+  ): ByteStreamDecoder[F, A] =
     new Reader[F, Stream[F, Byte], A] {
       val fa = XmlDocument.Decoder.fromSchema(schema)
 
