@@ -30,8 +30,7 @@ import cats.kernel.Monoid
 
 private[smithy4s] class XmlEncoderSchemaVisitor(
     val cache: CompilationCache[XmlEncoder]
-) extends SchemaVisitor.Cached[XmlEncoder]
-    with smithy4s.ScalaCompat { compile =>
+) extends SchemaVisitor.Cached[XmlEncoder] { compile =>
 
   def primitive[P](
       shapeId: ShapeId,

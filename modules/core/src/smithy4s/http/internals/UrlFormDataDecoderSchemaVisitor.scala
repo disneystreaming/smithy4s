@@ -30,9 +30,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
     ignoreUrlFormFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
-) extends SchemaVisitor.Cached[UrlFormDataDecoder]
-    with smithy4s.ScalaCompat {
-  compile =>
+) extends SchemaVisitor.Cached[UrlFormDataDecoder] { compile =>
 
   override def primitive[P](
       shapeId: ShapeId,
@@ -49,6 +47,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     }
   }
 
+  @annotation.nowarn("msg=Unused import")
   override def collection[C[_], A](
       shapeId: ShapeId,
       hints: Hints,
@@ -74,6 +73,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
           //
           // We can't assume they were encoded in order. That's why we have to
           // then sort by index.
+          import scala.collection.compat._
           val groupedAndSortedCursors = values
             .collect {
               case formData @ UrlForm.FormData(
@@ -88,11 +88,9 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
               index
             }
             .map { case (index, values) =>
-              UrlFormCursor(
-                history,
-                values
+              UrlFormCursor(history, values).down(
+                PayloadPath.Segment.Index(index)
               )
-                .down(PayloadPath.Segment.Index(index))
             }
           groupedAndSortedCursors
             .traverse[UrlFormDecodeError, A](memberDecoder.decode(_))
