@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package aws
+package smithy4s.aws
 package internals
 
 import _root_.aws.protocols.AwsQueryError
@@ -30,6 +29,7 @@ import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.Blob
 
 private[aws] object AwsQueryCodecs {
 

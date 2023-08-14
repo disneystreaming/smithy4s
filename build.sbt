@@ -611,6 +611,7 @@ lazy val xml = projectMatrix
   .in(file("modules/xml"))
   .dependsOn(
     core,
+    fs2,
     bootstrapped % "test->test",
     scalacheck % "test -> compile"
   )
@@ -618,6 +619,27 @@ lazy val xml = projectMatrix
     isMimaEnabled := false,
     libraryDependencies ++= Seq(
       Dependencies.Fs2Data.xml.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains common code which relies on fs2.
+ */
+lazy val fs2 = projectMatrix
+  .in(file("modules/fs2"))
+  .dependsOn(
+    core
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2.core.value,
       Dependencies.Weaver.cats.value % Test
     ),
     libraryDependencies ++= munitDeps.value,
