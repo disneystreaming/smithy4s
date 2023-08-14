@@ -82,17 +82,15 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
                   ) =>
                 index -> formData
             }
-            .groupBy { case (index, _) =>
-              index
-            }
+            .groupMap { case (index, _) => index } { case (_, value) => value }
             .toVector
             .sortBy { case (index, _) =>
               index
             }
-            .map { case (index, indicesAndValues) =>
+            .map { case (index, values) =>
               UrlFormCursor(
                 history,
-                indicesAndValues.map { case (_, value) => value }
+                values
               )
                 .down(PayloadPath.Segment.Index(index))
             }
