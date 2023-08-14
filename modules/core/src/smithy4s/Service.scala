@@ -110,10 +110,13 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
 
   val service: Service[Alg] = this
   def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]]
+
   def ordinal[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]) : Int
   def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
-  def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): Endpoint[I, E, O, SI, SO] =
+
+  final def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): Endpoint[I, E, O, SI, SO] =
     endpoints(ordinal(op)).asInstanceOf[Endpoint[I, E, O, SI, SO]]
+
   def version: String
   def hints: Hints
   def reified: Alg[Operation]
@@ -201,12 +204,12 @@ object Service {
     def fromService[Alg[_[_, _, _, _, _]]](
         service: Service[Alg]
     ): Builder[Alg, service.Operation] =
-      new Builder[Alg, service.Operation](service, PolyFunction5.identity, service.id, service.version, service.hints)
+      new Builder[Alg, service.Operation](service, service.endpoints, service.id, service.version, service.hints)
   }
 
   final case class Builder[Alg[_[_, _, _, _, _]], Op[_, _, _, _, _]] private(
       private val base: Service.Aux[Alg, Op],
-      private val endpointMapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e],
+      private val baseEndpoints: IndexedSeq[Endpoint[Op, _, _, _, _, _]],
       private val baseId: ShapeId,
       private val baseVersion: String,
       private val baseHints: Hints,
@@ -214,9 +217,15 @@ object Service {
 
     def mapEndpointEach(
         mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
-    ): Builder[Alg, Op] = copy(
-      endpointMapper = (endpointMapper.andThen(mapper))
-    )
+    ): Builder[Alg, Op] = {
+      // note: this may not be possible to inline because of a Scala 3 issue.
+      def handle[I, E, O, SI, SO](endpoint: Endpoint[Op, I, E, O, SI, SO]): Endpoint[Op, I, E, O, SI, SO] =
+        mapper(endpoint)
+
+      copy(
+        baseEndpoints = baseEndpoints.map(handle(_))
+      )
+    }
 
     def withId(id: ShapeId): Builder[Alg, Op ] = copy(baseId = id)
 
@@ -238,14 +247,7 @@ object Service {
 
       override type Operation[I, E, O, SI, SO] = Op[I, E, O, SI, SO]
 
-      override def endpoints: IndexedSeq[Endpoint[_, _, _, _, _]] =
-        // Explicit upcast to help Scala 3's type inference
-        base.endpoints.map(e => endpointMapper(e): Endpoint[_, _, _, _, _])
-
-      override def endpoint[I, E, O, SI, SO](
-          op: Op[I, E, O, SI, SO]
-      ): Endpoint[I, E, O, SI, SO] =
-        endpointMapper(base.endpoint(op))
+      override val endpoints: IndexedSeq[Endpoint[_, _, _, _, _]] = baseEndpoints
 
       override val id: ShapeId = baseId
 
