@@ -18,7 +18,7 @@ package smithy4s.codegen
 package internals
 
 import alloy.openapi._
-import smithy4s.codegen.transformers.AwsStandardTypesTransformer
+import smithy4s.codegen.transformers._
 import software.amazon.smithy.model.Model
 
 import scala.jdk.CollectionConverters._
@@ -158,6 +158,6 @@ private[codegen] object CodegenImpl { self =>
   }
 
   private def withAwsTypeTransformer(transformers: List[String]): List[String] =
-    transformers :+ AwsStandardTypesTransformer.name
+    transformers :+ AwsStandardTypesTransformer.name :+ OpenEnumTransformer.name
 
 }
