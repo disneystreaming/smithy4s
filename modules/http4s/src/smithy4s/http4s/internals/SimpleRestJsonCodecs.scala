@@ -117,7 +117,7 @@ private[http4s] class SimpleRestJsonCodecs(
       val input = messageDecoderCompiler
       val output = responseEncoderCompiler
 
-      val error = responseEncoderCompiler.mapK {
+      val error = responseEncoderCompiler.mapK[EncoderFromHints[F, *], ResponseEncoder[F, *]] {
         new PolyFunction[EncoderFromHints[F, *], ResponseEncoder[F, *]] {
           def apply[A](fromHints: EncoderFromHints[F, A]): ResponseEncoder[F, A] = fromHints(Hints.empty)
         }
