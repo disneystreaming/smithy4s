@@ -96,7 +96,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
             }
           groupedAndSortedCursors
             .traverse[UrlFormDecodeError, A](memberDecoder.decode(_))
-            .map(list => tag.fromIterator(list.iterator))
+            .map(vector => tag.fromIterator(vector.iterator))
       }
   }
 
