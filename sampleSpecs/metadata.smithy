@@ -2,6 +2,8 @@ $version: "2.0"
 
 namespace smithy4s.example
 
+use alloy#openEnum
+
 /// Just a dummy service to ensure that the rendered services compile
 /// when testing core
 service DummyService {
@@ -43,6 +45,10 @@ structure Queries {
   sl: StringList,
   @httpQuery("nums")
   ie: Numbers,
+  @httpQuery("openNums")
+  on: OpenNums
+  @httpQuery("openNumsStr")
+  ons: OpenNumsStr
   @httpQueryParams
   slm: StringMap
 }
@@ -74,6 +80,10 @@ structure HeadersStruct {
   sl: StringList,
   @httpHeader("nums")
   ie: Numbers,
+  @httpHeader("openNums")
+  on: OpenNums
+  @httpHeader("openNumsStr")
+  ons: OpenNumsStr
   @httpPrefixHeaders("foo-")
   slm: StringMap
 }
@@ -131,4 +141,16 @@ intEnum Numbers {
     ONE
     @enumValue(2)
     TWO
+}
+
+@openEnum
+intEnum OpenNums {
+  ONE = 1
+  TWO = 2
+}
+
+@openEnum
+enum OpenNumsStr {
+  ONE
+  TWO
 }

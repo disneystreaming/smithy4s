@@ -278,26 +278,31 @@ class DocumentDecoderSchemaVisitor(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): DocumentDecoder[E] = {
     val fromName = values.map(e => e.stringValue -> e.value).toMap
+    val fromOrdinal =
+      values.map(e => BigDecimal(e.intValue) -> e.value).toMap
+    val label = s"value in [${fromName.keySet.mkString(", ")}]"
     tag match {
-      case EnumTag.IntEnum =>
-        val fromOrdinal =
-          values.map(e => BigDecimal(e.intValue) -> e.value).toMap
-        from(
-          s"value in [${fromName.keySet.mkString(", ")}]"
-        ) {
+      case EnumTag.ClosedIntEnum =>
+        from(label) {
           case DNumber(value) if fromOrdinal.contains(value) =>
             fromOrdinal(value)
         }
-      case EnumTag.StringEnum =>
-        from(
-          s"value in [${fromName.keySet.mkString(", ")}]"
-        ) {
+      case EnumTag.OpenIntEnum(unknown) =>
+        from(label) { case DNumber(value) =>
+          fromOrdinal.getOrElse(value, unknown(value.toInt))
+        }
+      case EnumTag.ClosedStringEnum =>
+        from(label) {
           case DString(value) if fromName.contains(value) => fromName(value)
+        }
+      case EnumTag.OpenStringEnum(unknown) =>
+        from(label) { case DString(value) =>
+          fromName.getOrElse(value, unknown(value))
         }
     }
   }

@@ -38,6 +38,6 @@ object FaceCard extends Enumeration[FaceCard] with ShapeTag.Companion[FaceCard] 
     ACE,
     JOKER,
   )
-  val tag: EnumTag = EnumTag.IntEnum
+  val tag: EnumTag[FaceCard] = EnumTag.ClosedIntEnum
   implicit val schema: Schema[FaceCard] = enumeration(tag, values).withId(id).addHints(hints)
 }

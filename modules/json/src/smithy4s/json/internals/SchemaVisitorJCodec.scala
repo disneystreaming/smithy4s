@@ -1139,34 +1139,50 @@ private[smithy4s] class SchemaVisitorJCodec(
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): JCodec[E] =
     tag match {
-      case EnumTag.IntEnum =>
-        handleIntEnum(shapeId, hints, values, total)
-      case EnumTag.StringEnum =>
-        handleEnum(shapeId, hints, values, total)
+      case EnumTag.IntEnum() =>
+        handleIntEnum(shapeId, hints, values, total, tag)
+      case _ =>
+        handleEnum(shapeId, hints, values, total, tag)
     }
 
   private def handleEnum[E](
       shapeId: ShapeId,
       hints: Hints,
       values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      total: E => EnumValue[E],
+      tag: EnumTag[E]
   ): JCodec[E] = new JCodec[E] {
-    def fromName(v: String): Option[E] =
-      values.find(_.stringValue == v).map(_.value)
+    private val nameMap: Map[String, E] =
+      values.map(v => v.stringValue -> v.value).toMap
+
+    private def fromName(v: String): Option[E] =
+      nameMap.get(v)
+
+    private def fromNameOpen(v: String, unknown: String => E): E =
+      nameMap.getOrElse(v, unknown(v))
+
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
+    private val decode: (JsonReader, String) => E = tag match {
+      case EnumTag.OpenStringEnum(unknown) =>
+        (_, str) => fromNameOpen(str, unknown)
+      case _ =>
+        (in, str) =>
+          fromName(str) match {
+            case Some(value) => value
+            case None        => in.enumValueError(str)
+          }
+    }
+
     def decodeValue(cursor: Cursor, in: JsonReader): E = {
       val str = in.readString(null)
-      fromName(str) match {
-        case Some(value) => value
-        case None        => in.enumValueError(str)
-      }
+      decode(in, str)
     }
 
     def encodeValue(x: E, out: JsonWriter): Unit =
@@ -1174,10 +1190,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
     def decodeKey(in: JsonReader): E = {
       val str = in.readKeyAsString()
-      fromName(str) match {
-        case Some(value) => value
-        case None        => in.enumValueError(str)
-      }
+      decode(in, str)
     }
 
     def encodeKey(x: E, out: JsonWriter): Unit =
@@ -1188,19 +1201,35 @@ private[smithy4s] class SchemaVisitorJCodec(
       shapeId: ShapeId,
       hints: Hints,
       values: List[EnumValue[E]],
-      total: E => EnumValue[E]
+      total: E => EnumValue[E],
+      tag: EnumTag[E]
   ): JCodec[E] = new JCodec[E] {
-    def fromOrdinal(v: Int): Option[E] =
-      values.find(_.intValue == v).map(_.value)
+    private val ordinalMap: Map[Int, E] =
+      values.map(v => v.intValue -> v.value).toMap
+
+    private def fromOrdinal(v: Int): Option[E] =
+      ordinalMap.get(v)
+
+    private def fromOrdinalOpen(v: Int, unknown: Int => E): E =
+      ordinalMap.getOrElse(v, unknown(v))
+
     val expecting: String =
       s"enumeration: [${values.map(_.stringValue).mkString(", ")}]"
 
+    private val decode: (JsonReader, Int) => E = tag match {
+      case EnumTag.OpenIntEnum(unknown) =>
+        (_, i) => fromOrdinalOpen(i, unknown)
+      case _ =>
+        (in, i) =>
+          fromOrdinal(i) match {
+            case Some(value) => value
+            case None        => in.enumValueError(i)
+          }
+    }
+
     def decodeValue(cursor: Cursor, in: JsonReader): E = {
       val i = in.readInt()
-      fromOrdinal(i) match {
-        case Some(value) => value
-        case None        => in.enumValueError(i)
-      }
+      decode(in, i)
     }
 
     def encodeValue(x: E, out: JsonWriter): Unit =
@@ -1208,10 +1237,7 @@ private[smithy4s] class SchemaVisitorJCodec(
 
     def decodeKey(in: JsonReader): E = {
       val i = in.readKeyAsInt()
-      fromOrdinal(i) match {
-        case Some(value) => value
-        case None        => in.enumValueError(i)
-      }
+      decode(in, i)
     }
 
     def encodeKey(x: E, out: JsonWriter): Unit =

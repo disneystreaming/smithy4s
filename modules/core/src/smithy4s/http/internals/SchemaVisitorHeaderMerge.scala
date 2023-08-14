@@ -22,7 +22,6 @@ import smithy4s.{Hints, ShapeId}
 import smithy4s.Bijection
 import smithy4s.Refinement
 import smithy4s.schema.Primitive.PString
-import smithy4s.schema.EnumTag.StringEnum
 
 /**
   * A schema visitor that allows to merge several values into a single, comma-separated header value.
@@ -64,12 +63,12 @@ object SchemaVisitorHeaderMerge
   override def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): AwsMergeableHeader[E] = tag match {
-    case EnumTag.IntEnum => Some((e: E) => total(e).intValue.toString())
-    case StringEnum      => Some((e: E) => total(e).stringValue)
+    case EnumTag.IntEnum() => Some((e: E) => total(e).intValue.toString())
+    case _                 => Some((e: E) => total(e).stringValue)
   }
 
 }

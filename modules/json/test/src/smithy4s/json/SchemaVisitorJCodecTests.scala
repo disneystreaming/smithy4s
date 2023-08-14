@@ -34,6 +34,7 @@ import smithy4s.example.RangeCheck
 import smithy4s.example.TestBiggerUnion
 import smithy4s.example.Three
 import smithy4s.example.UntaggedUnion
+import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 import smithy4s.schema.Schema._
 
 import scala.collection.immutable.ListMap
@@ -332,6 +333,38 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     val roundTripped = readFromString[FaceCard](int)
     expect.same(int, jsonInt)
     expect.same(roundTripped, FaceCard.JACK)
+  }
+
+  test("Open Int Enum gets encoded/decoded correctly - known value") {
+    val jsonInt = "1"
+    val in = writeToString[OpenIntEnumTest](OpenIntEnumTest.ONE)
+    val roundTripped = readFromString[OpenIntEnumTest](in)
+    expect.same(in, jsonInt)
+    expect.same(roundTripped, OpenIntEnumTest.ONE)
+  }
+
+  test("Open Int Enum gets encoded/decoded correctly - unknown value") {
+    val jsonInt = "123"
+    val in = writeToString[OpenIntEnumTest](OpenIntEnumTest.$Unknown(123))
+    val roundTripped = readFromString[OpenIntEnumTest](in)
+    expect.same(in, jsonInt)
+    expect.same(roundTripped, OpenIntEnumTest.$Unknown(123))
+  }
+
+  test("Open String Enum gets encoded/decoded correctly - known value") {
+    val jsonStr = "\"ONE\""
+    val in = writeToString[OpenEnumTest](OpenEnumTest.ONE)
+    val roundTripped = readFromString[OpenEnumTest](in)
+    expect.same(in, jsonStr)
+    expect.same(roundTripped, OpenEnumTest.ONE)
+  }
+
+  test("Open String Enum gets encoded/decoded correctly - unknown value") {
+    val jsonStr = "\"SOMETHING\""
+    val in = writeToString[OpenEnumTest](OpenEnumTest.$Unknown("SOMETHING"))
+    val roundTripped = readFromString[OpenEnumTest](in)
+    expect.same(in, jsonStr)
+    expect.same(roundTripped, OpenEnumTest.$Unknown("SOMETHING"))
   }
 
   implicit val blobSchema: Schema[Blob] = blob

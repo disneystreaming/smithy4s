@@ -227,6 +227,8 @@ object Smithy4sBuildPlugin extends AutoPlugin {
     val base =
       if (scalaVersion.startsWith("3."))
         filterScala3Options(commonCompilerOptions)
+      else if (priorTo2_13(scalaVersion))
+        filterScala2_12Options(commonCompilerOptions)
       else
         commonCompilerOptions
     // ++ Seq(
@@ -252,6 +254,9 @@ object Smithy4sBuildPlugin extends AutoPlugin {
       .filterNot(_.startsWith("-Ywarn-"))
       .filterNot(_ == "-explaintypes")
       .filterNot(_ == "-Xcheckinit")
+
+  def filterScala2_12Options(opts: Seq[String]) =
+    opts.filterNot(_ == "-Xlint:missing-interpolator")
 
   def priorTo2_13(scalaVersion: String): Boolean =
     CrossVersion.partialVersion(scalaVersion) match {

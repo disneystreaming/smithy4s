@@ -38,7 +38,7 @@ object SchemaDescription extends SchemaVisitor[SchemaDescription] {
   override def map[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]): SchemaDescription[Map[K,V]] =
     SchemaDescription.of("Map")
 
-  override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
+  override def enumeration[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]], total: E => EnumValue[E]): SchemaDescription[E] =
     SchemaDescription.of("Enumeration")
 
   override def struct[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S): SchemaDescription[S] =

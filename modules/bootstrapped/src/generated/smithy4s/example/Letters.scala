@@ -31,6 +31,6 @@ object Letters extends Enumeration[Letters] with ShapeTag.Companion[Letters] {
     B,
     C,
   )
-  val tag: EnumTag = EnumTag.StringEnum
+  val tag: EnumTag[Letters] = EnumTag.ClosedStringEnum
   implicit val schema: Schema[Letters] = enumeration(tag, values).withId(id).addHints(hints)
 }

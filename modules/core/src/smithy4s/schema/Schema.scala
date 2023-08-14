@@ -153,7 +153,7 @@ object Schema {
   final case class PrimitiveSchema[P](shapeId: ShapeId, hints: Hints, tag: Primitive[P]) extends Schema[P]
   final case class CollectionSchema[C[_], A](shapeId: ShapeId, hints: Hints, tag: CollectionTag[C], member: Schema[A]) extends Schema[C[A]]
   final case class MapSchema[K, V](shapeId: ShapeId, hints: Hints, key: Schema[K], value: Schema[V]) extends Schema[Map[K, V]]
-  final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag, values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
+  final case class EnumerationSchema[E](shapeId: ShapeId, hints: Hints, tag: EnumTag[E], values: List[EnumValue[E]], total: E => EnumValue[E]) extends Schema[E]
   final case class StructSchema[S](shapeId: ShapeId, hints: Hints, fields: Vector[Field[S, _]], make: IndexedSeq[Any] => S) extends Schema[S]
   final case class UnionSchema[U](shapeId: ShapeId, hints: Hints, alternatives: Vector[Alt[U, _]], ordinal: U => Int) extends Schema[U]
   final case class OptionSchema[A](underlying: Schema[A]) extends Schema[Option[A]]{
@@ -235,23 +235,23 @@ object Schema {
     }
   }
 
-  def enumeration[E](total: E => EnumValue[E], tag: EnumTag, values: List[EnumValue[E]]): Schema[E] =
+  def enumeration[E](total: E => EnumValue[E], tag: EnumTag[E], values: List[EnumValue[E]]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values, total)
 
   def stringEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
-    enumeration(total, EnumTag.StringEnum, values)
+    enumeration(total, EnumTag.ClosedStringEnum, values)
 
   def intEnumeration[E](total: E => EnumValue[E], values: List[EnumValue[E]]): Schema[E] =
-    enumeration(total, EnumTag.IntEnum, values)
+    enumeration(total, EnumTag.ClosedIntEnum, values)
 
-  def enumeration[E <: Enumeration.Value](tag: EnumTag, values: List[E]): Schema[E] =
+  def enumeration[E <: Enumeration.Value](tag: EnumTag[E], values: List[E]): Schema[E] =
     Schema.EnumerationSchema(placeholder, Hints.empty, tag, values.map(Enumeration.Value.toSchema(_)), Enumeration.Value.toSchema[E])
 
   def stringEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
-    enumeration(EnumTag.StringEnum, values)
+    enumeration(EnumTag.ClosedStringEnum, values)
 
   def intEnumeration[E <: Enumeration.Value](values: List[E]): Schema[E] =
-    enumeration(EnumTag.IntEnum, values)
+    enumeration(EnumTag.ClosedIntEnum, values)
 
   def bijection[A, B](a: Schema[A], bijection: Bijection[A, B]): Schema[B] =
     Schema.BijectionSchema(a, bijection)

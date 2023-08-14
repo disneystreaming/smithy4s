@@ -42,6 +42,18 @@ When the smithy4sRenderOptics setting is enabled, Lenses and Prisms will be rend
 
 See https://github.com/disneystreaming/smithy4s/pull/1103
 
+### Open Enumerations
+
+Introduces alternative code generation for enums and intEnums when they are marked with the `alloy#openEnum` trait.
+
+See https://github.com/disneystreaming/smithy4s/pull/1137
+
+### Union Projections and Visitors
+
+Added convenient methods for working with unions including projectors for each union alternative and a visitor in union companion objects that can be passed to each union's new `accept` method.
+
+See https://github.com/disneystreaming/smithy4s/pull/1144
+
 # 0.17.14
 
 * Only transform AWS shapes named after standard shapes in [#1127](https://github.com/disneystreaming/smithy4s/pull/1127)

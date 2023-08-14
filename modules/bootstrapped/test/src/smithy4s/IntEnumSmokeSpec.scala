@@ -34,7 +34,7 @@ final class IntEnumSmokeSpec extends FunSuite {
     )
     assertEquals(values, expected)
     assert(
-      smithy4s.example.FaceCard.tag == EnumTag.IntEnum,
+      smithy4s.example.FaceCard.tag == EnumTag.ClosedIntEnum,
       "tag should be IntEnum"
     )
   }

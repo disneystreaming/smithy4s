@@ -166,6 +166,100 @@ class DocumentSpec() extends FunSuite {
     assertEquals(roundTripped, Right(faceCard))
   }
 
+  test("open integer based enum - known") {
+    import smithy4s.example._
+    val one: OpenIntEnumTest = OpenIntEnumTest.ONE
+    val document = Document.encode(one)
+    import Document._
+    val expectedDocument = DNumber(OpenIntEnumTest.ONE.intValue)
+
+    val roundTripped = Document.decode[OpenIntEnumTest](document)
+
+    assertEquals(document, expectedDocument)
+    assertEquals(roundTripped, Right(one))
+  }
+
+  test("open integer based enum - unknown") {
+    import smithy4s.example._
+    val unknown: OpenIntEnumTest = OpenIntEnumTest.$Unknown(202)
+    val document = Document.encode(unknown)
+    import Document._
+    val expectedDocument = DNumber(202)
+
+    val roundTripped = Document.decode[OpenIntEnumTest](document)
+
+    assertEquals(document, expectedDocument)
+    assertEquals(roundTripped, Right(unknown))
+  }
+
+  test("open integer based enum key") {
+    import smithy4s.example._
+    implicit val mapSchema: Schema[Map[OpenIntEnumTest, Int]] =
+      map(OpenIntEnumTest.schema, int)
+
+    val mapTest =
+      Map(OpenIntEnumTest.ONE -> 1, OpenIntEnumTest.$Unknown(100) -> 2)
+    val document = Document.encode(mapTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "1" -> fromInt(1),
+        "100" -> fromInt(2)
+      )
+
+    val roundTripped = Document.decode[Map[OpenIntEnumTest, Int]](document)
+
+    assertEquals(document, expectedDocument)
+    assertEquals(roundTripped, Right(mapTest))
+  }
+
+  test("open string based enum - known") {
+    import smithy4s.example._
+    val one: OpenEnumTest = OpenEnumTest.ONE
+    val document = Document.encode(one)
+    import Document._
+    val expectedDocument = DString(OpenEnumTest.ONE.value)
+
+    val roundTripped = Document.decode[OpenEnumTest](document)
+
+    assertEquals(document, expectedDocument)
+    assertEquals(roundTripped, Right(one))
+  }
+
+  test("open string based enum - unknown") {
+    import smithy4s.example._
+    val unknown: OpenEnumTest = OpenEnumTest.$Unknown("test")
+    val document = Document.encode(unknown)
+    import Document._
+    val expectedDocument = DString("test")
+
+    val roundTripped = Document.decode[OpenEnumTest](document)
+
+    assertEquals(document, expectedDocument)
+    assertEquals(roundTripped, Right(unknown))
+  }
+
+  test("open string based enum key") {
+    import smithy4s.example._
+    implicit val mapSchema: Schema[Map[OpenEnumTest, Int]] =
+      map(OpenEnumTest.schema, int)
+
+    val mapTest =
+      Map(OpenEnumTest.ONE -> 1, OpenEnumTest.$Unknown("test") -> 2)
+    val document = Document.encode(mapTest)
+    import Document._
+    val expectedDocument =
+      obj(
+        "ONE" -> fromInt(1),
+        "test" -> fromInt(2)
+      )
+
+    val roundTripped = Document.decode[Map[OpenEnumTest, Int]](document)
+
+    assertEquals(document, expectedDocument)
+    assertEquals(roundTripped, Right(mapTest))
+  }
+
   case class DefTest(int: Int, str: String)
   implicit val withDefaultsSchema: Schema[DefTest] = {
     val i = int

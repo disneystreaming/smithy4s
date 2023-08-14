@@ -1,5 +1,6 @@
 package smithy4s.example
 
+import OrderType.PreviewCaseAlt
 import smithy4s.Hints
 import smithy4s.Schema
 import smithy4s.ShapeId
@@ -12,16 +13,28 @@ import smithy4s.schema.Schema.union
 /** Our order types have different ways to identify a product
   * Except for preview orders, these don't have an ID 
   */
-sealed trait OrderType extends scala.Product with scala.Serializable {
+sealed trait OrderType extends scala.Product with scala.Serializable { self =>
   @inline final def widen: OrderType = this
   def $ordinal: Int
+
+  object project {
+    def online: Option[OrderNumber] = OrderType.OnlineCase.alt.project.lift(self).map(_.online)
+    def inStore: Option[OrderType.InStoreOrder] = OrderType.InStoreOrder.alt.project.lift(self)
+    def preview: Option[OrderType.PreviewCase.type] = PreviewCaseAlt.project.lift(self)
+  }
+
+  def accept[A](visitor: OrderType.Visitor[A]): A = this match {
+    case value: OrderType.OnlineCase => visitor.online(value.online)
+    case value: OrderType.InStoreOrder => visitor.inStore(value)
+    case value: OrderType.PreviewCase.type => visitor.preview(value)
+  }
 }
 object OrderType extends ShapeTag.Companion[OrderType] {
 
-  def online(online:OrderNumber): OrderType = OnlineCase(online)
+  def online(online: OrderNumber): OrderType = OnlineCase(online)
   /** For an InStoreOrder a location ID isn't needed */
   def inStoreOrder(id: OrderNumber, locationId: Option[String] = None):InStoreOrder = InStoreOrder(id, locationId)
-  def preview(): OrderType = PreviewCase
+  def preview(): OrderType = OrderType.PreviewCase
 
   val id: ShapeId = ShapeId("smithy4s.example", "OrderType")
 
@@ -51,17 +64,32 @@ object OrderType extends ShapeTag.Companion[OrderType] {
     val alt = schema.oneOf[OrderType]("inStore")
   }
   case object PreviewCase extends OrderType { final def $ordinal: Int = 2 }
-  private val PreviewCaseAlt = Schema.constant(PreviewCase).oneOf[OrderType]("preview").addHints(hints)
+  private val PreviewCaseAlt = Schema.constant(OrderType.PreviewCase).oneOf[OrderType]("preview").addHints(hints)
 
   object OnlineCase {
     val hints: Hints = Hints.empty
-    val schema: Schema[OnlineCase] = bijection(OrderNumber.schema.addHints(hints), OnlineCase(_), _.online)
+    val schema: Schema[OrderType.OnlineCase] = bijection(OrderNumber.schema.addHints(hints), OrderType.OnlineCase(_), _.online)
     val alt = schema.oneOf[OrderType]("online")
   }
 
+  trait Visitor[A] {
+    def online(value: OrderNumber): A
+    def inStore(value: OrderType.InStoreOrder): A
+    def preview(value: OrderType.PreviewCase.type): A
+  }
+
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def online(value: OrderNumber): A = default
+      def inStore(value: OrderType.InStoreOrder): A = default
+      def preview(value: OrderType.PreviewCase.type): A = default
+    }
+  }
+
   implicit val schema: Schema[OrderType] = union(
-    OnlineCase.alt,
-    InStoreOrder.alt,
+    OrderType.OnlineCase.alt,
+    OrderType.InStoreOrder.alt,
     PreviewCaseAlt,
   ){
     _.$ordinal
