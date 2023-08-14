@@ -111,13 +111,21 @@ object HelloWorldAuthServiceOperation {
       case SayWorldError.NotAuthorizedErrorCase(e) => e
     }
   }
-  sealed trait SayWorldError extends scala.Product with scala.Serializable {
+  sealed trait SayWorldError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: SayWorldError = this
     def $ordinal: Int
+
+    object project {
+      def notAuthorizedError: Option[NotAuthorizedError] = SayWorldError.NotAuthorizedErrorCase.alt.project.lift(self).map(_.notAuthorizedError)
+    }
+
+    def accept[A](visitor: SayWorldError.Visitor[A]): A = this match {
+      case value: SayWorldError.NotAuthorizedErrorCase => visitor.notAuthorizedError(value.notAuthorizedError)
+    }
   }
   object SayWorldError extends ShapeTag.Companion[SayWorldError] {
 
-    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
+    def notAuthorizedError(notAuthorizedError: NotAuthorizedError): SayWorldError = NotAuthorizedErrorCase(notAuthorizedError)
 
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "SayWorldError")
 
@@ -127,12 +135,23 @@ object HelloWorldAuthServiceOperation {
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema.addHints(hints), NotAuthorizedErrorCase(_), _.notAuthorizedError)
+      val schema: Schema[SayWorldError.NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema.addHints(hints), SayWorldError.NotAuthorizedErrorCase(_), _.notAuthorizedError)
       val alt = schema.oneOf[SayWorldError]("NotAuthorizedError")
     }
 
+    trait Visitor[A] {
+      def notAuthorizedError(value: NotAuthorizedError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def notAuthorizedError(value: NotAuthorizedError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[SayWorldError] = union(
-      NotAuthorizedErrorCase.alt,
+      SayWorldError.NotAuthorizedErrorCase.alt,
     ){
       _.$ordinal
     }
@@ -165,13 +184,21 @@ object HelloWorldAuthServiceOperation {
       case HealthCheckError.NotAuthorizedErrorCase(e) => e
     }
   }
-  sealed trait HealthCheckError extends scala.Product with scala.Serializable {
+  sealed trait HealthCheckError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: HealthCheckError = this
     def $ordinal: Int
+
+    object project {
+      def notAuthorizedError: Option[NotAuthorizedError] = HealthCheckError.NotAuthorizedErrorCase.alt.project.lift(self).map(_.notAuthorizedError)
+    }
+
+    def accept[A](visitor: HealthCheckError.Visitor[A]): A = this match {
+      case value: HealthCheckError.NotAuthorizedErrorCase => visitor.notAuthorizedError(value.notAuthorizedError)
+    }
   }
   object HealthCheckError extends ShapeTag.Companion[HealthCheckError] {
 
-    def notAuthorizedError(notAuthorizedError:NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
+    def notAuthorizedError(notAuthorizedError: NotAuthorizedError): HealthCheckError = NotAuthorizedErrorCase(notAuthorizedError)
 
     val id: ShapeId = ShapeId("smithy4s.example.guides.auth", "HealthCheckError")
 
@@ -181,12 +208,23 @@ object HelloWorldAuthServiceOperation {
 
     object NotAuthorizedErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema.addHints(hints), NotAuthorizedErrorCase(_), _.notAuthorizedError)
+      val schema: Schema[HealthCheckError.NotAuthorizedErrorCase] = bijection(NotAuthorizedError.schema.addHints(hints), HealthCheckError.NotAuthorizedErrorCase(_), _.notAuthorizedError)
       val alt = schema.oneOf[HealthCheckError]("NotAuthorizedError")
     }
 
+    trait Visitor[A] {
+      def notAuthorizedError(value: NotAuthorizedError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def notAuthorizedError(value: NotAuthorizedError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[HealthCheckError] = union(
-      NotAuthorizedErrorCase.alt,
+      HealthCheckError.NotAuthorizedErrorCase.alt,
     ){
       _.$ordinal
     }

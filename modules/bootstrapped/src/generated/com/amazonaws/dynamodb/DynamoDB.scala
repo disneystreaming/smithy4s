@@ -162,14 +162,24 @@ object DynamoDBOperation {
       case ListTablesError.InvalidEndpointExceptionCase(e) => e
     }
   }
-  sealed trait ListTablesError extends scala.Product with scala.Serializable {
+  sealed trait ListTablesError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ListTablesError = this
     def $ordinal: Int
+
+    object project {
+      def internalServerError: Option[InternalServerError] = ListTablesError.InternalServerErrorCase.alt.project.lift(self).map(_.internalServerError)
+      def invalidEndpointException: Option[InvalidEndpointException] = ListTablesError.InvalidEndpointExceptionCase.alt.project.lift(self).map(_.invalidEndpointException)
+    }
+
+    def accept[A](visitor: ListTablesError.Visitor[A]): A = this match {
+      case value: ListTablesError.InternalServerErrorCase => visitor.internalServerError(value.internalServerError)
+      case value: ListTablesError.InvalidEndpointExceptionCase => visitor.invalidEndpointException(value.invalidEndpointException)
+    }
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
 
-    def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
-    def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
+    def internalServerError(internalServerError: InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
+    def invalidEndpointException(invalidEndpointException: InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
 
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesError")
 
@@ -180,18 +190,31 @@ object DynamoDBOperation {
 
     object InternalServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[InternalServerErrorCase] = bijection(InternalServerError.schema.addHints(hints), InternalServerErrorCase(_), _.internalServerError)
+      val schema: Schema[ListTablesError.InternalServerErrorCase] = bijection(InternalServerError.schema.addHints(hints), ListTablesError.InternalServerErrorCase(_), _.internalServerError)
       val alt = schema.oneOf[ListTablesError]("InternalServerError")
     }
     object InvalidEndpointExceptionCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema.addHints(hints), InvalidEndpointExceptionCase(_), _.invalidEndpointException)
+      val schema: Schema[ListTablesError.InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema.addHints(hints), ListTablesError.InvalidEndpointExceptionCase(_), _.invalidEndpointException)
       val alt = schema.oneOf[ListTablesError]("InvalidEndpointException")
     }
 
+    trait Visitor[A] {
+      def internalServerError(value: InternalServerError): A
+      def invalidEndpointException(value: InvalidEndpointException): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def internalServerError(value: InternalServerError): A = default
+        def invalidEndpointException(value: InvalidEndpointException): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ListTablesError] = union(
-      InternalServerErrorCase.alt,
-      InvalidEndpointExceptionCase.alt,
+      ListTablesError.InternalServerErrorCase.alt,
+      ListTablesError.InvalidEndpointExceptionCase.alt,
     ){
       _.$ordinal
     }

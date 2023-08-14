@@ -50,6 +50,14 @@ private[codegen] object LineSegment {
   ) extends LineSegment {
     self =>
 
+    def nameDef: NameDef = NameDef(name)
+
+    def down(name: String): NameRef = this.copy(
+      rawPkg = rawPkg :+ this.name,
+      name = name,
+      typeParams = List.empty
+    )
+
     def pkg: List[String] = rawPkg.map(CollisionAvoidance.protectKeyword(_))
 
     def asValue: String = s"${(pkg :+ name).mkString(".")}"
