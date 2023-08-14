@@ -114,7 +114,7 @@ trait Service[Alg[_[_, _, _, _, _]]] extends FunctorK5[Alg] with HasId {
   def ordinal[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]) : Int
   def input[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): I
 
-  final def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): Endpoint[I, E, O, SI, SO] =
+  def endpoint[I, E, O, SI, SO](op: Operation[I, E, O, SI, SO]): Endpoint[I, E, O, SI, SO] =
     endpoints(ordinal(op)).asInstanceOf[Endpoint[I, E, O, SI, SO]]
 
   def version: String
