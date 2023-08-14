@@ -169,7 +169,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     val altMap = alternatives
       .map(altDecoder(_))
       .toMap[PayloadPath.Segment, UrlFormDataDecoder[U]]
-    ({
+    locally {
       case cursor @ UrlFormCursor(
             history,
             UrlForm.FormData(PayloadPath(segment :: Nil), _) :: Nil
@@ -189,7 +189,7 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
 
       case cursor =>
         Left(UrlFormDecodeError.singleValueExpected(cursor))
-    })
+    }
   }
 
   override def biject[A, B](
