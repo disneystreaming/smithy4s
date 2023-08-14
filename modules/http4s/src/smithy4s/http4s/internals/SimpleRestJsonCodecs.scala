@@ -29,6 +29,9 @@ import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.json.Json
 import smithy4s.schema.CachedSchemaCompiler
+import cats.syntax.all._
+import cats.Eq
+import smithy4s.kinds._
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -36,6 +39,9 @@ private[http4s] class SimpleRestJsonCodecs(
 ) extends SimpleProtocolCodecs {
   private val hintMask =
     alloy.SimpleRestJson.protocol.hintMask
+
+  private implicit val caseInsensitiveEq: Eq[CaseInsensitive] =
+    Eq.fromUniversalEquals
 
   private val underlyingCodecs = Json.payloadCodecs
     .withJsoniterCodecCompiler(
@@ -73,38 +79,73 @@ private[http4s] class SimpleRestJsonCodecs(
       .withContentType(`Content-Type`(mediaType"application/json"))
   }
 
+  private type EncoderFromHints[F[_], A] = Hints => ResponseEncoder[F, A]
+
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
       RequestDecoder.restSchemaCompiler[F](
         Metadata.Decoder,
         entityDecoders[F]
       )
+    val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
+      Metadata.Encoder,
+      entityEncoders[F]
+    )
+
     val responseEncoderCompiler = {
-      val restSchemaCompiler = ResponseEncoder.restSchemaCompiler[F](
-        Metadata.Encoder,
-        entityEncoders[F]
-      )
-      new CachedSchemaCompiler[ResponseEncoder[F, *]] {
+      new CachedSchemaCompiler[EncoderFromHints[F, *]] {
         type Cache = restSchemaCompiler.Cache
         def createCache(): Cache = restSchemaCompiler.createCache()
         def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
-        def fromSchema[A](schema: Schema[A], cache: Cache) = if (schema.isUnit) {
-          restSchemaCompiler.fromSchema(schema, cache)
-        } else {
-          restSchemaCompiler
-            .fromSchema(schema, cache)
-            .andThen(addEmptyJsonToResponse(_))
-        }
+        def fromSchema[A](schema: Schema[A], cache: Cache) = endpointHints =>
+          if (
+            schema.isUnit || endpointHints
+              .get[smithy.api.Http]
+              .exists(h => CaseInsensitive(h.method.value) === CaseInsensitive("HEAD"))
+          ) {
+            restSchemaCompiler.fromSchema(schema, cache)
+          } else {
+            restSchemaCompiler
+              .fromSchema(schema, cache)
+              .andThen(addEmptyJsonToResponse(_))
+          }
       }
     }
 
-    UnaryServerCodecs.make[F](
-      input = messageDecoderCompiler,
-      output = responseEncoderCompiler,
-      error = responseEncoderCompiler,
-      errorHeaders = errorHeaders
-    )
+    new UnaryServerCodecs.Make[F] {
+      val input = messageDecoderCompiler
+      val output = responseEncoderCompiler
+
+      val error = responseEncoderCompiler.mapK {
+        new PolyFunction[EncoderFromHints[F, *], ResponseEncoder[F, *]] {
+          def apply[A](fromHints: EncoderFromHints[F, A]): ResponseEncoder[F, A] = fromHints(Hints.empty)
+        }
+      }
+
+      val requestDecoderCache: input.Cache = input.createCache()
+      val errorResponseEncoderCache: error.Cache = error.createCache()
+      val responseEncoderCache: output.Cache = output.createCache()
+
+      def apply[I, E, O, SI, SO](
+          endpoint: Endpoint.Base[I, E, O, SI, SO]
+      ): UnaryServerCodecs[F, I, E, O] = {
+        new UnaryServerCodecs[F, I, E, O] {
+          val inputDecoder: RequestDecoder[F, I] =
+            input.fromSchema(endpoint.input, requestDecoderCache)
+          val outputEncoder: ResponseEncoder[F, O] =
+            output.fromSchema(endpoint.output, responseEncoderCache)(endpoint.hints)
+          val errorEncoder: ResponseEncoder[F, E] =
+            ResponseEncoder.forError(
+              errorHeaders,
+              endpoint.errorable,
+              error
+            )
+          def errorEncoder[EE](schema: Schema[EE]): ResponseEncoder[F, EE] =
+            error.fromSchema(schema, errorResponseEncoderCache)
+        }
+      }
+    }
   }
 
   def makeClientCodecs[F[_]: Concurrent]: UnaryClientCodecs.Make[F] = {

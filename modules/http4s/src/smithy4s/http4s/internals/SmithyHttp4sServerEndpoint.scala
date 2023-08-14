@@ -28,7 +28,6 @@ import org.http4s.Status
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.kinds._
-import org.typelevel.ci.CIString
 
 /**
   * A construct that encapsulates a smithy4s endpoint, and exposes
@@ -95,14 +94,6 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
     httpEndpoint.matches(path)
   }
 
-  private val headRemoveBody: Response[F] => Response[F] =
-    if (endpoint.hints.get[smithy.api.Http].exists(_.method.value === "HEAD"))
-      r =>
-        r.withHeaders(
-          r.headers.headers.filterNot(_.name === CIString("Content-Type"))
-        ).withBodyStream(fs2.Stream.empty)
-    else identity
-
   override val httpApp: HttpApp[F] = {
     val baseApp = HttpApp[F] { req =>
       val run: F[O] = for {
@@ -110,7 +101,7 @@ private[http4s] class SmithyHttp4sServerEndpointImpl[F[_], Op[_, _, _, _, _], I,
         output <- (impl(endpoint.wrap(input)): F[O])
       } yield output
 
-      run.map(outputEncoder.write(successResponseBase, _)).map(headRemoveBody)
+      run.map(outputEncoder.write(successResponseBase, _))
     }
     middleware(endpoint)(baseApp).handleErrorWith(error =>
       Kleisli.liftF(errorResponse(error))
