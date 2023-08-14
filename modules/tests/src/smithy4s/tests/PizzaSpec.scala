@@ -312,6 +312,27 @@ abstract class PizzaSpec
     )
   }
 
+  routerTest("HEAD request should have empty body") { (client, uri, log) =>
+    for {
+      res <- client.send[String](
+        HEAD((uri / "head-request")),
+        log
+      )
+    } yield {
+      val (code, headers, body) = res
+      expect.same(code, 200) &&
+      expect.same(body, "") &&
+      expect.same(
+        headers,
+        HeaderMap(
+          Map(
+            CaseInsensitive("Test") -> List("test")
+          )
+        )
+      )
+    }
+  }
+
   pureTest("Negative: http no match (bad path)") {
     val matchResult = smithy4s.http.httpMatch(
       PizzaAdminService.service,
