@@ -26,10 +26,8 @@ import fs2.compression.Compression
 import org.http4s.EntityEncoder
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
-import smithy4s.Blob
-import smithy4s.Endpoint
+import smithy4s._
 import smithy4s.codecs.PayloadPath
-import smithy4s.http.Metadata
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.kinds.PolyFunction

@@ -23,7 +23,7 @@ import cats.effect.Concurrent
 import cats.syntax.all._
 import fs2.compression.Compression
 import smithy.api.XmlName
-import smithy4s.Endpoint
+import smithy4s._
 import smithy4s.http._
 import smithy4s.http4s.kernel._
 import smithy4s.xml.internals.XmlStartingPath
