@@ -30,7 +30,9 @@ private[http] class UrlFormDataDecoderSchemaVisitor(
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
     ignoreUrlFormFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
-) extends SchemaVisitor.Cached[UrlFormDataDecoder] { compile =>
+) extends SchemaVisitor.Cached[UrlFormDataDecoder]
+    with smithy4s.ScalaCompat {
+  compile =>
 
   override def primitive[P](
       shapeId: ShapeId,
