@@ -572,4 +572,32 @@ class SchemaVisitorJCodecTests() extends FunSuite {
     }
   }
 
+  case class Patchable(a: Removable[Int])
+  object Patchable {
+    implicit val schema: Schema[Patchable] = {
+      val a = Removable.schema(int).required[Patchable]("a", _.a)
+      struct(a)(Patchable.apply)
+    }
+  }
+
+  test("Json patchable : removed is encoded as null") {
+    val patchable = Patchable(Removable.Removed)
+    val result = Json.writePrettyString(patchable)
+    val expectedJson = """|{
+                          |  "a": null
+                          |}""".stripMargin
+    val roundTripped = Json.read[Patchable](Blob(result))
+    assertEquals(result, expectedJson)
+    assertEquals(roundTripped, Right(patchable))
+  }
+
+  test("Json patchable : absent is encoded as absence of value)") {
+    val patchable = Patchable(Removable.Absent)
+    val result = Json.writeBlob(patchable)
+    val expectedJson = Blob("{}")
+    val roundTripped = Json.read[Patchable](result)
+    assertEquals(result, expectedJson)
+    assertEquals(roundTripped, Right(patchable))
+  }
+
 }

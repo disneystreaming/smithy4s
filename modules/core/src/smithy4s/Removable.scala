@@ -37,7 +37,7 @@ object Removable {
   case object Absent extends Removable[Nothing]
   case object Removed extends Removable[Nothing]
 
-  def schema[A](schemaA: Schema[A]): Schema[Removable[A]] = {
+  private[smithy4s] def schema[A](schemaA: Schema[A]): Schema[Removable[A]] = {
     schemaA.option.addMemberHints(alloy.Nullable()).option.biject {
       Bijection[Option[Option[A]], Removable[A]](
         {

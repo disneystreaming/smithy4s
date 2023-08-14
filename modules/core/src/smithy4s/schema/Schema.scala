@@ -286,6 +286,10 @@ object Schema {
 
   private object OptionDefaultVisitor extends SchemaVisitor.Default[Option] {
     def default[A] : Option[A] = None
+    override def biject[A, B](schema: Schema[A], bijection: Bijection[A, B]): Option[B] =
+      this(schema).map(bijection.to)
+    override def refine[A, B](schema: Schema[A], refinement: Refinement[A, B]): Option[B] =
+      this(schema).flatMap(b => refinement(b).toOption)
     override def option[A](schema: Schema[A]) : Option[Option[A]] = Some(None)
   }
 }

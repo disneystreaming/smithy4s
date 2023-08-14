@@ -21,7 +21,6 @@ import smithy4s.schema.Schema
 import smithy4s.Blob
 import smithy4s.Document
 import Schema._
-import smithy4s.Removable
 
 class JsonSpec() extends FunSuite {
 
@@ -59,25 +58,6 @@ class JsonSpec() extends FunSuite {
 
     assertEquals(result, expectedJson)
     assertEquals(roundTripped, Right(foo))
-  }
-
-  case class Patchable(a: Removable[Int])
-  object Patchable {
-    implicit val schema: Schema[Patchable] = {
-      val a = Removable.schema(int).required[Patchable]("a", _.a)
-      struct(a)(Patchable.apply)
-    }
-  }
-
-  test("Json patchable") {
-    val patchable = Patchable(Removable.Removed)
-    val result = Json.writePrettyString(patchable)
-    val expectedJson = """|{
-                          |  "a": null
-                          |}""".stripMargin
-    val roundTripped = Json.read[Patchable](Blob(result))
-    assertEquals(result, expectedJson)
-    assertEquals(roundTripped, Right(patchable))
   }
 
 }
