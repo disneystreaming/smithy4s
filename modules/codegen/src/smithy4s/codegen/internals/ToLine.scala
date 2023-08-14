@@ -153,6 +153,15 @@ private[internals] object Line {
       option
   }
 
+  def removable(line: Line, default: Boolean = false): Line = {
+    val result =
+      NameRef("smithy4s.Removable").toLine + Literal("[") + line + Literal("]")
+    if (default)
+      result + Literal(" = ") + NameRef("smithy4s.Removable.absent")
+    else
+      result
+  }
+
   def apply(value: String): Line = Line(Chain.one(Literal(value)))
 
   def apply(values: LineSegment*): Line = Line(Chain(values: _*))

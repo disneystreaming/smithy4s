@@ -123,11 +123,18 @@ private[internals] object EnumTag {
   case object IntEnum extends EnumTag
 }
 
+sealed abstract class FieldKind(val priority: Int)
+object FieldKind {
+  case object Required extends FieldKind(0)
+  case object Optional extends FieldKind(1)
+  case object Removable extends FieldKind(2)
+}
+
 private[internals] case class Field(
     name: String,
     realName: String,
     tpe: Type,
-    required: Boolean,
+    fieldKind: FieldKind,
     hints: List[Hint]
 )
 
@@ -142,10 +149,10 @@ private[internals] object Field {
   def apply(
       name: String,
       tpe: Type,
-      required: Boolean = true,
+      fieldKind: FieldKind = FieldKind.Required,
       hints: List[Hint] = Nil
   ): Field =
-    Field(name, name, tpe, required, hints)
+    Field(name, name, tpe, fieldKind, hints)
 
 }
 

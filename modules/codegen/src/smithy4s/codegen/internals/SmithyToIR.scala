@@ -217,8 +217,9 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
               val memberHasDefault = member.hasTrait(classOf[DefaultTrait])
 
               // if member has no default and is optional, then the field must be optional
-              if (!memberHasDefault && memberOptional) !field.required
-              else field.required
+              if (!memberHasDefault && memberOptional)
+                field.fieldKind != FieldKind.Required
+              else field.fieldKind == FieldKind.Required
             }
         }
       }
@@ -1050,12 +1051,17 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
             else List.empty
           val defaultable = member.hasTrait(classOf[DefaultTrait]) &&
             !member.tpe.exists(_.isExternal)
-          (
-            member.getMemberName(),
-            member.tpe,
-            member.hasTrait(classOf[RequiredTrait]) || defaultable,
-            hints(member) ++ default ++ noDefault
-          )
+          val isRequired = member.hasTrait(classOf[RequiredTrait])
+          val isExplicitlyNullable =
+            member.hasTrait(classOf[alloy.NullableTrait])
+          val fieldKind =
+            if (isRequired || defaultable)
+              FieldKind.Required
+            else if (!isRequired && isExplicitlyNullable)
+              FieldKind.Removable
+            else FieldKind.Optional
+          val memberHints = hints(member) ++ default ++ noDefault
+          (member.getMemberName(), member.tpe, fieldKind, memberHints)
         }
         .collect {
           case (name, Some(tpe: Type.ExternalType), required, hints) =>
@@ -1074,9 +1080,8 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
 
       defaultRenderMode match {
         case DefaultRenderMode.Full =>
-          result.sortBy(hintsContainsDefault).sortBy(!_.required)
-        case DefaultRenderMode.OptionOnly =>
-          result.sortBy(!_.required)
+          result.sortBy(hintsContainsDefault).sortBy(_.fieldKind.priority)
+        case DefaultRenderMode.OptionOnly => result.sortBy(_.fieldKind.priority)
         case DefaultRenderMode.NoDefaults => result
       }
     }
@@ -1242,7 +1247,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
         val structFields = struct.fields
         val fieldNames = struct.fields.map(_.name)
         val fields: List[TypedNode.FieldTN[NodeAndType]] = structFields.map {
-          case Field(_, realName, tpe, true, _) =>
+          case Field(_, realName, tpe, FieldKind.Required, _) =>
             val node = map.get(realName).getOrElse {
               struct
                 .getMember(realName)
@@ -1252,7 +1257,7 @@ private[codegen] class SmithyToIR(model: Model, namespace: String) {
                 .toNode
             } // value or default must be present on required field
             TypedNode.FieldTN.RequiredTN(NodeAndType(node, tpe))
-          case Field(_, realName, tpe, false, _) =>
+          case Field(_, realName, tpe, _, _) =>
             map.get(realName) match {
               case Some(node) =>
                 TypedNode.FieldTN.OptionalSomeTN(NodeAndType(node, tpe))

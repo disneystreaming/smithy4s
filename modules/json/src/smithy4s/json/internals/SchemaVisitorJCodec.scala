@@ -37,6 +37,7 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.ListMap
+import alloy.Nullable
 
 private[smithy4s] class SchemaVisitorJCodec(
     maxArity: Int,
@@ -1219,6 +1220,8 @@ private[smithy4s] class SchemaVisitorJCodec(
 
   override def option[A](schema: Schema[A]): JCodec[Option[A]] =
     new JCodec[Option[A]] {
+      val aIsNullable =
+        schema.hints.get(Nullable).isDefined && schema.isOption
       val underlying: JCodec[A] = self(schema)
       def expecting: String = s"JsNull or ${underlying.expecting}"
       def decodeKey(in: JsonReader): Option[A] = ???
@@ -1229,7 +1232,10 @@ private[smithy4s] class SchemaVisitorJCodec(
       }
 
       def decodeValue(cursor: Cursor, in: JsonReader): Option[A] =
-        if (in.isNextToken('n'))
+        // if `A` is an option and has nullable, we delegate the handling of `null` to it.
+        // This allows for supporting Json-merge patches, where the absence of value
+        // and the presence of "null" have different meanings.
+        if (in.isNextToken('n') && !aIsNullable)
           in.readNullOrError[Option[A]](None, "Expected null")
         else {
           in.rollbackToken()

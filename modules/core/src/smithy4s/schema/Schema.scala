@@ -24,8 +24,9 @@ import scala.reflect.ClassTag
 sealed trait Schema[A]{
   def shapeId: ShapeId
   def hints: Hints
-  final def required[Struct]: PartiallyAppliedRequired[Struct, A] = new PartiallyAppliedRequired[Struct, A](this)
-  final def optional[Struct]: PartiallyAppliedOptional[Struct, A] = new PartiallyAppliedOptional[Struct, A](this)
+  final def required[Struct]: PartiallyAppliedField[Struct, A] = new PartiallyAppliedField[Struct, A](this.addHints(smithy.api.Required()))
+  final def optional[Struct]: PartiallyAppliedField[Struct, Option[A]] = new PartiallyAppliedField[Struct, Option[A]](this.option)
+  final def removable[Struct]: PartiallyAppliedField[Struct, Removable[A]] = new PartiallyAppliedField[Struct, Removable[A]](Removable.schema(this))
 
   final def oneOf[Union]: PartiallyAppliedOneOf[Union, A] = new PartiallyAppliedOneOf[Union,A](this)
 
@@ -262,8 +263,8 @@ object Schema {
 
   def struct[S]: PartiallyAppliedStruct[S] = new PartiallyAppliedStruct[S](placeholder)
   val tuple: PartiallyAppliedTuple = new PartiallyAppliedTuple(placeholder)
-  private [smithy4s] class PartiallyAppliedRequired[S, A](private val schema: Schema[A]) extends AnyVal {
-    def apply(label: String, get: S => A): Field[S, A] = Field.required(label, schema, get)
+  private [smithy4s] class PartiallyAppliedField[S, A](private val schema: Schema[A]) extends AnyVal {
+    def apply(label: String, get: S => A): Field[S, A] = Field(label, schema, get)
   }
 
   private [smithy4s] class PartiallyAppliedOptional[S, A](private val schema: Schema[A]) extends AnyVal {

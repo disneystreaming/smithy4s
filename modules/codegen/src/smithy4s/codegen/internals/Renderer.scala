@@ -632,9 +632,11 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   ) {
     val smithyLens = NameRef("smithy4s.optics.Lens")
     val lenses = product.fields.map { field =>
-      val fieldType =
-        if (field.required) Line.required(line"${field.tpe}", None)
-        else Line.optional(line"${field.tpe}")
+      val fieldType = field.fieldKind match {
+        case FieldKind.Required  => Line.required(line"${field.tpe}", None)
+        case FieldKind.Optional  => Line.optional(line"${field.tpe}")
+        case FieldKind.Removable => Line.removable(line"${field.tpe}")
+      }
       line"val ${field.name}: $smithyLens[${product.nameRef}, $fieldType] = $smithyLens[${product.nameRef}, $fieldType](_.${field.name})(n => a => a.copy(${field.name} = n))"
     }
     obj(product.nameRef.copy(name = "optics"))(lenses) ++
@@ -697,8 +699,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
         renderLenses(product, hints),
         if (fields.nonEmpty) {
           val renderedFields =
-            fields.map { case Field(fieldName, realName, tpe, required, hints) =>
-              val req = if (required) "required" else "optional"
+            fields.map { case Field(fieldName, realName, tpe, fieldKind, hints) =>
+              val req = fieldKind match {
+                case FieldKind.Required  => "required"
+                case FieldKind.Optional  => "optional"
+                case FieldKind.Removable => "removable"
+              }
               if (hints.isEmpty) {
                 line"""${tpe.schemaRef}.$req[${product.nameRef}]("$realName", _.$fieldName)"""
               } else {
@@ -728,12 +734,15 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
               .block(
                 line"arr => new ${product.nameRef}".args(
                   fields.zipWithIndex.map {
-                    case (Field(_, _, tpe, required, _), idx) =>
+                    case (Field(_, _, tpe, fieldKind, _), idx) =>
                       val scalaTpe = line"$tpe"
-                      val optional =
-                        if (required) scalaTpe else Line.optional(scalaTpe)
+                      val wrappedType = fieldKind match {
+                        case FieldKind.Required  => scalaTpe
+                        case FieldKind.Optional  => Line.optional(scalaTpe)
+                        case FieldKind.Removable => Line.removable(scalaTpe)
+                      }
 
-                      line"arr($idx).asInstanceOf[$optional]"
+                      line"arr($idx).asInstanceOf[$wrappedType]"
                   }
                 )
               )
@@ -802,11 +811,12 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
   }
 
   private def renderGetMessage(field: Field) = field match {
-    case field if field.tpe.isResolved && field.required =>
+    case field
+        if field.tpe.isResolved && field.fieldKind == FieldKind.Required =>
       line"override def getMessage(): $string_ = ${field.name}"
     case field if field.tpe.isResolved =>
       line"override def getMessage(): $string_ = ${field.name}.orNull"
-    case field if field.required =>
+    case field if field.fieldKind == FieldKind.Required =>
       line"override def getMessage(): $string_ = ${field.name}.value"
     case field =>
       line"override def getMessage(): $string_ = ${field.name}.map(_.value).orNull"
@@ -1090,20 +1100,26 @@ private[internals] class Renderer(compilationUnit: CompilationUnit) { self =>
       noDefault: Boolean = false
   ): Line = {
     field match {
-      case Field(name, _, tpe, required, hints) =>
+      case Field(name, _, tpe, fieldKind, hints) =>
         val line = line"$tpe"
-        val tpeAndDefault = if (required) {
-          val maybeDefault = hints
-            .collectFirst { case d @ Hint.Default(_) => d }
-            .filterNot(_ => noDefault)
-            .map(renderDefault)
+        val tpeAndDefault = fieldKind match {
+          case FieldKind.Required =>
+            val maybeDefault = hints
+              .collectFirst { case d @ Hint.Default(_) => d }
+              .filterNot(_ => noDefault)
+              .map(renderDefault)
 
-          Line.required(line, maybeDefault)
-        } else {
-          Line.optional(
-            line,
-            !noDefault && !field.hints.contains(Hint.NoDefault)
-          )
+            Line.required(line, maybeDefault)
+          case FieldKind.Optional =>
+            Line.optional(
+              line,
+              !noDefault && !field.hints.contains(Hint.NoDefault)
+            )
+          case FieldKind.Removable =>
+            Line.removable(
+              line,
+              !noDefault && !field.hints.contains(Hint.NoDefault)
+            )
         }
 
         line"$name: " + tpeAndDefault

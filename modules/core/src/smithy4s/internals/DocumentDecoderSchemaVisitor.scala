@@ -32,6 +32,7 @@ import smithy4s.schema._
 import java.util.Base64
 import java.util.UUID
 import scala.collection.immutable.ListMap
+import alloy.Nullable
 
 trait DocumentDecoder[A] { self =>
   def apply(history: List[PayloadPath.Segment], document: Document): A
@@ -209,12 +210,13 @@ class DocumentDecoderSchemaVisitor(
   def option[A](schema: Schema[A]): DocumentDecoder[Option[A]] =
     new DocumentDecoder[Option[A]] {
       val decoder = schema.compile(self)
+      val aIsNullable = schema.hints.get(Nullable).isDefined && schema.isOption
       def expected = decoder.expected
 
       def apply(
           history: List[PayloadPath.Segment],
           document: smithy4s.Document
-      ): Option[A] = if (document == Document.DNull) None
+      ): Option[A] = if (document == Document.DNull && !aIsNullable) None
       else Some(decoder(history, document))
     }
 
