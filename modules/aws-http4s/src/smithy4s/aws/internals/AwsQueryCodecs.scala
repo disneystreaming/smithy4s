@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package aws
+package smithy4s.aws
 package internals
 
 import _root_.aws.protocols.AwsQueryError
@@ -27,6 +26,7 @@ import fs2.compression.Compression
 import org.http4s.EntityEncoder
 import smithy.api.XmlFlattened
 import smithy.api.XmlName
+import smithy4s.Blob
 import smithy4s.Endpoint
 import smithy4s.codecs.PayloadPath
 import smithy4s.http.Metadata

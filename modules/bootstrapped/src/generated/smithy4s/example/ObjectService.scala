@@ -118,14 +118,24 @@ object ObjectServiceOperation {
       case PutObjectError.NoMoreSpaceCase(e) => e
     }
   }
-  sealed trait PutObjectError extends scala.Product with scala.Serializable {
+  sealed trait PutObjectError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: PutObjectError = this
     def $ordinal: Int
+
+    object project {
+      def serverError: Option[ServerError] = PutObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
+      def noMoreSpace: Option[NoMoreSpace] = PutObjectError.NoMoreSpaceCase.alt.project.lift(self).map(_.noMoreSpace)
+    }
+
+    def accept[A](visitor: PutObjectError.Visitor[A]): A = this match {
+      case value: PutObjectError.ServerErrorCase => visitor.serverError(value.serverError)
+      case value: PutObjectError.NoMoreSpaceCase => visitor.noMoreSpace(value.noMoreSpace)
+    }
   }
   object PutObjectError extends ShapeTag.Companion[PutObjectError] {
 
-    def serverError(serverError:ServerError): PutObjectError = ServerErrorCase(serverError)
-    def noMoreSpace(noMoreSpace:NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
+    def serverError(serverError: ServerError): PutObjectError = ServerErrorCase(serverError)
+    def noMoreSpace(noMoreSpace: NoMoreSpace): PutObjectError = NoMoreSpaceCase(noMoreSpace)
 
     val id: ShapeId = ShapeId("smithy4s.example", "PutObjectError")
 
@@ -136,18 +146,31 @@ object ObjectServiceOperation {
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
+      val schema: Schema[PutObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), PutObjectError.ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[PutObjectError]("ServerError")
     }
     object NoMoreSpaceCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[NoMoreSpaceCase] = bijection(NoMoreSpace.schema.addHints(hints), NoMoreSpaceCase(_), _.noMoreSpace)
+      val schema: Schema[PutObjectError.NoMoreSpaceCase] = bijection(NoMoreSpace.schema.addHints(hints), PutObjectError.NoMoreSpaceCase(_), _.noMoreSpace)
       val alt = schema.oneOf[PutObjectError]("NoMoreSpace")
     }
 
+    trait Visitor[A] {
+      def serverError(value: ServerError): A
+      def noMoreSpace(value: NoMoreSpace): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def serverError(value: ServerError): A = default
+        def noMoreSpace(value: NoMoreSpace): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[PutObjectError] = union(
-      ServerErrorCase.alt,
-      NoMoreSpaceCase.alt,
+      PutObjectError.ServerErrorCase.alt,
+      PutObjectError.NoMoreSpaceCase.alt,
     ){
       _.$ordinal
     }
@@ -178,13 +201,21 @@ object ObjectServiceOperation {
       case GetObjectError.ServerErrorCase(e) => e
     }
   }
-  sealed trait GetObjectError extends scala.Product with scala.Serializable {
+  sealed trait GetObjectError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: GetObjectError = this
     def $ordinal: Int
+
+    object project {
+      def serverError: Option[ServerError] = GetObjectError.ServerErrorCase.alt.project.lift(self).map(_.serverError)
+    }
+
+    def accept[A](visitor: GetObjectError.Visitor[A]): A = this match {
+      case value: GetObjectError.ServerErrorCase => visitor.serverError(value.serverError)
+    }
   }
   object GetObjectError extends ShapeTag.Companion[GetObjectError] {
 
-    def serverError(serverError:ServerError): GetObjectError = ServerErrorCase(serverError)
+    def serverError(serverError: ServerError): GetObjectError = ServerErrorCase(serverError)
 
     val id: ShapeId = ShapeId("smithy4s.example", "GetObjectError")
 
@@ -194,12 +225,23 @@ object ObjectServiceOperation {
 
     object ServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[ServerErrorCase] = bijection(ServerError.schema.addHints(hints), ServerErrorCase(_), _.serverError)
+      val schema: Schema[GetObjectError.ServerErrorCase] = bijection(ServerError.schema.addHints(hints), GetObjectError.ServerErrorCase(_), _.serverError)
       val alt = schema.oneOf[GetObjectError]("ServerError")
     }
 
+    trait Visitor[A] {
+      def serverError(value: ServerError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def serverError(value: ServerError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[GetObjectError] = union(
-      ServerErrorCase.alt,
+      GetObjectError.ServerErrorCase.alt,
     ){
       _.$ordinal
     }

@@ -14,23 +14,29 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen.internals
+package smithy4s.xml
 
-import cats.syntax.all._
-import smithy4s.codegen.internals.LineSegment.Literal
+import weaver._
 
-private[internals] class PartialBlock(l: Line, sameLine: Line = Line.empty) {
-  def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    A.render(inner)
-      .transformLines(lines =>
-        (l + Literal(" {") + sameLine) :: indent(lines) ::: List(Line("}"))
-      )
+import smithy4s.schema.Schema
+import smithy4s.schema.Schema._
+import smithy4s.{ShapeId, Blob}
+
+object XmlSpec extends FunSuite {
+
+  implicit class SchemaOps[A](schema: Schema[A]) {
+    def named(name: String) = schema.withId(ShapeId("default", name))
+    def x = named("x")
+    def n = named("Foo")
   }
 
-  def withSameLineValue(value: Line): PartialBlock =
-    new PartialBlock(l, value)
-
-  def apply(inner: LinesWithValue*): Lines =
-    apply(inner.toList.foldMap(_.render))
+  test("roundtrip") {
+    implicit val schema: Schema[Int] = int.x
+    val xml = "<x>1</x>"
+    val decoded = Xml.read[Int](Blob(xml))
+    val encoded = Xml.write[Int](1)
+    expect.eql(Some(1), decoded.toOption) &&
+    expect(Blob(xml).sameBytesAs(encoded))
+  }
 
 }

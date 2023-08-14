@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-package smithy4s
-package aws
+package smithy4s.aws
 package internals
 
 import _root_.aws.protocols.AwsQueryError

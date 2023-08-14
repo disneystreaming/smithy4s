@@ -104,16 +104,30 @@ object ErrorHandlingServiceExtraErrorsOperation {
       case ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(e) => e
     }
   }
-  sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable {
+  sealed trait ExtraErrorOperationError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ExtraErrorOperationError = this
     def $ordinal: Int
+
+    object project {
+      def randomOtherClientError: Option[RandomOtherClientError] = ExtraErrorOperationError.RandomOtherClientErrorCase.alt.project.lift(self).map(_.randomOtherClientError)
+      def randomOtherServerError: Option[RandomOtherServerError] = ExtraErrorOperationError.RandomOtherServerErrorCase.alt.project.lift(self).map(_.randomOtherServerError)
+      def randomOtherClientErrorWithCode: Option[RandomOtherClientErrorWithCode] = ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase.alt.project.lift(self).map(_.randomOtherClientErrorWithCode)
+      def randomOtherServerErrorWithCode: Option[RandomOtherServerErrorWithCode] = ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase.alt.project.lift(self).map(_.randomOtherServerErrorWithCode)
+    }
+
+    def accept[A](visitor: ExtraErrorOperationError.Visitor[A]): A = this match {
+      case value: ExtraErrorOperationError.RandomOtherClientErrorCase => visitor.randomOtherClientError(value.randomOtherClientError)
+      case value: ExtraErrorOperationError.RandomOtherServerErrorCase => visitor.randomOtherServerError(value.randomOtherServerError)
+      case value: ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase => visitor.randomOtherClientErrorWithCode(value.randomOtherClientErrorWithCode)
+      case value: ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase => visitor.randomOtherServerErrorWithCode(value.randomOtherServerErrorWithCode)
+    }
   }
   object ExtraErrorOperationError extends ShapeTag.Companion[ExtraErrorOperationError] {
 
-    def randomOtherClientError(randomOtherClientError:RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
-    def randomOtherServerError(randomOtherServerError:RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerError)
-    def randomOtherClientErrorWithCode(randomOtherClientErrorWithCode:RandomOtherClientErrorWithCode): ExtraErrorOperationError = RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode)
-    def randomOtherServerErrorWithCode(randomOtherServerErrorWithCode:RandomOtherServerErrorWithCode): ExtraErrorOperationError = RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode)
+    def randomOtherClientError(randomOtherClientError: RandomOtherClientError): ExtraErrorOperationError = RandomOtherClientErrorCase(randomOtherClientError)
+    def randomOtherServerError(randomOtherServerError: RandomOtherServerError): ExtraErrorOperationError = RandomOtherServerErrorCase(randomOtherServerError)
+    def randomOtherClientErrorWithCode(randomOtherClientErrorWithCode: RandomOtherClientErrorWithCode): ExtraErrorOperationError = RandomOtherClientErrorWithCodeCase(randomOtherClientErrorWithCode)
+    def randomOtherServerErrorWithCode(randomOtherServerErrorWithCode: RandomOtherServerErrorWithCode): ExtraErrorOperationError = RandomOtherServerErrorWithCodeCase(randomOtherServerErrorWithCode)
 
     val id: ShapeId = ShapeId("smithy4s.example", "ExtraErrorOperationError")
 
@@ -126,30 +140,47 @@ object ErrorHandlingServiceExtraErrorsOperation {
 
     object RandomOtherClientErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherClientErrorCase] = bijection(RandomOtherClientError.schema.addHints(hints), RandomOtherClientErrorCase(_), _.randomOtherClientError)
+      val schema: Schema[ExtraErrorOperationError.RandomOtherClientErrorCase] = bijection(RandomOtherClientError.schema.addHints(hints), ExtraErrorOperationError.RandomOtherClientErrorCase(_), _.randomOtherClientError)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherClientError")
     }
     object RandomOtherServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherServerErrorCase] = bijection(RandomOtherServerError.schema.addHints(hints), RandomOtherServerErrorCase(_), _.randomOtherServerError)
+      val schema: Schema[ExtraErrorOperationError.RandomOtherServerErrorCase] = bijection(RandomOtherServerError.schema.addHints(hints), ExtraErrorOperationError.RandomOtherServerErrorCase(_), _.randomOtherServerError)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherServerError")
     }
     object RandomOtherClientErrorWithCodeCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherClientErrorWithCodeCase] = bijection(RandomOtherClientErrorWithCode.schema.addHints(hints), RandomOtherClientErrorWithCodeCase(_), _.randomOtherClientErrorWithCode)
+      val schema: Schema[ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase] = bijection(RandomOtherClientErrorWithCode.schema.addHints(hints), ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase(_), _.randomOtherClientErrorWithCode)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherClientErrorWithCode")
     }
     object RandomOtherServerErrorWithCodeCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[RandomOtherServerErrorWithCodeCase] = bijection(RandomOtherServerErrorWithCode.schema.addHints(hints), RandomOtherServerErrorWithCodeCase(_), _.randomOtherServerErrorWithCode)
+      val schema: Schema[ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase] = bijection(RandomOtherServerErrorWithCode.schema.addHints(hints), ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase(_), _.randomOtherServerErrorWithCode)
       val alt = schema.oneOf[ExtraErrorOperationError]("RandomOtherServerErrorWithCode")
     }
 
+    trait Visitor[A] {
+      def randomOtherClientError(value: RandomOtherClientError): A
+      def randomOtherServerError(value: RandomOtherServerError): A
+      def randomOtherClientErrorWithCode(value: RandomOtherClientErrorWithCode): A
+      def randomOtherServerErrorWithCode(value: RandomOtherServerErrorWithCode): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def randomOtherClientError(value: RandomOtherClientError): A = default
+        def randomOtherServerError(value: RandomOtherServerError): A = default
+        def randomOtherClientErrorWithCode(value: RandomOtherClientErrorWithCode): A = default
+        def randomOtherServerErrorWithCode(value: RandomOtherServerErrorWithCode): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ExtraErrorOperationError] = union(
-      RandomOtherClientErrorCase.alt,
-      RandomOtherServerErrorCase.alt,
-      RandomOtherClientErrorWithCodeCase.alt,
-      RandomOtherServerErrorWithCodeCase.alt,
+      ExtraErrorOperationError.RandomOtherClientErrorCase.alt,
+      ExtraErrorOperationError.RandomOtherServerErrorCase.alt,
+      ExtraErrorOperationError.RandomOtherClientErrorWithCodeCase.alt,
+      ExtraErrorOperationError.RandomOtherServerErrorWithCodeCase.alt,
     ){
       _.$ordinal
     }

@@ -105,14 +105,24 @@ object HelloWorldServiceOperation {
       case HelloError.SpecificServerErrorCase(e) => e
     }
   }
-  sealed trait HelloError extends scala.Product with scala.Serializable {
+  sealed trait HelloError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: HelloError = this
     def $ordinal: Int
+
+    object project {
+      def genericServerError: Option[GenericServerError] = HelloError.GenericServerErrorCase.alt.project.lift(self).map(_.genericServerError)
+      def specificServerError: Option[SpecificServerError] = HelloError.SpecificServerErrorCase.alt.project.lift(self).map(_.specificServerError)
+    }
+
+    def accept[A](visitor: HelloError.Visitor[A]): A = this match {
+      case value: HelloError.GenericServerErrorCase => visitor.genericServerError(value.genericServerError)
+      case value: HelloError.SpecificServerErrorCase => visitor.specificServerError(value.specificServerError)
+    }
   }
   object HelloError extends ShapeTag.Companion[HelloError] {
 
-    def genericServerError(genericServerError:GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
-    def specificServerError(specificServerError:SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
+    def genericServerError(genericServerError: GenericServerError): HelloError = GenericServerErrorCase(genericServerError)
+    def specificServerError(specificServerError: SpecificServerError): HelloError = SpecificServerErrorCase(specificServerError)
 
     val id: ShapeId = ShapeId("smithy4s.example.hello", "HelloError")
 
@@ -123,18 +133,31 @@ object HelloWorldServiceOperation {
 
     object GenericServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), GenericServerErrorCase(_), _.genericServerError)
+      val schema: Schema[HelloError.GenericServerErrorCase] = bijection(GenericServerError.schema.addHints(hints), HelloError.GenericServerErrorCase(_), _.genericServerError)
       val alt = schema.oneOf[HelloError]("GenericServerError")
     }
     object SpecificServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[SpecificServerErrorCase] = bijection(SpecificServerError.schema.addHints(hints), SpecificServerErrorCase(_), _.specificServerError)
+      val schema: Schema[HelloError.SpecificServerErrorCase] = bijection(SpecificServerError.schema.addHints(hints), HelloError.SpecificServerErrorCase(_), _.specificServerError)
       val alt = schema.oneOf[HelloError]("SpecificServerError")
     }
 
+    trait Visitor[A] {
+      def genericServerError(value: GenericServerError): A
+      def specificServerError(value: SpecificServerError): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def genericServerError(value: GenericServerError): A = default
+        def specificServerError(value: SpecificServerError): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[HelloError] = union(
-      GenericServerErrorCase.alt,
-      SpecificServerErrorCase.alt,
+      HelloError.GenericServerErrorCase.alt,
+      HelloError.SpecificServerErrorCase.alt,
     ){
       _.$ordinal
     }

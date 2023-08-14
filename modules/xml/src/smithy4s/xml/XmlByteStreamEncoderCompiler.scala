@@ -14,23 +14,10 @@
  *  limitations under the License.
  */
 
-package smithy4s.codegen.internals
+package smithy4s.xml
 
-import cats.syntax.all._
-import smithy4s.codegen.internals.LineSegment.Literal
+import smithy4s.schema.CachedSchemaCompiler
+import smithy4s.interopfs2._
 
-private[internals] class PartialBlock(l: Line, sameLine: Line = Line.empty) {
-  def apply[A](inner: A)(implicit A: ToLines[A]): Lines = {
-    A.render(inner)
-      .transformLines(lines =>
-        (l + Literal(" {") + sameLine) :: indent(lines) ::: List(Line("}"))
-      )
-  }
-
-  def withSameLineValue(value: Line): PartialBlock =
-    new PartialBlock(l, value)
-
-  def apply(inner: LinesWithValue*): Lines =
-    apply(inner.toList.foldMap(_.render))
-
-}
+trait XmlByteStreamEncoderCompiler[F[_]]
+    extends CachedSchemaCompiler[ByteStreamEncoder[F, *]]
