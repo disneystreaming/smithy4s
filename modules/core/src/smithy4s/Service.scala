@@ -219,6 +219,7 @@ object Service {
         mapper: PolyFunction5[Endpoint.ForOperation[Op]#e, Endpoint.ForOperation[Op]#e]
     ): Builder[Alg, Op] = {
       // note: this may not be possible to inline because of a Scala 3 issue.
+      // https://github.com/lampepfl/dotty/issues/18401
       def handle[I, E, O, SI, SO](endpoint: Endpoint[Op, I, E, O, SI, SO]): Endpoint[Op, I, E, O, SI, SO] =
         mapper(endpoint)
 
