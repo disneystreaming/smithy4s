@@ -355,7 +355,7 @@ abstract class PizzaSpec
           "Content-Type" -> List("application/json")
         )
         val containsProperHeaders =
-          expectedHeaders.forall(h => headers.get(h._1).isDefined)
+          expectedHeaders.forall(h => headers.get(h._1).contains(h._2))
         expect.same(code, 200) &&
         expect.same(body, "") &&
         expect(
