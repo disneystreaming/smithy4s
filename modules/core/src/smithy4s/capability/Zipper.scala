@@ -16,6 +16,9 @@
 
 package smithy4s.capability
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
+
 /**
   * A zipper is similar in notion to `Applicative`, in that it allows for
   * combining several values of `F` in non-sequential ways.
@@ -74,4 +77,11 @@ object Zipper {
       }
     }
 
+  implicit def futureZipper(implicit ec: ExecutionContext): Zipper[Future] =
+    new Zipper[Future] {
+      override def zipMapAll[A](seq: IndexedSeq[Future[Any]])(
+          f: IndexedSeq[Any] => A
+      ): Future[A] = Future.sequence(seq).map(f)
+      def pure[A](a: A): Future[A] = Future.successful(a)
+    }
 }
