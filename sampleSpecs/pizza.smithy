@@ -340,11 +340,14 @@ structure EchoBody {
 @http(method: "HEAD", uri: "/head-request")
 @readonly
 operation HeadRequest {
-    output: HeadRequestOutput
-}
-
-structure HeadRequestOutput {
-    @httpHeader("Test")
-    @required
-    test: String
+    input := {
+        @httpQuery("test")
+        test: String
+    }
+    output := {
+        @httpHeader("Test")
+        @required
+        test: String
+        bodyField: String
+    }
 }

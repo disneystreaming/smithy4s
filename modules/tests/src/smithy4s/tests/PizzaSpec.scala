@@ -312,7 +312,9 @@ abstract class PizzaSpec
     )
   }
 
-  routerTest("HEAD request should have empty body") { (client, uri, log) =>
+  routerTest(
+    "HEAD request should have empty body - content length from just brackets"
+  ) { (client, uri, log) =>
     for {
       res <- client.send[String](
         HEAD((uri / "head-request")),
@@ -320,17 +322,47 @@ abstract class PizzaSpec
       )
     } yield {
       val (code, headers, body) = res
+      val expectedHeaders = Map(
+        "Test" -> List("test"),
+        // response would have been `{}` if this was a GET
+        "Content-Length" -> List("2"),
+        "Content-Type" -> List("application/json")
+      )
+      val containsProperHeaders =
+        expectedHeaders.forall(h => headers.get(h._1).isDefined)
       expect.same(code, 200) &&
       expect.same(body, "") &&
-      expect.same(
-        headers,
-        HeaderMap(
-          Map(
-            CaseInsensitive("Test") -> List("test")
-          )
-        )
+      expect(
+        containsProperHeaders,
+        s"Expected to find all of $expectedHeaders inside of $headers"
       )
     }
+  }
+
+  routerTest("HEAD request should have empty body - longer content length") {
+    (client, uri, log) =>
+      for {
+        res <- client.send[String](
+          HEAD((uri / "head-request").withQueryParam("test", "one")),
+          log
+        )
+      } yield {
+        val (code, headers, body) = res
+        val expectedHeaders = Map(
+          "Test" -> List("test"),
+          // response would have been `{"bodyField":"one"}` if this was a GET
+          "Content-Length" -> List("19"),
+          "Content-Type" -> List("application/json")
+        )
+        val containsProperHeaders =
+          expectedHeaders.forall(h => headers.get(h._1).isDefined)
+        expect.same(code, 200) &&
+        expect.same(body, "") &&
+        expect(
+          containsProperHeaders,
+          s"Expected to find all of $expectedHeaders inside of $headers"
+        )
+      }
   }
 
   pureTest("Negative: http no match (bad path)") {

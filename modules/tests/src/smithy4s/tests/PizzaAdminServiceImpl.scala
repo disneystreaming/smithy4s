@@ -118,6 +118,7 @@ class PizzaAdminServiceImpl(ref: Compat.Ref[IO, State])
       queryParam: Option[String]
   ): IO[Unit] = IO.unit
 
-  def headRequest(): cats.effect.IO[HeadRequestOutput] =
-    IO.pure(HeadRequestOutput("test"))
+  def headRequest(test: Option[String]): cats.effect.IO[HeadRequestOutput] =
+    IO.pure(HeadRequestOutput("test", test))
+
 }
