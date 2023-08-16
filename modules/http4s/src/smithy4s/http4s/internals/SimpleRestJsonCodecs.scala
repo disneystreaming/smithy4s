@@ -31,7 +31,6 @@ import smithy4s.json.Json
 import smithy4s.schema.CachedSchemaCompiler
 import cats.syntax.all._
 import cats.Eq
-import smithy4s.kinds._
 
 private[http4s] class SimpleRestJsonCodecs(
     val maxArity: Int,
@@ -79,7 +78,17 @@ private[http4s] class SimpleRestJsonCodecs(
       .withContentType(`Content-Type`(mediaType"application/json"))
   }
 
-  private type EncoderFromHints[F[_], A] = Hints => ResponseEncoder[F, A]
+  private object IsHeadRequest {
+    val id = ShapeId("smithy4s.private", "IsHeadRequest")
+    val hint = Hints.Binding.DynamicBinding(id, Document.DNull)
+
+    def fromHints(hints: Hints): Option[Hints.Binding.DynamicBinding] = {
+      val isHeadRequest = hints
+        .get[smithy.api.Http]
+        .exists(h => CaseInsensitive(h.method.value) === CaseInsensitive("HEAD"))
+      if (isHeadRequest) Some(hint) else None
+    }
+  }
 
   def makeServerCodecs[F[_]: Concurrent]: UnaryServerCodecs.Make[F] = {
     val messageDecoderCompiler =
@@ -93,17 +102,13 @@ private[http4s] class SimpleRestJsonCodecs(
     )
 
     val responseEncoderCompiler = {
-      new CachedSchemaCompiler[EncoderFromHints[F, *]] {
+      new CachedSchemaCompiler[ResponseEncoder[F, *]] {
         type Cache = restSchemaCompiler.Cache
         def createCache(): Cache = restSchemaCompiler.createCache()
         def fromSchema[A](schema: Schema[A]) = fromSchema(schema, createCache())
 
-        def fromSchema[A](schema: Schema[A], cache: Cache) = endpointHints =>
-          if (
-            schema.isUnit || endpointHints
-              .get[smithy.api.Http]
-              .exists(h => CaseInsensitive(h.method.value) === CaseInsensitive("HEAD"))
-          ) {
+        def fromSchema[A](schema: Schema[A], cache: Cache) =
+          if (schema.isUnit || schema.hints.toMap.contains(IsHeadRequest.id)) {
             restSchemaCompiler.fromSchema(schema, cache)
           } else {
             restSchemaCompiler
@@ -116,12 +121,7 @@ private[http4s] class SimpleRestJsonCodecs(
     new UnaryServerCodecs.Make[F] {
       val input = messageDecoderCompiler
       val output = responseEncoderCompiler
-
-      val error = responseEncoderCompiler.mapK[EncoderFromHints[F, *], ResponseEncoder[F, *]] {
-        new PolyFunction[EncoderFromHints[F, *], ResponseEncoder[F, *]] {
-          def apply[A](fromHints: EncoderFromHints[F, A]): ResponseEncoder[F, A] = fromHints(Hints.empty)
-        }
-      }
+      val error = responseEncoderCompiler
 
       val requestDecoderCache: input.Cache = input.createCache()
       val errorResponseEncoderCache: error.Cache = error.createCache()
@@ -134,7 +134,10 @@ private[http4s] class SimpleRestJsonCodecs(
           val inputDecoder: RequestDecoder[F, I] =
             input.fromSchema(endpoint.input, requestDecoderCache)
           val outputEncoder: ResponseEncoder[F, O] =
-            output.fromSchema(endpoint.output, responseEncoderCache)(endpoint.hints)
+            output.fromSchema(
+              endpoint.output.addHints(IsHeadRequest.fromHints(endpoint.hints).toList: _*),
+              responseEncoderCache
+            )
           val errorEncoder: ResponseEncoder[F, E] =
             ResponseEncoder.forError(
               errorHeaders,
