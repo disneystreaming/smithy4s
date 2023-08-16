@@ -21,7 +21,6 @@ import software.amazon.smithy.build.{ProjectionTransformer, TransformContext}
 import software.amazon.smithy.model.Model
 import software.amazon.smithy.model.shapes._
 import software.amazon.smithy.model.traits._
-import software.amazon.smithy.utils.ToSmithyBuilder
 import java.util.function.Function
 
 @annotation.nowarn("msg=class EnumTrait in package traits is deprecated")
