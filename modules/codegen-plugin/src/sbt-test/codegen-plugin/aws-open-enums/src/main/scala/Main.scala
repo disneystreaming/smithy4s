@@ -18,7 +18,9 @@ import com.amazonaws.dynamodb.TestEnum
 
 object Main extends App {
 
-  if (TestEnum.hints.get[alloy.OpenEnum].isEmpty)
-    sys.error("Expected OpenEnum trait on aws enum.")
+  require(
+    TestEnum.hints.has(alloy.OpenEnum),
+    "Expected OpenEnum trait on aws enum."
+  )
 
 }

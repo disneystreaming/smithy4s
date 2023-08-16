@@ -71,8 +71,7 @@ final class OpenEnumTransformerSpec extends munit.FunSuite {
         )
 
     val containsOpenEnum = transformedModel
-      .getShape(ShapeId.fromParts("test", "Test"))
-      .get
+      .expectShape(ShapeId.fromParts("test", "Test"))
       .hasTrait(classOf[OpenEnumTrait])
 
     assert(!containsOpenEnum, "Expected openEnum trait NOT to be present")
@@ -91,20 +90,19 @@ final class OpenEnumTransformerSpec extends munit.FunSuite {
         )
 
     val containsOpenEnum = transformedModel
-      .getShape(ShapeId.fromParts("com.amazonaws.kinesis", "Test"))
-      .get
+      .expectShape(ShapeId.fromParts("com.amazonaws.kinesis", "Test"))
       .hasTrait(classOf[OpenEnumTrait])
 
     assert(containsOpenEnum, "Expected openEnum trait to be present")
   }
 
-  private def loadModel(namespaces: String*): Model = {
+  private def loadModel(strModels: String*): Model = {
     val assembler = Model
       .assembler()
       .disableValidation()
       .discoverModels()
 
-    namespaces
+    strModels
       .foldLeft(assembler) { case (a, model) =>
         a.addUnparsedModel(s"test-${model.hashCode}.smithy", model)
       }

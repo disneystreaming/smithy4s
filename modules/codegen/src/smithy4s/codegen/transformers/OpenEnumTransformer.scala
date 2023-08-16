@@ -32,24 +32,20 @@ private[codegen] final class OpenEnumTransformer extends ProjectionTransformer {
 
   def transform(ctx: TransformContext): Model = {
     val shapeMapper: Function[Shape, Shape] = { (shp: Shape) =>
-      if (shp.toShapeId.getNamespace.startsWith(awsNamespacePrefix)) {
-        shp match {
-          case e: EnumShape =>
-            val _ = e.hasTrait(classOf[EnumTrait])
-            e.toBuilder.addTrait(new OpenEnumTrait()).build()
-          case e: IntEnumShape =>
-            e.toBuilder.addTrait(new OpenEnumTrait()).build()
-          case t: Shape with ToSmithyBuilder[_]
-              if t.hasTrait(classOf[EnumTrait]) =>
-            t.toBuilder() match {
-              case b: AbstractShapeBuilder[_, _] =>
-                b.addTrait(new OpenEnumTrait())
-                b.build().asInstanceOf[Shape]
-              case _ => t
-            }
-          case other => other
-        }
-      } else shp
+      shp match {
+        case shp if !shp.getId.getNamespace.startsWith(awsNamespacePrefix) =>
+          shp
+        case e: EnumShape =>
+          e.toBuilder.addTrait(new OpenEnumTrait()).build()
+        case e: IntEnumShape =>
+          e.toBuilder.addTrait(new OpenEnumTrait()).build()
+        case t: Shape if t.hasTrait(classOf[EnumTrait]) =>
+          (Shape
+            .shapeToBuilder(t): AbstractShapeBuilder[_, _])
+            .addTrait(new OpenEnumTrait())
+            .build()
+        case other => other
+      }
     }
     ctx.getTransformer().mapShapes(ctx.getModel(), shapeMapper)
   }
