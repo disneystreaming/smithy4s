@@ -37,7 +37,7 @@ object Dependencies {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.10.0")
   }
 
   val Monocle = new {
