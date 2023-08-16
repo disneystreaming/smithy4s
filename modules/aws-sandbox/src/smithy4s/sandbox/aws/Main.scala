@@ -14,10 +14,14 @@
  *  limitations under the License.
  */
 
+package smithy4s
+package sandbox
+package aws
+
 import cats.effect._
 import com.amazonaws.cloudwatch
 import com.amazonaws.ec2
-import org.http4s.client.middleware._
+import org.http4s.client.middleware.RequestLogger
 import org.http4s.ember.client.EmberClientBuilder
 import smithy4s.aws._
 
@@ -72,8 +76,7 @@ object Main extends IOApp.Simple {
         .map(
           RequestLogger.colored(
             logHeaders = true,
-            logBody = true,
-            logAction = Some(IO.println _)
+            logBody = true
           )
         )
       awsCredentialsProvider = new AwsCredentialsProvider[IO]

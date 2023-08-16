@@ -20,6 +20,9 @@ import smithy4s.schema._
 
 case class PayloadPath(segments: List[PayloadPath.Segment]) {
 
+  def append(segment: PayloadPath.Segment): PayloadPath =
+    copy(segments ::: List(segment))
+
   def prepend(segment: PayloadPath.Segment): PayloadPath =
     copy(segment :: segments)
 

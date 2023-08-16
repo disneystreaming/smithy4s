@@ -90,10 +90,15 @@ object DocumentKeyEncoder {
       override def enumeration[E](
           shapeId: ShapeId,
           hints: Hints,
-          tag: EnumTag,
+          tag: EnumTag[E],
           values: List[EnumValue[E]],
           total: E => EnumValue[E]
-      ): OptDocumentKeyEncoder[E] = Some { a => total(a).stringValue }
+      ): OptDocumentKeyEncoder[E] = tag match {
+        case EnumTag.IntEnum() =>
+          Some { a => total(a).intValue.toString }
+        case _ =>
+          Some { a => total(a).stringValue }
+      }
 
       override def biject[A, B](
           schema: Schema[A],

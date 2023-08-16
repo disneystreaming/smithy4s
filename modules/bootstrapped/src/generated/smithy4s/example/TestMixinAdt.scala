@@ -9,9 +9,17 @@ import smithy4s.schema.Schema.string
 import smithy4s.schema.Schema.struct
 import smithy4s.schema.Schema.union
 
-sealed trait TestMixinAdt extends scala.Product with scala.Serializable {
+sealed trait TestMixinAdt extends scala.Product with scala.Serializable { self =>
   @inline final def widen: TestMixinAdt = this
   def $ordinal: Int
+
+  object project {
+    def test: Option[TestMixinAdt.TestAdtMemberWithMixin] = TestMixinAdt.TestAdtMemberWithMixin.alt.project.lift(self)
+  }
+
+  def accept[A](visitor: TestMixinAdt.Visitor[A]): A = this match {
+    case value: TestMixinAdt.TestAdtMemberWithMixin => visitor.test(value)
+  }
 }
 object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
 
@@ -40,8 +48,19 @@ object TestMixinAdt extends ShapeTag.Companion[TestMixinAdt] {
   }
 
 
+  trait Visitor[A] {
+    def test(value: TestMixinAdt.TestAdtMemberWithMixin): A
+  }
+
+  object Visitor {
+    trait Default[A] extends Visitor[A] {
+      def default: A
+      def test(value: TestMixinAdt.TestAdtMemberWithMixin): A = default
+    }
+  }
+
   implicit val schema: Schema[TestMixinAdt] = union(
-    TestAdtMemberWithMixin.alt,
+    TestMixinAdt.TestAdtMemberWithMixin.alt,
   ){
     _.$ordinal
   }.withId(id).addHints(hints)

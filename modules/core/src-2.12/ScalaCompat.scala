@@ -28,9 +28,4 @@ private[smithy4s] trait ScalaCompat {
     private def opt[A](a: => A): Option[A] = try { Some(a) }
     catch { case scala.util.control.NonFatal(_) => None }
   }
-
-  private[smithy4s] implicit final class MapOps[K, V](val map: Map[K, V]) {
-    def mapToValues[W](f: V => W): Map[K, W] = map.mapValues(f)
-  }
-
 }

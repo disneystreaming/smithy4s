@@ -29,6 +29,6 @@ object Numbers extends Enumeration[Numbers] with ShapeTag.Companion[Numbers] {
     ONE,
     TWO,
   )
-  val tag: EnumTag = EnumTag.IntEnum
+  val tag: EnumTag[Numbers] = EnumTag.ClosedIntEnum
   implicit val schema: Schema[Numbers] = enumeration(tag, values).withId(id).addHints(hints)
 }

@@ -19,7 +19,7 @@ object Dependencies {
 
   val Smithy = new {
     val org = "software.amazon.smithy"
-    val smithyVersion = "1.33.0"
+    val smithyVersion = "1.36.0"
     val model = org % "smithy-model" % smithyVersion
     val testTraits = org % "smithy-protocol-test-traits" % smithyVersion
     val build = org % "smithy-build" % smithyVersion
@@ -29,7 +29,7 @@ object Dependencies {
 
   val Alloy = new {
     val org = "com.disneystreaming.alloy"
-    val alloyVersion = "0.2.3"
+    val alloyVersion = "0.2.6"
     val core = org % "alloy-core" % alloyVersion
     val openapi = org %% "alloy-openapi" % alloyVersion
     val `protocol-tests` = org % "alloy-protocol-tests" % alloyVersion
@@ -37,7 +37,7 @@ object Dependencies {
 
   val Cats = new {
     val core: Def.Initialize[ModuleID] =
-      Def.setting("org.typelevel" %%% "cats-core" % "2.9.0")
+      Def.setting("org.typelevel" %%% "cats-core" % "2.10.0")
   }
 
   val Monocle = new {
@@ -60,7 +60,7 @@ object Dependencies {
       Def.setting("com.monovore" %%% "decline-effect" % declineVersion)
   }
   object Fs2 {
-    val fs2Version = "3.7.0"
+    val fs2Version = "3.8.0"
 
     val core: Def.Initialize[ModuleID] =
       Def.setting("co.fs2" %%% "fs2-core" % fs2Version)
@@ -117,8 +117,6 @@ object Dependencies {
       Def.setting("org.http4s" %%% "http4s-client" % http4sVersion)
   }
 
-  val slf4jNop: ModuleID = "org.slf4j" % "slf4j-nop" % "2.0.7"
-
   object Weaver {
 
     val weaverVersion = "0.8.3"
@@ -146,6 +144,8 @@ object Dependencies {
     val scalacheck =
       Def.setting("org.scalacheck" %%% "scalacheck" % scalacheckVersion)
   }
+
+  val Slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.7"
 
   object Webjars {
     val swaggerUi: ModuleID = "org.webjars.npm" % "swagger-ui-dist" % "4.19.1"

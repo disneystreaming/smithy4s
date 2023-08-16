@@ -64,7 +64,7 @@ object DynamoDBGen extends Service.Mixin[DynamoDBGen, DynamoDBOperation] {
     smithy.api.Title("Amazon DynamoDB"),
     aws.protocols.AwsJson1_0(http = None, eventStreamHttp = None),
     smithy.api.Documentation("<fullname>Amazon DynamoDB</fullname>\n\n\n         <p>Amazon DynamoDB is a fully managed NoSQL database service that provides fast and\n      predictable performance with seamless scalability. DynamoDB lets you offload the\n      administrative burdens of operating and scaling a distributed database, so that you don\'t have\n      to worry about hardware provisioning, setup and configuration, replication, software patching,\n      or cluster scaling.</p>\n\n         <p>With DynamoDB, you can create database tables that can store and retrieve any amount of\n      data, and serve any level of request traffic. You can scale up or scale down your tables\'\n      throughput capacity without downtime or performance degradation, and use the AWS Management\n      Console to monitor resource utilization and performance metrics.</p>\n\n         <p>DynamoDB automatically spreads the data and traffic for your tables over a sufficient\n      number of servers to handle your throughput and storage requirements, while maintaining\n      consistent and fast performance. All of your data is stored on solid state disks (SSDs) and\n      automatically replicated across multiple Availability Zones in an AWS region, providing\n      built-in high availability and data durability. </p>"),
-    aws.api.Service(sdkId = "DynamoDB", arnNamespace = Some(aws.api.ArnNamespace("dynamodb")), cloudFormationName = Some(aws.api.CloudFormationName("DynamoDB")), cloudTrailEventSource = Some("dynamodb.amazonaws.com"), endpointPrefix = Some("dynamodb")),
+    aws.api.Service(sdkId = "DynamoDB", arnNamespace = Some(aws.api.ArnNamespace("dynamodb")), cloudFormationName = Some(aws.api.CloudFormationName("DynamoDB")), cloudTrailEventSource = Some("dynamodb.amazonaws.com"), docId = None, endpointPrefix = Some("dynamodb")),
     smithy.api.XmlNamespace(uri = smithy.api.NonEmptyString("http://dynamodb.amazonaws.com/doc/2012-08-10/"), prefix = None),
     aws.api.ClientEndpointDiscovery(operation = smithy4s.ShapeId(namespace = "com.amazonaws.dynamodb", name = "DescribeEndpoints"), error = Some(smithy4s.ShapeId(namespace = "com.amazonaws.dynamodb", name = "InvalidEndpointException"))),
   )
@@ -162,14 +162,24 @@ object DynamoDBOperation {
       case ListTablesError.InvalidEndpointExceptionCase(e) => e
     }
   }
-  sealed trait ListTablesError extends scala.Product with scala.Serializable {
+  sealed trait ListTablesError extends scala.Product with scala.Serializable { self =>
     @inline final def widen: ListTablesError = this
     def $ordinal: Int
+
+    object project {
+      def internalServerError: Option[InternalServerError] = ListTablesError.InternalServerErrorCase.alt.project.lift(self).map(_.internalServerError)
+      def invalidEndpointException: Option[InvalidEndpointException] = ListTablesError.InvalidEndpointExceptionCase.alt.project.lift(self).map(_.invalidEndpointException)
+    }
+
+    def accept[A](visitor: ListTablesError.Visitor[A]): A = this match {
+      case value: ListTablesError.InternalServerErrorCase => visitor.internalServerError(value.internalServerError)
+      case value: ListTablesError.InvalidEndpointExceptionCase => visitor.invalidEndpointException(value.invalidEndpointException)
+    }
   }
   object ListTablesError extends ShapeTag.Companion[ListTablesError] {
 
-    def internalServerError(internalServerError:InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
-    def invalidEndpointException(invalidEndpointException:InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
+    def internalServerError(internalServerError: InternalServerError): ListTablesError = InternalServerErrorCase(internalServerError)
+    def invalidEndpointException(invalidEndpointException: InvalidEndpointException): ListTablesError = InvalidEndpointExceptionCase(invalidEndpointException)
 
     val id: ShapeId = ShapeId("com.amazonaws.dynamodb", "ListTablesError")
 
@@ -180,18 +190,31 @@ object DynamoDBOperation {
 
     object InternalServerErrorCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[InternalServerErrorCase] = bijection(InternalServerError.schema.addHints(hints), InternalServerErrorCase(_), _.internalServerError)
+      val schema: Schema[ListTablesError.InternalServerErrorCase] = bijection(InternalServerError.schema.addHints(hints), ListTablesError.InternalServerErrorCase(_), _.internalServerError)
       val alt = schema.oneOf[ListTablesError]("InternalServerError")
     }
     object InvalidEndpointExceptionCase {
       val hints: Hints = Hints.empty
-      val schema: Schema[InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema.addHints(hints), InvalidEndpointExceptionCase(_), _.invalidEndpointException)
+      val schema: Schema[ListTablesError.InvalidEndpointExceptionCase] = bijection(InvalidEndpointException.schema.addHints(hints), ListTablesError.InvalidEndpointExceptionCase(_), _.invalidEndpointException)
       val alt = schema.oneOf[ListTablesError]("InvalidEndpointException")
     }
 
+    trait Visitor[A] {
+      def internalServerError(value: InternalServerError): A
+      def invalidEndpointException(value: InvalidEndpointException): A
+    }
+
+    object Visitor {
+      trait Default[A] extends Visitor[A] {
+        def default: A
+        def internalServerError(value: InternalServerError): A = default
+        def invalidEndpointException(value: InvalidEndpointException): A = default
+      }
+    }
+
     implicit val schema: UnionSchema[ListTablesError] = union(
-      InternalServerErrorCase.alt,
-      InvalidEndpointExceptionCase.alt,
+      ListTablesError.InternalServerErrorCase.alt,
+      ListTablesError.InvalidEndpointExceptionCase.alt,
     ){
       _.$ordinal
     }

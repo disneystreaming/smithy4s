@@ -16,8 +16,4 @@
 
 package smithy4s
 
-private[smithy4s] trait ScalaCompat {
-  implicit final class MapOps[K, V](val map: Map[K, V]) {
-    def mapToValues[W](f: V => W): Map[K, W] = map.view.mapValues(f).toMap
-  }
-}
+private[smithy4s] trait ScalaCompat {}

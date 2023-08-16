@@ -327,7 +327,7 @@ private[dynamic] object Compiler {
           update(
             id,
             shape.traits,
-            enumeration(fromOrdinal, EnumTag.StringEnum, values)
+            enumeration(fromOrdinal, EnumTag.ClosedStringEnum, values)
           )
         }
         case _ => update(id, shape.traits, string)

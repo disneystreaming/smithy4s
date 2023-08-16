@@ -63,7 +63,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  sandbox,
+  `aws-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -495,7 +495,10 @@ lazy val decline = (projectMatrix in file("modules/decline"))
       Dependencies.Weaver.cats.value % Test
     )
   )
-  .dependsOn(json)
+  .dependsOn(
+    json,
+    bootstrapped % "test->test"
+  )
   .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
   .jsPlatform(allJsScalaVersions, jsDimSettings)
   .nativePlatform(allNativeScalaVersions, nativeDimSettings)
@@ -608,6 +611,7 @@ lazy val xml = projectMatrix
   .in(file("modules/xml"))
   .dependsOn(
     core,
+    fs2,
     bootstrapped % "test->test",
     scalacheck % "test -> compile"
   )
@@ -615,6 +619,27 @@ lazy val xml = projectMatrix
     isMimaEnabled := false,
     libraryDependencies ++= Seq(
       Dependencies.Fs2Data.xml.value,
+      Dependencies.Weaver.cats.value % Test
+    ),
+    libraryDependencies ++= munitDeps.value,
+    Test / fork := virtualAxes.value.contains(VirtualAxis.jvm)
+  )
+  .jvmPlatform(allJvmScalaVersions, jvmDimSettings)
+  .jsPlatform(allJsScalaVersions, jsDimSettings)
+  .nativePlatform(allNativeScalaVersions, nativeDimSettings)
+
+/**
+ * Module that contains common code which relies on fs2.
+ */
+lazy val fs2 = projectMatrix
+  .in(file("modules/fs2"))
+  .dependsOn(
+    core
+  )
+  .settings(
+    isMimaEnabled := false,
+    libraryDependencies ++= Seq(
+      Dependencies.Fs2.core.value,
       Dependencies.Weaver.cats.value % Test
     ),
     libraryDependencies ++= munitDeps.value,
@@ -885,8 +910,8 @@ lazy val benchmark = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
-lazy val sandbox = projectMatrix
-  .in(file("modules/sandbox"))
+lazy val `aws-sandbox` = projectMatrix
+  .in(file("modules/aws-sandbox"))
   .dependsOn(`aws-http4s`)
   .settings(
     Compile / allowedNamespaces := Seq(
@@ -897,14 +922,14 @@ lazy val sandbox = projectMatrix
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
-    ) ++ scala3MigrationOption(scalaVersion.value),
+    ),
     smithy4sDependencies ++= Seq(
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
       "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
-      Dependencies.slf4jNop
+      Dependencies.Slf4jSimple % Runtime
     ),
     run / fork := true
   )

@@ -29,13 +29,10 @@ import smithy4s.Blob
 import smithy4s.Document
 import smithy4s.Hints
 import smithy4s.ShapeId
-import smithy4s.schema.CompilationCache
 import smithy4s.schema.Schema
 import smithy4s.schema.Schema._
-import smithy4s.xml.internals.XmlCursor
-import smithy4s.xml.internals.XmlDecoder
-import smithy4s.xml.internals.XmlDecoderSchemaVisitor
 import weaver._
+import smithy4s.example.{OpenEnumTest, OpenIntEnumTest}
 
 object XmlCodecSpec extends SimpleIOSuite {
 
@@ -197,17 +194,7 @@ object XmlCodecSpec extends SimpleIOSuite {
     val xml = """|<Foo>
                  |</Foo>""".stripMargin
 
-    parseDocument(xml)
-      .flatMap(decodeDocument[Foo](_))
-      .attempt
-      .map { result =>
-        expect.same(
-          result,
-          Right(
-            Foo("bar", Some("baz"))
-          )
-        )
-      }
+    checkDocument(xml, Foo("bar", Some("baz")))
   }
 
   test("struct: attributes") {
@@ -432,6 +419,23 @@ object XmlCodecSpec extends SimpleIOSuite {
       checkContent[FooBar](xmlBar, FooBar.Bar)
   }
 
+  test("open string enumeration") {
+    val xmlKnown = "<OpenEnumTest>ONE</OpenEnumTest>"
+    val xmlUnknown = "<OpenEnumTest>something</OpenEnumTest>"
+    checkContent[OpenEnumTest](xmlKnown, OpenEnumTest.ONE) <+>
+      checkContent[OpenEnumTest](
+        xmlUnknown,
+        OpenEnumTest.$Unknown("something")
+      )
+  }
+
+  test("open int enumeration") {
+    val xmlKnown = "<OpenIntEnumTest>1</OpenIntEnumTest>"
+    val xmlUnknown = "<OpenIntEnumTest>123</OpenIntEnumTest>"
+    checkContent[OpenIntEnumTest](xmlKnown, OpenIntEnumTest.ONE) <+>
+      checkContent[OpenIntEnumTest](xmlUnknown, OpenIntEnumTest.$Unknown(123))
+  }
+
   test("map") {
     case class Foo(foos: Map[String, Int])
     object Foo {
@@ -573,7 +577,7 @@ object XmlCodecSpec extends SimpleIOSuite {
       loc: SourceLocation
   ): IO[Expectations] = {
     parseDocument(xmlString).flatMap { document =>
-      val decodingChecks = decodeContent[A](document)
+      val decodingChecks = decodeDocument[A](document)
         .map(result => expect.same(result, expected).traced(here))
 
       import cats.Show
@@ -603,27 +607,20 @@ object XmlCodecSpec extends SimpleIOSuite {
       .map(result => expect.same(result, expected))
   }
 
-  // Decode document differs from decode content in that the top-level
-  // tag is checked against the ShapeId
-  private def decodeDocument[A: Schema](document: XmlDocument): IO[A] = {
+  private def decodeDocument[A](
+      document: XmlDocument
+  )(implicit schema: Schema[A]): IO[A] = {
     XmlDocument.Decoder
-      .fromSchema(implicitly[Schema[A]])
+      .fromSchema(schema)
       .decode(document)
       .leftWiden[Throwable]
       .liftTo[IO]
   }
 
-  private def encodeDocument[A: Schema](value: A): XmlDocument = {
-    val encoder = XmlDocument.Encoder.fromSchema(implicitly[Schema[A]])
-    encoder.encode(value)
-  }
-
-  private def decodeContent[A: Schema](document: XmlDocument): IO[A] = {
-    val cache = CompilationCache.make[XmlDecoder]
-    val schemaVisitor = new XmlDecoderSchemaVisitor(cache)
-    val decoder = schemaVisitor(implicitly[Schema[A]])
-    val cursor = XmlCursor.SingleNode(XPath.root, document.root)
-    decoder.decode(cursor).leftWiden[Throwable].liftTo[IO]
+  private def encodeDocument[A](
+      value: A
+  )(implicit schema: Schema[A]): XmlDocument = {
+    XmlDocument.Encoder.fromSchema(schema).encode(value)
   }
 
   private def parseDocument(xmlString: String): IO[XmlDocument] = {
@@ -636,5 +633,4 @@ object XmlCodecSpec extends SimpleIOSuite {
       .last
       .flatMap(_.liftTo[IO](new Throwable("BOOM")))
   }
-
 }

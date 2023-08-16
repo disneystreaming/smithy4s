@@ -86,18 +86,31 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
   private def enumArg[E](
       values: List[EnumValue[E]],
-      fieldName: CoreHints.FieldName
-  ): Argument[E] =
+      fieldName: CoreHints.FieldName,
+      tag: EnumTag[E]
+  ): Argument[E] = {
+    val ordinalMap: Map[Int, E] = values.map(v => v.intValue -> v.value).toMap
+    val nameMap: Map[String, E] =
+      values.map(v => v.stringValue -> v.value).toMap
+    val extract: String => Option[E] = tag match {
+      case EnumTag.OpenIntEnum(unknown) =>
+        _.toIntOption.map(i => ordinalMap.getOrElse(i, unknown(i)))
+      case EnumTag.ClosedIntEnum =>
+        _.toIntOption.flatMap(ordinalMap.get)
+      case EnumTag.OpenStringEnum(unknown) =>
+        str => Some(nameMap.getOrElse(str, unknown(str)))
+      case EnumTag.ClosedStringEnum =>
+        nameMap.get(_)
+    }
     Argument.from("enum") { name =>
-      values
-        .find(_.stringValue == name)
-        .map(_.value)
+      extract(name)
         .toValidNel(
           s"""Unknown value "$name" for input ${fieldName.value}. Allowed values: ${values
             .map(_.stringValue)
             .mkString(", ")}"""
         )
     }
+  }
 
   private def jsonField[A](schema: Schema[A]): Opts[A] = {
     val jsonParser = parseJson(schema)
@@ -227,7 +240,7 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
 
       case e: EnumerationSchema[e] =>
         implicit val arg: Argument[e] =
-          enumArg(e.values, FieldName.require(hints))
+          enumArg(e.values, FieldName.require(hints), e.tag)
 
         fieldPlural(hints)
 
@@ -250,11 +263,12 @@ object OptsVisitor extends SchemaVisitor[Opts] { self =>
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): Opts[E] = {
-    implicit val arg: Argument[E] = enumArg(values, FieldName.require(hints))
+    implicit val arg: Argument[E] =
+      enumArg(values, FieldName.require(hints), tag)
 
     field(hints)
   }

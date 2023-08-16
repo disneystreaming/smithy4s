@@ -30,8 +30,7 @@ import cats.kernel.Monoid
 
 private[smithy4s] class XmlEncoderSchemaVisitor(
     val cache: CompilationCache[XmlEncoder]
-) extends SchemaVisitor.Cached[XmlEncoder]
-    with smithy4s.ScalaCompat { compile =>
+) extends SchemaVisitor.Cached[XmlEncoder] { compile =>
 
   def primitive[P](
       shapeId: ShapeId,
@@ -133,18 +132,18 @@ private[smithy4s] class XmlEncoderSchemaVisitor(
   def enumeration[E](
       shapeId: ShapeId,
       hints: Hints,
-      tag: EnumTag,
+      tag: EnumTag[E],
       values: List[EnumValue[E]],
       total: E => EnumValue[E]
   ): XmlEncoder[E] = tag match {
-    case EnumTag.IntEnum =>
+    case EnumTag.IntEnum() =>
       new XmlEncoder[E] {
         def encode(value: E): List[XmlContent] = List(
           XmlText(total(value).intValue.toString())
         )
       }
 
-    case EnumTag.StringEnum =>
+    case _ =>
       new XmlEncoder[E] {
         def encode(value: E): List[XmlContent] = List(
           XmlText(total(value).stringValue)

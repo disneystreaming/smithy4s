@@ -100,10 +100,11 @@ class Smithy4sCli[Alg[_[_, _, _, _, _]], F[_]: MonadThrow](
         ).mapN { (input, entrypoint) =>
           val printers = entrypoint.printerApi
           val printer = printers.printer(endpoint)
-          val FO = printer.printInput(input) *>
-            service.toPolyFunction[Kind1[F]#toKind5](entrypoint.interpreter)(
-              endpoint.wrap(input)
-            )
+          val polyFunction =
+            service.toPolyFunction[Kind1[F]#toKind5](entrypoint.interpreter)
+          val FO = printer
+            .printInput(input)
+            .flatMap(_ => polyFunction(endpoint.wrap(input)))
 
           FO.flatMap(printer.printOutput)
             .onError {
