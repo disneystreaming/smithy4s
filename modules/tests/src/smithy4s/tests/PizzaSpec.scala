@@ -320,15 +320,20 @@ abstract class PizzaSpec
       )
     } yield {
       val (code, headers, body) = res
+      // There may be other headers, but this one should definitely exist.
+      // In general, content-length and content-type headers should be omitted
+      // but we won't fail the test if they aren't since the HTTP Spec is
+      // fairly vague and thus permissive in this area.
+      val expectedHeaders = Map(
+        "Test" -> List("test")
+      )
+      val containsAllExpectedHeaders =
+        expectedHeaders.forall(h => headers.get(h._1).contains(h._2))
       expect.same(code, 200) &&
       expect.same(body, "") &&
-      expect.same(
-        headers,
-        HeaderMap(
-          Map(
-            CaseInsensitive("Test") -> List("test")
-          )
-        )
+      expect(
+        containsAllExpectedHeaders,
+        s"Expected to find all of $expectedHeaders inside of $headers"
       )
     }
   }
