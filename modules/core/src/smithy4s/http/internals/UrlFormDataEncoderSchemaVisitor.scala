@@ -18,17 +18,17 @@ package smithy4s
 package http
 package internals
 
-import smithy.api.XmlFlattened
-import smithy.api.XmlName
+import alloy.UrlFormFlattened
+import alloy.UrlFormName
 import smithy4s.codecs.PayloadPath
 import smithy4s.http._
 import smithy4s.schema._
 
-private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
+private[http] class UrlFormDataEncoderSchemaVisitor(
     val cache: CompilationCache[UrlFormDataEncoder],
     // These are used by AwsEc2QueryCodecs to conform to the requirements of
     // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
-    ignoreXmlFlattened: Boolean,
+    ignoreUrlFormFlattened: Boolean,
     capitalizeStructAndUnionMemberNames: Boolean
 ) extends SchemaVisitor.Cached[UrlFormDataEncoder] { compile =>
 
@@ -36,10 +36,14 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       shapeId: ShapeId,
       hints: Hints,
       tag: Primitive[P]
-  ): UrlFormDataEncoder[P] = (p: P) =>
+  ): UrlFormDataEncoder[P] =
     Primitive.stringWriter(tag, hints) match {
-      case Some(writer) => UrlForm.FormData.SimpleValue(writer(p)).widen
-      case None         => UrlForm.FormData.Empty.widen
+      case Some(writer) =>
+        primitive =>
+          List(UrlForm.FormData(PayloadPath.root, Some(writer(primitive))))
+
+      case None =>
+        _ => Nil
     }
 
   private val SkipEmpty = Hints.Binding.DynamicBinding(
@@ -55,37 +59,30 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   ): UrlFormDataEncoder[C[A]] = {
     val memberEncoder = compile(member)
     val maybeKey =
-      if (ignoreXmlFlattened || hints.has[XmlFlattened]) None
+      if (ignoreUrlFormFlattened || hints.has[UrlFormFlattened]) None
       else Option(getKey(member.hints, "member"))
     val skipEmpty = hints.toMap.contains(SkipEmpty.keyId)
-    (collection: C[A]) => {
-      val formData = UrlForm.FormData
-        .MultipleValues(
-          tag
-            .iterator(collection)
-            .zipWithIndex
-            .flatMap { case (a, index) =>
-              memberEncoder
-                .encode(a)
-                .prepend(PayloadPath.Segment(index + 1))
-                .toPathedValues
-            }
-            .toVector
-        )
-        .widen
+    collection =>
       // This is to handle a quirk of the AWS Query protocol at
       // https://github.com/smithy-lang/smithy/blob/f8a846df3c67fa4ae55ecaa57002d22499dc439f/smithy-aws-protocol-tests/model/awsQuery/input-lists.smithy#L43-L57
       // which is that empty lists must be serialised, i.e. the top level key
       // for the list must be present, e.g. &listName=&otherValue=foo.
       if (tag.isEmpty(collection) && !skipEmpty)
-        UrlForm.FormData.MultipleValues(
-          Vector(
-            UrlForm.FormData.PathedValue(PayloadPath.root, maybeValue = None)
-          )
+        List(
+          UrlForm.FormData(PayloadPath.root, maybeValue = None)
         )
-      else
-        maybeKey.fold(formData)(key => formData.prepend(key))
-    }
+      else {
+        val formData = tag
+          .iterator(collection)
+          .zipWithIndex
+          .flatMap { case (a, index) =>
+            memberEncoder
+              .encode(a)
+              .map(_.prepend(PayloadPath.Segment(index + 1)))
+          }
+          .toList
+        maybeKey.fold(formData)(key => formData.map(_.prepend(key)))
+      }
   }
 
   override def map[K, V](
@@ -98,13 +95,13 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
     val kvSchema: Schema[(K, V)] = {
       val kField = key.required[KV]("key", _._1)
       val vField = value.required[KV]("value", _._2)
-      Schema.struct(kField, vField)((_, _)).addHints(XmlName("entry"))
+      Schema.struct(kField, vField)((_, _)).addHints(UrlFormName("entry"))
     }
     // Avoid serialising empty maps, see comment in collection case and
     // https://github.com/smithy-lang/smithy/issues/1868.
     val schema = Schema.vector(kvSchema).addHints(hints).addHints(SkipEmpty)
     val collectionEncoder = compile(schema)
-    (m: Map[K, V]) => collectionEncoder.encode(m.toVector)
+    map => collectionEncoder.encode(map.toVector)
   }
 
   override def enumeration[E](
@@ -115,10 +112,22 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       total: E => EnumValue[E]
   ): UrlFormDataEncoder[E] = tag match {
     case EnumTag.IntEnum() =>
-      (value: E) => UrlForm.FormData.SimpleValue(total(value).intValue.toString)
+      value =>
+        List(
+          UrlForm.FormData(
+            PayloadPath.root,
+            Some(total(value).intValue.toString)
+          )
+        )
 
     case _ =>
-      (value: E) => UrlForm.FormData.SimpleValue(total(value).stringValue)
+      value =>
+        List(
+          UrlForm.FormData(
+            PayloadPath.root,
+            Some(total(value).stringValue)
+          )
+        )
   }
 
   override def struct[S](
@@ -127,15 +136,12 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
       fields: Vector[Field[S, _]],
       make: IndexedSeq[Any] => S
   ): UrlFormDataEncoder[S] = {
-    def fieldEncoder[A](field: Field[S, A]): UrlFormDataEncoder[S] = {
-      val fieldKey = getKey(field.hints, field.label)
-      compile(field.schema).contramap(field.get).prepend(fieldKey)
-    }
+    def fieldEncoder[A](field: Field[S, A]): UrlFormDataEncoder[S] =
+      compile(field.schema)
+        .contramap(field.get)
+        .prepend(getKey(field.hints, field.label))
     val encoders = fields.map(fieldEncoder(_))
-    (s: S) =>
-      UrlForm.FormData.MultipleValues(
-        encoders.flatMap(_.encode(s).toPathedValues)
-      )
+    struct => encoders.toList.flatMap(_.encode(struct))
   }
 
   override def union[U](
@@ -149,8 +155,9 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
           label: String,
           instance: Schema[A]
       ): UrlFormDataEncoder[A] = {
-        val key = getKey(instance.hints, label)
-        compile(instance).prepend(key)
+        val encoder = compile(instance)
+        value =>
+          encoder.encode(value).map(_.prepend(getKey(instance.hints, label)))
       }
     })
 
@@ -167,21 +174,20 @@ private[smithy4s] class UrlFormDataEncoderSchemaVisitor(
   override def lazily[A](suspend: Lazy[Schema[A]]): UrlFormDataEncoder[A] = {
     lazy val underlying: UrlFormDataEncoder[A] =
       suspend.map(schema => compile(schema)).value
-    (a: A) => underlying.encode(a)
+    underlying.encode(_)
   }
 
   override def option[A](schema: Schema[A]): UrlFormDataEncoder[Option[A]] = {
     val encoder = compile(schema)
-    (a: Option[A]) =>
-      a match {
-        case None    => UrlForm.FormData.Empty
-        case Some(a) => encoder.encode(a)
-      }
+    ({
+      case Some(value) => encoder.encode(value)
+      case None        => Nil
+    })
   }
 
   private def getKey(hints: Hints, default: String): PayloadPath.Segment =
     hints
-      .get(XmlName)
+      .get(UrlFormName)
       .map(_.value)
       .map(PayloadPath.Segment(_))
       .getOrElse(

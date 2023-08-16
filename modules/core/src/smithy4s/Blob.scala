@@ -96,7 +96,7 @@ object Blob {
     }
 
     override def equals(other: Any): Boolean = {
-      other.isInstanceOf[ByteArrayBlob] &&
+      other.isInstanceOf[ByteBufferBlob] &&
       buffer.compareTo(other.asInstanceOf[ByteBufferBlob].buffer) == 0
     }
 

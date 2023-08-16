@@ -22,25 +22,34 @@ import smithy4s.capability.EncoderK
 import smithy4s.codecs.PayloadPath
 import smithy4s.http.UrlForm
 
-private[smithy4s] trait UrlFormDataEncoder[-A] { self =>
+private[http] trait UrlFormDataEncoder[-A] { self =>
+
+  def encode(value: A): List[UrlForm.FormData]
 
   def contramap[B](f: B => A): UrlFormDataEncoder[B] =
-    (value: B) => self.encode(f(value))
-
-  def encode(value: A): UrlForm.FormData
+    value => self.encode(f(value))
 
   def prepend(segment: PayloadPath.Segment): UrlFormDataEncoder[A] =
-    (value: A) => self.encode(value).prepend(segment)
+    value => self.encode(value).map(_.prepend(segment))
 
 }
 
-object UrlFormDataEncoder {
+private[internals] object UrlFormDataEncoder {
+
   implicit val urlFormDataEncoderK
-      : EncoderK[UrlFormDataEncoder, UrlForm.FormData] =
-    new EncoderK[UrlFormDataEncoder, UrlForm.FormData] {
-      override def apply[A](fa: UrlFormDataEncoder[A], a: A): UrlForm.FormData =
+      : EncoderK[UrlFormDataEncoder, List[UrlForm.FormData]] =
+    new EncoderK[UrlFormDataEncoder, List[UrlForm.FormData]] {
+
+      override def absorb[A](
+          f: A => List[UrlForm.FormData]
+      ): UrlFormDataEncoder[A] =
+        f(_)
+
+      override def apply[A](
+          fa: UrlFormDataEncoder[A],
+          a: A
+      ): List[UrlForm.FormData] =
         fa.encode(a)
-      override def absorb[A](f: A => UrlForm.FormData): UrlFormDataEncoder[A] =
-        (value: A) => f(value)
+
     }
 }

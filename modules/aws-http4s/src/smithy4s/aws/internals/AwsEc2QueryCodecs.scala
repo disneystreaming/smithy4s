@@ -23,9 +23,10 @@ import cats.effect.Concurrent
 import cats.syntax.all._
 import fs2.compression.Compression
 import smithy.api.XmlName
-import smithy4s.Endpoint
+import smithy4s._
 import smithy4s.http._
 import smithy4s.http4s.kernel._
+import smithy4s.xml.internals.XmlStartingPath
 
 private[aws] object AwsEcsQueryCodecs {
 
@@ -41,13 +42,8 @@ private[aws] object AwsEcsQueryCodecs {
             // These are set to fulfil the requirements of
             // https://smithy.io/2.0/aws/protocols/aws-ec2-query-protocol.html?highlight=ec2%20query%20protocol#query-key-resolution.
             // without UrlFormDataEncoderSchemaVisitor having to be more aware
-            // than necessary of these protocol quirks (having it be aware of
-            // XmlName and XmlFlattened already feels like too much - perhaps in
-            // a future change UrlFormDataEncoderSchemaVisitor can work with
-            // better-named hints, and we can use this same transformation
-            // approach in AwsQueryCodecs to translate the AWS XML hints to
-            // those new hints).
-            ignoreXmlFlattened = true,
+            // than necessary of these protocol quirks.
+            ignoreUrlFormFlattened = true,
             capitalizeStructAndUnionMemberNames = true,
             action = endpoint.id.name,
             version = version
@@ -56,22 +52,16 @@ private[aws] object AwsEcsQueryCodecs {
             // This pre-processing works in collaboration with the passing of
             // the capitalizeStructAndUnionMemberNames flags to
             // UrlFormDataEncoderSchemaVisitor.
-            smithy4s.schema.Schema.transformHintsTransitivelyK(hints =>
+            Schema.transformHintsTransitivelyK(hints =>
               hints.memberHints.get(Ec2QueryName) match {
                 case Some(ec2QueryName) =>
-                  hints.addMemberHints(
-                    XmlName(ec2QueryName.value)
-                  )
+                  hints.addMemberHints(XmlName(ec2QueryName.value))
 
                 case None =>
                   hints.memberHints.get(XmlName) match {
                     case Some(xmlName) =>
-                      hints.addMemberHints(
-                        XmlName(xmlName.value.capitalize)
-                      )
-
-                    case None =>
-                      hints
+                      hints.addMemberHints(XmlName(xmlName.value.capitalize))
+                    case None => hints
                   }
               }
             )
@@ -91,23 +81,15 @@ private[aws] object AwsEcsQueryCodecs {
           AwsXmlCodecs
             .responseDecoderCompilers[F]
             .contramapSchema(
-              smithy4s.schema.Schema.transformHintsLocallyK(
-                _ ++ smithy4s.Hints(
-                  smithy4s.xml.internals.XmlStartingPath(
-                    List(responseTag)
-                  )
-                )
+              Schema.transformHintsLocallyK(
+                _ ++ Hints(XmlStartingPath(List(responseTag)))
               )
             )
         val errorDecoderCompilers = AwsXmlCodecs
           .responseDecoderCompilers[F]
           .contramapSchema(
-            smithy4s.schema.Schema.transformHintsLocallyK(
-              _ ++ smithy4s.Hints(
-                smithy4s.xml.internals.XmlStartingPath(
-                  List("Response", "Errors", "Error")
-                )
-              )
+            Schema.transformHintsLocallyK(
+              _ ++ Hints(XmlStartingPath(List("Response", "Errors", "Error")))
             )
           )
 
@@ -122,14 +104,15 @@ private[aws] object AwsEcsQueryCodecs {
               val shapeName = alt.schema.shapeId.name
               alt.hints.get(AwsQueryError).map(_.code).map(_ -> shapeName)
             }.toMap
-            (errorCode: String) => mapping.getOrElse(errorCode, errorCode)
+            errorCode => mapping.getOrElse(errorCode, errorCode)
         }
         val errorDiscriminator = AwsErrorTypeDecoder
           .fromResponse(errorDecoderCompilers)
           .andThen(_.map(_.map {
             case HttpDiscriminator.NameOnly(name) =>
               HttpDiscriminator.NameOnly(errorNameMapping(name))
-            case other => other
+            case other =>
+              other
           }))
 
         val make = UnaryClientCodecs.Make[F](

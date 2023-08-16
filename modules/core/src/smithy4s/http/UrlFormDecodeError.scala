@@ -15,17 +15,24 @@
  */
 
 package smithy4s
+package http
 
-private[smithy4s] trait ScalaCompat {
-  private[smithy4s] implicit final class SmithyStringOps(val s: String) {
-    def toIntOption: Option[Int] = opt(s.toInt)
-    def toDoubleOption: Option[Double] = opt(s.toDouble)
-    def toLongOption: Option[Long] = opt(s.toLong)
-    def toFloatOption: Option[Float] = opt(s.toFloat)
-    def toShortOption: Option[Short] = opt(s.toShort)
-    def toBooleanOption: Option[Boolean] = opt(s.toBoolean)
-    def toByteOption: Option[Byte] = opt(s.toByte)
-    private def opt[A](a: => A): Option[A] = try { Some(a) }
-    catch { case scala.util.control.NonFatal(_) => None }
-  }
+import smithy4s.codecs.PayloadPath
+import smithy4s.http.internals.UrlFormCursor
+
+private[http] final case class UrlFormDecodeError(
+    path: PayloadPath,
+    message: String
+) extends Throwable {
+  override def getMessage(): String = s"${path.render()}: $message"
+}
+
+private[http] object UrlFormDecodeError {
+
+  def singleValueExpected(cursor: UrlFormCursor): UrlFormDecodeError =
+    UrlFormDecodeError(
+      cursor.history,
+      s"Expected a single value but got ${cursor.values}"
+    )
+
 }

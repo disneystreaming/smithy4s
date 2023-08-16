@@ -63,7 +63,7 @@ lazy val allModules = Seq(
   decline,
   codegenPlugin,
   benchmark,
-  sandbox,
+  `aws-sandbox`,
   protocol,
   protocolTests,
   `aws-kernel`,
@@ -910,8 +910,8 @@ lazy val benchmark = projectMatrix
   .jvmPlatform(List(Scala213), jvmDimSettings)
   .settings(Smithy4sBuildPlugin.doNotPublishArtifact)
 
-lazy val sandbox = projectMatrix
-  .in(file("modules/sandbox"))
+lazy val `aws-sandbox` = projectMatrix
+  .in(file("modules/aws-sandbox"))
   .dependsOn(`aws-http4s`)
   .settings(
     Compile / allowedNamespaces := Seq(
@@ -922,14 +922,14 @@ lazy val sandbox = projectMatrix
     // Ignore deprecation warnings here - it's all generated code, anyway.
     scalacOptions ++= Seq(
       "-Wconf:cat=deprecation:silent"
-    ) ++ scala3MigrationOption(scalaVersion.value),
+    ),
     smithy4sDependencies ++= Seq(
       "com.disneystreaming.smithy" % "aws-cloudwatch-spec" % "2023.02.10",
       "com.disneystreaming.smithy" % "aws-ec2-spec" % "2023.02.10"
     ),
     libraryDependencies ++= Seq(
       Dependencies.Http4s.emberClient.value,
-      Dependencies.slf4jNop
+      Dependencies.Slf4jSimple % Runtime
     ),
     run / fork := true
   )
