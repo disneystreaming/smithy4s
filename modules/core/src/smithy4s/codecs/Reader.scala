@@ -101,4 +101,9 @@ object Reader {
         fa.mapK(fk)
     }
 
+  def lift[F[_], Message, A](
+      f: Message => F[A]
+  ): Reader[F, Message, A] = new Reader[F, Message, A] {
+    def read(message: Message): F[A] = f(message)
+  }
 }

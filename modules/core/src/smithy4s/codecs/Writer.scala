@@ -114,12 +114,14 @@ object Writer {
   type CachedCompiler[In, Out] = CachedSchemaCompiler[Writer[In, Out, *]]
 
   /**
+    * Creates an writer from a function.
+    */
+  def lift[In, Message, A](f: (In, A) => Message): Writer[In, Message, A] = { (in, a) => f(in, a) }
+
+  /**
     * Creates an encoder (a writer that takes any input) from a function.
     */
-  def encodeBy[A, Message](f: A => Message): Encoder[Message, A] =
-    new Encoder[Message, A] {
-      def write(message: Any, a: A): Message = f(a)
-    }
+  def encodeBy[A, Message](f: A => Message): Encoder[Message, A] = { (_, a) => f(a) }
 
   /**
     * Creates an encoder (a writer that takes any input) from a static output.
