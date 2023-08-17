@@ -17,8 +17,6 @@
 package smithy4s
 package http
 
-import smithy4s.codecs.Reader
-import smithy4s.codecs.Writer
 import smithy4s.http.internals.HttpResponseCodeSchemaVisitor
 import smithy4s.http.internals.MetaEncode._
 import smithy4s.http.internals.SchemaVisitorMetadataReader
@@ -140,6 +138,11 @@ case class Metadata(
 }
 
 object Metadata {
+  private[smithy4s] type Reader[A] =
+    smithy4s.codecs.Reader[Either[MetadataError, *], Metadata, A]
+  private[smithy4s] type Writer[A] =
+    smithy4s.codecs.Writer[Any, Metadata, A]
+
   def fold[A](i: Iterable[A])(f: A => Metadata): Metadata =
     i.foldLeft(empty)((acc, a) => acc ++ f(a))
 
@@ -167,8 +170,8 @@ object Metadata {
   trait Decoder[A] { self =>
     def decode(metadata: Metadata): Either[MetadataError, A]
 
-    final def toReader: Reader[Either[MetadataError, *], Metadata, A] =
-      new Reader[Either[MetadataError, *], Metadata, A] {
+    final def toReader: Reader[A] =
+      new Reader[A] {
         def read(metadata: Metadata): Either[MetadataError, A] =
           self.decode(metadata)
       }
@@ -176,11 +179,9 @@ object Metadata {
 
   object Decoder extends CachedDecoderCompilerImpl(awsHeaderEncoding = false) {
     // scalafmt: {maxColumn = 120}
-    def toReaderK: PolyFunction[Decoder, Reader[Either[MetadataError, *], Metadata, *]] =
-      new PolyFunction[Decoder, Reader[Either[MetadataError, *], Metadata, *]] {
-        def apply[A](
-            decoder: Decoder[A]
-        ): Reader[Either[MetadataError, *], Metadata, A] =
+    def toReaderK: PolyFunction[Decoder, Reader] =
+      new PolyFunction[Decoder, Reader] {
+        def apply[A](decoder: Decoder[A]): Reader[A] =
           decoder.toReader
       }
   }
@@ -220,17 +221,14 @@ object Metadata {
   trait Encoder[A] { self =>
     def encode(a: A): Metadata
 
-    final def toWriter: Writer[Any, Metadata, A] =
-      new Writer[Any, Metadata, A]() {
-        def write(input: Any, a: A): Metadata = self.encode(a)
-      }
+    final def toWriter: Writer[A] = smithy4s.codecs.Writer.encodeBy(encode)
   }
 
   object Encoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = false) {
     // scalafmt: {maxColumn = 120}
-    def toWriterK: PolyFunction[Encoder, Writer[Any, Metadata, *]] =
-      new PolyFunction[Encoder, Writer[Any, Metadata, *]]() {
-        def apply[A](fa: Encoder[A]): Writer[Any, Metadata, A] = fa.toWriter
+    def toWriterK: PolyFunction[Encoder, Writer] =
+      new PolyFunction[Encoder, Writer] {
+        def apply[A](fa: Encoder[A]): Writer[A] = fa.toWriter
       }
   }
   private[smithy4s] object AwsEncoder extends CachedEncoderCompilerImpl(awsHeaderEncoding = true)

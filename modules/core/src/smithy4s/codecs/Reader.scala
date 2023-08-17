@@ -57,6 +57,26 @@ trait Reader[F[_], -Message, A] { self =>
 
 object Reader {
 
+  def lift[F[_], Message, A](
+      f: Message => F[A]
+  ): Reader[F, Message, A] = new Reader[F, Message, A] {
+    def read(message: Message): F[A] = f(message)
+  }
+
+  def in[F[_]]: PartiallyAppliedReaderBuilderF[F] =
+    new PartiallyAppliedReaderBuilderF[F]
+
+  class PartiallyAppliedReaderBuilderF[F[_]](private val dummy: Boolean = true)
+      extends AnyVal {
+    def composeK[To, From](
+        f: From => To
+    ): PolyFunction[Reader[F, To, *], Reader[F, From, *]] =
+      new PolyFunction[Reader[F, To, *], Reader[F, From, *]] {
+        def apply[A](fa: Reader[F, To, A]): Reader[F, From, A] =
+          fa.compose(f)
+      }
+  }
+
   implicit def readerZipper[F[_]: Zipper, Message]
       : Zipper[Reader[F, Message, *]] = new Zipper[Reader[F, Message, *]] {
     def pure[A](a: A): Reader[F, Message, A] = new Reader[F, Message, A] {
@@ -101,9 +121,4 @@ object Reader {
         fa.mapK(fk)
     }
 
-  def lift[F[_], Message, A](
-      f: Message => F[A]
-  ): Reader[F, Message, A] = new Reader[F, Message, A] {
-    def read(message: Message): F[A] = f(message)
-  }
 }
