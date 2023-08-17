@@ -68,11 +68,16 @@ object RequestDecoder {
 
   private def toHttpRequest[F[_]](req: Request[F]): HttpRequest[Media[F]] = {
     val pathParams = req.attributes.lookup(pathParamsKey)
-    val params = getQueryParams(req)
+    val queryParams = getQueryParams(req)
     // EXTRACT the host
-    val uri = HttpUri("localhost", req.uri.path.segments.map(_.encoded), params)
+    val uri = HttpUri(
+      "localhost",
+      req.uri.path.segments.map(_.encoded),
+      queryParams,
+      pathParams
+    )
     val headers = getHeaders(req)
-    HttpRequest(uri, headers, req, pathParams)
+    HttpRequest(uri, headers, req)
   }
 
   private def fromHttpRequest[F[_]]: PolyFunction[
@@ -104,11 +109,12 @@ object RequestDecoder {
   ): CachedSchemaCompiler[RequestDecoder[F, *]] = {
     val bodyCompiler =
       entityDecoderCompiler.mapK(MediaDecoder.fromEntityDecoderK)
-    val httpRequestCompiler = HttpRequest.restSchemaCompiler[F, Media[F]](
-      metadataDecoderCompiler,
-      bodyCompiler,
-      liftEither
-    )
+    val httpRequestCompiler =
+      HttpRequest.Decoder.restSchemaCompiler[F, Media[F]](
+        metadataDecoderCompiler,
+        bodyCompiler,
+        liftEither
+      )
     httpRequestCompiler.mapK(fromHttpRequest[F])
   }
 }

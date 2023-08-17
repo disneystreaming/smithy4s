@@ -31,11 +31,12 @@ import org.http4s.{Method => Http4sMethod}
 import org.typelevel.ci.CIString
 import org.typelevel.vault.Key
 import smithy4s.capability.Covariant
-import smithy4s.capability.Zipper
+import smithy4s.capability.MonadThrowLike
 import smithy4s.http.CaseInsensitive
 import smithy4s.http.Metadata
 import smithy4s.http.PathParams
 import smithy4s.http.{HttpMethod => SmithyMethod}
+import cats.MonadThrow
 
 package object kernel {
 
@@ -47,11 +48,15 @@ package object kernel {
   type RequestDecoder[F[_], A] = smithy4s.codecs.Reader[F, Request[F], A]
   type ResponseDecoder[F[_], A] = smithy4s.codecs.Reader[F, Response[F], A]
 
-  private[kernel] implicit def applicativeZipper[F[_]: Applicative]: Zipper[F] =
-    new Zipper[F] {
+  private[kernel] implicit def monadThrowShim[F[_]: MonadThrow]
+      : MonadThrowLike[F] =
+    new MonadThrowLike[F] {
       def pure[A](a: A): F[A] = Applicative[F].pure(a)
       def zipMapAll[A](seq: IndexedSeq[F[Any]])(f: IndexedSeq[Any] => A): F[A] =
         seq.toVector.asInstanceOf[Vector[F[Any]]].sequence.map(f)
+      def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] =
+        MonadThrow[F].flatMap(fa)(f)
+      def raiseError[A](e: Throwable): F[A] = MonadThrow[F].raiseError(e)
     }
 
   /**

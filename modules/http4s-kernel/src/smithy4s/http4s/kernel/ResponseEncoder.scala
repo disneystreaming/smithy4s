@@ -175,7 +175,7 @@ object ResponseEncoder {
   ] = new PolyFunction[
     HttpResponse.Encoder[Entity[F], *],
     ResponseEncoder[F, *]
-  ]() {
+  ] {
     def apply[A](
         encoder: HttpResponse.Encoder[Entity[F], A]
     ): ResponseEncoder[F, A] = new ResponseEncoder[F, A]() {
@@ -207,7 +207,7 @@ object ResponseEncoder {
   )(implicit F: Concurrent[F]): CachedSchemaCompiler[ResponseEncoder[F, *]] = {
     val bodyCompiler =
       entityEncoderCompiler.mapK(fromEntityEncoderK2)
-    HttpResponse
+    HttpResponse.Encoder
       .restSchemaCompiler[Entity[F]](metadataEncoderCompiler, bodyCompiler)
       .mapK(toResponseEncoder[F])
   }
