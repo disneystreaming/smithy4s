@@ -16,11 +16,16 @@
 
 package smithy4s.http
 
+import smithy4s.Errorable
 import smithy4s.codecs.{Reader, Writer}
 import smithy4s.kinds.PolyFunction
 import smithy4s.schema.CachedSchemaCompiler
 import smithy4s.codecs.{Encoder => BodyEncoder}
 import smithy4s.capability.Zipper
+import smithy4s.schema.Alt
+import smithy4s.schema.Schema
+import smithy4s.capability.MonadThrowLike
+import smithy4s.Blob
 
 final case class HttpResponse[+A](
     statusCode: Int,
@@ -31,15 +36,44 @@ final case class HttpResponse[+A](
     this.copy(statusCode = statusCode)
   def withHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpResponse[A] =
     this.copy(headers = headers)
-  def addHeaders(headers: Map[CaseInsensitive, Seq[String]]): HttpResponse[A] =
+  def addHeaders(
+      headers: Iterable[(CaseInsensitive, Seq[String])]
+  ): HttpResponse[A] =
     this.copy(headers = this.headers ++ headers)
+
+  def toMetadata: Metadata = Metadata(
+    headers = headers,
+    statusCode = Some(statusCode)
+  )
 }
 
 object HttpResponse {
   type Encoder[Body, A] = Writer[HttpResponse[Body], HttpResponse[Body], A]
-  type Decoder[F[_], Body, A] = Reader[F, HttpRequest[Body], A]
+  type Decoder[F[_], Body, A] = Reader[F, HttpResponse[Body], A]
 
   object Encoder {
+
+    def restSchemaCompiler[Body](
+        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
+        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]]
+    ): CachedSchemaCompiler[Encoder[Body, *]] = {
+      val metadataCompiler =
+        metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
+      val bodyCompiler =
+        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body])
+      HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+    }
+
+    def forError[Body, E](
+        errorTypeHeaders: List[String],
+        maybeErrorable: Option[Errorable[E]],
+        encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
+    ): Encoder[Body, E] = maybeErrorable match {
+      case Some(errorable) =>
+        forErrorAux(errorTypeHeaders, errorable, encoderCompiler)
+      case None => Writer.noop
+    }
+
     private def isStatusCodeSuccess(statusCode: Int): Boolean =
       100 <= statusCode && statusCode <= 399
 
@@ -68,31 +102,46 @@ object HttpResponse {
         : PolyFunction[BodyEncoder[Body, *], Encoder[Body, *]] =
       Writer.pipeDataK[HttpResponse[Body], Body](bodyEncoder[Body]).narrow
 
-    def restSchemaCompiler[Body](
-        metadataEncoderCompiler: CachedSchemaCompiler[Metadata.Encoder],
-        bodyEncoderCompiler: CachedSchemaCompiler[BodyEncoder[Body, *]]
-    ): CachedSchemaCompiler[Encoder[Body, *]] = {
-      val metadataCompiler =
-        metadataEncoderCompiler.mapK(fromMetadataEncoderK[Body])
-      val bodyCompiler =
-        bodyEncoderCompiler.mapK(fromEntityEncoderK[Body])
-      HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+    private def forErrorAux[Body, E](
+        errorTypeHeaders: List[String],
+        errorable: Errorable[E],
+        encoderCompiler: CachedSchemaCompiler[Encoder[Body, *]]
+    ): Encoder[Body, E] = {
+      val errorUnionSchema = errorable.error
+      val dispatcher =
+        Alt.Dispatcher(errorUnionSchema.alternatives, errorUnionSchema.ordinal)
+      val precompiler = new Alt.Precompiler[Encoder[Body, *]] {
+        def apply[Err](
+            label: String,
+            errorSchema: Schema[Err]
+        ): Encoder[Body, Err] = new Encoder[Body, Err] {
+          val errorEncoder =
+            encoderCompiler.fromSchema(
+              errorSchema,
+              encoderCompiler.createCache()
+            )
+          def write(
+              response: HttpResponse[Body],
+              err: Err
+          ): HttpResponse[Body] = {
+            val errorCode =
+              HttpStatusCode.fromSchema(errorSchema).code(err, 500)
+            val encodedResponse = errorEncoder.write(response, err)
+            val additionalHeaders = errorTypeHeaders
+              .map(h => CaseInsensitive(h) -> Seq(label))
+              .toMap
+            encodedResponse
+              .copy(statusCode = errorCode)
+              .addHeaders(additionalHeaders)
+          }
+        }
+      }
+      dispatcher.compile(precompiler)
     }
+
   }
 
   object Decoder {
-
-    private def extractMetadata[F[_]](
-        liftToF: PolyFunction[Either[MetadataError, *], F]
-    ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
-      Reader
-        .in[Either[MetadataError, *]]
-        .composeK((_: HttpRequest[Any]).toMetadata)
-        .andThen(Reader.liftPolyFunction(liftToF))
-
-    private def extractBody[F[_], Body]
-        : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
-      Reader.in[F].composeK(_.body)
 
     def restSchemaCompiler[F[_]: Zipper, Body](
         metadataDecoderCompiler: CachedSchemaCompiler[Metadata.Decoder],
@@ -107,12 +156,85 @@ object HttpResponse {
       val bodyMetadataCompiler: CachedSchemaCompiler[Decoder[F, Body, *]] =
         entityDecoderCompiler.mapK { extractBody[F, Body] }
 
-      HttpRestSchema.combineReaderCompilers[F, HttpRequest[Body]](
+      HttpRestSchema.combineReaderCompilers[F, HttpResponse[Body]](
         restMetadataCompiler,
         bodyMetadataCompiler
       )
     }
 
+    /**
+    * Creates a response decoder that dispatches the response to
+    * the correct alternative, based on some discriminator.
+    */
+    def forError[F[_]: MonadThrowLike, Body, E](
+        maybeErrorable: Option[Errorable[E]],
+        decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
+        discriminate: HttpResponse[Body] => F[Option[HttpDiscriminator]],
+        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+    ): Decoder[F, Body, E] =
+      discriminating(
+        discriminate,
+        HttpErrorSelector(maybeErrorable, decoderCompiler),
+        toStrict
+      )
+
+    /**
+    * Creates a response decoder that dispatches the response to
+    * the correct alternative, based on some discriminator, and
+    * then upcasts the error as a throwable
+    */
+    def forErrorAsThrowable[F[_]: MonadThrowLike, Body, E](
+        maybeErrorable: Option[Errorable[E]],
+        decoderCompiler: CachedSchemaCompiler[Decoder[F, Body, *]],
+        discriminate: HttpResponse[Body] => F[Option[HttpDiscriminator]],
+        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+    ): Decoder[F, Body, Throwable] =
+      discriminating(
+        discriminate,
+        HttpErrorSelector.asThrowable(maybeErrorable, decoderCompiler),
+        toStrict
+      )
+
+    /**
+    * Creates a response decoder that dispatches  the response
+    * to a given decoder, based on some discriminator.
+    */
+    private def discriminating[F[_], Body, Discriminator, E](
+        discriminate: HttpResponse[Body] => F[Option[Discriminator]],
+        select: Discriminator => Option[Decoder[F, Body, E]],
+        toStrict: HttpResponse[Body] => F[(HttpResponse[Body], Blob)]
+    )(implicit F: MonadThrowLike[F]): Decoder[F, Body, E] =
+      new Decoder[F, Body, E] {
+        def read(response: HttpResponse[Body]): F[E] = {
+          F.flatMap(toStrict(response)) { case (strictResponse, bodyBlob) =>
+            F.flatMap(discriminate(strictResponse)) { maybeDiscriminator =>
+              maybeDiscriminator.flatMap(select) match {
+                case Some(decoder) => decoder.read(strictResponse)
+                case None =>
+                  F.raiseError(
+                    smithy4s.http.UnknownErrorResponse(
+                      response.statusCode,
+                      response.headers,
+                      bodyBlob.toUTF8String
+                    )
+                  )
+              }
+            }
+          }
+        }
+      }
   }
+
+  private def extractMetadata[F[_]](
+      liftToF: PolyFunction[Either[MetadataError, *], F]
+  ): PolyFunction[Metadata.Reader, Decoder[F, Any, *]] =
+    Reader
+      .in[Either[MetadataError, *]]
+      .composeK((_: HttpResponse[Any]).toMetadata)
+      .andThen(Reader.liftPolyFunction(liftToF))
+
+  private def extractBody[F[_], Body]
+      : PolyFunction[Reader[F, Body, *], Decoder[F, Body, *]] =
+    Reader.in[F].composeK(_.body)
 
 }
