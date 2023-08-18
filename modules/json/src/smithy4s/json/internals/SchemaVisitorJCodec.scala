@@ -396,11 +396,11 @@ private[smithy4s] class SchemaVisitorJCodec(
         case a: DArray =>
           out.writeArrayStart()
           a.value match {
-            case x: ArraySeq[Document] =>
-              val xs = x.unsafeArray.asInstanceOf[Array[Document]]
+            case x: ArraySeq[_] =>
+              val xs = x.unsafeArray
               var i = 0
               while (i < xs.length) {
-                encodeValue(xs(i), out)
+                encodeValue(xs(i).asInstanceOf[Document], out)
                 i += 1
               }
             case xs =>
