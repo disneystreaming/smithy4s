@@ -24,12 +24,13 @@ import smithy4s.capability.Zipper
 import smithy4s.schema._
 
 final case class HttpRequest[+A](
+    method: HttpMethod,
     uri: HttpUri,
     headers: Map[CaseInsensitive, Seq[String]],
     body: A
 ) {
   def map[B](f: A => B): HttpRequest[B] =
-    HttpRequest(uri, headers, f(body))
+    HttpRequest(method, uri, headers, f(body))
 
   def toMetadata: Metadata = Metadata(
     path = uri.pathParams.getOrElse(Map.empty),
@@ -79,6 +80,20 @@ object HttpRequest {
       val bodyCompiler =
         bodyEncoderCompiler.mapK(fromEntityEncoderK[Body])
       HttpRestSchema.combineWriterCompilers(metadataCompiler, bodyCompiler)
+    }
+
+    def fromHttpEndpoint[Body, I](
+        httpEndpoint: HttpEndpoint[I]
+    ): Encoder[Body, I] = new Encoder[Body, I] {
+      def write(request: HttpRequest[Body], input: I): HttpRequest[Body] = {
+        val path = httpEndpoint.path(input)
+        val staticQueries = httpEndpoint.staticQueryParams
+        val oldUri = request.uri
+        val newUri =
+          oldUri.copy(path = oldUri.path ++ path, queryParams = staticQueries)
+        val method = httpEndpoint.method
+        request.copy(method = method, uri = newUri)
+      }
     }
   }
 

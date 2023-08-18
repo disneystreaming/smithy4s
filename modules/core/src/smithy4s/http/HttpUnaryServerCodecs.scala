@@ -14,13 +14,51 @@
  *  limitations under the License.
  */
 
-package smithy4s.http
+package smithy4s
+package http
 
-import smithy4s.schema.Schema
+import smithy4s.schema.{Schema, CachedSchemaCompiler}
 
-trait UnaryServerCodecs[F[_], Body, I, E, O] {
+trait HttpUnaryServerCodecs[F[_], Body, I, E, O] {
   val inputDecoder: HttpRequest.Decoder[F, Body, I]
   val outputEncoder: HttpResponse.Encoder[Body, O]
   val errorEncoder: HttpResponse.Encoder[Body, E]
   def errorEncoder[EE](schema: Schema[EE]): HttpResponse.Encoder[Body, EE]
+}
+
+// scalafmt: {maxColumn = 120}
+object HttpUnaryServerCodecs {
+
+  type For[F[_], Body] = {
+    type toKind5[I, E, O, SI, SO] = HttpUnaryServerCodecs[F, Body, I, E, O]
+  }
+
+  type Make[F[_], Body] =
+    smithy4s.kinds.PolyFunction5[Endpoint.Base, For[F, Body]#toKind5]
+
+  def make[F[_], Body](
+      input: CachedSchemaCompiler[HttpRequest.Decoder[F, Body, *]],
+      output: CachedSchemaCompiler[HttpResponse.Encoder[Body, *]],
+      error: CachedSchemaCompiler[HttpResponse.Encoder[Body, *]],
+      errorHeaders: List[String]
+  ): Make[F, Body] = new Make[F, Body] {
+    val requestDecoderCache: input.Cache = input.createCache()
+    val responseEncoderCache: output.Cache = output.createCache()
+    val errorResponseEncoderCache: error.Cache = error.createCache()
+
+    def apply[I, E, O, SI, SO](
+        endpoint: Endpoint.Base[I, E, O, SI, SO]
+    ): HttpUnaryServerCodecs[F, Body, I, E, O] =
+      new HttpUnaryServerCodecs[F, Body, I, E, O] {
+        val inputDecoder: HttpRequest.Decoder[F, Body, I] =
+          input.fromSchema(endpoint.input, requestDecoderCache)
+        val outputEncoder: HttpResponse.Encoder[Body, O] =
+          output.fromSchema(endpoint.output, responseEncoderCache)
+        val errorEncoder: HttpResponse.Encoder[Body, E] =
+          HttpResponse.Encoder.forError(errorHeaders, endpoint.errorable, error)
+        def errorEncoder[EE](schema: Schema[EE]): HttpResponse.Encoder[Body, EE] =
+          error.fromSchema(schema, errorResponseEncoderCache)
+      }
+  }
+
 }
