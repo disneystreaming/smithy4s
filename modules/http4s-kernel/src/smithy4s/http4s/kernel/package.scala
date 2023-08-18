@@ -82,6 +82,16 @@ package object kernel {
       case smithy4s.http.HttpMethod.OTHER(v) => Http4sMethod.fromString(v)
     }
 
+  private[smithy4s] def toSmithy4sMethod(method: Http4sMethod): SmithyMethod =
+    method match {
+      case Http4sMethod.PUT    => SmithyMethod.PUT
+      case Http4sMethod.POST   => SmithyMethod.POST
+      case Http4sMethod.DELETE => SmithyMethod.DELETE
+      case Http4sMethod.GET    => SmithyMethod.GET
+      case Http4sMethod.PATCH  => SmithyMethod.PATCH
+      case other               => SmithyMethod.OTHER(other.renderString)
+    }
+
   private[smithy4s] def toHeaders(mp: Map[CaseInsensitive, Seq[String]]) =
     Headers(mp.flatMap { case (k, v) =>
       v.map(Header.Raw(CIString(k.toString), _))

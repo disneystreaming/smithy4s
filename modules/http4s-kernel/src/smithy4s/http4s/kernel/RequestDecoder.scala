@@ -69,15 +69,14 @@ object RequestDecoder {
   private def toHttpRequest[F[_]](req: Request[F]): HttpRequest[Media[F]] = {
     val pathParams = req.attributes.lookup(pathParamsKey)
     val queryParams = getQueryParams(req)
-    // EXTRACT the host
     val uri = HttpUri(
-      "localhost",
+      req.uri.host.map(_.renderString).getOrElse("localhost"),
       req.uri.path.segments.map(_.encoded),
       queryParams,
       pathParams
     )
     val headers = getHeaders(req)
-    HttpRequest(uri, headers, req)
+    HttpRequest(toSmithy4sMethod(req.method), uri, headers, req)
   }
 
   private def fromHttpRequest[F[_]]: PolyFunction[
@@ -86,7 +85,7 @@ object RequestDecoder {
   ] = new PolyFunction[
     HttpRequest.Decoder[F, Media[F], *],
     RequestDecoder[F, *]
-  ]() {
+  ] {
     def apply[A](
         fa: Reader[F, HttpRequest[Media[F]], A]
     ): Reader[F, Request[F], A] = {
